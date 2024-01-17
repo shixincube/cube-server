@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.ConfigInfo;
+import cube.aigc.ContactPreference;
 import cube.aigc.ModelConfig;
 import cube.aigc.Notification;
 import cube.auth.AuthToken;
@@ -92,7 +93,10 @@ public class GetConfigTask extends ServiceTask {
             return;
         }
 
-        ConfigInfo configInfo = new ConfigInfo(models, notifications);
+        // 个人偏好配置
+        ContactPreference preference = service.getPreference(token.getContactId());
+
+        ConfigInfo configInfo = new ConfigInfo(models, notifications, preference);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, configInfo.toJSON()));

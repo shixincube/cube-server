@@ -26,6 +26,12 @@
 
 package cube.service.aigc.knowledge;
 
+import cube.auth.AuthToken;
+import cube.core.AbstractModule;
+import cube.service.aigc.AIGCService;
+import cube.service.aigc.AIGCStorage;
+import cube.service.auth.AuthService;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -35,37 +41,50 @@ public class KnowledgeFrame {
 
     public final static String DefaultName = "document";
 
-    public final static String DefaultDescription = "文档库";
+    public final static String DefaultDisplayName = "默认文档库";
+
+    private AIGCService service;
+
+    private AuthService authService;
+
+    private AbstractModule fileStorage;
 
     /**
      * Key: 联系人 ID 。
      */
     private ConcurrentHashMap<Long, Frame> frameMap;
 
-    public KnowledgeFrame() {
+    public KnowledgeFrame(AIGCService service, AuthService authService, AbstractModule fileStorage) {
+        this.service = service;
+        this.authService = authService;
+        this.fileStorage = fileStorage;
         this.frameMap = new ConcurrentHashMap<>();
-    }
-
-    public KnowledgeBase getKnowledgeBase(long contactId) {
-        return this.getKnowledgeBase(contactId, DefaultName);
     }
 
     public KnowledgeBase getKnowledgeBase(long contactId, String baseName) {
         Frame frame = this.frameMap.get(contactId);
         if (null == frame) {
-            return null;
+            frame = new Frame(contactId);
+            this.frameMap.put(contactId, frame);
         }
 
-        return frame.getKnowledgeBase(baseName);
-    }
+        KnowledgeBase base = frame.getKnowledgeBase(baseName);
+        if (null == base) {
+            if (KnowledgeFrame.DefaultName.equals(baseName)) {
+                // 创建默认库
+                AuthToken authToken = this.authService.queryAuthTokenByContactId(contactId);
+                base = new KnowledgeBase(KnowledgeFrame.DefaultName, KnowledgeFrame.DefaultDisplayName,
+                        this.service, this.service.getStorage(), authToken, this.fileStorage);
+                frame.putKnowledgeBase(base);
 
-    public void putKnowledgeBase(KnowledgeBase knowledgeBase) {
-        Frame frame = this.frameMap.get(knowledgeBase.getAuthToken().getContactId());
-        if (null == frame) {
-            frame = new Frame(knowledgeBase.getAuthToken().getContactId());
-            this.frameMap.put(knowledgeBase.getAuthToken().getContactId(), frame);
+            }
+            else {
+                // 查询已创建的库
+
+            }
         }
-        frame.putKnowledgeBase(knowledgeBase);
+
+        return base;
     }
 
     private class Frame {

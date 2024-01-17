@@ -33,6 +33,7 @@ import com.sun.org.apache.xpath.internal.operations.Mod;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.auth.AuthToken;
+import cube.common.JSONable;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
@@ -59,7 +60,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * 知识库操作。
  */
-public class KnowledgeBase {
+public class KnowledgeBase implements JSONable {
 
     public final static String EMPTY_BASE_ANSWER = "您的知识库里没有配置文档，您可以先向知识库里导入文档，再向我提问。";
 
@@ -69,7 +70,7 @@ public class KnowledgeBase {
 
     private String name;
 
-    private String description;
+    private String displayName;
 
     private AIGCService service;
 
@@ -91,10 +92,10 @@ public class KnowledgeBase {
 
     private AtomicBoolean qaLock;
 
-    public KnowledgeBase(String name, String description, AIGCService service, AIGCStorage storage,
+    public KnowledgeBase(String name, String displayName, AIGCService service, AIGCStorage storage,
                          AuthToken authToken, AbstractModule fileStorage) {
         this.name = name;
-        this.description = description;
+        this.displayName = displayName;
         this.service = service;
         this.storage = storage;
         this.authToken = authToken;
@@ -105,17 +106,24 @@ public class KnowledgeBase {
         this.qaLock = new AtomicBoolean(false);
     }
 
-    public void init() {
-        this.listKnowledgeDocs();
-        this.listKnowledgeArticles();
+    public KnowledgeBase(JSONObject json) {
+
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 
     public String getName() {
         return this.name;
-    }
-
-    public String getDescription() {
-        return this.description;
     }
 
     public AuthToken getAuthToken() {
@@ -1440,6 +1448,7 @@ public class KnowledgeBase {
 
         return unit;
     }
+
 
     public class KnowledgeResource {
 

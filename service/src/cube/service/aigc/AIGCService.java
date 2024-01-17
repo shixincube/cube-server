@@ -30,10 +30,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.aigc.ModelConfig;
-import cube.aigc.Notification;
-import cube.aigc.Sentiment;
-import cube.aigc.Usage;
+import cube.aigc.*;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
 import cube.aigc.psychology.Painting;
@@ -193,7 +190,6 @@ public class AIGCService extends AbstractModule {
         this.textToImageQueueMap = new ConcurrentHashMap<>();
         this.extractKeywordsQueueMap = new ConcurrentHashMap<>();
         this.asrQueueMap = new ConcurrentHashMap<>();
-        this.knowledgeFrame = new KnowledgeFrame();
         this.tokenizer = new Tokenizer();
     }
 
@@ -300,6 +296,9 @@ public class AIGCService extends AbstractModule {
                 else {
                     Logger.e(AIGCService.class, "#start - Can NOT find \"FileStorage\" module!");
                 }
+
+                // 实例化知识框架
+                knowledgeFrame = new KnowledgeFrame(AIGCService.this, authService, fileStorage);
 
                 // 资源管理器
                 Explorer.getInstance().setup(AIGCService.this, tokenizer);
@@ -439,6 +438,10 @@ public class AIGCService extends AbstractModule {
         }
 
         return this.storage.readEnabledNotifications();
+    }
+
+    public ContactPreference getPreference(long contactId) {
+        return this.storage.readContactPreference(contactId);
     }
 
     public AIGCUnit selectUnitByName(String unitName) {
@@ -604,51 +607,27 @@ public class AIGCService extends AbstractModule {
      * 获取对应的知识库实例。
      *
      * @param tokenCode
+     * @param baseName
      * @return
      */
-    public synchronized KnowledgeBase getKnowledgeBase(String tokenCode) {
+    public synchronized KnowledgeBase getKnowledgeBase(String tokenCode, String baseName) {
         AuthToken authToken = this.getToken(tokenCode);
         if (null == authToken) {
             return null;
         }
 
-        return this.getKnowledgeBase(authToken.getContactId());
+        return this.getKnowledgeBase(authToken.getContactId(), baseName);
     }
 
     /**
      * 获取对应的知识库实例。
      *
      * @param contactId
+     * @param baseName
      * @return
      */
-    public synchronized KnowledgeBase getKnowledgeBase(Long contactId) {
-        KnowledgeBase base = this.knowledgeFrame.getKnowledgeBase(contactId);
-        if (null == base) {
-            AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
-            if (null == fileStorage) {
-                Logger.e(this.getClass(), "#getKnowledgeBase - File storage service is not ready");
-                return null;
-            }
-
-            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
-            AuthToken authToken = authService.queryAuthTokenByContactId(contactId);
-            if (null == authToken) {
-                Logger.e(this.getClass(), "#getKnowledgeBase - Can NOT find auth token: " + contactId);
-                return null;
-            }
-
-            base = new KnowledgeBase(KnowledgeFrame.DefaultName, KnowledgeFrame.DefaultDescription,
-                    this, this.storage, authToken, fileStorage);
-            final KnowledgeBase knowledgeBase = base;
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    knowledgeBase.init();
-                }
-            });
-            this.knowledgeFrame.putKnowledgeBase(knowledgeBase);
-        }
-        return base;
+    public synchronized KnowledgeBase getKnowledgeBase(Long contactId, String baseName) {
+        return this.knowledgeFrame.getKnowledgeBase(contactId, baseName);
     }
 
     /**

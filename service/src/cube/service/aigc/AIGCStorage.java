@@ -64,6 +64,8 @@ public class AIGCStorage implements Storagable {
 
     private final String knowledgeProfileTable = "aigc_knowledge_profile";
 
+    private final String knowledgeFrameTable = "aigc_knowledge_frame";
+
     private final String knowledgeDocTable = "aigc_knowledge_doc";
 
     private final String knowledgeArticleTable = "aigc_knowledge_article";
@@ -85,7 +87,9 @@ public class AIGCStorage implements Storagable {
      */
     private final String usageTable = "aigc_usage";
 
-    // 联系人偏好
+    /**
+     * 联系人偏好。
+     */
     private final String contactPreferenceTable = "aigc_contact_preference";
 
     private final StorageField[] appConfigFields = new StorageField[] {
@@ -218,6 +222,27 @@ public class AIGCStorage implements Storagable {
             })
     };
 
+    private final StorageField[] knowledgeFrameFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("base", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("display_name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("unit_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("store_size", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            })
+    };
+
     private final StorageField[] knowledgeDocFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY
@@ -230,6 +255,9 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("base", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             }),
             new StorageField("activated", LiteralBase.INT, new Constraint[] {
                     Constraint.DEFAULT_1
@@ -436,7 +464,7 @@ public class AIGCStorage implements Storagable {
             new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY
             }),
-            new StorageField("unit", LiteralBase.STRING, new Constraint[] {
+            new StorageField("models", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             })
     };
@@ -504,6 +532,13 @@ public class AIGCStorage implements Storagable {
             }
         }
 
+        if (!this.storage.exist(this.knowledgeFrameTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.knowledgeFrameTable, this.knowledgeFrameFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.knowledgeFrameTable + "' successfully");
+            }
+        }
+
         if (!this.storage.exist(this.knowledgeDocTable)) {
             // 不存在，建新表
             if (this.storage.executeCreate(this.knowledgeDocTable, this.knowledgeDocFields)) {
@@ -566,6 +601,13 @@ public class AIGCStorage implements Storagable {
                 Logger.i(this.getClass(), "Created table '" + this.usageTable + "' successfully");
             }
         }
+
+        if (!this.storage.exist(this.contactPreferenceTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.contactPreferenceTable, this.contactPreferenceFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.contactPreferenceTable + "' successfully");
+            }
+        }
     }
 
     public ModelConfig getModelConfig(String modelName) {
@@ -596,16 +638,20 @@ public class AIGCStorage implements Storagable {
 
         JSONArray models = new JSONArray(result.get(0)[0].getString());
         for (int i = 0; i < models.length(); ++i) {
-            String unitName = models.getString(i);
+            String model = models.getString(i);
             result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
-                    Conditional.createEqualTo("item", unitName)
+                    Conditional.createEqualTo("item", model)
             });
 
             for (StorageField[] fields : result) {
                 Map<String, StorageField> data = StorageFields.get(fields);
                 JSONObject value = new JSONObject(data.get("value").getString());
-                ModelConfig config = new ModelConfig(value);
-                list.add(config);
+                try {
+                    ModelConfig config = new ModelConfig(model, value);
+                    list.add(config);
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#getModelConfigs - ModelConfig error: " + e.getMessage());
+                }
             }
         }
 
@@ -1871,6 +1917,24 @@ public class AIGCStorage implements Storagable {
         long completionTokens = data.get("completion_tokens").getLong();
         long promptTokens = data.get("prompt_tokens").getLong();
         return new Usage(model, completionTokens, promptTokens, completionTokens + promptTokens);
+    }
+
+    public ContactPreference readContactPreference(long contactId) {
+        List<StorageField[]> result = this.storage.executeQuery(this.contactPreferenceTable,
+                this.contactPreferenceFields, new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        if (data.get("models").isNullValue()) {
+            return null;
+        }
+
+        JSONArray models = new JSONArray(data.get("models").getString());
+        return new ContactPreference(contactId, models);
     }
 
     private void resetDefaultConfig() {

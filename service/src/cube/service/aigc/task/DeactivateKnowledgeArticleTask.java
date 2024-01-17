@@ -38,6 +38,7 @@ import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
+import cube.service.aigc.knowledge.KnowledgeFrame;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -66,8 +67,13 @@ public class DeactivateKnowledgeArticleTask extends ServiceTask {
             return;
         }
 
+        String baseName = KnowledgeFrame.DefaultName;
+        if (packet.data.has("base")) {
+            baseName = packet.data.getString("base");
+        }
+
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        KnowledgeBase base = service.getKnowledgeBase(tokenCode);
+        KnowledgeBase base = service.getKnowledgeBase(tokenCode, baseName);
         if (null == base) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InconsistentToken.code, new JSONObject()));

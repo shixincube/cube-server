@@ -42,6 +42,7 @@ import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
+import cube.service.aigc.knowledge.KnowledgeFrame;
 import cube.service.aigc.listener.KnowledgeQAListener;
 import org.json.JSONObject;
 
@@ -93,7 +94,12 @@ public class PerformKnowledgeQATask extends ServiceTask {
             }
         }
 
-        KnowledgeBase base = service.getKnowledgeBase(tokenCode);
+        String baseName = KnowledgeFrame.DefaultName;
+        if (packet.data.has("base")) {
+            baseName = packet.data.getString("base");
+        }
+
+        KnowledgeBase base = service.getKnowledgeBase(tokenCode, baseName);
         if (null == base) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, new JSONObject()));

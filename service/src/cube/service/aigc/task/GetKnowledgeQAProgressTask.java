@@ -32,13 +32,13 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.AIGCChannel;
 import cube.common.entity.KnowledgeQAProgress;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
+import cube.service.aigc.knowledge.KnowledgeFrame;
 import org.json.JSONObject;
 
 /**
@@ -63,9 +63,14 @@ public class GetKnowledgeQAProgressTask extends ServiceTask {
             return;
         }
 
+        String baseName = KnowledgeFrame.DefaultName;
+        if (packet.data.has("base")) {
+            baseName = packet.data.getString("base");
+        }
+
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
-        KnowledgeBase base = service.getKnowledgeBase(tokenCode);
+        KnowledgeBase base = service.getKnowledgeBase(tokenCode, baseName);
         if (null == base) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, new JSONObject()));

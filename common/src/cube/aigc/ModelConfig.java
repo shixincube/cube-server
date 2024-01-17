@@ -46,7 +46,7 @@ public class ModelConfig implements JSONable {
 
     public final static int BAIZE_UNIT_CONTEXT_LIMIT = 1200;
 
-    private final String unitName;
+    private final String model;
 
     private final String name;
 
@@ -56,16 +56,24 @@ public class ModelConfig implements JSONable {
 
     private final JSONObject parameter;
 
-    public ModelConfig(String unitName, String name, String desc, String apiURL, JSONObject parameter) {
-        this.unitName = unitName;
+    public ModelConfig(String model, String name, String desc, String apiURL, JSONObject parameter) {
+        this.model = model;
         this.name = name;
         this.desc = desc;
         this.apiURL = apiURL + (apiURL.endsWith("/") ? "" : "/");
         this.parameter = parameter;
     }
 
+    public ModelConfig(String model, JSONObject json) {
+        this.model = model;
+        this.name = json.getString("name");
+        this.desc = json.getString("desc");
+        this.apiURL = json.getString("apiURL");
+        this.parameter = json.getJSONObject("parameter");
+    }
+
     public ModelConfig(JSONObject json) {
-        this.unitName = json.has("unitName") ? json.getString("unitName") :
+        this.model = json.has("model") ? json.getString("model") :
                 json.getJSONObject("parameter").getString("unit");
         this.name = json.getString("name");
         this.desc = json.getString("desc");
@@ -73,8 +81,8 @@ public class ModelConfig implements JSONable {
         this.parameter = json.getJSONObject("parameter");
     }
 
-    public String getUnitName() {
-        return this.unitName;
+    public String getModel() {
+        return this.model;
     }
 
     public String getName() {
@@ -89,6 +97,10 @@ public class ModelConfig implements JSONable {
         return this.apiURL;
     }
 
+    public String getUnitName() {
+        return this.parameter.getString("unit");
+    }
+
     public String getChannelURL() {
         int index = this.apiURL.indexOf("/aigc/");
         return this.apiURL.substring(0, index) + "/aigc/channel/";
@@ -101,7 +113,7 @@ public class ModelConfig implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("unitName", this.unitName);
+        json.put("model", this.model);
         json.put("name", this.name);
         json.put("desc", this.desc);
         json.put("apiURL", this.apiURL);

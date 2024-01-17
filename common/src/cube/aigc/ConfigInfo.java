@@ -31,6 +31,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -42,15 +43,19 @@ public class ConfigInfo implements JSONable {
 
     public List<Notification> notifications;
 
+    public ContactPreference contactPreference;
+
     public long timeoutMs;
 
     public int usage;
 
-    public ConfigInfo(List<ModelConfig> models, List<Notification> notifications) {
-        this.models = models;
+    public ConfigInfo(List<ModelConfig> models, List<Notification> notifications, ContactPreference contactPreference) {
+        this.models = new ArrayList<>(models);
         this.notifications = notifications;
+        this.contactPreference = contactPreference;
         this.timeoutMs = 60 * 1000;
         this.usage = 0;
+        this.fixModelsWithPreference();
     }
 
     public ConfigInfo(JSONObject json) {
@@ -70,6 +75,26 @@ public class ConfigInfo implements JSONable {
 
         this.timeoutMs = json.getLong("timeoutMs");
         this.usage = json.getInt("usage");
+
+        if (json.has("preference")) {
+            this.contactPreference = new ContactPreference(json.getJSONObject("preference"));
+            this.fixModelsWithPreference();
+        }
+    }
+
+    private void fixModelsWithPreference() {
+        if (null == this.contactPreference) {
+            return;
+        }
+
+        Iterator<ModelConfig> iter = this.models.iterator();
+        while (iter.hasNext()) {
+            ModelConfig mc = iter.next();
+            if (!this.contactPreference.containsModel(mc.getModel())) {
+                // 删除不包含的模型配置
+                iter.remove();
+            }
+        }
     }
 
     public JSONArray getModelsAsJSONArray() {
@@ -92,6 +117,10 @@ public class ConfigInfo implements JSONable {
         JSONArray notificationArray = new JSONArray();
         for (Notification notification : this.notifications) {
             notificationArray.put(notification.toJSON());
+        }
+
+        if (null != this.contactPreference) {
+            json.put("preference", this.contactPreference.toJSON());
         }
 
         json.put("models", modelArray);
