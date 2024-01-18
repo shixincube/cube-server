@@ -32,10 +32,7 @@ import cube.aigc.ConversationRequest;
 import cube.aigc.ConversationResponse;
 import cube.aigc.ModelConfig;
 import cube.common.JSONable;
-import cube.common.entity.ComplexContext;
-import cube.common.entity.FileLabel;
-import cube.common.entity.KnowledgeQAResult;
-import cube.common.entity.KnowledgeSource;
+import cube.common.entity.*;
 import cube.util.HttpClientFactory;
 import cube.util.JSONUtils;
 import org.eclipse.jetty.client.HttpClient;
@@ -182,6 +179,24 @@ public final class App {
             request.options.categories = new JSONArray();
         }
 
+        // 文件数据生成记录
+        JSONArray records = new JSONArray();
+        if (null != request.options.files) {
+            List<FileLabel> fileLabelList = new ArrayList<>();
+            for (int i = 0; i < request.options.files.length(); ++i) {
+                FileLabel fileLabel = new FileLabel(request.options.files.getJSONObject(i));
+                fileLabelList.add(fileLabel);
+            }
+            if (!fileLabelList.isEmpty()) {
+                AIGCGenerationRecord record = new AIGCGenerationRecord(fileLabelList);
+                records.put(record.toJSON());
+
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "#requestConversation - Use file context - num: " + fileLabelList.size());
+                }
+            }
+        }
+
         ModelConfig config = this.modelConfigMap.get(token);
         if (null == config) {
             Logger.w(this.getClass(), "#requestConversation - Not find model config for token: " + token);
@@ -229,6 +244,9 @@ public final class App {
         apiData.put("topP", request.topP);
         apiData.put("searchTopK", request.searchTopK);
         apiData.put("searchFetchK", request.searchFetchK);
+        if (records.length() > 0) {
+            apiData.put("records", records);
+        }
 
         HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
         try {

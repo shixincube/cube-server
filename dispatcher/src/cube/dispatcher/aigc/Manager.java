@@ -313,6 +313,25 @@ public class Manager implements Tickable, PerformerListener {
         return new KnowledgeProfile(Packet.extractDataPayload(responsePacket));
     }
 
+    public JSONObject getKnowledgeFramework(String token) {
+        Packet packet = new Packet(AIGCAction.GetKnowledgeFramework.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#getKnowledgeFramework - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#getKnowledgeFramework - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
     public JSONObject getKnowledgeDocs(String token) {
         Packet packet = new Packet(AIGCAction.ListKnowledgeDocs.name, new JSONObject());
         ActionDialect request = packet.toDialect();

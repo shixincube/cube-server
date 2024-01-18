@@ -45,9 +45,9 @@ import java.util.List;
 /**
  * 获取知识库基本信息任务。
  */
-public class GetKnowledgeBaseInfoTask extends ServiceTask {
+public class GetKnowledgeFrameworkTask extends ServiceTask {
 
-    public GetKnowledgeBaseInfoTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public GetKnowledgeFrameworkTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -80,7 +80,7 @@ public class GetKnowledgeBaseInfoTask extends ServiceTask {
 
         JSONObject responseData = new JSONObject();
         responseData.put("total", infos.size());
-        responseData.put("list", array);
+        responseData.put("infoList", array);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));

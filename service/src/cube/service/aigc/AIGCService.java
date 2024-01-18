@@ -44,6 +44,7 @@ import cube.common.action.FileProcessorAction;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
 import cube.common.notice.GetFile;
+import cube.common.notice.LoadFile;
 import cube.common.state.AIGCStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -81,6 +82,8 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -2282,12 +2285,15 @@ public class AIGCService extends AbstractModule {
 
             AIGCGenerationRecord result = null;
 
+            final StringBuilder realPrompt = new StringBuilder(this.content);
+
             if (complexContext.isSimplex()) {
                 // 一般文本
 
                 int maxHistories = 10;
                 if (ModelConfig.isExtraLongPromptUnit(this.unit.getCapability().getName())) {
-                    maxHistories = 50;
+                    // 考虑到用量，限制在20轮
+                    maxHistories = 20;
                 }
 
                 // 提示词长度限制
@@ -2299,55 +2305,98 @@ public class AIGCService extends AbstractModule {
                 data.put("content", this.content);
                 data.put("participant", this.participant.toCompactJSON());
 
-                // 处理多轮历史记录
-                List<AIGCGenerationRecord> candidateRecords = new ArrayList<>();
-                if (null == this.records) {
-                    int validNumHistories = Math.min(this.numHistories, maxHistories);
-                    if (validNumHistories > 0) {
+                boolean useQueryFile = false;
+                if (null != this.records) {
+                    for (AIGCGenerationRecord record : this.records) {
+                        if (record.hasQueryFile()) {
+                            useQueryFile = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (useQueryFile) {
+                    // 读取文件内容
+                    List<String> fileContent = this.readFileContent(this.records.get(0).queryFileLabels);
+                    // 构建提示词
+                    StringBuilder buf = new StringBuilder();
+                    if (!fileContent.isEmpty()) {
+                        for (String text : fileContent) {
+                            buf.append(text).append("\n");
+                            if (buf.length() >= lengthLimit) {
+                                break;
+                            }
+                        }
+                        buf.delete(buf.length() - 1, buf.length());
+
+                        realPrompt.delete(0, realPrompt.length());
+                        realPrompt.append(Consts.formatQuestion(buf.toString(), this.content));
+
+                        // 修改提示词
+                        data.remove("content");
+                        data.put("content", realPrompt.toString());
+
+                        Logger.d(this.getClass(), "#process - Use query file creating the prompt - length: " + realPrompt.length());
+                    }
+                    else {
+                        Logger.d(this.getClass(), "#process - Use query file creating the prompt error: "
+                                + this.records.get(0).queryFileLabels.get(0).getFileName());
+                    }
+
+                    // 无历史记录
+                    data.put("history", new JSONArray());
+                }
+                else {
+                    // 处理多轮历史记录
+                    List<AIGCGenerationRecord> candidateRecords = new ArrayList<>();
+                    if (null == this.records) {
+                        int validNumHistories = Math.min(this.numHistories, maxHistories);
+                        if (validNumHistories > 0) {
+                            int lengthCount = 0;
+                            List<AIGCGenerationRecord> records = this.channel.getLastHistory(validNumHistories);
+                            // 正序列表转为倒序以便计算上下文长度
+                            Collections.reverse(records);
+                            for (AIGCGenerationRecord record : records) {
+                                // 判断长度
+                                lengthCount += record.totalWords();
+                                if (lengthCount > lengthLimit) {
+                                    // 长度越界
+                                    break;
+                                }
+                                // 加入候选
+                                candidateRecords.add(record);
+                            }
+                            // 候选列表的倒序转为正序
+                            Collections.reverse(candidateRecords);
+                        }
+                    }
+                    else {
                         int lengthCount = 0;
-                        List<AIGCGenerationRecord> records = this.channel.getLastHistory(validNumHistories);
-                        // 正序列表转为倒序以便计算上下文长度
-                        Collections.reverse(records);
-                        for (AIGCGenerationRecord record : records) {
-                            // 判断长度
+                        for (int i = this.records.size() - 1; i >= 0; --i) {
+                            AIGCGenerationRecord record = this.records.get(i);
                             lengthCount += record.totalWords();
+                            // 判断长度
                             if (lengthCount > lengthLimit) {
                                 // 长度越界
                                 break;
                             }
                             // 加入候选
                             candidateRecords.add(record);
+                            if (candidateRecords.size() >= maxHistories) {
+                                break;
+                            }
                         }
-                        // 候选列表的倒序转为正序
+                        // 翻转顺序
                         Collections.reverse(candidateRecords);
                     }
-                }
-                else {
-                    int lengthCount = 0;
-                    for (int i = this.records.size() - 1; i >= 0; --i) {
-                        AIGCGenerationRecord record = this.records.get(i);
-                        lengthCount += record.totalWords();
-                        // 判断长度
-                        if (lengthCount > lengthLimit) {
-                            // 长度越界
-                            break;
-                        }
-                        // 加入候选
-                        candidateRecords.add(record);
-                        if (candidateRecords.size() >= maxHistories) {
-                            break;
-                        }
-                    }
-                    // 翻转顺序
-                    Collections.reverse(candidateRecords);
-                }
 
-                // 写入数组
-                JSONArray history = new JSONArray();
-                for (AIGCGenerationRecord record : candidateRecords) {
-                    history.put(record.toJSON());
+                    // 写入数组
+                    JSONArray history = new JSONArray();
+                    for (AIGCGenerationRecord record : candidateRecords) {
+                        history.put(record.toJSON());
+                    }
+                    data.put("history", history);
                 }
-                data.put("history", history);
 
                 if (useAgent) {
                     String responseText = Agent.getInstance().generateText(channel.getAuthToken().getCode(),
@@ -2442,7 +2491,7 @@ public class AIGCService extends AbstractModule {
                 @Override
                 public void run() {
                     // 更新用量
-                    List<String> tokens = calcTokens(content);
+                    List<String> tokens = calcTokens(realPrompt.toString());
                     long promptTokens = tokens.size();
                     tokens = calcTokens(history.answerContent);
                     long completionTokens = tokens.size();
@@ -2481,6 +2530,41 @@ public class AIGCService extends AbstractModule {
             else {
                 return text;
             }
+        }
+
+        private List<String> readFileContent(List<FileLabel> fileLabels) {
+            List<String> result = new ArrayList<>();
+
+            AbstractModule fileStorage = getKernel().getModule("FileStorage");
+            for (FileLabel fileLabel : fileLabels) {
+                if (fileLabel.getFileType() == FileType.TEXT
+                        || fileLabel.getFileType() == FileType.TXT
+                        || fileLabel.getFileType() == FileType.MD
+                        || fileLabel.getFileType() == FileType.LOG) {
+                    String fullpath = fileStorage.notify(new LoadFile(fileLabel.getDomain().getName(), fileLabel.getFileCode()));
+                    if (null == fullpath) {
+                        Logger.w(this.getClass(), "#readFileContent - Load file error: " + fileLabel.getFileCode());
+                        continue;
+                    }
+
+                    try {
+                        List<String> lines = Files.readAllLines(Paths.get(fullpath));
+                        for (String text : lines) {
+                            if (text.trim().length() < 3) {
+                                continue;
+                            }
+                            result.add(text);
+                        }
+                    } catch (Exception e) {
+                        Logger.w(this.getClass(), "#readFileContent - Read file error: " + fullpath);
+                    }
+                }
+                else {
+                    Logger.w(this.getClass(), "#readFileContent - File type error: " + fileLabel.getFileType().getMimeType());
+                }
+            }
+
+            return result;
         }
     }
 

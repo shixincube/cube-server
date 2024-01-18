@@ -121,6 +121,9 @@ public class Change extends ContextHandler {
             // 知识库概述
             responseData.put("knowledge", Manager.getInstance().getKnowledgeProfile(token).toJSON());
 
+            // 知识库框架
+            responseData.put("knowledgeFramework", Manager.getInstance().getKnowledgeFramework(token));
+
             Helper.respondOk(this, response, responseData);
 
             Logger.d(Change.class, "Client reset session for changing model: " + token);

@@ -274,9 +274,9 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new PerformKnowledgeQATask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (AIGCAction.GetKnowledgeBaseInfo.name.equals(action)) {
+        else if (AIGCAction.GetKnowledgeFramework.name.equals(action)) {
             // 来自 Dispatcher 的请求
-            this.execute(new GetKnowledgeBaseInfoTask(this, talkContext, primitive,
+            this.execute(new GetKnowledgeFrameworkTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (AIGCAction.ListKnowledgeDocs.name.equals(action)) {

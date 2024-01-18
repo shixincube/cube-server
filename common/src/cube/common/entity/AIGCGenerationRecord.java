@@ -45,15 +45,23 @@ public class AIGCGenerationRecord implements JSONable {
 
     public String answer;
 
-    public String unit;
+    public List<FileLabel> queryFileLabels;
 
-    public List<FileLabel> fileLabels;
+    public List<FileLabel> answerFileLabels;
+
+    public String unit;
 
     public long timestamp;
 
     public ComplexContext context;
 
     public int feedback = 0;
+
+    public AIGCGenerationRecord(List<FileLabel> queryFileLabels) {
+        this.sn = Utils.generateSerialNumber();
+        this.queryFileLabels = queryFileLabels;
+        this.timestamp = System.currentTimeMillis();
+    }
 
     public AIGCGenerationRecord(String unit, String query, String answer) {
         this.sn = Utils.generateSerialNumber();
@@ -72,12 +80,12 @@ public class AIGCGenerationRecord implements JSONable {
         this.context = context;
     }
 
-    public AIGCGenerationRecord(long sn, String unit, String query, FileLabel fileLabel, long timestamp) {
+    public AIGCGenerationRecord(long sn, String unit, String query, FileLabel answerFileLabel, long timestamp) {
         this.sn = sn;
         this.unit = unit;
         this.query = query;
-        this.fileLabels = new ArrayList<>();
-        this.fileLabels.add(fileLabel);
+        this.answerFileLabels = new ArrayList<>();
+        this.answerFileLabels.add(answerFileLabel);
         this.timestamp = timestamp;
     }
 
@@ -101,12 +109,21 @@ public class AIGCGenerationRecord implements JSONable {
             this.query = json.getString("query");
         }
 
-        if (json.has("fileLabels")) {
-            this.fileLabels = new ArrayList<>();
-            JSONArray array = json.getJSONArray("fileLabels");
+        if (json.has("answerFileLabels")) {
+            this.answerFileLabels = new ArrayList<>();
+            JSONArray array = json.getJSONArray("answerFileLabels");
             for (int i = 0; i < array.length(); ++i) {
                 FileLabel fileLabel = new FileLabel(array.getJSONObject(i));
-                this.fileLabels.add(fileLabel);
+                this.answerFileLabels.add(fileLabel);
+            }
+        }
+
+        if (json.has("queryFileLabels")) {
+            this.queryFileLabels = new ArrayList<>();
+            JSONArray array = json.getJSONArray("queryFileLabels");
+            for (int i = 0; i < array.length(); ++i) {
+                FileLabel fileLabel = new FileLabel(array.getJSONObject(i));
+                this.queryFileLabels.add(fileLabel);
             }
         }
 
@@ -119,17 +136,37 @@ public class AIGCGenerationRecord implements JSONable {
         }
     }
 
+    public boolean hasQueryFile() {
+        return (null != this.queryFileLabels && !this.queryFileLabels.isEmpty());
+    }
+
     public int totalWords() {
+        if (null == this.query) {
+            return 0;
+        }
+
         return this.query.length() + ((null != this.answer) ? this.answer.length() : 0);
     }
 
-    public JSONArray outputFileLabelArray() {
-        if (null == this.fileLabels) {
+    public JSONArray outputAnswerFileLabelArray() {
+        if (null == this.answerFileLabels) {
             return null;
         }
 
         JSONArray array = new JSONArray();
-        for (FileLabel fileLabel : this.fileLabels) {
+        for (FileLabel fileLabel : this.answerFileLabels) {
+            array.put(fileLabel.toJSON());
+        }
+        return array;
+    }
+
+    public JSONArray outputQueryFileLabelArray() {
+        if (null == this.queryFileLabels) {
+            return null;
+        }
+
+        JSONArray array = new JSONArray();
+        for (FileLabel fileLabel : this.queryFileLabels) {
             array.put(fileLabel.toJSON());
         }
         return array;
@@ -144,18 +181,28 @@ public class AIGCGenerationRecord implements JSONable {
             json.put("unit", this.unit);
         }
 
-        json.put("query", this.query);
+        if (null != this.query) {
+            json.put("query", this.query);
+        }
 
         if (null != this.answer) {
             json.put("answer", this.answer);
         }
 
-        if (null != this.fileLabels) {
+        if (null != this.answerFileLabels) {
             JSONArray array = new JSONArray();
-            for (FileLabel fileLabel : this.fileLabels) {
+            for (FileLabel fileLabel : this.answerFileLabels) {
                 array.put(fileLabel.toJSON());
             }
-            json.put("fileLabels", array);
+            json.put("answerFileLabels", array);
+        }
+
+        if (null != this.queryFileLabels) {
+            JSONArray array = new JSONArray();
+            for (FileLabel fileLabel : this.queryFileLabels) {
+                array.put(fileLabel.toJSON());
+            }
+            json.put("queryFileLabels", array);
         }
 
         json.put("timestamp", this.timestamp);

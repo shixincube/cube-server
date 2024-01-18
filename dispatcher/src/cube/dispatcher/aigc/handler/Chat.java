@@ -149,8 +149,8 @@ public class Chat extends ContextHandler {
                     if (null != record.context) {
                         responseData.put("context", record.context.toJSON());
                     }
-                    if (null != record.fileLabels) {
-                        responseData.put("fileLabels", record.outputFileLabelArray());
+                    if (null != record.answerFileLabels) {
+                        responseData.put("fileLabels", record.outputAnswerFileLabelArray());
                     }
 
                     this.respondOk(response, responseData);

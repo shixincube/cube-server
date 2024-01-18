@@ -76,7 +76,7 @@ public final class Consts {
     private final static int URL_ELLIPSIS_LIMIT = 56;
 
     private final static String ASK_FORMAT = "已知信息：\n%s\n\n" +
-            "根据上述已知信息，简洁和专业的来回答用户的问题。如果无法从中得到答案，请说“没有提供足够的相关信息”，不允许在答案中添加编造成分，答案请使用中文。问题是：%s";
+            "根据上述已知信息，简洁和专业的来回答用户的问题。如果无法从中得到答案，请说“没有提供足够的相关信息”，不允许在答案中添加编造成分。问题是：%s";
 
     public final static String KNOWLEDGE_SECTION_PROMPT = "整理信息的主要观点，不超过5条观点。";
 

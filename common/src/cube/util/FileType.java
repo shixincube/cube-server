@@ -925,7 +925,7 @@ public enum FileType {
     HTM(new String[]{ "htm" }, "text/html"),
     N3(new String[]{ "n3" }, "text/n3"),
     TXT(new String[]{ "txt" }, "text/plain"),
-    TEXT(new String[]{ "text" }, "text/plain"),
+    TEXT(new String[]{ "txt", "text" }, "text/plain"),
     MD(new String[]{ "md", "markdown" }, "text/markdown"),
     CONF(new String[]{ "conf" }, "text/plain"),
     DEF(new String[]{ "def" }, "text/plain"),
