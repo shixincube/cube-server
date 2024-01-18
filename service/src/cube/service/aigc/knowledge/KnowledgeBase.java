@@ -60,17 +60,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * 知识库操作。
  */
-public class KnowledgeBase implements JSONable {
+public class KnowledgeBase {
 
-    public final static String EMPTY_BASE_ANSWER = "您的知识库里没有配置文档，您可以先向知识库里导入文档，再向我提问。";
+    public final static String EMPTY_BASE_ANSWER = "您的知识库里没有数据，您可以先向知识库里导入文档或者添加文章，再向我提问。";
 
     public final static int DEFAULT_TOP_K = 10;
 
     public final static int DEFAULT_FETCH_K = 30;
 
     private String name;
-
-    private String displayName;
 
     private AIGCService service;
 
@@ -92,10 +90,9 @@ public class KnowledgeBase implements JSONable {
 
     private AtomicBoolean qaLock;
 
-    public KnowledgeBase(String name, String displayName, AIGCService service, AIGCStorage storage,
+    public KnowledgeBase(String name, AIGCService service, AIGCStorage storage,
                          AuthToken authToken, AbstractModule fileStorage) {
         this.name = name;
-        this.displayName = displayName;
         this.service = service;
         this.storage = storage;
         this.authToken = authToken;
@@ -104,22 +101,6 @@ public class KnowledgeBase implements JSONable {
         this.scope = getProfile().scope;
         this.lock = new AtomicBoolean(false);
         this.qaLock = new AtomicBoolean(false);
-    }
-
-    public KnowledgeBase(JSONObject json) {
-
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-
-        return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
     }
 
     public String getName() {
@@ -175,8 +156,8 @@ public class KnowledgeBase implements JSONable {
             }
 
             List<KnowledgeDoc> list = (KnowledgeScope.Private == this.scope) ?
-                    this.storage.readKnowledgeDocList(this.authToken.getDomain(), this.authToken.getContactId())
-                    : this.storage.readKnowledgeDocList(this.authToken.getDomain());
+                    this.storage.readKnowledgeDocList(this.authToken.getDomain(), this.authToken.getContactId(),this.name)
+                    : this.storage.readKnowledgeDocList(this.authToken.getDomain(), this.name);
 
             Iterator<KnowledgeDoc> iter = list.iterator();
             while (iter.hasNext()) {
@@ -223,7 +204,7 @@ public class KnowledgeBase implements JSONable {
         if (null == doc) {
             // 创建新文档
             doc = new KnowledgeDoc(Utils.generateSerialNumber(), this.authToken.getDomain(),
-                    this.authToken.getContactId(), fileCode, false, -1, this.scope);
+                    this.authToken.getContactId(), fileCode, this.name, false, -1, this.scope);
             this.storage.writeKnowledgeDoc(doc);
         }
 

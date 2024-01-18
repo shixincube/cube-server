@@ -52,6 +52,11 @@ public class KnowledgeDoc extends Entity {
 
     public final String fileCode;
 
+    /**
+     * 文档所属库名。
+     */
+    public String baseName = "document";
+
     public boolean activated;
 
     public FileLabel fileLabel;
@@ -71,11 +76,14 @@ public class KnowledgeDoc extends Entity {
      */
     public KnowledgeScope scope = KnowledgeScope.Private;
 
-    public KnowledgeDoc(long id, String domain, long contactId, String fileCode, boolean activated,
-                        int numSegments, KnowledgeScope scope) {
+    public KnowledgeDoc(long id, String domain, long contactId, String fileCode, String baseName,
+                        boolean activated, int numSegments, KnowledgeScope scope) {
         super(id, domain);
         this.contactId = contactId;
         this.fileCode = fileCode;
+        if (null != baseName) {
+            this.baseName = baseName;
+        }
         this.activated = activated;
         this.numSegments = numSegments;
         this.scope = scope;
@@ -85,6 +93,7 @@ public class KnowledgeDoc extends Entity {
         super(json);
         this.contactId = json.getLong("contactId");
         this.fileCode = json.getString("fileCode");
+        this.baseName = json.getString("baseName");
         this.activated = json.getBoolean("activated");
         this.splitter = json.getString("splitter");
         this.numSegments = json.getInt("numSegments");
@@ -115,6 +124,7 @@ public class KnowledgeDoc extends Entity {
         JSONObject json = super.toJSON();
         json.put("contactId", this.contactId);
         json.put("fileCode", this.fileCode);
+        json.put("baseName", this.baseName);
         json.put("activated", this.activated);
         json.put("splitter", this.splitter);
         json.put("numSegments", this.numSegments);

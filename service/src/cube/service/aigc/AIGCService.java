@@ -55,7 +55,7 @@ import cube.file.operation.ExtractAudioOperation;
 import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.knowledge.KnowledgeBase;
-import cube.service.aigc.knowledge.KnowledgeFrame;
+import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.*;
 import cube.service.aigc.module.ModuleManager;
 import cube.service.aigc.module.PublicOpinion;
@@ -151,7 +151,7 @@ public class AIGCService extends AbstractModule {
     /**
      * 知识库架构。
      */
-    private KnowledgeFrame knowledgeFrame;
+    private KnowledgeFramework knowledgeFramework;
 
     private long channelTimeout = 30 * 60 * 1000;
 
@@ -298,7 +298,7 @@ public class AIGCService extends AbstractModule {
                 }
 
                 // 实例化知识框架
-                knowledgeFrame = new KnowledgeFrame(AIGCService.this, authService, fileStorage);
+                knowledgeFramework = new KnowledgeFramework(AIGCService.this, authService, fileStorage);
 
                 // 资源管理器
                 Explorer.getInstance().setup(AIGCService.this, tokenizer);
@@ -604,13 +604,28 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
+     * 获取指定联系人的知识库信息列表。
+     *
+     * @param tokenCode
+     * @return
+     */
+    public List<KnowledgeBaseInfo> getKnowledgeBaseInfoList(String tokenCode) {
+        AuthToken authToken = this.getToken(tokenCode);
+        if (null == authToken) {
+            return null;
+        }
+
+        return this.knowledgeFramework.getKnowledgeBaseInfos(authToken.getContactId());
+    }
+
+    /**
      * 获取对应的知识库实例。
      *
      * @param tokenCode
      * @param baseName
      * @return
      */
-    public synchronized KnowledgeBase getKnowledgeBase(String tokenCode, String baseName) {
+    public KnowledgeBase getKnowledgeBase(String tokenCode, String baseName) {
         AuthToken authToken = this.getToken(tokenCode);
         if (null == authToken) {
             return null;
@@ -627,7 +642,7 @@ public class AIGCService extends AbstractModule {
      * @return
      */
     public synchronized KnowledgeBase getKnowledgeBase(Long contactId, String baseName) {
-        return this.knowledgeFrame.getKnowledgeBase(contactId, baseName);
+        return this.knowledgeFramework.getKnowledgeBase(contactId, baseName);
     }
 
     /**

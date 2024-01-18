@@ -177,6 +177,11 @@ public enum AIGCAction {
     UpdateKnowledgeProfile("updateKnowledgeProfile"),
 
     /**
+     * 获取知识库基本信息。
+     */
+    GetKnowledgeBaseInfo("getKnowledgeBaseInfo"),
+
+    /**
      * 删除知识库数据仓库。
      */
     DeleteKnowledgeStore("deleteKnowledgeStore"),

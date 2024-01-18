@@ -39,7 +39,7 @@ import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
-import cube.service.aigc.knowledge.KnowledgeFrame;
+import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.ConversationListener;
 import cube.service.aigc.listener.KnowledgeQAListener;
 import org.json.JSONArray;
@@ -126,7 +126,7 @@ public class ConversationTask extends ServiceTask {
             int searchFetchK = packet.data.has("searchFetchK")
                     ? packet.data.getInt("searchFetchK") : 50;
 
-            String baseName = KnowledgeFrame.DefaultName;
+            String baseName = KnowledgeFramework.DefaultName;
             if (packet.data.has("base")) {
                 baseName = packet.data.getString("base");
             }

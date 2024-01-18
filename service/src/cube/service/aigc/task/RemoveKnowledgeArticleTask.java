@@ -37,7 +37,7 @@ import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
-import cube.service.aigc.knowledge.KnowledgeFrame;
+import cube.service.aigc.knowledge.KnowledgeFramework;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -73,7 +73,7 @@ public class RemoveKnowledgeArticleTask extends ServiceTask {
             return;
         }
 
-        String baseName = KnowledgeFrame.DefaultName;
+        String baseName = KnowledgeFramework.DefaultName;
         if (packet.data.has("base")) {
             baseName = packet.data.getString("base");
         }

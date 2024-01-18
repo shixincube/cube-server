@@ -42,7 +42,7 @@ import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
-import cube.service.aigc.knowledge.KnowledgeFrame;
+import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.KnowledgeQAListener;
 import org.json.JSONObject;
 
@@ -94,7 +94,7 @@ public class PerformKnowledgeQATask extends ServiceTask {
             }
         }
 
-        String baseName = KnowledgeFrame.DefaultName;
+        String baseName = KnowledgeFramework.DefaultName;
         if (packet.data.has("base")) {
             baseName = packet.data.getString("base");
         }

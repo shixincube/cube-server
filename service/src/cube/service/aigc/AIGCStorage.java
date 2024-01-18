@@ -37,6 +37,7 @@ import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
+import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
@@ -236,9 +237,12 @@ public class AIGCStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("unit_id", LiteralBase.LONG, new Constraint[] {
-                    Constraint.DEFAULT_NULL
+                    Constraint.DEFAULT_0
             }),
             new StorageField("store_size", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.DEFAULT_0
             })
     };
@@ -880,18 +884,94 @@ public class AIGCStorage implements Storagable {
         return new KnowledgeProfile(id, contactId, domain, state, maxSize, scope);
     }
 
-    public List<KnowledgeDoc> readKnowledgeDocList(String domain) {
+    /**
+     * 读取联系人的知识库信息。
+     *
+     * @param contactId
+     * @return
+     */
+    public List<KnowledgeBaseInfo> readKnowledgeBaseInfo(long contactId) {
+        List<KnowledgeBaseInfo> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeFrameTable, this.knowledgeFrameFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId)
+                });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            KnowledgeBaseInfo info = new KnowledgeBaseInfo(data.get("contact_id").getLong(),
+                    data.get("base").getString(), data.get("display_name").getString(), data.get("unit_id").getLong(),
+                    data.get("store_size").getLong(), data.get("timestamp").getLong());
+            list.add(info);
+        }
+
+        return list;
+    }
+
+    public KnowledgeBaseInfo readKnowledgeBaseInfo(long contactId, String baseName) {
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeFrameTable, this.knowledgeFrameFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("base", baseName)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        KnowledgeBaseInfo info = new KnowledgeBaseInfo(data.get("contact_id").getLong(),
+                data.get("base").getString(), data.get("display_name").getString(), data.get("unit_id").getLong(),
+                data.get("store_size").getLong(), data.get("timestamp").getLong());
+        return info;
+    }
+
+    public boolean writeKnowledgeBaseInfo(KnowledgeBaseInfo info) {
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeFrameTable,
+                this.knowledgeFrameFields, new Conditional[] {
+                        Conditional.createEqualTo("contact_id", info.contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("base", info.name)
+                });
+        if (result.isEmpty()) {
+            return this.storage.executeInsert(this.knowledgeFrameTable, new StorageField[] {
+                    new StorageField("contact_id", info.contactId),
+                    new StorageField("base", info.name),
+                    new StorageField("display_name", info.displayName),
+                    new StorageField("unit_id", info.unitId),
+                    new StorageField("store_size", info.storeSize),
+                    new StorageField("timestamp", info.timestamp)
+            });
+        }
+        else {
+            return this.storage.executeUpdate(this.knowledgeFrameTable, new StorageField[] {
+                    new StorageField("display_name", info.displayName),
+                    new StorageField("unit_id", info.unitId),
+                    new StorageField("store_size", info.storeSize),
+                    new StorageField("timestamp", info.timestamp)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("contact_id", info.contactId),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("base", info.name)
+            });
+        }
+    }
+
+    public List<KnowledgeDoc> readKnowledgeDocList(String domain, String baseName) {
         List<KnowledgeDoc> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocTable, this.knowledgeDocFields,
                 new Conditional[] {
-                        Conditional.createEqualTo("domain", domain)
+                        Conditional.createEqualTo("domain", domain),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("base", baseName)
                 });
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
-                    data.get("contact_id").getLong(), data.get("file_code").getString(),
+                    data.get("contact_id").getLong(), data.get("file_code").getString(), data.get("base").getString(),
                     data.get("activated").getInt() == 1, data.get("num_segments").getInt(),
                     KnowledgeScope.parse(data.get("scope").getString()));
             list.add(doc);
@@ -900,20 +980,22 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public List<KnowledgeDoc> readKnowledgeDocList(String domain, long contactId) {
+    public List<KnowledgeDoc> readKnowledgeDocList(String domain, long contactId, String baseName) {
         List<KnowledgeDoc> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocTable, this.knowledgeDocFields,
                 new Conditional[] {
                         Conditional.createEqualTo("domain", domain),
                         Conditional.createAnd(),
-                        Conditional.createEqualTo("contact_id", contactId)
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("base", baseName)
                 });
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
-                    data.get("contact_id").getLong(), data.get("file_code").getString(),
+                    data.get("contact_id").getLong(), data.get("file_code").getString(), data.get("base").getString(),
                     data.get("activated").getInt() == 1, data.get("num_segments").getInt(),
                     KnowledgeScope.parse(data.get("scope").getString()));
             list.add(doc);
@@ -933,7 +1015,7 @@ public class AIGCStorage implements Storagable {
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
         KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
-                data.get("contact_id").getLong(), data.get("file_code").getString(),
+                data.get("contact_id").getLong(), data.get("file_code").getString(), data.get("base").getString(),
                 data.get("activated").getInt() == 1, data.get("num_segments").getInt(),
                 KnowledgeScope.parse(data.get("scope").getString()));
         return doc;
@@ -957,7 +1039,8 @@ public class AIGCStorage implements Storagable {
                 new StorageField("domain", doc.getDomain().getName()),
                 new StorageField("contact_id", doc.contactId),
                 new StorageField("file_code", doc.fileCode),
-                new StorageField("activated", 1),
+                new StorageField("base", doc.baseName),
+                new StorageField("activated", doc.activated ? 1 : 0),
                 new StorageField("num_segments", doc.numSegments),
                 new StorageField("scope", doc.scope.name)
         });
