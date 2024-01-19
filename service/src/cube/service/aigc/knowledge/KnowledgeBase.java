@@ -174,7 +174,7 @@ public class KnowledgeBase {
                 doc.fileLabel = new FileLabel(fileLabelJson);
             }
 
-            this.resource.docList = list;
+            this.resource.appendDocs(list);
             this.resource.listDocTime = System.currentTimeMillis();
 
             return list;
@@ -604,6 +604,15 @@ public class KnowledgeBase {
                 // 解锁
                 lock.set(false);
                 listener.onCompleted(KnowledgeBase.this, list, completionList);
+
+                Logger.i(this.getClass(), "#resetKnowledgeStore - Resets knowledge base completed: "
+                        + name + "/"+ authToken.getContactId());
+
+                // 更新内存数据
+                resource.clearDocs();
+                resource.clearArticles();
+                listKnowledgeDocs();
+                listKnowledgeArticles();
             }
         });
         thread.start();
@@ -870,12 +879,13 @@ public class KnowledgeBase {
      * @param searchTopK
      * @param searchFetchK
      * @param knowledgeCategories
+     * @param recordList
      * @param listener
      * @return
      */
     public boolean performKnowledgeQA(String channelCode, String unitName, String query,
                                       int searchTopK, int searchFetchK,
-                                      List<String> knowledgeCategories,
+                                      List<String> knowledgeCategories, List<AIGCGenerationRecord> recordList,
                                       KnowledgeQAListener listener) {
         Logger.d(this.getClass(), "#performKnowledgeQA - Channel: " + channelCode +
                 "/" + unitName + "/" + query);
@@ -884,6 +894,11 @@ public class KnowledgeBase {
         if (null == channel) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Can NOT find channel: " + channelCode);
             return false;
+        }
+
+        // 处理记录里的附件文件
+        if (null != recordList && !recordList.isEmpty()) {
+            this.processQueryFiles(recordList);
         }
 
         // 如果没有设置知识库文档，返回提示
@@ -967,6 +982,62 @@ public class KnowledgeBase {
         }
 
         return true;
+    }
+
+    private List<KnowledgeDoc> processQueryFiles(List<AIGCGenerationRecord> records) {
+        List<FileLabel> fileLabels = new ArrayList<>();
+        for (AIGCGenerationRecord record : records) {
+            if (record.hasQueryFile()) {
+                fileLabels.addAll(record.queryFileLabels);
+            }
+        }
+
+        // 判断是否有重复文件
+        if (null != this.resource.docList && !this.resource.docList.isEmpty()) {
+            for (KnowledgeDoc doc : this.resource.docList) {
+                for (int i = 0; i < fileLabels.size(); ++i) {
+                    FileLabel fileLabel = fileLabels.get(i);
+                    if (fileLabel.getFileCode().equals(doc.fileCode)) {
+                        // 文件码相同
+                        fileLabels.remove(fileLabel);
+                        break;
+                    }
+                    else if (fileLabel.getFileName().equalsIgnoreCase(doc.fileLabel.getFileName())) {
+                        // 文件名相同
+                        fileLabels.remove(fileLabel);
+                        break;
+                    }
+                }
+            }
+        }
+
+        List<KnowledgeDoc> resultList = new ArrayList<>();
+
+        if (fileLabels.isEmpty()) {
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#processQueryFiles - No file for query - contact: "
+                        + this.authToken.getContactId());
+            }
+            return resultList;
+        }
+
+        for (FileLabel fileLabel : fileLabels) {
+            KnowledgeDoc doc = this.importKnowledgeDoc(fileLabel.getFileCode());
+            if (null != doc) {
+                resultList.add(doc);
+            }
+            else {
+                Logger.w(this.getClass(), "#processQueryFiles - Import knowledge doc failed - fileCode: "
+                        + fileLabel.getFileCode());
+            }
+        }
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#processQueryFiles - Process query files - num: "
+                    + resultList.size());
+        }
+
+        return resultList;
     }
 
     private String optimizePrompt(String unitName, PromptMetadata promptMetadata, String query,
@@ -1433,11 +1504,11 @@ public class KnowledgeBase {
 
     public class KnowledgeResource {
 
-        protected List<KnowledgeDoc> docList;
+        private List<KnowledgeDoc> docList;
 
         protected long listDocTime;
 
-        protected List<KnowledgeArticle> articleList;
+        private List<KnowledgeArticle> articleList;
 
         protected long listArticleTime;
 
@@ -1480,7 +1551,34 @@ public class KnowledgeBase {
             return null;
         }
 
+        public void clearDocs() {
+            if (null == this.docList) {
+                this.docList = new ArrayList<>();
+            }
+            else {
+                this.docList.clear();
+            }
+        }
+
+        public void appendDocs(List<KnowledgeDoc> list) {
+            if (null == this.docList) {
+                this.docList = new ArrayList<>();
+            }
+
+            for (KnowledgeDoc doc : list) {
+                if (this.docList.contains(doc)) {
+                    this.docList.remove(doc);
+                }
+
+                this.docList.add(doc);
+            }
+        }
+
         public void appendDoc(KnowledgeDoc doc) {
+            if (null == this.docList) {
+                this.docList = new ArrayList<>();
+            }
+
             if (this.docList.contains(doc)) {
                 this.docList.remove(doc);
             }
@@ -1489,10 +1587,18 @@ public class KnowledgeBase {
         }
 
         public void removeDoc(KnowledgeDoc doc) {
+            if (null == this.docList) {
+                return;
+            }
+
             this.docList.remove(doc);
         }
 
         public KnowledgeDoc removeDoc(String fileCode) {
+            if (null == this.docList) {
+                return null;
+            }
+
             for (KnowledgeDoc doc : this.docList) {
                 if (doc.fileCode.equals(fileCode)) {
                     this.docList.remove(doc);

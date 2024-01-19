@@ -28,6 +28,7 @@ package cube.service.aigc.module;
 
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
+import cube.aigc.ModelConfig;
 import cube.aigc.Sentiment;
 import cube.aigc.publicopinion.Article;
 import cube.common.Storagable;
@@ -67,7 +68,7 @@ public class PublicOpinion implements Module {
 
     private final static String ArticleQueryOutputFormat = "在《%s》这篇文章里，%s";
 
-    private int maxArticleLength = 1000;
+    private int maxArticleLength = ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT;
 
     private List<String> matchingWords;
 

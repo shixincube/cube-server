@@ -215,6 +215,14 @@ public class AIGCService extends AbstractModule {
             this.enabledSearch = Boolean.parseBoolean(
                     properties.getProperty("enabled.search", "false"));
 
+            // 上下文长度限制
+            ModelConfig.EXTRA_LONG_PROMPT_LENGTH = Integer.parseInt(
+                    properties.getProperty("context.length",
+                            Integer.toString(ModelConfig.EXTRA_LONG_PROMPT_LENGTH)));
+            ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT = Integer.parseInt(
+                    properties.getProperty("context.length.baize",
+                            Integer.toString(ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT)));
+
             // 是否启用代理
             this.useAgent = Boolean.parseBoolean(
                     properties.getProperty("agent", "false"));
@@ -229,6 +237,8 @@ public class AIGCService extends AbstractModule {
 
         Logger.i(this.getClass(), "AI Service - Recognize Context Enabled: " + this.enabledRecognizeContext);
         Logger.i(this.getClass(), "AI Service - Search Enabled: " + this.enabledSearch);
+        Logger.i(this.getClass(), "AI Service - Context length: " + ModelConfig.EXTRA_LONG_PROMPT_LENGTH);
+        Logger.i(this.getClass(), "AI Service - Baize context limit: " + ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT);
         if (this.useAgent) {
             Logger.i(this.getClass(), "AI Service - Agent URL: " + Agent.getInstance().getUrl());
         }

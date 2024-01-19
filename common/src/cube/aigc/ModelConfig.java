@@ -38,13 +38,13 @@ public class ModelConfig implements JSONable {
 
     public final static String[] EXTRA_LONG_PROMPT_UNIT = new String[]{ "GPT", "Gemini", "Wenxin" };
 
-    public final static int EXTRA_LONG_PROMPT_LENGTH = 5000;
+    public static int EXTRA_LONG_PROMPT_LENGTH = 5000;
 
     public final static String PREFERENCE_UNIT_FOR_CV = "Chat";
 
     public final static String BAIZE_UNIT = "Chat";
 
-    public final static int BAIZE_UNIT_CONTEXT_LIMIT = 1200;
+    public static int BAIZE_UNIT_CONTEXT_LIMIT = 2000;
 
     private final String model;
 
