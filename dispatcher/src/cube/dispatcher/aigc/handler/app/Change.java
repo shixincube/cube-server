@@ -85,16 +85,20 @@ public class Change extends ContextHandler {
                     return;
                 }
 
-                String model = data.getString("model");
+                // 2024-1-20 更新为 name 参数，参数 model 向下兼容
+                String name = data.has("name") ? data.getString("name") : data.getString("model");
 
-                if (modelConfig.getName().equals(model)) {
+                if (modelConfig.getName().equals(name) || modelConfig.getModel().equals(name)) {
                     // 模型一致，返回成功
                     App.ChannelInfo channelInfo = App.getInstance().getChannel(token);
                     Helper.respondOk(this, response, channelInfo.toJSON());
                     return;
                 }
 
-                newModelConfig = Manager.getInstance().getModelConfig(configInfo, model);
+                newModelConfig = Manager.getInstance().getModelConfigByName(configInfo, name);
+                if (null == newModelConfig) {
+                    newModelConfig = Manager.getInstance().getModelConfigByModel(configInfo, name);
+                }
             } catch (Exception e) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();

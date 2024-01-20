@@ -98,6 +98,9 @@ public class GetConfigTask extends ServiceTask {
 
         ConfigInfo configInfo = new ConfigInfo(models, notifications, preference);
 
+        // 用量
+        configInfo.usages = service.queryContactUsages(token.getContactId());
+
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, configInfo.toJSON()));
         markResponseTime();

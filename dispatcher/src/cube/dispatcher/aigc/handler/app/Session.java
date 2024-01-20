@@ -42,8 +42,8 @@ import javax.servlet.http.HttpServletResponse;
 
 public class Session extends ContextHandler {
 
-    public final static String[] MODEL_NAMES = new String[]{
-            "Wenxin", "GPT", "Gemini", "DallE", "Baize"
+    public final static String[] MODELS = new String[]{
+            "Baize", "GPT", "Wenxin", "Gemini", "DallE"
     };
 
     public Session() {
@@ -121,9 +121,11 @@ public class Session extends ContextHandler {
 
                     // 获取模型配置
                     ConfigInfo configInfo = Manager.getInstance().getConfigInfo(token);
+
+                    // 选择默认
                     ModelConfig modelConfig = null;
-                    for (String modelName : MODEL_NAMES) {
-                        modelConfig = Manager.getInstance().getModelConfig(configInfo, modelName);
+                    for (String modelName : MODELS) {
+                        modelConfig = Manager.getInstance().getModelConfigByModel(configInfo, modelName);
                         if (null != modelConfig) {
                             break;
                         }

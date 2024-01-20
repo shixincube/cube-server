@@ -42,6 +42,8 @@ public class Usage implements JSONable {
 
     public final long totalTokens;
 
+    public String name;
+
     public Usage(String model, long completionTokens, long promptTokens, long totalTokens) {
         this.model = model;
         this.completionTokens = completionTokens;
@@ -57,6 +59,10 @@ public class Usage implements JSONable {
                 json.getLong("promptTokens") : json.getLong("prompt_tokens");
         this.totalTokens = json.has("totalTokens") ?
                 json.getLong("totalTokens") : json.getLong("total_tokens");
+
+        if (json.has("name")) {
+            this.name = json.getString("name");
+        }
     }
 
     @Override
@@ -69,6 +75,9 @@ public class Usage implements JSONable {
         json.put("prompt_tokens", this.promptTokens);
         json.put("totalTokens", this.totalTokens);
         json.put("total_tokens", this.totalTokens);
+        if (null != this.name) {
+            json.put("name", this.name);
+        }
         return json;
     }
 

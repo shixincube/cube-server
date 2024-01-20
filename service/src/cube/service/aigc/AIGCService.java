@@ -181,6 +181,13 @@ public class AIGCService extends AbstractModule {
      */
     private boolean useAgent = false;
 
+    /**
+     * 配置文件最后修改时间。
+     */
+    private long configFileLastModified = 0;
+    // 配置文件上一次检测事件
+    private long configFileLastTime = 0;
+
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
         this.unitMap = new ConcurrentHashMap<>();
@@ -204,44 +211,8 @@ public class AIGCService extends AbstractModule {
 
         PsychologyScene.getInstance().setAigcService(this);
 
-        try {
-            File file = new File("config/aigc.properties");
-            if (!file.exists()) {
-                file = new File("aigc.properties");
-            }
-            Properties properties = ConfigUtils.readProperties(file.getAbsolutePath());
-            this.enabledRecognizeContext = Boolean.parseBoolean(
-                    properties.getProperty("enabled.recognize_context", "false"));
-            this.enabledSearch = Boolean.parseBoolean(
-                    properties.getProperty("enabled.search", "false"));
-
-            // 上下文长度限制
-            ModelConfig.EXTRA_LONG_PROMPT_LENGTH = Integer.parseInt(
-                    properties.getProperty("context.length",
-                            Integer.toString(ModelConfig.EXTRA_LONG_PROMPT_LENGTH)));
-            ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT = Integer.parseInt(
-                    properties.getProperty("context.length.baize",
-                            Integer.toString(ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT)));
-
-            // 是否启用代理
-            this.useAgent = Boolean.parseBoolean(
-                    properties.getProperty("agent", "false"));
-            if (this.useAgent) {
-                Agent.createInstance(properties.getProperty("agent.url", "http://127.0.0.1:7010"));
-                // 添加单元
-                this.unitMap.put(Agent.getInstance().getUnit().getQueryKey(), Agent.getInstance().getUnit());
-            }
-        } catch (IOException e) {
-            Logger.e(this.getClass(), "#start - Load config properties error", e);
-        }
-
-        Logger.i(this.getClass(), "AI Service - Recognize Context Enabled: " + this.enabledRecognizeContext);
-        Logger.i(this.getClass(), "AI Service - Search Enabled: " + this.enabledSearch);
-        Logger.i(this.getClass(), "AI Service - Context length: " + ModelConfig.EXTRA_LONG_PROMPT_LENGTH);
-        Logger.i(this.getClass(), "AI Service - Baize context limit: " + ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT);
-        if (this.useAgent) {
-            Logger.i(this.getClass(), "AI Service - Agent URL: " + Agent.getInstance().getUrl());
-        }
+        // 读取配置文件
+        this.loadConfig();
 
         (new Thread(new Runnable() {
             @Override
@@ -351,6 +322,11 @@ public class AIGCService extends AbstractModule {
 
         long now = System.currentTimeMillis();
 
+        if (now - this.configFileLastTime > 5 * 60 * 1000) {
+            this.configFileLastTime = now;
+            this.loadConfig();
+        }
+
         // 删除失效的 Unit
         Iterator<AIGCUnit> unitIter = this.unitMap.values().iterator();
         while (unitIter.hasNext()) {
@@ -375,6 +351,57 @@ public class AIGCService extends AbstractModule {
         }
 
         Explorer.getInstance().onTick(now);
+    }
+
+    private void loadConfig() {
+        try {
+            File file = new File("config/aigc.properties");
+            if (!file.exists()) {
+                file = new File("aigc.properties");
+            }
+
+            if (this.configFileLastModified == file.lastModified()) {
+//                if (Logger.isDebugLevel()) {
+//                    Logger.d(this.getClass(), "#loadConfig - File not modified");
+//                }
+                return;
+            }
+
+            this.configFileLastModified = file.lastModified();
+
+            Properties properties = ConfigUtils.readProperties(file.getAbsolutePath());
+            this.enabledRecognizeContext = Boolean.parseBoolean(
+                    properties.getProperty("enabled.recognize_context", "false"));
+            this.enabledSearch = Boolean.parseBoolean(
+                    properties.getProperty("enabled.search", "false"));
+
+            // 上下文长度限制
+            ModelConfig.EXTRA_LONG_PROMPT_LENGTH = Integer.parseInt(
+                    properties.getProperty("context.length",
+                            Integer.toString(ModelConfig.EXTRA_LONG_PROMPT_LENGTH)));
+            ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT = Integer.parseInt(
+                    properties.getProperty("context.length.baize",
+                            Integer.toString(ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT)));
+
+            // 是否启用代理
+            this.useAgent = Boolean.parseBoolean(
+                    properties.getProperty("agent", "false"));
+            if (this.useAgent) {
+                Agent.createInstance(properties.getProperty("agent.url", "http://127.0.0.1:7010"));
+                // 添加单元
+                this.unitMap.put(Agent.getInstance().getUnit().getQueryKey(), Agent.getInstance().getUnit());
+            }
+        } catch (IOException e) {
+            Logger.e(this.getClass(), "#loadConfig - Load config properties error", e);
+        }
+
+        Logger.i(this.getClass(), "AI Service - Recognize Context Enabled: " + this.enabledRecognizeContext);
+        Logger.i(this.getClass(), "AI Service - Search Enabled: " + this.enabledSearch);
+        Logger.i(this.getClass(), "AI Service - Context length: " + ModelConfig.EXTRA_LONG_PROMPT_LENGTH);
+        Logger.i(this.getClass(), "AI Service - Baize context limit: " + ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT);
+        if (this.useAgent) {
+            Logger.i(this.getClass(), "AI Service - Agent URL: " + Agent.getInstance().getUrl());
+        }
     }
 
     public AIGCCellet getCellet() {
@@ -1507,12 +1534,13 @@ public class AIGCService extends AbstractModule {
 
         List<ModelConfig> models = this.getModelConfigs();
         for (ModelConfig modelConfig : models) {
-            Usage usage = this.storage.readUsage(contactId, modelConfig.getUnitName());
+            Usage usage = this.storage.readUsage(contactId, modelConfig.getModel());
             if (null == usage) {
                 // 跳过没有记录的模型
                 continue;
             }
 
+            usage.name = modelConfig.getName();
             result.add(usage);
         }
 
@@ -2291,7 +2319,10 @@ public class AIGCService extends AbstractModule {
             // 识别内容
             ComplexContext complexContext = enabledRecognizeContext ?
                     recognizeContext(this.content, this.channel.getAuthToken()) :
-                    new ComplexContext(ComplexContext.Type.Simplex);;
+                    new ComplexContext(ComplexContext.Type.Simplex);
+
+            // 设置是否启用了搜素
+            complexContext.setSearchable(enabledSearch);
 
             AIGCGenerationRecord result = null;
 
@@ -2505,7 +2536,8 @@ public class AIGCService extends AbstractModule {
                     long promptTokens = tokens.size();
                     tokens = calcTokens(history.answerContent);
                     long completionTokens = tokens.size();
-                    storage.updateUsage(history.queryContactId, history.unit, completionTokens, promptTokens);
+                    storage.updateUsage(history.queryContactId, ModelConfig.getModelByUnit(history.unit),
+                            completionTokens, promptTokens);
 
                     // 保存历史记录
                     if (needRecordHistory) {
@@ -2905,7 +2937,8 @@ public class AIGCService extends AbstractModule {
                         List<String> tokens = calcTokens(text);
                         long promptTokens = tokens.size();
                         long completionTokens = (long) Math.floor(fileLabel.getFileSize() / 1024.0);
-                        storage.updateUsage(contactId, history.unit, completionTokens, promptTokens);
+                        storage.updateUsage(contactId, ModelConfig.getModelByUnit(history.unit),
+                                completionTokens, promptTokens);
 
                         // 保存历史记录
                         storage.writeChatHistory(history);

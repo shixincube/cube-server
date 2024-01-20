@@ -64,6 +64,8 @@ public class ComplexContext extends Entity {
 
     public final Type type;
 
+    private boolean searchable = false;
+
     private List<ComplexResource> resources;
 
     private boolean inferable = false;
@@ -115,6 +117,10 @@ public class ComplexContext extends Entity {
                 this.inferenceResult.add(list.getString(i));
             }
         }
+
+        if (json.has("searchable")) {
+            this.searchable = json.getBoolean("searchable");
+        }
     }
 
     public boolean isSimplex() {
@@ -145,6 +151,10 @@ public class ComplexContext extends Entity {
 
     public void addResource(ComplexResource resource) {
         this.resources.add(resource);
+    }
+
+    public void setSearchable(boolean value) {
+        this.searchable = value;
     }
 
     public void setInferable(boolean value) {
@@ -196,6 +206,8 @@ public class ComplexContext extends Entity {
             }
             json.put("inferenceResult", list);
         }
+
+        json.put("searchable", this.searchable);
 
         return json;
     }

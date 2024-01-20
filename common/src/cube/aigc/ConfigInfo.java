@@ -49,6 +49,8 @@ public class ConfigInfo implements JSONable {
 
     public int usage;
 
+    public List<Usage> usages;
+
     public ConfigInfo(List<ModelConfig> models, List<Notification> notifications, ContactPreference contactPreference) {
         this.models = new ArrayList<>(models);
         this.notifications = notifications;
@@ -79,6 +81,14 @@ public class ConfigInfo implements JSONable {
         if (json.has("preference")) {
             this.contactPreference = new ContactPreference(json.getJSONObject("preference"));
             this.fixModelsWithPreference();
+        }
+
+        if (json.has("usages")) {
+            JSONArray array = json.getJSONArray("usages");
+            this.usages = new ArrayList<>();
+            for (int i = 0; i < array.length(); ++i) {
+                this.usages.add(new Usage(array.getJSONObject(i)));
+            }
         }
     }
 
@@ -121,6 +131,14 @@ public class ConfigInfo implements JSONable {
 
         if (null != this.contactPreference) {
             json.put("preference", this.contactPreference.toJSON());
+        }
+
+        if (null != this.usages) {
+            JSONArray array = new JSONArray();
+            for (Usage usage : this.usages) {
+                array.put(usage.toCompactJSON());
+            }
+            json.put("usages", array);
         }
 
         json.put("models", modelArray);

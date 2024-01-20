@@ -34,17 +34,26 @@ import org.json.JSONObject;
  */
 public class ModelConfig implements JSONable {
 
+    public static int EXTRA_LONG_PROMPT_LENGTH = 5000;
+
+    public static int BAIZE_UNIT_CONTEXT_LIMIT = 2000;
+
+
     public final static String[] TEXT_TO_IMAGE_UNIT = new String[] { "DallE" };
 
     public final static String[] EXTRA_LONG_PROMPT_UNIT = new String[]{ "GPT", "Gemini", "Wenxin" };
-
-    public static int EXTRA_LONG_PROMPT_LENGTH = 5000;
 
     public final static String PREFERENCE_UNIT_FOR_CV = "Chat";
 
     public final static String BAIZE_UNIT = "Chat";
 
-    public static int BAIZE_UNIT_CONTEXT_LIMIT = 2000;
+    private final static String[][] UNIT_MAP_MODEL = new String[][] {
+            new String[] { "Chat", "Baize" },
+            new String[] { "GPT", "GPT" },
+            new String[] { "DallE", "DallE" },
+            new String[] { "Gemini", "Gemini" },
+            new String[] { "Wenxin", "Wenxin" }
+    };
 
     private final String model;
 
@@ -124,6 +133,21 @@ public class ModelConfig implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         return this.toJSON();
+    }
+
+    /**
+     * 获取单元名对应的模型。
+     *
+     * @param unit
+     * @return
+     */
+    public static String getModelByUnit(String unit) {
+        for (String[] map : UNIT_MAP_MODEL) {
+            if (map[0].equalsIgnoreCase(unit)) {
+                return map[1];
+            }
+        }
+        return unit;
     }
 
     /**

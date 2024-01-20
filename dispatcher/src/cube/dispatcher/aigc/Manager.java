@@ -252,9 +252,19 @@ public class Manager implements Tickable, PerformerListener {
         return new ConfigInfo(Packet.extractDataPayload(responsePacket));
     }
 
-    public ModelConfig getModelConfig(ConfigInfo configInfo, String modelName) {
+    public ModelConfig getModelConfigByModel(ConfigInfo configInfo, String model) {
         for (ModelConfig config : configInfo.models) {
-            if (config.getName().equalsIgnoreCase(modelName)) {
+            if (config.getModel().equalsIgnoreCase(model)) {
+                return config;
+            }
+        }
+
+        return null;
+    }
+
+    public ModelConfig getModelConfigByName(ConfigInfo configInfo, String name) {
+        for (ModelConfig config : configInfo.models) {
+            if (config.getName().equalsIgnoreCase(name)) {
                 return config;
             }
         }
