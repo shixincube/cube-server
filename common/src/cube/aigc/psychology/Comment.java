@@ -52,9 +52,9 @@ public enum Comment {
     SelfControl("自制力"),
 
     /**
-     * 自我无力感。
+     * 无力感。
      */
-    SelfPowerlessness("自我无力感"),
+    Powerlessness("无力感"),
 
     /**
      * 自恋。
@@ -215,6 +215,11 @@ public enum Comment {
      * 自我需求。
      */
     SelfDemand("自我需求"),
+
+    /**
+     * 自我膨胀。
+     */
+    SelfInflated("自我膨胀"),
 
     /**
      * 敏感。

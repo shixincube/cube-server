@@ -48,17 +48,17 @@ public class EvaluationReport {
     public final static String HighTrick = "明显";
     public final static String LowTrick = "不足";
 
-    public final static String UNIT = "Chat";
+    public final static String UNIT = ModelConfig.BAIZE_UNIT;
 
     private List<ReportScore> reportScoreList;
 
-    public EvaluationReport(List<Evaluation.Result> resultList) {
+    public EvaluationReport(List<EvaluationFeature> resultList) {
         this.reportScoreList = new ArrayList<>();
         this.build(resultList);
     }
 
-    private void build(List<Evaluation.Result> resultList) {
-        for (Evaluation.Result result : resultList) {
+    private void build(List<EvaluationFeature> resultList) {
+        for (EvaluationFeature result : resultList) {
             ReportScore score = this.getReportScore(result.comment);
             if (null == score) {
                 CommentInterpretation interpretation = Resource.getInstance().getCommentInterpretation(result.comment);

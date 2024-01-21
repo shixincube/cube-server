@@ -428,7 +428,7 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("prompt", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
-            }),
+            })
     };
 
     private final StorageField[] promptWordScopeFields = new StorageField[] {
@@ -441,6 +441,9 @@ public class AIGCStorage implements Storagable {
             new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.DEFAULT_0
             }),
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            })
     };
 
     private final StorageField[] usageFields = new StorageField[] {

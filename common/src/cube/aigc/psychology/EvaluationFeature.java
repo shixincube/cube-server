@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2023 Cube Team.
+ * Copyright (c) 2020-2024 Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,71 +24,21 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.composition;
+package cube.aigc.psychology;
+
+import cube.aigc.psychology.composition.Score;
 
 /**
- * 空间示意。
+ * 评估的特征。
  */
-@Deprecated
-public enum SpatialRepresentation {
+public class EvaluationFeature {
 
-    /**
-     * 精神。
-     */
-    Spirit("精神领域"),
+    public Comment comment;
 
-    /**
-     * 物质。
-     */
-    Matter("物质领域"),
+    public Score score;
 
-    /**
-     * 过去。
-     */
-    Past("过去"),
-
-    /**
-     * 未来。
-     */
-    Future("未来"),
-
-    /**
-     * 内向者。
-     */
-    Introvert("Introvert"),
-
-    /**
-     * 外向者。
-     */
-    Extravert("Extravert"),
-
-    /**
-     * 被动性。
-     */
-    Passivity("Passivity"),
-
-    /**
-     * 主动性。
-     */
-    Proactivity("Proactivity"),
-
-    /**
-     * 退行。
-     */
-    Regression("Regression"),
-
-    /**
-     * 冲动。
-     */
-    Impulse("Impulse"),
-
-
-    Unknown("Unknown")
-    ;
-
-    public final String name;
-
-    SpatialRepresentation(String name) {
-        this.name = name;
+    public EvaluationFeature(Comment comment, Score score) {
+        this.comment = comment;
+        this.score = score;
     }
 }

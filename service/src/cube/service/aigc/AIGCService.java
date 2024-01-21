@@ -2377,7 +2377,8 @@ public class AIGCService extends AbstractModule {
                         data.remove("content");
                         data.put("content", realPrompt.toString());
 
-                        Logger.d(this.getClass(), "#process - Use query file creating the prompt - length: " + realPrompt.length());
+                        Logger.d(this.getClass(), "#process - Use query file creating the prompt - length: "
+                                + realPrompt.length());
                     }
                     else {
                         Logger.d(this.getClass(), "#process - Use query file creating the prompt error: "
@@ -2562,8 +2563,7 @@ public class AIGCService extends AbstractModule {
         private String filterChinese(AIGCUnit unit, String text) {
             if (unit.getCapability().getName().equalsIgnoreCase(ModelConfig.BAIZE_UNIT)) {
                 if (TextUtils.containsChinese(text)) {
-                    return text.replaceAll(",", "，")
-                            .replaceAll(":", "：");
+                    return text.replaceAll(",", "，");
                 }
                 else {
                     return text;

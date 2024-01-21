@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2023 Cube Team.
+ * Copyright (c) 2020-2024 Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,69 +26,28 @@
 
 package cube.aigc.psychology.composition;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * 空间示意。
+ * 特征含义。
  */
-@Deprecated
-public enum SpatialRepresentation {
+public class FeatureRepresentation {
 
-    /**
-     * 精神。
-     */
-    Spirit("精神领域"),
+    private Map<String, String> personMeaning;
 
-    /**
-     * 物质。
-     */
-    Matter("物质领域"),
+    private Map<String, String> treeMeaning;
 
-    /**
-     * 过去。
-     */
-    Past("过去"),
+    private Map<String, String> houseMeaning;
 
-    /**
-     * 未来。
-     */
-    Future("未来"),
+    public FeatureRepresentation() {
+        this.personMeaning = new HashMap<>();
+        this.treeMeaning = new HashMap<>();
+        this.houseMeaning = new HashMap<>();
+    }
 
-    /**
-     * 内向者。
-     */
-    Introvert("Introvert"),
+    public void load(File file) {
 
-    /**
-     * 外向者。
-     */
-    Extravert("Extravert"),
-
-    /**
-     * 被动性。
-     */
-    Passivity("Passivity"),
-
-    /**
-     * 主动性。
-     */
-    Proactivity("Proactivity"),
-
-    /**
-     * 退行。
-     */
-    Regression("Regression"),
-
-    /**
-     * 冲动。
-     */
-    Impulse("Impulse"),
-
-
-    Unknown("Unknown")
-    ;
-
-    public final String name;
-
-    SpatialRepresentation(String name) {
-        this.name = name;
     }
 }
