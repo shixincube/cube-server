@@ -47,6 +47,8 @@ public class AIGCGenerationRecord implements JSONable {
 
     public List<FileLabel> queryFileLabels;
 
+    public String[] queryAdditions;
+
     public List<FileLabel> answerFileLabels;
 
     public String unit;
@@ -57,6 +59,22 @@ public class AIGCGenerationRecord implements JSONable {
 
     public int feedback = 0;
 
+    /**
+     * 仅用于客户端向服务器以附件方式传递数据。
+     *
+     * @param queryAdditions
+     */
+    public AIGCGenerationRecord(String[] queryAdditions) {
+        this.sn = Utils.generateSerialNumber();
+        this.queryAdditions = queryAdditions;
+        this.timestamp = System.currentTimeMillis();
+    }
+
+    /**
+     * 仅用于客户端向服务器以附件方式传递数据。
+     *
+     * @param queryFileLabels
+     */
     public AIGCGenerationRecord(List<FileLabel> queryFileLabels) {
         this.sn = Utils.generateSerialNumber();
         this.queryFileLabels = queryFileLabels;
@@ -118,6 +136,15 @@ public class AIGCGenerationRecord implements JSONable {
             }
         }
 
+        if (json.has("queryAdditions")) {
+            JSONArray array = json.getJSONArray("queryAdditions");
+            this.queryAdditions = new String[array.length()];
+            for (int i = 0; i < array.length(); ++i) {
+                String text = array.getString(i);
+                this.queryAdditions[i] = text;
+            }
+        }
+
         if (json.has("queryFileLabels")) {
             this.queryFileLabels = new ArrayList<>();
             JSONArray array = json.getJSONArray("queryFileLabels");
@@ -134,6 +161,10 @@ public class AIGCGenerationRecord implements JSONable {
         if (json.has("context")) {
             this.context = new ComplexContext(json.getJSONObject("context"));
         }
+    }
+
+    public boolean hasQueryAddition() {
+        return (null != this.queryAdditions && this.queryAdditions.length > 0);
     }
 
     public boolean hasQueryFile() {
@@ -195,6 +226,14 @@ public class AIGCGenerationRecord implements JSONable {
                 array.put(fileLabel.toJSON());
             }
             json.put("answerFileLabels", array);
+        }
+
+        if (null != this.queryAdditions) {
+            JSONArray array = new JSONArray();
+            for (String text : this.queryAdditions) {
+                array.put(text);
+            }
+            json.put("queryAdditions", array);
         }
 
         if (null != this.queryFileLabels) {

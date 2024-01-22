@@ -56,3 +56,5 @@ tag_cube-ferryhouse
 ferryhouse/c1cd96771a9a61351958e23bd6afcbef
 dispatcher/qrcode-files
 service/assets/robot/tmp
+service/assets/data/model
+service/assets/data/dictionary

@@ -2346,28 +2346,67 @@ public class AIGCService extends AbstractModule {
                 data.put("content", this.content);
                 data.put("participant", this.participant.toCompactJSON());
 
-                boolean useQueryFile = false;
+                boolean useQueryAttachment = false;
                 if (null != this.records) {
                     for (AIGCGenerationRecord record : this.records) {
-                        if (record.hasQueryFile()) {
-                            useQueryFile = true;
+                        if (record.hasQueryFile() || record.hasQueryAddition()) {
+                            useQueryAttachment = true;
                             break;
                         }
                     }
                 }
 
-                if (useQueryFile) {
-                    // 读取文件内容
-                    List<String> fileContent = this.readFileContent(this.records.get(0).queryFileLabels);
+                if (useQueryAttachment) {
                     // 构建提示词
                     StringBuilder buf = new StringBuilder();
-                    if (!fileContent.isEmpty()) {
-                        for (String text : fileContent) {
-                            buf.append(text).append("\n");
-                            if (buf.length() >= lengthLimit) {
-                                break;
+
+                    for (AIGCGenerationRecord record : this.records) {
+                        if (record.hasQueryAddition()) {
+                            for (String text : record.queryAdditions) {
+                                String[] qaBuf = text.split("\n");
+                                for (String s : qaBuf) {
+                                    if (s.trim().length() <= 1) {
+                                        continue;
+                                    }
+                                    buf.append(s).append("\n");
+                                    if (buf.length() >= lengthLimit) {
+                                        break;
+                                    }
+                                }
+
+                                if (buf.length() >= lengthLimit) {
+                                    break;
+                                }
+                            }
+
+                            Logger.d(this.getClass(), "#process - Attachment text content length: "
+                                    + buf.length());
+                        }
+
+                        if (record.hasQueryFile()) {
+                            // 读取文件内容
+                            List<String> fileContent = this.readFileContent(record.queryFileLabels);
+
+                            if (!fileContent.isEmpty()) {
+                                for (String text : fileContent) {
+                                    buf.append(text).append("\n");
+                                    if (buf.length() >= lengthLimit) {
+                                        break;
+                                    }
+                                }
+
+                                Logger.d(this.getClass(), "#process - Attachment file content length: "
+                                        + buf.length());
+                            }
+                            else {
+                                Logger.d(this.getClass(), "#process - Attachment file error: "
+                                        + record.queryFileLabels.get(0).getFileName());
                             }
                         }
+                    }
+
+                    // 处理内容
+                    try {
                         buf.delete(buf.length() - 1, buf.length());
 
                         realPrompt.delete(0, realPrompt.length());
@@ -2377,12 +2416,10 @@ public class AIGCService extends AbstractModule {
                         data.remove("content");
                         data.put("content", realPrompt.toString());
 
-                        Logger.d(this.getClass(), "#process - Use query file creating the prompt - length: "
+                        Logger.d(this.getClass(), "#process - Use query attachments creating the prompt - length: "
                                 + realPrompt.length());
-                    }
-                    else {
-                        Logger.d(this.getClass(), "#process - Use query file creating the prompt error: "
-                                + this.records.get(0).queryFileLabels.get(0).getFileName());
+                    } catch (Exception e) {
+                        // Nothing
                     }
 
                     // 无历史记录

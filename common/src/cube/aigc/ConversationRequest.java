@@ -86,7 +86,7 @@ public class ConversationRequest implements JSONable {
 
         public String workPattern;
 
-        public JSONArray files;
+        public JSONArray attachments;
 
         public JSONArray categories;
 
@@ -100,8 +100,8 @@ public class ConversationRequest implements JSONable {
             if (json.has("workPattern")) {
                 this.workPattern = json.getString("workPattern");
             }
-            if (json.has("files")) {
-                this.files = json.getJSONArray("files");
+            if (json.has("attachments")) {
+                this.attachments = json.getJSONArray("attachments");
             }
             if (json.has("categories")) {
                 this.categories = json.getJSONArray("categories");
@@ -120,8 +120,8 @@ public class ConversationRequest implements JSONable {
             if (null != this.workPattern) {
                 json.put("workPattern", this.workPattern);
             }
-            if (null != this.files) {
-                json.put("files", this.files);
+            if (null != this.attachments) {
+                json.put("attachments", this.attachments);
             }
             if (null != this.categories) {
                 json.put("categories", this.categories);

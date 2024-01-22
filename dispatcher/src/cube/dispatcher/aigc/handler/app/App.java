@@ -179,20 +179,36 @@ public final class App {
             request.options.categories = new JSONArray();
         }
 
-        // 文件数据生成记录
+        // 附件对象转记录对象
         JSONArray records = new JSONArray();
-        if (null != request.options.files) {
+        if (null != request.options.attachments) {
+            List<String> contentList = new ArrayList<>();
             List<FileLabel> fileLabelList = new ArrayList<>();
-            for (int i = 0; i < request.options.files.length(); ++i) {
-                FileLabel fileLabel = new FileLabel(request.options.files.getJSONObject(i));
-                fileLabelList.add(fileLabel);
+
+            for (int i = 0; i < request.options.attachments.length(); ++i) {
+                JSONObject attachmentJson = request.options.attachments.getJSONObject(i);
+                if (attachmentJson.has("fileLabel") && !attachmentJson.isNull("fileLabel")) {
+                    FileLabel fileLabel = new FileLabel(attachmentJson.getJSONObject("fileLabel"));
+                    fileLabelList.add(fileLabel);
+                }
+
+                if (attachmentJson.has("content") && !attachmentJson.isNull("content")) {
+                    contentList.add(attachmentJson.getString("content"));
+                }
             }
+
             if (!fileLabelList.isEmpty()) {
                 AIGCGenerationRecord record = new AIGCGenerationRecord(fileLabelList);
                 records.put(record.toJSON());
-
                 if (Logger.isDebugLevel()) {
-                    Logger.d(this.getClass(), "#requestConversation - Use file context - num: " + fileLabelList.size());
+                    Logger.d(this.getClass(), "#requestConversation - Use file - num: " + fileLabelList.size());
+                }
+            }
+            if (!contentList.isEmpty()) {
+                AIGCGenerationRecord record = new AIGCGenerationRecord(contentList.toArray(new String[0]));
+                records.put(record.toJSON());
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "#requestConversation - Use text - num: " + contentList.size());
                 }
             }
         }

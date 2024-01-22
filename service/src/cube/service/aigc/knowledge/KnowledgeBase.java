@@ -897,13 +897,19 @@ public class KnowledgeBase {
         }
 
         // 处理记录里的附件文件
+        List<String> attachmentContents = new ArrayList<>();
         if (null != recordList && !recordList.isEmpty()) {
-            this.processQueryFiles(recordList);
+            attachmentContents = this.processQueryAttachments(recordList);
         }
 
         // 如果没有设置知识库文档，返回提示
         boolean noDocument = null == this.resource.docList || this.resource.docList.isEmpty();
         boolean noArticle = null == this.resource.articleList || this.resource.articleList.isEmpty();
+
+        if (noArticle && !attachmentContents.isEmpty()) {
+            noArticle = false;
+        }
+
         if (noDocument && noArticle) {
             Logger.d(this.getClass(), "#performKnowledgeQA - No knowledge document or article in base: " + channelCode);
             this.service.getCellet().getExecutor().execute(new Runnable() {
@@ -931,7 +937,7 @@ public class KnowledgeBase {
         }
 
         // 优化提示词
-        String prompt = this.optimizePrompt(unitName, promptMetadata, query, knowledgeCategories);
+        String prompt = this.optimizePrompt(unitName, promptMetadata, query, knowledgeCategories, attachmentContents);
 
         AIGCUnit unit = this.service.selectUnitByName(unitName);
         if (null == unit) {
@@ -984,9 +990,29 @@ public class KnowledgeBase {
         return true;
     }
 
-    private List<KnowledgeDoc> processQueryFiles(List<AIGCGenerationRecord> records) {
+    /**
+     * 处理查询附件。
+     *
+     * @param records
+     * @return 返回仅当次需要处理的文本。
+     */
+    private List<String> processQueryAttachments(List<AIGCGenerationRecord> records) {
+        List<String> contents = new ArrayList<>();
         List<FileLabel> fileLabels = new ArrayList<>();
+
         for (AIGCGenerationRecord record : records) {
+            if (record.hasQueryAddition()) {
+                for (String text : record.queryAdditions) {
+                    String[] buf = text.split("\n");
+                    for (String s : buf) {
+                        if (s.trim().length() <= 1) {
+                            continue;
+                        }
+                        contents.add(s);
+                    }
+                }
+            }
+
             if (record.hasQueryFile()) {
                 fileLabels.addAll(record.queryFileLabels);
             }
@@ -1011,37 +1037,26 @@ public class KnowledgeBase {
             }
         }
 
-        List<KnowledgeDoc> resultList = new ArrayList<>();
-
-        if (fileLabels.isEmpty()) {
-            if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#processQueryFiles - No file for query - contact: "
-                        + this.authToken.getContactId());
-            }
-            return resultList;
-        }
-
-        for (FileLabel fileLabel : fileLabels) {
-            KnowledgeDoc doc = this.importKnowledgeDoc(fileLabel.getFileCode());
-            if (null != doc) {
-                resultList.add(doc);
-            }
-            else {
-                Logger.w(this.getClass(), "#processQueryFiles - Import knowledge doc failed - fileCode: "
-                        + fileLabel.getFileCode());
+        if (!fileLabels.isEmpty()) {
+            for (FileLabel fileLabel : fileLabels) {
+                KnowledgeDoc doc = this.importKnowledgeDoc(fileLabel.getFileCode());
+                if (null == doc) {
+                    Logger.w(this.getClass(), "#processQueryAttachments - Import knowledge doc failed - fileCode: "
+                            + fileLabel.getFileCode());
+                }
             }
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#processQueryFiles - Process query files - num: "
-                    + resultList.size());
+            Logger.d(this.getClass(), "#processQueryAttachments - Process query attachments - num: "
+                    + contents.size() + "|" + fileLabels.size());
         }
 
-        return resultList;
+        return contents;
     }
 
     private String optimizePrompt(String unitName, PromptMetadata promptMetadata, String query,
-                                  List<String> knowledgeCategories) {
+                                  List<String> knowledgeCategories, List<String> attachmentContents) {
         int totalWords = 0;
         String[] lines = promptMetadata.prompt.split("\n");
         LinkedList<String> lineList = new LinkedList<>();
@@ -1061,6 +1076,32 @@ public class KnowledgeBase {
             // 提取第一行
             String first = lineList.pollFirst();
 
+            // 先处理附件内容
+            if (null != attachmentContents && !attachmentContents.isEmpty()) {
+                // 读取附件内容
+                int totalLength = first.length();
+                List<String> descend = new ArrayList<>();
+                for (String content : attachmentContents) {
+                    totalLength += content.length();
+                    if (totalLength > maxWords) {
+                        break;
+                    }
+                    descend.add(content);
+                }
+                // 翻转为倒序
+                Collections.reverse(descend);
+                for (String c : descend) {
+                    lineList.addFirst(c);
+                }
+                descend.clear();
+
+                Logger.d(KnowledgeBase.class, "#optimizePrompt - Use attachment content - length:" + totalLength);
+
+
+                // TODO XJW
+            }
+
+            // 按照分类读取文章
             List<KnowledgeArticle> articleList = new ArrayList<>();
 
             boolean allCategories = false;

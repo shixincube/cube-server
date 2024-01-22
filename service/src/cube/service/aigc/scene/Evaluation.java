@@ -207,6 +207,7 @@ public class Evaluation {
             }
         }
 
+        // 面积比例，建议不高于 0.010
         double tinyRatio = 0.008;
         int paintingArea = this.spaceLayout.getPaintingBox().calculateArea();
         if (null != person) {
