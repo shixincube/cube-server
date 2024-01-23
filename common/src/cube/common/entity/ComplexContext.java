@@ -74,6 +74,8 @@ public class ComplexContext extends Entity {
 
     private List<String> inferenceResult;
 
+    
+
     public ComplexContext(Type type) {
         super(Utils.generateSerialNumber());
         this.type = type;

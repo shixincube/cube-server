@@ -383,6 +383,12 @@ public class AIGCService extends AbstractModule {
                     properties.getProperty("context.length.baize",
                             Integer.toString(ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT)));
 
+            // 页面阅读器 URL
+            if (properties.containsKey("page.reader.url")) {
+                Logger.i(this.getClass(), "AI Service - Page reader url: " + properties.getProperty("page.reader.url"));
+                Explorer.getInstance().setPageReaderUrl(properties.getProperty("page.reader.url"));
+            }
+
             // 是否启用代理
             this.useAgent = Boolean.parseBoolean(
                     properties.getProperty("agent", "false"));
@@ -2260,7 +2266,7 @@ public class AIGCService extends AbstractModule {
 
         protected boolean needRecordHistory = true;
 
-        protected boolean needSearch = false;
+        protected boolean needNetworking = false;
 
         public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
                                     List<AIGCGenerationRecord> records, GenerateTextListener listener) {
@@ -2300,8 +2306,8 @@ public class AIGCService extends AbstractModule {
             this.needRecordHistory = value;
         }
 
-        public void setNeedSearch(boolean value) {
-            this.needSearch = value;
+        public void setNeedNetworking(boolean value) {
+            this.needNetworking = value;
         }
 
         public void setOriginalQuery(String originalQuery) {
@@ -2477,6 +2483,28 @@ public class AIGCService extends AbstractModule {
                     data.put("history", history);
                 }
 
+                if (enabledSearch) {
+                    executor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            // 进行资源搜索
+                            SearchResult searchResult = Explorer.getInstance().search(
+                                    (null != originalQuery) ? originalQuery : content,
+                                    channel.getAuthToken());
+                            if (searchResult.hasResult() && needNetworking) {
+                                for (SearchResult.OrganicResult or : searchResult.organicResults) {
+                                    Explorer.getInstance().readPageContent(or.link, new ReadPageListener() {
+                                        @Override
+                                        public void onCompleted(String url, Page page) {
+
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    });
+                }
+
                 if (useAgent) {
                     String responseText = Agent.getInstance().generateText(channel.getAuthToken().getCode(),
                             channel.getCode(), this.content);
@@ -2581,18 +2609,6 @@ public class AIGCService extends AbstractModule {
                     if (needRecordHistory) {
                         storage.writeChatHistory(history);
                     }
-
-                    if (complexContext.isSimplex() && enabledSearch) {
-                        // 进行资源搜索
-                        SearchResult searchResult = Explorer.getInstance().search(
-                                (null != originalQuery) ? originalQuery : content,
-                                history.answerContent, complexContext);
-                        if (searchResult.hasResult()) {
-                            // 缓存结果，以便客户端读取数据
-                            Explorer.getInstance().cacheSearchResult(channel.getAuthToken(),
-                                    searchResult);
-                        }
-                    }
                 }
             });
         }
@@ -2644,6 +2660,16 @@ public class AIGCService extends AbstractModule {
             }
 
             return result;
+        }
+
+        /**
+         * 提取相关的内容。
+         *
+         * @param content
+         * @param query
+         */
+        private void extractContent(List<String> content, String query) {
+//            syncGenerateText(this.channel.getAuthToken(), ModelConfig.BAIZE_UNIT, )
         }
     }
 

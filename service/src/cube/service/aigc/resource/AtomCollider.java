@@ -156,7 +156,7 @@ public class AtomCollider {
             if (exists) {
                 // 推测的年份存在数据
                 this.recommendYear = candidate;
-                this.recommendWord = String.format(Consts.ANSWER_FIND_SOME_YEAR_DATA,
+                this.recommendWord = String.format(Consts.ANSWER_FIND_SOME_YEAR_DATA_FORMAT,
                         yearDesc, candidate + "年");
             }
         } catch (Exception e) {
@@ -178,7 +178,7 @@ public class AtomCollider {
                 if (exists) {
                     this.recommendYear = this.year;
                     this.recommendMonth = candidate;
-                    this.recommendWord = String.format(Consts.ANSWER_FIND_SOME_YEAR_DATA,
+                    this.recommendWord = String.format(Consts.ANSWER_FIND_SOME_YEAR_DATA_FORMAT,
                             yearDesc + monthDesc, this.recommendYear + "年" + this.recommendMonth + "月");
                 }
             } catch (Exception e) {

@@ -90,10 +90,16 @@ public class BaiduSearcher extends ResourceSearcher {
             return false;
         }
 
-        JSONArray list = Packet.extractDataPayload(response).getJSONArray("list");
-        JSONObject data = list.getJSONObject(0);
-        if (!data.has("organic_results")) {
-            Logger.w(this.getClass(), "#search - Baidu search result format error: " + url);
+        JSONObject data = null;
+        try {
+            JSONArray list = Packet.extractDataPayload(response).getJSONArray("list");
+            data = list.getJSONObject(0);
+            if (!data.has("organic_results")) {
+                Logger.w(this.getClass(), "#search - Baidu search result format error: " + url);
+                return false;
+            }
+        } catch (Exception e) {
+            Logger.w(this.getClass(), "#search - Baidu search result exception", e);
             return false;
         }
 

@@ -27,6 +27,7 @@
 package cube.service.aigc;
 
 import cell.util.log.Logger;
+import cube.aigc.Page;
 import cube.aigc.attachment.Attachment;
 import cube.aigc.attachment.ThingAttachment;
 import cube.aigc.attachment.ui.Button;
@@ -37,6 +38,7 @@ import cube.auth.AuthToken;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.listener.ExtractKeywordsListener;
+import cube.service.aigc.listener.ReadPageListener;
 import cube.service.aigc.module.ModuleManager;
 import cube.service.aigc.module.PublicOpinion;
 import cube.service.aigc.module.Stage;
@@ -46,9 +48,18 @@ import cube.service.aigc.resource.BaiduSearcher;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+import cube.util.HttpClientFactory;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.util.StringContentProvider;
+import org.eclipse.jetty.http.HttpStatus;
+import org.json.JSONObject;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 资源中心。
@@ -67,6 +78,8 @@ public class Explorer {
 
     private Tokenizer tokenizer;
 
+    private String pageReaderUrl;
+
     private Map<Long, ComplexContext> complexContextMap;
 
     /**
@@ -84,6 +97,16 @@ public class Explorer {
      */
     private Map<Long, AttachmentResource> attachmentResourceMap;
 
+    /**
+     * 页面读取任务队列。
+     */
+    private Queue<PageReaderTask> pageReaderTaskQueue;
+
+    /**
+     * 任务计数器。
+     */
+    private AtomicInteger pageReaderTaskCount;
+
     public final static Explorer getInstance() {
         return Explorer.instance;
     }
@@ -92,6 +115,8 @@ public class Explorer {
         this.complexContextMap = new ConcurrentHashMap<>();
         this.contactSearchResults = new ConcurrentHashMap<>();
         this.attachmentResourceMap = new ConcurrentHashMap<>();
+        this.pageReaderTaskQueue = new ConcurrentLinkedQueue<>();
+        this.pageReaderTaskCount = new AtomicInteger(0);
     }
 
     public void setup(AIGCService service, Tokenizer tokenizer) {
@@ -106,6 +131,10 @@ public class Explorer {
         ModuleManager.getInstance().stop();
     }
 
+    public void setPageReaderUrl(String pageReaderUrl) {
+        this.pageReaderUrl = pageReaderUrl;
+    }
+
     public void cacheComplexContext(ComplexContext context) {
         this.complexContextMap.put(context.getId(), context);
     }
@@ -114,7 +143,14 @@ public class Explorer {
         return this.complexContextMap.get(id);
     }
 
-    public SearchResult search(String query, String answer, ComplexContext context) {
+    /**
+     * 使用爬虫节点进行搜索。
+     *
+     * @param query
+     * @param authToken
+     * @return
+     */
+    public SearchResult search(String query, AuthToken authToken) {
         final SearchResult result = new SearchResult();
         // 提取问句的关键词
         boolean success = this.service.extractKeywords(query, new ExtractKeywordsListener() {
@@ -129,6 +165,17 @@ public class Explorer {
 
             @Override
             public void onFailed(String text, AIGCStateCode stateCode) {
+                // 使用 TFIDF 提取关键字
+                TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
+                List<Keyword> keywords = analyzer.analyze(query, 5);
+                if (!keywords.isEmpty()) {
+                    List<String> words = new ArrayList<>();
+                    for (Keyword keyword : keywords) {
+                        words.add(keyword.getWord());
+                    }
+                    result.keywords = words;
+                }
+
                 synchronized (result) {
                     result.notify();
                 }
@@ -156,10 +203,18 @@ public class Explorer {
             searcher.fillSearchResult(result);
         }
 
+        if (result.hasResult()) {
+            // 缓存结果，以便客户端读取数据
+            this.cacheSearchResult(authToken, result);
+        }
+        else {
+            Logger.w(this.getClass(), "Search result is null - cid:" + authToken.getContactId());
+        }
+
         return result;
     }
 
-    public void cacheSearchResult(AuthToken authToken, SearchResult result) {
+    private void cacheSearchResult(AuthToken authToken, SearchResult result) {
         result.authToken = authToken;
         synchronized (this.contactSearchResults) {
             LinkedList<SearchResult> list = this.contactSearchResults.computeIfAbsent(authToken.getContactId(), k -> new LinkedList<>());
@@ -179,6 +234,40 @@ public class Explorer {
             }
         }
         return result;
+    }
+
+    /**
+     * 读取指定页面内容。
+     *
+     * @param url
+     * @param listener
+     */
+    public void readPageContent(String url, ReadPageListener listener) {
+        if (null == this.pageReaderUrl) {
+            listener.onCompleted(url, null);
+            return;
+        }
+
+        this.pageReaderTaskQueue.offer(new PageReaderTask(url, listener));
+
+        if (this.pageReaderTaskCount.get() < 2) {
+            this.pageReaderTaskCount.incrementAndGet();
+
+            (new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    PageReaderTask task = pageReaderTaskQueue.poll();
+
+                    while (null != task) {
+                        task.run();
+
+                        task = pageReaderTaskQueue.poll();
+                    }
+
+                    pageReaderTaskCount.decrementAndGet();
+                }
+            })).start();
+        }
     }
 
     public Stage infer(String content) {
@@ -498,6 +587,50 @@ public class Explorer {
         protected ChartReactionWrap(ChartReaction reaction, int matchingNum) {
             this.reaction = reaction;
             this.matchingNum = matchingNum;
+        }
+    }
+
+    private class PageReaderTask implements Runnable {
+
+        protected String url;
+
+        protected ReadPageListener listener;
+
+        protected PageReaderTask(String url, ReadPageListener listener) {
+            this.url = url;
+            this.listener = listener;
+        }
+
+        @Override
+        public void run() {
+            HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
+            try {
+                JSONObject requestParam = new JSONObject();
+                requestParam.put("url", this.url);
+                StringContentProvider provider = new StringContentProvider(requestParam.toString());
+                ContentResponse response = client.POST(pageReaderUrl).timeout(1, TimeUnit.MINUTES).content(provider).send();
+                if (response.getStatus() == HttpStatus.OK_200) {
+                    JSONObject responseData = new JSONObject(response.getContentAsString());
+                    if (responseData.getInt("code") == 200) {
+                        Page page = new Page(responseData);
+                        // 过滤短文本
+                        page.filterShortText();
+                        this.listener.onCompleted(this.url, page);
+                    }
+                    else {
+                        this.listener.onCompleted(this.url, null);
+                    }
+                }
+                else {
+                    Logger.w(this.getClass(), "#extractPageContent - Reader response error: " + response.getStatus());
+                    this.listener.onCompleted(this.url, null);
+                }
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#extractPageContent", e);
+                this.listener.onCompleted(this.url, null);
+            } finally {
+                HttpClientFactory.getInstance().returnHttpClient(client);
+            }
         }
     }
 }

@@ -78,9 +78,12 @@ public final class Consts {
     private final static String ASK_FORMAT = "已知信息：\n%s\n\n" +
             "根据上述已知信息，简洁和专业的来回答用户的问题。如果无法从中得到答案，请说“没有提供足够的相关信息”，不允许在答案中添加编造成分。问题是：%s";
 
+    private final static String EXTRACT_CONTENT_RELATIONSHIPS_FORMAT = "已知内容：\n%s\n\n" +
+            "请分析上述已知内容，把上述内容里与“%s”相关的内容提取出来。";
+
     public final static String KNOWLEDGE_SECTION_PROMPT = "整理信息的主要观点，不超过5条观点。";
 
-    public final static String ANSWER_FIND_SOME_YEAR_DATA = "没有找到%s的数据，但是找到了%s的数据。";
+    public final static String ANSWER_FIND_SOME_YEAR_DATA_FORMAT = "没有找到%s的数据，但是找到了%s的数据。";
 
     public final static String PROMPT_ROLE_PSYCHOLOGY = "专业的心理咨询专家。";
 
@@ -159,5 +162,9 @@ public final class Consts {
 
     public static String formatQuestion(String data, String query) {
         return String.format(ASK_FORMAT, data, query);
+    }
+
+    public static String formatExtractContent(String content, String relatedText) {
+        return String.format(EXTRACT_CONTENT_RELATIONSHIPS_FORMAT, content, relatedText);
     }
 }

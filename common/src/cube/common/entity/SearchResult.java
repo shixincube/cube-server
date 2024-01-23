@@ -64,7 +64,7 @@ public class SearchResult implements JSONable {
     }
 
     public boolean hasResult() {
-        return (null != this.organicResults);
+        return (null != this.organicResults && !this.organicResults.isEmpty());
     }
 
     public void addOrganicResult(int position, String title, String link, String snippet) {
