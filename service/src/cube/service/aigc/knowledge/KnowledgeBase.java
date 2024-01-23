@@ -1079,26 +1079,28 @@ public class KnowledgeBase {
             // 先处理附件内容
             if (null != attachmentContents && !attachmentContents.isEmpty()) {
                 // 读取附件内容
-                int totalLength = first.length();
-                List<String> descend = new ArrayList<>();
+                StringBuilder contentBuf = new StringBuilder();
                 for (String content : attachmentContents) {
-                    totalLength += content.length();
-                    if (totalLength > maxWords) {
+                    contentBuf.append(content).append("\n");
+                    if (contentBuf.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
                         break;
                     }
-                    descend.add(content);
                 }
-                // 翻转为倒序
-                Collections.reverse(descend);
-                for (String c : descend) {
-                    lineList.addFirst(c);
+
+                Logger.d(KnowledgeBase.class, "#optimizePrompt - Use attachment content - length: "
+                        + contentBuf.length());
+
+                String contentPrompt = Consts.formatQuestion(contentBuf.toString(), query);
+                // 对内容进行推理
+                String result = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_UNIT, contentPrompt);
+                if (null != result) {
+                    // 添加结果
+                    lineList.addFirst(result);
+                    // 添加源
+                    promptMetadata.addMetadata(contentBuf.toString());
+                    Logger.d(KnowledgeBase.class, "#optimizePrompt - Use attachment content - result length: "
+                            + result.length());
                 }
-                descend.clear();
-
-                Logger.d(KnowledgeBase.class, "#optimizePrompt - Use attachment content - length:" + totalLength);
-
-
-                // TODO XJW
             }
 
             // 按照分类读取文章
@@ -1153,6 +1155,9 @@ public class KnowledgeBase {
                     String[] data = article.content.split("\n");
                     StringBuilder buf = new StringBuilder();
                     for (String text : data) {
+                        if (text.trim().length() <= 1) {
+                            continue;
+                        }
                         buf.append(text).append("\n");
                         if (buf.length() >= ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
                             break;
@@ -1720,6 +1725,10 @@ public class KnowledgeBase {
             this.metadataList.add(new Metadata(Metadata.ARTICLE_PREFIX + article.getId(), 300));
         }
 
+        public void addMetadata(String text) {
+            this.metadataList.add(new Metadata(Metadata.TEXT_PREFIX + text, 200));
+        }
+
         public boolean containsMetadata(KnowledgeArticle article) {
             return this.metadataList.contains(article);
         }
@@ -1755,6 +1764,8 @@ public class KnowledgeBase {
             public final static String DOCUMENT_PREFIX = "./tmp/";
 
             public final static String ARTICLE_PREFIX = "article:";
+
+            public final static String TEXT_PREFIX = "text:";
 
             public String source;
 
@@ -1795,6 +1806,10 @@ public class KnowledgeBase {
                     } catch (Exception e) {
                         // Nothing
                     }
+                }
+                else if (this.source.startsWith(TEXT_PREFIX)) {
+                    String text = this.source.substring(TEXT_PREFIX.length());
+                    return new KnowledgeSource(text);
                 }
 
                 return null;
