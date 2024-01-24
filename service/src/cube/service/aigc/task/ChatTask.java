@@ -84,6 +84,7 @@ public class ChatTask extends ServiceTask {
         int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 10;
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
         boolean recordable = packet.data.has("recordable") && packet.data.getBoolean("recordable");
+        boolean networking = packet.data.has("networking") && packet.data.getBoolean("networking");
 
         List<AIGCGenerationRecord> recordList = null;
         if (null != records) {
@@ -150,7 +151,8 @@ public class ChatTask extends ServiceTask {
             }
             else {
                 // 执行文本生成
-                success = service.generateText(code, content, unit, histories, recordList, recordable, new GenerateTextListener() {
+                success = service.generateText(code, content, unit, histories, recordList, recordable, networking,
+                        new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                         cellet.speak(talkContext,

@@ -254,6 +254,7 @@ public final class App {
         apiData.put("code", convId);
         apiData.put("content", request.prompt);
         apiData.put("histories", request.usingContext ? 10 : 0);
+        apiData.put("networking", request.usingNetwork);
         apiData.put("pattern", request.options.workPattern);
         apiData.put("categories", request.options.categories);
         apiData.put("temperature", request.temperature);

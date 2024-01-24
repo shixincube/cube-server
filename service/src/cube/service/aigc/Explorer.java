@@ -603,6 +603,10 @@ public class Explorer {
 
         @Override
         public void run() {
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#run - Access " + this.url);
+            }
+
             HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
             try {
                 JSONObject requestParam = new JSONObject();
@@ -619,14 +623,18 @@ public class Explorer {
                     }
                     else {
                         this.listener.onCompleted(this.url, null);
+                        if (Logger.isDebugLevel()) {
+                            Logger.d(this.getClass(), "#run - Interface return error state: "
+                                    + responseData.getInt("code"));
+                        }
                     }
                 }
                 else {
-                    Logger.w(this.getClass(), "#extractPageContent - Reader response error: " + response.getStatus());
+                    Logger.w(this.getClass(), "#run - Reader response error: " + response.getStatus());
                     this.listener.onCompleted(this.url, null);
                 }
             } catch (Exception e) {
-                Logger.e(this.getClass(), "#extractPageContent", e);
+                Logger.e(this.getClass(), "#run", e);
                 this.listener.onCompleted(this.url, null);
             } finally {
                 HttpClientFactory.getInstance().returnHttpClient(client);

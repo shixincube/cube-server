@@ -47,6 +47,7 @@ import cube.common.notice.GetFile;
 import cube.common.notice.LoadFile;
 import cube.common.state.AIGCStateCode;
 import cube.core.AbstractModule;
+import cube.core.Constraint;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.file.FileProcessResult;
@@ -89,6 +90,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * AIGC 服务。
@@ -998,11 +1000,13 @@ public class AIGCService extends AbstractModule {
      * @param numHistories
      * @param records
      * @param recordable
+     * @param networking
      * @param listener
      * @return
      */
     public boolean generateText(String channelCode, String content, String unitName, int numHistories,
-                                List<AIGCGenerationRecord> records, boolean recordable, GenerateTextListener listener) {
+                                List<AIGCGenerationRecord> records, boolean recordable, boolean networking,
+                                GenerateTextListener listener) {
         if (!this.isStarted()) {
             Logger.w(AIGCService.class, "#generateText - Service is NOT ready");
             return false;
@@ -1057,6 +1061,7 @@ public class AIGCService extends AbstractModule {
         GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, content, records, listener);
         meta.numHistories = numHistories;
         meta.needRecordHistory = recordable;
+        meta.needNetworking = networking;
 
         synchronized (this.generateQueueMap) {
             Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(unit.getQueryKey());
@@ -1111,7 +1116,7 @@ public class AIGCService extends AbstractModule {
 
         synchronized (channel) {
             try {
-                channel.wait(2 * 60 * 1000);
+                channel.wait(60 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -2329,6 +2334,8 @@ public class AIGCService extends AbstractModule {
 
             // 设置是否启用了搜素
             complexContext.setSearchable(enabledSearch);
+            // 设置是否进行联网分析
+            complexContext.setNetworking(this.needNetworking);
 
             AIGCGenerationRecord result = null;
 
@@ -2489,17 +2496,9 @@ public class AIGCService extends AbstractModule {
                         public void run() {
                             // 进行资源搜索
                             SearchResult searchResult = Explorer.getInstance().search(
-                                    (null != originalQuery) ? originalQuery : content,
-                                    channel.getAuthToken());
+                                    (null != originalQuery) ? originalQuery : content, channel.getAuthToken());
                             if (searchResult.hasResult() && needNetworking) {
-                                for (SearchResult.OrganicResult or : searchResult.organicResults) {
-                                    Explorer.getInstance().readPageContent(or.link, new ReadPageListener() {
-                                        @Override
-                                        public void onCompleted(String url, Page page) {
-
-                                        }
-                                    });
-                                }
+                                performSearchPageQA(content, searchResult, complexContext);
                             }
                         }
                     });
@@ -2662,14 +2661,103 @@ public class AIGCService extends AbstractModule {
             return result;
         }
 
-        /**
-         * 提取相关的内容。
-         *
-         * @param content
-         * @param query
-         */
-        private void extractContent(List<String> content, String query) {
-//            syncGenerateText(this.channel.getAuthToken(), ModelConfig.BAIZE_UNIT, )
+        private void performSearchPageQA(String query, SearchResult searchResult, ComplexContext context) {
+            Object mutex = new Object();
+            AtomicInteger pageCount = new AtomicInteger(0);
+
+            List<String> urlList = new ArrayList<>();
+            for (SearchResult.OrganicResult or : searchResult.organicResults) {
+                urlList.add(or.link);
+                if (urlList.size() >= 2) {
+                    break;
+                }
+            }
+
+            List<Page> pages = new ArrayList<>();
+
+            for (String url : urlList) {
+                Explorer.getInstance().readPageContent(url, new ReadPageListener() {
+                    @Override
+                    public void onCompleted(String url, Page page) {
+                        pageCount.incrementAndGet();
+
+                        if (null != page) {
+                            pages.add(page);
+                        }
+
+                        if (pageCount.get() >= urlList.size()) {
+                            synchronized (mutex) {
+                                mutex.notify();
+                            }
+                        }
+                    }
+                });
+            }
+
+            synchronized (mutex) {
+                try {
+                    mutex.wait(60 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            StringBuilder pageContent = new StringBuilder();
+
+            for (Page page : pages) {
+                StringBuilder buf = new StringBuilder();
+                for (String text : page.textList) {
+                    buf.append(text).append("\n");
+                    if (buf.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
+                        break;
+                    }
+                }
+
+                if (buf.length() > 2) {
+                    buf.delete(buf.length() - 1, buf.length());
+                    // 提取页面与提问匹配的信息
+                    String prompt = Consts.formatExtractContent(buf.toString(), query);
+                    String answer = syncGenerateText(this.channel.getAuthToken(), ModelConfig.BAIZE_UNIT, prompt);
+                    if (null != answer) {
+                        // 记录内容
+                        pageContent.append(answer);
+                    }
+                }
+            }
+
+            if (pageContent.length() <= 10) {
+                Logger.d(this.getClass(), "#performSearchPageQA - No page content, cid:"
+                        + this.channel.getAuthToken().getContactId());
+                // 使用 null 值填充
+                context.fixNetworkingResult(null, null);
+                return;
+            }
+
+            if (pageContent.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
+                String[] tmp = pageContent.toString().split("。");
+                pageContent = new StringBuilder();
+                for (String text : tmp) {
+                    pageContent.append(text).append("。");
+                    if (pageContent.length() >= ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
+                        break;
+                    }
+                }
+                pageContent.delete(pageContent.length() - 1, pageContent.length());
+            }
+
+            // 对提取出来的内容进行推理
+            String prompt = Consts.formatQuestion(pageContent.toString(), query);
+            String result = syncGenerateText(this.channel.getAuthToken(), ModelConfig.BAIZE_UNIT, prompt);
+            if (null == result) {
+                Logger.w(this.getClass(), "#performSearchPageQA - Infers page content failed, cid:"
+                        + this.channel.getAuthToken().getContactId());
+                // 使用 null 值填充
+                context.fixNetworkingResult(null, null);
+                return;
+            }
+
+            // 将页面推理结果填充在上下文
+            context.fixNetworkingResult(pages, result);
         }
     }
 

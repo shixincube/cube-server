@@ -38,6 +38,8 @@ public class ConversationRequest implements JSONable {
 
     public final boolean usingContext;
 
+    public final boolean usingNetwork;
+
     public final float temperature;
 
     public final float topP;
@@ -49,7 +51,8 @@ public class ConversationRequest implements JSONable {
     public ConversationRequest(JSONObject json) {
         this.prompt = json.getString("prompt");
         this.options = new Options(json.getJSONObject("options"));
-        this.usingContext = json.has("usingContext") ? json.getBoolean("usingContext") : true;
+        this.usingContext = !json.has("usingContext") || json.getBoolean("usingContext");
+        this.usingNetwork = json.has("usingNetwork") && json.getBoolean("usingNetwork");
         this.temperature = json.has("temperature") ? json.getFloat("temperature") : 0.7f;
         this.topP = json.has("top_p") ? json.getFloat("top_p") : 0.8f;
         this.searchTopK = json.has("searchTopK") ? json.getInt("searchTopK") : 10;
@@ -62,6 +65,7 @@ public class ConversationRequest implements JSONable {
         json.put("prompt", this.prompt);
         json.put("options", this.options.toJSON());
         json.put("usingContext", this.usingContext);
+        json.put("usingNetwork", this.usingNetwork);
         json.put("temperature", this.temperature);
         json.put("top_p", this.topP);
         json.put("searchTopK", this.searchTopK);

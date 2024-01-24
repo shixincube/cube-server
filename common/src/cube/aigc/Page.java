@@ -39,6 +39,8 @@ import java.util.List;
  */
 public class Page implements JSONable {
 
+    public String url;
+
     public String title;
 
     public List<String> textList;
@@ -46,6 +48,13 @@ public class Page implements JSONable {
     public List<String> imageList;
 
     public Page(JSONObject json) {
+        if (json.has("url")) {
+            this.url = json.getString("url");
+        }
+        else if (json.has("currentUrl")) {
+            this.url = json.getString("currentUrl");
+        }
+
         if (json.has("title")) {
             this.title = json.getString("title");
         }
@@ -82,7 +91,13 @@ public class Page implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("title", this.title);
+        if (null != this.url) {
+            json.put("url", this.url);
+        }
+
+        if (null != this.title) {
+            json.put("title", this.title);
+        }
 
         if (null != this.textList) {
             JSONArray array = new JSONArray();
@@ -105,6 +120,14 @@ public class Page implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        if (null != this.url) {
+            json.put("url", this.url);
+        }
+
+        if (null != this.title) {
+            json.put("title", this.title);
+        }
+        return json;
     }
 }

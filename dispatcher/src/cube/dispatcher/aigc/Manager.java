@@ -942,14 +942,15 @@ public class Manager implements Tickable, PerformerListener {
      * @param histories
      * @param records
      * @param recordable
+     * @param networking
      * @param categories
      * @param searchTopK
      * @param searchFetchK
      * @return
      */
     public ChatFuture chat(String token, String channelCode, String pattern, String content, String unit,
-                           int histories, JSONArray records, boolean recordable, JSONArray categories,
-                           int searchTopK, int searchFetchK) {
+                           int histories, JSONArray records, boolean recordable, boolean networking,
+                           JSONArray categories, int searchTopK, int searchFetchK) {
         JSONObject data = new JSONObject();
         data.put("token", token);
         data.put("code", channelCode);
@@ -966,6 +967,7 @@ public class Manager implements Tickable, PerformerListener {
             data.put("categories", categories);
         }
         data.put("recordable", recordable);
+        data.put("networking", networking);
         data.put("searchTopK", searchTopK);
         data.put("searchFetchK", searchFetchK);
 

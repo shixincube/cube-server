@@ -74,6 +74,7 @@ public class Chat extends ContextHandler {
             int histories = 0;
             JSONArray records = null;
             boolean recordable = true;
+            boolean networking = false;
             int searchTopK = 5;
             int searchFetchK = 50;
             JSONArray categories = null;
@@ -106,6 +107,10 @@ public class Chat extends ContextHandler {
                     categories = json.getJSONArray("categories");
                 }
 
+                if (json.has("networking")) {
+                    networking = json.getBoolean("networking");
+                }
+
                 if (json.has("searchTopK")) {
                     searchTopK = json.getInt("searchTopK");
                 }
@@ -128,8 +133,8 @@ public class Chat extends ContextHandler {
             }
 
             // Chat
-            Manager.ChatFuture future = Manager.getInstance().chat(token, channelCode, pattern,
-                    content, unit, histories, records, recordable, categories, searchTopK, searchFetchK);
+            Manager.ChatFuture future = Manager.getInstance().chat(token, channelCode, pattern, content,
+                    unit, histories, records, recordable, networking, categories, searchTopK, searchFetchK);
             if (null == future) {
                 // 发生错误
                 this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);

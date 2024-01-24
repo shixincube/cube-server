@@ -28,6 +28,7 @@ package cube.common.entity;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.Page;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -74,7 +75,10 @@ public class ComplexContext extends Entity {
 
     private List<String> inferenceResult;
 
-    
+    private boolean networking = false;
+    private boolean networkingInferEnd = false;
+    private List<Page> networkingPages;
+    private String networkingResult;
 
     public ComplexContext(Type type) {
         super(Utils.generateSerialNumber());
@@ -122,6 +126,23 @@ public class ComplexContext extends Entity {
 
         if (json.has("searchable")) {
             this.searchable = json.getBoolean("searchable");
+        }
+
+        if (json.has("networking")) {
+            this.networking = json.getBoolean("networking");
+        }
+        if (json.has("networkingInferEnd")) {
+            this.networkingInferEnd = json.getBoolean("networkingInferEnd");
+        }
+        if (json.has("networkingPages")) {
+            this.networkingPages = new ArrayList<>();
+            JSONArray list = json.getJSONArray("networkingPages");
+            for (int i = 0; i < list.length(); ++i) {
+                this.networkingPages.add(new Page(list.getJSONObject(i)));
+            }
+        }
+        if (json.has("networkingResult")) {
+            this.networkingResult = json.getString("networkingResult");
         }
     }
 
@@ -187,6 +208,24 @@ public class ComplexContext extends Entity {
         return this.inferenceResult;
     }
 
+    public void setNetworking(boolean networking) {
+        this.networking = networking;
+    }
+
+    public void fixNetworkingResult(List<Page> pages, String result) {
+        this.networkingInferEnd = true;
+
+        if (null != pages) {
+            if (null == this.networkingPages) {
+                this.networkingPages = new ArrayList<>();
+            }
+            this.networkingPages.addAll(pages);
+        }
+        if (null != result) {
+            this.networkingResult = result;
+        }
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
@@ -211,6 +250,21 @@ public class ComplexContext extends Entity {
 
         json.put("searchable", this.searchable);
 
+        json.put("networking", this.networking);
+        json.put("networkingInferEnd", this.networkingInferEnd);
+
+        if (null != this.networkingPages) {
+            JSONArray list = new JSONArray();
+            for (Page page : this.networkingPages) {
+                list.put(page.toCompactJSON());
+            }
+            json.put("networkingPages", list);
+        }
+
+        if (null != this.networkingResult) {
+            json.put("networkingResult", this.networkingResult);
+        }
+
         return json;
     }
 
@@ -223,6 +277,9 @@ public class ComplexContext extends Entity {
         }
         if (json.has("inferenceResult")) {
             json.remove("inferenceResult");
+        }
+        if (json.has("networkingPages")) {
+            json.remove("networkingPages");
         }
         return json;
     }
