@@ -107,6 +107,8 @@ public class Explorer {
      */
     private AtomicInteger pageReaderTaskCount;
 
+    private final int maxPageReaders = 3;
+
     public final static Explorer getInstance() {
         return Explorer.instance;
     }
@@ -182,8 +184,8 @@ public class Explorer {
             }
         });
 
-        if (success && null == result.keywords) {
-            synchronized (result) {
+        synchronized (result) {
+            if (success && null == result.keywords) {
                 try {
                     result.wait(60 * 1000);
                 } catch (InterruptedException e) {
@@ -192,7 +194,7 @@ public class Explorer {
             }
         }
 
-        if (null == result.keywords) {
+        if (null == result.keywords || result.keywords.isEmpty()) {
             Logger.i(this.getClass(), "#search - Keywords is empty");
             return result;
         }
@@ -224,12 +226,14 @@ public class Explorer {
 
     public List<SearchResult> querySearchResults(AuthToken token) {
         LinkedList<SearchResult> result = new LinkedList<>();
-        LinkedList<SearchResult> list = this.contactSearchResults.get(token.getContactId());
-        if (null != list) {
-            for (SearchResult sr : list) {
-                if (!sr.popup) {
-                    sr.popup = true;
-                    result.add(sr);
+        synchronized (this.contactSearchResults) {
+            LinkedList<SearchResult> list = this.contactSearchResults.get(token.getContactId());
+            if (null != list) {
+                for (SearchResult sr : list) {
+                    if (!sr.popup) {
+                        sr.popup = true;
+                        result.add(sr);
+                    }
                 }
             }
         }
@@ -250,7 +254,7 @@ public class Explorer {
 
         this.pageReaderTaskQueue.offer(new PageReaderTask(url, listener));
 
-        if (this.pageReaderTaskCount.get() < 2) {
+        if (this.pageReaderTaskCount.get() < this.maxPageReaders) {
             this.pageReaderTaskCount.incrementAndGet();
 
             (new Thread(new Runnable() {
@@ -604,7 +608,7 @@ public class Explorer {
         @Override
         public void run() {
             if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#run - Access " + this.url);
+                Logger.d(this.getClass(), "#run - Request " + this.url);
             }
 
             HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
@@ -612,7 +616,9 @@ public class Explorer {
                 JSONObject requestParam = new JSONObject();
                 requestParam.put("url", this.url);
                 StringContentProvider provider = new StringContentProvider(requestParam.toString());
-                ContentResponse response = client.POST(pageReaderUrl).timeout(1, TimeUnit.MINUTES).content(provider).send();
+                ContentResponse response = client.POST(pageReaderUrl).timeout(1, TimeUnit.MINUTES)
+                        .header("Content-Type", "application/json")
+                        .content(provider).send();
                 if (response.getStatus() == HttpStatus.OK_200) {
                     JSONObject responseData = new JSONObject(response.getContentAsString());
                     if (responseData.getInt("code") == 200) {

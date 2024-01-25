@@ -966,7 +966,7 @@ public class KnowledgeBase {
         }
         else {
             // 其他单元执行
-            this.service.generateText(channel, unit, query, prompt, null, true,
+            this.service.generateText(channel, unit, query, prompt, null, false, true,
                     new GenerateTextListener() {
                 @Override
                 public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
@@ -1361,7 +1361,7 @@ public class KnowledgeBase {
                     String prompt = Consts.formatQuestion(buf.toString(), matchingSchema.getComprehensiveQuery());
 
                     service.generateText(channel, unit, matchingSchema.getComprehensiveQuery(), prompt,
-                            null, false, new GenerateTextListener() {
+                            null, false, false, new GenerateTextListener() {
                         @Override
                         public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                             activateProgress.setCode(AIGCStateCode.Ok.code);
@@ -1413,7 +1413,7 @@ public class KnowledgeBase {
             String prompt = Consts.formatQuestion(text, matchingSchema.getSectionQuery());
 
             this.service.generateText(channel, unit, matchingSchema.getSectionQuery(),
-                prompt, null, false, new GenerateTextListener() {
+                prompt, null, false, false, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                         synchronized (pipelineRecordList) {

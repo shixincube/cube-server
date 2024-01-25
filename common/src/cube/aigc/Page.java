@@ -62,7 +62,7 @@ public class Page implements JSONable {
             this.textList = new ArrayList<>();
             JSONArray array = json.getJSONArray("textList");
             for (int i = 0; i < array.length(); ++i) {
-                this.textList.add(array.getString(i));
+                this.textList.add(array.getString(i).trim());
             }
         }
         if (json.has("imgList")) {
@@ -82,7 +82,7 @@ public class Page implements JSONable {
         Iterator<String> iter = this.textList.iterator();
         while (iter.hasNext()) {
             String text = iter.next();
-            if (text.length() <= 20) {
+            if (text.length() <= 5) {
                 iter.remove();
             }
         }

@@ -37,7 +37,6 @@ import cube.common.entity.ComplexContext;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.Explorer;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -79,28 +78,28 @@ public class GetContextInferenceTask extends ServiceTask {
             return;
         }
 
-        if (!context.isInferable() || context.isInferring()) {
-            JSONObject responsePayload = new JSONObject();
-            responsePayload.put("inferable", context.isInferable());
-            responsePayload.put("inferring", context.isInferring());
-            responsePayload.put("inferenceResult", new JSONArray());
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responsePayload));
-            markResponseTime();
-            return;
-        }
-
-        JSONObject responsePayload = new JSONObject();
-        responsePayload.put("inferable", context.isInferable());
-        responsePayload.put("inferring", context.isInferring());
-        JSONArray inferenceResult = new JSONArray();
-        for (String text : context.getInferenceResult()) {
-            inferenceResult.put(text);
-        }
-        responsePayload.put("inferenceResult", inferenceResult);
-
+        JSONObject responsePayload = context.toJSON();
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responsePayload));
         markResponseTime();
+
+//        if (!context.isInferable() || context.isInferring()) {
+//            JSONObject responsePayload = new JSONObject();
+//            responsePayload.put("inferable", context.isInferable());
+//            responsePayload.put("inferring", context.isInferring());
+//            responsePayload.put("inferenceResult", new JSONArray());
+//            this.cellet.speak(this.talkContext,
+//                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responsePayload));
+//            markResponseTime();
+//            return;
+//        }
+//        JSONObject responsePayload = new JSONObject();
+//        responsePayload.put("inferable", context.isInferable());
+//        responsePayload.put("inferring", context.isInferring());
+//        JSONArray inferenceResult = new JSONArray();
+//        for (String text : context.getInferenceResult()) {
+//            inferenceResult.put(text);
+//        }
+//        responsePayload.put("inferenceResult", inferenceResult);
     }
 }

@@ -958,7 +958,7 @@ public class AIGCService extends AbstractModule {
                 StringBuilder result = new StringBuilder();
 
                 this.generateText(channel, unit, maq.articleQuery.query, maq.articleQuery.query,
-                        null, false, new GenerateTextListener() {
+                        null, false, false, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                         maq.articleQuery.answer = record.answer.replaceAll(",", "，");
@@ -1060,8 +1060,9 @@ public class AIGCService extends AbstractModule {
 
         GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, content, records, listener);
         meta.numHistories = numHistories;
-        meta.needRecordHistory = recordable;
-        meta.needNetworking = networking;
+        meta.searchEnabled = this.enabledSearch;
+        meta.recordHistoryEnabled = recordable;
+        meta.networkingEnabled = networking;
 
         synchronized (this.generateQueueMap) {
             Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(unit.getQueryKey());
@@ -1096,7 +1097,7 @@ public class AIGCService extends AbstractModule {
         AIGCChannel channel = new AIGCChannel(authToken, "Baize");
 
         StringBuilder result = new StringBuilder();
-        this.generateText(channel, unit, prompt, prompt, null, false, new GenerateTextListener() {
+        this.generateText(channel, unit, prompt, prompt, null, false, false, new GenerateTextListener() {
             @Override
             public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                 result.append(record.answer);
@@ -1126,7 +1127,8 @@ public class AIGCService extends AbstractModule {
     }
 
     public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt,
-                             List<AIGCGenerationRecord> records, boolean recordable, GenerateTextListener listener) {
+                             List<AIGCGenerationRecord> records, boolean search, boolean recordable,
+                             GenerateTextListener listener) {
         if (this.useAgent) {
             unit = Agent.getInstance().getUnit();
         }
@@ -1139,7 +1141,9 @@ public class AIGCService extends AbstractModule {
 
         GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, prompt, records, listener);
         meta.setOriginalQuery(query);
-        meta.setNeedRecordHistory(recordable);
+        meta.setSearchEnabled(search);
+        meta.setRecordHistoryEnabled(recordable);
+        meta.setNetworkingEnabled(false);
 
         synchronized (this.generateQueueMap) {
             Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(unit.getQueryKey());
@@ -2269,9 +2273,11 @@ public class AIGCService extends AbstractModule {
 
         protected AIGCChatHistory history;
 
-        protected boolean needRecordHistory = true;
+        protected boolean searchEnabled = false;
 
-        protected boolean needNetworking = false;
+        protected boolean recordHistoryEnabled = true;
+
+        protected boolean networkingEnabled = false;
 
         public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
                                     List<AIGCGenerationRecord> records, GenerateTextListener listener) {
@@ -2307,12 +2313,16 @@ public class AIGCService extends AbstractModule {
             this.history.queryContent = content;
         }
 
-        public void setNeedRecordHistory(boolean value) {
-            this.needRecordHistory = value;
+        public void setSearchEnabled(boolean value) {
+            this.searchEnabled = value;
         }
 
-        public void setNeedNetworking(boolean value) {
-            this.needNetworking = value;
+        public void setNetworkingEnabled(boolean value) {
+            this.networkingEnabled = value;
+        }
+
+        public void setRecordHistoryEnabled(boolean value) {
+            this.recordHistoryEnabled = value;
         }
 
         public void setOriginalQuery(String originalQuery) {
@@ -2333,9 +2343,9 @@ public class AIGCService extends AbstractModule {
                     new ComplexContext(ComplexContext.Type.Simplex);
 
             // 设置是否启用了搜素
-            complexContext.setSearchable(enabledSearch);
+            complexContext.setSearchable(this.searchEnabled);
             // 设置是否进行联网分析
-            complexContext.setNetworking(this.needNetworking);
+            complexContext.setNetworking(this.networkingEnabled);
 
             AIGCGenerationRecord result = null;
 
@@ -2490,15 +2500,19 @@ public class AIGCService extends AbstractModule {
                     data.put("history", history);
                 }
 
-                if (enabledSearch) {
+                if (this.searchEnabled) {
                     executor.execute(new Runnable() {
                         @Override
                         public void run() {
                             // 进行资源搜索
                             SearchResult searchResult = Explorer.getInstance().search(
                                     (null != originalQuery) ? originalQuery : content, channel.getAuthToken());
-                            if (searchResult.hasResult() && needNetworking) {
+                            if (searchResult.hasResult() && networkingEnabled) {
                                 performSearchPageQA(content, searchResult, complexContext);
+                            }
+                            else {
+                                // 没有搜索结果
+                                complexContext.fixNetworkingResult(null, null);
                             }
                         }
                     });
@@ -2579,7 +2593,13 @@ public class AIGCService extends AbstractModule {
                         (null != this.originalQuery) ? this.originalQuery : this.content, answer, complexContext);
             }
 
-            if (!complexContext.isSimplex()) {
+            if (complexContext.isSimplex()) {
+                if (this.searchEnabled && networkingEnabled) {
+                    // 缓存上下文
+                    Explorer.getInstance().cacheComplexContext(complexContext);
+                }
+            }
+            else {
                 // 缓存上下文
                 Explorer.getInstance().cacheComplexContext(complexContext);
             }
@@ -2605,7 +2625,7 @@ public class AIGCService extends AbstractModule {
                             completionTokens, promptTokens);
 
                     // 保存历史记录
-                    if (needRecordHistory) {
+                    if (recordHistoryEnabled) {
                         storage.writeChatHistory(history);
                     }
                 }
@@ -2754,6 +2774,10 @@ public class AIGCService extends AbstractModule {
                 // 使用 null 值填充
                 context.fixNetworkingResult(null, null);
                 return;
+            }
+
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#performSearchPageQA - Result length: " + result.length());
             }
 
             // 将页面推理结果填充在上下文
