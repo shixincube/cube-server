@@ -42,7 +42,6 @@ import cube.service.filestorage.FileStorageServiceCellet;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -89,7 +88,7 @@ public class ListFileLabelsTask extends ServiceTask {
             end = begin + limit - 1;
         }
 
-        if (begin >= end) {
+        if (begin > end) {
             // 参数
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.InvalidParameter.code, packet.data));
