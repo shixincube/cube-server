@@ -795,9 +795,11 @@ public class ServiceStorage implements Storagable {
      *
      * @param domain
      * @param ownerId
+     * @param begin
+     * @param end
      * @return
      */
-    public List<FileLabel> listFileLabelByOwnerId(String domain, long ownerId) {
+    public List<FileLabel> listFileLabelByOwnerId(String domain, long ownerId, int begin, int end) {
         List<FileLabel> list = new ArrayList<>();
         String labelTable = this.labelTableNameMap.get(domain);
         if (null == labelTable) {
@@ -805,7 +807,9 @@ public class ServiceStorage implements Storagable {
         }
 
         List<StorageField[]> result = this.storage.executeQuery(labelTable, this.labelFields, new Conditional[] {
-                Conditional.createEqualTo("owner_id", ownerId)
+                Conditional.createEqualTo("owner_id", ownerId),
+                Conditional.createOrderBy("sn", true),
+                Conditional.createLimitOffset(end - begin + 1, begin)
         });
 
         for (StorageField[] fields : result) {
@@ -834,6 +838,27 @@ public class ServiceStorage implements Storagable {
         }
 
         return list;
+    }
+
+    /**
+     * 计算指定联系人总文件标签数量。
+     *
+     * @param domain
+     * @param ownerId
+     * @return
+     */
+    public int totalFileLabelsByOwnerId(String domain, long ownerId) {
+        String labelTable = this.labelTableNameMap.get(domain);
+        if (null == labelTable) {
+            return 0;
+        }
+
+        String sql = "SELECT COUNT(sn) FROM `" + labelTable + "` WHERE `owner_id`=" + ownerId;
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        if (result.isEmpty()) {
+            return 0;
+        }
+        return result.get(0)[0].getInt();
     }
 
     /**

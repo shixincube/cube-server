@@ -939,6 +939,9 @@ public class KnowledgeBase {
         // 优化提示词
         String prompt = this.optimizePrompt(unitName, promptMetadata, query, knowledgeCategories, attachmentContents);
 
+        // 查询知识概念
+        // TODO XJW
+
         AIGCUnit unit = this.service.selectUnitByName(unitName);
         if (null == unit) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Select unit error: " + unitName);

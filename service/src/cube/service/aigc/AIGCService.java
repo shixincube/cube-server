@@ -386,9 +386,17 @@ public class AIGCService extends AbstractModule {
                             Integer.toString(ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT)));
 
             // 页面阅读器 URL
-            if (properties.containsKey("page.reader.url")) {
-                Logger.i(this.getClass(), "AI Service - Page reader url: " + properties.getProperty("page.reader.url"));
-                Explorer.getInstance().setPageReaderUrl(properties.getProperty("page.reader.url"));
+            if (properties.containsKey("page.reader.url") || properties.containsKey("page.searcher")) {
+                Explorer.getInstance().config(properties.getProperty("page.reader.url"),
+                        properties.getProperty("page.searcher", "baidu"));
+                if (properties.containsKey("page.searcher")) {
+                    Logger.i(this.getClass(), "AI Service - Page searcher: "
+                            + properties.getProperty("page.searcher", "baidu"));
+                }
+                if (properties.containsKey("page.reader.url")) {
+                    Logger.i(this.getClass(), "AI Service - Page reader url: "
+                            + properties.getProperty("page.reader.url"));
+                }
             }
 
             // 是否启用代理
@@ -2688,7 +2696,7 @@ public class AIGCService extends AbstractModule {
             List<String> urlList = new ArrayList<>();
             for (SearchResult.OrganicResult or : searchResult.organicResults) {
                 urlList.add(or.link);
-                if (urlList.size() >= 2) {
+                if (urlList.size() >= 5) {
                     break;
                 }
             }
@@ -2780,7 +2788,7 @@ public class AIGCService extends AbstractModule {
                 Logger.d(this.getClass(), "#performSearchPageQA - Result length: " + result.length());
             }
 
-            // 将页面推理结果填充在上下文
+            // 将页面推理结果填充到上下文
             context.fixNetworkingResult(pages, result);
         }
     }

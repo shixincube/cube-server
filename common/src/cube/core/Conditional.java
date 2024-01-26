@@ -341,4 +341,18 @@ public class Conditional {
         }
         return new Conditional(buf.toString());
     }
+
+    /**
+     * 创建 LIMIT %n OFFSET %n 条件。
+     *
+     * @param limit 限制量。
+     * @param offset 偏移量。
+     * @return
+     */
+    public static Conditional createLimitOffset(int limit, int offset) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("LIMIT ").append(limit);
+        buf.append(" OFFSET ").append(offset);
+        return new Conditional(buf.toString());
+    }
 }

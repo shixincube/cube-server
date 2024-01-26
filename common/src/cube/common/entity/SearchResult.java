@@ -46,6 +46,8 @@ public class SearchResult implements JSONable {
 
     public long created;
 
+    public String originSentence;
+
     public List<String> keywords;
 
     public List<OrganicResult> organicResults;
@@ -57,10 +59,11 @@ public class SearchResult implements JSONable {
      */
     public boolean popup = false;
 
-    public SearchResult() {
+    public SearchResult(String originSentence) {
         this.sn = Utils.generateSerialNumber();
         this.engine = "unknown";
         this.created = System.currentTimeMillis();
+        this.originSentence = originSentence;
     }
 
     public boolean hasResult() {

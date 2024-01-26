@@ -523,10 +523,23 @@ public class FileStorageService extends AbstractModule {
      *
      * @param domainName
      * @param contactId
+     * @param begin
+     * @param end
      * @return
      */
-    public List<FileLabel> getFileLabelsWithOwnerId(String domainName, long contactId) {
-        return this.serviceStorage.listFileLabelByOwnerId(domainName, contactId);
+    public List<FileLabel> getFileLabelsWithOwnerId(String domainName, long contactId, int begin, int end) {
+        return this.serviceStorage.listFileLabelByOwnerId(domainName, contactId, begin, end);
+    }
+
+    /**
+     * 获取指定联系人总文件标签数量。
+     *
+     * @param domainName
+     * @param contactId
+     * @return
+     */
+    public int totalFileLabelsByOwnerId(String domainName, long contactId) {
+        return this.serviceStorage.totalFileLabelsByOwnerId(domainName, contactId);
     }
 
     /**

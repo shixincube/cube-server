@@ -162,7 +162,7 @@ public class FileOperationHandler extends CrossDomainHandler {
         }
         else {
             // 不从层级结构读取
-            JSONObject payload = new JSONObject();
+            JSONObject payload = data;
             Packet packet = new Packet(FileStorageAction.ListFileLabels.name, payload);
             ActionDialect packetDialect = packet.toDialect();
             packetDialect.addParam("token", token);

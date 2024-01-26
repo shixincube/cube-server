@@ -42,9 +42,7 @@ import cube.service.aigc.listener.ReadPageListener;
 import cube.service.aigc.module.ModuleManager;
 import cube.service.aigc.module.PublicOpinion;
 import cube.service.aigc.module.Stage;
-import cube.service.aigc.resource.AtomCollider;
-import cube.service.aigc.resource.AttachmentBuilder;
-import cube.service.aigc.resource.BaiduSearcher;
+import cube.service.aigc.resource.*;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -79,6 +77,8 @@ public class Explorer {
     private Tokenizer tokenizer;
 
     private String pageReaderUrl;
+
+    private String searcher = "baidu";
 
     private Map<Long, ComplexContext> complexContextMap;
 
@@ -133,8 +133,9 @@ public class Explorer {
         ModuleManager.getInstance().stop();
     }
 
-    public void setPageReaderUrl(String pageReaderUrl) {
+    public void config(String pageReaderUrl, String searcher) {
         this.pageReaderUrl = pageReaderUrl;
+        this.searcher = searcher;
     }
 
     public void cacheComplexContext(ComplexContext context) {
@@ -153,7 +154,7 @@ public class Explorer {
      * @return
      */
     public SearchResult search(String query, AuthToken authToken) {
-        final SearchResult result = new SearchResult();
+        final SearchResult result = new SearchResult(query);
         // 提取问句的关键词
         boolean success = this.service.extractKeywords(query, new ExtractKeywordsListener() {
             @Override
@@ -199,8 +200,19 @@ public class Explorer {
             return result;
         }
 
-        BaiduSearcher searcher = new BaiduSearcher(this.service);
-        if (searcher.search(result.keywords)) {
+        List<String> keywords = new ArrayList<>();
+        keywords.add(query);
+
+        ResourceSearcher searcher = null;
+        if (this.searcher.equalsIgnoreCase("baidu")) {
+            keywords.add(result.keywords.get(0));
+            searcher = new BaiduSearcher(this.service);
+        }
+        else {
+            searcher = new BingSearcher(this.service);
+        }
+
+        if (searcher.search(keywords)) {
             // 搜索关键词
             searcher.fillSearchResult(result);
         }
@@ -221,6 +233,7 @@ public class Explorer {
         synchronized (this.contactSearchResults) {
             LinkedList<SearchResult> list = this.contactSearchResults.computeIfAbsent(authToken.getContactId(), k -> new LinkedList<>());
             list.addFirst(result);
+            Logger.d(this.getClass(), "#cacheSearchResult - Cache search result for " + result.authToken.getContactId());
         }
     }
 

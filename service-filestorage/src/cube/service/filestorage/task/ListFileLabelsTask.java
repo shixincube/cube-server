@@ -75,25 +75,51 @@ public class ListFileLabelsTask extends ServiceTask {
         // 最大数量
         final int limit = 10;
 
-        FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-        List<FileLabel> list = service.getFileLabelsWithOwnerId(authToken.getDomain(), authToken.getContactId());
+        int begin = 0;
+        int end = limit - 1;
 
-        // 翻转列表
-        Collections.reverse(list);
+        if (packet.data.has("begin")) {
+            begin = packet.data.getInt("begin");
+        }
+
+        if (packet.data.has("end")) {
+            end = packet.data.getInt("end");
+        }
+        else {
+            end = begin + limit - 1;
+        }
+
+        if (begin >= end) {
+            // 参数
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.InvalidParameter.code, packet.data));
+            markResponseTime();
+            return;
+        }
+        else if (end - begin + 1 > 10) {
+            // 超出限制
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(action, packet, FileStorageStateCode.InvalidParameter.code, packet.data));
+            markResponseTime();
+            return;
+        }
+
+        FileStorageService service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
+        List<FileLabel> list = service.getFileLabelsWithOwnerId(authToken.getDomain(), authToken.getContactId(),
+                begin, end);
 
         JSONArray array = new JSONArray();
         for (FileLabel fileLabel : list) {
             array.put(fileLabel.toCompactJSON());
-            if (array.length() >= limit) {
-                break;
-            }
         }
 
         JSONObject payload = new JSONObject();
         payload.put("ownerId", authToken.getContactId());
         payload.put("domain", authToken.getDomain());
-        payload.put("total", list.size());
+        payload.put("total", service.totalFileLabelsByOwnerId(authToken.getDomain(), authToken.getContactId()));
         payload.put("list", array);
+        payload.put("begin", begin);
+        payload.put("end", end);
 
         // 应答
         this.cellet.speak(this.talkContext,
