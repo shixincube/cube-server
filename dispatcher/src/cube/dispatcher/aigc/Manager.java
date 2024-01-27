@@ -450,9 +450,12 @@ public class Manager implements Tickable, PerformerListener {
         return new KnowledgeDoc(Packet.extractDataPayload(responsePacket));
     }
 
-    public ResetKnowledgeProgress getResetKnowledgeProgress(String token, long sn) {
+    public ResetKnowledgeProgress getResetKnowledgeProgress(String token, long sn, String baseName) {
         JSONObject payload = new JSONObject();
         payload.put("sn", sn);
+        if (null != baseName) {
+            payload.put("base", baseName);
+        }
         Packet packet = new Packet(AIGCAction.GetResetKnowledgeProgress.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
@@ -472,8 +475,11 @@ public class Manager implements Tickable, PerformerListener {
         return new ResetKnowledgeProgress(Packet.extractDataPayload(responsePacket));
     }
 
-    public ResetKnowledgeProgress resetKnowledgeStore(String token, boolean backup) {
+    public ResetKnowledgeProgress resetKnowledgeStore(String token, String baseName, boolean backup) {
         JSONObject payload = new JSONObject();
+        if (null != baseName) {
+            payload.put("base", baseName);
+        }
         payload.put("backup", backup);
         Packet packet = new Packet(AIGCAction.ResetKnowledgeStore.name, payload);
         ActionDialect request = packet.toDialect();

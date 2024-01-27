@@ -34,7 +34,6 @@ import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 /**
  * 导入知识库文档。
@@ -61,6 +60,7 @@ public class ImportKnowledgeDoc extends ContextHandler {
                 return;
             }
 
+            KnowledgeDoc doc = null;
             String fileCode = null;
             try {
                 JSONObject data = readBodyAsJSONObject(request);
@@ -77,13 +77,15 @@ public class ImportKnowledgeDoc extends ContextHandler {
                 }
 
                 fileCode = data.getString("fileCode");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
 
-            KnowledgeDoc doc = Manager.getInstance().importKnowledgeDoc(token, fileCode);
-            if (null == doc) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                doc = Manager.getInstance().importKnowledgeDoc(token, fileCode);
+                if (null == doc) {
+                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.complete();
+                    return;
+                }
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.NOT_FOUND_404);
                 this.complete();
                 return;
             }

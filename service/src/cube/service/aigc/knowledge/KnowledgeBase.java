@@ -200,55 +200,63 @@ public class KnowledgeBase {
         }
         this.lock.set(true);
 
-        KnowledgeDoc doc = this.getKnowledgeDocByFileCode(fileCode);
-        if (null == doc) {
-            // 创建新文档
-            doc = new KnowledgeDoc(Utils.generateSerialNumber(), this.authToken.getDomain(),
-                    this.authToken.getContactId(), fileCode, this.name, false, -1, this.scope);
-            this.storage.writeKnowledgeDoc(doc);
-        }
+        KnowledgeDoc activatedDoc = null;
 
-        if (null == doc.fileLabel) {
-            GetFile getFile = new GetFile(this.authToken.getDomain(), fileCode);
-            JSONObject fileLabelJson = this.fileStorage.notify(getFile);
-            if (null == fileLabelJson) {
-                this.storage.deleteKnowledgeDoc(fileCode);
-                Logger.e(this.getClass(), "#importKnowledgeDoc - Not find file: " + fileCode);
-                this.lock.set(false);
-                return null;
+        try {
+            KnowledgeDoc doc = this.getKnowledgeDocByFileCode(fileCode);
+            if (null == doc) {
+                // 创建新文档
+                doc = new KnowledgeDoc(Utils.generateSerialNumber(), this.authToken.getDomain(),
+                        this.authToken.getContactId(), fileCode, this.name, false, -1, this.scope);
+                this.storage.writeKnowledgeDoc(doc);
             }
 
-            FileLabel fileLabel = new FileLabel(fileLabelJson);
-            doc.fileLabel = fileLabel;
-        }
+            if (null == doc.fileLabel) {
+                GetFile getFile = new GetFile(this.authToken.getDomain(), fileCode);
+                JSONObject fileLabelJson = this.fileStorage.notify(getFile);
+                if (null == fileLabelJson) {
+                    this.storage.deleteKnowledgeDoc(fileCode);
+                    Logger.e(this.getClass(), "#importKnowledgeDoc - Not find file: " + fileCode);
+                    this.lock.set(false);
+                    return null;
+                }
 
-        KnowledgeDoc activatedDoc = doc;
-
-        if (!doc.activated) {
-            if (!this.resource.checkUnit()) {
-                Logger.e(this.getClass(), "#importKnowledgeDoc - Not find Knowledge unit");
-                this.lock.set(false);
-                return null;
+                FileLabel fileLabel = new FileLabel(fileLabelJson);
+                doc.fileLabel = fileLabel;
             }
 
-            activatedDoc = this.activateKnowledgeDoc(doc);
-            if (null == activatedDoc) {
-                Logger.e(this.getClass(), "#importKnowledgeDoc - Unit return error");
-                this.storage.deleteKnowledgeDoc(fileCode);
-                this.lock.set(false);
-                return null;
+            activatedDoc = doc;
+
+            if (!doc.activated) {
+                if (!this.resource.checkUnit()) {
+                    Logger.e(this.getClass(), "#importKnowledgeDoc - Not find Knowledge unit");
+                    this.lock.set(false);
+                    return null;
+                }
+
+                activatedDoc = this.activateKnowledgeDoc(doc);
+                if (null == activatedDoc) {
+                    Logger.e(this.getClass(), "#importKnowledgeDoc - Unit return error");
+                    this.storage.deleteKnowledgeDoc(fileCode);
+                    this.lock.set(false);
+                    return null;
+                }
             }
+
+            // 追加文档
+            this.resource.appendDoc(activatedDoc);
+
+            // Hook
+            AIGCHook hook = this.service.getPluginSystem().getImportKnowledgeDocHook();
+            hook.apply(new AIGCPluginContext(this, activatedDoc));
+
+            Logger.d(this.getClass(), "#importKnowledgeDoc - file code: " + fileCode);
+        } catch (Exception e) {
+            Logger.w(this.getClass(), "#importKnowledgeDoc", e);
+        } finally {
+            this.lock.set(false);
         }
 
-        // 追加文档
-        this.resource.appendDoc(activatedDoc);
-
-        // Hook
-        AIGCHook hook = this.service.getPluginSystem().getImportKnowledgeDocHook();
-        hook.apply(new AIGCPluginContext(this, activatedDoc));
-
-        Logger.d(this.getClass(), "#importKnowledgeDoc - file code: " + fileCode);
-        this.lock.set(false);
         return activatedDoc;
     }
 
@@ -259,36 +267,42 @@ public class KnowledgeBase {
         }
         this.lock.set(true);
 
-        if (!this.resource.checkUnit()) {
-            Logger.e(this.getClass(), "#removeKnowledgeDoc - No unit: " + fileCode);
-            this.lock.set(false);
-            return null;
-        }
+        KnowledgeDoc doc = null;
+        try {
+            if (!this.resource.checkUnit()) {
+                Logger.e(this.getClass(), "#removeKnowledgeDoc - No unit: " + fileCode);
+                this.lock.set(false);
+                return null;
+            }
 
-        KnowledgeDoc doc = this.getKnowledgeDocByFileCode(fileCode);
-        if (null != doc) {
-            this.storage.deleteKnowledgeDoc(fileCode);
+            doc = this.getKnowledgeDocByFileCode(fileCode);
+            if (null != doc) {
+                this.storage.deleteKnowledgeDoc(fileCode);
 
-            this.resource.removeDoc(doc);
+                this.resource.removeDoc(doc);
 
-            if (doc.activated) {
-                if (this.resource.checkUnit()) {
-                    KnowledgeDoc deactivatedDoc = this.deactivateKnowledgeDoc(doc);
-                    doc = deactivatedDoc;
+                if (doc.activated) {
+                    if (this.resource.checkUnit()) {
+                        KnowledgeDoc deactivatedDoc = this.deactivateKnowledgeDoc(doc);
+                        doc = deactivatedDoc;
+                    }
                 }
             }
-        }
-        else {
-            doc = this.resource.removeDoc(fileCode);
+            else {
+                doc = this.resource.removeDoc(fileCode);
+            }
+
+            if (null != doc) {
+                // Hook
+                AIGCHook hook = this.service.getPluginSystem().getRemoveKnowledgeDoc();
+                hook.apply(new AIGCPluginContext(this, doc));
+            }
+        } catch (Exception e) {
+            // Nothing
+        } finally {
+            this.lock.set(false);
         }
 
-        if (null != doc) {
-            // Hook
-            AIGCHook hook = this.service.getPluginSystem().getRemoveKnowledgeDoc();
-            hook.apply(new AIGCPluginContext(this, doc));
-        }
-
-        this.lock.set(false);
         return doc;
     }
 
@@ -936,22 +950,23 @@ public class KnowledgeBase {
             return false;
         }
 
-        // 优化提示词
-        String prompt = this.optimizePrompt(unitName, promptMetadata, query, knowledgeCategories, attachmentContents);
-
-        // 查询知识概念
-        // TODO XJW
-
         AIGCUnit unit = this.service.selectUnitByName(unitName);
         if (null == unit) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Select unit error: " + unitName);
             return false;
         }
 
+        // 优化提示词
+        String prompt = this.optimizePrompt(unitName, promptMetadata, query, knowledgeCategories, attachmentContents);
+
+        // 查询知识概念
+        List<AIGCGenerationRecord> paraphrases = this.makeParaphrases(knowledgeCategories,
+                ModelConfig.getPromptLengthLimit(unitName) - prompt.length(), unitName);
+
         final KnowledgeQAResult result = new KnowledgeQAResult(query, prompt);
 
-        if (unit.getCapability().getName().equals("MOSS")) {
-            // MOSS 单元执行 conversation
+        if (unit.getCapability().getName().equals(ModelConfig.BAIZE_NEXT_UNIT)) {
+            // 特定单元执行 conversation
             this.service.singleConversation(channel, unit, prompt, new ConversationListener() {
                 @Override
                 public void onConversation(AIGCChannel channel, AIGCConversationResponse response) {
@@ -969,7 +984,7 @@ public class KnowledgeBase {
         }
         else {
             // 其他单元执行
-            this.service.generateText(channel, unit, query, prompt, null, false, true,
+            this.service.generateText(channel, unit, query, prompt, paraphrases, false, true,
                     new GenerateTextListener() {
                 @Override
                 public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
@@ -991,6 +1006,36 @@ public class KnowledgeBase {
         }
 
         return true;
+    }
+
+    private List<AIGCGenerationRecord> makeParaphrases(List<String> knowledgeCategories, int lengthLimit,
+                                                       String unitName) {
+        if (null == knowledgeCategories || lengthLimit < 1) {
+            return null;
+        }
+
+        List<KnowledgeParaphrase> paraphraseList = new ArrayList<>();
+        for (String category : knowledgeCategories) {
+            List<KnowledgeParaphrase> list = this.storage.readKnowledgeParaphrases(category);
+            if (list.isEmpty()) {
+                continue;
+            }
+            paraphraseList.addAll(list);
+        }
+
+        List<AIGCGenerationRecord> result = new ArrayList<>();
+        int total = 0;
+        for (KnowledgeParaphrase paraphrase : paraphraseList) {
+            total += paraphrase.getWord().length() + paraphrase.getParaphrase().length();
+            if (total >= lengthLimit) {
+                break;
+            }
+            AIGCGenerationRecord record = new AIGCGenerationRecord(unitName,
+                    paraphrase.getWord(), paraphrase.getParaphrase());
+            result.add(record);
+        }
+
+        return result.isEmpty() ? null : result;
     }
 
     /**
@@ -1528,26 +1573,14 @@ public class KnowledgeBase {
         return promptMetadata;
     }
 
-    private AIGCUnit matchUnit(String modelName) {
-        ModelConfig config = this.storage.getModelConfig(modelName);
-        if (null == config) {
-            return null;
-        }
-
-        AIGCUnit unit = null;
-
-        if (config.getParameter().has("unit")) {
-            String unitName = config.getParameter().getString("unit");
-            unit = this.service.selectUnitByName(unitName);
-        }
-        else {
-            unit = this.service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational);
-            if (null == unit) {
-                unit = this.service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
-            }
-        }
-
-        return unit;
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("name", this.name);
+        json.put("profile", this.getProfile().toJSON());
+        json.put("locked", this.lock.get());
+        json.put("numDocuments", (null != this.resource.docList) ? this.resource.docList.size() : 0);
+        json.put("numArticles", (null != this.resource.articleList) ? this.resource.articleList.size() : 0);
+        return json;
     }
 
 

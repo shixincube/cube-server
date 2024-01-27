@@ -1190,9 +1190,9 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        if (content.length() > ModelConfig.getPromptLengthLimit("MOSS")) {
+        if (content.length() > ModelConfig.getPromptLengthLimit(ModelConfig.BAIZE_NEXT_UNIT)) {
             Logger.w(AIGCService.class, "#conversation - Content length greater than "
-                    + ModelConfig.getPromptLengthLimit("MOSS"));
+                    + ModelConfig.getPromptLengthLimit(ModelConfig.BAIZE_NEXT_UNIT));
             return false;
         }
 
@@ -1212,7 +1212,7 @@ public class AIGCService extends AbstractModule {
         channel.setProcessing(true);
 
         // 查找有该能力的单元
-        AIGCUnit unit = this.selectUnitByName("MOSS");
+        AIGCUnit unit = this.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
         if (null == unit) {
             Logger.w(AIGCService.class, "#conversation - No conversational task unit setup in server");
             channel.setProcessing(false);
@@ -2516,7 +2516,9 @@ public class AIGCService extends AbstractModule {
                             SearchResult searchResult = Explorer.getInstance().search(
                                     (null != originalQuery) ? originalQuery : content, channel.getAuthToken());
                             if (searchResult.hasResult() && networkingEnabled) {
-                                performSearchPageQA(content, searchResult, complexContext);
+                                // 执行搜索问答
+                                performSearchPageQA(content, unit.getCapability().getName(),
+                                        searchResult, complexContext);
                             }
                             else {
                                 // 没有搜索结果
@@ -2689,7 +2691,7 @@ public class AIGCService extends AbstractModule {
             return result;
         }
 
-        private void performSearchPageQA(String query, SearchResult searchResult, ComplexContext context) {
+        private void performSearchPageQA(String query, String unitName, SearchResult searchResult, ComplexContext context) {
             Object mutex = new Object();
             AtomicInteger pageCount = new AtomicInteger(0);
 
@@ -2761,12 +2763,13 @@ public class AIGCService extends AbstractModule {
                 return;
             }
 
-            if (pageContent.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
+            final int lengthLimit = ModelConfig.getPromptLengthLimit(unitName);
+            if (pageContent.length() > lengthLimit) {
                 String[] tmp = pageContent.toString().split("。");
                 pageContent = new StringBuilder();
                 for (String text : tmp) {
                     pageContent.append(text).append("。");
-                    if (pageContent.length() >= ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
+                    if (pageContent.length() >= lengthLimit) {
                         break;
                     }
                 }
@@ -2775,7 +2778,7 @@ public class AIGCService extends AbstractModule {
 
             // 对提取出来的内容进行推理
             String prompt = Consts.formatQuestion(pageContent.toString(), query);
-            String result = syncGenerateText(this.channel.getAuthToken(), ModelConfig.BAIZE_UNIT, prompt);
+            String result = syncGenerateText(this.channel.getAuthToken(), unitName, prompt);
             if (null == result) {
                 Logger.w(this.getClass(), "#performSearchPageQA - Infers page content failed, cid:"
                         + this.channel.getAuthToken().getContactId());

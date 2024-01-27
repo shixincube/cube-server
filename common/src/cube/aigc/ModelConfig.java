@@ -47,6 +47,8 @@ public class ModelConfig implements JSONable {
 
     public final static String BAIZE_UNIT = "Chat";
 
+    public final static String BAIZE_NEXT_UNIT = "BaizeNEXT";
+
     private final static String[][] UNIT_MAP_MODEL = new String[][] {
             new String[] { "Chat", "Baize" },
             new String[] { "GPT", "GPT" },

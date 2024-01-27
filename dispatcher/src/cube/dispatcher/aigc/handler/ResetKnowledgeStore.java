@@ -60,9 +60,13 @@ public class ResetKnowledgeStore extends ContextHandler {
                 return;
             }
 
+            String baseName = null;
             boolean backup = true;
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
+                if (data.has("base")) {
+                    baseName = data.getString("baseName");
+                }
                 if (data.has("backup")) {
                     backup = data.getBoolean("backup");
                 }
@@ -71,7 +75,7 @@ public class ResetKnowledgeStore extends ContextHandler {
             }
 
             // 重置
-            ResetKnowledgeProgress progress = Manager.getInstance().resetKnowledgeStore(token, backup);
+            ResetKnowledgeProgress progress = Manager.getInstance().resetKnowledgeStore(token, baseName, backup);
             if (null == progress) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
@@ -92,8 +96,10 @@ public class ResetKnowledgeStore extends ContextHandler {
             }
 
             long sn = 0;
+            String baseName = null;
             try {
                 sn = Long.parseLong(request.getParameter("sn"));
+                baseName = request.getParameter("base");
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
@@ -101,7 +107,7 @@ public class ResetKnowledgeStore extends ContextHandler {
             }
 
             // 获取重置进度
-            ResetKnowledgeProgress progress = Manager.getInstance().getResetKnowledgeProgress(token, sn);
+            ResetKnowledgeProgress progress = Manager.getInstance().getResetKnowledgeProgress(token, sn, baseName);
             if (null == progress) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();

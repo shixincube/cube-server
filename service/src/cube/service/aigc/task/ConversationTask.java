@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.aigc.ModelConfig;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.*;
@@ -133,8 +134,8 @@ public class ConversationTask extends ServiceTask {
 
             KnowledgeBase knowledgeBase = service.getKnowledgeBase(token, baseName);
             if (null != knowledgeBase) {
-                success = knowledgeBase.performKnowledgeQA(code, "MOSS", content, searchTopK, searchFetchK,
-                        null, null, new KnowledgeQAListener() {
+                success = knowledgeBase.performKnowledgeQA(code, ModelConfig.BAIZE_NEXT_UNIT, content,
+                        searchTopK, searchFetchK, null, null, new KnowledgeQAListener() {
                     @Override
                     public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
                         cellet.speak(talkContext,
