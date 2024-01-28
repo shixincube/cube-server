@@ -94,6 +94,8 @@ public class KnowledgeFramework {
                 base = new KnowledgeBase(KnowledgeFramework.DefaultName,
                         this.service, this.service.getStorage(), authToken, this.fileStorage);
                 framework.putKnowledgeBase(base);
+                base.listKnowledgeDocs();
+                base.listKnowledgeArticles();
             }
             else {
                 KnowledgeBaseInfo info = framework.getKnowledgeBaseInfo(baseName);
@@ -102,6 +104,8 @@ public class KnowledgeFramework {
                     base = new KnowledgeBase(info.name,
                             this.service, this.service.getStorage(), authToken, this.fileStorage);
                     framework.putKnowledgeBase(base);
+                    base.listKnowledgeDocs();
+                    base.listKnowledgeArticles();
                 }
             }
         }

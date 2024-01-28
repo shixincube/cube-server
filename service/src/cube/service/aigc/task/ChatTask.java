@@ -86,6 +86,13 @@ public class ChatTask extends ServiceTask {
         boolean recordable = packet.data.has("recordable") && packet.data.getBoolean("recordable");
         boolean networking = packet.data.has("networking") && packet.data.getBoolean("networking");
 
+        JSONArray categoryArray = packet.data.has("categories")
+                ? packet.data.getJSONArray("categories") : new JSONArray();
+        List<String> categories = new ArrayList<>();
+        for (int i = 0; i < categoryArray.length(); ++i) {
+            categories.add(categoryArray.getString(i));
+        }
+
         List<AIGCGenerationRecord> recordList = null;
         if (null != records) {
             recordList = new ArrayList<>();
@@ -151,7 +158,7 @@ public class ChatTask extends ServiceTask {
             }
             else {
                 // 执行文本生成
-                success = service.generateText(code, content, unit, histories, recordList, recordable, networking,
+                success = service.generateText(code, content, unit, histories, recordList, categories, recordable, networking,
                         new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
@@ -204,12 +211,6 @@ public class ChatTask extends ServiceTask {
                     ? packet.data.getInt("searchTopK") : 10;
             int searchFetchK = packet.data.has("searchFetchK")
                     ? packet.data.getInt("searchFetchK") : 50;
-            JSONArray categoryArray = packet.data.has("categories")
-                    ? packet.data.getJSONArray("categories") : new JSONArray();
-            List<String> categories = new ArrayList<>();
-            for (int i = 0; i < categoryArray.length(); ++i) {
-                categories.add(categoryArray.getString(i));
-            }
 
             String baseName = KnowledgeFramework.DefaultName;
             if (packet.data.has("base")) {

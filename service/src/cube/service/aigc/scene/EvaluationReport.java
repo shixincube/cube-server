@@ -145,7 +145,7 @@ public class EvaluationReport {
             records.add(group.record);
             aigcService.generateText(channel, unit,
                     promptBuilder.serializePromptChaining(group.chaining),
-                    promptBuilder.serializePromptChaining(group.chaining), records, false, false,
+                    promptBuilder.serializePromptChaining(group.chaining), records, null, false, false,
                     new GenerateTextListener() {
                         @Override
                         public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {

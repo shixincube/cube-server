@@ -304,6 +304,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new ResetKnowledgeStoreTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.GetBackupKnowledgeStores.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new GetKnowledgeBackupTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.ListKnowledgeArticles.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new ListKnowledgeArticlesTask(this, talkContext, primitive,

@@ -68,7 +68,7 @@ public class KnowledgeBase {
 
     public final static int DEFAULT_FETCH_K = 30;
 
-    private String name;
+    private final String name;
 
     private AIGCService service;
 
@@ -347,10 +347,7 @@ public class KnowledgeBase {
      * @return
      */
     private KnowledgeDoc deactivateKnowledgeDoc(KnowledgeDoc doc) {
-        JSONObject payload = new JSONObject();
-        payload.put("doc", doc.toJSON());
-
-        Packet packet = new Packet(AIGCAction.DeactivateKnowledgeDoc.name, payload);
+        Packet packet = new Packet(AIGCAction.DeactivateKnowledgeDoc.name, doc.toJSON());
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect());
         if (null == dialect) {
@@ -424,6 +421,7 @@ public class KnowledgeBase {
                     else {
                         payload.put("domain", authToken.getDomain());
                     }
+                    payload.put("name", name);
                     Packet packet = new Packet(AIGCAction.BackupKnowledgeStore.name, payload);
                     ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
                             packet.toDialect(), 90 * 1000);
@@ -468,6 +466,7 @@ public class KnowledgeBase {
                 else {
                     payload.put("domain", authToken.getDomain());
                 }
+                payload.put("name", name);
                 Packet packet = new Packet(AIGCAction.DeleteKnowledgeStore.name, payload);
                 ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
                         packet.toDialect(), 60 * 1000);
@@ -559,6 +558,7 @@ public class KnowledgeBase {
                     }
                     payload = new JSONObject();
                     payload.put("list", array);
+                    payload.put("name", name);
                     packet = new Packet(AIGCAction.BatchActivateKnowledgeDocs.name, payload);
                     dialect = service.getCellet().transmit(resource.unit.getContext(),
                             packet.toDialect(), 3 * 60 * 1000);
@@ -632,6 +632,38 @@ public class KnowledgeBase {
         thread.start();
 
         return this.resetProgress;
+    }
+
+    public JSONArray getKnowledgeBackups() {
+        if (!this.resource.checkUnit()) {
+            return null;
+        }
+
+        JSONObject payload = new JSONObject();
+        if (KnowledgeScope.Private == this.scope) {
+            payload.put("contactId", this.authToken.getContactId());
+        }
+        else {
+            payload.put("domain", this.authToken.getDomain());
+        }
+        payload.put("name", this.name);
+        Packet packet = new Packet(AIGCAction.GetBackupKnowledgeStores.name, payload);
+        ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
+                packet.toDialect(), 30 * 1000);
+        if (null == dialect) {
+            Logger.w(this.getClass(),"#getKnowledgeBackups - Request unit error: "
+                    + this.resource.unit.getCapability().getName());
+            return null;
+        }
+
+        Packet response = new Packet(dialect);
+        int state = Packet.extractCode(response);
+        if (state != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getKnowledgeBackups - Unit return error: " + state);
+            return null;
+        }
+
+        return Packet.extractDataPayload(response).getJSONArray("list");
     }
 
     public List<KnowledgeArticle> getKnowledgeArticles(long startTime, long endTime, boolean activated) {
@@ -984,7 +1016,7 @@ public class KnowledgeBase {
         }
         else {
             // 其他单元执行
-            this.service.generateText(channel, unit, query, prompt, paraphrases, false, true,
+            this.service.generateText(channel, unit, query, prompt, paraphrases, null, false, true,
                     new GenerateTextListener() {
                 @Override
                 public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
@@ -1157,9 +1189,14 @@ public class KnowledgeBase {
             boolean allCategories = false;
             if (null != knowledgeCategories && !knowledgeCategories.isEmpty()) {
                 allCategories = knowledgeCategories.get(0).equals("*");
+
+                if (knowledgeCategories.get(0).equals("-")) {
+                    // "-" 符号表示不使用分类
+                    knowledgeCategories.clear();
+                }
             }
 
-            if (null == knowledgeCategories || knowledgeCategories.isEmpty() || allCategories) {
+            if (allCategories) {
                 // 从数据库里匹配文章
                 TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
                 List<Keyword> keywords = analyzer.analyze(query, 5);
@@ -1183,13 +1220,16 @@ public class KnowledgeBase {
                     Logger.d(KnowledgeBase.class, "#optimizePrompt - Matching articles [All] - num:" + articleList.size());
                 }
             }
-            else {
+            else if (null != knowledgeCategories && !knowledgeCategories.isEmpty()) {
                 for (String category : knowledgeCategories) {
                     List<KnowledgeArticle> list = this.storage.readKnowledgeArticles(category);
                     articleList.addAll(list);
                 }
 
                 Logger.d(KnowledgeBase.class, "#optimizePrompt - Matching articles - num:" + articleList.size());
+            }
+            else {
+                Logger.d(KnowledgeBase.class, "#optimizePrompt - No matching articles");
             }
 
             if (!articleList.isEmpty()) {
@@ -1408,7 +1448,7 @@ public class KnowledgeBase {
 
                     String prompt = Consts.formatQuestion(buf.toString(), matchingSchema.getComprehensiveQuery());
 
-                    service.generateText(channel, unit, matchingSchema.getComprehensiveQuery(), prompt,
+                    service.generateText(channel, unit, matchingSchema.getComprehensiveQuery(), prompt, null,
                             null, false, false, new GenerateTextListener() {
                         @Override
                         public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
@@ -1461,7 +1501,7 @@ public class KnowledgeBase {
             String prompt = Consts.formatQuestion(text, matchingSchema.getSectionQuery());
 
             this.service.generateText(channel, unit, matchingSchema.getSectionQuery(),
-                prompt, null, false, false, new GenerateTextListener() {
+                prompt, null, null, false, false, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                         synchronized (pipelineRecordList) {
@@ -1543,6 +1583,7 @@ public class KnowledgeBase {
         payload.put("pathKey", (KnowledgeScope.Private == this.scope) ?
                 Long.toString(this.authToken.getContactId()) : this.authToken.getDomain());
         payload.put("contactId", this.authToken.getContactId());
+        payload.put("name", this.name);
         payload.put("query", query);
         payload.put("topK", topK);
         payload.put("fetchK", fetchK);

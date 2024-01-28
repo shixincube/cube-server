@@ -47,7 +47,6 @@ import cube.common.notice.GetFile;
 import cube.common.notice.LoadFile;
 import cube.common.state.AIGCStateCode;
 import cube.core.AbstractModule;
-import cube.core.Constraint;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.file.FileProcessResult;
@@ -966,7 +965,7 @@ public class AIGCService extends AbstractModule {
                 StringBuilder result = new StringBuilder();
 
                 this.generateText(channel, unit, maq.articleQuery.query, maq.articleQuery.query,
-                        null, false, false, new GenerateTextListener() {
+                        null, null, false, false, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                         maq.articleQuery.answer = record.answer.replaceAll(",", "，");
@@ -1007,14 +1006,15 @@ public class AIGCService extends AbstractModule {
      * @param unitName
      * @param numHistories
      * @param records
+     * @param categories
      * @param recordable
      * @param networking
      * @param listener
      * @return
      */
     public boolean generateText(String channelCode, String content, String unitName, int numHistories,
-                                List<AIGCGenerationRecord> records, boolean recordable, boolean networking,
-                                GenerateTextListener listener) {
+                                List<AIGCGenerationRecord> records, List<String> categories,
+                                boolean recordable, boolean networking, GenerateTextListener listener) {
         if (!this.isStarted()) {
             Logger.w(AIGCService.class, "#generateText - Service is NOT ready");
             return false;
@@ -1066,7 +1066,7 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, content, records, listener);
+        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, content, categories, records, listener);
         meta.numHistories = numHistories;
         meta.searchEnabled = this.enabledSearch;
         meta.recordHistoryEnabled = recordable;
@@ -1105,7 +1105,8 @@ public class AIGCService extends AbstractModule {
         AIGCChannel channel = new AIGCChannel(authToken, "Baize");
 
         StringBuilder result = new StringBuilder();
-        this.generateText(channel, unit, prompt, prompt, null, false, false, new GenerateTextListener() {
+        this.generateText(channel, unit, prompt, prompt, null, null, false, false,
+                new GenerateTextListener() {
             @Override
             public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
                 result.append(record.answer);
@@ -1135,8 +1136,8 @@ public class AIGCService extends AbstractModule {
     }
 
     public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt,
-                             List<AIGCGenerationRecord> records, boolean search, boolean recordable,
-                             GenerateTextListener listener) {
+                             List<AIGCGenerationRecord> records, List<String> categories,
+                             boolean search, boolean recordable, GenerateTextListener listener) {
         if (this.useAgent) {
             unit = Agent.getInstance().getUnit();
         }
@@ -1147,7 +1148,7 @@ public class AIGCService extends AbstractModule {
             return;
         }
 
-        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, prompt, records, listener);
+        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, prompt, categories, records, listener);
         meta.setOriginalQuery(query);
         meta.setSearchEnabled(search);
         meta.setRecordHistoryEnabled(recordable);
@@ -2275,6 +2276,8 @@ public class AIGCService extends AbstractModule {
 
         protected List<AIGCGenerationRecord> records;
 
+        protected List<String> categories;
+
         protected int numHistories;
 
         protected GenerateTextListener listener;
@@ -2287,7 +2290,7 @@ public class AIGCService extends AbstractModule {
 
         protected boolean networkingEnabled = false;
 
-        public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
+        public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, List<String> categories,
                                     List<AIGCGenerationRecord> records, GenerateTextListener listener) {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
@@ -2295,24 +2298,9 @@ public class AIGCService extends AbstractModule {
             this.participant = ContactManager.getInstance().getContact(channel.getAuthToken().getDomain(),
                     channel.getAuthToken().getContactId());
             this.content = content;
+            this.categories = categories;
             this.records = records;
             this.numHistories = (null != records) ? records.size() : 0;
-            this.listener = listener;
-
-            this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName());
-            this.history.queryContactId = channel.getAuthToken().getContactId();
-            this.history.queryTime = System.currentTimeMillis();
-            this.history.queryContent = content;
-        }
-
-        public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, int numHistories, GenerateTextListener listener) {
-            this.sn = Utils.generateSerialNumber();
-            this.unit = unit;
-            this.channel = channel;
-            this.participant = ContactManager.getInstance().getContact(channel.getAuthToken().getDomain(),
-                    channel.getAuthToken().getContactId());
-            this.content = content;
-            this.numHistories = numHistories;
             this.listener = listener;
 
             this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName());
@@ -2458,11 +2446,11 @@ public class AIGCService extends AbstractModule {
                 }
                 else {
                     // 处理多轮历史记录
+                    int lengthCount = 0;
                     List<AIGCGenerationRecord> candidateRecords = new ArrayList<>();
                     if (null == this.records) {
                         int validNumHistories = Math.min(this.numHistories, maxHistories);
                         if (validNumHistories > 0) {
-                            int lengthCount = 0;
                             List<AIGCGenerationRecord> records = this.channel.getLastHistory(validNumHistories);
                             // 正序列表转为倒序以便计算上下文长度
                             Collections.reverse(records);
@@ -2481,7 +2469,6 @@ public class AIGCService extends AbstractModule {
                         }
                     }
                     else {
-                        int lengthCount = 0;
                         for (int i = this.records.size() - 1; i >= 0; --i) {
                             AIGCGenerationRecord record = this.records.get(i);
                             lengthCount += record.totalWords();
@@ -2498,6 +2485,12 @@ public class AIGCService extends AbstractModule {
                         }
                         // 翻转顺序
                         Collections.reverse(candidateRecords);
+                    }
+
+                    // 加入分类释义
+                    if (null != this.categories && !this.categories.isEmpty()) {
+                        this.fillRecords(candidateRecords, this.categories, lengthLimit - lengthCount,
+                                this.unit.getCapability().getName());
                     }
 
                     // 写入数组
@@ -2793,6 +2786,28 @@ public class AIGCService extends AbstractModule {
 
             // 将页面推理结果填充到上下文
             context.fixNetworkingResult(pages, result);
+        }
+
+        private void fillRecords(List<AIGCGenerationRecord> recordList, List<String> categories, int lengthLimit,
+                                 String unitName) {
+            int total = 0;
+            for (String category : categories) {
+                List<KnowledgeParaphrase> list = storage.readKnowledgeParaphrases(category);
+                for (KnowledgeParaphrase paraphrase : list) {
+                    total += paraphrase.getWord().length() + paraphrase.getParaphrase().length();
+                    if (total > lengthLimit) {
+                        break;
+                    }
+
+                    AIGCGenerationRecord record = new AIGCGenerationRecord(unitName,
+                            paraphrase.getWord(), paraphrase.getParaphrase());
+                    recordList.add(record);
+                }
+
+                if (total > lengthLimit) {
+                    break;
+                }
+            }
         }
     }
 
