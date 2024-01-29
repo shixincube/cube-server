@@ -61,6 +61,7 @@ public class RemoveKnowledgeDoc extends ContextHandler {
                 return;
             }
 
+            String baseName = Manager.DEFAULT_BASE_NAME;
             String fileCode = null;
             try {
                 JSONObject data = readBodyAsJSONObject(request);
@@ -68,6 +69,10 @@ public class RemoveKnowledgeDoc extends ContextHandler {
                     this.respond(response, HttpStatus.FORBIDDEN_403);
                     this.complete();
                     return;
+                }
+
+                if (data.has("base")) {
+                    baseName = data.getString("base");
                 }
 
                 if (!data.has("fileCode")) {
@@ -81,7 +86,7 @@ public class RemoveKnowledgeDoc extends ContextHandler {
                 e.printStackTrace();
             }
 
-            KnowledgeDoc doc = Manager.getInstance().removeKnowledgeDoc(token, fileCode);
+            KnowledgeDoc doc = Manager.getInstance().removeKnowledgeDoc(token, baseName, fileCode);
             if (null == doc) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();

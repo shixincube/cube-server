@@ -212,6 +212,11 @@ public enum AIGCAction {
     DeactivateKnowledgeDoc("deactivateKnowledgeDoc"),
 
     /**
+     * 获取知识库操作进度。
+     */
+    GetKnowledgeProgress("getKnowledgeProgress"),
+
+    /**
      * 批量激活知识库文档。
      */
     BatchActivateKnowledgeDocs("batchActivateKnowledgeDocs"),

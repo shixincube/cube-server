@@ -61,6 +61,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Manager implements Tickable, PerformerListener {
 
+    public final static String DEFAULT_BASE_NAME = "document";
+
     private final static Manager instance = new Manager();
 
     private Performer performer;
@@ -408,8 +410,9 @@ public class Manager implements Tickable, PerformerListener {
         }
     }
 
-    public KnowledgeDoc importKnowledgeDoc(String token, String fileCode) {
+    public KnowledgeDoc importKnowledgeDoc(String token, String baseName, String fileCode) {
         JSONObject payload = new JSONObject();
+        payload.put("base", baseName);
         payload.put("fileCode", fileCode);
         Packet packet = new Packet(AIGCAction.ImportKnowledgeDoc.name, payload);
         ActionDialect request = packet.toDialect();
@@ -429,8 +432,31 @@ public class Manager implements Tickable, PerformerListener {
         return new KnowledgeDoc(Packet.extractDataPayload(responsePacket));
     }
 
-    public KnowledgeDoc removeKnowledgeDoc(String token, String fileCode) {
+    public KnowledgeProgress importKnowledgeDocs(String token, String baseName, JSONArray fileCodeArray) {
         JSONObject payload = new JSONObject();
+        payload.put("base", baseName);
+        payload.put("fileCodeList", fileCodeArray);
+        Packet packet = new Packet(AIGCAction.ImportKnowledgeDoc.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 2 * 60 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#importKnowledgeDocs - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#importKnowledgeDocs - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new KnowledgeProgress(Packet.extractDataPayload(responsePacket));
+    }
+
+    public KnowledgeDoc removeKnowledgeDoc(String token, String baseName, String fileCode) {
+        JSONObject payload = new JSONObject();
+        payload.put("base", baseName);
         payload.put("fileCode", fileCode);
         Packet packet = new Packet(AIGCAction.RemoveKnowledgeDoc.name, payload);
         ActionDialect request = packet.toDialect();
@@ -449,6 +475,29 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return new KnowledgeDoc(Packet.extractDataPayload(responsePacket));
+    }
+
+    public KnowledgeProgress getKnowledgeProgress(String token, String baseName, long sn) {
+        JSONObject payload = new JSONObject();
+        payload.put("base", baseName);
+        payload.put("sn", sn);
+        Packet packet = new Packet(AIGCAction.GetKnowledgeProgress.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#getKnowledgeProgress - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#getKnowledgeProgress - Response state is NOT ok : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new KnowledgeProgress(Packet.extractDataPayload(responsePacket));
     }
 
     public ResetKnowledgeProgress getResetKnowledgeProgress(String token, long sn, String baseName) {

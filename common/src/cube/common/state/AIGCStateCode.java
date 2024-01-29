@@ -92,6 +92,11 @@ public enum AIGCStateCode {
     IllegalOperation(25),
 
     /**
+     * 系统忙。
+     */
+    Busy(26),
+
+    /**
      * 单元未就绪。
      */
     UnitNoReady(30),
