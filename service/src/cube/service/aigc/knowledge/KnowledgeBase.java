@@ -29,11 +29,9 @@ package cube.service.aigc.knowledge;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
-import com.sun.org.apache.xpath.internal.operations.Mod;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.auth.AuthToken;
-import cube.common.JSONable;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
@@ -151,7 +149,16 @@ public class KnowledgeBase {
      * @return
      */
     public List<KnowledgeDoc> listKnowledgeDocs() {
+        return this.listKnowledgeDocs(false);
+    }
+
+    public List<KnowledgeDoc> listKnowledgeDocs(boolean force) {
         synchronized (this) {
+            if (force) {
+                this.resource.clearDocs();
+                this.resource.listDocTime = 0;
+            }
+
             if (null != this.resource.docList && System.currentTimeMillis() - this.resource.listDocTime < 30 * 1000) {
                 Logger.d(this.getClass(), "#listKnowledgeDocs - Read from memory");
                 return this.resource.docList;
@@ -271,12 +278,6 @@ public class KnowledgeBase {
 
         KnowledgeDoc doc = null;
         try {
-            if (!this.resource.checkUnit()) {
-                Logger.e(this.getClass(), "#removeKnowledgeDoc - No unit: " + fileCode);
-                this.lock.set(false);
-                return null;
-            }
-
             doc = this.getKnowledgeDocByFileCode(fileCode);
             if (null != doc) {
                 this.storage.deleteKnowledgeDoc(fileCode);
@@ -324,7 +325,7 @@ public class KnowledgeBase {
      * @param listener
      * @return
      */
-    public KnowledgeProgress batchImportKnowledgeDocuments(List<String> fileCodeList, BatchKnowledgeListener listener) {
+    public KnowledgeProgress batchImportKnowledgeDocuments(List<String> fileCodeList, KnowledgeProgressListener listener) {
         if (this.lock.get()) {
             Logger.w(this.getClass(), "#batchImportKnowledgeDocuments - Store locked: " + this.name);
             listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.Busy.code));
@@ -333,7 +334,7 @@ public class KnowledgeBase {
         this.lock.set(true);
 
         try {
-            // 检查节点
+            // 检查单元
             if (!this.resource.checkUnit()) {
                 listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.UnitNoReady.code));
                 this.lock.set(false);
@@ -358,8 +359,12 @@ public class KnowledgeBase {
                     }
 
                     doc.fileLabel = new FileLabel(fileLabelJson);
-                    // 写入数据库
-                    this.storage.writeKnowledgeDoc(doc);
+                }
+                else {
+                    // 该文件已经导入，跳过
+                    if (doc.activated) {
+                        continue;
+                    }
                 }
 
                 if (null == doc.fileLabel) {
@@ -412,7 +417,7 @@ public class KnowledgeBase {
                     try {
                         for (List<KnowledgeDoc> batch : batchList) {
                             // 更新进度
-                            progress.setActivatingDoc(batch.get(0));
+                            progress.setProcessingDoc(batch.get(0));
 
                             // 按照批次发送给单元
                             JSONArray array = new JSONArray();
@@ -447,8 +452,9 @@ public class KnowledgeBase {
                             }
 
                             // 更新进度
-                            progress.setActivatingDoc(batch.get(batch.size() - 1));
+                            progress.setProcessingDoc(batch.get(batch.size() - 1));
 
+                            // 更新完成列表
                             JSONArray resultArray = Packet.extractDataPayload(response).getJSONArray("list");
                             for (int i = 0; i < resultArray.length(); ++i) {
                                 KnowledgeDoc doc = new KnowledgeDoc(resultArray.getJSONObject(i));
@@ -463,10 +469,10 @@ public class KnowledgeBase {
                         }
 
                         // 取消活跃文档
-                        progress.setActivatingDoc(null);
+                        progress.setProcessingDoc(null);
 
                         // 获取最新列表
-                        List<KnowledgeDoc> currentList = listKnowledgeDocs();
+                        List<KnowledgeDoc> currentList = listKnowledgeDocs(true);
                         for (KnowledgeDoc doc : completionList) {
                             if (currentList.contains(doc)) {
                                 // 已经存在
@@ -476,7 +482,14 @@ public class KnowledgeBase {
                                 // 新文档
                                 storage.writeKnowledgeDoc(doc);
                             }
+
+                            // Hook
+                            AIGCHook hook = service.getPluginSystem().getImportKnowledgeDocHook();
+                            hook.apply(new AIGCPluginContext(KnowledgeBase.this, doc));
                         }
+
+                        // 刷新列表
+                        listKnowledgeDocs(true);
 
                         // 更新进度
                         progress.setStateCode(AIGCStateCode.Ok.code);
@@ -496,7 +509,59 @@ public class KnowledgeBase {
 
             return this.progress;
         } catch (Exception e) {
-            // 异常故障
+            // 异常
+            listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.Failure.code));
+            this.lock.set(false);
+            return new KnowledgeProgress(AIGCStateCode.Failure.code);
+        }
+    }
+
+    /**
+     * 批量移除知识文档。
+     *
+     * @param fileCodeList
+     * @param listener
+     * @return
+     */
+    public KnowledgeProgress batchRemoveKnowledgeDocuments(List<String> fileCodeList, KnowledgeProgressListener listener) {
+        if (this.lock.get()) {
+            Logger.w(this.getClass(), "#batchRemoveKnowledgeDocuments - Store locked: " + this.name);
+            listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.Busy.code));
+            return new KnowledgeProgress(AIGCStateCode.Busy.code);
+        }
+        this.lock.set(true);
+
+        try {
+            // 检查单元
+            if (!this.resource.checkUnit()) {
+                listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.UnitNoReady.code));
+                this.lock.set(false);
+                return new KnowledgeProgress(AIGCStateCode.UnitNoReady.code);
+            }
+
+            // 检查文档
+
+
+            // 创建进度
+            this.progress = new KnowledgeProgress(AIGCStateCode.Processing.code);
+
+            (new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+
+                    } catch (Exception e) {
+
+                    } finally {
+                        // 解锁
+                        lock.set(false);
+                    }
+                }
+            })).start();
+
+            return this.progress;
+        } catch (Exception e) {
+            // 异常
             listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.Failure.code));
             this.lock.set(false);
             return new KnowledgeProgress(AIGCStateCode.Failure.code);
@@ -801,10 +866,8 @@ public class KnowledgeBase {
                             + name + "/" + authToken.getContactId());
 
                     // 更新内存数据
-                    resource.clearDocs();
-                    resource.clearArticles();
-                    listKnowledgeDocs();
-                    listKnowledgeArticles();
+                    listKnowledgeDocs(true);
+                    listKnowledgeArticles(true);
                 } finally {
                     // 解锁
                     lock.set(false);
@@ -951,7 +1014,16 @@ public class KnowledgeBase {
      * @return
      */
     public List<KnowledgeArticle> listKnowledgeArticles() {
+        return this.listKnowledgeArticles(false);
+    }
+
+    public List<KnowledgeArticle> listKnowledgeArticles(boolean force) {
         synchronized (this) {
+            if (force) {
+                this.resource.clearArticles();
+                this.resource.listArticleTime = 0;
+            }
+
             if (null != this.resource.articleList && System.currentTimeMillis() - this.resource.listArticleTime < 30 * 1000) {
                 return this.resource.articleList;
             }

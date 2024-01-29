@@ -222,6 +222,11 @@ public enum AIGCAction {
     BatchActivateKnowledgeDocs("batchActivateKnowledgeDocs"),
 
     /**
+     * 批量释放知识库文档。
+     */
+    BatchDeactivateKnowledgeDocs("batchDeactivateKnowledgeDocs"),
+
+    /**
      * 重置知识库数据。
      */
     ResetKnowledgeStore("resetKnowledgeStore"),

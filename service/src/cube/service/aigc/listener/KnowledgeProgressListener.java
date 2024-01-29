@@ -32,7 +32,7 @@ import cube.service.aigc.knowledge.KnowledgeBase;
 /**
  * 批量操作知识库监听器。
  */
-public interface BatchKnowledgeListener {
+public interface KnowledgeProgressListener {
 
     void onProgress(KnowledgeBase knowledgeBase, KnowledgeProgress progress);
 

@@ -45,7 +45,7 @@ public class KnowledgeProgress implements JSONable {
 
     private int processedDocs;
 
-    private KnowledgeDoc activatingDoc;
+    private KnowledgeDoc processingDoc;
 
     private int stateCode;
 
@@ -63,8 +63,8 @@ public class KnowledgeProgress implements JSONable {
         this.endTime = json.getLong("endTime");
         this.totalDocs = json.getInt("totalDocs");
         this.processedDocs = json.getInt("processedDocs");
-        if (json.has("activatingDoc")) {
-            this.activatingDoc = new KnowledgeDoc(json.getJSONObject("activatingDoc"));
+        if (json.has("processingDoc")) {
+            this.processingDoc = new KnowledgeDoc(json.getJSONObject("processingDoc"));
         }
         this.stateCode = json.getInt("stateCode");
     }
@@ -85,8 +85,8 @@ public class KnowledgeProgress implements JSONable {
         this.processedDocs = value;
     }
 
-    public void setActivatingDoc(KnowledgeDoc doc) {
-        this.activatingDoc = doc;
+    public void setProcessingDoc(KnowledgeDoc doc) {
+        this.processingDoc = doc;
     }
 
     public void setStateCode(int code) {
@@ -105,8 +105,8 @@ public class KnowledgeProgress implements JSONable {
         json.put("endTime", this.endTime);
         json.put("totalDocs", this.totalDocs);
         json.put("processedDocs", this.processedDocs);
-        if (null != this.activatingDoc) {
-            json.put("activatingDoc", this.activatingDoc.toJSON());
+        if (null != this.processingDoc) {
+            json.put("activatingDoc", this.processingDoc.toJSON());
         }
         json.put("stateCode", this.stateCode);
         return json;

@@ -40,7 +40,7 @@ import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.knowledge.KnowledgeFramework;
-import cube.service.aigc.listener.BatchKnowledgeListener;
+import cube.service.aigc.listener.KnowledgeProgressListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -119,7 +119,7 @@ public class ImportKnowledgeDocTask extends ServiceTask {
             markResponseTime();
         }
         else {
-            KnowledgeProgress progress = base.batchImportKnowledgeDocuments(fileCodeList, new BatchKnowledgeListener() {
+            KnowledgeProgress progress = base.batchImportKnowledgeDocuments(fileCodeList, new KnowledgeProgressListener() {
                 @Override
                 public void onProgress(KnowledgeBase knowledgeBase, KnowledgeProgress progress) {
                     // Nothing
