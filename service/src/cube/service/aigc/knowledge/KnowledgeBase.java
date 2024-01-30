@@ -437,7 +437,7 @@ public class KnowledgeBase {
                                 progress.setStateCode(AIGCStateCode.UnitError.code);
                                 progress.setEndTime(System.currentTimeMillis());
                                 listener.onFailed(KnowledgeBase.this, progress);
-                                return;
+                                continue;
                             }
 
                             Packet response = new Packet(dialect);
@@ -448,7 +448,7 @@ public class KnowledgeBase {
                                 progress.setStateCode(AIGCStateCode.Failure.code);
                                 progress.setEndTime(System.currentTimeMillis());
                                 listener.onFailed(KnowledgeBase.this, progress);
-                                return;
+                                continue;
                             }
 
                             // 更新进度
@@ -540,18 +540,124 @@ public class KnowledgeBase {
             }
 
             // 检查文档
+            List<KnowledgeDoc> allList = new ArrayList<>();
+            for (String fileCode : fileCodeList) {
+                KnowledgeDoc doc = this.resource.getKnowledgeDoc(fileCode);
+                if (null != doc) {
+                    allList.add(doc);
+                }
+            }
 
+            if (allList.isEmpty()) {
+                Logger.w(this.getClass(), "#batchRemoveKnowledgeDocuments - No file: " + this.name);
+                listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.NoData.code));
+                this.lock.set(false);
+                return new KnowledgeProgress(AIGCStateCode.NoData.code);
+            }
+
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#batchRemoveKnowledgeDocuments - Total file num: " + allList.size());
+            }
+
+            // 分批
+            int batchSize = 10;
+            final List<List<KnowledgeDoc>> batchList = new ArrayList<>();
+            int index = 0;
+            while (index < allList.size()) {
+                List<KnowledgeDoc> docList = new ArrayList<>();
+                while (docList.size() < batchSize) {
+                    KnowledgeDoc doc = allList.get(index);
+                    docList.add(doc);
+                    ++index;
+                    if (index >= allList.size()) {
+                        break;
+                    }
+                }
+                batchList.add(docList);
+            }
+
+            final List<KnowledgeDoc> completionList = new ArrayList<>();
 
             // 创建进度
             this.progress = new KnowledgeProgress(AIGCStateCode.Processing.code);
+            // 设置总文档数
+            this.progress.setTotalDocs(allList.size());
 
             (new Thread(new Runnable() {
                 @Override
                 public void run() {
                     try {
+                        for (List<KnowledgeDoc> batch : batchList) {
+                            // 更新进度
+                            progress.setProcessingDoc(batch.get(0));
 
+                            // 按照批次发送给单元
+                            JSONArray array = new JSONArray();
+                            for (KnowledgeDoc doc : batch) {
+                                array.put(doc.toJSON());
+                            }
+                            JSONObject payload = new JSONObject();
+                            payload.put("list", array);
+                            payload.put("name", name);
+                            Packet packet = new Packet(AIGCAction.BatchDeactivateKnowledgeDocs.name, payload);
+                            ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
+                                    packet.toDialect(), 3 * 60 * 1000);
+                            if (null == dialect) {
+                                Logger.w(this.getClass(),"#batchRemoveKnowledgeDocuments - Request unit error: "
+                                        + resource.unit.getCapability().getName());
+                                // 更新进度
+                                progress.setStateCode(AIGCStateCode.UnitError.code);
+                                progress.setEndTime(System.currentTimeMillis());
+                                listener.onFailed(KnowledgeBase.this, progress);
+                                continue;
+                            }
+
+                            Packet response = new Packet(dialect);
+                            int state = Packet.extractCode(response);
+                            if (state != AIGCStateCode.Ok.code) {
+                                Logger.w(this.getClass(), "#batchRemoveKnowledgeDocuments - Unit return error: " + state);
+                                // 更新进度
+                                progress.setStateCode(AIGCStateCode.Failure.code);
+                                progress.setEndTime(System.currentTimeMillis());
+                                listener.onFailed(KnowledgeBase.this, progress);
+                                continue;
+                            }
+
+                            // 更新进度
+                            progress.setProcessingDoc(batch.get(batch.size() - 1));
+
+                            // 更新完成列表
+                            JSONArray resultArray = Packet.extractDataPayload(response).getJSONArray("list");
+                            for (int i = 0; i < resultArray.length(); ++i) {
+                                KnowledgeDoc doc = new KnowledgeDoc(resultArray.getJSONObject(i));
+                                completionList.add(doc);
+                            }
+
+                            // 更新进度
+                            progress.setProcessedDocs(completionList.size());
+
+                            // 回调
+                            listener.onProgress(KnowledgeBase.this, progress);
+                        }
+
+                        // 取消活跃文档
+                        progress.setProcessingDoc(null);
+
+                        // 删除文档
+                        for (KnowledgeDoc doc : completionList) {
+                            storage.deleteKnowledgeDoc(doc.fileCode);
+                            resource.removeDoc(doc);
+                        }
+
+                        // 更新进度
+                        progress.setStateCode(AIGCStateCode.Ok.code);
+                        progress.setEndTime(System.currentTimeMillis());
+                        listener.onCompleted(KnowledgeBase.this, progress);
                     } catch (Exception e) {
-
+                        progress.setStateCode(AIGCStateCode.Failure.code);
+                        progress.setEndTime(System.currentTimeMillis());
+                        listener.onFailed(KnowledgeBase.this, progress);
+                        Logger.e(KnowledgeBase.class, "#batchRemoveKnowledgeDocuments", e);
                     } finally {
                         // 解锁
                         lock.set(false);

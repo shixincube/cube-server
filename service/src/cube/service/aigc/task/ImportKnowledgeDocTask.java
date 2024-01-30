@@ -106,7 +106,6 @@ public class ImportKnowledgeDocTask extends ServiceTask {
 
         if (null != fileCode) {
             KnowledgeDoc doc = base.importKnowledgeDoc(fileCode);
-
             if (null == doc) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

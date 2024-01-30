@@ -33,13 +33,19 @@ import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.KnowledgeDoc;
+import cube.common.entity.KnowledgeProgress;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.knowledge.KnowledgeFramework;
+import cube.service.aigc.listener.KnowledgeProgressListener;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 移除知识库文档任务。
@@ -63,14 +69,26 @@ public class RemoveKnowledgeDocTask extends ServiceTask {
             return;
         }
 
-        if (!packet.data.has("fileCode")) {
+        String fileCode = null;
+        List<String> fileCodeList = null;
+
+        if (packet.data.has("fileCode")) {
+            fileCode = packet.data.getString("fileCode");
+        }
+        else if (packet.data.has("fileCodeList")) {
+            fileCodeList = new ArrayList<>();
+            JSONArray array = packet.data.getJSONArray("fileCodeList");
+            for (int i = 0; i < array.length(); ++i) {
+                fileCodeList.add(array.getString(i));
+            }
+        }
+
+        if (null == fileCode && null == fileCodeList) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
             return;
         }
-
-        String fileCode = packet.data.getString("fileCode");
 
         String baseName = KnowledgeFramework.DefaultName;
         if (packet.data.has("base")) {
@@ -86,25 +104,40 @@ public class RemoveKnowledgeDocTask extends ServiceTask {
             return;
         }
 
-        KnowledgeDoc doc = null;
-        try {
-            doc = base.removeKnowledgeDoc(fileCode);
-        } catch (Exception e) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
-            markResponseTime();
-            return;
-        }
+        if (null != fileCode) {
+            KnowledgeDoc doc = base.removeKnowledgeDoc(fileCode);
+            if (null == doc) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                markResponseTime();
+                return;
+            }
 
-        if (null == doc) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, doc.toJSON()));
             markResponseTime();
-            return;
         }
+        else {
+            KnowledgeProgress progress = base.batchRemoveKnowledgeDocuments(fileCodeList, new KnowledgeProgressListener() {
+                @Override
+                public void onProgress(KnowledgeBase knowledgeBase, KnowledgeProgress progress) {
+                    // Nothing
+                }
 
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, doc.toJSON()));
-        markResponseTime();
+                @Override
+                public void onFailed(KnowledgeBase knowledgeBase, KnowledgeProgress progress) {
+                    // Nothing
+                }
+
+                @Override
+                public void onCompleted(KnowledgeBase knowledgeBase, KnowledgeProgress progress) {
+                    // Nothing
+                }
+            });
+
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, progress.toJSON()));
+            markResponseTime();
+        }
     }
 }

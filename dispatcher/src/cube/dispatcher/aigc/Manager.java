@@ -477,6 +477,10 @@ public class Manager implements Tickable, PerformerListener {
         return new KnowledgeDoc(Packet.extractDataPayload(responsePacket));
     }
 
+    public KnowledgeProgress removeKnowledgeDocs(String token, String baseName, JSONArray fileCodeArray) {
+        return null;
+    }
+
     public KnowledgeProgress getKnowledgeProgress(String token, String baseName, long sn) {
         JSONObject payload = new JSONObject();
         payload.put("base", baseName);
