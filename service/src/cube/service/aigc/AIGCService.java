@@ -262,6 +262,9 @@ public class AIGCService extends AbstractModule {
                 }
                 ContactManager.getInstance().getPluginSystem().register(ContactHook.NewContact,
                         new ActivateKnowledgeBasePlugin(AIGCService.this));
+                ContactEventPlugin contactPlugin = new ContactEventPlugin(AIGCService.this);
+                ContactManager.getInstance().getPluginSystem().register(ContactHook.SignOut, contactPlugin);
+                ContactManager.getInstance().getPluginSystem().register(ContactHook.DeviceTimeout, contactPlugin);
 
                 // 监听文件服务事件
                 AbstractModule fileStorage = getKernel().getModule("FileStorage");
@@ -656,6 +659,10 @@ public class AIGCService extends AbstractModule {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(tokenCode);
         return authToken;
+    }
+
+    public KnowledgeFramework getKnowledgeFramework() {
+        return this.knowledgeFramework;
     }
 
     /**

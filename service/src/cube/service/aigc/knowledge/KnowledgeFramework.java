@@ -114,6 +114,16 @@ public class KnowledgeFramework {
     }
 
 
+    public void freeBase(String domain, Long contactId) {
+        Framework framework = this.frameworkMap.get(contactId);
+        if (null == framework) {
+            return;
+        }
+
+        this.frameworkMap.remove(contactId);
+        framework.destroy();
+    }
+
 
     private class Framework {
 
@@ -175,6 +185,11 @@ public class KnowledgeFramework {
                     this.baseInfoList.addAll(list);
                 }
             }
+        }
+
+        public void destroy() {
+            this.baseInfoList.clear();
+            this.knowledgeMap.clear();
         }
     }
 }

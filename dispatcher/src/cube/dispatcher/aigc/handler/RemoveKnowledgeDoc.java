@@ -27,9 +27,11 @@
 package cube.dispatcher.aigc.handler;
 
 import cube.common.entity.KnowledgeDoc;
+import cube.common.entity.KnowledgeProgress;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
@@ -61,8 +63,6 @@ public class RemoveKnowledgeDoc extends ContextHandler {
                 return;
             }
 
-            String baseName = Manager.DEFAULT_BASE_NAME;
-            String fileCode = null;
             try {
                 JSONObject data = readBodyAsJSONObject(request);
                 if (null == data) {
@@ -71,30 +71,71 @@ public class RemoveKnowledgeDoc extends ContextHandler {
                     return;
                 }
 
+                String baseName = Manager.DEFAULT_BASE_NAME;
                 if (data.has("base")) {
                     baseName = data.getString("base");
                 }
 
-                if (!data.has("fileCode")) {
+                if (data.has("fileCode")) {
+                    String fileCode = data.getString("fileCode");
+                    KnowledgeDoc doc = Manager.getInstance().removeKnowledgeDoc(token, baseName, fileCode);
+                    if (null == doc) {
+                        this.respond(response, HttpStatus.BAD_REQUEST_400);
+                        this.complete();
+                    }
+                    else {
+                        this.respondOk(response, doc.toJSON());
+                        this.complete();
+                    }
+                }
+                else if (data.has("fileCodeList")) {
+                    JSONArray fileCodeList = data.getJSONArray("fileCodeList");
+                    KnowledgeProgress progress = Manager.getInstance().removeKnowledgeDocs(token, baseName, fileCodeList);
+                    if (null == progress) {
+                        this.respond(response, HttpStatus.BAD_REQUEST_400);
+                        this.complete();
+                    }
+                    else {
+                        this.respondOk(response, progress.toJSON());
+                        this.complete();
+                    }
+                }
+                else {
                     this.respond(response, HttpStatus.FORBIDDEN_403);
                     this.complete();
-                    return;
                 }
-
-                fileCode = data.getString("fileCode");
             } catch (IOException e) {
-                e.printStackTrace();
+                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.complete();
             }
+        }
 
-            KnowledgeDoc doc = Manager.getInstance().removeKnowledgeDoc(token, baseName, fileCode);
-            if (null == doc) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+        @Override
+        public void doGet(HttpServletRequest request, HttpServletResponse response) {
+            String token = this.getLastRequestPath(request);
+            if (!Manager.getInstance().checkToken(token)) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
                 return;
             }
 
-            this.respondOk(response, doc.toJSON());
-            this.complete();
+            try {
+                String paramSN = request.getParameter("sn");
+                String baseName = (null != request.getParameter("base")) ?
+                        request.getParameter("base") : Manager.DEFAULT_BASE_NAME;
+                KnowledgeProgress progress = Manager.getInstance().getKnowledgeProgress(token, baseName, Long.parseLong(paramSN));
+                if (null == progress) {
+                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.complete();
+                    return;
+                }
+
+                this.respondOk(response, progress.toJSON());
+                this.complete();
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.complete();
+            }
         }
     }
 }
