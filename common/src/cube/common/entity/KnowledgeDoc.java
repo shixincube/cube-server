@@ -57,9 +57,11 @@ public class KnowledgeDoc extends Entity {
      */
     public String baseName = "document";
 
+    public String fileName;
+
     public boolean activated;
 
-    public FileLabel fileLabel;
+    private FileLabel fileLabel;
 
     /**
      * 文本分割器。
@@ -77,13 +79,14 @@ public class KnowledgeDoc extends Entity {
     public KnowledgeScope scope = KnowledgeScope.Private;
 
     public KnowledgeDoc(long id, String domain, long contactId, String fileCode, String baseName,
-                        boolean activated, int numSegments, KnowledgeScope scope) {
+                        String fileName, boolean activated, int numSegments, KnowledgeScope scope) {
         super(id, domain);
         this.contactId = contactId;
         this.fileCode = fileCode;
         if (null != baseName) {
             this.baseName = baseName;
         }
+        this.fileName = fileName;
         this.activated = activated;
         this.numSegments = numSegments;
         this.scope = scope;
@@ -99,9 +102,22 @@ public class KnowledgeDoc extends Entity {
         this.numSegments = json.getInt("numSegments");
         this.scope = KnowledgeScope.parse(json.getString("scope"));
 
+        if (json.has("fileName")) {
+            this.fileName = json.getString("fileName");
+        }
+
         if (json.has("fileLabel")) {
             this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
         }
+    }
+
+    public FileLabel getFileLabel() {
+        return this.fileLabel;
+    }
+
+    public void setFileLabel(FileLabel fileLabel) {
+        this.fileLabel = fileLabel;
+        this.fileName = fileLabel.getFileName();
     }
 
     @Override
@@ -129,6 +145,10 @@ public class KnowledgeDoc extends Entity {
         json.put("splitter", this.splitter);
         json.put("numSegments", this.numSegments);
         json.put("scope", this.scope.name);
+
+        if (null != this.fileName) {
+            json.put("fileName", this.fileName);
+        }
 
         if (null != this.fileLabel) {
             json.put("fileLabel", this.fileLabel.toJSON());

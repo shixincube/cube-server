@@ -80,7 +80,7 @@ public class KnowledgeSource implements JSONable {
     @Override
     public String toString() {
         if (null != this.document) {
-            return "文件《" + FileUtils.extractFileName(this.document.fileLabel.getFileName()) + "》";
+            return "文件《" + FileUtils.extractFileName(this.document.getFileLabel().getFileName()) + "》";
         }
         else if (null != this.article) {
             return "文章《" + this.article.title + "》";

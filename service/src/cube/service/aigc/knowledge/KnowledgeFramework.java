@@ -88,29 +88,22 @@ public class KnowledgeFramework {
 
         KnowledgeBase base = framework.getKnowledgeBase(baseName);
         if (null == base) {
-            if (KnowledgeFramework.DefaultName.equals(baseName)) {
-                // 创建默认库
+            KnowledgeBaseInfo info = framework.getKnowledgeBaseInfo(baseName);
+            if (null != info) {
                 AuthToken authToken = this.authService.queryAuthTokenByContactId(contactId);
-                base = new KnowledgeBase(KnowledgeFramework.DefaultName,
+                base = new KnowledgeBase(info,
                         this.service, this.service.getStorage(), authToken, this.fileStorage);
                 framework.putKnowledgeBase(base);
                 base.listKnowledgeDocs();
                 base.listKnowledgeArticles();
             }
-            else {
-                KnowledgeBaseInfo info = framework.getKnowledgeBaseInfo(baseName);
-                if (null != info) {
-                    AuthToken authToken = this.authService.queryAuthTokenByContactId(contactId);
-                    base = new KnowledgeBase(info.name,
-                            this.service, this.service.getStorage(), authToken, this.fileStorage);
-                    framework.putKnowledgeBase(base);
-                    base.listKnowledgeDocs();
-                    base.listKnowledgeArticles();
-                }
-            }
         }
 
         return base;
+    }
+
+    public KnowledgeBase newKnowledgeBase() {
+        return null;
     }
 
 

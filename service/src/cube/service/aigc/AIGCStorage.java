@@ -263,6 +263,9 @@ public class AIGCStorage implements Storagable {
             new StorageField("base", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
+            new StorageField("file_name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
             new StorageField("activated", LiteralBase.INT, new Constraint[] {
                     Constraint.DEFAULT_1
             }),
@@ -975,6 +978,7 @@ public class AIGCStorage implements Storagable {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
                     data.get("contact_id").getLong(), data.get("file_code").getString(), data.get("base").getString(),
+                    data.get("file_name").isNullValue() ? null : data.get("file_name").getString(),
                     data.get("activated").getInt() == 1, data.get("num_segments").getInt(),
                     KnowledgeScope.parse(data.get("scope").getString()));
             list.add(doc);
@@ -999,6 +1003,7 @@ public class AIGCStorage implements Storagable {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
                     data.get("contact_id").getLong(), data.get("file_code").getString(), data.get("base").getString(),
+                    data.get("file_name").isNullValue() ? null : data.get("file_name").getString(),
                     data.get("activated").getInt() == 1, data.get("num_segments").getInt(),
                     KnowledgeScope.parse(data.get("scope").getString()));
             list.add(doc);
@@ -1007,9 +1012,11 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public KnowledgeDoc readKnowledgeDoc(String fileCode) {
+    public KnowledgeDoc readKnowledgeDoc(String baseName, String fileCode) {
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocTable, this.knowledgeDocFields,
                 new Conditional[] {
+                        Conditional.createEqualTo("base", baseName),
+                        Conditional.createAnd(),
                         Conditional.createEqualTo("file_code", fileCode)
                 });
         if (result.isEmpty()) {
@@ -1019,6 +1026,7 @@ public class AIGCStorage implements Storagable {
         Map<String, StorageField> data = StorageFields.get(result.get(0));
         KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
                 data.get("contact_id").getLong(), data.get("file_code").getString(), data.get("base").getString(),
+                data.get("file_name").isNullValue() ? null : data.get("file_name").getString(),
                 data.get("activated").getInt() == 1, data.get("num_segments").getInt(),
                 KnowledgeScope.parse(data.get("scope").getString()));
         return doc;
@@ -1028,6 +1036,8 @@ public class AIGCStorage implements Storagable {
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocTable, new StorageField[] {
                 new StorageField("id", LiteralBase.LONG)
         }, new Conditional[] {
+                Conditional.createEqualTo("base", doc.baseName),
+                Conditional.createAnd(),
                 Conditional.createEqualTo("file_code", doc.fileCode)
         });
 
@@ -1043,6 +1053,7 @@ public class AIGCStorage implements Storagable {
                 new StorageField("contact_id", doc.contactId),
                 new StorageField("file_code", doc.fileCode),
                 new StorageField("base", doc.baseName),
+                new StorageField("file_name", doc.fileName),
                 new StorageField("activated", doc.activated ? 1 : 0),
                 new StorageField("num_segments", doc.numSegments),
                 new StorageField("scope", doc.scope.name)
@@ -1054,14 +1065,43 @@ public class AIGCStorage implements Storagable {
                 new StorageField("activated", doc.activated ? 1 : 0),
                 new StorageField("num_segments", doc.numSegments)
         }, new Conditional[] {
+                Conditional.createEqualTo("base", doc.baseName),
+                Conditional.createAnd(),
                 Conditional.createEqualTo("file_code", doc.fileCode)
         });
     }
 
-    public boolean deleteKnowledgeDoc(String fileCode) {
+    public boolean deleteKnowledgeDoc(String baseName, String fileCode) {
         return this.storage.executeDelete(this.knowledgeDocTable, new Conditional[] {
+                Conditional.createEqualTo("base", baseName),
+                Conditional.createAnd(),
                 Conditional.createEqualTo("file_code", fileCode)
         });
+    }
+
+    public List<String[]> matchKnowledgeDocWithFileName(String baseName, List<String> words) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT `file_code`,`file_name` FROM `").append(this.knowledgeDocTable).append("`");
+        sql.append(" WHERE `base`='").append(baseName).append("' AND `file_name` REGEXP '");
+        for (String word : words) {
+            sql.append(word).append("|");
+        }
+        sql.delete(sql.length() - 1, sql.length());
+        sql.append("'");
+
+        List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        List<String[]> codeAndNameList = new ArrayList<>();
+        for (StorageField[] fields : result) {
+            String[] data = new String[] {
+                    fields[0].getString(),
+                    fields[1].getString() };
+            codeAndNameList.add(data);
+        }
+        return codeAndNameList;
     }
 
     public boolean writeKnowledgeArticle(KnowledgeArticle article) {

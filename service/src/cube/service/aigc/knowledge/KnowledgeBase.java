@@ -36,6 +36,7 @@ import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.notice.GetFile;
+import cube.common.notice.LoadFile;
 import cube.common.state.AIGCStateCode;
 import cube.core.AbstractModule;
 import cube.service.aigc.AIGCHook;
@@ -46,10 +47,13 @@ import cube.service.aigc.listener.*;
 import cube.service.aigc.resource.Agent;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+import cube.util.FileType;
 import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -66,7 +70,7 @@ public class KnowledgeBase {
 
     public final static int DEFAULT_FETCH_K = 30;
 
-    private final String name;
+    private final KnowledgeBaseInfo baseInfo;
 
     private AIGCService service;
 
@@ -90,9 +94,9 @@ public class KnowledgeBase {
 
     private AtomicBoolean qaLock;
 
-    public KnowledgeBase(String name, AIGCService service, AIGCStorage storage,
+    public KnowledgeBase(KnowledgeBaseInfo baseInfo, AIGCService service, AIGCStorage storage,
                          AuthToken authToken, AbstractModule fileStorage) {
-        this.name = name;
+        this.baseInfo = baseInfo;
         this.service = service;
         this.storage = storage;
         this.authToken = authToken;
@@ -104,7 +108,7 @@ public class KnowledgeBase {
     }
 
     public String getName() {
-        return this.name;
+        return this.baseInfo.name;
     }
 
     public AuthToken getAuthToken() {
@@ -165,8 +169,9 @@ public class KnowledgeBase {
             }
 
             List<KnowledgeDoc> list = (KnowledgeScope.Private == this.scope) ?
-                    this.storage.readKnowledgeDocList(this.authToken.getDomain(), this.authToken.getContactId(),this.name)
-                    : this.storage.readKnowledgeDocList(this.authToken.getDomain(), this.name);
+                    this.storage.readKnowledgeDocList(this.authToken.getDomain(), this.authToken.getContactId(),
+                            this.baseInfo.name)
+                    : this.storage.readKnowledgeDocList(this.authToken.getDomain(), this.baseInfo.name);
 
             Iterator<KnowledgeDoc> iter = list.iterator();
             while (iter.hasNext()) {
@@ -176,11 +181,11 @@ public class KnowledgeBase {
                 if (null == fileLabelJson) {
                     // 文件已被删除
                     iter.remove();
-                    this.storage.deleteKnowledgeDoc(doc.fileCode);
+                    this.storage.deleteKnowledgeDoc(doc.baseName, doc.fileCode);
                     continue;
                 }
 
-                doc.fileLabel = new FileLabel(fileLabelJson);
+                doc.setFileLabel(new FileLabel(fileLabelJson));
             }
 
             this.resource.appendDocs(list);
@@ -191,12 +196,12 @@ public class KnowledgeBase {
     }
 
     public KnowledgeDoc getKnowledgeDocByFileCode(String fileCode) {
-        KnowledgeDoc doc = this.storage.readKnowledgeDoc(fileCode);
+        KnowledgeDoc doc = this.storage.readKnowledgeDoc(this.baseInfo.name, fileCode);
         if (null != doc) {
             GetFile getFile = new GetFile(this.authToken.getDomain(), doc.fileCode);
             JSONObject fileLabelJson = this.fileStorage.notify(getFile);
             if (null != fileLabelJson) {
-                doc.fileLabel = new FileLabel(fileLabelJson);
+                doc.setFileLabel(new FileLabel(fileLabelJson));
             }
         }
         return doc;
@@ -216,22 +221,23 @@ public class KnowledgeBase {
             if (null == doc) {
                 // 创建新文档
                 doc = new KnowledgeDoc(Utils.generateSerialNumber(), this.authToken.getDomain(),
-                        this.authToken.getContactId(), fileCode, this.name, false, -1, this.scope);
+                        this.authToken.getContactId(), fileCode, this.baseInfo.name, null,
+                        false, -1, this.scope);
                 this.storage.writeKnowledgeDoc(doc);
             }
 
-            if (null == doc.fileLabel) {
+            if (null == doc.getFileLabel()) {
                 GetFile getFile = new GetFile(this.authToken.getDomain(), fileCode);
                 JSONObject fileLabelJson = this.fileStorage.notify(getFile);
                 if (null == fileLabelJson) {
-                    this.storage.deleteKnowledgeDoc(fileCode);
+                    this.storage.deleteKnowledgeDoc(this.baseInfo.name, fileCode);
                     Logger.e(this.getClass(), "#importKnowledgeDoc - Not find file: " + fileCode);
                     this.lock.set(false);
                     return null;
                 }
 
                 FileLabel fileLabel = new FileLabel(fileLabelJson);
-                doc.fileLabel = fileLabel;
+                doc.setFileLabel(fileLabel);
             }
 
             activatedDoc = doc;
@@ -246,7 +252,7 @@ public class KnowledgeBase {
                 activatedDoc = this.activateKnowledgeDoc(doc);
                 if (null == activatedDoc) {
                     Logger.e(this.getClass(), "#importKnowledgeDoc - Unit return error");
-                    this.storage.deleteKnowledgeDoc(fileCode);
+                    this.storage.deleteKnowledgeDoc(this.baseInfo.name, fileCode);
                     this.lock.set(false);
                     return null;
                 }
@@ -280,7 +286,7 @@ public class KnowledgeBase {
         try {
             doc = this.getKnowledgeDocByFileCode(fileCode);
             if (null != doc) {
-                this.storage.deleteKnowledgeDoc(fileCode);
+                this.storage.deleteKnowledgeDoc(this.baseInfo.name, fileCode);
 
                 this.resource.removeDoc(doc);
 
@@ -327,7 +333,7 @@ public class KnowledgeBase {
      */
     public KnowledgeProgress batchImportKnowledgeDocuments(List<String> fileCodeList, KnowledgeProgressListener listener) {
         if (this.lock.get()) {
-            Logger.w(this.getClass(), "#batchImportKnowledgeDocuments - Store locked: " + this.name);
+            Logger.w(this.getClass(), "#batchImportKnowledgeDocuments - Store locked: " + this.baseInfo.name);
             listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.Busy.code));
             return new KnowledgeProgress(AIGCStateCode.Busy.code);
         }
@@ -349,7 +355,8 @@ public class KnowledgeBase {
                 if (null == doc) {
                     // 创建新文档
                     doc = new KnowledgeDoc(Utils.generateSerialNumber(), this.authToken.getDomain(),
-                            this.authToken.getContactId(), fileCode, this.name, false, -1, this.scope);
+                            this.authToken.getContactId(), fileCode, this.baseInfo.name, null,
+                            false, -1, this.scope);
 
                     GetFile getFile = new GetFile(this.authToken.getDomain(), fileCode);
                     JSONObject fileLabelJson = this.fileStorage.notify(getFile);
@@ -358,7 +365,7 @@ public class KnowledgeBase {
                         continue;
                     }
 
-                    doc.fileLabel = new FileLabel(fileLabelJson);
+                    doc.setFileLabel(new FileLabel(fileLabelJson));
                 }
                 else {
                     // 该文件已经导入，跳过
@@ -367,9 +374,9 @@ public class KnowledgeBase {
                     }
                 }
 
-                if (null == doc.fileLabel) {
+                if (null == doc.getFileLabel()) {
                     // 删除不存在的文档
-                    this.storage.deleteKnowledgeDoc(fileCode);
+                    this.storage.deleteKnowledgeDoc(this.baseInfo.name, fileCode);
                     continue;
                 }
 
@@ -377,7 +384,7 @@ public class KnowledgeBase {
             }
 
             if (allList.isEmpty()) {
-                Logger.w(this.getClass(), "#batchImportKnowledgeDocuments - No file: " + this.name);
+                Logger.w(this.getClass(), "#batchImportKnowledgeDocuments - No file: " + this.baseInfo.name);
                 listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.NoData.code));
                 this.lock.set(false);
                 return new KnowledgeProgress(AIGCStateCode.NoData.code);
@@ -426,7 +433,7 @@ public class KnowledgeBase {
                             }
                             JSONObject payload = new JSONObject();
                             payload.put("list", array);
-                            payload.put("name", name);
+                            payload.put("name", baseInfo.name);
                             Packet packet = new Packet(AIGCAction.BatchActivateKnowledgeDocs.name, payload);
                             ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
                                     packet.toDialect(), 3 * 60 * 1000);
@@ -525,7 +532,7 @@ public class KnowledgeBase {
      */
     public KnowledgeProgress batchRemoveKnowledgeDocuments(List<String> fileCodeList, KnowledgeProgressListener listener) {
         if (this.lock.get()) {
-            Logger.w(this.getClass(), "#batchRemoveKnowledgeDocuments - Store locked: " + this.name);
+            Logger.w(this.getClass(), "#batchRemoveKnowledgeDocuments - Store locked: " + this.baseInfo.name);
             listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.Busy.code));
             return new KnowledgeProgress(AIGCStateCode.Busy.code);
         }
@@ -549,7 +556,7 @@ public class KnowledgeBase {
             }
 
             if (allList.isEmpty()) {
-                Logger.w(this.getClass(), "#batchRemoveKnowledgeDocuments - No file: " + this.name);
+                Logger.w(this.getClass(), "#batchRemoveKnowledgeDocuments - No file: " + this.baseInfo.name);
                 listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.NoData.code));
                 this.lock.set(false);
                 return new KnowledgeProgress(AIGCStateCode.NoData.code);
@@ -598,7 +605,7 @@ public class KnowledgeBase {
                             }
                             JSONObject payload = new JSONObject();
                             payload.put("list", array);
-                            payload.put("name", name);
+                            payload.put("name", baseInfo.name);
                             Packet packet = new Packet(AIGCAction.BatchDeactivateKnowledgeDocs.name, payload);
                             ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
                                     packet.toDialect(), 3 * 60 * 1000);
@@ -645,7 +652,7 @@ public class KnowledgeBase {
 
                         // 删除文档
                         for (KnowledgeDoc doc : completionList) {
-                            storage.deleteKnowledgeDoc(doc.fileCode);
+                            storage.deleteKnowledgeDoc(doc.baseName, doc.fileCode);
                             resource.removeDoc(doc);
                         }
 
@@ -787,7 +794,7 @@ public class KnowledgeBase {
                         } else {
                             payload.put("domain", authToken.getDomain());
                         }
-                        payload.put("name", name);
+                        payload.put("name", baseInfo.name);
                         Packet packet = new Packet(AIGCAction.BackupKnowledgeStore.name, payload);
                         ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
                                 packet.toDialect(), 90 * 1000);
@@ -827,7 +834,7 @@ public class KnowledgeBase {
                     } else {
                         payload.put("domain", authToken.getDomain());
                     }
-                    payload.put("name", name);
+                    payload.put("name", baseInfo.name);
                     Packet packet = new Packet(AIGCAction.DeleteKnowledgeStore.name, payload);
                     ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
                             packet.toDialect(), 60 * 1000);
@@ -913,7 +920,7 @@ public class KnowledgeBase {
                         }
                         payload = new JSONObject();
                         payload.put("list", array);
-                        payload.put("name", name);
+                        payload.put("name", baseInfo.name);
                         packet = new Packet(AIGCAction.BatchActivateKnowledgeDocs.name, payload);
                         dialect = service.getCellet().transmit(resource.unit.getContext(),
                                 packet.toDialect(), 3 * 60 * 1000);
@@ -969,7 +976,7 @@ public class KnowledgeBase {
                     listener.onCompleted(KnowledgeBase.this, list, completionList);
 
                     Logger.i(this.getClass(), "#resetKnowledgeStore - Resets knowledge base completed: "
-                            + name + "/" + authToken.getContactId());
+                            + baseInfo.name + "/" + authToken.getContactId());
 
                     // 更新内存数据
                     listKnowledgeDocs(true);
@@ -997,7 +1004,7 @@ public class KnowledgeBase {
         else {
             payload.put("domain", this.authToken.getDomain());
         }
-        payload.put("name", this.name);
+        payload.put("name", this.baseInfo.name);
         Packet packet = new Packet(AIGCAction.GetBackupKnowledgeStores.name, payload);
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect(), 30 * 1000);
@@ -1348,6 +1355,14 @@ public class KnowledgeBase {
             return false;
         }
 
+        // 根据文件名匹配文档，读取文件内容进行问题推理
+        PromptMetadata docMeta = this.extractDocumentContent(query, 3);
+        if (null != docMeta) {
+            Logger.d(this.getClass(), "#performKnowledgeQA - Merge document num: " + docMeta.metadataList.size());
+            // 合并提示词
+            promptMetadata.mergeAnswer(docMeta);
+        }
+
         // 优化提示词
         String prompt = this.optimizePrompt(unitName, promptMetadata, query, knowledgeCategories, attachmentContents);
 
@@ -1375,7 +1390,7 @@ public class KnowledgeBase {
             });
         }
         else {
-            // 其他单元执行
+            // 执行 Generate Text
             this.service.generateText(channel, unit, query, prompt, paraphrases, null, false, true,
                     new GenerateTextListener() {
                 @Override
@@ -1398,6 +1413,134 @@ public class KnowledgeBase {
         }
 
         return true;
+    }
+
+    private PromptMetadata extractDocumentContent(String query, int topN) {
+        List<String> wordList = new ArrayList<>();
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
+        List<Keyword> keywordList = analyzer.analyze(query, 10);
+        for (Keyword keyword : keywordList) {
+            wordList.add(keyword.getWord());
+        }
+
+        List<String[]> fileResults = this.storage.matchKnowledgeDocWithFileName(this.baseInfo.name, wordList);
+        if (null == fileResults) {
+            return null;
+        }
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#extractDocumentContent - File num: " + fileResults.size());
+        }
+
+        List<FileNameMatching> matchingList = new ArrayList<>();
+        for (String[] data : fileResults) {
+            FileNameMatching matching = new FileNameMatching(data);
+            // 计算匹配词数量
+            int num = 0;
+            for (String word : wordList) {
+                if (matching.fileName.contains(word)) {
+                    ++num;
+                }
+            }
+            matching.numMatching = num;
+            matchingList.add(matching);
+        }
+
+        // 降序排序文件
+        Collections.sort(matchingList);
+
+        StringBuilder content = new StringBuilder();
+
+        PromptMetadata metadata = new PromptMetadata();
+
+        for (int i = 0; i < Math.min(topN, matchingList.size()); ++i) {
+            if (content.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
+                // 内容溢出
+                break;
+            }
+
+            FileNameMatching fm = matchingList.get(i);
+            GetFile getFile = new GetFile(this.authToken.getDomain(), fm.fileCode);
+            JSONObject fileLabelJson = this.fileStorage.notify(getFile);
+            if (null == fileLabelJson) {
+                Logger.w(this.getClass(), "#extractDocumentContent - Not find file: " + fm.fileCode);
+                continue;
+            }
+
+            FileLabel fileLabel = new FileLabel(fileLabelJson);
+            if (fileLabel.getFileType() == FileType.TEXT
+                    || fileLabel.getFileType() == FileType.TXT
+                    || fileLabel.getFileType() == FileType.MD
+                    || fileLabel.getFileType() == FileType.LOG) {
+                String fullpath = this.fileStorage.notify(new LoadFile(fileLabel.getDomain().getName(), fileLabel.getFileCode()));
+                if (null == fullpath) {
+                    Logger.w(this.getClass(), "#extractDocumentContent - Load file error: " + fileLabel.getFileCode());
+                    continue;
+                }
+
+                try {
+                    List<String> lines = Files.readAllLines(Paths.get(fullpath));
+                    for (String text : lines) {
+                        if (text.trim().length() < 3) {
+                            continue;
+                        }
+
+                        // 记录内容
+                        content.append(text).append("\n");
+                        // 判断长度
+                        if (content.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    Logger.w(this.getClass(), "#extractDocumentContent - Read file error: " + fullpath);
+                }
+
+                // 记录
+                metadata.addDocumentMetadata(fm.fileCode);
+            }
+            else {
+                Logger.w(this.getClass(), "#extractDocumentContent - File type error: " + fileLabel.getFileType().getMimeType());
+            }
+        }
+
+        if (content.length() < 3) {
+            Logger.w(this.getClass(), "#extractDocumentContent - No content: " + this.baseInfo.name);
+            return null;
+        }
+
+        // 将所有内容推送给模型推理
+        String prompt = Consts.formatExtractContent(content.toString(), query);
+        String result = this.service.syncGenerateText(this.authToken, ModelConfig.BAIZE_UNIT, prompt);
+        if (null == result) {
+            Logger.w(this.getClass(), "#extractDocumentContent - Unit error, no answer: " + this.baseInfo.name);
+            return null;
+        }
+
+        metadata.prompt = prompt;
+        metadata.answer = result;
+        return metadata;
+    }
+
+    private class FileNameMatching implements Comparable<FileNameMatching> {
+
+        protected String fileCode;
+        protected String fileName;
+
+        /**
+         * 匹配关键词数量
+         */
+        protected int numMatching;
+
+        public FileNameMatching(String[] data) {
+            this.fileCode = data[0];
+            this.fileName = data[1];
+        }
+
+        @Override
+        public int compareTo(FileNameMatching fm) {
+            return fm.numMatching - this.numMatching;
+        }
     }
 
     private List<AIGCGenerationRecord> makeParaphrases(List<String> knowledgeCategories, int lengthLimit,
@@ -1468,7 +1611,7 @@ public class KnowledgeBase {
                         fileLabels.remove(fileLabel);
                         break;
                     }
-                    else if (fileLabel.getFileName().equalsIgnoreCase(doc.fileLabel.getFileName())) {
+                    else if (fileLabel.getFileName().equalsIgnoreCase(doc.getFileLabel().getFileName())) {
                         // 文件名相同
                         fileLabels.remove(fileLabel);
                         break;
@@ -1943,7 +2086,7 @@ public class KnowledgeBase {
         payload.put("pathKey", (KnowledgeScope.Private == this.scope) ?
                 Long.toString(this.authToken.getContactId()) : this.authToken.getDomain());
         payload.put("contactId", this.authToken.getContactId());
-        payload.put("name", this.name);
+        payload.put("name", this.baseInfo.name);
         payload.put("query", query);
         payload.put("topK", topK);
         payload.put("fetchK", fetchK);
@@ -1976,7 +2119,7 @@ public class KnowledgeBase {
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("name", this.name);
+        json.put("name", this.baseInfo.name);
         json.put("profile", this.getProfile().toJSON());
         json.put("locked", this.lock.get());
         json.put("numDocuments", (null != this.resource.docList) ? this.resource.docList.size() : 0);
@@ -2146,6 +2289,12 @@ public class KnowledgeBase {
 
         public List<Metadata> metadataList;
 
+        private String answer;
+
+        public PromptMetadata() {
+            this.metadataList = new ArrayList<>();
+        }
+
         public PromptMetadata(JSONObject json) {
             this.prompt = json.getString("prompt");
             this.metadataList = new ArrayList<>();
@@ -2166,8 +2315,38 @@ public class KnowledgeBase {
             this.metadataList.add(new Metadata(Metadata.TEXT_PREFIX + text, 200));
         }
 
+        public void addDocumentMetadata(String fileCode) {
+            this.metadataList.add(new Metadata(Metadata.DOCUMENT_PREFIX + fileCode, 300));
+        }
+
         public boolean containsMetadata(KnowledgeArticle article) {
             return this.metadataList.contains(article);
+        }
+
+        public void mergeAnswer(PromptMetadata other) {
+            if (null == other.answer) {
+                return;
+            }
+
+            StringBuilder buf = new StringBuilder();
+            String[] lines = this.prompt.split("\n");
+            // 首行
+            buf.append(lines[0]).append("\n");
+            // 合并答案
+            buf.append(other.answer);
+            // 逐条恢复
+            for (int i = 1; i < lines.length; ++i) {
+                buf.append(lines[i]).append("\n");
+            }
+            if (buf.length() > 2) {
+                buf.delete(buf.length() - 1, buf.length());
+            }
+
+            // 新提示词
+            this.prompt = buf.toString();
+
+            // 添加源
+            this.metadataList.addAll(other.metadataList);
         }
 
         /**
@@ -2219,10 +2398,30 @@ public class KnowledgeBase {
                 this.score = score;
             }
 
+            private String getSourceKey() {
+                if (this.source.startsWith(DOCUMENT_PREFIX)) {
+                    int end = this.source.lastIndexOf(".");
+                    if (end <= 0) {
+                        end = this.source.length();
+                    }
+                    return this.source.substring(DOCUMENT_PREFIX.length(), end);
+                }
+                else if (this.source.startsWith(ARTICLE_PREFIX)) {
+                    return this.source.substring(ARTICLE_PREFIX.length());
+                }
+                else {
+                    return null;
+                }
+            }
+
             public KnowledgeSource getSource() {
                 // 判断是文档还是文章
                 if (this.source.startsWith(DOCUMENT_PREFIX)) {
-                    String fileCode = this.source.substring(DOCUMENT_PREFIX.length(), this.source.length() - 4);
+                    int end = this.source.lastIndexOf(".");
+                    if (end <= 0) {
+                        end = this.source.length();
+                    }
+                    String fileCode = this.source.substring(DOCUMENT_PREFIX.length(), end);
                     KnowledgeDoc doc = getKnowledgeDocByFileCode(fileCode);
                     if (null == doc) {
                         return null;
@@ -2255,7 +2454,16 @@ public class KnowledgeBase {
             @Override
             public boolean equals(Object obj) {
                 if (obj instanceof Metadata) {
-                    return this.source.equals(((Metadata) obj).source);
+                    if (this.source.equals(((Metadata) obj).source)) {
+                        return true;
+                    }
+
+                    // File Code 或 ID 重复
+                    String key = this.getSourceKey();
+                    String otherKey = ((Metadata) obj).getSourceKey();
+                    if (null != key && null != otherKey) {
+                        return key.equals(otherKey);
+                    }
                 }
                 return false;
             }
