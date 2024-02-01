@@ -64,7 +64,6 @@ public class CVService extends AbstractModule {
     }
 
     public JSONObject predict(FileLabel fileLabel) {
-        String modelFile = "painting.pt";
 
         return null;
     }

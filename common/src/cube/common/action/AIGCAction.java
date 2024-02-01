@@ -142,6 +142,11 @@ public enum AIGCAction {
     AutomaticSpeechRecognition("automaticSpeechRecognition"),
 
     /**
+     * 图像对象检测。
+     */
+    ObjectDetection("objectDetection"),
+
+    /**
      * 分词。
      */
     Segmentation("segmentation"),

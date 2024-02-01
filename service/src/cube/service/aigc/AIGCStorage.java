@@ -1821,7 +1821,8 @@ public class AIGCStorage implements Storagable {
         }, new StorageField[] {
                 new StorageField(this.promptWordTable, "id", LiteralBase.LONG),
                 new StorageField(this.promptWordTable, "act", LiteralBase.STRING),
-                new StorageField(this.promptWordTable, "prompt", LiteralBase.STRING)
+                new StorageField(this.promptWordTable, "prompt", LiteralBase.STRING),
+                new StorageField(this.promptWordScopeTable, "contact_id", LiteralBase.LONG)
         }, new Conditional[] {
                 Conditional.createEqualTo(new StorageField(this.promptWordTable, "id", LiteralBase.LONG),
                         new StorageField(this.promptWordScopeTable, "prompt_id", LiteralBase.LONG)),
@@ -1838,7 +1839,7 @@ public class AIGCStorage implements Storagable {
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
             PromptRecord promptRecord = new PromptRecord(data.get("id").getLong(), data.get("act").getString(),
-                    data.get("prompt").getString());
+                    data.get("prompt").getString(), data.get("contact_id").getLong() == 0);
             promptRecords.add(promptRecord);
         }
 
@@ -1856,7 +1857,8 @@ public class AIGCStorage implements Storagable {
         }
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
-        return new PromptRecord(data.get("id").getLong(), data.get("act").getString(), data.get("prompt").getString());
+        return new PromptRecord(data.get("id").getLong(), data.get("act").getString(), data.get("prompt").getString(),
+                false);
     }
 
     public boolean writePrompt(PromptRecord promptRecord, long contactId) {

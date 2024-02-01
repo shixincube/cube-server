@@ -1838,6 +1838,10 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
+    public void markFile(String fileCode) {
+        // TODO XJW
+    }
+
     /**
      * 文本分词。
      *

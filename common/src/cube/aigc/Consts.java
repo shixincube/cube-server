@@ -83,6 +83,8 @@ public final class Consts {
 
     public final static String KNOWLEDGE_SECTION_PROMPT = "整理信息的主要观点，不超过5条观点。";
 
+    // 修复下面这段文章的标点符号并分成段落：<文本内容>
+
     public final static String ANSWER_FIND_SOME_YEAR_DATA_FORMAT = "没有找到%s的数据，但是找到了%s的数据。";
 
     public final static String PROMPT_ROLE_PSYCHOLOGY = "专业的心理咨询专家。";

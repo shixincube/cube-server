@@ -136,7 +136,7 @@ public class SetPromptsTask extends ServiceTask {
 
             if (packet.data.has("id") && packet.data.has("act") && packet.data.has("prompt")) {
                 PromptRecord promptRecord = new PromptRecord(packet.data.getLong("id"),
-                        packet.data.getString("act"), packet.data.getString("prompt"));
+                        packet.data.getString("act"), packet.data.getString("prompt"), false);
 
                 service.getStorage().writePrompt(promptRecord, contactId);
                 responsePayload.put("total", 1);

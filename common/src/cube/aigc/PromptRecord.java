@@ -41,16 +41,20 @@ public class PromptRecord implements JSONable {
 
     public final String prompt;
 
-    public PromptRecord(long id, String act, String prompt) {
+    public final boolean readonly;
+
+    public PromptRecord(long id, String act, String prompt, boolean readonly) {
         this.id = id;
         this.act = act;
         this.prompt = prompt;
+        this.readonly = readonly;
     }
 
     public PromptRecord(JSONObject json) {
         this.id = json.has("id") ? json.getLong("id") : Utils.generateSerialNumber();
         this.act = json.getString("act");
         this.prompt = json.getString("prompt");
+        this.readonly = json.getBoolean("readonly");
     }
 
     @Override
@@ -59,6 +63,7 @@ public class PromptRecord implements JSONable {
         json.put("id", this.id);
         json.put("act", this.act);
         json.put("prompt", this.prompt);
+        json.put("readonly", this.readonly);
         return json;
     }
 
