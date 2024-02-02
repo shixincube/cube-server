@@ -26,7 +26,6 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.common.entity.ASRResult;
 import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
@@ -82,7 +81,7 @@ public class AutomaticSpeechRecognition extends ContextHandler {
                 return;
             }
 
-            Manager.ASRFuture future = Manager.getInstance().queryASRFuture(fileCode);
+            Manager.ASRFuture future = Manager.getInstance().getASRFuture(fileCode);
             if (null == future) {
                 this.respond(response, HttpStatus.NOT_FOUND_404);
                 this.complete();

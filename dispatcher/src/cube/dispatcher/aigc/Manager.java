@@ -50,10 +50,7 @@ import cube.util.HttpServer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -69,6 +66,11 @@ public class Manager implements Tickable, PerformerListener {
 
     private Map<String, ContactToken> validTokenMap;
     private long lastClearToken;
+
+    /**
+     * Key：频道码。
+     */
+    private Map<String, ObjectDetectionFuture> objectDetectionFutureMap;
 
     /**
      * Key：文件码
@@ -87,6 +89,7 @@ public class Manager implements Tickable, PerformerListener {
     public void start(Performer performer) {
         this.performer = performer;
         this.validTokenMap = new ConcurrentHashMap<>();
+        this.objectDetectionFutureMap = new ConcurrentHashMap<>();
         this.asrFutureMap = new ConcurrentHashMap<>();
         this.psychologyReportFutureMap = new ConcurrentHashMap<>();
 
@@ -1327,6 +1330,21 @@ public class Manager implements Tickable, PerformerListener {
         return new NLTask(Packet.extractDataPayload(responsePacket));
     }
 
+    public ObjectDetectionFuture objectDetection(String token, String channelCode, JSONArray fileCodeList) {
+        JSONObject data = new JSONObject();
+        data.put("code", channelCode);
+        data.put("fileCodeList", fileCodeList);
+        Packet packet = new Packet(AIGCAction.ObjectDetection.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ObjectDetectionFuture future = new ObjectDetectionFuture(channelCode, fileCodeList);
+
+        this.performer.transmit(AIGCCellet.NAME, request);
+
+        return future;
+    }
+
     public ASRFuture automaticSpeechRecognition(String domain, String fileCode) {
         if (this.asrFutureMap.containsKey(fileCode)) {
             // 正在处理
@@ -1346,7 +1364,7 @@ public class Manager implements Tickable, PerformerListener {
         return future;
     }
 
-    public ASRFuture queryASRFuture(String fileCode) {
+    public ASRFuture getASRFuture(String fileCode) {
         return this.asrFutureMap.get(fileCode);
     }
 
@@ -1692,7 +1710,22 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect actionDialect = new ActionDialect(primitive);
         String action = actionDialect.getName();
 
-        if (AIGCAction.AutomaticSpeechRecognition.name.equals(action)) {
+        if (AIGCAction.ObjectDetection.name.equals(action)) {
+            Packet responsePacket = new Packet(actionDialect);
+            // 状态码
+            int stateCode = Packet.extractCode(responsePacket);
+            if (stateCode == AIGCStateCode.Ok.code) {
+                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
+                JSONArray resultArray = resultJson.getJSONArray("list");
+                for (int i = 0; i < resultArray.length(); ++i) {
+                    // ObjectDetectionResult r
+                }
+            }
+            else {
+
+            }
+        }
+        else if (AIGCAction.AutomaticSpeechRecognition.name.equals(action)) {
             Packet responsePacket = new Packet(actionDialect);
             // 状态码
             int stateCode = Packet.extractCode(responsePacket);
@@ -1745,6 +1778,35 @@ public class Manager implements Tickable, PerformerListener {
         @Override
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
+        }
+    }
+
+    public class ObjectDetectionFuture implements JSONable {
+
+        protected final long timestamp;
+
+        protected String channelCode;
+
+        protected JSONArray fileCodeList;
+
+        protected JSONArray resultList;
+
+        public ObjectDetectionFuture(String channelCode, JSONArray fileCodeList) {
+            this.timestamp = System.currentTimeMillis();
+            this.channelCode = channelCode;
+            this.fileCodeList = fileCodeList;
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+
             return json;
         }
 

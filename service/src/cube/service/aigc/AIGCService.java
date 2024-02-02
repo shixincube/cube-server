@@ -1838,8 +1838,107 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
+    /**
+     * 图像内物体检测。
+     *
+     * @param channelCode
+     * @param fileCodeList
+     * @param listener
+     * @return
+     */
+    public boolean objectDetection(String channelCode, List<String> fileCodeList, ObjectDetectionListener listener) {
+        AIGCChannel channel = this.channelMap.get(channelCode);
+        if (null == channel) {
+            Logger.w(this.getClass(), "#objectDetection - No channel: " + channelCode);
+            return false;
+        }
+
+        final List<FileLabel> fileList = new ArrayList<>();
+        for (String fileCode : fileCodeList) {
+            FileLabel fileLabel = this.getFile(channel.getAuthToken().getDomain(), fileCode);
+            if (null == fileLabel) {
+                Logger.d(this.getClass(), "#objectDetection - Can NOT find file: " + fileCode);
+                continue;
+            }
+
+            fileList.add(fileLabel);
+            if (fileList.size() >= 10) {
+                break;
+            }
+        }
+
+        if (fileList.isEmpty()) {
+            Logger.w(this.getClass(), "#objectDetection - No files: " + channel.getAuthToken().getContactId());
+            return false;
+        }
+
+        (new Thread(new Runnable() {
+            @Override
+            public void run() {
+                AIGCUnit unit = selectUnitBySubtask(AICapability.ComputerVision.ObjectDetection);
+                if (null == unit) {
+                    Logger.w(AIGCService.class, "#objectDetection - No unit");
+                    listener.onFailed(fileList, AIGCStateCode.UnitNoReady);
+                    return;
+                }
+
+                JSONArray list = new JSONArray();
+                for (FileLabel fileLabel : fileList) {
+                    list.put(fileLabel.toJSON());
+                }
+                JSONObject payload = new JSONObject();
+                payload.put("list", list);
+                Packet request = new Packet(AIGCAction.ObjectDetection.name, payload);
+                ActionDialect dialect = cellet.transmit(unit.getContext(), request.toDialect(), 3 * 60 * 1000);
+                if (null == dialect) {
+                    Logger.w(AIGCService.class, "#objectDetection - Unit error");
+                    // 回调错误
+                    listener.onFailed(fileList, AIGCStateCode.UnitError);
+                    return;
+                }
+
+                Packet response = new Packet(dialect);
+                JSONObject data = Packet.extractDataPayload(response);
+                if (!data.has("result")) {
+                    Logger.w(AIGCService.class, "#objectDetection - Unit process failed");
+                    // 回调错误
+                    listener.onFailed(fileList, AIGCStateCode.Failure);
+                    return;
+                }
+
+                List<ObjectDetectionResult> resultList = new ArrayList<>();
+                JSONArray result = data.getJSONArray("result");
+                for (int i = 0; i < result.length(); ++i) {
+                    ObjectDetectionResult odr = new ObjectDetectionResult(result.getJSONObject(i));
+                    resultList.add(odr);
+                }
+                // 回调结束
+                listener.onCompleted(fileList, resultList);
+            }
+        })).start();
+
+        return true;
+    }
+
     public void markFile(String fileCode) {
         // TODO XJW
+    }
+
+    private FileLabel getFile(String domain, String fileCode) {
+        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        if (null == fileStorage) {
+            Logger.e(this.getClass(), "#getFile - File storage service is not ready");
+            return null;
+        }
+
+        GetFile getFile = new GetFile(domain, fileCode);
+        JSONObject fileLabelJson = fileStorage.notify(getFile);
+        if (null == fileLabelJson) {
+            Logger.e(this.getClass(), "#getFile - Get file failed: " + fileCode);
+            return null;
+        }
+
+        return new FileLabel(fileLabelJson);
     }
 
     /**
@@ -2512,7 +2611,8 @@ public class AIGCService extends AbstractModule {
                     data.put("history", history);
                 }
 
-                if (this.searchEnabled) {
+                // 启用搜索或者启用联网信息检索都执行搜索
+                if (this.searchEnabled || this.networkingEnabled) {
                     executor.execute(new Runnable() {
                         @Override
                         public void run() {
@@ -2522,7 +2622,7 @@ public class AIGCService extends AbstractModule {
                             if (searchResult.hasResult() && networkingEnabled) {
                                 // 执行搜索问答
                                 performSearchPageQA(content, unit.getCapability().getName(),
-                                        searchResult, complexContext);
+                                        searchResult, complexContext, 3);
                             }
                             else {
                                 // 没有搜索结果
@@ -2608,7 +2708,7 @@ public class AIGCService extends AbstractModule {
             }
 
             if (complexContext.isSimplex()) {
-                if (this.searchEnabled && networkingEnabled) {
+                if (this.searchEnabled || this.networkingEnabled) {
                     // 缓存上下文
                     Explorer.getInstance().cacheComplexContext(complexContext);
                 }
@@ -2695,14 +2795,20 @@ public class AIGCService extends AbstractModule {
             return result;
         }
 
-        private void performSearchPageQA(String query, String unitName, SearchResult searchResult, ComplexContext context) {
+        private void performSearchPageQA(String query, String unitName, SearchResult searchResult,
+                                         ComplexContext context, int maxPages) {
             Object mutex = new Object();
             AtomicInteger pageCount = new AtomicInteger(0);
 
             List<String> urlList = new ArrayList<>();
             for (SearchResult.OrganicResult or : searchResult.organicResults) {
+                if (Explorer.getInstance().isIgnorableUrl(or.link)) {
+                    // 跳过忽略的 URL
+                    continue;
+                }
+
                 urlList.add(or.link);
-                if (urlList.size() >= 5) {
+                if (urlList.size() >= maxPages) {
                     break;
                 }
             }

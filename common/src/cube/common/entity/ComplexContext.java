@@ -65,7 +65,7 @@ public class ComplexContext extends Entity {
 
     public final Type type;
 
-    private boolean searchable = false;
+    private boolean searchable = true;
 
     private List<ComplexResource> resources;
 

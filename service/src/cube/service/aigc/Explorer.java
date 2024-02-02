@@ -72,6 +72,13 @@ public class Explorer {
             "饼图", "饼状图", "饼形图", "圆瓣图", "环形图"
     };
 
+    /**
+     * 可被忽略的 URL ，这些 URL 不宜通过一般爬虫爬取数据。
+     */
+    private final String[] ignorableUrls = new String[] {
+            "zhihu.com"
+    };
+
     private AIGCService service;
 
     private Tokenizer tokenizer;
@@ -107,7 +114,7 @@ public class Explorer {
      */
     private AtomicInteger pageReaderTaskCount;
 
-    private final int maxPageReaders = 3;
+    private final int maxPageReaders = 5;
 
     public final static Explorer getInstance() {
         return Explorer.instance;
@@ -136,6 +143,21 @@ public class Explorer {
     public void config(String pageReaderUrl, String searcher) {
         this.pageReaderUrl = pageReaderUrl;
         this.searcher = searcher;
+    }
+
+    /**
+     * 是否是可被忽略的 URL 。
+     *
+     * @param url
+     * @return
+     */
+    public boolean isIgnorableUrl(String url) {
+        for (String u : this.ignorableUrls) {
+            if (url.contains(u)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void cacheComplexContext(ComplexContext context) {
@@ -168,17 +190,6 @@ public class Explorer {
 
             @Override
             public void onFailed(String text, AIGCStateCode stateCode) {
-                // 使用 TFIDF 提取关键字
-                TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
-                List<Keyword> keywords = analyzer.analyze(query, 5);
-                if (!keywords.isEmpty()) {
-                    List<String> words = new ArrayList<>();
-                    for (Keyword keyword : keywords) {
-                        words.add(keyword.getWord());
-                    }
-                    result.keywords = words;
-                }
-
                 synchronized (result) {
                     result.notify();
                 }
@@ -196,10 +207,25 @@ public class Explorer {
         }
 
         if (null == result.keywords || result.keywords.isEmpty()) {
-            Logger.i(this.getClass(), "#search - Keywords is empty");
-            return result;
+            // 使用 TFIDF 提取关键字
+            TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
+            List<Keyword> keywords = analyzer.analyze(query, 5);
+            if (!keywords.isEmpty()) {
+                List<String> words = new ArrayList<>();
+                for (Keyword keyword : keywords) {
+                    words.add(keyword.getWord());
+                }
+                result.keywords = words;
+            }
+
+            if (null == result.keywords || result.keywords.isEmpty()) {
+                result.keywords = new ArrayList<>();
+                result.keywords.add(query);
+                Logger.i(this.getClass(), "#search - Keywords is empty, use query text as keywords");
+            }
         }
 
+        // 关键词构建
         List<String> keywords = new ArrayList<>();
         keywords.add(query);
 

@@ -28,6 +28,7 @@ package cube.common.entity;
 
 import cell.util.Utils;
 import cube.auth.AuthToken;
+import cube.common.Domain;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -83,6 +84,7 @@ public class AIGCChannel extends Entity {
     }
 
     public AIGCChannel(AuthToken authToken, String participant, String channelCode) {
+        this.domain = new Domain(authToken.getDomain());
         this.authToken = authToken;
         this.participant = participant;
         this.creationTime = System.currentTimeMillis();
@@ -101,6 +103,7 @@ public class AIGCChannel extends Entity {
 
         if (json.has("authToken")) {
             this.authToken = new AuthToken(json.getJSONObject("authToken"));
+            this.domain = new Domain(this.authToken.getDomain());
         }
 
         this.history = new LinkedList<>();
