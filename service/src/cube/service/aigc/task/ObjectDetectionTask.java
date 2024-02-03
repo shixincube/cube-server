@@ -63,12 +63,12 @@ public class ObjectDetectionTask extends ServiceTask {
 
         if (null == token || !packet.data.has("code") || !packet.data.has("fileCodeList")) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, packet.data));
             markResponseTime();
             return;
         }
 
-        String code = packet.data.getString("code");
+        String channelCode = packet.data.getString("code");
 
         JSONArray array = packet.data.getJSONArray("fileCodeList");
         List<String> fileCodes = new ArrayList<>();
@@ -79,7 +79,7 @@ public class ObjectDetectionTask extends ServiceTask {
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         // 执行 Object Detection
-        boolean success = service.objectDetection(code, fileCodes, new ObjectDetectionListener() {
+        boolean success = service.objectDetection(channelCode, fileCodes, new ObjectDetectionListener() {
             @Override
             public void onCompleted(List<FileLabel> inputList, List<ObjectDetectionResult> resultList) {
                 JSONArray resultArray = new JSONArray();
@@ -87,6 +87,7 @@ public class ObjectDetectionTask extends ServiceTask {
                     resultArray.put(result.toJSON());
                 }
                 JSONObject data = new JSONObject();
+                data.put("code", channelCode);
                 data.put("list", resultArray);
                 data.put("total", resultList.size());
                 cellet.speak(talkContext,
@@ -97,6 +98,7 @@ public class ObjectDetectionTask extends ServiceTask {
             @Override
             public void onFailed(List<FileLabel> sourceList, AIGCStateCode stateCode) {
                 JSONObject data = new JSONObject();
+                data.put("code", channelCode);
                 data.put("stateCode", stateCode.code);
                 cellet.speak(talkContext,
                         makeResponse(dialect, packet, stateCode.code, data));
@@ -106,7 +108,7 @@ public class ObjectDetectionTask extends ServiceTask {
 
         if (!success) {
             JSONObject data = new JSONObject();
-            data.put("code", code);
+            data.put("code", channelCode);
             data.put("fileCodeList", array);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, data));

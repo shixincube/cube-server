@@ -1887,6 +1887,7 @@ public class AIGCService extends AbstractModule {
                     list.put(fileLabel.toJSON());
                 }
                 JSONObject payload = new JSONObject();
+                payload.put("code", channelCode);
                 payload.put("list", list);
                 Packet request = new Packet(AIGCAction.ObjectDetection.name, payload);
                 ActionDialect dialect = cellet.transmit(unit.getContext(), request.toDialect(), 3 * 60 * 1000);
