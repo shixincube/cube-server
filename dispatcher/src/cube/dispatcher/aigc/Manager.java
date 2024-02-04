@@ -28,6 +28,7 @@ package cube.dispatcher.aigc;
 
 import cell.core.talk.Primitive;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
 import cube.aigc.attachment.ui.Event;
@@ -68,9 +69,9 @@ public class Manager implements Tickable, PerformerListener {
     private long lastClearToken;
 
     /**
-     * Key：频道码。
+     * Key：操作序号。
      */
-    private Map<String, ObjectDetectionFuture> objectDetectionFutureMap;
+    private Map<Long, ObjectDetectionFuture> objectDetectionFutureMap;
 
     /**
      * Key：文件码
@@ -1332,28 +1333,26 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public ObjectDetectionFuture objectDetection(String token, String channelCode, JSONArray fileCodeList) {
-        if (this.objectDetectionFutureMap.containsKey(channelCode)) {
-            // 正在处理
-            return this.objectDetectionFutureMap.get(channelCode);
-        }
+        long sn = Utils.generateSerialNumber();
 
         JSONObject data = new JSONObject();
+        data.put("sn", sn);
         data.put("code", channelCode);
         data.put("fileCodeList", fileCodeList);
         Packet packet = new Packet(AIGCAction.ObjectDetection.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ObjectDetectionFuture future = new ObjectDetectionFuture(channelCode, fileCodeList);
-        this.objectDetectionFutureMap.put(channelCode, future);
+        ObjectDetectionFuture future = new ObjectDetectionFuture(sn, channelCode, fileCodeList);
+        this.objectDetectionFutureMap.put(sn, future);
 
         this.performer.transmit(AIGCCellet.NAME, request);
 
         return future;
     }
 
-    public ObjectDetectionFuture getObjectDetectionFuture(String channelCode) {
-        return this.objectDetectionFutureMap.get(channelCode);
+    public ObjectDetectionFuture getObjectDetectionFuture(long sn) {
+        return this.objectDetectionFutureMap.get(sn);
     }
 
     public ASRFuture automaticSpeechRecognition(String domain, String fileCode) {
@@ -1693,9 +1692,9 @@ public class Manager implements Tickable, PerformerListener {
             this.validTokenMap.clear();
             this.lastClearToken = now;
 
-            Iterator<Map.Entry<String, ObjectDetectionFuture>> odIter = this.objectDetectionFutureMap.entrySet().iterator();
+            Iterator<Map.Entry<Long, ObjectDetectionFuture>> odIter = this.objectDetectionFutureMap.entrySet().iterator();
             while (odIter.hasNext()) {
-                Map.Entry<String, ObjectDetectionFuture> e = odIter.next();
+                Map.Entry<Long, ObjectDetectionFuture> e = odIter.next();
                 if (now - e.getValue().timestamp > 30 * 60 * 1000) {
                     odIter.remove();
                 }
@@ -1740,7 +1739,7 @@ public class Manager implements Tickable, PerformerListener {
                 for (int i = 0; i < resultArray.length(); ++i) {
                     resultList.add(new ObjectDetectionResult(resultArray.getJSONObject(i)));
                 }
-                ObjectDetectionFuture future = this.objectDetectionFutureMap.get(resultJson.getString("code"));
+                ObjectDetectionFuture future = this.objectDetectionFutureMap.get(resultJson.getLong("sn"));
                 if (null != future) {
                     future.resultList = resultList;
                     future.stateCode = stateCode;
@@ -1751,7 +1750,7 @@ public class Manager implements Tickable, PerformerListener {
             }
             else {
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                ObjectDetectionFuture future = this.objectDetectionFutureMap.get(resultJson.getString("code"));
+                ObjectDetectionFuture future = this.objectDetectionFutureMap.get(resultJson.getLong("sn"));
                 if (null != future) {
                     future.stateCode = stateCode;
                 }
@@ -1826,6 +1825,8 @@ public class Manager implements Tickable, PerformerListener {
 
         protected final long timestamp;
 
+        protected final long sn;
+
         protected String channelCode;
 
         protected JSONArray fileCodeList;
@@ -1834,7 +1835,8 @@ public class Manager implements Tickable, PerformerListener {
 
         protected int stateCode = AIGCStateCode.Processing.code;
 
-        public ObjectDetectionFuture(String channelCode, JSONArray fileCodeList) {
+        public ObjectDetectionFuture(long sn, String channelCode, JSONArray fileCodeList) {
+            this.sn = sn;
             this.timestamp = System.currentTimeMillis();
             this.channelCode = channelCode;
             this.fileCodeList = fileCodeList;
@@ -1843,6 +1845,7 @@ public class Manager implements Tickable, PerformerListener {
         @Override
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
+            json.put("sn", this.sn);
             json.put("channelCode", this.channelCode);
             json.put("timestamp", this.timestamp);
             json.put("stateCode", this.stateCode);

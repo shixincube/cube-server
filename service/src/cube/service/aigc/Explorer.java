@@ -85,7 +85,7 @@ public class Explorer {
 
     private String pageReaderUrl;
 
-    private String searcher = "baidu";
+    private String searcherName = "baidu";
 
     private Map<Long, ComplexContext> complexContextMap;
 
@@ -140,9 +140,9 @@ public class Explorer {
         ModuleManager.getInstance().stop();
     }
 
-    public void config(String pageReaderUrl, String searcher) {
+    public void config(String pageReaderUrl, String searcherName) {
         this.pageReaderUrl = pageReaderUrl;
-        this.searcher = searcher;
+        this.searcherName = searcherName;
     }
 
     /**
@@ -230,7 +230,7 @@ public class Explorer {
         keywords.add(query);
 
         ResourceSearcher searcher = null;
-        if (this.searcher.equalsIgnoreCase("baidu")) {
+        if (this.searcherName.equalsIgnoreCase("baidu")) {
             keywords.add(result.keywords.get(0));
             searcher = new BaiduSearcher(this.service);
         }

@@ -98,12 +98,13 @@ public class BaiduSearcher extends ResourceSearcher {
                 Logger.w(this.getClass(), "#search - Baidu search result format error: " + url);
                 return false;
             }
+
+            this.baiduResult = new BaiduSearchResult(data);
         } catch (Exception e) {
             Logger.w(this.getClass(), "#search - Baidu search result exception", e);
             return false;
         }
 
-        this.baiduResult = new BaiduSearchResult(data);
         return true;
     }
 

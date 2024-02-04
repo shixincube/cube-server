@@ -64,25 +64,30 @@ public class ObjectDetection extends ContextHandler {
                 return;
             }
 
-            String token = this.getRequestPath(request);
+            String token = this.getLastRequestPath(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
                 return;
             }
 
-            String channelCode = request.getParameter("cc");
-            if (null == channelCode) {
-                channelCode = request.getParameter("code");
-            }
-
-            if (null == channelCode) {
+            String snString = request.getParameter("sn");
+            if (null == snString) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
                 return;
             }
 
-            Manager.ObjectDetectionFuture future = Manager.getInstance().getObjectDetectionFuture(channelCode);
+            long sn = 0;
+            try {
+                sn = Long.parseLong(snString);
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
+            Manager.ObjectDetectionFuture future = Manager.getInstance().getObjectDetectionFuture(sn);
             if (null == future) {
                 this.respond(response, HttpStatus.NOT_FOUND_404);
                 this.complete();

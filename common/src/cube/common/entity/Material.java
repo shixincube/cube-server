@@ -38,10 +38,13 @@ public class Material implements JSONable {
 
     public BoundingBox bbox;
 
+    public String color;
+
     public Material(JSONObject json) {
         this.label = json.getString("label");
         this.prob = json.getDouble("prob");
         this.bbox = new BoundingBox(json.getJSONObject("bbox"));
+        this.color = json.getString("color");
     }
 
     @Override
@@ -50,6 +53,7 @@ public class Material implements JSONable {
         json.put("label", this.label);
         json.put("prob", this.prob);
         json.put("bbox", this.bbox.toJSON());
+        json.put("color", this.color);
         return json;
     }
 

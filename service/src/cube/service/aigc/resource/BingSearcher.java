@@ -48,7 +48,7 @@ import java.util.List;
  */
 public class BingSearcher extends ResourceSearcher {
 
-    private final String urlFormat = "https://www.bing.com/search?q=%s";
+    private final String urlFormat = "https://cn.bing.com/search?q=%s";
 
     private BingSearchResult bingResult;
 
@@ -98,12 +98,13 @@ public class BingSearcher extends ResourceSearcher {
                 Logger.w(this.getClass(), "#search - Bing search result format error: " + url);
                 return false;
             }
+
+            this.bingResult = new BingSearchResult(data);
         } catch (Exception e) {
             Logger.w(this.getClass(), "#search - Bing search result exception", e);
             return false;
         }
 
-        this.bingResult = new BingSearchResult(data);
         return true;
     }
 

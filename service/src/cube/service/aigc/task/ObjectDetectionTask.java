@@ -61,13 +61,17 @@ public class ObjectDetectionTask extends ServiceTask {
 
         String token = getTokenCode(dialect);
 
-        if (null == token || !packet.data.has("code") || !packet.data.has("fileCodeList")) {
+        if (null == token ||
+                !packet.data.has("code") ||
+                !packet.data.has("fileCodeList") ||
+                !packet.data.has("sn")) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, packet.data));
             markResponseTime();
             return;
         }
 
+        long sn = packet.data.getLong("sn");
         String channelCode = packet.data.getString("code");
 
         JSONArray array = packet.data.getJSONArray("fileCodeList");
@@ -87,6 +91,7 @@ public class ObjectDetectionTask extends ServiceTask {
                     resultArray.put(result.toJSON());
                 }
                 JSONObject data = new JSONObject();
+                data.put("sn", sn);
                 data.put("code", channelCode);
                 data.put("list", resultArray);
                 data.put("total", resultList.size());
@@ -98,6 +103,7 @@ public class ObjectDetectionTask extends ServiceTask {
             @Override
             public void onFailed(List<FileLabel> sourceList, AIGCStateCode stateCode) {
                 JSONObject data = new JSONObject();
+                data.put("sn", sn);
                 data.put("code", channelCode);
                 data.put("stateCode", stateCode.code);
                 cellet.speak(talkContext,
@@ -108,6 +114,7 @@ public class ObjectDetectionTask extends ServiceTask {
 
         if (!success) {
             JSONObject data = new JSONObject();
+            data.put("sn", sn);
             data.put("code", channelCode);
             data.put("fileCodeList", array);
             this.cellet.speak(this.talkContext,
