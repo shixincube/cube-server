@@ -27,8 +27,13 @@
 package cube.service.aigc.resource;
 
 import cube.aigc.Consts;
+import cube.aigc.ModelConfig;
+import cube.auth.AuthToken;
 import cube.common.entity.*;
+import cube.service.aigc.AIGCService;
 import cube.util.TextUtils;
+
+import java.util.ArrayList;
 
 /**
  * 资源内容回答。
@@ -41,7 +46,7 @@ public class ResourceAnswer {
         this.complexContext = complexContext;
     }
 
-    public String answer() {
+    public String answer(String addition) {
         String result = "";
 
         if (this.complexContext.numResources() == 1) {
@@ -49,7 +54,7 @@ public class ResourceAnswer {
             if (res instanceof HyperlinkResource) {
                 HyperlinkResource resource = (HyperlinkResource) res;
                 if (HyperlinkResource.TYPE_PAGE.equals(resource.metaType)) {
-                    result = Consts.formatUrlPageAnswer(TextUtils.extractDomain(resource.url),
+                    result = Consts.formatUrlPageAnswer(resource.url, TextUtils.extractDomain(resource.url),
                             resource.title, resource.content.length());
                 }
                 else if (HyperlinkResource.TYPE_IMAGE.equals(resource.metaType)) {
@@ -154,7 +159,46 @@ public class ResourceAnswer {
             result = buf.toString();
         }
 
+        if (null != addition && addition.length() > 1) {
+            result = result + "\n\n" + addition;
+            System.out.println("XJW result:" + result);
+        }
+
         return result;
+    }
+
+    public String extractContent(AIGCService service, AuthToken authToken) {
+        StringBuilder result = new StringBuilder();
+
+        for (ComplexResource res : this.complexContext.getResources()) {
+            HyperlinkResource resource = (HyperlinkResource) res;
+            if (HyperlinkResource.TYPE_PAGE.equals(resource.metaType)) {
+                try {
+                    StringBuilder content = new StringBuilder();
+
+                    String[] lines = resource.content.split("\n");
+                    int offset = lines.length > 80 ? 10 : 0;
+                    for (int i = offset, len = lines.length - offset; i < len; ++i) {
+                        content.append(lines[i]).append("\n");
+                        if (content.length() >= ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT - 100) {
+                            break;
+                        }
+                    }
+
+                    if (content.length() > 10) {
+                        String prompt = Consts.formatExtractContent(content.toString(), resource.title);
+                        String response = service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt);
+                        if (null != response) {
+                            result.append(response).append("\n");
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return result.toString();
     }
 
     public String ask(String query) {

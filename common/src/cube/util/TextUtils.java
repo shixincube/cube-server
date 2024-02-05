@@ -26,6 +26,8 @@
 
 package cube.util;
 
+import cube.aigc.ModelConfig;
+import cube.common.entity.AIGCUnit;
 import cube.common.entity.TextConstraint;
 import cube.vision.Size;
 import org.json.JSONObject;
@@ -449,6 +451,20 @@ public final class TextUtils {
             }
         }
         return result;
+    }
+
+    public static String filterChinese(AIGCUnit unit, String text) {
+        if (unit.getCapability().getName().equalsIgnoreCase(ModelConfig.BAIZE_UNIT)) {
+            if (TextUtils.containsChinese(text)) {
+                return text.replaceAll(",", "，");
+            }
+            else {
+                return text;
+            }
+        }
+        else {
+            return text;
+        }
     }
 
     public static void main(String[] args) {

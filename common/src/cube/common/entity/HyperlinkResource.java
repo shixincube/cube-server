@@ -107,6 +107,7 @@ public class HyperlinkResource extends ComplexResource {
         if (payload.has("content")) {
             this.content = payload.getString("content");
         }
+
         if (payload.has("illustration")) {
             this.illustration = payload.getString("illustration");
         }
@@ -148,6 +149,27 @@ public class HyperlinkResource extends ComplexResource {
         else {
             return this.numWords;
         }
+    }
+
+    public void fixContent() {
+        if (null != this.content) {
+            this.content = this.filterContent(this.content);
+        }
+    }
+
+    private String filterContent(String content) {
+        StringBuilder result = new StringBuilder();
+        String[] array = content.split("\n");
+        for (String line : array) {
+            if (line.trim().length() < 2) {
+                continue;
+            }
+            result.append(line.trim()).append("\n");
+        }
+        if (result.length() > 1) {
+            result.delete(result.length() - 1, result.length());
+        }
+        return result.toString();
     }
 
     @Override

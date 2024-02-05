@@ -39,6 +39,8 @@ public final class SQLUtils {
 
     public final static String Quote = "`";
 
+    public final static String FILTER_PATTERN = "[-;'\",\\s]|(--)+";
+
     private SQLUtils() {
     }
 
@@ -65,8 +67,8 @@ public final class SQLUtils {
 //        result = result.replaceAll("/", "//");
 //        result = result.replaceAll("%", "/%");
 //        result = result.replaceAll("_", "/_");
-//        result = result.replaceAll("\\[", "/[");
-//        result = result.replaceAll("]", "/]");
+        result = result.replaceAll("\\[", "/[");
+        result = result.replaceAll("]", "/]");
 //        result = result.replaceAll("\\(", "/(");
 //        result = result.replaceAll("\\)", "/)");
         return result;

@@ -1103,6 +1103,48 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
+    public String syncGenerateText(String unitName, String prompt) {
+        AIGCUnit unit = this.selectUnitByName(unitName);
+        if (null == unit) {
+            return null;
+        }
+
+        Contact participant = new Contact(1000, "shixincube.com");
+
+        long sn = Utils.generateSerialNumber();
+
+        JSONObject data = new JSONObject();
+        data.put("unit", unit.getCapability().getName());
+        data.put("content", prompt);
+        data.put("participant", participant.toCompactJSON());
+        data.put("history", new JSONArray());
+
+        Packet request = new Packet(AIGCAction.Chat.name, data);
+        ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(),
+                3 * 60 * 1000, sn);
+        if (null == dialect) {
+            Logger.w(AIGCService.class, "#syncGenerateText - transmit failed, sn:" + sn);
+            // 记录故障
+            unit.markFailure(AIGCStateCode.UnitError.code, System.currentTimeMillis(), participant.getId());
+            return null;
+        }
+
+        Packet response = new Packet(dialect);
+        JSONObject payload = Packet.extractDataPayload(response);
+
+        String responseText = "";
+        try {
+            responseText = payload.getString("response");
+        } catch (Exception e) {
+            Logger.w(AIGCService.class, "#syncGenerateText - failed, sn:" + sn);
+            return null;
+        }
+
+        // 过滤中文字符
+        responseText = TextUtils.filterChinese(unit, responseText);
+        return responseText;
+    }
+
     public String syncGenerateText(AuthToken authToken, String unitName, String prompt) {
         AIGCUnit unit = this.selectUnitByName(unitName);
         if (null == unit) {
@@ -2019,6 +2061,7 @@ public class AIGCService extends AbstractModule {
                 result = new ComplexContext(ComplexContext.Type.Complex);
                 for (String url : urlList) {
                     HyperlinkResource resource = new HyperlinkResource(url, HyperlinkResource.TYPE_FAILURE);
+                    resource.fixContent();
                     result.addResource(resource);
                 }
             }
@@ -2030,6 +2073,7 @@ public class AIGCService extends AbstractModule {
                     JSONObject resPayload = new JSONObject();
                     resPayload.put("payload", list.getJSONObject(i));
                     HyperlinkResource resource = new HyperlinkResource(resPayload);
+                    resource.fixContent();
                     result.addResource(resource);
                 }
             }
@@ -2054,6 +2098,7 @@ public class AIGCService extends AbstractModule {
             Packet response = new Packet(dialect);
             if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
                 HyperlinkResource resource = new HyperlinkResource(content, HyperlinkResource.TYPE_FAILURE);
+                resource.fixContent();
                 result = new ComplexContext(ComplexContext.Type.Complex);
                 result.addResource(resource);
             }
@@ -2064,6 +2109,7 @@ public class AIGCService extends AbstractModule {
                     // 列表没有数据，获取 URL 失败
                     result = new ComplexContext(ComplexContext.Type.Complex);
                     HyperlinkResource resource = new HyperlinkResource(content, HyperlinkResource.TYPE_FAILURE);
+                    resource.fixContent();
                     result.addResource(resource);
                 }
                 else {
@@ -2071,6 +2117,7 @@ public class AIGCService extends AbstractModule {
                     JSONObject resPayload = new JSONObject();
                     resPayload.put("payload", list.getJSONObject(0));
                     HyperlinkResource resource = new HyperlinkResource(resPayload);
+                    resource.fixContent();
                     result.addResource(resource);
                 }
             }
@@ -2703,7 +2750,9 @@ public class AIGCService extends AbstractModule {
             else {
                 // 复合型数据
                 ResourceAnswer resourceAnswer = new ResourceAnswer(complexContext);
-                String answer = resourceAnswer.answer();
+                // 提取内容
+                String content = resourceAnswer.extractContent(AIGCService.this, this.channel.getAuthToken());
+                String answer = resourceAnswer.answer(content);
                 result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
                         (null != this.originalQuery) ? this.originalQuery : this.content, answer, complexContext);
             }
