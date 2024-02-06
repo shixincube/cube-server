@@ -36,5 +36,5 @@ public class CertificateInfo {
 
     public static String KEYSTORE_PASSWORD = "cubeteam";
 
-    public static String KEY_PASSWORD = "cube-2023";
+    public static String KEY_PASSWORD = "cube-2024";
 }

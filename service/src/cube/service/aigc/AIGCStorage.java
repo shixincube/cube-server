@@ -41,6 +41,7 @@ import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
+import cube.util.EmojiFilter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -792,10 +793,10 @@ public class AIGCStorage implements Storagable {
                 new StorageField("unit", history.unit),
                 new StorageField("query_cid", history.queryContactId),
                 new StorageField("query_time", history.queryTime),
-                new StorageField("query_content", history.queryContent),
+                new StorageField("query_content", EmojiFilter.filterEmoji(history.queryContent)),
                 new StorageField("answer_cid", history.answerContactId),
                 new StorageField("answer_time", history.answerTime),
-                new StorageField("answer_content", history.answerContent),
+                new StorageField("answer_content", EmojiFilter.filterEmoji(history.answerContent)),
                 new StorageField("feedback", history.feedback),
                 new StorageField("context_id", history.contextId)
         });

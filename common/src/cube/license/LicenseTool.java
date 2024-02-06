@@ -50,7 +50,7 @@ public class LicenseTool {
     # keystore: 指定私钥库文件的名称(生成在当前目录)
     # storepass：指定私钥库的密码(获取keystore信息所需的密码)
     # keypass：指定别名条目的密码(私钥的密码)
-    keytool -genkeypair -storetype JKS -keysize 512 -validity 300 -alias "CubeLicense" -keyalg "RSA" -keystore "CubeLicense.keystore" -storepass "cubeteam" -keypass "cube-2023" -dname "CN=Xu, OU=Yang, O=Cube, L=gz, ST=gd, C=CN"
+    keytool -genkeypair -storetype JKS -keysize 512 -validity 3655 -alias "CubeLicense" -keyalg "RSA" -keystore "CubeLicense.keystore" -storepass "cubeteam" -keypass "cube-2024" -dname "CN=Xu, OU=Yang, O=Cube, L=gz, ST=gd, C=CN"
     */
 
     /* 生成证书

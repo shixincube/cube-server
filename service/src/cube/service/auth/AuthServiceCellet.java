@@ -30,7 +30,6 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
-import cell.util.CachedQueueExecutor;
 import cube.common.action.AuthAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
@@ -38,8 +37,6 @@ import cube.service.auth.task.ApplyTokenTask;
 import cube.service.auth.task.GetDomainTask;
 import cube.service.auth.task.GetTokenTask;
 import cube.service.auth.task.LatencyTask;
-
-import java.util.concurrent.ExecutorService;
 
 /**
  * 授权服务 Cellet 单元。

@@ -31,6 +31,7 @@ import cube.common.JSONable;
 import cube.common.entity.AIGCGenerationRecord;
 import cube.common.entity.KnowledgeQAResult;
 import cube.common.state.AIGCStateCode;
+import cube.util.EmojiFilter;
 import org.json.JSONObject;
 
 import java.util.Date;
@@ -89,7 +90,7 @@ public class AppEvent implements JSONable {
         this.event = event;
         this.timestamp = timestamp;
         this.time = Utils.gsDateFormat.format(new Date(this.timestamp));
-        this.data = data;
+        this.data = this.filterData(data);
     }
 
     public AppEvent(String event, long timestamp, long contactId, JSONObject data) {
@@ -97,7 +98,7 @@ public class AppEvent implements JSONable {
         this.timestamp = timestamp;
         this.time = Utils.gsDateFormat.format(new Date(this.timestamp));
         this.contactId = contactId;
-        this.data = data;
+        this.data = this.filterData(data);
     }
 
     public AppEvent(String event, long timestamp, String time, long contactId, JSONObject data) {
@@ -105,7 +106,7 @@ public class AppEvent implements JSONable {
         this.timestamp = timestamp;
         this.time = time;
         this.contactId = contactId;
-        this.data = data;
+        this.data = this.filterData(data);
     }
 
     public AppEvent(JSONObject json) {
@@ -115,6 +116,21 @@ public class AppEvent implements JSONable {
                 Utils.gsDateFormat.format(new Date(this.timestamp));
         this.data = json.has("data") ? json.getJSONObject("data") : null;
         this.contactId = json.has("contactId") ? json.getLong("contactId") : 0;
+    }
+
+    private JSONObject filterData(JSONObject data) {
+        if (null == data) {
+            return null;
+        }
+
+        // 过滤表情字符
+        String str = data.toString();
+        String result = EmojiFilter.filterEmoji(str);
+        try {
+            return new JSONObject(result);
+        } catch (Exception e) {
+            return data;
+        }
     }
 
     public JSONObject getSafeData() {

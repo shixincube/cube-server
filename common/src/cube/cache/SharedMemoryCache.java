@@ -29,6 +29,7 @@ package cube.cache;
 import cell.adapter.extra.memory.LockFuture;
 import cell.adapter.extra.memory.SharedMemory;
 import cell.adapter.extra.memory.SharedMemoryConfig;
+import cell.util.log.Logger;
 import cube.core.*;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -147,7 +148,16 @@ public class SharedMemoryCache extends AbstractCache {
 
         context.lockFuture = future;
 
-        this.memory.apply(key.get(), future);
+        try {
+            if (null != this.memory) {
+                this.memory.apply(key.get(), future);
+            }
+            else {
+                Logger.w(this.getClass(), "#execute - Memory instance is null");
+            }
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#execute", e);
+        }
     }
 
 
