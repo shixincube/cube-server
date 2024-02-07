@@ -41,7 +41,10 @@ public enum AIGCAction {
      */
     Teardown("teardown"),
 
-
+    /**
+     * 单元向服务器提交知识文档分段内容。
+     */
+    SubmitDocSegments("submitDocSegments"),
 
     /**
      * 获取 AI 单元。

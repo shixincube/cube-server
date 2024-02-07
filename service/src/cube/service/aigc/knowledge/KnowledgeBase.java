@@ -295,7 +295,10 @@ public class KnowledgeBase {
         try {
             doc = this.getKnowledgeDocByFileCode(fileCode);
             if (null != doc) {
+                // 删除文档
                 this.storage.deleteKnowledgeDoc(this.baseInfo.name, fileCode);
+                // 删除分段
+                this.storage.deleteKnowledgeDocSegments(doc.getId());
 
                 this.resource.removeDoc(doc);
 
@@ -322,6 +325,10 @@ public class KnowledgeBase {
         }
 
         return doc;
+    }
+
+    public void receiveDocSegments(List<KnowledgeDocSegment> segmentList) {
+
     }
 
     /**

@@ -34,17 +34,56 @@ import org.json.JSONObject;
  */
 public class KnowledgeDocSegment implements JSONable {
 
-    public KnowledgeDocSegment() {
+    public final long sn;
 
+    public final long docId;
+
+    public final String uuid;
+
+    public String content;
+
+    public String category;
+
+    public KnowledgeDocSegment(long sn, long docId, String uuid, String content, String category) {
+        this.sn = sn;
+        this.docId = docId;
+        this.uuid = uuid;
+        this.content = content;
+        this.category = category;
+    }
+
+    public KnowledgeDocSegment(JSONObject json) {
+        if (json.has("sn")) {
+            this.sn = json.getLong("sn");
+        }
+        else {
+            this.sn = 0;
+        }
+
+        this.docId = json.getLong("docId");
+        this.uuid = json.getString("uuid");
+        this.content = json.getString("content");
+
+        if (json.has("category")) {
+            this.category = json.getString("category");
+        }
     }
 
     @Override
     public JSONObject toJSON() {
-        return null;
+        JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
+        json.put("docId", this.docId);
+        json.put("uuid", this.uuid);
+        json.put("content", this.content);
+        if (null != this.category) {
+            json.put("category", this.category);
+        }
+        return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return null;
+        return this.toJSON();
     }
 }

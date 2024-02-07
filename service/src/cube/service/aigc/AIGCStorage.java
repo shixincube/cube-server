@@ -577,6 +577,13 @@ public class AIGCStorage implements Storagable {
             }
         }
 
+        if (!this.storage.exist(this.knowledgeDocSegmentTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.knowledgeDocSegmentTable, this.knowledgeDocSegmentFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.knowledgeDocSegmentTable + "' successfully");
+            }
+        }
+
         if (!this.storage.exist(this.knowledgeArticleTable)) {
             // 不存在，建新表
             if (this.storage.executeCreate(this.knowledgeArticleTable, this.knowledgeArticleFields)) {
@@ -1126,7 +1133,38 @@ public class AIGCStorage implements Storagable {
         return codeAndNameList;
     }
 
+    public List<KnowledgeDocSegment> readKnowledgeDocSegments(long docId) {
+        List<KnowledgeDocSegment> list = new ArrayList<>();
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocSegmentTable,
+                this.knowledgeDocSegmentFields, new Conditional[] {
+                        Conditional.createEqualTo("doc_id", docId)
+                });
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            KnowledgeDocSegment segment = new KnowledgeDocSegment(data.get("sn").getLong(),
+                    data.get("doc_id").getLong(), data.get("uuid").getString(), data.get("content").getString(),
+                    data.get("category").isNullValue() ? null : data.get("category").getString());
+            list.add(segment);
+        }
+        return list;
+    }
 
+    public void writeKnowledgeDocSegments(List<KnowledgeDocSegment> segments) {
+        for (KnowledgeDocSegment segment : segments) {
+            this.storage.executeInsert(this.knowledgeDocSegmentTable, new StorageField[] {
+                    new StorageField("doc_id", segment.docId),
+                    new StorageField("uuid", segment.uuid),
+                    new StorageField("content", segment.content),
+                    new StorageField("category", segment.category)
+            });
+        }
+    }
+
+    public boolean deleteKnowledgeDocSegments(long docId) {
+        return this.storage.executeDelete(this.knowledgeDocSegmentTable, new Conditional[] {
+                Conditional.createEqualTo("doc_id", docId)
+        });
+    }
 
     public boolean writeKnowledgeArticle(KnowledgeArticle article) {
         return this.storage.executeInsert(this.knowledgeArticleTable, new StorageField[] {
