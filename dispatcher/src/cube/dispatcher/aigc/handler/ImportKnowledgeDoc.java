@@ -75,9 +75,14 @@ public class ImportKnowledgeDoc extends ContextHandler {
                     baseName = data.getString("base");
                 }
 
+                String splitter = KnowledgeDoc.SPLITTER_LINE;
+                if (data.has("splitter")) {
+                    splitter = data.getString("splitter");
+                }
+
                 if (data.has("fileCode")) {
                     String fileCode = data.getString("fileCode");
-                    KnowledgeDoc doc = Manager.getInstance().importKnowledgeDoc(token, baseName, fileCode);
+                    KnowledgeDoc doc = Manager.getInstance().importKnowledgeDoc(token, baseName, fileCode, splitter);
                     if (null == doc) {
                         this.respond(response, HttpStatus.BAD_REQUEST_400);
                         this.complete();
@@ -89,7 +94,7 @@ public class ImportKnowledgeDoc extends ContextHandler {
                 }
                 else if (data.has("fileCodeList")) {
                     JSONArray fileCodeList = data.getJSONArray("fileCodeList");
-                    KnowledgeProgress progress = Manager.getInstance().importKnowledgeDocs(token, baseName, fileCodeList);
+                    KnowledgeProgress progress = Manager.getInstance().importKnowledgeDocs(token, baseName, fileCodeList, splitter);
                     if (null == progress) {
                         this.respond(response, HttpStatus.BAD_REQUEST_400);
                         this.complete();

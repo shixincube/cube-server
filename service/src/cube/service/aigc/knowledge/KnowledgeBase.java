@@ -207,7 +207,7 @@ public class KnowledgeBase {
         return doc;
     }
 
-    public KnowledgeDoc importKnowledgeDoc(String fileCode) {
+    public KnowledgeDoc importKnowledgeDoc(String fileCode, String splitter) {
         if (this.lock.get()) {
             Logger.w(this.getClass(), "#importKnowledgeDoc - Store locked: " + fileCode);
             return null;
@@ -218,12 +218,13 @@ public class KnowledgeBase {
 
         try {
             KnowledgeDoc doc = this.getKnowledgeDocByFileCode(fileCode);
+            boolean newDoc = false;
             if (null == doc) {
+                newDoc = true;
                 // 创建新文档
                 doc = new KnowledgeDoc(Utils.generateSerialNumber(), this.authToken.getDomain(),
                         this.authToken.getContactId(), fileCode, this.baseInfo.name, null,
                         false, -1, this.scope);
-                this.storage.writeKnowledgeDoc(doc);
             }
 
             if (null == doc.getFileLabel()) {
@@ -238,6 +239,14 @@ public class KnowledgeBase {
 
                 FileLabel fileLabel = new FileLabel(fileLabelJson);
                 doc.setFileLabel(fileLabel);
+            }
+
+            // 设置分割器
+            doc.splitter = splitter;
+
+            if (newDoc) {
+                // 写入库
+                this.storage.writeKnowledgeDoc(doc);
             }
 
             activatedDoc = doc;
@@ -328,10 +337,12 @@ public class KnowledgeBase {
      * 批量导入知识文档。
      *
      * @param fileCodeList
+     * @param splitter
      * @param listener
      * @return
      */
-    public KnowledgeProgress batchImportKnowledgeDocuments(List<String> fileCodeList, KnowledgeProgressListener listener) {
+    public KnowledgeProgress batchImportKnowledgeDocuments(List<String> fileCodeList, String splitter,
+                                                           KnowledgeProgressListener listener) {
         if (this.lock.get()) {
             Logger.w(this.getClass(), "#batchImportKnowledgeDocuments - Store locked: " + this.baseInfo.name);
             listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.Busy.code));
@@ -380,6 +391,8 @@ public class KnowledgeBase {
                     continue;
                 }
 
+                // 设置分割器
+                doc.splitter = splitter;
                 allList.add(doc);
             }
 
@@ -1356,7 +1369,7 @@ public class KnowledgeBase {
         }
 
         // 根据文件名匹配文档，读取文件内容进行问题推理
-        PromptMetadata docMeta = this.extractDocumentContent(query, 3);
+        PromptMetadata docMeta = this.extractDocumentContent(query, 5);
         if (null != docMeta) {
             Logger.d(this.getClass(), "#performKnowledgeQA - Merge document num: " + docMeta.metadataList.size());
             // 合并提示词
@@ -1511,7 +1524,7 @@ public class KnowledgeBase {
 
         // 将所有内容推送给模型推理
         String prompt = Consts.formatExtractContent(content.toString(), query);
-        String result = this.service.syncGenerateText(this.authToken, ModelConfig.BAIZE_UNIT, prompt);
+        String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt);
         if (null == result) {
             Logger.w(this.getClass(), "#extractDocumentContent - Unit error, no answer: " + this.baseInfo.name);
             return null;
@@ -1622,7 +1635,7 @@ public class KnowledgeBase {
 
         if (!fileLabels.isEmpty()) {
             for (FileLabel fileLabel : fileLabels) {
-                KnowledgeDoc doc = this.importKnowledgeDoc(fileLabel.getFileCode());
+                KnowledgeDoc doc = this.importKnowledgeDoc(fileLabel.getFileCode(), KnowledgeDoc.SPLITTER_LINE);
                 if (null == doc) {
                     Logger.w(this.getClass(), "#processQueryAttachments - Import knowledge doc failed - fileCode: "
                             + fileLabel.getFileCode());

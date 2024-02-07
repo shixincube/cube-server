@@ -95,6 +95,11 @@ public class ImportKnowledgeDocTask extends ServiceTask {
             baseName = packet.data.getString("base");
         }
 
+        String splitter = KnowledgeDoc.SPLITTER_LINE;
+        if (packet.data.has("splitter")) {
+            splitter = packet.data.getString("splitter");
+        }
+
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         KnowledgeBase base = service.getKnowledgeBase(tokenCode, baseName);
         if (null == base) {
@@ -105,7 +110,7 @@ public class ImportKnowledgeDocTask extends ServiceTask {
         }
 
         if (null != fileCode) {
-            KnowledgeDoc doc = base.importKnowledgeDoc(fileCode);
+            KnowledgeDoc doc = base.importKnowledgeDoc(fileCode, splitter);
             if (null == doc) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
@@ -118,7 +123,8 @@ public class ImportKnowledgeDocTask extends ServiceTask {
             markResponseTime();
         }
         else {
-            KnowledgeProgress progress = base.batchImportKnowledgeDocuments(fileCodeList, new KnowledgeProgressListener() {
+            KnowledgeProgress progress = base.batchImportKnowledgeDocuments(fileCodeList, splitter,
+                    new KnowledgeProgressListener() {
                 @Override
                 public void onProgress(KnowledgeBase knowledgeBase, KnowledgeProgress progress) {
                     // Nothing

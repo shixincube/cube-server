@@ -415,10 +415,11 @@ public class Manager implements Tickable, PerformerListener {
         }
     }
 
-    public KnowledgeDoc importKnowledgeDoc(String token, String baseName, String fileCode) {
+    public KnowledgeDoc importKnowledgeDoc(String token, String baseName, String fileCode, String splitter) {
         JSONObject payload = new JSONObject();
         payload.put("base", baseName);
         payload.put("fileCode", fileCode);
+        payload.put("splitter", splitter);
         Packet packet = new Packet(AIGCAction.ImportKnowledgeDoc.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
@@ -437,10 +438,11 @@ public class Manager implements Tickable, PerformerListener {
         return new KnowledgeDoc(Packet.extractDataPayload(responsePacket));
     }
 
-    public KnowledgeProgress importKnowledgeDocs(String token, String baseName, JSONArray fileCodeArray) {
+    public KnowledgeProgress importKnowledgeDocs(String token, String baseName, JSONArray fileCodeArray, String splitter) {
         JSONObject payload = new JSONObject();
         payload.put("base", baseName);
         payload.put("fileCodeList", fileCodeArray);
+        payload.put("splitter", splitter);
         Packet packet = new Packet(AIGCAction.ImportKnowledgeDoc.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);

@@ -39,9 +39,14 @@ public class KnowledgeDoc extends Entity {
     public final static String SPLITTER_AUTO = "Auto";
 
     /**
-     * 根据标点符号切割。
+     * 根据中文标点符号切割。
      */
     public final static String SPLITTER_PUNCTUATION = "Punctuation";
+
+    /**
+     * 根据文本符号行进行切割。
+     */
+    public final static String SPLITTER_SIMPLE = "Simple";
 
     /**
      * 根据文本行进行切割，即一行文本切割为一段。
@@ -66,7 +71,7 @@ public class KnowledgeDoc extends Entity {
     /**
      * 文本分割器。
      */
-    public String splitter = SPLITTER_AUTO;
+    public String splitter = SPLITTER_LINE;
 
     /**
      * 分割的内容段落数量。

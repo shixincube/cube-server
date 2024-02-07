@@ -161,7 +161,6 @@ public class ResourceAnswer {
 
         if (null != addition && addition.length() > 1) {
             result = result + "\n\n" + addition;
-            System.out.println("XJW result:" + result);
         }
 
         return result;

@@ -70,6 +70,8 @@ public class AIGCStorage implements Storagable {
 
     private final String knowledgeDocTable = "aigc_knowledge_doc";
 
+
+
     private final String knowledgeArticleTable = "aigc_knowledge_article";
 
     private final String knowledgeParaphraseTable = "aigc_knowledge_paraphrase";
@@ -1064,7 +1066,8 @@ public class AIGCStorage implements Storagable {
     public boolean updateKnowledgeDoc(KnowledgeDoc doc) {
         return this.storage.executeUpdate(this.knowledgeDocTable, new StorageField[] {
                 new StorageField("activated", doc.activated ? 1 : 0),
-                new StorageField("num_segments", doc.numSegments)
+                new StorageField("num_segments", doc.numSegments),
+                new StorageField("file_name", doc.fileName)
         }, new Conditional[] {
                 Conditional.createEqualTo("base", doc.baseName),
                 Conditional.createAnd(),
