@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2023 Cube Team.
+ * Copyright (c) 2020-2024 Ambrose Xu.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -70,7 +70,7 @@ public class AIGCStorage implements Storagable {
 
     private final String knowledgeDocTable = "aigc_knowledge_doc";
 
-
+    private final String knowledgeDocSegmentTable = "aigc_knowledge_doc_segment";
 
     private final String knowledgeArticleTable = "aigc_knowledge_article";
 
@@ -277,6 +277,24 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("scope", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] knowledgeDocSegmentFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("doc_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("uuid", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("content", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("category", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 
@@ -1107,6 +1125,8 @@ public class AIGCStorage implements Storagable {
         }
         return codeAndNameList;
     }
+
+
 
     public boolean writeKnowledgeArticle(KnowledgeArticle article) {
         return this.storage.executeInsert(this.knowledgeArticleTable, new StorageField[] {

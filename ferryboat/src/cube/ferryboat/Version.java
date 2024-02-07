@@ -3,7 +3,7 @@
  * <p>
  * The MIT License (MIT)
  * <p>
- * Copyright (c) 2020-2023 Cube Team.
+ * Copyright (c) 2020-2024 Ambrose Xu.
  * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
