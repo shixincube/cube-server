@@ -134,6 +134,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new ImportKnowledgeDoc());
         httpServer.addContextHandler(new RemoveKnowledgeDoc());
         httpServer.addContextHandler(new ResetKnowledgeStore());
+        httpServer.addContextHandler(new KnowledgeSegments());
         httpServer.addContextHandler(new KnowledgeBackup());
         httpServer.addContextHandler(new KnowledgeArticles());
         httpServer.addContextHandler(new AppendKnowledgeArticle());
@@ -504,6 +505,31 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return new KnowledgeProgress(Packet.extractDataPayload(responsePacket));
+    }
+
+    public JSONObject getKnowledgeSegments(String token, String baseName, long docId, int start, int end) {
+        JSONObject payload = new JSONObject();
+        payload.put("base", baseName);
+        payload.put("docId", docId);
+        payload.put("start", start);
+        payload.put("end", end);
+        Packet packet = new Packet(AIGCAction.GetKnowledgeSegments.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#getKnowledgeDocSegments - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#getKnowledgeDocSegments - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
     }
 
     public KnowledgeProgress getKnowledgeProgress(String token, String baseName, long sn) {

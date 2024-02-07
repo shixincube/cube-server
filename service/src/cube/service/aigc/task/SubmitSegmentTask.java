@@ -32,7 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.KnowledgeDocSegment;
+import cube.common.entity.KnowledgeSegment;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -44,11 +44,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 提交知识文件分段数据任务。
+ * 提交知识分段数据任务。
  */
-public class SubmitDocSegmentTask extends ServiceTask {
+public class SubmitSegmentTask extends ServiceTask {
 
-    public SubmitDocSegmentTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public SubmitSegmentTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -58,14 +58,14 @@ public class SubmitDocSegmentTask extends ServiceTask {
         Packet packet = new Packet(dialect);
 
         long docId = 0;
-        List<KnowledgeDocSegment> segments = new ArrayList<>();
+        List<KnowledgeSegment> segments = new ArrayList<>();
         try {
             docId = packet.data.getLong("docId");
             JSONArray array = packet.data.getJSONArray("segments");
             for (int i = 0; i < array.length(); ++i) {
                 JSONObject data = array.getJSONObject(i);
                 data.put("docId", docId);
-                KnowledgeDocSegment segment = new KnowledgeDocSegment(data);
+                KnowledgeSegment segment = new KnowledgeSegment(data);
                 segments.add(segment);
             }
         } catch (Exception e){
@@ -78,7 +78,7 @@ public class SubmitDocSegmentTask extends ServiceTask {
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         // 写入数据库
-        service.getStorage().writeKnowledgeDocSegments(segments);
+        service.getStorage().writeKnowledgeSegments(segments);
 
         JSONObject responseData = new JSONObject();
         responseData.put("total", segments.size());

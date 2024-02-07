@@ -37,7 +37,6 @@ import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
-import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
@@ -70,7 +69,7 @@ public class AIGCStorage implements Storagable {
 
     private final String knowledgeDocTable = "aigc_knowledge_doc";
 
-    private final String knowledgeDocSegmentTable = "aigc_knowledge_doc_segment";
+    private final String knowledgeSegmentTable = "aigc_knowledge_segment";
 
     private final String knowledgeArticleTable = "aigc_knowledge_article";
 
@@ -280,7 +279,7 @@ public class AIGCStorage implements Storagable {
             })
     };
 
-    private final StorageField[] knowledgeDocSegmentFields = new StorageField[] {
+    private final StorageField[] knowledgeSegmentFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
@@ -577,10 +576,10 @@ public class AIGCStorage implements Storagable {
             }
         }
 
-        if (!this.storage.exist(this.knowledgeDocSegmentTable)) {
+        if (!this.storage.exist(this.knowledgeSegmentTable)) {
             // 不存在，建新表
-            if (this.storage.executeCreate(this.knowledgeDocSegmentTable, this.knowledgeDocSegmentFields)) {
-                Logger.i(this.getClass(), "Created table '" + this.knowledgeDocSegmentTable + "' successfully");
+            if (this.storage.executeCreate(this.knowledgeSegmentTable, this.knowledgeSegmentFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.knowledgeSegmentTable + "' successfully");
             }
         }
 
@@ -1133,15 +1132,16 @@ public class AIGCStorage implements Storagable {
         return codeAndNameList;
     }
 
-    public List<KnowledgeDocSegment> readKnowledgeDocSegments(long docId) {
-        List<KnowledgeDocSegment> list = new ArrayList<>();
-        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocSegmentTable,
-                this.knowledgeDocSegmentFields, new Conditional[] {
-                        Conditional.createEqualTo("doc_id", docId)
+    public List<KnowledgeSegment> readKnowledgeSegments(long docId, int startIndex, int endIndex) {
+        List<KnowledgeSegment> list = new ArrayList<>();
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeSegmentTable,
+                this.knowledgeSegmentFields, new Conditional[] {
+                        Conditional.createEqualTo("doc_id", docId),
+                        Conditional.createLimit(startIndex, endIndex - startIndex + 1)
                 });
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            KnowledgeDocSegment segment = new KnowledgeDocSegment(data.get("sn").getLong(),
+            KnowledgeSegment segment = new KnowledgeSegment(data.get("sn").getLong(),
                     data.get("doc_id").getLong(), data.get("uuid").getString(), data.get("content").getString(),
                     data.get("category").isNullValue() ? null : data.get("category").getString());
             list.add(segment);
@@ -1149,9 +1149,16 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public void writeKnowledgeDocSegments(List<KnowledgeDocSegment> segments) {
-        for (KnowledgeDocSegment segment : segments) {
-            this.storage.executeInsert(this.knowledgeDocSegmentTable, new StorageField[] {
+    public int countKnowledgeSegments(long docId) {
+        String sql = "SELECT COUNT(sn) FROM " + this.knowledgeSegmentTable +
+                " WHERE doc_id=" + docId;
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        return result.get(0)[0].getInt();
+    }
+
+    public void writeKnowledgeSegments(List<KnowledgeSegment> segments) {
+        for (KnowledgeSegment segment : segments) {
+            this.storage.executeInsert(this.knowledgeSegmentTable, new StorageField[] {
                     new StorageField("doc_id", segment.docId),
                     new StorageField("uuid", segment.uuid),
                     new StorageField("content", segment.content),
@@ -1160,8 +1167,8 @@ public class AIGCStorage implements Storagable {
         }
     }
 
-    public boolean deleteKnowledgeDocSegments(long docId) {
-        return this.storage.executeDelete(this.knowledgeDocSegmentTable, new Conditional[] {
+    public boolean deleteKnowledgeSegments(long docId) {
+        return this.storage.executeDelete(this.knowledgeSegmentTable, new Conditional[] {
                 Conditional.createEqualTo("doc_id", docId)
         });
     }

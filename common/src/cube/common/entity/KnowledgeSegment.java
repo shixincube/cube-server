@@ -32,7 +32,7 @@ import org.json.JSONObject;
 /**
  * 知识文档内容分段。
  */
-public class KnowledgeDocSegment implements JSONable {
+public class KnowledgeSegment implements JSONable {
 
     public final long sn;
 
@@ -44,7 +44,7 @@ public class KnowledgeDocSegment implements JSONable {
 
     public String category;
 
-    public KnowledgeDocSegment(long sn, long docId, String uuid, String content, String category) {
+    public KnowledgeSegment(long sn, long docId, String uuid, String content, String category) {
         this.sn = sn;
         this.docId = docId;
         this.uuid = uuid;
@@ -52,7 +52,7 @@ public class KnowledgeDocSegment implements JSONable {
         this.category = category;
     }
 
-    public KnowledgeDocSegment(JSONObject json) {
+    public KnowledgeSegment(JSONObject json) {
         if (json.has("sn")) {
             this.sn = json.getLong("sn");
         }

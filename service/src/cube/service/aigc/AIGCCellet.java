@@ -299,6 +299,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new RemoveKnowledgeDocTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.GetKnowledgeSegments.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new GetKnowledgeSegmentsTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.GetResetKnowledgeProgress.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new GetResetKnowledgeProgressTask(this, talkContext, primitive,
@@ -394,9 +399,9 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new GeneratePsychologyReportTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (AIGCAction.SubmitDocSegments.name.equals(action)) {
+        else if (AIGCAction.SubmitSegments.name.equals(action)) {
             // 来自 Unit 的请求
-            this.execute(new SubmitDocSegmentTask(this, talkContext, primitive,
+            this.execute(new SubmitSegmentTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (AIGCAction.Setup.name.equals(action)) {

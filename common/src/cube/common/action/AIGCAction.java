@@ -42,9 +42,9 @@ public enum AIGCAction {
     Teardown("teardown"),
 
     /**
-     * 单元向服务器提交知识文档分段内容。
+     * 单元向服务器提交知识分段内容。
      */
-    SubmitDocSegments("submitDocSegments"),
+    SubmitSegments("submitSegments"),
 
     /**
      * 获取 AI 单元。
@@ -220,6 +220,11 @@ public enum AIGCAction {
      * 释放知识库文档。
      */
     DeactivateKnowledgeDoc("deactivateKnowledgeDoc"),
+
+    /**
+     * 获取知识分段数据。
+     */
+    GetKnowledgeSegments("getKnowledgeSegments"),
 
     /**
      * 获取知识库操作进度。

@@ -298,7 +298,7 @@ public class KnowledgeBase {
                 // 删除文档
                 this.storage.deleteKnowledgeDoc(this.baseInfo.name, fileCode);
                 // 删除分段
-                this.storage.deleteKnowledgeDocSegments(doc.getId());
+                this.storage.deleteKnowledgeSegments(doc.getId());
 
                 this.resource.removeDoc(doc);
 
@@ -327,8 +327,12 @@ public class KnowledgeBase {
         return doc;
     }
 
-    public void receiveDocSegments(List<KnowledgeDocSegment> segmentList) {
+    public List<KnowledgeSegment> getKnowledgeSegments(long docId, int startIndex, int endIndex) {
+        return this.storage.readKnowledgeSegments(docId, startIndex, endIndex);
+    }
 
+    public int numKnowledgeSegments(long docId) {
+        return this.storage.countKnowledgeSegments(docId);
     }
 
     /**
