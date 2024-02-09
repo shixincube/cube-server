@@ -26,11 +26,13 @@
 
 package cube.service.aigc.knowledge;
 
+import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.common.entity.KnowledgeBaseInfo;
 import cube.core.AbstractModule;
 import cube.service.aigc.AIGCService;
 import cube.service.auth.AuthService;
+import cube.util.TextUtils;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -101,8 +103,55 @@ public class KnowledgeFramework {
         return base;
     }
 
-    public KnowledgeBase newKnowledgeBase() {
+    public List<KnowledgeBase> getKnowledgeBaseByCategory(long contactId, String category) {
+        FrameworkWrapper framework = null;
+        synchronized (this) {
+            framework = this.frameworks.get(contactId);
+            if (null == framework) {
+                framework = new FrameworkWrapper(contactId, this.service);
+                this.frameworks.put(contactId, framework);
+            }
+        }
+
+        List<KnowledgeBase> baseList = framework.getKnowledgeBaseByCategory(category);
+        if (baseList.isEmpty()) {
+            List<KnowledgeBaseInfo> infoList = framework.getKnowledgeBaseInfoByCategory(category);
+            AuthToken authToken = this.authService.queryAuthTokenByContactId(contactId);
+
+            for (KnowledgeBaseInfo info : infoList) {
+                KnowledgeBase base = new KnowledgeBase(info,
+                        this.service, this.service.getStorage(), authToken, this.fileStorage);
+                framework.putKnowledgeBase(base);
+                base.listKnowledgeDocs();
+                base.listKnowledgeArticles();
+                baseList.add(base);
+            }
+        }
+        return baseList;
+    }
+
+    public KnowledgeBase newKnowledgeBase(long contactId, String name, String displayName, String category) {
+        if (TextUtils.isChineseWord(name)) {
+            Logger.w(this.getClass(), "#newKnowledgeBase - Knowledge base name is chinese: " + name);
+            return null;
+        }
+
+        KnowledgeBaseInfo info = this.service.getStorage().readKnowledgeBaseInfo(contactId, name);
+        if (null != info) {
+            Logger.w(this.getClass(), "#newKnowledgeBase - Knowledge base already exist: " + name);
+            return null;
+        }
+
+        info = new KnowledgeBaseInfo(contactId, name, displayName, category, 0, 0, System.currentTimeMillis());
+        if (this.service.getStorage().writeKnowledgeBaseInfo(info)) {
+            return this.getKnowledgeBase(contactId, name);
+        }
+
         return null;
+    }
+
+    public void deleteKnowledgeBase(long contactId, String name) {
+
     }
 
     public void freeBase(String domain, Long contactId) {

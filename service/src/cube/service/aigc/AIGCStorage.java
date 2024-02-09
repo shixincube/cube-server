@@ -965,6 +965,28 @@ public class AIGCStorage implements Storagable {
         return info;
     }
 
+    public List<KnowledgeBaseInfo> readKnowledgeBaseInfoByCategory(long contactId, String category) {
+        List<KnowledgeBaseInfo> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.knowledgeFrameTable, this.knowledgeFrameFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("category", category)
+                });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            KnowledgeBaseInfo info = new KnowledgeBaseInfo(data.get("contact_id").getLong(),
+                    data.get("base").getString(), data.get("display_name").getString(),
+                    data.get("category").isNullValue() ? null : data.get("category").getString(),
+                    data.get("unit_id").getLong(), data.get("store_size").getLong(), data.get("timestamp").getLong());
+            list.add(info);
+        }
+
+        return list;
+    }
+
     public boolean writeKnowledgeBaseInfo(KnowledgeBaseInfo info) {
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeFrameTable,
                 this.knowledgeFrameFields, new Conditional[] {
@@ -988,7 +1010,8 @@ public class AIGCStorage implements Storagable {
                     new StorageField("display_name", info.displayName),
                     new StorageField("unit_id", info.unitId),
                     new StorageField("store_size", info.storeSize),
-                    new StorageField("timestamp", info.timestamp)
+                    new StorageField("timestamp", info.timestamp),
+                    new StorageField("category", info.category)
             }, new Conditional[] {
                     Conditional.createEqualTo("contact_id", info.contactId),
                     Conditional.createAnd(),

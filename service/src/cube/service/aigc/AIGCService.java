@@ -692,8 +692,21 @@ public class AIGCService extends AbstractModule {
         if (null == authToken) {
             return null;
         }
-
         return this.getKnowledgeBase(authToken.getContactId(), baseName);
+    }
+
+    /**
+     *
+     * @param tokenCode
+     * @param category
+     * @return
+     */
+    public List<KnowledgeBase> getKnowledgeBaseByCategory(String tokenCode, String category) {
+        AuthToken authToken = this.getToken(tokenCode);
+        if (null == authToken) {
+            return null;
+        }
+        return this.getKnowledgeBaseByCategory(authToken.getContactId(), category);
     }
 
     /**
@@ -705,6 +718,10 @@ public class AIGCService extends AbstractModule {
      */
     public synchronized KnowledgeBase getKnowledgeBase(Long contactId, String baseName) {
         return this.knowledgeFramework.getKnowledgeBase(contactId, baseName);
+    }
+
+    public synchronized List<KnowledgeBase> getKnowledgeBaseByCategory(Long contactId, String category) {
+        return this.knowledgeFramework.getKnowledgeBaseByCategory(contactId, category);
     }
 
     /**

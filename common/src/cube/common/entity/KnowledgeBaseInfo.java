@@ -72,6 +72,20 @@ public class KnowledgeBaseInfo implements JSONable {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof KnowledgeBaseInfo) {
+            KnowledgeBaseInfo other = (KnowledgeBaseInfo) obj;
+            return other.contactId == this.contactId && other.name.equals(this.name);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return (new Long(this.contactId)).hashCode() * 7 - this.name.hashCode();
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("contactId", this.contactId);

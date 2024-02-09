@@ -29,6 +29,7 @@ package cube.service.aigc.knowledge;
 import cube.common.entity.KnowledgeBaseInfo;
 import cube.service.aigc.AIGCService;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,7 +40,7 @@ public class FrameworkWrapper {
 
     private final AIGCService service;
 
-    private LinkedList<KnowledgeBaseInfo> baseInfoList;
+    private final LinkedList<KnowledgeBaseInfo> baseInfoList;
 
     /**
      * Key: 知识库名。
@@ -62,6 +63,23 @@ public class FrameworkWrapper {
         return this.knowledgeMap.get(name);
     }
 
+    public List<KnowledgeBase> getKnowledgeBaseByCategory(String category) {
+        List<KnowledgeBase> list = new ArrayList<>();
+
+        synchronized (this.baseInfoList) {
+            for (KnowledgeBaseInfo info : this.baseInfoList) {
+                if (null != info.category && info.category.equals(category)) {
+                    KnowledgeBase base = this.getKnowledgeBase(info.name);
+                    if (null != base) {
+                        list.add(base);
+                    }
+                }
+            }
+        }
+
+        return list;
+    }
+
     public void putKnowledgeBase(KnowledgeBase knowledgeBase) {
         this.knowledgeMap.put(knowledgeBase.getName(), knowledgeBase);
     }
@@ -76,12 +94,36 @@ public class FrameworkWrapper {
         }
 
         // 查询已创建的库
-        KnowledgeBaseInfo info = service.getStorage().readKnowledgeBaseInfo(this.contactId, baseName);
+        KnowledgeBaseInfo info = this.service.getStorage().readKnowledgeBaseInfo(this.contactId, baseName);
         if (null != info) {
             this.baseInfoList.add(info);
         }
 
         return info;
+    }
+
+    public List<KnowledgeBaseInfo> getKnowledgeBaseInfoByCategory(String category) {
+        List<KnowledgeBaseInfo> infos = new ArrayList<>();
+
+        synchronized (this.baseInfoList) {
+            for (KnowledgeBaseInfo info : this.baseInfoList) {
+                if (null != info.category && info.category.equals(category)) {
+                    infos.add(info);
+                }
+            }
+        }
+        if (!infos.isEmpty()) {
+            return infos;
+        }
+
+        infos = this.service.getStorage().readKnowledgeBaseInfoByCategory(this.contactId, category);
+        for (KnowledgeBaseInfo info : infos) {
+            if (!this.baseInfoList.contains(info)) {
+                this.baseInfoList.add(info);
+            }
+        }
+
+        return infos;
     }
 
     private void refreshKnowledgeBaseInfo() {

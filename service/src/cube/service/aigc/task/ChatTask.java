@@ -212,12 +212,23 @@ public class ChatTask extends ServiceTask {
             int searchFetchK = packet.data.has("searchFetchK")
                     ? packet.data.getInt("searchFetchK") : 50;
 
-            String baseName = KnowledgeFramework.DefaultName;
-            if (packet.data.has("base")) {
-                baseName = packet.data.getString("base");
+            KnowledgeBase knowledgeBase = null;
+
+            if (categories.isEmpty()) {
+                String baseName = KnowledgeFramework.DefaultName;
+                if (packet.data.has("base")) {
+                    baseName = packet.data.getString("base");
+                }
+                knowledgeBase = service.getKnowledgeBase(token, baseName);
+            }
+            else {
+                Logger.d(this.getClass(), "Select knowledge base by category: " + categories.get(0));
+                List<KnowledgeBase> baseList = service.getKnowledgeBaseByCategory(token, categories.get(0));
+                if (!baseList.isEmpty()) {
+                    knowledgeBase = baseList.get(0);
+                }
             }
 
-            KnowledgeBase knowledgeBase = service.getKnowledgeBase(token, baseName);
             if (null != knowledgeBase) {
                 success = knowledgeBase.performKnowledgeQA(code, unit, content, searchTopK, searchFetchK,
                         categories, recordList, new KnowledgeQAListener() {
