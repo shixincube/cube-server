@@ -40,16 +40,20 @@ public class KnowledgeBaseInfo implements JSONable {
 
     public String displayName;
 
+    public String category;
+
     public long unitId;
 
     public long storeSize;
 
     public long timestamp;
 
-    public KnowledgeBaseInfo(long contactId, String name, String displayName, long unitId, long storeSize, long timestamp) {
+    public KnowledgeBaseInfo(long contactId, String name, String displayName, String category,
+                             long unitId, long storeSize, long timestamp) {
         this.contactId = contactId;
         this.name = name;
         this.displayName = displayName;
+        this.category = category;
         this.unitId = unitId;
         this.storeSize = storeSize;
         this.timestamp = timestamp;
@@ -62,6 +66,9 @@ public class KnowledgeBaseInfo implements JSONable {
         this.unitId = json.getLong("unitId");
         this.storeSize = json.getLong("storeSize");
         this.timestamp = json.getLong("timestamp");
+        if (json.has("category")) {
+            this.category = json.getString("category");
+        }
     }
 
     @Override
@@ -73,6 +80,9 @@ public class KnowledgeBaseInfo implements JSONable {
         json.put("unitId", this.unitId);
         json.put("storeSize", this.storeSize);
         json.put("timestamp", this.timestamp);
+        if (null != this.category) {
+            json.put("category", this.category);
+        }
         return json;
     }
 

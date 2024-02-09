@@ -125,7 +125,7 @@ public class Change extends ContextHandler {
             // 知识库概述
             responseData.put("knowledge", Manager.getInstance().getKnowledgeProfile(token).toJSON());
 
-            // 知识库框架
+            // 知识库框架，仅为了兼容旧版本
             responseData.put("knowledgeFramework", Manager.getInstance().getKnowledgeFramework(token));
 
             Helper.respondOk(this, response, responseData);

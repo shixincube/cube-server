@@ -238,6 +238,9 @@ public class AIGCStorage implements Storagable {
             new StorageField("display_name", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("category", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
             new StorageField("unit_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.DEFAULT_0
             }),
@@ -934,8 +937,9 @@ public class AIGCStorage implements Storagable {
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeBaseInfo info = new KnowledgeBaseInfo(data.get("contact_id").getLong(),
-                    data.get("base").getString(), data.get("display_name").getString(), data.get("unit_id").getLong(),
-                    data.get("store_size").getLong(), data.get("timestamp").getLong());
+                    data.get("base").getString(), data.get("display_name").getString(),
+                    data.get("category").isNullValue() ? null : data.get("category").getString(),
+                    data.get("unit_id").getLong(), data.get("store_size").getLong(), data.get("timestamp").getLong());
             list.add(info);
         }
 
@@ -955,8 +959,9 @@ public class AIGCStorage implements Storagable {
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
         KnowledgeBaseInfo info = new KnowledgeBaseInfo(data.get("contact_id").getLong(),
-                data.get("base").getString(), data.get("display_name").getString(), data.get("unit_id").getLong(),
-                data.get("store_size").getLong(), data.get("timestamp").getLong());
+                data.get("base").getString(), data.get("display_name").getString(),
+                data.get("category").isNullValue() ? null : data.get("category").getString(),
+                data.get("unit_id").getLong(), data.get("store_size").getLong(), data.get("timestamp").getLong());
         return info;
     }
 
@@ -972,6 +977,7 @@ public class AIGCStorage implements Storagable {
                     new StorageField("contact_id", info.contactId),
                     new StorageField("base", info.name),
                     new StorageField("display_name", info.displayName),
+                    new StorageField("category", info.category),
                     new StorageField("unit_id", info.unitId),
                     new StorageField("store_size", info.storeSize),
                     new StorageField("timestamp", info.timestamp)

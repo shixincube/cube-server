@@ -295,19 +295,23 @@ public class KnowledgeBase {
         try {
             doc = this.getKnowledgeDocByFileCode(fileCode);
             if (null != doc) {
+                if (doc.activated) {
+                    if (this.resource.checkUnit()) {
+                        KnowledgeDoc deactivatedDoc = this.deactivateKnowledgeDoc(doc);
+                        doc = deactivatedDoc;
+                    }
+                    else {
+                        Logger.w(this.getClass(), "#removeKnowledgeDoc - Unit error: " + fileCode);
+                        return null;
+                    }
+                }
+
                 // 删除文档
                 this.storage.deleteKnowledgeDoc(this.baseInfo.name, fileCode);
                 // 删除分段
                 this.storage.deleteKnowledgeSegments(doc.getId());
 
                 this.resource.removeDoc(doc);
-
-                if (doc.activated) {
-                    if (this.resource.checkUnit()) {
-                        KnowledgeDoc deactivatedDoc = this.deactivateKnowledgeDoc(doc);
-                        doc = deactivatedDoc;
-                    }
-                }
             }
             else {
                 doc = this.resource.removeDoc(fileCode);
@@ -1365,26 +1369,33 @@ public class KnowledgeBase {
             return true;
         }
 
-        // 获取提示词
-        boolean brisk = !unitName.equalsIgnoreCase(ModelConfig.BAIZE_UNIT);
-        PromptMetadata promptMetadata = this.generatePrompt(query, searchTopK, searchFetchK, brisk);
-        if (null == promptMetadata) {
-            Logger.w(this.getClass(), "#performKnowledgeQA - Generate prompt failed in channel: " + channelCode);
-            return false;
-        }
-
         AIGCUnit unit = this.service.selectUnitByName(unitName);
         if (null == unit) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Select unit error: " + unitName);
             return false;
         }
 
+        PromptMetadata promptMetadata = null;
         // 根据文件名匹配文档，读取文件内容进行问题推理
-        PromptMetadata docMeta = this.extractDocumentContent(query, 5);
-        if (null != docMeta) {
-            Logger.d(this.getClass(), "#performKnowledgeQA - Merge document num: " + docMeta.metadataList.size());
-            // 合并提示词
-            promptMetadata.mergeAnswer(docMeta);
+        promptMetadata = this.extractDocumentContent(query, 5);
+        if (null != promptMetadata) {
+            Logger.d(this.getClass(), "#performKnowledgeQA - Generate prompt from document - num:" +
+                    promptMetadata.metadataList.size());
+            // 使用文档推理结果生成提示词
+            promptMetadata = promptMetadata.generatePrompt(query);
+            if (null == promptMetadata) {
+                promptMetadata = this.generatePrompt(query, searchTopK, searchFetchK, false);
+            }
+        }
+        else {
+            // 获取提示词
+            boolean brisk = !unitName.equalsIgnoreCase(ModelConfig.BAIZE_UNIT);
+            promptMetadata = this.generatePrompt(query, searchTopK, searchFetchK, brisk);
+        }
+
+        if (null == promptMetadata) {
+            Logger.w(this.getClass(), "#performKnowledgeQA - Generate prompt failed in channel: " + channelCode);
+            return false;
         }
 
         // 优化提示词
@@ -1415,6 +1426,10 @@ public class KnowledgeBase {
         }
         else {
             // 执行 Generate Text
+            System.out.println("----------------------------------------");
+            System.out.println(prompt);
+            System.out.println("----------------------------------------");
+            final List<KnowledgeSource> sources = promptMetadata.mergeSources();
             this.service.generateText(channel, unit, query, prompt, paraphrases, null, false, true,
                     new GenerateTextListener() {
                 @Override
@@ -1423,7 +1438,7 @@ public class KnowledgeBase {
                     result.record = record;
 
                     // 来源
-                    result.sources.addAll(promptMetadata.mergeSources());
+                    result.sources.addAll(sources);
 
                     listener.onCompleted(channel, result);
                 }
@@ -1473,15 +1488,10 @@ public class KnowledgeBase {
         // 降序排序文件
         Collections.sort(matchingList);
 
-        StringBuilder content = new StringBuilder();
-
         PromptMetadata metadata = new PromptMetadata();
 
         for (int i = 0; i < Math.min(topN, matchingList.size()); ++i) {
-            if (content.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
-                // 内容溢出
-                break;
-            }
+            StringBuilder content = new StringBuilder();
 
             FileNameMatching fm = matchingList.get(i);
             GetFile getFile = new GetFile(this.authToken.getDomain(), fm.fileCode);
@@ -1520,30 +1530,54 @@ public class KnowledgeBase {
                     Logger.w(this.getClass(), "#extractDocumentContent - Read file error: " + fullpath);
                 }
 
+                if (content.length() < 3) {
+                    Logger.w(this.getClass(), "#extractDocumentContent - No content: " + this.baseInfo.name);
+                    continue;
+                }
+
+                // 将所有内容推送给模型推理
+                String prompt = Consts.formatExtractContent(content.toString(), query);
+                String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt);
+                if (null == result) {
+                    Logger.w(this.getClass(), "#extractDocumentContent - Unit error, no answer: " + this.baseInfo.name);
+                    continue;
+                }
+
+                if (result.contains(Consts.NO_CONTENT_SENTENCE)) {
+                    Logger.d(this.getClass(), "#extractDocumentContent - No content: " + result);
+                    continue;
+                }
+
                 // 记录
+                if (null == metadata.answer) {
+                    metadata.answer = result;
+                }
+                else {
+                    metadata.answer = metadata.answer + "\n" + result;
+                }
+
                 metadata.addDocumentMetadata(fm.fileCode);
             }
             else {
-                Logger.w(this.getClass(), "#extractDocumentContent - File type error: " + fileLabel.getFileType().getMimeType());
+                Logger.w(this.getClass(), "#extractDocumentContent - File type error: "
+                        + fileLabel.getFileName() + " - "
+                        + fileLabel.getFileType().getMimeType());
             }
         }
 
-        if (content.length() < 3) {
-            Logger.w(this.getClass(), "#extractDocumentContent - No content: " + this.baseInfo.name);
-            return null;
-        }
-
-        // 将所有内容推送给模型推理
-        String prompt = Consts.formatExtractContent(content.toString(), query);
-        String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt);
-        if (null == result) {
-            Logger.w(this.getClass(), "#extractDocumentContent - Unit error, no answer: " + this.baseInfo.name);
-            return null;
-        }
-
-        metadata.prompt = prompt;
-        metadata.answer = result;
         return metadata;
+    }
+
+    /**
+     * 将生成的提示词和文档内容提示词进行合并优化。
+     *
+     * @param promptMetadata
+     * @param documentMetadata
+     * @return
+     */
+    private PromptMetadata refinePromptDocument(PromptMetadata promptMetadata, PromptMetadata documentMetadata) {
+        PromptMetadata result = null;
+        return result;
     }
 
     private class FileNameMatching implements Comparable<FileNameMatching> {
@@ -1668,6 +1702,10 @@ public class KnowledgeBase {
         String[] lines = promptMetadata.prompt.split("\n");
         LinkedList<String> lineList = new LinkedList<>();
         for (String line : lines) {
+            if (line.trim().length() == 0) {
+                continue;
+            }
+
             if (lineList.contains(line)) {
                 // 删除重复
                 continue;
@@ -2347,6 +2385,18 @@ public class KnowledgeBase {
             return this.metadataList.contains(article);
         }
 
+        public PromptMetadata generatePrompt(String query) {
+            if (null == this.answer) {
+                return null;
+            }
+
+            String prompt = Consts.formatQuestion(this.answer, query);
+            PromptMetadata metadata = new PromptMetadata();
+            metadata.prompt = prompt;
+            metadata.metadataList.addAll(this.metadataList);
+            return metadata;
+        }
+
         public void mergeAnswer(PromptMetadata other) {
             if (null == other.answer) {
                 return;
@@ -2407,11 +2457,14 @@ public class KnowledgeBase {
 
             public final static String TEXT_PREFIX = "text:";
 
+            public String content;
+
             public String source;
 
             public float score;
 
             public Metadata(JSONObject json) {
+                this.content = json.has("content") ? json.getString("content") : null;
                 this.source = json.getString("source");
                 String s = json.getString("score");
                 this.score = Float.parseFloat(s);

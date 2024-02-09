@@ -32,7 +32,6 @@ import cube.core.AbstractModule;
 import cube.service.aigc.AIGCService;
 import cube.service.auth.AuthService;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -54,35 +53,35 @@ public class KnowledgeFramework {
     /**
      * Key: 联系人 ID 。
      */
-    private ConcurrentHashMap<Long, Framework> frameworkMap;
+    private ConcurrentHashMap<Long, FrameworkWrapper> frameworks;
 
     public KnowledgeFramework(AIGCService service, AuthService authService, AbstractModule fileStorage) {
         this.service = service;
         this.authService = authService;
         this.fileStorage = fileStorage;
-        this.frameworkMap = new ConcurrentHashMap<>();
+        this.frameworks = new ConcurrentHashMap<>();
     }
 
     public List<KnowledgeBaseInfo> getKnowledgeBaseInfos(long contactId) {
-        Framework framework = null;
+        FrameworkWrapper framework = null;
         synchronized (this) {
-            framework = this.frameworkMap.get(contactId);
+            framework = this.frameworks.get(contactId);
             if (null == framework) {
-                framework = new Framework(contactId);
-                this.frameworkMap.put(contactId, framework);
+                framework = new FrameworkWrapper(contactId, this.service);
+                this.frameworks.put(contactId, framework);
             }
         }
 
-        return framework.baseInfoList;
+        return framework.getBaseInfos();
     }
 
     public KnowledgeBase getKnowledgeBase(long contactId, String baseName) {
-        Framework framework = null;
+        FrameworkWrapper framework = null;
         synchronized (this) {
-            framework = this.frameworkMap.get(contactId);
+            framework = this.frameworks.get(contactId);
             if (null == framework) {
-                framework = new Framework(contactId);
-                this.frameworkMap.put(contactId, framework);
+                framework = new FrameworkWrapper(contactId, this.service);
+                this.frameworks.put(contactId, framework);
             }
         }
 
@@ -106,83 +105,13 @@ public class KnowledgeFramework {
         return null;
     }
 
-
     public void freeBase(String domain, Long contactId) {
-        Framework framework = this.frameworkMap.get(contactId);
+        FrameworkWrapper framework = this.frameworks.get(contactId);
         if (null == framework) {
             return;
         }
 
-        this.frameworkMap.remove(contactId);
+        this.frameworks.remove(contactId);
         framework.destroy();
-    }
-
-
-    private class Framework {
-
-        private final long contactId;
-
-        private LinkedList<KnowledgeBaseInfo> baseInfoList;
-
-        /**
-         * Key: 知识库名。
-         */
-        private ConcurrentHashMap<String, KnowledgeBase> knowledgeMap;
-
-        private Framework(long contactId) {
-            this.contactId = contactId;
-            this.baseInfoList = new LinkedList<>();
-            this.knowledgeMap = new ConcurrentHashMap<>();
-            this.refreshKnowledgeBaseInfo();
-        }
-
-        private KnowledgeBase getKnowledgeBase(String name) {
-            return this.knowledgeMap.get(name);
-        }
-
-        private void putKnowledgeBase(KnowledgeBase knowledgeBase) {
-            this.knowledgeMap.put(knowledgeBase.getName(), knowledgeBase);
-        }
-
-        public KnowledgeBaseInfo getKnowledgeBaseInfo(String baseName) {
-            synchronized (this.baseInfoList) {
-                for (KnowledgeBaseInfo info : this.baseInfoList) {
-                    if (info.name.equals(baseName)) {
-                        return info;
-                    }
-                }
-            }
-
-            // 查询已创建的库
-            KnowledgeBaseInfo info = service.getStorage().readKnowledgeBaseInfo(this.contactId, baseName);
-            if (null != info) {
-                this.baseInfoList.add(info);
-            }
-
-            return info;
-        }
-
-        private void refreshKnowledgeBaseInfo() {
-            synchronized (this.baseInfoList) {
-                this.baseInfoList.clear();
-
-                List<KnowledgeBaseInfo> list = service.getStorage().readKnowledgeBaseInfo(this.contactId);
-                if (list.isEmpty()) {
-                    // 写入默认库
-                    KnowledgeBaseInfo info = new KnowledgeBaseInfo(this.contactId, DefaultName,
-                            DefaultDisplayName, 0, 0, System.currentTimeMillis());
-                    service.getStorage().writeKnowledgeBaseInfo(info);
-                    this.baseInfoList.add(info);
-                }
-                else {
-                    this.baseInfoList.addAll(list);
-                }
-            }
-        }
-
-        public void destroy() {
-            this.baseInfoList.clear();
-            this.knowledgeMap.clear();
-        }
     }
 }

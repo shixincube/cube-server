@@ -26,8 +26,6 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.common.entity.KnowledgeProfile;
-import cube.common.entity.KnowledgeScope;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -39,9 +37,9 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * 知识库配置信息。
  */
-public class KnowledgeFrame extends ContextHandler {
+public class KnowledgeFramework extends ContextHandler {
 
-    public KnowledgeFrame() {
+    public KnowledgeFramework() {
         super("/aigc/knowledge/info/");
         setHandler(new Handler());
     }
@@ -61,38 +59,15 @@ public class KnowledgeFrame extends ContextHandler {
                 return;
             }
 
-            Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
-
-            /*try {
-                JSONObject json = this.readBodyAsJSONObject(request);
-                if (json.has("contactId")) {
-                    contactId = json.getLong("contactId");
-                }
-                if (json.has("state")) {
-                    state = json.getInt("state");
-                }
-                if (json.has("maxSize")) {
-                    maxSize = json.getLong("maxSize");
-                }
-                if (json.has("scope")) {
-                    scope = KnowledgeScope.parse(json.getString("scope"));
-                }
-            } catch (Exception e) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
-                this.complete();
-                return;
-            }
-
-            KnowledgeProfile profile = Manager.getInstance().updateKnowledgeProfile(token, contactId,
-                    state, maxSize, scope);
-            if (null == profile) {
+            JSONObject data = Manager.getInstance().getKnowledgeFramework(token);
+            if (null == data) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }
 
-            this.respondOk(response, profile.toJSON());
-            this.complete();*/
+            this.respondOk(response, data);
+            this.complete();
         }
     }
 }
