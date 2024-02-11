@@ -130,11 +130,19 @@ public class KnowledgeFramework {
         return baseList;
     }
 
-    public KnowledgeBase newKnowledgeBase(long contactId, String name, String displayName, String category) {
+    public KnowledgeBaseInfo newKnowledgeBase(String token, String name, String displayName, String category) {
         if (TextUtils.isChineseWord(name)) {
             Logger.w(this.getClass(), "#newKnowledgeBase - Knowledge base name is chinese: " + name);
             return null;
         }
+
+        AuthToken authToken = this.service.getToken(token);
+        if (null == authToken) {
+            Logger.w(this.getClass(), "#newKnowledgeBase - Token error: " + token);
+            return null;
+        }
+
+        long contactId = authToken.getContactId();
 
         KnowledgeBaseInfo info = this.service.getStorage().readKnowledgeBaseInfo(contactId, name);
         if (null != info) {
@@ -143,15 +151,50 @@ public class KnowledgeFramework {
         }
 
         info = new KnowledgeBaseInfo(contactId, name, displayName, category, 0, 0, System.currentTimeMillis());
+        // 写入信息
         if (this.service.getStorage().writeKnowledgeBaseInfo(info)) {
-            return this.getKnowledgeBase(contactId, name);
+            // 获取实例
+            if (null != this.getKnowledgeBase(contactId, name)) {
+                return info;
+            }
         }
 
         return null;
     }
 
-    public void deleteKnowledgeBase(long contactId, String name) {
+    public KnowledgeBaseInfo deleteKnowledgeBase(String token, String name) {
+        if (DefaultName.equals(name)) {
+            Logger.w(this.getClass(), "#deleteKnowledgeBase - Default knowledge base can NOT delete: " + name);
+            return null;
+        }
 
+        AuthToken authToken = this.service.getToken(token);
+        if (null == authToken) {
+            Logger.w(this.getClass(), "#deleteKnowledgeBase - Token error: " + token);
+            return null;
+        }
+
+        long contactId = authToken.getContactId();
+
+        KnowledgeBase base = this.getKnowledgeBase(contactId, name);
+        if (null == base) {
+            Logger.w(this.getClass(), "#deleteKnowledgeBase - Knowledge base is null: " + name);
+            return null;
+        }
+
+        // 删除库的所有数据
+        base.destroy();
+
+        KnowledgeBaseInfo info = null;
+        FrameworkWrapper framework = this.frameworks.get(contactId);
+        if (null != framework) {
+            info = framework.getKnowledgeBaseInfo(name);
+            framework.removeKnowledgeBase(name);
+        }
+
+        this.service.getStorage().deleteKnowledgeBaseInfo(contactId, name);
+
+        return info;
     }
 
     public void freeBase(String domain, Long contactId) {

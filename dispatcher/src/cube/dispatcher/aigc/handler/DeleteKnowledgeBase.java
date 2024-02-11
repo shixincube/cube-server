@@ -26,6 +26,7 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cube.common.entity.KnowledgeBaseInfo;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -35,12 +36,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 知识库配置信息。
+ * 删除知识库。
  */
-public class KnowledgeFramework extends ContextHandler {
+public class DeleteKnowledgeBase extends ContextHandler {
 
-    public KnowledgeFramework() {
-        super("/aigc/knowledge/info/");
+    public DeleteKnowledgeBase() {
+        super("/aigc/knowledge/delete/");
         setHandler(new Handler());
     }
 
@@ -51,7 +52,7 @@ public class KnowledgeFramework extends ContextHandler {
         }
 
         @Override
-        public void doGet(HttpServletRequest request, HttpServletResponse response) {
+        public void doPost(HttpServletRequest request, HttpServletResponse response) {
             String token = this.getLastRequestPath(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
@@ -59,14 +60,24 @@ public class KnowledgeFramework extends ContextHandler {
                 return;
             }
 
-            JSONObject data = Manager.getInstance().getKnowledgeFramework(token);
-            if (null == data) {
+            String baseName = null;
+            try {
+                JSONObject data = this.readBodyAsJSONObject(request);
+                baseName = data.getString("name");
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
+            KnowledgeBaseInfo info = Manager.getInstance().deleteKnowledgeBase(token, baseName);
+            if (null == info) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }
 
-            this.respondOk(response, data);
+            this.respondOk(response, info.toJSON());
             this.complete();
         }
     }

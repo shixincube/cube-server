@@ -192,9 +192,14 @@ public enum AIGCAction {
     GetKnowledgeFramework("getKnowledgeFramework"),
 
     /**
-     * 删除知识库数据仓库。
+     * 创建知识库。
      */
-    DeleteKnowledgeStore("deleteKnowledgeStore"),
+    NewKnowledgeBase("newKnowledgeBase"),
+
+    /**
+     * 删除知识库。
+     */
+    DeleteKnowledgeBase("deleteKnowledgeBase"),
 
     /**
      * 获取知识库文档清单。
@@ -245,6 +250,11 @@ public enum AIGCAction {
      * 重置知识库数据。
      */
     ResetKnowledgeStore("resetKnowledgeStore"),
+
+    /**
+     * 删除知识库数据仓库。
+     */
+    DeleteKnowledgeStore("deleteKnowledgeStore"),
 
     /**
      * 备份知识库数据。

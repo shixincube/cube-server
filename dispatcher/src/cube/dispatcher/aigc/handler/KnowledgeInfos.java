@@ -26,7 +26,6 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.common.entity.ResetKnowledgeProgress;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -36,12 +35,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 重置知识库数据操作。
+ * 知识库配置信息。
  */
-public class ResetKnowledgeStore extends ContextHandler {
+public class KnowledgeInfos extends ContextHandler {
 
-    public ResetKnowledgeStore() {
-        super("/aigc/knowledge/reset/");
+    public KnowledgeInfos() {
+        super("/aigc/knowledge/info/");
         setHandler(new Handler());
     }
 
@@ -49,41 +48,6 @@ public class ResetKnowledgeStore extends ContextHandler {
 
         public Handler() {
             super();
-        }
-
-        @Override
-        public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
-                this.complete();
-                return;
-            }
-
-            String baseName = null;
-            boolean backup = true;
-            try {
-                JSONObject data = this.readBodyAsJSONObject(request);
-                if (data.has("base")) {
-                    baseName = data.getString("base");
-                }
-                if (data.has("backup")) {
-                    backup = data.getBoolean("backup");
-                }
-            } catch (Exception e) {
-                // Nothing
-            }
-
-            // 重置
-            ResetKnowledgeProgress progress = Manager.getInstance().resetKnowledgeStore(token, baseName, backup);
-            if (null == progress) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
-                this.complete();
-                return;
-            }
-
-            this.respondOk(response, progress.toJSON());
-            this.complete();
         }
 
         @Override
@@ -95,26 +59,14 @@ public class ResetKnowledgeStore extends ContextHandler {
                 return;
             }
 
-            long sn = 0;
-            String baseName = null;
-            try {
-                sn = Long.parseLong(request.getParameter("sn"));
-                baseName = request.getParameter("base");
-            } catch (Exception e) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
-                this.complete();
-                return;
-            }
-
-            // 获取重置进度
-            ResetKnowledgeProgress progress = Manager.getInstance().getResetKnowledgeProgress(token, sn, baseName);
-            if (null == progress) {
+            JSONObject data = Manager.getInstance().getKnowledgeFramework(token);
+            if (null == data) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }
 
-            this.respondOk(response, progress.toJSON());
+            this.respondOk(response, data);
             this.complete();
         }
     }

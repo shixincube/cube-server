@@ -30,6 +30,7 @@ import cube.common.entity.KnowledgeBaseInfo;
 import cube.service.aigc.AIGCService;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,6 +83,14 @@ public class FrameworkWrapper {
 
     public void putKnowledgeBase(KnowledgeBase knowledgeBase) {
         this.knowledgeMap.put(knowledgeBase.getName(), knowledgeBase);
+    }
+
+    public KnowledgeBase removeKnowledgeBase(String name) {
+        KnowledgeBase base = this.knowledgeMap.remove(name);
+        synchronized (this.baseInfoList) {
+            this.baseInfoList.removeIf(info -> info.name.equals(name));
+        }
+        return base;
     }
 
     public KnowledgeBaseInfo getKnowledgeBaseInfo(String baseName) {

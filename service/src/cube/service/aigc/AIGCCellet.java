@@ -284,6 +284,16 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new GetKnowledgeFrameworkTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.NewKnowledgeBase.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new NewKnowledgeBaseTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (AIGCAction.DeleteKnowledgeBase.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new DeleteKnowledgeBaseTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.ListKnowledgeDocs.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new ListKnowledgeDocsTask(this, talkContext, primitive,

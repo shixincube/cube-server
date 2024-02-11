@@ -26,7 +26,7 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.common.entity.ResetKnowledgeProgress;
+import cube.common.entity.KnowledgeBaseInfo;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -36,12 +36,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 重置知识库数据操作。
+ * 创建知识库。
  */
-public class ResetKnowledgeStore extends ContextHandler {
+public class NewKnowledgeBase extends ContextHandler {
 
-    public ResetKnowledgeStore() {
-        super("/aigc/knowledge/reset/");
+    public NewKnowledgeBase() {
+        super("/aigc/knowledge/new/");
         setHandler(new Handler());
     }
 
@@ -61,60 +61,29 @@ public class ResetKnowledgeStore extends ContextHandler {
             }
 
             String baseName = null;
-            boolean backup = true;
+            String displayName = null;
+            String category = null;
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
-                if (data.has("base")) {
-                    baseName = data.getString("base");
+                baseName = data.getString("name");
+                displayName = data.getString("displayName");
+                if (data.has("category")) {
+                    category = data.getString("category");
                 }
-                if (data.has("backup")) {
-                    backup = data.getBoolean("backup");
-                }
-            } catch (Exception e) {
-                // Nothing
-            }
-
-            // 重置
-            ResetKnowledgeProgress progress = Manager.getInstance().resetKnowledgeStore(token, baseName, backup);
-            if (null == progress) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
-                this.complete();
-                return;
-            }
-
-            this.respondOk(response, progress.toJSON());
-            this.complete();
-        }
-
-        @Override
-        public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
-                this.complete();
-                return;
-            }
-
-            long sn = 0;
-            String baseName = null;
-            try {
-                sn = Long.parseLong(request.getParameter("sn"));
-                baseName = request.getParameter("base");
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
                 return;
             }
 
-            // 获取重置进度
-            ResetKnowledgeProgress progress = Manager.getInstance().getResetKnowledgeProgress(token, sn, baseName);
-            if (null == progress) {
+            KnowledgeBaseInfo info = Manager.getInstance().newKnowledgeBase(token, baseName, displayName, category);
+            if (null == info) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
                 return;
             }
 
-            this.respondOk(response, progress.toJSON());
+            this.respondOk(response, info.toJSON());
             this.complete();
         }
     }

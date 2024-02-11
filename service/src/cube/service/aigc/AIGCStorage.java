@@ -965,6 +965,14 @@ public class AIGCStorage implements Storagable {
         return info;
     }
 
+    public boolean deleteKnowledgeBaseInfo(long contactId, String baseName) {
+        return this.storage.executeDelete(this.knowledgeFrameTable, new Conditional[] {
+                Conditional.createEqualTo("contact_id", contactId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("base", baseName)
+        });
+    }
+
     public List<KnowledgeBaseInfo> readKnowledgeBaseInfoByCategory(long contactId, String category) {
         List<KnowledgeBaseInfo> list = new ArrayList<>();
 

@@ -1020,6 +1020,60 @@ public class KnowledgeBase {
         return this.resetProgress;
     }
 
+    /**
+     * 删除当前库的所有数据。
+     *
+     * @return
+     */
+    public boolean destroy() {
+        if (!this.resource.checkUnit()) {
+            return false;
+        }
+
+        List<KnowledgeDoc> docList = this.listKnowledgeDocs(true);
+
+        for (KnowledgeDoc doc : docList) {
+            // 删除文档记录
+            this.storage.deleteKnowledgeDoc(this.baseInfo.name, doc.fileCode);
+            // 删除文档分段记录
+            this.storage.deleteKnowledgeSegments(doc.getId());
+        }
+
+        (new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // 删除库
+                    JSONObject payload = new JSONObject();
+                    if (KnowledgeScope.Private == scope) {
+                        payload.put("contactId", authToken.getContactId());
+                    } else {
+                        payload.put("domain", authToken.getDomain());
+                    }
+                    payload.put("name", baseInfo.name);
+                    Packet packet = new Packet(AIGCAction.DeleteKnowledgeStore.name, payload);
+                    ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
+                            packet.toDialect(), 60 * 1000);
+                    if (null == dialect) {
+                        Logger.w(this.getClass(), "#destroy - Request unit error: "
+                                + resource.unit.getCapability().getName());
+                        return;
+                    }
+
+                    Packet response = new Packet(dialect);
+                    int state = Packet.extractCode(response);
+                    if (state != AIGCStateCode.Ok.code) {
+                        Logger.w(this.getClass(), "#destroy - Unit return error: " + state);
+                    }
+                } catch (Exception e) {
+                    // Nothing
+                }
+            }
+        })).start();
+
+        return true;
+    }
+
     public JSONArray getKnowledgeBackups() {
         if (!this.resource.checkUnit()) {
             return null;

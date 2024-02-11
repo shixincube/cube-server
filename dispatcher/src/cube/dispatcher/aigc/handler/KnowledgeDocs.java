@@ -59,7 +59,12 @@ public class KnowledgeDocs extends ContextHandler {
                 return;
             }
 
-            JSONObject data = Manager.getInstance().getKnowledgeDocs(token);
+            String baseName = request.getParameter("base");
+            if (null == baseName || baseName.trim().length() == 0) {
+                baseName = Manager.DEFAULT_BASE_NAME;
+            }
+
+            JSONObject data = Manager.getInstance().getKnowledgeDocs(token, baseName);
             if (null == data) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();

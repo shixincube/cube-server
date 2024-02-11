@@ -130,7 +130,9 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new Conversation());
         httpServer.addContextHandler(new KnowledgeQA());
         httpServer.addContextHandler(new KnowledgeProfiles());
-        httpServer.addContextHandler(new KnowledgeFramework());
+        httpServer.addContextHandler(new KnowledgeInfos());
+        httpServer.addContextHandler(new NewKnowledgeBase());
+        httpServer.addContextHandler(new DeleteKnowledgeBase());
         httpServer.addContextHandler(new KnowledgeDocs());
         httpServer.addContextHandler(new ImportKnowledgeDoc());
         httpServer.addContextHandler(new RemoveKnowledgeDoc());
@@ -352,8 +354,56 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public JSONObject getKnowledgeDocs(String token) {
-        Packet packet = new Packet(AIGCAction.ListKnowledgeDocs.name, new JSONObject());
+    public KnowledgeBaseInfo newKnowledgeBase(String token, String baseName, String displayName, String category) {
+        JSONObject payload = new JSONObject();
+        payload.put("name", baseName);
+        payload.put("displayName", displayName);
+        if (null != category && category.length() > 0) {
+            payload.put("category", category);
+        }
+        Packet packet = new Packet(AIGCAction.NewKnowledgeBase.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#newKnowledgeBase - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#newKnowledgeBase - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new KnowledgeBaseInfo(Packet.extractDataPayload(responsePacket));
+    }
+
+    public KnowledgeBaseInfo deleteKnowledgeBase(String token, String baseName) {
+        JSONObject payload = new JSONObject();
+        payload.put("name", baseName);
+        Packet packet = new Packet(AIGCAction.DeleteKnowledgeBase.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#deleteKnowledgeBase - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#deleteKnowledgeBase - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new KnowledgeBaseInfo(Packet.extractDataPayload(responsePacket));
+    }
+
+    public JSONObject getKnowledgeDocs(String token, String baseName) {
+        JSONObject payload = new JSONObject();
+        payload.put("base", baseName);
+        Packet packet = new Packet(AIGCAction.ListKnowledgeDocs.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
