@@ -197,6 +197,29 @@ public class KnowledgeFramework {
         return info;
     }
 
+    public KnowledgeBaseInfo updateKnowledgeBase(String token, KnowledgeBaseInfo info) {
+        AuthToken authToken = this.service.getToken(token);
+        if (null == authToken) {
+            Logger.w(this.getClass(), "#updateKnowledgeBase - Token error: " + token);
+            return null;
+        }
+
+        long contactId = authToken.getContactId();
+
+        if (this.service.getStorage().updateKnowledgeBaseInfo(contactId, info)) {
+            KnowledgeBase base = this.getKnowledgeBase(contactId, info.name);
+            if (null != base) {
+                FrameworkWrapper framework = this.frameworks.get(contactId);
+                if (null != framework) {
+                    framework.refreshKnowledgeBaseInfo();
+                    return framework.getKnowledgeBaseInfo(info.name);
+                }
+            }
+        }
+
+        return null;
+    }
+
     public void freeBase(String domain, Long contactId) {
         FrameworkWrapper framework = this.frameworks.get(contactId);
         if (null == framework) {

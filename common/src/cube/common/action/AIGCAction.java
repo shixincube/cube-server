@@ -202,6 +202,11 @@ public enum AIGCAction {
     DeleteKnowledgeBase("deleteKnowledgeBase"),
 
     /**
+     * 更新知识库信息。
+     */
+    UpdateKnowledgeBase("updateKnowledgeBase"),
+
+    /**
      * 获取知识库文档清单。
      */
     ListKnowledgeDocs("listKnowledgeDocs"),

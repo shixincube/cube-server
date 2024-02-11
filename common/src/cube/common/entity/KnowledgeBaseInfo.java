@@ -66,7 +66,7 @@ public class KnowledgeBaseInfo implements JSONable {
         this.unitId = json.getLong("unitId");
         this.storeSize = json.getLong("storeSize");
         this.timestamp = json.getLong("timestamp");
-        if (json.has("category")) {
+        if (json.has("category") && json.getString("category").trim().length() > 0) {
             this.category = json.getString("category");
         }
     }
@@ -94,7 +94,7 @@ public class KnowledgeBaseInfo implements JSONable {
         json.put("unitId", this.unitId);
         json.put("storeSize", this.storeSize);
         json.put("timestamp", this.timestamp);
-        if (null != this.category) {
+        if (null != this.category && this.category.length() > 0) {
             json.put("category", this.category);
         }
         return json;

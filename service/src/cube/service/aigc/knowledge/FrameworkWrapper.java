@@ -30,7 +30,6 @@ import cube.common.entity.KnowledgeBaseInfo;
 import cube.service.aigc.AIGCService;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -135,7 +134,7 @@ public class FrameworkWrapper {
         return infos;
     }
 
-    private void refreshKnowledgeBaseInfo() {
+    public void refreshKnowledgeBaseInfo() {
         synchronized (this.baseInfoList) {
             this.baseInfoList.clear();
 

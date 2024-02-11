@@ -973,6 +973,18 @@ public class AIGCStorage implements Storagable {
         });
     }
 
+    public boolean updateKnowledgeBaseInfo(long contactId, KnowledgeBaseInfo info) {
+        return this.storage.executeUpdate(this.knowledgeFrameTable, new StorageField[] {
+                new StorageField("display_name", info.displayName),
+                new StorageField("category", info.category),
+                new StorageField("timestamp", info.timestamp)
+        }, new Conditional[] {
+                Conditional.createEqualTo("contact_id", contactId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("base", info.name)
+        });
+    }
+
     public List<KnowledgeBaseInfo> readKnowledgeBaseInfoByCategory(long contactId, String category) {
         List<KnowledgeBaseInfo> list = new ArrayList<>();
 
