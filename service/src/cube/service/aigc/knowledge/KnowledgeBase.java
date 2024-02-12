@@ -1622,18 +1622,6 @@ public class KnowledgeBase {
         return metadata;
     }
 
-    /**
-     * 将生成的提示词和文档内容提示词进行合并优化。
-     *
-     * @param promptMetadata
-     * @param documentMetadata
-     * @return
-     */
-    private PromptMetadata refinePromptDocument(PromptMetadata promptMetadata, PromptMetadata documentMetadata) {
-        PromptMetadata result = null;
-        return result;
-    }
-
     private class FileNameMatching implements Comparable<FileNameMatching> {
 
         protected String fileCode;
@@ -1920,9 +1908,17 @@ public class KnowledgeBase {
             lineList.addFirst(first);
         }
 
+        if (lineList.size() == 2) {
+            return Consts.NO_CONTENT_SENTENCE;
+        }
+
         StringBuilder buf = new StringBuilder();
-        for (String line : lineList) {
+        for (int i = 0, len = lineList.size(); i < len; ++i) {
+            String line = lineList.get(i);
             buf.append(line).append("\n");
+            if (i == len - 2) {
+                buf.append("\n");
+            }
         }
         buf.delete(buf.length() - 1, buf.length());
         return buf.toString();

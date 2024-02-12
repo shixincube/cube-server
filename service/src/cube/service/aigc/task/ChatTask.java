@@ -227,6 +227,11 @@ public class ChatTask extends ServiceTask {
                 if (!baseList.isEmpty()) {
                     knowledgeBase = baseList.get(0);
                 }
+                else {
+                    // 没有找到知识库，使用默认库
+                    Logger.w(this.getClass(), "Can NOT find knowledge by category " + categories.get(0));
+                    knowledgeBase = service.getKnowledgeBase(token, KnowledgeFramework.DefaultName);
+                }
             }
 
             if (null != knowledgeBase) {

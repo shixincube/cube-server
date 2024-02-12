@@ -2697,7 +2697,14 @@ public class AIGCService extends AbstractModule {
                     });
                 }
 
-                if (useAgent) {
+                if (Consts.NO_CONTENT_SENTENCE.equals(this.content)) {
+                    // 知识库会使用 NO_CONTENT_SENTENCE 作为答案
+                    String responseText = Consts.NO_CONTENT_SENTENCE + "。";
+                    result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
+                            (null != this.originalQuery) ? this.originalQuery : this.content,
+                            responseText, complexContext);
+                }
+                else if (useAgent) {
                     String responseText = Agent.getInstance().generateText(channel.getAuthToken().getCode(),
                             channel.getCode(), this.content);
                     if (null != responseText) {

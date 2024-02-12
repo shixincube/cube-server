@@ -198,6 +198,11 @@ public class KnowledgeFramework {
     }
 
     public KnowledgeBaseInfo updateKnowledgeBase(String token, KnowledgeBaseInfo info) {
+        if (DefaultName.equals(info.name)) {
+            Logger.w(this.getClass(), "#updateKnowledgeBase - Default knowledge base can NOT update: " + info.name);
+            return null;
+        }
+
         AuthToken authToken = this.service.getToken(token);
         if (null == authToken) {
             Logger.w(this.getClass(), "#updateKnowledgeBase - Token error: " + token);
