@@ -30,6 +30,9 @@ import cube.common.JSONable;
 import cube.vision.BoundingBox;
 import org.json.JSONObject;
 
+/**
+ * 图画里的素材描述。
+ */
 public class Material implements JSONable {
 
     public String label;
@@ -39,6 +42,9 @@ public class Material implements JSONable {
     public BoundingBox bbox;
 
     public String color;
+
+    public Material() {
+    }
 
     public Material(JSONObject json) {
         this.label = json.getString("label");

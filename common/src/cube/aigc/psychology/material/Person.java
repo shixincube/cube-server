@@ -250,8 +250,8 @@ public class Person extends Thing {
         }
 
         Eye eye = this.getMaxAreaThing(this.eyeList);
-        return ((double) eye.getBoundingBox().calculateArea())
-                / ((double) this.head.getBoundingBox().calculateArea());
+        return ((double) eye.bbox.calculateArea())
+                / ((double) this.head.bbox.calculateArea());
     }
 
     public void addEyebrow(Eyebrow eyebrow) {
@@ -340,8 +340,8 @@ public class Person extends Thing {
             return 0;
         }
 
-        Point c1 = this.armList.get(0).getBoundingBox().getCenterPoint();
-        Point c2 = this.armList.get(1).getBoundingBox().getCenterPoint();
+        Point c1 = this.armList.get(0).bbox.getCenterPoint();
+        Point c2 = this.armList.get(1).bbox.getCenterPoint();
         return Math.abs(c1.x - c2.x);
     }
 
@@ -376,8 +376,8 @@ public class Person extends Thing {
             return 0;
         }
 
-        Point c1 = this.legList.get(0).getBoundingBox().getCenterPoint();
-        Point c2 = this.legList.get(1).getBoundingBox().getCenterPoint();
+        Point c1 = this.legList.get(0).bbox.getCenterPoint();
+        Point c2 = this.legList.get(1).bbox.getCenterPoint();
         return Math.abs(c1.x - c2.x);
     }
 

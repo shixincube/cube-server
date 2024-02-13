@@ -27,9 +27,14 @@
 package cube.service.aigc.scene;
 
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.*;
+import cube.aigc.psychology.EvaluationReport;
+import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.Theme;
+import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.AIGCChannel;
@@ -39,7 +44,6 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,7 +88,7 @@ public class PsychologyScene {
     }
 
     public PsychologyReport generateEvaluationReport(AIGCChannel channel, FileLabel fileLabel,
-                                                     Theme theme, SceneListener listener) {
+                                                     Theme theme, PsychologySceneListener listener) {
         // 判断频道是否繁忙
         if (null == channel || channel.isProcessing()) {
             Logger.w(this.getClass(), "#generateEvaluationReport - Channel error");
@@ -94,47 +98,49 @@ public class PsychologyScene {
         // 设置为正在操作
         channel.setProcessing(true);
 
-        PsychologyReport report = new PsychologyReport(fileLabel, theme, channel);
+        PsychologyReport report = new PsychologyReport(fileLabel, theme);
 
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                // 处理绘图预测
+                // 绘图预测
+                listener.onPaintingPredict(report, fileLabel);
+
                 Painting painting = processPainting(fileLabel);
                 if (null == painting) {
                     // 预测绘图失败
-                    report.resetPhase(PsychologyReport.PHASE_PREDICT_FAILED);
                     channel.setProcessing(false);
-                    listener.onPaintingPredictFailed(report);
+                    listener.onPaintingPredictFailed(report, fileLabel);
                     return;
                 }
 
                 // 绘图预测完成
-                listener.onPaintingPredictCompleted(report, painting);
-                report.resetPhase(PsychologyReport.PHASE_INFER);
+                listener.onPaintingPredictCompleted(report, fileLabel, painting);
+
+                // 开始进行评估
+                listener.onReportEvaluate(report);
 
                 // 根据图像推理报告
                 Workflow workflow = processReport(channel, painting, theme);
                 if (null == workflow) {
                     // 推理生成报告失败
-                    report.resetPhase(PsychologyReport.PHASE_INFER_FAILED);
                     channel.setProcessing(false);
                     listener.onReportEvaluateFailed(report);
                     return;
                 }
 
-                report.setWorkflow(workflow);
-                report.resetPhase(PsychologyReport.PHASE_FINISH);
                 channel.setProcessing(false);
-                listener.onReportEvaluated(report);
+                listener.onReportEvaluateCompleted(report);
 
                 // 记录
-                List<PsychologyReport> list = psychologyReportMap.get(channel.getAuthToken().getCode());
-                if (null == list) {
-                    list = new ArrayList<>();
-                    psychologyReportMap.put(channel.getAuthToken().getCode(), list);
-                }
-                list.add(report);
+//                List<PsychologyReport> list = psychologyReportMap.get(channel.getAuthToken().getCode());
+//                if (null == list) {
+//                    list = new ArrayList<>();
+//                    psychologyReportMap.put(channel.getAuthToken().getCode(), list);
+//                }
+//                list.add(report);
+
+                channel.setProcessing(false);
             }
         });
         thread.start();
@@ -143,7 +149,7 @@ public class PsychologyScene {
     }
 
     private Painting processPainting(FileLabel fileLabel) {
-        AIGCUnit unit = this.aigcService.selectUnitByName(ModelConfig.PREFERENCE_UNIT_FOR_CV);
+        AIGCUnit unit = this.aigcService.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
         if (null == unit) {
             Logger.w(this.getClass(), "#processPainting - Can NOT find CV unit in server");
             return null;
@@ -151,7 +157,7 @@ public class PsychologyScene {
 
         JSONObject data = new JSONObject();
         data.put("fileLabel", fileLabel.toJSON());
-        Packet request = new Packet(AIGCAction.PredictImage.name, data);
+        Packet request = new Packet(AIGCAction.PredictPsychologyPainting.name, data);
         ActionDialect dialect = this.aigcService.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(), "#processPainting - Predict image unit error");
@@ -165,22 +171,21 @@ public class PsychologyScene {
             return null;
         }
 
-        JSONObject payload = Packet.extractDataPayload(response);
+        JSONObject responseData = Packet.extractDataPayload(response);
         // 绘画识别结果
-        Painting painting = new Painting(payload);
-        return painting;
+        return new Painting(responseData.getJSONArray("result").getJSONObject(0));
     }
 
     private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme) {
-        Workflow workflow = null;
-
         Evaluation evaluation = (null == painting) ? new Evaluation() : new Evaluation(painting);
 
         EvaluationReport report = evaluation.makeEvaluationReport();
 
+        Workflow workflow = new Workflow(report, channel, this.aigcService);
+
         switch (theme) {
             case Stress:
-                workflow = report.makeStress(channel, this.aigcService);
+                workflow.makeStress();
                 break;
             case FamilyRelationships:
                 break;
@@ -192,8 +197,16 @@ public class PsychologyScene {
                 break;
         }
 
-
-
         return workflow;
+    }
+
+
+    public static void main(String[] args) {
+        PsychologyScene scene = PsychologyScene.getInstance();
+
+        AuthToken authToken = new AuthToken(Utils.randomString(16), "shixincube.com", "AppKey",
+                1000L, System.currentTimeMillis(), System.currentTimeMillis() + 60 * 60 * 1000, false);
+        AIGCChannel channel = new AIGCChannel(authToken, "Test");
+        scene.processReport(channel, null, Theme.Stress);
     }
 }

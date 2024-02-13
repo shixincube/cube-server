@@ -42,10 +42,10 @@ public class Path extends Thing {
     public Path(JSONObject json) {
         super(json);
 
-        if (Label.HouseCurvePath == this.label) {
+        if (Label.HouseCurvePath == this.paintingLabel) {
             this.curve = true;
         }
-        else if (Label.HouseCobbledPath == this.label) {
+        else if (Label.HouseCobbledPath == this.paintingLabel) {
             this.cobbled = true;
         }
     }

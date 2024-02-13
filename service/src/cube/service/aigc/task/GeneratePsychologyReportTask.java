@@ -30,14 +30,17 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PsychologyReport;
 import cube.aigc.psychology.Theme;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.scene.PsychologySceneListener;
 import org.json.JSONObject;
 
 /**
@@ -81,11 +84,41 @@ public class GeneratePsychologyReportTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        PsychologyReport psychologyReport = service.generatePsychologyReport(token, fileCode, theme);
+        boolean success = service.generatePsychologyReport(token, fileCode, theme, new PsychologySceneListener() {
+            @Override
+            public void onPaintingPredict(PsychologyReport report, FileLabel file) {
 
-        if (null != psychologyReport) {
+            }
+
+            @Override
+            public void onPaintingPredictCompleted(PsychologyReport report, FileLabel file, Painting painting) {
+
+            }
+
+            @Override
+            public void onPaintingPredictFailed(PsychologyReport report, FileLabel file) {
+
+            }
+
+            @Override
+            public void onReportEvaluate(PsychologyReport report) {
+
+            }
+
+            @Override
+            public void onReportEvaluateCompleted(PsychologyReport report) {
+
+            }
+
+            @Override
+            public void onReportEvaluateFailed(PsychologyReport report) {
+
+            }
+        });
+
+        if (success) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, psychologyReport.toJSON()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, packet.data));
         }
         else {
             this.cellet.speak(this.talkContext,

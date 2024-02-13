@@ -26,5 +26,24 @@
 
 package cube.service.aigc.scene;
 
-public interface EvaluationReportListener {
+import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.PsychologyReport;
+import cube.common.entity.FileLabel;
+
+/**
+ * 场景事件监听器。
+ */
+public interface PsychologySceneListener {
+
+    void onPaintingPredict(PsychologyReport report, FileLabel file);
+
+    void onPaintingPredictCompleted(PsychologyReport report, FileLabel file, Painting painting);
+
+    void onPaintingPredictFailed(PsychologyReport report, FileLabel file);
+
+    void onReportEvaluate(PsychologyReport report);
+
+    void onReportEvaluateCompleted(PsychologyReport report);
+
+    void onReportEvaluateFailed(PsychologyReport report);
 }

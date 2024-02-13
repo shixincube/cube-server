@@ -39,7 +39,7 @@ public class Roof extends Thing {
 
     public Roof(JSONObject json) {
         super(json);
-        if (Label.HouseRoofTextured == this.label) {
+        if (Label.HouseRoofTextured == this.paintingLabel) {
             this.textured = true;
         }
     }

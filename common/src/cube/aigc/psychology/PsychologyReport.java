@@ -27,7 +27,6 @@
 package cube.aigc.psychology;
 
 import cube.common.JSONable;
-import cube.common.entity.AIGCChannel;
 import cube.common.entity.FileLabel;
 import org.json.JSONObject;
 
@@ -36,62 +35,45 @@ import org.json.JSONObject;
  */
 public class PsychologyReport implements JSONable {
 
-    public final static String PHASE_PREDICT = "PREDICT";
+//    public final static String PHASE_PREDICT = "PREDICT";
+//    public final static String PHASE_PREDICT_FAILED = "PREDICT_FAILED";
+//    public final static String PHASE_INFER = "INFER";
+//    public final static String PHASE_INFER_FAILED = "INFER_FAILED";
+//    public final static String PHASE_FINISH = "FINISH";
 
-    public final static String PHASE_PREDICT_FAILED = "PREDICT_FAILED";
-
-    public final static String PHASE_INFER = "INFER";
-
-    public final static String PHASE_INFER_FAILED = "INFER_FAILED";
-
-    public final static String PHASE_FINISH = "FINISH";
-
-
-    private String phase;
+    private final long start;
 
     private FileLabel fileLabel;
 
     private Theme theme;
 
-    private AIGCChannel channel;
+    private boolean finished = false;
 
-    private Workflow workflow;
-
-    public PsychologyReport(FileLabel fileLabel, Theme theme, AIGCChannel channel) {
-        this.phase = PHASE_PREDICT;
+    public PsychologyReport(FileLabel fileLabel, Theme theme) {
+        this.start = System.currentTimeMillis();
         this.fileLabel = fileLabel;
         this.theme = theme;
-        this.channel = channel;
     }
 
     public PsychologyReport(JSONObject json) {
-        this.phase = json.getString("phase");
+        this.start = json.getLong("start");
     }
 
     public FileLabel getFileLabel() {
         return this.fileLabel;
     }
 
-    public void resetPhase(String phase) {
-        this.phase = phase;
-    }
-
-    public void setWorkflow(Workflow workflow) {
-        this.workflow = workflow;
-    }
-
     @Override
     public JSONObject toJSON() {
-        JSONObject json = this.toCompactJSON();
+        JSONObject json = new JSONObject();
+        json.put("start", this.start);
+        json.put("fileLabel", this.fileLabel.toCompactJSON());
+        json.put("theme", this.theme.name);
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        json.put("phase", this.phase);
-        json.put("fileLabel", this.fileLabel.toCompactJSON());
-        json.put("theme", this.theme.name);
-        return json;
+        return this.toJSON();
     }
 }

@@ -27,8 +27,10 @@
 package cube.service.aigc.scene;
 
 import cell.util.Utils;
+import cell.util.log.Logger;
 import cube.aigc.psychology.Comment;
 import cube.aigc.psychology.EvaluationFeature;
+import cube.aigc.psychology.EvaluationReport;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.Score;
@@ -114,9 +116,9 @@ public class Evaluation {
         Person person = this.painting.getPerson();
         if (null != house && null != tree && null != person) {
             // 位置关系
-            Point hc = house.getBoundingBox().getCenterPoint();
-            Point tc = tree.getBoundingBox().getCenterPoint();
-            Point pc = person.getBoundingBox().getCenterPoint();
+            Point hc = house.bbox.getCenterPoint();
+            Point tc = tree.bbox.getCenterPoint();
+            Point pc = person.bbox.getCenterPoint();
             if (Math.abs(hc.y - tc.y) < evalRange && Math.abs(hc.y - pc.y) < evalRange) {
                 // 基本在一个水平线上
                 list.add(new EvaluationFeature(Comment.Stereotype, Score.High));
@@ -127,9 +129,9 @@ public class Evaluation {
             }
 
             // 大小关系
-            int ha = house.getBoundingBox().calculateArea();
-            int ta = tree.getBoundingBox().calculateArea();
-            int pa = person.getBoundingBox().calculateArea();
+            int ha = house.bbox.calculateArea();
+            int ta = tree.bbox.calculateArea();
+            int pa = person.bbox.calculateArea();
             if (ha >= ta && ha >= pa) {
                 // 房大
                 list.add(new EvaluationFeature(Comment.PayAttentionToFamily, Score.High));
@@ -146,15 +148,15 @@ public class Evaluation {
             }
         }
         else if (null != house && null != tree) {
-            Point hc = house.getBoundingBox().getCenterPoint();
-            Point tc = tree.getBoundingBox().getCenterPoint();
+            Point hc = house.bbox.getCenterPoint();
+            Point tc = tree.bbox.getCenterPoint();
             if (Math.abs(hc.y - tc.y) < evalRange) {
                 // 基本在一个水平线上
                 list.add(new EvaluationFeature(Comment.Stereotype, Score.High));
             }
 
-            int ha = house.getBoundingBox().calculateArea();
-            int ta = tree.getBoundingBox().calculateArea();
+            int ha = house.bbox.calculateArea();
+            int ta = tree.bbox.calculateArea();
             if (ha > ta) {
                 // 房大
                 list.add(new EvaluationFeature(Comment.PayAttentionToFamily, Score.High));
@@ -165,15 +167,15 @@ public class Evaluation {
             }
         }
         else if (null != house && null != person) {
-            Point hc = house.getBoundingBox().getCenterPoint();
-            Point pc = person.getBoundingBox().getCenterPoint();
+            Point hc = house.bbox.getCenterPoint();
+            Point pc = person.bbox.getCenterPoint();
             if (Math.abs(hc.y - pc.y) < evalRange) {
                 // 基本在一个水平线上
                 list.add(new EvaluationFeature(Comment.Stereotype, Score.High));
             }
 
-            int ha = house.getBoundingBox().calculateArea();
-            int pa = person.getBoundingBox().calculateArea();
+            int ha = house.bbox.calculateArea();
+            int pa = person.bbox.calculateArea();
             if (ha > pa) {
                 // 房大
                 list.add(new EvaluationFeature(Comment.PayAttentionToFamily, Score.High));
@@ -186,15 +188,15 @@ public class Evaluation {
             }
         }
         else if (null != tree && null != person) {
-            Point tc = tree.getBoundingBox().getCenterPoint();
-            Point pc = person.getBoundingBox().getCenterPoint();
+            Point tc = tree.bbox.getCenterPoint();
+            Point pc = person.bbox.getCenterPoint();
             if (Math.abs(tc.y - pc.y) < evalRange) {
                 // 基本在一个水平线上
                 list.add(new EvaluationFeature(Comment.Stereotype, Score.High));
             }
 
-            int ta = tree.getBoundingBox().calculateArea();
-            int pa = person.getBoundingBox().calculateArea();
+            int ta = tree.bbox.calculateArea();
+            int pa = person.bbox.calculateArea();
             if (ta > pa) {
                 // 树大
                 list.add(new EvaluationFeature(Comment.SocialDemand, Score.High));
@@ -212,7 +214,7 @@ public class Evaluation {
         int paintingArea = this.spaceLayout.getPaintingBox().calculateArea();
         if (null != person) {
             // 人整体大小
-            int personArea = person.getBoundingBox().calculateArea();
+            int personArea = person.bbox.calculateArea();
             if (((double)personArea / (double)paintingArea) <= tinyRatio) {
                 // 人很小
                 list.add(new EvaluationFeature(Comment.SenseOfSecurity, Score.Low));
@@ -700,6 +702,7 @@ public class Evaluation {
             report = new EvaluationReport(results);
         }
         else {
+            Logger.e(this.getClass(), "#makeEvaluationReport - Only for test");
             // 仅用于测试
             List<EvaluationFeature> results = new ArrayList<>();
             int num = Utils.randomInt(3, 5);

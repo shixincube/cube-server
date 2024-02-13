@@ -27,6 +27,7 @@
 package cube.aigc.psychology;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +36,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 资源。
@@ -45,10 +48,15 @@ public class Resource {
     private long commentDescriptionLastModified = 0;
     private List<CommentInterpretation> commentInterpretations;
 
+    private File themeFile = new File("assets/psychology/theme.json");
+    private long themeLastModified = 0;
+    private Map<String, ThemeTemplate> themeTemplates;
+
     private final static Resource instance = new Resource();
 
     private Resource() {
         this.commentInterpretations = new ArrayList<>();
+        this.themeTemplates = new ConcurrentHashMap<>();
     }
 
     public static Resource getInstance() {
@@ -89,5 +97,27 @@ public class Resource {
         }
 
         return null;
+    }
+
+    public ThemeTemplate getThemeTemplate(String name) {
+        if (this.themeFile.exists()) {
+            if (this.themeFile.lastModified() != this.themeLastModified) {
+                this.themeLastModified = this.themeFile.lastModified();
+                this.themeTemplates.clear();
+
+                try {
+                    byte[] data = Files.readAllBytes(Paths.get(this.themeFile.getAbsolutePath()));
+                    JSONObject json = new JSONObject(new String(data, StandardCharsets.UTF_8));
+                    for (String key : json.keySet()) {
+                        ThemeTemplate themeTemplate = new ThemeTemplate(key, json.getJSONObject(key));
+                        this.themeTemplates.put(key, themeTemplate);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return this.themeTemplates.get(name);
     }
 }

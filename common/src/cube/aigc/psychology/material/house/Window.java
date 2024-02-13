@@ -39,7 +39,7 @@ public class Window extends Thing {
 
     public Window(JSONObject json) {
         super(json);
-        if (Label.HouseWindowOpened == this.label) {
+        if (Label.HouseWindowOpened == this.paintingLabel) {
             this.open = true;
         }
     }

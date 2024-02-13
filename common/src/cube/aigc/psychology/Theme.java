@@ -31,18 +31,21 @@ package cube.aigc.psychology;
  */
 public enum Theme {
 
-    Stress("压力评估"),
+    Stress("压力评估", "Stress"),
 
-    FamilyRelationships("家庭关系"),
+    FamilyRelationships("家庭关系", "FamilyRelationships"),
 
-    Intimacy("亲密关系测试"),
+    Intimacy("亲密关系测试", "Intimacy"),
 
-    Cognition("认知测试");
+    Cognition("认知测试", "Cognition");
 
     public final String name;
 
-    Theme(String name) {
+    public final String code;
+
+    Theme(String name, String code) {
         this.name = name;
+        this.code = code;
     }
 
     public static Theme parse(String name) {
@@ -52,16 +55,16 @@ public enum Theme {
             }
         }
 
-        if (name.equalsIgnoreCase("Stress")) {
+        if (name.equalsIgnoreCase(Stress.code)) {
             return Stress;
         }
-        else if (name.equalsIgnoreCase("FamilyRelationships")) {
+        else if (name.equalsIgnoreCase(FamilyRelationships.code)) {
             return FamilyRelationships;
         }
-        else if (name.equalsIgnoreCase("Intimacy")) {
+        else if (name.equalsIgnoreCase(Intimacy.code)) {
             return Intimacy;
         }
-        else if (name.equalsIgnoreCase("Cognition")) {
+        else if (name.equalsIgnoreCase(Cognition.code)) {
             return Cognition;
         }
 

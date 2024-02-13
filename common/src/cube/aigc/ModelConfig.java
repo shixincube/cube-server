@@ -43,11 +43,11 @@ public class ModelConfig implements JSONable {
 
     public final static String[] EXTRA_LONG_PROMPT_UNIT = new String[]{ "GPT", "Gemini", "Wenxin" };
 
-    public final static String PREFERENCE_UNIT_FOR_CV = "Chat";
-
     public final static String BAIZE_UNIT = "Chat";
 
     public final static String BAIZE_NEXT_UNIT = "BaizeNEXT";
+
+    public final static String PSYCHOLOGY_UNIT = "Psychology";
 
     private final static String[][] UNIT_MAP_MODEL = new String[][] {
             new String[] { "Chat", "Baize" },

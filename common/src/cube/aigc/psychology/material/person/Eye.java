@@ -40,7 +40,7 @@ public class Eye extends Thing {
 
     public boolean isOpen() {
         // 判断纵横比
-        double ar = this.getBoundingBox().getAspectRatio();
+        double ar = this.bbox.getAspectRatio();
         return ar <= 1.25;
     }
 }

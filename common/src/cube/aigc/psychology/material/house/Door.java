@@ -42,10 +42,10 @@ public class Door extends Thing {
     public Door(JSONObject json) {
         super(json);
 
-        if (Label.HouseDoorOpened == this.label) {
+        if (Label.HouseDoorOpened == this.paintingLabel) {
             this.open = true;
         }
-        else if (Label.HouseDoorLocked == this.label) {
+        else if (Label.HouseDoorLocked == this.paintingLabel) {
             this.lock = true;
         }
     }

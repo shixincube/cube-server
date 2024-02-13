@@ -55,13 +55,13 @@ public class Animal extends Thing {
     public Animal(JSONObject json) {
         super(json);
 
-        if (Label.Bird == this.label) {
+        if (Label.Bird == this.paintingLabel) {
             this.classes = Classes.Bird;
         }
-        else if (Label.Cat == this.label) {
+        else if (Label.Cat == this.paintingLabel) {
             this.classes = Classes.Cat;
         }
-        else if (Label.Dog == this.label) {
+        else if (Label.Dog == this.paintingLabel) {
             this.classes = Classes.Dog;
         }
     }

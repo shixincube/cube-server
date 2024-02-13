@@ -40,7 +40,7 @@ public class Curtain extends Thing {
     public Curtain(JSONObject json) {
         super(json);
 
-        if (Label.HouseCurtainOpened == this.label) {
+        if (Label.HouseCurtainOpened == this.paintingLabel) {
             this.open = true;
         }
     }

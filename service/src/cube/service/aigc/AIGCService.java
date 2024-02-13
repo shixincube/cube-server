@@ -66,7 +66,7 @@ import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.ResourceAnswer;
 import cube.service.aigc.scene.PsychologyScene;
-import cube.service.aigc.scene.SceneListener;
+import cube.service.aigc.scene.PsychologySceneListener;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactHook;
@@ -1638,63 +1638,76 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
-     * 心理学绘画预测。
+     * 心理学绘画测验。
      *
      * @param token
      * @param fileCode
      * @param theme
+     * @param listener
      * @return
      */
-    public PsychologyReport generatePsychologyReport(String token, String fileCode, Theme theme) {
+    public boolean generatePsychologyReport(String token, String fileCode,
+                                            Theme theme, PsychologySceneListener listener) {
         if (!this.isStarted()) {
-            return null;
+            return false;
         }
 
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(token);
         if (null == authToken) {
             Logger.w(this.getClass(), "#generatePsychologyReport - Token error: " + token);
-            return null;
+            return false;
         }
 
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#generatePsychologyReport - File storage service is not ready");
-            return null;
+            return false;
         }
 
         GetFile getFile = new GetFile(authToken.getDomain(), fileCode);
         JSONObject fileLabelJson = fileStorage.notify(getFile);
         if (null == fileLabelJson) {
             Logger.e(this.getClass(), "#generatePsychologyReport - Get file failed: " + fileCode);
-            return null;
+            return false;
         }
 
         FileLabel fileLabel = new FileLabel(fileLabelJson);
 
         PsychologyReport report = PsychologyScene.getInstance().generateEvaluationReport(
-                this.getChannelByToken(token), fileLabel, theme, new SceneListener() {
-            @Override
-            public void onPaintingPredictCompleted(PsychologyReport report, Painting painting) {
+                this.getChannelByToken(token), fileLabel, theme, new PsychologySceneListener() {
+                    @Override
+                    public void onPaintingPredict(PsychologyReport report, FileLabel file) {
 
-            }
+                    }
 
-            @Override
-            public void onPaintingPredictFailed(PsychologyReport report) {
+                    @Override
+                    public void onPaintingPredictCompleted(PsychologyReport report, FileLabel file, Painting painting) {
 
-            }
+                    }
 
-            @Override
-            public void onReportEvaluated(PsychologyReport report) {
+                    @Override
+                    public void onPaintingPredictFailed(PsychologyReport report, FileLabel file) {
 
-            }
+                    }
 
-            @Override
-            public void onReportEvaluateFailed(PsychologyReport report) {
+                    @Override
+                    public void onReportEvaluate(PsychologyReport report) {
 
-            }
-        });
-        return report;
+                    }
+
+                    @Override
+                    public void onReportEvaluateCompleted(PsychologyReport report) {
+
+                    }
+
+                    @Override
+                    public void onReportEvaluateFailed(PsychologyReport report) {
+
+                    }
+                });
+
+        return (null != report);
     }
 
     public boolean automaticSpeechRecognition(String domain, String fileCode, AutomaticSpeechRecognitionListener listener) {

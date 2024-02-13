@@ -105,8 +105,8 @@ public class House extends Thing {
             return 0;
         }
 
-        return ((double) this.roof.getBoundingBox().calculateArea())
-                / ((double) this.getBoundingBox().calculateArea());
+        return ((double) this.roof.bbox.calculateArea())
+                / ((double) this.bbox.calculateArea());
     }
 
     /**
@@ -120,8 +120,8 @@ public class House extends Thing {
             return 0;
         }
 
-        return ((double) this.roof.getBoundingBox().height)
-                / ((double) this.getBoundingBox().height);
+        return ((double) this.roof.bbox.height)
+                / ((double) this.bbox.height);
     }
 
     public void addRoofSkylight(RoofSkylight roofSkylight) {
@@ -172,8 +172,8 @@ public class House extends Thing {
     public double getMaxWindowAreaRatio() {
         double maxRatio = 0;
         for (Window window : this.windowList) {
-            double ratio = ((double) window.getBoundingBox().calculateArea())
-                    / ((double) this.getBoundingBox().calculateArea());
+            double ratio = ((double) window.bbox.calculateArea())
+                    / ((double) this.bbox.calculateArea());
             if (ratio > maxRatio) {
                 maxRatio = ratio;
             }
@@ -212,8 +212,8 @@ public class House extends Thing {
     public double getMaxDoorAreaRatio() {
         double maxRatio = 0;
         for (Door door : this.doorList) {
-            double ratio = ((double) door.getBoundingBox().calculateArea())
-                    / ((double) this.getBoundingBox().calculateArea());
+            double ratio = ((double) door.bbox.calculateArea())
+                    / ((double) this.bbox.calculateArea());
             if (ratio > maxRatio) {
                 maxRatio = ratio;
             }

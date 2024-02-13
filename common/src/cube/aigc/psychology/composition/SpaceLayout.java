@@ -58,7 +58,7 @@ public class SpaceLayout {
         int y2 = 0;
 
         for (Thing thing : painting.getAllThings()) {
-            BoundingBox box = thing.getBoundingBox();
+            BoundingBox box = thing.bbox;
             if (box.x < x) {
                 x = box.x;
             }

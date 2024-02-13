@@ -41,7 +41,7 @@ public class Prompt implements JSONable {
     public String answer;
 
     public Prompt(String query) {
-        this.query= query;
+        this.query = query;
     }
 
     public Prompt(String query, String answer) {

@@ -26,8 +26,7 @@
 
 package cube.aigc.psychology.material;
 
-import cube.common.JSONable;
-import cube.vision.BoundingBox;
+import cube.common.entity.Material;
 import org.json.JSONObject;
 
 import java.util.List;
@@ -35,39 +34,29 @@ import java.util.List;
 /**
  * 素材。
  */
-public abstract class Thing implements JSONable {
+public abstract class Thing extends Material {
 
-    protected Label label;
+    protected Label paintingLabel;
 
-    protected BoundingBox boundingBox;
-
-    public Thing(Label label) {
-        this.label = label;
+    public Thing(Label paintingLabel) {
+        this.paintingLabel = paintingLabel;
     }
 
     public Thing(JSONObject json) {
-        this.label = Label.parse(json.getString("label"));
-        this.boundingBox = new BoundingBox(json.getJSONObject("bbox"));
+        super(json);
+        this.paintingLabel = Label.parse(this.label);
     }
 
     public Label getLabel() {
-        return this.label;
+        return this.paintingLabel;
     }
 
-    public BoundingBox getBoundingBox() {
-        return this.boundingBox;
+    public int getWidth() {
+        return this.bbox.width;
     }
 
-    public void setBoundingBox(BoundingBox bbox) {
-        this.boundingBox = bbox;
-    }
-
-    public double getWidth() {
-        return this.boundingBox.width;
-    }
-
-    public double getHeight() {
-        return this.boundingBox.height;
+    public int getHeight() {
+        return this.bbox.height;
     }
 
     protected <T> T getMaxAreaThing(List<T> list) {
@@ -76,7 +65,7 @@ public abstract class Thing implements JSONable {
         for (T t : list) {
             if (t instanceof Thing) {
                 Thing thing = (Thing) t;
-                int area = thing.getBoundingBox().calculateArea();
+                int area = thing.bbox.calculateArea();
                 if (area > max) {
                     max = area;
                     result = t;
@@ -84,21 +73,5 @@ public abstract class Thing implements JSONable {
             }
         }
         return result;
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("label", this.label.name);
-        json.put("bbox", this.boundingBox.toJSON());
-        return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        json.put("label", this.label.name);
-        json.put("bbox", this.boundingBox.toJSON());
-        return json;
     }
 }

@@ -81,8 +81,8 @@ public class Tree extends Thing {
             return 0;
         }
 
-        return ((double) this.trunkList.get(0).getBoundingBox().width * 0.7f)
-                / ((double) this.getBoundingBox().width);
+        return ((double) this.trunkList.get(0).bbox.width * 0.7f)
+                / ((double) this.bbox.width);
     }
 
     public void addBranch(Branch branch) {
@@ -126,8 +126,8 @@ public class Tree extends Thing {
             return 0;
         }
 
-        return ((double) canopy.getBoundingBox().calculateArea())
-                / ((double) this.getBoundingBox().calculateArea());
+        return ((double) canopy.bbox.calculateArea())
+                / ((double) this.bbox.calculateArea());
     }
 
     /**
@@ -186,12 +186,12 @@ public class Tree extends Thing {
         }
 
         Canopy canopy = this.getMaxAreaThing(this.canopyList);
-        double totalArea = canopy.getBoundingBox().calculateArea();
+        double totalArea = canopy.bbox.calculateArea();
 
         double[] result = new double[this.fruitList.size()];
         int index = 0;
         for (Fruit fruit : this.fruitList) {
-            double area = fruit.getBoundingBox().calculateArea();
+            double area = fruit.bbox.calculateArea();
             double ratio = area / totalArea;
             result[index] = ratio;
             ++index;
