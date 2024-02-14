@@ -51,10 +51,28 @@ public class ThemeTemplate {
         }
     }
 
+    public List<String> getTitles() {
+        List<String> list = new ArrayList<>();
+        for (ParagraphPromptFormat ppf : this.paragraphPromptFormatList) {
+            list.add(ppf.title);
+        }
+        return list;
+    }
+
     public List<String> formatDescriptionPrompt(String representationString) {
         List<String> result = new ArrayList<>();
         for (ParagraphPromptFormat format : this.paragraphPromptFormatList) {
+            String prompt = String.format(format.descriptionFormat, representationString);
+            result.add(prompt);
+        }
+        return result;
+    }
 
+    public List<String> formatSuggestionPrompt(String representationString) {
+        List<String> result = new ArrayList<>();
+        for (ParagraphPromptFormat format : this.paragraphPromptFormatList) {
+            String prompt = String.format(format.suggestionFormat, representationString);
+            result.add(prompt);
         }
         return result;
     }

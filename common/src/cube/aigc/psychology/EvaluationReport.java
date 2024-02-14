@@ -40,11 +40,18 @@ public class EvaluationReport {
 
     public final static String UNIT = ModelConfig.BAIZE_UNIT;
 
+    private ReportAttribute reportAttribute;
+
     private List<Representation> representationList;
 
-    public EvaluationReport(List<EvaluationFeature> resultList) {
+    public EvaluationReport(ReportAttribute reportAttribute, List<EvaluationFeature> resultList) {
+        this.reportAttribute = reportAttribute;
         this.representationList = new ArrayList<>();
         this.build(resultList);
+    }
+
+    public ReportAttribute getAuthor() {
+        return this.reportAttribute;
     }
 
     private void build(List<EvaluationFeature> resultList) {

@@ -26,6 +26,7 @@
 
 package cube.service.aigc.scene;
 
+import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Prompt;
 import cube.aigc.PromptBuilder;
@@ -55,65 +56,62 @@ public class Workflow {
 
     private AIGCService service;
 
+    private List<Paragraph> paragraphList;
+
     public Workflow(EvaluationReport evaluationReport, AIGCChannel channel, AIGCService service) {
         this.evaluationReport = evaluationReport;
         this.channel = channel;
         this.service = service;
+        this.paragraphList = new ArrayList<>();
     }
 
     public Workflow makeStress() {
         // 获取模板
         ThemeTemplate template = Resource.getInstance().getThemeTemplate(Theme.Stress.code);
 
+        // 生成上下文
+        List<AIGCGenerationRecord> records = this.makeRepresentationContext(this.evaluationReport.getRepresentationList());
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#makeStress - Context length: " + records.size());
+        }
+
+        for (String title : template.getTitles()) {
+            this.paragraphList.add(new Paragraph(title));
+        }
+
         // 生成描述串
         String representationString = this.spliceRepresentation();
 
-        template.formatDescriptionPrompt(representationString);
+        // 格式化所有段落提示词
+        List<String> descriptionPromptList = template.formatDescriptionPrompt(representationString);
+        List<String> suggestionPromptList = template.formatSuggestionPrompt(representationString);
+        for (int i = 0; i < this.paragraphList.size(); ++i) {
+            Paragraph paragraph = this.paragraphList.get(i);
 
-        /*
-        // Phase 1
-        for (EvaluationReport.ReportScore score : positiveScoreList) {
-            String word = score.interpretation.getComment().word;
+            String prompt = descriptionPromptList.get(i);
+//            String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
+            String result = "测试-description-" + prompt;
+            if (null == result) {
+                Logger.w(this.getClass(), "#makeStress - Infer failed");
+            }
+            else {
+                paragraph.description = result;
+            }
 
-            AIGCGenerationRecord record = new AIGCGenerationRecord(UNIT, word, score.interpretation.getInterpretation());
-
-            String prompt = template.formatFeaturePrompt(score.positive > 1 ? word + HighTrick : word);
-            PromptChaining chaining = new PromptChaining(Consts.PROMPT_ROLE_PSYCHOLOGY);
-            chaining.addPrompt(new Prompt(prompt));
-
-            workflow.addPhase1(record, chaining);
+            prompt = suggestionPromptList.get(i);
+//            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
+            result = "测试-suggestion-" + prompt;
+            if (null == result) {
+                Logger.w(this.getClass(), "#makeStress - Infer failed");
+            }
+            else {
+                paragraph.suggestion = result;
+            }
         }
-        for (EvaluationReport.ReportScore score : negativeScoreList) {
-            String word = score.interpretation.getComment().word;
-            AIGCGenerationRecord record = new AIGCGenerationRecord(UNIT, word, score.interpretation.getInterpretation());
 
-            String prompt = template.formatFeaturePrompt(word + LowTrick);
-            PromptChaining chaining = new PromptChaining(Consts.PROMPT_ROLE_PSYCHOLOGY);
-            chaining.addPrompt(new Prompt(prompt));
-
-            workflow.addPhase1(record, chaining);
+        for (Paragraph paragraph : this.paragraphList) {
+            System.out.println(paragraph.markdown());
         }
-
-        PromptBuilder promptBuilder = new PromptBuilder();
-
-        // 生成结果
-        AIGCUnit unit = aigcService.selectUnitByName(ModelConfig.BAIZE_UNIT);
-        for (Workflow.PromptGroup group : workflow.getPhase1Groups()) {
-            List<AIGCGenerationRecord> records = new ArrayList<>();
-            records.add(group.record);
-            aigcService.generateText(channel, unit,
-                    promptBuilder.serializePromptChaining(group.chaining),
-                    promptBuilder.serializePromptChaining(group.chaining), records, null, false, false,
-                    new GenerateTextListener() {
-                        @Override
-                        public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
-                        }
-
-                        @Override
-                        public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
-                        }
-                    });
-        }*/
 
         return this;
     }
@@ -134,13 +132,13 @@ public class Workflow {
         StringBuilder buf = new StringBuilder();
         for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationList()) {
             if (representation.positive > 1) {
-                buf.append(representation.interpretation.getComment()).append(HighTrick);
+                buf.append(representation.interpretation.getComment().word).append(HighTrick);
             }
             else if (representation.positive > 0) {
-                buf.append(representation.interpretation.getComment()).append(NormalTrick);
+                buf.append(representation.interpretation.getComment().word).append(NormalTrick);
             }
             else {
-                buf.append(representation.interpretation.getComment()).append(LowTrick);
+                buf.append(representation.interpretation.getComment().word).append(LowTrick);
             }
             buf.append("，");
         }
@@ -162,7 +160,6 @@ public class Workflow {
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        PromptBuilder builder = new PromptBuilder();
 //        for (PromptGroup group : this.phase1Groups) {
 //            buf.append("[R] user: ").append(group.record.query).append('\n');
 //            buf.append("[R] assistant: ").append(group.record.answer).append('\n');
@@ -181,13 +178,22 @@ public class Workflow {
 
         public String description;
 
-        public Prompt descriptionPrompt;
-
         public String suggestion;
 
-        public Prompt suggestionPrompt;
+        public Paragraph(String title) {
+            this.title = title;
+        }
 
-        public Paragraph() {
+        public String markdown() {
+            StringBuilder buf = new StringBuilder();
+            buf.append("## ").append(this.title).append("\n\n");
+            buf.append("### ").append("描述\n\n");
+            buf.append(this.description);
+            buf.append("\n\n");
+            buf.append("### ").append("建议\n\n");
+            buf.append(this.suggestion);
+            buf.append("\n");
+            return buf.toString();
         }
     }
 }

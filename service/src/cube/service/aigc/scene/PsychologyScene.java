@@ -30,10 +30,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.EvaluationReport;
-import cube.aigc.psychology.Painting;
-import cube.aigc.psychology.PsychologyReport;
-import cube.aigc.psychology.Theme;
+import cube.aigc.psychology.*;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -58,9 +55,9 @@ public class PsychologyScene {
     private AIGCService aigcService;
 
     /**
-     * Key：令牌码。
+     * Key：报告序号。
      */
-    private Map<String, List<PsychologyReport>> psychologyReportMap;
+    private Map<Long, PsychologyReport> psychologyReportMap;
 
     private PsychologyScene() {
         this.psychologyReportMap = new ConcurrentHashMap<>();
@@ -74,20 +71,11 @@ public class PsychologyScene {
         this.aigcService = aigcService;
     }
 
-    public PsychologyReport getPsychologyReport(String token, String fileCode) {
-        List<PsychologyReport> list = this.psychologyReportMap.get(token);
-        if (null == list) {
-            return null;
-        }
-        for (PsychologyReport report : list) {
-            if (report.getFileLabel().getFileCode().equals(fileCode)) {
-                return report;
-            }
-        }
-        return null;
+    public PsychologyReport getPsychologyReport(long sn) {
+        return this.psychologyReportMap.get(sn);
     }
 
-    public PsychologyReport generateEvaluationReport(AIGCChannel channel, FileLabel fileLabel,
+    public PsychologyReport generateEvaluationReport(AIGCChannel channel, ReportAttribute reportAttribute, FileLabel fileLabel,
                                                      Theme theme, PsychologySceneListener listener) {
         // 判断频道是否繁忙
         if (null == channel || channel.isProcessing()) {
@@ -98,7 +86,8 @@ public class PsychologyScene {
         // 设置为正在操作
         channel.setProcessing(true);
 
-        PsychologyReport report = new PsychologyReport(fileLabel, theme);
+        PsychologyReport report = new PsychologyReport(channel.getAuthToken().getCode(),
+                reportAttribute, fileLabel, theme);
 
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -106,13 +95,16 @@ public class PsychologyScene {
                 // 绘图预测
                 listener.onPaintingPredict(report, fileLabel);
 
-                Painting painting = processPainting(fileLabel);
-                if (null == painting) {
-                    // 预测绘图失败
-                    channel.setProcessing(false);
-                    listener.onPaintingPredictFailed(report, fileLabel);
-                    return;
-                }
+                Painting painting = null;//processPainting(fileLabel);
+//                if (null == painting) {
+//                    // 预测绘图失败
+//                    channel.setProcessing(false);
+//                    listener.onPaintingPredictFailed(report, fileLabel);
+//                    return;
+//                }
+
+                // 设置绘画作者属性
+//                painting.setAuthor(author);
 
                 // 绘图预测完成
                 listener.onPaintingPredictCompleted(report, fileLabel, painting);
@@ -144,6 +136,8 @@ public class PsychologyScene {
             }
         });
         thread.start();
+
+        this.psychologyReportMap.put(report.sn, report);
 
         return report;
     }
@@ -177,7 +171,8 @@ public class PsychologyScene {
     }
 
     private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme) {
-        Evaluation evaluation = (null == painting) ? new Evaluation() : new Evaluation(painting);
+        Evaluation evaluation = (null == painting) ?
+                new Evaluation(new ReportAttribute("男", 28)) : new Evaluation(painting);
 
         EvaluationReport report = evaluation.makeEvaluationReport();
 
@@ -194,6 +189,7 @@ public class PsychologyScene {
             case Cognition:
                 break;
             default:
+                workflow = null;
                 break;
         }
 

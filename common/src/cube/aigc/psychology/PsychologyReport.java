@@ -26,6 +26,7 @@
 
 package cube.aigc.psychology;
 
+import cell.util.Utils;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
 import org.json.JSONObject;
@@ -41,7 +42,13 @@ public class PsychologyReport implements JSONable {
 //    public final static String PHASE_INFER_FAILED = "INFER_FAILED";
 //    public final static String PHASE_FINISH = "FINISH";
 
-    private final long start;
+    public final long sn;
+
+    public final String token;
+
+    public final long timestamp;
+
+    private ReportAttribute reportAttribute;
 
     private FileLabel fileLabel;
 
@@ -49,14 +56,23 @@ public class PsychologyReport implements JSONable {
 
     private boolean finished = false;
 
-    public PsychologyReport(FileLabel fileLabel, Theme theme) {
-        this.start = System.currentTimeMillis();
+    public PsychologyReport(String token, ReportAttribute reportAttribute, FileLabel fileLabel, Theme theme) {
+        this.sn = Utils.generateSerialNumber();
+        this.token = token;
+        this.reportAttribute = reportAttribute;
         this.fileLabel = fileLabel;
         this.theme = theme;
+        this.timestamp = System.currentTimeMillis();
     }
 
     public PsychologyReport(JSONObject json) {
-        this.start = json.getLong("start");
+        this.sn = json.getLong("sn");
+        this.token = json.getString("token");
+        this.reportAttribute = new ReportAttribute(json.getJSONObject("attribute"));
+        this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
+        this.theme = Theme.parse(json.getString("theme"));
+        this.timestamp = json.getLong("timestamp");
+        this.finished = json.getBoolean("finished");
     }
 
     public FileLabel getFileLabel() {
@@ -66,9 +82,13 @@ public class PsychologyReport implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("start", this.start);
-        json.put("fileLabel", this.fileLabel.toCompactJSON());
+        json.put("sn", this.sn);
+        json.put("token", this.token);
+        json.put("attribute", this.reportAttribute.toJSON());
+        json.put("fileLabel", this.fileLabel.toJSON());
         json.put("theme", this.theme.name);
+        json.put("timestamp", this.timestamp);
+        json.put("finished", this.finished);
         return json;
     }
 

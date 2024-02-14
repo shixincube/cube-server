@@ -204,6 +204,19 @@ public class AIGCGenerationRecord implements JSONable {
     }
 
     @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        if (null != this.query) {
+            buf.append(this.query);
+        }
+        buf.append(" -> ");
+        if (null != this.answer) {
+            buf.append(this.answer);
+        }
+        return buf.toString();
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);

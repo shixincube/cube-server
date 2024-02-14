@@ -44,7 +44,7 @@ import java.util.*;
  */
 public class Painting implements JSONable {
 
-    private Author author;
+    private ReportAttribute reportAttribute;
 
     private Size canvasSize;
 
@@ -71,6 +71,10 @@ public class Painting implements JSONable {
     private List<Cloud> cloudList;
 
     private List<Animal> animalList;
+
+    public Painting(ReportAttribute reportAttribute) {
+        this.reportAttribute = reportAttribute;
+    }
 
     public Painting(JSONObject json) {
         this.canvasSize = new Size(json.getJSONObject("size"));
@@ -124,8 +128,8 @@ public class Painting implements JSONable {
             this.parseList(json.getJSONArray("animals"), this.animalList);
         }
 
-        if (json.has("author")) {
-            this.author = new Author(json.getJSONObject("author"));
+        if (json.has("attribute")) {
+            this.reportAttribute = new ReportAttribute(json.getJSONObject("attribute"));
         }
     }
 
@@ -504,12 +508,12 @@ public class Painting implements JSONable {
         return result;
     }
 
-    public void setAuthor(Author author) {
-        this.author = author;
+    public void setAuthor(ReportAttribute reportAttribute) {
+        this.reportAttribute = reportAttribute;
     }
 
-    public Author getAuthor() {
-        return this.author;
+    public ReportAttribute getAuthor() {
+        return this.reportAttribute;
     }
 
     public Size getCanvasSize() {
@@ -909,48 +913,6 @@ public class Painting implements JSONable {
         return this.toJSON();
     }
 
-    /**
-     * 作画作者。
-     */
-    public class Author implements JSONable {
-
-        public final String gender;
-
-        public final int age;
-
-        public Author(String gender, int age) {
-            this.gender = gender;
-            this.age = age;
-        }
-
-        public Author(JSONObject json) {
-            this.gender = json.getString("gender");
-            this.age = json.getInt("age");
-        }
-
-        public boolean isMale() {
-            return this.gender.equalsIgnoreCase("male")
-                    || this.gender.equals("男");
-        }
-
-        public boolean isFemale() {
-            return this.gender.equalsIgnoreCase("female")
-                    || this.gender.equals("女");
-        }
-
-        @Override
-        public JSONObject toJSON() {
-            JSONObject json = new JSONObject();
-            json.put("gender", this.gender);
-            json.put("age", this.age);
-            return json;
-        }
-
-        @Override
-        public JSONObject toCompactJSON() {
-            return this.toJSON();
-        }
-    }
 
     private class BoundingBoxComparator implements Comparator<Thing> {
 

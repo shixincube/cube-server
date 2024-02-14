@@ -26,10 +26,12 @@
 
 package cube.service.aigc.resource;
 
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.common.entity.AICapability;
+import cube.common.entity.AIGCGenerationRecord;
 import cube.common.entity.AIGCUnit;
 import cube.common.entity.Contact;
 import cube.util.HttpClientFactory;
@@ -38,6 +40,7 @@ import org.eclipse.jetty.client.WWWAuthenticationProtocolHandler;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpStatus;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -52,19 +55,25 @@ public final class Agent {
 
     private final String url;
 
+    private String token;
+
     private AIGCUnit unit;
+
+    private String channelCode;
 
     public final static Agent getInstance() {
         return Agent.instance;
     }
 
-    public final static Agent createInstance(String url) {
-        Agent.instance = new Agent(url);
+    public final static Agent createInstance(String url, String token) {
+        Agent.instance = new Agent(url, token);
         return Agent.instance;
     }
 
-    private Agent(String url) {
+    private Agent(String url, String token) {
         this.url = url.endsWith("/") ? url : url + "/";
+        this.token = token;
+        this.channelCode = Utils.randomString(16);
 
         Contact contact = new Contact(100000, "shixincube.com");
 
@@ -84,19 +93,32 @@ public final class Agent {
         return this.unit;
     }
 
-    public String generateText(String token, String channelCode, String content) {
+    public String generateText(String channelCode, String content, List<AIGCGenerationRecord> records) {
+        String code = channelCode;
+        if (null == code) {
+            code = this.channelCode;
+        }
+
         HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
 
         try {
-            String chatUrl = this.url + "aigc/chat/" + token;
+            JSONArray recordArray = new JSONArray();
+            if (null != records) {
+                for (AIGCGenerationRecord record : records) {
+                    recordArray.put(record.toJSON());
+                }
+            }
+
+            String chatUrl = this.url + "aigc/chat/" + this.token;
 
             JSONObject data = new JSONObject();
-            data.put("code", channelCode);
+            data.put("code", code);
             data.put("content", content);
             data.put("unit", this.unit.getCapability().getName());
             data.put("histories", 0);
             data.put("pattern", Consts.PATTERN_CHAT);
             data.put("recordable", false);
+            data.put("records", recordArray);
 
             client.getProtocolHandlers().remove(WWWAuthenticationProtocolHandler.NAME);
 

@@ -30,8 +30,10 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.ReportAttribute;
 import cube.aigc.psychology.Theme;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -65,15 +67,27 @@ public class GeneratePsychologyReportTask extends ServiceTask {
             return;
         }
 
-        if (!packet.data.has("fileCode") || !packet.data.has("theme")) {
+        if (!packet.data.has("fileCode") || !packet.data.has("theme") || !packet.data.has("attribute")) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        String fileCode = packet.data.getString("fileCode");
-        String themeName = packet.data.getString("theme");
+        ReportAttribute reportAttribute = null;
+        String fileCode = null;
+        String themeName = null;
+
+        try {
+            reportAttribute = new ReportAttribute(packet.data.getJSONObject("attribute"));
+            fileCode = packet.data.getString("fileCode");
+            themeName = packet.data.getString("theme");
+        } catch (Exception e) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
 
         Theme theme = Theme.parse(themeName);
         if (null == theme) {
@@ -84,45 +98,45 @@ public class GeneratePsychologyReportTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        boolean success = service.generatePsychologyReport(token, fileCode, theme, new PsychologySceneListener() {
+        PsychologyReport report = service.generatePsychologyReport(token, reportAttribute, fileCode, theme, new PsychologySceneListener() {
             @Override
             public void onPaintingPredict(PsychologyReport report, FileLabel file) {
-
+                Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredict - " + token);
             }
 
             @Override
             public void onPaintingPredictCompleted(PsychologyReport report, FileLabel file, Painting painting) {
-
+                Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredictCompleted - " + token);
             }
 
             @Override
             public void onPaintingPredictFailed(PsychologyReport report, FileLabel file) {
-
+                Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredictFailed - " + token);
             }
 
             @Override
             public void onReportEvaluate(PsychologyReport report) {
-
+                Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluate - " + token);
             }
 
             @Override
             public void onReportEvaluateCompleted(PsychologyReport report) {
-
+                Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted - " + token);
             }
 
             @Override
             public void onReportEvaluateFailed(PsychologyReport report) {
-
+                Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateFailed - " + token);
             }
         });
 
-        if (success) {
+        if (null != report) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, packet.data));
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, report.toJSON()));
         }
         else {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
         }
         markResponseTime();
     }

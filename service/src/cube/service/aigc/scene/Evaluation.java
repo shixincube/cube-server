@@ -28,10 +28,7 @@ package cube.service.aigc.scene;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.aigc.psychology.Comment;
-import cube.aigc.psychology.EvaluationFeature;
-import cube.aigc.psychology.EvaluationReport;
-import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.Score;
 import cube.aigc.psychology.composition.SpaceLayout;
@@ -60,7 +57,8 @@ public class Evaluation {
 
     private SpaceLayout spaceLayout;
 
-    public Evaluation() {
+    public Evaluation(ReportAttribute reportAttribute) {
+        this.painting = new Painting(reportAttribute);
     }
 
     public Evaluation(Painting painting) {
@@ -691,7 +689,7 @@ public class Evaluation {
     public EvaluationReport makeEvaluationReport() {
         EvaluationReport report = null;
 
-        if (null != this.painting) {
+        if (null != this.painting && null != this.spaceLayout) {
             List<EvaluationFeature> results = new ArrayList<>();
             results.addAll(this.evalSpaceStructure());
             results.addAll(this.evalFrameStructure());
@@ -699,10 +697,10 @@ public class Evaluation {
             results.addAll(this.evalTree());
             results.addAll(this.evalPerson());
             results.addAll(this.evalOthers());
-            report = new EvaluationReport(results);
+            report = new EvaluationReport(this.painting.getAuthor(), results);
         }
         else {
-            Logger.e(this.getClass(), "#makeEvaluationReport - Only for test");
+            Logger.w(this.getClass(), "#makeEvaluationReport - Only for test");
             // 仅用于测试
             List<EvaluationFeature> results = new ArrayList<>();
             int num = Utils.randomInt(3, 5);
@@ -711,7 +709,7 @@ public class Evaluation {
                 EvaluationFeature result = new EvaluationFeature(Comment.values()[index], Score.High);
                 results.add(result);
             }
-            report = new EvaluationReport(results);
+            report = new EvaluationReport(this.painting.getAuthor(), results);
         }
 
         return report;

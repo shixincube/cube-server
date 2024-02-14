@@ -33,6 +33,7 @@ import cell.util.log.Logger;
 import cube.aigc.*;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.ReportAttribute;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.Packet;
@@ -78,10 +79,6 @@ public class Manager implements Tickable, PerformerListener {
      */
     private Map<String, ASRFuture> asrFutureMap;
 
-    /**
-     * Key：文件码
-     */
-    private Map<String, PsychologyReportFuture> psychologyReportFutureMap;
 
     public static Manager getInstance() {
         return Manager.instance;
@@ -92,7 +89,6 @@ public class Manager implements Tickable, PerformerListener {
         this.validTokenMap = new ConcurrentHashMap<>();
         this.objectDetectionFutureMap = new ConcurrentHashMap<>();
         this.asrFutureMap = new ConcurrentHashMap<>();
-        this.psychologyReportFutureMap = new ConcurrentHashMap<>();
 
         this.setupHandler();
 
@@ -157,7 +153,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new PublicOpinionData());
         httpServer.addContextHandler(new InferByModule());
         httpServer.addContextHandler(new PreInfer());
-        httpServer.addContextHandler(new GeneratePsychologyReport());
+        httpServer.addContextHandler(new PsychologyReports());
         httpServer.addContextHandler(new QueryPsychologyReport());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
@@ -1725,66 +1721,46 @@ public class Manager implements Tickable, PerformerListener {
      * 执行心理学绘图预测。
      *
      * @param token
+     * @param reportAttribute
      * @param fileCode
      * @param theme
      * @return
      */
-    public PsychologyReportFuture generatePsychologyReport(String token, String fileCode, String theme) {
-        if (this.psychologyReportFutureMap.containsKey(fileCode)) {
-            return this.psychologyReportFutureMap.get(fileCode);
+    public PsychologyReport generatePsychologyReport(String token, ReportAttribute reportAttribute,
+                                                     String fileCode, String theme) {
+        JSONObject data = new JSONObject();
+        data.put("attribute", reportAttribute.toJSON());
+        data.put("fileCode", fileCode);
+        data.put("theme", theme);
+
+        Packet packet = new Packet(AIGCAction.GeneratePsychologyReport.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#generatePsychologyReport - No response");
+            return null;
         }
 
-        final PsychologyReportFuture reportFuture = new PsychologyReportFuture(token, fileCode);
-        this.psychologyReportFutureMap.put(fileCode, reportFuture);
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#generatePsychologyReport - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
 
-        this.performer.execute(new Runnable() {
-            @Override
-            public void run() {
-                reportFuture.start = System.currentTimeMillis();
-
-                JSONObject data = new JSONObject();
-                data.put("fileCode", fileCode);
-                data.put("theme", theme);
-
-                Packet packet = new Packet(AIGCAction.GeneratePsychologyReport.name, data);
-                ActionDialect request = packet.toDialect();
-                request.addParam("token", token);
-
-                // 不需要超长的超时时间
-                ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
-                if (null == response) {
-                    Logger.w(this.getClass(), "#generatePsychologyReport - No response");
-                    reportFuture.stateCode = AIGCStateCode.UnitError.code;
-                    reportFuture.end = System.currentTimeMillis();
-                    return;
-                }
-
-                Packet responsePacket = new Packet(response);
-                if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-                    Logger.w(this.getClass(), "#generatePsychologyReport - Response state is " + Packet.extractCode(responsePacket));
-                    reportFuture.stateCode = Packet.extractCode(responsePacket);
-                    reportFuture.end = System.currentTimeMillis();
-                    return;
-                }
-
-                PsychologyReport report = new PsychologyReport(Packet.extractDataPayload(responsePacket));
-                reportFuture.psychologyReport = report;
-                reportFuture.stateCode = AIGCStateCode.Ok.code;
-                reportFuture.end = System.currentTimeMillis();
-            }
-        });
-
-        return reportFuture;
+        PsychologyReport report = new PsychologyReport(Packet.extractDataPayload(responsePacket));
+        return report;
     }
 
     /**
-     * 查询心理学绘图预测任务。
+     * 查询心理学绘图预测报告。
      *
      * @param fileCode
      * @return
      */
-    public PsychologyReportFuture queryPsychologyReport(String fileCode) {
-        return this.psychologyReportFutureMap.get(fileCode);
+    public PsychologyReport queryPsychologyReport(String fileCode) {
+        return null;
     }
 
     @Override
@@ -1807,15 +1783,6 @@ public class Manager implements Tickable, PerformerListener {
                 ASRFuture future = e.getValue();
                 if (now - future.timestamp > 30 * 60 * 1000) {
                     asrIter.remove();
-                }
-            }
-
-            Iterator<Map.Entry<String, PsychologyReportFuture>> prfiter = this.psychologyReportFutureMap.entrySet().iterator();
-            while (prfiter.hasNext()) {
-                Map.Entry<String, PsychologyReportFuture> e = prfiter.next();
-                PsychologyReportFuture future = e.getValue();
-                if (now - future.start > 30 * 60 * 1000) {
-                    prfiter.remove();
                 }
             }
         }
@@ -1994,45 +1961,6 @@ public class Manager implements Tickable, PerformerListener {
             json.put("stateCode", this.stateCode);
             if (null != this.result) {
                 json.put("result", this.result.toJSON());
-            }
-            return json;
-        }
-
-        @Override
-        public JSONObject toCompactJSON() {
-            return this.toJSON();
-        }
-    }
-
-
-    public class PsychologyReportFuture implements JSONable {
-
-        protected String token;
-
-        protected String fileCode;
-
-        protected PsychologyReport psychologyReport;
-
-        protected long start;
-
-        protected long end;
-
-        protected int stateCode = -1;
-
-        public PsychologyReportFuture(String token, String fileCode) {
-            this.token = token;
-            this.fileCode = fileCode;
-        }
-
-        @Override
-        public JSONObject toJSON() {
-            JSONObject json = new JSONObject();
-            json.put("fileCode", fileCode);
-            json.put("stateCode", this.stateCode);
-            json.put("start", this.start);
-            json.put("end", this.end);
-            if (null != this.psychologyReport) {
-                json.put("psychologyReport", this.psychologyReport.toJSON());
             }
             return json;
         }

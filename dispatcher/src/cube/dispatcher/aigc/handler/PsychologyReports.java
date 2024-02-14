@@ -26,9 +26,12 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.ReportAttribute;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,10 +39,10 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * 心理学绘画预测。
  */
-public class QueryPsychologyReport extends ContextHandler {
+public class PsychologyReports extends ContextHandler {
 
-    public QueryPsychologyReport() {
-        super("/aigc/psychology/query");
+    public PsychologyReports() {
+        super("/aigc/psychology/report");
         setHandler(new Handler());
     }
 
@@ -58,22 +61,25 @@ public class QueryPsychologyReport extends ContextHandler {
                 return;
             }
 
-//            try {
-//                JSONObject data = this.readBodyAsJSONObject(request);
-//                String fileCode = data.getString("fileCode");
-//                Manager.PsychologyReportFuture reportFuture = Manager.getInstance().queryPsychologyReport(fileCode);
-//                if (null != reportFuture) {
-//                    this.respondOk(response, reportFuture.toJSON());
-//                    this.complete();
-//                }
-//                else {
-//                    this.respond(response, HttpStatus.NOT_FOUND_404);
-//                    this.complete();
-//                }
-//            } catch (Exception e) {
-//                this.respond(response, HttpStatus.BAD_REQUEST_400);
-//                this.complete();
-//            }
+            try {
+                JSONObject data = this.readBodyAsJSONObject(request);
+                ReportAttribute reportAttribute = new ReportAttribute(data.getJSONObject("attribute"));
+                String fileCode = data.getString("fileCode");
+                String theme = data.getString("theme");
+                PsychologyReport report =
+                        Manager.getInstance().generatePsychologyReport(token, reportAttribute, fileCode, theme);
+                if (null != report) {
+                    this.respondOk(response, report.toJSON());
+                    this.complete();
+                }
+                else {
+                    this.respond(response, HttpStatus.NOT_FOUND_404);
+                    this.complete();
+                }
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+            }
         }
     }
 }

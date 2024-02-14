@@ -33,7 +33,7 @@ import cell.util.log.Logger;
 import cube.aigc.*;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
-import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.ReportAttribute;
 import cube.aigc.psychology.PsychologyReport;
 import cube.aigc.psychology.Theme;
 import cube.aigc.publicopinion.PublicOpinionTaskName;
@@ -405,7 +405,8 @@ public class AIGCService extends AbstractModule {
             this.useAgent = Boolean.parseBoolean(
                     properties.getProperty("agent", "false"));
             if (this.useAgent) {
-                Agent.createInstance(properties.getProperty("agent.url", "http://127.0.0.1:7010"));
+                Agent.createInstance(properties.getProperty("agent.url", "http://127.0.0.1:7010"),
+                        properties.getProperty("agent.token", ""));
                 // 添加单元
                 this.unitMap.put(Agent.getInstance().getUnit().getQueryKey(), Agent.getInstance().getUnit());
             }
@@ -1120,10 +1121,21 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
-    public String syncGenerateText(String unitName, String prompt) {
+    public String syncGenerateText(String unitName, String prompt, List<AIGCGenerationRecord> history) {
+        if (this.useAgent) {
+            return Agent.getInstance().generateText(null, prompt, history);
+        }
+
         AIGCUnit unit = this.selectUnitByName(unitName);
         if (null == unit) {
             return null;
+        }
+
+        JSONArray historyArray = new JSONArray();
+        if (null != history) {
+            for (AIGCGenerationRecord record : history) {
+                historyArray.put(record.toJSON());
+            }
         }
 
         Contact participant = new Contact(1000, "shixincube.com");
@@ -1134,7 +1146,7 @@ public class AIGCService extends AbstractModule {
         data.put("unit", unit.getCapability().getName());
         data.put("content", prompt);
         data.put("participant", participant.toCompactJSON());
-        data.put("history", new JSONArray());
+        data.put("history", historyArray);
 
         Packet request = new Packet(AIGCAction.Chat.name, data);
         ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(),
@@ -1641,73 +1653,50 @@ public class AIGCService extends AbstractModule {
      * 心理学绘画测验。
      *
      * @param token
+     * @param reportAttribute
      * @param fileCode
      * @param theme
      * @param listener
      * @return
      */
-    public boolean generatePsychologyReport(String token, String fileCode,
+    public PsychologyReport generatePsychologyReport(String token, ReportAttribute reportAttribute, String fileCode,
                                             Theme theme, PsychologySceneListener listener) {
         if (!this.isStarted()) {
-            return false;
+            return null;
         }
 
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(token);
         if (null == authToken) {
             Logger.w(this.getClass(), "#generatePsychologyReport - Token error: " + token);
-            return false;
+            return null;
         }
 
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#generatePsychologyReport - File storage service is not ready");
-            return false;
+            return null;
         }
 
         GetFile getFile = new GetFile(authToken.getDomain(), fileCode);
         JSONObject fileLabelJson = fileStorage.notify(getFile);
         if (null == fileLabelJson) {
             Logger.e(this.getClass(), "#generatePsychologyReport - Get file failed: " + fileCode);
-            return false;
+            return null;
         }
 
         FileLabel fileLabel = new FileLabel(fileLabelJson);
 
-        PsychologyReport report = PsychologyScene.getInstance().generateEvaluationReport(
-                this.getChannelByToken(token), fileLabel, theme, new PsychologySceneListener() {
-                    @Override
-                    public void onPaintingPredict(PsychologyReport report, FileLabel file) {
+        AIGCChannel channel = this.getChannelByToken(token);
+        if (null == channel) {
+            channel = this.createChannel(token, "Baize", Utils.randomString(16));
+        }
 
-                    }
+        // 生成报告
+        PsychologyReport report = PsychologyScene.getInstance().generateEvaluationReport(channel,
+                reportAttribute, fileLabel, theme, listener);
 
-                    @Override
-                    public void onPaintingPredictCompleted(PsychologyReport report, FileLabel file, Painting painting) {
-
-                    }
-
-                    @Override
-                    public void onPaintingPredictFailed(PsychologyReport report, FileLabel file) {
-
-                    }
-
-                    @Override
-                    public void onReportEvaluate(PsychologyReport report) {
-
-                    }
-
-                    @Override
-                    public void onReportEvaluateCompleted(PsychologyReport report) {
-
-                    }
-
-                    @Override
-                    public void onReportEvaluateFailed(PsychologyReport report) {
-
-                    }
-                });
-
-        return (null != report);
+        return report;
     }
 
     public boolean automaticSpeechRecognition(String domain, String fileCode, AutomaticSpeechRecognitionListener listener) {
@@ -2718,8 +2707,7 @@ public class AIGCService extends AbstractModule {
                             responseText, complexContext);
                 }
                 else if (useAgent) {
-                    String responseText = Agent.getInstance().generateText(channel.getAuthToken().getCode(),
-                            channel.getCode(), this.content);
+                    String responseText = Agent.getInstance().generateText(channel.getCode(), this.content, this.records);
                     if (null != responseText) {
                         // 过滤中文字符
                         responseText = this.filterChinese(this.unit, responseText);
