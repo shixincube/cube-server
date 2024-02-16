@@ -29,7 +29,13 @@ package cube.aigc.psychology;
 import cell.util.Utils;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
+import cube.util.TextUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * 心理学报告。
@@ -56,6 +62,8 @@ public class PsychologyReport implements JSONable {
 
     private boolean finished = false;
 
+    private List<ReportParagraph> paragraphList;
+
     public PsychologyReport(String token, ReportAttribute reportAttribute, FileLabel fileLabel, Theme theme) {
         this.sn = Utils.generateSerialNumber();
         this.token = token;
@@ -73,27 +81,67 @@ public class PsychologyReport implements JSONable {
         this.theme = Theme.parse(json.getString("theme"));
         this.timestamp = json.getLong("timestamp");
         this.finished = json.getBoolean("finished");
+        if (json.has("paragraphList")) {
+            this.paragraphList = new ArrayList<>();
+            JSONArray array = json.getJSONArray("paragraphList");
+            for (int i = 0; i < array.length(); ++i) {
+                this.paragraphList.add(new ReportParagraph(array.getJSONObject(i)));
+            }
+        }
     }
 
     public FileLabel getFileLabel() {
         return this.fileLabel;
     }
 
+    public void setReportParagraph(List<ReportParagraph> list) {
+        this.paragraphList = new ArrayList<>();
+        this.paragraphList.addAll(list);
+        this.finished = true;
+    }
+
+    public String markdown() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("# ").append(this.theme.name).append("报告\n\n");
+
+        buf.append("> ").append(this.reportAttribute.getGenderText());
+        buf.append("    ").append(this.reportAttribute.getAgeText()).append("\n");
+
+        buf.append("> ").append(Utils.gsDateFormat.format(new Date(this.timestamp))).append("\n\n");
+
+        if (null != this.paragraphList) {
+            for (ReportParagraph paragraph : this.paragraphList) {
+                buf.append(paragraph.markdown());
+            }
+        }
+
+        return buf.toString();
+    }
+
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("sn", this.sn);
-        json.put("token", this.token);
-        json.put("attribute", this.reportAttribute.toJSON());
-        json.put("fileLabel", this.fileLabel.toJSON());
-        json.put("theme", this.theme.name);
-        json.put("timestamp", this.timestamp);
-        json.put("finished", this.finished);
+        JSONObject json = this.toCompactJSON();
+        json.put("markdown", this.markdown());
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
+        json.put("token", this.token);
+        json.put("attribute", this.reportAttribute.toJSON());
+        json.put("fileLabel", this.fileLabel.toCompactJSON());
+        json.put("theme", this.theme.name);
+        json.put("timestamp", this.timestamp);
+        json.put("finished", this.finished);
+        if (null != this.paragraphList) {
+            JSONArray array = new JSONArray();
+            for (ReportParagraph paragraph : this.paragraphList) {
+                array.put(paragraph.toJSON());
+            }
+            json.put("paragraphList", array);
+        }
+        return json;
     }
 }

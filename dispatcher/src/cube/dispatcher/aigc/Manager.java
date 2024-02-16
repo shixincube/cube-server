@@ -1145,6 +1145,7 @@ public class Manager implements Tickable, PerformerListener {
      * @param histories
      * @param records
      * @param recordable
+     * @param searchable
      * @param networking
      * @param categories
      * @param searchTopK
@@ -1152,7 +1153,7 @@ public class Manager implements Tickable, PerformerListener {
      * @return
      */
     public ChatFuture chat(String token, String channelCode, String pattern, String content, String unit,
-                           int histories, JSONArray records, boolean recordable, boolean networking,
+                           int histories, JSONArray records, boolean recordable, boolean searchable, boolean networking,
                            JSONArray categories, int searchTopK, int searchFetchK) {
         JSONObject data = new JSONObject();
         data.put("token", token);
@@ -1170,6 +1171,7 @@ public class Manager implements Tickable, PerformerListener {
             data.put("categories", categories);
         }
         data.put("recordable", recordable);
+        data.put("searchable", searchable);
         data.put("networking", networking);
         data.put("searchTopK", searchTopK);
         data.put("searchFetchK", searchFetchK);
@@ -1759,8 +1761,54 @@ public class Manager implements Tickable, PerformerListener {
      * @param fileCode
      * @return
      */
-    public PsychologyReport queryPsychologyReport(String fileCode) {
-        return null;
+    public PsychologyReport getPsychologyReport(String token, String fileCode) {
+        if (null == fileCode) {
+            return null;
+        }
+
+        JSONObject data = new JSONObject();
+        data.put("fileCode", fileCode);
+        Packet packet = new Packet(AIGCAction.GetPsychologyReport.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#getPsychologyReport - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getPsychologyReport - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        PsychologyReport report = new PsychologyReport(Packet.extractDataPayload(responsePacket));
+        return report;
+    }
+
+    public PsychologyReport getPsychologyReport(String token, long sn) {
+        JSONObject data = new JSONObject();
+        data.put("sn", sn);
+        Packet packet = new Packet(AIGCAction.GetPsychologyReport.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#getPsychologyReport - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getPsychologyReport - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        PsychologyReport report = new PsychologyReport(Packet.extractDataPayload(responsePacket));
+        return report;
     }
 
     @Override

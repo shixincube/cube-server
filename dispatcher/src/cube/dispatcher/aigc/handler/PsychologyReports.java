@@ -54,7 +54,7 @@ public class PsychologyReports extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getRequestPath(request);
+            String token = this.getLastRequestPath(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
@@ -68,6 +68,38 @@ public class PsychologyReports extends ContextHandler {
                 String theme = data.getString("theme");
                 PsychologyReport report =
                         Manager.getInstance().generatePsychologyReport(token, reportAttribute, fileCode, theme);
+                if (null != report) {
+                    this.respondOk(response, report.toJSON());
+                    this.complete();
+                }
+                else {
+                    this.respond(response, HttpStatus.NOT_FOUND_404);
+                    this.complete();
+                }
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+            }
+        }
+
+        @Override
+        public void doGet(HttpServletRequest request, HttpServletResponse response) {
+            String token = this.getLastRequestPath(request);
+            if (!Manager.getInstance().checkToken(token)) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.complete();
+                return;
+            }
+
+            try {
+                String snString = request.getParameter("sn");
+                long sn = 0;
+                String fileCode = request.getParameter("fc");
+                if (null != snString) {
+                    sn = Long.parseLong(snString);
+                }
+                PsychologyReport report = (0 != sn) ? Manager.getInstance().getPsychologyReport(token, sn)
+                        : Manager.getInstance().getPsychologyReport(token, fileCode);
                 if (null != report) {
                     this.respondOk(response, report.toJSON());
                     this.complete();

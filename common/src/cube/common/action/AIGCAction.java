@@ -372,6 +372,11 @@ public enum AIGCAction {
     GeneratePsychologyReport("generatePsychologyReport"),
 
     /**
+     * 获取心理学报告。
+     */
+    GetPsychologyReport("getPsychologyReport"),
+
+    /**
      * 心理学绘画预测。
      */
     PredictPsychologyPainting("predictPsychologyPainting"),

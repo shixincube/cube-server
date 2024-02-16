@@ -118,6 +118,7 @@ public final class Agent {
             data.put("histories", 0);
             data.put("pattern", Consts.PATTERN_CHAT);
             data.put("recordable", false);
+            data.put("searchable", false);
             data.put("records", recordArray);
 
             client.getProtocolHandlers().remove(WWWAuthenticationProtocolHandler.NAME);

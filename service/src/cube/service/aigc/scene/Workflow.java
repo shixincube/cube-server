@@ -28,15 +28,11 @@ package cube.service.aigc.scene;
 
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.Prompt;
-import cube.aigc.PromptBuilder;
-import cube.aigc.psychology.EvaluationReport;
-import cube.aigc.psychology.Resource;
-import cube.aigc.psychology.Theme;
-import cube.aigc.psychology.ThemeTemplate;
+import cube.aigc.psychology.*;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCGenerationRecord;
 import cube.service.aigc.AIGCService;
+import cube.util.TextUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +52,7 @@ public class Workflow {
 
     private AIGCService service;
 
-    private List<Paragraph> paragraphList;
+    private List<ReportParagraph> paragraphList;
 
     public Workflow(EvaluationReport evaluationReport, AIGCChannel channel, AIGCService service) {
         this.evaluationReport = evaluationReport;
@@ -65,53 +61,72 @@ public class Workflow {
         this.paragraphList = new ArrayList<>();
     }
 
+    public PsychologyReport fillReport(PsychologyReport report) {
+        report.setReportParagraph(this.paragraphList);
+        return report;
+    }
+
     public Workflow makeStress() {
         // 获取模板
         ThemeTemplate template = Resource.getInstance().getThemeTemplate(Theme.Stress.code);
 
         // 生成上下文
-        List<AIGCGenerationRecord> records = this.makeRepresentationContext(this.evaluationReport.getRepresentationList());
+        List<AIGCGenerationRecord> records = new ArrayList<>();
+        //this.makeRepresentationContext(this.evaluationReport.getRepresentationList());
         if (Logger.isDebugLevel()) {
             Logger.d(this.getClass(), "#makeStress - Context length: " + records.size());
         }
 
         for (String title : template.getTitles()) {
-            this.paragraphList.add(new Paragraph(title));
+            this.paragraphList.add(new ReportParagraph(title));
         }
 
-        // 生成描述串
-        String representationString = this.spliceRepresentation();
+        // 生成表征内容
+        String representationString = this.spliceRepresentationContent();
 
         // 格式化所有段落提示词
         List<String> descriptionPromptList = template.formatDescriptionPrompt(representationString);
         List<String> suggestionPromptList = template.formatSuggestionPrompt(representationString);
         for (int i = 0; i < this.paragraphList.size(); ++i) {
-            Paragraph paragraph = this.paragraphList.get(i);
+            ReportParagraph paragraph = this.paragraphList.get(i);
 
+            // 生成描述
             String prompt = descriptionPromptList.get(i);
-//            String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
-            String result = "测试-description-" + prompt;
+            String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
             if (null == result) {
                 Logger.w(this.getClass(), "#makeStress - Infer failed");
             }
             else {
-                paragraph.description = result;
+                List<String> list = this.extractList(result);
+                if (list.isEmpty()) {
+                    Logger.w(this.getClass(), "#makeStress - extract list error");
+                    break;
+                }
+                paragraph.addDescriptions(list);
             }
 
+            // 将描述结果进行拼合
+            prompt = template.formatOverviewPrompt(i, this.spliceList(paragraph.getDescriptions()));
+            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, null);
+            // 提取列表
+            List<String> contentList = this.extractList(result);
+            String overview = this.plainText(contentList);
+            paragraph.setOverview(overview);
+
+            // 生成建议
             prompt = suggestionPromptList.get(i);
-//            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
-            result = "测试-suggestion-" + prompt;
+            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
             if (null == result) {
                 Logger.w(this.getClass(), "#makeStress - Infer failed");
             }
             else {
-                paragraph.suggestion = result;
+                paragraph.addSuggestions(this.extractList(result));
             }
         }
 
-        for (Paragraph paragraph : this.paragraphList) {
-            System.out.println(paragraph.markdown());
-        }
+//        for (ReportParagraph paragraph : this.paragraphList) {
+//            System.out.println(paragraph.markdown());
+//        }
 
         return this;
     }
@@ -146,6 +161,19 @@ public class Workflow {
         return buf.toString();
     }
 
+    private String spliceRepresentationContent() {
+        StringBuilder buf = new StringBuilder();
+        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationList()) {
+            buf.append(representation.interpretation.getInterpretation()).append("\n");
+            if (buf.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT - 50) {
+                Logger.w(this.getClass(), "#spliceRepresentationContent - Context length is overflow: " + buf.length());
+                break;
+            }
+        }
+        buf.delete(buf.length() - 1, buf.length());
+        return buf.toString();
+    }
+
     private List<AIGCGenerationRecord> makeRepresentationContext(List<EvaluationReport.Representation> list) {
         List<AIGCGenerationRecord> result = new ArrayList<>();
         for (EvaluationReport.Representation representation : list) {
@@ -155,6 +183,79 @@ public class Workflow {
             result.add(record);
         }
         return result;
+    }
+
+    /**
+     * 将内容里的列表数据提取到列表里。
+     *
+     * @param content
+     * @return
+     */
+    private List<String> extractList(String content) {
+        List<String> result = new ArrayList<>();
+        String[] buf = content.split("\n");
+        List<String> lines = new ArrayList<>();
+        for (String text : buf) {
+            if (text.trim().length() <= 1) {
+                continue;
+            }
+
+            lines.add(text);
+
+            if (TextUtils.startsWithNumberSign(text.trim())) {
+                result.add(text.trim());
+            }
+        }
+
+        if (result.isEmpty()) {
+            Logger.d(this.getClass(), "#extractList - The result is not list, extracts list by symbol");
+
+            String targetContent = content;
+            if (lines.size() >= 3) {
+                targetContent = lines.get(1);
+            }
+
+            buf = targetContent.split("。");
+            for (int i = 0; i < buf.length; ++i) {
+                String text = buf[i].trim();
+                text = text.replaceAll("\n", "");
+                result.add((i + 1) + ". " + text + "。");
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * 将列表合并成文本内容。
+     *
+     * @param list
+     * @return
+     */
+    private String spliceList(List<String> list) {
+        StringBuilder buf = new StringBuilder();
+        for (String text : list) {
+            buf.append(text).append("\n");
+        }
+        buf.delete(buf.length() - 1, buf.length());
+        return buf.toString();
+    }
+
+    private String plainText(List<String> list) {
+        StringBuilder buf = new StringBuilder();
+        for (String text : list) {
+            String[] tmp = text.split("：");
+            if (tmp.length == 1) {
+                tmp = text.split(":");
+            }
+            String content = tmp[tmp.length - 1];
+            if (TextUtils.startsWithNumberSign(content)) {
+                int index = content.indexOf(".");
+                content = content.substring(index + 1).trim();
+            }
+            buf.append(content);
+        }
+        return buf.toString();
     }
 
     @Override
@@ -168,32 +269,5 @@ public class Workflow {
 //            buf.append("--------------------------------------------------------------------------------\n");
 //        }
         return buf.toString();
-    }
-
-    public class Paragraph {
-
-        public String title;
-
-        public int score;
-
-        public String description;
-
-        public String suggestion;
-
-        public Paragraph(String title) {
-            this.title = title;
-        }
-
-        public String markdown() {
-            StringBuilder buf = new StringBuilder();
-            buf.append("## ").append(this.title).append("\n\n");
-            buf.append("### ").append("描述\n\n");
-            buf.append(this.description);
-            buf.append("\n\n");
-            buf.append("### ").append("建议\n\n");
-            buf.append(this.suggestion);
-            buf.append("\n");
-            return buf.toString();
-        }
     }
 }

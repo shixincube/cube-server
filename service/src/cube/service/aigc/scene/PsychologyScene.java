@@ -41,7 +41,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import org.json.JSONObject;
 
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -55,7 +55,7 @@ public class PsychologyScene {
     private AIGCService aigcService;
 
     /**
-     * Key：报告序号。
+     * Key：报告序列号。
      */
     private Map<Long, PsychologyReport> psychologyReportMap;
 
@@ -73,6 +73,15 @@ public class PsychologyScene {
 
     public PsychologyReport getPsychologyReport(long sn) {
         return this.psychologyReportMap.get(sn);
+    }
+
+    public PsychologyReport getPsychologyReportByFileCode(String fileCode) {
+        for (Map.Entry<Long, PsychologyReport> e : this.psychologyReportMap.entrySet()) {
+            if (e.getValue().getFileLabel().getFileCode().equals(fileCode)) {
+                return e.getValue();
+            }
+        }
+        return null;
     }
 
     public PsychologyReport generateEvaluationReport(AIGCChannel channel, ReportAttribute reportAttribute, FileLabel fileLabel,
@@ -120,6 +129,8 @@ public class PsychologyScene {
                     listener.onReportEvaluateFailed(report);
                     return;
                 }
+
+                workflow.fillReport(report);
 
                 channel.setProcessing(false);
                 listener.onReportEvaluateCompleted(report);
@@ -196,6 +207,15 @@ public class PsychologyScene {
         return workflow;
     }
 
+    public void onTick(long now) {
+        Iterator<Map.Entry<Long, PsychologyReport>> iter = this.psychologyReportMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            PsychologyReport report = iter.next().getValue();
+            if (now - report.timestamp > 30 * 60 * 1000) {
+                iter.remove();
+            }
+        }
+    }
 
     public static void main(String[] args) {
         PsychologyScene scene = PsychologyScene.getInstance();

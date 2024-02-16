@@ -58,6 +58,14 @@ public class ReportAttribute implements JSONable {
                 || this.gender.contains("女");
     }
 
+    public String getGenderText() {
+        return this.isMale() ? "男" : "女";
+    }
+
+    public String getAgeText() {
+        return this.age + "岁";
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

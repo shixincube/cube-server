@@ -355,6 +355,8 @@ public class AIGCService extends AbstractModule {
         }
 
         Explorer.getInstance().onTick(now);
+
+        PsychologyScene.getInstance().onTick(now);
     }
 
     private void loadConfig() {
@@ -1033,13 +1035,15 @@ public class AIGCService extends AbstractModule {
      * @param records
      * @param categories
      * @param recordable
+     * @param searchable
      * @param networking
      * @param listener
      * @return
      */
     public boolean generateText(String channelCode, String content, String unitName, int numHistories,
                                 List<AIGCGenerationRecord> records, List<String> categories,
-                                boolean recordable, boolean networking, GenerateTextListener listener) {
+                                boolean recordable, boolean searchable, boolean networking,
+                                GenerateTextListener listener) {
         if (!this.isStarted()) {
             Logger.w(AIGCService.class, "#generateText - Service is NOT ready");
             return false;
@@ -1093,7 +1097,7 @@ public class AIGCService extends AbstractModule {
 
         GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, content, categories, records, listener);
         meta.numHistories = numHistories;
-        meta.searchEnabled = this.enabledSearch;
+        meta.searchEnabled = searchable && this.enabledSearch;
         meta.recordHistoryEnabled = recordable;
         meta.networkingEnabled = networking;
 
@@ -1123,6 +1127,8 @@ public class AIGCService extends AbstractModule {
 
     public String syncGenerateText(String unitName, String prompt, List<AIGCGenerationRecord> history) {
         if (this.useAgent) {
+            Logger.d(this.getClass(), "#syncGenerateText - \"" + unitName + "\" - history:"
+                    + ((null != history) ? history.size() : 0));
             return Agent.getInstance().generateText(null, prompt, history);
         }
 
@@ -1215,7 +1221,7 @@ public class AIGCService extends AbstractModule {
 
     public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt,
                              List<AIGCGenerationRecord> records, List<String> categories,
-                             boolean search, boolean recordable, GenerateTextListener listener) {
+                             boolean searchable, boolean recordable, GenerateTextListener listener) {
         if (this.useAgent) {
             unit = Agent.getInstance().getUnit();
         }
@@ -1228,7 +1234,7 @@ public class AIGCService extends AbstractModule {
 
         GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, prompt, categories, records, listener);
         meta.setOriginalQuery(query);
-        meta.setSearchEnabled(search);
+        meta.setSearchEnabled(searchable);
         meta.setRecordHistoryEnabled(recordable);
         meta.setNetworkingEnabled(false);
 
