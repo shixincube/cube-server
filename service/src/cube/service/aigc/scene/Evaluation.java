@@ -57,8 +57,8 @@ public class Evaluation {
 
     private SpaceLayout spaceLayout;
 
-    public Evaluation(ReportAttribute reportAttribute) {
-        this.painting = new Painting(reportAttribute);
+    public Evaluation(Attribute attribute) {
+        this.painting = new Painting(attribute);
     }
 
     public Evaluation(Painting painting) {
@@ -690,6 +690,12 @@ public class Evaluation {
         EvaluationReport report = null;
 
         if (null != this.painting && null != this.spaceLayout) {
+            // 判断绘画是否是有效绘画
+            if (!this.painting.isValid()) {
+                report = new EvaluationReport(this.painting.getAttribute(), new ArrayList<>());
+                return report;
+            }
+
             List<EvaluationFeature> results = new ArrayList<>();
             results.addAll(this.evalSpaceStructure());
             results.addAll(this.evalFrameStructure());
@@ -697,7 +703,7 @@ public class Evaluation {
             results.addAll(this.evalTree());
             results.addAll(this.evalPerson());
             results.addAll(this.evalOthers());
-            report = new EvaluationReport(this.painting.getAuthor(), results);
+            report = new EvaluationReport(this.painting.getAttribute(), results);
         }
         else {
             Logger.w(this.getClass(), "#makeEvaluationReport - Only for test");
@@ -709,7 +715,7 @@ public class Evaluation {
                 EvaluationFeature result = new EvaluationFeature(Comment.values()[index], Score.High);
                 results.add(result);
             }
-            report = new EvaluationReport(this.painting.getAuthor(), results);
+            report = new EvaluationReport(this.painting.getAttribute(), results);
         }
 
         return report;

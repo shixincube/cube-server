@@ -29,7 +29,7 @@ package cube.aigc.psychology;
 import cell.util.Utils;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
-import cube.util.TextUtils;
+import cube.common.state.AIGCStateCode;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -54,7 +54,7 @@ public class PsychologyReport implements JSONable {
 
     public final long timestamp;
 
-    private ReportAttribute reportAttribute;
+    private Attribute attribute;
 
     private FileLabel fileLabel;
 
@@ -62,25 +62,29 @@ public class PsychologyReport implements JSONable {
 
     private boolean finished = false;
 
+    private AIGCStateCode state;
+
     private List<ReportParagraph> paragraphList;
 
-    public PsychologyReport(String token, ReportAttribute reportAttribute, FileLabel fileLabel, Theme theme) {
+    public PsychologyReport(String token, Attribute attribute, FileLabel fileLabel, Theme theme) {
         this.sn = Utils.generateSerialNumber();
         this.token = token;
-        this.reportAttribute = reportAttribute;
+        this.attribute = attribute;
         this.fileLabel = fileLabel;
         this.theme = theme;
         this.timestamp = System.currentTimeMillis();
+        this.state = AIGCStateCode.Processing;
     }
 
     public PsychologyReport(JSONObject json) {
         this.sn = json.getLong("sn");
         this.token = json.getString("token");
-        this.reportAttribute = new ReportAttribute(json.getJSONObject("attribute"));
+        this.attribute = new Attribute(json.getJSONObject("attribute"));
         this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
         this.theme = Theme.parse(json.getString("theme"));
         this.timestamp = json.getLong("timestamp");
         this.finished = json.getBoolean("finished");
+        this.state = AIGCStateCode.parse(json.getInt("state"));
         if (json.has("paragraphList")) {
             this.paragraphList = new ArrayList<>();
             JSONArray array = json.getJSONArray("paragraphList");
@@ -88,6 +92,14 @@ public class PsychologyReport implements JSONable {
                 this.paragraphList.add(new ReportParagraph(array.getJSONObject(i)));
             }
         }
+    }
+
+    public void setState(AIGCStateCode state) {
+        this.state = state;
+    }
+
+    public void setFinished(boolean finished) {
+        this.finished = finished;
     }
 
     public FileLabel getFileLabel() {
@@ -100,18 +112,22 @@ public class PsychologyReport implements JSONable {
         this.finished = true;
     }
 
+    public boolean isEmpty() {
+        return (null == this.paragraphList || this.paragraphList.isEmpty());
+    }
+
     public String markdown() {
         StringBuilder buf = new StringBuilder();
         buf.append("# ").append(this.theme.name).append("报告\n\n");
 
-        buf.append("> ").append(this.reportAttribute.getGenderText());
-        buf.append("    ").append(this.reportAttribute.getAgeText()).append("\n");
+        buf.append("> ").append(this.attribute.getGenderText());
+        buf.append("    ").append(this.attribute.getAgeText()).append("\n");
 
         buf.append("> ").append(Utils.gsDateFormat.format(new Date(this.timestamp))).append("\n\n");
 
         if (null != this.paragraphList) {
             for (ReportParagraph paragraph : this.paragraphList) {
-                buf.append(paragraph.markdown());
+                buf.append(paragraph.markdown(true));
             }
         }
 
@@ -130,11 +146,12 @@ public class PsychologyReport implements JSONable {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
         json.put("token", this.token);
-        json.put("attribute", this.reportAttribute.toJSON());
+        json.put("attribute", this.attribute.toJSON());
         json.put("fileLabel", this.fileLabel.toCompactJSON());
         json.put("theme", this.theme.name);
         json.put("timestamp", this.timestamp);
         json.put("finished", this.finished);
+        json.put("state", this.state.code);
         if (null != this.paragraphList) {
             JSONArray array = new JSONArray();
             for (ReportParagraph paragraph : this.paragraphList) {

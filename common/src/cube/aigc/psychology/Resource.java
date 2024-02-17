@@ -26,6 +26,7 @@
 
 package cube.aigc.psychology;
 
+import cell.util.log.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -69,6 +70,8 @@ public class Resource {
                 this.commentDescriptionLastModified = this.commentDescriptionFile.lastModified();
                 this.commentInterpretations.clear();
 
+                Logger.i(this.getClass(), "Read comment description file: " + this.commentDescriptionFile.getAbsolutePath());
+
                 try {
                     byte[] data = Files.readAllBytes(Paths.get(this.commentDescriptionFile.getAbsolutePath()));
                     JSONArray array = new JSONArray(new String(data, StandardCharsets.UTF_8));
@@ -104,6 +107,8 @@ public class Resource {
             if (this.themeFile.lastModified() != this.themeLastModified) {
                 this.themeLastModified = this.themeFile.lastModified();
                 this.themeTemplates.clear();
+
+                Logger.i(this.getClass(), "Read the theme template file: " + this.themeFile.getAbsolutePath());
 
                 try {
                     byte[] data = Files.readAllBytes(Paths.get(this.themeFile.getAbsolutePath()));

@@ -420,7 +420,8 @@ public final class TextUtils {
         if (text.startsWith("1.") || text.startsWith("2.") || text.startsWith("3.") ||
             text.startsWith("4.") || text.startsWith("5.") || text.startsWith("6.") ||
             text.startsWith("7.") || text.startsWith("8.") || text.startsWith("9.") ||
-            text.startsWith("10.") || text.startsWith("11.")|| text.startsWith("12.")) {
+            text.startsWith("10.") || text.startsWith("11.")|| text.startsWith("12.") ||
+            text.startsWith("13.") || text.startsWith("14.")|| text.startsWith("15.")) {
             return true;
         }
 

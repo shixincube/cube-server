@@ -85,13 +85,13 @@ public class Workflow {
         String representationString = this.spliceRepresentationContent();
 
         // 格式化所有段落提示词
-        List<String> descriptionPromptList = template.formatDescriptionPrompt(representationString);
+        List<String> featurePromptList = template.formatFeaturePrompt(representationString);
         List<String> suggestionPromptList = template.formatSuggestionPrompt(representationString);
         for (int i = 0; i < this.paragraphList.size(); ++i) {
             ReportParagraph paragraph = this.paragraphList.get(i);
 
             // 生成描述
-            String prompt = descriptionPromptList.get(i);
+            String prompt = featurePromptList.get(i);
             String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
             if (null == result) {
                 Logger.w(this.getClass(), "#makeStress - Infer failed");
@@ -102,16 +102,17 @@ public class Workflow {
                     Logger.w(this.getClass(), "#makeStress - extract list error");
                     break;
                 }
-                paragraph.addDescriptions(list);
+                paragraph.addFeatures(list);
             }
 
-            // 将描述结果进行拼合
-            prompt = template.formatOverviewPrompt(i, this.spliceList(paragraph.getDescriptions()));
+            // 将特征结果进行拼合
+            prompt = template.formatDescriptionPrompt(i, this.spliceList(paragraph.getFeatures()));
             result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, null);
             // 提取列表
             List<String> contentList = this.extractList(result);
-            String overview = this.plainText(contentList);
-            paragraph.setOverview(overview);
+            // 转平滑文本，过滤噪音
+            String description = this.filterNoise(this.plainText(contentList));
+            paragraph.setDescription(description);
 
             // 生成建议
             prompt = suggestionPromptList.get(i);
@@ -123,10 +124,6 @@ public class Workflow {
                 paragraph.addSuggestions(this.extractList(result));
             }
         }
-
-//        for (ReportParagraph paragraph : this.paragraphList) {
-//            System.out.println(paragraph.markdown());
-//        }
 
         return this;
     }
@@ -254,6 +251,29 @@ public class Workflow {
                 content = content.substring(index + 1).trim();
             }
             buf.append(content);
+        }
+        return buf.toString().replaceAll("我", "你");
+    }
+
+    private String filterNoise(String text) {
+        List<String> content = new ArrayList<>();
+        String[] sentences = text.split("。");
+        for (String sentence : sentences) {
+            if (sentence.contains("人工智能") || sentence.contains("AI")) {
+                continue;
+            }
+
+            if (sentence.startsWith("但")) {
+                content.add(sentence.replaceFirst("但", ""));
+            }
+            else {
+                content.add(sentence);
+            }
+        }
+
+        StringBuilder buf = new StringBuilder();
+        for (String c : content) {
+            buf.append(c).append("。");
         }
         return buf.toString();
     }

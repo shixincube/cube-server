@@ -84,7 +84,7 @@ public class PsychologyScene {
         return null;
     }
 
-    public PsychologyReport generateEvaluationReport(AIGCChannel channel, ReportAttribute reportAttribute, FileLabel fileLabel,
+    public PsychologyReport generateEvaluationReport(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
                                                      Theme theme, PsychologySceneListener listener) {
         // 判断频道是否繁忙
         if (null == channel || channel.isProcessing()) {
@@ -96,7 +96,7 @@ public class PsychologyScene {
         channel.setProcessing(true);
 
         PsychologyReport report = new PsychologyReport(channel.getAuthToken().getCode(),
-                reportAttribute, fileLabel, theme);
+                attribute, fileLabel, theme);
 
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -104,16 +104,20 @@ public class PsychologyScene {
                 // 绘图预测
                 listener.onPaintingPredict(report, fileLabel);
 
-                Painting painting = null;//processPainting(fileLabel);
-//                if (null == painting) {
-//                    // 预测绘图失败
-//                    channel.setProcessing(false);
-//                    listener.onPaintingPredictFailed(report, fileLabel);
-//                    return;
-//                }
+                Painting painting = processPainting(fileLabel);
+                if (null == painting) {
+                    // 预测绘图失败
+                    Logger.w(PsychologyScene.class, "#generateEvaluationReport - onPaintingPredictFailed: " +
+                            fileLabel.getFileCode());
+                    channel.setProcessing(false);
+                    report.setState(AIGCStateCode.FileError);
+                    report.setFinished(true);
+                    listener.onPaintingPredictFailed(report, fileLabel);
+                    return;
+                }
 
-                // 设置绘画作者属性
-//                painting.setAuthor(author);
+                // 设置绘画属性
+                painting.setAttribute(attribute);
 
                 // 绘图预测完成
                 listener.onPaintingPredictCompleted(report, fileLabel, painting);
@@ -125,14 +129,26 @@ public class PsychologyScene {
                 Workflow workflow = processReport(channel, painting, theme);
                 if (null == workflow) {
                     // 推理生成报告失败
+                    Logger.w(PsychologyScene.class, "#generateEvaluationReport - onReportEvaluateFailed: " +
+                            fileLabel.getFileCode());
                     channel.setProcessing(false);
+                    report.setState(AIGCStateCode.IllegalOperation);
+                    report.setFinished(true);
                     listener.onReportEvaluateFailed(report);
                     return;
                 }
 
+                // 填写数据
                 workflow.fillReport(report);
 
-                channel.setProcessing(false);
+                // 设置状态
+                if (report.isEmpty()) {
+                    report.setState(AIGCStateCode.Failure);
+                }
+                else {
+                    report.setState(AIGCStateCode.Ok);
+                }
+
                 listener.onReportEvaluateCompleted(report);
 
                 // 记录
@@ -183,11 +199,16 @@ public class PsychologyScene {
 
     private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme) {
         Evaluation evaluation = (null == painting) ?
-                new Evaluation(new ReportAttribute("男", 28)) : new Evaluation(painting);
+                new Evaluation(new Attribute("男", 28)) : new Evaluation(painting);
 
         EvaluationReport report = evaluation.makeEvaluationReport();
 
         Workflow workflow = new Workflow(report, channel, this.aigcService);
+
+        if (report.isEmpty()) {
+            Logger.w(this.getClass(), "#processReport - No things in painting: " + channel.getAuthToken().getContactId());
+            return workflow;
+        }
 
         switch (theme) {
             case Stress:

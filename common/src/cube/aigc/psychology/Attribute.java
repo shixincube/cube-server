@@ -32,18 +32,18 @@ import org.json.JSONObject;
 /**
  * 报告属性。
  */
-public class ReportAttribute implements JSONable {
+public class Attribute implements JSONable {
 
     public final String gender;
 
     public final int age;
 
-    public ReportAttribute(String gender, int age) {
+    public Attribute(String gender, int age) {
         this.gender = gender;
         this.age = age;
     }
 
-    public ReportAttribute(JSONObject json) {
+    public Attribute(JSONObject json) {
         this.gender = json.getString("gender");
         this.age = json.getInt("age");
     }

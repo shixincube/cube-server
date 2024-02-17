@@ -27,7 +27,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cube.aigc.psychology.PsychologyReport;
-import cube.aigc.psychology.ReportAttribute;
+import cube.aigc.psychology.Attribute;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -63,11 +63,11 @@ public class PsychologyReports extends ContextHandler {
 
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
-                ReportAttribute reportAttribute = new ReportAttribute(data.getJSONObject("attribute"));
+                Attribute attribute = new Attribute(data.getJSONObject("attribute"));
                 String fileCode = data.getString("fileCode");
                 String theme = data.getString("theme");
                 PsychologyReport report =
-                        Manager.getInstance().generatePsychologyReport(token, reportAttribute, fileCode, theme);
+                        Manager.getInstance().generatePsychologyReport(token, attribute, fileCode, theme);
                 if (null != report) {
                     this.respondOk(response, report.toJSON());
                     this.complete();

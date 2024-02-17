@@ -52,9 +52,9 @@ public enum Comment {
     SelfControl("自制力"),
 
     /**
-     * 无力感。
+     * 自我无力感。
      */
-    Powerlessness("无力感"),
+    Powerlessness("自我无力感"),
 
     /**
      * 自恋。

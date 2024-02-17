@@ -44,7 +44,7 @@ import java.util.*;
  */
 public class Painting implements JSONable {
 
-    private ReportAttribute reportAttribute;
+    private Attribute attribute;
 
     private Size canvasSize;
 
@@ -72,8 +72,8 @@ public class Painting implements JSONable {
 
     private List<Animal> animalList;
 
-    public Painting(ReportAttribute reportAttribute) {
-        this.reportAttribute = reportAttribute;
+    public Painting(Attribute attribute) {
+        this.attribute = attribute;
     }
 
     public Painting(JSONObject json) {
@@ -129,7 +129,7 @@ public class Painting implements JSONable {
         }
 
         if (json.has("attribute")) {
-            this.reportAttribute = new ReportAttribute(json.getJSONObject("attribute"));
+            this.attribute = new Attribute(json.getJSONObject("attribute"));
         }
     }
 
@@ -159,6 +159,9 @@ public class Painting implements JSONable {
             thingList.add(thing);
         }
 
+        List<Thing> unknownList = new ArrayList<>();
+        unknownList.addAll(thingList);
+
         // 解析一级素材
         for (Thing thing : thingList) {
             Label label = thing.getLabel();
@@ -171,6 +174,7 @@ public class Painting implements JSONable {
                 case Temple:
                 case Grave:
                     addHouse((House) thing);
+                    unknownList.remove(thing);
                     break;
                 case Tree:
                 case DeciduousTree:
@@ -180,6 +184,7 @@ public class Painting implements JSONable {
                 case CoconutTree:
                 case Bamboo:
                     addTree((Tree) thing);
+                    unknownList.remove(thing);
                     break;
                 case Person:
                 case Man:
@@ -187,38 +192,47 @@ public class Painting implements JSONable {
                 case Boy:
                 case Girl:
                     addPerson((Person) thing);
+                    unknownList.remove(thing);
                     break;
                 case Table:
                     addTable((Table) thing);
+                    unknownList.remove(thing);
                     break;
                 case Sun:
                     addSun((Sun) thing);
+                    unknownList.remove(thing);
                     break;
                 case Moon:
                     addMoon((Moon) thing);
+                    unknownList.remove(thing);
                     break;
                 case Star:
                     addStar((Star) thing);
+                    unknownList.remove(thing);
                     break;
                 case Mountain:
                     addMountain((Mountain) thing);
+                    unknownList.remove(thing);
                     break;
                 case Flower:
                     addFlower((Flower) thing);
+                    unknownList.remove(thing);
                     break;
                 case Grass:
                     addGrass((Grass) thing);
+                    unknownList.remove(thing);
                     break;
                 case Cloud:
                     addCloud((Cloud) thing);
+                    unknownList.remove(thing);
                     break;
                 case Bird:
                 case Cat:
                 case Dog:
                     addAnimal((Animal) thing);
+                    unknownList.remove(thing);
                     break;
                 default:
-                    Logger.w(this.getClass(), "Unknown label: " + label.name);
                     break;
             }
         }
@@ -245,6 +259,7 @@ public class Painting implements JSONable {
                 case HousePath:
                 case HouseCurvePath:
                     buildHouse(thing);
+                    unknownList.remove(thing);
                     break;
                 case TreeTrunk:
                 case TreeBranch:
@@ -254,6 +269,7 @@ public class Painting implements JSONable {
                 case TreeHole:
                 case TreeDrooping:
                     buildTree(thing);
+                    unknownList.remove(thing);
                     break;
                 case PersonHead:
                 case PersonHair:
@@ -278,11 +294,15 @@ public class Painting implements JSONable {
                 case PersonItem:
                 case PersonGlasses:
                     buildPerson(thing);
+                    unknownList.remove(thing);
                     break;
                 default:
-                    Logger.w(this.getClass(), "Unknown label: " + label.name + " for building HTP");
                     break;
             }
+        }
+
+        for (Thing thing : unknownList) {
+            Logger.w(this.getClass(), "Unknown label: " + thing.label + " for building HTP");
         }
     }
 
@@ -508,16 +528,25 @@ public class Painting implements JSONable {
         return result;
     }
 
-    public void setAuthor(ReportAttribute reportAttribute) {
-        this.reportAttribute = reportAttribute;
+    public void setAttribute(Attribute attribute) {
+        this.attribute = attribute;
     }
 
-    public ReportAttribute getAuthor() {
-        return this.reportAttribute;
+    public Attribute getAttribute() {
+        return this.attribute;
     }
 
     public Size getCanvasSize() {
         return this.canvasSize;
+    }
+
+    /**
+     * 是否是有效的绘画。
+     *
+     * @return
+     */
+    public boolean isValid() {
+        return !(null == this.houseList && null == this.treeList && null == this.personList);
     }
 
     /**

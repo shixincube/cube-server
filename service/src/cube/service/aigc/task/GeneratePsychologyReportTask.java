@@ -33,7 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PsychologyReport;
-import cube.aigc.psychology.ReportAttribute;
+import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Theme;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -74,12 +74,12 @@ public class GeneratePsychologyReportTask extends ServiceTask {
             return;
         }
 
-        ReportAttribute reportAttribute = null;
+        Attribute attribute = null;
         String fileCode = null;
         String themeName = null;
 
         try {
-            reportAttribute = new ReportAttribute(packet.data.getJSONObject("attribute"));
+            attribute = new Attribute(packet.data.getJSONObject("attribute"));
             fileCode = packet.data.getString("fileCode");
             themeName = packet.data.getString("theme");
         } catch (Exception e) {
@@ -98,7 +98,7 @@ public class GeneratePsychologyReportTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        PsychologyReport report = service.generatePsychologyReport(token, reportAttribute, fileCode, theme, new PsychologySceneListener() {
+        PsychologyReport report = service.generatePsychologyReport(token, attribute, fileCode, theme, new PsychologySceneListener() {
             @Override
             public void onPaintingPredict(PsychologyReport report, FileLabel file) {
                 Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredict - " + token);

@@ -33,7 +33,7 @@ import cell.util.log.Logger;
 import cube.aigc.*;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.psychology.PsychologyReport;
-import cube.aigc.psychology.ReportAttribute;
+import cube.aigc.psychology.Attribute;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.Packet;
@@ -1723,15 +1723,15 @@ public class Manager implements Tickable, PerformerListener {
      * 执行心理学绘图预测。
      *
      * @param token
-     * @param reportAttribute
+     * @param attribute
      * @param fileCode
      * @param theme
      * @return
      */
-    public PsychologyReport generatePsychologyReport(String token, ReportAttribute reportAttribute,
+    public PsychologyReport generatePsychologyReport(String token, Attribute attribute,
                                                      String fileCode, String theme) {
         JSONObject data = new JSONObject();
-        data.put("attribute", reportAttribute.toJSON());
+        data.put("attribute", attribute.toJSON());
         data.put("fileCode", fileCode);
         data.put("theme", theme);
 
