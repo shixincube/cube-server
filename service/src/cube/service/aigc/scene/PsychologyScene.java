@@ -39,6 +39,8 @@ import cube.common.entity.AIGCUnit;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
+import cube.storage.StorageType;
+import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
 import java.util.Iterator;
@@ -54,6 +56,8 @@ public class PsychologyScene {
 
     private AIGCService aigcService;
 
+    private PsychologyStorage storage;
+
     /**
      * Key：报告序列号。
      */
@@ -67,8 +71,31 @@ public class PsychologyScene {
         return PsychologyScene.instance;
     }
 
-    public void setAigcService(AIGCService aigcService) {
+    public void start(AIGCService aigcService) {
         this.aigcService = aigcService;
+
+        try {
+            JSONObject config = ConfigUtils.readJsonFile("psychology.json");
+            JSONObject storage = config.getJSONObject("storage");
+            if (storage.getString("type").equalsIgnoreCase("SQLite")) {
+                this.storage = new PsychologyStorage(StorageType.SQLite, storage);
+            }
+            else {
+                this.storage = new PsychologyStorage(StorageType.MySQL, storage);
+            }
+
+            this.storage.open();
+            this.storage.execSelfChecking(null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Logger.w(this.getClass(), "#start", e);
+        }
+    }
+
+    public void stop() {
+        if (null != this.storage) {
+            this.storage.close();
+        }
     }
 
     public PsychologyReport getPsychologyReport(long sn) {
@@ -95,7 +122,7 @@ public class PsychologyScene {
         // 设置为正在操作
         channel.setProcessing(true);
 
-        PsychologyReport report = new PsychologyReport(channel.getAuthToken().getCode(),
+        PsychologyReport report = new PsychologyReport(channel.getAuthToken().getContactId(),
                 attribute, fileLabel, theme);
 
         Thread thread = new Thread(new Runnable() {
@@ -151,7 +178,7 @@ public class PsychologyScene {
 
                 listener.onReportEvaluateCompleted(report);
 
-                // 记录
+                // 存储
 //                List<PsychologyReport> list = psychologyReportMap.get(channel.getAuthToken().getCode());
 //                if (null == list) {
 //                    list = new ArrayList<>();

@@ -210,14 +210,15 @@ public class AIGCService extends AbstractModule {
 
         this.pluginSystem = new AIGCPluginSystem();
 
-        PsychologyScene.getInstance().setAigcService(this);
-
         // 读取配置文件
         this.loadConfig();
 
         (new Thread(new Runnable() {
             @Override
             public void run() {
+                // 启动心理学场景
+                PsychologyScene.getInstance().start(AIGCService.this);
+
                 JSONObject config = ConfigUtils.readStorageConfig();
                 if (config.has(AIGCService.NAME)) {
                     config = config.getJSONObject(AIGCService.NAME);
@@ -299,6 +300,8 @@ public class AIGCService extends AbstractModule {
 
     @Override
     public void stop() {
+        PsychologyScene.getInstance().stop();
+
         if (null != this.executor) {
             this.executor.shutdown();
             this.executor = null;

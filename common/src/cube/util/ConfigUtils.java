@@ -207,23 +207,23 @@ public final class ConfigUtils {
     }
 
     /**
-     * 读取指定的存储文件。
+     * 读取指定 JSON 格式的文件。
      *
-     * @param fullPath
+     * @param filePath
      * @return
      */
-    public static JSONObject readStorageFile(String fullPath) {
+    public static JSONObject readJsonFile(String filePath) {
         JSONObject json = null;
         try {
-            Path file = Paths.get(fullPath);
+            Path file = Paths.get(filePath);
             if (!Files.exists(file)) {
-                file = Paths.get("config/" + fullPath);
+                file = Paths.get("config/" + filePath);
             }
 
             byte[] data = Files.readAllBytes(file);
             json = new JSONObject(new String(data, StandardCharsets.UTF_8));
         } catch (Exception e) {
-            Logger.w(ConfigUtils.class, "#readStorageFile - Read file error", e);
+            Logger.w(ConfigUtils.class, "#readJsonFile - Read file error", e);
         }
         return json;
     }

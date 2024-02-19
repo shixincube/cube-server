@@ -86,6 +86,15 @@ public class ThemeTemplate {
         return result;
     }
 
+    public String formatOpinionPrompt(int index, String suggestionText) {
+        if (index >= this.paragraphPromptFormatList.size()) {
+            return null;
+        }
+        ParagraphPromptFormat format = this.paragraphPromptFormatList.get(index);
+        String prompt = String.format(format.opinionFormat, suggestionText);
+        return prompt;
+    }
+
     /*
     public static ThemeTemplate makeStressThemeTemplate() {
         ThemeTemplate template = null;
@@ -130,11 +139,14 @@ public class ThemeTemplate {
 
         public String suggestionFormat;
 
+        public String opinionFormat;
+
         public ParagraphPromptFormat(JSONObject json) {
             this.title = json.getString("title");
             this.featureFormat = json.getString("feature");
             this.descriptionFormat = json.getString("description");
             this.suggestionFormat = json.getString("suggestion");
+            this.opinionFormat = json.getString("opinion");
         }
     }
 }

@@ -321,7 +321,7 @@ public class PublicOpinion implements Module {
 
         @Override
         public void open() {
-            JSONObject config = ConfigUtils.readStorageFile("config/storage_public_opinion.json");
+            JSONObject config = ConfigUtils.readJsonFile("storage_public_opinion.json");
             if (null != config) {
                 this.storage = StorageFactory.getInstance().createStorage(StorageType.MySQL,
                         "PublicOpinionStorage", config);

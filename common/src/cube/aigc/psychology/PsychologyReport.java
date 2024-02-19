@@ -50,13 +50,17 @@ public class PsychologyReport implements JSONable {
 
     public final long sn;
 
-    public final String token;
+    public final long contactId;
 
     public final long timestamp;
+
+    private String name;
 
     private Attribute attribute;
 
     private FileLabel fileLabel;
+
+    private String fileCode;
 
     private Theme theme;
 
@@ -66,23 +70,38 @@ public class PsychologyReport implements JSONable {
 
     private List<ReportParagraph> paragraphList;
 
-    public PsychologyReport(String token, Attribute attribute, FileLabel fileLabel, Theme theme) {
+    public PsychologyReport(long contactId, Attribute attribute, FileLabel fileLabel, Theme theme) {
         this.sn = Utils.generateSerialNumber();
-        this.token = token;
+        this.contactId = contactId;
+        this.timestamp = System.currentTimeMillis();
+        this.name = theme.name + "-" + Utils.gsDateFormat.format(new Date(this.timestamp));
         this.attribute = attribute;
         this.fileLabel = fileLabel;
         this.theme = theme;
-        this.timestamp = System.currentTimeMillis();
         this.state = AIGCStateCode.Processing;
+    }
+
+    public PsychologyReport(long sn, long contactId, long timestamp, String name, Attribute attribute,
+                            String fileCode, Theme theme) {
+        this.sn = sn;
+        this.contactId = contactId;
+        this.timestamp = timestamp;
+        this.name = name;
+        this.attribute = attribute;
+        this.fileCode = fileCode;
+        this.theme = theme;
+        this.finished = true;
+        this.state = AIGCStateCode.Ok;
     }
 
     public PsychologyReport(JSONObject json) {
         this.sn = json.getLong("sn");
-        this.token = json.getString("token");
+        this.contactId = json.getLong("contactId");
+        this.timestamp = json.getLong("timestamp");
+        this.name = json.getString("name");
         this.attribute = new Attribute(json.getJSONObject("attribute"));
         this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
         this.theme = Theme.parse(json.getString("theme"));
-        this.timestamp = json.getLong("timestamp");
         this.finished = json.getBoolean("finished");
         this.state = AIGCStateCode.parse(json.getInt("state"));
         if (json.has("paragraphList")) {
@@ -92,6 +111,18 @@ public class PsychologyReport implements JSONable {
                 this.paragraphList.add(new ReportParagraph(array.getJSONObject(i)));
             }
         }
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public Attribute getAttribute() {
+        return this.attribute;
+    }
+
+    public Theme getTheme() {
+        return this.theme;
     }
 
     public void setState(AIGCStateCode state) {
@@ -106,10 +137,29 @@ public class PsychologyReport implements JSONable {
         return this.fileLabel;
     }
 
-    public void setReportParagraph(List<ReportParagraph> list) {
+    public void setFileLabel(FileLabel fileLabel) {
+        this.fileLabel = fileLabel;
+    }
+
+    public String getFileCode() {
+        return (null != this.fileCode) ? this.fileCode : this.fileLabel.getFileCode();
+    }
+
+    public List<ReportParagraph> getParagraphs() {
+        return this.paragraphList;
+    }
+
+    public void setParagraphs(List<ReportParagraph> list) {
         this.paragraphList = new ArrayList<>();
         this.paragraphList.addAll(list);
         this.finished = true;
+    }
+
+    public void addParagraph(ReportParagraph paragraph) {
+        if (null == this.paragraphList) {
+            this.paragraphList = new ArrayList<>();
+        }
+        this.paragraphList.add(paragraph);
     }
 
     public boolean isEmpty() {
@@ -127,7 +177,7 @@ public class PsychologyReport implements JSONable {
 
         if (null != this.paragraphList) {
             for (ReportParagraph paragraph : this.paragraphList) {
-                buf.append(paragraph.markdown(true));
+                buf.append(paragraph.markdown(false));
             }
         }
 
@@ -145,7 +195,7 @@ public class PsychologyReport implements JSONable {
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
-        json.put("token", this.token);
+        json.put("contactId", this.contactId);
         json.put("attribute", this.attribute.toJSON());
         json.put("fileLabel", this.fileLabel.toCompactJSON());
         json.put("theme", this.theme.name);

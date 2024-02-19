@@ -31,10 +31,7 @@ import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * JSON 辅助函数。
@@ -161,5 +158,33 @@ public final class JSONUtils {
             }
         }
         return dest;
+    }
+
+    /**
+     * 将列表转为存储字符串类型的 JSON 数组。
+     *
+     * @param list
+     * @return
+     */
+    public static JSONArray toStringArray(List<String> list) {
+        JSONArray array = new JSONArray();
+        for (String str : list) {
+            array.put(str);
+        }
+        return array;
+    }
+
+    /**
+     * 将 JSON 数组转为存储字符串的列表。
+     *
+     * @param array
+     * @return
+     */
+    public static List<String> toStringList(JSONArray array) {
+        List<String> list = new ArrayList<>();
+        for (int i = 0; i < array.length(); ++i) {
+            list.add(array.getString(i));
+        }
+        return list;
     }
 }

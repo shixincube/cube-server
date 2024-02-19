@@ -48,24 +48,11 @@ public enum Theme {
         this.code = code;
     }
 
-    public static Theme parse(String name) {
+    public static Theme parse(String nameOrCode) {
         for (Theme th : Theme.values()) {
-            if (th.name.equals(name)) {
+            if (th.name.equals(nameOrCode) || th.code.equalsIgnoreCase(nameOrCode)) {
                 return th;
             }
-        }
-
-        if (name.equalsIgnoreCase(Stress.code)) {
-            return Stress;
-        }
-        else if (name.equalsIgnoreCase(FamilyRelationships.code)) {
-            return FamilyRelationships;
-        }
-        else if (name.equalsIgnoreCase(Intimacy.code)) {
-            return Intimacy;
-        }
-        else if (name.equalsIgnoreCase(Cognition.code)) {
-            return Cognition;
         }
 
         return null;

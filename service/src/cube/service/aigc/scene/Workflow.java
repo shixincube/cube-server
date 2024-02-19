@@ -62,7 +62,7 @@ public class Workflow {
     }
 
     public PsychologyReport fillReport(PsychologyReport report) {
-        report.setReportParagraph(this.paragraphList);
+        report.setParagraphs(this.paragraphList);
         return report;
     }
 

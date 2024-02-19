@@ -42,7 +42,9 @@ public class ReportParagraph implements JSONable {
 
     public int score;
 
-    private String description = "";
+    public String description = "";
+
+    public String opinion = "";
 
     private List<String> features = new ArrayList<>();
 
@@ -52,10 +54,18 @@ public class ReportParagraph implements JSONable {
         this.title = title;
     }
 
+    public ReportParagraph(String title, int score, String description, String opinion) {
+        this.title = title;
+        this.score = score;
+        this.description = description;
+        this.opinion = opinion;
+    }
+
     public ReportParagraph(JSONObject json) {
         this.title = json.getString("title");
         this.score = json.getInt("score");
         this.description = json.getString("description");
+        this.opinion = json.getString("opinion");
         JSONArray array = json.getJSONArray("features");
         for (int i = 0; i < array.length(); ++i) {
             this.features.add(array.getString(i));
@@ -70,8 +80,16 @@ public class ReportParagraph implements JSONable {
         this.description = description;
     }
 
+    public void setOpinion(String opinion) {
+        this.opinion = opinion;
+    }
+
     public void addFeatures(List<String> list) {
         this.features.addAll(list);
+    }
+
+    public void addFeature(String feature) {
+        this.features.add(feature);
     }
 
     public List<String> getFeatures() {
@@ -82,26 +100,40 @@ public class ReportParagraph implements JSONable {
         this.suggestions.addAll(list);
     }
 
+    public void addSuggestion(String suggestion) {
+        this.suggestions.add(suggestion);
+    }
+
+    public List<String> getSuggestions() {
+        return this.suggestions;
+    }
+
     public String markdown(boolean details) {
         StringBuilder buf = new StringBuilder();
-        buf.append("## ").append(this.title).append("\n\n");
+        buf.append("## ").append(this.title);
+
+        buf.append("\n\n");
         buf.append("### ").append("描述\n\n");
         buf.append(this.description);
 
-        if (details) {
-            buf.append("\n\n");
-            buf.append("### ").append("特征\n\n");
-            for (String feature : this.features) {
-                buf.append(feature).append("\n");
-            }
-            buf.delete(buf.length() - 1, buf.length());
-        }
-
         buf.append("\n\n");
         buf.append("### ").append("建议\n\n");
-        for (String suggestion : this.suggestions) {
-            buf.append(suggestion).append("\n");
+        buf.append(this.opinion);
+
+        if (details) {
+            buf.append("\n\n");
+            buf.append("### ").append("特征\n");
+            for (String feature : this.features) {
+                buf.append("\n").append(feature);
+            }
+
+            buf.append("\n\n");
+            buf.append("### ").append("指导建议\n");
+            for (String suggestion : this.suggestions) {
+                buf.append("\n").append(suggestion);
+            }
         }
+
         return buf.toString();
     }
 
@@ -111,6 +143,7 @@ public class ReportParagraph implements JSONable {
         json.put("title", this.title);
         json.put("score", this.score);
         json.put("description", this.description);
+        json.put("opinion", this.opinion);
 
         JSONArray array = new JSONArray();
         for (String text : this.features) {
