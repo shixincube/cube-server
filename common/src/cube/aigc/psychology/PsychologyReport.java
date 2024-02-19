@@ -177,7 +177,7 @@ public class PsychologyReport implements JSONable {
 
         if (null != this.paragraphList) {
             for (ReportParagraph paragraph : this.paragraphList) {
-                buf.append(paragraph.markdown(true));
+                buf.append(paragraph.markdown(false));
             }
         }
 

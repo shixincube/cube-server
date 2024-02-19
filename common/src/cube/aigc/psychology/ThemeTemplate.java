@@ -59,10 +59,17 @@ public class ThemeTemplate {
         return list;
     }
 
-    public List<String> formatFeaturePrompt(String representationText) {
+    public String getExplain(int index) {
+        if (index >= this.paragraphPromptFormatList.size()) {
+            return null;
+        }
+        return this.paragraphPromptFormatList.get(index).explain;
+    }
+
+    public List<String> formatFeaturePrompt(String interpretationText, String representationText) {
         List<String> result = new ArrayList<>();
         for (ParagraphPromptFormat format : this.paragraphPromptFormatList) {
-            String prompt = String.format(format.featureFormat, representationText);
+            String prompt = String.format(format.featureFormat, interpretationText, representationText);
             result.add(prompt);
         }
         return result;
@@ -133,6 +140,8 @@ public class ThemeTemplate {
 
         public final String title;
 
+        public String explain;
+
         public String featureFormat;
 
         public String descriptionFormat;
@@ -143,6 +152,7 @@ public class ThemeTemplate {
 
         public ParagraphPromptFormat(JSONObject json) {
             this.title = json.getString("title");
+            this.explain = json.getString("explain");
             this.featureFormat = json.getString("feature");
             this.descriptionFormat = json.getString("description");
             this.suggestionFormat = json.getString("suggestion");

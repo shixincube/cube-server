@@ -237,7 +237,7 @@ public class PsychologyScene {
 
     private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme) {
         Evaluation evaluation = (null == painting) ?
-                new Evaluation(new Attribute("男", 28)) : new Evaluation(painting);
+                new Evaluation(new Attribute("male", 28)) : new Evaluation(painting);
 
         EvaluationReport report = evaluation.makeEvaluationReport();
 

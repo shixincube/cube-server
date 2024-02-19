@@ -70,25 +70,27 @@ public class Workflow {
         // 获取模板
         ThemeTemplate template = Resource.getInstance().getThemeTemplate(Theme.Stress.code);
 
-        // 生成上下文
-        List<AIGCGenerationRecord> records = new ArrayList<>();
-        //this.makeRepresentationContext(this.evaluationReport.getRepresentationList());
-        if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#makeStress - Context length: " + records.size());
-        }
-
         for (String title : template.getTitles()) {
             this.paragraphList.add(new ReportParagraph(title));
         }
 
         // 生成表征内容
-        String representationString = this.spliceRepresentationContent();
+        String representation = this.spliceRepresentation();
+        String interpretation = this.spliceRepresentationInterpretation();
 
         // 格式化所有段落提示词
-        List<String> featurePromptList = template.formatFeaturePrompt(representationString);
-        List<String> suggestionPromptList = template.formatSuggestionPrompt(representationString);
+        List<String> featurePromptList = template.formatFeaturePrompt(interpretation, representation);
+        List<String> suggestionPromptList = template.formatSuggestionPrompt(interpretation);
         for (int i = 0; i < this.paragraphList.size(); ++i) {
             ReportParagraph paragraph = this.paragraphList.get(i);
+
+            // 生成上下文markdown
+            List<AIGCGenerationRecord> records = new ArrayList<>();
+            records.add(new AIGCGenerationRecord(ModelConfig.BAIZE_UNIT, paragraph.title,
+                    template.getExplain(i)));
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#makeStress - \"" + paragraph.title + "\" context length: " + records.size());
+            }
 
             // 推理特征
             String prompt = featurePromptList.get(i);
@@ -107,7 +109,7 @@ public class Workflow {
 
             // 将特征结果进行拼合
             prompt = template.formatDescriptionPrompt(i, this.spliceList(paragraph.getFeatures()));
-            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, null);
+            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
             // 提取列表
             List<String> contentList = this.extractList(result);
             // 转平滑文本，过滤噪音
@@ -126,7 +128,7 @@ public class Workflow {
 
             // 将建议结果进行拼合
             prompt = template.formatOpinionPrompt(i, this.spliceList(paragraph.getSuggestions()));
-            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, null);
+            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
             // 提取列表
             contentList = this.extractList(result);
             // 转平滑文本，过滤噪音
@@ -151,7 +153,7 @@ public class Workflow {
 
     private String spliceRepresentation() {
         StringBuilder buf = new StringBuilder();
-        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationList()) {
+        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListOrderByScore()) {
             if (representation.positive > 1) {
                 buf.append(representation.interpretation.getComment().word).append(HighTrick);
             }
@@ -167,11 +169,11 @@ public class Workflow {
         return buf.toString();
     }
 
-    private String spliceRepresentationContent() {
+    private String spliceRepresentationInterpretation() {
         StringBuilder buf = new StringBuilder();
-        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationList()) {
+        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListOrderByScore()) {
             buf.append(representation.interpretation.getInterpretation()).append("\n");
-            if (buf.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT - 50) {
+            if (buf.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT - 100) {
                 Logger.w(this.getClass(), "#spliceRepresentationContent - Context length is overflow: " + buf.length());
                 break;
             }

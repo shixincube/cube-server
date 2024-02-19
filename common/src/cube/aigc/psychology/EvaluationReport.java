@@ -31,6 +31,7 @@ import cube.aigc.ModelConfig;
 import cube.aigc.psychology.composition.Score;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -92,6 +93,18 @@ public class EvaluationReport {
     }
 
     public List<Representation> getRepresentationList() {
+        return this.representationList;
+    }
+
+    public List<Representation> getRepresentationListOrderByScore() {
+        this.representationList.sort(new Comparator<Representation>() {
+            @Override
+            public int compare(Representation representation1, Representation representation2) {
+                int score1 = representation1.positive + representation1.negative;
+                int score2 = representation2.positive + representation2.negative;
+                return score2 - score1;
+            }
+        });
         return this.representationList;
     }
 

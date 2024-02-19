@@ -225,9 +225,14 @@ public class Explorer {
             }
         }
 
-        // 关键词构建
+        // 构建关键词
         List<String> keywords = new ArrayList<>();
-        keywords.add(query);
+        if (query.length() > 30) {
+            keywords.addAll(result.keywords);
+        }
+        else {
+            keywords.add(query);
+        }
 
         ResourceSearcher searcher = null;
         if (this.searcherName.equalsIgnoreCase("baidu")) {
