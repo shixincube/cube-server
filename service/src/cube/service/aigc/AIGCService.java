@@ -1991,8 +1991,8 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
-    public void markFile(String fileCode) {
-        // TODO XJW
+    public FileLabel getFile(String fileCode) {
+        return this.getFile("shixincube.com", fileCode);
     }
 
     private FileLabel getFile(String domain, String fileCode) {

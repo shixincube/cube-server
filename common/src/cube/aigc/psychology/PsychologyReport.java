@@ -177,7 +177,7 @@ public class PsychologyReport implements JSONable {
 
         if (null != this.paragraphList) {
             for (ReportParagraph paragraph : this.paragraphList) {
-                buf.append(paragraph.markdown(false));
+                buf.append(paragraph.markdown(true));
             }
         }
 
@@ -196,6 +196,7 @@ public class PsychologyReport implements JSONable {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
         json.put("contactId", this.contactId);
+        json.put("name", this.name);
         json.put("attribute", this.attribute.toJSON());
         json.put("fileLabel", this.fileLabel.toCompactJSON());
         json.put("theme", this.theme.name);

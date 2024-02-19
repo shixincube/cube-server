@@ -144,7 +144,45 @@ public class PsychologyStorage implements Storagable {
         }
     }
 
-    public List<PsychologyReport> readPsychologyReport(long contactId) {
+    public PsychologyReport readPsychologyReport(long sn) {
+        List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("sn", sn)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        PsychologyReport report = new PsychologyReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
+                data.get("timestamp").getLong(), data.get("name").getString(),
+                new Attribute(data.get("gender").getString(), data.get("age").getInt()),
+                data.get("fileCode").getString(), Theme.parse(data.get("theme").getString()));
+
+        List<StorageField[]> paragraphResult = this.storage.executeQuery(this.reportParagraphTable,
+                this.reportParagraphFields, new Conditional[] {
+                        Conditional.createEqualTo("report_sn", report.sn)
+                });
+        for (StorageField[] paragraphFields : paragraphResult) {
+            Map<String, StorageField> pd = StorageFields.get(paragraphFields);
+            ReportParagraph paragraph = new ReportParagraph(pd.get("title").getString(),
+                    pd.get("score").getInt(), pd.get("description").getString(), pd.get("opinion").getString());
+
+            String arrayString = pd.get("features").getString();
+            JSONArray array = new JSONArray(arrayString);
+            paragraph.addFeatures(JSONUtils.toStringList(array));
+
+            arrayString = pd.get("suggestions").getString();
+            array = new JSONArray(arrayString);
+            paragraph.addSuggestions(JSONUtils.toStringList(array));
+
+            report.addParagraph(paragraph);
+        }
+
+        return report;
+    }
+
+    public List<PsychologyReport> readPsychologyReports(long contactId) {
         List<PsychologyReport> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,

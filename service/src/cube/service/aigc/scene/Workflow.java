@@ -90,16 +90,16 @@ public class Workflow {
         for (int i = 0; i < this.paragraphList.size(); ++i) {
             ReportParagraph paragraph = this.paragraphList.get(i);
 
-            // 生成描述
+            // 推理特征
             String prompt = featurePromptList.get(i);
             String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
             if (null == result) {
-                Logger.w(this.getClass(), "#makeStress - Infer failed");
+                Logger.w(this.getClass(), "#makeStress - Infer feature failed");
             }
             else {
                 List<String> list = this.extractList(result);
                 if (list.isEmpty()) {
-                    Logger.w(this.getClass(), "#makeStress - extract list error");
+                    Logger.w(this.getClass(), "#makeStress - extract feature list error");
                     break;
                 }
                 paragraph.addFeatures(list);
@@ -114,15 +114,24 @@ public class Workflow {
             String description = this.filterNoise(this.plainText(contentList));
             paragraph.setDescription(description);
 
-            // 生成建议
+            // 推理建议
             prompt = suggestionPromptList.get(i);
             result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
             if (null == result) {
-                Logger.w(this.getClass(), "#makeStress - Infer failed");
+                Logger.w(this.getClass(), "#makeStress - Infer suggestion failed");
             }
             else {
                 paragraph.addSuggestions(this.extractList(result));
             }
+
+            // 将建议结果进行拼合
+            prompt = template.formatOpinionPrompt(i, this.spliceList(paragraph.getSuggestions()));
+            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, null);
+            // 提取列表
+            contentList = this.extractList(result);
+            // 转平滑文本，过滤噪音
+            String opinion = this.filterNoise(this.plainText(contentList));
+            paragraph.setOpinion(opinion);
         }
 
         return this;
@@ -267,7 +276,25 @@ public class Workflow {
                 content.add(sentence.replaceFirst("但", ""));
             }
             else {
-                content.add(sentence);
+                // 进行细分
+                String[] sub = sentence.split("，");
+                StringBuilder ss = new StringBuilder();
+                for (String s : sub) {
+                    String rs = s;
+                    if (s.contains("然而") || s.contains("但是")) {
+                        continue;
+                    }
+                    else if (s.contains("提供的信息")) {
+                        rs = s.replace("提供的信息", "绘画");
+                    }
+
+                    ss.append(rs).append("，");
+                }
+                if (ss.length() > 1) {
+                    ss.delete(ss.length() - 1, ss.length());
+                }
+
+                content.add(ss.toString());
             }
         }
 

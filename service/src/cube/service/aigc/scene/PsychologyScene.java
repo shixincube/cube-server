@@ -99,7 +99,23 @@ public class PsychologyScene {
     }
 
     public PsychologyReport getPsychologyReport(long sn) {
-        return this.psychologyReportMap.get(sn);
+        PsychologyReport report = this.psychologyReportMap.get(sn);
+        if (null != report) {
+            return report;
+        }
+
+        report = this.storage.readPsychologyReport(sn);
+        if (null == report) {
+            return null;
+        }
+
+        FileLabel fileLabel = this.aigcService.getFile(report.getFileCode());
+        if (null == fileLabel) {
+            return null;
+        }
+
+        report.setFileLabel(fileLabel);
+        return report;
     }
 
     public PsychologyReport getPsychologyReportByFileCode(String fileCode) {
@@ -179,12 +195,7 @@ public class PsychologyScene {
                 listener.onReportEvaluateCompleted(report);
 
                 // 存储
-//                List<PsychologyReport> list = psychologyReportMap.get(channel.getAuthToken().getCode());
-//                if (null == list) {
-//                    list = new ArrayList<>();
-//                    psychologyReportMap.put(channel.getAuthToken().getCode(), list);
-//                }
-//                list.add(report);
+                storage.writePsychologyReport(report);
 
                 channel.setProcessing(false);
             }

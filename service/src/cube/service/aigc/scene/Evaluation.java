@@ -248,6 +248,9 @@ public class Evaluation {
 
     public List<EvaluationFeature> evalHouse() {
         List<EvaluationFeature> list = new ArrayList<>();
+        if (null == this.painting.getHouses()) {
+            return list;
+        }
 
         List<House> houseList = this.painting.getHouses();
         for (House house : houseList) {
@@ -377,6 +380,9 @@ public class Evaluation {
 
     public List<EvaluationFeature> evalTree() {
         List<EvaluationFeature> list = new ArrayList<>();
+        if (null == this.painting.getTrees()) {
+            return list;
+        }
 
         List<Tree> treeList = this.painting.getTrees();
         for (Tree tree : treeList) {
@@ -506,6 +512,9 @@ public class Evaluation {
 
     public List<EvaluationFeature> evalPerson() {
         List<EvaluationFeature> list = new ArrayList<>();
+        if (null == this.painting.getPersons()) {
+            return list;
+        }
 
         for (Person person : this.painting.getPersons()) {
             // 头
