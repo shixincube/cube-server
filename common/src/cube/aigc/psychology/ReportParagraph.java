@@ -110,6 +110,7 @@ public class ReportParagraph implements JSONable {
 
     public String markdown(boolean details) {
         StringBuilder buf = new StringBuilder();
+        buf.append("\n\n");
         buf.append("## ").append(this.title);
 
         buf.append("\n\n");

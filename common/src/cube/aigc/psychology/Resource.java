@@ -47,7 +47,7 @@ public class Resource {
 
     private File commentDescriptionFile = new File("assets/psychology/interpretation.json");
     private long commentDescriptionLastModified = 0;
-    private List<CommentInterpretation> commentInterpretations;
+    private List<KnowledgeStrategy> knowledgeStrategies;
 
     private File themeFile = new File("assets/psychology/theme.json");
     private long themeLastModified = 0;
@@ -56,7 +56,7 @@ public class Resource {
     private final static Resource instance = new Resource();
 
     private Resource() {
-        this.commentInterpretations = new ArrayList<>();
+        this.knowledgeStrategies = new ArrayList<>();
         this.themeTemplates = new ConcurrentHashMap<>();
     }
 
@@ -64,11 +64,11 @@ public class Resource {
         return Resource.instance;
     }
 
-    public List<CommentInterpretation> getCommentInterpretations() {
+    public List<KnowledgeStrategy> getCommentInterpretations() {
         if (this.commentDescriptionFile.exists()) {
             if (this.commentDescriptionFile.lastModified() != this.commentDescriptionLastModified) {
                 this.commentDescriptionLastModified = this.commentDescriptionFile.lastModified();
-                this.commentInterpretations.clear();
+                this.knowledgeStrategies.clear();
 
                 Logger.i(this.getClass(), "Read comment description file: " + this.commentDescriptionFile.getAbsolutePath());
 
@@ -76,8 +76,8 @@ public class Resource {
                     byte[] data = Files.readAllBytes(Paths.get(this.commentDescriptionFile.getAbsolutePath()));
                     JSONArray array = new JSONArray(new String(data, StandardCharsets.UTF_8));
                     for (int i = 0; i < array.length(); ++i) {
-                        CommentInterpretation cd = new CommentInterpretation(array.getJSONObject(i));
-                        this.commentInterpretations.add(cd);
+                        KnowledgeStrategy cd = new KnowledgeStrategy(array.getJSONObject(i));
+                        this.knowledgeStrategies.add(cd);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -85,15 +85,15 @@ public class Resource {
             }
         }
 
-        return this.commentInterpretations;
+        return this.knowledgeStrategies;
     }
 
-    public CommentInterpretation getCommentInterpretation(Comment comment) {
-        if (this.commentInterpretations.isEmpty()) {
+    public KnowledgeStrategy getCommentInterpretation(Comment comment) {
+        if (this.knowledgeStrategies.isEmpty()) {
             this.getCommentInterpretations();
         }
 
-        for (CommentInterpretation interpretation : this.commentInterpretations) {
+        for (KnowledgeStrategy interpretation : this.knowledgeStrategies) {
             if (interpretation.getComment() == comment) {
                 return interpretation;
             }

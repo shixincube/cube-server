@@ -655,6 +655,13 @@ public class Explorer {
                 Logger.d(this.getClass(), "#run - Request " + this.url);
             }
 
+            if (HttpStatus.OK_200 != this.execute(true)) {
+                // 重试
+                this.execute(false);
+            }
+        }
+
+        private int execute(boolean retry) {
             HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
             try {
                 JSONObject requestParam = new JSONObject();
@@ -674,18 +681,25 @@ public class Explorer {
                     else {
                         this.listener.onCompleted(this.url, null);
                         if (Logger.isDebugLevel()) {
-                            Logger.d(this.getClass(), "#run - Interface return error state: "
+                            Logger.d(this.getClass(), "#execute - Interface return error state: "
                                     + responseData.getInt("code"));
                         }
                     }
                 }
                 else {
-                    Logger.w(this.getClass(), "#run - Reader response error: " + response.getStatus());
+                    Logger.w(this.getClass(), "#execute - Reader response error: " + response.getStatus());
+                    if (!retry) {
+                        this.listener.onCompleted(this.url, null);
+                    }
+                }
+
+                return response.getStatus();
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#execute", e);
+                if (!retry) {
                     this.listener.onCompleted(this.url, null);
                 }
-            } catch (Exception e) {
-                Logger.e(this.getClass(), "#run", e);
-                this.listener.onCompleted(this.url, null);
+                return HttpStatus.INTERNAL_SERVER_ERROR_500;
             } finally {
                 HttpClientFactory.getInstance().returnHttpClient(client);
             }

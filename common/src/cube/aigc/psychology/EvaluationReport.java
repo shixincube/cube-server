@@ -45,10 +45,17 @@ public class EvaluationReport {
 
     private List<Representation> representationList;
 
+    private int topN;
+
     public EvaluationReport(Attribute attribute, List<EvaluationFeature> resultList) {
         this.attribute = attribute;
         this.representationList = new ArrayList<>();
+        this.topN = 9;
         this.build(resultList);
+    }
+
+    public void setTopN(int value) {
+        this.topN = value;
     }
 
     public boolean isEmpty() {
@@ -63,7 +70,7 @@ public class EvaluationReport {
         for (EvaluationFeature result : resultList) {
             Representation representation = this.getRepresentation(result.comment);
             if (null == representation) {
-                CommentInterpretation interpretation = Resource.getInstance().getCommentInterpretation(result.comment);
+                KnowledgeStrategy interpretation = Resource.getInstance().getCommentInterpretation(result.comment);
                 if (null == interpretation) {
                     // 没有对应的释义
                     Logger.e(this.getClass(), "#build - Can NOT find comment interpretation: " + result.comment.word);
@@ -85,7 +92,7 @@ public class EvaluationReport {
 
     public Representation getRepresentation(Comment comment) {
         for (Representation score : this.representationList) {
-            if (score.interpretation.getComment() == comment) {
+            if (score.knowledgeStrategy.getComment() == comment) {
                 return score;
             }
         }
@@ -105,26 +112,31 @@ public class EvaluationReport {
                 return score2 - score1;
             }
         });
-        return this.representationList;
+
+        List<Representation> result = new ArrayList<>(this.topN);
+        for (int i = 0, len = Math.min(this.topN, this.representationList.size()); i < len; ++i) {
+            result.add(this.representationList.get(i));
+        }
+        return result;
     }
 
     public class Representation {
 
-        public CommentInterpretation interpretation;
+        public KnowledgeStrategy knowledgeStrategy;
 
         public int positive = 0;
 
         public int negative = 0;
 
-        public Representation(CommentInterpretation interpretation) {
-            this.interpretation = interpretation;
+        public Representation(KnowledgeStrategy knowledgeStrategy) {
+            this.knowledgeStrategy = knowledgeStrategy;
         }
 
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof Representation) {
                 Representation other = (Representation) obj;
-                if (other.interpretation.getComment() == this.interpretation.getComment()) {
+                if (other.knowledgeStrategy.getComment() == this.knowledgeStrategy.getComment()) {
                     return true;
                 }
             }
@@ -133,7 +145,7 @@ public class EvaluationReport {
 
         @Override
         public int hashCode() {
-            return this.interpretation.getComment().hashCode();
+            return this.knowledgeStrategy.getComment().hashCode();
         }
     }
 }

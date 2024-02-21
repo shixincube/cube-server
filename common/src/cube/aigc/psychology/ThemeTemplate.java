@@ -26,6 +26,7 @@
 
 package cube.aigc.psychology;
 
+import cube.aigc.psychology.material.Person;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -41,6 +42,8 @@ public class ThemeTemplate {
 
     private List<ParagraphPromptFormat> paragraphPromptFormatList;
 
+    private RepresentationPromptFormat representationPromptFormat;
+
     public ThemeTemplate(String name, JSONObject json) {
         this.theme = Theme.parse(name);
         this.paragraphPromptFormatList = new ArrayList<>();
@@ -48,6 +51,10 @@ public class ThemeTemplate {
         JSONArray array = prompt.getJSONArray("paragraphs");
         for (int i = 0; i < array.length(); ++i) {
             this.paragraphPromptFormatList.add(new ParagraphPromptFormat(array.getJSONObject(i)));
+        }
+
+        if (prompt.has("representation")) {
+            this.representationPromptFormat = new RepresentationPromptFormat(prompt.getJSONObject("representation"));
         }
     }
 
@@ -66,13 +73,14 @@ public class ThemeTemplate {
         return this.paragraphPromptFormatList.get(index).explain;
     }
 
-    public List<String> formatFeaturePrompt(String interpretationText, String representationText) {
-        List<String> result = new ArrayList<>();
-        for (ParagraphPromptFormat format : this.paragraphPromptFormatList) {
-            String prompt = String.format(format.featureFormat, interpretationText, representationText);
-            result.add(prompt);
+    public String formatFeaturePrompt(int index, String representationText) {
+        if (index >= this.paragraphPromptFormatList.size()) {
+            return null;
         }
-        return result;
+
+        ParagraphPromptFormat format = this.paragraphPromptFormatList.get(index);
+        String prompt = String.format(format.featureFormat, representationText);
+        return prompt;
     }
 
     public String formatDescriptionPrompt(int index, String descriptionText) {
@@ -84,13 +92,14 @@ public class ThemeTemplate {
         return prompt;
     }
 
-    public List<String> formatSuggestionPrompt(String representationText) {
-        List<String> result = new ArrayList<>();
-        for (ParagraphPromptFormat format : this.paragraphPromptFormatList) {
-            String prompt = String.format(format.suggestionFormat, representationText);
-            result.add(prompt);
+    public String formatSuggestionPrompt(int index, String representationText) {
+        if (index >= this.paragraphPromptFormatList.size()) {
+            return null;
         }
-        return result;
+
+        ParagraphPromptFormat format = this.paragraphPromptFormatList.get(index);
+        String prompt = String.format(format.suggestionFormat, representationText);
+        return prompt;
     }
 
     public String formatOpinionPrompt(int index, String suggestionText) {
@@ -102,36 +111,45 @@ public class ThemeTemplate {
         return prompt;
     }
 
+    public String formatBehaviorPrompt(String content, int age, String gender, String markedRepresentation) {
+        if (null == this.representationPromptFormat) {
+            return null;
+        }
+
+        return String.format(this.representationPromptFormat.behavior,
+                content, markedRepresentation, age, filterGender(gender), markedRepresentation);
+    }
+
+    private String filterGender(String gender) {
+        if (gender.equalsIgnoreCase("male")) {
+            return "男";
+        }
+        else if (gender.equalsIgnoreCase("female")) {
+            return "女";
+        }
+        else if (gender.contains("男")) {
+            return "男";
+        }
+        else {
+            return "女";
+        }
+    }
+
     /*
     public static ThemeTemplate makeStressThemeTemplate() {
         ThemeTemplate template = null;
-
-//                "将%s这种特点结合心理学的压力特征，描述一下%s是如何影响压力的。");
-//        template.paragraphList.add("压力的主要表现");
-//        template.paragraphList.add("压力的调整");
-//        template.paragraphList.add("总结");
-//        template.paragraphPromptFormatList.add("已知信息：%s。作为心理学咨询专家，结合心理学里心理压力特点给出对压力的表现描述。");
-//        template.paragraphPromptFormatList.add("已知信息：%s。这些压力表现应该如何调整，给我一些建议。");
-//        template.paragraphPromptFormatList.add("基于最近我的压力表现：%s，综合性地给我总结一些结论，能让我知道后续我应该怎么解决这些压力。");
-
         return template;
     }
 
     public static ThemeTemplate makeFamilyRelationshipsThemeTemplate() {
-//        ThemeTemplate template = new ThemeTemplate(Theme.FamilyRelationships);
-//                "将%s这种特点结合心理学里的家庭关系特征，描述一下%s是如何影响家庭关系的。");
         return null;
     }
 
     public static ThemeTemplate makeIntimacyThemeTemplate() {
-//        ThemeTemplate template = new ThemeTemplate(Theme.Intimacy);
-//                "将%s这种特点结合心理学的亲密关系特征，描述一下%s是如何影响亲密关系的。");
         return null;
     }
 
-    public static ThemeTemplate makeCognitionThemeTemplate() {
-//        ThemeTemplate template = new ThemeTemplate(Theme.Cognition);
-//                "将%s这种特点结合心理学的认知特征，描述一下%s是如何影响人的认知的。");
+    public static ThemeTemplate makeCognitionThemeTemplate() {;
         return null;
     }
     */
@@ -157,6 +175,15 @@ public class ThemeTemplate {
             this.descriptionFormat = json.getString("description");
             this.suggestionFormat = json.getString("suggestion");
             this.opinionFormat = json.getString("opinion");
+        }
+    }
+
+    public class RepresentationPromptFormat {
+
+        public final String behavior;
+
+        public RepresentationPromptFormat(JSONObject json) {
+            this.behavior = json.getString("behavior");
         }
     }
 }

@@ -26,12 +26,16 @@
 
 package cube.aigc.psychology;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * 词描述。
+ * 知识策略。
  */
-public class CommentInterpretation {
+public class KnowledgeStrategy {
 
     private Comment comment;
 
@@ -41,7 +45,9 @@ public class CommentInterpretation {
 
     private String remark;
 
-    public CommentInterpretation(JSONObject json) {
+    private List<Scene> sceneList;
+
+    public KnowledgeStrategy(JSONObject json) {
         this.comment = Comment.parse(json.getString("comment"));
         if (json.has("interpretation")) {
             this.interpretation = json.getString("interpretation");
@@ -52,6 +58,13 @@ public class CommentInterpretation {
         if (json.has("remark")) {
             this.remark = json.getString("remark");
         }
+        this.sceneList = new ArrayList<>();
+        if (json.has("scenes")) {
+            JSONArray array = json.getJSONArray("scenes");
+            for (int i = 0; i < array.length(); ++i) {
+                this.sceneList.add(new Scene(array.getJSONObject(i)));
+            }
+        }
     }
 
     public Comment getComment() {
@@ -60,6 +73,15 @@ public class CommentInterpretation {
 
     public String getInterpretation() {
         return this.interpretation;
+    }
+
+    public Scene getScene(Theme theme) {
+        for (Scene scene : this.sceneList) {
+            if (scene.theme == theme) {
+                return scene;
+            }
+        }
+        return null;
     }
 
     public String getAdvise() {
@@ -72,8 +94,8 @@ public class CommentInterpretation {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof CommentInterpretation) {
-            CommentInterpretation other = (CommentInterpretation) obj;
+        if (obj instanceof KnowledgeStrategy) {
+            KnowledgeStrategy other = (KnowledgeStrategy) obj;
             if (other.comment == this.comment) {
                 return true;
             }
@@ -85,5 +107,18 @@ public class CommentInterpretation {
     @Override
     public int hashCode() {
         return this.comment.hashCode();
+    }
+
+
+    public class Scene {
+
+        public Theme theme;
+
+        public String explain;
+
+        public Scene(JSONObject json) {
+            this.theme = Theme.parse(json.getString("theme"));
+            this.explain = json.getString("explain");
+        }
     }
 }

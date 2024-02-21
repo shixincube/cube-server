@@ -168,12 +168,13 @@ public class PsychologyReport implements JSONable {
 
     public String markdown() {
         StringBuilder buf = new StringBuilder();
-        buf.append("# ").append(this.theme.name).append("报告\n\n");
+        buf.append("# ").append(this.theme.name).append("报告");
 
+        buf.append("\n\n");
         buf.append("> ").append(this.attribute.getGenderText());
         buf.append("    ").append(this.attribute.getAgeText()).append("\n");
 
-        buf.append("> ").append(Utils.gsDateFormat.format(new Date(this.timestamp))).append("\n\n");
+        buf.append("> ").append(Utils.gsDateFormat.format(new Date(this.timestamp))).append("\n");
 
         if (null != this.paragraphList) {
             for (ReportParagraph paragraph : this.paragraphList) {

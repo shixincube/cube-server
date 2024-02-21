@@ -42,9 +42,9 @@ import java.util.List;
  */
 public class Workflow {
 
-    public final static String HighTrick = "明显";
-    public final static String NormalTrick = "";
-    public final static String LowTrick = "不足";
+    public final static String HighTrick = "过度";//"明显";
+    public final static String NormalTrick = "一般";
+    public final static String LowTrick = "缺乏";//"不足";
 
     private EvaluationReport evaluationReport;
 
@@ -53,6 +53,8 @@ public class Workflow {
     private AIGCService service;
 
     private List<ReportParagraph> paragraphList;
+
+    private int maxRepresentationNum = 9;
 
     public Workflow(EvaluationReport evaluationReport, AIGCChannel channel, AIGCService service) {
         this.evaluationReport = evaluationReport;
@@ -70,21 +72,29 @@ public class Workflow {
         // 获取模板
         ThemeTemplate template = Resource.getInstance().getThemeTemplate(Theme.Stress.code);
 
+        this.evaluationReport.setTopN(this.maxRepresentationNum);
+
+        int age = this.evaluationReport.getAttribute().age;
+        String gender = this.evaluationReport.getAttribute().gender;
+        // 逐一推理每一条表征
+        List<String> behaviorList = this.inferBehavior(template, age, gender);
+        if (null == behaviorList || behaviorList.isEmpty()) {
+            Logger.w(this.getClass(), "#makeStress - Behavior error");
+            return this;
+        }
+
         for (String title : template.getTitles()) {
             this.paragraphList.add(new ReportParagraph(title));
         }
 
         // 生成表征内容
-        String representation = this.spliceRepresentation();
-        String interpretation = this.spliceRepresentationInterpretation();
+        String representation = this.spliceRepresentationInterpretation();
 
-        // 格式化所有段落提示词
-        List<String> featurePromptList = template.formatFeaturePrompt(interpretation, representation);
-        List<String> suggestionPromptList = template.formatSuggestionPrompt(interpretation);
+        // 逐一生成提示词并推理
         for (int i = 0; i < this.paragraphList.size(); ++i) {
             ReportParagraph paragraph = this.paragraphList.get(i);
 
-            // 生成上下文markdown
+            // 生成标题的上下文内容
             List<AIGCGenerationRecord> records = new ArrayList<>();
             records.add(new AIGCGenerationRecord(ModelConfig.BAIZE_UNIT, paragraph.title,
                     template.getExplain(i)));
@@ -93,46 +103,45 @@ public class Workflow {
             }
 
             // 推理特征
-            String prompt = featurePromptList.get(i);
+            String prompt = template.formatFeaturePrompt(i, representation);
             String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
             if (null == result) {
                 Logger.w(this.getClass(), "#makeStress - Infer feature failed");
+                break;
             }
-            else {
-                List<String> list = this.extractList(result);
-                if (list.isEmpty()) {
-                    Logger.w(this.getClass(), "#makeStress - extract feature list error");
-                    break;
-                }
-                paragraph.addFeatures(list);
+
+            List<String> list = this.extractList(result);
+            if (list.isEmpty()) {
+                Logger.w(this.getClass(), "#makeStress - extract feature list error");
+                break;
             }
+            paragraph.addFeatures(list);
 
             // 将特征结果进行拼合
             prompt = template.formatDescriptionPrompt(i, this.spliceList(paragraph.getFeatures()));
             result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
-            // 提取列表
-            List<String> contentList = this.extractList(result);
+            if (null == result) {
+                Logger.w(this.getClass(), "#makeStress - Infer description failed");
+                break;
+            }
             // 转平滑文本，过滤噪音
-            String description = this.filterNoise(this.plainText(contentList));
+            String description = this.filterNoise(result);
             paragraph.setDescription(description);
 
             // 推理建议
-            prompt = suggestionPromptList.get(i);
+            prompt = template.formatSuggestionPrompt(i, representation);
             result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
             if (null == result) {
                 Logger.w(this.getClass(), "#makeStress - Infer suggestion failed");
+                break;
             }
-            else {
-                paragraph.addSuggestions(this.extractList(result));
-            }
+            paragraph.addSuggestions(this.extractList(result));
 
             // 将建议结果进行拼合
             prompt = template.formatOpinionPrompt(i, this.spliceList(paragraph.getSuggestions()));
             result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
-            // 提取列表
-            contentList = this.extractList(result);
             // 转平滑文本，过滤噪音
-            String opinion = this.filterNoise(this.plainText(contentList));
+            String opinion = this.filterNoise(result);
             paragraph.setOpinion(opinion);
         }
 
@@ -151,30 +160,72 @@ public class Workflow {
         return null;
     }
 
-    private String spliceRepresentation() {
-        StringBuilder buf = new StringBuilder();
+    private List<String> inferBehavior(ThemeTemplate template, int age, String gender) {
+        List<String> result = new ArrayList<>();
+
         for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListOrderByScore()) {
+            String marked = null;
+            // 计分
             if (representation.positive > 1) {
-                buf.append(representation.interpretation.getComment().word).append(HighTrick);
+                marked = HighTrick + "的" + representation.knowledgeStrategy.getComment().word;
             }
             else if (representation.positive > 0) {
-                buf.append(representation.interpretation.getComment().word).append(NormalTrick);
+                marked = NormalTrick + "的" + representation.knowledgeStrategy.getComment().word;
             }
             else {
-                buf.append(representation.interpretation.getComment().word).append(LowTrick);
+                marked = LowTrick + "的" + representation.knowledgeStrategy.getComment().word;
             }
-            buf.append("，");
+
+            String interpretation = representation.knowledgeStrategy.getInterpretation();
+            KnowledgeStrategy.Scene scene = representation.knowledgeStrategy.getScene(template.theme);
+
+            StringBuilder content = new StringBuilder();
+            if (null == scene) {
+                content.append(interpretation);
+            }
+            else {
+                content.append(scene.explain);
+            }
+
+            // 表征
+            String prompt = template.formatBehaviorPrompt(content.toString(), age, gender, marked);
+            String answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, null);
+
+            if (null != answer) {
+                result.add(answer);
+                System.out.println("****************************************");
+                System.out.println("XJW:\n" + prompt);
+                System.out.println("----------------------------------------");
+                System.out.println("XJW:\n" + answer);
+                System.out.println("****************************************");
+            }
         }
-        buf.delete(buf.length() - 1, buf.length());
-        return buf.toString();
+
+        return null;
     }
+
+//    private List<String> markRepresentation() {
+//        List<String> result = new ArrayList<>();
+//        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListOrderByScore()) {
+//            if (representation.positive > 1) {
+//                result.add(HighTrick + "的" + representation.interpretation.getComment().word);
+//            }
+//            else if (representation.positive > 0) {
+//                result.add(NormalTrick + "的" + representation.interpretation.getComment().word);
+//            }
+//            else {
+//                result.add(LowTrick + "的" + representation.interpretation.getComment().word);
+//            }
+//        }
+//        return result;
+//    }
 
     private String spliceRepresentationInterpretation() {
         StringBuilder buf = new StringBuilder();
         for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListOrderByScore()) {
-            buf.append(representation.interpretation.getInterpretation()).append("\n");
+            buf.append(representation.knowledgeStrategy.getInterpretation()).append("\n");
             if (buf.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT - 100) {
-                Logger.w(this.getClass(), "#spliceRepresentationContent - Context length is overflow: " + buf.length());
+                Logger.w(this.getClass(), "#spliceRepresentationInterpretation - Context length is overflow: " + buf.length());
                 break;
             }
         }
@@ -186,8 +237,8 @@ public class Workflow {
         List<AIGCGenerationRecord> result = new ArrayList<>();
         for (EvaluationReport.Representation representation : list) {
             AIGCGenerationRecord record = new AIGCGenerationRecord(ModelConfig.BAIZE_UNIT,
-                    representation.interpretation.getComment().word,
-                    representation.interpretation.getInterpretation());
+                    representation.knowledgeStrategy.getComment().word,
+                    representation.knowledgeStrategy.getInterpretation());
             result.add(record);
         }
         return result;
@@ -218,16 +269,18 @@ public class Workflow {
         if (result.isEmpty()) {
             Logger.d(this.getClass(), "#extractList - The result is not list, extracts list by symbol");
 
-            String targetContent = content;
-            if (lines.size() >= 3) {
-                targetContent = lines.get(1);
-            }
+            int index = 0;
+            for (String line : lines) {
+                if (line.contains("：") || line.contains(":")) {
+                    continue;
+                }
 
-            buf = targetContent.split("。");
-            for (int i = 0; i < buf.length; ++i) {
-                String text = buf[i].trim();
-                text = text.replaceAll("\n", "");
-                result.add((i + 1) + ". " + text + "。");
+                buf = line.split("。");
+                for (String text : buf) {
+                    text = text.trim().replaceAll("\n", "");
+                    result.add((index + 1) + ". " + text + "。");
+                    ++index;
+                }
             }
         }
 
@@ -249,8 +302,8 @@ public class Workflow {
         return buf.toString();
     }
 
-    private String plainText(List<String> list) {
-        StringBuilder buf = new StringBuilder();
+    private List<String> plainText(List<String> list) {
+        List<String> result = new ArrayList<>(list.size());
         for (String text : list) {
             String[] tmp = text.split("：");
             if (tmp.length == 1) {
@@ -261,42 +314,67 @@ public class Workflow {
                 int index = content.indexOf(".");
                 content = content.substring(index + 1).trim();
             }
-            buf.append(content);
+            content = content.replaceAll("我", "你")
+                    .replaceAll("他们", "你")
+                    .replace("人们", "");
+            result.add(content);
         }
-        return buf.toString().replaceAll("我", "你");
+        return result;
     }
 
     private String filterNoise(String text) {
         List<String> content = new ArrayList<>();
-        String[] sentences = text.split("。");
-        for (String sentence : sentences) {
-            if (sentence.contains("人工智能") || sentence.contains("AI")) {
+
+        // 按行读取
+        List<String> lines = new ArrayList<>();
+        String[] tmp = text.split("\n");
+        for (String t : tmp) {
+            if (t.trim().length() <= 2) {
+                continue;
+            }
+            lines.add(t.trim());
+        }
+        // 将 Markdown 格式文本转平滑文本
+        lines = this.plainText(lines);
+
+        for (String line : lines) {
+            if (line.contains("根据")) {
                 continue;
             }
 
-            if (sentence.startsWith("但")) {
-                content.add(sentence.replaceFirst("但", ""));
-            }
-            else {
-                // 进行细分
-                String[] sub = sentence.split("，");
-                StringBuilder ss = new StringBuilder();
-                for (String s : sub) {
-                    String rs = s;
-                    if (s.contains("然而") || s.contains("但是")) {
-                        continue;
-                    }
-                    else if (s.contains("提供的信息")) {
-                        rs = s.replace("提供的信息", "绘画");
-                    }
-
-                    ss.append(rs).append("，");
+            String[] sentences = line.split("。");
+            for (String sentence : sentences) {
+                if (sentence.contains("人工智能") || sentence.contains("AI")) {
+                    continue;
                 }
-                if (ss.length() > 1) {
-                    ss.delete(ss.length() - 1, ss.length());
+                else if (sentence.contains("总的来说") || sentence.contains("总之")) {
+                    continue;
                 }
 
-                content.add(ss.toString());
+                if (sentence.startsWith("但")) {
+                    content.add(sentence.replaceFirst("但", ""));
+                }
+                else {
+                    // 进行细分
+                    String[] sub = sentence.split("，");
+                    StringBuilder ss = new StringBuilder();
+                    for (String s : sub) {
+                        String rs = s;
+                        if (s.contains("然而") || s.contains("但是")) {
+                            continue;
+                        }
+                        else if (s.contains("提供的信息")) {
+                            rs = s.replace("提供的信息", "绘画");
+                        }
+
+                        ss.append(rs).append("，");
+                    }
+                    if (ss.length() > 1) {
+                        ss.delete(ss.length() - 1, ss.length());
+                    }
+
+                    content.add(ss.toString());
+                }
             }
         }
 

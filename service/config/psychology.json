@@ -1,2 +1,10 @@
 {
+	"storage": {
+		"type"     : "MySQL",
+		"host"     : "211.157.179.34",
+		"port"     : 3306,
+		"schema"   : "cube_dev",
+		"user"     : "baize",
+		"password" : "Baizejingzhi#2023"
+	}
 }
