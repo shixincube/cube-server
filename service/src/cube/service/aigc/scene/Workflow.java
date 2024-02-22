@@ -43,7 +43,7 @@ import java.util.List;
 public class Workflow {
 
     public final static String HighTrick = "过度";//"明显";
-    public final static String NormalTrick = "一般";
+    public final static String NormalTrick = "明显";
     public final static String LowTrick = "缺乏";//"不足";
 
     private EvaluationReport evaluationReport;
@@ -88,7 +88,8 @@ public class Workflow {
         }
 
         // 生成表征内容
-        String representation = this.spliceRepresentationInterpretation();
+//        String representation = this.spliceRepresentationInterpretation();
+        String representation = this.spliceBehaviorList(behaviorList);
 
         // 逐一生成提示词并推理
         for (int i = 0; i < this.paragraphList.size(); ++i) {
@@ -167,13 +168,13 @@ public class Workflow {
             String marked = null;
             // 计分
             if (representation.positive > 1) {
-                marked = HighTrick + "的" + representation.knowledgeStrategy.getComment().word;
+                marked = HighTrick + representation.knowledgeStrategy.getComment().word;
             }
             else if (representation.positive > 0) {
-                marked = NormalTrick + "的" + representation.knowledgeStrategy.getComment().word;
+                marked = NormalTrick + representation.knowledgeStrategy.getComment().word;
             }
             else {
-                marked = LowTrick + "的" + representation.knowledgeStrategy.getComment().word;
+                marked = LowTrick + representation.knowledgeStrategy.getComment().word;
             }
 
             String interpretation = representation.knowledgeStrategy.getInterpretation();
@@ -193,32 +194,26 @@ public class Workflow {
 
             if (null != answer) {
                 result.add(answer);
-                System.out.println("****************************************");
-                System.out.println("XJW:\n" + prompt);
-                System.out.println("----------------------------------------");
-                System.out.println("XJW:\n" + answer);
-                System.out.println("****************************************");
             }
         }
 
-        return null;
+        return result;
     }
 
-//    private List<String> markRepresentation() {
-//        List<String> result = new ArrayList<>();
-//        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListOrderByScore()) {
-//            if (representation.positive > 1) {
-//                result.add(HighTrick + "的" + representation.interpretation.getComment().word);
-//            }
-//            else if (representation.positive > 0) {
-//                result.add(NormalTrick + "的" + representation.interpretation.getComment().word);
-//            }
-//            else {
-//                result.add(LowTrick + "的" + representation.interpretation.getComment().word);
-//            }
-//        }
-//        return result;
-//    }
+    private String spliceBehaviorList(List<String> behaviorList) {
+        StringBuilder buf = new StringBuilder();
+        for (String text : behaviorList) {
+            List<String> list = this.extractList(text);
+            for (String content : list) {
+                if (TextUtils.startsWithNumberSign(content)) {
+                    int index = content.indexOf(".");
+                    content = content.substring(index + 1).trim();
+                    buf.append(content).append("\n");
+                }
+            }
+        }
+        return buf.toString();
+    }
 
     private String spliceRepresentationInterpretation() {
         StringBuilder buf = new StringBuilder();
@@ -259,7 +254,7 @@ public class Workflow {
                 continue;
             }
 
-            lines.add(text);
+            lines.add(text.trim());
 
             if (TextUtils.startsWithNumberSign(text.trim())) {
                 result.add(text.trim());
@@ -271,7 +266,7 @@ public class Workflow {
 
             int index = 0;
             for (String line : lines) {
-                if (line.contains("：") || line.contains(":")) {
+                if (line.endsWith("：") || line.endsWith(":")) {
                     continue;
                 }
 
@@ -316,6 +311,7 @@ public class Workflow {
             }
             content = content.replaceAll("我", "你")
                     .replaceAll("他们", "你")
+                    .replaceAll("这个人", "你")
                     .replace("人们", "");
             result.add(content);
         }
@@ -382,19 +378,6 @@ public class Workflow {
         for (String c : content) {
             buf.append(c).append("。");
         }
-        return buf.toString();
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-//        for (PromptGroup group : this.phase1Groups) {
-//            buf.append("[R] user: ").append(group.record.query).append('\n');
-//            buf.append("[R] assistant: ").append(group.record.answer).append('\n');
-//            buf.append("[Prompt]\n");
-//            buf.append(builder.serializePromptChaining(group.chaining));
-//            buf.append("--------------------------------------------------------------------------------\n");
-//        }
         return buf.toString();
     }
 }

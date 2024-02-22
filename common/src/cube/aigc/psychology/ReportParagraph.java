@@ -129,7 +129,7 @@ public class ReportParagraph implements JSONable {
             }
 
             buf.append("\n\n");
-            buf.append("### ").append("指导建议\n");
+            buf.append("### ").append("指导\n");
             for (String suggestion : this.suggestions) {
                 buf.append("\n").append(suggestion);
             }

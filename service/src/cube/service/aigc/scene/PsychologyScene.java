@@ -147,20 +147,20 @@ public class PsychologyScene {
                 // 绘图预测
                 listener.onPaintingPredict(report, fileLabel);
 
-                Painting painting = null;//processPainting(fileLabel);
-//                if (null == painting) {
-//                    // 预测绘图失败
-//                    Logger.w(PsychologyScene.class, "#generateEvaluationReport - onPaintingPredictFailed: " +
-//                            fileLabel.getFileCode());
-//                    channel.setProcessing(false);
-//                    report.setState(AIGCStateCode.FileError);
-//                    report.setFinished(true);
-//                    listener.onPaintingPredictFailed(report, fileLabel);
-//                    return;
-//                }
+                Painting painting = processPainting(fileLabel);
+                if (null == painting) {
+                    // 预测绘图失败
+                    Logger.w(PsychologyScene.class, "#generateEvaluationReport - onPaintingPredictFailed: " +
+                            fileLabel.getFileCode());
+                    channel.setProcessing(false);
+                    report.setState(AIGCStateCode.FileError);
+                    report.setFinished(true);
+                    listener.onPaintingPredictFailed(report, fileLabel);
+                    return;
+                }
 
                 // 设置绘画属性
-//                painting.setAttribute(attribute);
+                painting.setAttribute(attribute);
 
                 // 绘图预测完成
                 listener.onPaintingPredictCompleted(report, fileLabel, painting);
