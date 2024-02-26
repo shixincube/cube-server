@@ -26,7 +26,6 @@
 
 package cube.aigc.psychology;
 
-import cube.aigc.psychology.material.Person;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

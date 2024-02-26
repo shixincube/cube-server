@@ -50,7 +50,7 @@ public class EvaluationReport {
     public EvaluationReport(Attribute attribute, List<EvaluationFeature> resultList) {
         this.attribute = attribute;
         this.representationList = new ArrayList<>();
-        this.topN = 9;
+        this.topN = 5;
         this.build(resultList);
     }
 
@@ -82,10 +82,10 @@ public class EvaluationReport {
             }
 
             if (result.score == Score.High) {
-                representation.positive += 1;
+                representation.positiveCorrelation += 1;
             }
-            else {
-                representation.negative += 1;
+            else if (result.score == Score.Low) {
+                representation.negativeCorrelation += 1;
             }
         }
     }
@@ -103,12 +103,12 @@ public class EvaluationReport {
         return this.representationList;
     }
 
-    public List<Representation> getRepresentationListOrderByScore() {
+    public List<Representation> getRepresentationListOrderByCorrelation() {
         this.representationList.sort(new Comparator<Representation>() {
             @Override
             public int compare(Representation representation1, Representation representation2) {
-                int score1 = representation1.positive + representation1.negative;
-                int score2 = representation2.positive + representation2.negative;
+                int score1 = representation1.positiveCorrelation + representation1.negativeCorrelation;
+                int score2 = representation2.positiveCorrelation + representation2.negativeCorrelation;
                 return score2 - score1;
             }
         });
@@ -124,9 +124,9 @@ public class EvaluationReport {
 
         public KnowledgeStrategy knowledgeStrategy;
 
-        public int positive = 0;
+        public int positiveCorrelation = 0;
 
-        public int negative = 0;
+        public int negativeCorrelation = 0;
 
         public Representation(KnowledgeStrategy knowledgeStrategy) {
             this.knowledgeStrategy = knowledgeStrategy;

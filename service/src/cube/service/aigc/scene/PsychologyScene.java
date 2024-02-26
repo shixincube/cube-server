@@ -248,6 +248,9 @@ public class PsychologyScene {
             return workflow;
         }
 
+        // 设置使用的单元
+//        workflow.setUnitName("Baize", 1000);
+
         switch (theme) {
             case Stress:
                 workflow.makeStress();

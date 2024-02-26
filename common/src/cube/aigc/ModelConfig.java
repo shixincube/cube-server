@@ -36,7 +36,7 @@ public class ModelConfig implements JSONable {
 
     public static int EXTRA_LONG_PROMPT_LENGTH = 5000;
 
-    public static int BAIZE_UNIT_CONTEXT_LIMIT = 2000;
+    public static int BAIZE_UNIT_CONTEXT_LIMIT = 1000;
 
 
     public final static String[] TEXT_TO_IMAGE_UNIT = new String[] { "DallE" };

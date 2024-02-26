@@ -42,8 +42,8 @@ import java.util.List;
  */
 public class Workflow {
 
-    public final static String HighTrick = "过度";//"明显";
-    public final static String NormalTrick = "明显";
+    public final static String HighTrick = "明显";//"过度";
+    public final static String NormalTrick = "具有";
     public final static String LowTrick = "缺乏";//"不足";
 
     private EvaluationReport evaluationReport;
@@ -54,13 +54,22 @@ public class Workflow {
 
     private List<ReportParagraph> paragraphList;
 
-    private int maxRepresentationNum = 9;
+    private int maxRepresentationNum = 5;
+
+    private String unitName = ModelConfig.BAIZE_UNIT;
+
+    private int maxContext = ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT;
 
     public Workflow(EvaluationReport evaluationReport, AIGCChannel channel, AIGCService service) {
         this.evaluationReport = evaluationReport;
         this.channel = channel;
         this.service = service;
         this.paragraphList = new ArrayList<>();
+    }
+
+    public void setUnitName(String unitName, int maxContext) {
+        this.unitName = unitName;
+        this.maxContext = maxContext;
     }
 
     public PsychologyReport fillReport(PsychologyReport report) {
@@ -91,21 +100,24 @@ public class Workflow {
 //        String representation = this.spliceRepresentationInterpretation();
         String representation = this.spliceBehaviorList(behaviorList);
 
+        System.out.println(representation);
+
         // 逐一生成提示词并推理
         for (int i = 0; i < this.paragraphList.size(); ++i) {
             ReportParagraph paragraph = this.paragraphList.get(i);
 
             // 生成标题的上下文内容
             List<AIGCGenerationRecord> records = new ArrayList<>();
-            records.add(new AIGCGenerationRecord(ModelConfig.BAIZE_UNIT, paragraph.title,
+            records.add(new AIGCGenerationRecord(this.unitName, paragraph.title,
                     template.getExplain(i)));
             if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#makeStress - \"" + paragraph.title + "\" context length: " + records.size());
+                Logger.d(this.getClass(), "#makeStress - \"" + paragraph.title + "\" context num: " + records.size());
             }
 
             // 推理特征
             String prompt = template.formatFeaturePrompt(i, representation);
-            String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
+            System.out.println("XJW:\n" + prompt);
+            String result = this.service.syncGenerateText(this.unitName, prompt, records);
             if (null == result) {
                 Logger.w(this.getClass(), "#makeStress - Infer feature failed");
                 break;
@@ -120,7 +132,7 @@ public class Workflow {
 
             // 将特征结果进行拼合
             prompt = template.formatDescriptionPrompt(i, this.spliceList(paragraph.getFeatures()));
-            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
+            result = this.service.syncGenerateText(this.unitName, prompt, records);
             if (null == result) {
                 Logger.w(this.getClass(), "#makeStress - Infer description failed");
                 break;
@@ -129,9 +141,11 @@ public class Workflow {
             String description = this.filterNoise(result);
             paragraph.setDescription(description);
 
+            System.out.println("XJW:\n" + result);
+
             // 推理建议
             prompt = template.formatSuggestionPrompt(i, representation);
-            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
+            result = this.service.syncGenerateText(this.unitName, prompt, records);
             if (null == result) {
                 Logger.w(this.getClass(), "#makeStress - Infer suggestion failed");
                 break;
@@ -140,7 +154,7 @@ public class Workflow {
 
             // 将建议结果进行拼合
             prompt = template.formatOpinionPrompt(i, this.spliceList(paragraph.getSuggestions()));
-            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, records);
+            result = this.service.syncGenerateText(this.unitName, prompt, records);
             // 转平滑文本，过滤噪音
             String opinion = this.filterNoise(result);
             paragraph.setOpinion(opinion);
@@ -164,13 +178,13 @@ public class Workflow {
     private List<String> inferBehavior(ThemeTemplate template, int age, String gender) {
         List<String> result = new ArrayList<>();
 
-        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListOrderByScore()) {
+        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListOrderByCorrelation()) {
             String marked = null;
-            // 计分
-            if (representation.positive > 1) {
+            // 相关性
+            if (representation.positiveCorrelation > representation.negativeCorrelation) {
                 marked = HighTrick + representation.knowledgeStrategy.getComment().word;
             }
-            else if (representation.positive > 0) {
+            else if (representation.positiveCorrelation == representation.negativeCorrelation) {
                 marked = NormalTrick + representation.knowledgeStrategy.getComment().word;
             }
             else {
@@ -190,7 +204,7 @@ public class Workflow {
 
             // 表征
             String prompt = template.formatBehaviorPrompt(content.toString(), age, gender, marked);
-            String answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, null);
+            String answer = this.service.syncGenerateText(this.unitName, prompt, null);
 
             if (null != answer) {
                 result.add(answer);
@@ -200,7 +214,9 @@ public class Workflow {
         return result;
     }
 
-    private String spliceBehaviorList(List<String> behaviorList) {
+    private List<String> spliceBehaviorList(List<String> behaviorList) {
+        List<String> result = new ArrayList<>();
+
         StringBuilder buf = new StringBuilder();
         for (String text : behaviorList) {
             List<String> list = this.extractList(text);
@@ -208,18 +224,32 @@ public class Workflow {
                 if (TextUtils.startsWithNumberSign(content)) {
                     int index = content.indexOf(".");
                     content = content.substring(index + 1).trim();
+
+                    if (buf.length() + content.length() > this.maxContext) {
+
+                    }
+
                     buf.append(content).append("\n");
+
+                    if (buf.length() > this.maxContext) {
+                        break;
+                    }
                 }
             }
+
+            if (buf.length() > 600) {
+                break;
+            }
         }
-        return buf.toString();
+
+        return result;
     }
 
     private String spliceRepresentationInterpretation() {
         StringBuilder buf = new StringBuilder();
-        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListOrderByScore()) {
+        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListOrderByCorrelation()) {
             buf.append(representation.knowledgeStrategy.getInterpretation()).append("\n");
-            if (buf.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT - 100) {
+            if (buf.length() > this.maxContext - 100) {
                 Logger.w(this.getClass(), "#spliceRepresentationInterpretation - Context length is overflow: " + buf.length());
                 break;
             }
@@ -231,7 +261,7 @@ public class Workflow {
     private List<AIGCGenerationRecord> makeRepresentationContext(List<EvaluationReport.Representation> list) {
         List<AIGCGenerationRecord> result = new ArrayList<>();
         for (EvaluationReport.Representation representation : list) {
-            AIGCGenerationRecord record = new AIGCGenerationRecord(ModelConfig.BAIZE_UNIT,
+            AIGCGenerationRecord record = new AIGCGenerationRecord(this.unitName,
                     representation.knowledgeStrategy.getComment().word,
                     representation.knowledgeStrategy.getInterpretation());
             result.add(record);
@@ -313,6 +343,9 @@ public class Workflow {
                     .replaceAll("他们", "你")
                     .replaceAll("他", "你")
                     .replaceAll("这个人", "你")
+                    .replaceAll("该人", "你")
+                    .replaceAll("该个人", "你")
+                    .replaceAll("本人", "你")
                     .replace("人们", "");
             result.add(content);
         }

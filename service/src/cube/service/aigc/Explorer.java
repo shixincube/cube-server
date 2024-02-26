@@ -145,6 +145,14 @@ public class Explorer {
         this.searcherName = searcherName;
     }
 
+    public String getPageReaderUrl() {
+        return this.pageReaderUrl;
+    }
+
+    public String getSearcherName() {
+        return this.searcherName;
+    }
+
     /**
      * 是否是可被忽略的 URL 。
      *

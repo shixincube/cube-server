@@ -396,14 +396,10 @@ public class AIGCService extends AbstractModule {
             if (properties.containsKey("page.reader.url") || properties.containsKey("page.searcher")) {
                 Explorer.getInstance().config(properties.getProperty("page.reader.url"),
                         properties.getProperty("page.searcher", "baidu"));
-                if (properties.containsKey("page.searcher")) {
-                    Logger.i(this.getClass(), "AI Service - Page searcher: "
-                            + properties.getProperty("page.searcher", "baidu"));
-                }
-                if (properties.containsKey("page.reader.url")) {
-                    Logger.i(this.getClass(), "AI Service - Page reader url: "
-                            + properties.getProperty("page.reader.url"));
-                }
+                Logger.i(this.getClass(), "AI Service - Page searcher: "
+                        + Explorer.getInstance().getSearcherName());
+                Logger.i(this.getClass(), "AI Service - Page reader url: "
+                        + Explorer.getInstance().getPageReaderUrl());
             }
 
             // 是否启用代理
