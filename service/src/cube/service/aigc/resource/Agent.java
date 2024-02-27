@@ -94,6 +94,10 @@ public final class Agent {
     }
 
     public String generateText(String channelCode, String content, List<AIGCGenerationRecord> records) {
+        return this.generateText(channelCode, this.unit.getCapability().getName(), content, records);
+    }
+
+    public String generateText(String channelCode, String unitName, String content, List<AIGCGenerationRecord> records) {
         String code = channelCode;
         if (null == code) {
             code = this.channelCode;
@@ -114,7 +118,7 @@ public final class Agent {
             JSONObject data = new JSONObject();
             data.put("code", code);
             data.put("content", content);
-            data.put("unit", this.unit.getCapability().getName());
+            data.put("unit", unitName);
             data.put("histories", 0);
             data.put("pattern", Consts.PATTERN_CHAT);
             data.put("recordable", false);

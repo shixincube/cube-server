@@ -58,7 +58,7 @@ public class Workflow {
 
     private String unitName = ModelConfig.BAIZE_UNIT;
 
-    private int maxContext = ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT;
+    private int maxContext = ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT - 60;
 
     public Workflow(EvaluationReport evaluationReport, AIGCChannel channel, AIGCService service) {
         this.evaluationReport = evaluationReport;
@@ -69,7 +69,7 @@ public class Workflow {
 
     public void setUnitName(String unitName, int maxContext) {
         this.unitName = unitName;
-        this.maxContext = maxContext;
+        this.maxContext = maxContext - 60;
     }
 
     public PsychologyReport fillReport(PsychologyReport report) {
@@ -87,7 +87,7 @@ public class Workflow {
         String gender = this.evaluationReport.getAttribute().gender;
         // 逐一推理每一条表征
         List<String> behaviorList = this.inferBehavior(template, age, gender);
-        if (null == behaviorList || behaviorList.isEmpty()) {
+        if (behaviorList.isEmpty()) {
             Logger.w(this.getClass(), "#makeStress - Behavior error");
             return this;
         }
@@ -98,9 +98,10 @@ public class Workflow {
 
         // 生成表征内容
 //        String representation = this.spliceRepresentationInterpretation();
-        String representation = this.spliceBehaviorList(behaviorList);
-
-        System.out.println(representation);
+        List<String> representations = this.spliceBehaviorList(behaviorList);
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#makeStress - representation num: " + representations.size());
+        }
 
         // 逐一生成提示词并推理
         for (int i = 0; i < this.paragraphList.size(); ++i) {
@@ -115,48 +116,76 @@ public class Workflow {
             }
 
             // 推理特征
-            String prompt = template.formatFeaturePrompt(i, representation);
-            System.out.println("XJW:\n" + prompt);
-            String result = this.service.syncGenerateText(this.unitName, prompt, records);
-            if (null == result) {
-                Logger.w(this.getClass(), "#makeStress - Infer feature failed");
-                break;
+            StringBuilder result = new StringBuilder();
+            for (String representation : representations) {
+                String prompt = template.formatFeaturePrompt(i, representation);
+                String answer = this.service.syncGenerateText(this.unitName, prompt, records);
+                if (null == answer) {
+                    Logger.w(this.getClass(), "#makeStress - Infer feature failed");
+                    break;
+                }
+                // 记录结果
+                result.append(answer).append("\n");
             }
 
-            List<String> list = this.extractList(result);
+            List<String> list = this.extractList(result.toString());
             if (list.isEmpty()) {
                 Logger.w(this.getClass(), "#makeStress - extract feature list error");
                 break;
             }
-            paragraph.addFeatures(list);
+            // 添加特性
+            paragraph.addFeatures(this.plainText(list, false));
 
-            // 将特征结果进行拼合
-            prompt = template.formatDescriptionPrompt(i, this.spliceList(paragraph.getFeatures()));
-            result = this.service.syncGenerateText(this.unitName, prompt, records);
-            if (null == result) {
-                Logger.w(this.getClass(), "#makeStress - Infer description failed");
-                break;
+            // 推理描述
+            result = new StringBuilder();
+            List<List<String>> featuresList = TextUtils.splitList(paragraph.getFeatures(), this.maxContext);
+            for (List<String> features : featuresList) {
+                // 将特征结果进行拼合
+                String prompt = template.formatDescriptionPrompt(i, this.spliceList(features));
+                String answer = this.service.syncGenerateText(this.unitName, prompt, records);
+                if (null == answer) {
+                    Logger.w(this.getClass(), "#makeStress - Infer description failed");
+                    break;
+                }
+                // 记录结果
+                result.append(answer).append("\n");
             }
+
             // 转平滑文本，过滤噪音
-            String description = this.filterNoise(result);
+            String description = this.filterNoise(result.toString());
             paragraph.setDescription(description);
 
-            System.out.println("XJW:\n" + result);
-
             // 推理建议
-            prompt = template.formatSuggestionPrompt(i, representation);
-            result = this.service.syncGenerateText(this.unitName, prompt, records);
-            if (null == result) {
-                Logger.w(this.getClass(), "#makeStress - Infer suggestion failed");
-                break;
+            result = new StringBuilder();
+            for (String representation : representations) {
+                String prompt = template.formatSuggestionPrompt(i, representation);
+                String answer = this.service.syncGenerateText(this.unitName, prompt, records);
+                if (null == answer) {
+                    Logger.w(this.getClass(), "#makeStress - Infer suggestion failed");
+                    break;
+                }
+                // 记录结果
+                result.append(answer).append("\n");
             }
-            paragraph.addSuggestions(this.extractList(result));
+            // 添加建议
+            paragraph.addSuggestions(this.extractList(result.toString()));
 
-            // 将建议结果进行拼合
-            prompt = template.formatOpinionPrompt(i, this.spliceList(paragraph.getSuggestions()));
-            result = this.service.syncGenerateText(this.unitName, prompt, records);
+            // 推理意见
+            result = new StringBuilder();
+            List<List<String>> suggestionsList = TextUtils.splitList(paragraph.getSuggestions(), this.maxContext);
+            for (List<String> suggestions : suggestionsList) {
+                String prompt = template.formatOpinionPrompt(i, this.spliceList(suggestions));
+                String answer = this.service.syncGenerateText(this.unitName, prompt, records);
+                if (null == answer) {
+                    Logger.w(this.getClass(), "#makeStress - Infer opinion failed");
+                    break;
+                }
+                // 记录结果
+                result.append(answer).append("\n");
+            }
+
             // 转平滑文本，过滤噪音
-            String opinion = this.filterNoise(result);
+            String opinion = this.filterNoise(result.toString());
             paragraph.setOpinion(opinion);
         }
 
@@ -205,7 +234,6 @@ public class Workflow {
             // 表征
             String prompt = template.formatBehaviorPrompt(content.toString(), age, gender, marked);
             String answer = this.service.syncGenerateText(this.unitName, prompt, null);
-
             if (null != answer) {
                 result.add(answer);
             }
@@ -216,8 +244,8 @@ public class Workflow {
 
     private List<String> spliceBehaviorList(List<String> behaviorList) {
         List<String> result = new ArrayList<>();
-
         StringBuilder buf = new StringBuilder();
+
         for (String text : behaviorList) {
             List<String> list = this.extractList(text);
             for (String content : list) {
@@ -226,22 +254,16 @@ public class Workflow {
                     content = content.substring(index + 1).trim();
 
                     if (buf.length() + content.length() > this.maxContext) {
-
+                        result.add(buf.toString());
+                        buf = new StringBuilder();
                     }
 
                     buf.append(content).append("\n");
-
-                    if (buf.length() > this.maxContext) {
-                        break;
-                    }
                 }
-            }
-
-            if (buf.length() > 600) {
-                break;
             }
         }
 
+        result.add(buf.toString());
         return result;
     }
 
@@ -327,18 +349,29 @@ public class Workflow {
         return buf.toString();
     }
 
-    private List<String> plainText(List<String> list) {
+    /**
+     *
+     * @param list
+     * @param sequenceFilter 是否过滤段落序号。
+     * @return
+     */
+    private List<String> plainText(List<String> list, boolean sequenceFilter) {
         List<String> result = new ArrayList<>(list.size());
         for (String text : list) {
-            String[] tmp = text.split("：");
-            if (tmp.length == 1) {
-                tmp = text.split(":");
+            String content = text;
+
+            if (sequenceFilter) {
+                String[] tmp = text.split("：");
+                if (tmp.length == 1) {
+                    tmp = text.split(":");
+                }
+                content = tmp[tmp.length - 1];
+                if (TextUtils.startsWithNumberSign(content)) {
+                    int index = content.indexOf(".");
+                    content = content.substring(index + 1).trim();
+                }
             }
-            String content = tmp[tmp.length - 1];
-            if (TextUtils.startsWithNumberSign(content)) {
-                int index = content.indexOf(".");
-                content = content.substring(index + 1).trim();
-            }
+
             content = content.replaceAll("我", "你")
                     .replaceAll("他们", "你")
                     .replaceAll("他", "你")
@@ -365,7 +398,7 @@ public class Workflow {
             lines.add(t.trim());
         }
         // 将 Markdown 格式文本转平滑文本
-        lines = this.plainText(lines);
+        lines = this.plainText(lines, true);
 
         for (String line : lines) {
             if (line.contains("根据")) {

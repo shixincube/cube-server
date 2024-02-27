@@ -454,6 +454,32 @@ public final class TextUtils {
         return result;
     }
 
+    /**
+     * 按照指定长度限制分拆列表。
+     * 每个列表里的字符串总长度不会超过指定限制。
+     *
+     * @param list
+     * @param limit
+     * @return
+     */
+    public static List<List<String>> splitList(List<String> list, int limit) {
+        List<List<String>> result = new ArrayList<>();
+        int length = 0;
+        List<String> tmpList = new ArrayList<>();
+        for (String text : list) {
+            if (length > limit) {
+                result.add(tmpList);
+                tmpList = new ArrayList<>();
+                length = 0;
+            }
+
+            tmpList.add(text);
+            length += text.length();
+        }
+        result.add(tmpList);
+        return result;
+    }
+
     public static String filterChinese(AIGCUnit unit, String text) {
         if (unit.getCapability().getName().equalsIgnoreCase(ModelConfig.BAIZE_UNIT)) {
             if (TextUtils.containsChinese(text)) {

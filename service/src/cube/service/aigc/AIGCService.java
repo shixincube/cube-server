@@ -1126,9 +1126,9 @@ public class AIGCService extends AbstractModule {
 
     public String syncGenerateText(String unitName, String prompt, List<AIGCGenerationRecord> history) {
         if (this.useAgent) {
-            Logger.d(this.getClass(), "#syncGenerateText - \"" + unitName + "\" - history:"
+            Logger.d(this.getClass(), "#syncGenerateText - Agent - \"" + unitName + "\" - history:"
                     + ((null != history) ? history.size() : 0));
-            return Agent.getInstance().generateText(null, prompt, history);
+            return Agent.getInstance().generateText(null, unitName, prompt, history);
         }
 
         AIGCUnit unit = this.selectUnitByName(unitName);
