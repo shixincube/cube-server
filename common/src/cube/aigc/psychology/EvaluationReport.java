@@ -29,6 +29,7 @@ package cube.aigc.psychology;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.composition.Score;
+import cube.aigc.psychology.composition.Trend;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -81,10 +82,10 @@ public class EvaluationReport {
                 this.representationList.add(representation);
             }
 
-            if (result.score == Score.High) {
+            if (result.trend == Trend.Positive) {
                 representation.positiveCorrelation += 1;
             }
-            else if (result.score == Score.Low) {
+            else if (result.trend == Trend.Negative) {
                 representation.negativeCorrelation += 1;
             }
         }

@@ -26,33 +26,36 @@
 
 package cube.aigc.psychology.composition;
 
+import cube.aigc.psychology.ScoreIndicator;
+
 /**
  * 得分。
  */
-public enum Score {
+public class Score {
 
-    High(1.0),
+    public final ScoreIndicator indicator;
 
-    Medium(0),
+    public final int value;
 
-    Low(-1.0),
-
-
-    Level_1(1.0),
-
-    Level_2(2.0),
-
-    Level_3(3.0),
-
-    Level_4(4.0),
-
-    Level_5(5.0),
-
-    Default(0);
-
-    public final double value;
-
-    Score(double value) {
+    public Score(ScoreIndicator indicator, int value) {
+        this.indicator = indicator;
         this.value = value;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Score) {
+            Score other = (Score) obj;
+            if (other.indicator == this.indicator) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.indicator.hashCode();
     }
 }

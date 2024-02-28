@@ -24,24 +24,16 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
-
-import cube.aigc.psychology.composition.Score;
-import cube.aigc.psychology.composition.Trend;
+package cube.aigc.psychology.composition;
 
 /**
- * 评估的特征。
+ * 特征趋势。
  */
-public class EvaluationFeature {
+public enum Trend {
 
-    public Comment comment;
+    Positive,
 
-    public Trend trend;
+    Negative,
 
-    public Score score;
-
-    public EvaluationFeature(Comment comment, Trend trend) {
-        this.comment = comment;
-        this.trend = trend;
-    }
+    Normal
 }

@@ -26,22 +26,54 @@
 
 package cube.aigc.psychology;
 
-import cube.aigc.psychology.composition.Score;
-import cube.aigc.psychology.composition.Trend;
+public enum ScoreIndicator {
 
-/**
- * 评估的特征。
- */
-public class EvaluationFeature {
+    Psychosis("精神病性", "Psychosis"),
 
-    public Comment comment;
+    Optimism("乐观", "Optimism"),
 
-    public Trend trend;
+    Pessimism("悲观", "Pessimism"),
 
-    public Score score;
+    Narcissism("自恋", "Narcissism"),
 
-    public EvaluationFeature(Comment comment, Trend trend) {
-        this.comment = comment;
-        this.trend = trend;
+    Confidence("自信", "Confidence"),
+
+    SelfEsteem("自尊", "SelfEsteem"),
+
+    SocialAdaptability("社会适应性", "SocialAdaptability"),
+
+    Independence("独立", "Independence"),
+
+    Idealism("理想主义", "Idealism"),
+
+    Emotion("情感", "Emotion"),
+
+    SelfConsciousness("自我意识", "SelfConsciousness"),
+
+    Realism("现实主义", "Realism"),
+
+    Thought("思考", "Thought"),
+
+    SenseOfSecurity("安全感", "SenseOfSecurity"),
+
+    Obsession("强迫", "Obsession"),
+
+    Constrain("压抑", "Constrain"),
+
+    SelfControl("自我控制", "SelfControl"),
+
+    Anxiety("焦虑", "Anxiety"),
+
+    Depression("抑郁", "Depression"),
+
+    ;
+
+    public final String name;
+
+    public final String code;
+
+    ScoreIndicator(String name, String code) {
+        this.name = name;
+        this.code = code;
     }
 }
