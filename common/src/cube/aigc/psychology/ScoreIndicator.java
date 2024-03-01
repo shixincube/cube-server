@@ -30,6 +30,10 @@ public enum ScoreIndicator {
 
     Psychosis("精神病性", "Psychosis"),
 
+    Extroversion("外倾", "Extroversion"),
+
+    Introversion("内倾", "Introversion"),
+
     Optimism("乐观", "Optimism"),
 
     Pessimism("悲观", "Pessimism"),
@@ -65,6 +69,10 @@ public enum ScoreIndicator {
     Anxiety("焦虑", "Anxiety"),
 
     Depression("抑郁", "Depression"),
+
+    Family("家庭关系", "Family"),
+
+    InterpersonalRelation("人际关系", "InterpersonalRelation"),
 
     ;
 

@@ -27,21 +27,46 @@
 package cube.aigc.psychology;
 
 import cube.aigc.psychology.composition.Score;
-import cube.aigc.psychology.composition.Trend;
+import cube.aigc.psychology.composition.Tendency;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 评估的特征。
  */
 public class EvaluationFeature {
 
-    public Comment comment;
+    private List<Feature> features;
 
-    public Trend trend;
+    private List<Score> scores;
 
-    public Score score;
+    public EvaluationFeature() {
+        this.features = new ArrayList<>();
+        this.scores = new ArrayList<>();
+    }
 
-    public EvaluationFeature(Comment comment, Trend trend) {
-        this.comment = comment;
-        this.trend = trend;
+    public void addFeature(Comment comment, Tendency tendency) {
+        this.features.add(new Feature(comment, tendency));
+    }
+
+    public List<Feature> getFeatures() {
+        return this.features;
+    }
+
+    public void addScore(Score score) {
+        this.scores.add(score);
+    }
+
+    public class Feature {
+
+        public Comment comment;
+
+        public Tendency tendency;
+
+        public Feature(Comment comment, Tendency tendency) {
+            this.comment = comment;
+            this.tendency = tendency;
+        }
     }
 }

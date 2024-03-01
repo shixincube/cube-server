@@ -28,12 +28,9 @@ package cube.aigc.psychology;
 
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.composition.Score;
-import cube.aigc.psychology.composition.Trend;
+import cube.aigc.psychology.composition.Tendency;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * 评估报告。
@@ -46,17 +43,21 @@ public class EvaluationReport {
 
     private List<Representation> representationList;
 
-    private int topN;
+    private int representationTopN;
 
-    public EvaluationReport(Attribute attribute, List<EvaluationFeature> resultList) {
+    public EvaluationReport(Attribute attribute, EvaluationFeature evaluationFeature) {
+        this(attribute, Collections.singletonList((evaluationFeature)));
+    }
+
+    public EvaluationReport(Attribute attribute, List<EvaluationFeature> evaluationFeatureList) {
         this.attribute = attribute;
         this.representationList = new ArrayList<>();
-        this.topN = 5;
-        this.build(resultList);
+        this.representationTopN = 5;
+        this.build(evaluationFeatureList);
     }
 
     public void setTopN(int value) {
-        this.topN = value;
+        this.representationTopN = value;
     }
 
     public boolean isEmpty() {
@@ -69,32 +70,34 @@ public class EvaluationReport {
 
     private void build(List<EvaluationFeature> resultList) {
         for (EvaluationFeature result : resultList) {
-            Representation representation = this.getRepresentation(result.comment);
-            if (null == representation) {
-                KnowledgeStrategy interpretation = Resource.getInstance().getCommentInterpretation(result.comment);
-                if (null == interpretation) {
-                    // 没有对应的释义
-                    Logger.e(this.getClass(), "#build - Can NOT find comment interpretation: " + result.comment.word);
-                    continue;
+            for (EvaluationFeature.Feature feature : result.getFeatures()) {
+                Representation representation = this.getRepresentation(feature.comment);
+                if (null == representation) {
+                    KnowledgeStrategy interpretation = Resource.getInstance().getCommentInterpretation(feature.comment);
+                    if (null == interpretation) {
+                        // 没有对应的释义
+                        Logger.e(this.getClass(), "#build - Can NOT find comment interpretation: " + feature.comment.word);
+                        continue;
+                    }
+
+                    representation = new Representation(interpretation);
+                    this.representationList.add(representation);
                 }
 
-                representation = new Representation(interpretation);
-                this.representationList.add(representation);
-            }
-
-            if (result.trend == Trend.Positive) {
-                representation.positiveCorrelation += 1;
-            }
-            else if (result.trend == Trend.Negative) {
-                representation.negativeCorrelation += 1;
+                if (feature.tendency == Tendency.Positive) {
+                    representation.positiveCorrelation += 1;
+                }
+                else if (feature.tendency == Tendency.Negative) {
+                    representation.negativeCorrelation += 1;
+                }
             }
         }
     }
 
     public Representation getRepresentation(Comment comment) {
-        for (Representation score : this.representationList) {
-            if (score.knowledgeStrategy.getComment() == comment) {
-                return score;
+        for (Representation representation : this.representationList) {
+            if (representation.knowledgeStrategy.getComment() == comment) {
+                return representation;
             }
         }
         return null;
@@ -114,8 +117,8 @@ public class EvaluationReport {
             }
         });
 
-        List<Representation> result = new ArrayList<>(this.topN);
-        for (int i = 0, len = Math.min(this.topN, this.representationList.size()); i < len; ++i) {
+        List<Representation> result = new ArrayList<>(this.representationTopN);
+        for (int i = 0, len = Math.min(this.representationTopN, this.representationList.size()); i < len; ++i) {
             result.add(this.representationList.get(i));
         }
         return result;

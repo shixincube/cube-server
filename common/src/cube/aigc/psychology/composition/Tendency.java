@@ -29,7 +29,7 @@ package cube.aigc.psychology.composition;
 /**
  * 特征趋势。
  */
-public enum Trend {
+public enum Tendency {
 
     Positive,
 
