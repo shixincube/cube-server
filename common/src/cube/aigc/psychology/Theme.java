@@ -31,6 +31,8 @@ package cube.aigc.psychology;
  */
 public enum Theme {
 
+    Generic("一般", "Generic"),
+
     Stress("压力评估", "Stress"),
 
     FamilyRelationships("家庭关系", "FamilyRelationships"),

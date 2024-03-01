@@ -29,13 +29,16 @@ package cube.aigc.psychology;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.composition.Tendency;
+import cube.common.JSONable;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.*;
 
 /**
  * 评估报告。
  */
-public class EvaluationReport {
+public class EvaluationReport implements JSONable {
 
     public final static String UNIT = ModelConfig.BAIZE_UNIT;
 
@@ -54,6 +57,15 @@ public class EvaluationReport {
         this.representationList = new ArrayList<>();
         this.representationTopN = 5;
         this.build(evaluationFeatureList);
+    }
+
+    public EvaluationReport(JSONObject json) {
+        this.attribute = new Attribute(json.getJSONObject("attribute"));
+        this.representationList = new ArrayList<>();
+        JSONArray array = json.getJSONArray("representationList");
+        for (int i = 0; i < array.length(); ++i) {
+            this.representationList.add(new Representation(array.getJSONObject(i)));
+        }
     }
 
     public void setTopN(int value) {
@@ -124,7 +136,33 @@ public class EvaluationReport {
         return result;
     }
 
-    public class Representation {
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("attribute", this.attribute.toJSON());
+
+        JSONArray array = new JSONArray();
+        for (Representation representation : this.representationList) {
+            array.put(representation.toJSON());
+        }
+        json.put("representationList", array);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        json.put("attribute", this.attribute.toJSON());
+
+        JSONArray array = new JSONArray();
+        for (Representation representation : this.representationList) {
+            array.put(representation.toCompactJSON());
+        }
+        json.put("representationList", array);
+        return json;
+    }
+
+    public class Representation implements JSONable {
 
         public KnowledgeStrategy knowledgeStrategy;
 
@@ -134,6 +172,12 @@ public class EvaluationReport {
 
         public Representation(KnowledgeStrategy knowledgeStrategy) {
             this.knowledgeStrategy = knowledgeStrategy;
+        }
+
+        public Representation(JSONObject json) {
+            this.knowledgeStrategy = new KnowledgeStrategy(json.getJSONObject("knowledgeStrategy"));
+            this.positiveCorrelation = json.getInt("positiveCorrelation");
+            this.negativeCorrelation = json.getInt("negativeCorrelation");
         }
 
         @Override
@@ -150,6 +194,24 @@ public class EvaluationReport {
         @Override
         public int hashCode() {
             return this.knowledgeStrategy.getComment().hashCode();
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("knowledgeStrategy", this.knowledgeStrategy.toJSON());
+            json.put("positiveCorrelation", this.positiveCorrelation);
+            json.put("negativeCorrelation", this.negativeCorrelation);
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            JSONObject json = new JSONObject();
+            json.put("knowledgeStrategy", this.knowledgeStrategy.toCompactJSON());
+            json.put("positiveCorrelation", this.positiveCorrelation);
+            json.put("negativeCorrelation", this.negativeCorrelation);
+            return json;
         }
     }
 }

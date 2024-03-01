@@ -70,6 +70,8 @@ public class PsychologyReport implements JSONable {
 
     private List<ReportParagraph> paragraphList;
 
+    private EvaluationReport evaluationReport;
+
     public PsychologyReport(long contactId, Attribute attribute, FileLabel fileLabel, Theme theme) {
         this.sn = Utils.generateSerialNumber();
         this.contactId = contactId;
@@ -104,6 +106,9 @@ public class PsychologyReport implements JSONable {
         this.theme = Theme.parse(json.getString("theme"));
         this.finished = json.getBoolean("finished");
         this.state = AIGCStateCode.parse(json.getInt("state"));
+        if (json.has("evaluationReport")) {
+            this.evaluationReport = new EvaluationReport(json.getJSONObject("evaluationReport"));
+        }
         if (json.has("paragraphList")) {
             this.paragraphList = new ArrayList<>();
             JSONArray array = json.getJSONArray("paragraphList");
@@ -111,6 +116,10 @@ public class PsychologyReport implements JSONable {
                 this.paragraphList.add(new ReportParagraph(array.getJSONObject(i)));
             }
         }
+    }
+
+    public void setEvaluationReport(EvaluationReport evaluationReport) {
+        this.evaluationReport = evaluationReport;
     }
 
     public String getName() {
@@ -172,9 +181,22 @@ public class PsychologyReport implements JSONable {
 
         buf.append("\n\n");
         buf.append("> ").append(this.attribute.getGenderText());
-        buf.append("    ").append(this.attribute.getAgeText()).append("\n");
+        buf.append("    ").append(this.attribute.getAgeText());
+        buf.append("\n> ").append(Utils.gsDateFormat.format(new Date(this.timestamp))).append("\n");
 
-        buf.append("> ").append(Utils.gsDateFormat.format(new Date(this.timestamp))).append("\n");
+        if (null != this.evaluationReport) {
+            buf.append("\n\n");
+            buf.append("> **特征**");
+            for (EvaluationReport.Representation rep : this.evaluationReport.getRepresentationList()) {
+                buf.append("\n> ");
+                buf.append(rep.knowledgeStrategy.getComment().word);
+                buf.append("    ");
+                buf.append(rep.positiveCorrelation);
+                buf.append("/");
+                buf.append(rep.negativeCorrelation);
+            }
+            buf.append("\n");
+        }
 
         if (null != this.paragraphList) {
             for (ReportParagraph paragraph : this.paragraphList) {
@@ -204,6 +226,9 @@ public class PsychologyReport implements JSONable {
         json.put("timestamp", this.timestamp);
         json.put("finished", this.finished);
         json.put("state", this.state.code);
+        if (null != this.evaluationReport) {
+            json.put("evaluationReport", this.evaluationReport.toCompactJSON());
+        }
         if (null != this.paragraphList) {
             JSONArray array = new JSONArray();
             for (ReportParagraph paragraph : this.paragraphList) {

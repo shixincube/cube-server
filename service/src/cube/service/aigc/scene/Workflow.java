@@ -74,12 +74,13 @@ public class Workflow {
 
     public PsychologyReport fillReport(PsychologyReport report) {
         report.setParagraphs(this.paragraphList);
+        report.setEvaluationReport(this.evaluationReport);
         return report;
     }
 
-    public Workflow makeStress() {
+    public Workflow make(Theme theme) {
         // 获取模板
-        ThemeTemplate template = Resource.getInstance().getThemeTemplate(Theme.Stress.code);
+        ThemeTemplate template = Resource.getInstance().getThemeTemplate(theme.code);
 
         this.evaluationReport.setTopN(this.maxRepresentationNum);
 
@@ -88,7 +89,7 @@ public class Workflow {
         // 逐一推理每一条表征
         List<String> behaviorList = this.inferBehavior(template, age, gender);
         if (behaviorList.isEmpty()) {
-            Logger.w(this.getClass(), "#makeStress - Behavior error");
+            Logger.w(this.getClass(), "#make - Behavior error");
             return this;
         }
 
@@ -100,7 +101,7 @@ public class Workflow {
 //        String representation = this.spliceRepresentationInterpretation();
         List<String> representations = this.spliceBehaviorList(behaviorList);
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#makeStress - representation num: " + representations.size());
+            Logger.d(this.getClass(), "#make - representation num: " + representations.size());
         }
 
         // 逐一生成提示词并推理
@@ -112,7 +113,7 @@ public class Workflow {
             records.add(new AIGCGenerationRecord(this.unitName, paragraph.title,
                     template.getExplain(i)));
             if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#makeStress - \"" + paragraph.title + "\" context num: " + records.size());
+                Logger.d(this.getClass(), "#make - \"" + paragraph.title + "\" context num: " + records.size());
             }
 
             // 推理特征
@@ -121,7 +122,7 @@ public class Workflow {
                 String prompt = template.formatFeaturePrompt(i, representation);
                 String answer = this.service.syncGenerateText(this.unitName, prompt, records);
                 if (null == answer) {
-                    Logger.w(this.getClass(), "#makeStress - Infer feature failed");
+                    Logger.w(this.getClass(), "#make - Infer feature failed");
                     break;
                 }
                 // 记录结果
@@ -130,7 +131,7 @@ public class Workflow {
 
             List<String> list = this.extractList(result.toString());
             if (list.isEmpty()) {
-                Logger.w(this.getClass(), "#makeStress - extract feature list error");
+                Logger.w(this.getClass(), "#make - extract feature list error");
                 break;
             }
             // 添加特性
@@ -144,7 +145,7 @@ public class Workflow {
                 String prompt = template.formatDescriptionPrompt(i, this.spliceList(features));
                 String answer = this.service.syncGenerateText(this.unitName, prompt, records);
                 if (null == answer) {
-                    Logger.w(this.getClass(), "#makeStress - Infer description failed");
+                    Logger.w(this.getClass(), "#make - Infer description failed");
                     break;
                 }
                 // 记录结果
@@ -161,7 +162,7 @@ public class Workflow {
                 String prompt = template.formatSuggestionPrompt(i, representation);
                 String answer = this.service.syncGenerateText(this.unitName, prompt, records);
                 if (null == answer) {
-                    Logger.w(this.getClass(), "#makeStress - Infer suggestion failed");
+                    Logger.w(this.getClass(), "#make - Infer suggestion failed");
                     break;
                 }
                 // 记录结果
@@ -177,7 +178,7 @@ public class Workflow {
                 String prompt = template.formatOpinionPrompt(i, this.spliceList(suggestions));
                 String answer = this.service.syncGenerateText(this.unitName, prompt, records);
                 if (null == answer) {
-                    Logger.w(this.getClass(), "#makeStress - Infer opinion failed");
+                    Logger.w(this.getClass(), "#make - Infer opinion failed");
                     break;
                 }
                 // 记录结果
@@ -190,18 +191,6 @@ public class Workflow {
         }
 
         return this;
-    }
-
-    public ThemeTemplate makeFamilyRelationships() {
-        return null;
-    }
-
-    public ThemeTemplate makeIntimacy() {
-        return null;
-    }
-
-    public ThemeTemplate makeCognition() {
-        return null;
     }
 
     private List<String> inferBehavior(ThemeTemplate template, int age, String gender) {

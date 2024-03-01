@@ -251,22 +251,8 @@ public class PsychologyScene {
         // 设置使用的单元
         workflow.setUnitName("Baize", 1000);
 
-        switch (theme) {
-            case Stress:
-                workflow.makeStress();
-                break;
-            case FamilyRelationships:
-                break;
-            case Intimacy:
-                break;
-            case Cognition:
-                break;
-            default:
-                workflow = null;
-                break;
-        }
-
-        return workflow;
+        // 制作报告
+        return workflow.make(theme);
     }
 
     public void onTick(long now) {

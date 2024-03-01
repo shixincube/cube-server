@@ -834,6 +834,7 @@ public class Evaluation {
         if (null != this.painting && null != this.spaceLayout) {
             // 判断绘画是否是有效绘画
             if (!this.painting.isValid()) {
+                Logger.w(this.getClass(), "#makeEvaluationReport - Painting is NOT valid");
                 report = new EvaluationReport(this.painting.getAttribute(), new ArrayList<>());
                 return report;
             }

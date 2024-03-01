@@ -26,6 +26,7 @@
 
 package cube.aigc.psychology;
 
+import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -35,7 +36,7 @@ import java.util.List;
 /**
  * 知识策略。
  */
-public class KnowledgeStrategy {
+public class KnowledgeStrategy implements JSONable {
 
     private Comment comment;
 
@@ -49,6 +50,7 @@ public class KnowledgeStrategy {
 
     public KnowledgeStrategy(JSONObject json) {
         this.comment = Comment.parse(json.getString("comment"));
+
         if (json.has("interpretation")) {
             this.interpretation = json.getString("interpretation");
         }
@@ -107,6 +109,26 @@ public class KnowledgeStrategy {
     @Override
     public int hashCode() {
         return this.comment.hashCode();
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = this.toCompactJSON();
+        if (null != this.advise) {
+            json.put("advise", this.advise);
+        }
+        if (null != this.remark) {
+            json.put("remark", this.remark);
+        }
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        json.put("comment", this.comment.word);
+        json.put("interpretation", this.interpretation);
+        return json;
     }
 
 
