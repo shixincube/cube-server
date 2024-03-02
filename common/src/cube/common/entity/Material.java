@@ -46,6 +46,13 @@ public class Material implements JSONable {
     public Material() {
     }
 
+    public Material(String label, BoundingBox bbox) {
+        this.label = label;
+        this.bbox = bbox;
+        this.prob = 0.8;
+        this.color = "#FF0000";
+    }
+
     public Material(JSONObject json) {
         this.label = json.getString("label");
         this.prob = json.getDouble("prob");

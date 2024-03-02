@@ -116,7 +116,7 @@ public class ThemeTemplate {
         }
 
         return String.format(this.representationPromptFormat.behavior,
-                content, markedRepresentation, age, filterGender(gender), markedRepresentation);
+                content, markedRepresentation, age, filterGender(gender));
     }
 
     private String filterGender(String gender) {

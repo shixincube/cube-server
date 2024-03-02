@@ -70,9 +70,15 @@ public enum ScoreIndicator {
 
     Depression("抑郁", "Depression"),
 
+    Simple("单纯", "Simple"),
+
+    Hostile("敌对", "Hostile"),
+
     Family("家庭关系", "Family"),
 
     InterpersonalRelation("人际关系", "InterpersonalRelation"),
+
+    EvaluationFromOutside("外在评价", "EvaluationFromOutside"),
 
     ;
 

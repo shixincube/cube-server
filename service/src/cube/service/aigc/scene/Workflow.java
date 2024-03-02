@@ -361,7 +361,7 @@ public class Workflow {
                 }
             }
 
-            content = content.replaceAll("我", "你")
+            content = content
                     .replaceAll("他们", "你")
                     .replaceAll("他", "你")
                     .replaceAll("这个人", "你")

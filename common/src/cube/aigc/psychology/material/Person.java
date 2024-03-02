@@ -27,6 +27,7 @@
 package cube.aigc.psychology.material;
 
 import cube.aigc.psychology.material.person.*;
+import cube.vision.BoundingBox;
 import cube.vision.Point;
 import org.json.JSONObject;
 
@@ -95,8 +96,19 @@ public class Person extends Thing {
         super(json);
     }
 
+    public Person(BoundingBox boundingBox) {
+        super(Label.Person.name, boundingBox);
+    }
+
     public Gender getGender() {
         return this.gender;
+    }
+
+    public void refreshBox(BoundingBox boundingBox) {
+        this.bbox.x = Math.min(this.bbox.x, boundingBox.x);
+        this.bbox.y = Math.min(this.bbox.y, boundingBox.y);
+        this.bbox.width = Math.max(this.bbox.width, boundingBox.width);
+        this.bbox.height = Math.max(this.bbox.height, boundingBox.height);
     }
 
     public void setHead(Head head) {
@@ -116,7 +128,7 @@ public class Person extends Thing {
             return 0;
         }
 
-        return this.head.getHeight() / this.getHeight();
+        return ((double) this.head.getHeight() / (double) this.getHeight());
     }
 
     public void addBraid(Braid braid) {

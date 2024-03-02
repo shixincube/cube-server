@@ -422,92 +422,94 @@ public class Painting implements JSONable {
 
     private void buildPerson(Thing thing) {
         if (null == this.personList || this.personList.isEmpty()) {
+            // 没有识别出人，但是出现了人的元素，创建 Person
             Logger.i(this.getClass(), "#buildPerson - No person material");
-            return;
+
+            BoundingBox bbox = new BoundingBox(thing.bbox.x - 1, thing.bbox.y - 1,
+                    thing.bbox.width + 1, thing.bbox.height + 1);
+            Person person = new Person(bbox);
+
+            this.personList = new ArrayList<>();
+            this.personList.add(person);
         }
 
-        LinkedList<Thing> list = null;
+        LinkedList<Thing> list = this.sortByCollisionArea(this.personList, thing.bbox);
+        Person person = (Person) list.getLast();
 
         switch (thing.getLabel()) {
             case PersonHead:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).setHead((Head) thing);
+                person.setHead((Head) thing);
+                person.refreshBox(thing.bbox);
                 break;
             case PersonBraid:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).addBraid((Braid) thing);
+                person.addBraid((Braid) thing);
                 break;
             case PersonHair:
             case PersonStraightHair:
             case PersonShortHair:
             case PersonCurlyHair:
             case PersonStandingHair:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).addHair((Hair) thing);
+                person.addHair((Hair) thing);
+                person.refreshBox(thing.bbox);
                 break;
             case PersonCap:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).setCap((Cap) thing);
+                person.setCap((Cap) thing);
                 break;
             case PersonEye:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).addEye((Eye) thing);
+                person.addEye((Eye) thing);
+                person.refreshBox(thing.bbox);
                 break;
             case PersonEyebrow:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).addEyebrow((Eyebrow) thing);
+                person.addEyebrow((Eyebrow) thing);
+                person.refreshBox(thing.bbox);
                 break;
             case PersonNose:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).setNose((Nose) thing);
+                person.setNose((Nose) thing);
+                person.refreshBox(thing.bbox);
                 break;
             case PersonEar:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).addEar((Ear) thing);
+                person.addEar((Ear) thing);
+                person.refreshBox(thing.bbox);
                 break;
             case PersonMouth:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).setMouth((Mouth) thing);
+                person.setMouth((Mouth) thing);
+                person.refreshBox(thing.bbox);
                 break;
             case PersonBody:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).setBody((Body) thing);
+                person.setBody((Body) thing);
+                person.refreshBox(thing.bbox);
                 break;
             case PersonArm:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).addArm((Arm) thing);
+                person.addArm((Arm) thing);
+                person.refreshBox(thing.bbox);
                 break;
             case PersonPalm:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).addPalm((Palm) thing);
+                person.addPalm((Palm) thing);
+                person.refreshBox(thing.bbox);
                 break;
             case PersonLeg:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).addLeg((Leg) thing);
+                person.addLeg((Leg) thing);
+                person.refreshBox(thing.bbox);
                 break;
             case PersonFoot:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).addFoot((Foot) thing);
+                person.addFoot((Foot) thing);
+                person.refreshBox(thing.bbox);
                 break;
             case PersonSkirt:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).setSkirt((Skirt) thing);
+                person.setSkirt((Skirt) thing);
+                person.refreshBox(thing.bbox);
                 break;
             case PersonMask:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).setMask((Mask) thing);
+                person.setMask((Mask) thing);
                 break;
             case PersonHairAccessories:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).addHairAccessory((HairAccessory) thing);
+                person.addHairAccessory((HairAccessory) thing);
                 break;
             case PersonItem:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).addItem((Item) thing);
+                person.addItem((Item) thing);
                 break;
             case PersonGlasses:
-                list = this.sortByCollisionArea(this.personList, thing.bbox);
-                ((Person) list.getLast()).setGlasses((Glasses) thing);
+                person.setGlasses((Glasses) thing);
                 break;
             default:
                 Logger.w(this.getClass(), "Unknown label: " + thing.getLabel().name + " for building person");
@@ -517,7 +519,7 @@ public class Painting implements JSONable {
 
     private LinkedList<Thing> sortByCollisionArea(List<? extends Thing> list, BoundingBox box) {
         LinkedList<Thing> result = new LinkedList<>(list);
-        Collections.sort(result, new Comparator<Thing>() {
+        result.sort(new Comparator<Thing>() {
             @Override
             public int compare(Thing t1, Thing t2) {
                 int area1 = t1.bbox.calculateCollisionArea(box);

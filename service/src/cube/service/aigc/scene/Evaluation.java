@@ -320,6 +320,28 @@ public class Evaluation {
             if (Math.abs(tc.y - pc.y) < evalRange) {
                 // 基本在一个水平线上
                 result.addFeature(Comment.Stereotype, Tendency.Positive);
+
+                result.addScore(new Score(ScoreIndicator.SelfConsciousness, 1));
+            }
+
+            // 绝对位置判断
+            if (treeTHalf && personTHalf) {
+                // 整体偏上
+                result.addFeature(Comment.Idealization, Tendency.Positive);
+
+                result.addScore(new Score(ScoreIndicator.Idealism, 1));
+                result.addScore(new Score(ScoreIndicator.Emotion, 1));
+            }
+            else if (treeBHalf && personBHalf) {
+                // 整体偏下
+                result.addFeature(Comment.Idealization, Tendency.Negative);
+
+                result.addScore(new Score(ScoreIndicator.Realism, 1));
+                result.addScore(new Score(ScoreIndicator.Thought, 1));
+                result.addScore(new Score(ScoreIndicator.SenseOfSecurity, 1));
+            }
+            else {
+                result.addScore(new Score(ScoreIndicator.SelfConsciousness, 1));
             }
 
             int ta = tree.bbox.calculateArea();
@@ -349,6 +371,8 @@ public class Evaluation {
             if (((double)personArea / (double)paintingArea) <= tinyRatio) {
                 // 人很小
                 result.addFeature(Comment.SenseOfSecurity, Tendency.Negative);
+
+                result.addScore(new Score(ScoreIndicator.SenseOfSecurity, -1));
             }
         }
 
@@ -390,16 +414,22 @@ public class Evaluation {
             // 立体感
             if (house.hasSidewall()) {
                 result.addFeature(Comment.SelfConfidence, Tendency.Positive);
+
+                result.addScore(new Score(ScoreIndicator.Confidence, 1));
             }
 
             // 房屋类型
             if (Label.Bungalow == house.getLabel()) {
                 // 平房
                 result.addFeature(Comment.Simple, Tendency.Positive);
+
+                result.addScore(new Score(ScoreIndicator.Simple, 1));
             }
             else if (Label.Villa == house.getLabel()) {
                 // 别墅
                 result.addFeature(Comment.Luxurious, Tendency.Positive);
+
+                result.addScore(new Score(ScoreIndicator.EvaluationFromOutside, 1));
             }
             else if (Label.Building == house.getLabel()) {
                 // 楼房

@@ -27,6 +27,7 @@
 package cube.aigc.psychology.material;
 
 import cube.common.entity.Material;
+import cube.vision.BoundingBox;
 import org.json.JSONObject;
 
 import java.util.List;
@@ -37,6 +38,11 @@ import java.util.List;
 public abstract class Thing extends Material {
 
     protected Label paintingLabel;
+
+    public Thing(String label, BoundingBox boundingBox) {
+        super(label, boundingBox);
+        this.paintingLabel = Label.parse(this.label);
+    }
 
     public Thing(Label paintingLabel) {
         this.paintingLabel = paintingLabel;
