@@ -80,6 +80,16 @@ public enum ScoreIndicator {
 
     EvaluationFromOutside("外在评价", "EvaluationFromOutside"),
 
+    Paranoid("偏执", "Paranoid"),
+
+    AchievementMotivation("成就动机", "AchievementMotivation"),
+
+    Stress("压力", "Stress"),
+
+    Creativity("创造力", "Creativity"),
+
+    Impulsion("冲动", "Impulsion"),
+
     ;
 
     public final String name;
@@ -89,5 +99,15 @@ public enum ScoreIndicator {
     ScoreIndicator(String name, String code) {
         this.name = name;
         this.code = code;
+    }
+
+    public static ScoreIndicator parse(String valueOrName) {
+        for (ScoreIndicator indicator : ScoreIndicator.values()) {
+            if (indicator.name.equals(valueOrName) || indicator.code.equalsIgnoreCase(valueOrName)) {
+                return indicator;
+            }
+        }
+
+        return null;
     }
 }

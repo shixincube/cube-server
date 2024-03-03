@@ -27,19 +27,30 @@
 package cube.aigc.psychology.composition;
 
 import cube.aigc.psychology.ScoreIndicator;
+import cube.common.JSONable;
+import org.json.JSONObject;
 
 /**
  * 得分。
  */
-public class Score {
+public class Score implements JSONable {
 
     public final ScoreIndicator indicator;
 
-    public final int value;
+    public int value;
+
+    public int count;
 
     public Score(ScoreIndicator indicator, int value) {
         this.indicator = indicator;
         this.value = value;
+        this.count = 1;
+    }
+
+    public Score(JSONObject json) {
+        this.indicator = ScoreIndicator.parse(json.getString("indicator"));
+        this.value = json.getInt("value");
+        this.count = json.getInt("count");
     }
 
     @Override
@@ -57,5 +68,23 @@ public class Score {
     @Override
     public int hashCode() {
         return this.indicator.hashCode();
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("indicator", this.indicator.name);
+        json.put("value", this.value);
+        json.put("count", this.count);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        json.put("indicator", this.indicator.name);
+        json.put("value", this.value);
+        json.put("count", this.count);
+        return json;
     }
 }

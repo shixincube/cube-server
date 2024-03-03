@@ -27,6 +27,8 @@
 package cube.aigc.psychology;
 
 import cell.util.Utils;
+import cell.util.log.Logger;
+import cube.aigc.psychology.composition.Score;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
@@ -41,12 +43,6 @@ import java.util.List;
  * 心理学报告。
  */
 public class PsychologyReport implements JSONable {
-
-//    public final static String PHASE_PREDICT = "PREDICT";
-//    public final static String PHASE_PREDICT_FAILED = "PREDICT_FAILED";
-//    public final static String PHASE_INFER = "INFER";
-//    public final static String PHASE_INFER_FAILED = "INFER_FAILED";
-//    public final static String PHASE_FINISH = "FINISH";
 
     public final long sn;
 
@@ -67,6 +63,8 @@ public class PsychologyReport implements JSONable {
     private boolean finished = false;
 
     private AIGCStateCode state;
+
+    private String markdown = null;
 
     private List<ReportParagraph> paragraphList;
 
@@ -106,9 +104,15 @@ public class PsychologyReport implements JSONable {
         this.theme = Theme.parse(json.getString("theme"));
         this.finished = json.getBoolean("finished");
         this.state = AIGCStateCode.parse(json.getInt("state"));
+
+        if (json.has("markdown")) {
+            this.markdown = json.getString("markdown");
+        }
+
         if (json.has("evaluationReport")) {
             this.evaluationReport = new EvaluationReport(json.getJSONObject("evaluationReport"));
         }
+
         if (json.has("paragraphList")) {
             this.paragraphList = new ArrayList<>();
             JSONArray array = json.getJSONArray("paragraphList");
@@ -161,7 +165,6 @@ public class PsychologyReport implements JSONable {
     public void setParagraphs(List<ReportParagraph> list) {
         this.paragraphList = new ArrayList<>();
         this.paragraphList.addAll(list);
-        this.finished = true;
     }
 
     public void addParagraph(ReportParagraph paragraph) {
@@ -172,10 +175,18 @@ public class PsychologyReport implements JSONable {
     }
 
     public boolean isEmpty() {
-        return (null == this.paragraphList || this.paragraphList.isEmpty());
+        if (null == this.evaluationReport) {
+            Logger.d(this.getClass(), "Data is null");
+        }
+
+        return (null == this.paragraphList || this.paragraphList.isEmpty() || null == this.evaluationReport);
     }
 
-    public String markdown() {
+    private String makeMarkdown(boolean outputParagraph) {
+        if (null != this.markdown && null == this.evaluationReport) {
+            return this.markdown;
+        }
+
         StringBuilder buf = new StringBuilder();
         buf.append("# ").append(this.theme.name).append("报告");
 
@@ -186,31 +197,70 @@ public class PsychologyReport implements JSONable {
 
         if (null != this.evaluationReport) {
             buf.append("\n\n");
-            buf.append("> **特征**");
+            buf.append("**特征表**");
+            buf.append("\n\n");
+            buf.append("| 特征 | 正向趋势 | 负向趋势 |");
+            buf.append("\n");
+            buf.append("| ---- | ---- | ---- |");
             for (EvaluationReport.Representation rep : this.evaluationReport.getRepresentationList()) {
-                buf.append("\n> ");
-                buf.append(rep.knowledgeStrategy.getComment().word);
-                buf.append("    ");
-                buf.append(rep.positiveCorrelation);
-                buf.append("/");
-                buf.append(rep.negativeCorrelation);
+                buf.append("\n");
+                buf.append("|").append(rep.knowledgeStrategy.getComment().word);
+                buf.append("|").append(rep.positiveCorrelation);
+                buf.append("|").append(rep.negativeCorrelation);
+                buf.append("|");
+            }
+            buf.append("\n");
+
+//            buf.append("> **特征**");
+//            for (EvaluationReport.Representation rep : this.evaluationReport.getRepresentationList()) {
+//                buf.append("\n> ");
+//                buf.append(rep.knowledgeStrategy.getComment().word);
+//                buf.append("    ");
+//                buf.append(rep.positiveCorrelation);
+//                buf.append("/");
+//                buf.append(rep.negativeCorrelation);
+//            }
+//            buf.append("\n");
+
+            buf.append("\n");
+            buf.append("**评分表**");
+            buf.append("\n\n");
+            buf.append("| 评分项目 | 得分 | 计分次数 |");
+            buf.append("\n");
+            buf.append("| ---- | ---- | ---- |");
+            for (Score score : this.evaluationReport.getScoreList()) {
+                buf.append("\n");
+                buf.append("|").append(score.indicator.name);
+                buf.append("|").append(score.value);
+                buf.append("|").append(score.count);
+                buf.append("|");
             }
             buf.append("\n");
         }
 
-        if (null != this.paragraphList) {
+        if (outputParagraph && null != this.paragraphList) {
             for (ReportParagraph paragraph : this.paragraphList) {
                 buf.append(paragraph.markdown(true));
             }
         }
 
-        return buf.toString();
+        this.markdown = buf.toString();
+        return this.markdown;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = this.toCompactJSON();
-        json.put("markdown", this.markdown());
+        if (null != this.evaluationReport) {
+            json.put("evaluationReport", this.evaluationReport.toCompactJSON());
+        }
+        if (null != this.paragraphList) {
+            JSONArray array = new JSONArray();
+            for (ReportParagraph paragraph : this.paragraphList) {
+                array.put(paragraph.toJSON());
+            }
+            json.put("paragraphList", array);
+        }
         return json;
     }
 
@@ -226,16 +276,7 @@ public class PsychologyReport implements JSONable {
         json.put("timestamp", this.timestamp);
         json.put("finished", this.finished);
         json.put("state", this.state.code);
-        if (null != this.evaluationReport) {
-            json.put("evaluationReport", this.evaluationReport.toCompactJSON());
-        }
-        if (null != this.paragraphList) {
-            JSONArray array = new JSONArray();
-            for (ReportParagraph paragraph : this.paragraphList) {
-                array.put(paragraph.toJSON());
-            }
-            json.put("paragraphList", array);
-        }
+        json.put("markdown", this.makeMarkdown(false));
         return json;
     }
 }

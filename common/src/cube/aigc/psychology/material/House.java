@@ -221,6 +221,26 @@ public class House extends Thing {
         return maxRatio;
     }
 
+    /**
+     * 所有门和窗总面积比例。
+     *
+     * @return
+     */
+    public double getAllDoorsAndWindowsAreaRatio() {
+        double totalArea = 0;
+        if (null != this.windowList) {
+            for (Window window : this.windowList) {
+                totalArea += window.bbox.calculateArea() * 0.9f;
+            }
+        }
+        if (null != this.doorList) {
+            for (Door door : this.doorList) {
+                totalArea += door.bbox.calculateArea();
+            }
+        }
+        return totalArea / this.bbox.calculateArea();
+    }
+
     public void addCurtain(Curtain curtain) {
         if (null == this.curtainList) {
             this.curtainList = new ArrayList<>();

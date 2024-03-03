@@ -54,8 +54,12 @@ public class EvaluationFeature {
         return this.features;
     }
 
-    public void addScore(Score score) {
-        this.scores.add(score);
+    public void addScore(ScoreIndicator scoreIndicator, int value) {
+        this.scores.add(new Score(scoreIndicator, value));
+    }
+
+    public List<Score> getScores() {
+        return this.scores;
     }
 
     public class Feature {

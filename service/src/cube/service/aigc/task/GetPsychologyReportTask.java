@@ -86,7 +86,7 @@ public class GetPsychologyReportTask extends ServiceTask {
 
         if (null != report) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, report.toJSON()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, report.toCompactJSON()));
         }
         else {
             this.cellet.speak(this.talkContext,

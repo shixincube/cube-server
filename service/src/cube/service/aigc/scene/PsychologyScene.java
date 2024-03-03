@@ -192,6 +192,9 @@ public class PsychologyScene {
                     report.setState(AIGCStateCode.Ok);
                 }
 
+                // 修改结束状态
+                report.setFinished(true);
+
                 listener.onReportEvaluateCompleted(report);
 
                 // 存储
