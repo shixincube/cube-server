@@ -52,6 +52,8 @@ public class Workflow {
 
     private AIGCService service;
 
+    private List<String> behaviorList;
+
     private List<ReportParagraph> paragraphList;
 
     private int maxRepresentationNum = 5;
@@ -64,6 +66,7 @@ public class Workflow {
         this.evaluationReport = evaluationReport;
         this.channel = channel;
         this.service = service;
+        this.behaviorList = new ArrayList<>();
         this.paragraphList = new ArrayList<>();
     }
 
@@ -73,12 +76,13 @@ public class Workflow {
     }
 
     public PsychologyReport fillReport(PsychologyReport report) {
-        report.setParagraphs(this.paragraphList);
         report.setEvaluationReport(this.evaluationReport);
+        report.setBehaviorList(this.behaviorList);
+        report.setParagraphs(this.paragraphList);
         return report;
     }
 
-    public Workflow make(Theme theme) {
+    public Workflow make(Theme theme, boolean paragraphInferrable) {
         // 获取模板
         ThemeTemplate template = Resource.getInstance().getThemeTemplate(theme.code);
 
@@ -87,10 +91,14 @@ public class Workflow {
         int age = this.evaluationReport.getAttribute().age;
         String gender = this.evaluationReport.getAttribute().gender;
         // 逐一推理每一条表征
-        List<String> behaviorList = this.inferBehavior(template, age, gender);
-        if (behaviorList.isEmpty()) {
+        this.behaviorList = this.inferBehavior(template, age, gender);
+        if (this.behaviorList.isEmpty()) {
             Logger.w(this.getClass(), "#make - Behavior error");
             return this;
+        }
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#make - Behavior list size: " + this.behaviorList.size());
         }
 
         for (String title : template.getTitles()) {
@@ -99,95 +107,97 @@ public class Workflow {
 
         // 生成表征内容
 //        String representation = this.spliceRepresentationInterpretation();
-        List<String> representations = this.spliceBehaviorList(behaviorList);
+        List<String> representations = this.spliceBehaviorList(this.behaviorList);
         if (Logger.isDebugLevel()) {
             Logger.d(this.getClass(), "#make - representation num: " + representations.size());
         }
 
-        // 逐一生成提示词并推理
-        for (int i = 0; i < this.paragraphList.size(); ++i) {
-            ReportParagraph paragraph = this.paragraphList.get(i);
+        if (paragraphInferrable) {
+            // 逐一生成提示词并推理
+            for (int i = 0; i < this.paragraphList.size(); ++i) {
+                ReportParagraph paragraph = this.paragraphList.get(i);
 
-            // 生成标题的上下文内容
-            List<AIGCGenerationRecord> records = new ArrayList<>();
-            records.add(new AIGCGenerationRecord(this.unitName, paragraph.title,
-                    template.getExplain(i)));
-            if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#make - \"" + paragraph.title + "\" context num: " + records.size());
-            }
+                // 生成标题的上下文内容
+                List<AIGCGenerationRecord> records = new ArrayList<>();
+                records.add(new AIGCGenerationRecord(this.unitName, paragraph.title,
+                        template.getExplain(i)));
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "#make - \"" + paragraph.title + "\" context num: " + records.size());
+                }
 
-            // 推理特征
-            StringBuilder result = new StringBuilder();
-            for (String representation : representations) {
-                String prompt = template.formatFeaturePrompt(i, representation);
-                String answer = this.service.syncGenerateText(this.unitName, prompt, records);
-                if (null == answer) {
-                    Logger.w(this.getClass(), "#make - Infer feature failed");
+                // 推理特征
+                StringBuilder result = new StringBuilder();
+                for (String representation : representations) {
+                    String prompt = template.formatFeaturePrompt(i, representation);
+                    String answer = this.service.syncGenerateText(this.unitName, prompt, records);
+                    if (null == answer) {
+                        Logger.w(this.getClass(), "#make - Infer feature failed");
+                        break;
+                    }
+                    // 记录结果
+                    result.append(answer).append("\n");
+                }
+
+                List<String> list = this.extractList(result.toString());
+                if (list.isEmpty()) {
+                    Logger.w(this.getClass(), "#make - extract feature list error");
                     break;
                 }
-                // 记录结果
-                result.append(answer).append("\n");
-            }
+                // 添加特性
+                paragraph.addFeatures(this.plainText(list, false));
 
-            List<String> list = this.extractList(result.toString());
-            if (list.isEmpty()) {
-                Logger.w(this.getClass(), "#make - extract feature list error");
-                break;
-            }
-            // 添加特性
-            paragraph.addFeatures(this.plainText(list, false));
-
-            // 推理描述
-            result = new StringBuilder();
-            List<List<String>> featuresList = TextUtils.splitList(paragraph.getFeatures(), this.maxContext);
-            for (List<String> features : featuresList) {
-                // 将特征结果进行拼合
-                String prompt = template.formatDescriptionPrompt(i, this.spliceList(features));
-                String answer = this.service.syncGenerateText(this.unitName, prompt, records);
-                if (null == answer) {
-                    Logger.w(this.getClass(), "#make - Infer description failed");
-                    break;
+                // 推理描述
+                result = new StringBuilder();
+                List<List<String>> featuresList = TextUtils.splitList(paragraph.getFeatures(), this.maxContext);
+                for (List<String> features : featuresList) {
+                    // 将特征结果进行拼合
+                    String prompt = template.formatDescriptionPrompt(i, this.spliceList(features));
+                    String answer = this.service.syncGenerateText(this.unitName, prompt, records);
+                    if (null == answer) {
+                        Logger.w(this.getClass(), "#make - Infer description failed");
+                        break;
+                    }
+                    // 记录结果
+                    result.append(answer).append("\n");
                 }
-                // 记录结果
-                result.append(answer).append("\n");
-            }
 
-            // 转平滑文本，过滤噪音
-            String description = this.filterNoise(result.toString());
-            paragraph.setDescription(description);
+                // 转平滑文本，过滤噪音
+                String description = this.filterNoise(result.toString());
+                paragraph.setDescription(description);
 
-            // 推理建议
-            result = new StringBuilder();
-            for (String representation : representations) {
-                String prompt = template.formatSuggestionPrompt(i, representation);
-                String answer = this.service.syncGenerateText(this.unitName, prompt, records);
-                if (null == answer) {
-                    Logger.w(this.getClass(), "#make - Infer suggestion failed");
-                    break;
+                // 推理建议
+                result = new StringBuilder();
+                for (String representation : representations) {
+                    String prompt = template.formatSuggestionPrompt(i, representation);
+                    String answer = this.service.syncGenerateText(this.unitName, prompt, records);
+                    if (null == answer) {
+                        Logger.w(this.getClass(), "#make - Infer suggestion failed");
+                        break;
+                    }
+                    // 记录结果
+                    result.append(answer).append("\n");
                 }
-                // 记录结果
-                result.append(answer).append("\n");
-            }
-            // 添加建议
-            paragraph.addSuggestions(this.extractList(result.toString()));
+                // 添加建议
+                paragraph.addSuggestions(this.extractList(result.toString()));
 
-            // 推理意见
-            result = new StringBuilder();
-            List<List<String>> suggestionsList = TextUtils.splitList(paragraph.getSuggestions(), this.maxContext);
-            for (List<String> suggestions : suggestionsList) {
-                String prompt = template.formatOpinionPrompt(i, this.spliceList(suggestions));
-                String answer = this.service.syncGenerateText(this.unitName, prompt, records);
-                if (null == answer) {
-                    Logger.w(this.getClass(), "#make - Infer opinion failed");
-                    break;
+                // 推理意见
+                result = new StringBuilder();
+                List<List<String>> suggestionsList = TextUtils.splitList(paragraph.getSuggestions(), this.maxContext);
+                for (List<String> suggestions : suggestionsList) {
+                    String prompt = template.formatOpinionPrompt(i, this.spliceList(suggestions));
+                    String answer = this.service.syncGenerateText(this.unitName, prompt, records);
+                    if (null == answer) {
+                        Logger.w(this.getClass(), "#make - Infer opinion failed");
+                        break;
+                    }
+                    // 记录结果
+                    result.append(answer).append("\n");
                 }
-                // 记录结果
-                result.append(answer).append("\n");
-            }
 
-            // 转平滑文本，过滤噪音
-            String opinion = this.filterNoise(result.toString());
-            paragraph.setOpinion(opinion);
+                // 转平滑文本，过滤噪音
+                String opinion = this.filterNoise(result.toString());
+                paragraph.setOpinion(opinion);
+            }
         }
 
         return this;

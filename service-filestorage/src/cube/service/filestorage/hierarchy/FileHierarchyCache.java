@@ -26,6 +26,7 @@
 
 package cube.service.filestorage.hierarchy;
 
+import cell.util.log.Logger;
 import cube.common.UniqueKey;
 import cube.core.*;
 import cube.service.filestorage.ServiceStorage;
@@ -67,13 +68,18 @@ public class FileHierarchyCache extends AbstractCache {
         Long id = (Long) uk[0];
         String domain = (String) uk[1];
 
-        JSONObject json = this.structStorage.readHierarchyNode(domain, id);
-        if (null == json) {
+        try {
+            JSONObject json = this.structStorage.readHierarchyNode(domain, id);
+            if (null == json) {
+                return null;
+            }
+
+            CacheValue value = new CacheValue(json);
+            return value;
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#get", e);
             return null;
         }
-
-        CacheValue value = new CacheValue(json);
-        return value;
     }
 
     @Override

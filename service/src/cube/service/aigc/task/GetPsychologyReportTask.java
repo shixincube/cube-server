@@ -80,7 +80,6 @@ public class GetPsychologyReportTask extends ServiceTask {
             return;
         }
 
-//        AIGCService service = ((AIGCCellet) this.cellet).getService();
         PsychologyReport report = (0 != sn) ? PsychologyScene.getInstance().getPsychologyReport(sn)
                 : PsychologyScene.getInstance().getPsychologyReportByFileCode(fileCode);
 

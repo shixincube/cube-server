@@ -67,8 +67,8 @@ public final class SQLUtils {
 //        result = result.replaceAll("/", "//");
 //        result = result.replaceAll("%", "/%");
 //        result = result.replaceAll("_", "/_");
-        result = result.replaceAll("\\[", "/[");
-        result = result.replaceAll("]", "/]");
+//        result = result.replaceAll("\\[", "/[");  // 转义导致 JSON Array 解析异常
+//        result = result.replaceAll("]", "/]");    // 转义导致 JSON Array 解析异常
 //        result = result.replaceAll("\\(", "/(");
 //        result = result.replaceAll("\\)", "/)");
         return result;

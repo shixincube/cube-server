@@ -32,6 +32,7 @@ import cube.aigc.psychology.composition.Score;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
+import cube.util.JSONUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -66,9 +67,11 @@ public class PsychologyReport implements JSONable {
 
     private String markdown = null;
 
-    private List<ReportParagraph> paragraphList;
-
     private EvaluationReport evaluationReport;
+
+    private List<String> behaviorList;
+
+    private List<ReportParagraph> paragraphList;
 
     public PsychologyReport(long contactId, Attribute attribute, FileLabel fileLabel, Theme theme) {
         this.sn = Utils.generateSerialNumber();
@@ -113,6 +116,10 @@ public class PsychologyReport implements JSONable {
             this.evaluationReport = new EvaluationReport(json.getJSONObject("evaluationReport"));
         }
 
+        if (json.has("behaviorList")) {
+            this.behaviorList = JSONUtils.toStringList(json.getJSONArray("behaviorList"));
+        }
+
         if (json.has("paragraphList")) {
             this.paragraphList = new ArrayList<>();
             JSONArray array = json.getJSONArray("paragraphList");
@@ -124,6 +131,11 @@ public class PsychologyReport implements JSONable {
 
     public void setEvaluationReport(EvaluationReport evaluationReport) {
         this.evaluationReport = evaluationReport;
+    }
+
+    public void setBehaviorList(List<String> behaviorList) {
+        this.behaviorList = new ArrayList<>();
+        this.behaviorList.addAll(behaviorList);
     }
 
     public String getName() {
@@ -182,6 +194,10 @@ public class PsychologyReport implements JSONable {
         return (null == this.paragraphList || this.paragraphList.isEmpty() || null == this.evaluationReport);
     }
 
+    public String getMarkdown() {
+        return this.makeMarkdown(false);
+    }
+
     private String makeMarkdown(boolean outputParagraph) {
         if (null != this.markdown && null == this.evaluationReport) {
             return this.markdown;
@@ -238,6 +254,28 @@ public class PsychologyReport implements JSONable {
             buf.append("\n");
         }
 
+        if (null != this.behaviorList) {
+            buf.append("\n");
+            buf.append("**行为特征：**");
+            buf.append("\n");
+            for (String behavior : this.behaviorList) {
+                buf.append("\n");
+
+                String[] lines = behavior.split("\n");
+                for (String line : lines) {
+                    if (line.trim().length() <= 2) {
+                        continue;
+                    }
+
+                    buf.append("> ").append(line);
+                    buf.append("\n");
+                }
+
+                buf.append("\n***\n");
+            }
+            buf.append("\n");
+        }
+
         if (outputParagraph && null != this.paragraphList) {
             for (ReportParagraph paragraph : this.paragraphList) {
                 buf.append(paragraph.markdown(true));
@@ -254,6 +292,11 @@ public class PsychologyReport implements JSONable {
         if (null != this.evaluationReport) {
             json.put("evaluationReport", this.evaluationReport.toCompactJSON());
         }
+
+        if (null != this.behaviorList) {
+            json.put("behaviorList", JSONUtils.toStringArray(this.behaviorList));
+        }
+
         if (null != this.paragraphList) {
             JSONArray array = new JSONArray();
             for (ReportParagraph paragraph : this.paragraphList) {

@@ -1661,11 +1661,13 @@ public class AIGCService extends AbstractModule {
      * @param attribute
      * @param fileCode
      * @param theme
+     * @param paragraphInferrable
      * @param listener
      * @return
      */
     public PsychologyReport generatePsychologyReport(String token, Attribute attribute, String fileCode,
-                                                     Theme theme, PsychologySceneListener listener) {
+                                                     Theme theme, boolean paragraphInferrable,
+                                                     PsychologySceneListener listener) {
         if (!this.isStarted()) {
             return null;
         }
@@ -1699,7 +1701,7 @@ public class AIGCService extends AbstractModule {
 
         // 生成报告
         PsychologyReport report = PsychologyScene.getInstance().generateEvaluationReport(channel,
-                attribute, fileLabel, theme, listener);
+                attribute, fileLabel, theme, paragraphInferrable, listener);
 
         return report;
     }

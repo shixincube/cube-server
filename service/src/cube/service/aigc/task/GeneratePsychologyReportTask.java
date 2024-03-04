@@ -31,9 +31,9 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PsychologyReport;
-import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Theme;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -77,11 +77,14 @@ public class GeneratePsychologyReportTask extends ServiceTask {
         Attribute attribute = null;
         String fileCode = null;
         String themeName = null;
+        boolean paragraphInferrable = false;
 
         try {
             attribute = new Attribute(packet.data.getJSONObject("attribute"));
             fileCode = packet.data.getString("fileCode");
             themeName = packet.data.getString("theme");
+            paragraphInferrable = packet.data.has("paragraph")
+                    && packet.data.getBoolean("paragraph");
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -98,7 +101,8 @@ public class GeneratePsychologyReportTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        PsychologyReport report = service.generatePsychologyReport(token, attribute, fileCode, theme, new PsychologySceneListener() {
+        PsychologyReport report = service.generatePsychologyReport(token, attribute, fileCode, theme, paragraphInferrable,
+                new PsychologySceneListener() {
             @Override
             public void onPaintingPredict(PsychologyReport report, FileLabel file) {
                 Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredict - " + token);
