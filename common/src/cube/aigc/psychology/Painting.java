@@ -157,6 +157,8 @@ public class Painting implements JSONable {
             }
 
             thingList.add(thing);
+
+            System.out.println("XJW:" + thing.area);
         }
 
         List<Thing> unknownList = new ArrayList<>();
@@ -258,6 +260,7 @@ public class Painting implements JSONable {
                 case HouseFence:
                 case HousePath:
                 case HouseCurvePath:
+                case HouseCobbledPath:
                     buildHouse(thing);
                     unknownList.remove(thing);
                     break;
@@ -371,7 +374,7 @@ public class Painting implements JSONable {
                     house.addPath((Path) thing);
                     break;
                 default:
-                    Logger.w(this.getClass(), "Unknown label: " + thing.getLabel().name + " for building house");
+                    Logger.w(this.getClass(), "#buildHouse - Unknown label: " + thing.getLabel().name + " for building house");
                     break;
             }
         }

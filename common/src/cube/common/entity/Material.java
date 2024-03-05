@@ -41,6 +41,8 @@ public class Material implements JSONable {
 
     public BoundingBox bbox;
 
+    public int area;
+
     public String color;
 
     public Material() {
@@ -49,6 +51,7 @@ public class Material implements JSONable {
     public Material(String label, BoundingBox bbox) {
         this.label = label;
         this.bbox = bbox;
+        this.area = 0;
         this.prob = 0.8;
         this.color = "#FF0000";
     }
@@ -57,6 +60,7 @@ public class Material implements JSONable {
         this.label = json.getString("label");
         this.prob = json.getDouble("prob");
         this.bbox = new BoundingBox(json.getJSONObject("bbox"));
+        this.area = json.getInt("area");
         this.color = json.getString("color");
     }
 
@@ -66,6 +70,7 @@ public class Material implements JSONable {
         json.put("label", this.label);
         json.put("prob", this.prob);
         json.put("bbox", this.bbox.toJSON());
+        json.put("area", this.area);
         json.put("color", this.color);
         return json;
     }
