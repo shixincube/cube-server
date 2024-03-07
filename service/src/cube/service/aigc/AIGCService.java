@@ -2562,6 +2562,7 @@ public class AIGCService extends AbstractModule {
                 if (useQueryAttachment) {
                     // 构建提示词
                     StringBuilder buf = new StringBuilder();
+                    int bufLen = 0;
 
                     for (AIGCGenerationRecord record : this.records) {
                         if (record.hasQueryAddition()) {
@@ -2571,13 +2572,17 @@ public class AIGCService extends AbstractModule {
                                     if (s.trim().length() <= 1) {
                                         continue;
                                     }
-                                    buf.append(s).append("\n");
-                                    if (buf.length() >= lengthLimit) {
+
+                                    // 计算长度
+                                    bufLen = buf.length() + s.length();
+                                    if (bufLen >= lengthLimit) {
                                         break;
                                     }
+
+                                    buf.append(s).append("\n");
                                 }
 
-                                if (buf.length() >= lengthLimit) {
+                                if (bufLen >= lengthLimit) {
                                     break;
                                 }
                             }
@@ -2586,16 +2591,23 @@ public class AIGCService extends AbstractModule {
                                     + buf.length());
                         }
 
+                        if (bufLen >= lengthLimit) {
+                            break;
+                        }
+
                         if (record.hasQueryFile()) {
                             // 读取文件内容
                             List<String> fileContent = this.readFileContent(record.queryFileLabels);
 
                             if (!fileContent.isEmpty()) {
                                 for (String text : fileContent) {
-                                    buf.append(text).append("\n");
-                                    if (buf.length() >= lengthLimit) {
+                                    // 计算长度
+                                    bufLen = buf.length() + text.length();
+                                    if (bufLen >= lengthLimit) {
                                         break;
                                     }
+
+                                    buf.append(text).append("\n");
                                 }
 
                                 Logger.d(this.getClass(), "#process - Attachment file content length: "
@@ -2605,6 +2617,10 @@ public class AIGCService extends AbstractModule {
                                 Logger.d(this.getClass(), "#process - Attachment file error: "
                                         + record.queryFileLabels.get(0).getFileName());
                             }
+                        }
+
+                        if (bufLen >= lengthLimit) {
+                            break;
                         }
                     }
 
@@ -2622,7 +2638,7 @@ public class AIGCService extends AbstractModule {
                         Logger.d(this.getClass(), "#process - Use query attachments creating the prompt - length: "
                                 + realPrompt.length());
                     } catch (Exception e) {
-                        // Nothing
+                        Logger.w(this.getClass(), "#process", e);
                     }
 
                     // 无历史记录

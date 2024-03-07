@@ -1382,6 +1382,8 @@ public class KnowledgeBase {
                                       int searchTopK, int searchFetchK,
                                       List<String> knowledgeCategories, List<AIGCGenerationRecord> recordList,
                                       KnowledgeQAListener listener) {
+        query = query.replaceAll("\n", "");
+
         Logger.d(this.getClass(), "#performKnowledgeQA - Channel: " + channelCode +
                 "/" + unitName + "/" + query);
 
@@ -1405,6 +1407,8 @@ public class KnowledgeBase {
             noArticle = false;
         }
 
+        final String queryForResult = query;
+
         if (noDocument && noArticle) {
             Logger.d(this.getClass(), "#performKnowledgeQA - No knowledge document or article in base: " + channelCode);
             this.service.getCellet().getExecutor().execute(new Runnable() {
@@ -1413,8 +1417,8 @@ public class KnowledgeBase {
                     long sn = Utils.generateSerialNumber();
                     channel.setLastUnitMetaSn(sn);
 
-                    KnowledgeQAResult result = new KnowledgeQAResult(query, "");
-                    AIGCGenerationRecord record = new AIGCGenerationRecord(sn, unitName, query, EMPTY_BASE_ANSWER,
+                    KnowledgeQAResult result = new KnowledgeQAResult(queryForResult, "");
+                    AIGCGenerationRecord record = new AIGCGenerationRecord(sn, unitName, queryForResult, EMPTY_BASE_ANSWER,
                             System.currentTimeMillis(), new ComplexContext(ComplexContext.Type.Simplex));
                     result.record = record;
                     listener.onCompleted(channel, result);
@@ -1756,8 +1760,8 @@ public class KnowledgeBase {
             lineList.add(line);
         }
 
-        final int maxWords = ModelConfig.isExtraLongPromptUnit(unitName)
-                ? ModelConfig.EXTRA_LONG_PROMPT_LENGTH : ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT;
+        final int maxWords = (ModelConfig.isExtraLongPromptUnit(unitName)
+                ? ModelConfig.EXTRA_LONG_PROMPT_LENGTH : ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) - 60;
         if (totalWords < maxWords) {
             // 补充内容
             // 提取第一行
@@ -1768,10 +1772,10 @@ public class KnowledgeBase {
                 // 读取附件内容
                 StringBuilder contentBuf = new StringBuilder();
                 for (String content : attachmentContents) {
-                    contentBuf.append(content).append("\n");
-                    if (contentBuf.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
+                    if (contentBuf.length() + content.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
                         break;
                     }
+                    contentBuf.append(content).append("\n");
                 }
 
                 Logger.d(KnowledgeBase.class, "#optimizePrompt - Use attachment content - length: "
@@ -1785,8 +1789,11 @@ public class KnowledgeBase {
                     lineList.addFirst(result);
                     // 添加源
                     promptMetadata.addMetadata(contentBuf.toString());
+                    // 更新长度
+                    totalWords += result.length();
+
                     Logger.d(KnowledgeBase.class, "#optimizePrompt - Use attachment content - result length: "
-                            + result.length());
+                            + result.length() + ", total: " + totalWords);
                 }
             }
 
@@ -1839,7 +1846,7 @@ public class KnowledgeBase {
                 Logger.d(KnowledgeBase.class, "#optimizePrompt - No matching articles");
             }
 
-            if (!articleList.isEmpty()) {
+            if (!articleList.isEmpty() && totalWords < maxWords) {
                 for (KnowledgeArticle article : articleList) {
                     // 排除重复文章
                     if (promptMetadata.containsMetadata(article)) {
@@ -1872,9 +1879,9 @@ public class KnowledgeBase {
                         lineList.addFirst(articleResult);
                         // 加入源
                         promptMetadata.addMetadata(article);
-                        // 计算内容大小
+                        // 更新内容大小
                         totalWords += articleResult.length();
-                        if (totalWords > maxWords) {
+                        if (totalWords >= maxWords) {
                             break;
                         }
                     }
@@ -1888,15 +1895,18 @@ public class KnowledgeBase {
             // 内容超过上下文限制
             // 提取第一行
             String first = lineList.pollFirst();
+            // 提取最后一行
+            String last = lineList.pollLast();
 
-            int numWords = first.length();
+            int numWords = first.length() + last.length();
             List<String> newList = new ArrayList<>();
             for (String line : lineList) {
-                newList.add(line);
                 numWords += line.length();
                 if (numWords >= maxWords) {
                     break;
                 }
+                // 添加
+                newList.add(line);
             }
 
             // 清空
@@ -1906,9 +1916,11 @@ public class KnowledgeBase {
 
             // 恢复第一行
             lineList.addFirst(first);
+            // 恢复最后一行
+            lineList.addLast(last);
         }
 
-        if (lineList.size() == 2) {
+        if (lineList.size() <= 2) {
             return Consts.NO_CONTENT_SENTENCE;
         }
 
