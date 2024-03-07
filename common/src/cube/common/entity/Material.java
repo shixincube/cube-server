@@ -28,6 +28,7 @@ package cube.common.entity;
 
 import cube.common.JSONable;
 import cube.vision.BoundingBox;
+import cube.vision.Box;
 import org.json.JSONObject;
 
 /**
@@ -39,7 +40,9 @@ public class Material implements JSONable {
 
     public double prob;
 
-    public BoundingBox bbox;
+    public BoundingBox boundingBox;
+
+    public Box box;
 
     public int area;
 
@@ -48,10 +51,11 @@ public class Material implements JSONable {
     public Material() {
     }
 
-    public Material(String label, BoundingBox bbox) {
+    public Material(String label, BoundingBox boundingBox, Box box) {
         this.label = label;
-        this.bbox = bbox;
-        this.area = 0;
+        this.boundingBox = boundingBox;
+        this.box = box;
+        this.area = Math.round(boundingBox.width * boundingBox.height * 0.76f);
         this.prob = 0.8;
         this.color = "#FF0000";
     }
@@ -59,7 +63,8 @@ public class Material implements JSONable {
     public Material(JSONObject json) {
         this.label = json.getString("label");
         this.prob = json.getDouble("prob");
-        this.bbox = new BoundingBox(json.getJSONObject("bbox"));
+        this.boundingBox = new BoundingBox(json.getJSONObject("bbox"));
+        this.box = new Box(json.getJSONObject("box"));
         this.area = json.getInt("area");
         this.color = json.getString("color");
     }
@@ -69,7 +74,8 @@ public class Material implements JSONable {
         JSONObject json = new JSONObject();
         json.put("label", this.label);
         json.put("prob", this.prob);
-        json.put("bbox", this.bbox.toJSON());
+        json.put("bbox", this.boundingBox.toJSON());
+        json.put("box", this.box.toJSON());
         json.put("area", this.area);
         json.put("color", this.color);
         return json;

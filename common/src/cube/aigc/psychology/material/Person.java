@@ -28,6 +28,7 @@ package cube.aigc.psychology.material;
 
 import cube.aigc.psychology.material.person.*;
 import cube.vision.BoundingBox;
+import cube.vision.Box;
 import cube.vision.Point;
 import org.json.JSONObject;
 
@@ -96,19 +97,25 @@ public class Person extends Thing {
         super(json);
     }
 
-    public Person(BoundingBox boundingBox) {
-        super(Label.Person.name, boundingBox);
+    public Person(BoundingBox boundingBox, Box box) {
+        super(Label.Person.name, boundingBox, box);
     }
 
     public Gender getGender() {
         return this.gender;
     }
 
-    public void refreshBox(BoundingBox boundingBox) {
-        this.bbox.x = Math.min(this.bbox.x, boundingBox.x);
-        this.bbox.y = Math.min(this.bbox.y, boundingBox.y);
-        this.bbox.width = Math.max(this.bbox.width, boundingBox.width);
-        this.bbox.height = Math.max(this.bbox.height, boundingBox.height);
+    public void refreshBox(BoundingBox boundingBox, Box box) {
+        this.boundingBox.x = Math.min(this.boundingBox.x, boundingBox.x);
+        this.boundingBox.y = Math.min(this.boundingBox.y, boundingBox.y);
+        int pX = Math.max(this.boundingBox.getX2(), boundingBox.getX2());
+        int pY = Math.max(this.boundingBox.getY2(), boundingBox.getY2());
+
+        this.boundingBox.width = pX - this.boundingBox.x;
+        this.boundingBox.height = pY - this.boundingBox.y;
+
+        this.box.refresh(box);
+        this.area = Math.round(this.boundingBox.calculateArea() * 0.76f);
     }
 
     public void setHead(Head head) {
@@ -262,8 +269,8 @@ public class Person extends Thing {
         }
 
         Eye eye = this.getMaxAreaThing(this.eyeList);
-        return ((double) eye.bbox.calculateArea())
-                / ((double) this.head.bbox.calculateArea());
+        return ((double) eye.area)
+                / ((double) this.head.area);
     }
 
     public void addEyebrow(Eyebrow eyebrow) {
@@ -352,8 +359,8 @@ public class Person extends Thing {
             return 0;
         }
 
-        Point c1 = this.armList.get(0).bbox.getCenterPoint();
-        Point c2 = this.armList.get(1).bbox.getCenterPoint();
+        Point c1 = this.armList.get(0).box.getCenterPoint();
+        Point c2 = this.armList.get(1).box.getCenterPoint();
         return Math.abs(c1.x - c2.x);
     }
 
@@ -388,8 +395,8 @@ public class Person extends Thing {
             return 0;
         }
 
-        Point c1 = this.legList.get(0).bbox.getCenterPoint();
-        Point c2 = this.legList.get(1).bbox.getCenterPoint();
+        Point c1 = this.legList.get(0).box.getCenterPoint();
+        Point c2 = this.legList.get(1).box.getCenterPoint();
         return Math.abs(c1.x - c2.x);
     }
 

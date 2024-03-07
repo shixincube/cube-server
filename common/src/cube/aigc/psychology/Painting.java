@@ -33,6 +33,7 @@ import cube.aigc.psychology.material.person.*;
 import cube.aigc.psychology.material.tree.*;
 import cube.common.JSONable;
 import cube.vision.BoundingBox;
+import cube.vision.Box;
 import cube.vision.Size;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -157,8 +158,6 @@ public class Painting implements JSONable {
             }
 
             thingList.add(thing);
-
-            System.out.println("XJW:" + thing.area);
         }
 
         List<Thing> unknownList = new ArrayList<>();
@@ -318,47 +317,47 @@ public class Painting implements JSONable {
         for (House house : this.houseList) {
             switch (thing.getLabel()) {
                 case HouseSidewall:
-                    if (house.bbox.detectCollision(thing.bbox)) {
+                    if (house.box.detectCollision(thing.box)) {
                         house.addSidewall((Sidewall) thing);
                     }
                     break;
                 case HouseRoof:
                 case HouseRoofTextured:
-                    if (house.bbox.detectCollision(thing.bbox)) {
+                    if (house.box.detectCollision(thing.box)) {
                         house.setRoof((Roof) thing);
                     }
                     break;
                 case HouseRoofSkylight:
-                    if (house.bbox.detectCollision(thing.bbox)) {
+                    if (house.box.detectCollision(thing.box)) {
                         house.addRoofSkylight((RoofSkylight) thing);
                     }
                     break;
                 case HouseChimney:
-                    if (house.bbox.detectCollision(thing.bbox)) {
+                    if (house.box.detectCollision(thing.box)) {
                         house.addChimney((Chimney) thing);
                     }
                     break;
                 case HouseDoor:
                 case HouseDoorOpened:
                 case HouseDoorLocked:
-                    if (house.bbox.detectCollision(thing.bbox)) {
+                    if (house.box.detectCollision(thing.box)) {
                         house.addDoor((Door) thing);
                     }
                     break;
                 case HouseWindow:
                 case HouseWindowOpened:
-                    if (house.bbox.detectCollision(thing.bbox)) {
+                    if (house.box.detectCollision(thing.box)) {
                         house.addWindow((Window) thing);
                     }
                     break;
                 case HouseCurtain:
                 case HouseCurtainOpened:
-                    if (house.bbox.detectCollision(thing.bbox)) {
+                    if (house.box.detectCollision(thing.box)) {
                         house.addCurtain((Curtain) thing);
                     }
                     break;
                 case HouseWindowRailing:
-                    if (house.bbox.detectCollision(thing.bbox)) {
+                    if (house.box.detectCollision(thing.box)) {
                         house.addWindowRailing((WindowRailing) thing);
                     }
                     break;
@@ -390,31 +389,31 @@ public class Painting implements JSONable {
 
         switch (thing.getLabel()) {
             case TreeTrunk:
-                list = this.sortByCollisionArea(this.treeList, thing.bbox);
+                list = this.sortByCollisionArea(this.treeList);
                 ((Tree) list.getLast()).addTrunk((Trunk) thing);
                 break;
             case TreeBranch:
-                list = this.sortByCollisionArea(this.treeList, thing.bbox);
+                list = this.sortByCollisionArea(this.treeList);
                 ((Tree) list.getLast()).addBranch((Branch) thing);
                 break;
             case TreeCanopy:
-                list = this.sortByCollisionArea(this.treeList, thing.bbox);
+                list = this.sortByCollisionArea(this.treeList);
                 ((Tree) list.getLast()).addCanopy((Canopy) thing);
                 break;
             case TreeRoot:
-                list = this.sortByCollisionArea(this.treeList, thing.bbox);
+                list = this.sortByCollisionArea(this.treeList);
                 ((Tree) list.getLast()).addRoot((Root) thing);
                 break;
             case TreeFruit:
-                list = this.sortByCollisionArea(this.treeList, thing.bbox);
+                list = this.sortByCollisionArea(this.treeList);
                 ((Tree) list.getLast()).addFruit((Fruit) thing);
                 break;
             case TreeHole:
-                list = this.sortByCollisionArea(this.treeList, thing.bbox);
+                list = this.sortByCollisionArea(this.treeList);
                 ((Tree) list.getLast()).addHole((Hole) thing);
                 break;
             case TreeDrooping:
-                list = this.sortByCollisionArea(this.treeList, thing.bbox);
+                list = this.sortByCollisionArea(this.treeList);
                 ((Tree) list.getLast()).addDrooping((DroopingLeaves) thing);
                 break;
             default:
@@ -428,21 +427,22 @@ public class Painting implements JSONable {
             // 没有识别出人，但是出现了人的元素，创建 Person
             Logger.i(this.getClass(), "#buildPerson - No person material");
 
-            BoundingBox bbox = new BoundingBox(thing.bbox.x - 1, thing.bbox.y - 1,
-                    thing.bbox.width + 1, thing.bbox.height + 1);
-            Person person = new Person(bbox);
+            BoundingBox boundingBox = new BoundingBox(thing.boundingBox.x - 1, thing.boundingBox.y - 1,
+                    thing.boundingBox.width + 2, thing.boundingBox.height + 2);
+            Box box = new Box(thing.box.x0 - 1, thing.box.y0 - 1, thing.box.x1 + 1, thing.box.y1 + 1);
+            Person person = new Person(boundingBox, box);
 
             this.personList = new ArrayList<>();
             this.personList.add(person);
         }
 
-        LinkedList<Thing> list = this.sortByCollisionArea(this.personList, thing.bbox);
+        LinkedList<Thing> list = this.sortByCollisionArea(this.personList);
         Person person = (Person) list.getLast();
 
         switch (thing.getLabel()) {
             case PersonHead:
                 person.setHead((Head) thing);
-                person.refreshBox(thing.bbox);
+                person.refreshBox(thing.boundingBox, thing.box);
                 break;
             case PersonBraid:
                 person.addBraid((Braid) thing);
@@ -453,54 +453,54 @@ public class Painting implements JSONable {
             case PersonCurlyHair:
             case PersonStandingHair:
                 person.addHair((Hair) thing);
-                person.refreshBox(thing.bbox);
+                person.refreshBox(thing.boundingBox, thing.box);
                 break;
             case PersonCap:
                 person.setCap((Cap) thing);
                 break;
             case PersonEye:
                 person.addEye((Eye) thing);
-                person.refreshBox(thing.bbox);
+                person.refreshBox(thing.boundingBox, thing.box);
                 break;
             case PersonEyebrow:
                 person.addEyebrow((Eyebrow) thing);
-                person.refreshBox(thing.bbox);
+                person.refreshBox(thing.boundingBox, thing.box);
                 break;
             case PersonNose:
                 person.setNose((Nose) thing);
-                person.refreshBox(thing.bbox);
+                person.refreshBox(thing.boundingBox, thing.box);
                 break;
             case PersonEar:
                 person.addEar((Ear) thing);
-                person.refreshBox(thing.bbox);
+                person.refreshBox(thing.boundingBox, thing.box);
                 break;
             case PersonMouth:
                 person.setMouth((Mouth) thing);
-                person.refreshBox(thing.bbox);
+                person.refreshBox(thing.boundingBox, thing.box);
                 break;
             case PersonBody:
                 person.setBody((Body) thing);
-                person.refreshBox(thing.bbox);
+                person.refreshBox(thing.boundingBox, thing.box);
                 break;
             case PersonArm:
                 person.addArm((Arm) thing);
-                person.refreshBox(thing.bbox);
+                person.refreshBox(thing.boundingBox, thing.box);
                 break;
             case PersonPalm:
                 person.addPalm((Palm) thing);
-                person.refreshBox(thing.bbox);
+                person.refreshBox(thing.boundingBox, thing.box);
                 break;
             case PersonLeg:
                 person.addLeg((Leg) thing);
-                person.refreshBox(thing.bbox);
+                person.refreshBox(thing.boundingBox, thing.box);
                 break;
             case PersonFoot:
                 person.addFoot((Foot) thing);
-                person.refreshBox(thing.bbox);
+                person.refreshBox(thing.boundingBox, thing.box);
                 break;
             case PersonSkirt:
                 person.setSkirt((Skirt) thing);
-                person.refreshBox(thing.bbox);
+                person.refreshBox(thing.boundingBox, thing.box);
                 break;
             case PersonMask:
                 person.setMask((Mask) thing);
@@ -520,13 +520,24 @@ public class Painting implements JSONable {
         }
     }
 
+    private LinkedList<Thing> sortByCollisionArea(List<? extends Thing> list) {
+        LinkedList<Thing> result = new LinkedList<>(list);
+        result.sort(new Comparator<Thing>() {
+            @Override
+            public int compare(Thing t1, Thing t2) {
+                return t1.area - t2.area;
+            }
+        });
+        return result;
+    }
+
     private LinkedList<Thing> sortByCollisionArea(List<? extends Thing> list, BoundingBox box) {
         LinkedList<Thing> result = new LinkedList<>(list);
         result.sort(new Comparator<Thing>() {
             @Override
             public int compare(Thing t1, Thing t2) {
-                int area1 = t1.bbox.calculateCollisionArea(box);
-                int area2 = t2.bbox.calculateCollisionArea(box);
+                int area1 = t1.boundingBox.calculateCollisionArea(box);
+                int area2 = t2.boundingBox.calculateCollisionArea(box);
                 return area1 - area2;
             }
         });
@@ -829,7 +840,7 @@ public class Painting implements JSONable {
             bbdList.addAll(this.personList);
         }
 
-        Collections.sort(bbdList, new BoundingBoxComparator());
+        Collections.sort(bbdList, new AreaComparator());
         return bbdList;
     }
 
@@ -837,7 +848,7 @@ public class Painting implements JSONable {
         Thing maxAreaThing = null;
         int area = 0;
         for (Thing thing : list) {
-            int ta = thing.bbox.calculateArea();
+            int ta = thing.area;
             if (ta > area) {
                 area = ta;
                 maxAreaThing = thing;
@@ -948,14 +959,14 @@ public class Painting implements JSONable {
     }
 
 
-    private class BoundingBoxComparator implements Comparator<Thing> {
+    private class AreaComparator implements Comparator<Thing> {
 
-        public BoundingBoxComparator() {
+        public AreaComparator() {
         }
 
         @Override
-        public int compare(Thing bbd1, Thing bbd2) {
-            return bbd1.bbox.calculateArea() - bbd2.bbox.calculateArea();
+        public int compare(Thing thing1, Thing thing2) {
+            return thing1.area - thing2.area;
         }
     }
 }

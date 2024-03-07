@@ -105,8 +105,8 @@ public class House extends Thing {
             return 0;
         }
 
-        return ((double) this.roof.bbox.calculateArea())
-                / ((double) this.bbox.calculateArea());
+        return ((double) this.roof.area)
+                / ((double) this.area);
     }
 
     /**
@@ -120,8 +120,8 @@ public class House extends Thing {
             return 0;
         }
 
-        return ((double) this.roof.bbox.height)
-                / ((double) this.bbox.height);
+        return ((double) this.roof.box.height)
+                / ((double) this.box.height);
     }
 
     public void addRoofSkylight(RoofSkylight roofSkylight) {
@@ -172,8 +172,8 @@ public class House extends Thing {
     public double getMaxWindowAreaRatio() {
         double maxRatio = 0;
         for (Window window : this.windowList) {
-            double ratio = ((double) window.bbox.calculateArea())
-                    / ((double) this.bbox.calculateArea());
+            double ratio = ((double) window.area)
+                    / ((double) this.area);
             if (ratio > maxRatio) {
                 maxRatio = ratio;
             }
@@ -212,8 +212,8 @@ public class House extends Thing {
     public double getMaxDoorAreaRatio() {
         double maxRatio = 0;
         for (Door door : this.doorList) {
-            double ratio = ((double) door.bbox.calculateArea())
-                    / ((double) this.bbox.calculateArea());
+            double ratio = ((double) door.area)
+                    / ((double) this.area);
             if (ratio > maxRatio) {
                 maxRatio = ratio;
             }
@@ -230,15 +230,15 @@ public class House extends Thing {
         double totalArea = 0;
         if (null != this.windowList) {
             for (Window window : this.windowList) {
-                totalArea += window.bbox.calculateArea() * 0.9f;
+                totalArea += window.area;
             }
         }
         if (null != this.doorList) {
             for (Door door : this.doorList) {
-                totalArea += door.bbox.calculateArea();
+                totalArea += door.area;
             }
         }
-        return totalArea / this.bbox.calculateArea();
+        return totalArea / this.area;
     }
 
     public void addCurtain(Curtain curtain) {

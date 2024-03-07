@@ -132,10 +132,10 @@ public class Evaluation {
         Tree tree = this.painting.getTree();
         Person person = this.painting.getPerson();
         if (null != house && null != tree && null != person) {
-            // 位置关系
-            Point hc = house.bbox.getCenterPoint();
-            Point tc = tree.bbox.getCenterPoint();
-            Point pc = person.bbox.getCenterPoint();
+            // 位置关系，使用 box 计算位置
+            Point hc = house.box.getCenterPoint();
+            Point tc = tree.box.getCenterPoint();
+            Point pc = person.box.getCenterPoint();
 
             // 判断上半将中线上移；判断下半将中心下移
             boolean houseTHalf = hc.y < (bl - centerYOffset);
@@ -178,9 +178,9 @@ public class Evaluation {
             }
 
             // 大小关系
-            int ha = house.bbox.calculateArea();
-            int ta = tree.bbox.calculateArea();
-            int pa = person.bbox.calculateArea();
+            int ha = house.area;
+            int ta = tree.area;
+            int pa = person.area;
             if (ha >= ta && ha >= pa) {
                 // 房大
                 result.addFeature(Comment.PayAttentionToFamily, Tendency.Positive);
@@ -203,8 +203,9 @@ public class Evaluation {
             }
         }
         else if (null != house && null != tree) {
-            Point hc = house.bbox.getCenterPoint();
-            Point tc = tree.bbox.getCenterPoint();
+            // 位置关系，使用 box 计算位置
+            Point hc = house.box.getCenterPoint();
+            Point tc = tree.box.getCenterPoint();
 
             // 判断上半将中线上移；判断下半将中心下移
             boolean houseTHalf = hc.y < (bl - centerYOffset);
@@ -239,8 +240,8 @@ public class Evaluation {
                 result.addScore(ScoreIndicator.SelfConsciousness, 1);
             }
 
-            int ha = house.bbox.calculateArea();
-            int ta = tree.bbox.calculateArea();
+            int ha = house.area;
+            int ta = tree.area;
             if (ha > ta) {
                 // 房大
                 result.addFeature(Comment.PayAttentionToFamily, Tendency.Positive);
@@ -255,8 +256,9 @@ public class Evaluation {
             }
         }
         else if (null != house && null != person) {
-            Point hc = house.bbox.getCenterPoint();
-            Point pc = person.bbox.getCenterPoint();
+            // 位置关系，使用 box 计算位置
+            Point hc = house.box.getCenterPoint();
+            Point pc = person.box.getCenterPoint();
 
             boolean houseTHalf = hc.y < (bl - centerYOffset);
             boolean houseBHalf = hc.y > (bl + centerYOffset);
@@ -290,8 +292,8 @@ public class Evaluation {
                 result.addScore(ScoreIndicator.SelfConsciousness, 1);
             }
 
-            int ha = house.bbox.calculateArea();
-            int pa = person.bbox.calculateArea();
+            int ha = house.area;
+            int pa = person.area;
             if (ha > pa) {
                 // 房大
                 result.addFeature(Comment.PayAttentionToFamily, Tendency.Positive);
@@ -308,8 +310,9 @@ public class Evaluation {
             }
         }
         else if (null != tree && null != person) {
-            Point tc = tree.bbox.getCenterPoint();
-            Point pc = person.bbox.getCenterPoint();
+            // 位置关系，使用 box 计算位置
+            Point tc = tree.box.getCenterPoint();
+            Point pc = person.box.getCenterPoint();
 
             // 判断上半将中线上移；判断下半将中心下移
             boolean treeTHalf = tc.y < (bl - centerYOffset);
@@ -344,8 +347,8 @@ public class Evaluation {
                 result.addScore(ScoreIndicator.SelfConsciousness, 1);
             }
 
-            int ta = tree.bbox.calculateArea();
-            int pa = person.bbox.calculateArea();
+            int ta = tree.area;
+            int pa = person.area;
             if (ta > pa) {
                 // 树大
                 result.addFeature(Comment.SocialDemand, Tendency.Positive);
@@ -367,7 +370,7 @@ public class Evaluation {
         int paintingArea = this.spaceLayout.getPaintingBox().calculateArea();
         if (null != person) {
             // 人整体大小
-            int personArea = person.bbox.calculateArea();
+            int personArea = person.area;
             if (((double)personArea / (double)paintingArea) <= tinyRatio) {
                 // 人很小
                 result.addFeature(Comment.SenseOfSecurity, Tendency.Negative);

@@ -40,7 +40,7 @@ public class Mouth extends Thing {
 
     public boolean isOpen() {
         // 判断纵横比
-        double ar = this.bbox.getAspectRatio();
+        double ar = this.box.getAspectRatio();
         return ar <= 1.13;
     }
 
@@ -51,7 +51,7 @@ public class Mouth extends Thing {
      */
     public boolean isStraight() {
         // 判断纵横比
-        double ar = this.bbox.getAspectRatio();
+        double ar = this.box.getAspectRatio();
         return ar > 3.33;
     }
 }

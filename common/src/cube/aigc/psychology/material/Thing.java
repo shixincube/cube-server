@@ -28,6 +28,7 @@ package cube.aigc.psychology.material;
 
 import cube.common.entity.Material;
 import cube.vision.BoundingBox;
+import cube.vision.Box;
 import org.json.JSONObject;
 
 import java.util.List;
@@ -39,8 +40,8 @@ public abstract class Thing extends Material {
 
     protected Label paintingLabel;
 
-    public Thing(String label, BoundingBox boundingBox) {
-        super(label, boundingBox);
+    public Thing(String label, BoundingBox boundingBox, Box box) {
+        super(label, boundingBox, box);
         this.paintingLabel = Label.parse(this.label);
     }
 
@@ -58,11 +59,11 @@ public abstract class Thing extends Material {
     }
 
     public int getWidth() {
-        return this.bbox.width;
+        return this.box.width;
     }
 
     public int getHeight() {
-        return this.bbox.height;
+        return this.box.height;
     }
 
     protected <T> T getMaxAreaThing(List<T> list) {
@@ -71,7 +72,7 @@ public abstract class Thing extends Material {
         for (T t : list) {
             if (t instanceof Thing) {
                 Thing thing = (Thing) t;
-                int area = thing.bbox.calculateArea();
+                int area = thing.area;
                 if (area > max) {
                     max = area;
                     result = t;
