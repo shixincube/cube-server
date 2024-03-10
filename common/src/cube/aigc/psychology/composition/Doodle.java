@@ -24,66 +24,42 @@
  * SOFTWARE.
  */
 
-package cube.common.entity;
+package cube.aigc.psychology.composition;
 
-import cube.aigc.psychology.composition.Doodle;
 import cube.common.JSONable;
-import cube.vision.BoundingBox;
-import cube.vision.Box;
 import org.json.JSONObject;
 
-/**
- * 图画里的素材描述。
- */
-public class Material implements JSONable {
+public class Doodle implements JSONable {
 
-    public String label;
+    public double max;
 
-    public double prob;
+    public double avg;
 
-    public BoundingBox boundingBox;
+    public double squareDeviation;
 
-    public Box box;
+    public double standardDeviation;
 
-    public int area;
-
-    public String color;
-
-    public Doodle doodle;
-
-    public Material() {
+    public Doodle() {
+        this.max = 0;
+        this.avg = 0;
+        this.squareDeviation = 0;
+        this.standardDeviation = 0;
     }
 
-    public Material(String label, BoundingBox boundingBox, Box box) {
-        this.label = label;
-        this.boundingBox = boundingBox;
-        this.box = box;
-        this.area = Math.round(boundingBox.width * boundingBox.height * 0.76f);
-        this.prob = 0.8;
-        this.color = "#FF0000";
-        this.doodle = new Doodle();
-    }
-
-    public Material(JSONObject json) {
-        this.label = json.getString("label");
-        this.prob = json.getDouble("prob");
-        this.boundingBox = new BoundingBox(json.getJSONObject("bbox"));
-        this.box = new Box(json.getJSONObject("box"));
-        this.area = json.getInt("area");
-        this.color = json.getString("color");
-        this.doodle = new Doodle(json.getJSONObject("doodle"));
+    public Doodle(JSONObject json) {
+        this.max = Double.parseDouble(json.getString("max"));
+        this.avg = Double.parseDouble(json.getString("avg"));
+        this.squareDeviation = Double.parseDouble(json.getString("squareDeviation"));
+        this.standardDeviation = Double.parseDouble(json.getString("standardDeviation"));
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("label", this.label);
-        json.put("prob", this.prob);
-        json.put("bbox", this.boundingBox.toJSON());
-        json.put("box", this.box.toJSON());
-        json.put("area", this.area);
-        json.put("color", this.color);
-        json.put("doodle", this.doodle.toJSON());
+        json.put("max", Double.toString(this.max));
+        json.put("avg", Double.toString(this.avg));
+        json.put("squareDeviation", Double.toString(this.squareDeviation));
+        json.put("standardDeviation", Double.toString(this.standardDeviation));
         return json;
     }
 
