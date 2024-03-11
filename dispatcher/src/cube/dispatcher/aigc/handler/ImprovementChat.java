@@ -27,7 +27,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cube.aigc.Consts;
-import cube.common.entity.AIGCGenerationRecord;
+import cube.common.entity.GenerativeRecord;
 import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
@@ -107,7 +107,7 @@ public class ImprovementChat extends ContextHandler {
             }
 
             // Chat
-            AIGCGenerationRecord record = Manager.getInstance().chat(token, channelCode, pattern,
+            GenerativeRecord record = Manager.getInstance().chat(token, channelCode, pattern,
                     content, desc, histories, records, false, false, false,
                     null, 10, 50).record;
             if (null == record) {

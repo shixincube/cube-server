@@ -31,7 +31,7 @@ import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.common.entity.AICapability;
-import cube.common.entity.AIGCGenerationRecord;
+import cube.common.entity.GenerativeRecord;
 import cube.common.entity.AIGCUnit;
 import cube.common.entity.Contact;
 import cube.util.HttpClientFactory;
@@ -93,11 +93,11 @@ public final class Agent {
         return this.unit;
     }
 
-    public String generateText(String channelCode, String content, List<AIGCGenerationRecord> records) {
+    public String generateText(String channelCode, String content, List<GenerativeRecord> records) {
         return this.generateText(channelCode, this.unit.getCapability().getName(), content, records);
     }
 
-    public String generateText(String channelCode, String unitName, String content, List<AIGCGenerationRecord> records) {
+    public String generateText(String channelCode, String unitName, String content, List<GenerativeRecord> records) {
         String code = channelCode;
         if (null == code) {
             code = this.channelCode;
@@ -108,7 +108,7 @@ public final class Agent {
         try {
             JSONArray recordArray = new JSONArray();
             if (null != records) {
-                for (AIGCGenerationRecord record : records) {
+                for (GenerativeRecord record : records) {
                     recordArray.put(record.toJSON());
                 }
             }

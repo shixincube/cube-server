@@ -56,7 +56,7 @@ public class AIGCChannel extends Entity {
     private long activeTimestamp;
 
     // 倒序存储历史记录
-    private LinkedList<AIGCGenerationRecord> history;
+    private LinkedList<GenerativeRecord> history;
 
     // 倒序存储应答历史
     private LinkedList<AIGCConversationResponse> conversationResponses;
@@ -118,7 +118,7 @@ public class AIGCChannel extends Entity {
         this.lastUnitMetaSn = json.has("lastMetaSn") ? json.getLong("lastMetaSn") : 0;
 
         if (json.has("lastRecord")) {
-            AIGCGenerationRecord record = new AIGCGenerationRecord(json.getJSONObject("lastRecord"));
+            GenerativeRecord record = new GenerativeRecord(json.getJSONObject("lastRecord"));
             this.history.addFirst(record);
         }
     }
@@ -172,7 +172,7 @@ public class AIGCChannel extends Entity {
         return this.lastUnitMetaSn;
     }
 
-    public AIGCGenerationRecord getLastRecord() {
+    public GenerativeRecord getLastRecord() {
         synchronized (this.history) {
             if (this.history.isEmpty()) {
                 return null;
@@ -182,7 +182,7 @@ public class AIGCChannel extends Entity {
         }
     }
 
-    public AIGCGenerationRecord appendRecord(long sn, String unit, String query, String answer, ComplexContext context) {
+    public GenerativeRecord appendRecord(long sn, String unit, String query, String answer, ComplexContext context) {
         this.activeTimestamp = System.currentTimeMillis();
 
         this.totalQueryWords += query.length();
@@ -190,14 +190,14 @@ public class AIGCChannel extends Entity {
 
         this.rounds.incrementAndGet();
 
-        AIGCGenerationRecord record = new AIGCGenerationRecord(sn, unit, query, answer, this.activeTimestamp, context);
+        GenerativeRecord record = new GenerativeRecord(sn, unit, query, answer, this.activeTimestamp, context);
         synchronized (this.history) {
             this.history.addFirst(record);
         }
         return record;
     }
 
-    public AIGCGenerationRecord appendRecord(long sn, String unit, String query, FileLabel fileLabel) {
+    public GenerativeRecord appendRecord(long sn, String unit, String query, FileLabel fileLabel) {
         this.activeTimestamp = System.currentTimeMillis();
 
         this.totalQueryWords += query.length();
@@ -205,14 +205,14 @@ public class AIGCChannel extends Entity {
 
         this.rounds.incrementAndGet();
 
-        AIGCGenerationRecord record = new AIGCGenerationRecord(sn, unit, query, fileLabel, this.activeTimestamp);
+        GenerativeRecord record = new GenerativeRecord(sn, unit, query, fileLabel, this.activeTimestamp);
         synchronized (this.history) {
             this.history.addFirst(record);
         }
         return record;
     }
 
-    public AIGCGenerationRecord appendRecord(long sn, AIGCConversationResponse conversationResponse) {
+    public GenerativeRecord appendRecord(long sn, AIGCConversationResponse conversationResponse) {
         this.activeTimestamp = System.currentTimeMillis();
 
         this.totalQueryWords += conversationResponse.query.length();
@@ -220,7 +220,7 @@ public class AIGCChannel extends Entity {
 
         this.rounds.incrementAndGet();
 
-        AIGCGenerationRecord record = new AIGCGenerationRecord(sn, conversationResponse.unit,
+        GenerativeRecord record = new GenerativeRecord(sn, conversationResponse.unit,
                 conversationResponse.query, conversationResponse.answer, this.activeTimestamp,
                 conversationResponse.context);
         synchronized (this.history) {
@@ -231,11 +231,11 @@ public class AIGCChannel extends Entity {
         return record;
     }
 
-    public List<AIGCGenerationRecord> getLastHistory(int num) {
-        List<AIGCGenerationRecord> list = new ArrayList<>(num);
+    public List<GenerativeRecord> getLastHistory(int num) {
+        List<GenerativeRecord> list = new ArrayList<>(num);
 
         synchronized (this.history) {
-            for (AIGCGenerationRecord record : this.history) {
+            for (GenerativeRecord record : this.history) {
                 if (record.totalWords() > this.historyLengthLimit) {
                     // 过滤掉词多的问答
                     continue;
@@ -261,7 +261,7 @@ public class AIGCChannel extends Entity {
 
     public void feedbackRecord(long sn, int feedback) {
         synchronized (this.history) {
-            for (AIGCGenerationRecord record : this.history) {
+            for (GenerativeRecord record : this.history) {
                 if (record.sn == sn) {
                     record.feedback = feedback;
                     break;
@@ -317,7 +317,7 @@ public class AIGCChannel extends Entity {
         json.put("totalAnswerWords", this.totalAnswerWords());
         json.put("lastMetaSn", this.lastUnitMetaSn);
 
-        AIGCGenerationRecord record = this.getLastRecord();
+        GenerativeRecord record = this.getLastRecord();
         if (null != record) {
             json.put("lastRecord", record.toCompactJSON());
         }

@@ -179,7 +179,7 @@ public class ResourceAnswer {
                     int offset = lines.length > 80 ? 10 : 0;
                     for (int i = offset, len = lines.length - offset; i < len; ++i) {
                         content.append(lines[i]).append("\n");
-                        if (content.length() >= ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT - 100) {
+                        if (content.length() >= ModelConfig.BAIZE_CONTEXT_LIMIT - 100) {
                             break;
                         }
                     }

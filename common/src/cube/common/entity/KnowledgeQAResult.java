@@ -44,7 +44,7 @@ public class KnowledgeQAResult implements JSONable {
 
     public List<KnowledgeSource> sources;
 
-    public AIGCGenerationRecord record;
+    public GenerativeRecord record;
 
     public AIGCConversationResponse conversationResponse;
 
@@ -61,7 +61,7 @@ public class KnowledgeQAResult implements JSONable {
             this.prompt = json.getString("prompt");
         }
         if (json.has("record")) {
-            this.record = new AIGCGenerationRecord(json.getJSONObject("record"));
+            this.record = new GenerativeRecord(json.getJSONObject("record"));
         }
         if (json.has("sources")) {
             JSONArray array = json.getJSONArray("sources");

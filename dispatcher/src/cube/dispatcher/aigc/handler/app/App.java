@@ -198,14 +198,14 @@ public final class App {
             }
 
             if (!fileLabelList.isEmpty()) {
-                AIGCGenerationRecord record = new AIGCGenerationRecord(fileLabelList);
+                GenerativeRecord record = new GenerativeRecord(fileLabelList);
                 records.put(record.toJSON());
                 if (Logger.isDebugLevel()) {
                     Logger.d(this.getClass(), "#requestConversation - Use file - num: " + fileLabelList.size());
                 }
             }
             if (!contentList.isEmpty()) {
-                AIGCGenerationRecord record = new AIGCGenerationRecord(contentList.toArray(new String[0]));
+                GenerativeRecord record = new GenerativeRecord(contentList.toArray(new String[0]));
                 records.put(record.toJSON());
                 if (Logger.isDebugLevel()) {
                     Logger.d(this.getClass(), "#requestConversation - Use text - num: " + contentList.size());

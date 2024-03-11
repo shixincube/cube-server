@@ -27,7 +27,7 @@
 package cube.service.aigc.listener;
 
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCGenerationRecord;
+import cube.common.entity.GenerativeRecord;
 import cube.common.state.AIGCStateCode;
 
 /**
@@ -37,7 +37,7 @@ public interface TextToImageListener {
 
     void onProcessing(AIGCChannel channel);
 
-    void onCompleted(AIGCGenerationRecord record);
+    void onCompleted(GenerativeRecord record);
 
     void onFailed(AIGCChannel channel, AIGCStateCode stateCode);
 }

@@ -264,7 +264,7 @@ public class PsychologyScene {
         }
 
         // 设置使用的单元
-        workflow.setUnitName("Baize", 1200);
+        workflow.setUnitName(ModelConfig.BAIZE_NEXT_UNIT, ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT);
 
         // 制作报告
         return workflow.make(theme, paragraphInferrable);

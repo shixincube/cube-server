@@ -1380,7 +1380,7 @@ public class KnowledgeBase {
      */
     public boolean performKnowledgeQA(String channelCode, String unitName, String query,
                                       int searchTopK, int searchFetchK,
-                                      List<String> knowledgeCategories, List<AIGCGenerationRecord> recordList,
+                                      List<String> knowledgeCategories, List<GenerativeRecord> recordList,
                                       KnowledgeQAListener listener) {
         query = query.replaceAll("\n", "");
 
@@ -1418,7 +1418,7 @@ public class KnowledgeBase {
                     channel.setLastUnitMetaSn(sn);
 
                     KnowledgeQAResult result = new KnowledgeQAResult(queryForResult, "");
-                    AIGCGenerationRecord record = new AIGCGenerationRecord(sn, unitName, queryForResult, EMPTY_BASE_ANSWER,
+                    GenerativeRecord record = new GenerativeRecord(sn, unitName, queryForResult, EMPTY_BASE_ANSWER,
                             System.currentTimeMillis(), new ComplexContext(ComplexContext.Type.Simplex));
                     result.record = record;
                     listener.onCompleted(channel, result);
@@ -1460,7 +1460,7 @@ public class KnowledgeBase {
         String prompt = this.optimizePrompt(unitName, promptMetadata, query, knowledgeCategories, attachmentContents);
 
         // 查询知识概念
-        List<AIGCGenerationRecord> paraphrases = this.makeParaphrases(knowledgeCategories,
+        List<GenerativeRecord> paraphrases = this.makeParaphrases(knowledgeCategories,
                 ModelConfig.getPromptLengthLimit(unitName) - prompt.length(), unitName);
 
         final KnowledgeQAResult result = new KnowledgeQAResult(query, prompt);
@@ -1491,7 +1491,7 @@ public class KnowledgeBase {
             this.service.generateText(channel, unit, query, prompt, paraphrases, null, false, true,
                     new GenerateTextListener() {
                 @Override
-                public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
+                public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                     // 结果记录
                     result.record = record;
 
@@ -1580,7 +1580,7 @@ public class KnowledgeBase {
                         // 记录内容
                         content.append(text).append("\n");
                         // 判断长度
-                        if (content.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
+                        if (content.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
                             break;
                         }
                     }
@@ -1647,8 +1647,8 @@ public class KnowledgeBase {
         }
     }
 
-    private List<AIGCGenerationRecord> makeParaphrases(List<String> knowledgeCategories, int lengthLimit,
-                                                       String unitName) {
+    private List<GenerativeRecord> makeParaphrases(List<String> knowledgeCategories, int lengthLimit,
+                                                   String unitName) {
         if (null == knowledgeCategories || lengthLimit < 1) {
             return null;
         }
@@ -1662,14 +1662,14 @@ public class KnowledgeBase {
             paraphraseList.addAll(list);
         }
 
-        List<AIGCGenerationRecord> result = new ArrayList<>();
+        List<GenerativeRecord> result = new ArrayList<>();
         int total = 0;
         for (KnowledgeParaphrase paraphrase : paraphraseList) {
             total += paraphrase.getWord().length() + paraphrase.getParaphrase().length();
             if (total >= lengthLimit) {
                 break;
             }
-            AIGCGenerationRecord record = new AIGCGenerationRecord(unitName,
+            GenerativeRecord record = new GenerativeRecord(unitName,
                     paraphrase.getWord(), paraphrase.getParaphrase());
             result.add(record);
         }
@@ -1683,11 +1683,11 @@ public class KnowledgeBase {
      * @param records
      * @return 返回仅当次需要处理的文本。
      */
-    private List<String> processQueryAttachments(List<AIGCGenerationRecord> records) {
+    private List<String> processQueryAttachments(List<GenerativeRecord> records) {
         List<String> contents = new ArrayList<>();
         List<FileLabel> fileLabels = new ArrayList<>();
 
-        for (AIGCGenerationRecord record : records) {
+        for (GenerativeRecord record : records) {
             if (record.hasQueryAddition()) {
                 for (String text : record.queryAdditions) {
                     String[] buf = text.split("\n");
@@ -1760,8 +1760,7 @@ public class KnowledgeBase {
             lineList.add(line);
         }
 
-        final int maxWords = (ModelConfig.isExtraLongPromptUnit(unitName)
-                ? ModelConfig.EXTRA_LONG_PROMPT_LENGTH : ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) - 60;
+        final int maxWords = ModelConfig.getPromptLengthLimit(unitName) - 60;
         if (totalWords < maxWords) {
             // 补充内容
             // 提取第一行
@@ -1772,7 +1771,7 @@ public class KnowledgeBase {
                 // 读取附件内容
                 StringBuilder contentBuf = new StringBuilder();
                 for (String content : attachmentContents) {
-                    if (contentBuf.length() + content.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
+                    if (contentBuf.length() + content.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
                         break;
                     }
                     contentBuf.append(content).append("\n");
@@ -1861,7 +1860,7 @@ public class KnowledgeBase {
                             continue;
                         }
                         buf.append(text).append("\n");
-                        if (buf.length() >= ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
+                        if (buf.length() >= ModelConfig.BAIZE_CONTEXT_LIMIT) {
                             break;
                         }
                     }
@@ -2026,7 +2025,7 @@ public class KnowledgeBase {
         this.activateProgress.defineTotalProgress(contentList.size() + 1);
 
         AtomicInteger count = new AtomicInteger(0);
-        List<AIGCGenerationRecord> pipelineRecordList = new ArrayList<>();
+        List<GenerativeRecord> pipelineRecordList = new ArrayList<>();
 
         (new Thread(new Runnable() {
             @Override
@@ -2047,7 +2046,7 @@ public class KnowledgeBase {
                 if (!pipelineRecordList.isEmpty()) {
                     final int limit = 1500;
                     StringBuilder buf = new StringBuilder();
-                    for (AIGCGenerationRecord record : pipelineRecordList) {
+                    for (GenerativeRecord record : pipelineRecordList) {
                         String[] paragraphs = record.answer.split("\n");
                         // 跳过第一行
                         for (int i = 1; i < paragraphs.length; ++i) {
@@ -2078,7 +2077,7 @@ public class KnowledgeBase {
                     service.generateText(channel, unit, matchingSchema.getComprehensiveQuery(), prompt, null,
                             null, false, false, new GenerateTextListener() {
                         @Override
-                        public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
+                        public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                             activateProgress.setCode(AIGCStateCode.Ok.code);
 
                             KnowledgeQAResult result = new KnowledgeQAResult(matchingSchema.getComprehensiveQuery(), prompt);
@@ -2130,7 +2129,7 @@ public class KnowledgeBase {
             this.service.generateText(channel, unit, matchingSchema.getSectionQuery(),
                 prompt, null, null, false, false, new GenerateTextListener() {
                     @Override
-                    public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
+                    public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                         synchronized (pipelineRecordList) {
                             pipelineRecordList.add(record);
                         }

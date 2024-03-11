@@ -34,9 +34,11 @@ import org.json.JSONObject;
  */
 public class ModelConfig implements JSONable {
 
-    public static int EXTRA_LONG_PROMPT_LENGTH = 5000;
+    public static int EXTRA_LONG_CONTEXT_LIMIT = 5000;
 
-    public static int BAIZE_UNIT_CONTEXT_LIMIT = 1000;
+    public static int BAIZE_CONTEXT_LIMIT = 1000;
+
+    public static int BAIZE_NEXT_CONTEXT_LIMIT = 3000;
 
 
     public final static String[] TEXT_TO_IMAGE_UNIT = new String[] { "DallE" };
@@ -45,7 +47,7 @@ public class ModelConfig implements JSONable {
 
     public final static String BAIZE_UNIT = "Chat";
 
-    public final static String BAIZE_NEXT_UNIT = "BaizeNEXT";
+    public final static String BAIZE_NEXT_UNIT = "BaizeNext";
 
     public final static String PSYCHOLOGY_UNIT = "Psychology";
 
@@ -190,10 +192,15 @@ public class ModelConfig implements JSONable {
      */
     public static int getPromptLengthLimit(String unitName) {
         if (isExtraLongPromptUnit(unitName)) {
-            return EXTRA_LONG_PROMPT_LENGTH;
+            return EXTRA_LONG_CONTEXT_LIMIT;
         }
         else {
-            return BAIZE_UNIT_CONTEXT_LIMIT;
+            if (unitName.equalsIgnoreCase("BaizeNext")) {
+                return BAIZE_NEXT_CONTEXT_LIMIT;
+            }
+            else {
+                return BAIZE_CONTEXT_LIMIT;
+            }
         }
     }
 }

@@ -385,12 +385,15 @@ public class AIGCService extends AbstractModule {
                     properties.getProperty("enabled.search", "false"));
 
             // 上下文长度限制
-            ModelConfig.EXTRA_LONG_PROMPT_LENGTH = Integer.parseInt(
+            ModelConfig.EXTRA_LONG_CONTEXT_LIMIT = Integer.parseInt(
                     properties.getProperty("context.length",
-                            Integer.toString(ModelConfig.EXTRA_LONG_PROMPT_LENGTH)));
-            ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT = Integer.parseInt(
+                            Integer.toString(ModelConfig.EXTRA_LONG_CONTEXT_LIMIT)));
+            ModelConfig.BAIZE_CONTEXT_LIMIT = Integer.parseInt(
                     properties.getProperty("context.length.baize",
-                            Integer.toString(ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT)));
+                            Integer.toString(ModelConfig.BAIZE_CONTEXT_LIMIT)));
+            ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT = Integer.parseInt(
+                    properties.getProperty("context.length.baize_next",
+                            Integer.toString(ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT)));
 
             // 页面阅读器 URL
             if (properties.containsKey("page.reader.url") || properties.containsKey("page.searcher")) {
@@ -417,8 +420,9 @@ public class AIGCService extends AbstractModule {
 
         Logger.i(this.getClass(), "AI Service - Recognize Context Enabled: " + this.enabledRecognizeContext);
         Logger.i(this.getClass(), "AI Service - Search Enabled: " + this.enabledSearch);
-        Logger.i(this.getClass(), "AI Service - Context length: " + ModelConfig.EXTRA_LONG_PROMPT_LENGTH);
-        Logger.i(this.getClass(), "AI Service - Baize context limit: " + ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT);
+        Logger.i(this.getClass(), "AI Service - Context length: " + ModelConfig.EXTRA_LONG_CONTEXT_LIMIT);
+        Logger.i(this.getClass(), "AI Service - Baize context limit: " + ModelConfig.BAIZE_CONTEXT_LIMIT);
+        Logger.i(this.getClass(), "AI Service - BaizeNext context limit: " + ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT);
         if (this.useAgent) {
             Logger.i(this.getClass(), "AI Service - Agent URL: " + Agent.getInstance().getUrl());
         }
@@ -993,7 +997,7 @@ public class AIGCService extends AbstractModule {
                 this.generateText(channel, unit, maq.articleQuery.query, maq.articleQuery.query,
                         null, null, false, false, new GenerateTextListener() {
                     @Override
-                    public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
+                    public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                         maq.articleQuery.answer = record.answer.replaceAll(",", "，");
                         synchronized (result) {
                             result.append(maq.articleQuery.output());
@@ -1040,7 +1044,7 @@ public class AIGCService extends AbstractModule {
      * @return
      */
     public boolean generateText(String channelCode, String content, String unitName, int numHistories,
-                                List<AIGCGenerationRecord> records, List<String> categories,
+                                List<GenerativeRecord> records, List<String> categories,
                                 boolean recordable, boolean searchable, boolean networking,
                                 GenerateTextListener listener) {
         if (!this.isStarted()) {
@@ -1124,7 +1128,7 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
-    public String syncGenerateText(String unitName, String prompt, List<AIGCGenerationRecord> history) {
+    public String syncGenerateText(String unitName, String prompt, List<GenerativeRecord> history) {
         if (this.useAgent) {
             Logger.d(this.getClass(), "#syncGenerateText - Agent - \"" + unitName + "\" - history:"
                     + ((null != history) ? history.size() : 0));
@@ -1138,7 +1142,7 @@ public class AIGCService extends AbstractModule {
 
         JSONArray historyArray = new JSONArray();
         if (null != history) {
-            for (AIGCGenerationRecord record : history) {
+            for (GenerativeRecord record : history) {
                 historyArray.put(record.toJSON());
             }
         }
@@ -1191,7 +1195,7 @@ public class AIGCService extends AbstractModule {
         this.generateText(channel, unit, prompt, prompt, null, null, false, false,
                 new GenerateTextListener() {
             @Override
-            public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
+            public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                 result.append(record.answer);
 
                 synchronized (channel) {
@@ -1219,7 +1223,7 @@ public class AIGCService extends AbstractModule {
     }
 
     public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt,
-                             List<AIGCGenerationRecord> records, List<String> categories,
+                             List<GenerativeRecord> records, List<String> categories,
                              boolean searchable, boolean recordable, GenerateTextListener listener) {
         if (this.useAgent) {
             unit = Agent.getInstance().getUnit();
@@ -2458,7 +2462,7 @@ public class AIGCService extends AbstractModule {
 
         protected String originalQuery;
 
-        protected List<AIGCGenerationRecord> records;
+        protected List<GenerativeRecord> records;
 
         protected List<String> categories;
 
@@ -2475,7 +2479,7 @@ public class AIGCService extends AbstractModule {
         protected boolean networkingEnabled = false;
 
         public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, List<String> categories,
-                                    List<AIGCGenerationRecord> records, GenerateTextListener listener) {
+                                    List<GenerativeRecord> records, GenerateTextListener listener) {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
@@ -2527,7 +2531,7 @@ public class AIGCService extends AbstractModule {
             // 设置是否进行联网分析
             complexContext.setNetworking(this.networkingEnabled);
 
-            AIGCGenerationRecord result = null;
+            GenerativeRecord result = null;
 
             final StringBuilder realPrompt = new StringBuilder(this.content);
 
@@ -2551,7 +2555,7 @@ public class AIGCService extends AbstractModule {
 
                 boolean useQueryAttachment = false;
                 if (null != this.records) {
-                    for (AIGCGenerationRecord record : this.records) {
+                    for (GenerativeRecord record : this.records) {
                         if (record.hasQueryFile() || record.hasQueryAddition()) {
                             useQueryAttachment = true;
                             break;
@@ -2564,7 +2568,7 @@ public class AIGCService extends AbstractModule {
                     StringBuilder buf = new StringBuilder();
                     int bufLen = 0;
 
-                    for (AIGCGenerationRecord record : this.records) {
+                    for (GenerativeRecord record : this.records) {
                         if (record.hasQueryAddition()) {
                             for (String text : record.queryAdditions) {
                                 String[] qaBuf = text.split("\n");
@@ -2647,14 +2651,14 @@ public class AIGCService extends AbstractModule {
                 else {
                     // 处理多轮历史记录
                     int lengthCount = 0;
-                    List<AIGCGenerationRecord> candidateRecords = new ArrayList<>();
+                    List<GenerativeRecord> candidateRecords = new ArrayList<>();
                     if (null == this.records) {
                         int validNumHistories = Math.min(this.numHistories, maxHistories);
                         if (validNumHistories > 0) {
-                            List<AIGCGenerationRecord> records = this.channel.getLastHistory(validNumHistories);
+                            List<GenerativeRecord> records = this.channel.getLastHistory(validNumHistories);
                             // 正序列表转为倒序以便计算上下文长度
                             Collections.reverse(records);
-                            for (AIGCGenerationRecord record : records) {
+                            for (GenerativeRecord record : records) {
                                 // 判断长度
                                 lengthCount += record.totalWords();
                                 if (lengthCount > lengthLimit) {
@@ -2670,7 +2674,7 @@ public class AIGCService extends AbstractModule {
                     }
                     else {
                         for (int i = this.records.size() - 1; i >= 0; --i) {
-                            AIGCGenerationRecord record = this.records.get(i);
+                            GenerativeRecord record = this.records.get(i);
                             lengthCount += record.totalWords();
                             // 判断长度
                             if (lengthCount > lengthLimit) {
@@ -2695,7 +2699,7 @@ public class AIGCService extends AbstractModule {
 
                     // 写入数组
                     JSONArray history = new JSONArray();
-                    for (AIGCGenerationRecord record : candidateRecords) {
+                    for (GenerativeRecord record : candidateRecords) {
                         history.put(record.toJSON());
                     }
                     data.put("history", history);
@@ -2946,7 +2950,7 @@ public class AIGCService extends AbstractModule {
                 StringBuilder buf = new StringBuilder();
                 for (String text : page.textList) {
                     buf.append(text).append("\n");
-                    if (buf.length() > ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT) {
+                    if (buf.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
                         break;
                     }
                 }
@@ -3003,7 +3007,7 @@ public class AIGCService extends AbstractModule {
             context.fixNetworkingResult(pages, result);
         }
 
-        private void fillRecords(List<AIGCGenerationRecord> recordList, List<String> categories, int lengthLimit,
+        private void fillRecords(List<GenerativeRecord> recordList, List<String> categories, int lengthLimit,
                                  String unitName) {
             int total = 0;
             for (String category : categories) {
@@ -3014,7 +3018,7 @@ public class AIGCService extends AbstractModule {
                         break;
                     }
 
-                    AIGCGenerationRecord record = new AIGCGenerationRecord(unitName,
+                    GenerativeRecord record = new GenerativeRecord(unitName,
                             paraphrase.getWord(), paraphrase.getParaphrase());
                     recordList.add(record);
                 }
@@ -3071,7 +3075,7 @@ public class AIGCService extends AbstractModule {
 
             if (null != this.parameter.records) {
                 JSONArray history = new JSONArray();
-                for (AIGCGenerationRecord record : this.parameter.records) {
+                for (GenerativeRecord record : this.parameter.records) {
                     history.put(record.toJSON());
                     // 字数
                     totalLength += record.totalWords();
@@ -3082,7 +3086,7 @@ public class AIGCService extends AbstractModule {
                 List<AIGCConversationResponse> responseList = this.channel.extractConversationResponses();
                 JSONArray history = new JSONArray();
                 for (AIGCConversationResponse response : responseList) {
-                    AIGCGenerationRecord record = response.toRecord();
+                    GenerativeRecord record = response.toRecord();
                     history.put(record.toJSON());
                     // 字数
                     totalLength += record.totalWords();
@@ -3336,7 +3340,7 @@ public class AIGCService extends AbstractModule {
                 this.fileLabel.resetURLsToken(this.channel.getAuthToken().getCode());
 
                 // 记录
-                AIGCGenerationRecord record = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
+                GenerativeRecord record = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
                         this.text, this.fileLabel);
                 this.listener.onCompleted(record);
 

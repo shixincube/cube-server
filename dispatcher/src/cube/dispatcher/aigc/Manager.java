@@ -1196,7 +1196,7 @@ public class Manager implements Tickable, PerformerListener {
         else if (Packet.extractCode(responsePacket) == AIGCStateCode.Ok.code) {
             ChatFuture future = null;
             if (Consts.PATTERN_CHAT.equals(pattern)) {
-                AIGCGenerationRecord record = new AIGCGenerationRecord(Packet.extractDataPayload(responsePacket));
+                GenerativeRecord record = new GenerativeRecord(Packet.extractDataPayload(responsePacket));
                 if (null == record.query) {
                     record.query = content;
                 }
@@ -1909,7 +1909,7 @@ public class Manager implements Tickable, PerformerListener {
 
         public AIGCChannel channel;
 
-        public AIGCGenerationRecord record;
+        public GenerativeRecord record;
 
         public KnowledgeQAResult knowledgeResult;
 
@@ -1917,7 +1917,7 @@ public class Manager implements Tickable, PerformerListener {
             this.channel = channel;
         }
 
-        protected ChatFuture(AIGCGenerationRecord record) {
+        protected ChatFuture(GenerativeRecord record) {
             this.record = record;
         }
 

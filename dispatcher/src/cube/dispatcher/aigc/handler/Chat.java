@@ -30,7 +30,7 @@ import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCGenerationRecord;
+import cube.common.entity.GenerativeRecord;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -149,7 +149,7 @@ public class Chat extends ContextHandler {
                 // 已结束
                 if (null != future.record) {
                     // Record 转结果
-                    AIGCGenerationRecord record = future.record;
+                    GenerativeRecord record = future.record;
                     JSONObject responseData = new JSONObject();
                     responseData.put("sn", record.sn);
                     responseData.put("participant", AI_NAME);

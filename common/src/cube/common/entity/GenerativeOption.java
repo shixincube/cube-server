@@ -26,26 +26,24 @@
 
 package cube.common.entity;
 
-import java.util.List;
+import cube.common.JSONable;
+import org.json.JSONObject;
 
 /**
- * 会话参数。
+ * AIGC 生成选项。
  */
-public class AIGCConversationParameter {
+public class GenerativeOption implements JSONable {
 
-    public final float temperature;
+    public GenerativeOption() {
+    }
 
-    public final float topP;
+    @Override
+    public JSONObject toJSON() {
+        return null;
+    }
 
-    public final float repetitionPenalty;
-
-    public final List<GenerativeRecord> records;
-
-    public AIGCConversationParameter(float temperature, float topP, float repetitionPenalty,
-                                     List<GenerativeRecord> records) {
-        this.temperature = temperature;
-        this.topP = topP;
-        this.repetitionPenalty = repetitionPenalty;
-        this.records = records;
+    @Override
+    public JSONObject toCompactJSON() {
+        return null;
     }
 }

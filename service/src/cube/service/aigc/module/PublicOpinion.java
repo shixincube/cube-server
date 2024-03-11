@@ -68,7 +68,7 @@ public class PublicOpinion implements Module {
 
     private final static String ArticleQueryOutputFormat = "在《%s》这篇文章里，%s";
 
-    private int maxArticleLength = ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT;
+    private int maxArticleLength = ModelConfig.BAIZE_CONTEXT_LIMIT;
 
     private List<String> matchingWords;
 

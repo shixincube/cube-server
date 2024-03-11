@@ -37,7 +37,7 @@ import cube.aigc.ModelConfig;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCGenerationRecord;
+import cube.common.entity.GenerativeRecord;
 import cube.common.entity.KnowledgeQAResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
@@ -94,12 +94,12 @@ public class ChatTask extends ServiceTask {
             categories.add(categoryArray.getString(i));
         }
 
-        List<AIGCGenerationRecord> recordList = null;
+        List<GenerativeRecord> recordList = null;
         if (null != records) {
             recordList = new ArrayList<>();
             try {
                 for (int i = 0; i < records.length(); ++i) {
-                    AIGCGenerationRecord record = new AIGCGenerationRecord(records.getJSONObject(i));
+                    GenerativeRecord record = new GenerativeRecord(records.getJSONObject(i));
                     recordList.add(record);
                 }
             } catch (Exception e) {
@@ -133,7 +133,7 @@ public class ChatTask extends ServiceTask {
                     }
 
                     @Override
-                    public void onCompleted(AIGCGenerationRecord record) {
+                    public void onCompleted(GenerativeRecord record) {
                         cellet.speak(talkContext,
                                 makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
                         markResponseTime();
@@ -143,7 +143,7 @@ public class ChatTask extends ServiceTask {
                     public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                         if (stateCode == AIGCStateCode.Interrupted) {
                             // 被中断
-                            AIGCGenerationRecord record = new AIGCGenerationRecord(unit,
+                            GenerativeRecord record = new GenerativeRecord(unit,
                                     content, Consts.ANSWER_INTERRUPTED);
                             cellet.speak(talkContext,
                                     makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
@@ -162,7 +162,7 @@ public class ChatTask extends ServiceTask {
                 success = service.generateText(code, content, unit, histories, recordList, categories, recordable,
                         searchable, networking, new GenerateTextListener() {
                     @Override
-                    public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
+                    public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                         cellet.speak(talkContext,
                                 makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
                         markResponseTime();
@@ -181,7 +181,7 @@ public class ChatTask extends ServiceTask {
                     public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                         if (stateCode == AIGCStateCode.Interrupted) {
                             // 被中断
-                            AIGCGenerationRecord record = new AIGCGenerationRecord(unit,
+                            GenerativeRecord record = new GenerativeRecord(unit,
                                     content, Consts.ANSWER_INTERRUPTED);
                             cellet.speak(talkContext,
                                     makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));

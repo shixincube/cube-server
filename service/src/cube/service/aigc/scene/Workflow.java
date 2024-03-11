@@ -30,7 +30,7 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCGenerationRecord;
+import cube.common.entity.GenerativeRecord;
 import cube.service.aigc.AIGCService;
 import cube.util.TextUtils;
 
@@ -60,7 +60,7 @@ public class Workflow {
 
     private String unitName = ModelConfig.BAIZE_UNIT;
 
-    private int maxContext = ModelConfig.BAIZE_UNIT_CONTEXT_LIMIT - 60;
+    private int maxContext = ModelConfig.BAIZE_CONTEXT_LIMIT - 60;
 
     public Workflow(EvaluationReport evaluationReport, AIGCChannel channel, AIGCService service) {
         this.evaluationReport = evaluationReport;
@@ -118,8 +118,8 @@ public class Workflow {
                 ReportParagraph paragraph = this.paragraphList.get(i);
 
                 // 生成标题的上下文内容
-                List<AIGCGenerationRecord> records = new ArrayList<>();
-                records.add(new AIGCGenerationRecord(this.unitName, paragraph.title,
+                List<GenerativeRecord> records = new ArrayList<>();
+                records.add(new GenerativeRecord(this.unitName, paragraph.title,
                         template.getExplain(i)));
                 if (Logger.isDebugLevel()) {
                     Logger.d(this.getClass(), "#make - \"" + paragraph.title + "\" context num: " + records.size());
@@ -279,10 +279,10 @@ public class Workflow {
         return buf.toString();
     }
 
-    private List<AIGCGenerationRecord> makeRepresentationContext(List<EvaluationReport.Representation> list) {
-        List<AIGCGenerationRecord> result = new ArrayList<>();
+    private List<GenerativeRecord> makeRepresentationContext(List<EvaluationReport.Representation> list) {
+        List<GenerativeRecord> result = new ArrayList<>();
         for (EvaluationReport.Representation representation : list) {
-            AIGCGenerationRecord record = new AIGCGenerationRecord(this.unitName,
+            GenerativeRecord record = new GenerativeRecord(this.unitName,
                     representation.knowledgeStrategy.getComment().word,
                     representation.knowledgeStrategy.getInterpretation());
             result.add(record);

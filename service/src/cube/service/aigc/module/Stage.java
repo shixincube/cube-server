@@ -98,7 +98,7 @@ public class Stage extends Entity {
                                 articleQuery.query, articleQuery.query, null, null, false, false,
                                 new GenerateTextListener() {
                                     @Override
-                                    public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
+                                    public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                                         PublicOpinion.ArticleQuery current = findArticleQuery(negativeQueries,
                                                 record.query);
                                         if (null != current) {
@@ -128,7 +128,7 @@ public class Stage extends Entity {
                                 articleQuery.query, articleQuery.query, null, null, false, false,
                                 new GenerateTextListener() {
                                     @Override
-                                    public void onGenerated(AIGCChannel channel, AIGCGenerationRecord record) {
+                                    public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                                         PublicOpinion.ArticleQuery current = findArticleQuery(positiveQueries,
                                                 record.query);
                                         if (null != current) {

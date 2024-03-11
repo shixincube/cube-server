@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * AIGC 内容生成记录。
  */
-public class AIGCGenerationRecord implements JSONable {
+public class GenerativeRecord implements JSONable {
 
     public final long sn;
 
@@ -64,7 +64,7 @@ public class AIGCGenerationRecord implements JSONable {
      *
      * @param queryAdditions
      */
-    public AIGCGenerationRecord(String[] queryAdditions) {
+    public GenerativeRecord(String[] queryAdditions) {
         this.sn = Utils.generateSerialNumber();
         this.queryAdditions = queryAdditions;
         this.timestamp = System.currentTimeMillis();
@@ -75,13 +75,13 @@ public class AIGCGenerationRecord implements JSONable {
      *
      * @param queryFileLabels
      */
-    public AIGCGenerationRecord(List<FileLabel> queryFileLabels) {
+    public GenerativeRecord(List<FileLabel> queryFileLabels) {
         this.sn = Utils.generateSerialNumber();
         this.queryFileLabels = queryFileLabels;
         this.timestamp = System.currentTimeMillis();
     }
 
-    public AIGCGenerationRecord(String unit, String query, String answer) {
+    public GenerativeRecord(String unit, String query, String answer) {
         this.sn = Utils.generateSerialNumber();
         this.unit = unit;
         this.query = query;
@@ -89,7 +89,7 @@ public class AIGCGenerationRecord implements JSONable {
         this.timestamp = System.currentTimeMillis();
     }
 
-    public AIGCGenerationRecord(long sn, String unit, String query, String answer, long timestamp, ComplexContext context) {
+    public GenerativeRecord(long sn, String unit, String query, String answer, long timestamp, ComplexContext context) {
         this.sn = sn;
         this.unit = unit;
         this.query = query;
@@ -98,7 +98,7 @@ public class AIGCGenerationRecord implements JSONable {
         this.context = context;
     }
 
-    public AIGCGenerationRecord(long sn, String unit, String query, FileLabel answerFileLabel, long timestamp) {
+    public GenerativeRecord(long sn, String unit, String query, FileLabel answerFileLabel, long timestamp) {
         this.sn = sn;
         this.unit = unit;
         this.query = query;
@@ -107,7 +107,7 @@ public class AIGCGenerationRecord implements JSONable {
         this.timestamp = timestamp;
     }
 
-    public AIGCGenerationRecord(JSONObject json) {
+    public GenerativeRecord(JSONObject json) {
         if (json.has("sn")) {
             this.sn = json.getLong("sn");
         }
