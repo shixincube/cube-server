@@ -30,7 +30,6 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.FrameStructure;
-import cube.aigc.psychology.composition.Score;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.composition.Tendency;
 import cube.aigc.psychology.material.House;
@@ -567,6 +566,14 @@ public class Evaluation {
             if (house.hasFence()) {
                 result.addFeature(Comment.Defensiveness, Tendency.Positive);
             }
+
+
+            // 判断房屋是否涂鸦
+            if (house.isDoodle()) {
+                // 涂鸦的房子
+                result.addScore(ScoreIndicator.Anxiety, 1);
+                Logger.d(this.getClass(), "#evalHouse - House is doodle - " + house.doodle.toJSON().toString(4));
+            }
         }
 
         return result;
@@ -746,6 +753,13 @@ public class Evaluation {
                     }
                 }
             }
+
+            // 判断树是否涂鸦
+            if (tree.isDoodle()) {
+                // 涂鸦的树
+                result.addScore(ScoreIndicator.Anxiety, 1);
+                Logger.d(this.getClass(), "#evalTree - Tree is doodle - " + tree.doodle.toJSON().toString(4));
+            }
         }
 
         return result;
@@ -894,6 +908,13 @@ public class Evaluation {
                     }
                 }
             }
+
+            // 判断人是否涂鸦
+            if (person.isDoodle()) {
+                // 涂鸦的人
+                result.addScore(ScoreIndicator.Anxiety, 1);
+                Logger.d(this.getClass(), "#evalPerson - Person is doodle - " + person.doodle.toJSON().toString(4));
+            }
         }
 
         return result;
@@ -907,6 +928,11 @@ public class Evaluation {
             result.addFeature(Comment.PositiveExpectation, Tendency.Positive);
 
             result.addScore(ScoreIndicator.Optimism, 1);
+
+            if (this.painting.getSun().isDoodle()) {
+                // 涂鸦的太阳
+                result.addScore(ScoreIndicator.Depression, 1);
+            }
         }
 
         if (this.painting.hasMoon()) {

@@ -689,6 +689,13 @@ public class Painting implements JSONable {
         return (null != this.sunList);
     }
 
+    public Sun getSun() {
+        if (null == this.sunList) {
+            return null;
+        }
+        return this.sunList.get(0);
+    }
+
     public void addMoon(Moon moon) {
         if (null == this.moonList) {
             this.moonList = new ArrayList<>();

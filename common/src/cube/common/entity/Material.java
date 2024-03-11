@@ -74,6 +74,21 @@ public class Material implements JSONable {
         this.doodle = new Doodle(json.getJSONObject("doodle"));
     }
 
+    public boolean isDoodle() {
+        // 涂鸦特征：轮廓密度高，层密度低
+        if (this.doodle.isValid()) {
+            // 判断最大值
+            if (this.doodle.max >= 1.0) {
+                // 判断标准差和层密度
+                if (this.doodle.standardDeviation >= 0.4 && this.doodle.hierarchy <= 0.03) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

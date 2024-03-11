@@ -39,11 +39,14 @@ public class Doodle implements JSONable {
 
     public double standardDeviation;
 
+    public double hierarchy;
+
     public Doodle() {
         this.max = 0;
         this.avg = 0;
         this.squareDeviation = 0;
         this.standardDeviation = 0;
+        this.hierarchy = 0;
     }
 
     public Doodle(JSONObject json) {
@@ -51,6 +54,11 @@ public class Doodle implements JSONable {
         this.avg = Double.parseDouble(json.getString("avg"));
         this.squareDeviation = Double.parseDouble(json.getString("squareDeviation"));
         this.standardDeviation = Double.parseDouble(json.getString("standardDeviation"));
+        this.hierarchy = Double.parseDouble(json.getString("hierarchy"));
+    }
+
+    public boolean isValid() {
+        return this.max > 0 && this.squareDeviation > 0 && this.standardDeviation > 0 && this.hierarchy > 0;
     }
 
     @Override
@@ -60,6 +68,7 @@ public class Doodle implements JSONable {
         json.put("avg", Double.toString(this.avg));
         json.put("squareDeviation", Double.toString(this.squareDeviation));
         json.put("standardDeviation", Double.toString(this.standardDeviation));
+        json.put("hierarchy", Double.toString(this.hierarchy));
         return json;
     }
 
