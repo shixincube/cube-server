@@ -33,8 +33,6 @@ import cube.common.entity.*;
 import cube.service.aigc.AIGCService;
 import cube.util.TextUtils;
 
-import java.util.ArrayList;
-
 /**
  * 资源内容回答。
  */
@@ -186,7 +184,8 @@ public class ResourceAnswer {
 
                     if (content.length() > 10) {
                         String prompt = Consts.formatExtractContent(content.toString(), resource.title);
-                        String response = service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, null);
+                        String response = service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
+                                new GenerativeOption(), null);
                         if (null != response) {
                             result.append(response).append("\n");
                         }

@@ -30,10 +30,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
-import cube.common.entity.AICapability;
-import cube.common.entity.GenerativeRecord;
-import cube.common.entity.AIGCUnit;
-import cube.common.entity.Contact;
+import cube.common.entity.*;
 import cube.util.HttpClientFactory;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.WWWAuthenticationProtocolHandler;
@@ -94,10 +91,11 @@ public final class Agent {
     }
 
     public String generateText(String channelCode, String content, List<GenerativeRecord> records) {
-        return this.generateText(channelCode, this.unit.getCapability().getName(), content, records);
+        return this.generateText(channelCode, this.unit.getCapability().getName(), content, new GenerativeOption(), records);
     }
 
-    public String generateText(String channelCode, String unitName, String content, List<GenerativeRecord> records) {
+    public String generateText(String channelCode, String unitName, String content, GenerativeOption option,
+                               List<GenerativeRecord> records) {
         String code = channelCode;
         if (null == code) {
             code = this.channelCode;
@@ -119,6 +117,7 @@ public final class Agent {
             data.put("code", code);
             data.put("content", content);
             data.put("unit", unitName);
+            data.put("option", (null == option) ? (new GenerativeOption()).toJSON() : option);
             data.put("histories", 0);
             data.put("pattern", Consts.PATTERN_CHAT);
             data.put("recordable", false);

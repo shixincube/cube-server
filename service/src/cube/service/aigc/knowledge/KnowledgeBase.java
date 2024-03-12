@@ -1488,8 +1488,8 @@ public class KnowledgeBase {
             System.out.println(prompt);
             System.out.println("----------------------------------------");
             final List<KnowledgeSource> sources = promptMetadata.mergeSources();
-            this.service.generateText(channel, unit, query, prompt, paraphrases, null, false, true,
-                    new GenerateTextListener() {
+            this.service.generateText(channel, unit, query, prompt, new GenerativeOption(), paraphrases,
+                    null, false, true, new GenerateTextListener() {
                 @Override
                 public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                     // 结果记录
@@ -1595,7 +1595,7 @@ public class KnowledgeBase {
 
                 // 将所有内容推送给模型推理
                 String prompt = Consts.formatExtractContent(content.toString(), query);
-                String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, null);
+                String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GenerativeOption(), null);
                 if (null == result) {
                     Logger.w(this.getClass(), "#extractDocumentContent - Unit error, no answer: " + this.baseInfo.name);
                     continue;
@@ -1782,7 +1782,8 @@ public class KnowledgeBase {
 
                 String contentPrompt = Consts.formatQuestion(contentBuf.toString(), query);
                 // 对内容进行推理
-                String result = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_UNIT, contentPrompt);
+                String result = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_UNIT, contentPrompt,
+                        new GenerativeOption());
                 if (null != result) {
                     // 添加结果
                     lineList.addFirst(result);
@@ -1868,7 +1869,8 @@ public class KnowledgeBase {
 
                     String articlePrompt = Consts.formatQuestion(buf.toString(), Consts.KNOWLEDGE_SECTION_PROMPT);
                     // 对文章内容进行推理
-                    String articleResult = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_UNIT, articlePrompt);
+                    String articleResult = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_UNIT, articlePrompt,
+                            new GenerativeOption());
                     if (null == articleResult) {
                         articleResult = article.summarization;
                     }
@@ -2074,8 +2076,8 @@ public class KnowledgeBase {
 
                     String prompt = Consts.formatQuestion(buf.toString(), matchingSchema.getComprehensiveQuery());
 
-                    service.generateText(channel, unit, matchingSchema.getComprehensiveQuery(), prompt, null,
-                            null, false, false, new GenerateTextListener() {
+                    service.generateText(channel, unit, matchingSchema.getComprehensiveQuery(), prompt, new GenerativeOption(),
+                            null, null, false, false, new GenerateTextListener() {
                         @Override
                         public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                             activateProgress.setCode(AIGCStateCode.Ok.code);
@@ -2127,7 +2129,7 @@ public class KnowledgeBase {
             String prompt = Consts.formatQuestion(text, matchingSchema.getSectionQuery());
 
             this.service.generateText(channel, unit, matchingSchema.getSectionQuery(),
-                prompt, null, null, false, false, new GenerateTextListener() {
+                prompt, new GenerativeOption(), null, null, false, false, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                         synchronized (pipelineRecordList) {

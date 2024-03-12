@@ -27,6 +27,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cube.aigc.Consts;
+import cube.common.entity.GenerativeOption;
 import cube.common.entity.GenerativeRecord;
 import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
@@ -108,7 +109,7 @@ public class ImprovementChat extends ContextHandler {
 
             // Chat
             GenerativeRecord record = Manager.getInstance().chat(token, channelCode, pattern,
-                    content, desc, histories, records, false, false, false,
+                    content, desc, new GenerativeOption(), histories, records, false, false, false,
                     null, 10, 50).record;
             if (null == record) {
                 // 发生错误

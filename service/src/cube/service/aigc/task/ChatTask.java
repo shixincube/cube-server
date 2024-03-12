@@ -37,6 +37,7 @@ import cube.aigc.ModelConfig;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
+import cube.common.entity.GenerativeOption;
 import cube.common.entity.GenerativeRecord;
 import cube.common.entity.KnowledgeQAResult;
 import cube.common.state.AIGCStateCode;
@@ -81,6 +82,8 @@ public class ChatTask extends ServiceTask {
         String content = packet.data.getString("content").trim();
         String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : Consts.PATTERN_CHAT;
         String unit = packet.data.has("unit") ? packet.data.getString("unit") : ModelConfig.BAIZE_UNIT;
+        GenerativeOption option = packet.data.has("option") ?
+                new GenerativeOption(packet.data.getJSONObject("option")) : new GenerativeOption();
         int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 10;
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
         boolean recordable = packet.data.has("recordable") && packet.data.getBoolean("recordable");
@@ -159,7 +162,7 @@ public class ChatTask extends ServiceTask {
             }
             else {
                 // 执行文本生成
-                success = service.generateText(code, content, unit, histories, recordList, categories, recordable,
+                success = service.generateText(code, content, unit, option, histories, recordList, categories, recordable,
                         searchable, networking, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GenerativeRecord record) {

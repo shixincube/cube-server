@@ -95,7 +95,8 @@ public class Stage extends Entity {
                     for (PublicOpinion.ArticleQuery articleQuery : negativeQueries) {
                         service.generateText(channel,
                                 service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational),
-                                articleQuery.query, articleQuery.query, null, null, false, false,
+                                articleQuery.query, articleQuery.query, new GenerativeOption(),
+                                null, null, false, false,
                                 new GenerateTextListener() {
                                     @Override
                                     public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
@@ -125,7 +126,8 @@ public class Stage extends Entity {
                     for (PublicOpinion.ArticleQuery articleQuery : positiveQueries) {
                         service.generateText(channel,
                                 service.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational),
-                                articleQuery.query, articleQuery.query, null, null, false, false,
+                                articleQuery.query, articleQuery.query, new GenerativeOption(),
+                                null, null, false, false,
                                 new GenerateTextListener() {
                                     @Override
                                     public void onGenerated(AIGCChannel channel, GenerativeRecord record) {

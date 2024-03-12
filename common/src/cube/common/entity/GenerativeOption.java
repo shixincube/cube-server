@@ -34,16 +34,36 @@ import org.json.JSONObject;
  */
 public class GenerativeOption implements JSONable {
 
+    public double temperature = 0.3;
+
+    public double topP = 0.95;
+
+    public double repetitionPenalty = 1.3;
+
+    public int topK = 50;
+
     public GenerativeOption() {
+    }
+
+    public GenerativeOption(JSONObject json) {
+        this.temperature = json.getDouble("temperature");
+        this.topP = json.getDouble("topP");
+        this.repetitionPenalty = json.getDouble("repetitionPenalty");
+        this.topK = json.getInt("topK");
     }
 
     @Override
     public JSONObject toJSON() {
-        return null;
+        JSONObject json = new JSONObject();
+        json.put("temperature", this.temperature);
+        json.put("topP", this.topP);
+        json.put("repetitionPenalty", this.repetitionPenalty);
+        json.put("topK", this.topK);
+        return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return null;
+        return this.toJSON();
     }
 }

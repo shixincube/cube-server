@@ -30,6 +30,7 @@ import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.common.entity.AIGCChannel;
+import cube.common.entity.GenerativeOption;
 import cube.common.entity.GenerativeRecord;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
@@ -71,6 +72,7 @@ public class Chat extends ContextHandler {
             String pattern = Consts.PATTERN_CHAT;
             String content = null;
             String unit = ModelConfig.BAIZE_UNIT;
+            GenerativeOption option = new GenerativeOption();
             int histories = 0;
             JSONArray records = null;
             boolean recordable = true;
@@ -86,6 +88,10 @@ public class Chat extends ContextHandler {
 
                 if (json.has("unit")) {
                     unit = json.getString("unit");
+                }
+
+                if (json.has("option")) {
+                    option = new GenerativeOption(json.getJSONObject("option"));
                 }
 
                 if (json.has("histories")) {
@@ -138,8 +144,8 @@ public class Chat extends ContextHandler {
             }
 
             // Chat
-            Manager.ChatFuture future = Manager.getInstance().chat(token, channelCode, pattern, content,
-                    unit, histories, records, recordable, searchable, networking, categories, searchTopK, searchFetchK);
+            Manager.ChatFuture future = Manager.getInstance().chat(token, channelCode, pattern, content, unit, option,
+                    histories, records, recordable, searchable, networking, categories, searchTopK, searchFetchK);
             if (null == future) {
                 // 发生错误
                 this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);

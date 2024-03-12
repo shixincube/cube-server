@@ -995,7 +995,7 @@ public class AIGCService extends AbstractModule {
                 StringBuilder result = new StringBuilder();
 
                 this.generateText(channel, unit, maq.articleQuery.query, maq.articleQuery.query,
-                        null, null, false, false, new GenerateTextListener() {
+                        new GenerativeOption(), null, null, false, false, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                         maq.articleQuery.answer = record.answer.replaceAll(",", "，");
@@ -1034,6 +1034,7 @@ public class AIGCService extends AbstractModule {
      * @param channelCode
      * @param content
      * @param unitName
+     * @param option
      * @param numHistories
      * @param records
      * @param categories
@@ -1043,8 +1044,8 @@ public class AIGCService extends AbstractModule {
      * @param listener
      * @return
      */
-    public boolean generateText(String channelCode, String content, String unitName, int numHistories,
-                                List<GenerativeRecord> records, List<String> categories,
+    public boolean generateText(String channelCode, String content, String unitName, GenerativeOption option,
+                                int numHistories, List<GenerativeRecord> records, List<String> categories,
                                 boolean recordable, boolean searchable, boolean networking,
                                 GenerateTextListener listener) {
         if (!this.isStarted()) {
@@ -1098,7 +1099,7 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, content, categories, records, listener);
+        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, content, option, categories, records, listener);
         meta.numHistories = numHistories;
         meta.searchEnabled = searchable && this.enabledSearch;
         meta.recordHistoryEnabled = recordable;
@@ -1128,11 +1129,11 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
-    public String syncGenerateText(String unitName, String prompt, List<GenerativeRecord> history) {
+    public String syncGenerateText(String unitName, String prompt, GenerativeOption option, List<GenerativeRecord> history) {
         if (this.useAgent) {
             Logger.d(this.getClass(), "#syncGenerateText - Agent - \"" + unitName + "\" - history:"
                     + ((null != history) ? history.size() : 0));
-            return Agent.getInstance().generateText(null, unitName, prompt, history);
+            return Agent.getInstance().generateText(null, unitName, prompt, option, history);
         }
 
         AIGCUnit unit = this.selectUnitByName(unitName);
@@ -1156,6 +1157,7 @@ public class AIGCService extends AbstractModule {
         data.put("content", prompt);
         data.put("participant", participant.toCompactJSON());
         data.put("history", historyArray);
+        data.put("option", (null == option) ? (new GenerativeOption()).toJSON() : option);
 
         Packet request = new Packet(AIGCAction.Chat.name, data);
         ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(),
@@ -1183,7 +1185,7 @@ public class AIGCService extends AbstractModule {
         return responseText;
     }
 
-    public String syncGenerateText(AuthToken authToken, String unitName, String prompt) {
+    public String syncGenerateText(AuthToken authToken, String unitName, String prompt, GenerativeOption option) {
         AIGCUnit unit = this.selectUnitByName(unitName);
         if (null == unit) {
             return null;
@@ -1192,7 +1194,7 @@ public class AIGCService extends AbstractModule {
         AIGCChannel channel = new AIGCChannel(authToken, "Baize");
 
         StringBuilder result = new StringBuilder();
-        this.generateText(channel, unit, prompt, prompt, null, null, false, false,
+        this.generateText(channel, unit, prompt, prompt, option, null, null, false, false,
                 new GenerateTextListener() {
             @Override
             public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
@@ -1222,7 +1224,7 @@ public class AIGCService extends AbstractModule {
         return result.length() <= 1 ? null : result.toString();
     }
 
-    public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt,
+    public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt, GenerativeOption option,
                              List<GenerativeRecord> records, List<String> categories,
                              boolean searchable, boolean recordable, GenerateTextListener listener) {
         if (this.useAgent) {
@@ -1235,7 +1237,7 @@ public class AIGCService extends AbstractModule {
             return;
         }
 
-        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, prompt, categories, records, listener);
+        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, prompt, option, categories, records, listener);
         meta.setOriginalQuery(query);
         meta.setSearchEnabled(searchable);
         meta.setRecordHistoryEnabled(recordable);
@@ -2462,6 +2464,8 @@ public class AIGCService extends AbstractModule {
 
         protected String originalQuery;
 
+        protected GenerativeOption option;
+
         protected List<GenerativeRecord> records;
 
         protected List<String> categories;
@@ -2478,14 +2482,15 @@ public class AIGCService extends AbstractModule {
 
         protected boolean networkingEnabled = false;
 
-        public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, List<String> categories,
-                                    List<GenerativeRecord> records, GenerateTextListener listener) {
+        public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, GenerativeOption option,
+                                    List<String> categories, List<GenerativeRecord> records, GenerateTextListener listener) {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
             this.participant = ContactManager.getInstance().getContact(channel.getAuthToken().getDomain(),
                     channel.getAuthToken().getContactId());
             this.content = content;
+            this.option = option;
             this.categories = categories;
             this.records = records;
             this.numHistories = (null != records) ? records.size() : 0;
@@ -2552,6 +2557,7 @@ public class AIGCService extends AbstractModule {
                 data.put("unit", this.unit.getCapability().getName());
                 data.put("content", this.content);
                 data.put("participant", this.participant.toCompactJSON());
+                data.put("option", this.option.toJSON());
 
                 boolean useQueryAttachment = false;
                 if (null != this.records) {
@@ -2959,7 +2965,8 @@ public class AIGCService extends AbstractModule {
                     buf.delete(buf.length() - 1, buf.length());
                     // 提取页面与提问匹配的信息
                     String prompt = Consts.formatExtractContent(buf.toString(), query);
-                    String answer = syncGenerateText(this.channel.getAuthToken(), ModelConfig.BAIZE_UNIT, prompt);
+                    String answer = syncGenerateText(this.channel.getAuthToken(), ModelConfig.BAIZE_UNIT, prompt,
+                            new GenerativeOption());
                     if (null != answer) {
                         // 记录内容
                         pageContent.append(answer);
@@ -2990,7 +2997,7 @@ public class AIGCService extends AbstractModule {
 
             // 对提取出来的内容进行推理
             String prompt = Consts.formatQuestion(pageContent.toString(), query);
-            String result = syncGenerateText(this.channel.getAuthToken(), unitName, prompt);
+            String result = syncGenerateText(this.channel.getAuthToken(), unitName, prompt, new GenerativeOption());
             if (null == result) {
                 Logger.w(this.getClass(), "#performSearchPageQA - Infers page content failed, cid:"
                         + this.channel.getAuthToken().getContactId());

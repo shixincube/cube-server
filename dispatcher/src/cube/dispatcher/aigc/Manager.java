@@ -1142,6 +1142,7 @@ public class Manager implements Tickable, PerformerListener {
      * @param pattern
      * @param content
      * @param unit
+     * @param option
      * @param histories
      * @param records
      * @param recordable
@@ -1153,13 +1154,15 @@ public class Manager implements Tickable, PerformerListener {
      * @return
      */
     public ChatFuture chat(String token, String channelCode, String pattern, String content, String unit,
-                           int histories, JSONArray records, boolean recordable, boolean searchable, boolean networking,
+                           GenerativeOption option, int histories, JSONArray records,
+                           boolean recordable, boolean searchable, boolean networking,
                            JSONArray categories, int searchTopK, int searchFetchK) {
         JSONObject data = new JSONObject();
         data.put("token", token);
         data.put("code", channelCode);
         data.put("pattern", pattern);
         data.put("content", content);
+        data.put("option", option.toJSON());
         data.put("histories", histories);
         if (null != unit) {
             data.put("unit", unit);
