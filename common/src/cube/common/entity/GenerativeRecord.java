@@ -239,6 +239,9 @@ public class GenerativeRecord implements JSONable {
                 array.put(fileLabel.toJSON());
             }
             json.put("answerFileLabels", array);
+
+            // 兼容旧版本
+            json.put("fileLabels", array);
         }
 
         if (null != this.queryAdditions) {
