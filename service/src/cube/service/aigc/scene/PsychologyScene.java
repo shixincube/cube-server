@@ -58,6 +58,10 @@ public class PsychologyScene {
 
     private PsychologyStorage storage;
 
+    private String unitName;
+
+    private int unitContextLength;
+
     /**
      * Key：报告序列号。
      */
