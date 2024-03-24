@@ -26,7 +26,11 @@
 
 package cube.common.entity;
 
+import cube.util.JSONUtils;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 知识库文档。
@@ -83,7 +87,10 @@ public class KnowledgeDoc extends Entity {
      */
     public KnowledgeScope scope = KnowledgeScope.Private;
 
-
+    /**
+     * 知识标签。
+     */
+    public List<String> knowledgeLabels = new ArrayList<>();
 
     public KnowledgeDoc(long id, String domain, long contactId, String fileCode, String baseName,
                         String fileName, boolean activated, int numSegments, KnowledgeScope scope) {
@@ -97,6 +104,7 @@ public class KnowledgeDoc extends Entity {
         this.activated = activated;
         this.numSegments = numSegments;
         this.scope = scope;
+        this.knowledgeLabels.add(fileName.split("\\.")[0]);
     }
 
     public KnowledgeDoc(JSONObject json) {
@@ -115,6 +123,10 @@ public class KnowledgeDoc extends Entity {
 
         if (json.has("fileLabel")) {
             this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
+        }
+
+        if (json.has("knowledgeLabels")) {
+            this.knowledgeLabels = JSONUtils.toStringList(json.getJSONArray("knowledgeLabels"));
         }
     }
 
@@ -160,6 +172,8 @@ public class KnowledgeDoc extends Entity {
         if (null != this.fileLabel) {
             json.put("fileLabel", this.fileLabel.toJSON());
         }
+
+        json.put("knowledgeLabels", JSONUtils.toStringArray(this.knowledgeLabels));
         return json;
     }
 
