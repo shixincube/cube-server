@@ -1182,7 +1182,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.Chat.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 90 * 1000);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 4 * 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#chat - Response is null - " + channelCode);
             return null;

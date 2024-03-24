@@ -42,6 +42,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 代理访问。
@@ -127,7 +128,7 @@ public final class Agent {
             client.getProtocolHandlers().remove(WWWAuthenticationProtocolHandler.NAME);
 
             StringContentProvider provider = new StringContentProvider(data.toString());
-            ContentResponse response = client.POST(chatUrl).content(provider).send();
+            ContentResponse response = client.POST(chatUrl).timeout(4, TimeUnit.MINUTES).content(provider).send();
 
             if (response.getStatus() == HttpStatus.OK_200) {
                 JSONObject responseData = new JSONObject(response.getContentAsString());

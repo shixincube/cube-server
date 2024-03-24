@@ -80,6 +80,8 @@ public class PsychologyScene {
 
         try {
             JSONObject config = ConfigUtils.readJsonFile("psychology.json");
+
+            // 读取存储配置
             JSONObject storage = config.getJSONObject("storage");
             if (storage.getString("type").equalsIgnoreCase("SQLite")) {
                 this.storage = new PsychologyStorage(StorageType.SQLite, storage);
@@ -90,6 +92,11 @@ public class PsychologyScene {
 
             this.storage.open();
             this.storage.execSelfChecking(null);
+
+
+            JSONObject unitConfig = config.getJSONObject("unit");
+            this.unitName = unitConfig.getString("name");
+            this.unitContextLength = unitConfig.getInt("contextLength");
         } catch (Exception e) {
             e.printStackTrace();
             Logger.w(this.getClass(), "#start", e);
@@ -268,7 +275,7 @@ public class PsychologyScene {
         }
 
         // 设置使用的单元
-        workflow.setUnitName(ModelConfig.BAIZE_NEXT_UNIT, ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT);
+        workflow.setUnitName(this.unitName, this.unitContextLength);
 
         // 制作报告
         return workflow.make(theme, paragraphInferrable);

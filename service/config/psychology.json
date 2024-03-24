@@ -6,5 +6,10 @@
 		"schema"   : "cube_dev",
 		"user"     : "baize",
 		"password" : "Baizejingzhi#2023"
+	},
+
+	"unit": {
+		"name": "BaizeNext",
+		"contextLength" : 3000
 	}
 }

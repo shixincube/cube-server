@@ -83,6 +83,8 @@ public class KnowledgeDoc extends Entity {
      */
     public KnowledgeScope scope = KnowledgeScope.Private;
 
+
+
     public KnowledgeDoc(long id, String domain, long contactId, String fileCode, String baseName,
                         String fileName, boolean activated, int numSegments, KnowledgeScope scope) {
         super(id, domain);

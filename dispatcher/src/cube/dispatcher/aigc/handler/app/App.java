@@ -270,7 +270,7 @@ public final class App {
             client.getProtocolHandlers().remove(WWWAuthenticationProtocolHandler.NAME);
 
             StringContentProvider provider = new StringContentProvider(apiData.toString());
-            ContentResponse response = client.POST(url).timeout(2, TimeUnit.MINUTES).content(provider).send();
+            ContentResponse response = client.POST(url).timeout(5, TimeUnit.MINUTES).content(provider).send();
             if (response.getStatus() == HttpStatus.OK_200) {
                 JSONObject responseData = new JSONObject(response.getContentAsString());
                 if (responseData.has("content")) {
