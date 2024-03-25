@@ -1225,51 +1225,74 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     /**
-     * 增强型对话。
+     * 互动对话。
      *
      * @param token
      * @param channelCode
      * @param pattern
      * @param content
+     * @param histories
      * @param records
-     * @param temperature
-     * @param topP
-     * @param repetitionPenalty
+     * @param option
      * @return
      */
-    public AIGCConversationResponse conversation(String token, String channelCode, String pattern,
-                                                 String content, JSONArray records,
-                                                 float temperature, float topP, float repetitionPenalty) {
+    public long conversation(String token, String channelCode, String pattern,
+                             String content, int histories, JSONArray records,
+                             GenerativeOption option) {
         JSONObject data = new JSONObject();
         data.put("token", token);
         data.put("code", channelCode);
         data.put("pattern", pattern);
         data.put("content", content);
-        if (temperature >= 0.0 && temperature <= 1.0) {
-            data.put("temperature", temperature);
-        }
-        if (topP >= 0.0 && topP <= 1.0) {
-            data.put("topP", topP);
-        }
-        if (repetitionPenalty >= 0.0) {
-            data.put("repetitionPenalty", repetitionPenalty);
-        }
+        data.put("option", option.toJSON());
+        data.put("histories", histories);
         if (null != records) {
             data.put("records", records);
         }
+        data.put("recordable", false);
+        data.put("searchable", false);
+        data.put("networking", false);
+        data.put("searchTopK", 20);
+        data.put("searchFetchK", 50);
 
         Packet packet = new Packet(AIGCAction.Conversation.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 120 * 1000);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#conversation - Response is null - " + channelCode);
-            return null;
+            return 0;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.w(Manager.class, "#conversation - Response state code is NOT Ok - " + channelCode +
+                    " - " + Packet.extractCode(responsePacket));
+            return 0;
+        }
+
+        JSONObject responseData = Packet.extractDataPayload(responsePacket);
+        return responseData.getLong("sn");
+    }
+
+    public AIGCConversationResponse queryConversation(String token, String channelCode, long sn) {
+        JSONObject data = new JSONObject();
+        data.put("token", token);
+        data.put("code", channelCode);
+        data.put("sn", sn);
+
+        Packet packet = new Packet(AIGCAction.QueryConversation.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#queryConversation - Response is null - " + channelCode);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#queryConversation - Response state code is NOT Ok - " + channelCode +
                     " - " + Packet.extractCode(responsePacket));
             return null;
         }

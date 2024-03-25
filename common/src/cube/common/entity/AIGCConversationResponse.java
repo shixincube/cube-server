@@ -31,7 +31,7 @@ import cube.common.JSONable;
 import org.json.JSONObject;
 
 /**
- * AIGC 互动聊天记录。
+ * AIGC 互动聊天应答。
  */
 public class AIGCConversationResponse implements JSONable {
 
@@ -43,17 +43,27 @@ public class AIGCConversationResponse implements JSONable {
 
     public String answer;
 
-    public String thought;
+//    public String thought;
 
-    public boolean needHistory;
+//    public boolean needHistory;
 
-    public String candidateQuery;
+//    public String candidateQuery;
 
-    public String candidateAnswer;
+//    public String candidateAnswer;
 
     public long timestamp;
 
     public ComplexContext context;
+
+    public boolean processing = false;
+
+    public AIGCConversationResponse(long sn, String unit) {
+        this.sn = sn;
+        this.unit = unit;
+        this.answer = "";
+        this.timestamp = System.currentTimeMillis();
+        this.processing = true;
+    }
 
     public AIGCConversationResponse(JSONObject json) {
         if (json.has("sn")) {
@@ -75,10 +85,11 @@ public class AIGCConversationResponse implements JSONable {
         }
 
         this.answer = json.getString("answer");
-        this.thought = json.getString("thought");
-        this.needHistory = json.getBoolean("needHistory");
-        this.candidateQuery = json.getString("candidateQuery");
-        this.candidateAnswer = json.getString("candidateAnswer");
+
+//        this.thought = json.getString("thought");
+//        this.needHistory = json.getBoolean("needHistory");
+//        this.candidateQuery = json.getString("candidateQuery");
+//        this.candidateAnswer = json.getString("candidateAnswer");
 
         if (json.has("timestamp")) {
             this.timestamp = json.getLong("timestamp");
@@ -90,27 +101,38 @@ public class AIGCConversationResponse implements JSONable {
         if (json.has("context")) {
             this.context = new ComplexContext(json.getJSONObject("context"));
         }
+
+        this.processing = json.getBoolean("processing");
     }
 
-    public AIGCConversationResponse(long sn, String unit, String query, ComplexContext context, JSONObject payload) {
-        this.sn = sn;
-        this.unit = unit;
-        this.query = query;
-        this.context = context;
-
-        this.answer = payload.getString("answer");
-        this.thought = payload.getString("thought");
-        this.needHistory = payload.getBoolean("needHistory");
-        this.candidateQuery = payload.getString("candidateQuery");
-        this.candidateAnswer = payload.getString("candidateAnswer");
-
-        if (payload.has("timestamp")) {
-            this.timestamp = payload.getLong("timestamp");
-        }
-        else {
-            this.timestamp = System.currentTimeMillis();
-        }
+    public AIGCConversationResponse(GenerativeRecord record) {
+        this.sn = record.sn;
+        this.unit = record.unit;
+        this.query = record.query;
+        this.answer = record.answer;
+        this.context = record.context;
+        this.timestamp = record.timestamp;
     }
+
+//    public AIGCConversationResponse(long sn, String unit, String query, ComplexContext context, JSONObject payload) {
+//        this.sn = sn;
+//        this.unit = unit;
+//        this.query = query;
+//        this.context = context;
+//
+//        this.answer = payload.getString("answer");
+//        this.thought = payload.getString("thought");
+//        this.needHistory = payload.getBoolean("needHistory");
+//        this.candidateQuery = payload.getString("candidateQuery");
+//        this.candidateAnswer = payload.getString("candidateAnswer");
+//
+//        if (payload.has("timestamp")) {
+//            this.timestamp = payload.getLong("timestamp");
+//        }
+//        else {
+//            this.timestamp = System.currentTimeMillis();
+//        }
+//    }
 
     public GenerativeRecord toRecord() {
         GenerativeRecord record = new GenerativeRecord(this.sn,
@@ -128,14 +150,19 @@ public class AIGCConversationResponse implements JSONable {
         json.put("sn", this.sn);
         json.put("unit", this.unit);
         json.put("answer", this.answer);
-        json.put("thought", this.thought);
-        json.put("needHistory", this.needHistory);
-        json.put("candidateQuery", this.candidateQuery);
-        json.put("candidateAnswer", this.candidateAnswer);
+
+//        json.put("thought", this.thought);
+//        json.put("needHistory", this.needHistory);
+//        json.put("candidateQuery", this.candidateQuery);
+//        json.put("candidateAnswer", this.candidateAnswer);
 
         json.put("timestamp", this.timestamp);
 
-        json.put("context", this.context.toJSON());
+        if (null != this.context) {
+            json.put("context", this.context.toJSON());
+        }
+
+        json.put("processing", this.processing);
         return json;
     }
 

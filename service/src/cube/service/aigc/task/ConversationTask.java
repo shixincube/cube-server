@@ -31,6 +31,8 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.aigc.AppEvent;
+import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -50,7 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 向模型请求会话。
+ * 互动聊天会话。
  */
 public class ConversationTask extends ServiceTask {
 
@@ -73,13 +75,22 @@ public class ConversationTask extends ServiceTask {
         }
 
         String code = packet.data.getString("code");
-        String content = packet.data.getString("content");
-        String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : "chat";
+        String content = packet.data.getString("content").trim();
+        String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : Consts.PATTERN_CHAT;
+        GenerativeOption option = packet.data.has("option") ?
+                new GenerativeOption(packet.data.getJSONObject("option")) : new GenerativeOption();
+        int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 10;
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
-        float temperature = packet.data.has("temperature") ? packet.data.getFloat("temperature") : 0.7f;
-        float topP = packet.data.has("topP") ? packet.data.getFloat("topP") : 0.8f;
-        float repetitionPenalty = packet.data.has("repetitionPenalty") ?
-                packet.data.getFloat("repetitionPenalty") : 1.02f;
+        boolean recordable = packet.data.has("recordable") && packet.data.getBoolean("recordable");
+        boolean searchable = packet.data.has("searchable") && packet.data.getBoolean("searchable");
+        boolean networking = packet.data.has("networking") && packet.data.getBoolean("networking");
+
+        JSONArray categoryArray = packet.data.has("categories")
+                ? packet.data.getJSONArray("categories") : new JSONArray();
+        List<String> categories = new ArrayList<>();
+        for (int i = 0; i < categoryArray.length(); ++i) {
+            categories.add(categoryArray.getString(i));
+        }
 
         List<GenerativeRecord> recordList = null;
         if (null != records) {
@@ -94,63 +105,108 @@ public class ConversationTask extends ServiceTask {
             }
         }
 
-        AIGCConversationParameter parameter = new AIGCConversationParameter(temperature,
-                topP, repetitionPenalty, recordList);
+        AIGCConversationParameter parameter = new AIGCConversationParameter(option.temperature,
+                option.topP, option.repetitionPenalty, recordList, categories, histories,
+                recordable, searchable, networking);
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         boolean success = false;
 
         // 根据工作模式进行调用
-        if (pattern.equalsIgnoreCase("chat")) {
+        if (pattern.equalsIgnoreCase(Consts.PATTERN_CHAT)) {
             // 执行 Conversation
-            success = service.conversation(code, content, parameter, new ConversationListener() {
+            long sn = service.conversation(token, code, content, parameter, new ConversationListener() {
                 @Override
                 public void onConversation(AIGCChannel channel, AIGCConversationResponse response) {
-                    cellet.speak(talkContext,
-                            makeResponse(dialect, packet, AIGCStateCode.Ok.code, response.toJSON()));
-                    markResponseTime();
+                    if (Logger.isDebugLevel()) {
+                        Logger.d(ConversationTask.class, "#onConversation - " + token);
+                    }
                 }
 
                 @Override
                 public void onFailed(AIGCChannel channel, AIGCStateCode errorCode) {
-                    cellet.speak(talkContext,
-                            makeResponse(dialect, packet, errorCode.code, new JSONObject()));
-                    markResponseTime();
+                    if (Logger.isDebugLevel()) {
+                        Logger.d(ConversationTask.class, "#onFailed : " + errorCode.code + " - " + token);
+                    }
                 }
             });
+
+            if (sn > 0) {
+                success = true;
+
+                JSONObject response = new JSONObject();
+                response.put("sn", sn);
+                cellet.speak(talkContext,
+                        makeResponse(dialect, packet, AIGCStateCode.Ok.code, response));
+                markResponseTime();
+            }
         }
-        else if (pattern.equalsIgnoreCase("knowledge")) {
+        else if (pattern.equalsIgnoreCase(Consts.PATTERN_KNOWLEDGE)) {
             // 执行知识库问答
             int searchTopK = packet.data.has("searchTopK")
-                    ? packet.data.getInt("searchTopK") : 5;
+                    ? packet.data.getInt("searchTopK") : 10;
             int searchFetchK = packet.data.has("searchFetchK")
                     ? packet.data.getInt("searchFetchK") : 50;
 
-            String baseName = KnowledgeFramework.DefaultName;
-            if (packet.data.has("base")) {
-                baseName = packet.data.getString("base");
+            KnowledgeBase knowledgeBase = null;
+
+            if (categories.isEmpty()) {
+                String baseName = KnowledgeFramework.DefaultName;
+                if (packet.data.has("base")) {
+                    baseName = packet.data.getString("base");
+                }
+                knowledgeBase = service.getKnowledgeBase(token, baseName);
+            }
+            else {
+                Logger.d(this.getClass(), "Select knowledge base by category: " + categories.get(0));
+                List<KnowledgeBase> baseList = service.getKnowledgeBaseByCategory(token, categories.get(0));
+                if (!baseList.isEmpty()) {
+                    knowledgeBase = baseList.get(0);
+                }
+                else {
+                    // 没有找到知识库，使用默认库
+                    Logger.w(this.getClass(), "Can NOT find knowledge by category " + categories.get(0));
+                    knowledgeBase = service.getKnowledgeBase(token, KnowledgeFramework.DefaultName);
+                }
             }
 
-            KnowledgeBase knowledgeBase = service.getKnowledgeBase(token, baseName);
             if (null != knowledgeBase) {
-                success = knowledgeBase.performKnowledgeQA(code, ModelConfig.BAIZE_NEXT_UNIT, content,
-                        searchTopK, searchFetchK, null, null, new KnowledgeQAListener() {
-                    @Override
-                    public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
-                        cellet.speak(talkContext,
-                                makeResponse(dialect, packet, AIGCStateCode.Ok.code,
-                                        result.conversationResponse.toCompactJSON()));
-                        markResponseTime();
-                    }
+                success = knowledgeBase.performKnowledgeQA(code, ModelConfig.BAIZE_NEXT_UNIT, content, searchTopK, searchFetchK,
+                        categories, recordList, new KnowledgeQAListener() {
+                            @Override
+                            public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
+                                cellet.speak(talkContext,
+                                        makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.toCompactJSON()));
+                                markResponseTime();
 
-                    @Override
-                    public void onFailed(AIGCChannel channel, AIGCStateCode errorCode) {
-                        cellet.speak(talkContext,
-                                makeResponse(dialect, packet, errorCode.code, new JSONObject()));
-                        markResponseTime();
-                    }
-                });
+                                // 写入事件
+                                AppEvent appEvent = new AppEvent(AppEvent.Knowledge, System.currentTimeMillis(),
+                                        channel.getAuthToken().getContactId(),
+                                        AppEvent.createKnowledgeSuccessfulData(result));
+                                if (!service.getStorage().writeAppEvent(appEvent)) {
+                                    Logger.w(ChatTask.class, "Writes app event failed (knowledge) - cid: " +
+                                            channel.getAuthToken().getContactId());
+                                }
+                            }
+
+                            @Override
+                            public void onFailed(AIGCChannel channel, AIGCStateCode errorCode) {
+                                cellet.speak(talkContext,
+                                        makeResponse(dialect, packet, errorCode.code, new JSONObject()));
+                                markResponseTime();
+
+                                // 写入事件
+                                AppEvent appEvent = new AppEvent(AppEvent.Knowledge, System.currentTimeMillis(),
+                                        channel.getAuthToken().getContactId(),
+                                        AppEvent.createKnowledgeFailedData(channel.getLastUnitMetaSn(), errorCode,
+                                                content));
+                                if (!service.getStorage().writeAppEvent(appEvent)) {
+                                    Logger.w(ChatTask.class, "Writes app event failed (knowledge) - cid: " +
+                                            channel.getAuthToken().getContactId());
+                                }
+                            }
+                        });
             }
         }
 

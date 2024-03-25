@@ -117,9 +117,14 @@ public enum AIGCAction {
     Chat("chat"),
 
     /**
-     * 增强型会话。
+     * 会话式问答互动（异步方式）。
      */
     Conversation("conversation"),
+
+    /**
+     * 查询会话数据。
+     */
+    QueryConversation("queryConversation"),
 
     /**
      * 情感分析。

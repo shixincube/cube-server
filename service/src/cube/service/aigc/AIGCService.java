@@ -113,7 +113,9 @@ public class AIGCService extends AbstractModule {
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, Queue<ConversationUnitMeta>> conversationQueueMap;
+    private final Map<String, Queue<ConversationUnitMeta>> conversationQueueMap;
+
+    private volatile ConversationUnitMeta currentConversationUnitMeta;
 
     /**
      * Key 是 AIGC 的 Query Key
@@ -1224,6 +1226,20 @@ public class AIGCService extends AbstractModule {
         return result.length() <= 1 ? null : result.toString();
     }
 
+    /**
+     * 生成文本。
+     *
+     * @param channel
+     * @param unit
+     * @param query
+     * @param prompt
+     * @param option
+     * @param records
+     * @param categories
+     * @param searchable
+     * @param recordable
+     * @param listener
+     */
     public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt, GenerativeOption option,
                              List<GenerativeRecord> records, List<String> categories,
                              boolean searchable, boolean recordable, GenerateTextListener listener) {
@@ -1266,37 +1282,40 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
-     * 增强型互动会话。
+     * 互动会话。
      *
-     * @param code
+     * @param tokenCode
+     * @param channelCode
      * @param content
      * @param parameter
      * @param listener
      * @return
      */
-    public boolean conversation(String code, String content, AIGCConversationParameter parameter, ConversationListener listener) {
+    public long conversation(String tokenCode, String channelCode, String content, AIGCConversationParameter parameter,
+                             ConversationListener listener) {
         if (!this.isStarted()) {
             Logger.w(AIGCService.class, "#conversation - Service is NOT ready");
-            return false;
+            return 0;
         }
 
         if (content.length() > ModelConfig.getPromptLengthLimit(ModelConfig.BAIZE_NEXT_UNIT)) {
             Logger.w(AIGCService.class, "#conversation - Content length greater than "
                     + ModelConfig.getPromptLengthLimit(ModelConfig.BAIZE_NEXT_UNIT));
-            return false;
+            return 0;
         }
 
         // 获取频道
-        AIGCChannel channel = this.channelMap.get(code);
+        AIGCChannel channel = this.channelMap.get(channelCode);
         if (null == channel) {
-            Logger.w(AIGCService.class, "#conversation - Can NOT find AIGC channel: " + code);
-            return false;
+            Logger.d(AIGCService.class, "#conversation - Can NOT find channel, create new channel: " + channelCode);
+            // 创建频道
+            channel = this.createChannel(tokenCode, "User-" + channelCode, channelCode);
         }
 
         // 如果频道正在应答上一次问题，则返回 null
         if (channel.isProcessing()) {
-            Logger.w(AIGCService.class, "#conversation - Channel is processing: " + code);
-            return false;
+            Logger.w(AIGCService.class, "#conversation - Channel is processing: " + channelCode);
+            return 0;
         }
 
         channel.setProcessing(true);
@@ -1306,7 +1325,7 @@ public class AIGCService extends AbstractModule {
         if (null == unit) {
             Logger.w(AIGCService.class, "#conversation - No conversational task unit setup in server");
             channel.setProcessing(false);
-            return false;
+            return 0;
         }
 
         ConversationUnitMeta meta = new ConversationUnitMeta(unit, channel, content, parameter, listener);
@@ -1332,34 +1351,58 @@ public class AIGCService extends AbstractModule {
             });
         }
 
-        return true;
+        return meta.sn;
     }
 
-    public void singleConversation(AIGCChannel channel, AIGCUnit unit, String query, ConversationListener listener) {
-        AIGCConversationParameter parameter = new AIGCConversationParameter(0.7f, 0.8f, 1.02f,
-                new ArrayList<>());
-        ConversationUnitMeta meta = new ConversationUnitMeta(unit, channel, query, parameter, listener);
+    public AIGCConversationResponse queryConversation(String channelCode, long sn) {
+        // 获取频道
+        AIGCChannel channel = this.channelMap.get(channelCode);
+        if (null == channel) {
+            Logger.w(AIGCService.class, "#queryConversation - Can NOT find channel: " + channelCode);
+            return null;
+        }
 
-        synchronized (this.conversationQueueMap) {
-            Queue<ConversationUnitMeta> queue = this.conversationQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.conversationQueueMap.put(unit.getQueryKey(), queue);
+        GenerativeRecord record = channel.getRecord(sn);
+        if (null == record) {
+            ConversationUnitMeta unitMeta = null;
+
+            if (null != this.currentConversationUnitMeta && this.currentConversationUnitMeta.sn == sn) {
+                unitMeta = this.currentConversationUnitMeta;
+            }
+            else {
+                synchronized (this.conversationQueueMap) {
+                    for (Queue<ConversationUnitMeta> queue : this.conversationQueueMap.values()) {
+                        for (ConversationUnitMeta meta : queue) {
+                            if (meta.sn == sn) {
+                                unitMeta = meta;
+                                break;
+                            }
+                        }
+
+                        if (null != unitMeta) {
+                            break;
+                        }
+                    }
+                }
             }
 
-            queue.offer(meta);
-        }
+            if (null == unitMeta) {
+                Logger.w(this.getClass(), "#queryConversation - Can NOT find conversation : " + sn);
+                return null;
+            }
 
-        if (!unit.isRunning()) {
-            unit.setRunning(true);
-
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    processConversationQueue(meta.unit.getQueryKey());
-                }
-            });
+            AIGCConversationResponse result = new AIGCConversationResponse(unitMeta.sn,
+                    unitMeta.unit.getCapability().getName());
+            result.processing = true;
+            return result;
         }
+        else {
+            return new AIGCConversationResponse(record);
+        }
+    }
+
+    public boolean converseBy(AIGCChannel channel, AIGCUnit unit, String prompt, ConversationListener listener) {
+        return false;
     }
 
     /**
@@ -2272,6 +2315,9 @@ public class AIGCService extends AbstractModule {
 
         ConversationUnitMeta meta = queue.poll();
         while (null != meta) {
+            // 设置当前值
+            this.currentConversationUnitMeta = meta;
+
             // 执行处理
             try {
                 meta.process();
@@ -2286,6 +2332,8 @@ public class AIGCService extends AbstractModule {
         if (null != unit) {
             unit.setRunning(false);
         }
+
+        this.currentConversationUnitMeta = null;
     }
 
     private void processNaturalLanguageTaskQueue(String queryKey) {
@@ -2450,7 +2498,51 @@ public class AIGCService extends AbstractModule {
     }
 
 
-    private class GenerateTextUnitMeta {
+    private abstract class UnitMeta {
+
+        public UnitMeta() {
+        }
+
+        protected List<String> readFileContent(List<FileLabel> fileLabels) {
+            List<String> result = new ArrayList<>();
+
+            AbstractModule fileStorage = getKernel().getModule("FileStorage");
+            for (FileLabel fileLabel : fileLabels) {
+                if (fileLabel.getFileType() == FileType.TEXT
+                        || fileLabel.getFileType() == FileType.TXT
+                        || fileLabel.getFileType() == FileType.MD
+                        || fileLabel.getFileType() == FileType.LOG) {
+                    String fullpath = fileStorage.notify(new LoadFile(fileLabel.getDomain().getName(), fileLabel.getFileCode()));
+                    if (null == fullpath) {
+                        Logger.w(this.getClass(), "#readFileContent - Load file error: " + fileLabel.getFileCode());
+                        continue;
+                    }
+
+                    try {
+                        List<String> lines = Files.readAllLines(Paths.get(fullpath));
+                        for (String text : lines) {
+                            if (text.trim().length() < 3) {
+                                continue;
+                            }
+                            result.add(text);
+                        }
+                    } catch (Exception e) {
+                        Logger.w(this.getClass(), "#readFileContent - Read file error: " + fullpath);
+                    }
+                }
+                else {
+                    Logger.w(this.getClass(), "#readFileContent - File type error: " + fileLabel.getFileType().getMimeType());
+                }
+            }
+
+            return result;
+        }
+
+        public abstract void process();
+    }
+
+
+    private class GenerateTextUnitMeta extends UnitMeta {
 
         protected final long sn;
 
@@ -2483,7 +2575,8 @@ public class AIGCService extends AbstractModule {
         protected boolean networkingEnabled = false;
 
         public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, GenerativeOption option,
-                                    List<String> categories, List<GenerativeRecord> records, GenerateTextListener listener) {
+                                    List<String> categories, List<GenerativeRecord> records,
+                                    GenerateTextListener listener) {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
@@ -2523,6 +2616,7 @@ public class AIGCService extends AbstractModule {
             this.history.queryContent = originalQuery;
         }
 
+        @Override
         public void process() {
             this.channel.setLastUnitMetaSn(this.sn);
 
@@ -2854,7 +2948,7 @@ public class AIGCService extends AbstractModule {
             });
         }
 
-        private String filterChinese(AIGCUnit unit, String text) {
+        protected String filterChinese(AIGCUnit unit, String text) {
             if (unit.getCapability().getName().equalsIgnoreCase(ModelConfig.BAIZE_UNIT)) {
                 if (TextUtils.containsChinese(text)) {
                     return text.replaceAll(",", "，");
@@ -2868,42 +2962,7 @@ public class AIGCService extends AbstractModule {
             }
         }
 
-        private List<String> readFileContent(List<FileLabel> fileLabels) {
-            List<String> result = new ArrayList<>();
-
-            AbstractModule fileStorage = getKernel().getModule("FileStorage");
-            for (FileLabel fileLabel : fileLabels) {
-                if (fileLabel.getFileType() == FileType.TEXT
-                        || fileLabel.getFileType() == FileType.TXT
-                        || fileLabel.getFileType() == FileType.MD
-                        || fileLabel.getFileType() == FileType.LOG) {
-                    String fullpath = fileStorage.notify(new LoadFile(fileLabel.getDomain().getName(), fileLabel.getFileCode()));
-                    if (null == fullpath) {
-                        Logger.w(this.getClass(), "#readFileContent - Load file error: " + fileLabel.getFileCode());
-                        continue;
-                    }
-
-                    try {
-                        List<String> lines = Files.readAllLines(Paths.get(fullpath));
-                        for (String text : lines) {
-                            if (text.trim().length() < 3) {
-                                continue;
-                            }
-                            result.add(text);
-                        }
-                    } catch (Exception e) {
-                        Logger.w(this.getClass(), "#readFileContent - Read file error: " + fullpath);
-                    }
-                }
-                else {
-                    Logger.w(this.getClass(), "#readFileContent - File type error: " + fileLabel.getFileType().getMimeType());
-                }
-            }
-
-            return result;
-        }
-
-        private void performSearchPageQA(String query, String unitName, SearchResult searchResult,
+        protected void performSearchPageQA(String query, String unitName, SearchResult searchResult,
                                          ComplexContext context, int maxPages) {
             Object mutex = new Object();
             AtomicInteger pageCount = new AtomicInteger(0);
@@ -3014,7 +3073,7 @@ public class AIGCService extends AbstractModule {
             context.fixNetworkingResult(pages, result);
         }
 
-        private void fillRecords(List<GenerativeRecord> recordList, List<String> categories, int lengthLimit,
+        protected void fillRecords(List<GenerativeRecord> recordList, List<String> categories, int lengthLimit,
                                  String unitName) {
             int total = 0;
             for (String category : categories) {
@@ -3037,134 +3096,39 @@ public class AIGCService extends AbstractModule {
         }
     }
 
-    private class ConversationUnitMeta {
 
-        protected final long sn;
-
-        protected AIGCUnit unit;
-
-        protected AIGCChannel channel;
-
-        protected String content;
+    private class ConversationUnitMeta extends GenerateTextUnitMeta {
 
         protected AIGCConversationParameter parameter;
 
-        protected ConversationListener listener;
+        protected ConversationListener conversationListener;
 
-        protected AIGCChatHistory history;
+        protected GenerateTextListener generateListener = new GenerateTextListener() {
+            @Override
+            public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
+                AIGCConversationResponse response = new AIGCConversationResponse(record);
+                conversationListener.onConversation(channel, response);
+            }
+            @Override
+            public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
+                conversationListener.onFailed(channel, stateCode);
+            }
+        };
 
         public ConversationUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
-                                    AIGCConversationParameter parameter, ConversationListener listener) {
-            this.sn = Utils.generateSerialNumber();
-            this.unit = unit;
-            this.channel = channel;
-            this.content = content;
+                                    AIGCConversationParameter parameter,
+                                    ConversationListener listener) {
+            super(unit, channel, content, parameter.toGenerativeOption(), parameter.categories, parameter.records, null);
+            this.listener = this.generateListener;
+            this.numHistories = parameter.histories;
+            this.searchEnabled = parameter.searchable;
+            this.recordHistoryEnabled = parameter.recordable;
+            this.networkingEnabled = parameter.networking;
             this.parameter = parameter;
-            this.listener = listener;
-
-            this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName());
-            this.history.queryContactId = channel.getAuthToken().getContactId();
-            this.history.queryTime = System.currentTimeMillis();
-            this.history.queryContent = content;
-        }
-
-        public void process() {
-            ComplexContext complexContext = recognizeContext(this.content, this.channel.getAuthToken());
-
-            JSONObject data = new JSONObject();
-            data.put("unit", this.unit.getCapability().getName());
-            data.put("content", this.content);
-            data.put("temperature", this.parameter.temperature);
-            data.put("topP", this.parameter.topP);
-            data.put("repetitionPenalty", this.parameter.repetitionPenalty);
-
-            int totalLength = this.content.length();
-
-            if (null != this.parameter.records) {
-                JSONArray history = new JSONArray();
-                for (GenerativeRecord record : this.parameter.records) {
-                    history.put(record.toJSON());
-                    // 字数
-                    totalLength += record.totalWords();
-                }
-                data.put("history", history);
-            }
-            else {
-                List<AIGCConversationResponse> responseList = this.channel.extractConversationResponses();
-                JSONArray history = new JSONArray();
-                for (AIGCConversationResponse response : responseList) {
-                    GenerativeRecord record = response.toRecord();
-                    history.put(record.toJSON());
-                    // 字数
-                    totalLength += record.totalWords();
-                }
-                data.put("history", history);
-            }
-
-            // 判断长度
-            if (totalLength > ModelConfig.getPromptLengthLimit(this.unit.getCapability().getName())) {
-                // 总长度越界
-                this.channel.setProcessing(false);
-                this.listener.onFailed(this.channel, AIGCStateCode.ContentLengthOverflow);
-                return;
-            }
-
-            Packet request = new Packet(AIGCAction.Conversation.name, data);
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
-            if (null == dialect) {
-                Logger.w(AIGCService.class, "Conversation unit error - channel: " + this.channel.getCode());
-                this.channel.setProcessing(false);
-                // 回调错误
-                this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
-                return;
-            }
-
-            Packet response = new Packet(dialect);
-            int stateCode = Packet.extractCode(response);
-            if (stateCode != AIGCStateCode.Ok.code) {
-                Logger.w(AIGCService.class, "Conversation unit respond failed - channel: " + this.channel.getCode());
-                this.channel.setProcessing(false);
-                // 回调错误
-                this.listener.onFailed(this.channel, AIGCStateCode.parse(stateCode));
-                return;
-            }
-
-            JSONObject payload = Packet.extractDataPayload(response);
-            AIGCConversationResponse convResponse = new AIGCConversationResponse(this.sn,
-                    this.unit.getCapability().getName(), this.content, complexContext, payload);
-
-            // 过滤中文字符
-            convResponse.answer = this.filterChinese(convResponse.answer);
-
-            this.history.answerContactId = this.unit.getContact().getId();
-            this.history.answerTime = System.currentTimeMillis();
-            this.history.answerContent = convResponse.answer;
-
-            // 记录
-            this.channel.appendRecord(this.sn, convResponse);
-
-            // 重置状态位
-            this.channel.setProcessing(false);
-
-            this.listener.onConversation(this.channel, convResponse);
-
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    storage.writeChatHistory(history);
-                }
-            });
-        }
-
-        private String filterChinese(String text) {
-            if (!TextUtils.containsChinese(text)) {
-                return text;
-            }
-
-            return text.replaceAll(",", "，")
-                    .replaceAll(":", "：");
+            this.conversationListener = listener;
         }
     }
+
 
     private class NaturalLanguageTaskMeta {
 

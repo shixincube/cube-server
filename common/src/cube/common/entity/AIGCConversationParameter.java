@@ -33,19 +33,40 @@ import java.util.List;
  */
 public class AIGCConversationParameter {
 
-    public final float temperature;
+    public double temperature = 0.3;
 
-    public final float topP;
+    public double topP = 0.95;
 
-    public final float repetitionPenalty;
+    public double repetitionPenalty = 1.3;
 
-    public final List<GenerativeRecord> records;
+    public int topK = 50;
 
-    public AIGCConversationParameter(float temperature, float topP, float repetitionPenalty,
-                                     List<GenerativeRecord> records) {
+    public List<String> categories;
+
+    public List<GenerativeRecord> records;
+
+    public int histories = 0;
+
+    public boolean recordable = false;
+
+    public boolean searchable = false;
+
+    public boolean networking = false;
+
+    public AIGCConversationParameter(double temperature, double topP, double repetitionPenalty,
+                                     List<GenerativeRecord> records, List<String> categories, int histories,
+                                     boolean recordable, boolean searchable, boolean networking) {
         this.temperature = temperature;
         this.topP = topP;
         this.repetitionPenalty = repetitionPenalty;
         this.records = records;
+        this.categories = categories;
+        this.recordable = recordable;
+        this.searchable = searchable;
+        this.networking = networking;
+    }
+
+    public GenerativeOption toGenerativeOption() {
+        return new GenerativeOption(this.temperature, this.topP, this.repetitionPenalty, this.topK);
     }
 }

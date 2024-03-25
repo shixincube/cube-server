@@ -56,7 +56,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 向模型请求聊天。
+ * 互动聊天。
  */
 public class ChatTask extends ServiceTask {
 

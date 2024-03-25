@@ -1467,7 +1467,7 @@ public class KnowledgeBase {
 
         if (unit.getCapability().getName().equals(ModelConfig.BAIZE_NEXT_UNIT)) {
             // 特定单元执行 conversation
-            this.service.singleConversation(channel, unit, prompt, new ConversationListener() {
+            this.service.converseBy(channel, unit, prompt, new ConversationListener() {
                 @Override
                 public void onConversation(AIGCChannel channel, AIGCConversationResponse response) {
                     result.conversationResponse = response;

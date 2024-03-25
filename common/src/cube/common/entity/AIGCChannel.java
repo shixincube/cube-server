@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class AIGCChannel extends Entity {
 
-    private int historyLengthLimit = 4 * 1024;
+    private int historyLengthLimit = 2 * 1024;
 
     private AuthToken authToken;
 
@@ -57,9 +57,6 @@ public class AIGCChannel extends Entity {
 
     // 倒序存储历史记录
     private LinkedList<GenerativeRecord> history;
-
-    // 倒序存储应答历史
-    private LinkedList<AIGCConversationResponse> conversationResponses;
 
     private AtomicBoolean processing;
 
@@ -90,7 +87,6 @@ public class AIGCChannel extends Entity {
         this.creationTime = System.currentTimeMillis();
         this.code = channelCode;
         this.history = new LinkedList<>();
-        this.conversationResponses = new LinkedList<>();
         this.processing = new AtomicBoolean(false);
         this.activeTimestamp = this.creationTime;
         this.rounds = new AtomicInteger(0);
@@ -107,7 +103,6 @@ public class AIGCChannel extends Entity {
         }
 
         this.history = new LinkedList<>();
-        this.conversationResponses = new LinkedList<>();
 
         this.processing = new AtomicBoolean(json.has("processing") && json.getBoolean("processing"));
         this.activeTimestamp = json.has("activeTimestamp") ? json.getLong("activeTimestamp") :  this.creationTime;
@@ -182,6 +177,17 @@ public class AIGCChannel extends Entity {
         }
     }
 
+    public GenerativeRecord getRecord(long sn) {
+        synchronized (this.history) {
+            for (GenerativeRecord record : this.history) {
+                if (record.sn == sn) {
+                    return record;
+                }
+            }
+        }
+        return null;
+    }
+
     public GenerativeRecord appendRecord(long sn, String unit, String query, String answer, ComplexContext context) {
         this.activeTimestamp = System.currentTimeMillis();
 
@@ -212,24 +218,24 @@ public class AIGCChannel extends Entity {
         return record;
     }
 
-    public GenerativeRecord appendRecord(long sn, AIGCConversationResponse conversationResponse) {
-        this.activeTimestamp = System.currentTimeMillis();
-
-        this.totalQueryWords += conversationResponse.query.length();
-        this.totalAnswerWords += conversationResponse.answer.length();
-
-        this.rounds.incrementAndGet();
-
-        GenerativeRecord record = new GenerativeRecord(sn, conversationResponse.unit,
-                conversationResponse.query, conversationResponse.answer, this.activeTimestamp,
-                conversationResponse.context);
-        synchronized (this.history) {
-            this.history.addFirst(record);
-        }
-
-        this.conversationResponses.addFirst(conversationResponse);
-        return record;
-    }
+//    public GenerativeRecord appendRecord(long sn, AIGCConversationResponse conversationResponse) {
+//        this.activeTimestamp = System.currentTimeMillis();
+//
+//        this.totalQueryWords += conversationResponse.query.length();
+//        this.totalAnswerWords += conversationResponse.answer.length();
+//
+//        this.rounds.incrementAndGet();
+//
+//        GenerativeRecord record = new GenerativeRecord(sn, conversationResponse.unit,
+//                conversationResponse.query, conversationResponse.answer, this.activeTimestamp,
+//                conversationResponse.context);
+//        synchronized (this.history) {
+//            this.history.addFirst(record);
+//        }
+//
+//        this.conversationResponses.addFirst(conversationResponse);
+//        return record;
+//    }
 
     public List<GenerativeRecord> getLastHistory(int num) {
         List<GenerativeRecord> list = new ArrayList<>(num);
@@ -268,26 +274,6 @@ public class AIGCChannel extends Entity {
                 }
             }
         }
-    }
-
-    public List<AIGCConversationResponse> extractConversationResponses() {
-        List<AIGCConversationResponse> list = new ArrayList<>();
-        if (this.conversationResponses.isEmpty()) {
-            return list;
-        }
-
-        for (AIGCConversationResponse cr : this.conversationResponses) {
-            if (cr.needHistory) {
-                list.add(cr);
-            }
-            else {
-                break;
-            }
-        }
-
-        // 调换顺序，成为时间正序
-        Collections.reverse(list);
-        return list;
     }
 
     /**

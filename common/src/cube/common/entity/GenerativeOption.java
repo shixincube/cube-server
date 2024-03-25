@@ -45,6 +45,13 @@ public class GenerativeOption implements JSONable {
     public GenerativeOption() {
     }
 
+    public GenerativeOption(double temperature, double topP, double repetitionPenalty, int topK) {
+        this.temperature = temperature;
+        this.topP = topP;
+        this.repetitionPenalty = repetitionPenalty;
+        this.topK = topK;
+    }
+
     public GenerativeOption(JSONObject json) {
         this.temperature = json.getDouble("temperature");
         this.topP = json.getDouble("topP");
