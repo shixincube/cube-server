@@ -1179,16 +1179,32 @@ public class Manager implements Tickable, PerformerListener {
         data.put("searchTopK", searchTopK);
         data.put("searchFetchK", searchFetchK);
 
-        Packet packet = new Packet(AIGCAction.Chat.name, data);
-        ActionDialect request = packet.toDialect();
-        request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 4 * 60 * 1000);
-        if (null == response) {
-            Logger.w(Manager.class, "#chat - Response is null - " + channelCode);
-            return null;
-        }
+        Packet responsePacket = null;
 
-        Packet responsePacket = new Packet(response);
+        if (ModelConfig.BAIZE_NEXT_UNIT.equalsIgnoreCase(unit)) {
+            Packet packet = new Packet(AIGCAction.Conversation.name, data);
+            ActionDialect request = packet.toDialect();
+            request.addParam("token", token);
+            ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+            if (null == response) {
+                Logger.w(Manager.class, "#chat - Response (conversation) is null - " + channelCode);
+                return null;
+            }
+
+            responsePacket = new Packet(response);
+        }
+        else {
+            Packet packet = new Packet(AIGCAction.Chat.name, data);
+            ActionDialect request = packet.toDialect();
+            request.addParam("token", token);
+            ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 4 * 60 * 1000);
+            if (null == response) {
+                Logger.w(Manager.class, "#chat - Response is null - " + channelCode);
+                return null;
+            }
+
+            responsePacket = new Packet(response);
+        }
 
         if (Packet.extractCode(responsePacket) == AIGCStateCode.Processing.code) {
             AIGCChannel channel = new AIGCChannel(Packet.extractDataPayload(responsePacket));
@@ -1199,22 +1215,27 @@ public class Manager implements Tickable, PerformerListener {
         else if (Packet.extractCode(responsePacket) == AIGCStateCode.Ok.code) {
             ChatFuture future = null;
             if (Consts.PATTERN_CHAT.equals(pattern)) {
-                GenerativeRecord record = new GenerativeRecord(Packet.extractDataPayload(responsePacket));
-                if (null == record.query) {
-                    record.query = content;
+                JSONObject responseData = Packet.extractDataPayload(responsePacket);
+                if (responseData.has("processing") && responseData.has("channel")) {
+                    // 来自 conversation 的结果
+                    future = new ChatFuture(new AIGCChannel(responseData.getJSONObject("channel")));
+                    future.end = false;
                 }
-                future = new ChatFuture(record);
+                else {
+                    GenerativeRecord record = new GenerativeRecord(responseData);
+                    if (null == record.query) {
+                        record.query = content;
+                    }
+                    future = new ChatFuture(record);
+                    future.end = true;
+                }
             }
             else if (Consts.PATTERN_KNOWLEDGE.equals(pattern)) {
                 KnowledgeQAResult result = new KnowledgeQAResult(Packet.extractDataPayload(responsePacket));
                 future = new ChatFuture(result);
+                future.end = true;
             }
 
-            if (null == future) {
-                return null;
-            }
-
-            future.end = true;
             return future;
         }
         else {

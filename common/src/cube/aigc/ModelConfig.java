@@ -56,7 +56,8 @@ public class ModelConfig implements JSONable {
             new String[] { "GPT", "GPT" },
             new String[] { "DallE", "DallE" },
             new String[] { "Gemini", "Gemini" },
-            new String[] { "Wenxin", "Wenxin" }
+            new String[] { "Wenxin", "Wenxin" },
+            new String[] { "BaizeNext", "BaizeNext" }
     };
 
     private final String model;

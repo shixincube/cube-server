@@ -137,6 +137,13 @@ public class ConversationTask extends ServiceTask {
 
                 JSONObject response = new JSONObject();
                 response.put("sn", sn);
+                response.put("processing", true);
+                response.put("timestamp", System.currentTimeMillis());
+
+                // 修正频道的 last meta sn 数据
+                JSONObject channelJson = service.getChannel(code).toCompactJSON();
+                channelJson.put("lastMetaSn", sn);
+                response.put("channel", channelJson);
                 cellet.speak(talkContext,
                         makeResponse(dialect, packet, AIGCStateCode.Ok.code, response));
                 markResponseTime();
