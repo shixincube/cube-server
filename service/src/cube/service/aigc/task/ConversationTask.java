@@ -106,8 +106,9 @@ public class ConversationTask extends ServiceTask {
         }
 
         AIGCConversationParameter parameter = new AIGCConversationParameter(option.temperature,
-                option.topP, option.repetitionPenalty, recordList, categories, histories,
+                option.topP, option.repetitionPenalty, option.maxNewTokens, recordList, categories, histories,
                 recordable, searchable, networking);
+        parameter.topK = option.topK;
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
@@ -116,7 +117,7 @@ public class ConversationTask extends ServiceTask {
         // 根据工作模式进行调用
         if (pattern.equalsIgnoreCase(Consts.PATTERN_CHAT)) {
             // 执行 Conversation
-            long sn = service.conversation(token, code, content, parameter, new ConversationListener() {
+            long sn = service.executeConversation(token, code, content, parameter, new ConversationListener() {
                 @Override
                 public void onConversation(AIGCChannel channel, AIGCConversationResponse response) {
                     if (Logger.isDebugLevel()) {

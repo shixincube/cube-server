@@ -130,7 +130,8 @@ public class Workflow {
                 StringBuilder result = new StringBuilder();
                 for (String representation : representations) {
                     String prompt = template.formatFeaturePrompt(i, representation);
-                    String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(), records);
+                    String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                            records, null);
                     if (null == answer) {
                         Logger.w(this.getClass(), "#make - Infer feature failed");
                         break;
@@ -153,7 +154,8 @@ public class Workflow {
                 for (List<String> features : featuresList) {
                     // 将特征结果进行拼合
                     String prompt = template.formatDescriptionPrompt(i, this.spliceList(features));
-                    String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(), records);
+                    String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                            records, null);
                     if (null == answer) {
                         Logger.w(this.getClass(), "#make - Infer description failed");
                         break;
@@ -170,7 +172,8 @@ public class Workflow {
                 result = new StringBuilder();
                 for (String representation : representations) {
                     String prompt = template.formatSuggestionPrompt(i, representation);
-                    String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(), records);
+                    String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                            records, null);
                     if (null == answer) {
                         Logger.w(this.getClass(), "#make - Infer suggestion failed");
                         break;
@@ -186,7 +189,8 @@ public class Workflow {
                 List<List<String>> suggestionsList = TextUtils.splitList(paragraph.getSuggestions(), this.maxContext);
                 for (List<String> suggestions : suggestionsList) {
                     String prompt = template.formatOpinionPrompt(i, this.spliceList(suggestions));
-                    String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(), records);
+                    String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                            records, null);
                     if (null == answer) {
                         Logger.w(this.getClass(), "#make - Infer opinion failed");
                         break;
@@ -233,7 +237,8 @@ public class Workflow {
 
             // 表征
             String prompt = template.formatBehaviorPrompt(content.toString(), age, gender, marked);
-            String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(), null);
+            String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                    null, null);
             if (null != answer) {
                 result.add(answer);
             }

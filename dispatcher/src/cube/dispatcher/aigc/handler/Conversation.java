@@ -172,7 +172,7 @@ public class Conversation extends ContextHandler {
             }
 
             // Conversation
-            long sn = Manager.getInstance().conversation(token,
+            long sn = Manager.getInstance().executeConversation(token,
                     channelCode, pattern, content, histories, records, option);
             if (0 == sn) {
                 // 发生错误

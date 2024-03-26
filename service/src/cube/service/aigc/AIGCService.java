@@ -1131,7 +1131,18 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
-    public String syncGenerateText(String unitName, String prompt, GenerativeOption option, List<GenerativeRecord> history) {
+    /**
+     * 同步方式生成文本。
+     *
+     * @param unitName
+     * @param prompt
+     * @param option
+     * @param history
+     * @param participantContact
+     * @return
+     */
+    public String syncGenerateText(String unitName, String prompt, GenerativeOption option,
+                                   List<GenerativeRecord> history, Contact participantContact) {
         if (this.useAgent) {
             Logger.d(this.getClass(), "#syncGenerateText - Agent - \"" + unitName + "\" - history:"
                     + ((null != history) ? history.size() : 0));
@@ -1150,7 +1161,8 @@ public class AIGCService extends AbstractModule {
             }
         }
 
-        Contact participant = new Contact(1000, "shixincube.com");
+        Contact participant = (null == participantContact) ?
+                new Contact(1000, "shixincube.com") : participantContact;
 
         long sn = Utils.generateSerialNumber();
 
@@ -1159,7 +1171,7 @@ public class AIGCService extends AbstractModule {
         data.put("content", prompt);
         data.put("participant", participant.toCompactJSON());
         data.put("history", historyArray);
-        data.put("option", (null == option) ? (new GenerativeOption()).toJSON() : option);
+        data.put("option", (null == option) ? (new GenerativeOption()).toJSON() : option.toJSON());
 
         Packet request = new Packet(AIGCAction.Chat.name, data);
         ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(),
@@ -1187,43 +1199,28 @@ public class AIGCService extends AbstractModule {
         return responseText;
     }
 
+    /**
+     * 同步方式生成文本。
+     *
+     * @param authToken
+     * @param unitName
+     * @param prompt
+     * @param option
+     * @return
+     */
     public String syncGenerateText(AuthToken authToken, String unitName, String prompt, GenerativeOption option) {
         AIGCUnit unit = this.selectUnitByName(unitName);
         if (null == unit) {
             return null;
         }
 
-        AIGCChannel channel = new AIGCChannel(authToken, "Baize");
-
-        StringBuilder result = new StringBuilder();
-        this.generateText(channel, unit, prompt, prompt, option, null, null, false, false,
-                new GenerateTextListener() {
-            @Override
-            public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
-                result.append(record.answer);
-
-                synchronized (channel) {
-                    channel.notify();
-                }
-            }
-
-            @Override
-            public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
-                synchronized (channel) {
-                    channel.notify();
-                }
-            }
-        });
-
-        synchronized (channel) {
-            try {
-                channel.wait(60 * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        Contact participant = ContactManager.getInstance().getContact(authToken.getDomain(), authToken.getContactId());
+        if (null == participant) {
+            Logger.w(this.getClass(), "#syncGenerateText(AuthToken) - Can NOT find participant: " + authToken.getCode());
+            return null;
         }
 
-        return result.length() <= 1 ? null : result.toString();
+        return this.syncGenerateText(unitName, prompt, option, null, participant);
     }
 
     /**
@@ -1291,7 +1288,7 @@ public class AIGCService extends AbstractModule {
      * @param listener
      * @return
      */
-    public long conversation(String tokenCode, String channelCode, String content, AIGCConversationParameter parameter,
+    public long executeConversation(String tokenCode, String channelCode, String content, AIGCConversationParameter parameter,
                              ConversationListener listener) {
         if (!this.isStarted()) {
             Logger.w(AIGCService.class, "#conversation - Service is NOT ready");

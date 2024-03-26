@@ -1595,7 +1595,8 @@ public class KnowledgeBase {
 
                 // 将所有内容推送给模型推理
                 String prompt = Consts.formatExtractContent(content.toString(), query);
-                String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GenerativeOption(), null);
+                String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
+                        new GenerativeOption(), null, null);
                 if (null == result) {
                     Logger.w(this.getClass(), "#extractDocumentContent - Unit error, no answer: " + this.baseInfo.name);
                     continue;

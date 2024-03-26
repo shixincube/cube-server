@@ -36,27 +36,45 @@ public class GenerativeOption implements JSONable {
 
     public double temperature = 0.3;
 
-    public double topP = 0.95;
+    public double topP = 0.85;
 
-    public double repetitionPenalty = 1.3;
+    public double repetitionPenalty = 1.05;
 
-    public int topK = 50;
+    public int topK = 5;
+
+    public int maxNewTokens = 2048;
 
     public GenerativeOption() {
     }
 
-    public GenerativeOption(double temperature, double topP, double repetitionPenalty, int topK) {
+    public GenerativeOption(double temperature, double topP, double repetitionPenalty, int maxNewTokens, int topK) {
         this.temperature = temperature;
         this.topP = topP;
         this.repetitionPenalty = repetitionPenalty;
+        this.maxNewTokens = maxNewTokens;
         this.topK = topK;
     }
 
     public GenerativeOption(JSONObject json) {
-        this.temperature = json.getDouble("temperature");
-        this.topP = json.getDouble("topP");
-        this.repetitionPenalty = json.getDouble("repetitionPenalty");
-        this.topK = json.getInt("topK");
+        if (json.has("temperature")) {
+            this.temperature = json.getDouble("temperature");
+        }
+
+        if (json.has("topP")) {
+            this.topP = json.getDouble("topP");
+        }
+
+        if (json.has("repetitionPenalty")) {
+            this.repetitionPenalty = json.getDouble("repetitionPenalty");
+        }
+
+        if (json.has("topK")) {
+            this.topK = json.getInt("topK");
+        }
+
+        if (json.has("maxNewTokens")) {
+            this.maxNewTokens = json.getInt("maxNewTokens");
+        }
     }
 
     @Override
@@ -66,6 +84,7 @@ public class GenerativeOption implements JSONable {
         json.put("topP", this.topP);
         json.put("repetitionPenalty", this.repetitionPenalty);
         json.put("topK", this.topK);
+        json.put("maxNewTokens", this.maxNewTokens);
         return json;
     }
 

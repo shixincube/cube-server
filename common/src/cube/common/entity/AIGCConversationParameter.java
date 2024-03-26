@@ -41,6 +41,8 @@ public class AIGCConversationParameter {
 
     public int topK = 50;
 
+    public int maxNewTokens = 2048;
+
     public List<String> categories;
 
     public List<GenerativeRecord> records;
@@ -53,20 +55,22 @@ public class AIGCConversationParameter {
 
     public boolean networking = false;
 
-    public AIGCConversationParameter(double temperature, double topP, double repetitionPenalty,
+    public AIGCConversationParameter(double temperature, double topP, double repetitionPenalty, int maxNewTokens,
                                      List<GenerativeRecord> records, List<String> categories, int histories,
                                      boolean recordable, boolean searchable, boolean networking) {
         this.temperature = temperature;
         this.topP = topP;
         this.repetitionPenalty = repetitionPenalty;
+        this.maxNewTokens = maxNewTokens;
         this.records = records;
         this.categories = categories;
+        this.histories = histories;
         this.recordable = recordable;
         this.searchable = searchable;
         this.networking = networking;
     }
 
     public GenerativeOption toGenerativeOption() {
-        return new GenerativeOption(this.temperature, this.topP, this.repetitionPenalty, this.topK);
+        return new GenerativeOption(this.temperature, this.topP, this.repetitionPenalty, this.maxNewTokens, this.topK);
     }
 }

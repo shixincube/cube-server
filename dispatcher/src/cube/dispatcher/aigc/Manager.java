@@ -1257,7 +1257,7 @@ public class Manager implements Tickable, PerformerListener {
      * @param option
      * @return
      */
-    public long conversation(String token, String channelCode, String pattern,
+    public long executeConversation(String token, String channelCode, String pattern,
                              String content, int histories, JSONArray records,
                              GenerativeOption option) {
         JSONObject data = new JSONObject();

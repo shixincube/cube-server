@@ -185,7 +185,7 @@ public class ResourceAnswer {
                     if (content.length() > 10) {
                         String prompt = Consts.formatExtractContent(content.toString(), resource.title);
                         String response = service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
-                                new GenerativeOption(), null);
+                                new GenerativeOption(), null, null);
                         if (null != response) {
                             result.append(response).append("\n");
                         }
