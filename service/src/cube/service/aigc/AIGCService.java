@@ -1404,6 +1404,7 @@ public class AIGCService extends AbstractModule {
     }
 
     public boolean converseBy(AIGCChannel channel, AIGCUnit unit, String prompt, ConversationListener listener) {
+        // TODO
         return false;
     }
 

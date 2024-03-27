@@ -52,6 +52,7 @@ import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -1436,7 +1437,7 @@ public class KnowledgeBase {
         PromptMetadata promptMetadata = null;
         // 根据文件名匹配文档，读取文件内容进行问题推理
         promptMetadata = this.extractDocumentContent(query, 5);
-        if (null != promptMetadata) {
+        if (null != promptMetadata && !promptMetadata.isEmpty()) {
             Logger.d(this.getClass(), "#performKnowledgeQA - Generate prompt from document - num:" +
                     promptMetadata.metadataList.size());
             // 使用文档推理结果生成提示词
@@ -1560,6 +1561,12 @@ public class KnowledgeBase {
             }
 
             FileLabel fileLabel = new FileLabel(fileLabelJson);
+
+            if (fileLabel.getFileSize() >= ModelConfig.BAIZE_CONTEXT_LIMIT - 50) {
+                Logger.d(this.getClass(), "#extractDocumentContent - File size overflow: " + fileLabel.getFileSize());
+                continue;
+            }
+
             if (fileLabel.getFileType() == FileType.TEXT
                     || fileLabel.getFileType() == FileType.TXT
                     || fileLabel.getFileType() == FileType.MD
@@ -2431,6 +2438,10 @@ public class KnowledgeBase {
                     this.metadataList.add(metadata);
                 }
             }
+        }
+
+        public boolean isEmpty() {
+            return this.metadataList.isEmpty();
         }
 
         public void addMetadata(KnowledgeArticle article) {

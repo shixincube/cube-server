@@ -56,7 +56,12 @@ public class FrameworkWrapper {
     }
 
     public List<KnowledgeBaseInfo> getBaseInfos() {
-        return this.baseInfoList;
+        synchronized (this.baseInfoList) {
+            this.baseInfoList.clear();
+            List<KnowledgeBaseInfo> list = this.service.getStorage().readKnowledgeBaseInfo(this.contactId);
+            this.baseInfoList.addAll(list);
+            return this.baseInfoList;
+        }
     }
 
     public KnowledgeBase getKnowledgeBase(String name) {
