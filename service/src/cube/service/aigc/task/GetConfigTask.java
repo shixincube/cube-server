@@ -77,14 +77,6 @@ public class GetConfigTask extends ServiceTask {
             return;
         }
 
-        List<ModelConfig> models = service.getModelConfigs();
-        if (null == models) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
-            markResponseTime();
-            return;
-        }
-
         List<Notification> notifications = service.getNotifications();
         if (null == notifications) {
             this.cellet.speak(this.talkContext,
@@ -95,6 +87,21 @@ public class GetConfigTask extends ServiceTask {
 
         // 个人偏好配置
         ContactPreference preference = service.getPreference(token.getContactId());
+
+        List<ModelConfig> models = null;
+        if (null == preference || preference.getModels().length() == 0) {
+            models = service.getModelConfigs();
+        }
+        else {
+            models = service.getModelConfigs(preference.getModels());
+        }
+
+        if (null == models) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
 
         ConfigInfo configInfo = new ConfigInfo(models, notifications, preference);
 

@@ -73,10 +73,7 @@ import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.tokenizer.Tokenizer;
 import cube.storage.StorageType;
-import cube.util.ConfigUtils;
-import cube.util.FileType;
-import cube.util.FileUtils;
-import cube.util.TextUtils;
+import cube.util.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -496,6 +493,14 @@ public class AIGCService extends AbstractModule {
         }
 
         return this.storage.getModelConfigs();
+    }
+
+    public List<ModelConfig> getModelConfigs(JSONArray modelNames) {
+        if (!this.isStarted()) {
+            return null;
+        }
+
+        return this.storage.getModelConfigs(JSONUtils.toStringList(modelNames));
     }
 
     public List<Notification> getNotifications() {

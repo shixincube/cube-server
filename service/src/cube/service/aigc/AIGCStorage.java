@@ -698,6 +698,29 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
+    public List<ModelConfig> getModelConfigs(List<String> modelNames) {
+        List<ModelConfig> list = new ArrayList<>();
+
+        for (String modelName : modelNames) {
+            List<StorageField[]> result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
+                    Conditional.createEqualTo("item", modelName.trim())
+            });
+
+            for (StorageField[] fields : result) {
+                Map<String, StorageField> data = StorageFields.get(fields);
+                JSONObject value = new JSONObject(data.get("value").getString());
+                try {
+                    ModelConfig config = new ModelConfig(modelName, value);
+                    list.add(config);
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#getModelConfigs - ModelConfig error: " + e.getMessage());
+                }
+            }
+        }
+
+        return list;
+    }
+
     public String readTokenByInvitation(String invitation) {
         List<StorageField[]> result = this.storage.executeQuery(this.appInvitationTable, new StorageField[] {
                     new StorageField("token", LiteralBase.STRING)
