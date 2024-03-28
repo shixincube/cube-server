@@ -218,27 +218,28 @@ public class KnowledgeBase {
         KnowledgeDoc activatedDoc = null;
 
         try {
+            GetFile getFile = new GetFile(this.authToken.getDomain(), fileCode);
+            JSONObject fileLabelJson = this.fileStorage.notify(getFile);
+            if (null == fileLabelJson) {
+                this.storage.deleteKnowledgeDoc(this.baseInfo.name, fileCode);
+                Logger.e(this.getClass(), "#importKnowledgeDoc - Not find file: " + fileCode);
+                this.lock.set(false);
+                return null;
+            }
+
+            FileLabel fileLabel = new FileLabel(fileLabelJson);
+
             KnowledgeDoc doc = this.getKnowledgeDocByFileCode(fileCode);
             boolean newDoc = false;
             if (null == doc) {
                 newDoc = true;
                 // 创建新文档
                 doc = new KnowledgeDoc(Utils.generateSerialNumber(), this.authToken.getDomain(),
-                        this.authToken.getContactId(), fileCode, this.baseInfo.name, null,
+                        this.authToken.getContactId(), fileCode, this.baseInfo.name, fileLabel.getFileName(),
                         false, -1, this.scope);
             }
 
             if (null == doc.getFileLabel()) {
-                GetFile getFile = new GetFile(this.authToken.getDomain(), fileCode);
-                JSONObject fileLabelJson = this.fileStorage.notify(getFile);
-                if (null == fileLabelJson) {
-                    this.storage.deleteKnowledgeDoc(this.baseInfo.name, fileCode);
-                    Logger.e(this.getClass(), "#importKnowledgeDoc - Not find file: " + fileCode);
-                    this.lock.set(false);
-                    return null;
-                }
-
-                FileLabel fileLabel = new FileLabel(fileLabelJson);
                 doc.setFileLabel(fileLabel);
             }
 

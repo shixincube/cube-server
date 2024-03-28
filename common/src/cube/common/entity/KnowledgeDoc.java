@@ -104,7 +104,10 @@ public class KnowledgeDoc extends Entity {
         this.activated = activated;
         this.numSegments = numSegments;
         this.scope = scope;
-        this.knowledgeLabels.add(fileName.split("\\.")[0]);
+
+        if (null != fileName) {
+            this.knowledgeLabels.add(fileName.split("\\.")[0]);
+        }
     }
 
     public KnowledgeDoc(JSONObject json) {
