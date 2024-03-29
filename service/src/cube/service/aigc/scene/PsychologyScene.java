@@ -31,6 +31,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
+import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -120,7 +121,7 @@ public class PsychologyScene {
             return null;
         }
 
-        FileLabel fileLabel = this.aigcService.getFile(report.getFileCode());
+        FileLabel fileLabel = this.aigcService.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
         if (null == fileLabel) {
             return null;
         }
@@ -294,7 +295,7 @@ public class PsychologyScene {
     public static void main(String[] args) {
         PsychologyScene scene = PsychologyScene.getInstance();
 
-        AuthToken authToken = new AuthToken(Utils.randomString(16), "shixincube.com", "AppKey",
+        AuthToken authToken = new AuthToken(Utils.randomString(16), AuthConsts.DEFAULT_DOMAIN, "AppKey",
                 1000L, System.currentTimeMillis(), System.currentTimeMillis() + 60 * 60 * 1000, false);
         AIGCChannel channel = new AIGCChannel(authToken, "Test");
         scene.processReport(channel, null, Theme.Stress, false);

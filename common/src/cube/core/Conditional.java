@@ -109,6 +109,16 @@ public class Conditional {
     }
 
     /**
+     * 创建字段 NULL 值判断。
+     *
+     * @param fieldName 指定字段名。
+     * @return 返回句式实例。
+     */
+    public static Conditional createIsNull(String fieldName) {
+        return new Conditional(Quote + fieldName + Quote + " IS NULL");
+    }
+
+    /**
      * 创建 LIMIT 约束。
      *
      * @param num 指定约束数量。

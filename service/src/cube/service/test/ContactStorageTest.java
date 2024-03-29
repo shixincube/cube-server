@@ -28,6 +28,7 @@ package cube.service.test;
 
 import cell.util.CachedQueueExecutor;
 import cell.util.Utils;
+import cube.auth.AuthConsts;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
 import cube.common.entity.GroupState;
@@ -87,7 +88,7 @@ public class ContactStorageTest {
 
         this.storage.open();
 
-        String domain = "shixincube.com";
+        String domain = AuthConsts.DEFAULT_DOMAIN;
 
         this.domainList = new ArrayList<>();
         this.domainList.add(domain);

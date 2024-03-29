@@ -26,6 +26,7 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cube.auth.AuthConsts;
 import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
@@ -107,7 +108,7 @@ public class AutomaticSpeechRecognition extends ContextHandler {
                 return;
             }
 
-            String domain = "shixincube.com";
+            String domain = AuthConsts.DEFAULT_DOMAIN;
             String fileCode = null;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);

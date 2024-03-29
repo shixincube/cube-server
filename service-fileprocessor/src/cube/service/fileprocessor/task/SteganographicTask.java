@@ -34,6 +34,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.Base64;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.auth.AuthConsts;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.action.FileProcessorAction;
@@ -96,7 +97,7 @@ public class SteganographicTask extends ServiceTask {
             Object mutex = new Object();
 
             OperationWorkflow workflow = new OperationWorkflow(this.presetFile);
-            workflow.setDomain("shixincube.com");
+            workflow.setDomain(AuthConsts.DEFAULT_DOMAIN);
 
             SteganographyOperation operation = new SteganographyOperation(content);
             workflow.append(new OperationWork(operation));
@@ -164,7 +165,7 @@ public class SteganographicTask extends ServiceTask {
 
             OperationWorkflow workflow = new OperationWorkflow();
             workflow.setSourceFileCode(fileCode);
-            workflow.setDomain("shixincube.com");
+            workflow.setDomain(AuthConsts.DEFAULT_DOMAIN);
 
             SteganographyOperation operation = new SteganographyOperation(size);
             workflow.append(new OperationWork(operation));

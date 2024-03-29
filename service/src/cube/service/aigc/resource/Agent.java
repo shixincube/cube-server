@@ -30,6 +30,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
+import cube.auth.AuthConsts;
 import cube.common.entity.*;
 import cube.util.HttpClientFactory;
 import org.eclipse.jetty.client.HttpClient;
@@ -73,7 +74,7 @@ public final class Agent {
         this.token = token;
         this.channelCode = Utils.randomString(16);
 
-        Contact contact = new Contact(100000, "shixincube.com");
+        Contact contact = new Contact(100000, AuthConsts.DEFAULT_DOMAIN);
 
         List<String> subtasks = new ArrayList<>();
         subtasks.add(AICapability.NaturalLanguageProcessing.Conversational);

@@ -105,10 +105,10 @@ public class QueryChatHistoryTask extends ServiceTask {
         List<AIGCChatHistory> historyList = null;
 
         if (contactId != 0) {
-            historyList = service.getStorage().readChatHistoryByContactId(contactId, start, end);
+            historyList = service.getStorage().readChatHistoryByContactId(contactId, token.getDomain(), start, end);
         }
         else if (feedback != -1) {
-            historyList = service.getStorage().readChatHistoryByFeedback(feedback, start, end);
+            historyList = service.getStorage().readChatHistoryByFeedback(feedback, token.getDomain(), start, end);
         }
 
         if (null == historyList) {

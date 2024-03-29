@@ -34,6 +34,7 @@ import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkError;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.auth.AuthConsts;
 import cube.common.Packet;
 import cube.common.action.ContactAction;
 import cube.common.entity.Contact;
@@ -77,7 +78,7 @@ public class ContactTest implements TalkListener {
     }
 
     public void testSignIn() {
-        Contact self = new Contact(100200300L, "shixincube.com", "时信魔方");
+        Contact self = new Contact(100200300L, AuthConsts.DEFAULT_DOMAIN, "时信魔方");
         Device device = new Device("Mac", "MacBookPro Ambrose");
         self.addDevice(device);
 

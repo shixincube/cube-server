@@ -37,6 +37,7 @@ import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PsychologyReport;
 import cube.aigc.psychology.Theme;
 import cube.aigc.publicopinion.PublicOpinionTaskName;
+import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -638,8 +639,8 @@ public class AIGCService extends AbstractModule {
             return null;
         }
 
-        final String domain = "shixincube.com";
-        final String appKey = "shixin-cubeteam-opensource-appkey";
+        final String domain = AuthConsts.DEFAULT_DOMAIN;
+        final String appKey = AuthConsts.DEFAULT_APP_KEY;
 
         AuthToken authToken = null;
 
@@ -1167,7 +1168,7 @@ public class AIGCService extends AbstractModule {
         }
 
         Contact participant = (null == participantContact) ?
-                new Contact(1000, "shixincube.com") : participantContact;
+                new Contact(1000, AuthConsts.DEFAULT_DOMAIN) : participantContact;
 
         long sn = Utils.generateSerialNumber();
 
@@ -2041,11 +2042,7 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
-    public FileLabel getFile(String fileCode) {
-        return this.getFile("shixincube.com", fileCode);
-    }
-
-    private FileLabel getFile(String domain, String fileCode) {
+    public FileLabel getFile(String domain, String fileCode) {
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#getFile - File storage service is not ready");
@@ -2592,7 +2589,7 @@ public class AIGCService extends AbstractModule {
             this.numHistories = (null != records) ? records.size() : 0;
             this.listener = listener;
 
-            this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName());
+            this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName(), this.participant.getDomain().getName());
             this.history.queryContactId = channel.getAuthToken().getContactId();
             this.history.queryTime = System.currentTimeMillis();
             this.history.queryContent = content;
@@ -3267,7 +3264,8 @@ public class AIGCService extends AbstractModule {
             this.text = text;
             this.listener = listener;
 
-            this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName());
+            this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName(),
+                    channel.getDomain().getName());
             this.history.queryContactId = channel.getAuthToken().getContactId();
             this.history.queryTime = System.currentTimeMillis();
             this.history.queryContent = text;

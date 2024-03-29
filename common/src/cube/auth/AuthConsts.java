@@ -1,20 +1,20 @@
 /*
  * This source file is part of Cube.
- * <p>
+ *
  * The MIT License (MIT)
- * <p>
+ *
  * Copyright (c) 2020-2024 Ambrose Xu.
- * <p>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p>
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * <p>
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,34 +24,31 @@
  * SOFTWARE.
  */
 
-package cube.service;
+package cube.auth;
 
-/**
- * 版本信息。
- */
-public final class Version {
-
-    public final static int MAJOR = 3;
-
-    public final static int MINOR = 0;
-
-    public final static int REVISION = 67;
-
-    private Version() {
-    }
+public final class AuthConsts {
 
     /**
-     * 转版本串。
-     *
-     * @return
+     * 默认域。
      */
-    public static String toVersionString() {
+    public static String DEFAULT_DOMAIN = "default_domain";
+
+    /**
+     * 默认 App ID 。
+     */
+    public static String DEFAULT_APP_ID = "CubeApp";
+
+    /**
+     * 默认 App Key 。
+     */
+    public static String DEFAULT_APP_KEY = "default-opensource-appkey";
+
+
+    public static String formatString() {
         StringBuilder buf = new StringBuilder();
-        buf.append(MAJOR);
-        buf.append(".");
-        buf.append(MINOR);
-        buf.append(".");
-        buf.append(REVISION);
+        buf.append("Default domain : ").append(AuthConsts.DEFAULT_DOMAIN).append("\n");
+        buf.append("Default app id : ").append(AuthConsts.DEFAULT_APP_ID).append("\n");
+        buf.append("Default app key: ").append(AuthConsts.DEFAULT_APP_KEY);
         return buf.toString();
     }
 }

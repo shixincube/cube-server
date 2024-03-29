@@ -29,6 +29,7 @@ package cube.service.hub;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.auth.AuthConsts;
 import cube.cache.SharedMemoryCache;
 import cube.common.action.FileStorageAction;
 import cube.common.entity.FileLabel;
@@ -39,7 +40,6 @@ import cube.core.Kernel;
 import cube.core.Module;
 import cube.hub.*;
 import cube.hub.data.ChannelCode;
-import cube.hub.data.DataHelper;
 import cube.hub.event.*;
 import cube.hub.signal.*;
 import cube.plugin.HookResult;
@@ -450,7 +450,7 @@ public class HubService extends AbstractModule {
     private FileLabel getFileLabel(String fileCode) {
         JSONObject notification = new JSONObject();
         notification.put("action", FileStorageAction.GetFile.name);
-        notification.put("domain", DataHelper.DEFAULT_DOMAIN_NAME);
+        notification.put("domain", AuthConsts.DEFAULT_DOMAIN);
         notification.put("fileCode", fileCode);
         notification.put("transmitting", false);
 

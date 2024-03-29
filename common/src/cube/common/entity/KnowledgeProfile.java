@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cube.auth.AuthConsts;
 import org.json.JSONObject;
 
 /**
@@ -77,7 +78,7 @@ public class KnowledgeProfile extends Entity {
     }
 
     public static KnowledgeProfile createDummy() {
-        return new KnowledgeProfile(0, 0, "shixincube.com", STATE_FORBIDDEN, 0,
+        return new KnowledgeProfile(0, 0, AuthConsts.DEFAULT_DOMAIN, STATE_FORBIDDEN, 0,
                 KnowledgeScope.Private);
     }
 }

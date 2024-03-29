@@ -28,6 +28,7 @@ package cube.dispatcher.hub.handler;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.auth.AuthConsts;
 import cube.common.entity.FileLabel;
 import cube.dispatcher.Performer;
 import cube.dispatcher.hub.CacheCenter;
@@ -156,7 +157,7 @@ public class FileHandler extends FileLabelHandler {
             file.renameTo(newFile);
 
             // 生成文件码
-            String fileCode = FileUtils.makeFileCode(code, DataHelper.DEFAULT_DOMAIN_NAME, newFile.getName());
+            String fileCode = FileUtils.makeFileCode(code, AuthConsts.DEFAULT_DOMAIN, newFile.getName());
 
             // 发送文件数据
             String[] hashCodes = this.performer.transmit(HubCellet.NAME, fileCode, new FileInputStream(newFile));
@@ -165,7 +166,7 @@ public class FileHandler extends FileLabelHandler {
             FileType fileType = FileType.matchExtension(extName);
 
             // 生成文件标签
-            FileLabel fileLabel = new FileLabel(DataHelper.DEFAULT_DOMAIN_NAME, fileCode,
+            FileLabel fileLabel = new FileLabel(AuthConsts.DEFAULT_DOMAIN, fileCode,
                     DataHelper.DEFAULT_OWNER_ID, newFile);
             // 需要重置文件名
             fileLabel.setFileName(filename);

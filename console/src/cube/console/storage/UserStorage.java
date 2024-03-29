@@ -29,6 +29,7 @@ package cube.console.storage;
 import cell.core.talk.LiteralBase;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.auth.AuthConsts;
 import cube.console.mgmt.User;
 import cube.console.mgmt.UserToken;
 import cube.core.Conditional;
@@ -190,7 +191,7 @@ public class UserStorage extends AbstractStorage {
                     new StorageField("avatar", LiteralBase.STRING, "assets/img/avatar.png"),
                     new StorageField("display_name", LiteralBase.STRING, "魔方管理员"),
                     new StorageField("role", LiteralBase.INT, 1),
-                    new StorageField("group", LiteralBase.STRING, "shixincube.com")
+                    new StorageField("group", LiteralBase.STRING, AuthConsts.DEFAULT_DOMAIN)
             };
             this.storage.executeInsert(this.userTable, fields);
 

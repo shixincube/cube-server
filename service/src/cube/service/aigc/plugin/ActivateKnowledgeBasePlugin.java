@@ -27,6 +27,7 @@
 package cube.service.aigc.plugin;
 
 import cell.util.log.Logger;
+import cube.auth.AuthConsts;
 import cube.common.entity.Contact;
 import cube.common.entity.KnowledgeProfile;
 import cube.common.entity.KnowledgeScope;
@@ -66,7 +67,7 @@ public class ActivateKnowledgeBasePlugin implements Plugin {
             Logger.i(ActivateKnowledgeBasePlugin.class, "Activate knowledge base: " + contact.getId());
 
             // 更新
-            this.service.getStorage().updateKnowledgeProfile(contact.getId(), "shixincube.com",
+            this.service.getStorage().updateKnowledgeProfile(contact.getId(), AuthConsts.DEFAULT_DOMAIN,
                     KnowledgeProfile.STATE_NORMAL, 549755813888L, KnowledgeScope.Private);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#launch", e);

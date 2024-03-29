@@ -28,6 +28,7 @@ package cube.service.filestorage.test;
 
 import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
+import cube.auth.AuthConsts;
 import cube.service.filestorage.ServiceStorage;
 import cube.service.filestorage.hierarchy.Directory;
 import cube.service.filestorage.hierarchy.FileHierarchy;
@@ -62,7 +63,7 @@ public class FileHierarchyTest {
     public FileHierarchyTest() {
         this.executor = CachedQueueExecutor.newCachedQueueThreadPool(2);
         this.domainList = new ArrayList<>();
-        this.domainList.add("shixincube.com");
+        this.domainList.add(AuthConsts.DEFAULT_DOMAIN);
     }
 
     public void setup() {

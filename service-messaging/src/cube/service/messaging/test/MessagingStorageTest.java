@@ -28,6 +28,7 @@ package cube.service.messaging.test;
 
 import cell.util.CachedQueueExecutor;
 import cell.util.Utils;
+import cube.auth.AuthConsts;
 import cube.common.entity.Message;
 import cube.service.messaging.MessagingStorage;
 import cube.storage.StorageType;
@@ -83,7 +84,7 @@ public class MessagingStorageTest {
         this.storage.open();
 
         this.domainList = new ArrayList<>();
-        this.domainList.add("shixincube.com");
+        this.domainList.add(AuthConsts.DEFAULT_DOMAIN);
 
         this.storage.execSelfChecking(this.domainList);
 

@@ -29,6 +29,7 @@ package cube.service.auth;
 import cell.core.net.Endpoint;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
+import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
 import cube.common.Storagable;
@@ -40,13 +41,12 @@ import cube.core.StorageField;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
+import cube.util.ConfigUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.util.*;
 
 /**
  * 授权模块存储器。
@@ -157,6 +157,7 @@ public class AuthStorage implements Storagable {
     public void execSelfChecking(List<String> domainNameList) {
         this.checkDomainTable();
         this.checkTokenTable();
+        this.buildInData();
     }
 
     /**
@@ -220,19 +221,43 @@ public class AuthStorage implements Storagable {
      */
     public void addDomainApp(String domain, String appId, String appKey, Endpoint main, Endpoint http, Endpoint https,
         JSONArray iceServers, boolean ferry) {
-        this.storage.executeInsert(this.domainTable, new StorageField[] {
-                new StorageField("domain", LiteralBase.STRING, domain),
-                new StorageField("app_id", LiteralBase.STRING, appId),
-                new StorageField("app_key", LiteralBase.STRING, appKey),
-                new StorageField("address", LiteralBase.STRING, main.getHost()),
-                new StorageField("port", LiteralBase.INT, main.getPort()),
-                new StorageField("http_address", LiteralBase.STRING, http.getHost()),
-                new StorageField("http_port", LiteralBase.INT, http.getPort()),
-                new StorageField("https_address", LiteralBase.STRING, https.getHost()),
-                new StorageField("https_port", LiteralBase.INT, https.getPort()),
-                new StorageField("ice_servers", LiteralBase.STRING, iceServers.toString()),
-                new StorageField("ferry", LiteralBase.INT, ferry ? 1 : 0)
+        List<StorageField[]> result = this.storage.executeQuery(this.domainTable, this.domainFields, new Conditional[] {
+                Conditional.createEqualTo("domain", domain),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("app_id", appId)
         });
+        if (result.isEmpty()) {
+            this.storage.executeInsert(this.domainTable, new StorageField[] {
+                    new StorageField("domain", LiteralBase.STRING, domain),
+                    new StorageField("app_id", LiteralBase.STRING, appId),
+                    new StorageField("app_key", LiteralBase.STRING, appKey),
+                    new StorageField("address", LiteralBase.STRING, main.getHost()),
+                    new StorageField("port", LiteralBase.INT, main.getPort()),
+                    new StorageField("http_address", LiteralBase.STRING, http.getHost()),
+                    new StorageField("http_port", LiteralBase.INT, http.getPort()),
+                    new StorageField("https_address", LiteralBase.STRING, https.getHost()),
+                    new StorageField("https_port", LiteralBase.INT, https.getPort()),
+                    new StorageField("ice_servers", LiteralBase.STRING, iceServers.toString()),
+                    new StorageField("ferry", LiteralBase.INT, ferry ? 1 : 0)
+            });
+        }
+        else {
+            this.storage.executeUpdate(this.domainTable, new StorageField[] {
+                    new StorageField("app_key", LiteralBase.STRING, appKey),
+                    new StorageField("address", LiteralBase.STRING, main.getHost()),
+                    new StorageField("port", LiteralBase.INT, main.getPort()),
+                    new StorageField("http_address", LiteralBase.STRING, http.getHost()),
+                    new StorageField("http_port", LiteralBase.INT, http.getPort()),
+                    new StorageField("https_address", LiteralBase.STRING, https.getHost()),
+                    new StorageField("https_port", LiteralBase.INT, https.getPort()),
+                    new StorageField("ice_servers", LiteralBase.STRING, iceServers.toString()),
+                    new StorageField("ferry", LiteralBase.INT, ferry ? 1 : 0)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("domain", domain),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("app_id", appId)
+            });
+        }
     }
 
     /**
@@ -272,6 +297,16 @@ public class AuthStorage implements Storagable {
         }, new Conditional[] {
                 Conditional.createEqualTo("domain", domain),
         });
+    }
+
+    /**
+     * 获取访问域。
+     *
+     * @param domain
+     * @return
+     */
+    public AuthDomain getDomain(String domain) {
+        return this.getDomain(domain, null);
     }
 
     /**
@@ -402,15 +437,15 @@ public class AuthStorage implements Storagable {
             if (this.storage.executeCreate(this.domainTable, this.domainFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.domainTable + "' successfully");
 
-                // 插入 Demo 数据
+                // 插入默认数据
 
                 JSONArray iceServers = new JSONArray("[{" +
                         "\"urls\": \"turn:52.83.195.35:3478\"," +
                         "\"username\": \"cube\"," +
                         "\"credential\": \"cube887\"" +
                     "}]");
-                this.addDomainApp("shixincube.com", "CubeApp",
-                        "shixin-cubeteam-opensource-appkey",
+                this.addDomainApp(AuthConsts.DEFAULT_DOMAIN, AuthConsts.DEFAULT_APP_ID,
+                        AuthConsts.DEFAULT_APP_KEY,
                         new Endpoint("127.0.0.1", 7000),
                         new Endpoint("127.0.0.1", 7010),
                         new Endpoint("127.0.0.1", 7017),
@@ -425,6 +460,51 @@ public class AuthStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.tokenTable, this.tokenFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.tokenTable + "' successfully");
+            }
+        }
+    }
+
+    private void buildInData() {
+        File file = new File("config/auth.properties");
+        if (file.exists()) {
+            try {
+                JSONArray iceServers = new JSONArray("[{" +
+                        "\"urls\": \"turn:52.83.195.35:3478\"," +
+                        "\"username\": \"cube\"," +
+                        "\"credential\": \"cube887\"" +
+                    "}]");
+
+                Properties properties = ConfigUtils.readProperties(file.getAbsolutePath());
+                boolean enabled = Boolean.parseBoolean(properties.getProperty("domain.1.enabled").trim());
+                if (enabled) {
+                    String domain = properties.getProperty("domain.1.name").trim();
+                    String appId = properties.getProperty("domain.1.app_id").trim();
+                    String appKey = properties.getProperty("domain.1.app_key").trim();
+                    String host = properties.getProperty("domain.1.host").trim();
+                    String http = properties.getProperty("domain.1.http").trim();
+                    String https = properties.getProperty("domain.1.https").trim();
+
+                    String[] tmp = host.split(":");
+                    Endpoint mainHost = new Endpoint(tmp[0], Integer.parseInt(tmp[1]));
+
+                    tmp = http.split(":");
+                    Endpoint httpHost = new Endpoint(tmp[0], Integer.parseInt(tmp[1]));
+
+                    tmp = https.split(":");
+                    Endpoint httpsHost = new Endpoint(tmp[0], Integer.parseInt(tmp[1]));
+
+                    Logger.i(this.getClass(), "Activate domain app: " + domain + "/" + appId);
+
+                    this.addDomainApp(domain, appId, appKey,
+                            mainHost,
+                            httpHost,
+                            httpsHost,
+                            iceServers,
+                            false);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Logger.e(this.getClass(), "#buildInData", e);
             }
         }
     }

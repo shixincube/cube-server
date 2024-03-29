@@ -29,6 +29,7 @@ package cube.service.auth;
 import cell.core.net.Endpoint;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
 import cube.common.action.ClientAction;
@@ -105,6 +106,18 @@ public class AuthService extends AbstractModule {
             // 开启存储
             this.authStorage.open();
             this.authStorage.execSelfChecking(null);
+
+            // FIXME XJW 2024-3-29 为了兼容已经部署的旧系统，从域数据表里提取第一条记录作为默认域数据
+            try {
+                String domainName = this.authStorage.listDomains().get(0);
+                AuthDomain authDomain = this.authStorage.getDomain(domainName);
+                AuthConsts.DEFAULT_DOMAIN = authDomain.domainName;
+                AuthConsts.DEFAULT_APP_ID = authDomain.appId;
+                AuthConsts.DEFAULT_APP_KEY = authDomain.appKey;
+                Logger.i(this.getClass(), "Auth data:\n" + AuthConsts.formatString());
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#start - Config default domain failed", e);
+            }
         }
 
         // 创建插件系统
@@ -146,7 +159,7 @@ public class AuthService extends AbstractModule {
             return result;
         }
         else {
-            int count = 5;
+            int count = 10;
             while (null == this.authStorage) {
                 try {
                     Thread.sleep(1000);
@@ -164,10 +177,24 @@ public class AuthService extends AbstractModule {
                 return null;
             }
 
+            // 等待就绪
+            count = 10;
+            while (!this.isStarted()) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                if (--count <= 0) {
+                    break;
+                }
+            }
+
             List<String> result = this.authStorage.listDomains();
             if (null == result) {
                 try {
-                    Thread.sleep(2000);
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

@@ -53,14 +53,14 @@ public class AIGCChatHistory extends Entity {
 
     public long contextId = 0;
 
-    public AIGCChatHistory(long sn, String unit) {
-        super(0L, "shixincube.com");
+    public AIGCChatHistory(long sn, String unit, String domain) {
+        super(0L, domain);
         this.sn = sn;
         this.unit = unit;
     }
 
-    public AIGCChatHistory(long id, long sn) {
-        super(id, "shixincube.com");
+    public AIGCChatHistory(long id, long sn, String domain) {
+        super(id, domain);
         this.sn = sn;
     }
 

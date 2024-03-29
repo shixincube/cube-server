@@ -180,6 +180,9 @@ public class AIGCStorage implements Storagable {
             new StorageField("query_cid", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("query_domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
             new StorageField("query_time", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -779,12 +782,18 @@ public class AIGCStorage implements Storagable {
         });
     }
 
-    public List<AIGCChatHistory> readChatHistoryByContactId(long contactId, long startTime, long endTime) {
+    public List<AIGCChatHistory> readChatHistoryByContactId(long contactId, String domain, long startTime, long endTime) {
         List<AIGCChatHistory> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.queryAnswerTable,
                 this.queryAnswerFields, new Conditional[] {
                         Conditional.createEqualTo("query_cid", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createBracket(new Conditional[] {
+                                Conditional.createIsNull("query_domain"),
+                                Conditional.createOr(),
+                                Conditional.createEqualTo("query_domain", domain)
+                        }),
                         Conditional.createAnd(),
                         Conditional.createGreaterThanEqual(new StorageField("query_time", startTime)),
                         Conditional.createAnd(),
@@ -793,7 +802,7 @@ public class AIGCStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            AIGCChatHistory history = new AIGCChatHistory(data.get("id").getLong(), data.get("sn").getLong());
+            AIGCChatHistory history = new AIGCChatHistory(data.get("id").getLong(), data.get("sn").getLong(), domain);
             history.unit = data.get("unit").getString();
             history.queryContactId = data.get("query_cid").getLong();
             history.queryTime = data.get("query_time").getLong();
@@ -809,12 +818,18 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public List<AIGCChatHistory> readChatHistoryByFeedback(int feedback, long startTime, long endTime) {
+    public List<AIGCChatHistory> readChatHistoryByFeedback(int feedback, String domain, long startTime, long endTime) {
         List<AIGCChatHistory> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.queryAnswerTable,
                 this.queryAnswerFields, new Conditional[] {
                         Conditional.createEqualTo("feedback", feedback),
+                        Conditional.createAnd(),
+                        Conditional.createBracket(new Conditional[] {
+                                Conditional.createIsNull("query_domain"),
+                                Conditional.createOr(),
+                                Conditional.createEqualTo("query_domain", domain)
+                        }),
                         Conditional.createAnd(),
                         Conditional.createGreaterThanEqual(new StorageField("query_time", startTime)),
                         Conditional.createAnd(),
@@ -823,7 +838,7 @@ public class AIGCStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            AIGCChatHistory history = new AIGCChatHistory(data.get("id").getLong(), data.get("sn").getLong());
+            AIGCChatHistory history = new AIGCChatHistory(data.get("id").getLong(), data.get("sn").getLong(), domain);
             history.unit = data.get("unit").getString();
             history.queryContactId = data.get("query_cid").getLong();
             history.queryTime = data.get("query_time").getLong();
