@@ -24,16 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.material;
+package cube.aigc.psychology.material.other;
 
+import cube.aigc.psychology.material.Thing;
 import org.json.JSONObject;
 
 /**
- * 太阳。
+ * 沙漏。
  */
-public class Sun extends Thing {
+public class Sandglass extends Thing {
 
-    public Sun(JSONObject json) {
+    public Sandglass(JSONObject json) {
         super(json);
     }
 }

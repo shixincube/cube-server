@@ -24,16 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.material;
+package cube.aigc.psychology.material.other;
 
+import cube.aigc.psychology.material.Thing;
 import org.json.JSONObject;
 
 /**
- * 草。
+ * 蘑菇。
  */
-public class Grass extends Thing {
+public class Mushroom extends Thing {
 
-    public Grass(JSONObject json) {
+    public Mushroom(JSONObject json) {
         super(json);
     }
 }

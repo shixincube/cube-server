@@ -29,6 +29,7 @@ package cube.aigc.psychology;
 import cell.util.log.Logger;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.house.*;
+import cube.aigc.psychology.material.other.*;
 import cube.aigc.psychology.material.person.*;
 import cube.aigc.psychology.material.tree.*;
 import cube.common.JSONable;
@@ -55,23 +56,7 @@ public class Painting implements JSONable {
 
     private List<Person> personList;
 
-    private List<Table> tableList;
-
-    private List<Sun> sunList;
-
-    private List<Moon> moonList;
-
-    private List<Star> starList;
-
-    private List<Mountain> mountainList;
-
-    private List<Flower> flowerList;
-
-    private List<Grass> grassList;
-
-    private List<Cloud> cloudList;
-
-    private List<Animal> animalList;
+    private ThingSet otherSet;
 
     public Painting(Attribute attribute) {
         this.attribute = attribute;
@@ -96,38 +81,8 @@ public class Painting implements JSONable {
             this.personList = new ArrayList<>();
             this.parseList(json.getJSONArray("persons"), this.personList);
         }
-        if (json.has("suns")) {
-            this.sunList = new ArrayList<>();
-            this.parseList(json.getJSONArray("suns"), this.sunList);
-        }
-        if (json.has("moons")) {
-            this.moonList = new ArrayList<>();
-            this.parseList(json.getJSONArray("moons"), this.moonList);
-        }
-        if (json.has("stars")) {
-            this.starList = new ArrayList<>();
-            this.parseList(json.getJSONArray("stars"), this.starList);
-        }
-        if (json.has("mountains")) {
-            this.mountainList = new ArrayList<>();
-            this.parseList(json.getJSONArray("mountains"), this.mountainList);
-        }
-        if (json.has("flowers")) {
-            this.flowerList = new ArrayList<>();
-            this.parseList(json.getJSONArray("flowers"), this.flowerList);
-        }
-        if (json.has("grasses")) {
-            this.grassList = new ArrayList<>();
-            this.parseList(json.getJSONArray("grasses"), this.grassList);
-        }
-        if (json.has("clouds")) {
-            this.cloudList = new ArrayList<>();
-            this.parseList(json.getJSONArray("clouds"), this.cloudList);
-        }
-        if (json.has("animals")) {
-            this.animalList = new ArrayList<>();
-            this.parseList(json.getJSONArray("animals"), this.animalList);
-        }
+
+        this.otherSet = new ThingSet(json);
 
         if (json.has("attribute")) {
             this.attribute = new Attribute(json.getJSONObject("attribute"));
@@ -195,45 +150,11 @@ public class Painting implements JSONable {
                     addPerson((Person) thing);
                     unknownList.remove(thing);
                     break;
-                case Table:
-                    addTable((Table) thing);
-                    unknownList.remove(thing);
-                    break;
-                case Sun:
-                    addSun((Sun) thing);
-                    unknownList.remove(thing);
-                    break;
-                case Moon:
-                    addMoon((Moon) thing);
-                    unknownList.remove(thing);
-                    break;
-                case Star:
-                    addStar((Star) thing);
-                    unknownList.remove(thing);
-                    break;
-                case Mountain:
-                    addMountain((Mountain) thing);
-                    unknownList.remove(thing);
-                    break;
-                case Flower:
-                    addFlower((Flower) thing);
-                    unknownList.remove(thing);
-                    break;
-                case Grass:
-                    addGrass((Grass) thing);
-                    unknownList.remove(thing);
-                    break;
-                case Cloud:
-                    addCloud((Cloud) thing);
-                    unknownList.remove(thing);
-                    break;
-                case Bird:
-                case Cat:
-                case Dog:
-                    addAnimal((Animal) thing);
-                    unknownList.remove(thing);
-                    break;
                 default:
+                    if (Label.isOther(label)) {
+                        addOther(thing);
+                        unknownList.remove(thing);
+                    }
                     break;
             }
         }
@@ -512,7 +433,7 @@ public class Painting implements JSONable {
                 person.addItem((Item) thing);
                 break;
             case PersonGlasses:
-                person.setGlasses((Glasses) thing);
+                person.setGlasses((Eyeglass) thing);
                 break;
             default:
                 Logger.w(this.getClass(), "Unknown label: " + thing.getLabel().name + " for building person");
@@ -581,30 +502,8 @@ public class Painting implements JSONable {
         if (null != this.personList) {
             list.addAll(this.personList);
         }
-        if (null != this.sunList) {
-            list.addAll(this.sunList);
-        }
-        if (null != this.moonList) {
-            list.addAll(this.moonList);
-        }
-        if (null != this.starList) {
-            list.addAll(this.starList);
-        }
-        if (null != this.mountainList) {
-            list.addAll(this.mountainList);
-        }
-        if (null != this.flowerList) {
-            list.addAll(this.flowerList);
-        }
-        if (null != this.grassList) {
-            list.addAll(this.grassList);
-        }
-        if (null != this.cloudList) {
-            list.addAll(this.cloudList);
-        }
-        if (null != this.animalList) {
-            list.addAll(this.animalList);
-        }
+
+        list.addAll(this.otherSet.getAll());
         return list;
     }
 
@@ -671,168 +570,12 @@ public class Painting implements JSONable {
         return this.personList;
     }
 
-    public void addTable(Table table) {
-        if (null == this.tableList) {
-            this.tableList = new ArrayList<>();
-        }
-        this.tableList.add(table);
+    public void addOther(Thing other) {
+        this.otherSet.add(other);
     }
 
-    public void addSun(Sun sun) {
-        if (null == this.sunList) {
-            this.sunList = new ArrayList<>();
-        }
-        this.sunList.add(sun);
-    }
-
-    public boolean hasSun() {
-        return (null != this.sunList);
-    }
-
-    public Sun getSun() {
-        if (null == this.sunList) {
-            return null;
-        }
-        return this.sunList.get(0);
-    }
-
-    public void addMoon(Moon moon) {
-        if (null == this.moonList) {
-            this.moonList = new ArrayList<>();
-        }
-        this.moonList.add(moon);
-    }
-
-    public boolean hasMoon() {
-        return (null != this.moonList);
-    }
-
-    public void addStar(Star star) {
-        if (null == this.starList) {
-            this.starList = new ArrayList<>();
-        }
-        this.starList.add(star);
-    }
-
-    public boolean hasStar() {
-        return (null != this.starList);
-    }
-
-    public int numStars() {
-        return (null != this.starList) ? this.starList.size() : 0;
-    }
-
-    public void addMountain(Mountain mountain) {
-        if (null == this.mountainList) {
-            this.mountainList = new ArrayList<>();
-        }
-        this.mountainList.add(mountain);
-    }
-
-    public boolean hasMountain() {
-        return (null != this.mountainList);
-    }
-
-    public int numMountains() {
-        return (null != this.mountainList) ? this.mountainList.size() : 0;
-    }
-
-    public void addFlower(Flower flower) {
-        if (null == this.flowerList) {
-            this.flowerList = new ArrayList<>();
-        }
-        this.flowerList.add(flower);
-    }
-
-    public boolean hasFlower() {
-        return (null != this.flowerList);
-    }
-
-    public int numFlowers() {
-        return (null != this.flowerList) ? this.flowerList.size() : 0;
-    }
-
-    public void addGrass(Grass grass) {
-        if (null == this.grassList) {
-            this.grassList = new ArrayList<>();
-        }
-        this.grassList.add(grass);
-    }
-
-    public boolean hasGrass() {
-        return (null != this.grassList);
-    }
-
-    public int numGrasses() {
-        return (null != this.grassList) ? this.grassList.size() : 0;
-    }
-
-    public void addCloud(Cloud cloud) {
-        if (null == this.cloudList) {
-            this.cloudList = new ArrayList<>();
-        }
-        this.cloudList.add(cloud);
-    }
-
-    public boolean hasCloud() {
-        return (null != this.cloudList);
-    }
-
-    public void addAnimal(Animal animal) {
-        if (null == this.animalList) {
-            this.animalList = new ArrayList<>();
-        }
-        this.animalList.add(animal);
-    }
-
-    public int numAnimals() {
-        return (null != this.animalList) ? this.animalList.size() : 0;
-    }
-
-    public boolean hasAnimal() {
-        return (null != this.animalList);
-    }
-
-    public boolean hasBird() {
-        if (null == this.animalList) {
-            return false;
-        }
-
-        for (Animal animal : this.animalList) {
-            if (animal.getClasses() == Animal.Classes.Bird) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public boolean hasDog() {
-        if (null == this.animalList) {
-            return false;
-        }
-
-        for (Animal animal : this.animalList) {
-            if (animal.getClasses() == Animal.Classes.Dog) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public boolean hasCat() {
-        if (null == this.animalList) {
-            return false;
-        }
-
-        for (Animal animal : this.animalList) {
-            if (animal.getClasses() == Animal.Classes.Cat) {
-                return true;
-            }
-        }
-
-        return false;
+    public ThingSet getOtherSet() {
+        return this.otherSet;
     }
 
     public List<Thing> sortBySize() {
@@ -893,7 +636,7 @@ public class Painting implements JSONable {
             json.put("persons", personArray);
         }
 
-        if (null != this.sunList) {
+        /*if (null != this.sunList) {
             JSONArray sunArray = new JSONArray();
             for (Sun sun : this.sunList) {
                 sunArray.put(sun.toJSON());
@@ -955,7 +698,7 @@ public class Painting implements JSONable {
                 animalArray.put(animal.toJSON());
             }
             json.put("animals", animalArray);
-        }
+        }*/
 
         return json;
     }

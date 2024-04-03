@@ -923,6 +923,7 @@ public class Evaluation {
     public EvaluationFeature evalOthers() {
         EvaluationFeature result = new EvaluationFeature();
 
+        /*
         if (this.painting.hasSun()) {
             // 太阳
             result.addFeature(Comment.PositiveExpectation, Tendency.Positive);
@@ -993,7 +994,7 @@ public class Evaluation {
         if (numMaterials >= 5) {
             // 绘制的元素多
             result.addFeature(Comment.Creativity, Tendency.Positive);
-        }
+        }*/
 
         return result;
     }

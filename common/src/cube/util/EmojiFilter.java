@@ -30,7 +30,7 @@ import org.json.JSONObject;
 
 public class EmojiFilter {
 
-    private static boolean isEmojiCharacter(char codePoint) {
+    private static boolean isNormalCharacter(char codePoint) {
         return (codePoint == 0x0) || (codePoint == 0x9) || (codePoint == 0xA)
                 || (codePoint == 0xD)
                 || ((codePoint >= 0x20) && (codePoint <= 0xD7FF))
@@ -52,7 +52,7 @@ public class EmojiFilter {
         int len = source.length();
         for (int i = 0; i < len; i++) {
             char codePoint = source.charAt(i);
-            if (isEmojiCharacter(codePoint)) {
+            if (isNormalCharacter(codePoint)) {
                 if (buf == null) {
                     buf = new StringBuilder(source.length());
                 }

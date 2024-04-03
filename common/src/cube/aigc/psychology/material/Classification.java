@@ -27,6 +27,7 @@
 package cube.aigc.psychology.material;
 
 import cube.aigc.psychology.material.house.*;
+import cube.aigc.psychology.material.other.*;
 import cube.aigc.psychology.material.person.*;
 import cube.aigc.psychology.material.tree.*;
 import org.json.JSONObject;
@@ -91,7 +92,8 @@ public class Classification {
 
             case Table:
                 return new Table(json);
-
+            case Bed:
+                return new Bed(json);
             case Sun:
                 return new Sun(json);
             case Moon:
@@ -104,12 +106,118 @@ public class Classification {
                 return new Flower(json);
             case Grass:
                 return new Grass(json);
+            case Sea:
+                return new Sea(json);
+            case Pool:
+                return new Pool(json);
+            case Sunflower:
+                return new Sunflower(json);
+            case Mushroom:
+                return new Mushroom(json);
+            case Lotus:
+                return new Lotus(json);
+            case PlumFlower:
+                return new PlumFlower(json);
+            case Rose:
+                return new Rose(json);
             case Cloud:
                 return new Cloud(json);
+            case Rain:
+                return new Rain(json);
+            case Rainbow:
+                return new Rainbow(json);
+            case Torch:
+                return new Torch(json);
+            case Bonfire:
+                return new Bonfire(json);
             case Bird:
+                return new Bird(json);
             case Cat:
+                return new Cat(json);
             case Dog:
-                return new Animal(json);
+                return new Dog(json);
+            case Cow:
+                return new Cow(json);
+            case Sheep:
+                return new Sheep(json);
+            case Pig:
+                return new Pig(json);
+            case Fish:
+                return new Fish(json);
+            case Rabbit:
+                return new Rabbit(json);
+            case Horse:
+                return new Horse(json);
+            case Hawk:
+                return new Hawk(json);
+            case Rat:
+                return new Rat(json);
+            case Butterfly:
+                return new Butterfly(json);
+            case Tiger:
+                return new Tiger(json);
+            case Hedgehog:
+                return new Hedgehog(json);
+            case Snake:
+                return new Snake(json);
+            case Dragon:
+                return new Dragon(json);
+            case Watch:
+                return new Watch(json);
+            case Clock:
+                return new Clock(json);
+            case MusicalNotation:
+                return new MusicalNotation(json);
+            case TV:
+                return new TV(json);
+            case Pole:
+                return new Pole(json);
+            case Tower:
+                return new Tower(json);
+            case Lighthouse:
+                return new Lighthouse(json);
+            case Gun:
+                return new Gun(json);
+            case Sword:
+                return new Sword(json);
+            case Knife:
+                return new Knife(json);
+            case Shield:
+                return new Shield(json);
+            case Sandglass:
+                return new Sandglass(json);
+            case Kite:
+                return new Kite(json);
+            case Umbrella:
+                return new Umbrella(json);
+            case Windmill:
+                return new Windmill(json);
+            case Flag:
+                return new Flag(json);
+            case Bridge:
+                return new Bridge(json);
+            case Crossroads:
+                return new Crossroads(json);
+            case Ladder:
+                return new Ladder(json);
+            case Stairs:
+                return new Stairs(json);
+            case Birdcage:
+                return new Birdcage(json);
+            case Car:
+                return new Car(json);
+            case Boat:
+                return new Boat(json);
+            case Airplane:
+                return new Airplane(json);
+            case Bike:
+                return new Bike(json);
+            case Skull:
+                return new Skull(json);
+            case Glasses:
+                return new Glasses(json);
+            case Swing:
+                return new Swing(json);
 
             case HouseSidewall:
                 return new Sidewall(json);
@@ -200,7 +308,7 @@ public class Classification {
             case PersonItem:
                 return new Item(json);
             case PersonGlasses:
-                return new Glasses(json);
+                return new Eyeglass(json);
 
             default:
                 break;

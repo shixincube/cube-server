@@ -266,6 +266,7 @@ public class PsychologyScene {
         Evaluation evaluation = (null == painting) ?
                 new Evaluation(new Attribute("male", 28)) : new Evaluation(painting);
 
+        // 生成评估报告
         EvaluationReport report = evaluation.makeEvaluationReport();
 
         Workflow workflow = new Workflow(report, channel, this.aigcService);

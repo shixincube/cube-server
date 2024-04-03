@@ -24,16 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.material;
+package cube.aigc.psychology.material.other;
 
+import cube.aigc.psychology.material.Thing;
 import org.json.JSONObject;
 
 /**
- * 桌子。
+ * 火堆。
  */
-public class Table extends Thing {
+public class Bonfire extends Thing {
 
-    public Table(JSONObject json) {
+    public Bonfire(JSONObject json) {
         super(json);
     }
 }

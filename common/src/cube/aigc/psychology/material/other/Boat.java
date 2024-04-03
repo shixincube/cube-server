@@ -24,16 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.material;
+package cube.aigc.psychology.material.other;
 
+import cube.aigc.psychology.material.Thing;
 import org.json.JSONObject;
 
 /**
- * 山。
+ * 船。
  */
-public class Mountain extends Thing {
+public class Boat extends Thing {
 
-    public Mountain(JSONObject json) {
+    public Boat(JSONObject json) {
         super(json);
     }
 }

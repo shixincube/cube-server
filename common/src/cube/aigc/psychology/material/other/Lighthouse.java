@@ -24,17 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.material.person;
+package cube.aigc.psychology.material.other;
 
 import cube.aigc.psychology.material.Thing;
 import org.json.JSONObject;
 
 /**
- * 眼镜。
+ * 灯塔。
  */
-public class Glasses extends Thing {
+public class Lighthouse extends Thing {
 
-    public Glasses(JSONObject json) {
+    public Lighthouse(JSONObject json) {
         super(json);
     }
 }

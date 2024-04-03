@@ -27,12 +27,15 @@
 package cube.service.aigc.plugin;
 
 import cube.common.entity.Contact;
+import cube.common.entity.KnowledgeBaseInfo;
 import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
 import cube.service.aigc.AIGCService;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactPluginContext;
+
+import java.util.List;
 
 public class ContactEventPlugin implements Plugin {
 
@@ -56,7 +59,17 @@ public class ContactEventPlugin implements Plugin {
     public HookResult launch(PluginContext context) {
         ContactPluginContext ctx = (ContactPluginContext) context;
         String hook = ctx.getHookName();
-        if (ContactHook.SignOut.equals(hook) || ContactHook.DeviceTimeout.equals(hook)) {
+
+        if (ContactHook.SignIn.equals(hook)) {
+            Contact contact = ctx.getContact();
+            List<KnowledgeBaseInfo> list = this.service.getKnowledgeFramework().getKnowledgeBaseInfos(contact.getId());
+            if (null != list) {
+                for (KnowledgeBaseInfo info : list) {
+                    this.service.getKnowledgeFramework().getKnowledgeBase(contact.getId(), info.name);
+                }
+            }
+        }
+        else if (ContactHook.SignOut.equals(hook) || ContactHook.DeviceTimeout.equals(hook)) {
             Contact contact = ctx.getContact();
             this.service.getKnowledgeFramework().freeBase(contact.getDomain().getName(),
                     contact.getId());

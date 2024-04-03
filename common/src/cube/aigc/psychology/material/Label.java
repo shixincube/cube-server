@@ -37,6 +37,8 @@ public enum Label {
 
     Person("p_person"),
 
+    // 房 - 类别
+
     Bungalow("p_bungalow"),
 
     Villa("p_villa"),
@@ -48,6 +50,8 @@ public enum Label {
     Temple("p_temple"),
 
     Grave("p_grave"),
+
+    // 树 - 类别
 
     DeciduousTree("p_deciduous_tree"),
 
@@ -61,6 +65,8 @@ public enum Label {
 
     Bamboo("p_bamboo"),
 
+    // 人 - 类别
+
     Man("p_man"),
 
     Woman("p_woman"),
@@ -69,7 +75,11 @@ public enum Label {
 
     Girl("p_girl"),
 
+    // 其他
+
     Table("p_table"),
+
+    Bed("p_bed"),
 
     Sun("p_sun"),
 
@@ -83,13 +93,119 @@ public enum Label {
 
     Grass("p_grass"),
 
+    Sea("p_sea"),
+
+    Pool("p_pool"),
+
+    Sunflower("p_sunflower"),
+
+    Mushroom("p_mushroom"),
+
+    Lotus("p_lotus"),
+
+    PlumFlower("p_plum_flower"),
+
+    Rose("p_rose"),
+
     Cloud("p_cloud"),
+
+    Rain("p_rain"),
+
+    Rainbow("p_rainbow"),
+
+    Torch("p_torch"),
+
+    Bonfire("p_bonfire"),
 
     Bird("p_bird"),
 
     Cat("p_cat"),
 
     Dog("p_dog"),
+
+    Cow("p_cow"),
+
+    Sheep("p_sheep"),
+
+    Pig("p_pig"),
+
+    Fish("p_fish"),
+
+    Rabbit("p_rabbit"),
+
+    Horse("p_horse"),
+
+    Hawk("p_hawk"),
+
+    Rat("p_rat"),
+
+    Butterfly("p_butterfly"),
+
+    Tiger("p_tiger"),
+
+    Hedgehog("p_hedgehog"),
+
+    Snake("p_snake"),
+
+    Dragon("p_dragon"),
+
+    Watch("p_watch"),
+
+    Clock("p_clock"),
+
+    MusicalNotation("p_musical_notation"),
+
+    TV("p_tv"),
+
+    Pole("p_pole"),
+
+    Tower("p_tower"),
+
+    Lighthouse("p_lighthouse"),
+
+    Gun("p_gun"),
+
+    Sword("p_sword"),
+
+    Knife("p_knife"),
+
+    Shield("p_shield"),
+
+    Sandglass("p_sandglass"),
+
+    Kite("p_kite"),
+
+    Umbrella("p_umbrella"),
+
+    Windmill("p_windmill"),
+
+    Flag("p_flag"),
+
+    Bridge("p_bridge"),
+
+    Crossroads("p_crossroads"),
+
+    Ladder("p_ladder"),
+
+    Stairs("p_stairs"),
+
+    Birdcage("p_birdcage"),
+
+    Car("p_car"),
+
+    Boat("p_boat"),
+
+    Airplane("p_airplane"),
+
+    Bike("p_bike"),
+
+    Skull("p_skull"),
+
+    Glasses("p_glasses"),
+
+    Swing("p_swing"),
+
+    // 房 - 细节
 
     HouseSidewall("p_house_sidewall"),
 
@@ -127,6 +243,8 @@ public enum Label {
 
     HouseCobbledPath("p_house_cobbled_path"),
 
+    // 树 - 细节
+
     TreeTrunk("p_tree_trunk"),
 
     TreeBranch("p_tree_branch"),
@@ -140,6 +258,8 @@ public enum Label {
     TreeHole("p_tree_hole"),
 
     TreeDrooping("p_tree_drooping"),
+
+    // 人 - 细节
 
     PersonSideFace("p_person_side_face"),
 
@@ -205,5 +325,77 @@ public enum Label {
         }
 
         return Label.Unknown;
+    }
+
+    public static boolean isOther(Label label) {
+        switch (label) {
+            case Table:
+            case Bed:
+            case Sun:
+            case Moon:
+            case Star:
+            case Mountain:
+            case Flower:
+            case Grass:
+            case Sea:
+            case Pool:
+            case Sunflower:
+            case Mushroom:
+            case Lotus:
+            case PlumFlower:
+            case Rose:
+            case Cloud:
+            case Rain:
+            case Rainbow:
+            case Torch:
+            case Bonfire:
+            case Bird:
+            case Cat:
+            case Dog:
+            case Cow:
+            case Sheep:
+            case Pig:
+            case Fish:
+            case Rabbit:
+            case Horse:
+            case Hawk:
+            case Rat:
+            case Butterfly:
+            case Tiger:
+            case Hedgehog:
+            case Snake:
+            case Dragon:
+            case Watch:
+            case Clock:
+            case MusicalNotation:
+            case TV:
+            case Pole:
+            case Tower:
+            case Lighthouse:
+            case Gun:
+            case Sword:
+            case Knife:
+            case Shield:
+            case Sandglass:
+            case Kite:
+            case Umbrella:
+            case Windmill:
+            case Flag:
+            case Bridge:
+            case Crossroads:
+            case Ladder:
+            case Stairs:
+            case Birdcage:
+            case Car:
+            case Boat:
+            case Airplane:
+            case Bike:
+            case Skull:
+            case Glasses:
+            case Swing:
+                return true;
+            default:
+                return false;
+        }
     }
 }

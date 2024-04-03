@@ -91,7 +91,7 @@ public class Person extends Thing {
 
     private List<Item> itemList;
 
-    private Glasses glasses;
+    private Eyeglass eyeglass;
 
     public Person(JSONObject json) {
         super(json);
@@ -472,11 +472,11 @@ public class Person extends Thing {
         return this.itemList;
     }
 
-    public void setGlasses(Glasses glasses) {
-        this.glasses = glasses;
+    public void setGlasses(Eyeglass eyeglass) {
+        this.eyeglass = eyeglass;
     }
 
-    public Glasses getGlasses() {
-        return this.glasses;
+    public Eyeglass getGlasses() {
+        return this.eyeglass;
     }
 }

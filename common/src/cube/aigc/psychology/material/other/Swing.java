@@ -24,16 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.material;
+package cube.aigc.psychology.material.other;
 
+import cube.aigc.psychology.material.Thing;
 import org.json.JSONObject;
 
 /**
- * 云。
+ * 秋千。
  */
-public class Cloud extends Thing {
+public class Swing extends Thing {
 
-    public Cloud(JSONObject json) {
+    public Swing(JSONObject json) {
         super(json);
     }
 }

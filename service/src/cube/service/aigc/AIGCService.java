@@ -264,6 +264,7 @@ public class AIGCService extends AbstractModule {
                 ContactManager.getInstance().getPluginSystem().register(ContactHook.NewContact,
                         new ActivateKnowledgeBasePlugin(AIGCService.this));
                 ContactEventPlugin contactPlugin = new ContactEventPlugin(AIGCService.this);
+                ContactManager.getInstance().getPluginSystem().register(ContactHook.SignIn, contactPlugin);
                 ContactManager.getInstance().getPluginSystem().register(ContactHook.SignOut, contactPlugin);
                 ContactManager.getInstance().getPluginSystem().register(ContactHook.DeviceTimeout, contactPlugin);
 

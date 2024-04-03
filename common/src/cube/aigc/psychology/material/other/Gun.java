@@ -24,16 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.material;
+package cube.aigc.psychology.material.other;
 
+import cube.aigc.psychology.material.Thing;
 import org.json.JSONObject;
 
 /**
- * 月亮。
+ * 枪。
  */
-public class Moon extends Thing {
+public class Gun extends Thing {
 
-    public Moon(JSONObject json) {
+    public Gun(JSONObject json) {
         super(json);
     }
 }
