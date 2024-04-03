@@ -26,6 +26,9 @@
 
 package cube.aigc.psychology.material;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 标签。
  */
@@ -397,5 +400,15 @@ public enum Label {
             default:
                 return false;
         }
+    }
+
+    public static List<Label> getOthers() {
+        List<Label> result = new ArrayList<>();
+        for (Label label : Label.values()) {
+            if (isOther(label)) {
+                result.add(label);
+            }
+        }
+        return result;
     }
 }

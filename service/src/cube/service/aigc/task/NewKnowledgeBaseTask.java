@@ -76,6 +76,10 @@ public class NewKnowledgeBaseTask extends ServiceTask {
                 }
             }
 
+            if (null == category) {
+                category = displayName;
+            }
+
             if (TextUtils.isBlank(baseName) || TextUtils.isBlank(displayName)) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, new JSONObject()));

@@ -100,6 +100,22 @@ public class KnowledgeFramework {
             }
         }
 
+        // 判断是否是默认库
+        if (null == base && KnowledgeFramework.DefaultName.equals(baseName)) {
+            // 创建默认库
+            AuthToken authToken = this.authService.queryAuthTokenByContactId(contactId);
+            // 新库
+            KnowledgeBaseInfo info = this.newKnowledgeBase(authToken.getCode(), KnowledgeFramework.DefaultName,
+                    KnowledgeFramework.DefaultDisplayName, KnowledgeFramework.DefaultDisplayName);
+            if (null != info) {
+                base = new KnowledgeBase(info,
+                        this.service, this.service.getStorage(), authToken, this.fileStorage);
+                framework.putKnowledgeBase(base);
+                base.listKnowledgeDocs();
+                base.listKnowledgeArticles();
+            }
+        }
+
         return base;
     }
 

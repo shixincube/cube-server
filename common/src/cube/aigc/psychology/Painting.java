@@ -29,7 +29,7 @@ package cube.aigc.psychology;
 import cell.util.log.Logger;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.house.*;
-import cube.aigc.psychology.material.other.*;
+import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.*;
 import cube.aigc.psychology.material.tree.*;
 import cube.common.JSONable;
@@ -56,10 +56,11 @@ public class Painting implements JSONable {
 
     private List<Person> personList;
 
-    private ThingSet otherSet;
+    private OtherSet otherSet;
 
     public Painting(Attribute attribute) {
         this.attribute = attribute;
+        this.otherSet = new OtherSet();
     }
 
     public Painting(JSONObject json) {
@@ -82,7 +83,7 @@ public class Painting implements JSONable {
             this.parseList(json.getJSONArray("persons"), this.personList);
         }
 
-        this.otherSet = new ThingSet(json);
+        this.otherSet = new OtherSet(json);
 
         if (json.has("attribute")) {
             this.attribute = new Attribute(json.getJSONObject("attribute"));
@@ -152,7 +153,7 @@ public class Painting implements JSONable {
                     break;
                 default:
                     if (Label.isOther(label)) {
-                        addOther(thing);
+                        this.otherSet.add(thing);
                         unknownList.remove(thing);
                     }
                     break;
@@ -570,11 +571,7 @@ public class Painting implements JSONable {
         return this.personList;
     }
 
-    public void addOther(Thing other) {
-        this.otherSet.add(other);
-    }
-
-    public ThingSet getOtherSet() {
+    public OtherSet getOtherSet() {
         return this.otherSet;
     }
 
@@ -636,69 +633,7 @@ public class Painting implements JSONable {
             json.put("persons", personArray);
         }
 
-        /*if (null != this.sunList) {
-            JSONArray sunArray = new JSONArray();
-            for (Sun sun : this.sunList) {
-                sunArray.put(sun.toJSON());
-            }
-            json.put("suns", sunArray);
-        }
-
-        if (null != this.moonList) {
-            JSONArray moonArray = new JSONArray();
-            for (Moon moon : this.moonList) {
-                moonArray.put(moon.toJSON());
-            }
-            json.put("moons", moonArray);
-        }
-
-        if (null != this.starList) {
-            JSONArray starArray = new JSONArray();
-            for (Star star : this.starList) {
-                starArray.put(star.toJSON());
-            }
-            json.put("stars", starArray);
-        }
-
-        if (null != this.mountainList) {
-            JSONArray mountainArray = new JSONArray();
-            for (Mountain mountain : this.mountainList) {
-                mountainArray.put(mountain.toJSON());
-            }
-            json.put("mountains", mountainArray);
-        }
-
-        if (null != this.flowerList) {
-            JSONArray flowerArray = new JSONArray();
-            for (Flower flower : this.flowerList) {
-                flowerArray.put(flower.toJSON());
-            }
-            json.put("flowers", flowerArray);
-        }
-
-        if (null != this.grassList) {
-            JSONArray grassArray = new JSONArray();
-            for (Grass grass : this.grassList) {
-                grassArray.put(grass.toJSON());
-            }
-            json.put("grasses", grassArray);
-        }
-
-        if (null != this.cloudList) {
-            JSONArray cloudArray = new JSONArray();
-            for (Cloud cloud : this.cloudList) {
-                cloudArray.put(cloud.toJSON());
-            }
-            json.put("clouds", cloudArray);
-        }
-
-        if (null != this.animalList) {
-            JSONArray animalArray = new JSONArray();
-            for (Animal animal : this.animalList) {
-                animalArray.put(animal.toJSON());
-            }
-            json.put("animals", animalArray);
-        }*/
+        json.put("others", this.otherSet.toJSONArray());
 
         return json;
     }

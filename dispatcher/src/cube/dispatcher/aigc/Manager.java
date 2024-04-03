@@ -358,6 +358,9 @@ public class Manager implements Tickable, PerformerListener {
         if (null != category && category.length() > 0) {
             payload.put("category", category);
         }
+        else {
+            payload.put("category", displayName);
+        }
         Packet packet = new Packet(AIGCAction.NewKnowledgeBase.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);

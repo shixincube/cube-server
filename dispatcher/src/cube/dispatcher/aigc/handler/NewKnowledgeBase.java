@@ -70,6 +70,9 @@ public class NewKnowledgeBase extends ContextHandler {
                 if (data.has("category")) {
                     category = data.getString("category");
                 }
+                else {
+                    category = displayName;
+                }
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();

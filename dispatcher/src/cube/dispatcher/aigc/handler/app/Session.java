@@ -143,7 +143,15 @@ public class Session extends ContextHandler {
                         responseData.put("context", contactToken.toJSON());
 
                         // 知识库概述
-                        responseData.put("knowledge", Manager.getInstance().getKnowledgeProfile(token).toJSON());
+                        KnowledgeProfile profile = Manager.getInstance().getKnowledgeProfile(token);
+                        if (null != profile) {
+                            responseData.put("knowledge", profile.toJSON());
+                        }
+                        else {
+                            responseData.put("knowledge", KnowledgeProfile.createDummy().toJSON());
+                            Logger.w(this.getClass(), "#doPost - Knowledge profile is null - token: " + token);
+                        }
+
                         // 知识库框架，仅为了兼容旧版本
                         responseData.put("knowledgeFramework", Manager.getInstance().getKnowledgeFramework(token));
 
@@ -165,13 +173,13 @@ public class Session extends ContextHandler {
                 }
                 else {
                     responseData.put("auth", false);
-                    responseData.put("knowledge", KnowledgeProfile.createDummy());
+                    responseData.put("knowledge", KnowledgeProfile.createDummy().toJSON());
                     Logger.w(Session.class, "Manager check token failed: " + token);
                 }
             }
             else {
                 responseData.put("auth", false);
-                responseData.put("knowledge", KnowledgeProfile.createDummy());
+                responseData.put("knowledge", KnowledgeProfile.createDummy().toJSON());
                 Logger.w(Session.class, "Token is null");
             }
 
