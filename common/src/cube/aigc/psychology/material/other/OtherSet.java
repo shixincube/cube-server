@@ -575,6 +575,142 @@ public class OtherSet {
         }
     }
 
+    public Thing get(Label label) {
+        switch (label) {
+            case Table:
+                return (null != this.tableList) ? this.tableList.get(0) : null;
+            case Bed:
+                return (null != this.bedList) ? this.bedList.get(0) : null;
+            case Sun:
+                return (null != this.sunList) ? this.sunList.get(0) : null;
+            case Moon:
+                return (null != this.moonList) ? this.moonList.get(0) : null;
+            case Star:
+                return (null != this.starList) ? this.starList.get(0) : null;
+            case Mountain:
+                return (null != this.mountainList) ? this.mountainList.get(0) : null;
+            case Flower:
+                return (null != this.flowerList) ? this.flowerList.get(0) : null;
+            case Grass:
+                return (null != this.grassList) ? this.grassList.get(0) : null;
+            case Sea:
+                return (null != this.seaList) ? this.seaList.get(0) : null;
+            case Pool:
+                return (null != this.poolList) ? this.poolList.get(0) : null;
+            case Sunflower:
+                return (null != this.sunflowerList) ? this.sunflowerList.get(0) : null;
+            case Mushroom:
+                return (null != this.mushroomList) ? this.mushroomList.get(0) : null;
+            case Lotus:
+                return (null != this.lotusList) ? this.lotusList.get(0) : null;
+            case PlumFlower:
+                return (null != this.plumFlowerList) ? this.plumFlowerList.get(0) : null;
+            case Rose:
+                return (null != this.roseList) ? this.roseList.get(0) : null;
+            case Cloud:
+                return (null != this.cloudList) ? this.cloudList.get(0) : null;
+            case Rain:
+                return (null != this.rainList) ? this.rainList.get(0) : null;
+            case Rainbow:
+                return (null != this.rainbowList) ? this.rainbowList.get(0) : null;
+            case Torch:
+                return (null != this.torchList) ? this.torchList.get(0) : null;
+            case Bonfire:
+                return (null != this.bonfireList) ? this.bonfireList.get(0) : null;
+            case Bird:
+                return (null != this.birdList) ? this.birdList.get(0) : null;
+            case Cat:
+                return (null != this.catList) ? this.catList.get(0) : null;
+            case Dog:
+                return (null != this.dogList) ? this.dogList.get(0) : null;
+            case Cow:
+                return (null != this.cowList) ? this.cowList.get(0) : null;
+            case Sheep:
+                return (null != this.sheepList) ? this.sheepList.get(0) : null;
+            case Pig:
+                return (null != this.pigList) ? this.pigList.get(0) : null;
+            case Fish:
+                return (null != this.fishList) ? this.fishList.get(0) : null;
+            case Rabbit:
+                return (null != this.rabbitList) ? this.rabbitList.get(0) : null;
+            case Horse:
+                return (null != this.horseList) ? this.horseList.get(0) : null;
+            case Hawk:
+                return (null != this.hawkList) ? this.hawkList.get(0) : null;
+            case Rat:
+                return (null != this.ratList) ? this.ratList.get(0) : null;
+            case Butterfly:
+                return (null != this.butterflyList) ? this.butterflyList.get(0) : null;
+            case Tiger:
+                return (null != this.tigerList) ? this.tigerList.get(0) : null;
+            case Hedgehog:
+                return (null != this.hedgehogList) ? this.hedgehogList.get(0) : null;
+            case Snake:
+                return (null != this.snakeList) ? this.snakeList.get(0) : null;
+            case Dragon:
+                return (null != this.dragonList) ? this.dragonList.get(0) : null;
+            case Watch:
+                return (null != this.watchList) ? this.watchList.get(0) : null;
+            case Clock:
+                return (null != this.clockList) ? this.clockList.get(0) : null;
+            case MusicalNotation:
+                return (null != this.musicalNotationList) ? this.musicalNotationList.get(0) : null;
+            case TV:
+                return (null != this.tvList) ? this.tvList.get(0) : null;
+            case Pole:
+                return (null != this.poleList) ? this.poleList.get(0) : null;
+            case Tower:
+                return (null != this.towerList) ? this.towerList.get(0) : null;
+            case Lighthouse:
+                return (null != this.lighthouseList) ? this.lighthouseList.get(0) : null;
+            case Gun:
+                return (null != this.gunList) ? this.gunList.get(0) : null;
+            case Sword:
+                return (null != this.swordList) ? this.swordList.get(0) : null;
+            case Knife:
+                return (null != this.knifeList) ? this.knifeList.get(0) : null;
+            case Shield:
+                return (null != this.shieldList) ? this.shieldList.get(0) : null;
+            case Sandglass:
+                return (null != this.sandglassList) ? this.sandglassList.get(0) : null;
+            case Kite:
+                return (null != this.kiteList) ? this.kiteList.get(0) : null;
+            case Umbrella:
+                return (null != this.umbrellaList) ? this.umbrellaList.get(0) : null;
+            case Windmill:
+                return (null != this.windmillList) ? this.windmillList.get(0) : null;
+            case Flag:
+                return (null != this.flagList) ? this.flagList.get(0) : null;
+            case Bridge:
+                return (null != this.bridgeList) ? this.bridgeList.get(0) : null;
+            case Crossroads:
+                return (null != this.crossroadsList) ? this.crossroadsList.get(0) : null;
+            case Ladder:
+                return (null != this.ladderList) ? this.ladderList.get(0) : null;
+            case Stairs:
+                return (null != this.stairsList) ? this.stairsList.get(0) : null;
+            case Birdcage:
+                return (null != this.birdcageList) ? this.birdcageList.get(0) : null;
+            case Car:
+                return (null != this.carList) ? this.carList.get(0) : null;
+            case Boat:
+                return (null != this.boatList) ? this.boatList.get(0) : null;
+            case Airplane:
+                return (null != this.airplaneList) ? this.airplaneList.get(0) : null;
+            case Bike:
+                return (null != this.bikeList) ? this.bikeList.get(0) : null;
+            case Skull:
+                return (null != this.skullList) ? this.skullList.get(0) : null;
+            case Glasses:
+                return (null != this.glassesList) ? this.glassesList.get(0) : null;
+            case Swing:
+                return (null != this.swingList) ? this.swingList.get(0) : null;
+            default:
+                break;
+        }
+        return null;
+    }
+
     public List<Thing> getAll() {
         List<Thing> result = new ArrayList<>();
 
@@ -775,12 +911,147 @@ public class OtherSet {
     }
 
     public boolean has(Label label) {
+        switch (label) {
+            case Table:
+                return (null != this.tableList);
+            case Bed:
+                return (null != this.bedList);
+            case Sun:
+                return (null != this.sunList);
+            case Moon:
+                return (null != this.moonList);
+            case Star:
+                return (null != this.starList);
+            case Mountain:
+                return (null != this.mountainList);
+            case Flower:
+                return (null != this.flowerList);
+            case Grass:
+                return (null != this.grassList);
+            case Sea:
+                return (null != this.seaList);
+            case Pool:
+                return (null != this.poolList);
+            case Sunflower:
+                return (null != this.sunflowerList);
+            case Mushroom:
+                return (null != this.mushroomList);
+            case Lotus:
+                return (null != this.lotusList);
+            case PlumFlower:
+                return (null != this.plumFlowerList);
+            case Rose:
+                return (null != this.roseList);
+            case Cloud:
+                return (null != this.cloudList);
+            case Rain:
+                return (null != this.rainList);
+            case Rainbow:
+                return (null != this.rainbowList);
+            case Torch:
+                return (null != this.torchList);
+            case Bonfire:
+                return (null != this.bonfireList);
+            case Bird:
+                return (null != this.birdList);
+            case Cat:
+                return (null != this.catList);
+            case Dog:
+                return (null != this.dogList);
+            case Cow:
+                return (null != this.cowList);
+            case Sheep:
+                return (null != this.sheepList);
+            case Pig:
+                return (null != this.pigList);
+            case Fish:
+                return (null != this.fishList);
+            case Rabbit:
+                return (null != this.rabbitList);
+            case Horse:
+                return (null != this.horseList);
+            case Hawk:
+                return (null != hawkList);
+            case Rat:
+                return (null != this.ratList);
+            case Butterfly:
+                return (null != this.butterflyList);
+            case Tiger:
+                return (null != this.tigerList);
+            case Hedgehog:
+                return (null != this.hedgehogList);
+            case Snake:
+                return (null != this.snakeList);
+            case Dragon:
+                return (null != this.dragonList);
+            case Watch:
+                return (null != this.watchList);
+            case Clock:
+                return (null != this.clockList);
+            case MusicalNotation:
+                return (null != this.musicalNotationList);
+            case TV:
+                return (null != this.tvList);
+            case Pole:
+                return (null != this.poleList);
+            case Tower:
+                return (null != this.towerList);
+            case Lighthouse:
+                return (null != this.lighthouseList);
+            case Gun:
+                return (null != this.gunList);
+            case Sword:
+                return (null != this.swordList);
+            case Knife:
+                return (null != this.knifeList);
+            case Shield:
+                return (null != this.shieldList);
+            case Sandglass:
+                return (null != this.sandglassList);
+            case Kite:
+                return (null != this.kiteList);
+            case Umbrella:
+                return (null != this.umbrellaList);
+            case Windmill:
+                return (null != this.windmillList);
+            case Flag:
+                return (null != this.flagList);
+            case Bridge:
+                return (null != this.bridgeList);
+            case Crossroads:
+                return (null != this.crossroadsList);
+            case Ladder:
+                return (null != this.ladderList);
+            case Stairs:
+                return (null != this.stairsList);
+            case Birdcage:
+                return (null != this.birdcageList);
+            case Car:
+                return (null != this.carList);
+            case Boat:
+                return (null != this.boatList);
+            case Airplane:
+                return (null != this.airplaneList);
+            case Bike:
+                return (null != this.bikeList);
+            case Skull:
+                return (null != this.skullList);
+            case Glasses:
+                return (null != this.glassesList);
+            case Swing:
+                return (null != this.swingList);
+            default:
+                break;
+        }
         return false;
     }
 
     public JSONArray toJSONArray() {
         JSONArray array = new JSONArray();
-
+        List<Thing> all = this.getAll();
+        for (Thing thing : all) {
+            array.put(thing.toJSON());
+        }
         return array;
     }
 }

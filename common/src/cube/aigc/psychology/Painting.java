@@ -571,7 +571,7 @@ public class Painting implements JSONable {
         return this.personList;
     }
 
-    public OtherSet getOtherSet() {
+    public OtherSet getOther() {
         return this.otherSet;
     }
 

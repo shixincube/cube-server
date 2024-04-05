@@ -45,6 +45,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Resource {
 
+    public final static String ReportTextFormat = "%s的报告描述";
+
     private File commentDescriptionFile = new File("assets/psychology/interpretation.json");
     private long commentDescriptionLastModified = 0;
     private List<KnowledgeStrategy> knowledgeStrategies;

@@ -36,6 +36,7 @@ import cube.aigc.psychology.material.House;
 import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Person;
 import cube.aigc.psychology.material.Tree;
+import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.Leg;
 import cube.vision.BoundingBox;
 import cube.vision.Point;
@@ -923,24 +924,52 @@ public class Evaluation {
     public EvaluationFeature evalOthers() {
         EvaluationFeature result = new EvaluationFeature();
 
-        /*
-        if (this.painting.hasSun()) {
+        OtherSet other = this.painting.getOther();
+
+        if (other.has(Label.Table)) {
+            // 桌子
+            result.addFeature(Comment.PayAttentionToFamily, Tendency.Positive);
+            result.addScore(ScoreIndicator.Family, 1);
+        }
+
+        if (other.has(Label.Bed)) {
+            // 床
+            result.addScore(ScoreIndicator.Family, -1);
+        }
+
+        if (other.has(Label.Sun)) {
             // 太阳
             result.addFeature(Comment.PositiveExpectation, Tendency.Positive);
 
             result.addScore(ScoreIndicator.Optimism, 1);
 
-            if (this.painting.getSun().isDoodle()) {
+            if (other.get(Label.Sun).isDoodle()) {
                 // 涂鸦的太阳
                 result.addScore(ScoreIndicator.Depression, 1);
             }
         }
 
-        if (this.painting.hasMoon()) {
+        if (other.has(Label.Moon)) {
             // 月亮
             result.addFeature(Comment.Sentimentality, Tendency.Positive);
         }
 
+        if (other.has(Label.Star)) {
+            // 星星
+            result.addFeature(Comment.Fantasy, Tendency.Positive);
+        }
+
+        if (other.has(Label.Mountain)) {
+            // 山
+            result.addFeature(Comment.NeedProtection, Tendency.Positive);
+            result.addScore(ScoreIndicator.SenseOfSecurity, 1);
+        }
+
+        if (other.has(Label.Flower)) {
+            
+        }
+
+        /*
         if (this.painting.hasCloud()) {
             // 云
             result.addFeature(Comment.Imagination, Tendency.Positive);
