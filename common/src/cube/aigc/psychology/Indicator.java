@@ -26,7 +26,10 @@
 
 package cube.aigc.psychology;
 
-public enum ScoreIndicator {
+/**
+ * 评价指标。
+ */
+public enum Indicator {
 
     Psychosis("精神病性", "Psychosis"),
 
@@ -96,13 +99,13 @@ public enum ScoreIndicator {
 
     public final String code;
 
-    ScoreIndicator(String name, String code) {
+    Indicator(String name, String code) {
         this.name = name;
         this.code = code;
     }
 
-    public static ScoreIndicator parse(String valueOrName) {
-        for (ScoreIndicator indicator : ScoreIndicator.values()) {
+    public static Indicator parse(String valueOrName) {
+        for (Indicator indicator : Indicator.values()) {
             if (indicator.name.equals(valueOrName) || indicator.code.equalsIgnoreCase(valueOrName)) {
                 return indicator;
             }

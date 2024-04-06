@@ -24,53 +24,24 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
+package cube.util;
 
-import cube.aigc.psychology.composition.Score;
-import cube.aigc.psychology.composition.Tendency;
+import cell.util.Utils;
 
-import java.util.ArrayList;
-import java.util.List;
+public final class FloatUtils {
 
-/**
- * 评估的特征。
- */
-public class EvaluationFeature {
-
-    private List<Feature> features;
-
-    private List<Score> scores;
-
-    public EvaluationFeature() {
-        this.features = new ArrayList<>();
-        this.scores = new ArrayList<>();
+    private FloatUtils() {
     }
 
-    public void addFeature(Comment comment, Tendency tendency) {
-        this.features.add(new Feature(comment, tendency));
+    public static double random(double floor, double ceil) {
+        double scale = 10000.0f;
+        int num = Utils.randomInt((int)(floor * scale), (int)(ceil * scale));
+        return ((double) num) / scale;
     }
 
-    public List<Feature> getFeatures() {
-        return this.features;
-    }
-
-    public void addScore(Indicator indicator, int value, double weight) {
-        this.scores.add(new Score(indicator, value, weight));
-    }
-
-    public List<Score> getScores() {
-        return this.scores;
-    }
-
-    public class Feature {
-
-        public Comment comment;
-
-        public Tendency tendency;
-
-        public Feature(Comment comment, Tendency tendency) {
-            this.comment = comment;
-            this.tendency = tendency;
-        }
+    public static void main(String[] args) {
+        System.out.println(FloatUtils.random(0.1, 0.2));
+        System.out.println(FloatUtils.random(0.5, 0.7));
+        System.out.println(FloatUtils.random(0.9, 1.0));
     }
 }

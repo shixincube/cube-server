@@ -233,11 +233,10 @@ public class PsychologyReport implements JSONable {
             buf.append("| 评分项目 | 得分 | 计分次数 |");
             buf.append("\n");
             buf.append("| ---- | ---- | ---- |");
-            for (Score score : this.evaluationReport.getScoreList()) {
+            for (Score score : this.evaluationReport.getMergedScores()) {
                 buf.append("\n");
                 buf.append("|").append(score.indicator.name);
                 buf.append("|").append(score.value);
-                buf.append("|").append(score.count);
                 buf.append("|");
             }
             buf.append("\n");

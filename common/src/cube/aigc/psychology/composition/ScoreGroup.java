@@ -30,61 +30,36 @@ import cube.aigc.psychology.Indicator;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
-/**
- * 得分。
- */
-public class Score implements JSONable {
+import java.util.ArrayList;
+import java.util.List;
 
-    public final Indicator indicator;
+public class ScoreGroup implements JSONable {
 
-    public int value;
+    private List<Score> scoreList;
 
-    public double weight;
-
-    public Score(Indicator indicator, int value, double weight) {
-        this.indicator = indicator;
-        this.value = value;
-        this.weight = weight;
+    public ScoreGroup() {
+        this.scoreList = new ArrayList<>();
     }
 
-    public Score(JSONObject json) {
-        this.indicator = Indicator.parse(json.getString("indicator"));
-        this.value = json.getInt("value");
-        this.weight = json.getFloat("weight");
+    public ScoreGroup(JSONObject json) {
+        this.scoreList = new ArrayList<>();
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Score) {
-            Score other = (Score) obj;
-            if (other.indicator == this.indicator) {
-                return true;
-            }
-        }
+    public void addScore(Score score) {
 
-        return false;
     }
 
-    @Override
-    public int hashCode() {
-        return this.indicator.hashCode();
+    public Score getScore(Indicator indicator) {
+        return null;
     }
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("indicator", this.indicator.name);
-        json.put("value", this.value);
-        json.put("weight", this.weight);
-        return json;
+        return null;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        json.put("indicator", this.indicator.name);
-        json.put("value", this.value);
-        json.put("weight", this.weight);
-        return json;
+        return this.toJSON();
     }
 }

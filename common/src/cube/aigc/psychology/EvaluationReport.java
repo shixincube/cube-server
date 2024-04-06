@@ -29,12 +29,16 @@ package cube.aigc.psychology;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.composition.Score;
+import cube.aigc.psychology.composition.ScoreGroup;
 import cube.aigc.psychology.composition.Tendency;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * 评估报告。
@@ -49,7 +53,7 @@ public class EvaluationReport implements JSONable {
 
     private int representationTopN;
 
-    private List<Score> scoreList;
+    private ScoreGroup scoreGroup;
 
     public EvaluationReport(Attribute attribute, EvaluationFeature evaluationFeature) {
         this(attribute, Collections.singletonList((evaluationFeature)));
@@ -59,7 +63,7 @@ public class EvaluationReport implements JSONable {
         this.attribute = attribute;
         this.representationList = new ArrayList<>();
         this.representationTopN = 5;
-        this.scoreList = new ArrayList<>();
+        this.scoreGroup = new ScoreGroup();
         this.build(evaluationFeatureList);
     }
 
@@ -70,10 +74,7 @@ public class EvaluationReport implements JSONable {
         for (int i = 0; i < array.length(); ++i) {
             this.representationList.add(new Representation(array.getJSONObject(i)));
         }
-        array = json.getJSONArray("scoreList");
-        for (int i = 0; i < array.length(); ++i) {
-            this.scoreList.add(new Score(array.getJSONObject(i)));
-        }
+        this.scoreGroup = new ScoreGroup(json.getJSONObject("scoreGroup"));
     }
 
     public void setTopN(int value) {
@@ -114,15 +115,7 @@ public class EvaluationReport implements JSONable {
 
             // 提取并合并分数
             for (Score score : result.getScores()) {
-                Score current = this.getScore(score.indicator);
-                if (null == current) {
-                    score = new Score(score.indicator, score.value);
-                    this.scoreList.add(score);
-                }
-                else {
-                    current.value += score.value;
-                    current.count += 1;
-                }
+                this.scoreGroup.addScore(score);
             }
         }
     }
@@ -157,16 +150,11 @@ public class EvaluationReport implements JSONable {
         return result;
     }
 
-    public List<Score> getScoreList() {
-        return this.scoreList;
+    public Score getScore(Indicator indicator) {
+        return this.scoreGroup.getScore(indicator);
     }
 
-    public Score getScore(ScoreIndicator indicator) {
-        for (Score score : this.scoreList) {
-            if (score.indicator == indicator) {
-                return score;
-            }
-        }
+    public List<Score> getMergedScores() {
         return null;
     }
 
@@ -181,11 +169,7 @@ public class EvaluationReport implements JSONable {
         }
         json.put("representationList", array);
 
-        array = new JSONArray();
-        for (Score score : this.scoreList) {
-            array.put(score.toJSON());
-        }
-        json.put("scoreList", array);
+        json.put("scoreGroup", this.scoreGroup.toJSON());
 
         return json;
     }
@@ -201,11 +185,7 @@ public class EvaluationReport implements JSONable {
         }
         json.put("representationList", array);
 
-        array = new JSONArray();
-        for (Score score : this.scoreList) {
-            array.put(score.toJSON());
-        }
-        json.put("scoreList", array);
+        json.put("scoreGroup", this.scoreGroup.toCompactJSON());
 
         return json;
     }
