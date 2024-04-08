@@ -9,7 +9,7 @@
 	},
 
 	"unit": {
-		"name": "BaizeNext",
-		"contextLength" : 3000
+		"name": "Baize",
+		"contextLength" : 2000
 	}
 }

@@ -75,7 +75,11 @@ public enum Indicator {
 
     Simple("单纯", "Simple"),
 
+    Meekness("温顺", "Meekness"),
+
     Hostile("敌对", "Hostile"),
+
+    Attacking("攻击性", "Attacking"),
 
     Family("家庭关系", "Family"),
 
@@ -92,6 +96,12 @@ public enum Indicator {
     Creativity("创造力", "Creativity"),
 
     Impulsion("冲动", "Impulsion"),
+
+    Struggle("奋斗", "Struggle"),
+
+    MoralSense("道德感", "MoralSense"),
+
+    DesireForFreedom("向往自由", "DesireForFreedom"),
 
     ;
 

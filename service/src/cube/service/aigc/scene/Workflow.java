@@ -57,7 +57,7 @@ public class Workflow {
 
     private List<ReportParagraph> paragraphList;
 
-    private int maxRepresentationNum = 5;
+    private int maxRepresentationNum = 10;
 
     private String unitName = ModelConfig.BAIZE_UNIT;
 
@@ -106,14 +106,15 @@ public class Workflow {
             this.paragraphList.add(new ReportParagraph(title));
         }
 
+        /* FIXME XJW 以下步骤不再推荐使用
         // 生成表征内容
-//        String representation = this.spliceRepresentationInterpretation();
-        List<String> representations = this.spliceBehaviorList(this.behaviorList);
-        if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#make - representation num: " + representations.size());
-        }
-
         if (paragraphInferrable) {
+    //        String representation = this.spliceRepresentationInterpretation();
+            List<String> representations = this.spliceBehaviorList(this.behaviorList);
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#make - representation num: " + representations.size());
+            }
+
             // 逐一生成提示词并推理
             for (int i = 0; i < this.paragraphList.size(); ++i) {
                 ReportParagraph paragraph = this.paragraphList.get(i);
@@ -203,7 +204,7 @@ public class Workflow {
                 String opinion = this.filterNoise(result.toString());
                 paragraph.setOpinion(opinion);
             }
-        }
+        }*/
 
         return this;
     }
@@ -213,16 +214,29 @@ public class Workflow {
 
         for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListOrderByCorrelation()) {
             String marked = null;
-            // 相关性
-            if (representation.positiveCorrelation > representation.negativeCorrelation) {
-                marked = HighTrick + representation.knowledgeStrategy.getComment().word;
-            }
-            else if (representation.positiveCorrelation == representation.negativeCorrelation) {
-                marked = NormalTrick + representation.knowledgeStrategy.getComment().word;
-            }
-            else {
+            // 趋势
+            if (representation.negativeCorrelation > 0) {
                 marked = LowTrick + representation.knowledgeStrategy.getComment().word;
             }
+            else if (representation.positiveCorrelation > representation.negativeCorrelation) {
+                marked = HighTrick + representation.knowledgeStrategy.getComment().word;
+            }
+            else {
+                marked = NormalTrick + representation.knowledgeStrategy.getComment().word;
+            }
+
+            // 设置短描述
+            representation.description = marked;
+
+//            if (representation.positiveCorrelation > representation.negativeCorrelation) {
+//                marked = HighTrick + representation.knowledgeStrategy.getComment().word;
+//            }
+//            else if (representation.positiveCorrelation == representation.negativeCorrelation) {
+//                marked = NormalTrick + representation.knowledgeStrategy.getComment().word;
+//            }
+//            else {
+//                marked = LowTrick + representation.knowledgeStrategy.getComment().word;
+//            }
 
             String interpretation = representation.knowledgeStrategy.getInterpretation();
             KnowledgeStrategy.Scene scene = representation.knowledgeStrategy.getScene(template.theme);
@@ -235,7 +249,7 @@ public class Workflow {
                 content.append(scene.explain);
             }
 
-            // 表征
+            // 推理表征
             String prompt = template.formatBehaviorPrompt(content.toString(), age, gender, marked);
             String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                     null, null);

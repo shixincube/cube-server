@@ -30,61 +30,37 @@ import cube.aigc.psychology.Indicator;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
-/**
- * 得分。
- */
-public class Score implements JSONable {
+public class EvaluationScore implements JSONable {
 
     public final Indicator indicator;
 
-    public int value;
+    public int total;
 
-    public double weight;
+    public double score;
 
-    public Score(Indicator indicator, int value, double weight) {
+    public EvaluationScore(Indicator indicator, int total, double score) {
         this.indicator = indicator;
-        this.value = value;
-        this.weight = weight;
+        this.total = total;
+        this.score = score;
     }
 
-    public Score(JSONObject json) {
+    public EvaluationScore(JSONObject json) {
         this.indicator = Indicator.parse(json.getString("indicator"));
-        this.value = json.getInt("value");
-        this.weight = json.getDouble("weight");
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Score) {
-            Score other = (Score) obj;
-            if (other.indicator == this.indicator) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return this.indicator.hashCode();
+        this.total = json.getInt("total");
+        this.score = json.getDouble("score");
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("indicator", this.indicator.name);
-        json.put("value", this.value);
-        json.put("weight", this.weight);
+        json.put("total", this.total);
+        json.put("score", this.score);
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        json.put("indicator", this.indicator.name);
-        json.put("value", this.value);
-        json.put("weight", this.weight);
-        return json;
+        return this.toJSON();
     }
 }

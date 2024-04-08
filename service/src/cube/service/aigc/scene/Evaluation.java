@@ -87,8 +87,8 @@ public class Evaluation {
                 result.addFeature(Comment.SocialAdaptability, Tendency.Negative);
 
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.2, 0.3));
-                result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.2, 0.3));
-                result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.4, 0.5));
+                result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.2, 0.3));
             }
             else {
@@ -417,9 +417,9 @@ public class Evaluation {
         for (House house : houseList) {
             // 立体感
             if (house.hasSidewall()) {
-                result.addFeature(Comment.SelfConfidence, Tendency.Positive);
+                result.addFeature(Comment.Creativity, Tendency.Positive);
 
-                result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.7, 0.8));
+                result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.7, 0.8));
             }
 
             // 房屋类型
@@ -927,6 +927,8 @@ public class Evaluation {
 
         OtherSet other = this.painting.getOther();
 
+        int counter = 0;
+
         if (other.has(Label.Table)) {
             // 桌子
             result.addFeature(Comment.PayAttentionToFamily, Tendency.Positive);
@@ -970,65 +972,365 @@ public class Evaluation {
             // 花
             result.addFeature(Comment.Vanity, Tendency.Positive);
             result.addScore(Indicator.EvaluationFromOutside, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
         }
 
-
-
-        /*
-        if (this.painting.hasCloud()) {
-            // 云
-            result.addFeature(Comment.Imagination, Tendency.Positive);
-
-            result.addScore(ScoreIndicator.Optimism, 1);
-            result.addScore(ScoreIndicator.Idealism, 1);
-        }
-
-        if (this.painting.hasAnimal()) {
-            // 动物
-            result.addFeature(Comment.DelicateEmotions, Tendency.Positive);
-
-            result.addScore(ScoreIndicator.InterpersonalRelation, 1);
-
-            if (this.painting.hasBird()) {
-                // 鸟
-                result.addFeature(Comment.DesireForFreedom, Tendency.Positive);
-            }
-            else if (this.painting.hasDog()) {
-                // 狗
-                result.addFeature(Comment.NeedProtection, Tendency.Positive);
-            }
-            else if (this.painting.hasCat()) {
-                // 猫
-                result.addFeature(Comment.SocialDemand, Tendency.Positive);
-            }
-        }
-
-        if (this.painting.hasGrass()) {
+        if (other.has(Label.Grass)) {
             // 草
             result.addFeature(Comment.Stubborn, Tendency.Positive);
         }
 
-        if (this.painting.hasFlower()) {
-            // 花
-            result.addFeature(Comment.Vanity, Tendency.Positive);
-
-            result.addScore(ScoreIndicator.EvaluationFromOutside, 1);
+        if (other.has(Label.Sea)) {
+            // 海
+            result.addFeature(Comment.DesireForFreedom, Tendency.Normal);
         }
 
-        if (this.painting.hasMountain()) {
-            // 山
-            result.addFeature(Comment.NeedProtection, Tendency.Positive);
-
-            result.addScore(ScoreIndicator.SenseOfSecurity, 1);
+        if (other.has(Label.Pool)) {
+            // 池塘
+            result.addFeature(Comment.Stubborn, Tendency.Normal);
+            result.addScore(Indicator.InterpersonalRelation, -1, FloatUtils.random(0.2, 0.3));
         }
 
-        int numMaterials = this.painting.numStars()
-                + this.painting.numFlowers() + this.painting.numGrasses()
-                + this.painting.numMountains() + this.painting.numAnimals();
-        if (numMaterials >= 5) {
-            // 绘制的元素多
+        if (other.has(Label.Sunflower)) {
+            // 向日葵
+            result.addFeature(Comment.Extroversion, Tendency.Positive);
+            result.addFeature(Comment.PursuitOfAchievement, Tendency.Normal);
+            result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Mushroom)) {
+            // 蘑菇
+            result.addScore(Indicator.Stress, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Lotus)) {
+            // 莲花
+            result.addFeature(Comment.SelfInflated, Tendency.Positive);
+            result.addFeature(Comment.Creativity, Tendency.Normal);
+            result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.2, 0.3));
+            result.addScore(Indicator.MoralSense, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.PlumFlower)) {
+            // 梅花
+            result.addFeature(Comment.SelfEsteem, Tendency.Positive);
+            result.addScore(Indicator.SelfEsteem, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Rose)) {
+            // 玫瑰
             result.addFeature(Comment.Creativity, Tendency.Positive);
-        }*/
+            result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Cloud)) {
+            // 云
+            result.addFeature(Comment.Imagination, Tendency.Positive);
+            result.addScore(Indicator.Optimism, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.Idealism, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Rain)) {
+            // 雨
+            result.addFeature(Comment.HighPressure, Tendency.Positive);
+            result.addScore(Indicator.Stress, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Rainbow)) {
+            // 彩虹
+            result.addFeature(Comment.Future, Tendency.Positive);
+            result.addScore(Indicator.Simple, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Torch)) {
+            // 火炬
+            result.addScore(Indicator.Hostile, 1, FloatUtils.random(0.3, 0.4));
+        }
+
+        if (other.has(Label.Bonfire)) {
+            // 火堆
+            result.addScore(Indicator.Hostile, 1, FloatUtils.random(0.3, 0.4));
+        }
+
+        if (other.has(Label.Bird)) {
+            // 鸟
+            result.addFeature(Comment.DesireForFreedom, Tendency.Positive);
+            result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.DesireForFreedom, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Cat)) {
+            // 猫
+            result.addFeature(Comment.SocialDemand, Tendency.Positive);
+            result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
+            result.addScore(Indicator.Meekness, 1, FloatUtils.random(0.5, 0.6));
+            counter += 1;
+        }
+
+        if (other.has(Label.Dog)) {
+            // 狗
+            result.addFeature(Comment.NeedProtection, Tendency.Positive);
+            result.addFeature(Comment.SenseOfSecurity, Tendency.Positive);
+            result.addScore(Indicator.SenseOfSecurity, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Cow)) {
+            // 牛
+            result.addScore(Indicator.Struggle, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Sheep)) {
+            // 羊
+            result.addScore(Indicator.Meekness, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Pig)) {
+            // 猪
+            result.addScore(Indicator.Meekness, 1, FloatUtils.random(0.5, 0.6));
+            counter += 1;
+        }
+
+        if (other.has(Label.Fish)) {
+            // 鱼
+            result.addFeature(Comment.DesireForFreedom, Tendency.Positive);
+            result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.5, 0.6));
+            result.addScore(Indicator.DesireForFreedom, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Rabbit)) {
+            // 兔
+            result.addScore(Indicator.Meekness, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Horse)) {
+            // 马
+            result.addFeature(Comment.DesireForFreedom, Tendency.Positive);
+            result.addScore(Indicator.DesireForFreedom, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Hawk)) {
+            // 鹰
+            result.addScore(Indicator.Struggle, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Rat)) {
+            // 鼠
+            result.addFeature(Comment.Sensitiveness, Tendency.Positive);
+            result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Butterfly)) {
+            // 蝴蝶
+            result.addFeature(Comment.PursuitOfAchievement, Tendency.Positive);
+        }
+
+        if (other.has(Label.Tiger)) {
+            // 虎
+            result.addFeature(Comment.Extroversion, Tendency.Positive);
+            result.addFeature(Comment.SelfConfidence, Tendency.Positive);
+            result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.5, 0.6));
+            counter += 1;
+        }
+
+        if (other.has(Label.Hedgehog)) {
+            // 刺猬
+            result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Snake)) {
+            // 蛇
+            result.addFeature(Comment.Trauma, Tendency.Positive);
+            result.addScore(Indicator.Emotion, -1, FloatUtils.random(0.3, 0.4));
+        }
+
+        if (other.has(Label.Dragon)) {
+            // 龙
+            result.addFeature(Comment.PursuitOfAchievement, Tendency.Positive);
+            result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Watch)) {
+            // 表
+            result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Clock)) {
+            // 钟
+            result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.MusicalNotation)) {
+            // 音乐符号
+            result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.TV)) {
+            // 电视
+            result.addFeature(Comment.PayAttentionToFamily, Tendency.Negative);
+            result.addScore(Indicator.Family, -1, FloatUtils.random(0.4, 0.5));
+        }
+
+        if (other.has(Label.Pole)) {
+            // 电线杆
+            result.addFeature(Comment.Stubborn, Tendency.Positive);
+        }
+
+        if (other.has(Label.Tower)) {
+            // 铁塔
+            result.addFeature(Comment.Stereotype, Tendency.Positive);
+            result.addScore(Indicator.MoralSense, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Lighthouse)) {
+            // 灯塔
+            result.addFeature(Comment.Idealization, Tendency.Positive);
+        }
+
+        if (other.has(Label.Gun)) {
+            // 枪
+            result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Sword)) {
+            // 剑
+            result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Knife)) {
+            // 刀
+            result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Shield)) {
+            // 盾
+            result.addFeature(Comment.Defensiveness, Tendency.Positive);
+            result.addFeature(Comment.NeedProtection, Tendency.Positive);
+            result.addScore(Indicator.Pessimism, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Sandglass)) {
+            // 沙漏
+            result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Kite)) {
+            // 风筝
+            result.addFeature(Comment.DesireForFreedom, Tendency.Positive);
+            result.addScore(Indicator.DesireForFreedom, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Umbrella)) {
+            // 伞
+            result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Windmill)) {
+            // 风车
+            result.addFeature(Comment.Fantasy, Tendency.Positive);
+            result.addScore(Indicator.Simple, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Flag)) {
+            // 旗帜
+            result.addScore(Indicator.MoralSense, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Bridge)) {
+            // 桥
+            result.addFeature(Comment.PursueInterpersonalRelationships, Tendency.Positive);
+            result.addScore(Indicator.InterpersonalRelation, -1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Crossroads)) {
+            // 十字路口
+            result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
+        }
+
+        if (other.has(Label.Ladder)) {
+            // 梯子
+            result.addFeature(Comment.PursuitOfAchievement, Tendency.Positive);
+            result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
+        }
+
+        if (other.has(Label.Stairs)) {
+            // 楼梯
+            result.addFeature(Comment.EnvironmentalAlienation, Tendency.Positive);
+            result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
+        }
+
+        if (other.has(Label.Birdcage)) {
+            // 鸟笼
+            result.addFeature(Comment.DesireForFreedom, Tendency.Positive);
+            result.addScore(Indicator.DesireForFreedom, 1, FloatUtils.random(0.7, 0.8));
+            counter += 1;
+        }
+
+        if (other.has(Label.Car)) {
+            // 汽车
+            result.addFeature(Comment.Luxurious, Tendency.Positive);
+        }
+
+        if (other.has(Label.Boat)) {
+            // 船
+            result.addFeature(Comment.DesireForFreedom, Tendency.Positive);
+            result.addScore(Indicator.DesireForFreedom, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Airplane)) {
+            // 飞机
+            result.addFeature(Comment.Escapism, Tendency.Positive);
+            result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
+        }
+
+        if (other.has(Label.Bike)) {
+            // 自行车
+            result.addFeature(Comment.EmotionalDisturbance, Tendency.Positive);
+            counter += 1;
+        }
+
+        if (other.has(Label.Skull)) {
+            // 骷髅
+            result.addFeature(Comment.WorldWeariness, Tendency.Positive);
+            result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.7, 0.8));
+        }
+
+        if (other.has(Label.Glasses)) {
+            // 眼镜
+            result.addFeature(Comment.Escapism, Tendency.Positive);
+        }
+
+        if (other.has(Label.Swing)) {
+            // 秋千
+            result.addFeature(Comment.Childish, Tendency.Positive);
+        }
+
+        if (counter >= 2) {
+            result.addFeature(Comment.Creativity, Tendency.Positive);
+            result.addScore(Indicator.Creativity, counter, FloatUtils.random(0.7, 0.8));
+        }
 
         return result;
     }

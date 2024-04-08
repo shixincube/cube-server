@@ -28,6 +28,7 @@ package cube.aigc.psychology;
 
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
+import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.Score;
 import cube.aigc.psychology.composition.ScoreGroup;
 import cube.aigc.psychology.composition.Tendency;
@@ -62,7 +63,7 @@ public class EvaluationReport implements JSONable {
     public EvaluationReport(Attribute attribute, List<EvaluationFeature> evaluationFeatureList) {
         this.attribute = attribute;
         this.representationList = new ArrayList<>();
-        this.representationTopN = 5;
+        this.representationTopN = 10;
         this.scoreGroup = new ScoreGroup();
         this.build(evaluationFeatureList);
     }
@@ -89,6 +90,10 @@ public class EvaluationReport implements JSONable {
         return this.attribute;
     }
 
+    public ScoreGroup getScoreGroup() {
+        return this.scoreGroup;
+    }
+
     private void build(List<EvaluationFeature> resultList) {
         for (EvaluationFeature result : resultList) {
             for (EvaluationFeature.Feature feature : result.getFeatures()) {
@@ -105,11 +110,11 @@ public class EvaluationReport implements JSONable {
                     this.representationList.add(representation);
                 }
 
+                if (feature.tendency == Tendency.Negative) {
+                    representation.negativeCorrelation += 1;
+                }
                 if (feature.tendency == Tendency.Positive) {
                     representation.positiveCorrelation += 1;
-                }
-                else if (feature.tendency == Tendency.Negative) {
-                    representation.negativeCorrelation += 1;
                 }
             }
 
@@ -150,12 +155,8 @@ public class EvaluationReport implements JSONable {
         return result;
     }
 
-    public Score getScore(Indicator indicator) {
-        return this.scoreGroup.getScore(indicator);
-    }
-
-    public List<Score> getMergedScores() {
-        return null;
+    public List<EvaluationScore> getEvaluationScores() {
+        return this.scoreGroup.getEvaluationScores();
     }
 
     @Override
@@ -198,6 +199,8 @@ public class EvaluationReport implements JSONable {
 
         public int negativeCorrelation = 0;
 
+        public String description = "";
+
         public Representation(KnowledgeStrategy knowledgeStrategy) {
             this.knowledgeStrategy = knowledgeStrategy;
         }
@@ -206,6 +209,7 @@ public class EvaluationReport implements JSONable {
             this.knowledgeStrategy = new KnowledgeStrategy(json.getJSONObject("knowledgeStrategy"));
             this.positiveCorrelation = json.getInt("positiveCorrelation");
             this.negativeCorrelation = json.getInt("negativeCorrelation");
+            this.description = json.getString("description");
         }
 
         @Override
@@ -230,6 +234,7 @@ public class EvaluationReport implements JSONable {
             json.put("knowledgeStrategy", this.knowledgeStrategy.toJSON());
             json.put("positiveCorrelation", this.positiveCorrelation);
             json.put("negativeCorrelation", this.negativeCorrelation);
+            json.put("description", this.description);
             return json;
         }
 
@@ -239,6 +244,7 @@ public class EvaluationReport implements JSONable {
             json.put("knowledgeStrategy", this.knowledgeStrategy.toCompactJSON());
             json.put("positiveCorrelation", this.positiveCorrelation);
             json.put("negativeCorrelation", this.negativeCorrelation);
+            json.put("description", this.description);
             return json;
         }
     }

@@ -28,7 +28,7 @@ package cube.aigc.psychology;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.aigc.psychology.composition.Score;
+import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
@@ -215,12 +215,13 @@ public class PsychologyReport implements JSONable {
             buf.append("\n\n");
             buf.append("**特征表**");
             buf.append("\n\n");
-            buf.append("| 特征 | 正向趋势 | 负向趋势 |");
+            buf.append("| 特征 | 描述 | 正向趋势 | 负向趋势 |");
             buf.append("\n");
-            buf.append("| ---- | ---- | ---- |");
-            for (EvaluationReport.Representation rep : this.evaluationReport.getRepresentationList()) {
+            buf.append("| ---- | ---- | ---- | ---- |");
+            for (EvaluationReport.Representation rep : this.evaluationReport.getRepresentationListOrderByCorrelation()) {
                 buf.append("\n");
                 buf.append("|").append(rep.knowledgeStrategy.getComment().word);
+                buf.append("|").append(rep.description);
                 buf.append("|").append(rep.positiveCorrelation);
                 buf.append("|").append(rep.negativeCorrelation);
                 buf.append("|");
@@ -230,13 +231,14 @@ public class PsychologyReport implements JSONable {
             buf.append("\n");
             buf.append("**评分表**");
             buf.append("\n\n");
-            buf.append("| 评分项目 | 得分 | 计分次数 |");
+            buf.append("| 评分项目 | 总分 | 权重分 |");
             buf.append("\n");
             buf.append("| ---- | ---- | ---- |");
-            for (Score score : this.evaluationReport.getMergedScores()) {
+            for (EvaluationScore score : this.evaluationReport.getEvaluationScores()) {
                 buf.append("\n");
                 buf.append("|").append(score.indicator.name);
-                buf.append("|").append(score.value);
+                buf.append("|").append(score.total);
+                buf.append("|").append(score.score);
                 buf.append("|");
             }
             buf.append("\n");
