@@ -30,32 +30,88 @@ import cube.aigc.psychology.Indicator;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
+/**
+ * 评估得分。
+ */
 public class EvaluationScore implements JSONable {
 
     public final Indicator indicator;
 
-    public int total;
+    public int hit = 0;
 
-    public double score;
+    public int value = 0;
 
-    public EvaluationScore(Indicator indicator, int total, double score) {
+    public int positive = 0;
+
+    public double positiveWeight = 0;
+
+    public int negative = 0;
+
+    public double negativeWeight = 0;
+
+    public double positiveScore = 0;
+
+    public double negativeScore = 0;
+
+    public EvaluationScore(Indicator indicator, int value, double weight) {
         this.indicator = indicator;
-        this.total = total;
-        this.score = score;
+        this.hit = 1;
+        this.value = value;
+        if (value > 0) {
+            this.positive = value;
+            this.positiveWeight = weight;
+            this.positiveScore = value * weight;
+        }
+        else if (value < 0) {
+            this.negative = Math.abs(value);
+            this.negativeWeight = weight;
+            this.negativeScore = Math.abs(value) * weight;
+        }
     }
 
     public EvaluationScore(JSONObject json) {
         this.indicator = Indicator.parse(json.getString("indicator"));
-        this.total = json.getInt("total");
-        this.score = json.getDouble("score");
+        this.hit = json.getInt("hit");
+        this.value = json.getInt("value");
+        this.positiveScore = json.getDouble("positiveScore");
+        this.negativeScore = json.getDouble("negativeScore");
+    }
+
+    public void scoring(Score score) {
+        this.hit += 1;
+        // 原始分
+        this.value += score.value;
+
+        if (score.value > 0) {
+            // 最大权重值
+            if (score.weight > this.positiveWeight) {
+                this.positive = score.value;
+                this.positiveWeight = score.weight;
+            }
+
+            // 计分
+            this.positiveScore += score.value * score.weight;
+        }
+        else if (score.value < 0) {
+            // 最大权重值
+            if (score.weight > this.negativeWeight) {
+                this.negative = Math.abs(score.value);
+                this.negativeWeight = score.weight;
+            }
+
+            // 计分
+            this.negativeScore += Math.abs(score.value) * score.weight;
+        }
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("indicator", this.indicator.name);
-        json.put("total", this.total);
-        json.put("score", this.score);
+        json.put("hit", this.hit);
+        json.put("value", this.value);
+        json.put("positiveScore", this.positiveScore);
+        json.put("negativeScore", this.negativeScore);
         return json;
     }
 

@@ -78,7 +78,7 @@ public class Evaluation {
             if (areaRatio >= (2.0f / 3.0f)) {
                 result.addFeature(Comment.SelfExistence, Tendency.Positive);
 
-                result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.Narcissism, 1, FloatUtils.random(0.2, 0.3));
             }
             else if (areaRatio < (1.0f / 6.0f)) {
@@ -89,14 +89,14 @@ public class Evaluation {
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.4, 0.5));
-                result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.4, 0.5));
             }
             else {
-                result.addFeature(Comment.SelfEsteem, Tendency.Normal);
-                result.addFeature(Comment.SelfConfidence, Tendency.Positive);
+                result.addFeature(Comment.SelfEsteem, Tendency.Negative);
+                result.addFeature(Comment.SelfConfidence, Tendency.Negative);
 
-                result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.2, 0.3));
-                result.addScore(Indicator.SelfEsteem, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
+                result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.2, 0.3));
             }
         }
 
@@ -639,19 +639,19 @@ public class Evaluation {
             // 树干
             if (tree.hasTrunk()) {
                 double ratio = tree.getTrunkWidthRatio();
-                if (ratio < 0.2f) {
+                if (ratio < 0.2d) {
                     // 细
                     result.addFeature(Comment.Powerlessness, Tendency.Positive);
 
-                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
-                    result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.6, 0.7));
-                    result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.6, 0.7));
+                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
+                    result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.3, 0.4));
+                    result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.3, 0.4));
                 }
-                else if (ratio >= 0.2f && ratio < 0.7f) {
+                else if (ratio >= 0.3d && ratio < 0.7d) {
                     // 粗
                     result.addFeature(Comment.EmotionalStability, Tendency.Positive);
 
-                    result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.6, 0.7));
+                    result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.2, 0.3));
                 }
             }
             else {

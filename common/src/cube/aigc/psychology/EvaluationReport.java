@@ -123,6 +123,16 @@ public class EvaluationReport implements JSONable {
                 this.scoreGroup.addScore(score);
             }
         }
+
+        // 排序
+        this.representationList.sort(new Comparator<Representation>() {
+            @Override
+            public int compare(Representation representation1, Representation representation2) {
+                int score1 = representation1.positiveCorrelation + representation1.negativeCorrelation;
+                int score2 = representation2.positiveCorrelation + representation2.negativeCorrelation;
+                return score2 - score1;
+            }
+        });
     }
 
     public Representation getRepresentation(Comment comment) {
@@ -139,15 +149,6 @@ public class EvaluationReport implements JSONable {
     }
 
     public List<Representation> getRepresentationListOrderByCorrelation() {
-        this.representationList.sort(new Comparator<Representation>() {
-            @Override
-            public int compare(Representation representation1, Representation representation2) {
-                int score1 = representation1.positiveCorrelation + representation1.negativeCorrelation;
-                int score2 = representation2.positiveCorrelation + representation2.negativeCorrelation;
-                return score2 - score1;
-            }
-        });
-
         List<Representation> result = new ArrayList<>(this.representationTopN);
         for (int i = 0, len = Math.min(this.representationTopN, this.representationList.size()); i < len; ++i) {
             result.add(this.representationList.get(i));
@@ -155,8 +156,110 @@ public class EvaluationReport implements JSONable {
         return result;
     }
 
+    /**
+     * 通过和评分结果进行对比排序
+     *
+     * @return
+     */
+    public List<Representation> getRepresentationListByEvaluationScore() {
+        List<Representation> result = new ArrayList<>();
+        for (Representation representation : this.representationList) {
+            // 匹配和评分表一致的特征
+            Indicator indicator = this.matchIndicator(representation.knowledgeStrategy.getComment());
+            if (null != indicator) {
+                result.add(representation);
+            }
+        }
+
+        if (result.size() == this.representationTopN) {
+            return result;
+        }
+
+        // 补齐 Top N 数量
+        if (result.size() < this.representationTopN) {
+            for (Representation representation : this.representationList) {
+                if (result.contains(representation)) {
+                    continue;
+                }
+
+                result.add(representation);
+                if (result.size() >= this.representationTopN) {
+                    break;
+                }
+            }
+        }
+        else {
+            while (result.size() > this.representationTopN) {
+                result.remove(result.size() - 1);
+            }
+        }
+
+        return result;
+    }
+
     public List<EvaluationScore> getEvaluationScores() {
         return this.scoreGroup.getEvaluationScores();
+    }
+
+    private Indicator matchIndicator(Comment comment) {
+        switch (comment) {
+            case Extroversion:
+                return Indicator.Extroversion;
+            case Introversion:
+                return Indicator.Introversion;
+            case Narcissism:
+                return Indicator.Narcissism;
+            case SelfConfidence:
+                return Indicator.Confidence;
+            case SelfEsteem:
+                return Indicator.SelfEsteem;
+            case SocialAdaptability:
+                return Indicator.SocialAdaptability;
+            case Independence:
+                return Indicator.Independence;
+            case Idealization:
+                return Indicator.Idealism;
+            case DelicateEmotions:
+                return Indicator.Emotion;
+            case SelfExistence:
+                return Indicator.SelfConsciousness;
+            case Luxurious:
+                return Indicator.Realism;
+            case SenseOfSecurity:
+                return Indicator.SenseOfSecurity;
+            case HighPressure:
+            case ExternalPressure:
+                return Indicator.Stress;
+            case SelfControl:
+                return Indicator.SelfControl;
+            case WorldWeariness:
+            case Escapism:
+                return Indicator.Anxiety;
+            case Depression:
+                return Indicator.Depression;
+            case SimpleIdea:
+            case Childish:
+                return Indicator.Simple;
+            case Hostility:
+                return Indicator.Hostile;
+            case Aggression:
+                return Indicator.Attacking;
+            case PayAttentionToFamily:
+                return Indicator.Family;
+            case PursueInterpersonalRelationships:
+                return Indicator.InterpersonalRelation;
+            case PursuitOfAchievement:
+                return Indicator.AchievementMotivation;
+            case Creativity:
+                return Indicator.Creativity;
+            case PositiveExpectation:
+                return Indicator.Struggle;
+            case DesireForFreedom:
+                return Indicator.DesireForFreedom;
+            default:
+                break;
+        }
+        return null;
     }
 
     @Override

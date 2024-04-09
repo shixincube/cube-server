@@ -218,7 +218,7 @@ public class PsychologyReport implements JSONable {
             buf.append("| 特征 | 描述 | 正向趋势 | 负向趋势 |");
             buf.append("\n");
             buf.append("| ---- | ---- | ---- | ---- |");
-            for (EvaluationReport.Representation rep : this.evaluationReport.getRepresentationListOrderByCorrelation()) {
+            for (EvaluationReport.Representation rep : this.evaluationReport.getRepresentationListByEvaluationScore()) {
                 buf.append("\n");
                 buf.append("|").append(rep.knowledgeStrategy.getComment().word);
                 buf.append("|").append(rep.description);
@@ -231,14 +231,16 @@ public class PsychologyReport implements JSONable {
             buf.append("\n");
             buf.append("**评分表**");
             buf.append("\n\n");
-            buf.append("| 评分项目 | 总分 | 权重分 |");
+            buf.append("| 评分项目 | 计分 | 计数 | 正权重分 | 负权重分 |");
             buf.append("\n");
-            buf.append("| ---- | ---- | ---- |");
+            buf.append("| ---- | ---- | ---- | ---- | ---- |");
             for (EvaluationScore score : this.evaluationReport.getEvaluationScores()) {
                 buf.append("\n");
                 buf.append("|").append(score.indicator.name);
-                buf.append("|").append(score.total);
-                buf.append("|").append(score.score);
+                buf.append("|").append(score.value);
+                buf.append("|").append(score.hit);
+                buf.append("|").append(score.positiveScore);
+                buf.append("|").append(score.negativeScore);
                 buf.append("|");
             }
             buf.append("\n");

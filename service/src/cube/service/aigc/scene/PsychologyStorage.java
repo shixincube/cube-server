@@ -28,10 +28,7 @@ package cube.service.aigc.scene;
 
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
-import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.PsychologyReport;
-import cube.aigc.psychology.ReportParagraph;
-import cube.aigc.psychology.Theme;
+import cube.aigc.psychology.*;
 import cube.common.Storagable;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -81,6 +78,9 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("theme", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("evaluation_data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 
@@ -158,6 +158,11 @@ public class PsychologyStorage implements Storagable {
                 data.get("timestamp").getLong(), data.get("name").getString(),
                 new Attribute(data.get("gender").getString(), data.get("age").getInt()),
                 data.get("fileCode").getString(), Theme.parse(data.get("theme").getString()));
+
+        if (!data.get("evaluation_data").isNullValue()) {
+            EvaluationReport evaluationReport = new EvaluationReport(new JSONObject(data.get("evaluation_data").getString()));
+            report.setEvaluationReport(evaluationReport);
+        }
 
         List<StorageField[]> paragraphResult = this.storage.executeQuery(this.reportParagraphTable,
                 this.reportParagraphFields, new Conditional[] {

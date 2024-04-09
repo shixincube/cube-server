@@ -90,31 +90,6 @@ public class ScoreGroup implements JSONable {
         return list;
     }
 
-//    public List<Score> getScoresOrderByValue() {
-//        List<Score> list = new ArrayList<>();
-//        // 合并得分项
-//        for (Score score : this.scoreList) {
-//            int index = list.indexOf(score);
-//            if (index >= 0) {
-//                // 合并
-//                Score current = list.get(index);
-//                current.value += score.value;
-//                current.weight += score.weight;
-//            }
-//            else {
-//                list.add(new Score(score.indicator, score.value, score.weight));
-//            }
-//        }
-//        // 排序
-//        Collections.sort(list, new Comparator<Score>() {
-//            @Override
-//            public int compare(Score s1, Score s2) {
-//                return s2.value - s1.value;
-//            }
-//        });
-//        return list;
-//    }
-
     public List<EvaluationScore> getEvaluationScores() {
         if (null != this.evaluationScoreList) {
             return this.evaluationScoreList;
@@ -126,11 +101,10 @@ public class ScoreGroup implements JSONable {
         for (Score score : this.scoreList) {
             EvaluationScore es = this.findEvaluationScore(result, score.indicator);
             if (null == es) {
-                result.add(new EvaluationScore(score.indicator, score.value, score.value * score. weight));
+                result.add(new EvaluationScore(score.indicator, score.value, score.weight));
             }
             else {
-                es.total += score.value;
-                es.score += score.value * score.weight;
+                es.scoring(score);
             }
         }
 
@@ -138,7 +112,7 @@ public class ScoreGroup implements JSONable {
         Collections.sort(result, new Comparator<EvaluationScore>() {
             @Override
             public int compare(EvaluationScore s1, EvaluationScore s2) {
-                return s2.total - s1.total;
+                return s2.hit - s1.hit;
             }
         });
 

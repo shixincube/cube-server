@@ -212,13 +212,14 @@ public class Workflow {
     private List<String> inferBehavior(ThemeTemplate template, int age, String gender) {
         List<String> result = new ArrayList<>();
 
-        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListOrderByCorrelation()) {
+        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore()) {
             String marked = null;
             // 趋势
             if (representation.negativeCorrelation > 0) {
                 marked = LowTrick + representation.knowledgeStrategy.getComment().word;
             }
-            else if (representation.positiveCorrelation > representation.negativeCorrelation) {
+            else if (representation.positiveCorrelation >= 2 ||
+                    (representation.positiveCorrelation - representation.negativeCorrelation) >= 2) {
                 marked = HighTrick + representation.knowledgeStrategy.getComment().word;
             }
             else {
@@ -288,7 +289,7 @@ public class Workflow {
 
     private String spliceRepresentationInterpretation() {
         StringBuilder buf = new StringBuilder();
-        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListOrderByCorrelation()) {
+        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore()) {
             buf.append(representation.knowledgeStrategy.getInterpretation()).append("\n");
             if (buf.length() > this.maxContext - 100) {
                 Logger.w(this.getClass(), "#spliceRepresentationInterpretation - Context length is overflow: " + buf.length());

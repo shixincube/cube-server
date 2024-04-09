@@ -44,6 +44,7 @@ import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,6 +59,8 @@ public class PsychologyScene {
     private AIGCService aigcService;
 
     private PsychologyStorage storage;
+
+    private long lastConfigModified;
 
     private String unitName;
 
@@ -94,6 +97,7 @@ public class PsychologyScene {
             this.storage.open();
             this.storage.execSelfChecking(null);
 
+            this.lastConfigModified = System.currentTimeMillis();
 
             JSONObject unitConfig = config.getJSONObject("unit");
             this.unitName = unitConfig.getString("name");
@@ -107,6 +111,25 @@ public class PsychologyScene {
     public void stop() {
         if (null != this.storage) {
             this.storage.close();
+        }
+    }
+
+    private void loadConfig() {
+        try {
+            File file = new File("config/psychology.json");
+            if (file.exists() && file.lastModified() <= this.lastConfigModified) {
+                return;
+            }
+
+            this.lastConfigModified = file.lastModified();
+
+            JSONObject config = ConfigUtils.readJsonFile("psychology.json");
+            JSONObject unitConfig = config.getJSONObject("unit");
+            this.unitName = unitConfig.getString("name");
+            this.unitContextLength = unitConfig.getInt("contextLength");
+        } catch (Exception e) {
+            e.printStackTrace();
+            Logger.w(this.getClass(), "#loadConfig", e);
         }
     }
 
@@ -168,6 +191,9 @@ public class PsychologyScene {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
+                // 加载配置
+                loadConfig();
+
                 // 绘图预测
                 listener.onPaintingPredict(report, fileLabel);
 
