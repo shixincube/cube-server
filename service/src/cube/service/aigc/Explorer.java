@@ -34,6 +34,7 @@ import cube.aigc.attachment.ui.Button;
 import cube.aigc.attachment.ui.ButtonListener;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
+import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
@@ -43,6 +44,7 @@ import cube.service.aigc.module.ModuleManager;
 import cube.service.aigc.module.PublicOpinion;
 import cube.service.aigc.module.Stage;
 import cube.service.aigc.resource.*;
+import cube.service.contact.ContactManager;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -134,6 +136,13 @@ public class Explorer {
 
         ModuleManager.getInstance().addModule(new PublicOpinion());
         ModuleManager.getInstance().start();
+
+        (new Thread() {
+            @Override
+            public void run() {
+                buildInData();
+            }
+        }).start();
     }
 
     public void teardown() {
@@ -143,6 +152,22 @@ public class Explorer {
     public void config(String pageReaderUrl, String searcherName) {
         this.pageReaderUrl = pageReaderUrl;
         this.searcherName = searcherName;
+    }
+
+    private void buildInData() {
+        // 创建单元用户
+        long id = 200101;
+        for (int i = 0; i < 10; ++i) {
+            Contact contact = new Contact(id + i, AuthConsts.DEFAULT_DOMAIN, "Unit-" + (id + i));
+            ContactManager.getInstance().newContact(contact);
+        }
+
+        // 创建 API 用户
+        id = 102001;
+        for (int i = 0; i < 10; ++i) {
+            Contact contact = new Contact(id + i, AuthConsts.DEFAULT_DOMAIN, "API-" + (id + i));
+            ContactManager.getInstance().newContact(contact);
+        }
     }
 
     public String getPageReaderUrl() {

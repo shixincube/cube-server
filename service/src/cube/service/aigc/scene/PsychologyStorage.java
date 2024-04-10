@@ -202,6 +202,11 @@ public class PsychologyStorage implements Storagable {
                     new Attribute(data.get("gender").getString(), data.get("age").getInt()),
                     data.get("fileCode").getString(), Theme.parse(data.get("theme").getString()));
 
+            if (!data.get("evaluation_data").isNullValue()) {
+                EvaluationReport evaluationReport = new EvaluationReport(new JSONObject(data.get("evaluation_data").getString()));
+                report.setEvaluationReport(evaluationReport);
+            }
+
             List<StorageField[]> paragraphResult = this.storage.executeQuery(this.reportParagraphTable,
                     this.reportParagraphFields, new Conditional[] {
                             Conditional.createEqualTo("report_sn", report.sn)
@@ -250,7 +255,8 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("gender", report.getAttribute().gender),
                 new StorageField("age", report.getAttribute().age),
                 new StorageField("fileCode", report.getFileCode()),
-                new StorageField("theme", report.getTheme().code)
+                new StorageField("theme", report.getTheme().code),
+                new StorageField("evaluation_data", report.getEvaluationReport().toJSON().toString())
         });
     }
 }

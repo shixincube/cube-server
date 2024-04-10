@@ -673,10 +673,16 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 创建新的联系人。
      *
-     * @param contact
+     * @param contact 待创建的联系人数据。
      * @return
      */
     public Contact newContact(Contact contact) {
+        Contact current = this.storage.readContact(contact.getDomain().getName(), contact.getId());
+        if (null != current) {
+            // 已经有该联系人
+            return current;
+        }
+
         this.storage.writeContact(contact);
 
         String key = UniqueKey.make(contact.getId(), contact.getDomain().getName());

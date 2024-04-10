@@ -133,6 +133,10 @@ public class PsychologyReport implements JSONable {
         this.evaluationReport = evaluationReport;
     }
 
+    public EvaluationReport getEvaluationReport() {
+        return this.evaluationReport;
+    }
+
     public void setBehaviorList(List<String> behaviorList) {
         this.behaviorList = new ArrayList<>();
         this.behaviorList.addAll(behaviorList);
