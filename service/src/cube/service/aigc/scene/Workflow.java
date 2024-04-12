@@ -29,6 +29,8 @@ package cube.service.aigc.scene;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.KnowledgeStrategy;
+import cube.aigc.psychology.algorithm.Representation;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GenerativeOption;
 import cube.common.entity.GenerativeRecord;
@@ -212,7 +214,7 @@ public class Workflow {
     private List<String> inferBehavior(ThemeTemplate template, int age, String gender) {
         List<String> result = new ArrayList<>();
 
-        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore()) {
+        for (Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore()) {
             String marked = null;
             // 趋势
             if (representation.negativeCorrelation > 0) {
@@ -289,7 +291,7 @@ public class Workflow {
 
     private String spliceRepresentationInterpretation() {
         StringBuilder buf = new StringBuilder();
-        for (EvaluationReport.Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore()) {
+        for (Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore()) {
             buf.append(representation.knowledgeStrategy.getInterpretation()).append("\n");
             if (buf.length() > this.maxContext - 100) {
                 Logger.w(this.getClass(), "#spliceRepresentationInterpretation - Context length is overflow: " + buf.length());
@@ -300,9 +302,9 @@ public class Workflow {
         return buf.toString();
     }
 
-    private List<GenerativeRecord> makeRepresentationContext(List<EvaluationReport.Representation> list) {
+    private List<GenerativeRecord> makeRepresentationContext(List<Representation> list) {
         List<GenerativeRecord> result = new ArrayList<>();
-        for (EvaluationReport.Representation representation : list) {
+        for (Representation representation : list) {
             GenerativeRecord record = new GenerativeRecord(this.unitName,
                     representation.knowledgeStrategy.getComment().word,
                     representation.knowledgeStrategy.getInterpretation());

@@ -212,12 +212,14 @@ public class ClientCellet extends AbstractCellet {
     private void login(ActionDialect actionDialect, TalkContext talkContext) {
         boolean result = ClientManager.getInstance().login(actionDialect, talkContext);
         if (!result) {
-            // 关闭不合法的客户端
-            hangup(talkContext, false);
+            // 不合法的客户端，Session ID 返回 0
+            ActionDialect response = new ActionDialect(ClientAction.Login.name);
+            response.addParam("sessionId", (long) 0);
+            this.speak(talkContext, response);
         }
         else {
             ActionDialect response = new ActionDialect(ClientAction.Login.name);
-            response.addParam("sessionId", talkContext.getSessionId().longValue());
+            response.addParam("sessionId", talkContext.getSessionId());
             this.speak(talkContext, response);
         }
     }

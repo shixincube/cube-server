@@ -380,6 +380,12 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public KnowledgeBaseInfo deleteKnowledgeBase(String token, String baseName) {
+        if (null == baseName) {
+            return null;
+        }
+
+        Logger.d(this.getClass(), "#deleteKnowledgeBase - " + baseName + " - " + token);
+
         JSONObject payload = new JSONObject();
         payload.put("name", baseName);
         Packet packet = new Packet(AIGCAction.DeleteKnowledgeBase.name, payload);
@@ -422,6 +428,8 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public JSONObject getKnowledgeDocs(String token, String baseName) {
+        Logger.d(this.getClass(), "#getKnowledgeDocs - " + baseName + " - " + token);
+
         JSONObject payload = new JSONObject();
         payload.put("base", baseName);
         Packet packet = new Packet(AIGCAction.ListKnowledgeDocs.name, payload);
@@ -512,6 +520,8 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public KnowledgeProgress importKnowledgeDocs(String token, String baseName, JSONArray fileCodeArray, String splitter) {
+        Logger.d(this.getClass(), "#importKnowledgeDocs - " + baseName + " - " + token);
+
         JSONObject payload = new JSONObject();
         payload.put("base", baseName);
         payload.put("fileCodeList", fileCodeArray);
@@ -558,6 +568,8 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public KnowledgeProgress removeKnowledgeDocs(String token, String baseName, JSONArray fileCodeArray) {
+        Logger.d(this.getClass(), "#removeKnowledgeDocs - " + baseName + " - " + token);
+
         JSONObject payload = new JSONObject();
         payload.put("base", baseName);
         payload.put("fileCodeList", fileCodeArray);
@@ -653,10 +665,14 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public ResetKnowledgeProgress resetKnowledgeStore(String token, String baseName, boolean backup) {
-        JSONObject payload = new JSONObject();
-        if (null != baseName) {
-            payload.put("base", baseName);
+        if (null == baseName) {
+            return null;
         }
+
+        Logger.d(this.getClass(), "#resetKnowledgeStore - " + baseName + " - " + token);
+
+        JSONObject payload = new JSONObject();
+        payload.put("base", baseName);
         payload.put("backup", backup);
         Packet packet = new Packet(AIGCAction.ResetKnowledgeStore.name, payload);
         ActionDialect request = packet.toDialect();

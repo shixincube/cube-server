@@ -31,76 +31,184 @@ package cube.aigc.psychology;
  */
 public enum Indicator {
 
+    /**
+     * 精神病性。
+     */
     Psychosis("精神病性", "Psychosis"),
 
+    /**
+     * 外倾。
+     */
     Extroversion("外倾", "Extroversion"),
 
+    /**
+     * 内倾。
+     */
     Introversion("内倾", "Introversion"),
 
+    /**
+     * 乐观。
+     */
     Optimism("乐观", "Optimism"),
 
+    /**
+     * 悲观。
+     */
     Pessimism("悲观", "Pessimism"),
 
+    /**
+     * 自恋。
+     */
     Narcissism("自恋", "Narcissism"),
 
+    /**
+     * 自信。
+     */
     Confidence("自信", "Confidence"),
 
+    /**
+     * 自尊。
+     */
     SelfEsteem("自尊", "SelfEsteem"),
 
+    /**
+     * 社会适应性。
+     */
     SocialAdaptability("社会适应性", "SocialAdaptability"),
 
+    /**
+     * 独立。
+     */
     Independence("独立", "Independence"),
 
+    /**
+     * 理想主义。
+     */
     Idealism("理想主义", "Idealism"),
 
+    /**
+     * 情感。
+     */
     Emotion("情感", "Emotion"),
 
+    /**
+     * 自我意识。
+     */
     SelfConsciousness("自我意识", "SelfConsciousness"),
 
+    /**
+     * 现实主义。
+     */
     Realism("现实主义", "Realism"),
 
+    /**
+     * 思考。
+     */
     Thought("思考", "Thought"),
 
+    /**
+     * 安全感。
+     */
     SenseOfSecurity("安全感", "SenseOfSecurity"),
 
+    /**
+     * 强迫。
+     */
     Obsession("强迫", "Obsession"),
 
+    /**
+     * 压抑。
+     */
     Constrain("压抑", "Constrain"),
 
+    /**
+     * 自我控制。
+     */
     SelfControl("自我控制", "SelfControl"),
 
+    /**
+     * 焦虑。
+     */
     Anxiety("焦虑", "Anxiety"),
 
+    /**
+     * 抑郁。
+     */
     Depression("抑郁", "Depression"),
 
+    /**
+     * 单纯。
+     */
     Simple("单纯", "Simple"),
 
+    /**
+     * 温顺。
+     */
     Meekness("温顺", "Meekness"),
 
+    /**
+     * 敌对。
+     */
     Hostile("敌对", "Hostile"),
 
+    /**
+     * 攻击性。
+     */
     Attacking("攻击性", "Attacking"),
 
+    /**
+     * 家庭关系。
+     */
     Family("家庭关系", "Family"),
 
+    /**
+     * 人际关系。
+     */
     InterpersonalRelation("人际关系", "InterpersonalRelation"),
 
+    /**
+     * 外在评价。
+     */
     EvaluationFromOutside("外在评价", "EvaluationFromOutside"),
 
+    /**
+     * 偏执。
+     */
     Paranoid("偏执", "Paranoid"),
 
+    /**
+     * 成就动机。
+     */
     AchievementMotivation("成就动机", "AchievementMotivation"),
 
+    /**
+     * 压力。
+     */
     Stress("压力", "Stress"),
 
+    /**
+     * 创造力。
+     */
     Creativity("创造力", "Creativity"),
 
+    /**
+     * 冲动。
+     */
     Impulsion("冲动", "Impulsion"),
 
+    /**
+     * 奋斗。
+     */
     Struggle("奋斗", "Struggle"),
 
+    /**
+     * 道德感。
+     */
     MoralSense("道德感", "MoralSense"),
 
+    /**
+     * 向往自由。
+     */
     DesireForFreedom("向往自由", "DesireForFreedom"),
 
     ;

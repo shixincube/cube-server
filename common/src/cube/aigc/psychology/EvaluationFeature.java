@@ -26,8 +26,8 @@
 
 package cube.aigc.psychology;
 
-import cube.aigc.psychology.composition.Score;
-import cube.aigc.psychology.composition.Tendency;
+import cube.aigc.psychology.algorithm.Score;
+import cube.aigc.psychology.algorithm.Tendency;
 
 import java.util.ArrayList;
 import java.util.List;

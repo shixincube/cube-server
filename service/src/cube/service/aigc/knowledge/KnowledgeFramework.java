@@ -154,7 +154,7 @@ public class KnowledgeFramework {
 
         AuthToken authToken = this.service.getToken(token);
         if (null == authToken) {
-            Logger.w(this.getClass(), "#newKnowledgeBase - Token error: " + token);
+            Logger.w(this.getClass(), "#newKnowledgeBase - " + name + " - Token error: " + token);
             return null;
         }
 
@@ -186,7 +186,7 @@ public class KnowledgeFramework {
 
         AuthToken authToken = this.service.getToken(token);
         if (null == authToken) {
-            Logger.w(this.getClass(), "#deleteKnowledgeBase - Token error: " + token);
+            Logger.w(this.getClass(), "#deleteKnowledgeBase - " + name + " - Token error: " + token);
             return null;
         }
 

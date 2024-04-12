@@ -165,7 +165,7 @@ public class KnowledgeBase {
             }
 
             if (null != this.resource.docList && System.currentTimeMillis() - this.resource.listDocTime < 30 * 1000) {
-                Logger.d(this.getClass(), "#listKnowledgeDocs - Read from memory");
+                Logger.d(this.getClass(), "#listKnowledgeDocs - " + this.getName() + " - Read from memory");
                 return this.resource.docList;
             }
 
@@ -210,7 +210,7 @@ public class KnowledgeBase {
 
     public KnowledgeDoc importKnowledgeDoc(String fileCode, String splitter) {
         if (this.lock.get()) {
-            Logger.w(this.getClass(), "#importKnowledgeDoc - Store locked: " + fileCode);
+            Logger.w(this.getClass(), "#importKnowledgeDoc - " + this.getName() + " - Store locked: " + fileCode);
             return null;
         }
         this.lock.set(true);
@@ -222,7 +222,7 @@ public class KnowledgeBase {
             JSONObject fileLabelJson = this.fileStorage.notify(getFile);
             if (null == fileLabelJson) {
                 this.storage.deleteKnowledgeDoc(this.baseInfo.name, fileCode);
-                Logger.e(this.getClass(), "#importKnowledgeDoc - Not find file: " + fileCode);
+                Logger.e(this.getClass(), "#importKnowledgeDoc - " + this.getName() + " - Not find file: " + fileCode);
                 this.lock.set(false);
                 return null;
             }
@@ -255,14 +255,14 @@ public class KnowledgeBase {
 
             if (!doc.activated) {
                 if (!this.resource.checkUnit()) {
-                    Logger.e(this.getClass(), "#importKnowledgeDoc - Not find Knowledge unit");
+                    Logger.e(this.getClass(), "#importKnowledgeDoc - " + this.getName() + " - Not find Knowledge unit");
                     this.lock.set(false);
                     return null;
                 }
 
                 activatedDoc = this.activateKnowledgeDoc(doc);
                 if (null == activatedDoc) {
-                    Logger.e(this.getClass(), "#importKnowledgeDoc - Unit return error");
+                    Logger.e(this.getClass(), "#importKnowledgeDoc - " + this.getName() + " - Unit return error");
                     this.storage.deleteKnowledgeDoc(this.baseInfo.name, fileCode);
                     this.lock.set(false);
                     return null;
@@ -276,9 +276,9 @@ public class KnowledgeBase {
             AIGCHook hook = this.service.getPluginSystem().getImportKnowledgeDocHook();
             hook.apply(new AIGCPluginContext(this, activatedDoc));
 
-            Logger.d(this.getClass(), "#importKnowledgeDoc - file code: " + fileCode);
+            Logger.d(this.getClass(), "#importKnowledgeDoc - " + this.getName() + " - file code: " + fileCode);
         } catch (Exception e) {
-            Logger.w(this.getClass(), "#importKnowledgeDoc", e);
+            Logger.w(this.getClass(), "#importKnowledgeDoc - " + this.getName(), e);
         } finally {
             this.lock.set(false);
         }
@@ -288,7 +288,7 @@ public class KnowledgeBase {
 
     public KnowledgeDoc removeKnowledgeDoc(String fileCode) {
         if (this.lock.get()) {
-            Logger.w(this.getClass(), "#removeKnowledgeDoc - Store locked: " + fileCode);
+            Logger.w(this.getClass(), "#removeKnowledgeDoc - " + this.getName() + " - Store locked: " + fileCode);
             return null;
         }
         this.lock.set(true);
@@ -303,7 +303,7 @@ public class KnowledgeBase {
                         doc = deactivatedDoc;
                     }
                     else {
-                        Logger.w(this.getClass(), "#removeKnowledgeDoc - Unit error: " + fileCode);
+                        Logger.w(this.getClass(), "#removeKnowledgeDoc - " + this.getName() + " - Unit error: " + fileCode);
                         return null;
                     }
                 }
@@ -324,6 +324,8 @@ public class KnowledgeBase {
                 AIGCHook hook = this.service.getPluginSystem().getRemoveKnowledgeDoc();
                 hook.apply(new AIGCPluginContext(this, doc));
             }
+
+            Logger.d(this.getClass(), "#removeKnowledgeDoc - " + this.getName() + " - file code: " + fileCode);
         } catch (Exception e) {
             // Nothing
         } finally {
@@ -389,7 +391,8 @@ public class KnowledgeBase {
                     GetFile getFile = new GetFile(this.authToken.getDomain(), fileCode);
                     JSONObject fileLabelJson = this.fileStorage.notify(getFile);
                     if (null == fileLabelJson) {
-                        Logger.w(this.getClass(), "#batchImportKnowledgeDocuments - Not find file: " + fileCode);
+                        Logger.w(this.getClass(), "#batchImportKnowledgeDocuments - " +
+                                this.baseInfo.name + " - Not find file: " + fileCode);
                         continue;
                     }
 
@@ -414,14 +417,15 @@ public class KnowledgeBase {
             }
 
             if (allList.isEmpty()) {
-                Logger.w(this.getClass(), "#batchImportKnowledgeDocuments - No file: " + this.baseInfo.name);
+                Logger.w(this.getClass(), "#batchImportKnowledgeDocuments - " + this.baseInfo.name + " - No file");
                 listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.NoData.code));
                 this.lock.set(false);
                 return new KnowledgeProgress(AIGCStateCode.NoData.code);
             }
 
             if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#batchImportKnowledgeDocuments - Total file num: " + allList.size());
+                Logger.d(this.getClass(), "#batchImportKnowledgeDocuments - " +
+                        this.baseInfo.name + " - Total file num: " + allList.size());
             }
 
             // 分批
@@ -468,7 +472,8 @@ public class KnowledgeBase {
                             ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
                                     packet.toDialect(), 3 * 60 * 1000);
                             if (null == dialect) {
-                                Logger.w(this.getClass(),"#batchImportKnowledgeDocuments - Request unit error: "
+                                Logger.w(this.getClass(),"#batchImportKnowledgeDocuments - " +
+                                        baseInfo.name + " - Request unit error: "
                                         + resource.unit.getCapability().getName());
                                 // 更新进度
                                 progress.setStateCode(AIGCStateCode.UnitError.code);
@@ -480,7 +485,8 @@ public class KnowledgeBase {
                             Packet response = new Packet(dialect);
                             int state = Packet.extractCode(response);
                             if (state != AIGCStateCode.Ok.code) {
-                                Logger.w(this.getClass(), "#batchImportKnowledgeDocuments - Unit return error: " + state);
+                                Logger.w(this.getClass(), "#batchImportKnowledgeDocuments - " +
+                                        baseInfo.name + " - Unit return error: " + state);
                                 // 更新进度
                                 progress.setStateCode(AIGCStateCode.Failure.code);
                                 progress.setEndTime(System.currentTimeMillis());
@@ -536,7 +542,7 @@ public class KnowledgeBase {
                         progress.setStateCode(AIGCStateCode.Failure.code);
                         progress.setEndTime(System.currentTimeMillis());
                         listener.onFailed(KnowledgeBase.this, progress);
-                        Logger.e(KnowledgeBase.class, "#batchImportKnowledgeDocuments", e);
+                        Logger.e(KnowledgeBase.class, "#batchImportKnowledgeDocuments - " + baseInfo.name, e);
                     } finally {
                         // 解锁
                         lock.set(false);
@@ -586,14 +592,15 @@ public class KnowledgeBase {
             }
 
             if (allList.isEmpty()) {
-                Logger.w(this.getClass(), "#batchRemoveKnowledgeDocuments - No file: " + this.baseInfo.name);
+                Logger.w(this.getClass(), "#batchRemoveKnowledgeDocuments - " + this.baseInfo.name + " - No file");
                 listener.onFailed(this, new KnowledgeProgress(AIGCStateCode.NoData.code));
                 this.lock.set(false);
                 return new KnowledgeProgress(AIGCStateCode.NoData.code);
             }
 
             if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#batchRemoveKnowledgeDocuments - Total file num: " + allList.size());
+                Logger.d(this.getClass(), "#batchRemoveKnowledgeDocuments - " +
+                        this.baseInfo.name + " - Total file num: " + allList.size());
             }
 
             // 分批
@@ -640,7 +647,8 @@ public class KnowledgeBase {
                             ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
                                     packet.toDialect(), 3 * 60 * 1000);
                             if (null == dialect) {
-                                Logger.w(this.getClass(),"#batchRemoveKnowledgeDocuments - Request unit error: "
+                                Logger.w(this.getClass(),"#batchRemoveKnowledgeDocuments - " +
+                                        baseInfo.name + " - Request unit error: "
                                         + resource.unit.getCapability().getName());
                                 // 更新进度
                                 progress.setStateCode(AIGCStateCode.UnitError.code);
@@ -652,7 +660,8 @@ public class KnowledgeBase {
                             Packet response = new Packet(dialect);
                             int state = Packet.extractCode(response);
                             if (state != AIGCStateCode.Ok.code) {
-                                Logger.w(this.getClass(), "#batchRemoveKnowledgeDocuments - Unit return error: " + state);
+                                Logger.w(this.getClass(), "#batchRemoveKnowledgeDocuments - " +
+                                        baseInfo.name + " - Unit return error: " + state);
                                 // 更新进度
                                 progress.setStateCode(AIGCStateCode.Failure.code);
                                 progress.setEndTime(System.currentTimeMillis());
@@ -694,7 +703,7 @@ public class KnowledgeBase {
                         progress.setStateCode(AIGCStateCode.Failure.code);
                         progress.setEndTime(System.currentTimeMillis());
                         listener.onFailed(KnowledgeBase.this, progress);
-                        Logger.e(KnowledgeBase.class, "#batchRemoveKnowledgeDocuments", e);
+                        Logger.e(KnowledgeBase.class, "#batchRemoveKnowledgeDocuments - " + baseInfo.name, e);
                     } finally {
                         // 解锁
                         lock.set(false);
@@ -722,7 +731,7 @@ public class KnowledgeBase {
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect(), 3 * 60 * 1000);
         if (null == dialect) {
-            Logger.w(this.getClass(),"#activateKnowledgeDoc - Request unit error: "
+            Logger.w(this.getClass(),"#activateKnowledgeDoc - " + this.baseInfo.name + " - Request unit error: "
                     + this.resource.unit.getCapability().getName());
             return null;
         }
@@ -730,14 +739,15 @@ public class KnowledgeBase {
         Packet response = new Packet(dialect);
         int state = Packet.extractCode(response);
         if (state != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#activateKnowledgeDoc - Unit return error: " + state);
+            Logger.w(this.getClass(), "#activateKnowledgeDoc - " + this.baseInfo.name + " - Unit return error: " + state);
             return null;
         }
 
         // 更新文档
         KnowledgeDoc activatedDoc = new KnowledgeDoc(Packet.extractDataPayload(response));
         if (activatedDoc.numSegments <= 0) {
-            Logger.w(this.getClass(), "#activateKnowledgeDoc - Num of segments error: " + activatedDoc.numSegments);
+            Logger.w(this.getClass(), "#activateKnowledgeDoc - " +
+                    this.baseInfo.name + " - Num of segments error: " + activatedDoc.numSegments);
             return null;
         }
 
@@ -756,7 +766,7 @@ public class KnowledgeBase {
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect());
         if (null == dialect) {
-            Logger.w(this.getClass(),"#deactivateKnowledgeDoc - Request unit error: "
+            Logger.w(this.getClass(),"#deactivateKnowledgeDoc - " + this.baseInfo.name + " - Request unit error: "
                     + this.resource.unit.getCapability().getName());
             return null;
         }
@@ -764,7 +774,7 @@ public class KnowledgeBase {
         Packet response = new Packet(dialect);
         int state = Packet.extractCode(response);
         if (state != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#deactivateKnowledgeDoc - Unit return error: " + state);
+            Logger.w(this.getClass(), "#deactivateKnowledgeDoc - " + this.baseInfo.name + " - Unit return error: " + state);
             return null;
         }
 
@@ -792,7 +802,8 @@ public class KnowledgeBase {
     public synchronized ResetKnowledgeProgress resetKnowledgeStore(boolean backup,
                                                                    ResetKnowledgeStoreListener listener) {
         if (this.lock.get()) {
-            Logger.w(this.getClass(), "#resetKnowledgeStore - Store locked: " + this.authToken.getContactId());
+            Logger.w(this.getClass(), "#resetKnowledgeStore - " +
+                    this.baseInfo.name + " - Store locked: " + this.authToken.getContactId());
             return null;
         }
         this.lock.set(true);
@@ -829,7 +840,8 @@ public class KnowledgeBase {
                         ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
                                 packet.toDialect(), 90 * 1000);
                         if (null == dialect) {
-                            Logger.w(this.getClass(), "#resetKnowledgeStore - Request unit error: "
+                            Logger.w(this.getClass(), "#resetKnowledgeStore - " +
+                                    baseInfo.name + " - Request unit error: "
                                     + resource.unit.getCapability().getName());
                             // 回调
                             listener.onFailed(KnowledgeBase.this, resetProgress, AIGCStateCode.UnitError);
@@ -842,7 +854,8 @@ public class KnowledgeBase {
                         Packet response = new Packet(dialect);
                         int state = Packet.extractCode(response);
                         if (state != AIGCStateCode.Ok.code) {
-                            Logger.w(this.getClass(), "#resetKnowledgeStore - Unit return error: " + state);
+                            Logger.w(this.getClass(), "#resetKnowledgeStore - " +
+                                    baseInfo.name + " - Unit return error: " + state);
                             // 回调
                             listener.onFailed(KnowledgeBase.this, resetProgress, AIGCStateCode.parse(state));
                             // 更新进度
@@ -869,7 +882,8 @@ public class KnowledgeBase {
                     ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
                             packet.toDialect(), 60 * 1000);
                     if (null == dialect) {
-                        Logger.w(this.getClass(), "#resetKnowledgeStore - Request unit error: "
+                        Logger.w(this.getClass(), "#resetKnowledgeStore - " +
+                                baseInfo.name + " - Request unit error: "
                                 + resource.unit.getCapability().getName());
                         // 回调
                         listener.onFailed(KnowledgeBase.this, resetProgress, AIGCStateCode.UnitError);
@@ -882,7 +896,8 @@ public class KnowledgeBase {
                     Packet response = new Packet(dialect);
                     int state = Packet.extractCode(response);
                     if (state != AIGCStateCode.Ok.code) {
-                        Logger.w(this.getClass(), "#resetKnowledgeStore - Unit return error: " + state);
+                        Logger.w(this.getClass(), "#resetKnowledgeStore - " +
+                                baseInfo.name + " - Unit return error: " + state);
                         // 回调
                         listener.onFailed(KnowledgeBase.this, resetProgress, AIGCStateCode.parse(state));
                         // 更新进度
@@ -955,7 +970,8 @@ public class KnowledgeBase {
                         dialect = service.getCellet().transmit(resource.unit.getContext(),
                                 packet.toDialect(), 3 * 60 * 1000);
                         if (null == dialect) {
-                            Logger.w(this.getClass(), "#resetKnowledgeStore - Request unit error: "
+                            Logger.w(this.getClass(), "#resetKnowledgeStore - " +
+                                    baseInfo.name + " - Request unit error: "
                                     + resource.unit.getCapability().getName());
                             // 回调
                             listener.onFailed(KnowledgeBase.this, resetProgress, AIGCStateCode.UnitError);
@@ -968,7 +984,8 @@ public class KnowledgeBase {
                         response = new Packet(dialect);
                         state = Packet.extractCode(response);
                         if (state != AIGCStateCode.Ok.code) {
-                            Logger.w(this.getClass(), "#resetKnowledgeStore - Unit return error: " + state);
+                            Logger.w(this.getClass(), "#resetKnowledgeStore - " +
+                                    baseInfo.name + " - Unit return error: " + state);
                             // 回调
                             listener.onFailed(KnowledgeBase.this, resetProgress, AIGCStateCode.parse(state));
                             // 更新进度
@@ -1005,8 +1022,9 @@ public class KnowledgeBase {
                     listener.onProgress(KnowledgeBase.this, resetProgress);
                     listener.onCompleted(KnowledgeBase.this, list, completionList);
 
-                    Logger.i(this.getClass(), "#resetKnowledgeStore - Resets knowledge base completed: "
-                            + baseInfo.name + "/" + authToken.getContactId());
+                    Logger.i(this.getClass(), "#resetKnowledgeStore - " +
+                            baseInfo.name + " - Resets knowledge base completed: "
+                            + authToken.getContactId());
 
                     // 更新内存数据
                     listKnowledgeDocs(true);
@@ -1057,7 +1075,7 @@ public class KnowledgeBase {
                     ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
                             packet.toDialect(), 60 * 1000);
                     if (null == dialect) {
-                        Logger.w(this.getClass(), "#destroy - Request unit error: "
+                        Logger.w(this.getClass(), "#destroy - " + baseInfo.name + " - Request unit error: "
                                 + resource.unit.getCapability().getName());
                         return;
                     }
@@ -1065,7 +1083,7 @@ public class KnowledgeBase {
                     Packet response = new Packet(dialect);
                     int state = Packet.extractCode(response);
                     if (state != AIGCStateCode.Ok.code) {
-                        Logger.w(this.getClass(), "#destroy - Unit return error: " + state);
+                        Logger.w(this.getClass(), "#destroy - " + baseInfo.name + " - Unit return error: " + state);
                     }
                 } catch (Exception e) {
                     // Nothing
@@ -1093,7 +1111,7 @@ public class KnowledgeBase {
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect(), 30 * 1000);
         if (null == dialect) {
-            Logger.w(this.getClass(),"#getKnowledgeBackups - Request unit error: "
+            Logger.w(this.getClass(),"#getKnowledgeBackups - " + baseInfo.name + " - Request unit error: "
                     + this.resource.unit.getCapability().getName());
             return null;
         }
@@ -1101,7 +1119,7 @@ public class KnowledgeBase {
         Packet response = new Packet(dialect);
         int state = Packet.extractCode(response);
         if (state != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#getKnowledgeBackups - Unit return error: " + state);
+            Logger.w(this.getClass(), "#getKnowledgeBackups - " + baseInfo.name + " - Unit return error: " + state);
             return null;
         }
 
@@ -1141,7 +1159,8 @@ public class KnowledgeBase {
             if (null == article.summarization) {
                 List<String> contentList = this.trimArticleContent(article.content, 300);
 
-                Logger.d(KnowledgeBase.class, "#appendKnowledgeArticle - Content list length: "
+                Logger.d(KnowledgeBase.class, "#appendKnowledgeArticle - "
+                        + baseInfo.name + " - Content list length: "
                         + contentList.size());
 
                 List<String> resultList = new ArrayList<>();
@@ -1169,7 +1188,8 @@ public class KnowledgeBase {
 
                         @Override
                         public void onFailed(String text, AIGCStateCode stateCode) {
-                            Logger.w(KnowledgeBase.class, "#appendKnowledgeArticle - Generate summarization failed - id: "
+                            Logger.w(KnowledgeBase.class, "#appendKnowledgeArticle - "
+                                    + baseInfo.name + " - Generate summarization failed - id: "
                                     + article.getId() + " - code: " + stateCode.code);
 
                             count.incrementAndGet();
@@ -1253,7 +1273,7 @@ public class KnowledgeBase {
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect(), 60 * 1000);
         if (null == dialect) {
-            Logger.w(this.getClass(),"#queryActivatedArticles - Request unit error: "
+            Logger.w(this.getClass(),"#queryActivatedArticles - " + baseInfo.name + " - Request unit error: "
                     + this.resource.unit.getCapability().getName());
             return new ArrayList<>();
         }
@@ -1261,7 +1281,7 @@ public class KnowledgeBase {
         Packet response = new Packet(dialect);
         int state = Packet.extractCode(response);
         if (state != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#queryActivatedArticles - Unit return error: " + state);
+            Logger.w(this.getClass(), "#queryActivatedArticles - " + baseInfo.name + " - Unit return error: " + state);
             return new ArrayList<>();
         }
 
@@ -1283,7 +1303,7 @@ public class KnowledgeBase {
      */
     public List<KnowledgeArticle> activateKnowledgeArticles(List<Long> articleIdList) {
         if (!this.resource.checkUnit()) {
-            Logger.w(this.getClass(),"#activateKnowledgeArticles - No knowledge unit");
+            Logger.w(this.getClass(),"#activateKnowledgeArticles - " + baseInfo.name + " - No knowledge unit");
             return null;
         }
 
@@ -1299,7 +1319,7 @@ public class KnowledgeBase {
             ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                     packet.toDialect(), 2 * 60 * 1000);
             if (null == dialect) {
-                Logger.w(this.getClass(),"#activateKnowledgeArticles - Request unit error: "
+                Logger.w(this.getClass(),"#activateKnowledgeArticles - " + baseInfo.name + " - Request unit error: "
                         + this.resource.unit.getCapability().getName());
                 continue;
             }
@@ -1307,7 +1327,8 @@ public class KnowledgeBase {
             Packet response = new Packet(dialect);
             int state = Packet.extractCode(response);
             if (state != AIGCStateCode.Ok.code) {
-                Logger.w(this.getClass(), "#activateKnowledgeArticles - Unit return error: " + state);
+                Logger.w(this.getClass(), "#activateKnowledgeArticles - "
+                        + baseInfo.name + " - Unit return error: " + state);
                 continue;
             }
 
@@ -1322,7 +1343,7 @@ public class KnowledgeBase {
 
     public List<KnowledgeArticle> deactivateKnowledgeArticles(List<Long> articleIdList) {
         if (!this.resource.checkUnit()) {
-            Logger.w(this.getClass(),"#deactivateKnowledgeArticles - No knowledge unit");
+            Logger.w(this.getClass(),"#deactivateKnowledgeArticles - " + baseInfo.name + " - No knowledge unit");
             return null;
         }
 
@@ -1337,7 +1358,7 @@ public class KnowledgeBase {
             ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                     packet.toDialect(), 60 * 1000);
             if (null == dialect) {
-                Logger.w(this.getClass(),"#deactivateKnowledgeArticles - Request unit error: "
+                Logger.w(this.getClass(),"#deactivateKnowledgeArticles - " + baseInfo.name + " - Request unit error: "
                         + this.resource.unit.getCapability().getName());
                 continue;
             }
@@ -1345,7 +1366,8 @@ public class KnowledgeBase {
             Packet response = new Packet(dialect);
             int state = Packet.extractCode(response);
             if (state != AIGCStateCode.Ok.code) {
-                Logger.w(this.getClass(), "#deactivateKnowledgeArticles - Unit return error: " + state);
+                Logger.w(this.getClass(), "#deactivateKnowledgeArticles - "
+                        + baseInfo.name + " - Unit return error: " + state);
                 continue;
             }
 
@@ -1386,12 +1408,13 @@ public class KnowledgeBase {
                                       KnowledgeQAListener listener) {
         query = query.replaceAll("\n", "");
 
-        Logger.d(this.getClass(), "#performKnowledgeQA - Channel: " + channelCode +
+        Logger.d(this.getClass(), "#performKnowledgeQA - " + baseInfo.name + " - Channel: " + channelCode +
                 "/" + unitName + "/" + query);
 
         final AIGCChannel channel = this.service.getChannel(channelCode);
         if (null == channel) {
-            Logger.w(this.getClass(), "#performKnowledgeQA - Can NOT find channel: " + channelCode);
+            Logger.w(this.getClass(), "#performKnowledgeQA - "
+                    + baseInfo.name + " - Can NOT find channel: " + channelCode);
             return false;
         }
 
@@ -1412,7 +1435,8 @@ public class KnowledgeBase {
         final String queryForResult = query;
 
         if (noDocument && noArticle) {
-            Logger.d(this.getClass(), "#performKnowledgeQA - No knowledge document or article in base: " + channelCode);
+            Logger.d(this.getClass(), "#performKnowledgeQA - "
+                    + baseInfo.name + " - No knowledge document or article in base: " + channelCode);
             this.service.getCellet().getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
@@ -1431,7 +1455,8 @@ public class KnowledgeBase {
 
         AIGCUnit unit = this.service.selectUnitByName(unitName);
         if (null == unit) {
-            Logger.w(this.getClass(), "#performKnowledgeQA - Select unit error: " + unitName);
+            Logger.w(this.getClass(), "#performKnowledgeQA - "
+                    + baseInfo.name + " - Select unit error: " + unitName);
             return false;
         }
 
@@ -1439,7 +1464,8 @@ public class KnowledgeBase {
         // 根据文件名匹配文档，读取文件内容进行问题推理
         promptMetadata = this.extractDocumentContent(query, 5);
         if (null != promptMetadata && !promptMetadata.isEmpty()) {
-            Logger.d(this.getClass(), "#performKnowledgeQA - Generate prompt from document - num:" +
+            Logger.d(this.getClass(), "#performKnowledgeQA - "
+                    + baseInfo.name + " - Generate prompt from document - num:" +
                     promptMetadata.metadataList.size());
             // 使用文档推理结果生成提示词
             promptMetadata = promptMetadata.generatePrompt(query);
@@ -1454,7 +1480,8 @@ public class KnowledgeBase {
         }
 
         if (null == promptMetadata) {
-            Logger.w(this.getClass(), "#performKnowledgeQA - Generate prompt failed in channel: " + channelCode);
+            Logger.w(this.getClass(), "#performKnowledgeQA - "
+                    + baseInfo.name + " - Generate prompt failed in channel: " + channelCode);
             return false;
         }
 
@@ -1479,16 +1506,18 @@ public class KnowledgeBase {
                 @Override
                 public void onFailed(AIGCChannel channel, AIGCStateCode errorCode) {
                     listener.onFailed(channel, errorCode);
-                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Single conversation failed: "
+                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - "
+                            + baseInfo.name + " - Single conversation failed: "
                             + errorCode.code);
                 }
             });
         }
         else {
             // 执行 Generate Text
-            System.out.println("----------------------------------------");
-            System.out.println(prompt);
-            System.out.println("----------------------------------------");
+            Logger.d(KnowledgeBase.class, "#performKnowledgeQA - " + baseInfo.name +
+                    "\n----------------------------------------\n" +
+                    prompt +
+                    "\n----------------------------------------");
             final List<KnowledgeSource> sources = promptMetadata.mergeSources();
             this.service.generateText(channel, unit, query, prompt, new GenerativeOption(), paraphrases,
                     null, false, true, new GenerateTextListener() {
@@ -1506,7 +1535,8 @@ public class KnowledgeBase {
                 @Override
                 public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                     listener.onFailed(channel, stateCode);
-                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - Generates text failed: " + stateCode.code);
+                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - " +
+                            baseInfo.name + " - Generates text failed: " + stateCode.code);
                 }
             });
         }
@@ -1528,7 +1558,8 @@ public class KnowledgeBase {
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#extractDocumentContent - File num: " + fileResults.size());
+            Logger.d(this.getClass(), "#extractDocumentContent - "
+                    + baseInfo.name + " - File num: " + fileResults.size());
         }
 
         List<FileNameMatching> matchingList = new ArrayList<>();
@@ -1557,14 +1588,16 @@ public class KnowledgeBase {
             GetFile getFile = new GetFile(this.authToken.getDomain(), fm.fileCode);
             JSONObject fileLabelJson = this.fileStorage.notify(getFile);
             if (null == fileLabelJson) {
-                Logger.w(this.getClass(), "#extractDocumentContent - Not find file: " + fm.fileCode);
+                Logger.w(this.getClass(), "#extractDocumentContent - "
+                        + baseInfo.name + " - Not find file: " + fm.fileCode);
                 continue;
             }
 
             FileLabel fileLabel = new FileLabel(fileLabelJson);
 
             if (fileLabel.getFileSize() >= ModelConfig.BAIZE_CONTEXT_LIMIT - 50) {
-                Logger.d(this.getClass(), "#extractDocumentContent - File size overflow: " + fileLabel.getFileSize());
+                Logger.d(this.getClass(), "#extractDocumentContent - "
+                        + baseInfo.name + " - File size overflow: " + fileLabel.getFileSize());
                 continue;
             }
 
@@ -1574,7 +1607,8 @@ public class KnowledgeBase {
                     || fileLabel.getFileType() == FileType.LOG) {
                 String fullpath = this.fileStorage.notify(new LoadFile(fileLabel.getDomain().getName(), fileLabel.getFileCode()));
                 if (null == fullpath) {
-                    Logger.w(this.getClass(), "#extractDocumentContent - Load file error: " + fileLabel.getFileCode());
+                    Logger.w(this.getClass(), "#extractDocumentContent - "
+                            + baseInfo.name + " - Load file error: " + fileLabel.getFileCode());
                     continue;
                 }
 
@@ -1593,11 +1627,13 @@ public class KnowledgeBase {
                         }
                     }
                 } catch (Exception e) {
-                    Logger.w(this.getClass(), "#extractDocumentContent - Read file error: " + fullpath);
+                    Logger.w(this.getClass(), "#extractDocumentContent - "
+                            + baseInfo.name + " - Read file error: " + fullpath);
                 }
 
                 if (content.length() < 3) {
-                    Logger.w(this.getClass(), "#extractDocumentContent - No content: " + this.baseInfo.name);
+                    Logger.w(this.getClass(), "#extractDocumentContent - "
+                            + baseInfo.name + " - No content: " + this.baseInfo.name);
                     continue;
                 }
 
@@ -1606,12 +1642,14 @@ public class KnowledgeBase {
                 String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
                         new GenerativeOption(), null, null);
                 if (null == result) {
-                    Logger.w(this.getClass(), "#extractDocumentContent - Unit error, no answer: " + this.baseInfo.name);
+                    Logger.w(this.getClass(), "#extractDocumentContent - "
+                            + baseInfo.name + " - Unit error, no answer: " + this.baseInfo.name);
                     continue;
                 }
 
                 if (result.contains(Consts.NO_CONTENT_SENTENCE)) {
-                    Logger.d(this.getClass(), "#extractDocumentContent - No content: " + result);
+                    Logger.d(this.getClass(), "#extractDocumentContent - "
+                            + baseInfo.name + " - No content: " + result);
                     continue;
                 }
 
@@ -1626,7 +1664,7 @@ public class KnowledgeBase {
                 metadata.addDocumentMetadata(fm.fileCode);
             }
             else {
-                Logger.w(this.getClass(), "#extractDocumentContent - File type error: "
+                Logger.w(this.getClass(), "#extractDocumentContent - " + baseInfo.name + " - File type error: "
                         + fileLabel.getFileName() + " - "
                         + fileLabel.getFileType().getMimeType());
             }

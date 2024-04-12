@@ -586,6 +586,9 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.knowledgeSegmentTable, this.knowledgeSegmentFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.knowledgeSegmentTable + "' successfully");
+
+                String sql = "alter table `" + this.knowledgeSegmentTable + "` convert to character set utf8mb4 collate utf8mb4_unicode_ci";
+                this.storage.execute(sql);
             }
         }
 
@@ -593,6 +596,9 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.knowledgeArticleTable, this.knowledgeArticleFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.knowledgeArticleTable + "' successfully");
+
+                String sql = "alter table `" + this.knowledgeArticleTable + "` convert to character set utf8mb4 collate utf8mb4_unicode_ci";
+                this.storage.execute(sql);
             }
         }
 

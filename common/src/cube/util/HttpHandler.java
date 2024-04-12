@@ -139,7 +139,9 @@ public abstract class HttpHandler extends AbstractHandler {
                     continue;
                 }
 
-                json.put(kv[0], URLDecoder.decode(kv[1], "UTF-8"));
+                String k = URLDecoder.decode(kv[0].trim().replaceAll("%(?![0-9a-fA-F]{2})", "%25"), "UTF-8");
+                String v = URLDecoder.decode(kv[1].trim().replaceAll("%(?![0-9a-fA-F]{2})", "%25"), "UTF-8");
+                json.put(k, v);
             }
         }
 

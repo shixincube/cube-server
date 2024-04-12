@@ -27,6 +27,7 @@
 package cube.aigc.psychology;
 
 import cell.util.log.Logger;
+import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

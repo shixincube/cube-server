@@ -31,7 +31,7 @@ import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.SpaceLayout;
-import cube.aigc.psychology.composition.Tendency;
+import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.material.House;
 import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Person;

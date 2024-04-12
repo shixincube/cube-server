@@ -24,67 +24,68 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.composition;
+package cube.aigc.psychology.algorithm;
 
-import cube.aigc.psychology.Indicator;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
 /**
- * 得分。
+ * 表征含义。
  */
-public class Score implements JSONable {
+public class Representation implements JSONable {
 
-    public final Indicator indicator;
+    public KnowledgeStrategy knowledgeStrategy;
 
-    public int value;
+    public int positiveCorrelation = 0;
 
-    public double weight;
+    public int negativeCorrelation = 0;
 
-    public Score(Indicator indicator, int value, double weight) {
-        this.indicator = indicator;
-        this.value = value;
-        this.weight = weight;
+    public String description = "";
+
+    public Representation(KnowledgeStrategy knowledgeStrategy) {
+        this.knowledgeStrategy = knowledgeStrategy;
     }
 
-    public Score(JSONObject json) {
-        this.indicator = Indicator.parse(json.getString("indicator"));
-        this.value = json.getInt("value");
-        this.weight = json.getDouble("weight");
+    public Representation(JSONObject json) {
+        this.knowledgeStrategy = new KnowledgeStrategy(json.getJSONObject("knowledgeStrategy"));
+        this.positiveCorrelation = json.getInt("positiveCorrelation");
+        this.negativeCorrelation = json.getInt("negativeCorrelation");
+        this.description = json.getString("description");
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Score) {
-            Score other = (Score) obj;
-            if (other.indicator == this.indicator) {
+        if (obj instanceof Representation) {
+            Representation other = (Representation) obj;
+            if (other.knowledgeStrategy.getComment() == this.knowledgeStrategy.getComment()) {
                 return true;
             }
         }
-
         return false;
     }
 
     @Override
     public int hashCode() {
-        return this.indicator.hashCode();
+        return this.knowledgeStrategy.getComment().hashCode();
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("indicator", this.indicator.name);
-        json.put("value", this.value);
-        json.put("weight", this.weight);
+        json.put("knowledgeStrategy", this.knowledgeStrategy.toJSON());
+        json.put("positiveCorrelation", this.positiveCorrelation);
+        json.put("negativeCorrelation", this.negativeCorrelation);
+        json.put("description", this.description);
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
-        json.put("indicator", this.indicator.name);
-        json.put("value", this.value);
-        json.put("weight", this.weight);
+        json.put("knowledgeStrategy", this.knowledgeStrategy.toCompactJSON());
+        json.put("positiveCorrelation", this.positiveCorrelation);
+        json.put("negativeCorrelation", this.negativeCorrelation);
+        json.put("description", this.description);
         return json;
     }
 }

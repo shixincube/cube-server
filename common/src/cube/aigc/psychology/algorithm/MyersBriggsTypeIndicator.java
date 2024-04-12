@@ -24,30 +24,34 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.composition;
+package cube.aigc.psychology.algorithm;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+public enum MyersBriggsTypeIndicator {
 
-/**
- * 特征含义。
- */
-public class FeatureRepresentation {
+    Introversion("内倾", "I"),
 
-    private Map<String, String> personMeaning;
+    Extraversion("外倾", "E"),
 
-    private Map<String, String> treeMeaning;
+    Sensing("感觉", "S"),
 
-    private Map<String, String> houseMeaning;
+    Intuition("直觉", "N"),
 
-    public FeatureRepresentation() {
-        this.personMeaning = new HashMap<>();
-        this.treeMeaning = new HashMap<>();
-        this.houseMeaning = new HashMap<>();
-    }
+    Feeling("情感", "F"),
 
-    public void load(File file) {
+    Thinking("思考", "T"),
 
+    Judging("判断", "J"),
+
+    Perceiving("知觉", "P")
+
+    ;
+
+    public final String displayName;
+
+    public final String code;
+
+    MyersBriggsTypeIndicator(String displayName, String code) {
+        this.displayName = displayName;
+        this.code = code;
     }
 }

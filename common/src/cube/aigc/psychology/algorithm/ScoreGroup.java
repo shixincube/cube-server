@@ -24,9 +24,10 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.composition;
+package cube.aigc.psychology.algorithm;
 
 import cube.aigc.psychology.Indicator;
+import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -65,6 +66,10 @@ public class ScoreGroup implements JSONable {
 
     public void addScore(Score score) {
         this.scoreList.add(score);
+    }
+
+    public int numScores() {
+        return this.scoreList.size();
     }
 
     public int getOriginalValue(Indicator indicator) {

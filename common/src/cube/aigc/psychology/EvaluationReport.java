@@ -28,10 +28,8 @@ package cube.aigc.psychology;
 
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.composition.EvaluationScore;
-import cube.aigc.psychology.composition.Score;
-import cube.aigc.psychology.composition.ScoreGroup;
-import cube.aigc.psychology.composition.Tendency;
+import cube.aigc.psychology.algorithm.*;
+import cube.aigc.psychology.composition.*;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -292,63 +290,5 @@ public class EvaluationReport implements JSONable {
         json.put("scoreGroup", this.scoreGroup.toCompactJSON());
 
         return json;
-    }
-
-    public class Representation implements JSONable {
-
-        public KnowledgeStrategy knowledgeStrategy;
-
-        public int positiveCorrelation = 0;
-
-        public int negativeCorrelation = 0;
-
-        public String description = "";
-
-        public Representation(KnowledgeStrategy knowledgeStrategy) {
-            this.knowledgeStrategy = knowledgeStrategy;
-        }
-
-        public Representation(JSONObject json) {
-            this.knowledgeStrategy = new KnowledgeStrategy(json.getJSONObject("knowledgeStrategy"));
-            this.positiveCorrelation = json.getInt("positiveCorrelation");
-            this.negativeCorrelation = json.getInt("negativeCorrelation");
-            this.description = json.getString("description");
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj instanceof Representation) {
-                Representation other = (Representation) obj;
-                if (other.knowledgeStrategy.getComment() == this.knowledgeStrategy.getComment()) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            return this.knowledgeStrategy.getComment().hashCode();
-        }
-
-        @Override
-        public JSONObject toJSON() {
-            JSONObject json = new JSONObject();
-            json.put("knowledgeStrategy", this.knowledgeStrategy.toJSON());
-            json.put("positiveCorrelation", this.positiveCorrelation);
-            json.put("negativeCorrelation", this.negativeCorrelation);
-            json.put("description", this.description);
-            return json;
-        }
-
-        @Override
-        public JSONObject toCompactJSON() {
-            JSONObject json = new JSONObject();
-            json.put("knowledgeStrategy", this.knowledgeStrategy.toCompactJSON());
-            json.put("positiveCorrelation", this.positiveCorrelation);
-            json.put("negativeCorrelation", this.negativeCorrelation);
-            json.put("description", this.description);
-            return json;
-        }
     }
 }

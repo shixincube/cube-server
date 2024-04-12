@@ -24,8 +24,10 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
+package cube.aigc.psychology.algorithm;
 
+import cube.aigc.psychology.Comment;
+import cube.aigc.psychology.Theme;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;

@@ -28,6 +28,7 @@ package cube.aigc.psychology;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
@@ -222,7 +223,7 @@ public class PsychologyReport implements JSONable {
             buf.append("| 特征 | 描述 | 正向趋势 | 负向趋势 |");
             buf.append("\n");
             buf.append("| ---- | ---- | ---- | ---- |");
-            for (EvaluationReport.Representation rep : this.evaluationReport.getRepresentationListByEvaluationScore()) {
+            for (Representation rep : this.evaluationReport.getRepresentationListByEvaluationScore()) {
                 buf.append("\n");
                 buf.append("|").append(rep.knowledgeStrategy.getComment().word);
                 buf.append("|").append(rep.description);

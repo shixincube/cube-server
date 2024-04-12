@@ -64,14 +64,14 @@ public class ResetKnowledgeStore extends ContextHandler {
             boolean backup = true;
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
-                if (data.has("base")) {
-                    baseName = data.getString("base");
-                }
+                baseName = data.getString("base");
                 if (data.has("backup")) {
                     backup = data.getBoolean("backup");
                 }
             } catch (Exception e) {
-                // Nothing
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
             }
 
             // 重置

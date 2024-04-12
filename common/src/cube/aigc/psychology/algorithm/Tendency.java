@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.composition;
+package cube.aigc.psychology.algorithm;
 
 /**
  * 特征趋势。

@@ -27,6 +27,7 @@
 package cube.aigc.psychology.composition;
 
 import cube.aigc.psychology.Indicator;
+import cube.aigc.psychology.algorithm.Score;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
