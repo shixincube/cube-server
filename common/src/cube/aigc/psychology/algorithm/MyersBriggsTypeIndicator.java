@@ -54,4 +54,14 @@ public enum MyersBriggsTypeIndicator {
         this.displayName = displayName;
         this.code = code;
     }
+
+    public static MyersBriggsTypeIndicator parse(String nameOrCode) {
+        for (MyersBriggsTypeIndicator indicator : MyersBriggsTypeIndicator.values()) {
+            if (indicator.displayName.equals(nameOrCode) || indicator.code.equalsIgnoreCase(nameOrCode)) {
+                return indicator;
+            }
+        }
+
+        return null;
+    }
 }

@@ -29,7 +29,6 @@ package cube.service.aigc.scene;
 import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.aigc.psychology.algorithm.MyersBriggsTypeIndicator;
 import cube.aigc.psychology.algorithm.Representation;
-import cube.aigc.psychology.algorithm.ScoreGroup;
 import cube.aigc.psychology.composition.EvaluationScore;
 
 import java.util.ArrayList;
@@ -39,15 +38,15 @@ public class MBTIEvaluation {
 
     private MBTIFeature result;
 
-    public MBTIEvaluation(List<Representation> representationList, ScoreGroup scoreGroup) {
-        this.result = this.build(representationList, scoreGroup);
+    public MBTIEvaluation(List<Representation> representationList, List<EvaluationScore> scoreList) {
+        this.result = this.build(representationList, scoreList);
     }
 
     public MBTIFeature getResult() {
         return this.result;
     }
 
-    private MBTIFeature build(List<Representation> representationList, ScoreGroup scoreGroup) {
+    private MBTIFeature build(List<Representation> representationList, List<EvaluationScore> scoreList) {
         List<MyersBriggsTypeIndicator> list = new ArrayList<>();
 
         for (Representation representation : representationList) {
@@ -199,7 +198,7 @@ public class MBTIEvaluation {
             }
         }
 
-        for (EvaluationScore score : scoreGroup.getEvaluationScores()) {
+        for (EvaluationScore score : scoreList) {
             switch (score.indicator) {
                 case Extroversion:
                     list.add(MyersBriggsTypeIndicator.Extraversion);
@@ -289,44 +288,44 @@ public class MBTIEvaluation {
         // 检测缺失
         if (!mbtiList.contains(MyersBriggsTypeIndicator.Introversion) &&
                 !mbtiList.contains(MyersBriggsTypeIndicator.Extraversion)) {
-            mbtiList.add((representationList.size() + scoreGroup.numScores()) % 2 == 0 ?
+            mbtiList.add((representationList.size() + scoreList.size()) % 2 == 0 ?
                     MyersBriggsTypeIndicator.Introversion : MyersBriggsTypeIndicator.Extraversion);
         }
         if (!mbtiList.contains(MyersBriggsTypeIndicator.Sensing) &&
                 !mbtiList.contains(MyersBriggsTypeIndicator.Intuition)) {
-            mbtiList.add((representationList.size() + scoreGroup.numScores()) % 2 == 0 ?
+            mbtiList.add((representationList.size() + scoreList.size()) % 2 == 0 ?
                     MyersBriggsTypeIndicator.Sensing : MyersBriggsTypeIndicator.Intuition);
         }
         if (!mbtiList.contains(MyersBriggsTypeIndicator.Feeling) &&
                 !mbtiList.contains(MyersBriggsTypeIndicator.Thinking)) {
-            mbtiList.add((representationList.size() + scoreGroup.numScores()) % 2 == 0 ?
+            mbtiList.add((representationList.size() + scoreList.size()) % 2 == 0 ?
                     MyersBriggsTypeIndicator.Feeling : MyersBriggsTypeIndicator.Thinking);
         }
         if (!mbtiList.contains(MyersBriggsTypeIndicator.Judging) &&
                 !mbtiList.contains(MyersBriggsTypeIndicator.Perceiving)) {
-            mbtiList.add((representationList.size() + scoreGroup.numScores()) % 2 == 0 ?
+            mbtiList.add((representationList.size() + scoreList.size()) % 2 == 0 ?
                     MyersBriggsTypeIndicator.Judging : MyersBriggsTypeIndicator.Perceiving);
         }
 
         // 检测冲突
         if (mbtiList.contains(MyersBriggsTypeIndicator.Introversion) &&
                 mbtiList.contains(MyersBriggsTypeIndicator.Extraversion)) {
-            mbtiList.remove((representationList.size() + scoreGroup.numScores()) % 2 == 0 ?
+            mbtiList.remove((representationList.size() + scoreList.size()) % 2 == 0 ?
                     MyersBriggsTypeIndicator.Introversion : MyersBriggsTypeIndicator.Extraversion);
         }
         if (mbtiList.contains(MyersBriggsTypeIndicator.Sensing) &&
                 mbtiList.contains(MyersBriggsTypeIndicator.Intuition)) {
-            mbtiList.remove((representationList.size() + scoreGroup.numScores()) % 2 == 0 ?
+            mbtiList.remove((representationList.size() + scoreList.size()) % 2 == 0 ?
                     MyersBriggsTypeIndicator.Sensing : MyersBriggsTypeIndicator.Intuition);
         }
         if (mbtiList.contains(MyersBriggsTypeIndicator.Feeling) &&
                 mbtiList.contains(MyersBriggsTypeIndicator.Thinking)) {
-            mbtiList.remove((representationList.size() + scoreGroup.numScores()) % 2 == 0 ?
+            mbtiList.remove((representationList.size() + scoreList.size()) % 2 == 0 ?
                     MyersBriggsTypeIndicator.Feeling : MyersBriggsTypeIndicator.Thinking);
         }
         if (mbtiList.contains(MyersBriggsTypeIndicator.Judging) &&
                 mbtiList.contains(MyersBriggsTypeIndicator.Perceiving)) {
-            mbtiList.remove((representationList.size() + scoreGroup.numScores()) % 2 == 0 ?
+            mbtiList.remove((representationList.size() + scoreList.size()) % 2 == 0 ?
                     MyersBriggsTypeIndicator.Judging : MyersBriggsTypeIndicator.Perceiving);
         }
 

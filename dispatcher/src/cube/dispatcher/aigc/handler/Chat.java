@@ -71,7 +71,7 @@ public class Chat extends ContextHandler {
             String channelCode = null;
             String content = null;
             String pattern = Consts.PATTERN_CHAT;
-            String unit = ModelConfig.BAIZE_UNIT;
+            String unit = ModelConfig.CHAT_UNIT;
             GenerativeOption option = new GenerativeOption();
             int histories = 0;
             JSONArray records = null;

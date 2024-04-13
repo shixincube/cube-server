@@ -29,7 +29,7 @@ package cube.aigc.psychology;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.algorithm.*;
-import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;

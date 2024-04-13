@@ -1475,7 +1475,7 @@ public class KnowledgeBase {
         }
         else {
             // 获取提示词
-            boolean brisk = !unitName.equalsIgnoreCase(ModelConfig.BAIZE_UNIT);
+            boolean brisk = !unitName.equalsIgnoreCase(ModelConfig.CHAT_UNIT);
             promptMetadata = this.generatePrompt(query, searchTopK, searchFetchK, brisk);
         }
 
@@ -1639,7 +1639,7 @@ public class KnowledgeBase {
 
                 // 将所有内容推送给模型推理
                 String prompt = Consts.formatExtractContent(content.toString(), query);
-                String result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
+                String result = this.service.syncGenerateText(ModelConfig.CHAT_UNIT, prompt,
                         new GenerativeOption(), null, null);
                 if (null == result) {
                     Logger.w(this.getClass(), "#extractDocumentContent - "
@@ -1829,7 +1829,7 @@ public class KnowledgeBase {
 
                 String contentPrompt = Consts.formatQuestion(contentBuf.toString(), query);
                 // 对内容进行推理
-                String result = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_UNIT, contentPrompt,
+                String result = this.service.syncGenerateText(authToken, ModelConfig.CHAT_UNIT, contentPrompt,
                         new GenerativeOption());
                 if (null != result) {
                     // 添加结果
@@ -1916,7 +1916,7 @@ public class KnowledgeBase {
 
                     String articlePrompt = Consts.formatQuestion(buf.toString(), Consts.KNOWLEDGE_SECTION_PROMPT);
                     // 对文章内容进行推理
-                    String articleResult = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_UNIT, articlePrompt,
+                    String articleResult = this.service.syncGenerateText(authToken, ModelConfig.CHAT_UNIT, articlePrompt,
                             new GenerativeOption());
                     if (null == articleResult) {
                         articleResult = article.summarization;

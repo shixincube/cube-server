@@ -45,11 +45,13 @@ import java.util.List;
  */
 public class Workflow {
 
-    public final static String HighTrick = "明显";//"过度";
+    public final static String HighTrick = "明显";
     public final static String NormalTrick = "具有";
     public final static String LowTrick = "缺乏";//"不足";
 
     private EvaluationReport evaluationReport;
+
+    private MBTIEvaluation mbtiEvaluation;
 
     private AIGCChannel channel;
 
@@ -80,6 +82,7 @@ public class Workflow {
 
     public PsychologyReport fillReport(PsychologyReport report) {
         report.setEvaluationReport(this.evaluationReport);
+        report.setMBTIFeature(this.mbtiEvaluation.getResult());
         report.setBehaviorList(this.behaviorList);
         report.setParagraphs(this.paragraphList);
         return report;
@@ -88,6 +91,10 @@ public class Workflow {
     public Workflow make(Theme theme, boolean paragraphInferrable) {
         // 获取模板
         ThemeTemplate template = Resource.getInstance().getThemeTemplate(theme.code);
+
+        // MBTI 评估
+        this.mbtiEvaluation = new MBTIEvaluation(this.evaluationReport.getRepresentationList(),
+            this.evaluationReport.getEvaluationScores());
 
         this.evaluationReport.setTopN(this.maxRepresentationNum);
 

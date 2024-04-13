@@ -2950,7 +2950,7 @@ public class AIGCService extends AbstractModule {
         }
 
         protected String filterChinese(AIGCUnit unit, String text) {
-            if (unit.getCapability().getName().equalsIgnoreCase(ModelConfig.BAIZE_UNIT)) {
+            if (unit.getCapability().getName().equalsIgnoreCase(ModelConfig.CHAT_UNIT)) {
                 if (TextUtils.containsChinese(text)) {
                     return text.replaceAll(",", "，");
                 }
@@ -3025,7 +3025,7 @@ public class AIGCService extends AbstractModule {
                     buf.delete(buf.length() - 1, buf.length());
                     // 提取页面与提问匹配的信息
                     String prompt = Consts.formatExtractContent(buf.toString(), query);
-                    String answer = syncGenerateText(this.channel.getAuthToken(), ModelConfig.BAIZE_UNIT, prompt,
+                    String answer = syncGenerateText(this.channel.getAuthToken(), ModelConfig.CHAT_UNIT, prompt,
                             new GenerativeOption());
                     if (null != answer) {
                         // 记录内容

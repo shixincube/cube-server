@@ -81,7 +81,7 @@ public class ChatTask extends ServiceTask {
         String code = packet.data.getString("code");
         String content = packet.data.getString("content").trim();
         String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : Consts.PATTERN_CHAT;
-        String unit = packet.data.has("unit") ? packet.data.getString("unit") : ModelConfig.BAIZE_UNIT;
+        String unit = packet.data.has("unit") ? packet.data.getString("unit") : ModelConfig.CHAT_UNIT;
         GenerativeOption option = packet.data.has("option") ?
                 new GenerativeOption(packet.data.getJSONObject("option")) : new GenerativeOption();
         int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 10;

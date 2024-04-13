@@ -71,7 +71,7 @@ public class PerformKnowledgeQATask extends ServiceTask {
         String unitName = null;
         KnowledgeMatchingSchema matchingSchema = null;
         try {
-            unitName = packet.data.has("unit") ? packet.data.getString("unit") : ModelConfig.BAIZE_UNIT;
+            unitName = packet.data.has("unit") ? packet.data.getString("unit") : ModelConfig.CHAT_UNIT;
             matchingSchema = new KnowledgeMatchingSchema(packet.data.getJSONObject("matchingSchema"));
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,

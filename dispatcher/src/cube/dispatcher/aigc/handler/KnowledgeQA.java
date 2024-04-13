@@ -62,7 +62,7 @@ public class KnowledgeQA extends ContextHandler {
                 return;
             }
 
-            String unit = ModelConfig.BAIZE_UNIT;
+            String unit = ModelConfig.CHAT_UNIT;
             KnowledgeMatchingSchema matchingSchema = null;
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);

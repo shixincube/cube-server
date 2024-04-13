@@ -28,6 +28,7 @@ package cube.aigc.psychology;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.JSONable;
@@ -69,6 +70,8 @@ public class PsychologyReport implements JSONable {
     private String markdown = null;
 
     private EvaluationReport evaluationReport;
+
+    private MBTIFeature mbtiFeature;
 
     private List<String> behaviorList;
 
@@ -136,6 +139,14 @@ public class PsychologyReport implements JSONable {
 
     public EvaluationReport getEvaluationReport() {
         return this.evaluationReport;
+    }
+
+    public void setMBTIFeature(MBTIFeature mbtiFeature) {
+        this.mbtiFeature = mbtiFeature;
+    }
+
+    public MBTIFeature getMBTIFeature() {
+        return this.mbtiFeature;
     }
 
     public void setBehaviorList(List<String> behaviorList) {
@@ -249,6 +260,10 @@ public class PsychologyReport implements JSONable {
                 buf.append("|");
             }
             buf.append("\n");
+        }
+
+        if (null != this.mbtiFeature) {
+
         }
 
         if (null != this.behaviorList) {

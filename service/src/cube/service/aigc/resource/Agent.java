@@ -78,7 +78,7 @@ public final class Agent {
 
         List<String> subtasks = new ArrayList<>();
         subtasks.add(AICapability.NaturalLanguageProcessing.Conversational);
-        AICapability capability = new AICapability(ModelConfig.BAIZE_UNIT,
+        AICapability capability = new AICapability(ModelConfig.CHAT_UNIT,
                 AICapability.NaturalLanguageProcessingTask, subtasks, "");
 
         this.unit = new AIGCUnit(contact, capability, null);
