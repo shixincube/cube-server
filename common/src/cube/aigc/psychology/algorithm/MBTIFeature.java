@@ -163,12 +163,11 @@ public class MBTIFeature implements JSONable {
 
     public MBTIFeature(MyersBriggsTypeIndicator[] indicators) {
         this.indicators = indicators;
-        this.parse();
     }
 
     public MBTIFeature(List<MyersBriggsTypeIndicator> indicators) {
-        this.indicators = this.build(indicators);
-        this.parse();
+        this.indicators = this.buildIndicators(indicators);
+        this.build();
     }
 
     public MBTIFeature(JSONObject json) {
@@ -179,10 +178,10 @@ public class MBTIFeature implements JSONable {
                 MyersBriggsTypeIndicator.parse(array.getString(2)),
                 MyersBriggsTypeIndicator.parse(array.getString(3))
         };
-        this.parse();
+        this.build();
     }
 
-    private MyersBriggsTypeIndicator[] build(List<MyersBriggsTypeIndicator> indicators) {
+    private MyersBriggsTypeIndicator[] buildIndicators(List<MyersBriggsTypeIndicator> indicators) {
         MyersBriggsTypeIndicator[] result = new MyersBriggsTypeIndicator[4];
         result[0] = indicators.contains(MyersBriggsTypeIndicator.Introversion) ?
                 MyersBriggsTypeIndicator.Introversion : MyersBriggsTypeIndicator.Extraversion;
@@ -195,7 +194,7 @@ public class MBTIFeature implements JSONable {
         return result;
     }
 
-    private void parse() {
+    private void build() {
         if (ISTJ.equals(this)) {
             this.name = "检查员型";
             this.description = "安静、严肃，通过全面性和可靠性获得成功。实际，有责任感。决定有逻辑性，并一步步地朝着目标前进，不易分心。喜欢将工作、 家庭和生活都安排得井井有条。重视传统和忠诚。";
@@ -269,6 +268,20 @@ public class MBTIFeature implements JSONable {
     public String getCode() {
         return this.indicators[0].code + this.indicators[1].code +
                 this.indicators[2].code + this.indicators[3].code;
+    }
+
+    public String getName() {
+        if (null == this.name) {
+            this.build();
+        }
+        return this.name;
+    }
+
+    public String getDescription() {
+        if (null == this.description) {
+            this.build();
+        }
+        return this.description;
     }
 
     @Override

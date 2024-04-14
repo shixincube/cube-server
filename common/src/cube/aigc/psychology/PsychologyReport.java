@@ -116,6 +116,10 @@ public class PsychologyReport implements JSONable {
             this.markdown = json.getString("markdown");
         }
 
+        if (json.has("mbti")) {
+            this.mbtiFeature = new MBTIFeature(json.getJSONObject("mbti"));
+        }
+
         if (json.has("evaluationReport")) {
             this.evaluationReport = new EvaluationReport(json.getJSONObject("evaluationReport"));
         }
@@ -263,7 +267,14 @@ public class PsychologyReport implements JSONable {
         }
 
         if (null != this.mbtiFeature) {
-
+            buf.append("\n\n");
+            buf.append("**MBTI 性格倾向**");
+            buf.append("\n\n");
+            buf.append("- **性格类型** ：").append(this.mbtiFeature.getName())
+                    .append(" （").append(this.mbtiFeature.getCode()).append("）");
+            buf.append("\n\n");
+            buf.append("- **性格描述** ：").append(this.mbtiFeature.getDescription());
+            buf.append("\n\n");
         }
 
         if (null != this.behaviorList) {
@@ -332,6 +343,9 @@ public class PsychologyReport implements JSONable {
         json.put("finished", this.finished);
         json.put("state", this.state.code);
         json.put("markdown", this.makeMarkdown(false));
+        if (null != this.mbtiFeature) {
+            json.put("mbti", this.mbtiFeature.toJSON());
+        }
         return json;
     }
 }
