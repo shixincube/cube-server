@@ -387,6 +387,28 @@ public class AuthStorage implements Storagable {
         return token;
     }
 
+    public AuthToken readToken(String domain, long contactId) {
+        List<StorageField[]> result = this.storage.executeQuery(this.tokenTable, this.tokenFields, new Conditional[] {
+                Conditional.createEqualTo("domain", domain),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("cid", contactId)
+        });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+
+        Date issues = new Date(map.get("issues").getLong());
+        Date expiry = new Date(map.get("expiry").getLong());
+
+        AuthToken token = new AuthToken(map.get("code").getString(), map.get("domain").getString(),
+                map.get("app_key").getString(), map.get("cid").getLong(), issues, expiry,
+                new PrimaryDescription(new JSONObject(map.get("primary_content").getString())),
+                map.get("ferry").getInt() == 1);
+        return token;
+    }
+
     public void updateToken(AuthToken token) {
         this.storage.executeUpdate(this.tokenTable, new StorageField[] {
                 new StorageField("cid", token.getContactId())

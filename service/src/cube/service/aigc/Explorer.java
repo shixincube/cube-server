@@ -44,6 +44,7 @@ import cube.service.aigc.module.ModuleManager;
 import cube.service.aigc.module.PublicOpinion;
 import cube.service.aigc.module.Stage;
 import cube.service.aigc.resource.*;
+import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
@@ -140,7 +141,7 @@ public class Explorer {
         (new Thread() {
             @Override
             public void run() {
-                buildInData();
+                buildInData((AuthService) service.getKernel().getModule(AuthService.NAME));
             }
         }).start();
     }
@@ -154,12 +155,18 @@ public class Explorer {
         this.searcherName = searcherName;
     }
 
-    private void buildInData() {
+    private void buildInData(AuthService authService) {
         // 创建单元用户
         long id = 200101;
         for (int i = 0; i < 10; ++i) {
             Contact contact = new Contact(id + i, AuthConsts.DEFAULT_DOMAIN, "Unit-" + (id + i));
             ContactManager.getInstance().newContact(contact);
+
+            // 授权码
+            if (null == authService.getToken(AuthConsts.DEFAULT_DOMAIN, contact.getId())) {
+                authService.applyToken(AuthConsts.DEFAULT_DOMAIN, AuthConsts.DEFAULT_APP_KEY,
+                        contact.getId(), 10L * 365 * 24 * 60 * 60 * 1000);
+            }
         }
 
         // 创建 API 用户
@@ -167,6 +174,12 @@ public class Explorer {
         for (int i = 0; i < 10; ++i) {
             Contact contact = new Contact(id + i, AuthConsts.DEFAULT_DOMAIN, "API-" + (id + i));
             ContactManager.getInstance().newContact(contact);
+
+            // 授权码
+            if (null == authService.getToken(AuthConsts.DEFAULT_DOMAIN, contact.getId())) {
+                authService.applyToken(AuthConsts.DEFAULT_DOMAIN, AuthConsts.DEFAULT_APP_KEY,
+                        contact.getId(), 10L * 365 * 24 * 60 * 60 * 1000);
+            }
         }
     }
 

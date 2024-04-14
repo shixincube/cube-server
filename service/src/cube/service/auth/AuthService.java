@@ -333,6 +333,22 @@ public class AuthService extends AbstractModule {
     }
 
     /**
+     * 获取指定域里联系人的令牌。
+     *
+     * @param domain
+     * @param contactId
+     * @return
+     */
+    public AuthToken getToken(String domain, long contactId) {
+        if (!this.started.get()) {
+            Logger.w(this.getClass(), "#getToken - Service has not started");
+            return null;
+        }
+
+        return this.authStorage.readToken(domain, contactId);
+    }
+
+    /**
      * 通过编码获取令牌。
      *
      * @param code 指定令牌码。
