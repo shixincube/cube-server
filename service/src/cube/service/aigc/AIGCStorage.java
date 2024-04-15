@@ -122,6 +122,9 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("token", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("remark", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 

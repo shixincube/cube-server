@@ -88,19 +88,22 @@ public class ResetKnowledgeStoreTask extends ServiceTask {
         ResetKnowledgeProgress progress = base.resetKnowledgeStore(backup, new ResetKnowledgeStoreListener() {
             @Override
             public void onProgress(KnowledgeBase knowledgeBase, ResetKnowledgeProgress progress) {
-                Logger.d(ResetKnowledgeStoreTask.class, "#onProgress - " + knowledgeBase.getAuthToken().getContactId() +
+                Logger.d(ResetKnowledgeStoreTask.class, "#onProgress - " + knowledgeBase.getName() +
+                        " - " + knowledgeBase.getAuthToken().getContactId() +
                         " - " + progress.getProgress());
             }
 
             @Override
             public void onFailed(KnowledgeBase knowledgeBase, ResetKnowledgeProgress progress, AIGCStateCode stateCode) {
-                Logger.d(ResetKnowledgeStoreTask.class, "#onFailed - " + knowledgeBase.getAuthToken().getContactId() +
+                Logger.d(ResetKnowledgeStoreTask.class, "#onFailed - " + knowledgeBase.getName() +
+                        " - " + knowledgeBase.getAuthToken().getContactId() +
                         " - " + progress.getProgress() + " - code:" + stateCode.code);
             }
 
             @Override
             public void onCompleted(KnowledgeBase knowledgeBase, List<KnowledgeDoc> originList, List<KnowledgeDoc> completionList) {
-                Logger.d(ResetKnowledgeStoreTask.class, "#onCompleted - " + knowledgeBase.getAuthToken().getContactId());
+                Logger.d(ResetKnowledgeStoreTask.class, "#onCompleted - " + knowledgeBase.getName() +
+                        " - " + knowledgeBase.getAuthToken().getContactId());
             }
         });
 

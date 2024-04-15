@@ -34,8 +34,9 @@ import cube.service.aigc.AIGCService;
 import cube.service.auth.AuthService;
 import cube.util.TextUtils;
 
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 /**
  * 知识库框架。
@@ -55,17 +56,18 @@ public class KnowledgeFramework {
     /**
      * Key: 联系人 ID 。
      */
-    private ConcurrentHashMap<Long, FrameworkWrapper> frameworks;
+    private Map<Long, FrameworkWrapper> frameworks;
 
     public KnowledgeFramework(AIGCService service, AuthService authService, AbstractModule fileStorage) {
         this.service = service;
         this.authService = authService;
         this.fileStorage = fileStorage;
-        this.frameworks = new ConcurrentHashMap<>();
+        this.frameworks = new HashMap<>();
     }
 
     public List<KnowledgeBaseInfo> getKnowledgeBaseInfos(long contactId) {
         FrameworkWrapper framework = null;
+
         synchronized (this) {
             framework = this.frameworks.get(contactId);
             if (null == framework) {
@@ -79,44 +81,45 @@ public class KnowledgeFramework {
 
     public KnowledgeBase getKnowledgeBase(long contactId, String baseName) {
         FrameworkWrapper framework = null;
+
         synchronized (this) {
             framework = this.frameworks.get(contactId);
             if (null == framework) {
                 framework = new FrameworkWrapper(contactId, this.service);
                 this.frameworks.put(contactId, framework);
             }
-        }
 
-        KnowledgeBase base = framework.getKnowledgeBase(baseName);
-        if (null == base) {
-            KnowledgeBaseInfo info = framework.getKnowledgeBaseInfo(baseName);
-            if (null != info) {
+            KnowledgeBase base = framework.getKnowledgeBase(baseName);
+            if (null == base) {
+                KnowledgeBaseInfo info = framework.getKnowledgeBaseInfo(baseName);
+                if (null != info) {
+                    AuthToken authToken = this.authService.queryAuthTokenByContactId(contactId);
+                    base = new KnowledgeBase(info,
+                            this.service, this.service.getStorage(), authToken, this.fileStorage);
+                    framework.putKnowledgeBase(base);
+                    base.listKnowledgeDocs();
+                    base.listKnowledgeArticles();
+                }
+            }
+
+            // 判断是否是默认库
+            if (null == base && KnowledgeFramework.DefaultName.equals(baseName)) {
+                // 创建默认库
                 AuthToken authToken = this.authService.queryAuthTokenByContactId(contactId);
-                base = new KnowledgeBase(info,
-                        this.service, this.service.getStorage(), authToken, this.fileStorage);
-                framework.putKnowledgeBase(base);
-                base.listKnowledgeDocs();
-                base.listKnowledgeArticles();
+                // 新库
+                KnowledgeBaseInfo info = this.newKnowledgeBase(authToken.getCode(), KnowledgeFramework.DefaultName,
+                        KnowledgeFramework.DefaultDisplayName, KnowledgeFramework.DefaultDisplayName);
+                if (null != info) {
+                    base = new KnowledgeBase(info,
+                            this.service, this.service.getStorage(), authToken, this.fileStorage);
+                    framework.putKnowledgeBase(base);
+                    base.listKnowledgeDocs();
+                    base.listKnowledgeArticles();
+                }
             }
-        }
 
-        // 判断是否是默认库
-        if (null == base && KnowledgeFramework.DefaultName.equals(baseName)) {
-            // 创建默认库
-            AuthToken authToken = this.authService.queryAuthTokenByContactId(contactId);
-            // 新库
-            KnowledgeBaseInfo info = this.newKnowledgeBase(authToken.getCode(), KnowledgeFramework.DefaultName,
-                    KnowledgeFramework.DefaultDisplayName, KnowledgeFramework.DefaultDisplayName);
-            if (null != info) {
-                base = new KnowledgeBase(info,
-                        this.service, this.service.getStorage(), authToken, this.fileStorage);
-                framework.putKnowledgeBase(base);
-                base.listKnowledgeDocs();
-                base.listKnowledgeArticles();
-            }
+            return base;
         }
-
-        return base;
     }
 
     public List<KnowledgeBase> getKnowledgeBaseByCategory(long contactId, String category) {
@@ -127,23 +130,23 @@ public class KnowledgeFramework {
                 framework = new FrameworkWrapper(contactId, this.service);
                 this.frameworks.put(contactId, framework);
             }
-        }
 
-        List<KnowledgeBase> baseList = framework.getKnowledgeBaseByCategory(category);
-        if (baseList.isEmpty()) {
-            List<KnowledgeBaseInfo> infoList = framework.getKnowledgeBaseInfoByCategory(category);
-            AuthToken authToken = this.authService.queryAuthTokenByContactId(contactId);
+            List<KnowledgeBase> baseList = framework.getKnowledgeBaseByCategory(category);
+            if (baseList.isEmpty()) {
+                List<KnowledgeBaseInfo> infoList = framework.getKnowledgeBaseInfoByCategory(category);
+                AuthToken authToken = this.authService.queryAuthTokenByContactId(contactId);
 
-            for (KnowledgeBaseInfo info : infoList) {
-                KnowledgeBase base = new KnowledgeBase(info,
-                        this.service, this.service.getStorage(), authToken, this.fileStorage);
-                framework.putKnowledgeBase(base);
-                base.listKnowledgeDocs();
-                base.listKnowledgeArticles();
-                baseList.add(base);
+                for (KnowledgeBaseInfo info : infoList) {
+                    KnowledgeBase base = new KnowledgeBase(info,
+                            this.service, this.service.getStorage(), authToken, this.fileStorage);
+                    framework.putKnowledgeBase(base);
+                    base.listKnowledgeDocs();
+                    base.listKnowledgeArticles();
+                    baseList.add(base);
+                }
             }
+            return baseList;
         }
-        return baseList;
     }
 
     public KnowledgeBaseInfo newKnowledgeBase(String token, String name, String displayName, String category) {
@@ -201,16 +204,18 @@ public class KnowledgeFramework {
         // 删除库的所有数据
         base.destroy();
 
-        KnowledgeBaseInfo info = null;
-        FrameworkWrapper framework = this.frameworks.get(contactId);
-        if (null != framework) {
-            info = framework.getKnowledgeBaseInfo(name);
-            framework.removeKnowledgeBase(name);
+        synchronized (this) {
+            KnowledgeBaseInfo info = null;
+            FrameworkWrapper framework = this.frameworks.get(contactId);
+            if (null != framework) {
+                info = framework.getKnowledgeBaseInfo(name);
+                framework.removeKnowledgeBase(name);
+            }
+
+            this.service.getStorage().deleteKnowledgeBaseInfo(contactId, name);
+
+            return info;
         }
-
-        this.service.getStorage().deleteKnowledgeBaseInfo(contactId, name);
-
-        return info;
     }
 
     public KnowledgeBaseInfo updateKnowledgeBase(String token, KnowledgeBaseInfo info) {
@@ -230,10 +235,12 @@ public class KnowledgeFramework {
         if (this.service.getStorage().updateKnowledgeBaseInfo(contactId, info)) {
             KnowledgeBase base = this.getKnowledgeBase(contactId, info.name);
             if (null != base) {
-                FrameworkWrapper framework = this.frameworks.get(contactId);
-                if (null != framework) {
-                    framework.refreshKnowledgeBaseInfo();
-                    return framework.getKnowledgeBaseInfo(info.name);
+                synchronized (this) {
+                    FrameworkWrapper framework = this.frameworks.get(contactId);
+                    if (null != framework) {
+                        framework.refreshKnowledgeBaseInfo();
+                        return framework.getKnowledgeBaseInfo(info.name);
+                    }
                 }
             }
         }
@@ -242,12 +249,14 @@ public class KnowledgeFramework {
     }
 
     public void freeBase(String domain, Long contactId) {
-        FrameworkWrapper framework = this.frameworks.get(contactId);
-        if (null == framework) {
-            return;
-        }
+        synchronized (this) {
+            FrameworkWrapper framework = this.frameworks.get(contactId);
+            if (null == framework) {
+                return;
+            }
 
-        this.frameworks.remove(contactId);
-        framework.destroy();
+            this.frameworks.remove(contactId);
+            framework.destroy();
+        }
     }
 }

@@ -165,7 +165,9 @@ public class KnowledgeBase {
             }
 
             if (null != this.resource.docList && System.currentTimeMillis() - this.resource.listDocTime < 30 * 1000) {
-                Logger.d(this.getClass(), "#listKnowledgeDocs - " + this.getName() + " - Read from memory");
+                Logger.d(this.getClass(), "#listKnowledgeDocs - " + this.getName() +
+                        " - " + this.getAuthToken().getContactId() +
+                        " - Read from memory");
                 return this.resource.docList;
             }
 
@@ -189,8 +191,8 @@ public class KnowledgeBase {
                 doc.setFileLabel(new FileLabel(fileLabelJson));
             }
 
-            this.resource.appendDocs(list);
             this.resource.listDocTime = System.currentTimeMillis();
+            this.resource.appendDocs(list);
 
             return list;
         }
@@ -819,6 +821,7 @@ public class KnowledgeBase {
                         resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
                         resetProgress.setStateCode(AIGCStateCode.UnitNoReady.code);
                         listener.onFailed(KnowledgeBase.this, resetProgress, AIGCStateCode.UnitNoReady);
+                        lock.set(false);
                         return;
                     }
 
@@ -848,6 +851,7 @@ public class KnowledgeBase {
                             // 更新进度
                             resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
                             resetProgress.setStateCode(AIGCStateCode.UnitError.code);
+                            lock.set(false);
                             return;
                         }
 
@@ -861,6 +865,7 @@ public class KnowledgeBase {
                             // 更新进度
                             resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
                             resetProgress.setStateCode(AIGCStateCode.Failure.code);
+                            lock.set(false);
                             return;
                         }
                     }
@@ -890,6 +895,7 @@ public class KnowledgeBase {
                         // 更新进度
                         resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
                         resetProgress.setStateCode(AIGCStateCode.UnitError.code);
+                        lock.set(false);
                         return;
                     }
 
@@ -903,6 +909,7 @@ public class KnowledgeBase {
                         // 更新进度
                         resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
                         resetProgress.setStateCode(AIGCStateCode.Failure.code);
+                        lock.set(false);
                         return;
                     }
 
@@ -912,15 +919,16 @@ public class KnowledgeBase {
                     listener.onProgress(KnowledgeBase.this, resetProgress);
 
                     List<KnowledgeDoc> list = listKnowledgeDocs();
-                    if (list.isEmpty()) {
+                    if (null == list || list.isEmpty()) {
                         // 更新进度
-                        resetProgress.setTotalDocs(list.size());
-                        resetProgress.setProcessedDocs(list.size());
+                        resetProgress.setTotalDocs(0);
+                        resetProgress.setProcessedDocs(0);
                         resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
                         resetProgress.setStateCode(AIGCStateCode.Ok.code);
                         // 回调
                         listener.onProgress(KnowledgeBase.this, resetProgress);
                         listener.onCompleted(KnowledgeBase.this, list, list);
+                        lock.set(false);
                         return;
                     }
 
@@ -978,6 +986,7 @@ public class KnowledgeBase {
                             // 更新进度
                             resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
                             resetProgress.setStateCode(AIGCStateCode.UnitError.code);
+                            lock.set(false);
                             return;
                         }
 
@@ -991,6 +1000,7 @@ public class KnowledgeBase {
                             // 更新进度
                             resetProgress.setProgress(ResetKnowledgeProgress.PROGRESS_END);
                             resetProgress.setStateCode(AIGCStateCode.Failure.code);
+                            lock.set(false);
                             return;
                         }
 
@@ -1029,6 +1039,9 @@ public class KnowledgeBase {
                     // 更新内存数据
                     listKnowledgeDocs(true);
                     listKnowledgeArticles(true);
+                    lock.set(false);
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#resetKnowledgeStore", e);
                 } finally {
                     // 解锁
                     lock.set(false);

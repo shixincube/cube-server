@@ -32,27 +32,29 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
 import cube.aigc.attachment.ui.Event;
-import cube.aigc.psychology.PsychologyReport;
 import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.PsychologyReport;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
-import cube.common.entity.KnowledgeProfile;
 import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.PerformerListener;
 import cube.dispatcher.aigc.handler.Conversation;
-import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.aigc.handler.Sentiment;
+import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.aigc.handler.app.App;
 import cube.dispatcher.util.Tickable;
 import cube.util.HttpServer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -451,13 +453,14 @@ public class Manager implements Tickable, PerformerListener {
             JSONObject data = Packet.extractDataPayload(responsePacket);
             if (data.has("page")) {
                 // 有分页
+                int page = data.getInt("page");
                 int total = data.getInt("total");
                 JSONArray list = data.getJSONArray("list");
-                int page = data.getInt("page");
                 while (list.length() < total) {
                     page += 1;
 
                     JSONObject packetPayload = new JSONObject();
+                    packetPayload.put("base", baseName);
                     packetPayload.put("page", page);
                     packet = new Packet(AIGCAction.ListKnowledgeDocs.name, packetPayload);
                     request = packet.toDialect();
@@ -465,25 +468,31 @@ public class Manager implements Tickable, PerformerListener {
                     response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
                     if (null == response) {
                         Logger.w(Manager.class, "#getKnowledgeDocs - Response is null : " + token);
-                        return null;
+                        break;
                     }
 
                     responsePacket = new Packet(response);
                     if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
                         Logger.d(Manager.class, "#getKnowledgeDocs - Response state is NOT ok : "
                                 + Packet.extractCode(responsePacket));
-                        return null;
+                        break;
                     }
 
                     JSONObject nextData = Packet.extractDataPayload(responsePacket);
                     JSONArray nextList = nextData.getJSONArray("list");
+                    if (nextList.length() == 0) {
+                        Logger.d(Manager.class, "#getKnowledgeDocs - List is empty: "
+                                + Packet.extractCode(responsePacket));
+                        break;
+                    }
+
                     for (int i = 0; i < nextList.length(); ++i) {
                         list.put(nextList.getJSONObject(i));
                     }
                 }
 
                 JSONObject result = new JSONObject();
-                result.put("total", total);
+                result.put("total", list.length());
                 result.put("list", list);
                 return result;
             }
