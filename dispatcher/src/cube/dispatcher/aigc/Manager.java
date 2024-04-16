@@ -62,8 +62,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Manager implements Tickable, PerformerListener {
 
-    public final static String DEFAULT_BASE_NAME = "document";
-
     private final static Manager instance = new Manager();
 
     private Performer performer;
@@ -626,6 +624,10 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public KnowledgeProgress getKnowledgeProgress(String token, String baseName, long sn) {
+        if (null == baseName) {
+            return null;
+        }
+
         JSONObject payload = new JSONObject();
         payload.put("base", baseName);
         payload.put("sn", sn);
@@ -649,11 +651,13 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public ResetKnowledgeProgress getResetKnowledgeProgress(String token, long sn, String baseName) {
+        if (null == baseName) {
+            return null;
+        }
+
         JSONObject payload = new JSONObject();
         payload.put("sn", sn);
-        if (null != baseName) {
-            payload.put("base", baseName);
-        }
+        payload.put("base", baseName);
         Packet packet = new Packet(AIGCAction.GetResetKnowledgeProgress.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);

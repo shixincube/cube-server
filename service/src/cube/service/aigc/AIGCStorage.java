@@ -1166,6 +1166,8 @@ public class AIGCStorage implements Storagable {
 
         if (!result.isEmpty()) {
             this.storage.executeDelete(this.knowledgeDocTable, new Conditional[] {
+                    Conditional.createEqualTo("base", doc.baseName),
+                    Conditional.createAnd(),
                     Conditional.createEqualTo("file_code", doc.fileCode)
             });
         }

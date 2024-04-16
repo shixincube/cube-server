@@ -88,7 +88,7 @@ public class Workflow {
         return report;
     }
 
-    public Workflow make(Theme theme, boolean paragraphInferrable) {
+    public Workflow make(Theme theme) {
         // 获取模板
         ThemeTemplate template = Resource.getInstance().getThemeTemplate(theme.code);
 
@@ -111,12 +111,16 @@ public class Workflow {
             Logger.d(this.getClass(), "#make - Behavior list size: " + this.behaviorList.size());
         }
 
+        // 得分推理
+
+
         for (String title : template.getTitles()) {
             this.paragraphList.add(new ReportParagraph(title));
         }
 
         /* FIXME XJW 以下步骤不再推荐使用
         // 生成表征内容
+        boolean paragraphInferrable = false;
         if (paragraphInferrable) {
     //        String representation = this.spliceRepresentationInterpretation();
             List<String> representations = this.spliceBehaviorList(this.behaviorList);

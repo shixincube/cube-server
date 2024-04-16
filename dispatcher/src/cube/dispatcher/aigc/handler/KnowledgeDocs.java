@@ -61,7 +61,9 @@ public class KnowledgeDocs extends ContextHandler {
 
             String baseName = request.getParameter("base");
             if (null == baseName || baseName.trim().length() == 0) {
-                baseName = Manager.DEFAULT_BASE_NAME;
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
             }
 
             JSONObject data = Manager.getInstance().getKnowledgeDocs(token, baseName);

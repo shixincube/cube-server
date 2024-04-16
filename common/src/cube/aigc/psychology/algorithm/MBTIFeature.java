@@ -170,6 +170,20 @@ public class MBTIFeature implements JSONable {
         this.build();
     }
 
+    public MBTIFeature(String mbtiCode) {
+        this.indicators = new MyersBriggsTypeIndicator[] {
+                mbtiCode.contains(MyersBriggsTypeIndicator.Introversion.code) ?
+                        MyersBriggsTypeIndicator.Introversion : MyersBriggsTypeIndicator.Extraversion,
+                mbtiCode.contains(MyersBriggsTypeIndicator.Sensing.code) ?
+                        MyersBriggsTypeIndicator.Sensing : MyersBriggsTypeIndicator.Intuition,
+                mbtiCode.contains(MyersBriggsTypeIndicator.Feeling.code) ?
+                        MyersBriggsTypeIndicator.Feeling : MyersBriggsTypeIndicator.Thinking,
+                mbtiCode.contains(MyersBriggsTypeIndicator.Judging.code) ?
+                        MyersBriggsTypeIndicator.Judging : MyersBriggsTypeIndicator.Perceiving
+        };
+        this.build();
+    }
+
     public MBTIFeature(JSONObject json) {
         JSONArray array = json.getJSONArray("indicators");
         this.indicators = new MyersBriggsTypeIndicator[] {

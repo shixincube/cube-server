@@ -105,6 +105,96 @@ public class EvaluationScore implements JSONable {
         }
     }
 
+    public String generateReportPrompt() {
+        if (this.hit == 0) {
+            return null;
+        }
+
+        StringBuilder buf = new StringBuilder();
+        switch (this.indicator) {
+            case Obsession:
+                if (this.positiveScore > 0.2 && this.positiveScore < 0.4) {
+                    buf.append("轻度强迫症的报告描述");
+                } else if (this.positiveScore >= 0.4 && this.positiveScore < 0.8) {
+                    buf.append("中度强迫症的报告描述");
+                } else if (this.positiveScore >= 0.8) {
+                    buf.append("重度强迫症的报告描述");
+                }
+                break;
+            case Depression:
+                if (this.positiveScore > 0.3 && this.positiveScore < 0.5) {
+                    buf.append("轻度抑郁的报告描述");
+                } else if (this.positiveScore >= 0.5 && this.positiveScore < 0.9) {
+                    buf.append("中度抑郁的报告描述");
+                } else if (this.positiveScore >= 0.9) {
+                    buf.append("严重抑郁的报告描述");
+                }
+                break;
+            case Anxiety:
+                if (this.positiveScore > 0.3 && this.positiveScore < 0.5) {
+                    buf.append("轻度焦虑的报告描述");
+                } else if (this.positiveScore >= 0.5 && this.positiveScore < 0.9) {
+                    buf.append("中度焦虑的报告描述");
+                } else if (this.positiveScore >= 0.9) {
+                    buf.append("严重焦虑的报告描述");
+                }
+                break;
+            case Hostile:
+                if (this.positiveScore > 0.2 && this.positiveScore < 0.4) {
+                    buf.append("轻微敌对的报告描述");
+                } else if (this.positiveScore >= 0.4 && this.positiveScore < 0.8) {
+                    buf.append("中度敌对的报告描述");
+                } else if (this.positiveScore >= 0.8) {
+                    buf.append("严重敌对的报告描述");
+                }
+                break;
+            case Paranoid:
+                if (this.positiveScore > 0.2 && this.positiveScore < 0.5) {
+                    buf.append("轻微偏执的报告描述");
+                } else if (this.positiveScore >= 0.5 && this.positiveScore < 0.8) {
+                    buf.append("中度偏执的报告描述");
+                } else if (this.positiveScore >= 0.8) {
+                    buf.append("严重偏执的报告描述");
+                }
+                break;
+            case SelfControl:
+                // 自我控制
+                if (this.positiveScore >= 0.2) {
+                    buf.append("自我控制较好的报告描述");
+                } else if (this.negativeScore >= 0.2) {
+                    buf.append("自我控制较差的报告描述");
+                } else {
+                    buf.append("自我控制一般的报告描述");
+                }
+                break;
+            case Creativity:
+                // 创造力
+                if (this.positiveScore > 1.2) {
+                    buf.append("有较强的创造力的报告描述");
+                } else if (this.positiveScore >= 0.5) {
+                    buf.append("有一定的创造力的报告描述");
+                } else {
+                    buf.append("创造力一般的报告描述");
+                }
+                break;
+            case SelfConsciousness:
+                // 自我意识
+                if (this.positiveScore < 0.2) {
+                    buf.append("自我意识不强的报告描述");
+                } else if (this.positiveScore < 1.2) {
+                    buf.append("自我意识中等的报告描述");
+                } else {
+                    buf.append("自我意识强的报告描述");
+                }
+                break;
+            default:
+                buf.append(this.indicator.name);
+                buf.append("的报告描述。");
+                break;
+        }
+        return buf.toString();
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

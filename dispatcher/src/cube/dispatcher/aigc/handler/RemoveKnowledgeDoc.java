@@ -82,9 +82,11 @@ public class RemoveKnowledgeDoc extends ContextHandler {
                     return;
                 }
 
-                String baseName = Manager.DEFAULT_BASE_NAME;
-                if (data.has("base")) {
-                    baseName = data.getString("base");
+                String baseName = data.getString("base");
+                if (null == baseName) {
+                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.complete();
+                    return;
                 }
 
                 if (data.has("fileCode")) {
@@ -132,8 +134,7 @@ public class RemoveKnowledgeDoc extends ContextHandler {
 
             try {
                 String paramSN = request.getParameter("sn");
-                String baseName = (null != request.getParameter("base")) ?
-                        request.getParameter("base") : Manager.DEFAULT_BASE_NAME;
+                String baseName = request.getParameter("base");
                 KnowledgeProgress progress = Manager.getInstance().getKnowledgeProgress(token, baseName, Long.parseLong(paramSN));
                 if (null == progress) {
                     this.respond(response, HttpStatus.BAD_REQUEST_400);

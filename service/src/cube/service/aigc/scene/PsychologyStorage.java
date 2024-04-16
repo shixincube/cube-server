@@ -29,6 +29,7 @@ package cube.service.aigc.scene;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.common.Storagable;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -80,6 +81,9 @@ public class PsychologyStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("evaluation_data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("mbti_code", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             })
     };
@@ -162,6 +166,11 @@ public class PsychologyStorage implements Storagable {
         if (!data.get("evaluation_data").isNullValue()) {
             EvaluationReport evaluationReport = new EvaluationReport(new JSONObject(data.get("evaluation_data").getString()));
             report.setEvaluationReport(evaluationReport);
+        }
+
+        if (!data.get("mbti_code").isNullValue()) {
+            MBTIFeature feature = new MBTIFeature(data.get("mbti_code").getString());
+            report.setMBTIFeature(feature);
         }
 
         List<StorageField[]> paragraphResult = this.storage.executeQuery(this.reportParagraphTable,
@@ -256,7 +265,8 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("age", report.getAttribute().age),
                 new StorageField("fileCode", report.getFileCode()),
                 new StorageField("theme", report.getTheme().code),
-                new StorageField("evaluation_data", report.getEvaluationReport().toJSON().toString())
+                new StorageField("evaluation_data", report.getEvaluationReport().toJSON().toString()),
+                new StorageField("mbti_code", report.getMBTIFeature().getCode())
         });
     }
 }

@@ -1755,7 +1755,7 @@ public class AIGCService extends AbstractModule {
 
         // 生成报告
         PsychologyReport report = PsychologyScene.getInstance().generateEvaluationReport(channel,
-                attribute, fileLabel, theme, paragraphInferrable, listener);
+                attribute, fileLabel, theme, listener);
 
         return report;
     }

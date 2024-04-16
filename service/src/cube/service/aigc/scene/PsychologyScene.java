@@ -169,13 +169,11 @@ public class PsychologyScene {
      * @param attribute
      * @param fileLabel
      * @param theme
-     * @param paragraphInferrable 是否对主题的段落进行推理
      * @param listener
      * @return
      */
     public PsychologyReport generateEvaluationReport(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
-                                                     Theme theme, boolean paragraphInferrable,
-                                                     PsychologySceneListener listener) {
+                                                     Theme theme, PsychologySceneListener listener) {
         // 判断频道是否繁忙
         if (null == channel || channel.isProcessing()) {
             Logger.w(this.getClass(), "#generateEvaluationReport - Channel error");
@@ -219,7 +217,7 @@ public class PsychologyScene {
                 listener.onReportEvaluate(report);
 
                 // 根据图像推理报告
-                Workflow workflow = processReport(channel, painting, theme, paragraphInferrable);
+                Workflow workflow = processReport(channel, painting, theme);
                 if (null == workflow) {
                     // 推理生成报告失败
                     Logger.w(PsychologyScene.class, "#generateEvaluationReport - onReportEvaluateFailed: " +
@@ -288,7 +286,7 @@ public class PsychologyScene {
         return new Painting(responseData.getJSONArray("result").getJSONObject(0));
     }
 
-    private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme, boolean paragraphInferrable) {
+    private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme) {
         Evaluation evaluation = (null == painting) ?
                 new Evaluation(new Attribute("male", 28)) : new Evaluation(painting);
 
@@ -306,7 +304,7 @@ public class PsychologyScene {
         workflow.setUnitName(this.unitName, this.unitContextLength);
 
         // 制作报告
-        return workflow.make(theme, paragraphInferrable);
+        return workflow.make(theme);
     }
 
     public void onTick(long now) {
@@ -325,6 +323,6 @@ public class PsychologyScene {
         AuthToken authToken = new AuthToken(Utils.randomString(16), AuthConsts.DEFAULT_DOMAIN, "AppKey",
                 1000L, System.currentTimeMillis(), System.currentTimeMillis() + 60 * 60 * 1000, false);
         AIGCChannel channel = new AIGCChannel(authToken, "Test");
-        scene.processReport(channel, null, Theme.Stress, false);
+        scene.processReport(channel, null, Theme.Stress);
     }
 }
