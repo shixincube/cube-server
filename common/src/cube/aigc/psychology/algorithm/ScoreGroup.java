@@ -121,6 +121,9 @@ public class ScoreGroup implements JSONable {
             }
         });
 
+        this.evaluationScoreList = new ArrayList<>();
+        this.evaluationScoreList.addAll(result);
+
         return result;
     }
 

@@ -31,6 +31,7 @@ import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import cube.aigc.psychology.algorithm.Representation;
+import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GenerativeOption;
 import cube.common.entity.GenerativeRecord;
@@ -59,6 +60,8 @@ public class Workflow {
 
     private List<String> behaviorList;
 
+    private List<String> reportTextList;
+
     private List<ReportParagraph> paragraphList;
 
     private int maxRepresentationNum = 10;
@@ -72,6 +75,7 @@ public class Workflow {
         this.channel = channel;
         this.service = service;
         this.behaviorList = new ArrayList<>();
+        this.reportTextList = new ArrayList<>();
         this.paragraphList = new ArrayList<>();
     }
 
@@ -84,6 +88,7 @@ public class Workflow {
         report.setEvaluationReport(this.evaluationReport);
         report.setMBTIFeature(this.mbtiEvaluation.getResult());
         report.setBehaviorList(this.behaviorList);
+        report.setReportTextList(this.reportTextList);
         report.setParagraphs(this.paragraphList);
         return report;
     }
@@ -112,7 +117,19 @@ public class Workflow {
         }
 
         // 得分推理
+        List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation();
+        for (EvaluationScore es : scoreList) {
+            String prompt = es.generateReportPrompt();
+            if (null == prompt) {
+                continue;
+            }
 
+            String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                    null, null);
+            if (null != answer) {
+                this.reportTextList.add(answer);
+            }
+        }
 
         for (String title : template.getTitles()) {
             this.paragraphList.add(new ReportParagraph(title));

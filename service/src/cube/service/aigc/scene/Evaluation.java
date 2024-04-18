@@ -172,7 +172,7 @@ public class Evaluation {
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.SenseOfSecurity, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -235,7 +235,7 @@ public class Evaluation {
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.SenseOfSecurity, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -287,7 +287,7 @@ public class Evaluation {
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.SenseOfSecurity, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -342,7 +342,7 @@ public class Evaluation {
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.SenseOfSecurity, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -965,7 +965,7 @@ public class Evaluation {
         if (other.has(Label.Mountain)) {
             // 山
             result.addFeature(Comment.NeedProtection, Tendency.Positive);
-            result.addScore(Indicator.SenseOfSecurity, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.7, 0.8));
         }
 
         if (other.has(Label.Flower)) {
@@ -1077,8 +1077,8 @@ public class Evaluation {
         if (other.has(Label.Dog)) {
             // 狗
             result.addFeature(Comment.NeedProtection, Tendency.Positive);
-            result.addFeature(Comment.SenseOfSecurity, Tendency.Positive);
-            result.addScore(Indicator.SenseOfSecurity, 1, FloatUtils.random(0.7, 0.8));
+            result.addFeature(Comment.SenseOfSecurity, Tendency.Negative);
+            result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.7, 0.8));
             counter += 1;
         }
 

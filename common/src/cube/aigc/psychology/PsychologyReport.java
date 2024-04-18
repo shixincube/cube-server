@@ -75,6 +75,8 @@ public class PsychologyReport implements JSONable {
 
     private List<String> behaviorList;
 
+    private List<String> reportTextList;
+
     private List<ReportParagraph> paragraphList;
 
     public PsychologyReport(long contactId, Attribute attribute, FileLabel fileLabel, Theme theme) {
@@ -128,6 +130,10 @@ public class PsychologyReport implements JSONable {
             this.behaviorList = JSONUtils.toStringList(json.getJSONArray("behaviorList"));
         }
 
+        if (json.has("reportTextList")) {
+            this.reportTextList = JSONUtils.toStringList(json.getJSONArray("reportTextList"));
+        }
+
         if (json.has("paragraphList")) {
             this.paragraphList = new ArrayList<>();
             JSONArray array = json.getJSONArray("paragraphList");
@@ -156,6 +162,11 @@ public class PsychologyReport implements JSONable {
     public void setBehaviorList(List<String> behaviorList) {
         this.behaviorList = new ArrayList<>();
         this.behaviorList.addAll(behaviorList);
+    }
+
+    public void setReportTextList(List<String> textList) {
+        this.reportTextList = new ArrayList<>();
+        this.reportTextList.addAll(textList);
     }
 
     public String getName() {
@@ -277,6 +288,18 @@ public class PsychologyReport implements JSONable {
             buf.append("\n\n");
         }
 
+        if (null != this.reportTextList) {
+            buf.append("\n");
+            buf.append("**报告文本：**");
+            buf.append("\n");
+            for (String text : this.reportTextList) {
+                buf.append("\n");
+                buf.append("> ").append(text);
+                buf.append("\n\n");
+            }
+            buf.append("\n\n");
+        }
+
         if (null != this.behaviorList) {
             buf.append("\n");
             buf.append("**行为特征：**");
@@ -318,6 +341,10 @@ public class PsychologyReport implements JSONable {
 
         if (null != this.behaviorList) {
             json.put("behaviorList", JSONUtils.toStringArray(this.behaviorList));
+        }
+
+        if (null != this.reportTextList) {
+            json.put("reportTextList", JSONUtils.toStringArray(this.reportTextList));
         }
 
         if (null != this.paragraphList) {

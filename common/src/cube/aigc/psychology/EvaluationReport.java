@@ -155,7 +155,7 @@ public class EvaluationReport implements JSONable {
     }
 
     /**
-     * 通过和评分结果进行对比排序
+     * 通过和评分结果进行对比排序，返回表征列表。
      *
      * @return
      */
@@ -191,6 +191,39 @@ public class EvaluationReport implements JSONable {
                 result.remove(result.size() - 1);
             }
         }
+
+        return result;
+    }
+
+    /**
+     * 通过和表征对比、排序，返回评估得分。
+     *
+     * @return
+     */
+    public List<EvaluationScore> getEvaluationScoresByRepresentation() {
+        List<Indicator> indicators = new ArrayList<>();
+        for (Representation representation : this.representationList) {
+            // 匹配和评分表一致的特征
+            Indicator indicator = this.matchIndicator(representation.knowledgeStrategy.getComment());
+            if (null != indicator) {
+                indicators.add(indicator);
+            }
+        }
+
+        List<EvaluationScore> list = this.scoreGroup.getEvaluationScores();
+        List<EvaluationScore> result = new ArrayList<>();
+        for (EvaluationScore es : list) {
+            if (indicators.contains(es.indicator)) {
+                result.add(es);
+            }
+        }
+
+        Collections.sort(result, new Comparator<EvaluationScore>() {
+            @Override
+            public int compare(EvaluationScore es1, EvaluationScore es2) {
+                return es2.hit - es1.hit;
+            }
+        });
 
         return result;
     }

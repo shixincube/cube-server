@@ -187,6 +187,101 @@ public class EvaluationScore implements JSONable {
                     buf.append("自我意识强的报告描述");
                 }
                 break;
+            case Confidence:
+                if (this.positiveScore < 0.2) {
+                    buf.append("自信心不足的报告描述");
+                } else if (this.positiveScore < 1.5) {
+                    buf.append("自信心较强的报告描述");
+                } else {
+                    buf.append("自信心很强的报告描述");
+                }
+                break;
+            case EvaluationFromOutside:
+                if (this.value >= 2) {
+                    buf.append("非常重视外在评价的报告描述");
+                } else if (this.value == 1) {
+                    buf.append("较为重视外在评价的报告描述");
+                }
+                break;
+            case AchievementMotivation:
+                if (this.value > 1 && this.value < 4) {
+                    buf.append("中度的成就动机的报告描述");
+                } else if (this.value >= 4) {
+                    buf.append("很强的成就动机的报告描述");
+                } else {
+                    buf.append("较弱的成就动机的报告描述");
+                }
+                break;
+            case SenseOfSecurity:
+                if (this.negativeScore > 1.0) {
+                    buf.append("安全感很差的报告描述");
+                } else if (this.negativeScore >= 0.3) {
+                    buf.append("安全感合格的报告描述");
+                } else {
+                    buf.append("安全感较好的报告描述");
+                }
+                break;
+            case Attacking:
+                if (this.value <= 1) {
+                    buf.append("较小的攻击性的报告描述");
+                } else if (this.value <= 3) {
+                    buf.append("中度的攻击性的报告描述");
+                } else {
+                    buf.append("很强的攻击性的报告描述");
+                }
+                break;
+            case Impulsion:
+                if (this.positiveScore <= 0.5) {
+                    buf.append("轻微冲动性的报告描述");
+                } else if (this.positiveScore <= 1.2) {
+                    buf.append("中度冲动性的报告描述");
+                } else {
+                    buf.append("重度冲动性的报告描述");
+                }
+                break;
+            case Narcissism:
+                if (this.positiveScore <= 0.5) {
+                    buf.append("不太自恋的报告描述");
+                } else if (this.positiveScore <= 1.2) {
+                    buf.append("中度自恋的报告描述");
+                } else {
+                    buf.append("重度自恋的报告描述");
+                }
+                break;
+            case Constrain:
+                if (this.positiveScore <= 0.5) {
+                    buf.append("不太压抑的报告描述");
+                } else if (this.positiveScore <= 1.2) {
+                    buf.append("中度压抑的报告描述");
+                } else {
+                    buf.append("重度压抑的报告描述");
+                }
+                break;
+            case SocialAdaptability:
+                if (this.positiveScore >= 0.3) {
+                    buf.append("社会适应性良好的报告描述");
+                } else {
+                    buf.append("社会适应性较差的报告描述");
+                }
+                break;
+            case Family:
+                if (this.value >= 3) {
+                    buf.append("较为重视家庭关系的报告描述");
+                } else if (this.value >= 2) {
+                    buf.append("一般重视家庭关系的报告描述");
+                } else {
+                    buf.append("不太重视家庭关系的报告描述");
+                }
+                break;
+            case InterpersonalRelation:
+                if (this.positiveScore >= 1.3) {
+                    buf.append("人际关系很受朋友欢迎的报告描述");
+                } else if (this.positiveScore >= 1.0) {
+                    buf.append("人际关系有点距离感的报告描述");
+                } else {
+                    buf.append("人际关系疏远的报告描述");
+                }
+                break;
             default:
                 buf.append(this.indicator.name);
                 buf.append("的报告描述。");
