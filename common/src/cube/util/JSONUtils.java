@@ -187,4 +187,8 @@ public final class JSONUtils {
         }
         return list;
     }
+
+    public static String filter(String text) {
+        return text.replaceAll("\\n", "\\\\n");
+    }
 }

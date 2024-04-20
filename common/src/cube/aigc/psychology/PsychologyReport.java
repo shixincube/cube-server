@@ -109,7 +109,14 @@ public class PsychologyReport implements JSONable {
         this.timestamp = json.getLong("timestamp");
         this.name = json.getString("name");
         this.attribute = new Attribute(json.getJSONObject("attribute"));
-        this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
+
+        if (json.has("fileLabel")) {
+            this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
+        }
+        else if (json.has("fileCode")) {
+            this.fileCode = json.getString("fileCode");
+        }
+
         this.theme = Theme.parse(json.getString("theme"));
         this.finished = json.getBoolean("finished");
         this.state = AIGCStateCode.parse(json.getInt("state"));
@@ -164,9 +171,17 @@ public class PsychologyReport implements JSONable {
         this.behaviorList.addAll(behaviorList);
     }
 
+    public List<String> getBehaviorList() {
+        return this.behaviorList;
+    }
+
     public void setReportTextList(List<String> textList) {
         this.reportTextList = new ArrayList<>();
         this.reportTextList.addAll(textList);
+    }
+
+    public List<String> getReportTextList() {
+        return this.reportTextList;
     }
 
     public String getName() {
@@ -222,18 +237,10 @@ public class PsychologyReport implements JSONable {
             Logger.d(this.getClass(), "Data is null");
         }
 
-        return (null == this.paragraphList || this.paragraphList.isEmpty() || null == this.evaluationReport);
+        return (null == this.evaluationReport);
     }
 
-    public String getMarkdown() {
-        return this.makeMarkdown(false);
-    }
-
-    private String makeMarkdown(boolean outputParagraph) {
-        if (null != this.markdown && null == this.evaluationReport) {
-            return this.markdown;
-        }
-
+    public String makeMarkdown(boolean outputParagraph) {
         StringBuilder buf = new StringBuilder();
         buf.append("# ").append(this.theme.name).append("报告");
 
@@ -335,6 +342,7 @@ public class PsychologyReport implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = this.toCompactJSON();
+
         if (null != this.evaluationReport) {
             json.put("evaluationReport", this.evaluationReport.toCompactJSON());
         }
@@ -364,12 +372,23 @@ public class PsychologyReport implements JSONable {
         json.put("contactId", this.contactId);
         json.put("name", this.name);
         json.put("attribute", this.attribute.toJSON());
-        json.put("fileLabel", this.fileLabel.toCompactJSON());
+
+        if (null != this.fileLabel) {
+            json.put("fileLabel", this.fileLabel.toCompactJSON());
+        }
+        else if (null != this.fileCode) {
+            json.put("fileCode", this.fileCode);
+        }
+
         json.put("theme", this.theme.name);
         json.put("timestamp", this.timestamp);
         json.put("finished", this.finished);
         json.put("state", this.state.code);
-        json.put("markdown", this.makeMarkdown(false));
+
+        if (null != this.markdown) {
+            json.put("markdown", this.markdown);
+        }
+
         if (null != this.mbtiFeature) {
             json.put("mbti", this.mbtiFeature.toJSON());
         }

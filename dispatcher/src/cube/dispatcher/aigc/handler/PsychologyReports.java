@@ -26,8 +26,8 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.aigc.psychology.PsychologyReport;
 import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.PsychologyReport;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -70,12 +70,11 @@ public class PsychologyReports extends ContextHandler {
                         Manager.getInstance().generatePsychologyReport(token, attribute, fileCode, theme);
                 if (null != report) {
                     this.respondOk(response, report.toJSON());
-                    this.complete();
                 }
                 else {
                     this.respond(response, HttpStatus.NOT_FOUND_404);
-                    this.complete();
                 }
+                this.complete();
             } catch (Exception e) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
@@ -93,19 +92,29 @@ public class PsychologyReports extends ContextHandler {
 
             try {
                 String snString = request.getParameter("sn");
-                long sn = 0;
-                String fileCode = request.getParameter("fc");
                 if (null != snString) {
-                    sn = Long.parseLong(snString);
-                }
-                PsychologyReport report = (0 != sn) ? Manager.getInstance().getPsychologyReport(token, sn)
-                        : Manager.getInstance().getPsychologyReport(token, fileCode);
-                if (null != report) {
-                    this.respondOk(response, report.toJSON());
+                    long sn = Long.parseLong(snString);
+                    PsychologyReport report = Manager.getInstance().getPsychologyReport(token, sn);
+                    if (null != report) {
+                        this.respondOk(response, report.toJSON());
+                    }
+                    else {
+                        this.respond(response, HttpStatus.NOT_FOUND_404);
+                    }
                     this.complete();
                 }
                 else {
-                    this.respond(response, HttpStatus.NOT_FOUND_404);
+                    long cid = Long.parseLong(request.getParameter("cid"));
+                    long start = Long.parseLong(request.getParameter("start"));
+                    long end = Long.parseLong(request.getParameter("end"));
+                    int page = Integer.parseInt(request.getParameter("page"));
+                    JSONObject data = Manager.getInstance().getPsychologyReports(token, cid, start, end, page);
+                    if (null != data) {
+                        this.respondOk(response, data);
+                    }
+                    else {
+                        this.respond(response, HttpStatus.NOT_FOUND_404);
+                    }
                     this.complete();
                 }
             } catch (Exception e) {

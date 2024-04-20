@@ -1837,16 +1837,23 @@ public class Manager implements Tickable, PerformerListener {
     /**
      * 查询心理学绘图预测报告。
      *
-     * @param fileCode
+     * @param token
+     * @param contactId
+     * @param startTime
+     * @param endTime
+     * @param pageIndex
      * @return
      */
-    public PsychologyReport getPsychologyReport(String token, String fileCode) {
-        if (null == fileCode) {
+    public JSONObject getPsychologyReports(String token, long contactId, long startTime, long endTime, int pageIndex) {
+        if (endTime < startTime) {
             return null;
         }
 
         JSONObject data = new JSONObject();
-        data.put("fileCode", fileCode);
+        data.put("cid", contactId);
+        data.put("start", startTime);
+        data.put("end", endTime);
+        data.put("page", pageIndex);
         Packet packet = new Packet(AIGCAction.GetPsychologyReport.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
@@ -1863,8 +1870,7 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
-        PsychologyReport report = new PsychologyReport(Packet.extractDataPayload(responsePacket));
-        return report;
+        return Packet.extractDataPayload(responsePacket);
     }
 
     public PsychologyReport getPsychologyReport(String token, long sn) {

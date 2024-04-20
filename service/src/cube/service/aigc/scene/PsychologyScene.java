@@ -46,6 +46,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -153,13 +154,19 @@ public class PsychologyScene {
         return report;
     }
 
-    public PsychologyReport getPsychologyReportByFileCode(String fileCode) {
-        for (Map.Entry<Long, PsychologyReport> e : this.psychologyReportMap.entrySet()) {
-            if (e.getValue().getFileLabel().getFileCode().equals(fileCode)) {
-                return e.getValue();
+    public int numPsychologyReports(long contactId, long startTime, long endTime) {
+        return this.storage.countPsychologyReports(contactId, startTime, endTime);
+    }
+
+    public List<PsychologyReport> getPsychologyReports(long contactId, long startTime, long endTime, int pageIndex) {
+        List<PsychologyReport> list = this.storage.readPsychologyReports(contactId, startTime, endTime, pageIndex);
+        for (PsychologyReport report : list) {
+            FileLabel fileLabel = this.aigcService.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
+            if (null != fileLabel) {
+                report.setFileLabel(fileLabel);
             }
         }
-        return null;
+        return list;
     }
 
     /**
@@ -231,6 +238,8 @@ public class PsychologyScene {
 
                 // 填写数据
                 workflow.fillReport(report);
+                // 生成 Markdown 调试信息
+                report.makeMarkdown(false);
 
                 // 设置状态
                 if (report.isEmpty()) {
@@ -317,12 +326,12 @@ public class PsychologyScene {
         }
     }
 
-    public static void main(String[] args) {
-        PsychologyScene scene = PsychologyScene.getInstance();
-
-        AuthToken authToken = new AuthToken(Utils.randomString(16), AuthConsts.DEFAULT_DOMAIN, "AppKey",
-                1000L, System.currentTimeMillis(), System.currentTimeMillis() + 60 * 60 * 1000, false);
-        AIGCChannel channel = new AIGCChannel(authToken, "Test");
-        scene.processReport(channel, null, Theme.Stress);
-    }
+//    public static void main(String[] args) {
+//        PsychologyScene scene = PsychologyScene.getInstance();
+//
+//        AuthToken authToken = new AuthToken(Utils.randomString(16), AuthConsts.DEFAULT_DOMAIN, "AppKey",
+//                1000L, System.currentTimeMillis(), System.currentTimeMillis() + 60 * 60 * 1000, false);
+//        AIGCChannel channel = new AIGCChannel(authToken, "Test");
+//        scene.processReport(channel, null, Theme.Stress);
+//    }
 }

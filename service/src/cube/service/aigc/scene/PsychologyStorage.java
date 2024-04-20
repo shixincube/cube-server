@@ -38,6 +38,7 @@ import cube.core.StorageField;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
+import cube.util.EmojiFilter;
 import cube.util.JSONUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -52,6 +53,10 @@ import java.util.Map;
 public class PsychologyStorage implements Storagable {
 
     private final String reportTable = "psychology_report";
+
+    private final String reportBehaviorTable = "psychology_report_behavior";
+
+    private final String reportTextTable = "psychology_report_text";
 
     private final String reportParagraphTable = "psychology_report_paragraph";
 
@@ -85,6 +90,30 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("mbti_code", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
+            })
+    };
+
+    private final StorageField[] reportBehaviorFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("report_sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("behavior", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
+    public final StorageField[] reportTextFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("report_sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("text", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
             })
     };
 
@@ -140,6 +169,20 @@ public class PsychologyStorage implements Storagable {
             }
         }
 
+        if (!this.storage.exist(this.reportBehaviorTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.reportBehaviorTable, this.reportBehaviorFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.reportBehaviorTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.reportTextTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.reportTextTable, this.reportTextFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.reportTextTable + "' successfully");
+            }
+        }
+
         if (!this.storage.exist(this.reportParagraphTable)) {
             // 不存在，建新表
             if (this.storage.executeCreate(this.reportParagraphTable, this.reportParagraphFields)) {
@@ -157,14 +200,113 @@ public class PsychologyStorage implements Storagable {
             return null;
         }
 
-        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        PsychologyReport report = this.makeReport(result.get(0));
+        return report;
+    }
+
+    public List<PsychologyReport> readPsychologyReports(long contactId) {
+        List<PsychologyReport> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId)
+                });
+
+        for (StorageField[] fields : result) {
+            PsychologyReport report = this.makeReport(fields);
+            // 添加到列表
+            list.add(report);
+        }
+
+        return list;
+    }
+
+    public int countPsychologyReports(long contactId, long starTime, long endTime) {
+        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(*) FROM " + this.reportTable +
+                " WHERE contact_id=" + contactId + " AND `timestamp`>=" + starTime +
+                " AND `timestamp`<=" + endTime);
+        return result.get(0)[0].getInt();
+    }
+
+    public List<PsychologyReport> readPsychologyReports(long contactId, long starTime, long endTime, int pageIndex) {
+        List<PsychologyReport> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createGreaterThanEqual(new StorageField("timestamp", starTime)),
+                        Conditional.createAnd(),
+                        Conditional.createLessThanEqual(new StorageField("timestamp", endTime)),
+                        Conditional.createLimitOffset(5, pageIndex * 5)
+                });
+
+        for (StorageField[] fields : result) {
+            PsychologyReport report = this.makeReport(fields);
+            list.add(report);
+        }
+
+        return list;
+    }
+
+    public boolean writePsychologyReport(PsychologyReport report) {
+        if (null != report.getParagraphs()) {
+            for (ReportParagraph paragraph : report.getParagraphs()) {
+                this.storage.executeInsert(this.reportParagraphTable, new StorageField[] {
+                        new StorageField("report_sn", report.sn),
+                        new StorageField("title", paragraph.title),
+                        new StorageField("score", paragraph.score),
+                        new StorageField("description", paragraph.description),
+                        new StorageField("opinion", paragraph.opinion),
+                        new StorageField("features", JSONUtils.toStringArray(paragraph.getFeatures()).toString()),
+                        new StorageField("suggestions", JSONUtils.toStringArray(paragraph.getSuggestions()).toString())
+                });
+            }
+        }
+
+        if (null != report.getBehaviorList()) {
+            for (String behavior : report.getBehaviorList()) {
+                this.storage.executeInsert(this.reportBehaviorTable, new StorageField[] {
+                        new StorageField("report_sn", report.sn),
+                        new StorageField("behavior", EmojiFilter.filterEmoji(behavior))
+                });
+            }
+        }
+
+        if (null != report.getReportTextList()) {
+            for (String text : report.getReportTextList()) {
+                this.storage.executeInsert(this.reportTextTable, new StorageField[] {
+                        new StorageField("report_sn", report.sn),
+                        new StorageField("text", EmojiFilter.filterEmoji(text))
+                });
+            }
+        }
+
+        return this.storage.executeInsert(this.reportTable, new StorageField[] {
+                new StorageField("sn", report.sn),
+                new StorageField("contact_id", report.contactId),
+                new StorageField("timestamp", report.timestamp),
+                new StorageField("name", report.getName()),
+                new StorageField("gender", report.getAttribute().gender),
+                new StorageField("age", report.getAttribute().age),
+                new StorageField("fileCode", report.getFileCode()),
+                new StorageField("theme", report.getTheme().code),
+                new StorageField("evaluation_data", report.getEvaluationReport().toJSON().toString()),
+                new StorageField("mbti_code", report.getMBTIFeature().getCode())
+        });
+    }
+
+    private PsychologyReport makeReport(StorageField[] storageFields) {
+        Map<String, StorageField> data = StorageFields.get(storageFields);
+
         PsychologyReport report = new PsychologyReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
                 data.get("timestamp").getLong(), data.get("name").getString(),
                 new Attribute(data.get("gender").getString(), data.get("age").getInt()),
                 data.get("fileCode").getString(), Theme.parse(data.get("theme").getString()));
 
         if (!data.get("evaluation_data").isNullValue()) {
-            EvaluationReport evaluationReport = new EvaluationReport(new JSONObject(data.get("evaluation_data").getString()));
+            String content = JSONUtils.filter(data.get("evaluation_data").getString().trim());
+            EvaluationReport evaluationReport = new EvaluationReport(new JSONObject(content));
             report.setEvaluationReport(evaluationReport);
         }
 
@@ -172,6 +314,28 @@ public class PsychologyStorage implements Storagable {
             MBTIFeature feature = new MBTIFeature(data.get("mbti_code").getString());
             report.setMBTIFeature(feature);
         }
+
+        List<StorageField[]> fields = this.storage.executeQuery(this.reportBehaviorTable,
+                this.reportBehaviorFields, new Conditional[] {
+                        Conditional.createEqualTo("report_sn", report.sn)
+                });
+        List<String> behaviorList = new ArrayList<>();
+        for (StorageField[] behaviorFields : fields) {
+            Map<String, StorageField> bf = StorageFields.get(behaviorFields);
+            behaviorList.add(bf.get("behavior").getString());
+        }
+        report.setBehaviorList(behaviorList);
+
+        fields = this.storage.executeQuery(this.reportTextTable,
+                this.reportTextFields, new Conditional[] {
+                        Conditional.createEqualTo("report_sn", report.sn)
+                });
+        List<String> textList = new ArrayList<>();
+        for (StorageField[] textFields : fields) {
+            Map<String, StorageField> tf = StorageFields.get(textFields);
+            textList.add(tf.get("text").getString());
+        }
+        report.setReportTextList(textList);
 
         List<StorageField[]> paragraphResult = this.storage.executeQuery(this.reportParagraphTable,
                 this.reportParagraphFields, new Conditional[] {
@@ -194,79 +358,5 @@ public class PsychologyStorage implements Storagable {
         }
 
         return report;
-    }
-
-    public List<PsychologyReport> readPsychologyReports(long contactId) {
-        List<PsychologyReport> list = new ArrayList<>();
-
-        List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
-                new Conditional[] {
-                        Conditional.createEqualTo("contact_id", contactId)
-                });
-
-        for (StorageField[] fields : result) {
-            Map<String, StorageField> data = StorageFields.get(fields);
-            PsychologyReport report = new PsychologyReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
-                    data.get("timestamp").getLong(), data.get("name").getString(),
-                    new Attribute(data.get("gender").getString(), data.get("age").getInt()),
-                    data.get("fileCode").getString(), Theme.parse(data.get("theme").getString()));
-
-            if (!data.get("evaluation_data").isNullValue()) {
-                EvaluationReport evaluationReport = new EvaluationReport(new JSONObject(data.get("evaluation_data").getString()));
-                report.setEvaluationReport(evaluationReport);
-            }
-
-            List<StorageField[]> paragraphResult = this.storage.executeQuery(this.reportParagraphTable,
-                    this.reportParagraphFields, new Conditional[] {
-                            Conditional.createEqualTo("report_sn", report.sn)
-                    });
-            for (StorageField[] paragraphFields : paragraphResult) {
-                Map<String, StorageField> pd = StorageFields.get(paragraphFields);
-                ReportParagraph paragraph = new ReportParagraph(pd.get("title").getString(),
-                        pd.get("score").getInt(), pd.get("description").getString(), pd.get("opinion").getString());
-
-                String arrayString = pd.get("features").getString();
-                JSONArray array = new JSONArray(arrayString);
-                paragraph.addFeatures(JSONUtils.toStringList(array));
-
-                arrayString = pd.get("suggestions").getString();
-                array = new JSONArray(arrayString);
-                paragraph.addSuggestions(JSONUtils.toStringList(array));
-
-                report.addParagraph(paragraph);
-            }
-
-            // 添加到列表
-            list.add(report);
-        }
-
-        return list;
-    }
-
-    public boolean writePsychologyReport(PsychologyReport report) {
-        for (ReportParagraph paragraph : report.getParagraphs()) {
-            this.storage.executeInsert(this.reportParagraphTable, new StorageField[] {
-                    new StorageField("report_sn", report.sn),
-                    new StorageField("title", paragraph.title),
-                    new StorageField("score", paragraph.score),
-                    new StorageField("description", paragraph.description),
-                    new StorageField("opinion", paragraph.opinion),
-                    new StorageField("features", JSONUtils.toStringArray(paragraph.getFeatures()).toString()),
-                    new StorageField("suggestions", JSONUtils.toStringArray(paragraph.getSuggestions()).toString())
-            });
-        }
-
-        return this.storage.executeInsert(this.reportTable, new StorageField[] {
-                new StorageField("sn", report.sn),
-                new StorageField("contact_id", report.contactId),
-                new StorageField("timestamp", report.timestamp),
-                new StorageField("name", report.getName()),
-                new StorageField("gender", report.getAttribute().gender),
-                new StorageField("age", report.getAttribute().age),
-                new StorageField("fileCode", report.getFileCode()),
-                new StorageField("theme", report.getTheme().code),
-                new StorageField("evaluation_data", report.getEvaluationReport().toJSON().toString()),
-                new StorageField("mbti_code", report.getMBTIFeature().getCode())
-        });
     }
 }

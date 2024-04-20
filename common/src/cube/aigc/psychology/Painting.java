@@ -65,6 +65,7 @@ public class Painting implements JSONable {
 
     public Painting(JSONObject json) {
         this.canvasSize = new Size(json.getJSONObject("size"));
+        this.otherSet = new OtherSet(json);
 
         if (json.has("materials")) {
             this.parseMaterials(json.getJSONArray("materials"));
@@ -82,8 +83,6 @@ public class Painting implements JSONable {
             this.personList = new ArrayList<>();
             this.parseList(json.getJSONArray("persons"), this.personList);
         }
-
-        this.otherSet = new OtherSet(json);
 
         if (json.has("attribute")) {
             this.attribute = new Attribute(json.getJSONObject("attribute"));

@@ -131,9 +131,9 @@ public class Workflow {
             }
         }
 
-        for (String title : template.getTitles()) {
-            this.paragraphList.add(new ReportParagraph(title));
-        }
+//        for (String title : template.getTitles()) {
+//            this.paragraphList.add(new ReportParagraph(title));
+//        }
 
         /* FIXME XJW 以下步骤不再推荐使用
         // 生成表征内容
@@ -245,7 +245,11 @@ public class Workflow {
         for (Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore()) {
             String marked = null;
             // 趋势
-            if (representation.negativeCorrelation > 0) {
+            if (representation.positiveCorrelation == representation.negativeCorrelation) {
+                marked = NormalTrick + representation.knowledgeStrategy.getComment().word;
+            }
+            else if (representation.negativeCorrelation > 0 &&
+                    representation.positiveCorrelation < representation.negativeCorrelation) {
                 marked = LowTrick + representation.knowledgeStrategy.getComment().word;
             }
             else if (representation.positiveCorrelation >= 2 ||

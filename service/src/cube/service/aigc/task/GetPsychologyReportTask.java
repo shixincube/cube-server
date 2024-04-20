@@ -36,7 +36,10 @@ import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.scene.PsychologyScene;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  * 获取心理学报告任务。
@@ -60,19 +63,18 @@ public class GetPsychologyReportTask extends ServiceTask {
             return;
         }
 
-        if (!packet.data.has("fileCode") && !packet.data.has("sn")) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
-            markResponseTime();
-            return;
-        }
-
-        String fileCode = null;
         long sn = 0;
+        long contactId = 0;
+        long startTime = 0;
+        long endTime = 0;
+        int pageIndex = 0;
 
         try {
-            fileCode = packet.data.has("fileCode") ? packet.data.getString("fileCode") : null;
             sn = packet.data.has("sn") ? packet.data.getLong("sn") : 0;
+            contactId = packet.data.has("cid") ? packet.data.getLong("cid") : 0;
+            startTime = packet.data.has("start") ? packet.data.getLong("start") : 0;
+            endTime = packet.data.has("end") ? packet.data.getLong("end") : 0;
+            pageIndex = packet.data.has("page") ? packet.data.getInt("page") : 0;
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -80,17 +82,35 @@ public class GetPsychologyReportTask extends ServiceTask {
             return;
         }
 
-        PsychologyReport report = (0 != sn) ? PsychologyScene.getInstance().getPsychologyReport(sn)
-                : PsychologyScene.getInstance().getPsychologyReportByFileCode(fileCode);
+        if (0 != sn) {
+            PsychologyReport report = PsychologyScene.getInstance().getPsychologyReport(sn);
+            if (null != report) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, report.toJSON()));
+            }
+            else {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+            }
+        }
+        else if (0 != contactId && 0 != startTime && 0 != endTime) {
+            int num = PsychologyScene.getInstance().numPsychologyReports(contactId, startTime, endTime);
 
-        if (null != report) {
+            List<PsychologyReport> list = PsychologyScene.getInstance().getPsychologyReports(contactId,
+                    startTime, endTime, pageIndex);
+            JSONArray array = new JSONArray();
+            for (PsychologyReport report : list) {
+                array.put(report.toJSON());
+            }
+
+            JSONObject responseData = new JSONObject();
+            responseData.put("total", num);
+            responseData.put("page", pageIndex);
+            responseData.put("list", array);
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, report.toCompactJSON()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
         }
-        else {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
-        }
+
         markResponseTime();
     }
 }
