@@ -27,6 +27,7 @@
 package cube.aigc.psychology;
 
 import cell.util.log.Logger;
+import cube.aigc.psychology.composition.Doodle;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.house.*;
 import cube.aigc.psychology.material.other.OtherSet;
@@ -58,9 +59,12 @@ public class Painting implements JSONable {
 
     private OtherSet otherSet;
 
+    private List<Doodle> spaceDoodles;
+
     public Painting(Attribute attribute) {
         this.attribute = attribute;
         this.otherSet = new OtherSet();
+        this.spaceDoodles = new ArrayList<>();
     }
 
     public Painting(JSONObject json) {
@@ -69,6 +73,11 @@ public class Painting implements JSONable {
 
         if (json.has("materials")) {
             this.parseMaterials(json.getJSONArray("materials"));
+        }
+
+        if (json.has("spaceDoodles")) {
+            this.spaceDoodles = new ArrayList<>();
+            this.parseSpaceDoodles(json.getJSONArray("spaceDoodles"));
         }
 
         if (json.has("houses")) {
@@ -99,6 +108,13 @@ public class Painting implements JSONable {
             }
 
             targetList.add(thing);
+        }
+    }
+
+    private void parseSpaceDoodles(JSONArray array) {
+        for (int i = 0; i < array.length(); ++i) {
+            Doodle doodle = new Doodle(array.getJSONObject(i));
+            this.spaceDoodles.add(doodle);
         }
     }
 
@@ -475,6 +491,10 @@ public class Painting implements JSONable {
 
     public Size getCanvasSize() {
         return this.canvasSize;
+    }
+
+    public List<Doodle> getSpaceDoodles() {
+        return this.spaceDoodles;
     }
 
     /**

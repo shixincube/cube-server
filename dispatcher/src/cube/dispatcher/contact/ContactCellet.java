@@ -34,6 +34,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cube.common.action.ContactAction;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.contact.handler.CreateContact;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -89,6 +90,7 @@ public class ContactCellet extends AbstractCellet {
     @Override
     public boolean install() {
         this.performer = (Performer) this.getNucleus().getParameter("performer");
+        this.setupHandlers();
         return true;
     }
 
@@ -123,6 +125,10 @@ public class ContactCellet extends AbstractCellet {
     @Override
     public void onQuitted(TalkContext context, Servable server) {
         this.performer.execute(this.borrowDisconnectTask(context));
+    }
+
+    private void setupHandlers() {
+        this.performer.getHttpServer().addContextHandler(new CreateContact());
     }
 
     protected SignInTask borrowSignInTask(TalkContext talkContext, Primitive primitive) {

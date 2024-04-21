@@ -40,6 +40,7 @@ import cube.common.entity.AIGCUnit;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.Explorer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
@@ -270,7 +271,7 @@ public class PsychologyScene {
     private Painting processPainting(FileLabel fileLabel) {
         AIGCUnit unit = this.aigcService.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
         if (null == unit) {
-            Logger.w(this.getClass(), "#processPainting - Can NOT find CV unit in server");
+            Logger.w(this.getClass(), "#processPainting - Can NOT find unit in server");
             return null;
         }
 
@@ -290,9 +291,14 @@ public class PsychologyScene {
             return null;
         }
 
-        JSONObject responseData = Packet.extractDataPayload(response);
-        // 绘画识别结果
-        return new Painting(responseData.getJSONArray("result").getJSONObject(0));
+        try {
+            JSONObject responseData = Packet.extractDataPayload(response);
+            // 绘画识别结果
+            return new Painting(responseData.getJSONArray("result").getJSONObject(0));
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#processPainting", e);
+            return null;
+        }
     }
 
     private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme) {

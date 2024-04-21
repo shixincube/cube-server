@@ -29,6 +29,7 @@ package cube.service.aigc.scene;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.composition.Doodle;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.algorithm.Tendency;
@@ -75,7 +76,11 @@ public class Evaluation {
         // 画面大小比例
         double areaRatio = this.spaceLayout.getAreaRatio();
         if (areaRatio > 0) {
-            if (areaRatio >= (2.0f / 3.0f)) {
+            if (areaRatio <= 0.08) {
+                result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.7, 0.8));
+                result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
+            }
+            else if (areaRatio >= (2.0f / 3.0f)) {
                 result.addFeature(Comment.SelfExistence, Tendency.Positive);
 
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.4, 0.5));
@@ -380,6 +385,27 @@ public class Evaluation {
             }
         }
 
+        // 画面涂鸦
+        if (null != this.painting.getSpaceDoodles()) {
+            for (Doodle doodle : this.painting.getSpaceDoodles()) {
+                boolean isDoodle = false;
+                if (doodle.isValid()) {
+                    // 判断最大值
+                    if (doodle.max >= 1.0) {
+                        // 判断标准差和层密度
+                        if (doodle.standardDeviation >= 0.4 && doodle.hierarchy <= 0.05) {
+                            isDoodle = true;
+                        }
+                    }
+                }
+
+                if (isDoodle) {
+                    // 画面有1/4画幅涂鸦
+                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
+                }
+            }
+        }
+
         return result;
     }
 
@@ -598,9 +624,10 @@ public class Evaluation {
             }
             else if (Label.DeadTree == tree.getLabel()) {
                 // 枯树
-                result.addFeature(Comment.Depression, Tendency.Positive);
+                result.addFeature(Comment.EmotionalDisturbance, Tendency.Positive);
 
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
             }
             else if (Label.PineTree == tree.getLabel()) {
                 // 松树

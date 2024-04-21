@@ -188,12 +188,12 @@ public class EvaluationScore implements JSONable {
                 }
                 break;
             case Confidence:
-                if (this.positiveScore < 0.2) {
-                    buf.append("自信心不足的报告描述");
-                } else if (this.positiveScore < 1.5) {
+                if (this.positiveScore > this.negativeScore && this.positiveScore > 1.5) {
+                    buf.append("自信心很强的报告描述");
+                } else if (this.positiveScore > this.negativeScore && this.positiveScore > 0.3) {
                     buf.append("自信心较强的报告描述");
                 } else {
-                    buf.append("自信心很强的报告描述");
+                    buf.append("自信心不足的报告描述");
                 }
                 break;
             case EvaluationFromOutside:
