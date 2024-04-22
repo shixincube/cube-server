@@ -243,7 +243,7 @@ public class PsychologyScene {
                 report.makeMarkdown(false);
 
                 // 设置状态
-                if (report.isEmpty()) {
+                if (report.isNull()) {
                     report.setState(AIGCStateCode.Failure);
                 }
                 else {

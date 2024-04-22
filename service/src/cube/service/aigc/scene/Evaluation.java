@@ -29,6 +29,7 @@ package cube.service.aigc.scene;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.composition.Doodle;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.SpaceLayout;
@@ -370,6 +371,33 @@ public class Evaluation {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
         }
+        else {
+            // 房、树、人三元素中仅有一种元素
+            boolean onlyHouse = (null != house);
+            boolean onlyTree = (null != tree);
+            boolean onlyPerson = (null != person);
+
+            double weight = FloatUtils.random(0.3, 0.4);
+            Score score = result.getScore(Indicator.Confidence);
+            if (null != score) {
+                if (score.value < 0) {
+                    weight += FloatUtils.random(0.2, 0.3);
+                }
+                else {
+                    weight -= FloatUtils.random(0.1, 0.2);
+                }
+            }
+
+            if (onlyHouse) {
+                result.addScore(Indicator.Psychosis, 1, weight);
+            }
+            else if (onlyTree) {
+                result.addScore(Indicator.Psychosis, 1, weight);
+            }
+            else if (onlyPerson) {
+                result.addScore(Indicator.Psychosis, 1, weight);
+            }
+        }
 
         // 面积比例，建议不高于 0.010
         double tinyRatio = 0.008;
@@ -402,6 +430,7 @@ public class Evaluation {
                 if (isDoodle) {
                     // 画面有1/4画幅涂鸦
                     result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
+                    Logger.d(this.getClass(), "#evalSpaceStructure - Space doodle: " + doodle.toJSON().toString(4));
                 }
             }
         }
@@ -1374,7 +1403,11 @@ public class Evaluation {
             // 判断绘画是否是有效绘画
             if (!this.painting.isValid()) {
                 Logger.w(this.getClass(), "#makeEvaluationReport - Painting is NOT valid");
-                report = new EvaluationReport(this.painting.getAttribute(), new ArrayList<>());
+                List<EvaluationFeature> list = new ArrayList<>();
+                EvaluationFeature feature = new EvaluationFeature();
+                feature.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.8, 0.9));
+                list.add(feature);
+                report = new EvaluationReport(this.painting.getAttribute(), list);
                 return report;
             }
 

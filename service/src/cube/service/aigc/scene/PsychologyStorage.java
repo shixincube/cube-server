@@ -292,7 +292,8 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("fileCode", report.getFileCode()),
                 new StorageField("theme", report.getTheme().code),
                 new StorageField("evaluation_data", report.getEvaluationReport().toJSON().toString()),
-                new StorageField("mbti_code", report.getMBTIFeature().getCode())
+                new StorageField("mbti_code",
+                        (null != report.getMBTIFeature()) ? report.getMBTIFeature().getCode() : null)
         });
     }
 

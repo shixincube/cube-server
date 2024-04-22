@@ -232,7 +232,7 @@ public class PsychologyReport implements JSONable {
         this.paragraphList.add(paragraph);
     }
 
-    public boolean isEmpty() {
+    public boolean isNull() {
         if (null == this.evaluationReport) {
             Logger.d(this.getClass(), "Data is null");
         }
@@ -250,37 +250,48 @@ public class PsychologyReport implements JSONable {
         buf.append("\n> ").append(Utils.gsDateFormat.format(new Date(this.timestamp))).append("\n");
 
         if (null != this.evaluationReport) {
-            buf.append("\n\n");
-            buf.append("**特征表**");
-            buf.append("\n\n");
-            buf.append("| 特征 | 描述 | 正向趋势 | 负向趋势 |");
-            buf.append("\n");
-            buf.append("| ---- | ---- | ---- | ---- |");
-            for (Representation rep : this.evaluationReport.getRepresentationListByEvaluationScore()) {
+            if (this.evaluationReport.numRepresentations() > 0) {
+                buf.append("\n\n");
+                buf.append("**特征表**");
+                buf.append("\n\n");
+                buf.append("| 特征 | 描述 | 正向趋势 | 负向趋势 |");
                 buf.append("\n");
-                buf.append("|").append(rep.knowledgeStrategy.getComment().word);
-                buf.append("|").append(rep.description);
-                buf.append("|").append(rep.positiveCorrelation);
-                buf.append("|").append(rep.negativeCorrelation);
-                buf.append("|");
+                buf.append("| ---- | ---- | ---- | ---- |");
+                for (Representation rep : this.evaluationReport.getRepresentationListByEvaluationScore()) {
+                    buf.append("\n");
+                    buf.append("|").append(rep.knowledgeStrategy.getComment().word);
+                    buf.append("|").append(rep.description);
+                    buf.append("|").append(rep.positiveCorrelation);
+                    buf.append("|").append(rep.negativeCorrelation);
+                    buf.append("|");
+                }
+                buf.append("\n");
             }
-            buf.append("\n");
 
-            buf.append("\n");
-            buf.append("**评分表**");
-            buf.append("\n\n");
-            buf.append("| 评分项目 | 计分 | 计数 | 正权重分 | 负权重分 |");
-            buf.append("\n");
-            buf.append("| ---- | ---- | ---- | ---- | ---- |");
-            for (EvaluationScore score : this.evaluationReport.getEvaluationScores()) {
+            if (this.evaluationReport.numEvaluationScores() > 0) {
                 buf.append("\n");
-                buf.append("|").append(score.indicator.name);
-                buf.append("|").append(score.value);
-                buf.append("|").append(score.hit);
-                buf.append("|").append(score.positiveScore);
-                buf.append("|").append(score.negativeScore);
-                buf.append("|");
+                buf.append("**评分表**");
+                buf.append("\n\n");
+                buf.append("| 评分项目 | 计分 | 计数 | 正权重分 | 负权重分 |");
+                buf.append("\n");
+                buf.append("| ---- | ---- | ---- | ---- | ---- |");
+                for (EvaluationScore score : this.evaluationReport.getEvaluationScores()) {
+                    buf.append("\n");
+                    buf.append("|").append(score.indicator.name);
+                    buf.append("|").append(score.value);
+                    buf.append("|").append(score.hit);
+                    buf.append("|").append(score.positiveScore);
+                    buf.append("|").append(score.negativeScore);
+                    buf.append("|");
+                }
+                buf.append("\n");
             }
+
+            // 心理状态是否异常需要关注
+            buf.append("\n");
+            buf.append("**是否需要审慎关注**");
+            buf.append("\n\n");
+            buf.append(this.evaluationReport.isAbnormal() ? "***是***" : "***否***");
             buf.append("\n");
         }
 
@@ -392,6 +403,11 @@ public class PsychologyReport implements JSONable {
         if (null != this.mbtiFeature) {
             json.put("mbti", this.mbtiFeature.toJSON());
         }
+
+        if (null != this.evaluationReport) {
+            json.put("abnormal", this.evaluationReport.isAbnormal());
+        }
+
         return json;
     }
 }

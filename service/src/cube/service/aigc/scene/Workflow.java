@@ -86,7 +86,11 @@ public class Workflow {
 
     public PsychologyReport fillReport(PsychologyReport report) {
         report.setEvaluationReport(this.evaluationReport);
-        report.setMBTIFeature(this.mbtiEvaluation.getResult());
+
+        if (null != this.mbtiEvaluation) {
+            report.setMBTIFeature(this.mbtiEvaluation.getResult());
+        }
+
         report.setBehaviorList(this.behaviorList);
         report.setReportTextList(this.reportTextList);
         report.setParagraphs(this.paragraphList);

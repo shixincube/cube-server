@@ -46,6 +46,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Resource {
 
+    /**
+     * 绘画指导语。
+     */
+    public final static String Instruction = "请你在纸上至少画出“房、树、人”三个元素（其他元素任意选择），共同构成一副有意义的画面。绘画时间10到15分钟。";
+
     public final static String ReportTextFormat = "%s的报告描述";
 
     private File commentDescriptionFile = new File("assets/psychology/interpretation.json");

@@ -62,6 +62,15 @@ public class EvaluationFeature {
         return this.scores;
     }
 
+    public Score getScore(Indicator indicator) {
+        for (Score score : this.scores) {
+            if (score.indicator == indicator) {
+                return score;
+            }
+        }
+        return null;
+    }
+
     public class Feature {
 
         public Comment comment;

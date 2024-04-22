@@ -279,7 +279,7 @@ public final class FileUtils {
     }
 
     private static String fastHash(List<byte[]> bytes) {
-        int seed = 13;
+        int seed = bytes.size();
         int length = bytes.get(0).length;
         int[] hashCode = new int[length];
 
@@ -654,5 +654,11 @@ public final class FileUtils {
 //        System.out.println();
 //        System.out.println(FileUtils.makeFileCode(2005179136L, "这个文件的文件名很长很长很长很长很长很长很长"
 //          + "很长很长很长很长很长很长很长很长很长很长很长.txt"));
+
+//        String fc1 = FileUtils.makeFileCode(22003303L, AuthConsts.DEFAULT_DOMAIN, "PT_10.jpg");
+//        String fc2 = FileUtils.makeFileCode(22003303L, AuthConsts.DEFAULT_DOMAIN, "PT_14.jpg");
+//        System.out.println(fc1);
+//        System.out.println(fc2);
+//        System.out.println(fc1.equals(fc2));
 //    }
 }

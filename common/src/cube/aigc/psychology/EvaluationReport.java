@@ -44,6 +44,15 @@ import java.util.List;
  */
 public class EvaluationReport implements JSONable {
 
+    /**
+     * 问题检出时依赖的关键指标。
+     */
+    public final Indicator[] KEY_INDICATORS = new Indicator[] {
+            Indicator.Psychosis,
+            Indicator.SocialAdaptability,
+            Indicator.Depression
+    };
+
     public final static String UNIT = ModelConfig.BAIZE_UNIT;
 
     private Attribute attribute;
@@ -90,6 +99,31 @@ public class EvaluationReport implements JSONable {
 
     public ScoreGroup getScoreGroup() {
         return this.scoreGroup;
+    }
+
+    public boolean isAbnormal() {
+        for (EvaluationScore es : this.scoreGroup.getEvaluationScores()) {
+            switch (es.indicator) {
+                case Psychosis:
+                    if (es.positiveScore > 0.3) {
+                        return true;
+                    }
+                    break;
+                case SocialAdaptability:
+                    if (es.negativeScore > es.positiveScore) {
+                        return true;
+                    }
+                    break;
+                case Depression:
+                    if (es.positiveScore > es.negativeScore) {
+                        return true;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        return false;
     }
 
     private void build(List<EvaluationFeature> resultList) {
@@ -140,6 +174,10 @@ public class EvaluationReport implements JSONable {
             }
         }
         return null;
+    }
+
+    public int numRepresentations() {
+        return this.representationList.size();
     }
 
     public List<Representation> getRepresentationList() {
@@ -230,6 +268,10 @@ public class EvaluationReport implements JSONable {
 
     public List<EvaluationScore> getEvaluationScores() {
         return this.scoreGroup.getEvaluationScores();
+    }
+
+    public int numEvaluationScores() {
+        return this.scoreGroup.getEvaluationScores().size();
     }
 
     private Indicator matchIndicator(Comment comment) {
