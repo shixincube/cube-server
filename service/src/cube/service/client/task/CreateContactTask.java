@@ -51,8 +51,8 @@ public class CreateContactTask extends ClientTask {
         JSONObject context = actionDialect.containsParam("context")
                 ? actionDialect.getParamAsJson("context") : null;
 
-        // 获取联系人
-        Contact contact = ContactManager.getInstance().createContact(contactId, domain, name, context);
+        // 新建联系人
+        Contact contact = ContactManager.getInstance().newContact(contactId, domain, name, context);
 
         ActionDialect result = new ActionDialect(ClientAction.CreateContact.name);
         copyNotifier(result);

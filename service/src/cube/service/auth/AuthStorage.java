@@ -409,6 +409,14 @@ public class AuthStorage implements Storagable {
         return token;
     }
 
+    public boolean deleteToken(String domain, long contactId) {
+        return this.storage.executeDelete(this.tokenTable, new Conditional[] {
+                Conditional.createEqualTo("domain", domain),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("cid", contactId)
+        });
+    }
+
     public void updateToken(AuthToken token) {
         this.storage.executeUpdate(this.tokenTable, new StorageField[] {
                 new StorageField("cid", token.getContactId())

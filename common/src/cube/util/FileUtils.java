@@ -110,10 +110,10 @@ public final class FileUtils {
 
         // 补空位
         if (buf.length() < 64) {
-            buf.append("_").append(contactId.toString());
+            buf.append("_").append(fileName);
         }
         if (buf.length() < 64) {
-            buf.append("_").append(fileName);
+            buf.append("_").append(contactId.toString());
         }
         if (buf.length() < 64) {
             buf.append("_").append(domain);

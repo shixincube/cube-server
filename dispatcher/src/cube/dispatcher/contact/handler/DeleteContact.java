@@ -26,7 +26,13 @@
 
 package cube.dispatcher.contact.handler;
 
+import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.common.Packet;
+import cube.common.action.ContactAction;
+import cube.common.state.ContactStateCode;
+import cube.dispatcher.Performer;
+import cube.dispatcher.contact.ContactCellet;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
@@ -34,29 +40,53 @@ import org.json.JSONObject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class CreateContact extends ContextHandler {
+public class DeleteContact extends ContextHandler {
 
-    public CreateContact() {
-        super("/contact/inject/");
-        setHandler(new Handler());
+    public DeleteContact(Performer performer) {
+        super("/contact/delete/");
+        setHandler(new Handler(performer));
     }
 
     private class Handler extends ContactHandler {
 
-        public Handler() {
-            super();
+        public Handler(Performer performer) {
+            super(performer);
         }
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
+            String tokenCode = getLastRequestPath(request);
+            if (null == tokenCode) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
-                String id = data.getString("id");
-                String name = data.has("name") ? data.getString("name") : null;
 
+                Packet requestPacket = new Packet(ContactAction.DeleteContact.name, data);
+                ActionDialect dialect = requestPacket.toDialect();
+                dialect.addParam("token", tokenCode);
 
+                ActionDialect responseDialect = this.performer.syncTransmit(ContactCellet.NAME, dialect);
+                if (null == responseDialect) {
+                    this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                    this.complete();
+                    return;
+                }
+
+                Packet responsePacket = new Packet(responseDialect);
+                if (Packet.extractCode(responsePacket) != ContactStateCode.Ok.code) {
+                    this.respond(response, HttpStatus.NOT_FOUND_404);
+                    this.complete();
+                    return;
+                }
+
+                this.respondOk(response, Packet.extractDataPayload(responsePacket));
+                this.complete();
             } catch (Exception e) {
-                Logger.w(CreateContact.class, "#doPost", e);
+                Logger.w(DeleteContact.class, "#doPost", e);
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
             }

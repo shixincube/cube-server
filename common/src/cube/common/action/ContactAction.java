@@ -72,6 +72,16 @@ public enum ContactAction {
     ModifyContact("modifyContact"),
 
     /**
+     * 新建联系人。
+     */
+    NewContact("newContact"),
+
+    /**
+     * 删除联系人。
+     */
+    DeleteContact("deleteContact"),
+
+    /**
      * 按照指定参数列出联系人分区清单。
      */
     ListContactZones("listContactZones"),

@@ -26,6 +26,7 @@
 
 package cube.dispatcher.contact.handler;
 
+import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,8 +36,11 @@ import javax.servlet.http.HttpServletRequest;
  */
 public abstract class ContactHandler extends CrossDomainHandler {
 
-    public ContactHandler() {
+    protected final Performer performer;
+
+    public ContactHandler(Performer performer) {
         super();
+        this.performer = performer;
     }
 
     protected String getRequestPath(HttpServletRequest request) {
@@ -62,6 +66,6 @@ public abstract class ContactHandler extends CrossDomainHandler {
         path = path.substring(1).trim();
         String[] paths = path.split("/");
         path = paths[paths.length - 1];
-        return path;
+        return path.trim();
     }
 }

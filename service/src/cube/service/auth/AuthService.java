@@ -314,6 +314,17 @@ public class AuthService extends AbstractModule {
     }
 
     /**
+     * 删除指定联系人的所有令牌。
+     *
+     * @param domain
+     * @param contactId
+     * @return
+     */
+    public boolean deleteContactTokens(String domain, long contactId) {
+        return this.authStorage.deleteToken(domain, contactId);
+    }
+
+    /**
      * 注入令牌。
      *
      * @param token

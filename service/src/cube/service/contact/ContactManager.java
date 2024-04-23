@@ -380,8 +380,12 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         return this.maxContactNum;
     }
 
+    public AuthService getAuthService() {
+        return (AuthService) this.getKernel().getModule(AuthService.NAME);
+    }
+
     /**
-     * 创建联系人。
+     * 新建联系人。
      *
      * @param contactId 指定联系人 ID 。
      * @param domain 指定域名称。
@@ -389,7 +393,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param context 指定联系人上下文数据，可以设置 {@code null} 值。
      * @return 返回联系人实例。
      */
-    public Contact createContact(Long contactId, String domain, String contactName, JSONObject context) {
+    public Contact newContact(Long contactId, String domain, String contactName, JSONObject context) {
         Contact contact = new Contact(contactId, domain, contactName);
         contact.setContext(context);
 
@@ -400,6 +404,29 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         ContactHook hook = this.pluginSystem.getNewContact();
         hook.apply(new ContactPluginContext(ContactHook.NewContact, contact, null));
+
+        return contact;
+    }
+
+    /**
+     * 删除联系人。
+     *
+     * @param contactId
+     * @param domain
+     * @return
+     */
+    public Contact deleteContact(Long contactId, String domain) {
+        Contact contact = this.storage.readContact(domain, contactId);
+        if (null == contact) {
+            return null;
+        }
+
+        if (!this.storage.deleteContact(domain, contactId)) {
+            return null;
+        }
+
+        String key = UniqueKey.make(contactId, domain);
+        this.contactCache.remove(key);
 
         return contact;
     }
@@ -765,7 +792,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         ContactAppendix srcAppendix = new ContactAppendix(srcContact, appendix.toJSON());
 
         // 创建新联系人
-        Contact newContact = this.createContact(srcContact.getId(), destDomain, srcContact.getName(),
+        Contact newContact = this.newContact(srcContact.getId(), destDomain, srcContact.getName(),
                 srcContact.getContext());
         this.updateAppendix(srcAppendix);
 

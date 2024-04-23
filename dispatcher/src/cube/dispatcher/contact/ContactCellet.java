@@ -34,7 +34,8 @@ import cell.core.talk.dialect.DialectFactory;
 import cube.common.action.ContactAction;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
-import cube.dispatcher.contact.handler.CreateContact;
+import cube.dispatcher.contact.handler.DeleteContact;
+import cube.dispatcher.contact.handler.NewContact;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -128,7 +129,8 @@ public class ContactCellet extends AbstractCellet {
     }
 
     private void setupHandlers() {
-        this.performer.getHttpServer().addContextHandler(new CreateContact());
+        this.performer.getHttpServer().addContextHandler(new NewContact(this.performer));
+        this.performer.getHttpServer().addContextHandler(new DeleteContact(this.performer));
     }
 
     protected SignInTask borrowSignInTask(TalkContext talkContext, Primitive primitive) {

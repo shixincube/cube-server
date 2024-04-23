@@ -452,6 +452,24 @@ public class ContactStorage implements Storagable {
     }
 
     /**
+     * 删除联系人。
+     *
+     * @param domain
+     * @param id
+     * @return
+     */
+    public boolean deleteContact(String domain, long id) {
+        String table = this.contactTableNameMap.get(domain);
+        if (null == table) {
+            return false;
+        }
+
+        return this.storage.executeDelete(table, new Conditional[] {
+                Conditional.createEqualTo("id", id)
+        });
+    }
+
+    /**
      * 更新联系人时间戳。
      *
      * @param contact

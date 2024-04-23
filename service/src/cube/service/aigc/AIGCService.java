@@ -648,7 +648,7 @@ public class AIGCService extends AbstractModule {
         ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactId(domain, Long.toString(phone));
         if (searchResult.getContactList().isEmpty()) {
             // 没有该联系人
-            Contact contact = ContactManager.getInstance().createContact(phone,
+            Contact contact = ContactManager.getInstance().newContact(phone,
                     domain, (null != userName) ? userName : phoneNumber, null);
             // 创建令牌
             AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
