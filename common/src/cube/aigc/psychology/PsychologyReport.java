@@ -129,8 +129,8 @@ public class PsychologyReport implements JSONable {
             this.mbtiFeature = new MBTIFeature(json.getJSONObject("mbti"));
         }
 
-        if (json.has("evaluationReport")) {
-            this.evaluationReport = new EvaluationReport(json.getJSONObject("evaluationReport"));
+        if (json.has("evaluation")) {
+            this.evaluationReport = new EvaluationReport(json.getJSONObject("evaluation"));
         }
 
         if (json.has("behaviorList")) {
@@ -289,9 +289,9 @@ public class PsychologyReport implements JSONable {
 
             // 心理状态是否异常需要关注
             buf.append("\n");
-            buf.append("**是否需要审慎关注**");
+            buf.append("**是否需要关注**");
             buf.append("\n\n");
-            buf.append(this.evaluationReport.isAbnormal() ? "***是***" : "***否***");
+            buf.append(this.evaluationReport.getAttentionSuggestion().description);
             buf.append("\n");
         }
 
@@ -350,12 +350,20 @@ public class PsychologyReport implements JSONable {
         return this.markdown;
     }
 
+    public JSONObject toJSON(boolean markdown) {
+        JSONObject json = this.toJSON();
+        if (!markdown) {
+            json.remove("markdown");
+        }
+        return json;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = this.toCompactJSON();
 
         if (null != this.evaluationReport) {
-            json.put("evaluationReport", this.evaluationReport.toCompactJSON());
+            json.put("evaluation", this.evaluationReport.toCompactJSON());
         }
 
         if (null != this.behaviorList) {
@@ -405,7 +413,10 @@ public class PsychologyReport implements JSONable {
         }
 
         if (null != this.evaluationReport) {
-            json.put("abnormal", this.evaluationReport.isAbnormal());
+            JSONObject attention = new JSONObject();
+            attention.put("level", this.evaluationReport.getAttentionSuggestion().level);
+            attention.put("desc", this.evaluationReport.getAttentionSuggestion().description);
+            json.put("attention", attention);
         }
 
         return json;

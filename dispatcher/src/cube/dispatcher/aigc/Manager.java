@@ -1842,9 +1842,11 @@ public class Manager implements Tickable, PerformerListener {
      * @param startTime
      * @param endTime
      * @param pageIndex
+     * @param markdown
      * @return
      */
-    public JSONObject getPsychologyReports(String token, long contactId, long startTime, long endTime, int pageIndex) {
+    public JSONObject getPsychologyReports(String token, long contactId, long startTime, long endTime, int pageIndex,
+                                           boolean markdown) {
         if (endTime < startTime) {
             return null;
         }
@@ -1854,6 +1856,7 @@ public class Manager implements Tickable, PerformerListener {
         data.put("start", startTime);
         data.put("end", endTime);
         data.put("page", pageIndex);
+        data.put("markdown", markdown);
         Packet packet = new Packet(AIGCAction.GetPsychologyReport.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
@@ -1873,9 +1876,10 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public PsychologyReport getPsychologyReport(String token, long sn) {
+    public PsychologyReport getPsychologyReport(String token, long sn, boolean markdown) {
         JSONObject data = new JSONObject();
         data.put("sn", sn);
+        data.put("markdown", markdown);
         Packet packet = new Packet(AIGCAction.GetPsychologyReport.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);

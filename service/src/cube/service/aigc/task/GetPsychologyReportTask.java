@@ -64,6 +64,7 @@ public class GetPsychologyReportTask extends ServiceTask {
         }
 
         long sn = 0;
+        boolean markdown = false;
         long contactId = 0;
         long startTime = 0;
         long endTime = 0;
@@ -71,6 +72,7 @@ public class GetPsychologyReportTask extends ServiceTask {
 
         try {
             sn = packet.data.has("sn") ? packet.data.getLong("sn") : 0;
+            markdown = packet.data.has("markdown") && packet.data.getBoolean("markdown");
             contactId = packet.data.has("cid") ? packet.data.getLong("cid") : 0;
             startTime = packet.data.has("start") ? packet.data.getLong("start") : 0;
             endTime = packet.data.has("end") ? packet.data.getLong("end") : 0;
@@ -86,7 +88,7 @@ public class GetPsychologyReportTask extends ServiceTask {
             PsychologyReport report = PsychologyScene.getInstance().getPsychologyReport(sn);
             if (null != report) {
                 this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, report.toJSON()));
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, report.toJSON(markdown)));
             }
             else {
                 this.cellet.speak(this.talkContext,
@@ -100,7 +102,7 @@ public class GetPsychologyReportTask extends ServiceTask {
                     startTime, endTime, pageIndex);
             JSONArray array = new JSONArray();
             for (PsychologyReport report : list) {
-                array.put(report.toJSON());
+                array.put(report.toJSON(markdown));
             }
 
             JSONObject responseData = new JSONObject();

@@ -38,7 +38,6 @@ import cube.common.entity.Contact;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
 import cube.service.contact.ContactManager;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -59,10 +58,16 @@ public class GetContactTask extends ServiceTask {
 
         Long id = null;
         String domain = null;
+        String code = null;
         try {
-            id = data.getLong("id");
-            domain = data.getString("domain");
-        } catch (JSONException e) {
+            if (data.has("id")) {
+                id = data.getLong("id");
+                domain = data.getString("domain");
+            }
+            else {
+                code = data.getString("code");
+            }
+        } catch (Exception e) {
             Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.InvalidParameter.code, data));
@@ -70,7 +75,14 @@ public class GetContactTask extends ServiceTask {
             return;
         }
 
-        Contact contact = ContactManager.getInstance().getContact(domain, id);
+        Contact contact = null;
+        if (null != id && null != domain) {
+            contact = ContactManager.getInstance().getContact(domain, id);
+        }
+        else {
+            contact = ContactManager.getInstance().getContact(code);
+        }
+
         if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));

@@ -28,6 +28,7 @@ package cube.dispatcher.aigc.handler;
 
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.Theme;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -65,7 +66,7 @@ public class PsychologyReports extends ContextHandler {
                 JSONObject data = this.readBodyAsJSONObject(request);
                 Attribute attribute = new Attribute(data.getJSONObject("attribute"));
                 String fileCode = data.getString("fileCode");
-                String theme = data.getString("theme");
+                String theme = data.has("theme") ? data.getString("theme") : Theme.Generic.code;
                 PsychologyReport report =
                         Manager.getInstance().generatePsychologyReport(token, attribute, fileCode, theme);
                 if (null != report) {
@@ -91,10 +92,11 @@ public class PsychologyReports extends ContextHandler {
             }
 
             try {
+                boolean markdown = null != request.getParameter("markdown") && Boolean.parseBoolean(request.getParameter("markdown"));
                 String snString = request.getParameter("sn");
                 if (null != snString) {
                     long sn = Long.parseLong(snString);
-                    PsychologyReport report = Manager.getInstance().getPsychologyReport(token, sn);
+                    PsychologyReport report = Manager.getInstance().getPsychologyReport(token, sn, markdown);
                     if (null != report) {
                         this.respondOk(response, report.toJSON());
                     }
@@ -108,7 +110,7 @@ public class PsychologyReports extends ContextHandler {
                     long start = Long.parseLong(request.getParameter("start"));
                     long end = Long.parseLong(request.getParameter("end"));
                     int page = Integer.parseInt(request.getParameter("page"));
-                    JSONObject data = Manager.getInstance().getPsychologyReports(token, cid, start, end, page);
+                    JSONObject data = Manager.getInstance().getPsychologyReports(token, cid, start, end, page, markdown);
                     if (null != data) {
                         this.respondOk(response, data);
                     }

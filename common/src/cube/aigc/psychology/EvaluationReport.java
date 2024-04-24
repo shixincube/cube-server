@@ -63,6 +63,8 @@ public class EvaluationReport implements JSONable {
 
     private ScoreGroup scoreGroup;
 
+    private AttentionSuggestion attentionSuggestion;
+
     public EvaluationReport(Attribute attribute, EvaluationFeature evaluationFeature) {
         this(attribute, Collections.singletonList((evaluationFeature)));
     }
@@ -72,6 +74,7 @@ public class EvaluationReport implements JSONable {
         this.representationList = new ArrayList<>();
         this.representationTopN = 10;
         this.scoreGroup = new ScoreGroup();
+        this.attentionSuggestion = AttentionSuggestion.NoAttention;
         this.build(evaluationFeatureList);
     }
 
@@ -83,6 +86,7 @@ public class EvaluationReport implements JSONable {
             this.representationList.add(new Representation(array.getJSONObject(i)));
         }
         this.scoreGroup = new ScoreGroup(json.getJSONObject("scoreGroup"));
+        this.attentionSuggestion = AttentionSuggestion.parse(json.getInt("attention"));
     }
 
     public void setTopN(int value) {
@@ -101,29 +105,8 @@ public class EvaluationReport implements JSONable {
         return this.scoreGroup;
     }
 
-    public boolean isAbnormal() {
-        for (EvaluationScore es : this.scoreGroup.getEvaluationScores()) {
-            switch (es.indicator) {
-                case Psychosis:
-                    if (es.positiveScore > 0.3) {
-                        return true;
-                    }
-                    break;
-                case SocialAdaptability:
-                    if (es.negativeScore > es.positiveScore) {
-                        return true;
-                    }
-                    break;
-                case Depression:
-                    if (es.positiveScore > es.negativeScore) {
-                        return true;
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-        return false;
+    public AttentionSuggestion getAttentionSuggestion() {
+        return this.attentionSuggestion;
     }
 
     private void build(List<EvaluationFeature> resultList) {
@@ -165,6 +148,54 @@ public class EvaluationReport implements JSONable {
                 return score2 - score1;
             }
         });
+
+        // 计算关注
+        this.calcAttentionSuggestion();
+    }
+
+    private void calcAttentionSuggestion() {
+        int score = 0;
+        for (EvaluationScore es : this.scoreGroup.getEvaluationScores()) {
+            switch (es.indicator) {
+                case Psychosis:
+                    if (es.positiveScore > 0.3) {
+                        score += 5;
+                    }
+                    break;
+                case SocialAdaptability:
+                    if (es.negativeScore > es.positiveScore) {
+                        score += 1;
+
+                        if (es.negativeScore - es.positiveScore > 0.3) {
+                            score += 1;
+                        }
+                    }
+                    break;
+                case Depression:
+                    if (es.positiveScore > es.negativeScore) {
+                        score += 1;
+
+                        if (es.positiveScore > 0.7) {
+                            score += 1;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (score > 0) {
+            if (score >= 5) {
+                this.attentionSuggestion = AttentionSuggestion.SpecialAttention;
+            }
+            else if (score >= 3) {
+                this.attentionSuggestion = AttentionSuggestion.FocusedAttention;
+            }
+            else {
+                this.attentionSuggestion = AttentionSuggestion.GeneralAttention;
+            }
+        }
     }
 
     public Representation getRepresentation(Comment comment) {
@@ -348,6 +379,8 @@ public class EvaluationReport implements JSONable {
 
         json.put("scoreGroup", this.scoreGroup.toJSON());
 
+        json.put("attention", this.attentionSuggestion.level);
+
         return json;
     }
 
@@ -363,6 +396,8 @@ public class EvaluationReport implements JSONable {
         json.put("representationList", array);
 
         json.put("scoreGroup", this.scoreGroup.toCompactJSON());
+
+        json.put("attention", this.attentionSuggestion.level);
 
         return json;
     }
