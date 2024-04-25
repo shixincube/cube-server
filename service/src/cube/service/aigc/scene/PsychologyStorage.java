@@ -85,6 +85,9 @@ public class PsychologyStorage implements Storagable {
             new StorageField("theme", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("finished_timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
             new StorageField("evaluation_data", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
@@ -291,6 +294,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("age", report.getAttribute().age),
                 new StorageField("fileCode", report.getFileCode()),
                 new StorageField("theme", report.getTheme().code),
+                new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("evaluation_data", report.getEvaluationReport().toJSON().toString()),
                 new StorageField("mbti_code",
                         (null != report.getMBTIFeature()) ? report.getMBTIFeature().getCode() : null)
@@ -303,7 +307,8 @@ public class PsychologyStorage implements Storagable {
         PsychologyReport report = new PsychologyReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
                 data.get("timestamp").getLong(), data.get("name").getString(),
                 new Attribute(data.get("gender").getString(), data.get("age").getInt()),
-                data.get("fileCode").getString(), Theme.parse(data.get("theme").getString()));
+                data.get("fileCode").getString(), Theme.parse(data.get("theme").getString()),
+                data.get("finished_timestamp").getLong());
 
         if (!data.get("evaluation_data").isNullValue()) {
             String content = JSONUtils.filter(data.get("evaluation_data").getString().trim());

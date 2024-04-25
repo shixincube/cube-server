@@ -77,14 +77,14 @@ public class GeneratePsychologyReportTask extends ServiceTask {
         Attribute attribute = null;
         String fileCode = null;
         String themeName = null;
-        boolean paragraphInferrable = false;
+//        boolean paragraphInferrable = false;
 
         try {
             attribute = new Attribute(packet.data.getJSONObject("attribute"));
             fileCode = packet.data.getString("fileCode");
             themeName = packet.data.getString("theme");
-            paragraphInferrable = packet.data.has("paragraph")
-                    && packet.data.getBoolean("paragraph");
+//            paragraphInferrable = packet.data.has("paragraph")
+//                    && packet.data.getBoolean("paragraph");
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -101,7 +101,7 @@ public class GeneratePsychologyReportTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        PsychologyReport report = service.generatePsychologyReport(token, attribute, fileCode, theme, paragraphInferrable,
+        PsychologyReport report = service.generatePsychologyReport(token, attribute, fileCode, theme,
                 new PsychologySceneListener() {
             @Override
             public void onPaintingPredict(PsychologyReport report, FileLabel file) {
@@ -114,7 +114,7 @@ public class GeneratePsychologyReportTask extends ServiceTask {
             }
 
             @Override
-            public void onPaintingPredictFailed(PsychologyReport report, FileLabel file) {
+            public void onPaintingPredictFailed(PsychologyReport report) {
                 Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredictFailed - " + token);
             }
 

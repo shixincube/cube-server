@@ -65,6 +65,8 @@ public class PsychologyReport implements JSONable {
 
     private boolean finished = false;
 
+    private long finishedTimestamp;
+
     private AIGCStateCode state;
 
     private String markdown = null;
@@ -91,7 +93,7 @@ public class PsychologyReport implements JSONable {
     }
 
     public PsychologyReport(long sn, long contactId, long timestamp, String name, Attribute attribute,
-                            String fileCode, Theme theme) {
+                            String fileCode, Theme theme, long finishedTimestamp) {
         this.sn = sn;
         this.contactId = contactId;
         this.timestamp = timestamp;
@@ -100,6 +102,7 @@ public class PsychologyReport implements JSONable {
         this.fileCode = fileCode;
         this.theme = theme;
         this.finished = true;
+        this.finishedTimestamp = finishedTimestamp;
         this.state = AIGCStateCode.Ok;
     }
 
@@ -119,6 +122,7 @@ public class PsychologyReport implements JSONable {
 
         this.theme = Theme.parse(json.getString("theme"));
         this.finished = json.getBoolean("finished");
+        this.finishedTimestamp = json.getLong("finishedTimestamp");
         this.state = AIGCStateCode.parse(json.getInt("state"));
 
         if (json.has("markdown")) {
@@ -202,6 +206,11 @@ public class PsychologyReport implements JSONable {
 
     public void setFinished(boolean finished) {
         this.finished = finished;
+        this.finishedTimestamp = System.currentTimeMillis();
+    }
+
+    public long getFinishedTimestamp() {
+        return this.finishedTimestamp;
     }
 
     public FileLabel getFileLabel() {
@@ -402,6 +411,7 @@ public class PsychologyReport implements JSONable {
         json.put("theme", this.theme.name);
         json.put("timestamp", this.timestamp);
         json.put("finished", this.finished);
+        json.put("finishedTimestamp", this.finishedTimestamp);
         json.put("state", this.state.code);
 
         if (null != this.markdown) {

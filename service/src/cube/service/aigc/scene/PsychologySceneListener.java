@@ -31,7 +31,7 @@ import cube.aigc.psychology.PsychologyReport;
 import cube.common.entity.FileLabel;
 
 /**
- * 场景事件监听器。
+ * 心理学测试报告事件监听器。
  */
 public interface PsychologySceneListener {
 
@@ -39,7 +39,7 @@ public interface PsychologySceneListener {
 
     void onPaintingPredictCompleted(PsychologyReport report, FileLabel file, Painting painting);
 
-    void onPaintingPredictFailed(PsychologyReport report, FileLabel file);
+    void onPaintingPredictFailed(PsychologyReport report);
 
     void onReportEvaluate(PsychologyReport report);
 

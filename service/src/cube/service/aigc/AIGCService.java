@@ -517,6 +517,38 @@ public class AIGCService extends AbstractModule {
         return this.storage.readContactPreference(contactId);
     }
 
+    public int numUnitsByName(String unitName) {
+        int num = 0;
+        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
+        while (iter.hasNext()) {
+            AIGCUnit unit = iter.next();
+            if (unit.getCapability().getName().equals(unitName)) {
+                ++num;
+            }
+        }
+        return num;
+    }
+
+    /**
+     * 选择空闲的单元，如果没有空闲单元返回 <code>null</code> 值。
+     *
+     * @param unitName
+     * @return
+     */
+    public AIGCUnit selectIdleUnitByName(String unitName) {
+        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
+        while (iter.hasNext()) {
+            AIGCUnit unit = iter.next();
+            if (unit.getCapability().getName().equals(unitName)
+                    && unit.getContext().isValid()
+                    && !unit.isRunning()) {
+                return unit;
+            }
+        }
+
+        return null;
+    }
+
     public AIGCUnit selectUnitByName(String unitName) {
         ArrayList<AIGCUnit> candidates = new ArrayList<>();
 
@@ -1715,13 +1747,11 @@ public class AIGCService extends AbstractModule {
      * @param attribute
      * @param fileCode
      * @param theme
-     * @param paragraphInferrable
      * @param listener
      * @return
      */
     public PsychologyReport generatePsychologyReport(String token, Attribute attribute, String fileCode,
-                                                     Theme theme, boolean paragraphInferrable,
-                                                     PsychologySceneListener listener) {
+                                                     Theme theme, PsychologySceneListener listener) {
         if (!this.isStarted()) {
             return null;
         }
