@@ -154,7 +154,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new InferByModule());
         httpServer.addContextHandler(new PreInfer());
         httpServer.addContextHandler(new PsychologyReports());
-        httpServer.addContextHandler(new QueryPsychologyReport());
+        httpServer.addContextHandler(new CheckPsychology());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -1870,6 +1870,28 @@ public class Manager implements Tickable, PerformerListener {
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.w(this.getClass(), "#getPsychologyReport - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject checkPsychologyPainting(String token, String fileCode) {
+        JSONObject data = new JSONObject();
+        data.put("fileCode", fileCode);
+        Packet packet = new Packet(AIGCAction.CheckPsychologyPainting.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#checkPsychologyPainting - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#checkPsychologyPainting - Response state is " + Packet.extractCode(responsePacket));
             return null;
         }
 

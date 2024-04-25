@@ -27,7 +27,6 @@
 package cube.service.aigc.scene;
 
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
@@ -40,13 +39,15 @@ import cube.common.entity.AIGCUnit;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.Explorer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -150,9 +151,32 @@ public class PsychologyScene {
             return false;
         }
 
-        
+        AIGCUnit unit = this.aigcService.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
 
-        return false;
+        JSONObject data = new JSONObject();
+        data.put("fileLabel", fileLabel.toJSON());
+        Packet request = new Packet(AIGCAction.CheckPsychologyPainting.name, data);
+        ActionDialect dialect = this.aigcService.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+        if (null == dialect) {
+            Logger.w(this.getClass(), "#checkPsychologyPainting - Predict image unit error");
+            return false;
+        }
+
+        Packet response = new Packet(dialect);
+        if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#checkPsychologyPainting - Predict image response state: " +
+                    Packet.extractCode(response));
+            return false;
+        }
+
+        try {
+            JSONObject responseData = Packet.extractDataPayload(response);
+            // 结果
+            return responseData.getBoolean("result");
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#checkPsychologyPainting", e);
+            return false;
+        }
     }
 
     public PsychologyReport getPsychologyReport(long sn) {
