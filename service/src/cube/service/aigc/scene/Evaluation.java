@@ -816,7 +816,7 @@ public class Evaluation {
             if (tree.isDoodle()) {
                 // 涂鸦的树
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
-                Logger.d(this.getClass(), "#evalTree - Tree is doodle - " + tree.doodle.toJSON().toString(4));
+                Logger.d(this.getClass(), "#evalTree - Tree is doodle - \n" + tree.doodle.toJSON().toString(4));
             }
         }
 
