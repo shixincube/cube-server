@@ -37,17 +37,17 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class ScoreGroup implements JSONable {
+public class ScoreAccelerator implements JSONable {
 
     private List<Score> scoreList;
 
     private List<EvaluationScore> evaluationScoreList;
 
-    public ScoreGroup() {
+    public ScoreAccelerator() {
         this.scoreList = new ArrayList<>();
     }
 
-    public ScoreGroup(JSONObject json) {
+    public ScoreAccelerator(JSONObject json) {
         this.scoreList = new ArrayList<>();
         if (json.has("scores")) {
             JSONArray array = json.getJSONArray("scores");

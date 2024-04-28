@@ -31,10 +31,67 @@ import cube.aigc.psychology.Indicator;
 
 public class RepresentationStrategy {
 
-    public RepresentationStrategy() {
+    private RepresentationStrategy() {
     }
 
-    public Indicator matchIndicator(Comment comment) {
+    public static Indicator matchIndicator(Comment comment) {
+        switch (comment) {
+            case Extroversion:
+                return Indicator.Extroversion;
+            case Introversion:
+                return Indicator.Introversion;
+            case Narcissism:
+                return Indicator.Narcissism;
+            case SelfConfidence:
+                return Indicator.Confidence;
+            case SelfEsteem:
+                return Indicator.SelfEsteem;
+            case SocialAdaptability:
+                return Indicator.SocialAdaptability;
+            case Independence:
+                return Indicator.Independence;
+            case Idealization:
+                return Indicator.Idealism;
+            case DelicateEmotions:
+                return Indicator.Emotion;
+            case SelfExistence:
+                return Indicator.SelfConsciousness;
+            case Luxurious:
+                return Indicator.Realism;
+            case SenseOfSecurity:
+                return Indicator.SenseOfSecurity;
+            case HighPressure:
+            case ExternalPressure:
+                return Indicator.Stress;
+            case SelfControl:
+                return Indicator.SelfControl;
+            case WorldWeariness:
+            case Escapism:
+                return Indicator.Anxiety;
+            case Depression:
+                return Indicator.Depression;
+            case SimpleIdea:
+            case Childish:
+                return Indicator.Simple;
+            case Hostility:
+                return Indicator.Hostile;
+            case Aggression:
+                return Indicator.Attacking;
+            case PayAttentionToFamily:
+                return Indicator.Family;
+            case PursueInterpersonalRelationships:
+                return Indicator.InterpersonalRelation;
+            case PursuitOfAchievement:
+                return Indicator.AchievementMotivation;
+            case Creativity:
+                return Indicator.Creativity;
+            case PositiveExpectation:
+                return Indicator.Struggle;
+            case DesireForFreedom:
+                return Indicator.DesireForFreedom;
+            default:
+                break;
+        }
         return null;
     }
 }

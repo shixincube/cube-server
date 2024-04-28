@@ -61,7 +61,7 @@ public class EvaluationReport implements JSONable {
 
     private int representationTopN;
 
-    private ScoreGroup scoreGroup;
+    private ScoreAccelerator scoreAccelerator;
 
     private AttentionSuggestion attentionSuggestion;
 
@@ -73,7 +73,7 @@ public class EvaluationReport implements JSONable {
         this.attribute = attribute;
         this.representationList = new ArrayList<>();
         this.representationTopN = 10;
-        this.scoreGroup = new ScoreGroup();
+        this.scoreAccelerator = new ScoreAccelerator();
         this.attentionSuggestion = AttentionSuggestion.NoAttention;
         this.build(evaluationFeatureList);
     }
@@ -85,7 +85,7 @@ public class EvaluationReport implements JSONable {
         for (int i = 0; i < array.length(); ++i) {
             this.representationList.add(new Representation(array.getJSONObject(i)));
         }
-        this.scoreGroup = new ScoreGroup(json.getJSONObject("scoreGroup"));
+        this.scoreAccelerator = new ScoreAccelerator(json.getJSONObject("accelerator"));
         this.attentionSuggestion = AttentionSuggestion.parse(json.getInt("attention"));
     }
 
@@ -101,8 +101,8 @@ public class EvaluationReport implements JSONable {
         return this.attribute;
     }
 
-    public ScoreGroup getScoreGroup() {
-        return this.scoreGroup;
+    public ScoreAccelerator getScoreAccelerator() {
+        return this.scoreAccelerator;
     }
 
     public AttentionSuggestion getAttentionSuggestion() {
@@ -135,7 +135,7 @@ public class EvaluationReport implements JSONable {
 
             // 提取并合并分数
             for (Score score : result.getScores()) {
-                this.scoreGroup.addScore(score);
+                this.scoreAccelerator.addScore(score);
             }
         }
 
@@ -155,7 +155,7 @@ public class EvaluationReport implements JSONable {
 
     private void calcAttentionSuggestion() {
         int score = 0;
-        for (EvaluationScore es : this.scoreGroup.getEvaluationScores()) {
+        for (EvaluationScore es : this.scoreAccelerator.getEvaluationScores()) {
             switch (es.indicator) {
                 case Psychosis:
                     if (es.positiveScore > 0.3) {
@@ -215,13 +215,13 @@ public class EvaluationReport implements JSONable {
         return this.representationList;
     }
 
-    public List<Representation> getRepresentationListOrderByCorrelation() {
-        List<Representation> result = new ArrayList<>(this.representationTopN);
-        for (int i = 0, len = Math.min(this.representationTopN, this.representationList.size()); i < len; ++i) {
-            result.add(this.representationList.get(i));
-        }
-        return result;
-    }
+//    public List<Representation> getRepresentationListOrderByCorrelation() {
+//        List<Representation> result = new ArrayList<>(this.representationTopN);
+//        for (int i = 0, len = Math.min(this.representationTopN, this.representationList.size()); i < len; ++i) {
+//            result.add(this.representationList.get(i));
+//        }
+//        return result;
+//    }
 
     /**
      * 通过和评分结果进行对比排序，返回表征列表。
@@ -232,7 +232,7 @@ public class EvaluationReport implements JSONable {
         List<Representation> result = new ArrayList<>();
         for (Representation representation : this.representationList) {
             // 匹配和评分表一致的特征
-            Indicator indicator = this.matchIndicator(representation.knowledgeStrategy.getComment());
+            Indicator indicator = RepresentationStrategy.matchIndicator(representation.knowledgeStrategy.getComment());
             if (null != indicator) {
                 result.add(representation);
             }
@@ -273,13 +273,13 @@ public class EvaluationReport implements JSONable {
         List<Indicator> indicators = new ArrayList<>();
         for (Representation representation : this.representationList) {
             // 匹配和评分表一致的特征
-            Indicator indicator = this.matchIndicator(representation.knowledgeStrategy.getComment());
+            Indicator indicator = RepresentationStrategy.matchIndicator(representation.knowledgeStrategy.getComment());
             if (null != indicator) {
                 indicators.add(indicator);
             }
         }
 
-        List<EvaluationScore> list = this.scoreGroup.getEvaluationScores();
+        List<EvaluationScore> list = this.scoreAccelerator.getEvaluationScores();
         List<EvaluationScore> result = new ArrayList<>();
         for (EvaluationScore es : list) {
             if (indicators.contains(es.indicator)) {
@@ -298,72 +298,11 @@ public class EvaluationReport implements JSONable {
     }
 
     public List<EvaluationScore> getEvaluationScores() {
-        return this.scoreGroup.getEvaluationScores();
+        return this.scoreAccelerator.getEvaluationScores();
     }
 
     public int numEvaluationScores() {
-        return this.scoreGroup.getEvaluationScores().size();
-    }
-
-    private Indicator matchIndicator(Comment comment) {
-        switch (comment) {
-            case Extroversion:
-                return Indicator.Extroversion;
-            case Introversion:
-                return Indicator.Introversion;
-            case Narcissism:
-                return Indicator.Narcissism;
-            case SelfConfidence:
-                return Indicator.Confidence;
-            case SelfEsteem:
-                return Indicator.SelfEsteem;
-            case SocialAdaptability:
-                return Indicator.SocialAdaptability;
-            case Independence:
-                return Indicator.Independence;
-            case Idealization:
-                return Indicator.Idealism;
-            case DelicateEmotions:
-                return Indicator.Emotion;
-            case SelfExistence:
-                return Indicator.SelfConsciousness;
-            case Luxurious:
-                return Indicator.Realism;
-            case SenseOfSecurity:
-                return Indicator.SenseOfSecurity;
-            case HighPressure:
-            case ExternalPressure:
-                return Indicator.Stress;
-            case SelfControl:
-                return Indicator.SelfControl;
-            case WorldWeariness:
-            case Escapism:
-                return Indicator.Anxiety;
-            case Depression:
-                return Indicator.Depression;
-            case SimpleIdea:
-            case Childish:
-                return Indicator.Simple;
-            case Hostility:
-                return Indicator.Hostile;
-            case Aggression:
-                return Indicator.Attacking;
-            case PayAttentionToFamily:
-                return Indicator.Family;
-            case PursueInterpersonalRelationships:
-                return Indicator.InterpersonalRelation;
-            case PursuitOfAchievement:
-                return Indicator.AchievementMotivation;
-            case Creativity:
-                return Indicator.Creativity;
-            case PositiveExpectation:
-                return Indicator.Struggle;
-            case DesireForFreedom:
-                return Indicator.DesireForFreedom;
-            default:
-                break;
-        }
-        return null;
+        return this.scoreAccelerator.getEvaluationScores().size();
     }
 
     @Override
@@ -377,9 +316,15 @@ public class EvaluationReport implements JSONable {
         }
         json.put("representationList", array);
 
-        json.put("scoreGroup", this.scoreGroup.toJSON());
+        json.put("accelerator", this.scoreAccelerator.toJSON());
 
         json.put("attention", this.attentionSuggestion.level);
+
+        JSONArray priorityArray = new JSONArray();
+        for (EvaluationScore es : this.getEvaluationScoresByRepresentation()) {
+            priorityArray.put(es.toJSON());
+        }
+        json.put("priorities", priorityArray);
 
         return json;
     }
@@ -395,9 +340,15 @@ public class EvaluationReport implements JSONable {
         }
         json.put("representationList", array);
 
-        json.put("scoreGroup", this.scoreGroup.toCompactJSON());
+        json.put("accelerator", this.scoreAccelerator.toCompactJSON());
 
         json.put("attention", this.attentionSuggestion.level);
+
+        JSONArray priorityArray = new JSONArray();
+        for (EvaluationScore es : this.getEvaluationScoresByRepresentation()) {
+            priorityArray.put(es.toCompactJSON());
+        }
+        json.put("priorities", priorityArray);
 
         return json;
     }
