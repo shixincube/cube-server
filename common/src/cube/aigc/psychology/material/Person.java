@@ -99,6 +99,7 @@ public class Person extends Thing {
 
     public Person(BoundingBox boundingBox, Box box) {
         super(Label.Person.name, boundingBox, box);
+        this.backwardReasoning = true;
     }
 
     public Gender getGender() {

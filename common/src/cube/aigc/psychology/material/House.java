@@ -27,6 +27,8 @@
 package cube.aigc.psychology.material;
 
 import cube.aigc.psychology.material.house.*;
+import cube.vision.BoundingBox;
+import cube.vision.Box;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -65,6 +67,24 @@ public class House extends Thing {
         if (json.has("roof")) {
             this.roof = new Roof(json.getJSONObject("roof"));
         }
+    }
+
+    public House(BoundingBox boundingBox, Box box) {
+        super(Label.House.name, boundingBox, box);
+        this.backwardReasoning = true;
+    }
+
+    public void refreshBox(BoundingBox boundingBox, Box box) {
+        this.boundingBox.x = Math.min(this.boundingBox.x, boundingBox.x);
+        this.boundingBox.y = Math.min(this.boundingBox.y, boundingBox.y);
+        int pX = Math.max(this.boundingBox.getX2(), boundingBox.getX2());
+        int pY = Math.max(this.boundingBox.getY2(), boundingBox.getY2());
+
+        this.boundingBox.width = pX - this.boundingBox.x;
+        this.boundingBox.height = pY - this.boundingBox.y;
+
+        this.box.refresh(box);
+        this.area = Math.round(this.boundingBox.calculateArea() * 0.86f);
     }
 
     public void addSidewall(Sidewall sidewall) {

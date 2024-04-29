@@ -246,9 +246,16 @@ public class Painting implements JSONable {
     }
 
     private void buildHouse(Thing thing) {
-        if (null == this.houseList) {
-            Logger.i(this.getClass(), "#buildHouse - No house material");
-            return;
+        if (null == this.houseList || this.houseList.isEmpty()) {
+            Logger.i(this.getClass(), "#buildHouse - No house material, backward reasoning - " + thing.label);
+
+            BoundingBox boundingBox = new BoundingBox(thing.boundingBox.x - 1, thing.boundingBox.y - 1,
+                    thing.boundingBox.width + 2, thing.boundingBox.height + 2);
+            Box box = new Box(thing.box.x0 - 1, thing.box.y0 - 1, thing.box.x1 + 1, thing.box.y1 + 1);
+            House house = new House(boundingBox, box);
+
+            this.houseList = new ArrayList<>();
+            this.houseList.add(house);
         }
 
         for (House house : this.houseList) {
@@ -256,17 +263,26 @@ public class Painting implements JSONable {
                 case HouseSidewall:
                     if (house.box.detectCollision(thing.box)) {
                         house.addSidewall((Sidewall) thing);
+                        if (house.isBackwardReasoning()) {
+                            house.refreshBox(thing.boundingBox, thing.box);
+                        }
                     }
                     break;
                 case HouseRoof:
                 case HouseRoofTextured:
                     if (house.box.detectCollision(thing.box)) {
                         house.setRoof((Roof) thing);
+                        if (house.isBackwardReasoning()) {
+                            house.refreshBox(thing.boundingBox, thing.box);
+                        }
                     }
                     break;
                 case HouseRoofSkylight:
                     if (house.box.detectCollision(thing.box)) {
                         house.addRoofSkylight((RoofSkylight) thing);
+                        if (house.isBackwardReasoning()) {
+                            house.refreshBox(thing.boundingBox, thing.box);
+                        }
                     }
                     break;
                 case HouseChimney:
@@ -279,23 +295,35 @@ public class Painting implements JSONable {
                 case HouseDoorLocked:
                     if (house.box.detectCollision(thing.box)) {
                         house.addDoor((Door) thing);
+                        if (house.isBackwardReasoning()) {
+                            house.refreshBox(thing.boundingBox, thing.box);
+                        }
                     }
                     break;
                 case HouseWindow:
                 case HouseWindowOpened:
                     if (house.box.detectCollision(thing.box)) {
                         house.addWindow((Window) thing);
+                        if (house.isBackwardReasoning()) {
+                            house.refreshBox(thing.boundingBox, thing.box);
+                        }
                     }
                     break;
                 case HouseCurtain:
                 case HouseCurtainOpened:
                     if (house.box.detectCollision(thing.box)) {
                         house.addCurtain((Curtain) thing);
+                        if (house.isBackwardReasoning()) {
+                            house.refreshBox(thing.boundingBox, thing.box);
+                        }
                     }
                     break;
                 case HouseWindowRailing:
                     if (house.box.detectCollision(thing.box)) {
                         house.addWindowRailing((WindowRailing) thing);
+                        if (house.isBackwardReasoning()) {
+                            house.refreshBox(thing.boundingBox, thing.box);
+                        }
                     }
                     break;
                 case HouseSmoke:
@@ -318,40 +346,63 @@ public class Painting implements JSONable {
 
     private void buildTree(Thing thing) {
         if (null == this.treeList || this.treeList.isEmpty()) {
-            Logger.i(this.getClass(), "#buildTree - No tree material");
-            return;
+            // 没有识别出树，但是出现了树的元素，创建 Tree
+            Logger.i(this.getClass(), "#buildTree - No tree material, backward reasoning - " + thing.label);
+
+            BoundingBox boundingBox = new BoundingBox(thing.boundingBox.x - 1, thing.boundingBox.y - 1,
+                    thing.boundingBox.width + 2, thing.boundingBox.height + 2);
+            Box box = new Box(thing.box.x0 - 1, thing.box.y0 - 1, thing.box.x1 + 1, thing.box.y1 + 1);
+            Tree tree = new Tree(boundingBox, box);
+
+            this.treeList = new ArrayList<>();
+            this.treeList.add(tree);
         }
 
-        LinkedList<Thing> list = null;
+        LinkedList<Thing> list = this.sortByCollisionArea(this.treeList, thing.boundingBox);
+        Tree tree = (Tree) list.getLast();
 
         switch (thing.getLabel()) {
             case TreeTrunk:
-                list = this.sortByCollisionArea(this.treeList);
-                ((Tree) list.getLast()).addTrunk((Trunk) thing);
+                tree.addTrunk((Trunk) thing);
+                if (tree.isBackwardReasoning()) {
+                    tree.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case TreeBranch:
-                list = this.sortByCollisionArea(this.treeList);
-                ((Tree) list.getLast()).addBranch((Branch) thing);
+                tree.addBranch((Branch) thing);
+                if (tree.isBackwardReasoning()) {
+                    tree.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case TreeCanopy:
-                list = this.sortByCollisionArea(this.treeList);
-                ((Tree) list.getLast()).addCanopy((Canopy) thing);
+                tree.addCanopy((Canopy) thing);
+                if (tree.isBackwardReasoning()) {
+                    tree.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case TreeRoot:
-                list = this.sortByCollisionArea(this.treeList);
-                ((Tree) list.getLast()).addRoot((Root) thing);
+                tree.addRoot((Root) thing);
+                if (tree.isBackwardReasoning()) {
+                    tree.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case TreeFruit:
-                list = this.sortByCollisionArea(this.treeList);
-                ((Tree) list.getLast()).addFruit((Fruit) thing);
+                tree.addFruit((Fruit) thing);
+                if (tree.isBackwardReasoning()) {
+                    tree.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case TreeHole:
-                list = this.sortByCollisionArea(this.treeList);
-                ((Tree) list.getLast()).addHole((Hole) thing);
+                tree.addHole((Hole) thing);
+                if (tree.isBackwardReasoning()) {
+                    tree.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case TreeDrooping:
-                list = this.sortByCollisionArea(this.treeList);
-                ((Tree) list.getLast()).addDrooping((DroopingLeaves) thing);
+                tree.addDrooping((DroopingLeaves) thing);
+                if (tree.isBackwardReasoning()) {
+                    tree.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             default:
                 Logger.w(this.getClass(), "Unknown label: " + thing.getLabel().name + " for building tree");
@@ -362,7 +413,7 @@ public class Painting implements JSONable {
     private void buildPerson(Thing thing) {
         if (null == this.personList || this.personList.isEmpty()) {
             // 没有识别出人，但是出现了人的元素，创建 Person
-            Logger.i(this.getClass(), "#buildPerson - No person material");
+            Logger.i(this.getClass(), "#buildPerson - No person material, backward reasoning - " + thing.label);
 
             BoundingBox boundingBox = new BoundingBox(thing.boundingBox.x - 1, thing.boundingBox.y - 1,
                     thing.boundingBox.width + 2, thing.boundingBox.height + 2);
@@ -373,13 +424,15 @@ public class Painting implements JSONable {
             this.personList.add(person);
         }
 
-        LinkedList<Thing> list = this.sortByCollisionArea(this.personList);
+        LinkedList<Thing> list = this.sortByCollisionArea(this.personList, thing.boundingBox);
         Person person = (Person) list.getLast();
 
         switch (thing.getLabel()) {
             case PersonHead:
                 person.setHead((Head) thing);
-                person.refreshBox(thing.boundingBox, thing.box);
+                if (person.isBackwardReasoning()) {
+                    person.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case PersonBraid:
                 person.addBraid((Braid) thing);
@@ -390,54 +443,78 @@ public class Painting implements JSONable {
             case PersonCurlyHair:
             case PersonStandingHair:
                 person.addHair((Hair) thing);
-                person.refreshBox(thing.boundingBox, thing.box);
+                if (person.isBackwardReasoning()) {
+                    person.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case PersonCap:
                 person.setCap((Cap) thing);
                 break;
             case PersonEye:
                 person.addEye((Eye) thing);
-                person.refreshBox(thing.boundingBox, thing.box);
+                if (person.isBackwardReasoning()) {
+                    person.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case PersonEyebrow:
                 person.addEyebrow((Eyebrow) thing);
-                person.refreshBox(thing.boundingBox, thing.box);
+                if (person.isBackwardReasoning()) {
+                    person.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case PersonNose:
                 person.setNose((Nose) thing);
-                person.refreshBox(thing.boundingBox, thing.box);
+                if (person.isBackwardReasoning()) {
+                    person.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case PersonEar:
                 person.addEar((Ear) thing);
-                person.refreshBox(thing.boundingBox, thing.box);
+                if (person.isBackwardReasoning()) {
+                    person.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case PersonMouth:
                 person.setMouth((Mouth) thing);
-                person.refreshBox(thing.boundingBox, thing.box);
+                if (person.isBackwardReasoning()) {
+                    person.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case PersonBody:
                 person.setBody((Body) thing);
-                person.refreshBox(thing.boundingBox, thing.box);
+                if (person.isBackwardReasoning()) {
+                    person.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case PersonArm:
                 person.addArm((Arm) thing);
-                person.refreshBox(thing.boundingBox, thing.box);
+                if (person.isBackwardReasoning()) {
+                    person.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case PersonPalm:
                 person.addPalm((Palm) thing);
-                person.refreshBox(thing.boundingBox, thing.box);
+                if (person.isBackwardReasoning()) {
+                    person.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case PersonLeg:
                 person.addLeg((Leg) thing);
-                person.refreshBox(thing.boundingBox, thing.box);
+                if (person.isBackwardReasoning()) {
+                    person.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case PersonFoot:
                 person.addFoot((Foot) thing);
-                person.refreshBox(thing.boundingBox, thing.box);
+                if (person.isBackwardReasoning()) {
+                    person.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case PersonSkirt:
                 person.setSkirt((Skirt) thing);
-                person.refreshBox(thing.boundingBox, thing.box);
+                if (person.isBackwardReasoning()) {
+                    person.refreshBox(thing.boundingBox, thing.box);
+                }
                 break;
             case PersonMask:
                 person.setMask((Mask) thing);
@@ -457,7 +534,13 @@ public class Painting implements JSONable {
         }
     }
 
-    private LinkedList<Thing> sortByCollisionArea(List<? extends Thing> list) {
+    /**
+     * 从低到高。
+     *
+     * @param list
+     * @return
+     */
+    private LinkedList<Thing> sortByArea(List<? extends Thing> list) {
         LinkedList<Thing> result = new LinkedList<>(list);
         result.sort(new Comparator<Thing>() {
             @Override
@@ -468,6 +551,13 @@ public class Painting implements JSONable {
         return result;
     }
 
+    /**
+     * 从低到高。
+     *
+     * @param list
+     * @param box
+     * @return
+     */
     private LinkedList<Thing> sortByCollisionArea(List<? extends Thing> list, BoundingBox box) {
         LinkedList<Thing> result = new LinkedList<>(list);
         result.sort(new Comparator<Thing>() {

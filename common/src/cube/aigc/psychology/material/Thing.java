@@ -40,6 +40,11 @@ public abstract class Thing extends Material {
 
     protected Label paintingLabel;
 
+    /**
+     * 是否是反向推理来的元素。
+     */
+    protected boolean backwardReasoning = false;
+
     public Thing(String label, BoundingBox boundingBox, Box box) {
         super(label, boundingBox, box);
         this.paintingLabel = Label.parse(this.label);
@@ -56,6 +61,10 @@ public abstract class Thing extends Material {
 
     public Label getLabel() {
         return this.paintingLabel;
+    }
+
+    public boolean isBackwardReasoning() {
+        return this.backwardReasoning;
     }
 
     public int getWidth() {

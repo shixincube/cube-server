@@ -419,7 +419,7 @@ public class Evaluation {
                 boolean isDoodle = false;
                 if (doodle.isValid()) {
                     // 判断最大值
-                    if (doodle.max >= 1.0) {
+                    if (doodle.max >= 1.0 && doodle.max < 2.0) {
                         // 判断标准差和层密度
                         if (doodle.standardDeviation >= 0.4 && doodle.hierarchy <= 0.05) {
                             isDoodle = true;
@@ -1391,6 +1391,27 @@ public class Evaluation {
         return result;
     }
 
+    private List<EvaluationFeature> correct(List<EvaluationFeature> list) {
+        // 如果有乐观和社会适应性，则社会适应性负分降分
+        boolean optimism = false;
+        for (EvaluationFeature ef : list) {
+            Score score = ef.getScore(Indicator.Optimism);
+            if (null != score && score.value > 0) {
+                optimism = true;
+                break;
+            }
+        }
+        if (optimism) {
+            for (EvaluationFeature ef : list) {
+                Score score = ef.getScore(Indicator.SocialAdaptability);
+                if (null != score) {
+                    score.weight -= FloatUtils.random(0.50, 0.59);
+                }
+            }
+        }
+        return list;
+    }
+
     /**
      * 生成评估报告。
      *
@@ -1418,6 +1439,8 @@ public class Evaluation {
             results.add(this.evalTree());
             results.add(this.evalPerson());
             results.add(this.evalOthers());
+            // 矫正
+            results = this.correct(results);
             report = new EvaluationReport(this.painting.getAttribute(), results);
         }
         else {

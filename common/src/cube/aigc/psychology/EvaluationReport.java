@@ -163,7 +163,8 @@ public class EvaluationReport implements JSONable {
                     }
                     break;
                 case SocialAdaptability:
-                    if (es.negativeScore > es.positiveScore) {
+                    // 负分应当大于 0.2
+                    if (es.negativeScore > es.positiveScore && es.negativeScore >= 0.2) {
                         score += 1;
 
                         if (es.negativeScore - es.positiveScore > 0.3) {

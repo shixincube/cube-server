@@ -149,6 +149,8 @@ public class PsychologyStorage implements Storagable {
 
     private Storage storage;
 
+    public final int limit = 5;
+
     public PsychologyStorage(StorageType type, JSONObject config) {
         this.storage = StorageFactory.getInstance().createStorage(type, "PsychologyStorage", config);
     }
@@ -241,7 +243,7 @@ public class PsychologyStorage implements Storagable {
                         Conditional.createGreaterThanEqual(new StorageField("timestamp", starTime)),
                         Conditional.createAnd(),
                         Conditional.createLessThanEqual(new StorageField("timestamp", endTime)),
-                        Conditional.createLimitOffset(5, pageIndex * 5)
+                        Conditional.createLimitOffset(this.limit, pageIndex * this.limit)
                 });
 
         for (StorageField[] fields : result) {
