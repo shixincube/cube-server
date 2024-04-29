@@ -88,10 +88,10 @@ public class SpaceLayout {
         // 计算画面边距
         double paddingW = (painting.getCanvasSize().width - canvasW) * 0.5f;
         double paddingH = (painting.getCanvasSize().height - canvasH) * 0.5f;
-        this.topMargin = y - paddingH;
-        this.rightMargin = painting.getCanvasSize().width - x2 - paddingW;
-        this.bottomMargin = painting.getCanvasSize().height - y2 - paddingH;
-        this.leftMargin = x - paddingW;
+        this.topMargin = Math.max(y - paddingH, 0);
+        this.rightMargin = Math.max(painting.getCanvasSize().width - x2 - paddingW, 0);
+        this.bottomMargin = Math.max(painting.getCanvasSize().height - y2 - paddingH, 0);
+        this.leftMargin = Math.max(x - paddingW, 0);
     }
 
     public BoundingBox getPaintingBox() {

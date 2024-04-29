@@ -30,10 +30,10 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Score;
+import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.Doodle;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.SpaceLayout;
-import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.material.House;
 import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Person;
@@ -76,18 +76,25 @@ public class Evaluation {
 
         // 画面大小比例
         double areaRatio = this.spaceLayout.getAreaRatio();
+
+        Logger.d(this.getClass(), "#evalSpaceStructure - Area ratio: " + areaRatio +
+                " - TRBL: " + spaceLayout.getTopMargin() + "," + spaceLayout.getRightMargin() +
+                "," + spaceLayout.getBottomMargin() + "," + spaceLayout.getLeftMargin());
+
         if (areaRatio > 0) {
             if (areaRatio <= 0.08) {
                 result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.7, 0.8));
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
             }
-            else if (areaRatio >= (2.0f / 3.0f)) {
+            else if (areaRatio >= (2.0d / 3.0d)) {
                 result.addFeature(Comment.SelfExistence, Tendency.Positive);
 
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.Narcissism, 1, FloatUtils.random(0.2, 0.3));
+                // FIXME 画幅大，社会适应性正分
+                result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.5, 0.6));
             }
-            else if (areaRatio < (1.0f / 6.0f)) {
+            else if (areaRatio < (1.0d / 6.0d)) {
                 result.addFeature(Comment.SelfEsteem, Tendency.Negative);
                 result.addFeature(Comment.SelfConfidence, Tendency.Negative);
                 result.addFeature(Comment.SocialAdaptability, Tendency.Negative);
@@ -103,6 +110,8 @@ public class Evaluation {
 
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
                 result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.2, 0.3));
+                // FIXME 画幅大，社会适应性正分
+                result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.2, 0.3));
             }
         }
 
@@ -421,7 +430,7 @@ public class Evaluation {
                     // 判断最大值
                     if (doodle.max >= 1.0 && doodle.max < 2.0) {
                         // 判断标准差和层密度
-                        if (doodle.standardDeviation >= 0.4 && doodle.hierarchy <= 0.05) {
+                        if (doodle.standardDeviation >= 0.42 && doodle.hierarchy <= 0.05) {
                             isDoodle = true;
                         }
                     }
@@ -430,7 +439,7 @@ public class Evaluation {
                 if (isDoodle) {
                     // 画面有1/4画幅涂鸦
                     result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
-                    Logger.d(this.getClass(), "#evalSpaceStructure - Space doodle: " + doodle.toJSON().toString(4));
+                    Logger.d(this.getClass(), "#evalSpaceStructure - Space doodle: \n" + doodle.toJSON().toString(4));
                 }
             }
         }
@@ -642,6 +651,9 @@ public class Evaluation {
             return result;
         }
 
+        // 整个画面里没有树干
+        boolean hasTrunk = false;
+
         List<Tree> treeList = this.painting.getTrees();
         for (Tree tree : treeList) {
             // 树类型
@@ -694,8 +706,10 @@ public class Evaluation {
 
             // 树干
             if (tree.hasTrunk()) {
+                hasTrunk = true;
                 double ratio = tree.getTrunkWidthRatio();
-                if (ratio < 0.2d) {
+                Logger.d(this.getClass(), "#evalTree - Tree trunk width ratio: " + ratio);
+                if (ratio < 0.18d) {
                     // 细
                     result.addFeature(Comment.Powerlessness, Tendency.Positive);
 
@@ -709,12 +723,6 @@ public class Evaluation {
 
                     result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.2, 0.3));
                 }
-            }
-            else {
-                // 无树干
-                result.addFeature(Comment.Introversion, Tendency.Positive);
-
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
             }
 
             // 树根
@@ -820,6 +828,14 @@ public class Evaluation {
             }
         }
 
+        if (!hasTrunk) {
+            // 无树干
+            result.addFeature(Comment.Introversion, Tendency.Positive);
+
+            result.addScore(Indicator.Depression, 1, FloatUtils.random(0.4, 0.5));
+            result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
+        }
+
         return result;
     }
 
@@ -833,7 +849,8 @@ public class Evaluation {
             // 头
             if (person.hasHead()) {
                 // 头身比例
-                if (person.getHeadHeightRatio() > 0.25) {
+                Logger.d(this.getClass(), "#evalPerson - Head height ratio: " + person.getHeadHeightRatio());
+                if (person.getHeadHeightRatio() > 0.47d) {
                     // 头大
                     result.addFeature(Comment.SocialAdaptability, Tendency.Negative);
 
@@ -968,11 +985,21 @@ public class Evaluation {
             }
 
             // 判断人是否涂鸦
-            if (person.isDoodle()) {
-                // 涂鸦的人
-                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
-                Logger.d(this.getClass(), "#evalPerson - Person is doodle - " + person.doodle.toJSON().toString(4));
+            if (person.doodle.isValid()) {
+                if (person.doodle.max >= 1.0 && person.doodle.max < 2.0) {
+                    // 判断标准差和层密度
+                    if (person.doodle.standardDeviation >= 0.42 && person.doodle.hierarchy <= 0.05) {
+                        // 涂鸦的人
+                        result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
+                        Logger.d(this.getClass(), "#evalPerson - Person is doodle - \n" + person.doodle.toJSON().toString(4));
+                    }
+                }
             }
+//            if (person.isDoodle()) {
+//                // 涂鸦的人
+//                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
+//                Logger.d(this.getClass(), "#evalPerson - Person is doodle - \n" + person.doodle.toJSON().toString(4));
+//            }
         }
 
         return result;
@@ -1004,6 +1031,8 @@ public class Evaluation {
 
             if (other.get(Label.Sun).isDoodle()) {
                 // 涂鸦的太阳
+                Logger.d(this.getClass(), "#evalOthers - Sun is doodle - \n"
+                        + other.get(Label.Sun).doodle.toJSON().toString(4));
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.7, 0.8));
             }
         }
