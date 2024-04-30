@@ -386,6 +386,9 @@ public class Evaluation {
             boolean onlyTree = (null != tree);
             boolean onlyPerson = (null != person);
 
+            Logger.d(this.getClass(), "#evalSpaceStructure - only one material: H/T/P - " +
+                    onlyHouse + "/" + onlyTree + "/" + onlyPerson);
+
             double weight = FloatUtils.random(0.3, 0.4);
             Score score = result.getScore(Indicator.Confidence);
             if (null != score) {
@@ -393,9 +396,11 @@ public class Evaluation {
                     weight += FloatUtils.random(0.2, 0.3);
                 }
                 else {
-                    weight -= FloatUtils.random(0.1, 0.2);
+                    weight -= FloatUtils.random(0.2, 0.3);
                 }
             }
+
+            weight = Math.abs(weight);
 
             if (onlyHouse) {
                 result.addScore(Indicator.Psychosis, 1, weight);
@@ -438,7 +443,7 @@ public class Evaluation {
 
                 if (isDoodle) {
                     // 画面有1/4画幅涂鸦
-                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
+                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                     Logger.d(this.getClass(), "#evalSpaceStructure - Space doodle: \n" + doodle.toJSON().toString(4));
                 }
             }
@@ -658,12 +663,16 @@ public class Evaluation {
         for (Tree tree : treeList) {
             // 树类型
             if (Label.DeciduousTree == tree.getLabel()) {
+                hasTrunk = true;
+
                 // 落叶树
                 result.addFeature(Comment.ExternalPressure, Tendency.Positive);
 
                 result.addScore(Indicator.Stress, 1, FloatUtils.random(0.6, 0.7));
             }
             else if (Label.DeadTree == tree.getLabel()) {
+                hasTrunk = true;
+
                 // 枯树
                 result.addFeature(Comment.EmotionalDisturbance, Tendency.Positive);
 
@@ -671,6 +680,8 @@ public class Evaluation {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
             }
             else if (Label.PineTree == tree.getLabel()) {
+                hasTrunk = true;
+
                 // 松树
                 result.addFeature(Comment.SelfControl, Tendency.Positive);
 
@@ -678,6 +689,8 @@ public class Evaluation {
                 result.addScore(Indicator.SelfControl, 1, FloatUtils.random(0.6, 0.7));
             }
             else if (Label.WillowTree == tree.getLabel()) {
+                hasTrunk = true;
+
                 // 柳树
                 result.addFeature(Comment.Sensitiveness, Tendency.Positive);
                 result.addFeature(Comment.Emotionality, Tendency.Positive);
@@ -685,6 +698,8 @@ public class Evaluation {
                 result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.6, 0.7));
             }
             else if (Label.CoconutTree == tree.getLabel()) {
+                hasTrunk = true;
+
                 // 椰子树
                 result.addFeature(Comment.Emotionality, Tendency.Positive);
                 result.addFeature(Comment.Creativity, Tendency.Positive);
@@ -693,6 +708,8 @@ public class Evaluation {
                 result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.6, 0.7));
             }
             else if (Label.Bamboo == tree.getLabel()) {
+                hasTrunk = true;
+
                 // 竹子
                 result.addFeature(Comment.Independence, Tendency.Positive);
 
@@ -709,7 +726,7 @@ public class Evaluation {
                 hasTrunk = true;
                 double ratio = tree.getTrunkWidthRatio();
                 Logger.d(this.getClass(), "#evalTree - Tree trunk width ratio: " + ratio);
-                if (ratio < 0.18d) {
+                if (ratio < 0.16d) {
                     // 细
                     result.addFeature(Comment.Powerlessness, Tendency.Positive);
 
@@ -832,7 +849,6 @@ public class Evaluation {
             // 无树干
             result.addFeature(Comment.Introversion, Tendency.Positive);
 
-            result.addScore(Indicator.Depression, 1, FloatUtils.random(0.4, 0.5));
             result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
         }
 
@@ -1435,6 +1451,7 @@ public class Evaluation {
                 Score score = ef.getScore(Indicator.SocialAdaptability);
                 if (null != score) {
                     score.weight -= FloatUtils.random(0.50, 0.59);
+                    score.weight = Math.abs(score.weight);
                 }
             }
         }
@@ -1455,7 +1472,7 @@ public class Evaluation {
                 Logger.w(this.getClass(), "#makeEvaluationReport - Painting is NOT valid");
                 List<EvaluationFeature> list = new ArrayList<>();
                 EvaluationFeature feature = new EvaluationFeature();
-                feature.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.8, 0.9));
+                feature.addScore(Indicator.Unknown, 1, FloatUtils.random(0.8, 0.9));
                 list.add(feature);
                 report = new EvaluationReport(this.painting.getAttribute(), list);
                 return report;

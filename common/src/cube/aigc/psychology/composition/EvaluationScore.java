@@ -91,7 +91,7 @@ public class EvaluationScore implements JSONable {
             }
 
             // 计分
-            this.positiveScore += score.value * score.weight;
+            this.positiveScore += Math.abs(score.value * score.weight);
         }
         else if (score.value < 0) {
             // 最大权重值

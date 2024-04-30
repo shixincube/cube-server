@@ -155,11 +155,17 @@ public class EvaluationReport implements JSONable {
 
     private void calcAttentionSuggestion() {
         int score = 0;
+        boolean depression = false;
+        boolean senseOfSecurity = false;
+
         for (EvaluationScore es : this.scoreAccelerator.getEvaluationScores()) {
             switch (es.indicator) {
                 case Psychosis:
                     if (es.positiveScore > 0.3) {
-                        score += 5;
+                        score += 4;
+                    }
+                    else if (es.positiveScore > 0.2) {
+                        score += 3;
                     }
                     break;
                 case SocialAdaptability:
@@ -174,16 +180,27 @@ public class EvaluationReport implements JSONable {
                     break;
                 case Depression:
                     if (es.positiveScore > es.negativeScore) {
+                        depression = true;
                         score += 1;
 
-                        if (es.positiveScore > 0.7) {
-                            score += 1;
+                        if (es.positiveScore > 0.6) {
+                            score += 2;
                         }
+                    }
+                    break;
+                case SenseOfSecurity:
+                    if (es.negativeScore > 0.5) {
+                        senseOfSecurity = true;
+                        score += 1;
                     }
                     break;
                 default:
                     break;
             }
+        }
+
+        if (depression && senseOfSecurity) {
+            score += 1;
         }
 
         if (score > 0) {

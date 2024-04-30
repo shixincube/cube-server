@@ -211,6 +211,11 @@ public enum Indicator {
      */
     DesireForFreedom("向往自由", "DesireForFreedom"),
 
+    /**
+     * 未知。（服务无法进行处理）
+     */
+    Unknown("未知", "Unknown")
+
     ;
 
     public final String name;
