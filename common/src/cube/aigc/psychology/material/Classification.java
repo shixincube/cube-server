@@ -89,6 +89,8 @@ public class Classification {
                 return new Boy(json);
             case Girl:
                 return new Girl(json);
+            case StickMan:
+                return new StickMan(json);
 
             case Table:
                 return new Table(json);

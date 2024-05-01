@@ -242,7 +242,8 @@ public class Workflow {
     private List<String> inferBehavior(ThemeTemplate template, int age, String gender, int maxRepresentation) {
         List<String> result = new ArrayList<>();
 
-        for (Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore(maxRepresentation)) {
+        int count = 0;
+        for (Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore(100)) {
             String marked = null;
             // 趋势
             if (representation.positiveCorrelation == representation.negativeCorrelation) {
@@ -272,6 +273,11 @@ public class Workflow {
 //            else {
 //                marked = LowTrick + representation.knowledgeStrategy.getComment().word;
 //            }
+
+            ++count;
+            if (count >= maxRepresentation) {
+                continue;
+            }
 
             String interpretation = representation.knowledgeStrategy.getInterpretation();
             KnowledgeStrategy.Scene scene = representation.knowledgeStrategy.getScene(template.theme);

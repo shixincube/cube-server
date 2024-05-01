@@ -78,6 +78,8 @@ public enum Label {
 
     Girl("p_girl"),
 
+    StickMan("p_stick_man"),
+
     // 其他
 
     Table("p_table"),
@@ -322,7 +324,7 @@ public enum Label {
 
     public static Label parse(String name) {
         for (Label label : Label.values()) {
-            if (label.name.equals(name)) {
+            if (label.name.equalsIgnoreCase(name)) {
                 return label;
             }
         }

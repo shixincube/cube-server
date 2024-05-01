@@ -184,7 +184,6 @@ public class EvaluationReport implements JSONable {
                 case SenseOfSecurity:
                     if (es.negativeScore > 0.5) {
                         senseOfSecurity = true;
-                        score += 1;
                     }
                     break;
                 default:

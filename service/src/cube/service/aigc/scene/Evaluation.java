@@ -34,10 +34,7 @@ import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.Doodle;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.SpaceLayout;
-import cube.aigc.psychology.material.House;
-import cube.aigc.psychology.material.Label;
-import cube.aigc.psychology.material.Person;
-import cube.aigc.psychology.material.Tree;
+import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.Leg;
 import cube.util.FloatUtils;
@@ -92,7 +89,7 @@ public class Evaluation {
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.Narcissism, 1, FloatUtils.random(0.2, 0.3));
                 // FIXME 画幅大，社会适应性正分
-                result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.5, 0.6));
+//                result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.5, 0.6));
             }
             else if (areaRatio < (1.0d / 6.0d)) {
                 result.addFeature(Comment.SelfEsteem, Tendency.Negative);
@@ -111,7 +108,7 @@ public class Evaluation {
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
                 result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.2, 0.3));
                 // FIXME 画幅大，社会适应性正分
-                result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.2, 0.3));
+//                result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.2, 0.3));
             }
         }
 
@@ -270,6 +267,9 @@ public class Evaluation {
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
             }
+
+            // 没有人
+            result.addScore(Indicator.Depression, 1, FloatUtils.random(0.4, 0.5));
         }
         else if (null != house && null != person) {
             // 位置关系，使用 box 计算位置
@@ -430,6 +430,7 @@ public class Evaluation {
         // 画面涂鸦
         if (null != this.painting.getSpaceDoodles()) {
             for (Doodle doodle : this.painting.getSpaceDoodles()) {
+                System.out.println("Space doodle:\n" + doodle.toJSON().toString(4));
                 boolean isDoodle = false;
                 if (doodle.isValid()) {
                     // 判断最大值
@@ -676,7 +677,7 @@ public class Evaluation {
                 // 枯树
                 result.addFeature(Comment.EmotionalDisturbance, Tendency.Positive);
 
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
             }
             else if (Label.PineTree == tree.getLabel()) {
@@ -862,6 +863,29 @@ public class Evaluation {
         }
 
         for (Person person : this.painting.getPersons()) {
+            // 人类型
+            if (person instanceof StickMan) {
+                // 火柴人
+                result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.5, 0.6));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.4, 0.5));
+            }
+
+            // 性别
+            if (person.getGender() == Person.Gender.Female) {
+                if (this.painting.getAttribute().isMale()) {
+                    // 男画女
+                    result.addFeature(Comment.SocialPowerlessness, Tendency.Positive);
+                    result.addScore(Indicator.Emotion, -1, FloatUtils.random(0.3, 0.4));
+                }
+            }
+            else if (person.getGender() == Person.Gender.Male) {
+                if (this.painting.getAttribute().isFemale()) {
+                    // 女画男
+                    result.addFeature(Comment.SelfDemand, Tendency.Positive);
+                    result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
+                }
+            }
+
             // 头
             if (person.hasHead()) {
                 // 头身比例
@@ -1066,7 +1090,7 @@ public class Evaluation {
         if (other.has(Label.Mountain)) {
             // 山
             result.addFeature(Comment.NeedProtection, Tendency.Positive);
-            result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.4, 0.5));
         }
 
         if (other.has(Label.Flower)) {
@@ -1179,7 +1203,7 @@ public class Evaluation {
             // 狗
             result.addFeature(Comment.NeedProtection, Tendency.Positive);
             result.addFeature(Comment.SenseOfSecurity, Tendency.Negative);
-            result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.4, 0.5));
             counter += 1;
         }
 

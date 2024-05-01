@@ -163,6 +163,7 @@ public class Painting implements JSONable {
                 case Woman:
                 case Boy:
                 case Girl:
+                case StickMan:
                     addPerson((Person) thing);
                     unknownList.remove(thing);
                     break;
