@@ -266,7 +266,7 @@ public class PsychologyReport implements JSONable {
                 buf.append("| 特征 | 描述 | 正向趋势 | 负向趋势 |");
                 buf.append("\n");
                 buf.append("| ---- | ---- | ---- | ---- |");
-                for (Representation rep : this.evaluationReport.getRepresentationListByEvaluationScore()) {
+                for (Representation rep : this.evaluationReport.getRepresentationListByEvaluationScore(3)) {
                     buf.append("\n");
                     buf.append("|").append(rep.knowledgeStrategy.getComment().word);
                     buf.append("|").append(rep.description);

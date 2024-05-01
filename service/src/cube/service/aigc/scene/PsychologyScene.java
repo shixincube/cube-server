@@ -221,11 +221,14 @@ public class PsychologyScene {
      * @param attribute
      * @param fileLabel
      * @param theme
+     * @param maxBehaviorTexts
+     * @param maxIndicatorTexts
      * @param listener
      * @return
      */
     public PsychologyReport generateEvaluationReport(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
-                                                     Theme theme, PsychologySceneListener listener) {
+                                                     Theme theme, int maxBehaviorTexts, int maxIndicatorTexts,
+                                                     PsychologySceneListener listener) {
         if (null == channel) {
             Logger.e(this.getClass(), "#generateEvaluationReport - Channel is null");
             return null;
@@ -241,7 +244,8 @@ public class PsychologyScene {
         PsychologyReport report = new PsychologyReport(channel.getAuthToken().getContactId(),
                 attribute, fileLabel, theme);
 
-        ReportTask task = new ReportTask(channel, attribute, fileLabel, theme, listener, report);
+        ReportTask task = new ReportTask(channel, attribute, fileLabel, theme,
+                maxBehaviorTexts, maxIndicatorTexts, listener, report);
 
         this.taskQueue.offer(task);
 
@@ -341,7 +345,8 @@ public class PsychologyScene {
                     reportTask.listener.onReportEvaluate(reportTask.report);
 
                     // 根据图像推理报告
-                    Workflow workflow = processReport(reportTask.channel, painting, reportTask.theme);
+                    Workflow workflow = processReport(reportTask.channel, painting, reportTask.theme,
+                            reportTask.maxBehaviorTexts, reportTask.maxIndicatorTexts);
                     if (null == workflow) {
                         // 推理生成报告失败
                         Logger.w(PsychologyScene.class, "#generateEvaluationReport - onReportEvaluateFailed: " +
@@ -420,7 +425,8 @@ public class PsychologyScene {
         }
     }
 
-    private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme) {
+    private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme,
+                                   int maxBehaviorText, int maxIndicatorText) {
         Evaluation evaluation = (null == painting) ?
                 new Evaluation(new Attribute("male", 28)) : new Evaluation(painting);
 
@@ -438,7 +444,7 @@ public class PsychologyScene {
         workflow.setUnitName(this.unitName, this.unitContextLength);
 
         // 制作报告
-        return workflow.make(theme);
+        return workflow.make(theme, maxBehaviorText, maxIndicatorText);
     }
 
     public void onTick(long now) {
@@ -461,16 +467,23 @@ public class PsychologyScene {
 
         protected Theme theme;
 
+        protected int maxBehaviorTexts;
+
+        protected int maxIndicatorTexts;
+
         protected PsychologySceneListener listener;
 
         protected PsychologyReport report;
 
         public ReportTask(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
-                          Theme theme, PsychologySceneListener listener, PsychologyReport report) {
+                          Theme theme, int maxBehaviorTexts, int maxIndicatorTexts,
+                          PsychologySceneListener listener, PsychologyReport report) {
             this.channel = channel;
             this.attribute = attribute;
             this.fileLabel = fileLabel;
             this.theme = theme;
+            this.maxBehaviorTexts = Math.min(maxBehaviorTexts, 10);
+            this.maxIndicatorTexts = Math.min(maxIndicatorTexts, 5);
             this.listener = listener;
             this.report = report;
         }

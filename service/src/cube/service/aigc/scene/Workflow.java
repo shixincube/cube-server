@@ -64,8 +64,6 @@ public class Workflow {
 
     private List<ReportParagraph> paragraphList;
 
-    private int maxRepresentationNum = 10;
-
     private String unitName = ModelConfig.BAIZE_UNIT;
 
     private int maxContext = ModelConfig.BAIZE_CONTEXT_LIMIT - 60;
@@ -97,7 +95,7 @@ public class Workflow {
         return report;
     }
 
-    public Workflow make(Theme theme) {
+    public Workflow make(Theme theme, int maxBehaviorTexts, int maxIndicatorTexts) {
         // 获取模板
         ThemeTemplate template = Resource.getInstance().getThemeTemplate(theme.code);
 
@@ -105,12 +103,10 @@ public class Workflow {
         this.mbtiEvaluation = new MBTIEvaluation(this.evaluationReport.getRepresentationList(),
             this.evaluationReport.getEvaluationScores());
 
-        this.evaluationReport.setTopN(this.maxRepresentationNum);
-
         int age = this.evaluationReport.getAttribute().age;
         String gender = this.evaluationReport.getAttribute().gender;
         // 逐一推理每一条表征
-        this.behaviorList = this.inferBehavior(template, age, gender);
+        this.behaviorList = this.inferBehavior(template, age, gender, maxBehaviorTexts);
         if (this.behaviorList.isEmpty()) {
             Logger.w(this.getClass(), "#make - Behavior error");
             return this;
@@ -121,7 +117,7 @@ public class Workflow {
         }
 
         // 得分推理
-        List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation();
+        List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation(maxIndicatorTexts);
         for (EvaluationScore es : scoreList) {
             String prompt = es.generateReportPrompt();
             if (null == prompt) {
@@ -243,10 +239,10 @@ public class Workflow {
         return this;
     }
 
-    private List<String> inferBehavior(ThemeTemplate template, int age, String gender) {
+    private List<String> inferBehavior(ThemeTemplate template, int age, String gender, int maxRepresentation) {
         List<String> result = new ArrayList<>();
 
-        for (Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore()) {
+        for (Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore(maxRepresentation)) {
             String marked = null;
             // 趋势
             if (representation.positiveCorrelation == representation.negativeCorrelation) {
@@ -327,7 +323,7 @@ public class Workflow {
 
     private String spliceRepresentationInterpretation() {
         StringBuilder buf = new StringBuilder();
-        for (Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore()) {
+        for (Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore(100)) {
             buf.append(representation.knowledgeStrategy.getInterpretation()).append("\n");
             if (buf.length() > this.maxContext - 100) {
                 Logger.w(this.getClass(), "#spliceRepresentationInterpretation - Context length is overflow: " + buf.length());

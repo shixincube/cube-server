@@ -59,8 +59,6 @@ public class EvaluationReport implements JSONable {
 
     private List<Representation> representationList;
 
-    private int representationTopN;
-
     private ScoreAccelerator scoreAccelerator;
 
     private AttentionSuggestion attentionSuggestion;
@@ -72,7 +70,6 @@ public class EvaluationReport implements JSONable {
     public EvaluationReport(Attribute attribute, List<EvaluationFeature> evaluationFeatureList) {
         this.attribute = attribute;
         this.representationList = new ArrayList<>();
-        this.representationTopN = 10;
         this.scoreAccelerator = new ScoreAccelerator();
         this.attentionSuggestion = AttentionSuggestion.NoAttention;
         this.build(evaluationFeatureList);
@@ -87,10 +84,6 @@ public class EvaluationReport implements JSONable {
         }
         this.scoreAccelerator = new ScoreAccelerator(json.getJSONObject("accelerator"));
         this.attentionSuggestion = AttentionSuggestion.parse(json.getInt("attention"));
-    }
-
-    public void setTopN(int value) {
-        this.representationTopN = value;
     }
 
     public boolean isEmpty() {
@@ -246,7 +239,7 @@ public class EvaluationReport implements JSONable {
      *
      * @return
      */
-    public List<Representation> getRepresentationListByEvaluationScore() {
+    public List<Representation> getRepresentationListByEvaluationScore(int topNum) {
         List<Representation> result = new ArrayList<>();
         for (Representation representation : this.representationList) {
             // 匹配和评分表一致的特征
@@ -256,25 +249,25 @@ public class EvaluationReport implements JSONable {
             }
         }
 
-        if (result.size() == this.representationTopN) {
+        if (result.size() == topNum) {
             return result;
         }
 
         // 补齐 Top N 数量
-        if (result.size() < this.representationTopN) {
+        if (result.size() < topNum) {
             for (Representation representation : this.representationList) {
                 if (result.contains(representation)) {
                     continue;
                 }
 
                 result.add(representation);
-                if (result.size() >= this.representationTopN) {
+                if (result.size() >= topNum) {
                     break;
                 }
             }
         }
         else {
-            while (result.size() > this.representationTopN) {
+            while (result.size() > topNum) {
                 result.remove(result.size() - 1);
             }
         }
@@ -287,7 +280,7 @@ public class EvaluationReport implements JSONable {
      *
      * @return
      */
-    public List<EvaluationScore> getEvaluationScoresByRepresentation() {
+    public List<EvaluationScore> getEvaluationScoresByRepresentation(int topNum) {
         List<Indicator> indicators = new ArrayList<>();
         for (Representation representation : this.representationList) {
             // 匹配和评分表一致的特征
@@ -311,6 +304,10 @@ public class EvaluationReport implements JSONable {
                 return es2.hit - es1.hit;
             }
         });
+
+        while (result.size() > topNum) {
+            result.remove(result.size() - 1);
+        }
 
         return result;
     }
@@ -339,7 +336,7 @@ public class EvaluationReport implements JSONable {
         json.put("attention", this.attentionSuggestion.level);
 
         JSONArray priorityArray = new JSONArray();
-        for (EvaluationScore es : this.getEvaluationScoresByRepresentation()) {
+        for (EvaluationScore es : this.getEvaluationScoresByRepresentation(100)) {
             priorityArray.put(es.toJSON());
         }
         json.put("priorities", priorityArray);
@@ -363,7 +360,7 @@ public class EvaluationReport implements JSONable {
         json.put("attention", this.attentionSuggestion.level);
 
         JSONArray priorityArray = new JSONArray();
-        for (EvaluationScore es : this.getEvaluationScoresByRepresentation()) {
+        for (EvaluationScore es : this.getEvaluationScoresByRepresentation(100)) {
             priorityArray.put(es.toCompactJSON());
         }
         json.put("priorities", priorityArray);
