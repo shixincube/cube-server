@@ -168,6 +168,7 @@ public class Evaluation {
             else {
                 // 位置分散
                 result.addFeature(Comment.EmotionalStability, Tendency.Negative);
+                result.addScore(Indicator.Emotion, -1, FloatUtils.random(0.3, 0.4));
             }
 
             // 绝对位置判断
@@ -269,7 +270,7 @@ public class Evaluation {
             }
 
             // 没有人
-            result.addScore(Indicator.Depression, 1, FloatUtils.random(0.4, 0.5));
+            result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
         }
         else if (null != house && null != person) {
             // 位置关系，使用 box 计算位置
@@ -429,24 +430,49 @@ public class Evaluation {
 
         // 画面涂鸦
         if (null != this.painting.getSpaceDoodles()) {
+            // 稀疏计数，如果稀疏大于等于3，说明画面过于简单
+            int sparseness = 0;
+            int doodles = 0;
             for (Doodle doodle : this.painting.getSpaceDoodles()) {
-                System.out.println("Space doodle:\n" + doodle.toJSON().toString(4));
-                boolean isDoodle = false;
+//                System.out.println("Space doodle:\n" + doodle.toJSON().toString(4));
+//                boolean isDoodle = false;
                 if (doodle.isValid()) {
-                    // 判断最大值
                     if (doodle.max >= 1.0 && doodle.max < 2.0) {
                         // 判断标准差和层密度
                         if (doodle.standardDeviation >= 0.42 && doodle.hierarchy <= 0.05) {
-                            isDoodle = true;
+                            doodles += 1;
+//                            isDoodle = true;
+                        }
+                        else if (doodle.standardDeviation < 0.5 && doodle.hierarchy > 0.02) {
+                            sparseness += 1;
                         }
                     }
                 }
 
-                if (isDoodle) {
-                    // 画面有1/4画幅涂鸦
-                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
-                    Logger.d(this.getClass(), "#evalSpaceStructure - Space doodle: \n" + doodle.toJSON().toString(4));
-                }
+//                if (isDoodle) {
+//                    Logger.d(this.getClass(), "#evalSpaceStructure - Space doodle:\n" + doodle.toJSON().toString(4));
+//                }
+            }
+
+            if (doodles >= 2) {
+                // 画面有1/2画幅涂鸦
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
+                Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles:" + doodles);
+            }
+            else if (doodles >= 1) {
+                // 画面有1/4画幅涂鸦
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
+                Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles:" + doodles);
+            }
+
+            // 画面稀疏
+            if (sparseness >= 3) {
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
+                Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
+            }
+            else if (sparseness >= 2) {
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
+                Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
             }
         }
 
@@ -548,6 +574,7 @@ public class Evaluation {
                     // 房顶面积大
                     result.addFeature(Comment.HighPressure, Tendency.Positive);
                     result.addFeature(Comment.Escapism, Tendency.Positive);
+                    result.addScore(Indicator.Stress, 1, FloatUtils.random(0.6, 0.7));
                 }
             }
 
@@ -836,6 +863,14 @@ public class Evaluation {
                         result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.6, 0.7));
                     }
                 }
+            }
+
+            // 水果数量
+            if (tree.numFruits() >= 5 && tree.numFruits() < 8) {
+                result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.4, 0.5));
+            }
+            else if (tree.numFruits() >= 8) {
+                result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.6, 0.7));
             }
 
             // 判断树是否涂鸦

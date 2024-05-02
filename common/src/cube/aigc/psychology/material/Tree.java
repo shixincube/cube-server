@@ -199,6 +199,10 @@ public class Tree extends Thing {
         return (null != this.fruitList);
     }
 
+    public int numFruits() {
+        return (null != this.fruitList) ? this.fruitList.size() : 0;
+    }
+
     public double[] getFruitAreaRatios() {
         if (null == this.fruitList || null == this.canopyList) {
             return null;
@@ -217,6 +221,8 @@ public class Tree extends Thing {
         }
         return result;
     }
+
+
 
     public void addHole(Hole hole) {
         if (null == this.holeList) {

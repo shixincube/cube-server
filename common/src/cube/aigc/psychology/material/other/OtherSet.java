@@ -31,7 +31,6 @@ import cube.aigc.psychology.material.Classification;
 import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Thing;
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -172,19 +171,16 @@ public class OtherSet {
     public OtherSet() {
     }
 
-    public OtherSet(JSONObject json) {
-        if (json.has("others")) {
-            JSONArray array = json.getJSONArray("others");
-            Classification classification = new Classification();
-            for (int i = 0; i < array.length(); ++i) {
-                Thing thing = classification.recognize(array.getJSONObject(i));
-                if (null == thing) {
-                    Logger.w(this.getClass(), "Unknown label: " + array.getJSONObject(i).toString(4));
-                    continue;
-                }
-
-                this.add(thing);
+    public OtherSet(JSONArray array) {
+        Classification classification = new Classification();
+        for (int i = 0; i < array.length(); ++i) {
+            Thing thing = classification.recognize(array.getJSONObject(i));
+            if (null == thing) {
+                Logger.w(this.getClass(), "Unknown label: " + array.getJSONObject(i).toString(4));
+                continue;
             }
+
+            this.add(thing);
         }
     }
 
