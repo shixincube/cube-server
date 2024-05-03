@@ -384,6 +384,7 @@ public class PsychologyScene {
 
                     // 存储
                     storage.writePsychologyReport(reportTask.report);
+                    storage.writePainting(reportTask.report.sn, reportTask.fileLabel.getFileCode(), painting);
 
                     // 从正在执行队列移除
                     runningTaskQueue.remove(reportTask);

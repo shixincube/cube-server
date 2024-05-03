@@ -392,6 +392,11 @@ public enum AIGCAction {
     CheckPsychologyPainting("checkPsychologyPainting"),
 
     /**
+     * 获取心理学分数基线值。
+     */
+    GetPsychologyScoreBenchmark("getPsychologyScoreBenchmark"),
+
+    /**
      * 预测图片元素。
      */
     //PredictImage("predictImage"),

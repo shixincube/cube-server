@@ -30,25 +30,22 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.algorithm.Benchmark;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.scene.PsychologyScene;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.List;
-
 /**
- * 获取心理学报告任务。
+ * 获取心理学分数基线任务。
  */
-public class GetPsychologyReportTask extends ServiceTask {
+public class GetPsychologyScoreBenchmarkTask extends ServiceTask {
 
-    public GetPsychologyReportTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public GetPsychologyScoreBenchmarkTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -73,56 +70,16 @@ public class GetPsychologyReportTask extends ServiceTask {
             return;
         }
 
-        long sn = 0;
-        boolean markdown = false;
-        long contactId = 0;
-        long startTime = 0;
-        long endTime = 0;
-        int pageIndex = 0;
-
-        try {
-            sn = packet.data.has("sn") ? packet.data.getLong("sn") : 0;
-            markdown = packet.data.has("markdown") && packet.data.getBoolean("markdown");
-            contactId = packet.data.has("cid") ? packet.data.getLong("cid") : 0;
-            startTime = packet.data.has("start") ? packet.data.getLong("start") : 0;
-            endTime = packet.data.has("end") ? packet.data.getLong("end") : 0;
-            pageIndex = packet.data.has("page") ? packet.data.getInt("page") : 0;
-        } catch (Exception e) {
+        Benchmark benchmark = Resource.getInstance().getBenchmark();
+        if (null == benchmark) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        if (0 != sn) {
-            PsychologyReport report = PsychologyScene.getInstance().getPsychologyReport(sn);
-            if (null != report) {
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, report.toJSON(markdown)));
-            }
-            else {
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
-            }
-        }
-        else if (0 != contactId && 0 != startTime && 0 != endTime) {
-            int num = PsychologyScene.getInstance().numPsychologyReports(contactId, startTime, endTime);
-
-            List<PsychologyReport> list = PsychologyScene.getInstance().getPsychologyReports(contactId,
-                    startTime, endTime, pageIndex);
-            JSONArray array = new JSONArray();
-            for (PsychologyReport report : list) {
-                array.put(report.toJSON(markdown));
-            }
-
-            JSONObject responseData = new JSONObject();
-            responseData.put("total", num);
-            responseData.put("page", pageIndex);
-            responseData.put("list", array);
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
-        }
-
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, benchmark.toJSON()));
         markResponseTime();
     }
 }

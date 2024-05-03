@@ -47,6 +47,8 @@ import java.util.*;
  */
 public class Painting implements JSONable {
 
+    private long elapsed;
+
     private Attribute attribute;
 
     private Size canvasSize;
@@ -70,6 +72,7 @@ public class Painting implements JSONable {
     }
 
     public Painting(JSONObject json) {
+        this.elapsed = json.getLong("elapsed");
         this.canvasSize = new Size(json.getJSONObject("size"));
 
         this.otherSet = json.has("others") ? new OtherSet(json.getJSONArray("others")) : new OtherSet();
@@ -721,33 +724,51 @@ public class Painting implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("elapsed", this.elapsed);
         json.put("size", this.canvasSize.toJSON());
 
-        if (null != this.houseList) {
-            JSONArray houseArray = new JSONArray();
-            for (House house : this.houseList) {
-                houseArray.put(house.toJSON());
-            }
-            json.put("houses", houseArray);
+        if (null != this.attribute) {
+            json.put("attribute", this.attribute.toJSON());
         }
 
-        if (null != this.treeList) {
-            JSONArray treeArray = new JSONArray();
-            for (Tree tree : this.treeList) {
-                treeArray.put(tree.toJSON());
+        if (null != this.spaceDoodles) {
+            JSONArray array = new JSONArray();
+            for (Doodle doodle : this.spaceDoodles) {
+                array.put(doodle.toJSON());
             }
-            json.put("trees", treeArray);
+            json.put("spaceDoodles", array);
         }
 
-        if (null != this.personList) {
-            JSONArray personArray = new JSONArray();
-            for (Person person : this.personList) {
-                personArray.put(person.toJSON());
-            }
-            json.put("persons", personArray);
+        if (null != this.materials) {
+            json.put("materials", this.materials);
         }
+        else {
+            if (null != this.houseList) {
+                JSONArray houseArray = new JSONArray();
+                for (House house : this.houseList) {
+                    houseArray.put(house.toJSON());
+                }
+                json.put("houses", houseArray);
+            }
 
-        json.put("others", this.otherSet.toJSONArray());
+            if (null != this.treeList) {
+                JSONArray treeArray = new JSONArray();
+                for (Tree tree : this.treeList) {
+                    treeArray.put(tree.toJSON());
+                }
+                json.put("trees", treeArray);
+            }
+
+            if (null != this.personList) {
+                JSONArray personArray = new JSONArray();
+                for (Person person : this.personList) {
+                    personArray.put(person.toJSON());
+                }
+                json.put("persons", personArray);
+            }
+
+            json.put("others", this.otherSet.toJSONArray());
+        }
 
         return json;
     }

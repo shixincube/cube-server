@@ -26,29 +26,78 @@
 
 package cube.aigc.psychology.algorithm;
 
-import cube.aigc.psychology.composition.EvaluationScore;
+import cell.util.log.Logger;
+import cube.aigc.psychology.Indicator;
+import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class Benchmark {
 
-    private Benchmark() {
+    private Map<Indicator, BenchmarkScore> scoreMap;
+
+    public Benchmark(JSONObject json) {
+        this.scoreMap = new HashMap<>();
+
+        Iterator<String> keys = json.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            Indicator indicator = Indicator.parse(key);
+            if (null == indicator) {
+                Logger.e(this.getClass(), "Can not find indicator: " + key);
+                continue;
+            }
+
+            JSONObject value = json.getJSONObject(key);
+            BenchmarkScore score = new BenchmarkScore(value);
+            this.scoreMap.put(indicator, score);
+        }
     }
 
-    public List<Score> mark(List<EvaluationScore> evaluationScores) {
-        List<Score> scores = new ArrayList<>();
-        for (EvaluationScore es : evaluationScores) {
-            switch (es.indicator) {
-
-                default:
-                    break;
-            }
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        for (Map.Entry<Indicator, BenchmarkScore> entry : this.scoreMap.entrySet()) {
+            json.put(entry.getKey().code, entry.getValue().toJSON(entry.getKey().name));
         }
-        return scores;
+        return json;
     }
 
     public class BenchmarkScore {
 
+        public double positiveMin;
+
+        public double positiveMax;
+
+        public double negativeMin;
+
+        public double negativeMax;
+
+        public BenchmarkScore(JSONObject json) {
+            JSONObject positive = json.getJSONObject("positive");
+            JSONObject negative = json.getJSONObject("negative");
+            this.positiveMin = positive.getDouble("min");
+            this.positiveMax = positive.getDouble("max");
+            this.negativeMin = negative.getDouble("min");
+            this.negativeMax = negative.getDouble("max");
+        }
+
+        public JSONObject toJSON(String name) {
+            JSONObject json = new JSONObject();
+            json.put("name", name);
+
+            JSONObject positive = new JSONObject();
+            positive.put("min", this.positiveMin);
+            positive.put("max", this.positiveMax);
+            json.put("positive", positive);
+
+            JSONObject negative = new JSONObject();
+            negative.put("min", this.negativeMin);
+            negative.put("max", this.negativeMax);
+            json.put("negative", negative);
+
+            return json;
+        }
     }
 }

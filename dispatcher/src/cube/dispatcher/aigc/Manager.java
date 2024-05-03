@@ -153,8 +153,10 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new PublicOpinionData());
         httpServer.addContextHandler(new InferByModule());
         httpServer.addContextHandler(new PreInfer());
+
         httpServer.addContextHandler(new PsychologyReports());
         httpServer.addContextHandler(new CheckPsychology());
+        httpServer.addContextHandler(new PsychologyBenchmark());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -1925,6 +1927,26 @@ public class Manager implements Tickable, PerformerListener {
 
         PsychologyReport report = new PsychologyReport(Packet.extractDataPayload(responsePacket));
         return report;
+    }
+
+    public JSONObject getPsychologyScoreBenchmark(String token) {
+        JSONObject data = new JSONObject();
+        Packet packet = new Packet(AIGCAction.GetPsychologyScoreBenchmark.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#getPsychologyScoreBenchmark - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getPsychologyScoreBenchmark - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+        return Packet.extractDataPayload(responsePacket);
     }
 
     @Override

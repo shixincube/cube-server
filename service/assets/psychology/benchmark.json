@@ -1,0 +1,362 @@
+{
+    "Extroversion": {
+        "positive": {
+            "min": 0.0,
+            "max": 1.4
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Introversion": {
+        "positive": {
+            "min": 0.0,
+            "max": 1.4
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Optimism": {
+        "positive": {
+            "min": 0.0,
+            "max": 1.8
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Pessimism": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.4
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Narcissism": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.6
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Confidence": {
+        "positive": {
+            "min": 0.2,
+            "max": 2.0
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "SelfEsteem": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.0
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.3
+        }
+    },
+    "SocialAdaptability": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.0
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.2
+        }
+    },
+    "Independence": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.7
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Idealism": {
+        "positive": {
+            "min": 0.0,
+            "max": 1.2
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Emotion": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.5
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "SelfConsciousness": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.4
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Realism": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.7
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Thought": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.7
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "SenseOfSecurity": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.2
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.2
+        }
+    },
+    "Obsession": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.2
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Constrain": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.2
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "SelfControl": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.7
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Anxiety": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.6
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Depression": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.2
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Simple": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.6
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Meekness": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.8
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Hostile": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.6
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Attacking": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.4
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Family": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.5
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "InterpersonalRelation": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.5
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "EvaluationFromOutside": {
+        "positive": {
+            "min": 0.0,
+            "max": 2.1
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Paranoid": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.7
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "AchievementMotivation": {
+        "positive": {
+            "min": 0.0,
+            "max": 1.8
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Stress": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.8
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Creativity": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.7
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Impulsion": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.7
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Struggle": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.8
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "MoralSense": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.7
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "DesireForFreedom": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.7
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    },
+    "Psychosis": {
+        "positive": {
+            "min": 0.0,
+            "max": 0.0
+        },
+        "negative": {
+            "min": 0.0,
+            "max": 0.0
+        }
+    }
+}

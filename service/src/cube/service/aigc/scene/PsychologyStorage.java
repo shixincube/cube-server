@@ -81,7 +81,7 @@ public class PsychologyStorage implements Storagable {
             new StorageField("age", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("fileCode", LiteralBase.STRING, new Constraint[] {
+            new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("theme", LiteralBase.STRING, new Constraint[] {
@@ -95,6 +95,24 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("mbti_code", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
+            })
+    };
+
+    private final StorageField[] paintingFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("report_sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
             })
     };
 
@@ -173,6 +191,13 @@ public class PsychologyStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.reportTable, this.reportFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.reportTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.paintingTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.paintingTable, this.paintingFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.paintingTable + "' successfully");
             }
         }
 
@@ -296,7 +321,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("name", report.getName()),
                 new StorageField("gender", report.getAttribute().gender),
                 new StorageField("age", report.getAttribute().age),
-                new StorageField("fileCode", report.getFileCode()),
+                new StorageField("file_code", report.getFileCode()),
                 new StorageField("theme", report.getTheme().code),
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("evaluation_data", report.getEvaluationReport().toJSON().toString()),
@@ -305,13 +330,59 @@ public class PsychologyStorage implements Storagable {
         });
     }
 
+    public Painting readPainting(long sn) {
+        List<StorageField[]> result = this.storage.executeQuery(this.paintingTable, this.paintingFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("report_sn", sn)
+                });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> fields = StorageFields.get(result.get(0));
+        try {
+            return new Painting(new JSONObject(fields.get("data").getString()));
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#readPainting", e);
+            return null;
+        }
+    }
+
+    public boolean writePainting(long sn, String fileCode, Painting painting) {
+        List<StorageField[]> result = this.storage.executeQuery(this.paintingTable, this.paintingFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("report_sn", sn)
+                });
+
+        if (result.isEmpty()) {
+            // 插入
+            return this.storage.executeInsert(this.paintingTable, new StorageField[] {
+                    new StorageField("report_sn", sn),
+                    new StorageField("file_code", fileCode),
+                    new StorageField("timestamp", System.currentTimeMillis()),
+                    new StorageField("data", painting.toJSON().toString())
+            });
+        }
+        else {
+            // 更新
+            return this.storage.executeUpdate(this.paintingTable, new StorageField[] {
+                    new StorageField("file_code", fileCode),
+                    new StorageField("timestamp", System.currentTimeMillis()),
+                    new StorageField("data", painting.toJSON().toString())
+            }, new Conditional[] {
+                    Conditional.createEqualTo("report_sn", sn)
+            });
+        }
+    }
+
     private PsychologyReport makeReport(StorageField[] storageFields) {
         Map<String, StorageField> data = StorageFields.get(storageFields);
 
         PsychologyReport report = new PsychologyReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
                 data.get("timestamp").getLong(), data.get("name").getString(),
                 new Attribute(data.get("gender").getString(), data.get("age").getInt()),
-                data.get("fileCode").getString(), Theme.parse(data.get("theme").getString()),
+                data.get("file_code").getString(), Theme.parse(data.get("theme").getString()),
                 data.get("finished_timestamp").getLong());
 
         if (!data.get("evaluation_data").isNullValue()) {

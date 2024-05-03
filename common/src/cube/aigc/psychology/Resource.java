@@ -27,6 +27,7 @@
 package cube.aigc.psychology;
 
 import cell.util.log.Logger;
+import cube.aigc.psychology.algorithm.Benchmark;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -60,6 +61,10 @@ public class Resource {
     private File themeFile = new File("assets/psychology/theme.json");
     private long themeLastModified = 0;
     private Map<String, ThemeTemplate> themeTemplates;
+
+    private File benchmarkScoreFile = new File("assets/psychology/benchmark.json");
+    private long benchmarkScoreLastModified = 0;
+    private Benchmark benchmark;
 
     private final static Resource instance = new Resource();
 
@@ -132,5 +137,25 @@ public class Resource {
         }
 
         return this.themeTemplates.get(name);
+    }
+
+    public Benchmark getBenchmark() {
+        if (this.benchmarkScoreFile.exists()) {
+            if (this.benchmarkScoreFile.lastModified() != this.benchmarkScoreLastModified) {
+                this.benchmarkScoreLastModified = this.benchmarkScoreFile.lastModified();
+
+                Logger.i(this.getClass(), "Read benchmark file: " + this.benchmarkScoreFile.getAbsolutePath());
+
+                try {
+                    byte[] data = Files.readAllBytes(Paths.get(this.benchmarkScoreFile.getAbsolutePath()));
+                    JSONObject json = new JSONObject(new String(data, StandardCharsets.UTF_8));
+                    this.benchmark = new Benchmark(json);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return this.benchmark;
     }
 }
