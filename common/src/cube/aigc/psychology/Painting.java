@@ -218,6 +218,8 @@ public class Painting implements JSONable {
                     buildTree(thing);
                     unknownList.remove(thing);
                     break;
+                case PersonSideFace:
+                case PersonBraid:
                 case PersonHead:
                 case PersonHair:
                 case PersonStraightHair:
@@ -257,98 +259,83 @@ public class Painting implements JSONable {
         if (null == this.houseList || this.houseList.isEmpty()) {
             Logger.i(this.getClass(), "#buildHouse - No house material, backward reasoning - " + thing.label);
 
-            BoundingBox boundingBox = new BoundingBox(thing.boundingBox.x - 1, thing.boundingBox.y - 1,
-                    thing.boundingBox.width + 2, thing.boundingBox.height + 2);
-            Box box = new Box(thing.box.x0 - 1, thing.box.y0 - 1, thing.box.x1 + 1, thing.box.y1 + 1);
+            BoundingBox boundingBox = new BoundingBox(thing.boundingBox.x, thing.boundingBox.y,
+                    thing.boundingBox.width, thing.boundingBox.height);
+            Box box = new Box(thing.box.x0, thing.box.y0, thing.box.x1, thing.box.y1);
             House house = new House(boundingBox, box);
 
             this.houseList = new ArrayList<>();
             this.houseList.add(house);
         }
 
-        for (House house : this.houseList) {
-            switch (thing.getLabel()) {
-                case HouseSidewall:
-                    if (house.box.detectCollision(thing.box)) {
-                        house.addSidewall((Sidewall) thing);
-                        if (house.isBackwardReasoning()) {
-                            house.refreshBox(thing.boundingBox, thing.box);
-                        }
-                    }
-                    break;
-                case HouseRoof:
-                case HouseRoofTextured:
-                    if (house.box.detectCollision(thing.box)) {
-                        house.setRoof((Roof) thing);
-                        if (house.isBackwardReasoning()) {
-                            house.refreshBox(thing.boundingBox, thing.box);
-                        }
-                    }
-                    break;
-                case HouseRoofSkylight:
-                    if (house.box.detectCollision(thing.box)) {
-                        house.addRoofSkylight((RoofSkylight) thing);
-                        if (house.isBackwardReasoning()) {
-                            house.refreshBox(thing.boundingBox, thing.box);
-                        }
-                    }
-                    break;
-                case HouseChimney:
-                    if (house.box.detectCollision(thing.box)) {
-                        house.addChimney((Chimney) thing);
-                    }
-                    break;
-                case HouseDoor:
-                case HouseDoorOpened:
-                case HouseDoorLocked:
-                    if (house.box.detectCollision(thing.box)) {
-                        house.addDoor((Door) thing);
-                        if (house.isBackwardReasoning()) {
-                            house.refreshBox(thing.boundingBox, thing.box);
-                        }
-                    }
-                    break;
-                case HouseWindow:
-                case HouseWindowOpened:
-                    if (house.box.detectCollision(thing.box)) {
-                        house.addWindow((Window) thing);
-                        if (house.isBackwardReasoning()) {
-                            house.refreshBox(thing.boundingBox, thing.box);
-                        }
-                    }
-                    break;
-                case HouseCurtain:
-                case HouseCurtainOpened:
-                    if (house.box.detectCollision(thing.box)) {
-                        house.addCurtain((Curtain) thing);
-                        if (house.isBackwardReasoning()) {
-                            house.refreshBox(thing.boundingBox, thing.box);
-                        }
-                    }
-                    break;
-                case HouseWindowRailing:
-                    if (house.box.detectCollision(thing.box)) {
-                        house.addWindowRailing((WindowRailing) thing);
-                        if (house.isBackwardReasoning()) {
-                            house.refreshBox(thing.boundingBox, thing.box);
-                        }
-                    }
-                    break;
-                case HouseSmoke:
-                    house.addSmoke((Smoke) thing);
-                    break;
-                case HouseFence:
-                    house.addFence((Fence) thing);
-                    break;
-                case HousePath:
-                case HouseCurvePath:
-                case HouseCobbledPath:
-                    house.addPath((Path) thing);
-                    break;
-                default:
-                    Logger.w(this.getClass(), "#buildHouse - Unknown label: " + thing.getLabel().name + " for building house");
-                    break;
-            }
+        LinkedList<Thing> list = this.sortByCollisionArea(this.houseList, thing.boundingBox);
+        House house = (House) list.getLast();
+
+        switch (thing.getLabel()) {
+            case HouseSidewall:
+                house.addSidewall((Sidewall) thing);
+                if (house.isBackwardReasoning()) {
+                    house.refreshBox(thing.boundingBox, thing.box);
+                }
+                break;
+            case HouseRoof:
+            case HouseRoofTextured:
+                house.setRoof((Roof) thing);
+                if (house.isBackwardReasoning()) {
+                    house.refreshBox(thing.boundingBox, thing.box);
+                }
+                break;
+            case HouseRoofSkylight:
+                house.addRoofSkylight((RoofSkylight) thing);
+                if (house.isBackwardReasoning()) {
+                    house.refreshBox(thing.boundingBox, thing.box);
+                }
+                break;
+            case HouseChimney:
+                house.addChimney((Chimney) thing);
+                break;
+            case HouseDoor:
+            case HouseDoorOpened:
+            case HouseDoorLocked:
+                house.addDoor((Door) thing);
+                if (house.isBackwardReasoning()) {
+                    house.refreshBox(thing.boundingBox, thing.box);
+                }
+                break;
+            case HouseWindow:
+            case HouseWindowOpened:
+                house.addWindow((Window) thing);
+                if (house.isBackwardReasoning()) {
+                    house.refreshBox(thing.boundingBox, thing.box);
+                }
+                break;
+            case HouseCurtain:
+            case HouseCurtainOpened:
+                house.addCurtain((Curtain) thing);
+                if (house.isBackwardReasoning()) {
+                    house.refreshBox(thing.boundingBox, thing.box);
+                }
+                break;
+            case HouseWindowRailing:
+                house.addWindowRailing((WindowRailing) thing);
+                if (house.isBackwardReasoning()) {
+                    house.refreshBox(thing.boundingBox, thing.box);
+                }
+                break;
+            case HouseSmoke:
+                house.addSmoke((Smoke) thing);
+                break;
+            case HouseFence:
+                house.addFence((Fence) thing);
+                break;
+            case HousePath:
+            case HouseCurvePath:
+            case HouseCobbledPath:
+                house.addPath((Path) thing);
+                break;
+            default:
+                Logger.w(this.getClass(), "#buildHouse - Unknown label: " + thing.getLabel().name + " for building house");
+                break;
         }
     }
 
@@ -436,6 +423,9 @@ public class Painting implements JSONable {
         Person person = (Person) list.getLast();
 
         switch (thing.getLabel()) {
+            case PersonSideFace:
+                person.setSideFace((Head) thing);
+                break;
             case PersonHead:
                 person.setHead((Head) thing);
                 if (person.isBackwardReasoning()) {

@@ -56,7 +56,7 @@
         },
         "negative": {
             "min": 0.0,
-            "max": 0.0
+            "max": 0.7
         }
     },
     "SelfEsteem": {

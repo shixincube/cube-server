@@ -151,6 +151,7 @@ public class EvaluationReport implements JSONable {
         boolean depression = false;
         boolean senseOfSecurity = false;
         boolean stress = false;
+        boolean anxiety = false;
 
         for (EvaluationScore es : this.scoreAccelerator.getEvaluationScores()) {
             switch (es.indicator) {
@@ -173,46 +174,45 @@ public class EvaluationReport implements JSONable {
                     }
                     break;
                 case Depression:
-                    if (es.positiveScore > es.negativeScore) {
-                        depression = true;
-                        score += 1;
-
-                        if (es.positiveScore > 1.0) {
-                            score += 3;
-                        }
-                        else if (es.positiveScore > 0.7) {
-                            score += 2;
-                        }
-                        else if (es.positiveScore > 0.5) {
-                            score += 1;
-                        }
-                    }
-                    else if (es.positiveScore > 0.7) {
+                    double depressionScore = es.positiveScore - es.negativeScore;
+                    if (depressionScore > 1.0) {
                         depression = true;
                         score += 3;
                     }
-                    else if (es.positiveScore > 0.5) {
+                    else if (depressionScore > 0.7) {
                         depression = true;
                         score += 2;
                     }
+                    else if (depressionScore > 0.5) {
+                        depression = true;
+                        score += 1;
+                    }
+                    else if (depressionScore > 0.2) {
+                        depression = true;
+                        score += 1;
+                    }
+                    else if (depressionScore > 0.1) {
+                        depression = true;
+                    }
                     break;
                 case SenseOfSecurity:
-                    if (es.negativeScore > 0.3) {
-                        senseOfSecurity = true;
-                        score += 1;
-
-                        if (es.negativeScore > 0.5) {
-                            score += 1;
-                        }
-                    }
-                    else if (es.negativeScore > 0.5) {
+                    if (es.negativeScore > 0.6) {
                         senseOfSecurity = true;
                         score += 2;
                     }
+                    else if (es.negativeScore >= 0.5) {
+                        senseOfSecurity = true;
+                        score += 1;
+                    }
                     break;
                 case Stress:
-                    if (es.positiveScore > 0.5) {
+                    if (es.positiveScore - es.negativeScore > 0.5) {
                         stress = true;
+                    }
+                    break;
+                case Anxiety:
+                    if (es.positiveScore - es.negativeScore > 0.4) {
+                        anxiety = true;
                     }
                     break;
                 case Obsession:
@@ -221,6 +221,14 @@ public class EvaluationReport implements JSONable {
                     }
                     else if (es.positiveScore > 0.4) {
                         score += 1;
+                    }
+                    break;
+                case Optimism:
+                    if (es.positiveScore - es.negativeScore > 0.4) {
+                        score -= 2;
+                    }
+                    else if (es.positiveScore - es.negativeScore > 0.1) {
+                        score -= 1;
                     }
                     break;
                 case Unknown:
@@ -236,6 +244,9 @@ public class EvaluationReport implements JSONable {
             score += 1;
         }
         if (depression && stress) {
+            score += 1;
+        }
+        if (depression && anxiety) {
             score += 1;
         }
 

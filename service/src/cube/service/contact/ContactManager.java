@@ -535,13 +535,17 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 Logger.i(this.getClass(), "#signIn - Sign-in not allowed: " + contact.getId());
                 return null;
             }
-
-            // Hook sign-in
-            hook = this.pluginSystem.getSignInHook();
-            hook.apply(new ContactPluginContext(ContactHook.SignIn, authToken, contact, activeDevice));
         } catch (Exception e) {
             Logger.e(this.getClass(), "#signIn", e);
             return null;
+        }
+
+        try {
+            // Hook sign-in
+            ContactHook hook = this.pluginSystem.getSignInHook();
+            hook.apply(new ContactPluginContext(ContactHook.SignIn, authToken, contact, activeDevice));
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#signIn", e);
         }
 
         this.contactCache.apply(contact.getUniqueKey(), new LockFuture() {

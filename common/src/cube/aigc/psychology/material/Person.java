@@ -139,6 +139,11 @@ public class Person extends Thing {
         return ((double) this.head.getHeight() / (double) this.getHeight());
     }
 
+    public void setSideFace(Head head) {
+        this.sideFace = true;
+        this.head = head;
+    }
+
     public void addBraid(Braid braid) {
         if (null == this.braidList) {
             this.braidList = new ArrayList<>();

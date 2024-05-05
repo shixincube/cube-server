@@ -185,7 +185,7 @@ public class Evaluation {
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -214,6 +214,34 @@ public class Evaluation {
                 result.addFeature(Comment.SelfControl, Tendency.Negative);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
+            }
+
+            // 距离
+            int distHT = house.distance(tree);
+            int distPH = person.distance(house);
+            int distTP = tree.distance(person);
+            Logger.d(this.getClass(), "#evalSpaceStructure - distance: " + distHT + "/" + distPH + "/" + distTP);
+            if (distHT > 0) {
+                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
+            }
+            if (distPH > 0) {
+                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
+            }
+            if (distTP > 0) {
+                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
+            }
+
+            if (distHT > 10 && distPH > 10 && distTP > 10) {
+                // HTP 距离大，判断所占画幅大小
+                double paintingArea = this.spaceLayout.getPaintingBox().calculateArea() * 0.9;
+                double rH = house.boundingBox.calculateArea() * 0.9 / paintingArea;
+                double rT = tree.boundingBox.calculateArea() * 0.9 / paintingArea;
+                double rP = person.boundingBox.calculateArea() * 0.9 / paintingArea;
+                Logger.d(this.getClass(), "#evalSpaceStructure - Area ratio: " + rH + "," + rT + "," + rP);
+                if (rH < 0.1 || rT < 0.1 || rP < 0.1) {
+                    result.addFeature(Comment.SocialPowerlessness, Tendency.Positive);
+                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
+                }
             }
         }
         else if (null != house && null != tree) {
@@ -248,7 +276,7 @@ public class Evaluation {
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -269,7 +297,14 @@ public class Evaluation {
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
             }
 
+            // 间距
+            Logger.d(this.getClass(), "#evalSpaceStructure - distance: HT - " + house.distance(tree));
+            if (house.distance(tree) > 0) {
+                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
+            }
+
             // 没有人
+            Logger.d(this.getClass(), "#evalSpaceStructure [Depression] : No person");
             result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
         }
         else if (null != house && null != person) {
@@ -303,7 +338,7 @@ public class Evaluation {
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -324,6 +359,12 @@ public class Evaluation {
                 result.addFeature(Comment.SelfControl, Tendency.Negative);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
+            }
+
+            // 间距
+            Logger.d(this.getClass(), "#evalSpaceStructure - distance: PH - " + house.distance(person));
+            if (house.distance(person) > 0) {
+                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
             }
         }
         else if (null != tree && null != person) {
@@ -358,7 +399,7 @@ public class Evaluation {
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -379,6 +420,12 @@ public class Evaluation {
                 result.addFeature(Comment.SelfControl, Tendency.Negative);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
+            }
+
+            // 间距
+            Logger.d(this.getClass(), "#evalSpaceStructure - distance: TP - " + tree.distance(person));
+            if (tree.distance(person) > 0) {
+                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
             }
         }
         else {
@@ -434,35 +481,29 @@ public class Evaluation {
             int sparseness = 0;
             int doodles = 0;
             for (Doodle doodle : this.painting.getSpaceDoodles()) {
-//                System.out.println("Space doodle:\n" + doodle.toJSON().toString(4));
-//                boolean isDoodle = false;
+                System.out.println("Space doodle:\n" + doodle.toJSON().toString(4));
                 if (doodle.isValid()) {
                     if (doodle.max >= 1.0 && doodle.max < 2.0) {
                         // 判断标准差和层密度
                         if (doodle.standardDeviation >= 0.42 && doodle.hierarchy <= 0.05) {
                             doodles += 1;
-//                            isDoodle = true;
                         }
                         else if (doodle.standardDeviation < 0.5 && doodle.hierarchy > 0.02) {
                             sparseness += 1;
                         }
                     }
                 }
-
-//                if (isDoodle) {
-//                    Logger.d(this.getClass(), "#evalSpaceStructure - Space doodle:\n" + doodle.toJSON().toString(4));
-//                }
             }
 
             if (doodles >= 2) {
                 // 画面有1/2画幅涂鸦
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
-                Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles:" + doodles);
+                Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
             }
             else if (doodles >= 1) {
                 // 画面有1/4画幅涂鸦
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
-                Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles:" + doodles);
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.2, 0.3));
+                Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
             }
 
             // 画面稀疏
@@ -574,7 +615,7 @@ public class Evaluation {
                     // 房顶面积大
                     result.addFeature(Comment.HighPressure, Tendency.Positive);
                     result.addFeature(Comment.Escapism, Tendency.Positive);
-                    result.addScore(Indicator.Stress, 1, FloatUtils.random(0.6, 0.7));
+                    result.addScore(Indicator.Stress, 1, FloatUtils.random(0.4, 0.5));
                 }
             }
 
@@ -706,6 +747,8 @@ public class Evaluation {
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
+
+                Logger.d(this.getClass(), "#evalTree [Depression] : dead tree");
             }
             else if (Label.PineTree == tree.getLabel()) {
                 hasTrunk = true;
@@ -762,11 +805,20 @@ public class Evaluation {
                     result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.3, 0.4));
                     result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.3, 0.4));
                 }
+                else if (ratio >= 0.16d && ratio < 0.3d) {
+                    // 粗细适度
+                    result.addScore(Indicator.Pessimism, -1, FloatUtils.random(0.3, 0.4));
+                }
                 else if (ratio >= 0.3d && ratio < 0.7d) {
                     // 粗
                     result.addFeature(Comment.EmotionalStability, Tendency.Positive);
 
                     result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.2, 0.3));
+                }
+                else {
+                    // 很粗
+                    Score score = result.addScore(Indicator.Depression, -1, FloatUtils.random(0.6, 0.7));
+                    Logger.d(this.getClass(), "#evalTree [Depression] : " + score.value);
                 }
             }
 
@@ -784,6 +836,7 @@ public class Evaluation {
                 result.addFeature(Comment.EmotionalDisturbance, Tendency.Positive);
 
                 result.addScore(Indicator.Stress, 1, FloatUtils.random(0.6, 0.7));
+                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.1, 0.2));
             }
 
             // 树冠大小
@@ -820,12 +873,12 @@ public class Evaluation {
                     result.addFeature(Comment.Childish, Tendency.Positive);
                 }
             }
+            /* 树冠存在识别失败的可能性
             else {
                 // 安全感缺失
                 result.addFeature(Comment.SenseOfSecurity, Tendency.Negative);
-
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.6, 0.7));
-            }
+            }*/
 
             // 果实
             if (tree.hasFruit()) {
@@ -877,6 +930,7 @@ public class Evaluation {
             if (tree.isDoodle()) {
                 // 涂鸦的树
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalTree - Tree is doodle - \n" + tree.doodle.toJSON().toString(4));
             }
         }
@@ -1103,6 +1157,7 @@ public class Evaluation {
             result.addFeature(Comment.PositiveExpectation, Tendency.Positive);
 
             result.addScore(Indicator.Optimism, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.Depression, -1, FloatUtils.random(0.4, 0.5));
 
             if (other.get(Label.Sun).isDoodle()) {
                 // 涂鸦的太阳
@@ -1125,7 +1180,7 @@ public class Evaluation {
         if (other.has(Label.Mountain)) {
             // 山
             result.addFeature(Comment.NeedProtection, Tendency.Positive);
-            result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.4, 0.5));
+            result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
         }
 
         if (other.has(Label.Flower)) {
@@ -1238,7 +1293,7 @@ public class Evaluation {
             // 狗
             result.addFeature(Comment.NeedProtection, Tendency.Positive);
             result.addFeature(Comment.SenseOfSecurity, Tendency.Negative);
-            result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.4, 0.5));
+            result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
             counter += 1;
         }
 
@@ -1497,19 +1552,24 @@ public class Evaluation {
 
     private List<EvaluationFeature> correct(List<EvaluationFeature> list) {
         // 如果有乐观和社会适应性，则社会适应性负分降分
-        boolean optimism = false;
+        double optimism = 0;
         for (EvaluationFeature ef : list) {
             Score score = ef.getScore(Indicator.Optimism);
             if (null != score && score.value > 0) {
-                optimism = true;
-                break;
+                optimism += score.weight;
             }
         }
-        if (optimism) {
+        if (optimism > 0) {
             for (EvaluationFeature ef : list) {
                 Score score = ef.getScore(Indicator.SocialAdaptability);
                 if (null != score) {
                     score.weight -= FloatUtils.random(0.50, 0.59);
+                    score.weight = Math.abs(score.weight);
+                }
+
+                score = ef.getScore(Indicator.Depression);
+                if (null != score) {
+                    score.weight -= optimism * 0.66;
                     score.weight = Math.abs(score.weight);
                 }
             }

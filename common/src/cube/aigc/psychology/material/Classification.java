@@ -265,6 +265,8 @@ public class Classification {
             case TreeDrooping:
                 return new DroopingLeaves(json);
 
+            case PersonSideFace:
+                return new Head(json);
             case PersonBraid:
                 return new Braid(json);
             case PersonHead:

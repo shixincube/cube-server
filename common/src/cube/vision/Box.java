@@ -97,6 +97,30 @@ public class Box implements JSONable {
         }
     }
 
+    public int calculateCollisionArea(Box box) {
+        int mX = Math.max(this.x0, box.x0);
+        int mY = Math.max(this.y0, box.y0);
+        int mX2 = Math.min(this.x1, box.x1);
+        int mY2 = Math.min(this.y1, box.y1);
+        int w = mX2 - mX;
+        int h = mY2 - mY;
+        if (w <= 0 || h <= 0) {
+            return 0;
+        }
+        return w * h;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("(")
+                .append(x0).append(",")
+                .append(y0).append(",")
+                .append(x1).append(",")
+                .append(y1).append(")");
+        return buf.toString();
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

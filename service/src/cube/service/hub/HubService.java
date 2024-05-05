@@ -192,6 +192,10 @@ public class HubService extends AbstractModule {
     }
 
     public void quit(TalkContext talkContext) {
+        if (null == this.signalController) {
+            return;
+        }
+
         this.signalController.removeClient(talkContext);
     }
 

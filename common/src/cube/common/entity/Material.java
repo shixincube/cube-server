@@ -89,6 +89,49 @@ public class Material implements JSONable {
         return false;
     }
 
+    /**
+     * 返回两个 Material 间的最短距离。
+     *
+     * @param other
+     * @return 如果范围负数表示与指定的 Material 发生碰撞，没有间距，返回的值是碰撞面积。
+     */
+    public int distance(Material other) {
+        int area = this.box.calculateCollisionArea(other.box);
+        if (area > 0) {
+            return -area;
+        }
+
+        int minDist = -1;
+
+        // 计算中心点
+        int c1x = (int) Math.round(this.box.x0 + (this.box.width * 0.5));
+        int c1y = (int) Math.round(this.box.y0 + (this.box.height * 0.5));
+        int c2x = (int) Math.round(other.box.x0 + (other.box.width * 0.5));
+        int c2y = (int) Math.round(other.box.y0 + (other.box.height * 0.5));
+        int dx = Math.abs(c2x - c1x);
+        int dy = Math.abs(c2y - c1y);
+
+        if ((dx < ((this.box.width + other.box.width) * 0.5)) && (dy >= ((this.box.height + other.box.height) * 0.5))) {
+            // 两矩形不相交，在X轴方向有部分重合的两个矩形，最小距离是上矩形的下边线与下矩形的上边线之间的距离
+            minDist = dy - (int) Math.round((this.box.height + other.box.height) * 0.5);
+        }
+        else if ((dx >= ((this.box.width + other.box.width) * 0.5)) && (dy < ((this.box.height + other.box.height) * 0.5))) {
+            // 两矩形不相交，在Y轴方向有部分重合的两个矩形，最小距离是左矩形的右边线与右矩形的左边线之间的距离
+            minDist = dx - (int) Math.round((this.box.width + other.box.width) * 0.5);
+        }
+        else if ((dx >= ((this.box.width + other.box.width) * 0.5)) && (dy >= ((this.box.height + other.box.height) * 0.5))) {
+            // 两矩形不相交，在X轴和Y轴方向无重合的两个矩形，最小距离是距离最近的两个顶点之间的距离，使用勾股定理
+            double deltaX = dx - ((this.box.width + other.box.width) * 0.5);
+            double deltaY = dy - ((this.box.height + other.box.height) * 0.5);
+            minDist = (int) Math.round(Math.sqrt(deltaX * deltaX + deltaY * deltaY));
+        }
+        else {
+            minDist = 0;
+        }
+
+        return minDist;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

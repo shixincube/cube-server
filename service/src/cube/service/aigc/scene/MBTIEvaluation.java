@@ -210,23 +210,40 @@ public class MBTIEvaluation {
                     list.add(new MBTICandidate(MyersBriggsTypeIndicator.Introversion, 1, true));
                     break;
                 case Optimism:
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Extraversion, 0.1));
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Feeling, 0.1));
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Perceiving, 0.1));
+                    if (score.value > 0) {
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Extraversion, 0.1));
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Feeling, 0.1));
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Perceiving, 0.1));
+                    }
                     break;
                 case Pessimism:
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Introversion, 0.1));
+                    if (score.value > 0) {
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Introversion, 0.1));
+                    }
                     break;
                 case Narcissism:
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Intuition, 0.1));
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Thinking, 0.1));
+                    if (score.value > 0) {
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Intuition, 0.1));
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Thinking, 0.1));
+                    }
                     break;
                 case Confidence:
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Extraversion, 0.5));
+                    if (score.value > 0) {
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Extraversion, 0.5));
+                    }
+                    else {
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Introversion, 0.5));
+                    }
                     break;
                 case SelfEsteem:
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Feeling, 0.1));
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Perceiving, 0.1));
+                    if (score.value > 0) {
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Feeling, 0.1));
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Perceiving, 0.1));
+                    }
+                    else if (score.value < 0) {
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Thinking, 0.1));
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Judging, 0.1));
+                    }
                     break;
                 case SocialAdaptability:
                     if (score.positiveScore > score.negativeScore) {
@@ -239,8 +256,14 @@ public class MBTIEvaluation {
                     }
                     break;
                 case Independence:
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Thinking, 0.1));
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Judging, 0.1));
+                    if (score.positiveScore > score.negativeScore) {
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Thinking, 0.1));
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Judging, 0.1));
+                    }
+                    else {
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Intuition, 0.1));
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Perceiving, 0.1));
+                    }
                     break;
                 case Idealism:
                     list.add(new MBTICandidate(MyersBriggsTypeIndicator.Sensing, 0.5));
@@ -328,7 +351,9 @@ public class MBTIEvaluation {
                     list.add(new MBTICandidate(MyersBriggsTypeIndicator.Judging, 0.4));
                     break;
                 case Stress:
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Judging, 0.5));
+                    if (score.positiveScore > score.negativeScore) {
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Judging, 0.5));
+                    }
                     break;
                 case Creativity:
                     if (score.positiveScore > score.negativeScore) {
