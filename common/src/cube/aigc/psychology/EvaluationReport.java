@@ -152,6 +152,7 @@ public class EvaluationReport implements JSONable {
         boolean senseOfSecurity = false;
         boolean stress = false;
         boolean anxiety = false;
+        boolean optimism = false;
 
         for (EvaluationScore es : this.scoreAccelerator.getEvaluationScores()) {
             switch (es.indicator) {
@@ -224,11 +225,11 @@ public class EvaluationReport implements JSONable {
                     }
                     break;
                 case Optimism:
-                    if (es.positiveScore - es.negativeScore > 0.4) {
-                        score -= 2;
-                    }
-                    else if (es.positiveScore - es.negativeScore > 0.1) {
-                        score -= 1;
+                    if (es.positiveScore - es.negativeScore > 0.1) {
+                        optimism = true;
+                        if (es.positiveScore - es.negativeScore > 1.0) {
+                            score -= 1;
+                        }
                     }
                     break;
                 case Unknown:
@@ -248,6 +249,9 @@ public class EvaluationReport implements JSONable {
         }
         if (depression && anxiety) {
             score += 1;
+        }
+        if (!depression && optimism) {
+            score -= 1;
         }
 
         Logger.d(this.getClass(), "#calcAttentionSuggestion - score: " + score);

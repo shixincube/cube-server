@@ -27,7 +27,7 @@
 package cube.aigc.psychology;
 
 import cell.util.log.Logger;
-import cube.aigc.psychology.composition.Doodle;
+import cube.aigc.psychology.composition.Texture;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.house.*;
 import cube.aigc.psychology.material.other.OtherSet;
@@ -61,14 +61,16 @@ public class Painting implements JSONable {
 
     private OtherSet otherSet;
 
-    private List<Doodle> spaceDoodles;
+    private List<Texture> quadrants;
+
+    private Texture whole;
 
     private JSONArray materials;
 
     public Painting(Attribute attribute) {
         this.attribute = attribute;
         this.otherSet = new OtherSet();
-        this.spaceDoodles = new ArrayList<>();
+        this.quadrants = new ArrayList<>();
     }
 
     public Painting(JSONObject json) {
@@ -82,9 +84,10 @@ public class Painting implements JSONable {
             this.parseMaterials(this.materials);
         }
 
-        if (json.has("spaceDoodles")) {
-            this.spaceDoodles = new ArrayList<>();
-            this.parseSpaceDoodles(json.getJSONArray("spaceDoodles"));
+        if (json.has("texture")) {
+            this.quadrants = new ArrayList<>();
+            this.parseQuadrants(json.getJSONObject("texture").getJSONArray("quadrants"));
+            this.whole = new Texture(json.getJSONObject("texture").getJSONObject("whole"));
         }
 
         if (json.has("houses")) {
@@ -118,10 +121,10 @@ public class Painting implements JSONable {
         }
     }
 
-    private void parseSpaceDoodles(JSONArray array) {
+    private void parseQuadrants(JSONArray array) {
         for (int i = 0; i < array.length(); ++i) {
-            Doodle doodle = new Doodle(array.getJSONObject(i));
-            this.spaceDoodles.add(doodle);
+            Texture texture = new Texture(array.getJSONObject(i));
+            this.quadrants.add(texture);
         }
     }
 
@@ -581,8 +584,12 @@ public class Painting implements JSONable {
         return this.canvasSize;
     }
 
-    public List<Doodle> getSpaceDoodles() {
-        return this.spaceDoodles;
+    public List<Texture> getQuadrants() {
+        return this.quadrants;
+    }
+
+    public Texture getWhole() {
+        return this.whole;
     }
 
     /**
@@ -721,12 +728,15 @@ public class Painting implements JSONable {
             json.put("attribute", this.attribute.toJSON());
         }
 
-        if (null != this.spaceDoodles) {
+        if (null != this.whole) {
+            JSONObject textureJson = new JSONObject();
             JSONArray array = new JSONArray();
-            for (Doodle doodle : this.spaceDoodles) {
-                array.put(doodle.toJSON());
+            for (Texture texture : this.quadrants) {
+                array.put(texture.toJSON());
             }
-            json.put("spaceDoodles", array);
+            textureJson.put("quadrants", array);
+            textureJson.put("whole", this.whole.toJSON());
+            json.put("texture", textureJson);
         }
 
         if (null != this.materials) {

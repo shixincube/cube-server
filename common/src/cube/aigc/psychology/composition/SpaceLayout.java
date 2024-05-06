@@ -111,19 +111,19 @@ public class SpaceLayout {
         };
     }
 
-    public double getTopMargin() {
-        return this.topMargin;
+    public int getTopMargin() {
+        return (int) Math.round(this.topMargin);
     }
 
-    public double getRightMargin() {
-        return this.rightMargin;
+    public int getRightMargin() {
+        return (int) Math.round(this.rightMargin);
     }
 
-    public double getBottomMargin() {
-        return this.bottomMargin;
+    public int getBottomMargin() {
+        return (int) Math.round(this.bottomMargin);
     }
 
-    public double getLeftMargin() {
-        return this.leftMargin;
+    public int getLeftMargin() {
+        return (int) Math.round(this.leftMargin);
     }
 }

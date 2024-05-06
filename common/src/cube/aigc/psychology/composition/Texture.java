@@ -29,7 +29,7 @@ package cube.aigc.psychology.composition;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
-public class Doodle implements JSONable {
+public class Texture implements JSONable {
 
     public double max;
 
@@ -41,20 +41,24 @@ public class Doodle implements JSONable {
 
     public double hierarchy;
 
-    public Doodle() {
+    public double density;
+
+    public Texture() {
         this.max = 0;
         this.avg = 0;
         this.squareDeviation = 0;
         this.standardDeviation = 0;
         this.hierarchy = 0;
+        this.density = 1;
     }
 
-    public Doodle(JSONObject json) {
+    public Texture(JSONObject json) {
         this.max = Double.parseDouble(json.getString("max"));
         this.avg = Double.parseDouble(json.getString("avg"));
         this.squareDeviation = Double.parseDouble(json.getString("squareDeviation"));
         this.standardDeviation = Double.parseDouble(json.getString("standardDeviation"));
         this.hierarchy = Double.parseDouble(json.getString("hierarchy"));
+        this.density = Double.parseDouble(json.getString("density"));
     }
 
     public boolean isValid() {
@@ -69,6 +73,7 @@ public class Doodle implements JSONable {
         json.put("squareDeviation", Double.toString(this.squareDeviation));
         json.put("standardDeviation", Double.toString(this.standardDeviation));
         json.put("hierarchy", Double.toString(this.hierarchy));
+        json.put("density", Double.toString(this.density));
         return json;
     }
 

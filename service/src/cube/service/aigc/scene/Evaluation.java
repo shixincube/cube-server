@@ -31,7 +31,7 @@ import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
-import cube.aigc.psychology.composition.Doodle;
+import cube.aigc.psychology.composition.Texture;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.material.*;
@@ -476,23 +476,33 @@ public class Evaluation {
         }
 
         // 画面涂鸦
-        if (null != this.painting.getSpaceDoodles()) {
+        if (null != this.painting.getWhole()) {
             // 稀疏计数，如果稀疏大于等于3，说明画面过于简单
             int sparseness = 0;
             int doodles = 0;
-            for (Doodle doodle : this.painting.getSpaceDoodles()) {
-                System.out.println("Space doodle:\n" + doodle.toJSON().toString(4));
-                if (doodle.isValid()) {
-                    if (doodle.max >= 1.0 && doodle.max < 2.0) {
-                        // 判断标准差和层密度
-                        if (doodle.standardDeviation >= 0.42 && doodle.hierarchy <= 0.05) {
+            for (Texture texture : this.painting.getQuadrants()) {
+                Logger.d(this.getClass(), "#evalSpaceStructure - Space texture:\n"
+                        + texture.toJSON().toString(4));
+
+                if (texture.isValid()) {
+                    // 判断画面涂鸦效果
+                    if (texture.max >= 1.0 && texture.max < 2.0) {
+                        // 通过标准差和层密度，判断是否画面被反复涂鸦
+                        if (texture.standardDeviation >= 0.42 && texture.hierarchy <= 0.05) {
                             doodles += 1;
                         }
-                        else if (doodle.standardDeviation < 0.5 && doodle.hierarchy > 0.02) {
-                            sparseness += 1;
-                        }
+                    }
+
+                    if (texture.density < 0.3) {
+                        sparseness += 1;
                     }
                 }
+            }
+
+            Logger.d(this.getClass(), "#evalSpaceStructure - Space whole texture:\n"
+                    + this.painting.getWhole().toJSON().toString(4));
+            if (this.painting.getWhole().density < 0.35) {
+                sparseness += 2;
             }
 
             if (doodles >= 2) {
@@ -712,7 +722,7 @@ public class Evaluation {
             if (house.isDoodle()) {
                 // 涂鸦的房子
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
-                Logger.d(this.getClass(), "#evalHouse - House is doodle - " + house.doodle.toJSON().toString(4));
+                Logger.d(this.getClass(), "#evalHouse - House is doodle - " + house.texture.toJSON().toString(4));
             }
         }
 
@@ -931,7 +941,7 @@ public class Evaluation {
                 // 涂鸦的树
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
-                Logger.d(this.getClass(), "#evalTree - Tree is doodle - \n" + tree.doodle.toJSON().toString(4));
+                Logger.d(this.getClass(), "#evalTree - Tree is doodle - \n" + tree.texture.toJSON().toString(4));
             }
         }
 
@@ -1114,13 +1124,13 @@ public class Evaluation {
             }
 
             // 判断人是否涂鸦
-            if (person.doodle.isValid()) {
-                if (person.doodle.max >= 1.0 && person.doodle.max < 2.0) {
+            if (person.texture.isValid()) {
+                if (person.texture.max >= 1.0 && person.texture.max < 2.0) {
                     // 判断标准差和层密度
-                    if (person.doodle.standardDeviation >= 0.42 && person.doodle.hierarchy <= 0.05) {
+                    if (person.texture.standardDeviation >= 0.42 && person.texture.hierarchy <= 0.05) {
                         // 涂鸦的人
                         result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
-                        Logger.d(this.getClass(), "#evalPerson - Person is doodle - \n" + person.doodle.toJSON().toString(4));
+                        Logger.d(this.getClass(), "#evalPerson - Person is doodle - \n" + person.texture.toJSON().toString(4));
                     }
                 }
             }
@@ -1162,7 +1172,7 @@ public class Evaluation {
             if (other.get(Label.Sun).isDoodle()) {
                 // 涂鸦的太阳
                 Logger.d(this.getClass(), "#evalOthers - Sun is doodle - \n"
-                        + other.get(Label.Sun).doodle.toJSON().toString(4));
+                        + other.get(Label.Sun).texture.toJSON().toString(4));
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.7, 0.8));
             }
         }

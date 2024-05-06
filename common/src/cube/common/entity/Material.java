@@ -26,7 +26,7 @@
 
 package cube.common.entity;
 
-import cube.aigc.psychology.composition.Doodle;
+import cube.aigc.psychology.composition.Texture;
 import cube.common.JSONable;
 import cube.vision.BoundingBox;
 import cube.vision.Box;
@@ -49,7 +49,7 @@ public class Material implements JSONable {
 
     public String color;
 
-    public Doodle doodle;
+    public Texture texture;
 
     public Material() {
     }
@@ -61,7 +61,7 @@ public class Material implements JSONable {
         this.area = Math.round(boundingBox.width * boundingBox.height * 0.76f);
         this.prob = 0.8;
         this.color = "#FF0000";
-        this.doodle = new Doodle();
+        this.texture = new Texture();
     }
 
     public Material(JSONObject json) {
@@ -71,16 +71,16 @@ public class Material implements JSONable {
         this.box = new Box(json.getJSONObject("box"));
         this.area = json.getInt("area");
         this.color = json.getString("color");
-        this.doodle = new Doodle(json.getJSONObject("doodle"));
+        this.texture = new Texture(json.getJSONObject("texture"));
     }
 
     public boolean isDoodle() {
         // 涂鸦特征：轮廓密度高，层密度低
-        if (this.doodle.isValid()) {
+        if (this.texture.isValid()) {
             // 判断最大值
-            if (this.doodle.max >= 1.0) {
+            if (this.texture.max >= 1.0) {
                 // 判断标准差和层密度
-                if (this.doodle.standardDeviation >= 0.4 && this.doodle.hierarchy <= 0.03) {
+                if (this.texture.standardDeviation >= 0.4 && this.texture.hierarchy <= 0.03) {
                     return true;
                 }
             }
@@ -141,7 +141,7 @@ public class Material implements JSONable {
         json.put("box", this.box.toJSON());
         json.put("area", this.area);
         json.put("color", this.color);
-        json.put("doodle", this.doodle.toJSON());
+        json.put("texture", this.texture.toJSON());
         return json;
     }
 
