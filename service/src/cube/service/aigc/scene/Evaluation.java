@@ -486,22 +486,24 @@ public class Evaluation {
 
                 if (texture.isValid()) {
                     // 判断画面涂鸦效果
-                    if (texture.max >= 1.0 && texture.max < 2.0) {
-                        // 通过标准差和层密度，判断是否画面被反复涂鸦
-                        if (texture.standardDeviation >= 0.42 && texture.hierarchy <= 0.05) {
-                            doodles += 1;
-                        }
+                    if (texture.density > 0.8) {
+                        doodles += 1;
                     }
-
-                    if (texture.density < 0.3) {
-                        sparseness += 1;
-                    }
+//                    if (texture.max >= 1.0 && texture.max < 2.0) {
+//                        // 通过标准差和层密度，判断是否画面被反复涂鸦
+//                        if (texture.standardDeviation >= 0.42 && texture.hierarchy <= 0.05) {
+//                            doodles += 1;
+//                        }
+//                    }
                 }
             }
 
             Logger.d(this.getClass(), "#evalSpaceStructure - Space whole texture:\n"
                     + this.painting.getWhole().toJSON().toString(4));
-            if (this.painting.getWhole().density < 0.35) {
+            if (this.painting.getWhole().density > 0.1 && this.painting.getWhole().density < 0.3) {
+                sparseness += 1;
+            }
+            else if (this.painting.getWhole().density <= 0.1) {
                 sparseness += 2;
             }
 
@@ -517,12 +519,12 @@ public class Evaluation {
             }
 
             // 画面稀疏
-            if (sparseness >= 3) {
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
+            if (sparseness >= 2) {
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
             }
-            else if (sparseness >= 2) {
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
+            if (sparseness >= 1) {
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
             }
         }
