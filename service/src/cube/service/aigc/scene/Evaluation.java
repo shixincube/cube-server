@@ -31,9 +31,9 @@ import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
-import cube.aigc.psychology.composition.Texture;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.SpaceLayout;
+import cube.aigc.psychology.composition.Texture;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.Leg;
@@ -488,6 +488,10 @@ public class Evaluation {
                     // 判断画面涂鸦效果
                     if (texture.density > 0.8) {
                         doodles += 1;
+                    }
+                    if (texture.max >= 2.0 || texture.max == 0.0) {
+                        // max 大于2或者等于0画面线条可能很粗，不判断画面疏密性
+                        sparseness -= 1;
                     }
 //                    if (texture.max >= 1.0 && texture.max < 2.0) {
 //                        // 通过标准差和层密度，判断是否画面被反复涂鸦
@@ -1565,27 +1569,40 @@ public class Evaluation {
     private List<EvaluationFeature> correct(List<EvaluationFeature> list) {
         // 如果有乐观和社会适应性，则社会适应性负分降分
         double optimism = 0;
+
+        // 如果抑郁都是负分，则删除所有抑郁指标
+        int depressionValue = 0;
+        int depressionCount = 0;
+
         for (EvaluationFeature ef : list) {
             Score score = ef.getScore(Indicator.Optimism);
             if (null != score && score.value > 0) {
                 optimism += score.weight;
             }
+
+            List<Score> scores = ef.getScores(Indicator.Depression);
+            for (Score s : scores) {
+                depressionCount += 1;
+                depressionValue += s.value;
+            }
         }
+
         if (optimism > 0) {
             for (EvaluationFeature ef : list) {
                 Score score = ef.getScore(Indicator.SocialAdaptability);
                 if (null != score) {
-                    score.weight -= FloatUtils.random(0.50, 0.59);
-                    score.weight = Math.abs(score.weight);
-                }
-
-                score = ef.getScore(Indicator.Depression);
-                if (null != score) {
-                    score.weight -= optimism * 0.66;
+                    score.weight -= optimism * 0.6;
                     score.weight = Math.abs(score.weight);
                 }
             }
         }
+
+        if (depressionValue < 0 && depressionCount == Math.abs(depressionValue)) {
+            for (EvaluationFeature ef : list) {
+                ef.removeScores(Indicator.Depression);
+            }
+        }
+
         return list;
     }
 

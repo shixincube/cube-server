@@ -225,11 +225,9 @@ public class EvaluationReport implements JSONable {
                     }
                     break;
                 case Optimism:
-                    if (es.positiveScore - es.negativeScore > 0.1) {
+                    if (es.positiveScore - es.negativeScore > 1.0) {
                         optimism = true;
-                        if (es.positiveScore - es.negativeScore > 1.0) {
-                            score -= 1;
-                        }
+                        score -= 1;
                     }
                     break;
                 case Unknown:

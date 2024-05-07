@@ -30,6 +30,7 @@ import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -65,12 +66,39 @@ public class EvaluationFeature {
     }
 
     public Score getScore(Indicator indicator) {
+        Score result = new Score(indicator, 0, 0);
         for (Score score : this.scores) {
             if (score.indicator == indicator) {
-                return score;
+                result.value += score.value;
+                result.weight += score.value * score.weight;
             }
         }
-        return null;
+
+        if (result.value == 0) {
+            return null;
+        }
+
+        return result;
+    }
+
+    public List<Score> getScores(Indicator indicator) {
+        List<Score> result = new ArrayList<>();
+        for (Score score : this.scores) {
+            if (score.indicator == indicator) {
+                result.add(score);
+            }
+        }
+        return result;
+    }
+
+    public void removeScores(Indicator indicator) {
+        Iterator<Score> iter = this.scores.iterator();
+        while (iter.hasNext()) {
+            Score score = iter.next();
+            if (score.indicator == indicator) {
+                iter.remove();
+            }
+        }
     }
 
     public class Feature {
