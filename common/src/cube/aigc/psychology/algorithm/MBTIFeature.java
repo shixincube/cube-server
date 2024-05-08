@@ -26,6 +26,7 @@
 
 package cube.aigc.psychology.algorithm;
 
+import cube.aigc.psychology.material.Person;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -296,6 +297,12 @@ public class MBTIFeature implements JSONable {
             this.build();
         }
         return this.description;
+    }
+
+    public String makeDescriptionPrompt(int age, Person.Gender gender) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("已知");
+        return buf.toString();
     }
 
     @Override

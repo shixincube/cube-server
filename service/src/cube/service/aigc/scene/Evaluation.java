@@ -143,7 +143,24 @@ public class Evaluation {
 
         House house = this.painting.getHouse();
         Tree tree = this.painting.getTree();
+
         Person person = this.painting.getPerson();
+        if (null != person) {
+            if (person instanceof StickMan) {
+                // 排除火柴人
+                person = null;
+
+                result.addFeature(Comment.Creativity, Tendency.Negative);
+                result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.3, 0.4));
+
+                for (Person p : this.painting.getPersons()) {
+                    if (!(p instanceof StickMan)) {
+                        person = p;
+                    }
+                }
+            }
+        }
+
         if (null != house && null != tree && null != person) {
             // 位置关系，使用 box 计算位置
             Point hc = house.box.getCenterPoint();
@@ -216,6 +233,19 @@ public class Evaluation {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
 
+            // 房的面积非常小
+            double hR = (double)ha / (double)this.spaceLayout.getPaintingArea();
+            if (hR < 0.1) {
+                result.addFeature(Comment.PayAttentionToFamily, Tendency.Negative);
+                result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
+            }
+
+            // 人的面积非常小
+            double hP = (double)pa / (double)this.spaceLayout.getPaintingArea();
+            if (hP < 0.09) {
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
+            }
+
             // 距离
             int distHT = house.distance(tree);
             int distPH = person.distance(house);
@@ -229,6 +259,14 @@ public class Evaluation {
             }
             if (distTP > 0) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
+            }
+            else {
+                // 树和人重叠
+                int area = tree.box.calculateCollisionArea(person.box);
+                if (Math.abs((person.box.width * person.box.height) - area) < 100) {
+                    // 人和树基本重叠
+                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
+                }
             }
 
             if (distHT > 10 && distPH > 10 && distTP > 10) {
@@ -297,6 +335,13 @@ public class Evaluation {
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
             }
 
+            // 房的面积非常小
+            double hR = (double)ha / (double)this.spaceLayout.getPaintingArea();
+            if (hR < 0.1) {
+                result.addFeature(Comment.PayAttentionToFamily, Tendency.Negative);
+                result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
+            }
+
             // 间距
             Logger.d(this.getClass(), "#evalSpaceStructure - distance: HT - " + house.distance(tree));
             if (house.distance(tree) > 0) {
@@ -305,7 +350,8 @@ public class Evaluation {
 
             // 没有人
             Logger.d(this.getClass(), "#evalSpaceStructure [Depression] : No person");
-            result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
+            result.addScore(Indicator.Depression, 1,
+                    hR < 0.1 ? FloatUtils.random(1.0, 1.1) : FloatUtils.random(0.5, 0.6));
         }
         else if (null != house && null != person) {
             // 位置关系，使用 box 计算位置
@@ -359,6 +405,13 @@ public class Evaluation {
                 result.addFeature(Comment.SelfControl, Tendency.Negative);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
+            }
+
+            // 房的面积非常小
+            double hR = (double)ha / (double)this.spaceLayout.getPaintingArea();
+            if (hR < 0.1) {
+                result.addFeature(Comment.PayAttentionToFamily, Tendency.Negative);
+                result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
             }
 
             // 间距
@@ -486,12 +539,19 @@ public class Evaluation {
 
                 if (texture.isValid()) {
                     // 判断画面涂鸦效果
-                    if (texture.density > 0.8) {
+                    if (texture.density > 0.8 && texture.max < 2.0) {
                         doodles += 1;
                     }
-                    if (texture.max >= 2.0 || texture.max == 0.0) {
+
+                    if ((texture.max >= 2.0 || texture.max == 0.0) && texture.density < 0.8) {
                         // max 大于2或者等于0画面线条可能很粗，不判断画面疏密性
                         sparseness -= 1;
+                    }
+                    else if (texture.max < 0.1) {
+                        sparseness += 1;
+                    }
+                    else if (texture.density < 0.1) {
+                        sparseness += 2;
                     }
 //                    if (texture.max >= 1.0 && texture.max < 2.0) {
 //                        // 通过标准差和层密度，判断是否画面被反复涂鸦
@@ -504,11 +564,16 @@ public class Evaluation {
 
             Logger.d(this.getClass(), "#evalSpaceStructure - Space whole texture:\n"
                     + this.painting.getWhole().toJSON().toString(4));
-            if (this.painting.getWhole().density > 0.1 && this.painting.getWhole().density < 0.3) {
-                sparseness += 1;
+            if (this.painting.getWhole().max < 2.0 && this.painting.getWhole().max != 0) {
+                if (this.painting.getWhole().density > 0.1 && this.painting.getWhole().density < 0.3) {
+                    sparseness += 1;
+                }
+                else if (this.painting.getWhole().density <= 0.1) {
+                    sparseness += 2;
+                }
             }
-            else if (this.painting.getWhole().density <= 0.1) {
-                sparseness += 2;
+            else if (this.painting.getWhole().max >= 2.0) {
+                sparseness -= 1;
             }
 
             if (doodles >= 2) {
@@ -523,11 +588,19 @@ public class Evaluation {
             }
 
             // 画面稀疏
-            if (sparseness >= 2) {
+            if (sparseness >= 4) {
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.7, 0.8));
+                Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
+            }
+            else if (sparseness >= 3) {
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
+                Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
+            }
+            else if (sparseness >= 2) {
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
             }
-            if (sparseness >= 1) {
+            else if (sparseness >= 1) {
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
             }
@@ -830,6 +903,7 @@ public class Evaluation {
                     result.addFeature(Comment.EmotionalStability, Tendency.Positive);
 
                     result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.2, 0.3));
+                    result.addScore(Indicator.Depression, -1, FloatUtils.random(0.4, 0.5));
                 }
                 else {
                     // 很粗
@@ -1589,9 +1663,9 @@ public class Evaluation {
 
         if (optimism > 0) {
             for (EvaluationFeature ef : list) {
-                Score score = ef.getScore(Indicator.SocialAdaptability);
-                if (null != score) {
-                    score.weight -= optimism * 0.6;
+                List<Score> scores = ef.getScores(Indicator.SocialAdaptability);
+                for (Score score : scores) {
+                    score.weight -= optimism * 0.677;
                     score.weight = Math.abs(score.weight);
                 }
             }

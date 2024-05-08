@@ -259,6 +259,11 @@ public class PsychologyReport implements JSONable {
         buf.append("\n> ").append(Utils.gsDateFormat.format(new Date(this.timestamp))).append("\n");
 
         if (null != this.evaluationReport) {
+            buf.append("\n\n");
+            buf.append("**绘画疑似可被解读的内容较少**：");
+            buf.append(this.evaluationReport.isHesitating() ? "***是***" : "***否***");
+            buf.append("\n");
+
             if (this.evaluationReport.numRepresentations() > 0) {
                 buf.append("\n\n");
                 buf.append("**特征表**");

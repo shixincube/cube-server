@@ -102,6 +102,10 @@ public class SpaceLayout {
         return this.areaRatio;
     }
 
+    public long getPaintingArea() {
+        return Math.round((double)(this.paintingBox.width * this.paintingBox.height) * this.correctedValue);
+    }
+
     public double[] getMargin() {
         return new double[] {
                 this.topMargin,

@@ -63,6 +63,8 @@ public class EvaluationReport implements JSONable {
 
     private AttentionSuggestion attentionSuggestion;
 
+    private boolean hesitating = false;
+
     public EvaluationReport(Attribute attribute, EvaluationFeature evaluationFeature) {
         this(attribute, Collections.singletonList((evaluationFeature)));
     }
@@ -84,6 +86,7 @@ public class EvaluationReport implements JSONable {
         }
         this.scoreAccelerator = new ScoreAccelerator(json.getJSONObject("accelerator"));
         this.attentionSuggestion = AttentionSuggestion.parse(json.getInt("attention"));
+        this.hesitating = json.has("hesitating") && json.getBoolean("hesitating");
     }
 
     public boolean isEmpty() {
@@ -100,6 +103,10 @@ public class EvaluationReport implements JSONable {
 
     public AttentionSuggestion getAttentionSuggestion() {
         return this.attentionSuggestion;
+    }
+
+    public boolean isHesitating() {
+        return this.hesitating;
     }
 
     private void build(List<EvaluationFeature> resultList) {
@@ -144,15 +151,22 @@ public class EvaluationReport implements JSONable {
 
         // 计算关注
         this.calcAttentionSuggestion();
+
+        // 判断 hesitating
+        if (this.representationList.size() <= 10 || this.scoreAccelerator.getEvaluationScores().size() <= 7) {
+            this.hesitating = true;
+        }
     }
 
     private void calcAttentionSuggestion() {
         int score = 0;
         boolean depression = false;
+        double depressionScore = 0;
         boolean senseOfSecurity = false;
         boolean stress = false;
         boolean anxiety = false;
         boolean optimism = false;
+        boolean obsession = false;
 
         for (EvaluationScore es : this.scoreAccelerator.getEvaluationScores()) {
             switch (es.indicator) {
@@ -165,18 +179,19 @@ public class EvaluationReport implements JSONable {
                     }
                     break;
                 case SocialAdaptability:
-                    // 负分应当大于 0.2
-                    if (es.negativeScore > es.positiveScore && es.negativeScore >= 0.2) {
-                        score += 1;
-
-                        if (es.negativeScore - es.positiveScore > 0.3) {
+                    double delta = es.negativeScore - es.positiveScore;
+                    if (delta > 0) {
+                        if (delta > 0.3) {
+                            score += 2;
+                        }
+                        else if (delta >= 0.2) {
                             score += 1;
                         }
                     }
                     break;
                 case Depression:
-                    double depressionScore = es.positiveScore - es.negativeScore;
-                    if (depressionScore > 1.0) {
+                    depressionScore = es.positiveScore - es.negativeScore;
+                    if (depressionScore >= 0.9) {
                         depression = true;
                         score += 3;
                     }
@@ -197,11 +212,11 @@ public class EvaluationReport implements JSONable {
                     }
                     break;
                 case SenseOfSecurity:
-                    if (es.negativeScore > 0.6) {
+                    if (es.negativeScore - es.positiveScore > 0.6) {
                         senseOfSecurity = true;
                         score += 2;
                     }
-                    else if (es.negativeScore >= 0.5) {
+                    else if (es.negativeScore - es.positiveScore >= 0.5) {
                         senseOfSecurity = true;
                         score += 1;
                     }
@@ -212,15 +227,21 @@ public class EvaluationReport implements JSONable {
                     }
                     break;
                 case Anxiety:
-                    if (es.positiveScore - es.negativeScore > 0.4) {
+                    if (es.positiveScore - es.negativeScore > 1.1) {
+                        anxiety = true;
+                        score += 1;
+                    }
+                    else if (es.positiveScore - es.negativeScore > 0.4) {
                         anxiety = true;
                     }
                     break;
                 case Obsession:
                     if (es.positiveScore > 0.6) {
+                        obsession = true;
                         score += 2;
                     }
                     else if (es.positiveScore > 0.4) {
+                        obsession = true;
                         score += 1;
                     }
                     break;
@@ -228,6 +249,12 @@ public class EvaluationReport implements JSONable {
                     if (es.positiveScore - es.negativeScore > 1.0) {
                         optimism = true;
                         score -= 1;
+                    }
+                    else if (es.positiveScore - es.negativeScore > 0.5) {
+                        optimism = true;
+                        if (depressionScore >= 0.4) {
+                            score -= 1;
+                        }
                     }
                     break;
                 case Unknown:
@@ -241,18 +268,30 @@ public class EvaluationReport implements JSONable {
 
         if (depression && senseOfSecurity) {
             score += 1;
+            Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && senseOfSecurity)");
         }
         if (depression && stress) {
             score += 1;
+            Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && stress)");
         }
         if (depression && anxiety) {
             score += 1;
+            Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && anxiety)");
         }
         if (!depression && optimism) {
             score -= 1;
         }
+        if (obsession && optimism) {
+            score -= 1;
+        }
 
-        Logger.d(this.getClass(), "#calcAttentionSuggestion - score: " + score);
+        Logger.d(this.getClass(), "#calcAttentionSuggestion - score: " + score + " - " +
+                "depression:" + depression + "|" +
+                "senseOfSecurity:" + senseOfSecurity + "|" +
+                "stress:" + stress + "|" +
+                "anxiety:" + anxiety + "|" +
+                "obsession:" + obsession + "|" +
+                "optimism:" + optimism);
 
         if (score > 0) {
             if (score >= 5) {
@@ -393,6 +432,8 @@ public class EvaluationReport implements JSONable {
 
         json.put("attention", this.attentionSuggestion.level);
 
+        json.put("hesitating", this.hesitating);
+
         JSONArray priorityArray = new JSONArray();
         for (EvaluationScore es : this.getEvaluationScoresByRepresentation(100)) {
             priorityArray.put(es.toJSON());
@@ -416,6 +457,8 @@ public class EvaluationReport implements JSONable {
         json.put("accelerator", this.scoreAccelerator.toCompactJSON());
 
         json.put("attention", this.attentionSuggestion.level);
+
+        json.put("hesitating", this.hesitating);
 
         JSONArray priorityArray = new JSONArray();
         for (EvaluationScore es : this.getEvaluationScoresByRepresentation(100)) {
