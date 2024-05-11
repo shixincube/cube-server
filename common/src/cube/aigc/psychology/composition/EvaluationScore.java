@@ -110,181 +110,230 @@ public class EvaluationScore implements JSONable {
             return null;
         }
 
+        double score = this.positiveScore - this.negativeScore;
+
         StringBuilder buf = new StringBuilder();
         switch (this.indicator) {
             case Obsession:
-                if (this.positiveScore > 0.2 && this.positiveScore < 0.4) {
+                if (score > 0.2 && score <= 0.4) {
                     buf.append("轻度强迫症的报告描述");
-                } else if (this.positiveScore >= 0.4 && this.positiveScore < 0.8) {
+                } else if (score > 0.4 && score <= 0.8) {
                     buf.append("中度强迫症的报告描述");
-                } else if (this.positiveScore >= 0.8) {
+                } else if (score > 0.8) {
                     buf.append("重度强迫症的报告描述");
                 }
                 break;
             case Depression:
-                if (this.positiveScore > 0.3 && this.positiveScore < 0.5) {
+                if (score > 0.3 && score <= 0.5) {
                     buf.append("轻度抑郁的报告描述");
-                } else if (this.positiveScore >= 0.5 && this.positiveScore < 0.9) {
+                } else if (score > 0.5 && score <= 0.9) {
                     buf.append("中度抑郁的报告描述");
-                } else if (this.positiveScore >= 0.9) {
+                } else if (score > 0.9) {
                     buf.append("严重抑郁的报告描述");
                 }
                 break;
             case Anxiety:
-                if (this.positiveScore > 0.3 && this.positiveScore < 0.5) {
+                if (score > 0.3 && score <= 0.5) {
                     buf.append("轻度焦虑的报告描述");
-                } else if (this.positiveScore >= 0.5 && this.positiveScore < 0.9) {
+                } else if (score > 0.5 && score <= 0.9) {
                     buf.append("中度焦虑的报告描述");
-                } else if (this.positiveScore >= 0.9) {
+                } else if (score > 0.9) {
                     buf.append("严重焦虑的报告描述");
                 }
                 break;
             case Hostile:
-                if (this.positiveScore > 0.2 && this.positiveScore < 0.4) {
+                if (score > 0.2 && score <= 0.4) {
                     buf.append("轻微敌对的报告描述");
-                } else if (this.positiveScore >= 0.4 && this.positiveScore < 0.8) {
+                } else if (score > 0.4 && score <= 0.8) {
                     buf.append("中度敌对的报告描述");
-                } else if (this.positiveScore >= 0.8) {
+                } else if (score > 0.8) {
                     buf.append("严重敌对的报告描述");
                 }
                 break;
             case Paranoid:
-                if (this.positiveScore > 0.2 && this.positiveScore < 0.5) {
+                if (score > 0.2 && score <= 0.5) {
                     buf.append("轻微偏执的报告描述");
-                } else if (this.positiveScore >= 0.5 && this.positiveScore < 0.8) {
+                } else if (score > 0.5 && score <= 0.8) {
                     buf.append("中度偏执的报告描述");
-                } else if (this.positiveScore >= 0.8) {
+                } else if (score > 0.8) {
                     buf.append("严重偏执的报告描述");
                 }
                 break;
             case SelfControl:
-                // 自我控制
-                if (this.positiveScore >= 0.2) {
+                if (score >= 0.8) {
                     buf.append("自我控制较好的报告描述");
-                } else if (this.negativeScore >= 0.2) {
-                    buf.append("自我控制较差的报告描述");
-                } else {
+                } else if (score >= 0.0) {
                     buf.append("自我控制一般的报告描述");
+                } else {
+                    buf.append("自我控制较差的报告描述");
                 }
                 break;
             case Creativity:
-                // 创造力
-                if (this.positiveScore > 1.2) {
+                if (score >= 1.2) {
                     buf.append("有较强的创造力的报告描述");
-                } else if (this.positiveScore >= 0.5) {
+                } else if (score >= 0.5) {
                     buf.append("有一定的创造力的报告描述");
                 } else {
                     buf.append("创造力一般的报告描述");
                 }
                 break;
             case SelfConsciousness:
-                // 自我意识
-                if (this.positiveScore < 0.2) {
-                    buf.append("自我意识不强的报告描述");
-                } else if (this.positiveScore < 1.2) {
+                if (score > 0.5) {
+                    buf.append("自我意识强的报告描述");
+                } else if (score > 0.3) {
                     buf.append("自我意识中等的报告描述");
                 } else {
-                    buf.append("自我意识强的报告描述");
+                    buf.append("自我意识不强的报告描述");
                 }
                 break;
             case Confidence:
-                if (this.positiveScore > this.negativeScore && this.positiveScore > 1.5) {
+                if (score > 1.0) {
                     buf.append("自信心很强的报告描述");
-                } else if (this.positiveScore > this.negativeScore && this.positiveScore > 0.3) {
+                } else if (score > 0.3) {
                     buf.append("自信心较强的报告描述");
                 } else {
                     buf.append("自信心不足的报告描述");
                 }
                 break;
+            case Independence:
+                if (score > 0.3) {
+                    buf.append("较为独立的报告描述");
+                } else {
+                    buf.append("较为依赖环境的报告描述");
+                }
+                break;
             case EvaluationFromOutside:
-                if (this.value >= 2) {
+                if (score >= 1.0) {
                     buf.append("非常重视外在评价的报告描述");
-                } else if (this.value == 1) {
+                } else if (score > 0.3) {
                     buf.append("较为重视外在评价的报告描述");
                 }
                 break;
             case AchievementMotivation:
-                if (this.value > 1 && this.value < 4) {
-                    buf.append("中度的成就动机的报告描述");
-                } else if (this.value >= 4) {
+                if (score > 1.0) {
                     buf.append("很强的成就动机的报告描述");
+                } else if (score > 0.6) {
+                    buf.append("中度的成就动机的报告描述");
                 } else {
                     buf.append("较弱的成就动机的报告描述");
                 }
                 break;
             case SenseOfSecurity:
-                if (this.negativeScore > 1.0) {
-                    buf.append("安全感很差的报告描述");
-                } else if (this.negativeScore >= 0.3) {
+                if (score >= 0.5) {
+                    buf.append("安全感较好的报告描述");
+                } else if (score > 0.3) {
                     buf.append("安全感合格的报告描述");
                 } else {
-                    buf.append("安全感较好的报告描述");
+                    buf.append("安全感很差的报告描述");
                 }
                 break;
             case Attacking:
-                if (this.value <= 1) {
-                    buf.append("较小的攻击性的报告描述");
-                } else if (this.value <= 3) {
+                if (score > 0.7) {
+                    buf.append("很强的攻击性的报告描述");
+                } else if (score > 0.4) {
                     buf.append("中度的攻击性的报告描述");
                 } else {
-                    buf.append("很强的攻击性的报告描述");
+                    buf.append("较小的攻击性的报告描述");
                 }
                 break;
             case Impulsion:
-                if (this.positiveScore <= 0.5) {
-                    buf.append("轻微冲动性的报告描述");
-                } else if (this.positiveScore <= 1.2) {
+                if (score > 1.0) {
+                    buf.append("重度冲动性的报告描述");
+                } else if (score > 0.5) {
                     buf.append("中度冲动性的报告描述");
                 } else {
-                    buf.append("重度冲动性的报告描述");
+                    buf.append("轻微冲动性的报告描述");
                 }
                 break;
             case Narcissism:
-                if (this.positiveScore <= 0.5) {
-                    buf.append("不太自恋的报告描述");
-                } else if (this.positiveScore <= 1.2) {
+                if (score > 1.0) {
+                    buf.append("重度自恋的报告描述");
+                } else if (score > 0.5) {
                     buf.append("中度自恋的报告描述");
                 } else {
-                    buf.append("重度自恋的报告描述");
+                    buf.append("轻度自恋的报告描述");
+                }
+                break;
+            case Emotion:
+                if (score > 0.3) {
+                    buf.append("情绪较为稳定的报告描述");
+                } else {
+                    buf.append("情绪较不稳定的报告描述");
                 }
                 break;
             case Constrain:
-                if (this.positiveScore <= 0.5) {
-                    buf.append("不太压抑的报告描述");
-                } else if (this.positiveScore <= 1.2) {
+                if (score > 1.0) {
+                    buf.append("重度压抑的报告描述");
+                } else if (score > 0.5) {
                     buf.append("中度压抑的报告描述");
                 } else {
-                    buf.append("重度压抑的报告描述");
+                    buf.append("不太压抑的报告描述");
                 }
                 break;
             case SocialAdaptability:
-                if (this.positiveScore >= 0.3) {
+                if (score >= 0.3) {
                     buf.append("社会适应性良好的报告描述");
                 } else {
                     buf.append("社会适应性较差的报告描述");
                 }
                 break;
             case Family:
-                if (this.value >= 3) {
+                if (score > 1.0) {
                     buf.append("较为重视家庭关系的报告描述");
-                } else if (this.value >= 2) {
+                } else if (score > 0.8) {
                     buf.append("一般重视家庭关系的报告描述");
                 } else {
                     buf.append("不太重视家庭关系的报告描述");
                 }
                 break;
             case InterpersonalRelation:
-                if (this.positiveScore >= 1.3) {
+                if (score >= 1.3) {
                     buf.append("人际关系很受朋友欢迎的报告描述");
-                } else if (this.positiveScore >= 1.0) {
+                } else if (score >= 1.0) {
                     buf.append("人际关系有点距离感的报告描述");
-                } else {
+                } else if (score > 0.1) {
                     buf.append("人际关系疏远的报告描述");
+                } else if (score > -0.3 ) {
+                    buf.append("轻微人际敏感的报告描述");
+                } else if (score > -0.8 ) {
+                    buf.append("中度人际敏感的报告描述");
+                } else {
+                    buf.append("严重人际敏感的报告描述");
+                }
+                break;
+            case Idealism:
+                if (score >= 0.3) {
+                    buf.append("理想主义者的报告描述");
+                }
+                break;
+            case Realism:
+                if (score >= 0.3) {
+                    buf.append("现实主义者的报告描述");
+                }
+                break;
+            case Optimism:
+                if (score > 0.1) {
+                    buf.append("乐观者的报告描述");
+                }
+                break;
+            case Pessimism:
+                if (score > 0.1) {
+                    buf.append("悲观者的报告描述");
+                }
+                break;
+            case Psychosis:
+                if (score > 1.5) {
+                    buf.append("重度精神病性的报告描述");
+                } else if ( score > 1.0) {
+                    buf.append("中度精神病性的报告描述");
+                } else if (score > 0.5) {
+                    buf.append("轻度精神病性的报告描述");
                 }
                 break;
             default:
+                buf.append("个体的");
                 buf.append(this.indicator.name);
-                buf.append("的报告描述。");
+                buf.append("心理特点");
                 break;
         }
         return buf.toString();
