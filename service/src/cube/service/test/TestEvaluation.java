@@ -26,12 +26,45 @@
 
 package cube.service.test;
 
+import cell.util.Utils;
+import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.composition.Answer;
+import cube.aigc.psychology.composition.Question;
+import cube.aigc.psychology.composition.Scale;
+import org.json.JSONObject;
+
 public class TestEvaluation {
 
     public static void testEvaluationReport() {
     }
 
+    public static void testLoadScale() {
+        System.out.println("testLoadScale");
+
+        Scale scale = Resource.getInstance().loadScaleByFilename("example");
+//        System.out.println(scale.toMarkdown());
+
+        System.out.println("Complete: " + scale.isComplete());
+
+        System.out.println("----------------------------------------");
+
+        for (Question question : scale.getQuestions()) {
+            question.chooseAnswer(Utils.randomUnsigned() % 2 == 0 ? "A" : "B");
+        }
+
+        System.out.println("Complete: " + scale.isComplete());
+
+        for (Answer answer : scale.getAllChosenAnswers()) {
+            System.out.println(answer.sn + " : " + answer.code);
+        }
+
+        System.out.println("----------------------------------------");
+
+        JSONObject conclusion = scale.scoring();
+        System.out.println(conclusion.toString(4));
+    }
+
     public static void main(String[] args) {
-        testEvaluationReport();
+        testLoadScale();
     }
 }

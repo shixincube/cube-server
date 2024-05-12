@@ -24,21 +24,30 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology;
+package cube.aigc.psychology.composition;
 
-import cube.aigc.psychology.composition.Question;
+import cube.common.JSONable;
+import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-/**
- * 量表。
- */
-public class Scale {
+public class ScaleScore implements JSONable {
 
-    private List<Question> questions;
+    public Map<String, Object> items;
 
-    public Scale() {
-        this.questions = new ArrayList<>();
+    public ScaleScore() {
+        this.items = new LinkedHashMap<>();
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

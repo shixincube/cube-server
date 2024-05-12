@@ -26,21 +26,27 @@
 
 package cube.aigc.psychology.composition;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class Answer {
+import java.util.ArrayList;
+import java.util.List;
 
-    public final int sn;
+public class QuestionSection {
 
-    public final String code;
+    public final String title;
 
     public final String content;
 
-    public boolean chosen = false;
+    public final List<Question> questions;
 
-    public Answer(int sn, JSONObject structure) {
-        this.sn = sn;
-        this.code = structure.getString("code");
+    public QuestionSection(JSONObject structure) {
+        this.title = structure.getString("title");
         this.content = structure.getString("content");
+        this.questions = new ArrayList<>();
+        JSONArray array = structure.getJSONArray("questions");
+        for (int i = 0; i < array.length(); ++i) {
+            this.questions.add(new Question(array.getJSONObject(i)));
+        }
     }
 }

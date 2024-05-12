@@ -29,6 +29,7 @@ package cube.aigc.psychology;
 import cell.util.log.Logger;
 import cube.aigc.psychology.algorithm.Benchmark;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
+import cube.aigc.psychology.composition.Scale;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -157,5 +158,14 @@ public class Resource {
         }
 
         return this.benchmark;
+    }
+
+    public Scale loadScaleByFilename(String filename) {
+        File file = new File("assets/psychology/questionnaires/" + filename + ".json");
+        if (!file.exists()) {
+            Logger.w(this.getClass(), "#loadScaleByFilename - Can NOT find file: " + file.getAbsolutePath());
+            return null;
+        }
+        return new Scale(file);
     }
 }

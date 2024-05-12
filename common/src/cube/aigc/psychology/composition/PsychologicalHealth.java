@@ -37,6 +37,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class PsychologicalHealth {
 
     private final static String PATH = "assets/psychology/";
