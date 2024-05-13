@@ -1647,6 +1647,7 @@ public class Evaluation {
         // 如果抑郁都是负分，则删除所有抑郁指标
         int depressionValue = 0;
         int depressionCount = 0;
+        double depression = 0;
 
         for (EvaluationFeature ef : list) {
             Score score = ef.getScore(Indicator.Optimism);
@@ -1658,6 +1659,11 @@ public class Evaluation {
             for (Score s : scores) {
                 depressionCount += 1;
                 depressionValue += s.value;
+                if (s.value > 0) {
+                    depression += s.weight;
+                } else {
+                    depression -= s.weight;
+                }
             }
         }
 
@@ -1675,6 +1681,10 @@ public class Evaluation {
             for (EvaluationFeature ef : list) {
                 ef.removeScores(Indicator.Depression);
             }
+        }
+        else if (depressionValue < 0 && depression > 0.5) {
+            // 增加一个权重负值
+            list.get(list.size() - 1).addScore(Indicator.Depression, -1, FloatUtils.random(0.79, 0.88));
         }
 
         return list;
