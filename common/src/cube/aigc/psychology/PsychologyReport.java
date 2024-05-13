@@ -30,6 +30,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.aigc.psychology.algorithm.Representation;
+import cube.aigc.psychology.composition.BehaviorSuggestion;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
@@ -75,7 +76,7 @@ public class PsychologyReport implements JSONable {
 
     private MBTIFeature mbtiFeature;
 
-    private List<String> behaviorList;
+    private List<BehaviorSuggestion> behaviorList;
 
     private List<String> reportTextList;
 
@@ -138,7 +139,12 @@ public class PsychologyReport implements JSONable {
         }
 
         if (json.has("behaviorList")) {
-            this.behaviorList = JSONUtils.toStringList(json.getJSONArray("behaviorList"));
+            this.behaviorList = new ArrayList<>();
+            JSONArray array = json.getJSONArray("behaviorList");
+            for (int i = 0; i < array.length(); ++i) {
+                BehaviorSuggestion bs = new BehaviorSuggestion(array.getJSONObject(i));
+                this.behaviorList.add(bs);
+            }
         }
 
         if (json.has("reportTextList")) {
@@ -170,12 +176,12 @@ public class PsychologyReport implements JSONable {
         return this.mbtiFeature;
     }
 
-    public void setBehaviorList(List<String> behaviorList) {
+    public void setBehaviorList(List<BehaviorSuggestion> behaviorList) {
         this.behaviorList = new ArrayList<>();
         this.behaviorList.addAll(behaviorList);
     }
 
-    public List<String> getBehaviorList() {
+    public List<BehaviorSuggestion> getBehaviorList() {
         return this.behaviorList;
     }
 
@@ -336,18 +342,21 @@ public class PsychologyReport implements JSONable {
             buf.append("\n");
             buf.append("**行为特征：**");
             buf.append("\n");
-            for (String behavior : this.behaviorList) {
+            for (BehaviorSuggestion behaviorSuggestion : this.behaviorList) {
                 buf.append("\n");
 
-                String[] lines = behavior.split("\n");
-                for (String line : lines) {
-                    if (line.trim().length() <= 2) {
-                        continue;
-                    }
+//                String[] lines = behavior.split("\n");
+//                for (String line : lines) {
+//                    if (line.trim().length() <= 2) {
+//                        continue;
+//                    }
+//
+//                    buf.append("> ").append(line);
+//                    buf.append("\n");
+//                }
 
-                    buf.append("> ").append(line);
-                    buf.append("\n");
-                }
+                buf.append("> **描述**：").append(behaviorSuggestion.behavior).append("\n");
+                buf.append("> **建议**：").append(behaviorSuggestion.suggestion).append("\n");
 
                 buf.append("\n***\n");
             }
@@ -381,7 +390,11 @@ public class PsychologyReport implements JSONable {
         }
 
         if (null != this.behaviorList) {
-            json.put("behaviorList", JSONUtils.toStringArray(this.behaviorList));
+            JSONArray jsonArray = new JSONArray();
+            for (BehaviorSuggestion bs : this.behaviorList) {
+                jsonArray.put(bs.toJSON());
+            }
+            json.put("behaviorList", jsonArray);
         }
 
         if (null != this.reportTextList) {

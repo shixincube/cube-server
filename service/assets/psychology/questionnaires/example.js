@@ -1,5 +1,7 @@
 
 function scoring(answers) {
+    
+    
     var score = new ScaleScore();
 
     return {

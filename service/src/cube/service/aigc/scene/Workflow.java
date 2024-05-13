@@ -29,12 +29,11 @@ package cube.service.aigc.scene;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
-import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import cube.aigc.psychology.algorithm.Representation;
+import cube.aigc.psychology.composition.BehaviorSuggestion;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GenerativeOption;
-import cube.common.entity.GenerativeRecord;
 import cube.service.aigc.AIGCService;
 import cube.util.TextUtils;
 
@@ -58,7 +57,7 @@ public class Workflow {
 
     private AIGCService service;
 
-    private List<String> behaviorList;
+    private List<BehaviorSuggestion> behaviorList;
 
     private List<String> reportTextList;
 
@@ -239,11 +238,11 @@ public class Workflow {
         return this;
     }
 
-    private List<String> inferBehavior(ThemeTemplate template, int age, String gender, int maxRepresentation) {
-        List<String> result = new ArrayList<>();
+    private List<BehaviorSuggestion> inferBehavior(ThemeTemplate template, int age, String gender, int maxRepresentation) {
+        List<BehaviorSuggestion> result = new ArrayList<>();
 
-        int count = 0;
-        for (Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore(100)) {
+        List<Representation> representations = this.evaluationReport.getRepresentationListByEvaluationScore(100);
+        for (Representation representation : representations) {
             String marked = null;
             // 趋势
             if (representation.positiveCorrelation == representation.negativeCorrelation) {
@@ -263,45 +262,44 @@ public class Workflow {
 
             // 设置短描述
             representation.description = marked;
+        }
 
-//            if (representation.positiveCorrelation > representation.negativeCorrelation) {
-//                marked = HighTrick + representation.knowledgeStrategy.getComment().word;
-//            }
-//            else if (representation.positiveCorrelation == representation.negativeCorrelation) {
-//                marked = NormalTrick + representation.knowledgeStrategy.getComment().word;
+        int count = 0;
+        for (Representation representation : representations) {
+//            String interpretation = representation.knowledgeStrategy.getInterpretation();
+//            KnowledgeStrategy.Scene scene = representation.knowledgeStrategy.getScene(template.theme);
+//            StringBuilder content = new StringBuilder();
+//            if (null == scene) {
+//                content.append(interpretation);
 //            }
 //            else {
-//                marked = LowTrick + representation.knowledgeStrategy.getComment().word;
+//                content.append(scene.explain);
 //            }
+
+            // 推理表征
+            String prompt = template.formatBehaviorPrompt(representation.knowledgeStrategy.getComment().word,
+                    age, gender, representation.description);
+            String behavior = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                    null, null);
+
+            prompt = template.formatSuggestionPrompt(representation.knowledgeStrategy.getComment().word);
+            String suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                    null, null);
+
+            if (null != behavior && null != suggestion) {
+                result.add(new BehaviorSuggestion(behavior, suggestion));
+            }
 
             ++count;
             if (count >= maxRepresentation) {
-                continue;
-            }
-
-            String interpretation = representation.knowledgeStrategy.getInterpretation();
-            KnowledgeStrategy.Scene scene = representation.knowledgeStrategy.getScene(template.theme);
-
-            StringBuilder content = new StringBuilder();
-            if (null == scene) {
-                content.append(interpretation);
-            }
-            else {
-                content.append(scene.explain);
-            }
-
-            // 推理表征
-            String prompt = template.formatBehaviorPrompt(content.toString(), age, gender, marked);
-            String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                    null, null);
-            if (null != answer) {
-                result.add(answer);
+                break;
             }
         }
 
         return result;
     }
 
+    /*
     private List<String> spliceBehaviorList(List<String> behaviorList) {
         List<String> result = new ArrayList<>();
         StringBuilder buf = new StringBuilder();
@@ -349,7 +347,7 @@ public class Workflow {
             result.add(record);
         }
         return result;
-    }
+    }*/
 
     /**
      * 将内容里的列表数据提取到列表里。

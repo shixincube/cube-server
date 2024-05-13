@@ -387,11 +387,28 @@ public class EvaluationReport implements JSONable {
             }
         }
 
-        List<EvaluationScore> list = this.scoreAccelerator.getEvaluationScores();
+        List<EvaluationScore> evaluationScores = this.scoreAccelerator.getEvaluationScores();
         List<EvaluationScore> result = new ArrayList<>();
-        for (EvaluationScore es : list) {
+        for (EvaluationScore es : evaluationScores) {
             if (indicators.contains(es.indicator)) {
                 result.add(es);
+            }
+        }
+
+        if (result.size() < topNum) {
+            // 补充
+            for (EvaluationScore es : evaluationScores) {
+                if (!result.contains(es)) {
+                    result.add(es);
+                    if (result.size() >= topNum) {
+                        break;
+                    }
+                }
+            }
+        }
+        else {
+            while (result.size() > topNum) {
+                result.remove(result.size() - 1);
             }
         }
 
@@ -402,8 +419,10 @@ public class EvaluationReport implements JSONable {
             }
         });
 
-        while (result.size() > topNum) {
-            result.remove(result.size() - 1);
+        // 把"人际关系"移到最后一项
+        if (result.get(0).indicator == Indicator.InterpersonalRelation) {
+            EvaluationScore es = result.remove(0);
+            result.add(es);
         }
 
         return result;

@@ -110,13 +110,22 @@ public class ThemeTemplate {
         return prompt;
     }
 
-    public String formatBehaviorPrompt(String content, int age, String gender, String markedRepresentation) {
+    public String formatBehaviorPrompt(String representation, int age, String gender, String markedRepresentation) {
         if (null == this.representationPromptFormat) {
             return null;
         }
 
         return String.format(this.representationPromptFormat.behavior,
-                content, markedRepresentation, age, filterGender(gender));
+                representation, markedRepresentation, age, filterGender(gender));
+    }
+
+    public String formatSuggestionPrompt(String representation) {
+        if (null == this.representationPromptFormat) {
+            return null;
+        }
+
+        return String.format(this.representationPromptFormat.suggestion,
+                representation);
     }
 
     private String filterGender(String gender) {
@@ -181,8 +190,11 @@ public class ThemeTemplate {
 
         public final String behavior;
 
+        public final String suggestion;
+
         public RepresentationPromptFormat(JSONObject json) {
             this.behavior = json.getString("behavior");
+            this.suggestion = json.getString("suggestion");
         }
     }
 }

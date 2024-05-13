@@ -30,6 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.MBTIFeature;
+import cube.aigc.psychology.composition.BehaviorSuggestion;
 import cube.common.Storagable;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -124,6 +125,9 @@ public class PsychologyStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("behavior", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("suggestion", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             })
     };
@@ -297,10 +301,11 @@ public class PsychologyStorage implements Storagable {
         }
 
         if (null != report.getBehaviorList()) {
-            for (String behavior : report.getBehaviorList()) {
+            for (BehaviorSuggestion bs : report.getBehaviorList()) {
                 this.storage.executeInsert(this.reportBehaviorTable, new StorageField[] {
                         new StorageField("report_sn", report.sn),
-                        new StorageField("behavior", EmojiFilter.filterEmoji(behavior))
+                        new StorageField("behavior", EmojiFilter.filterEmoji(bs.behavior)),
+                        new StorageField("suggestion", EmojiFilter.filterEmoji(bs.suggestion))
                 });
             }
         }
@@ -400,10 +405,12 @@ public class PsychologyStorage implements Storagable {
                 this.reportBehaviorFields, new Conditional[] {
                         Conditional.createEqualTo("report_sn", report.sn)
                 });
-        List<String> behaviorList = new ArrayList<>();
+        List<BehaviorSuggestion> behaviorList = new ArrayList<>();
         for (StorageField[] behaviorFields : fields) {
             Map<String, StorageField> bf = StorageFields.get(behaviorFields);
-            behaviorList.add(bf.get("behavior").getString());
+            BehaviorSuggestion bs = new BehaviorSuggestion(bf.get("behavior").getString(),
+                    bf.get("suggestion").getString());
+            behaviorList.add(bs);
         }
         report.setBehaviorList(behaviorList);
 

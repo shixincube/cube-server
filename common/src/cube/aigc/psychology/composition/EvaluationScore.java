@@ -340,6 +340,27 @@ public class EvaluationScore implements JSONable {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof EvaluationScore) {
+            EvaluationScore other = (EvaluationScore) obj;
+            if (other == this) {
+                return true;
+            }
+
+            if (other.indicator == this.indicator) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.indicator.hashCode();
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("indicator", this.indicator.name);
