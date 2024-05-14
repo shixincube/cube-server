@@ -32,6 +32,7 @@ import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.BehaviorSuggestion;
 import cube.aigc.psychology.composition.EvaluationScore;
+import cube.aigc.psychology.composition.ReportSuggestion;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GenerativeOption;
 import cube.service.aigc.AIGCService;
@@ -57,9 +58,9 @@ public class Workflow {
 
     private AIGCService service;
 
-    private List<BehaviorSuggestion> behaviorList;
+    private List<BehaviorSuggestion> behaviorTextList;
 
-    private List<String> reportTextList;
+    private List<ReportSuggestion> reportTextList;
 
     private List<ReportParagraph> paragraphList;
 
@@ -71,7 +72,7 @@ public class Workflow {
         this.evaluationReport = evaluationReport;
         this.channel = channel;
         this.service = service;
-        this.behaviorList = new ArrayList<>();
+        this.behaviorTextList = new ArrayList<>();
         this.reportTextList = new ArrayList<>();
         this.paragraphList = new ArrayList<>();
     }
@@ -88,7 +89,7 @@ public class Workflow {
             report.setMBTIFeature(this.mbtiEvaluation.getResult());
         }
 
-        report.setBehaviorList(this.behaviorList);
+        report.setBehaviorList(this.behaviorTextList);
         report.setReportTextList(this.reportTextList);
         report.setParagraphs(this.paragraphList);
         return report;
@@ -105,36 +106,30 @@ public class Workflow {
         int age = this.evaluationReport.getAttribute().age;
         String gender = this.evaluationReport.getAttribute().gender;
         // 逐一推理每一条表征
-        this.behaviorList = this.inferBehavior(template, age, gender, maxBehaviorTexts);
-        if (this.behaviorList.isEmpty()) {
-            Logger.w(this.getClass(), "#make - Behavior error");
+        this.behaviorTextList = this.inferBehavior(template, age, gender, maxBehaviorTexts);
+        if (this.behaviorTextList.isEmpty()) {
+            Logger.w(this.getClass(), "#make - Behavior text error");
+            return this;
+        }
+
+        // 评估分推理
+        List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation(maxIndicatorTexts);
+        this.reportTextList = this.inferScore(scoreList);
+        if (this.reportTextList.isEmpty()) {
+            Logger.w(this.getClass(), "#make - Report text error");
             return this;
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#make - Behavior list size: " + this.behaviorList.size());
+            Logger.d(this.getClass(), "#make - List size: " +
+                    this.behaviorTextList.size() + "/" + this.reportTextList.size());
         }
-
-        // 得分推理
-        List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation(maxIndicatorTexts);
-        for (EvaluationScore es : scoreList) {
-            String prompt = es.generateReportPrompt();
-            if (null == prompt) {
-                continue;
-            }
-
-            String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                    null, null);
-            if (null != answer) {
-                this.reportTextList.add(answer);
-            }
-        }
-
-//        for (String title : template.getTitles()) {
-//            this.paragraphList.add(new ReportParagraph(title));
-//        }
 
         /* FIXME XJW 以下步骤不再推荐使用
+        for (String title : template.getTitles()) {
+            this.paragraphList.add(new ReportParagraph(title));
+        }
+
         // 生成表征内容
         boolean paragraphInferrable = false;
         if (paragraphInferrable) {
@@ -246,18 +241,18 @@ public class Workflow {
             String marked = null;
             // 趋势
             if (representation.positiveCorrelation == representation.negativeCorrelation) {
-                marked = NormalTrick + representation.knowledgeStrategy.getComment().word;
+                marked = NormalTrick + representation.knowledgeStrategy.getTerm().word;
             }
             else if (representation.negativeCorrelation > 0 &&
                     representation.positiveCorrelation < representation.negativeCorrelation) {
-                marked = LowTrick + representation.knowledgeStrategy.getComment().word;
+                marked = LowTrick + representation.knowledgeStrategy.getTerm().word;
             }
             else if (representation.positiveCorrelation >= 2 ||
                     (representation.positiveCorrelation - representation.negativeCorrelation) >= 2) {
-                marked = HighTrick + representation.knowledgeStrategy.getComment().word;
+                marked = HighTrick + representation.knowledgeStrategy.getTerm().word;
             }
             else {
-                marked = NormalTrick + representation.knowledgeStrategy.getComment().word;
+                marked = NormalTrick + representation.knowledgeStrategy.getTerm().word;
             }
 
             // 设置短描述
@@ -277,17 +272,18 @@ public class Workflow {
 //            }
 
             // 推理表征
-            String prompt = template.formatBehaviorPrompt(representation.knowledgeStrategy.getComment().word,
+            String prompt = template.formatBehaviorPrompt(representation.knowledgeStrategy.getTerm().word,
                     age, gender, representation.description);
             String behavior = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                     null, null);
 
-            prompt = template.formatSuggestionPrompt(representation.knowledgeStrategy.getComment().word);
+            prompt = template.formatSuggestionPrompt(representation.knowledgeStrategy.getTerm().word);
             String suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                     null, null);
 
             if (null != behavior && null != suggestion) {
-                result.add(new BehaviorSuggestion(behavior, suggestion));
+                result.add(new BehaviorSuggestion(representation.knowledgeStrategy.getTerm(),
+                        representation.description, behavior, suggestion));
             }
 
             ++count;
@@ -296,6 +292,31 @@ public class Workflow {
             }
         }
 
+        return result;
+    }
+
+    private List<ReportSuggestion> inferScore(List<EvaluationScore> scoreList) {
+        List<ReportSuggestion> result = new ArrayList<>();
+        for (EvaluationScore es : scoreList) {
+            String prompt = es.generateReportPrompt();
+            if (null == prompt) {
+                continue;
+            }
+            String report = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                    null, null);
+
+            prompt = es.generateSuggestionPrompt();
+            if (null == prompt) {
+                continue;
+            }
+            String suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                    null, null);
+
+            if (null != report && null != suggestion) {
+                result.add(new ReportSuggestion(es.indicator, es.positiveScore > es.negativeScore ? 1 : -1,
+                        report, suggestion));
+            }
+        }
         return result;
     }
 

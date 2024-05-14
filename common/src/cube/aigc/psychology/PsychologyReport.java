@@ -32,10 +32,10 @@ import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.BehaviorSuggestion;
 import cube.aigc.psychology.composition.EvaluationScore;
+import cube.aigc.psychology.composition.ReportSuggestion;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
-import cube.util.JSONUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -76,9 +76,9 @@ public class PsychologyReport implements JSONable {
 
     private MBTIFeature mbtiFeature;
 
-    private List<BehaviorSuggestion> behaviorList;
+    private List<BehaviorSuggestion> behaviorTextList;
 
-    private List<String> reportTextList;
+    private List<ReportSuggestion> reportTextList;
 
     private List<ReportParagraph> paragraphList;
 
@@ -138,17 +138,22 @@ public class PsychologyReport implements JSONable {
             this.evaluationReport = new EvaluationReport(json.getJSONObject("evaluation"));
         }
 
-        if (json.has("behaviorList")) {
-            this.behaviorList = new ArrayList<>();
-            JSONArray array = json.getJSONArray("behaviorList");
+        if (json.has("behaviorTextList")) {
+            this.behaviorTextList = new ArrayList<>();
+            JSONArray array = json.getJSONArray("behaviorTextList");
             for (int i = 0; i < array.length(); ++i) {
                 BehaviorSuggestion bs = new BehaviorSuggestion(array.getJSONObject(i));
-                this.behaviorList.add(bs);
+                this.behaviorTextList.add(bs);
             }
         }
 
         if (json.has("reportTextList")) {
-            this.reportTextList = JSONUtils.toStringList(json.getJSONArray("reportTextList"));
+            this.reportTextList = new ArrayList<>();
+            JSONArray array = json.getJSONArray("reportTextList");
+            for (int i = 0; i < array.length(); ++i) {
+                ReportSuggestion rs = new ReportSuggestion(array.getJSONObject(i));
+                this.reportTextList.add(rs);
+            }
         }
 
         if (json.has("paragraphList")) {
@@ -176,21 +181,21 @@ public class PsychologyReport implements JSONable {
         return this.mbtiFeature;
     }
 
-    public void setBehaviorList(List<BehaviorSuggestion> behaviorList) {
-        this.behaviorList = new ArrayList<>();
-        this.behaviorList.addAll(behaviorList);
+    public void setBehaviorList(List<BehaviorSuggestion> textList) {
+        this.behaviorTextList = new ArrayList<>();
+        this.behaviorTextList.addAll(textList);
     }
 
     public List<BehaviorSuggestion> getBehaviorList() {
-        return this.behaviorList;
+        return this.behaviorTextList;
     }
 
-    public void setReportTextList(List<String> textList) {
+    public void setReportTextList(List<ReportSuggestion> textList) {
         this.reportTextList = new ArrayList<>();
         this.reportTextList.addAll(textList);
     }
 
-    public List<String> getReportTextList() {
+    public List<ReportSuggestion> getReportTextList() {
         return this.reportTextList;
     }
 
@@ -279,7 +284,7 @@ public class PsychologyReport implements JSONable {
                 buf.append("| ---- | ---- | ---- | ---- |");
                 for (Representation rep : this.evaluationReport.getRepresentationListByEvaluationScore(100)) {
                     buf.append("\n");
-                    buf.append("|").append(rep.knowledgeStrategy.getComment().word);
+                    buf.append("|").append(rep.knowledgeStrategy.getTerm().word);
                     buf.append("|").append(rep.description);
                     buf.append("|").append(rep.positiveCorrelation);
                     buf.append("|").append(rep.negativeCorrelation);
@@ -330,34 +335,23 @@ public class PsychologyReport implements JSONable {
             buf.append("\n");
             buf.append("**报告文本：**");
             buf.append("\n");
-            for (String text : this.reportTextList) {
+            for (ReportSuggestion rs : this.reportTextList) {
                 buf.append("\n");
-                buf.append("> ").append(text);
-                buf.append("\n\n");
+                buf.append("> **报告**：").append(rs.report).append("\n");
+                buf.append("> **建议**：").append(rs.suggestion).append("\n");
+                buf.append("\n***\n");
             }
             buf.append("\n\n");
         }
 
-        if (null != this.behaviorList) {
+        if (null != this.behaviorTextList) {
             buf.append("\n");
             buf.append("**行为特征：**");
             buf.append("\n");
-            for (BehaviorSuggestion behaviorSuggestion : this.behaviorList) {
+            for (BehaviorSuggestion behaviorSuggestion : this.behaviorTextList) {
                 buf.append("\n");
-
-//                String[] lines = behavior.split("\n");
-//                for (String line : lines) {
-//                    if (line.trim().length() <= 2) {
-//                        continue;
-//                    }
-//
-//                    buf.append("> ").append(line);
-//                    buf.append("\n");
-//                }
-
                 buf.append("> **描述**：").append(behaviorSuggestion.behavior).append("\n");
                 buf.append("> **建议**：").append(behaviorSuggestion.suggestion).append("\n");
-
                 buf.append("\n***\n");
             }
             buf.append("\n");
@@ -389,16 +383,20 @@ public class PsychologyReport implements JSONable {
             json.put("evaluation", this.evaluationReport.toCompactJSON());
         }
 
-        if (null != this.behaviorList) {
+        if (null != this.behaviorTextList) {
             JSONArray jsonArray = new JSONArray();
-            for (BehaviorSuggestion bs : this.behaviorList) {
+            for (BehaviorSuggestion bs : this.behaviorTextList) {
                 jsonArray.put(bs.toJSON());
             }
-            json.put("behaviorList", jsonArray);
+            json.put("behaviorTextList", jsonArray);
         }
 
         if (null != this.reportTextList) {
-            json.put("reportTextList", JSONUtils.toStringArray(this.reportTextList));
+            JSONArray jsonArray = new JSONArray();
+            for (ReportSuggestion rs : this.reportTextList) {
+                jsonArray.put(rs.toJSON());
+            }
+            json.put("reportTextList", jsonArray);
         }
 
         if (null != this.paragraphList) {

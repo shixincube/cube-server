@@ -31,6 +31,7 @@ import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.aigc.psychology.composition.BehaviorSuggestion;
+import cube.aigc.psychology.composition.ReportSuggestion;
 import cube.common.Storagable;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -124,6 +125,12 @@ public class PsychologyStorage implements Storagable {
             new StorageField("report_sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("term", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("description", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("behavior", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -139,7 +146,16 @@ public class PsychologyStorage implements Storagable {
             new StorageField("report_sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("text", LiteralBase.STRING, new Constraint[] {
+            new StorageField("indicator", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("tendency", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
+            }),
+            new StorageField("report", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("suggestion", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             })
     };
@@ -304,6 +320,8 @@ public class PsychologyStorage implements Storagable {
             for (BehaviorSuggestion bs : report.getBehaviorList()) {
                 this.storage.executeInsert(this.reportBehaviorTable, new StorageField[] {
                         new StorageField("report_sn", report.sn),
+                        new StorageField("term", bs.term.word),
+                        new StorageField("description", bs.description),
                         new StorageField("behavior", EmojiFilter.filterEmoji(bs.behavior)),
                         new StorageField("suggestion", EmojiFilter.filterEmoji(bs.suggestion))
                 });
@@ -311,10 +329,13 @@ public class PsychologyStorage implements Storagable {
         }
 
         if (null != report.getReportTextList()) {
-            for (String text : report.getReportTextList()) {
+            for (ReportSuggestion rs : report.getReportTextList()) {
                 this.storage.executeInsert(this.reportTextTable, new StorageField[] {
                         new StorageField("report_sn", report.sn),
-                        new StorageField("text", EmojiFilter.filterEmoji(text))
+                        new StorageField("indicator", rs.indicator.name),
+                        new StorageField("tendency", rs.tendency),
+                        new StorageField("report", EmojiFilter.filterEmoji(rs.report)),
+                        new StorageField("suggestion", EmojiFilter.filterEmoji(rs.suggestion))
                 });
             }
         }
@@ -408,7 +429,10 @@ public class PsychologyStorage implements Storagable {
         List<BehaviorSuggestion> behaviorList = new ArrayList<>();
         for (StorageField[] behaviorFields : fields) {
             Map<String, StorageField> bf = StorageFields.get(behaviorFields);
-            BehaviorSuggestion bs = new BehaviorSuggestion(bf.get("behavior").getString(),
+            BehaviorSuggestion bs = new BehaviorSuggestion(
+                    Term.parse(bf.get("term").getString()),
+                    bf.get("description").getString(),
+                    bf.get("behavior").getString(),
                     bf.get("suggestion").getString());
             behaviorList.add(bs);
         }
@@ -418,10 +442,16 @@ public class PsychologyStorage implements Storagable {
                 this.reportTextFields, new Conditional[] {
                         Conditional.createEqualTo("report_sn", report.sn)
                 });
-        List<String> textList = new ArrayList<>();
+        List<ReportSuggestion> textList = new ArrayList<>();
         for (StorageField[] textFields : fields) {
             Map<String, StorageField> tf = StorageFields.get(textFields);
-            textList.add(tf.get("text").getString());
+            ReportSuggestion rs = new ReportSuggestion(
+                    Indicator.parse(tf.get("indicator").getString()),
+                    tf.get("tendency").getInt(),
+                    tf.get("report").getString(),
+                    tf.get("suggestion").getString()
+            );
+            textList.add(rs);
         }
         report.setReportTextList(textList);
 

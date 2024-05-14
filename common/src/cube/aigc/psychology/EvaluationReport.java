@@ -112,12 +112,12 @@ public class EvaluationReport implements JSONable {
     private void build(List<EvaluationFeature> resultList) {
         for (EvaluationFeature result : resultList) {
             for (EvaluationFeature.Feature feature : result.getFeatures()) {
-                Representation representation = this.getRepresentation(feature.comment);
+                Representation representation = this.getRepresentation(feature.term);
                 if (null == representation) {
-                    KnowledgeStrategy interpretation = Resource.getInstance().getCommentInterpretation(feature.comment);
+                    KnowledgeStrategy interpretation = Resource.getInstance().getTermInterpretation(feature.term);
                     if (null == interpretation) {
                         // 没有对应的释义
-                        Logger.e(this.getClass(), "#build - Can NOT find comment interpretation: " + feature.comment.word);
+                        Logger.e(this.getClass(), "#build - Can NOT find comment interpretation: " + feature.term.word);
                         continue;
                     }
 
@@ -181,7 +181,7 @@ public class EvaluationReport implements JSONable {
                 case SocialAdaptability:
                     double delta = es.negativeScore - es.positiveScore;
                     if (delta > 0) {
-                        if (delta > 0.3) {
+                        if (delta > 0.7) {
                             score += 2;
                         }
                         else if (delta >= 0.2) {
@@ -306,9 +306,9 @@ public class EvaluationReport implements JSONable {
         }
     }
 
-    public Representation getRepresentation(Comment comment) {
+    public Representation getRepresentation(Term term) {
         for (Representation representation : this.representationList) {
-            if (representation.knowledgeStrategy.getComment() == comment) {
+            if (representation.knowledgeStrategy.getTerm() == term) {
                 return representation;
             }
         }
@@ -340,7 +340,7 @@ public class EvaluationReport implements JSONable {
         List<Representation> result = new ArrayList<>();
         for (Representation representation : this.representationList) {
             // 匹配和评分表一致的特征
-            Indicator indicator = RepresentationStrategy.matchIndicator(representation.knowledgeStrategy.getComment());
+            Indicator indicator = RepresentationStrategy.matchIndicator(representation.knowledgeStrategy.getTerm());
             if (null != indicator) {
                 result.add(representation);
             }
@@ -381,7 +381,7 @@ public class EvaluationReport implements JSONable {
         List<Indicator> indicators = new ArrayList<>();
         for (Representation representation : this.representationList) {
             // 匹配和评分表一致的特征
-            Indicator indicator = RepresentationStrategy.matchIndicator(representation.knowledgeStrategy.getComment());
+            Indicator indicator = RepresentationStrategy.matchIndicator(representation.knowledgeStrategy.getTerm());
             if (null != indicator) {
                 indicators.add(indicator);
             }

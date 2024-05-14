@@ -47,8 +47,8 @@ public class EvaluationFeature {
         this.scores = new ArrayList<>();
     }
 
-    public void addFeature(Comment comment, Tendency tendency) {
-        this.features.add(new Feature(comment, tendency));
+    public void addFeature(Term term, Tendency tendency) {
+        this.features.add(new Feature(term, tendency));
     }
 
     public List<Feature> getFeatures() {
@@ -103,12 +103,12 @@ public class EvaluationFeature {
 
     public class Feature {
 
-        public Comment comment;
+        public Term term;
 
         public Tendency tendency;
 
-        public Feature(Comment comment, Tendency tendency) {
-            this.comment = comment;
+        public Feature(Term term, Tendency tendency) {
+            this.term = term;
             this.tendency = tendency;
         }
     }

@@ -55,8 +55,8 @@ public class Resource {
 
     public final static String ReportTextFormat = "%s的报告描述";
 
-    private File commentDescriptionFile = new File("assets/psychology/interpretation.json");
-    private long commentDescriptionLastModified = 0;
+    private File termDescriptionFile = new File("assets/psychology/interpretation.json");
+    private long termDescriptionLastModified = 0;
     private List<KnowledgeStrategy> knowledgeStrategies;
 
     private File themeFile = new File("assets/psychology/theme.json");
@@ -78,16 +78,16 @@ public class Resource {
         return Resource.instance;
     }
 
-    public List<KnowledgeStrategy> getCommentInterpretations() {
-        if (this.commentDescriptionFile.exists()) {
-            if (this.commentDescriptionFile.lastModified() != this.commentDescriptionLastModified) {
-                this.commentDescriptionLastModified = this.commentDescriptionFile.lastModified();
+    public List<KnowledgeStrategy> getTermInterpretations() {
+        if (this.termDescriptionFile.exists()) {
+            if (this.termDescriptionFile.lastModified() != this.termDescriptionLastModified) {
+                this.termDescriptionLastModified = this.termDescriptionFile.lastModified();
                 this.knowledgeStrategies.clear();
 
-                Logger.i(this.getClass(), "Read comment description file: " + this.commentDescriptionFile.getAbsolutePath());
+                Logger.i(this.getClass(), "Read term description file: " + this.termDescriptionFile.getAbsolutePath());
 
                 try {
-                    byte[] data = Files.readAllBytes(Paths.get(this.commentDescriptionFile.getAbsolutePath()));
+                    byte[] data = Files.readAllBytes(Paths.get(this.termDescriptionFile.getAbsolutePath()));
                     JSONArray array = new JSONArray(new String(data, StandardCharsets.UTF_8));
                     for (int i = 0; i < array.length(); ++i) {
                         KnowledgeStrategy cd = new KnowledgeStrategy(array.getJSONObject(i));
@@ -102,13 +102,13 @@ public class Resource {
         return this.knowledgeStrategies;
     }
 
-    public KnowledgeStrategy getCommentInterpretation(Comment comment) {
+    public KnowledgeStrategy getTermInterpretation(Term term) {
         if (this.knowledgeStrategies.isEmpty()) {
-            this.getCommentInterpretations();
+            this.getTermInterpretations();
         }
 
         for (KnowledgeStrategy interpretation : this.knowledgeStrategies) {
-            if (interpretation.getComment() == comment) {
+            if (interpretation.getTerm() == term) {
                 return interpretation;
             }
         }

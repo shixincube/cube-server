@@ -26,6 +26,8 @@
 
 package cube.aigc.psychology;
 
+import org.json.JSONObject;
+
 /**
  * 评价指标。
  */
@@ -225,6 +227,13 @@ public enum Indicator {
     Indicator(String name, String code) {
         this.name = name;
         this.code = code;
+    }
+
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("name", this.name);
+        json.put("code", this.code);
+        return json;
     }
 
     public static Indicator parse(String valueOrName) {

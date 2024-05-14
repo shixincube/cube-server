@@ -51,7 +51,7 @@ public class MBTIEvaluation {
         List<MBTICandidate> list = new ArrayList<>();
 
         for (Representation representation : representationList) {
-            switch (representation.knowledgeStrategy.getComment()) {
+            switch (representation.knowledgeStrategy.getTerm()) {
                 case SelfExistence:
                     break;
                 case SelfEsteem:

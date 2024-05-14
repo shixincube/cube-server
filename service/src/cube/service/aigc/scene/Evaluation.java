@@ -84,7 +84,7 @@ public class Evaluation {
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
             }
             else if (areaRatio >= (2.0d / 3.0d)) {
-                result.addFeature(Comment.SelfExistence, Tendency.Positive);
+                result.addFeature(Term.SelfExistence, Tendency.Positive);
 
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.Narcissism, 1, FloatUtils.random(0.2, 0.3));
@@ -92,9 +92,9 @@ public class Evaluation {
 //                result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.5, 0.6));
             }
             else if (areaRatio < (1.0d / 6.0d)) {
-                result.addFeature(Comment.SelfEsteem, Tendency.Negative);
-                result.addFeature(Comment.SelfConfidence, Tendency.Negative);
-                result.addFeature(Comment.SocialAdaptability, Tendency.Negative);
+                result.addFeature(Term.SelfEsteem, Tendency.Negative);
+                result.addFeature(Term.SelfConfidence, Tendency.Negative);
+                result.addFeature(Term.SocialAdaptability, Tendency.Negative);
 
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.4, 0.5));
@@ -102,8 +102,8 @@ public class Evaluation {
                 result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.4, 0.5));
             }
             else {
-                result.addFeature(Comment.SelfEsteem, Tendency.Negative);
-                result.addFeature(Comment.SelfConfidence, Tendency.Negative);
+                result.addFeature(Term.SelfEsteem, Tendency.Negative);
+                result.addFeature(Term.SelfConfidence, Tendency.Negative);
 
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
                 result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.2, 0.3));
@@ -120,7 +120,7 @@ public class Evaluation {
                 || this.spaceLayout.getBottomMargin() < minThreshold
                 || this.spaceLayout.getLeftMargin() < minThreshold) {
             // 达到边缘
-            result.addFeature(Comment.EnvironmentalDependence, Tendency.Positive);
+            result.addFeature(Term.EnvironmentalDependence, Tendency.Positive);
 
             result.addScore(Indicator.Independence, 1, FloatUtils.random(0.2, 0.3));
         }
@@ -129,7 +129,7 @@ public class Evaluation {
                 || this.spaceLayout.getBottomMargin() > maxThreshold
                 || this.spaceLayout.getLeftMargin() > maxThreshold) {
             // 未达边缘
-            result.addFeature(Comment.EnvironmentalAlienation, Tendency.Positive);
+            result.addFeature(Term.EnvironmentalAlienation, Tendency.Positive);
 
             result.addScore(Indicator.Independence, -1, FloatUtils.random(0.2, 0.3));
         }
@@ -150,7 +150,7 @@ public class Evaluation {
                 // 排除火柴人
                 person = null;
 
-                result.addFeature(Comment.Creativity, Tendency.Negative);
+                result.addFeature(Term.Creativity, Tendency.Negative);
                 result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.3, 0.4));
 
                 for (Person p : this.painting.getPersons()) {
@@ -178,27 +178,27 @@ public class Evaluation {
             // 相对位置判断
             if (Math.abs(hc.y - tc.y) < evalRange && Math.abs(hc.y - pc.y) < evalRange) {
                 // 基本在一个水平线上
-                result.addFeature(Comment.Stereotype, Tendency.Positive);
+                result.addFeature(Term.Stereotype, Tendency.Positive);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
             else {
                 // 位置分散
-                result.addFeature(Comment.EmotionalStability, Tendency.Negative);
+                result.addFeature(Term.EmotionalStability, Tendency.Negative);
                 result.addScore(Indicator.Emotion, -1, FloatUtils.random(0.3, 0.4));
             }
 
             // 绝对位置判断
             if (houseTHalf && treeTHalf && personTHalf) {
                 // 整体偏上
-                result.addFeature(Comment.Idealization, Tendency.Positive);
+                result.addFeature(Term.Idealization, Tendency.Positive);
 
                 result.addScore(Indicator.Idealism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.3, 0.4));
             }
             else if (houseBHalf && treeBHalf && personBHalf) {
                 // 整体偏下
-                result.addFeature(Comment.Idealization, Tendency.Negative);
+                result.addFeature(Term.Idealization, Tendency.Negative);
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
@@ -214,21 +214,21 @@ public class Evaluation {
             int pa = person.area;
             if (ha >= ta && ha >= pa) {
                 // 房大
-                result.addFeature(Comment.PayAttentionToFamily, Tendency.Positive);
+                result.addFeature(Term.PayAttentionToFamily, Tendency.Positive);
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
             }
             if (ta >= ha && ta >= pa) {
                 // 树大
-                result.addFeature(Comment.SocialDemand, Tendency.Positive);
+                result.addFeature(Term.SocialDemand, Tendency.Positive);
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
             }
             if (pa >= ha && pa >= ta) {
                 // 人大
-                result.addFeature(Comment.SelfDemand, Tendency.Positive);
-                result.addFeature(Comment.SelfInflated, Tendency.Positive);
-                result.addFeature(Comment.SelfControl, Tendency.Negative);
+                result.addFeature(Term.SelfDemand, Tendency.Positive);
+                result.addFeature(Term.SelfInflated, Tendency.Positive);
+                result.addFeature(Term.SelfControl, Tendency.Negative);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
@@ -236,7 +236,7 @@ public class Evaluation {
             // 房的面积非常小
             double hR = (double)ha / (double)this.spaceLayout.getPaintingArea();
             if (hR < 0.1) {
-                result.addFeature(Comment.PayAttentionToFamily, Tendency.Negative);
+                result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
             }
 
@@ -277,7 +277,7 @@ public class Evaluation {
                 double rP = person.boundingBox.calculateArea() * 0.9 / paintingArea;
                 Logger.d(this.getClass(), "#evalSpaceStructure - Area ratio: " + rH + "," + rT + "," + rP);
                 if (rH < 0.1 || rT < 0.1 || rP < 0.1) {
-                    result.addFeature(Comment.SocialPowerlessness, Tendency.Positive);
+                    result.addFeature(Term.SocialPowerlessness, Tendency.Positive);
                     result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
                 }
             }
@@ -295,7 +295,7 @@ public class Evaluation {
 
             if (Math.abs(hc.y - tc.y) < evalRange) {
                 // 基本在一个水平线上
-                result.addFeature(Comment.Stereotype, Tendency.Positive);
+                result.addFeature(Term.Stereotype, Tendency.Positive);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
@@ -303,14 +303,14 @@ public class Evaluation {
             // 绝对位置判断
             if (houseTHalf && treeTHalf) {
                 // 整体偏上
-                result.addFeature(Comment.Idealization, Tendency.Positive);
+                result.addFeature(Term.Idealization, Tendency.Positive);
 
                 result.addScore(Indicator.Idealism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.3, 0.4));
             }
             else if (houseBHalf && treeBHalf) {
                 // 整体偏下
-                result.addFeature(Comment.Idealization, Tendency.Negative);
+                result.addFeature(Term.Idealization, Tendency.Negative);
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
@@ -324,13 +324,13 @@ public class Evaluation {
             int ta = tree.area;
             if (ha > ta) {
                 // 房大
-                result.addFeature(Comment.PayAttentionToFamily, Tendency.Positive);
+                result.addFeature(Term.PayAttentionToFamily, Tendency.Positive);
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
             }
             else {
                 // 树大
-                result.addFeature(Comment.SocialDemand, Tendency.Positive);
+                result.addFeature(Term.SocialDemand, Tendency.Positive);
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
             }
@@ -338,7 +338,7 @@ public class Evaluation {
             // 房的面积非常小
             double hR = (double)ha / (double)this.spaceLayout.getPaintingArea();
             if (hR < 0.1) {
-                result.addFeature(Comment.PayAttentionToFamily, Tendency.Negative);
+                result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
             }
 
@@ -365,7 +365,7 @@ public class Evaluation {
 
             if (Math.abs(hc.y - pc.y) < evalRange) {
                 // 基本在一个水平线上
-                result.addFeature(Comment.Stereotype, Tendency.Positive);
+                result.addFeature(Term.Stereotype, Tendency.Positive);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
@@ -373,14 +373,14 @@ public class Evaluation {
             // 绝对位置判断
             if (houseTHalf && personTHalf) {
                 // 整体偏上
-                result.addFeature(Comment.Idealization, Tendency.Positive);
+                result.addFeature(Term.Idealization, Tendency.Positive);
 
                 result.addScore(Indicator.Idealism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.3, 0.4));
             }
             else if (houseBHalf && personBHalf) {
                 // 整体偏下
-                result.addFeature(Comment.Idealization, Tendency.Negative);
+                result.addFeature(Term.Idealization, Tendency.Negative);
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
@@ -394,15 +394,15 @@ public class Evaluation {
             int pa = person.area;
             if (ha > pa) {
                 // 房大
-                result.addFeature(Comment.PayAttentionToFamily, Tendency.Positive);
+                result.addFeature(Term.PayAttentionToFamily, Tendency.Positive);
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
             }
             else {
                 // 人大
-                result.addFeature(Comment.SelfDemand, Tendency.Positive);
-                result.addFeature(Comment.SelfInflated, Tendency.Positive);
-                result.addFeature(Comment.SelfControl, Tendency.Negative);
+                result.addFeature(Term.SelfDemand, Tendency.Positive);
+                result.addFeature(Term.SelfInflated, Tendency.Positive);
+                result.addFeature(Term.SelfControl, Tendency.Negative);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
@@ -410,7 +410,7 @@ public class Evaluation {
             // 房的面积非常小
             double hR = (double)ha / (double)this.spaceLayout.getPaintingArea();
             if (hR < 0.1) {
-                result.addFeature(Comment.PayAttentionToFamily, Tendency.Negative);
+                result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
             }
 
@@ -433,7 +433,7 @@ public class Evaluation {
 
             if (Math.abs(tc.y - pc.y) < evalRange) {
                 // 基本在一个水平线上
-                result.addFeature(Comment.Stereotype, Tendency.Positive);
+                result.addFeature(Term.Stereotype, Tendency.Positive);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
@@ -441,14 +441,14 @@ public class Evaluation {
             // 绝对位置判断
             if (treeTHalf && personTHalf) {
                 // 整体偏上
-                result.addFeature(Comment.Idealization, Tendency.Positive);
+                result.addFeature(Term.Idealization, Tendency.Positive);
 
                 result.addScore(Indicator.Idealism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.3, 0.4));
             }
             else if (treeBHalf && personBHalf) {
                 // 整体偏下
-                result.addFeature(Comment.Idealization, Tendency.Negative);
+                result.addFeature(Term.Idealization, Tendency.Negative);
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
@@ -462,15 +462,15 @@ public class Evaluation {
             int pa = person.area;
             if (ta > pa) {
                 // 树大
-                result.addFeature(Comment.SocialDemand, Tendency.Positive);
+                result.addFeature(Term.SocialDemand, Tendency.Positive);
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
             }
             else {
                 // 人大
-                result.addFeature(Comment.SelfDemand, Tendency.Positive);
-                result.addFeature(Comment.SelfInflated, Tendency.Positive);
-                result.addFeature(Comment.SelfControl, Tendency.Negative);
+                result.addFeature(Term.SelfDemand, Tendency.Positive);
+                result.addFeature(Term.SelfInflated, Tendency.Positive);
+                result.addFeature(Term.SelfControl, Tendency.Negative);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
@@ -522,7 +522,7 @@ public class Evaluation {
             int personArea = person.area;
             if (((double)personArea / (double)paintingArea) <= tinyRatio) {
                 // 人很小
-                result.addFeature(Comment.SenseOfSecurity, Tendency.Negative);
+                result.addFeature(Term.SenseOfSecurity, Tendency.Negative);
 
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
             }
@@ -615,19 +615,19 @@ public class Evaluation {
         FrameStructureDescription description = this.calcFrameStructure(this.spaceLayout.getPaintingBox());
         if (description.isWholeTop()) {
             // 整体顶部
-            result.addFeature(Comment.Idealization, Tendency.Positive);
+            result.addFeature(Term.Idealization, Tendency.Positive);
         }
         else if (description.isWholeBottom()) {
             // 整体底部
-            result.addFeature(Comment.Instinct, Tendency.Positive);
+            result.addFeature(Term.Instinct, Tendency.Positive);
         }
         else if (description.isWholeLeft()) {
             // 整体左边
-            result.addFeature(Comment.Nostalgia, Tendency.Positive);
+            result.addFeature(Term.Nostalgia, Tendency.Positive);
         }
         else if (description.isWholeRight()) {
             // 整体右边
-            result.addFeature(Comment.Future, Tendency.Positive);
+            result.addFeature(Term.Future, Tendency.Positive);
         }
 
         return result;
@@ -643,7 +643,7 @@ public class Evaluation {
         for (House house : houseList) {
             // 立体感
             if (house.hasSidewall()) {
-                result.addFeature(Comment.Creativity, Tendency.Positive);
+                result.addFeature(Term.Creativity, Tendency.Positive);
 
                 result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.7, 0.8));
             }
@@ -651,80 +651,80 @@ public class Evaluation {
             // 房屋类型
             if (Label.Bungalow == house.getLabel()) {
                 // 平房
-                result.addFeature(Comment.Simple, Tendency.Positive);
+                result.addFeature(Term.Simple, Tendency.Positive);
 
                 result.addScore(Indicator.Simple, 1, FloatUtils.random(0.5, 0.6));
             }
             else if (Label.Villa == house.getLabel()) {
                 // 别墅
-                result.addFeature(Comment.Luxurious, Tendency.Positive);
+                result.addFeature(Term.Luxurious, Tendency.Positive);
 
                 result.addScore(Indicator.EvaluationFromOutside, 1, FloatUtils.random(0.5, 0.6));
             }
             else if (Label.Building == house.getLabel()) {
                 // 楼房
-                result.addFeature(Comment.Defensiveness, Tendency.Positive);
+                result.addFeature(Term.Defensiveness, Tendency.Positive);
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.5, 0.6));
             }
             else if (Label.Fairyland == house.getLabel()) {
                 // 童话房
-                result.addFeature(Comment.Fantasy, Tendency.Positive);
-                result.addFeature(Comment.Childish, Tendency.Normal);
+                result.addFeature(Term.Fantasy, Tendency.Positive);
+                result.addFeature(Term.Childish, Tendency.Normal);
 
                 result.addScore(Indicator.Idealism, 1, FloatUtils.random(0.5, 0.6));
             }
             else if (Label.Temple == house.getLabel()) {
                 // 庙宇
-                result.addFeature(Comment.Extreme, Tendency.Positive);
+                result.addFeature(Term.Extreme, Tendency.Positive);
 
                 result.addScore(Indicator.Paranoid, 1, FloatUtils.random(0.5, 0.6));
             }
             else if (Label.Grave == house.getLabel()) {
                 // 坟墓
-                result.addFeature(Comment.WorldWeariness, Tendency.Positive);
+                result.addFeature(Term.WorldWeariness, Tendency.Positive);
             }
 
             // 房顶
             if (house.hasRoof()) {
                 if (house.getRoof().isTextured()) {
-                    result.addFeature(Comment.Perfectionism, Tendency.Normal);
+                    result.addFeature(Term.Perfectionism, Tendency.Normal);
 
                     result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.6, 0.7));
                 }
 
                 if (house.getRoofHeightRatio() > 0.5f) {
                     // 房顶高
-                    result.addFeature(Comment.Future, Tendency.Positive);
+                    result.addFeature(Term.Future, Tendency.Positive);
 
                     result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
                 }
 
                 if (house.getRoofAreaRatio() > 0.3f) {
                     // 房顶面积大
-                    result.addFeature(Comment.HighPressure, Tendency.Positive);
-                    result.addFeature(Comment.Escapism, Tendency.Positive);
+                    result.addFeature(Term.HighPressure, Tendency.Positive);
+                    result.addFeature(Term.Escapism, Tendency.Positive);
                     result.addScore(Indicator.Stress, 1, FloatUtils.random(0.4, 0.5));
                 }
             }
 
             // 天窗
             if (house.hasRoofSkylight()) {
-                result.addFeature(Comment.Maverick, Tendency.Positive);
+                result.addFeature(Term.Maverick, Tendency.Positive);
 
                 result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
             }
 
             // 烟囱
             if (house.hasChimney()) {
-                result.addFeature(Comment.PursueInterpersonalRelationships, Tendency.Positive);
+                result.addFeature(Term.PursueInterpersonalRelationships, Tendency.Positive);
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.6, 0.7));
             }
 
             // 门和窗
             if (!house.hasDoor() && !house.hasWindow()) {
-                result.addFeature(Comment.EmotionalIndifference, Tendency.Positive);
+                result.addFeature(Term.EmotionalIndifference, Tendency.Positive);
             }
             else {
                 if (house.hasDoor()) {
@@ -732,18 +732,18 @@ public class Evaluation {
 
                     double areaRatio = house.getMaxDoorAreaRatio();
                     if (areaRatio < 0.05f) {
-                        result.addFeature(Comment.SocialPowerlessness, Tendency.Positive);
+                        result.addFeature(Term.SocialPowerlessness, Tendency.Positive);
                     }
                     else if (areaRatio >= 0.15f) {
-                        result.addFeature(Comment.Dependence, Tendency.Positive);
+                        result.addFeature(Term.Dependence, Tendency.Positive);
                     }
                     else if (areaRatio > 0.12f) {
-                        result.addFeature(Comment.PursueInterpersonalRelationships, Tendency.Positive);
+                        result.addFeature(Term.PursueInterpersonalRelationships, Tendency.Positive);
                     }
 
                     // 开启的门
                     if (house.hasOpenDoor()) {
-                        result.addFeature(Comment.PursueInterpersonalRelationships, Tendency.Positive);
+                        result.addFeature(Term.PursueInterpersonalRelationships, Tendency.Positive);
 
                         result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.6, 0.7));
                     }
@@ -754,10 +754,10 @@ public class Evaluation {
 
                     double areaRatio = house.getMaxWindowAreaRatio();
                     if (areaRatio < 0.03f) {
-                        result.addFeature(Comment.SocialPowerlessness, Tendency.Positive);
+                        result.addFeature(Term.SocialPowerlessness, Tendency.Positive);
                     }
                     else if (areaRatio > 0.11f) {
-                        result.addFeature(Comment.PursueInterpersonalRelationships, Tendency.Positive);
+                        result.addFeature(Term.PursueInterpersonalRelationships, Tendency.Positive);
                     }
                 }
 
@@ -770,30 +770,30 @@ public class Evaluation {
 
             // 窗帘
             if (house.hasCurtain()) {
-                result.addFeature(Comment.Sensitiveness, Tendency.Positive);
-                result.addFeature(Comment.Suspiciousness, Tendency.Positive);
+                result.addFeature(Term.Sensitiveness, Tendency.Positive);
+                result.addFeature(Term.Suspiciousness, Tendency.Positive);
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.6, 0.7));
             }
 
             // 小径
             if (house.hasPath()) {
-                result.addFeature(Comment.Straightforwardness, Tendency.Positive);
+                result.addFeature(Term.Straightforwardness, Tendency.Positive);
 
                 if (house.hasCurvePath()) {
                     // 弯曲小径
-                    result.addFeature(Comment.Vigilance, Tendency.Positive);
+                    result.addFeature(Term.Vigilance, Tendency.Positive);
                 }
 
                 if (house.hasCobbledPath()) {
                     // 石头小径
-                    result.addFeature(Comment.Perfectionism, Tendency.Positive);
+                    result.addFeature(Term.Perfectionism, Tendency.Positive);
                 }
             }
 
             // 栅栏
             if (house.hasFence()) {
-                result.addFeature(Comment.Defensiveness, Tendency.Positive);
+                result.addFeature(Term.Defensiveness, Tendency.Positive);
             }
 
 
@@ -824,7 +824,7 @@ public class Evaluation {
                 hasTrunk = true;
 
                 // 落叶树
-                result.addFeature(Comment.ExternalPressure, Tendency.Positive);
+                result.addFeature(Term.ExternalPressure, Tendency.Positive);
 
                 result.addScore(Indicator.Stress, 1, FloatUtils.random(0.6, 0.7));
             }
@@ -832,7 +832,7 @@ public class Evaluation {
                 hasTrunk = true;
 
                 // 枯树
-                result.addFeature(Comment.EmotionalDisturbance, Tendency.Positive);
+                result.addFeature(Term.EmotionalDisturbance, Tendency.Positive);
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
@@ -843,7 +843,7 @@ public class Evaluation {
                 hasTrunk = true;
 
                 // 松树
-                result.addFeature(Comment.SelfControl, Tendency.Positive);
+                result.addFeature(Term.SelfControl, Tendency.Positive);
 
                 result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.SelfControl, 1, FloatUtils.random(0.6, 0.7));
@@ -852,8 +852,8 @@ public class Evaluation {
                 hasTrunk = true;
 
                 // 柳树
-                result.addFeature(Comment.Sensitiveness, Tendency.Positive);
-                result.addFeature(Comment.Emotionality, Tendency.Positive);
+                result.addFeature(Term.Sensitiveness, Tendency.Positive);
+                result.addFeature(Term.Emotionality, Tendency.Positive);
 
                 result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.6, 0.7));
             }
@@ -861,8 +861,8 @@ public class Evaluation {
                 hasTrunk = true;
 
                 // 椰子树
-                result.addFeature(Comment.Emotionality, Tendency.Positive);
-                result.addFeature(Comment.Creativity, Tendency.Positive);
+                result.addFeature(Term.Emotionality, Tendency.Positive);
+                result.addFeature(Term.Creativity, Tendency.Positive);
 
                 result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.6, 0.7));
@@ -871,14 +871,14 @@ public class Evaluation {
                 hasTrunk = true;
 
                 // 竹子
-                result.addFeature(Comment.Independence, Tendency.Positive);
+                result.addFeature(Term.Independence, Tendency.Positive);
 
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
             }
             else {
                 // 常青树
-                result.addFeature(Comment.SelfConfidence, Tendency.Positive);
+                result.addFeature(Term.SelfConfidence, Tendency.Positive);
             }
 
             // 树干
@@ -888,7 +888,7 @@ public class Evaluation {
                 Logger.d(this.getClass(), "#evalTree - Tree trunk width ratio: " + ratio);
                 if (ratio < 0.16d) {
                     // 细
-                    result.addFeature(Comment.Powerlessness, Tendency.Positive);
+                    result.addFeature(Term.Powerlessness, Tendency.Positive);
 
                     result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
                     result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.3, 0.4));
@@ -900,7 +900,7 @@ public class Evaluation {
                 }
                 else if (ratio >= 0.3d && ratio < 0.7d) {
                     // 粗
-                    result.addFeature(Comment.EmotionalStability, Tendency.Positive);
+                    result.addFeature(Term.EmotionalStability, Tendency.Positive);
 
                     result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.2, 0.3));
                     result.addScore(Indicator.Depression, -1, FloatUtils.random(0.4, 0.5));
@@ -914,7 +914,7 @@ public class Evaluation {
 
             // 树根
             if (tree.hasRoot()) {
-                result.addFeature(Comment.Instinct, Tendency.Positive);
+                result.addFeature(Term.Instinct, Tendency.Positive);
 
                 result.addScore(Indicator.SelfControl, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Paranoid, 1, FloatUtils.random(0.6, 0.7));
@@ -922,8 +922,8 @@ public class Evaluation {
 
             // 树洞
             if (tree.hasHole()) {
-                result.addFeature(Comment.Trauma, Tendency.Positive);
-                result.addFeature(Comment.EmotionalDisturbance, Tendency.Positive);
+                result.addFeature(Term.Trauma, Tendency.Positive);
+                result.addFeature(Term.EmotionalDisturbance, Tendency.Positive);
 
                 result.addScore(Indicator.Stress, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.1, 0.2));
@@ -931,36 +931,36 @@ public class Evaluation {
 
             // 树冠大小
             if (tree.hasCanopy()) {
-                result.addFeature(Comment.HighEnergy, Tendency.Positive);
+                result.addFeature(Term.HighEnergy, Tendency.Positive);
                 // 通过评估面积和高度确定树冠大小
                 if (tree.getCanopyAreaRatio() >= 0.45) {
-                    result.addFeature(Comment.SocialDemand, Tendency.Positive);
+                    result.addFeature(Term.SocialDemand, Tendency.Positive);
 
                     result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.6, 0.7));
                     result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.6, 0.7));
                 }
                 else if (tree.getCanopyAreaRatio() < 0.2) {
-                    result.addFeature(Comment.SelfConfidence, Tendency.Negative);
+                    result.addFeature(Term.SelfConfidence, Tendency.Negative);
 
                     result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.6, 0.7));
                     result.addScore(Indicator.InterpersonalRelation, -1, FloatUtils.random(0.6, 0.7));
                 }
 
                 if (tree.getCanopyHeightRatio() >= 0.33) {
-                    result.addFeature(Comment.SelfEsteem, Tendency.Positive);
+                    result.addFeature(Term.SelfEsteem, Tendency.Positive);
 
                     result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.6, 0.7));
                     result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.6, 0.7));
                 }
                 else if (tree.getCanopyHeightRatio() < 0.2) {
-                    result.addFeature(Comment.SelfEsteem, Tendency.Negative);
+                    result.addFeature(Term.SelfEsteem, Tendency.Negative);
 
                     result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.6, 0.7));
                     result.addScore(Indicator.InterpersonalRelation, -1, FloatUtils.random(0.6, 0.7));
                 }
 
                 if (tree.getCanopyAreaRatio() < 0.2 && tree.getCanopyHeightRatio() < 0.3) {
-                    result.addFeature(Comment.Childish, Tendency.Positive);
+                    result.addFeature(Term.Childish, Tendency.Positive);
                 }
             }
             /* 树冠存在识别失败的可能性
@@ -972,7 +972,7 @@ public class Evaluation {
 
             // 果实
             if (tree.hasFruit()) {
-                result.addFeature(Comment.PursuitOfAchievement, Tendency.Positive);
+                result.addFeature(Term.PursuitOfAchievement, Tendency.Positive);
 
                 result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
 
@@ -989,19 +989,19 @@ public class Evaluation {
 
                     if (big && many) {
                         // 大而多
-                        result.addFeature(Comment.ManyGoals, Tendency.Positive);
-                        result.addFeature(Comment.ManyDesires, Tendency.Positive);
-                        result.addFeature(Comment.SelfConfidence, Tendency.Positive);
+                        result.addFeature(Term.ManyGoals, Tendency.Positive);
+                        result.addFeature(Term.ManyDesires, Tendency.Positive);
+                        result.addFeature(Term.SelfConfidence, Tendency.Positive);
                     }
                     else if (big) {
-                        result.addFeature(Comment.ManyGoals, Tendency.Positive);
+                        result.addFeature(Term.ManyGoals, Tendency.Positive);
                     }
                     else if (many) {
-                        result.addFeature(Comment.ManyGoals, Tendency.Positive);
-                        result.addFeature(Comment.SelfConfidence, Tendency.Negative);
+                        result.addFeature(Term.ManyGoals, Tendency.Positive);
+                        result.addFeature(Term.SelfConfidence, Tendency.Negative);
                     }
                     else {
-                        result.addFeature(Comment.SelfConfidence, Tendency.Negative);
+                        result.addFeature(Term.SelfConfidence, Tendency.Negative);
 
                         result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.6, 0.7));
                     }
@@ -1027,7 +1027,7 @@ public class Evaluation {
 
         if (!hasTrunk) {
             // 无树干
-            result.addFeature(Comment.Introversion, Tendency.Positive);
+            result.addFeature(Term.Introversion, Tendency.Positive);
 
             result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
         }
@@ -1053,14 +1053,14 @@ public class Evaluation {
             if (person.getGender() == Person.Gender.Female) {
                 if (this.painting.getAttribute().isMale()) {
                     // 男画女
-                    result.addFeature(Comment.SocialPowerlessness, Tendency.Positive);
+                    result.addFeature(Term.SocialPowerlessness, Tendency.Positive);
                     result.addScore(Indicator.Emotion, -1, FloatUtils.random(0.3, 0.4));
                 }
             }
             else if (person.getGender() == Person.Gender.Male) {
                 if (this.painting.getAttribute().isFemale()) {
                     // 女画男
-                    result.addFeature(Comment.SelfDemand, Tendency.Positive);
+                    result.addFeature(Term.SelfDemand, Tendency.Positive);
                     result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
                 }
             }
@@ -1071,7 +1071,7 @@ public class Evaluation {
                 Logger.d(this.getClass(), "#evalPerson - Head height ratio: " + person.getHeadHeightRatio());
                 if (person.getHeadHeightRatio() > 0.47d) {
                     // 头大
-                    result.addFeature(Comment.SocialAdaptability, Tendency.Negative);
+                    result.addFeature(Term.SocialAdaptability, Tendency.Negative);
 
                     result.addScore(Indicator.Impulsion, 1, FloatUtils.random(0.6, 0.7));
                     result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.6, 0.7));
@@ -1084,7 +1084,7 @@ public class Evaluation {
             // 五官是否完整
             if (!(person.hasEye() && person.hasNose() && person.hasMouth())) {
                 // 不完整
-                result.addFeature(Comment.SelfConfidence, Tendency.Negative);
+                result.addFeature(Term.SelfConfidence, Tendency.Negative);
 
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.6, 0.7));
             }
@@ -1096,23 +1096,23 @@ public class Evaluation {
             if (person.hasEye()) {
                 // 是否睁开眼
                 if (!person.hasOpenEye()) {
-                    result.addFeature(Comment.Hostility, Tendency.Positive);
+                    result.addFeature(Term.Hostility, Tendency.Positive);
                 }
 
                 double ratio = person.getMaxEyeAreaRatio();
                 if (ratio > 0.018) {
                     // 眼睛大
-                    result.addFeature(Comment.Sensitiveness, Tendency.Positive);
-                    result.addFeature(Comment.Alertness, Tendency.Positive);
+                    result.addFeature(Term.Sensitiveness, Tendency.Positive);
+                    result.addFeature(Term.Alertness, Tendency.Positive);
                 }
             }
             else {
-                result.addFeature(Comment.IntrapsychicConflict, Tendency.Positive);
+                result.addFeature(Term.IntrapsychicConflict, Tendency.Positive);
             }
 
             // 眉毛
             if (person.hasEyebrow()) {
-                result.addFeature(Comment.AttentionToDetail, Tendency.Positive);
+                result.addFeature(Term.AttentionToDetail, Tendency.Positive);
 
                 result.addScore(Indicator.Paranoid, 1, FloatUtils.random(0.6, 0.7));
             }
@@ -1120,10 +1120,10 @@ public class Evaluation {
             // 嘴
             if (person.hasMouth()) {
                 if (person.getMouth().isOpen()) {
-                    result.addFeature(Comment.LongingForMaternalLove, Tendency.Positive);
+                    result.addFeature(Term.LongingForMaternalLove, Tendency.Positive);
                 }
                 else if (person.getMouth().isStraight()) {
-                    result.addFeature(Comment.Strong, Tendency.Positive);
+                    result.addFeature(Term.Strong, Tendency.Positive);
 
                     result.addScore(Indicator.Constrain, 1, FloatUtils.random(0.6, 0.7));
                 }
@@ -1132,32 +1132,32 @@ public class Evaluation {
             // 耳朵
             if (!person.hasEar()) {
                 // 没有耳朵
-                result.addFeature(Comment.Stubborn, Tendency.Positive);
+                result.addFeature(Term.Stubborn, Tendency.Positive);
             }
 
             // 头发
             if (person.hasHair()) {
                 if (person.hasStraightHair()) {
                     // 直发
-                    result.addFeature(Comment.Simple, Tendency.Positive);
+                    result.addFeature(Term.Simple, Tendency.Positive);
 
                     result.addScore(Indicator.Impulsion, 1, FloatUtils.random(0.6, 0.7));
                 }
                 else if (person.hasShortHair()) {
                     // 短发
-                    result.addFeature(Comment.DesireForControl, Tendency.Positive);
+                    result.addFeature(Term.DesireForControl, Tendency.Positive);
 
                     result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.6, 0.7));
                 }
                 else if (person.hasCurlyHair()) {
                     // 卷发
-                    result.addFeature(Comment.Sentimentality, Tendency.Positive);
+                    result.addFeature(Term.Sentimentality, Tendency.Positive);
 
                     result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
                 }
                 else if (person.hasStandingHair()) {
                     // 竖直头发
-                    result.addFeature(Comment.Aggression, Tendency.Positive);
+                    result.addFeature(Term.Aggression, Tendency.Positive);
 
                     result.addScore(Indicator.Hostile, 1, FloatUtils.random(0.6, 0.7));
                 }
@@ -1165,14 +1165,14 @@ public class Evaluation {
 
             // 发饰
             if (person.hasHairAccessory()) {
-                result.addFeature(Comment.Narcissism, Tendency.Positive);
+                result.addFeature(Term.Narcissism, Tendency.Positive);
 
                 result.addScore(Indicator.Narcissism, 1, FloatUtils.random(0.6, 0.7));
             }
 
             // 帽子
             if (person.hasCap()) {
-                result.addFeature(Comment.Powerlessness, Tendency.Positive);
+                result.addFeature(Term.Powerlessness, Tendency.Positive);
 
                 result.addScore(Indicator.Constrain, 1, FloatUtils.random(0.6, 0.7));
             }
@@ -1183,7 +1183,7 @@ public class Evaluation {
                 double d = person.calcArmsDistance();
                 if (d > person.getBody().getWidth() * 0.5) {
                     // 手臂分开
-                    result.addFeature(Comment.Extroversion, Tendency.Positive);
+                    result.addFeature(Term.Extroversion, Tendency.Positive);
                 }
 
                 result.addScore(Indicator.EvaluationFromOutside, 1, FloatUtils.random(0.6, 0.7));
@@ -1197,8 +1197,8 @@ public class Evaluation {
                 if (null != thinLeg) {
                     if (d < thinLeg.getWidth() * 0.5) {
                         // 腿的距离较近
-                        result.addFeature(Comment.Cautious, Tendency.Positive);
-                        result.addFeature(Comment.Introversion, Tendency.Positive);
+                        result.addFeature(Term.Cautious, Tendency.Positive);
+                        result.addFeature(Term.Introversion, Tendency.Positive);
                     }
                 }
             }
@@ -1233,7 +1233,7 @@ public class Evaluation {
 
         if (other.has(Label.Table)) {
             // 桌子
-            result.addFeature(Comment.PayAttentionToFamily, Tendency.Positive);
+            result.addFeature(Term.PayAttentionToFamily, Tendency.Positive);
             result.addScore(Indicator.Family, 1, FloatUtils.random(0.7, 0.8));
         }
 
@@ -1244,7 +1244,7 @@ public class Evaluation {
 
         if (other.has(Label.Sun)) {
             // 太阳
-            result.addFeature(Comment.PositiveExpectation, Tendency.Positive);
+            result.addFeature(Term.PositiveExpectation, Tendency.Positive);
 
             result.addScore(Indicator.Optimism, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Depression, -1, FloatUtils.random(0.4, 0.5));
@@ -1259,47 +1259,47 @@ public class Evaluation {
 
         if (other.has(Label.Moon)) {
             // 月亮
-            result.addFeature(Comment.Sentimentality, Tendency.Positive);
+            result.addFeature(Term.Sentimentality, Tendency.Positive);
         }
 
         if (other.has(Label.Star)) {
             // 星星
-            result.addFeature(Comment.Fantasy, Tendency.Positive);
+            result.addFeature(Term.Fantasy, Tendency.Positive);
         }
 
         if (other.has(Label.Mountain)) {
             // 山
-            result.addFeature(Comment.NeedProtection, Tendency.Positive);
+            result.addFeature(Term.NeedProtection, Tendency.Positive);
             result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
         }
 
         if (other.has(Label.Flower)) {
             // 花
-            result.addFeature(Comment.Vanity, Tendency.Positive);
+            result.addFeature(Term.Vanity, Tendency.Positive);
             result.addScore(Indicator.EvaluationFromOutside, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
         }
 
         if (other.has(Label.Grass)) {
             // 草
-            result.addFeature(Comment.Stubborn, Tendency.Positive);
+            result.addFeature(Term.Stubborn, Tendency.Positive);
         }
 
         if (other.has(Label.Sea)) {
             // 海
-            result.addFeature(Comment.DesireForFreedom, Tendency.Normal);
+            result.addFeature(Term.DesireForFreedom, Tendency.Normal);
         }
 
         if (other.has(Label.Pool)) {
             // 池塘
-            result.addFeature(Comment.Stubborn, Tendency.Normal);
+            result.addFeature(Term.Stubborn, Tendency.Normal);
             result.addScore(Indicator.InterpersonalRelation, -1, FloatUtils.random(0.2, 0.3));
         }
 
         if (other.has(Label.Sunflower)) {
             // 向日葵
-            result.addFeature(Comment.Extroversion, Tendency.Positive);
-            result.addFeature(Comment.PursuitOfAchievement, Tendency.Normal);
+            result.addFeature(Term.Extroversion, Tendency.Positive);
+            result.addFeature(Term.PursuitOfAchievement, Tendency.Normal);
             result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
         }
@@ -1312,8 +1312,8 @@ public class Evaluation {
 
         if (other.has(Label.Lotus)) {
             // 莲花
-            result.addFeature(Comment.SelfInflated, Tendency.Positive);
-            result.addFeature(Comment.Creativity, Tendency.Normal);
+            result.addFeature(Term.SelfInflated, Tendency.Positive);
+            result.addFeature(Term.Creativity, Tendency.Normal);
             result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.2, 0.3));
             result.addScore(Indicator.MoralSense, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
@@ -1321,34 +1321,34 @@ public class Evaluation {
 
         if (other.has(Label.PlumFlower)) {
             // 梅花
-            result.addFeature(Comment.SelfEsteem, Tendency.Positive);
+            result.addFeature(Term.SelfEsteem, Tendency.Positive);
             result.addScore(Indicator.SelfEsteem, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
         }
 
         if (other.has(Label.Rose)) {
             // 玫瑰
-            result.addFeature(Comment.Creativity, Tendency.Positive);
+            result.addFeature(Term.Creativity, Tendency.Positive);
             result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
         }
 
         if (other.has(Label.Cloud)) {
             // 云
-            result.addFeature(Comment.Imagination, Tendency.Positive);
+            result.addFeature(Term.Imagination, Tendency.Positive);
             result.addScore(Indicator.Optimism, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Idealism, 1, FloatUtils.random(0.7, 0.8));
         }
 
         if (other.has(Label.Rain)) {
             // 雨
-            result.addFeature(Comment.HighPressure, Tendency.Positive);
+            result.addFeature(Term.HighPressure, Tendency.Positive);
             result.addScore(Indicator.Stress, 1, FloatUtils.random(0.7, 0.8));
         }
 
         if (other.has(Label.Rainbow)) {
             // 彩虹
-            result.addFeature(Comment.Future, Tendency.Positive);
+            result.addFeature(Term.Future, Tendency.Positive);
             result.addScore(Indicator.Simple, 1, FloatUtils.random(0.7, 0.8));
         }
 
@@ -1364,7 +1364,7 @@ public class Evaluation {
 
         if (other.has(Label.Bird)) {
             // 鸟
-            result.addFeature(Comment.DesireForFreedom, Tendency.Positive);
+            result.addFeature(Term.DesireForFreedom, Tendency.Positive);
             result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.DesireForFreedom, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
@@ -1372,7 +1372,7 @@ public class Evaluation {
 
         if (other.has(Label.Cat)) {
             // 猫
-            result.addFeature(Comment.SocialDemand, Tendency.Positive);
+            result.addFeature(Term.SocialDemand, Tendency.Positive);
             result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
             result.addScore(Indicator.Meekness, 1, FloatUtils.random(0.5, 0.6));
@@ -1381,8 +1381,8 @@ public class Evaluation {
 
         if (other.has(Label.Dog)) {
             // 狗
-            result.addFeature(Comment.NeedProtection, Tendency.Positive);
-            result.addFeature(Comment.SenseOfSecurity, Tendency.Negative);
+            result.addFeature(Term.NeedProtection, Tendency.Positive);
+            result.addFeature(Term.SenseOfSecurity, Tendency.Negative);
             result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
             counter += 1;
         }
@@ -1407,7 +1407,7 @@ public class Evaluation {
 
         if (other.has(Label.Fish)) {
             // 鱼
-            result.addFeature(Comment.DesireForFreedom, Tendency.Positive);
+            result.addFeature(Term.DesireForFreedom, Tendency.Positive);
             result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.5, 0.6));
             result.addScore(Indicator.DesireForFreedom, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
@@ -1421,7 +1421,7 @@ public class Evaluation {
 
         if (other.has(Label.Horse)) {
             // 马
-            result.addFeature(Comment.DesireForFreedom, Tendency.Positive);
+            result.addFeature(Term.DesireForFreedom, Tendency.Positive);
             result.addScore(Indicator.DesireForFreedom, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
         }
@@ -1435,20 +1435,20 @@ public class Evaluation {
 
         if (other.has(Label.Rat)) {
             // 鼠
-            result.addFeature(Comment.Sensitiveness, Tendency.Positive);
+            result.addFeature(Term.Sensitiveness, Tendency.Positive);
             result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.7, 0.8));
             counter += 1;
         }
 
         if (other.has(Label.Butterfly)) {
             // 蝴蝶
-            result.addFeature(Comment.PursuitOfAchievement, Tendency.Positive);
+            result.addFeature(Term.PursuitOfAchievement, Tendency.Positive);
         }
 
         if (other.has(Label.Tiger)) {
             // 虎
-            result.addFeature(Comment.Extroversion, Tendency.Positive);
-            result.addFeature(Comment.SelfConfidence, Tendency.Positive);
+            result.addFeature(Term.Extroversion, Tendency.Positive);
+            result.addFeature(Term.SelfConfidence, Tendency.Positive);
             result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.5, 0.6));
             counter += 1;
@@ -1462,13 +1462,13 @@ public class Evaluation {
 
         if (other.has(Label.Snake)) {
             // 蛇
-            result.addFeature(Comment.Trauma, Tendency.Positive);
+            result.addFeature(Term.Trauma, Tendency.Positive);
             result.addScore(Indicator.Emotion, -1, FloatUtils.random(0.3, 0.4));
         }
 
         if (other.has(Label.Dragon)) {
             // 龙
-            result.addFeature(Comment.PursuitOfAchievement, Tendency.Positive);
+            result.addFeature(Term.PursuitOfAchievement, Tendency.Positive);
             result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
         }
@@ -1490,24 +1490,24 @@ public class Evaluation {
 
         if (other.has(Label.TV)) {
             // 电视
-            result.addFeature(Comment.PayAttentionToFamily, Tendency.Negative);
+            result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
             result.addScore(Indicator.Family, -1, FloatUtils.random(0.4, 0.5));
         }
 
         if (other.has(Label.Pole)) {
             // 电线杆
-            result.addFeature(Comment.Stubborn, Tendency.Positive);
+            result.addFeature(Term.Stubborn, Tendency.Positive);
         }
 
         if (other.has(Label.Tower)) {
             // 铁塔
-            result.addFeature(Comment.Stereotype, Tendency.Positive);
+            result.addFeature(Term.Stereotype, Tendency.Positive);
             result.addScore(Indicator.MoralSense, 1, FloatUtils.random(0.7, 0.8));
         }
 
         if (other.has(Label.Lighthouse)) {
             // 灯塔
-            result.addFeature(Comment.Idealization, Tendency.Positive);
+            result.addFeature(Term.Idealization, Tendency.Positive);
         }
 
         if (other.has(Label.Gun)) {
@@ -1527,8 +1527,8 @@ public class Evaluation {
 
         if (other.has(Label.Shield)) {
             // 盾
-            result.addFeature(Comment.Defensiveness, Tendency.Positive);
-            result.addFeature(Comment.NeedProtection, Tendency.Positive);
+            result.addFeature(Term.Defensiveness, Tendency.Positive);
+            result.addFeature(Term.NeedProtection, Tendency.Positive);
             result.addScore(Indicator.Pessimism, 1, FloatUtils.random(0.7, 0.8));
         }
 
@@ -1539,7 +1539,7 @@ public class Evaluation {
 
         if (other.has(Label.Kite)) {
             // 风筝
-            result.addFeature(Comment.DesireForFreedom, Tendency.Positive);
+            result.addFeature(Term.DesireForFreedom, Tendency.Positive);
             result.addScore(Indicator.DesireForFreedom, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
         }
@@ -1551,7 +1551,7 @@ public class Evaluation {
 
         if (other.has(Label.Windmill)) {
             // 风车
-            result.addFeature(Comment.Fantasy, Tendency.Positive);
+            result.addFeature(Term.Fantasy, Tendency.Positive);
             result.addScore(Indicator.Simple, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
         }
@@ -1563,7 +1563,7 @@ public class Evaluation {
 
         if (other.has(Label.Bridge)) {
             // 桥
-            result.addFeature(Comment.PursueInterpersonalRelationships, Tendency.Positive);
+            result.addFeature(Term.PursueInterpersonalRelationships, Tendency.Positive);
             result.addScore(Indicator.InterpersonalRelation, -1, FloatUtils.random(0.7, 0.8));
         }
 
@@ -1574,66 +1574,66 @@ public class Evaluation {
 
         if (other.has(Label.Ladder)) {
             // 梯子
-            result.addFeature(Comment.PursuitOfAchievement, Tendency.Positive);
+            result.addFeature(Term.PursuitOfAchievement, Tendency.Positive);
             result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
         }
 
         if (other.has(Label.Stairs)) {
             // 楼梯
-            result.addFeature(Comment.EnvironmentalAlienation, Tendency.Positive);
+            result.addFeature(Term.EnvironmentalAlienation, Tendency.Positive);
             result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
         }
 
         if (other.has(Label.Birdcage)) {
             // 鸟笼
-            result.addFeature(Comment.DesireForFreedom, Tendency.Positive);
+            result.addFeature(Term.DesireForFreedom, Tendency.Positive);
             result.addScore(Indicator.DesireForFreedom, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
         }
 
         if (other.has(Label.Car)) {
             // 汽车
-            result.addFeature(Comment.Luxurious, Tendency.Positive);
+            result.addFeature(Term.Luxurious, Tendency.Positive);
         }
 
         if (other.has(Label.Boat)) {
             // 船
-            result.addFeature(Comment.DesireForFreedom, Tendency.Positive);
+            result.addFeature(Term.DesireForFreedom, Tendency.Positive);
             result.addScore(Indicator.DesireForFreedom, 1, FloatUtils.random(0.7, 0.8));
         }
 
         if (other.has(Label.Airplane)) {
             // 飞机
-            result.addFeature(Comment.Escapism, Tendency.Positive);
+            result.addFeature(Term.Escapism, Tendency.Positive);
             result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
         }
 
         if (other.has(Label.Bike)) {
             // 自行车
-            result.addFeature(Comment.EmotionalDisturbance, Tendency.Positive);
+            result.addFeature(Term.EmotionalDisturbance, Tendency.Positive);
             counter += 1;
         }
 
         if (other.has(Label.Skull)) {
             // 骷髅
-            result.addFeature(Comment.WorldWeariness, Tendency.Positive);
+            result.addFeature(Term.WorldWeariness, Tendency.Positive);
             result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.7, 0.8));
         }
 
         if (other.has(Label.Glasses)) {
             // 眼镜
-            result.addFeature(Comment.Escapism, Tendency.Positive);
+            result.addFeature(Term.Escapism, Tendency.Positive);
         }
 
         if (other.has(Label.Swing)) {
             // 秋千
-            result.addFeature(Comment.Childish, Tendency.Positive);
+            result.addFeature(Term.Childish, Tendency.Positive);
         }
 
         if (counter >= 2) {
-            result.addFeature(Comment.Creativity, Tendency.Positive);
+            result.addFeature(Term.Creativity, Tendency.Positive);
             result.addScore(Indicator.Creativity, counter, FloatUtils.random(0.7, 0.8));
         }
 
@@ -1682,7 +1682,8 @@ public class Evaluation {
                 ef.removeScores(Indicator.Depression);
             }
         }
-        else if (depressionValue < 0 && depression > 0.5) {
+        else if ((depressionValue < 0 && depression > 0.5) ||
+                (depressionValue < 0 && depression > 0.3 && depressionCount >= 5)) {
             // 增加一个权重负值
             list.get(list.size() - 1).addScore(Indicator.Depression, -1, FloatUtils.random(0.79, 0.88));
         }
@@ -1727,8 +1728,8 @@ public class Evaluation {
             EvaluationFeature result = new EvaluationFeature();
             int num = Utils.randomInt(3, 5);
             for (int i = 0; i < num; ++i) {
-                int index = Utils.randomInt(0, Comment.values().length - 1);
-                result.addFeature(Comment.values()[index], Tendency.Positive);
+                int index = Utils.randomInt(0, Term.values().length - 1);
+                result.addFeature(Term.values()[index], Tendency.Positive);
             }
             report = new EvaluationReport(this.painting.getAttribute(), result);
         }

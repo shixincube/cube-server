@@ -26,21 +26,30 @@
 
 package cube.aigc.psychology.composition;
 
+import cube.aigc.psychology.Indicator;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
 public class ReportSuggestion implements JSONable {
+
+    public Indicator indicator;
+
+    public int tendency;
 
     public String report;
 
     public String suggestion;
 
     public ReportSuggestion(JSONObject json) {
+        this.indicator = Indicator.parse(json.getString("indicator"));
+        this.tendency = json.getInt("tendency");
         this.report = json.getString("report");
         this.suggestion = json.getString("suggestion");
     }
 
-    public ReportSuggestion(String report, String suggestion) {
+    public ReportSuggestion(Indicator indicator, int tendency, String report, String suggestion) {
+        this.indicator = indicator;
+        this.tendency = tendency;
         this.report = report;
         this.suggestion = suggestion;
     }
@@ -48,6 +57,8 @@ public class ReportSuggestion implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("indicator", this.indicator.name);
+        json.put("tendency", this.tendency);
         json.put("report", this.report);
         json.put("suggestion", this.suggestion);
         return json;

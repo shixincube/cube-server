@@ -57,7 +57,7 @@ public class Representation implements JSONable {
     public boolean equals(Object obj) {
         if (obj instanceof Representation) {
             Representation other = (Representation) obj;
-            if (other.knowledgeStrategy.getComment() == this.knowledgeStrategy.getComment()) {
+            if (other.knowledgeStrategy.getTerm() == this.knowledgeStrategy.getTerm()) {
                 return true;
             }
         }
@@ -66,7 +66,7 @@ public class Representation implements JSONable {
 
     @Override
     public int hashCode() {
-        return this.knowledgeStrategy.getComment().hashCode();
+        return this.knowledgeStrategy.getTerm().hashCode();
     }
 
     @Override

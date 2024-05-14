@@ -26,7 +26,7 @@
 
 package cube.aigc.psychology.algorithm;
 
-import cube.aigc.psychology.Comment;
+import cube.aigc.psychology.Term;
 import cube.aigc.psychology.Indicator;
 
 public class RepresentationStrategy {
@@ -34,8 +34,8 @@ public class RepresentationStrategy {
     private RepresentationStrategy() {
     }
 
-    public static Indicator matchIndicator(Comment comment) {
-        switch (comment) {
+    public static Indicator matchIndicator(Term term) {
+        switch (term) {
             case Extroversion:
                 return Indicator.Extroversion;
             case Introversion:

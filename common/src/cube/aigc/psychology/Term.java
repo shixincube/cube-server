@@ -29,7 +29,7 @@ package cube.aigc.psychology;
 /**
  * 专业描述词。
  */
-public enum Comment {
+public enum Term {
 
     /**
      * 自我存在。
@@ -393,14 +393,14 @@ public enum Comment {
 
     public final String word;
 
-    Comment(String word) {
+    Term(String word) {
         this.word = word;
     }
 
-    public static Comment parse(String word) {
-        for (Comment comment : Comment.values()) {
-            if (comment.word.equals(word)) {
-                return comment;
+    public static Term parse(String word) {
+        for (Term term : Term.values()) {
+            if (term.word.equals(word)) {
+                return term;
             }
         }
         return Unknown;

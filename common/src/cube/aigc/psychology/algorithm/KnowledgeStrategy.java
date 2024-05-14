@@ -26,7 +26,7 @@
 
 package cube.aigc.psychology.algorithm;
 
-import cube.aigc.psychology.Comment;
+import cube.aigc.psychology.Term;
 import cube.aigc.psychology.Theme;
 import cube.common.JSONable;
 import org.json.JSONArray;
@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class KnowledgeStrategy implements JSONable {
 
-    private Comment comment;
+    private Term term;
 
     private String interpretation;
 
@@ -51,7 +51,7 @@ public class KnowledgeStrategy implements JSONable {
     private List<Scene> sceneList;
 
     public KnowledgeStrategy(JSONObject json) {
-        this.comment = Comment.parse(json.getString("comment"));
+        this.term = Term.parse(json.getString("comment"));
 
         if (json.has("interpretation")) {
             this.interpretation = json.getString("interpretation");
@@ -71,8 +71,8 @@ public class KnowledgeStrategy implements JSONable {
         }
     }
 
-    public Comment getComment() {
-        return this.comment;
+    public Term getTerm() {
+        return this.term;
     }
 
     public String getInterpretation() {
@@ -100,7 +100,7 @@ public class KnowledgeStrategy implements JSONable {
     public boolean equals(Object obj) {
         if (obj instanceof KnowledgeStrategy) {
             KnowledgeStrategy other = (KnowledgeStrategy) obj;
-            if (other.comment == this.comment) {
+            if (other.term == this.term) {
                 return true;
             }
         }
@@ -110,7 +110,7 @@ public class KnowledgeStrategy implements JSONable {
 
     @Override
     public int hashCode() {
-        return this.comment.hashCode();
+        return this.term.hashCode();
     }
 
     @Override
@@ -128,7 +128,7 @@ public class KnowledgeStrategy implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
-        json.put("comment", this.comment.word);
+        json.put("comment", this.term.word);
         json.put("interpretation", this.interpretation);
         return json;
     }
