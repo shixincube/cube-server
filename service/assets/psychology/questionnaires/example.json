@@ -1,78 +1,57 @@
 {
 	"name": "量表示例",
-	"sections": [
-		{
-			"title": "第一部分",
-			"content": "哪一答案最接近地描述了你通常的思考和行为方式。",
-			"questions": [
-				{
-					"sn": 1,
-					"content": "第一个问题",
-					"choice": "single",
-					"answers": [
-						{
-							"code": "A",
-							"content": "A. 第一个问题的第一个答案选项"
-						},
-						{
-							"code": "B",
-							"content": "B. 第一个问题的第二个答案选项"
-						}
-					]
-				},
-				{
-					"sn": 2,
-					"content": "第二个问题",
-					"choice": "single",
-					"answers": [
-						{
-							"code": "A",
-							"content": "A. 第二个问题的第一个答案选项"
-						},
-						{
-							"code": "B",
-							"content": "B. 第二个问题的第二个答案选项"
-						}
-					]
-				}
-			],
-		},
-		{
-			"title": "第二部分",
-			"content": "在以下各对词中，你更倾向于哪一个。\n\n考虑以下这些词的意思，而不是它们好不好听或好不好看。",
-			"questions": [
-				{
-					"sn": 27,
-					"content": "",
-					"choice": "single",
-					"answers": [
-						{
-							"code": "A",
-							"content": "A. 事实"
-						},
-						{
-							"code": "B",
-							"content": "B. 观点"
-						}
-					]
-				},
-				{
-					"sn": 28,
-					"content": "",
-					"choice": "single",
-					"answers": [
-						{
-							"code": "A",
-							"content": "A. 热忱"
-						},
-						{
-							"code": "B",
-							"content": "B. 坚决"
-						}
-					]
-				}
-			]
-		}
-	],
+	"sections": [{
+		"title": "第一部分",
+		"content": "哪一答案最接近地描述了你通常的思考和行为方式。",
+		"questions": [{
+			"sn": 1,
+			"choice": "single",
+			"content": "第一个问题",
+			"answers": [{
+				"code": "A",
+				"content": "A. 第一个问题的第一个答案选项"
+			}, {
+				"code": "B",
+				"content": "B. 第一个问题的第二个答案选项"
+			}]
+		}, {
+			"sn": 2,
+			"choice": "single",
+			"content": "第二个问题",
+			"answers": [{
+				"code": "A",
+				"content": "A. 第二个问题的第一个答案选项"
+			}, {
+				"code": "B",
+				"content": "B. 第二个问题的第二个答案选项"
+			}]
+		}]
+	}, {
+		"title": "第二部分",
+		"content": "在以下各对词中，你更倾向于哪一个。\n\n考虑以下这些词的意思，而不是它们好不好听或好不好看。",
+		"questions": [{
+			"sn": 27,
+			"choice": "single",
+			"content": "",
+			"answers": [{
+				"code": "A",
+				"content": "A. 事实"
+			}, {
+				"code": "B",
+				"content": "B. 观点"
+			}]
+		}, {
+			"sn": 28,
+			"choice": "single",
+			"content": "",
+			"answers": [{
+				"code": "A",
+				"content": "A. 热忱"
+			}, {
+				"code": "B",
+				"content": "B. 坚决"
+			}]
+		}]
+	}],
 	"scoring": "example.js"
 }

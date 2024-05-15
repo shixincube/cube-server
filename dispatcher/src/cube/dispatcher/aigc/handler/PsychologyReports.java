@@ -67,8 +67,8 @@ public class PsychologyReports extends ContextHandler {
                 Attribute attribute = new Attribute(data.getJSONObject("attribute"));
                 String fileCode = data.getString("fileCode");
                 String theme = data.has("theme") ? data.getString("theme") : Theme.Generic.code;
-                int behaviorTexts = data.has("behaviorTexts") ? data.getInt("behaviorTexts") : 3;
-                int indicatorTexts = data.has("indicatorTexts") ? data.getInt("indicatorTexts") : 3;
+                int behaviorTexts = data.has("behaviorTexts") ? data.getInt("behaviorTexts") : 5;
+                int indicatorTexts = data.has("indicatorTexts") ? data.getInt("indicatorTexts") : 5;
 
                 PsychologyReport report =
                         Manager.getInstance().generatePsychologyReport(token, attribute, fileCode,

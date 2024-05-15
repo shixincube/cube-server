@@ -1,0 +1,229 @@
+{
+    "name": "MBTI性格测试",
+    "sections": [{
+        "title": "第一部分",
+        "content": "哪一答案最接近地描述了你通常的思考和行为方式。",
+        "questions": [{
+            "sn": 1,
+            "choice": "single",
+            "content": "当你某日想去某个地方，你会____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 计划好将做的事情以及何时做"
+            }, {
+                "code": "B",
+                "content": "B. 什么都不想就去"
+            }]
+        }, {
+            "sn": 2,
+            "choice": "single",
+            "content": "如果你是一位老师，你愿教____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 涉及事实的课程"
+            }, {
+                "code": "B",
+                "content": "B. 涉及理论的课程"
+            }]
+        }, {
+            "sn": 3,
+            "choice": "single",
+            "content": "你通常是____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 一个善于交际的人"
+            }, {
+                "code": "B",
+                "content": "B. 安静缄默的人"
+            }]
+        }, {
+            "sn": 4,
+            "choice": "single",
+            "content": "你喜欢____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 事先安排好约会，聚会等"
+            }, {
+                "code": "B",
+                "content": "B. 只要时机恰当就无拘无束地做任何有趣的事"
+            }]
+        }, {
+            "sn": 5,
+            "choice": "single",
+            "content": "你通常和____相处得更好？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 现实的人"
+            }, {
+                "code": "B",
+                "content": "B. 想象力丰富的人"
+            }]
+        }, {
+            "sn": 6,
+            "choice": "single",
+            "content": "当你和一群人在一起时，你会____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 参加大家的谈话"
+            }, {
+                "code": "B",
+                "content": "B. 只同你熟知的人单独谈话"
+            }]
+        }, {
+            "sn": 7,
+            "choice": "single",
+            "content": "往往，你是____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 情感驾驭理智"
+            }, {
+                "code": "B",
+                "content": "B. 理智驾驭情感"
+            }]
+        }, {
+            "sn": 8,
+            "choice": "single",
+            "content": "你更喜欢____做多数事情？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 有计划地"
+            }, {
+                "code": "B",
+                "content": "B. 即兴时"
+            }]
+        }, {
+            "sn": 9,
+            "choice": "single",
+            "content": "你愿意自己被认为是一个____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 善于动手的人"
+            }, {
+                "code": "B",
+                "content": "B. 善于创意的人"
+            }]
+        }, {
+            "sn": 10,
+            "choice": "single",
+            "content": "在大群体中，你常更多地____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 介绍他人"
+            }, {
+                "code": "B",
+                "content": "B. 由别人来介绍你"
+            }]
+        }, {
+            "sn": 11,
+            "choice": "single",
+            "content": "按日程表办事____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 正合你意"
+            }, {
+                "code": "B",
+                "content": "B. 束缚了你"
+            }]
+        }, {
+            "sn": 12,
+            "choice": "single",
+            "content": "你更喜欢____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 务实且有丰富常识的人"
+            }, {
+                "code": "B",
+                "content": "B. 头脑灵活的人"
+            }]
+        }, {
+            "sn": 13,
+            "choice": "single",
+            "content": "你觉得通常别人要花费____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 一小段时间来了解你"
+            }, {
+                "code": "B",
+                "content": "B. 很久来了解你"
+            }]
+        }, {
+            "sn": 14,
+            "choice": "single",
+            "content": "被称为____是更高的赞赏？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 感性的人"
+            }, {
+                "code": "B",
+                "content": "B. 一贯理性的人"
+            }]
+        }, {
+            "sn": 15,
+            "choice": "single",
+            "content": "对于制定周末计划，你觉得____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 很有必要"
+            }, {
+                "code": "B",
+                "content": "B. 没必要"
+            }]
+        }, {
+            "sn": 16,
+            "choice": "single",
+            "content": "你愿把____作为朋友？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 脚踏实地的人"
+            }, {
+                "code": "B",
+                "content": "B. 常有新观点的人"
+            }]
+        }, {
+            "sn": 17,
+            "choice": "single",
+            "content": "多数时候，你倾向于____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 同他人在一起"
+            }, {
+                "code": "B",
+                "content": "B. 独处"
+            }]
+        }, {
+            "sn": 18,
+            "choice": "single",
+            "content": "日常工作中，你喜欢____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 通常先安排好工作并加以完成，以免压力过大"
+            }, {
+                "code": "B",
+                "content": "B. 在时间紧迫的情况下争分夺秒地工作"
+            }]
+        }, {
+            "sn": 19,
+            "choice": "single",
+            "content": "当你为了消遣而阅读时，你____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 喜欢作者确切地表达其意思"
+            }, {
+                "code": "B",
+                "content": "B. 欣赏奇特新颖的表达方式"
+            }]
+        }, {
+            "sn": 20,
+            "choice": "single",
+            "content": "你能否____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 只要愿意就能轻松地同几乎任何人说个没完"
+            }, {
+                "code": "B",
+                "content": "B. 只能在特定场合下或同特定的人才愿意讲许多话"
+            }]
+        }]
+    }],
+    "scoring": "mbti-16personalities.js"
+}

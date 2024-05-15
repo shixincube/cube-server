@@ -7,7 +7,7 @@ function scoring(answers) {
     var score = new ScaleScore();
 
     return {
-        result: "INFP",
+        result: "",
         score: score
     }
 }
