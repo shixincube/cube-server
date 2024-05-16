@@ -215,6 +215,10 @@ public class PsychologyReport implements JSONable {
         this.state = state;
     }
 
+    public AIGCStateCode getState() {
+        return this.state;
+    }
+
     public void setFinished(boolean finished) {
         this.finished = finished;
         this.finishedTimestamp = System.currentTimeMillis();
@@ -367,20 +371,86 @@ public class PsychologyReport implements JSONable {
         return this.markdown;
     }
 
-    public JSONObject toJSON(boolean markdown) {
-        JSONObject json = this.toJSON();
-        if (!markdown) {
-            json.remove("markdown");
+    public JSONObject toMarkdown() {
+        JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
+        if (null != this.markdown) {
+            json.put("markdown", this.markdown);
         }
         return json;
+    }
+
+    public void extendMarkdown(JSONObject json) {
+        if (json.has("markdown")) {
+            this.markdown = json.getString("markdown");
+        }
+    }
+
+    public JSONObject toTextListJSON() {
+        JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
+
+        if (null != this.behaviorTextList) {
+            JSONArray jsonArray = new JSONArray();
+            for (BehaviorSuggestion bs : this.behaviorTextList) {
+                jsonArray.put(bs.toJSON());
+            }
+            json.put("behaviorTextList", jsonArray);
+        }
+
+        if (null != this.reportTextList) {
+            JSONArray jsonArray = new JSONArray();
+            for (ReportSuggestion rs : this.reportTextList) {
+                jsonArray.put(rs.toJSON());
+            }
+            json.put("reportTextList", jsonArray);
+        }
+
+        if (null != this.paragraphList) {
+            JSONArray array = new JSONArray();
+            for (ReportParagraph paragraph : this.paragraphList) {
+                array.put(paragraph.toJSON());
+            }
+            json.put("paragraphList", array);
+        }
+
+        return json;
+    }
+
+    public void extendTextList(JSONObject json) {
+        if (json.has("behaviorTextList")) {
+            this.behaviorTextList = new ArrayList<>();
+            JSONArray array = json.getJSONArray("behaviorTextList");
+            for (int i = 0; i < array.length(); ++i) {
+                BehaviorSuggestion bs = new BehaviorSuggestion(array.getJSONObject(i));
+                this.behaviorTextList.add(bs);
+            }
+        }
+
+        if (json.has("reportTextList")) {
+            this.reportTextList = new ArrayList<>();
+            JSONArray array = json.getJSONArray("reportTextList");
+            for (int i = 0; i < array.length(); ++i) {
+                ReportSuggestion rs = new ReportSuggestion(array.getJSONObject(i));
+                this.reportTextList.add(rs);
+            }
+        }
+
+        if (json.has("paragraphList")) {
+            this.paragraphList = new ArrayList<>();
+            JSONArray array = json.getJSONArray("paragraphList");
+            for (int i = 0; i < array.length(); ++i) {
+                this.paragraphList.add(new ReportParagraph(array.getJSONObject(i)));
+            }
+        }
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = this.toCompactJSON();
 
-        if (null != this.evaluationReport) {
-            json.put("evaluation", this.evaluationReport.toCompactJSON());
+        if (null != this.markdown) {
+            json.put("markdown", this.markdown);
         }
 
         if (null != this.behaviorTextList) {
@@ -406,6 +476,7 @@ public class PsychologyReport implements JSONable {
             }
             json.put("paragraphList", array);
         }
+
         return json;
     }
 
@@ -430,10 +501,6 @@ public class PsychologyReport implements JSONable {
         json.put("finishedTimestamp", this.finishedTimestamp);
         json.put("state", this.state.code);
 
-        if (null != this.markdown) {
-            json.put("markdown", this.markdown);
-        }
-
         if (null != this.mbtiFeature) {
             json.put("mbti", this.mbtiFeature.toJSON());
         }
@@ -443,8 +510,9 @@ public class PsychologyReport implements JSONable {
             attention.put("level", this.evaluationReport.getAttentionSuggestion().level);
             attention.put("desc", this.evaluationReport.getAttentionSuggestion().description);
             json.put("attention", attention);
-        }
 
+            json.put("evaluation", this.evaluationReport.toCompactJSON());
+        }
         return json;
     }
 }

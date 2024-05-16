@@ -97,6 +97,11 @@ public enum AIGCStateCode {
     Busy(26),
 
     /**
+     * 已停止的动作。
+     */
+    Stopped(27),
+
+    /**
      * 单元未就绪。
      */
     UnitNoReady(30),

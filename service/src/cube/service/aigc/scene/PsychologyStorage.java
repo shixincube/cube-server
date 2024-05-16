@@ -475,6 +475,9 @@ public class PsychologyStorage implements Storagable {
             report.addParagraph(paragraph);
         }
 
+        // 生成 Markdown
+        report.makeMarkdown(false);
+
         return report;
     }
 }

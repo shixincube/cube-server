@@ -1906,9 +1906,11 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public PsychologyReport getPsychologyReport(String token, long sn, boolean markdown) {
+        // 第一步，获取基础数据
         JSONObject data = new JSONObject();
         data.put("sn", sn);
-        data.put("markdown", markdown);
+        data.put("texts", false);
+        data.put("markdown", false);
         Packet packet = new Packet(AIGCAction.GetPsychologyReport.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
@@ -1925,7 +1927,57 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
+        // 解析报告
         PsychologyReport report = new PsychologyReport(Packet.extractDataPayload(responsePacket));
+
+        // 第二步，获取文本数据
+        data = new JSONObject();
+        data.put("sn", sn);
+        data.put("texts", true);
+        data.put("markdown", false);
+        packet = new Packet(AIGCAction.GetPsychologyReport.name, data);
+        request = packet.toDialect();
+        request.addParam("token", token);
+
+        response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#getPsychologyReport - No response");
+            return null;
+        }
+
+        responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getPsychologyReport - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        report.extendTextList(Packet.extractDataPayload(responsePacket));
+
+        // 第三步，是否获取 Markdown 数据
+        if (markdown) {
+            data = new JSONObject();
+            data.put("sn", sn);
+            data.put("texts", false);
+            data.put("markdown", true);
+            packet = new Packet(AIGCAction.GetPsychologyReport.name, data);
+            request = packet.toDialect();
+            request.addParam("token", token);
+
+            response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+            if (null == response) {
+                Logger.w(this.getClass(), "#getPsychologyReport - No response");
+                return null;
+            }
+
+            responsePacket = new Packet(response);
+            if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+                Logger.w(this.getClass(), "#getPsychologyReport - Response state is " + Packet.extractCode(responsePacket));
+                return null;
+            }
+
+            report.extendMarkdown(Packet.extractDataPayload(responsePacket));
+        }
+
         return report;
     }
 

@@ -271,6 +271,8 @@ public class Workflow {
 //                content.append(scene.explain);
 //            }
 
+            Logger.d(this.getClass(), "#inferBehavior - ");
+
             // 推理表征
             String prompt = template.formatBehaviorPrompt(representation.knowledgeStrategy.getTerm().word,
                     age, gender, representation.description);

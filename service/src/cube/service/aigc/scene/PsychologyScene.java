@@ -226,7 +226,8 @@ public class PsychologyScene {
      * @param listener
      * @return
      */
-    public PsychologyReport generateEvaluationReport(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
+    public synchronized PsychologyReport generateEvaluationReport(AIGCChannel channel, Attribute attribute,
+                                                     FileLabel fileLabel,
                                                      Theme theme, int maxBehaviorTexts, int maxIndicatorTexts,
                                                      PsychologySceneListener listener) {
         if (null == channel) {
@@ -235,9 +236,9 @@ public class PsychologyScene {
         }
 
         // 判断并发数量
-        int numUnit = this.aigcService.numUnitsByName(ModelConfig.PSYCHOLOGY_UNIT);
+        int numUnit = this.aigcService.numUnitsByName(ModelConfig.BAIZE_UNIT);
         if (0 == numUnit) {
-            Logger.e(this.getClass(), "#generateEvaluationReport - No psychology unit");
+            Logger.e(this.getClass(), "#generateEvaluationReport - No baize unit");
             return null;
         }
 
@@ -262,6 +263,8 @@ public class PsychologyScene {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
+                Logger.i(PsychologyScene.class, "Generating thread start");
+
                 while (!taskQueue.isEmpty()) {
                     ReportTask reportTask = taskQueue.poll();
                     if (null == reportTask) {
@@ -335,6 +338,9 @@ public class PsychologyScene {
                         continue;
                     }
 
+                    // 更新单元状态
+                    unit.setRunning(false);
+
                     // 设置绘画属性
                     painting.setAttribute(reportTask.attribute);
 
@@ -351,8 +357,6 @@ public class PsychologyScene {
                         // 推理生成报告失败
                         Logger.w(PsychologyScene.class, "#generateEvaluationReport - onReportEvaluateFailed: " +
                                 reportTask.fileLabel.getFileCode());
-                        // 更新单元状态
-                        unit.setRunning(false);
                         runningTaskQueue.remove(reportTask);
                         reportTask.channel.setProcessing(false);
                         reportTask.report.setState(AIGCStateCode.IllegalOperation);
@@ -360,9 +364,6 @@ public class PsychologyScene {
                         reportTask.listener.onReportEvaluateFailed(reportTask.report);
                         continue;
                     }
-
-                    // 更新单元状态
-                    unit.setRunning(false);
 
                     // 填写数据
                     workflow.fillReport(reportTask.report);
@@ -392,11 +393,57 @@ public class PsychologyScene {
 
                 // 更新运行计数
                 numRunningTasks.decrementAndGet();
+
+                Logger.i(PsychologyScene.class, "Generating thread end");
             }
         });
         thread.start();
 
         return report;
+    }
+
+    public PsychologyReport stopGenerating(long sn) {
+        PsychologyReport report = this.psychologyReportMap.get(sn);
+        if (null == report) {
+            // 没有找到报告
+            Logger.i(this.getClass(), "#stopGenerating - Can NOT find report: " + sn);
+            return null;
+        }
+
+        if (report.getState() == AIGCStateCode.Ok) {
+            // 已经生成的报告不能停止
+            Logger.i(this.getClass(), "#stopGenerating - Report is ok: " + sn);
+            return null;
+        }
+
+        Iterator<ReportTask> iter = this.taskQueue.iterator();
+        while (iter.hasNext()) {
+            ReportTask task = iter.next();
+            if (task.report.sn == sn) {
+                iter.remove();
+                break;
+            }
+        }
+
+        // 设置状态
+        report.setState(AIGCStateCode.Stopped);
+
+        return report;
+    }
+
+    public Queue<ReportTask> getRunningTaskQueue() {
+        return this.runningTaskQueue;
+    }
+
+    public int getGeneratingQueuePosition(long sn) {
+        int position = 0;
+        for (ReportTask task : this.taskQueue) {
+            ++position;
+            if (task.report.sn == sn) {
+                return position;
+            }
+        }
+        return -1;
     }
 
     private Painting processPainting(AIGCUnit unit, FileLabel fileLabel) {

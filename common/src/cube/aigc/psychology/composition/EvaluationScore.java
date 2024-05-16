@@ -111,6 +111,10 @@ public class EvaluationScore implements JSONable {
         }
 
         String word = this.generateWord();
+        if (null == word || word.length() == 0) {
+            return null;
+        }
+
         return word + "的报告描述";
     }
 
@@ -120,6 +124,10 @@ public class EvaluationScore implements JSONable {
         }
 
         String word = this.generateWord();
+        if (null == word || word.length() == 0) {
+            return null;
+        }
+
         return word + "的建议";
     }
 
@@ -135,23 +143,27 @@ public class EvaluationScore implements JSONable {
                     buf.append("中度强迫症");
                 } else if (score > 0.8) {
                     buf.append("重度强迫症");
+                } else {
+                    return null;
                 }
                 break;
             case Depression:
-                if (score > 0.3 && score <= 0.5) {
+                if (score > 0.3 && score <= 0.7) {
                     buf.append("轻度抑郁");
-                } else if (score > 0.5 && score <= 0.9) {
+                } else if (score > 0.7 && score <= 1.1) {
                     buf.append("中度抑郁");
-                } else if (score > 0.9) {
+                } else if (score > 1.1) {
                     buf.append("严重抑郁");
+                } else {
+                    return null;
                 }
                 break;
             case Anxiety:
-                if (score > 0.3 && score <= 0.5) {
+                if (score > 0.3 && score <= 0.7) {
                     buf.append("轻度焦虑");
-                } else if (score > 0.5 && score <= 0.9) {
+                } else if (score > 0.7 && score <= 1.1) {
                     buf.append("中度焦虑");
-                } else if (score > 0.9) {
+                } else {
                     buf.append("严重焦虑");
                 }
                 break;
@@ -160,7 +172,7 @@ public class EvaluationScore implements JSONable {
                     buf.append("轻微敌对");
                 } else if (score > 0.4 && score <= 0.8) {
                     buf.append("中度敌对");
-                } else if (score > 0.8) {
+                } else {
                     buf.append("严重敌对");
                 }
                 break;
@@ -169,7 +181,7 @@ public class EvaluationScore implements JSONable {
                     buf.append("轻微偏执");
                 } else if (score > 0.5 && score <= 0.8) {
                     buf.append("中度偏执");
-                } else if (score > 0.8) {
+                } else {
                     buf.append("严重偏执");
                 }
                 break;
@@ -221,6 +233,8 @@ public class EvaluationScore implements JSONable {
                     buf.append("非常重视外在评价");
                 } else if (score > 0.3) {
                     buf.append("较为重视外在评价");
+                } else {
+                    buf.append("一般重视外在评价");
                 }
                 break;
             case AchievementMotivation:

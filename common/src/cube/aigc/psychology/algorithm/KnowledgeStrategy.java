@@ -116,6 +116,9 @@ public class KnowledgeStrategy implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = this.toCompactJSON();
+        if (null != this.interpretation) {
+            json.put("interpretation", this.interpretation);
+        }
         if (null != this.advise) {
             json.put("advise", this.advise);
         }
@@ -129,7 +132,6 @@ public class KnowledgeStrategy implements JSONable {
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
         json.put("comment", this.term.word);
-        json.put("interpretation", this.interpretation);
         return json;
     }
 

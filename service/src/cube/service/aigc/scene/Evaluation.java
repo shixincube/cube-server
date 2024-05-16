@@ -281,6 +281,9 @@ public class Evaluation {
                     result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
                 }
             }
+
+            // 三者都有，抑郁大幅修正
+            result.addScore(Indicator.Depression, -1, FloatUtils.random(0.75, 0.85));
         }
         else if (null != house && null != tree) {
             // 位置关系，使用 box 计算位置
