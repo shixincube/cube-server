@@ -113,8 +113,8 @@ public class Workflow {
         }
 
         // 评估分推理
-        List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation(maxIndicatorTexts);
-        this.reportTextList = this.inferScore(scoreList);
+        List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation();
+        this.reportTextList = this.inferScore(scoreList, maxIndicatorTexts);
         if (this.reportTextList.isEmpty()) {
             Logger.w(this.getClass(), "#make - Report text error");
             return this;
@@ -259,7 +259,6 @@ public class Workflow {
             representation.description = marked;
         }
 
-        int count = 0;
         for (Representation representation : representations) {
 //            String interpretation = representation.knowledgeStrategy.getInterpretation();
 //            KnowledgeStrategy.Scene scene = representation.knowledgeStrategy.getScene(template.theme);
@@ -271,7 +270,7 @@ public class Workflow {
 //                content.append(scene.explain);
 //            }
 
-            Logger.d(this.getClass(), "#inferBehavior - ");
+            Logger.d(this.getClass(), "#inferBehavior - representation: " + representation.description);
 
             // 推理表征
             String prompt = template.formatBehaviorPrompt(representation.knowledgeStrategy.getTerm().word,
@@ -286,20 +285,21 @@ public class Workflow {
             if (null != behavior && null != suggestion) {
                 result.add(new BehaviorSuggestion(representation.knowledgeStrategy.getTerm(),
                         representation.description, behavior, suggestion));
-            }
 
-            ++count;
-            if (count >= maxRepresentation) {
-                break;
+                if (result.size() >= maxRepresentation) {
+                    break;
+                }
             }
         }
 
         return result;
     }
 
-    private List<ReportSuggestion> inferScore(List<EvaluationScore> scoreList) {
+    private List<ReportSuggestion> inferScore(List<EvaluationScore> scoreList, int maxIndicatorTexts) {
         List<ReportSuggestion> result = new ArrayList<>();
         for (EvaluationScore es : scoreList) {
+            Logger.d(this.getClass(), "#inferScore - score: " + es.indicator.name);
+
             String prompt = es.generateReportPrompt();
             if (null == prompt) {
                 continue;
@@ -317,6 +317,10 @@ public class Workflow {
             if (null != report && null != suggestion) {
                 result.add(new ReportSuggestion(es.indicator, es.positiveScore > es.negativeScore ? 1 : -1,
                         report, suggestion));
+
+                if (result.size() >= maxIndicatorTexts) {
+                    break;
+                }
             }
         }
         return result;

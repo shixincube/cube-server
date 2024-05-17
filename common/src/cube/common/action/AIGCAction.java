@@ -377,6 +377,11 @@ public enum AIGCAction {
     GeneratePsychologyReport("generatePsychologyReport"),
 
     /**
+     * 停止心理学报告生成。
+     */
+    StopGeneratingPsychologyReport("stopGeneratingPsychologyReport"),
+
+    /**
      * 获取心理学报告。
      */
     GetPsychologyReport("getPsychologyReport"),

@@ -36,187 +36,187 @@ public enum Indicator {
     /**
      * 精神病性。
      */
-    Psychosis("精神病性", "Psychosis"),
+    Psychosis("精神病性", "Psychosis", 90),
 
     /**
      * 外倾。
      */
-    Extroversion("外倾", "Extroversion"),
+    Extroversion("外倾", "Extroversion", 70),
 
     /**
      * 内倾。
      */
-    Introversion("内倾", "Introversion"),
+    Introversion("内倾", "Introversion", 70),
 
     /**
      * 乐观。
      */
-    Optimism("乐观", "Optimism"),
+    Optimism("乐观", "Optimism", 80),
 
     /**
      * 悲观。
      */
-    Pessimism("悲观", "Pessimism"),
+    Pessimism("悲观", "Pessimism", 80),
 
     /**
      * 自恋。
      */
-    Narcissism("自恋", "Narcissism"),
+    Narcissism("自恋", "Narcissism", 60),
 
     /**
      * 自信。
      */
-    Confidence("自信", "Confidence"),
+    Confidence("自信", "Confidence", 60),
 
     /**
      * 自尊。
      */
-    SelfEsteem("自尊", "SelfEsteem"),
+    SelfEsteem("自尊", "SelfEsteem", 50),
 
     /**
      * 社会适应性。
      */
-    SocialAdaptability("社会适应性", "SocialAdaptability"),
+    SocialAdaptability("社会适应性", "SocialAdaptability", 80),
 
     /**
      * 独立。
      */
-    Independence("独立", "Independence"),
+    Independence("独立", "Independence", 70),
 
     /**
      * 理想主义。
      */
-    Idealism("理想主义", "Idealism"),
-
-    /**
-     * 情感。
-     */
-    Emotion("情感", "Emotion"),
-
-    /**
-     * 自我意识。
-     */
-    SelfConsciousness("自我意识", "SelfConsciousness"),
+    Idealism("理想主义", "Idealism", 60),
 
     /**
      * 现实主义。
      */
-    Realism("现实主义", "Realism"),
+    Realism("现实主义", "Realism", 60),
+
+    /**
+     * 情感。
+     */
+    Emotion("情感", "Emotion", 70),
+
+    /**
+     * 自我意识。
+     */
+    SelfConsciousness("自我意识", "SelfConsciousness", 50),
 
     /**
      * 思考。
      */
-    Thought("思考", "Thought"),
+    Thought("思考", "Thought", 70),
 
     /**
      * 安全感。
      */
-    SenseOfSecurity("安全感", "SenseOfSecurity"),
+    SenseOfSecurity("安全感", "SenseOfSecurity", 80),
 
     /**
      * 强迫。
      */
-    Obsession("强迫", "Obsession"),
+    Obsession("强迫", "Obsession", 80),
 
     /**
      * 压抑。
      */
-    Constrain("压抑", "Constrain"),
+    Constrain("压抑", "Constrain", 70),
 
     /**
      * 自我控制。
      */
-    SelfControl("自我控制", "SelfControl"),
+    SelfControl("自我控制", "SelfControl", 60),
 
     /**
      * 焦虑。
      */
-    Anxiety("焦虑", "Anxiety"),
+    Anxiety("焦虑", "Anxiety", 70),
 
     /**
      * 抑郁。
      */
-    Depression("抑郁", "Depression"),
+    Depression("抑郁", "Depression", 80),
 
     /**
      * 单纯。
      */
-    Simple("单纯", "Simple"),
+    Simple("单纯", "Simple", 40),
 
     /**
      * 温顺。
      */
-    Meekness("温顺", "Meekness"),
+    Meekness("温顺", "Meekness", 40),
 
     /**
      * 敌对。
      */
-    Hostile("敌对", "Hostile"),
+    Hostile("敌对", "Hostile", 50),
 
     /**
      * 攻击性。
      */
-    Attacking("攻击性", "Attacking"),
+    Attacking("攻击性", "Attacking", 40),
 
     /**
      * 家庭关系。
      */
-    Family("家庭关系", "Family"),
+    Family("家庭关系", "Family", 30),
 
     /**
      * 人际关系。
      */
-    InterpersonalRelation("人际关系", "InterpersonalRelation"),
+    InterpersonalRelation("人际关系", "InterpersonalRelation", 30),
 
     /**
      * 外在评价。
      */
-    EvaluationFromOutside("外在评价", "EvaluationFromOutside"),
+    EvaluationFromOutside("外在评价", "EvaluationFromOutside", 40),
 
     /**
      * 偏执。
      */
-    Paranoid("偏执", "Paranoid"),
+    Paranoid("偏执", "Paranoid", 50),
 
     /**
      * 成就动机。
      */
-    AchievementMotivation("成就动机", "AchievementMotivation"),
+    AchievementMotivation("成就动机", "AchievementMotivation", 50),
 
     /**
      * 压力。
      */
-    Stress("压力", "Stress"),
+    Stress("压力", "Stress", 70),
 
     /**
      * 创造力。
      */
-    Creativity("创造力", "Creativity"),
+    Creativity("创造力", "Creativity", 70),
 
     /**
      * 冲动。
      */
-    Impulsion("冲动", "Impulsion"),
+    Impulsion("冲动", "Impulsion", 60),
 
     /**
      * 奋斗。
      */
-    Struggle("奋斗", "Struggle"),
+    Struggle("奋斗", "Struggle", 50),
 
     /**
      * 道德感。
      */
-    MoralSense("道德感", "MoralSense"),
+    MoralSense("道德感", "MoralSense", 30),
 
     /**
      * 向往自由。
      */
-    DesireForFreedom("向往自由", "DesireForFreedom"),
+    DesireForFreedom("向往自由", "DesireForFreedom", 30),
 
     /**
      * 未知。（服务无法进行处理）
      */
-    Unknown("未知", "Unknown")
+    Unknown("未知", "Unknown", 0)
 
     ;
 
@@ -224,9 +224,12 @@ public enum Indicator {
 
     public final String code;
 
-    Indicator(String name, String code) {
+    public final int priority;
+
+    Indicator(String name, String code, int priority) {
         this.name = name;
         this.code = code;
+        this.priority = priority;
     }
 
     public JSONObject toJSON() {
@@ -243,6 +246,6 @@ public enum Indicator {
             }
         }
 
-        return null;
+        return Unknown;
     }
 }

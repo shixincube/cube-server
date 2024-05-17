@@ -377,7 +377,9 @@ public class EvaluationReport implements JSONable {
      *
      * @return
      */
-    public List<EvaluationScore> getEvaluationScoresByRepresentation(int topNum) {
+    public List<EvaluationScore> getEvaluationScoresByRepresentation() {
+        int num = 10;
+
         List<Indicator> indicators = new ArrayList<>();
         for (Representation representation : this.representationList) {
             // 匹配和评分表一致的特征
@@ -388,6 +390,15 @@ public class EvaluationReport implements JSONable {
         }
 
         List<EvaluationScore> evaluationScores = this.scoreAccelerator.getEvaluationScores();
+
+        // 按照优先级排序
+        Collections.sort(evaluationScores, new Comparator<EvaluationScore>() {
+            @Override
+            public int compare(EvaluationScore es1, EvaluationScore es2) {
+                return es2.indicator.priority - es1.indicator.priority;
+            }
+        });
+
         List<EvaluationScore> result = new ArrayList<>();
         for (EvaluationScore es : evaluationScores) {
             if (indicators.contains(es.indicator)) {
@@ -395,29 +406,22 @@ public class EvaluationReport implements JSONable {
             }
         }
 
-        if (result.size() < topNum) {
+        if (result.size() < num) {
             // 补充
             for (EvaluationScore es : evaluationScores) {
                 if (!result.contains(es)) {
                     result.add(es);
-                    if (result.size() >= topNum) {
+                    if (result.size() >= num) {
                         break;
                     }
                 }
             }
         }
         else {
-            while (result.size() > topNum) {
+            while (result.size() > num) {
                 result.remove(result.size() - 1);
             }
         }
-
-        Collections.sort(result, new Comparator<EvaluationScore>() {
-            @Override
-            public int compare(EvaluationScore es1, EvaluationScore es2) {
-                return es2.hit - es1.hit;
-            }
-        });
 
         // 把"人际关系"移到最后一项
         if (result.get(0).indicator == Indicator.InterpersonalRelation) {
@@ -454,7 +458,7 @@ public class EvaluationReport implements JSONable {
         json.put("hesitating", this.hesitating);
 
         JSONArray priorityArray = new JSONArray();
-        for (EvaluationScore es : this.getEvaluationScoresByRepresentation(100)) {
+        for (EvaluationScore es : this.getEvaluationScoresByRepresentation()) {
             priorityArray.put(es.toJSON());
         }
         json.put("priorities", priorityArray);
@@ -480,7 +484,7 @@ public class EvaluationReport implements JSONable {
         json.put("hesitating", this.hesitating);
 
         JSONArray priorityArray = new JSONArray();
-        for (EvaluationScore es : this.getEvaluationScoresByRepresentation(100)) {
+        for (EvaluationScore es : this.getEvaluationScoresByRepresentation()) {
             priorityArray.put(es.toCompactJSON());
         }
         json.put("priorities", priorityArray);
