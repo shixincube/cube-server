@@ -49,4 +49,18 @@ public class QuestionSection {
             this.questions.add(new Question(array.getJSONObject(i)));
         }
     }
+
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("title", this.title);
+        json.put("content", this.content);
+
+        JSONArray array = new JSONArray();
+        for (Question question : this.questions) {
+            array.put(question.toJSON());
+        }
+        json.put("questions", array);
+
+        return json;
+    }
 }

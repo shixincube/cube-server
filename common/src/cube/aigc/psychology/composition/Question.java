@@ -95,4 +95,19 @@ public class Question {
         }
         return false;
     }
+
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
+        json.put("content", this.content);
+        json.put("choice", this.choice);
+
+        JSONArray array = new JSONArray();
+        for (Answer answer : this.answers) {
+            array.put(answer.toJSON());
+        }
+        json.put("answers", array);
+
+        return json;
+    }
 }

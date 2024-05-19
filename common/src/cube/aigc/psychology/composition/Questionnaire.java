@@ -46,12 +46,16 @@ public class Questionnaire {
     protected void build(JSONObject structure) {
         this.name = structure.getString("name");
         this.questionSections = new ArrayList<>();
-        JSONArray array = structure.getJSONArray("sections");
-        for (int i = 0; i < array.length(); ++i) {
-            QuestionSection section = new QuestionSection(array.getJSONObject(i));
-            this.questionSections.add(section);
+        if (structure.has("sections")) {
+            JSONArray array = structure.getJSONArray("sections");
+            for (int i = 0; i < array.length(); ++i) {
+                QuestionSection section = new QuestionSection(array.getJSONObject(i));
+                this.questionSections.add(section);
+            }
         }
-        this.scoringScript = structure.getString("scoring");
+        if (structure.has("scoringScript")) {
+            this.scoringScript = structure.getString("scoringScript");
+        }
     }
 
     public boolean chooseAnswer(int sn, String code) {

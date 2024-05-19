@@ -34,6 +34,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -66,6 +67,9 @@ public class Resource {
     private File benchmarkScoreFile = new File("assets/psychology/benchmark.json");
     private long benchmarkScoreLastModified = 0;
     private Benchmark benchmark;
+
+    private File questionnairesPath = new File("assets/psychology/questionnaires/");
+    private Map<String, File> scaleNameFileMap = new ConcurrentHashMap<>();
 
     private final static Resource instance = new Resource();
 
@@ -160,12 +164,74 @@ public class Resource {
         return this.benchmark;
     }
 
+    public List<File> listScaleFiles() {
+        List<File> result = new ArrayList<>();
+        File[] files = this.questionnairesPath.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return (!name.startsWith("_") && name.endsWith(".json"));
+            }
+        });
+        if (null == files) {
+            return result;
+        }
+
+        for (File file : files) {
+            result.add(file);
+        }
+        return result;
+    }
+
+    public List<Scale> listScales() {
+        List<Scale> result = new ArrayList<>();
+        List<File> files = this.listScaleFiles();
+        for (File file : files) {
+            try {
+                Scale scale = new Scale(file);
+                result.add(scale);
+                // 量表名对应文件
+                this.scaleNameFileMap.put(scale.name, file);
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "#listScales - File format error: " + file.getAbsolutePath(), e);
+            }
+        }
+        return result;
+    }
+
+    public Scale loadScaleByName(String name) {
+        File file = this.scaleNameFileMap.get(name);
+        if (null == file) {
+            List<Scale> list = this.listScales();
+            for (Scale scale : list) {
+                if (scale.name.equalsIgnoreCase(name)) {
+                    return scale;
+                }
+            }
+        }
+        else {
+            try {
+                return new Scale(file);
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "#loadScaleByName - File error: " + file.getAbsolutePath(), e);
+            }
+        }
+
+        return null;
+    }
+
     public Scale loadScaleByFilename(String filename) {
-        File file = new File("assets/psychology/questionnaires/" + filename + ".json");
+        File file = new File(this.questionnairesPath, filename.endsWith(".json") ? filename : filename + ".json");
         if (!file.exists()) {
             Logger.w(this.getClass(), "#loadScaleByFilename - Can NOT find file: " + file.getAbsolutePath());
             return null;
         }
-        return new Scale(file);
+        try {
+            Scale scale = new Scale(file);
+            this.scaleNameFileMap.put(scale.name, file);
+            return scale;
+        } catch (Exception e) {
+            Logger.w(this.getClass(), "#loadScaleByFilename - File format error: " + file.getAbsolutePath(), e);
+            return null;
+        }
     }
 }

@@ -32,6 +32,7 @@ import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.aigc.psychology.composition.BehaviorSuggestion;
 import cube.aigc.psychology.composition.ReportSuggestion;
+import cube.aigc.psychology.composition.Scale;
 import cube.common.Storagable;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -63,6 +64,8 @@ public class PsychologyStorage implements Storagable {
     private final String reportTextTable = "psychology_report_text";
 
     private final String reportParagraphTable = "psychology_report_paragraph";
+
+    private final String scaleTable = "psychology_scale";
 
     private final StorageField[] reportFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
@@ -187,6 +190,33 @@ public class PsychologyStorage implements Storagable {
             })
     };
 
+    private final StorageField[] scaleFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.UNIQUE
+            }),
+            new StorageField("name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("gender", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("age", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("complete", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
     private Storage storage;
 
     public final int limit = 5;
@@ -239,6 +269,13 @@ public class PsychologyStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.reportParagraphTable, this.reportParagraphFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.reportParagraphTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.scaleTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.scaleTable, this.scaleFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.scaleTable + "' successfully");
             }
         }
     }
@@ -398,6 +435,56 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("data", painting.toJSON().toString())
             }, new Conditional[] {
                     Conditional.createEqualTo("report_sn", sn)
+            });
+        }
+    }
+
+    public Scale readScale(long sn) {
+        List<StorageField[]> result = this.storage.executeQuery(this.scaleTable, this.scaleFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("sn", sn)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> fields = StorageFields.get(result.get(0));
+        try {
+            return new Scale(new JSONObject(fields.get("data").getString()));
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#readScale", e);
+            return null;
+        }
+    }
+
+    public boolean writeScale(Scale scale) {
+        List<StorageField[]> result = this.storage.executeQuery(this.scaleTable, new StorageField[] {
+                    new StorageField("id", LiteralBase.LONG)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("sn", scale.getSN())
+            });
+
+        if (result.isEmpty()) {
+            return this.storage.executeInsert(this.scaleTable, new StorageField[] {
+                    new StorageField("sn", scale.getSN()),
+                    new StorageField("name", scale.name),
+                    new StorageField("timestamp", scale.getTimestamp()),
+                    new StorageField("gender", scale.getAttribute().gender),
+                    new StorageField("age", scale.getAttribute().age),
+                    new StorageField("complete", scale.isComplete() ? 1 : 0),
+                    new StorageField("data", scale.toJSON().toString())
+            });
+        }
+        else {
+            return this.storage.executeUpdate(this.scaleTable, new StorageField[] {
+                    new StorageField("name", scale.name),
+                    new StorageField("timestamp", scale.getTimestamp()),
+                    new StorageField("gender", scale.getAttribute().gender),
+                    new StorageField("age", scale.getAttribute().age),
+                    new StorageField("complete", scale.isComplete() ? 1 : 0),
+                    new StorageField("data", scale.toJSON().toString())
+            }, new Conditional[] {
+                    Conditional.createEqualTo("sn", scale.getSN())
             });
         }
     }

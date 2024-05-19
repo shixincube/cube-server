@@ -1,20 +1,20 @@
 /*
  * This source file is part of Cube.
- * <p>
+ *
  * The MIT License (MIT)
- * <p>
+ *
  * Copyright (c) 2020-2024 Ambrose Xu.
- * <p>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p>
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * <p>
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,34 +24,53 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher;
+package cube.aigc.psychology.composition;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * 版本信息。
+ * 问卷答题卡。
  */
-public final class Version {
+public class AnswerSheet {
 
-    public final static int MAJOR = 3;
+    public final long scaleSn;
 
-    public final static int MINOR = 0;
+    public final List<Answer> answers;
 
-    public final static int REVISION = 71;
-
-    private Version() {
+    public AnswerSheet(JSONObject json) {
+        this.scaleSn = json.getLong("sn");
+        this.answers = new ArrayList<>();
+        JSONArray array = json.getJSONArray("answers");
+        for (int i = 0; i < array.length(); ++i) {
+            Answer answer = new Answer(array.getJSONObject(i));
+            this.answers.add(answer);
+        }
     }
 
-    /**
-     * 转版本串。
-     *
-     * @return
-     */
-    public static String toVersionString() {
-        StringBuilder buf = new StringBuilder();
-        buf.append(MAJOR);
-        buf.append(".");
-        buf.append(MINOR);
-        buf.append(".");
-        buf.append(REVISION);
-        return buf.toString();
+    public List<Answer> getAnswers() {
+        return this.answers;
+    }
+
+    public class Answer {
+
+        public final int sn;
+
+        public final String choice;
+
+        public Answer(JSONObject json) {
+            this.sn = json.getInt("sn");
+            this.choice = json.getString("choice");
+        }
+
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("sn", this.sn);
+            json.put("choice", this.choice);
+            return json;
+        }
     }
 }

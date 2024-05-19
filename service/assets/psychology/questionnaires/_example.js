@@ -5,6 +5,7 @@ function scoring(answers) {
     });
     
     var score = new ScaleScore();
+    score.addItem("item", 123);
 
     return {
         result: "INFP",

@@ -33,15 +33,27 @@ import cube.aigc.psychology.composition.Question;
 import cube.aigc.psychology.composition.Scale;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.util.List;
+
 public class TestEvaluation {
 
     public static void testEvaluationReport() {
     }
 
+    public static void testListScales() {
+        System.out.println("testListScales");
+
+        List<File> fileList = Resource.getInstance().listScaleFiles();
+        for (File file : fileList) {
+            System.out.println(file.getAbsolutePath());
+        }
+    }
+
     public static void testLoadScale() {
         System.out.println("testLoadScale");
 
-        Scale scale = Resource.getInstance().loadScaleByFilename("example");
+        Scale scale = Resource.getInstance().loadScaleByFilename("mbti-16personalities");
 //        System.out.println(scale.toMarkdown());
 
         System.out.println("Complete: " + scale.isComplete());
@@ -54,17 +66,15 @@ public class TestEvaluation {
 
         System.out.println("Complete: " + scale.isComplete());
 
-        for (Answer answer : scale.getAllChosenAnswers()) {
-            System.out.println(answer.sn + " : " + answer.code);
-        }
-
         System.out.println("----------------------------------------");
 
-        JSONObject conclusion = scale.scoring();
+        JSONObject conclusion = scale.scoring().toJSON();
         System.out.println(conclusion.toString(4));
     }
 
     public static void main(String[] args) {
+//        testListScales();
+
         testLoadScale();
     }
 }

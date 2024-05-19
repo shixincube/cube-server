@@ -30,6 +30,9 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.composition.AnswerSheet;
+import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.composition.ScaleResult;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.Packet;
@@ -227,9 +230,8 @@ public class PsychologyScene {
      * @return
      */
     public synchronized PsychologyReport generateEvaluationReport(AIGCChannel channel, Attribute attribute,
-                                                     FileLabel fileLabel,
-                                                     Theme theme, int maxBehaviorTexts, int maxIndicatorTexts,
-                                                     PsychologySceneListener listener) {
+                FileLabel fileLabel, Theme theme, int maxBehaviorTexts, int maxIndicatorTexts,
+                PsychologySceneListener listener) {
         if (null == channel) {
             Logger.e(this.getClass(), "#generateEvaluationReport - Channel is null");
             return null;
@@ -444,6 +446,42 @@ public class PsychologyScene {
             }
         }
         return -1;
+    }
+
+    public List<Scale> listScales() {
+        return Resource.getInstance().listScales();
+    }
+
+    public Scale getScale(long sn) {
+        return this.storage.readScale(sn);
+    }
+
+    public Scale generateScale(String scaleName, Attribute attribute) {
+        Scale scale = Resource.getInstance().loadScaleByName(scaleName);
+        if (null == scale) {
+            Logger.w(this.getClass(), "#generateScale - Can NOT find scale: " + scaleName);
+            return null;
+        }
+
+        scale.setAttribute(attribute);
+        this.storage.writeScale(scale);
+        return scale;
+    }
+
+    public ScaleResult submitAnswerSheet(long scaleSn, AnswerSheet answerSheet) {
+        Scale scale = this.storage.readScale(scaleSn);
+        if (null == scale) {
+            Logger.w(this.getClass(), "#submitAnswerSheet - Can NOT find scale: " + scaleSn);
+            return null;
+        }
+
+        scale.submitAnswer(answerSheet);
+        this.storage.writeScale(scale);
+
+        if (!scale.isComplete()) {
+            return null;
+        }
+        return scale.scoring();
     }
 
     private Painting processPainting(AIGCUnit unit, FileLabel fileLabel) {

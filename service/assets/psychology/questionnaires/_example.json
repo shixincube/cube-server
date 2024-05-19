@@ -53,5 +53,5 @@
 			}]
 		}]
 	}],
-	"scoring": "example.js"
+	"scoringScript": "example.js"
 }

@@ -26,8 +26,12 @@
 
 package cube.aigc.psychology.composition;
 
+import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.psychology.Attribute;
+import cube.common.JSONable;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.script.Invocable;
@@ -43,16 +47,63 @@ import java.nio.file.Paths;
 /**
  * 量表。
  */
-public class Scale extends Questionnaire {
+public class Scale extends Questionnaire implements JSONable {
+
+    private long sn;
+
+    private Attribute attribute;
 
     private File structureFile;
 
+    private long timestamp;
+
     public Scale(File structureFile) {
+        this.sn = Utils.generateSerialNumber();
         this.structureFile = structureFile;
+        this.timestamp = System.currentTimeMillis();
         this.build(this.readJsonFile(structureFile));
     }
 
-    public JSONObject scoring() {
+    public Scale(JSONObject json) {
+        this.build(json);
+
+        if (json.has("sn")) {
+            this.sn = json.getLong("sn");
+        }
+        if (json.has("attribute")) {
+            this.attribute = new Attribute(json.getJSONObject("attribute"));
+        }
+        if (json.has("timestamp")) {
+            this.timestamp = json.getLong("timestamp");
+        }
+        else {
+            this.timestamp = System.currentTimeMillis();
+        }
+    }
+
+    public long getSN() {
+        return this.sn;
+    }
+
+    public long getTimestamp() {
+        return this.timestamp;
+    }
+
+    public void setAttribute(Attribute attribute) {
+        this.attribute = attribute;
+    }
+
+    public Attribute getAttribute() {
+        return this.attribute;
+    }
+
+    public void submitAnswer(AnswerSheet sheet) {
+        for (AnswerSheet.Answer answer : sheet.answers) {
+            this.chooseAnswer(answer.sn, answer.choice);
+        }
+    }
+
+    public ScaleResult scoring() {
         Path scoringScriptFile = Paths.get(this.structureFile.getParent(), this.scoringScript);
         if (!Files.exists(scoringScriptFile)) {
             Logger.w(this.getClass(), "#scoring - Scoring script file error: "
@@ -95,10 +146,7 @@ public class Scale extends Questionnaire {
             scaleScore = (ScaleScore) returnVal.get("score");
         }
 
-        JSONObject json = new JSONObject();
-        json.put("result", result);
-        json.put("score", scaleScore.toJSON());
-        return json;
+        return new ScaleResult(result, scaleScore);
     }
 
     /**
@@ -115,6 +163,30 @@ public class Scale extends Questionnaire {
         } catch (Exception e) {
             Logger.w(this.getClass(), "#readJsonFile - Read file error", e);
         }
+        return json;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = this.toCompactJSON();
+        JSONArray sections = new JSONArray();
+        for (QuestionSection questionSection : this.questionSections) {
+            sections.put(questionSection.toJSON());
+        }
+        json.put("sections", sections);
+        json.put("scoringScript", this.scoringScript);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
+        json.put("name", this.name);
+        if (null != this.attribute) {
+            json.put("attribute", this.attribute.toJSON());
+        }
+        json.put("timestamp", this.timestamp);
         return json;
     }
 }

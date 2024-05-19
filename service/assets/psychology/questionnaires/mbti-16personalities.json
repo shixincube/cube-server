@@ -223,7 +223,818 @@
                 "code": "B",
                 "content": "B. 只能在特定场合下或同特定的人才愿意讲许多话"
             }]
+        }, {
+            "sn": 21,
+            "choice": "single",
+            "content": "你更倾向于____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 感性地做事"
+            }, {
+                "code": "B",
+                "content": "B. 依逻辑行事"
+            }]
+        }, {
+            "sn": 22,
+            "choice": "single",
+            "content": "当有一项特殊工作时，你会____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 在开始前精心组织策划"
+            }, {
+                "code": "B",
+                "content": "B. 在工作进行中找出必要环节"
+            }]
+        }, {
+            "sn": 23,
+            "choice": "single",
+            "content": "做很多人都会做的事情时，你喜欢____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 按惯例做"
+            }, {
+                "code": "B",
+                "content": "B. 按自己独创的方式做"
+            }]
+        }, {
+            "sn": 24,
+            "choice": "single",
+            "content": "你新认识的人____说出你的兴趣所在？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 马上就能"
+            }, {
+                "code": "B",
+                "content": "B. 只有当他们真正了解你之后才能"
+            }]
+        }, {
+            "sn": 25,
+            "choice": "single",
+            "content": "在计划一次旅行时，你更喜欢____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 事先就知道在大部分日子所将做的事情"
+            }, {
+                "code": "B",
+                "content": "B. 在多数情况下随心所欲地行事"
+            }]
+        }, {
+            "sn": 26,
+            "choice": "single",
+            "content": "多数人认为你____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 非常坦率"
+            }, {
+                "code": "B",
+                "content": "B. 不太把自己的事情告诉别人"
+            }]
+        }]
+    }, {
+        "title": "第二部分",
+        "content": "在以下各对词中，你更倾向于哪一个。\n考虑以下这些词的意思，而不是它们好不好听或好不好看。",
+        "questions": [{
+            "sn": 27,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 事实"
+            }, {
+                "code": "B",
+                "content": "B. 观点"
+            }]
+        }, {
+            "sn": 28,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 热忱"
+            }, {
+                "code": "B",
+                "content": "B. 坚决"
+            }]
+        }, {
+            "sn": 29,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 切实"
+            }, {
+                "code": "B",
+                "content": "B. 创新"
+            }]
+        }, {
+            "sn": 30,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 有计划"
+            }, {
+                "code": "B",
+                "content": "B. 随意"
+            }]
+        }, {
+            "sn": 31,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 实在"
+            }, {
+                "code": "B",
+                "content": "B. 抽象"
+            }]
+        }, {
+            "sn": 32,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 感觉"
+            }, {
+                "code": "B",
+                "content": "B. 思考"
+            }]
+        }, {
+            "sn": 33,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 已知的"
+            }, {
+                "code": "B",
+                "content": "B. 新颖的"
+            }]
+        }, {
+            "sn": 34,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 感性"
+            }, {
+                "code": "B",
+                "content": "B. 理性"
+            }]
+        }, {
+            "sn": 35,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 安排好的"
+            }, {
+                "code": "B",
+                "content": "B. 不受限制的"
+            }]
+        }, {
+            "sn": 36,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 热情"
+            }, {
+                "code": "B",
+                "content": "B. 安静"
+            }]
+        }, {
+            "sn": 37,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 温柔"
+            }, {
+                "code": "B",
+                "content": "B. 坚硬"
+            }]
+        }, {
+            "sn": 38,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 陈述"
+            }, {
+                "code": "B",
+                "content": "B. 观念"
+            }]
+        }, {
+            "sn": 39,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 慈悲心肠"
+            }, {
+                "code": "B",
+                "content": "B. 意志坚强"
+            }]
+        }, {
+            "sn": 40,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 事实的"
+            }, {
+                "code": "B",
+                "content": "B. 理论的"
+            }]
+        }, {
+            "sn": 41,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 很多朋友"
+            }, {
+                "code": "B",
+                "content": "B. 少许朋友"
+            }]
+        }, {
+            "sn": 42,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 系统的"
+            }, {
+                "code": "B",
+                "content": "B. 自发的"
+            }]
+        }, {
+            "sn": 43,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 确定"
+            }, {
+                "code": "B",
+                "content": "B. 推测"
+            }]
+        }, {
+            "sn": 44,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 宽容"
+            }, {
+                "code": "B",
+                "content": "B. 坚定"
+            }]
+        }, {
+            "sn": 45,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 必然性"
+            }, {
+                "code": "B",
+                "content": "B. 可能性"
+            }]
+        }, {
+            "sn": 46,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 动之以情"
+            }, {
+                "code": "B",
+                "content": "B. 晓之以理"
+            }]
+        }, {
+            "sn": 47,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 健谈"
+            }, {
+                "code": "B",
+                "content": "B. 缄默"
+            }]
+        }, {
+            "sn": 48,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 温和"
+            }, {
+                "code": "B",
+                "content": "B. 温和"
+            }]
+        }, {
+            "sn": 49,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 现实"
+            }, {
+                "code": "B",
+                "content": "B. 理想"
+            }]
+        }, {
+            "sn": 50,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 好心的"
+            }, {
+                "code": "B",
+                "content": "B. 称职的"
+            }]
+        }, {
+            "sn": 51,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 事实"
+            }, {
+                "code": "B",
+                "content": "B. 理论"
+            }]
+        }, {
+            "sn": 52,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 系统"
+            }, {
+                "code": "B",
+                "content": "B. 随机"
+            }]
+        }, {
+            "sn": 53,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 现实的"
+            }, {
+                "code": "B",
+                "content": "B. 想象的"
+            }]
+        }, {
+            "sn": 54,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 易动情的"
+            }, {
+                "code": "B",
+                "content": "B. 客观的"
+            }]
+        }, {
+            "sn": 55,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 建造"
+            }, {
+                "code": "B",
+                "content": "B. 发明"
+            }]
+        }, {
+            "sn": 56,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 感情丰富的"
+            }, {
+                "code": "B",
+                "content": "B. 注重实际的"
+            }]
+        }, {
+            "sn": 57,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 有序的"
+            }, {
+                "code": "B",
+                "content": "B. 随便的"
+            }]
+        }, {
+            "sn": 58,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 开朗"
+            }, {
+                "code": "B",
+                "content": "B. 文静"
+            }]
+        }, {
+            "sn": 59,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 认同"
+            }, {
+                "code": "B",
+                "content": "B. 分析"
+            }]
+        }, {
+            "sn": 60,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 事实的"
+            }, {
+                "code": "B",
+                "content": "B. 想象的"
+            }]
+        }, {
+            "sn": 61,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 祝福"
+            }, {
+                "code": "B",
+                "content": "B. 利益"
+            }]
+        }, {
+            "sn": 62,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 详实"
+            }, {
+                "code": "B",
+                "content": "B. 概括"
+            }]
+        }, {
+            "sn": 63,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 决定"
+            }, {
+                "code": "B",
+                "content": "B. 冲动"
+            }]
+        }, {
+            "sn": 64,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 制作"
+            }, {
+                "code": "B",
+                "content": "B. 创造"
+            }]
+        }, {
+            "sn": 65,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 热情"
+            }, {
+                "code": "B",
+                "content": "B. 客观"
+            }]
+        }, {
+            "sn": 66,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 实用的"
+            }, {
+                "code": "B",
+                "content": "B. 迷人的"
+            }]
+        }, {
+            "sn": 67,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 体谅的"
+            }, {
+                "code": "B",
+                "content": "B. 公正的"
+            }]
+        }, {
+            "sn": 68,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 爱交际"
+            }, {
+                "code": "B",
+                "content": "B. 爱文静"
+            }]
+        }, {
+            "sn": 69,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 敏感"
+            }, {
+                "code": "B",
+                "content": "B. 合理"
+            }]
+        }, {
+            "sn": 70,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 制造"
+            }, {
+                "code": "B",
+                "content": "B. 设计"
+            }]
+        }, {
+            "sn": 71,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 有同情心"
+            }, {
+                "code": "B",
+                "content": "B. 有逻辑头脑"
+            }]
+        }, {
+            "sn": 72,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 公开的"
+            }, {
+                "code": "B",
+                "content": "B. 私人的"
+            }]
+        }, {
+            "sn": 73,
+            "choice": "single",
+            "content": "",
+            "answers": [{
+                "code": "A",
+                "content": "A. 同情怜悯"
+            }, {
+                "code": "B",
+                "content": "B. 深谋远虑"
+            }]
+        }]
+    }, {
+        "title": "第三部分",
+        "content": "哪个答案最接近地描述了你通常的思考和行为方式。",
+        "questions": [{
+            "sn": 74,
+            "choice": "single",
+            "content": "通常你更喜欢____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 提前安排好业余活动"
+            }, {
+                "code": "B",
+                "content": "B. 即兴地做事情"
+            }]
+        }, {
+            "sn": 75,
+            "choice": "single",
+            "content": "你觉得被许多人围着____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 让你感到更有精神"
+            }, {
+                "code": "B",
+                "content": "B. 常让你精力衰竭"
+            }]
+        }, {
+            "sn": 76,
+            "choice": "single",
+            "content": "多数情况下，你更喜欢____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 按日程表办事"
+            }, {
+                "code": "B",
+                "content": "B. 顺其自然"
+            }]
+        }, {
+            "sn": 77,
+            "choice": "single",
+            "content": "在聚会中，你____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 总是玩得很开心"
+            }, {
+                "code": "B",
+                "content": "B. 有时觉得无趣"
+            }]
+        }, {
+            "sn": 78,
+            "choice": "single",
+            "content": "作决定时，对于你来说更重要的是____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 考虑人们的感受和观点"
+            }, {
+                "code": "B",
+                "content": "B. 权衡事实"
+            }]
+        }, {
+            "sn": 79,
+            "choice": "single",
+            "content": "你喜欢____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 事先很早就作好准备"
+            }, {
+                "code": "B",
+                "content": "B. 看清事态如何发展再作计划"
+            }]
+        }, {
+            "sn": 80,
+            "choice": "single",
+            "content": "别人____了解你？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 很容易"
+            }, {
+                "code": "B",
+                "content": "B. 很难"
+            }]
+        }, {
+            "sn": 81,
+            "choice": "single",
+            "content": "你喜欢的处事方式是____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 坚持那些已经有效的方法"
+            }, {
+                "code": "B",
+                "content": "B. 分析哪些仍有错并挑战未解决的问题"
+            }]
+        }, {
+            "sn": 82,
+            "choice": "single",
+            "content": "你觉得自己更偏向于是一个____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 有组织性的人"
+            }, {
+                "code": "B",
+                "content": "B. 自发性的人"
+            }]
+        }, {
+            "sn": 83,
+            "choice": "single",
+            "content": "你____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 只要愿意，就能和几乎任何一个人谈个没完"
+            }, {
+                "code": "B",
+                "content": "B. 只同和自己有共同兴趣的人才能长时间的交谈"
+            }]
+        }, {
+            "sn": 84,
+            "choice": "single",
+            "content": "你愿在一个____老板(老师)手下工作(学习)？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 脾气好，但前后不一致"
+            }, {
+                "code": "B",
+                "content": "B. 对人严厉，但有条理"
+            }]
+        }, {
+            "sn": 85,
+            "choice": "single",
+            "content": "你更喜欢按照____做大多数事情？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 已定的日程表"
+            }, {
+                "code": "B",
+                "content": "B. 当天的感觉"
+            }]
+        }, {
+            "sn": 86,
+            "choice": "single",
+            "content": "在聚会中，你____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 自己聊得多"
+            }, {
+                "code": "B",
+                "content": "B. 听别人聊得多"
+            }]
+        }, {
+            "sn": 87,
+            "choice": "single",
+            "content": "通常，你更喜欢上涉及____的课程？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 具体内容"
+            }, {
+                "code": "B",
+                "content": "B. 概念和原则"
+            }]
+        }, {
+            "sn": 88,
+            "choice": "single",
+            "content": "当你开始了一项必须在一周内完成的大项目时，你会____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 花时间列出所要做的事情及其先后次序"
+            }, {
+                "code": "B",
+                "content": "B. 直接开始"
+            }]
+        }, {
+            "sn": 89,
+            "choice": "single",
+            "content": "在社交场合中，你通常觉得____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 很容易同大多数人长时间谈话"
+            }, {
+                "code": "B",
+                "content": "B. 同某些人很难开展和维持长时间的谈话"
+            }]
+        }, {
+            "sn": 90,
+            "choice": "single",
+            "content": "被称为____是更高的赞赏？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 富有同情心"
+            }, {
+                "code": "B",
+                "content": "B. 有竞争力"
+            }]
+        }, {
+            "sn": 91,
+            "choice": "single",
+            "content": "你觉得按计划行事____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 多数时候是有帮助的、适宜的"
+            }, {
+                "code": "B",
+                "content": "B. 有时必要，便令人不爽"
+            }]
+        }, {
+            "sn": 92,
+            "choice": "single",
+            "content": "你通常____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 同大家打成一片"
+            }, {
+                "code": "B",
+                "content": "B. 倾向于独处"
+            }]
+        }, {
+            "sn": 93,
+            "choice": "single",
+            "content": "总的来说，要完成一项重大任务，你倾向于____？",
+            "answers": [{
+                "code": "A",
+                "content": "A. 开始先确定每一个步骤"
+            }, {
+                "code": "B",
+                "content": "B. 边做边考虑必须完成的事"
+            }]
         }]
     }],
-    "scoring": "mbti-16personalities.js"
+    "scoringScript": "mbti-16personalities.js"
 }

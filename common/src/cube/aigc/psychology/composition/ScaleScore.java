@@ -34,15 +34,28 @@ import java.util.Map;
 
 public class ScaleScore implements JSONable {
 
-    public Map<String, Object> items;
+    private Map<String, Object> items;
 
     public ScaleScore() {
         this.items = new LinkedHashMap<>();
     }
 
+    public void addItem(String name, Object value) {
+        this.items.put(name, value);
+    }
+
+    public Object getItem(String name) {
+        return this.items.get(name);
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        for (Map.Entry<String, Object> e : this.items.entrySet()) {
+            String key = e.getKey();
+            Object value = e.getValue();
+            json.put(key, value);
+        }
         return json;
     }
 

@@ -1,20 +1,20 @@
 /*
  * This source file is part of Cube.
- * <p>
+ *
  * The MIT License (MIT)
- * <p>
+ *
  * Copyright (c) 2020-2024 Ambrose Xu.
- * <p>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p>
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * <p>
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,34 +24,25 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher;
+package cube.aigc.psychology.composition;
 
-/**
- * 版本信息。
- */
-public final class Version {
+import org.json.JSONObject;
 
-    public final static int MAJOR = 3;
+public class ScaleResult {
 
-    public final static int MINOR = 0;
+    public String result;
 
-    public final static int REVISION = 71;
+    public ScaleScore score;
 
-    private Version() {
+    public ScaleResult(String result, ScaleScore score) {
+        this.result = result;
+        this.score = score;
     }
 
-    /**
-     * 转版本串。
-     *
-     * @return
-     */
-    public static String toVersionString() {
-        StringBuilder buf = new StringBuilder();
-        buf.append(MAJOR);
-        buf.append(".");
-        buf.append(MINOR);
-        buf.append(".");
-        buf.append(REVISION);
-        return buf.toString();
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("result", this.result);
+        json.put("score", this.score.toJSON());
+        return json;
     }
 }
