@@ -468,10 +468,10 @@ public class PsychologyScene {
         return scale;
     }
 
-    public ScaleResult submitAnswerSheet(long scaleSn, AnswerSheet answerSheet) {
-        Scale scale = this.storage.readScale(scaleSn);
+    public ScaleResult submitAnswerSheet(AnswerSheet answerSheet) {
+        Scale scale = this.storage.readScale(answerSheet.scaleSn);
         if (null == scale) {
-            Logger.w(this.getClass(), "#submitAnswerSheet - Can NOT find scale: " + scaleSn);
+            Logger.w(this.getClass(), "#submitAnswerSheet - Can NOT find scale: " + answerSheet.scaleSn);
             return null;
         }
 
@@ -479,8 +479,10 @@ public class PsychologyScene {
         this.storage.writeScale(scale);
 
         if (!scale.isComplete()) {
-            return null;
+            Logger.d(this.getClass(), "#submitAnswerSheet - Scale complete: false");
+            return new ScaleResult(scale);
         }
+
         return scale.scoring();
     }
 

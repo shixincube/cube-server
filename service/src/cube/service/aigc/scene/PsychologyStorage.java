@@ -450,7 +450,8 @@ public class PsychologyStorage implements Storagable {
 
         Map<String, StorageField> fields = StorageFields.get(result.get(0));
         try {
-            return new Scale(new JSONObject(fields.get("data").getString()));
+            String dataStr = JSONUtils.filter(fields.get("data").getString());
+            return new Scale(new JSONObject(dataStr));
         } catch (Exception e) {
             Logger.e(this.getClass(), "#readScale", e);
             return null;

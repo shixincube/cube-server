@@ -29,6 +29,7 @@ package cube.aigc.psychology.composition;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -38,6 +39,16 @@ public class ScaleScore implements JSONable {
 
     public ScaleScore() {
         this.items = new LinkedHashMap<>();
+    }
+
+    public ScaleScore(JSONObject json) {
+        this.items = new LinkedHashMap<>();
+        Iterator<String> iter = json.keys();
+        while (iter.hasNext()) {
+            String key = iter.next();
+            Object value = json.get(key);
+            this.items.put(key, value);
+        }
     }
 
     public void addItem(String name, Object value) {

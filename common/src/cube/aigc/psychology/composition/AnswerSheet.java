@@ -55,6 +55,18 @@ public class AnswerSheet {
         return this.answers;
     }
 
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("sn", this.scaleSn);
+
+        JSONArray array = new JSONArray();
+        for (Answer answer : this.answers) {
+            array.put(answer.toJSON());
+        }
+        json.put("answers", array);
+        return json;
+    }
+
     public class Answer {
 
         public final int sn;

@@ -34,15 +34,37 @@ public class ScaleResult {
 
     public ScaleScore score;
 
-    public ScaleResult(String result, ScaleScore score) {
+    public boolean complete;
+
+    public ScaleResult(Scale scale) {
+        this.complete = scale.isComplete();
+    }
+
+    public ScaleResult(String result, ScaleScore score, Scale scale) {
         this.result = result;
         this.score = score;
+        this.complete = scale.isComplete();
+    }
+
+    public ScaleResult(JSONObject json) {
+        this.complete = json.getBoolean("complete");
+        if (json.has("result")) {
+            this.result = json.getString("result");
+        }
+        if (json.has("score")) {
+            this.score = new ScaleScore(json.getJSONObject("score"));
+        }
     }
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("result", this.result);
-        json.put("score", this.score.toJSON());
+        json.put("complete", this.complete);
+        if (null != this.result) {
+            json.put("result", this.result);
+        }
+        if (null != this.score) {
+            json.put("score", this.score.toJSON());
+        }
         return json;
     }
 }

@@ -34,6 +34,9 @@ import cube.aigc.*;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.composition.AnswerSheet;
+import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.composition.ScaleResult;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.Packet;
@@ -158,6 +161,8 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new CheckPsychology());
         httpServer.addContextHandler(new PsychologyBenchmark());
         httpServer.addContextHandler(new PsychologyStopping());
+        httpServer.addContextHandler(new PsychologyScales());
+        httpServer.addContextHandler(new PsychologyScaleOperation());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -2022,6 +2027,92 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
         return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject listPsychologyScales(String token) {
+        Packet packet = new Packet(AIGCAction.ListPsychologyScales.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#listPsychologyScales - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#listPsychologyScales - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public Scale getPsychologyScale(String token, long sn) {
+        JSONObject data = new JSONObject();
+        data.put("sn", sn);
+        Packet packet = new Packet(AIGCAction.GetPsychologyScale.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#getPsychologyScale - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getPsychologyScale - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new Scale(Packet.extractDataPayload(responsePacket));
+    }
+
+    public Scale generatePsychologyScale(String token, String scaleName, String gender, int age) {
+        JSONObject data = new JSONObject();
+        data.put("name", scaleName);
+        data.put("gender", gender);
+        data.put("age", age);
+        Packet packet = new Packet(AIGCAction.GeneratePsychologyScale.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#generatePsychologyScale - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#generatePsychologyScale - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new Scale(Packet.extractDataPayload(responsePacket));
+    }
+
+    public ScaleResult submitPsychologyAnswerSheet(String token, AnswerSheet answerSheet) {
+        Packet packet = new Packet(AIGCAction.SubmitPsychologyAnswerSheet.name, answerSheet.toJSON());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#submitPsychologyAnswerSheet - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#submitPsychologyAnswerSheet - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new ScaleResult(Packet.extractDataPayload(responsePacket));
     }
 
     @Override

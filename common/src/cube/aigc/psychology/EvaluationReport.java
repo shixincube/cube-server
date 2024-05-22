@@ -226,6 +226,7 @@ public class EvaluationReport implements JSONable {
                     }
                     break;
                 case Stress:
+                    // 压力 0.4 是阈值
                     if (es.positiveScore - es.negativeScore > 0.5) {
                         stress = true;
                     }

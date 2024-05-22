@@ -1124,7 +1124,10 @@ public class AIGCService extends AbstractModule {
         }
         else {
             if (null != unitName) {
-                unit = this.selectUnitByName(unitName);
+                unit = this.selectIdleUnitByName(unitName);
+                if (null == unit) {
+                    unit = this.selectUnitByName(unitName);
+                }
             }
             else {
                 unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
