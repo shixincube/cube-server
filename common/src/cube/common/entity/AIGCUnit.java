@@ -31,7 +31,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * AIGC 服务单元。
@@ -46,7 +46,7 @@ public class AIGCUnit extends Entity {
 
     private TalkContext context;
 
-    private AtomicBoolean running;
+    private AtomicInteger runningCounter;
 
     private ConcurrentLinkedQueue<Failure> failures;
 
@@ -56,14 +56,14 @@ public class AIGCUnit extends Entity {
         this.contact = contact;
         this.capability = capability;
         this.context = context;
-        this.running = new AtomicBoolean(false);
+        this.runningCounter = new AtomicInteger(0);
         this.failures = new ConcurrentLinkedQueue<>();
     }
 
     public AIGCUnit(JSONObject json) {
         super(json);
         this.capability = new AICapability(json.getJSONObject("capability"));
-        this.running = new AtomicBoolean(json.getBoolean("running"));
+        this.runningCounter = new AtomicInteger(json.getInt("runningCounter"));
         this.failures = new ConcurrentLinkedQueue<>();
         if (json.has("failures")) {
             JSONArray array = json.getJSONArray("failures");
@@ -94,12 +94,17 @@ public class AIGCUnit extends Entity {
         this.context = context;
     }
 
-    public void setRunning(boolean value) {
-        this.running.set(value);
+    public synchronized void setRunning(boolean value) {
+        if (value) {
+            this.runningCounter.incrementAndGet();
+        }
+        else {
+            this.runningCounter.decrementAndGet();
+        }
     }
 
     public boolean isRunning() {
-        return this.running.get();
+        return this.runningCounter.get() != 0;
     }
 
     public void markFailure(int code, long timestamp, long contactId) {
@@ -110,7 +115,8 @@ public class AIGCUnit extends Entity {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("capability", this.capability.toJSON());
-        json.put("running", this.running);
+        json.put("running", this.runningCounter.get() > 0);
+        json.put("runningCounter", this.runningCounter.get());
 
         JSONArray array = new JSONArray();
         for (Failure failure : this.failures) {

@@ -1188,10 +1188,16 @@ public class AIGCService extends AbstractModule {
             return Agent.getInstance().generateText(null, unitName, prompt, option, history);
         }
 
-        AIGCUnit unit = this.selectUnitByName(unitName);
+        AIGCUnit unit = this.selectIdleUnitByName(unitName);
         if (null == unit) {
-            return null;
+            unit = this.selectUnitByName(unitName);
+            if (null == unit) {
+                return null;
+            }
         }
+
+        // 更新运行状态
+        unit.setRunning(true);
 
         JSONArray historyArray = new JSONArray();
         if (null != history) {
@@ -1219,6 +1225,7 @@ public class AIGCService extends AbstractModule {
             Logger.w(AIGCService.class, "#syncGenerateText - transmit failed, sn:" + sn);
             // 记录故障
             unit.markFailure(AIGCStateCode.UnitError.code, System.currentTimeMillis(), participant.getId());
+            unit.setRunning(false);
             return null;
         }
 
@@ -1230,8 +1237,12 @@ public class AIGCService extends AbstractModule {
             responseText = payload.getString("response");
         } catch (Exception e) {
             Logger.w(AIGCService.class, "#syncGenerateText - failed, sn:" + sn);
+            unit.setRunning(false);
             return null;
         }
+
+        // 更新运行状态
+        unit.setRunning(false);
 
         // 过滤中文字符
         responseText = TextUtils.filterChinese(unit, responseText);

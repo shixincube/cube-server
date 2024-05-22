@@ -75,6 +75,10 @@ public abstract class Thing extends Material {
         return this.box.height;
     }
 
+    public int numComponents() {
+        return 0;
+    }
+
     protected <T> T getMaxAreaThing(List<T> list) {
         int max = 0;
         T result = null;

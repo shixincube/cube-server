@@ -249,4 +249,15 @@ public class Tree extends Thing {
     public List<DroopingLeaves> getDroopingLeaves() {
         return this.droopingLeavesList;
     }
+
+    @Override
+    public int numComponents() {
+        return ((null != this.trunkList) ? this.trunkList.size() : 0) +
+                ((null != this.branchList) ? this.branchList.size() : 0) +
+                ((null != this.canopyList) ? this.canopyList.size() : 0) +
+                ((null != this.rootList) ? this.rootList.size() : 0) +
+                ((null != this.fruitList) ? this.fruitList.size() : 0) +
+                ((null != this.holeList) ? this.holeList.size() : 0) +
+                ((null != this.droopingLeavesList) ? this.droopingLeavesList.size() : 0);
+    }
 }

@@ -371,6 +371,36 @@ public class House extends Thing {
     }
 
     @Override
+    public int numComponents() {
+        int num = 0;
+        if (null != roof) {
+            num += 1;
+        }
+        if (null != roofSkylightList) {
+            num += roofSkylightList.size();
+        }
+        if (null != chimneyList) {
+            num += chimneyList.size();
+        }
+        if (null != windowList) {
+            num += windowList.size();
+        }
+        if (null != doorList) {
+            num += doorList.size();
+        }
+        if (null != curtainList) {
+            num += curtainList.size();
+        }
+        if (null != windowRailingList) {
+            num += windowRailingList.size();
+        }
+        if (null != smokeList) {
+            num += smokeList.size();
+        }
+        return num;
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         if (null != this.roof) {

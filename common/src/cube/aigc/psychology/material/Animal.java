@@ -31,6 +31,7 @@ import org.json.JSONObject;
 /**
  * 动物。
  */
+@Deprecated
 public class Animal extends Thing {
 
     public enum Classes {
@@ -68,5 +69,9 @@ public class Animal extends Thing {
 
     public Classes getClasses() {
         return this.classes;
+    }
+
+    public int numComponents() {
+        return 0;
     }
 }

@@ -485,4 +485,67 @@ public class Person extends Thing {
     public Eyeglass getGlasses() {
         return this.eyeglass;
     }
+
+    @Override
+    public int numComponents() {
+        int num = 0;
+        if (null != this.head) {
+            num += 1;
+        }
+        if (null != braidList) {
+            num += braidList.size();
+        }
+        if (null != hairList) {
+            num += 1;
+        }
+        if (null != cap) {
+            num += 1;
+        }
+        if (null != eyeList) {
+            num += eyeList.size();
+        }
+        if (null != eyebrowList) {
+            num += eyebrowList.size();
+        }
+        if (null != nose) {
+            num += 1;
+        }
+        if (null != earList) {
+            num += earList.size();
+        }
+        if (null != mouth) {
+            num += 1;
+        }
+        if (null != body) {
+            num += 1;
+        }
+        if (null != armList) {
+            num += armList.size();
+        }
+        if (null != palmList) {
+            num += palmList.size();
+        }
+        if (null != legList) {
+            num += legList.size();
+        }
+        if (null != footList) {
+            num += footList.size();
+        }
+        if (null != skirt) {
+            num += 1;
+        }
+        if (null != mask) {
+            num += 1;
+        }
+        if (null != hairAccessoryList) {
+            num += 1;
+        }
+        if (null != itemList) {
+            num += 1;
+        }
+        if (null != eyeglass) {
+            num += 1;
+        }
+        return num;
+    }
 }

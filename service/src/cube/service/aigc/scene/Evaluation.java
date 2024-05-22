@@ -251,16 +251,22 @@ public class Evaluation {
             int distPH = person.distance(house);
             int distTP = tree.distance(person);
             Logger.d(this.getClass(), "#evalSpaceStructure - distance: " + distHT + "/" + distPH + "/" + distTP);
-            if (distHT > 0) {
-                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
+            int count = 0;
+            if (distHT > 1) {
+                ++count;
             }
-            if (distPH > 0) {
-                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
+            if (distPH > 1) {
+                ++count;
             }
-            if (distTP > 0) {
-                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
+            if (distTP > 1) {
+                ++count;
             }
-            else {
+
+            if (count > 0) {
+                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1 * count, 0.15 * count));
+            }
+
+            if (distTP < 0) {
                 // 树和人重叠
                 int area = tree.box.calculateCollisionArea(person.box);
                 if (Math.abs((person.box.width * person.box.height) - area) < 100) {
@@ -283,7 +289,9 @@ public class Evaluation {
             }
 
             // 三者都有，抑郁大幅修正
-            result.addScore(Indicator.Depression, -1, FloatUtils.random(0.75, 0.85));
+            if (house.numComponents() > 2 && tree.numComponents() > 2 && person.numComponents() > 1) {
+                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.75, 0.85));
+            }
         }
         else if (null != house && null != tree) {
             // 位置关系，使用 box 计算位置
@@ -422,6 +430,8 @@ public class Evaluation {
             if (house.distance(person) > 0) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
             }
+            result.addScore(Indicator.Depression, 1,
+                    hR < 0.1 ? FloatUtils.random(1.0, 1.1) : FloatUtils.random(0.5, 0.6));
         }
         else if (null != tree && null != person) {
             // 位置关系，使用 box 计算位置
@@ -483,6 +493,10 @@ public class Evaluation {
             if (tree.distance(person) > 0) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
             }
+
+            double tR = (double)ta / (double)this.spaceLayout.getPaintingArea();
+            result.addScore(Indicator.Depression, 1,
+                    tR < 0.1 ? FloatUtils.random(1.0, 1.1) : FloatUtils.random(0.5, 0.6));
         }
         else {
             // 房、树、人三元素中仅有一种元素
@@ -889,7 +903,7 @@ public class Evaluation {
                 hasTrunk = true;
                 double ratio = tree.getTrunkWidthRatio();
                 Logger.d(this.getClass(), "#evalTree - Tree trunk width ratio: " + ratio);
-                if (ratio < 0.16d) {
+                if (ratio < 0.18d) {
                     // 细
                     result.addFeature(Term.Powerlessness, Tendency.Positive);
 
@@ -897,7 +911,7 @@ public class Evaluation {
                     result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.3, 0.4));
                     result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.3, 0.4));
                 }
-                else if (ratio >= 0.16d && ratio < 0.3d) {
+                else if (ratio >= 0.18d && ratio < 0.3d) {
                     // 粗细适度
                     result.addScore(Indicator.Pessimism, -1, FloatUtils.random(0.3, 0.4));
                 }
@@ -907,6 +921,7 @@ public class Evaluation {
 
                     result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.2, 0.3));
                     result.addScore(Indicator.Depression, -1, FloatUtils.random(0.4, 0.5));
+                    Logger.d(this.getClass(), "#evalTree [Depression] : -1");
                 }
                 else {
                     // 很粗
@@ -1688,6 +1703,7 @@ public class Evaluation {
         else if ((depressionValue < 0 && depression > 0.5) ||
                 (depressionValue < 0 && depression > 0.3 && depressionCount >= 5)) {
             // 增加一个权重负值
+            Logger.w(this.getClass(), "#correct - depression: " + depressionValue + " - " + depression);
             list.get(list.size() - 1).addScore(Indicator.Depression, -1, FloatUtils.random(0.79, 0.88));
         }
 

@@ -166,12 +166,16 @@ public class EvaluationReport implements JSONable {
         boolean stress = false;
         boolean anxiety = false;
         boolean optimism = false;
+        boolean pessimism = false;
         boolean obsession = false;
 
         for (EvaluationScore es : this.scoreAccelerator.getEvaluationScores()) {
             switch (es.indicator) {
                 case Psychosis:
-                    if (es.positiveScore > 0.3) {
+                    if (es.positiveScore > 0.8) {
+                        score += 5;
+                    }
+                    else if (es.positiveScore > 0.4) {
                         score += 4;
                     }
                     else if (es.positiveScore > 0.2) {
@@ -257,6 +261,11 @@ public class EvaluationReport implements JSONable {
                         }
                     }
                     break;
+                case Pessimism:
+                    if (es.positiveScore - es.negativeScore > 0.1) {
+                        pessimism = true;
+                    }
+                    break;
                 case Unknown:
                     // 绘图未被识别
                     score = 4;
@@ -278,6 +287,11 @@ public class EvaluationReport implements JSONable {
             score += 1;
             Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && anxiety)");
         }
+        if (depression && pessimism) {
+            score += 1;
+            Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && pessimism)");
+        }
+
         if (!depression && optimism) {
             score -= 1;
         }
@@ -286,12 +300,13 @@ public class EvaluationReport implements JSONable {
         }
 
         Logger.d(this.getClass(), "#calcAttentionSuggestion - score: " + score + " - " +
-                "depression:" + depression + "|" +
-                "senseOfSecurity:" + senseOfSecurity + "|" +
-                "stress:" + stress + "|" +
-                "anxiety:" + anxiety + "|" +
-                "obsession:" + obsession + "|" +
-                "optimism:" + optimism);
+                "depression:" + depression + " | " +
+                "senseOfSecurity:" + senseOfSecurity + " | " +
+                "stress:" + stress + " | " +
+                "anxiety:" + anxiety + " | " +
+                "obsession:" + obsession + " | " +
+                "optimism:" + optimism + " | " +
+                "pessimism:" + pessimism);
 
         if (score > 0) {
             if (score >= 5) {
@@ -369,6 +384,15 @@ public class EvaluationReport implements JSONable {
             }
         }
 
+        // "理想化" Idealization
+        for (Representation representation : result) {
+            if (representation.knowledgeStrategy.getTerm() == Term.Idealization) {
+                result.remove(representation);
+                result.add(representation);
+                break;
+            }
+        }
+
         return result;
     }
 
@@ -423,10 +447,26 @@ public class EvaluationReport implements JSONable {
             }
         }
 
-        // 把"人际关系"移到最后一项
+        // "人际关系"移到最后
         if (result.get(0).indicator == Indicator.InterpersonalRelation) {
             EvaluationScore es = result.remove(0);
             result.add(es);
+        }
+        // "理想主义"移动最后
+        for (EvaluationScore es : result) {
+            if (es.indicator == Indicator.Idealism) {
+                result.remove(es);
+                result.add(es);
+                break;
+            }
+        }
+        // "自我意识"移动到最后
+        for (EvaluationScore es : result) {
+            if (es.indicator == Indicator.SelfConsciousness) {
+                result.remove(es);
+                result.add(es);
+                break;
+            }
         }
 
         return result;

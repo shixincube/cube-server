@@ -402,9 +402,29 @@ public enum AIGCAction {
     GetPsychologyScoreBenchmark("getPsychologyScoreBenchmark"),
 
     /**
+     * 获取心理学量表列表。
+     */
+    ListPsychologyScales("listPsychologyScales"),
+
+    /**
+     * 获取心理学量表。
+     */
+    GetPsychologyScale("getPsychologyScale"),
+
+    /**
+     * 生成心理学量表。
+     */
+    GeneratePsychologyScale("generatePsychologyScale"),
+
+    /**
+     * 提交量表答题卡。
+     */
+    SubmitPsychologyAnswerSheet("submitPsychologyAnswerSheet"),
+
+    /**
      * 预测图片元素。
      */
-    //PredictImage("predictImage"),
+    // PredictImage("predictImage"),
 
     ;
 
