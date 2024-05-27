@@ -39,6 +39,7 @@ import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.Leg;
 import cube.util.FloatUtils;
 import cube.vision.BoundingBox;
+import cube.vision.Box;
 import cube.vision.Point;
 import cube.vision.Size;
 
@@ -110,28 +111,6 @@ public class Evaluation {
                 // FIXME 画幅大，社会适应性正分
 //                result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.2, 0.3));
             }
-        }
-
-        // 空间构图
-        double minThreshold = this.canvasSize.width * 0.025f;
-        double maxThreshold = this.canvasSize.width * 0.15f;
-        if (this.spaceLayout.getTopMargin() < minThreshold
-                || this.spaceLayout.getRightMargin() < minThreshold
-                || this.spaceLayout.getBottomMargin() < minThreshold
-                || this.spaceLayout.getLeftMargin() < minThreshold) {
-            // 达到边缘
-            result.addFeature(Term.EnvironmentalDependence, Tendency.Positive);
-
-            result.addScore(Indicator.Independence, 1, FloatUtils.random(0.2, 0.3));
-        }
-        else if (this.spaceLayout.getTopMargin() > maxThreshold
-                || this.spaceLayout.getRightMargin() > maxThreshold
-                || this.spaceLayout.getBottomMargin() > maxThreshold
-                || this.spaceLayout.getLeftMargin() > maxThreshold) {
-            // 未达边缘
-            result.addFeature(Term.EnvironmentalAlienation, Tendency.Positive);
-
-            result.addScore(Indicator.Independence, -1, FloatUtils.random(0.2, 0.3));
         }
 
         // 房、树、人之间的空间关系
@@ -645,6 +624,63 @@ public class Evaluation {
         else if (description.isWholeRight()) {
             // 整体右边
             result.addFeature(Term.Future, Tendency.Positive);
+        }
+
+//        spaceLayout.getTopMargin() + "," + spaceLayout.getRightMargin() +
+//                "," + spaceLayout.getBottomMargin() + "," + spaceLayout.getLeftMargin());
+
+        // 空间构图
+        double minThreshold = this.canvasSize.width * 0.025f;
+        double maxThreshold = this.canvasSize.width * 0.15f;
+        if (this.spaceLayout.getTopMargin() < minThreshold
+                || this.spaceLayout.getRightMargin() < minThreshold
+                || this.spaceLayout.getBottomMargin() < minThreshold
+                || this.spaceLayout.getLeftMargin() < minThreshold) {
+            // 达到边缘
+            result.addFeature(Term.EnvironmentalDependence, Tendency.Positive);
+
+            result.addScore(Indicator.Independence, 1, FloatUtils.random(0.2, 0.3));
+        }
+        else if (this.spaceLayout.getTopMargin() > maxThreshold
+                || this.spaceLayout.getRightMargin() > maxThreshold
+                || this.spaceLayout.getBottomMargin() > maxThreshold
+                || this.spaceLayout.getLeftMargin() > maxThreshold) {
+            // 未达边缘
+            result.addFeature(Term.EnvironmentalAlienation, Tendency.Positive);
+
+            result.addScore(Indicator.Independence, -1, FloatUtils.random(0.2, 0.3));
+        }
+
+        // 房、树、人各自的空间结构
+        House house = this.painting.getHouse();
+        Tree tree = this.painting.getTree();
+        Person person = this.painting.getPerson();
+
+        // 左半边中线位置
+        int halfLeftCenterX = (int) Math.round(this.canvasSize.width * 0.5 * 0.5);
+        // 右半边中线位置
+        int halfRightCenterX = this.canvasSize.width - halfLeftCenterX;
+
+        if (null != house) {
+            int cX = (int) Math.round(house.boundingBox.x + house.boundingBox.width * 0.5);
+            if (cX < halfLeftCenterX) {
+                // house 中线越过左半边中线
+                result.addFeature(Term.PayAttentionToFamily, Tendency.Positive);
+                result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
+            }
+            else if (cX > halfRightCenterX) {
+                // house 中线越过右半边中线
+                result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
+                result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
+            }
+        }
+
+        if (null != tree) {
+
+        }
+
+        if (null != person) {
+
         }
 
         return result;
