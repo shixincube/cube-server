@@ -85,8 +85,8 @@ public class GeneratePsychologyReportTask extends ServiceTask {
             attribute = new Attribute(packet.data.getJSONObject("attribute"));
             fileCode = packet.data.getString("fileCode");
             themeName = packet.data.getString("theme");
-            maxBehaviorTexts = packet.data.has("behaviors") ? packet.data.getInt("behaviors") : 3;
-            maxIndicatorTexts = packet.data.has("indicators") ? packet.data.getInt("indicators") : 3;
+            maxBehaviorTexts = packet.data.has("behaviors") ? packet.data.getInt("behaviors") : 5;
+            maxIndicatorTexts = packet.data.has("indicators") ? packet.data.getInt("indicators") : 10;
 //            paragraphInferrable = packet.data.has("paragraph")
 //                    && packet.data.getBoolean("paragraph");
         } catch (Exception e) {

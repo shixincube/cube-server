@@ -153,7 +153,7 @@ public class EvaluationReport implements JSONable {
         this.calcAttentionSuggestion();
 
         // 判断 hesitating
-        if (this.representationList.size() <= 10 || this.scoreAccelerator.getEvaluationScores().size() <= 7) {
+        if (this.representationList.size() <= 7 || this.scoreAccelerator.getEvaluationScores().size() <= 5) {
             this.hesitating = true;
         }
     }
@@ -308,6 +308,11 @@ public class EvaluationReport implements JSONable {
                 "obsession:" + obsession + " | " +
                 "optimism:" + optimism + " | " +
                 "pessimism:" + pessimism);
+
+        // 根据年龄就行修正
+        if (this.attribute.age >= 35) {
+            score -= 1;
+        }
 
         if (score > 0) {
             if (score >= 5) {

@@ -95,7 +95,7 @@ public class Workflow {
         return report;
     }
 
-    public Workflow make(Theme theme, int maxBehaviorTexts, int maxIndicatorTexts) {
+    public Workflow make(Theme theme, int maxBehaviorTexts, int maxIndicatorTexts, WorkflowListener listener) {
         // 获取模板
         ThemeTemplate template = Resource.getInstance().getThemeTemplate(theme.code);
 
@@ -105,12 +105,6 @@ public class Workflow {
 
         int age = this.evaluationReport.getAttribute().age;
         String gender = this.evaluationReport.getAttribute().gender;
-        // 逐一推理每一条表征
-        this.behaviorTextList = this.inferBehavior(template, age, gender, maxBehaviorTexts);
-        if (this.behaviorTextList.isEmpty()) {
-            Logger.w(this.getClass(), "#make - Behavior text error");
-            return this;
-        }
 
         // 评估分推理
         List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation();
@@ -121,9 +115,25 @@ public class Workflow {
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#make - List size: " +
-                    this.behaviorTextList.size() + "/" + this.reportTextList.size());
+            Logger.d(this.getClass(), "#make - Report list size: " + this.reportTextList.size());
         }
+
+        // 推理行为特征
+        (new Thread() {
+            @Override
+            public void run() {
+                behaviorTextList = inferBehavior(template, age, gender, maxBehaviorTexts);
+                if (behaviorTextList.isEmpty()) {
+                    Logger.w(this.getClass(), "#make - Behavior text error");
+                }
+
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "#make - Behavior list size: " + behaviorTextList.size());
+                }
+
+                listener.onInferCompleted(Workflow.this);
+            }
+        }).start();
 
         /* FIXME XJW 以下步骤不再推荐使用
         for (String title : template.getTitles()) {

@@ -1742,6 +1742,12 @@ public class Evaluation {
             Logger.w(this.getClass(), "#correct - depression: " + depressionValue + " - " + depression);
             list.get(list.size() - 1).addScore(Indicator.Depression, -1, FloatUtils.random(0.79, 0.88));
         }
+        else if (depressionCount > 0) {
+            if (this.painting.getAttribute().age >= 35) {
+                list.get(list.size() - 1).addScore(Indicator.Depression, -1,
+                        this.painting.getAttribute().age * FloatUtils.random(0.009, 0.011));
+            }
+        }
 
         return list;
     }

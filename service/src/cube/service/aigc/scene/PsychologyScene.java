@@ -354,7 +354,15 @@ public class PsychologyScene {
 
                     // 根据图像推理报告
                     Workflow workflow = processReport(reportTask.channel, painting, reportTask.theme,
-                            reportTask.maxBehaviorTexts, reportTask.maxIndicatorTexts);
+                            reportTask.maxBehaviorTexts, reportTask.maxIndicatorTexts, new WorkflowListener() {
+                                @Override
+                                public void onInferCompleted(Workflow workflow) {
+                                    synchronized (workflow) {
+                                        workflow.notifyAll();
+                                    }
+                                }
+                            });
+
                     if (null == workflow) {
                         // 推理生成报告失败
                         Logger.w(PsychologyScene.class, "#generateEvaluationReport - onReportEvaluateFailed: " +
@@ -384,6 +392,15 @@ public class PsychologyScene {
                     reportTask.report.setFinished(true);
                     reportTask.listener.onReportEvaluateCompleted(reportTask.report);
                     reportTask.channel.setProcessing(false);
+
+                    // 等待推理完成
+                    synchronized (workflow) {
+                        try {
+                            workflow.wait(4 * 60 * 1000);
+                        } catch (InterruptedException e) {
+                            Logger.e(PsychologyScene.class, "#workflow.wait", e);
+                        }
+                    }
 
                     // 存储
                     storage.writePsychologyReport(reportTask.report);
@@ -514,7 +531,7 @@ public class PsychologyScene {
     }
 
     private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme,
-                                   int maxBehaviorText, int maxIndicatorText) {
+                                   int maxBehaviorText, int maxIndicatorText, WorkflowListener listener) {
         Evaluation evaluation = (null == painting) ?
                 new Evaluation(new Attribute("male", 28)) : new Evaluation(painting);
 
@@ -532,14 +549,14 @@ public class PsychologyScene {
         workflow.setUnitName(this.unitName, this.unitContextLength);
 
         // 制作报告
-        return workflow.make(theme, maxBehaviorText, maxIndicatorText);
+        return workflow.make(theme, maxBehaviorText, maxIndicatorText, listener);
     }
 
     public void onTick(long now) {
         Iterator<Map.Entry<Long, PsychologyReport>> iter = this.psychologyReportMap.entrySet().iterator();
         while (iter.hasNext()) {
             PsychologyReport report = iter.next().getValue();
-            if (now - report.timestamp > 60 * 60 * 1000) {
+            if (now - report.timestamp > 72 * 60 * 60 * 1000) {
                 iter.remove();
             }
         }
@@ -571,7 +588,7 @@ public class PsychologyScene {
             this.fileLabel = fileLabel;
             this.theme = theme;
             this.maxBehaviorTexts = Math.min(maxBehaviorTexts, 10);
-            this.maxIndicatorTexts = Math.min(maxIndicatorTexts, 5);
+            this.maxIndicatorTexts = Math.min(maxIndicatorTexts, 10);
             this.listener = listener;
             this.report = report;
         }
