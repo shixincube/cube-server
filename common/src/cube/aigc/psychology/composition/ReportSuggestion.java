@@ -36,6 +36,8 @@ public class ReportSuggestion implements JSONable {
 
     public int tendency;
 
+    public String title;
+
     public String report;
 
     public String suggestion;
@@ -45,10 +47,13 @@ public class ReportSuggestion implements JSONable {
         this.tendency = json.getInt("tendency");
         this.report = json.getString("report");
         this.suggestion = json.getString("suggestion");
+        this.title = json.has("title") ? json.getString("title")
+                : this.indicator.name + (this.tendency > 0 ? "正倾向" : "负倾向");
     }
 
     public ReportSuggestion(Indicator indicator, int tendency, String report, String suggestion) {
         this.indicator = indicator;
+        this.title = indicator.name + (tendency > 0 ? "正倾向" : "负倾向");
         this.tendency = tendency;
         this.report = report;
         this.suggestion = suggestion;
@@ -61,6 +66,7 @@ public class ReportSuggestion implements JSONable {
         json.put("tendency", this.tendency);
         json.put("report", this.report);
         json.put("suggestion", this.suggestion);
+        json.put("title", this.title);
         return json;
     }
 

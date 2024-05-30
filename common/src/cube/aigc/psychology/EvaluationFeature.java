@@ -101,6 +101,10 @@ public class EvaluationFeature {
         }
     }
 
+    public void removeScore(Score score) {
+        this.scores.remove(score);
+    }
+
     public class Feature {
 
         public Term term;

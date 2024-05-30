@@ -212,19 +212,6 @@ public class Evaluation {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
 
-            // 房的面积非常小
-            double hR = (double)ha / (double)this.spaceLayout.getPaintingArea();
-            if (hR < 0.1) {
-                result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
-                result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
-            }
-
-            // 人的面积非常小
-            double hP = (double)pa / (double)this.spaceLayout.getPaintingArea();
-            if (hP < 0.09) {
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
-            }
-
             // 距离
             int distHT = house.distance(tree);
             int distPH = person.distance(house);
@@ -673,6 +660,13 @@ public class Evaluation {
                 result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
             }
+
+            double ratio = (double)house.area / (double)this.spaceLayout.getPaintingArea();
+            if (ratio < 0.1) {
+                // 房的面积非常小
+                result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
+                result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
+            }
         }
 
         if (null != tree) {
@@ -680,7 +674,19 @@ public class Evaluation {
         }
 
         if (null != person) {
+            double ratio = (double)person.area / (double)this.spaceLayout.getPaintingArea();
+            if (ratio < 0.09) {
+                // 人的面积非常小
+                result.addFeature(Term.SenseOfSecurity, Tendency.Negative);
 
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
+                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
+            }
+            else if (ratio > 0.3) {
+                // 人的面积非常大
+                result.addFeature(Term.SelfInflated, Tendency.Positive);
+                result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.2, 0.3));
+            }
         }
 
         return result;
@@ -1099,16 +1105,22 @@ public class Evaluation {
             // 人类型
             if (person instanceof StickMan) {
                 // 火柴人
-                result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.5, 0.6));
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.4, 0.5));
-            }
+                result.addFeature(Term.Defensiveness, Tendency.Positive);
 
+                result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.5, 0.6));
+                result.addScore(Indicator.InterpersonalRelation, -1, FloatUtils.random(0.4, 0.5));
+                break;
+            }
+        }
+
+        for (Person person : this.painting.getPersons()) {
             // 性别
             if (person.getGender() == Person.Gender.Female) {
                 if (this.painting.getAttribute().isMale()) {
                     // 男画女
                     result.addFeature(Term.SocialPowerlessness, Tendency.Positive);
                     result.addScore(Indicator.Emotion, -1, FloatUtils.random(0.3, 0.4));
+                    break;
                 }
             }
             else if (person.getGender() == Person.Gender.Male) {
@@ -1116,19 +1128,26 @@ public class Evaluation {
                     // 女画男
                     result.addFeature(Term.SelfDemand, Tendency.Positive);
                     result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
+                    break;
                 }
             }
+        }
 
+        Person person = this.painting.getPerson();
+        if (null != person) {
             // 头
             if (person.hasHead()) {
                 // 头身比例
                 Logger.d(this.getClass(), "#evalPerson - Head height ratio: " + person.getHeadHeightRatio());
-                if (person.getHeadHeightRatio() > 0.47d) {
-                    // 头大
-                    result.addFeature(Term.SocialAdaptability, Tendency.Negative);
+                if (this.painting.getAttribute().age > 12) {
+                    double hR = this.painting.getAttribute().age >= 18 ? 0.47d : 0.5d;
+                    if (person.getHeadHeightRatio() > hR) {
+                        // 头大
+                        result.addFeature(Term.SocialAdaptability, Tendency.Negative);
 
-                    result.addScore(Indicator.Impulsion, 1, FloatUtils.random(0.6, 0.7));
-                    result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.6, 0.7));
+                        result.addScore(Indicator.Impulsion, 1, FloatUtils.random(0.6, 0.7));
+                        result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.6, 0.7));
+                    }
                 }
             }
 
@@ -1703,12 +1722,37 @@ public class Evaluation {
         int depressionCount = 0;
         double depression = 0;
 
+        if (this.painting.getAttribute().age < 18) {
+            // 针对年龄的修订
+            double w = 1d - Math.sin(this.painting.getAttribute().age * 0.041);
+            for (EvaluationFeature ef : list) {
+                List<Score> scores = ef.getScores(Indicator.Depression);
+                for (Score score : scores) {
+                    if (w <= 0) {
+                        break;
+                    }
+
+                    if (score.value > 0) {
+                        w = w - score.weight;
+                        ef.removeScore(score);
+                        ef.addScore(Indicator.Stress, 1, score.weight);
+                    }
+                }
+
+                if (w <= 0) {
+                    break;
+                }
+            }
+        }
+
         for (EvaluationFeature ef : list) {
+            // 计算"乐观"总分
             Score score = ef.getScore(Indicator.Optimism);
             if (null != score && score.value > 0) {
                 optimism += score.weight;
             }
 
+            // 统计"抑郁"
             List<Score> scores = ef.getScores(Indicator.Depression);
             for (Score s : scores) {
                 depressionCount += 1;
@@ -1746,6 +1790,30 @@ public class Evaluation {
             if (this.painting.getAttribute().age >= 35) {
                 list.get(list.size() - 1).addScore(Indicator.Depression, -1,
                         this.painting.getAttribute().age * FloatUtils.random(0.009, 0.011));
+            }
+        }
+
+        // 按照年龄修订
+        if (this.painting.getAttribute().age >= 35) {
+            Score psychosis = null;
+            for (EvaluationFeature ef : list) {
+                for (Score s : ef.getScores()) {
+                    if (s.indicator == Indicator.Psychosis) {
+                        if (null != psychosis) {
+                            if (s.weight > psychosis.weight) {
+                                psychosis = s;
+                            }
+                        }
+                        else {
+                            psychosis = s;
+                        }
+                    }
+                }
+            }
+            if (null != psychosis) {
+                for (EvaluationFeature ef : list) {
+                    ef.removeScore(psychosis);
+                }
             }
         }
 

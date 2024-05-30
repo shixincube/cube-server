@@ -312,6 +312,7 @@ public class Workflow {
 
             String prompt = es.generateReportPrompt();
             if (null == prompt) {
+                // 不需要进行报告推理，下一个
                 continue;
             }
             String report = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
@@ -325,7 +326,7 @@ public class Workflow {
                     null, null);
 
             if (null != report && null != suggestion) {
-                result.add(new ReportSuggestion(es.indicator, es.positiveScore > es.negativeScore ? 1 : -1,
+                result.add(new ReportSuggestion(es.indicator, es.positiveScore >= es.negativeScore ? 1 : -1,
                         report, suggestion));
 
                 if (result.size() >= maxIndicatorTexts) {

@@ -38,7 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 心理学绘画预测。
+ * 心理学绘画报告。
  */
 public class PsychologyReports extends ContextHandler {
 

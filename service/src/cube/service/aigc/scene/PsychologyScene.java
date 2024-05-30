@@ -232,6 +232,13 @@ public class PsychologyScene {
     public synchronized PsychologyReport generateEvaluationReport(AIGCChannel channel, Attribute attribute,
                 FileLabel fileLabel, Theme theme, int maxBehaviorTexts, int maxIndicatorTexts,
                 PsychologySceneListener listener) {
+        // 判断属性限制
+        if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
+            Logger.w(this.getClass(), "#generateEvaluationReport - Age param overflow: " +
+                    attribute.age);
+            return null;
+        }
+
         if (null == channel) {
             Logger.e(this.getClass(), "#generateEvaluationReport - Channel is null");
             return null;
@@ -401,6 +408,11 @@ public class PsychologyScene {
                             Logger.e(PsychologyScene.class, "#workflow.wait", e);
                         }
                     }
+
+                    // 填写数据
+                    workflow.fillReport(reportTask.report);
+                    // 生成 Markdown 调试信息
+                    reportTask.report.makeMarkdown(false);
 
                     // 存储
                     storage.writePsychologyReport(reportTask.report);

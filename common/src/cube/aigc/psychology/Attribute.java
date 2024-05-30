@@ -34,6 +34,10 @@ import org.json.JSONObject;
  */
 public class Attribute implements JSONable {
 
+    public final static int MAX_AGE = 70;
+
+    public final static int MIN_AGE = 12;
+
     public final String gender;
 
     public final int age;

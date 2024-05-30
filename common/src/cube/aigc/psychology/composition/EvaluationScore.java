@@ -163,8 +163,10 @@ public class EvaluationScore implements JSONable {
                     buf.append("轻度焦虑");
                 } else if (score > 0.7 && score <= 1.1) {
                     buf.append("中度焦虑");
-                } else {
+                } else if (score > 1.1) {
                     buf.append("严重焦虑");
+                } else {
+                    return null;
                 }
                 break;
             case Hostile:
@@ -172,8 +174,10 @@ public class EvaluationScore implements JSONable {
                     buf.append("轻微敌对");
                 } else if (score > 0.4 && score <= 0.8) {
                     buf.append("中度敌对");
-                } else {
+                } else if (score > 0.8) {
                     buf.append("严重敌对");
+                } else {
+                    return null;
                 }
                 break;
             case Paranoid:
@@ -181,8 +185,10 @@ public class EvaluationScore implements JSONable {
                     buf.append("轻微偏执");
                 } else if (score > 0.5 && score <= 0.8) {
                     buf.append("中度偏执");
-                } else {
+                } else if (score > 0.8) {
                     buf.append("严重偏执");
+                } else {
+                    return null;
                 }
                 break;
             case SelfControl:
@@ -217,8 +223,10 @@ public class EvaluationScore implements JSONable {
                     buf.append("自信心很强");
                 } else if (score > 0.3) {
                     buf.append("自信心较强");
-                } else {
+                } else if (score > -0.3) {
                     buf.append("自信心不足");
+                } else {
+                    return null;
                 }
                 break;
             case Independence:
@@ -332,21 +340,29 @@ public class EvaluationScore implements JSONable {
             case Idealism:
                 if (score >= 0.3) {
                     buf.append("理想主义者");
+                } else {
+                    return null;
                 }
                 break;
             case Realism:
                 if (score >= 0.3) {
                     buf.append("现实主义者");
+                } else {
+                    return null;
                 }
                 break;
             case Optimism:
                 if (score > 0.1) {
                     buf.append("乐观者");
+                } else {
+                    return null;
                 }
                 break;
             case Pessimism:
                 if (score > 0.1) {
                     buf.append("悲观者");
+                } else {
+                    return null;
                 }
                 break;
             case Psychosis:
@@ -356,6 +372,8 @@ public class EvaluationScore implements JSONable {
                     buf.append("中度精神病性");
                 } else if (score > 0.5) {
                     buf.append("轻度精神病性");
+                } else {
+                    return null;
                 }
                 break;
             default:

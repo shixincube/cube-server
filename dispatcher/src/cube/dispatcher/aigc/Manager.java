@@ -161,6 +161,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new CheckPsychology());
         httpServer.addContextHandler(new PsychologyBenchmark());
         httpServer.addContextHandler(new PsychologyStopping());
+        httpServer.addContextHandler(new PsychologyReportParts());
         httpServer.addContextHandler(new PsychologyScales());
         httpServer.addContextHandler(new PsychologyScaleOperation());
 
@@ -1985,6 +1986,30 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return report;
+    }
+
+    public JSONObject getPsychologyReportPart(String token, long sn, boolean behaviorText, boolean reportText) {
+        JSONObject data = new JSONObject();
+        data.put("sn", sn);
+        data.put("behaviorText", behaviorText);
+        data.put("reportText", reportText);
+        Packet packet = new Packet(AIGCAction.GetPsychologyReportPart.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#getPsychologyReportPart - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getPsychologyReportPart - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
     }
 
     public JSONObject stopGeneratingPsychologyReport(String token, long sn) {
