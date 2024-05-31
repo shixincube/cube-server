@@ -82,6 +82,8 @@ public class PsychologyReport implements JSONable {
 
     private List<ReportParagraph> paragraphList;
 
+    public AIGCStateCode behaviorInferenceState = AIGCStateCode.Processing;
+
     public PsychologyReport(long contactId, Attribute attribute, FileLabel fileLabel, Theme theme) {
         this.sn = Utils.generateSerialNumber();
         this.contactId = contactId;
@@ -184,6 +186,12 @@ public class PsychologyReport implements JSONable {
     public void setBehaviorList(List<BehaviorSuggestion> textList) {
         this.behaviorTextList = new ArrayList<>();
         this.behaviorTextList.addAll(textList);
+
+        if (!this.behaviorTextList.isEmpty()) {
+            this.behaviorInferenceState = AIGCStateCode.Ok;
+        } else {
+            this.behaviorInferenceState = AIGCStateCode.Failure;
+        }
     }
 
     public List<BehaviorSuggestion> getBehaviorList() {
@@ -341,8 +349,9 @@ public class PsychologyReport implements JSONable {
             buf.append("\n");
             for (ReportSuggestion rs : this.reportTextList) {
                 buf.append("\n");
+                buf.append("> **").append(rs.title).append("** \n");
                 buf.append("> **报告**：").append(rs.report).append("\n");
-                buf.append("> **建议**：").append(rs.suggestion).append("\n");
+                buf.append("> **建议**：\n").append(rs.suggestion).append("\n");
                 buf.append("\n***\n");
             }
             buf.append("\n\n");
@@ -355,7 +364,7 @@ public class PsychologyReport implements JSONable {
             for (BehaviorSuggestion behaviorSuggestion : this.behaviorTextList) {
                 buf.append("\n");
                 buf.append("> **描述**：").append(behaviorSuggestion.behavior).append("\n");
-                buf.append("> **建议**：").append(behaviorSuggestion.suggestion).append("\n");
+                buf.append("> **建议**：\n").append(behaviorSuggestion.suggestion).append("\n");
                 buf.append("\n***\n");
             }
             buf.append("\n");

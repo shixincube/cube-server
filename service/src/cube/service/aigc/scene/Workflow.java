@@ -35,6 +35,7 @@ import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.ReportSuggestion;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GenerativeOption;
+import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.util.TextUtils;
 

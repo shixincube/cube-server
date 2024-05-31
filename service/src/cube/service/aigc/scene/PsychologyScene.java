@@ -387,6 +387,9 @@ public class PsychologyScene {
                     // 生成 Markdown 调试信息
                     reportTask.report.makeMarkdown(false);
 
+                    // 更新行为推理状态
+                    reportTask.report.behaviorInferenceState = AIGCStateCode.Processing;
+
                     // 设置状态
                     if (reportTask.report.isNull()) {
                         reportTask.report.setState(AIGCStateCode.Failure);

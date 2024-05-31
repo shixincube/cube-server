@@ -100,6 +100,8 @@ public class GetPsychologyReportPartTask extends ServiceTask {
 
         JSONObject responseData = new JSONObject();
         responseData.put("sn", sn);
+        responseData.put("behaviorState", report.behaviorInferenceState.code);
+        responseData.put("reportState", report.getState().code);
 
         if (behaviorText) {
             List<BehaviorSuggestion> list = report.getBehaviorList();
