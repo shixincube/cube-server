@@ -59,8 +59,20 @@ public class PsychologyBenchmark extends ContextHandler {
                 return;
             }
 
+            int age = 30;
             try {
-                JSONObject result = Manager.getInstance().getPsychologyScoreBenchmark(token);
+                String strAge = request.getParameter("age");
+                if (null != strAge) {
+                    age = Integer.parseInt(strAge);
+                }
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.complete();
+                return;
+            }
+
+            try {
+                JSONObject result = Manager.getInstance().getPsychologyScoreBenchmark(token, age);
                 if (null != result) {
                     this.respondOk(response, result);
                 }

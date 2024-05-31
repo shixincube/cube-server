@@ -28,40 +28,69 @@ package cube.aigc.psychology.algorithm;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.Indicator;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public class Benchmark {
 
-    private Map<Indicator, BenchmarkScore> scoreMap;
+    private List<GenerationBenchmark> benchmarkList;
 
-    public Benchmark(JSONObject json) {
-        this.scoreMap = new HashMap<>();
-
-        Iterator<String> keys = json.keys();
-        while (keys.hasNext()) {
-            String key = keys.next();
-            Indicator indicator = Indicator.parse(key);
-            if (null == indicator) {
-                Logger.e(this.getClass(), "Can not find indicator: " + key);
-                continue;
-            }
-
-            JSONObject value = json.getJSONObject(key);
-            BenchmarkScore score = new BenchmarkScore(value);
-            this.scoreMap.put(indicator, score);
+    public Benchmark(JSONArray array) {
+        this.benchmarkList = new ArrayList<>();
+        for (int i = 0; i < array.length(); ++i) {
+            JSONObject json = array.getJSONObject(i);
+            GenerationBenchmark benchmark = new GenerationBenchmark(json);
+            this.benchmarkList.add(benchmark);
         }
     }
 
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        for (Map.Entry<Indicator, BenchmarkScore> entry : this.scoreMap.entrySet()) {
-            json.put(entry.getKey().code, entry.getValue().toJSON(entry.getKey().name));
+    public JSONObject toJSON(int age) {
+        for (GenerationBenchmark benchmark : this.benchmarkList) {
+            if (age >= benchmark.min && age <= benchmark.max) {
+                JSONObject json = new JSONObject();
+                for (Map.Entry<Indicator, BenchmarkScore> entry : benchmark.scoreMap.entrySet()) {
+                    json.put(entry.getKey().code, entry.getValue().toJSON(entry.getKey().name));
+                }
+                return json;
+            }
         }
-        return json;
+
+        return null;
+    }
+
+
+    public class GenerationBenchmark {
+
+        public int min;
+
+        public int max;
+
+        public Map<Indicator, BenchmarkScore> scoreMap;
+
+        public GenerationBenchmark(JSONObject json) {
+            this.scoreMap = new HashMap<>();
+
+            JSONArray generation = json.getJSONArray("generation");
+            this.min = generation.getInt(0);
+            this.max = generation.getInt(1);
+
+            JSONObject benchmark = json.getJSONObject("benchmark");
+            Iterator<String> keys = benchmark.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                Indicator indicator = Indicator.parse(key);
+                if (null == indicator) {
+                    Logger.e(this.getClass(), "Can not find indicator: " + key);
+                    continue;
+                }
+
+                JSONObject value = benchmark.getJSONObject(key);
+                BenchmarkScore score = new BenchmarkScore(value);
+                this.scoreMap.put(indicator, score);
+            }
+        }
     }
 
     public class BenchmarkScore {

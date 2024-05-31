@@ -153,8 +153,8 @@ public class Resource {
 
                 try {
                     byte[] data = Files.readAllBytes(Paths.get(this.benchmarkScoreFile.getAbsolutePath()));
-                    JSONObject json = new JSONObject(new String(data, StandardCharsets.UTF_8));
-                    this.benchmark = new Benchmark(json);
+                    JSONArray jsonArray = new JSONArray(new String(data, StandardCharsets.UTF_8));
+                    this.benchmark = new Benchmark(jsonArray);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

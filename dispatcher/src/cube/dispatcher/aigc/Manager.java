@@ -2034,8 +2034,9 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public JSONObject getPsychologyScoreBenchmark(String token) {
+    public JSONObject getPsychologyScoreBenchmark(String token, int age) {
         JSONObject data = new JSONObject();
+        data.put("age", age);
         Packet packet = new Packet(AIGCAction.GetPsychologyScoreBenchmark.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);

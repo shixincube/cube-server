@@ -70,6 +70,8 @@ public class GetPsychologyScoreBenchmarkTask extends ServiceTask {
             return;
         }
 
+        int age = packet.data.has("age") ? packet.data.getInt("age") : 30;
+
         Benchmark benchmark = Resource.getInstance().getBenchmark();
         if (null == benchmark) {
             this.cellet.speak(this.talkContext,
@@ -78,8 +80,16 @@ public class GetPsychologyScoreBenchmarkTask extends ServiceTask {
             return;
         }
 
+        JSONObject responseData = benchmark.toJSON(age);
+        if (null == responseData) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, benchmark.toJSON()));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
         markResponseTime();
     }
 }
