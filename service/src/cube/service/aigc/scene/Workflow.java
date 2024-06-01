@@ -33,9 +33,9 @@ import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.BehaviorSuggestion;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.ReportSuggestion;
+import cube.aigc.psychology.composition.SixDimensionScore;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GenerativeOption;
-import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.util.TextUtils;
 
@@ -58,6 +58,10 @@ public class Workflow {
     private AIGCChannel channel;
 
     private AIGCService service;
+
+    private SixDimensionScore dimensionScore;
+
+    private SixDimensionScore normDimensionScore;
 
     private List<BehaviorSuggestion> behaviorTextList;
 
@@ -90,6 +94,10 @@ public class Workflow {
             report.setMBTIFeature(this.mbtiEvaluation.getResult());
         }
 
+        if (null != this.dimensionScore && null != this.normDimensionScore) {
+            report.setDimensionalScore(this.dimensionScore, this.normDimensionScore);
+        }
+
         report.setBehaviorList(this.behaviorTextList);
         report.setReportTextList(this.reportTextList);
         report.setParagraphs(this.paragraphList);
@@ -100,12 +108,25 @@ public class Workflow {
         // 获取模板
         ThemeTemplate template = Resource.getInstance().getThemeTemplate(theme.code);
 
+        int age = this.evaluationReport.getAttribute().age;
+        String gender = this.evaluationReport.getAttribute().gender;
+
         // MBTI 评估
         this.mbtiEvaluation = new MBTIEvaluation(this.evaluationReport.getRepresentationList(),
             this.evaluationReport.getEvaluationScores());
 
-        int age = this.evaluationReport.getAttribute().age;
-        String gender = this.evaluationReport.getAttribute().gender;
+        // 六维得分计算
+        try {
+            this.dimensionScore = Resource.getInstance()
+                    .getSixDimProjection().calc(this.evaluationReport.getEvaluationScores());
+
+            List<EvaluationScore> scoreList = Resource.getInstance().getBenchmark().getEvaluationScores(age);
+            scoreList = this.filter(this.evaluationReport.getEvaluationScores(), scoreList);
+            System.out.println("XJW: " + scoreList.size());
+            this.normDimensionScore = Resource.getInstance().getSixDimProjection().calc(scoreList);
+        } catch (Exception e) {
+            Logger.w(this.getClass(), "#make", e);
+        }
 
         // 评估分推理
         List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation();
@@ -244,6 +265,19 @@ public class Workflow {
         return this;
     }
 
+    private List<EvaluationScore> filter(List<EvaluationScore> indicatorList, List<EvaluationScore> sources) {
+        List<EvaluationScore> result = new ArrayList<>();
+        for (EvaluationScore es : indicatorList) {
+            Indicator indicator = es.indicator;
+            for (EvaluationScore score : sources) {
+                if (score.indicator == indicator) {
+                    result.add(score);
+                }
+            }
+        }
+        return result;
+    }
+
     private List<BehaviorSuggestion> inferBehavior(ThemeTemplate template, int age, String gender, int maxRepresentation) {
         List<BehaviorSuggestion> result = new ArrayList<>();
 
@@ -283,23 +317,27 @@ public class Workflow {
 
             Logger.d(this.getClass(), "#inferBehavior - representation: " + representation.description);
 
-            // 推理表征
-            String prompt = template.formatBehaviorPrompt(representation.knowledgeStrategy.getTerm().word,
-                    age, gender, representation.description);
-            String behavior = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                    null, null);
+            try {
+                // 推理表征
+                String prompt = template.formatBehaviorPrompt(representation.knowledgeStrategy.getTerm().word,
+                        age, gender, representation.description);
+                String behavior = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                        null, null);
 
-            prompt = template.formatSuggestionPrompt(representation.knowledgeStrategy.getTerm().word);
-            String suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                    null, null);
+                prompt = template.formatSuggestionPrompt(representation.knowledgeStrategy.getTerm().word);
+                String suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                        null, null);
 
-            if (null != behavior && null != suggestion) {
-                result.add(new BehaviorSuggestion(representation.knowledgeStrategy.getTerm(),
-                        representation.description, behavior, suggestion));
+                if (null != behavior && null != suggestion) {
+                    result.add(new BehaviorSuggestion(representation.knowledgeStrategy.getTerm(),
+                            representation.description, behavior, suggestion));
 
-                if (result.size() >= maxRepresentation) {
-                    break;
+                    if (result.size() >= maxRepresentation) {
+                        break;
+                    }
                 }
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#inferBehavior", e);
             }
         }
 

@@ -68,6 +68,10 @@ public class Resource {
     private long benchmarkScoreLastModified = 0;
     private Benchmark benchmark;
 
+    private File sixDimProjectionFile = new File("assets/psychology/projection.json");
+    private long sixDimProjectionModified = 0;
+    private SixDimensionProjection sixDimProjection;
+
     private File questionnairesPath = new File("assets/psychology/questionnaires/");
     private Map<String, File> scaleNameFileMap = new ConcurrentHashMap<>();
 
@@ -162,6 +166,26 @@ public class Resource {
         }
 
         return this.benchmark;
+    }
+
+    public SixDimensionProjection getSixDimProjection() {
+        if (this.sixDimProjectionFile.exists()) {
+            if (this.sixDimProjectionFile.lastModified() != this.sixDimProjectionModified) {
+                this.sixDimProjectionModified = this.sixDimProjectionFile.lastModified();
+
+                Logger.i(this.getClass(), "Read projection file: " + this.sixDimProjectionFile.getAbsolutePath());
+
+                try {
+                    byte[] data = Files.readAllBytes(Paths.get(this.sixDimProjectionFile.getAbsolutePath()));
+                    JSONObject json = new JSONObject(new String(data, StandardCharsets.UTF_8));
+                    this.sixDimProjection = new SixDimensionProjection(json);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return this.sixDimProjection;
     }
 
     public List<File> listScaleFiles() {

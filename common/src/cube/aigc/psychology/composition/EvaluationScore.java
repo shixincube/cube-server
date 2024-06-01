@@ -54,6 +54,10 @@ public class EvaluationScore implements JSONable {
 
     public double negativeScore = 0;
 
+    public EvaluationScore(Indicator indicator) {
+        this.indicator = indicator;
+    }
+
     public EvaluationScore(Indicator indicator, int value, double weight) {
         this.indicator = indicator;
         this.hit = 1;

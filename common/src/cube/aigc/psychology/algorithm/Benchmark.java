@@ -28,6 +28,7 @@ package cube.aigc.psychology.algorithm;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.Indicator;
+import cube.aigc.psychology.composition.EvaluationScore;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -44,6 +45,31 @@ public class Benchmark {
             GenerationBenchmark benchmark = new GenerationBenchmark(json);
             this.benchmarkList.add(benchmark);
         }
+    }
+
+    public List<EvaluationScore> getEvaluationScores(int age) {
+        List<EvaluationScore> list = new ArrayList<>();
+        GenerationBenchmark benchmark = this.getGenerationBenchmark(age);
+        if (null != benchmark) {
+            for (Map.Entry<Indicator, BenchmarkScore> e : benchmark.scoreMap.entrySet()) {
+                Indicator indicator = e.getKey();
+                BenchmarkScore benchmarkScore = e.getValue();
+                EvaluationScore score = new EvaluationScore(indicator);
+                score.positiveScore = benchmarkScore.positiveMax;
+                score.negativeScore = benchmarkScore.negativeMax;;
+                list.add(score);
+            }
+        }
+        return list;
+    }
+
+    private GenerationBenchmark getGenerationBenchmark(int age) {
+        for (GenerationBenchmark benchmark : this.benchmarkList) {
+            if (age >= benchmark.min && age <= benchmark.max) {
+                return benchmark;
+            }
+        }
+        return null;
     }
 
     public JSONObject toJSON(int age) {

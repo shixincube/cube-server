@@ -30,9 +30,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.aigc.psychology.algorithm.Representation;
-import cube.aigc.psychology.composition.BehaviorSuggestion;
-import cube.aigc.psychology.composition.EvaluationScore;
-import cube.aigc.psychology.composition.ReportSuggestion;
+import cube.aigc.psychology.composition.*;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
@@ -75,6 +73,10 @@ public class PsychologyReport implements JSONable {
     private EvaluationReport evaluationReport;
 
     private MBTIFeature mbtiFeature;
+
+    private SixDimensionScore dimensionScore;
+
+    private SixDimensionScore normDimensionScore;
 
     private List<BehaviorSuggestion> behaviorTextList;
 
@@ -136,6 +138,13 @@ public class PsychologyReport implements JSONable {
             this.mbtiFeature = new MBTIFeature(json.getJSONObject("mbti"));
         }
 
+        if (json.has("dimensionScore")) {
+            this.dimensionScore = new SixDimensionScore(json.getJSONObject("dimensionScore"));
+        }
+        if (json.has("normDimensionScore")) {
+            this.normDimensionScore = new SixDimensionScore(json.getJSONObject("normDimensionScore"));
+        }
+
         if (json.has("evaluation")) {
             this.evaluationReport = new EvaluationReport(json.getJSONObject("evaluation"));
         }
@@ -181,6 +190,11 @@ public class PsychologyReport implements JSONable {
 
     public MBTIFeature getMBTIFeature() {
         return this.mbtiFeature;
+    }
+
+    public void setDimensionalScore(SixDimensionScore score, SixDimensionScore normScore) {
+        this.dimensionScore = score;
+        this.normDimensionScore = normScore;
     }
 
     public void setBehaviorList(List<BehaviorSuggestion> textList) {
@@ -332,6 +346,22 @@ public class PsychologyReport implements JSONable {
             buf.append("\n");
         }
 
+        if (null != this.dimensionScore && null != this.normDimensionScore) {
+            buf.append("\n");
+            buf.append("**六维评价**\n\n");
+            buf.append("| 维度 | 得分 | 标准分 |");
+            buf.append("\n");
+            buf.append("| ---- | ---- | ---- |");
+            for (SixDimension dimension : SixDimension.values()) {
+                buf.append("\n");
+                buf.append("|").append(dimension.name);
+                buf.append("|").append(this.dimensionScore.getDimensionScore(dimension));
+                buf.append("|").append(this.normDimensionScore.getDimensionScore(dimension));
+                buf.append("|");
+            }
+            buf.append("\n");
+        }
+
         if (null != this.mbtiFeature) {
             buf.append("\n\n");
             buf.append("**MBTI 性格倾向**");
@@ -357,7 +387,7 @@ public class PsychologyReport implements JSONable {
             buf.append("\n\n");
         }
 
-        if (null != this.behaviorTextList) {
+        if (null != this.behaviorTextList && !this.behaviorTextList.isEmpty()) {
             buf.append("\n");
             buf.append("**行为特征：**");
             buf.append("\n");
@@ -512,6 +542,13 @@ public class PsychologyReport implements JSONable {
 
         if (null != this.mbtiFeature) {
             json.put("mbti", this.mbtiFeature.toJSON());
+        }
+
+        if (null != this.dimensionScore) {
+            json.put("dimensionScore", this.dimensionScore.toJSON());
+        }
+        if (null != this.normDimensionScore) {
+            json.put("normDimensionScore", this.normDimensionScore.toJSON());
         }
 
         if (null != this.evaluationReport) {
