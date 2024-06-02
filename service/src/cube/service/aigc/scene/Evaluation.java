@@ -228,7 +228,10 @@ public class Evaluation {
                 ++count;
             }
 
-            if (count > 0) {
+            if (count > 1) {
+                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.2 * count, 0.25 * count));
+            }
+            else if (count > 0) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1 * count, 0.15 * count));
             }
 

@@ -207,12 +207,15 @@ public class EvaluationReport implements JSONable {
                         depression = true;
                         score += 1;
                     }
-                    else if (depressionScore > 0.2) {
+                    else if (depressionScore > 0.3) {
                         depression = true;
                         score += 1;
                     }
-                    else if (depressionScore > 0.1) {
+                    else if (depressionScore >= 0.1) {
                         depression = true;
+                    }
+                    else if (depressionScore < 0.1) {
+                        score -= 1;
                     }
                     break;
                 case SenseOfSecurity:
@@ -238,6 +241,9 @@ public class EvaluationReport implements JSONable {
                     }
                     else if (es.positiveScore - es.negativeScore > 0.4) {
                         anxiety = true;
+                    }
+                    else if (es.positiveScore - es.negativeScore < 0.1) {
+                        score -= 1;
                     }
                     break;
                 case Obsession:
@@ -293,10 +299,7 @@ public class EvaluationReport implements JSONable {
             Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && pessimism)");
         }
 
-        if (!depression && optimism) {
-            score -= 1;
-        }
-        if (obsession && optimism) {
+        if (optimism) {
             score -= 1;
         }
 
