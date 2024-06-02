@@ -122,7 +122,6 @@ public class Workflow {
 
             List<EvaluationScore> scoreList = Resource.getInstance().getBenchmark().getEvaluationScores(age);
             scoreList = this.filter(this.evaluationReport.getEvaluationScores(), scoreList);
-            System.out.println("XJW: " + scoreList.size());
             this.normDimensionScore = Resource.getInstance().getSixDimProjection().calc(scoreList);
         } catch (Exception e) {
             Logger.w(this.getClass(), "#make", e);
@@ -317,6 +316,8 @@ public class Workflow {
 
             Logger.d(this.getClass(), "#inferBehavior - representation: " + representation.description);
 
+            boolean inferSuggestion = false;
+
             try {
                 // 推理表征
                 String prompt = template.formatBehaviorPrompt(representation.knowledgeStrategy.getTerm().word,
@@ -324,9 +325,12 @@ public class Workflow {
                 String behavior = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                         null, null);
 
-                prompt = template.formatSuggestionPrompt(representation.knowledgeStrategy.getTerm().word);
-                String suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                        null, null);
+                String suggestion = "";
+                if (inferSuggestion) {
+                    prompt = template.formatSuggestionPrompt(representation.knowledgeStrategy.getTerm().word);
+                    suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                            null, null);
+                }
 
                 if (null != behavior && null != suggestion) {
                     result.add(new BehaviorSuggestion(representation.knowledgeStrategy.getTerm(),
