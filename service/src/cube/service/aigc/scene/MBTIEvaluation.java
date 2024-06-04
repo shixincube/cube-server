@@ -359,6 +359,7 @@ public class MBTIEvaluation {
                     if (score.positiveScore > score.negativeScore) {
                         list.add(new MBTICandidate(MyersBriggsTypeIndicator.Intuition, 0.5));
                         list.add(new MBTICandidate(MyersBriggsTypeIndicator.Perceiving, 0.5));
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Introversion, 0.3));
                     }
                     break;
                 case Impulsion:
