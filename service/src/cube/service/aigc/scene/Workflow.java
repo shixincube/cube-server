@@ -30,7 +30,7 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Representation;
-import cube.aigc.psychology.composition.BehaviorSuggestion;
+import cube.aigc.psychology.composition.DescriptionSuggestion;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.ReportSuggestion;
 import cube.aigc.psychology.composition.SixDimensionScore;
@@ -63,9 +63,11 @@ public class Workflow {
 
     private SixDimensionScore normDimensionScore;
 
-    private List<BehaviorSuggestion> behaviorTextList;
+    private List<DescriptionSuggestion> behaviorTextList;
 
     private List<ReportSuggestion> reportTextList;
+
+    private String summary = null;
 
     private List<ReportParagraph> paragraphList;
 
@@ -98,6 +100,7 @@ public class Workflow {
             report.setDimensionalScore(this.dimensionScore, this.normDimensionScore);
         }
 
+        report.setSummary(this.summary);
         report.setBehaviorList(this.behaviorTextList);
         report.setReportTextList(this.reportTextList);
         report.setParagraphs(this.paragraphList);
@@ -139,17 +142,20 @@ public class Workflow {
             Logger.d(this.getClass(), "#make - Report list size: " + this.reportTextList.size());
         }
 
+        // 生成概述
+        this.summary = this.inferSummary(this.reportTextList);
+
         // 推理行为特征
         (new Thread() {
             @Override
             public void run() {
-                behaviorTextList = inferBehavior(template, age, gender, maxBehaviorTexts);
+                behaviorTextList = inferDescription(template, age, gender, maxBehaviorTexts, false);
                 if (behaviorTextList.isEmpty()) {
-                    Logger.w(this.getClass(), "#make - Behavior text error");
+                    Logger.w(this.getClass(), "#make - Description text error");
                 }
 
                 if (Logger.isDebugLevel()) {
-                    Logger.d(this.getClass(), "#make - Behavior list size: " + behaviorTextList.size());
+                    Logger.d(this.getClass(), "#make - Description list size: " + behaviorTextList.size());
                 }
 
                 listener.onInferCompleted(Workflow.this);
@@ -277,8 +283,9 @@ public class Workflow {
         return result;
     }
 
-    private List<BehaviorSuggestion> inferBehavior(ThemeTemplate template, int age, String gender, int maxRepresentation) {
-        List<BehaviorSuggestion> result = new ArrayList<>();
+    private List<DescriptionSuggestion> inferDescription(ThemeTemplate template, int age, String gender,
+                                                         int maxRepresentation, boolean inferSuggestion) {
+        List<DescriptionSuggestion> result = new ArrayList<>();
 
         List<Representation> representations = this.evaluationReport.getRepresentationListByEvaluationScore(100);
         for (Representation representation : representations) {
@@ -291,8 +298,8 @@ public class Workflow {
                     representation.positiveCorrelation < representation.negativeCorrelation) {
                 marked = LowTrick + representation.knowledgeStrategy.getTerm().word;
             }
-            else if (representation.positiveCorrelation >= 2 ||
-                    (representation.positiveCorrelation - representation.negativeCorrelation) >= 2) {
+            else if (representation.positiveCorrelation >= 3 ||
+                    (representation.positiveCorrelation - representation.negativeCorrelation) >= 4) {
                 marked = HighTrick + representation.knowledgeStrategy.getTerm().word;
             }
             else {
@@ -304,25 +311,13 @@ public class Workflow {
         }
 
         for (Representation representation : representations) {
-//            String interpretation = representation.knowledgeStrategy.getInterpretation();
-//            KnowledgeStrategy.Scene scene = representation.knowledgeStrategy.getScene(template.theme);
-//            StringBuilder content = new StringBuilder();
-//            if (null == scene) {
-//                content.append(interpretation);
-//            }
-//            else {
-//                content.append(scene.explain);
-//            }
-
-            Logger.d(this.getClass(), "#inferBehavior - representation: " + representation.description);
-
-            boolean inferSuggestion = false;
+            Logger.d(this.getClass(), "#inferDescription - representation: " + representation.description);
 
             try {
                 // 推理表征
-                String prompt = template.formatBehaviorPrompt(representation.knowledgeStrategy.getTerm().word,
+                String prompt = template.formatRepresentationDescriptionPrompt(representation.knowledgeStrategy.getTerm().word,
                         age, gender, representation.description);
-                String behavior = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                String description = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                         null, null);
 
                 String suggestion = "";
@@ -332,16 +327,16 @@ public class Workflow {
                             null, null);
                 }
 
-                if (null != behavior && null != suggestion) {
-                    result.add(new BehaviorSuggestion(representation.knowledgeStrategy.getTerm(),
-                            representation.description, behavior, suggestion));
+                if (null != description && null != suggestion) {
+                    result.add(new DescriptionSuggestion(representation.knowledgeStrategy.getTerm(),
+                            representation.description, description, suggestion));
 
                     if (result.size() >= maxRepresentation) {
                         break;
                     }
                 }
             } catch (Exception e) {
-                Logger.e(this.getClass(), "#inferBehavior", e);
+                Logger.e(this.getClass(), "#inferDescription", e);
             }
         }
 
@@ -377,7 +372,24 @@ public class Workflow {
                 }
             }
         }
+
         return result;
+    }
+
+    private String inferSummary(List<ReportSuggestion> list) {
+        // 生成概述
+        StringBuilder prompt = new StringBuilder("已知信息：\n");
+        for (ReportSuggestion rs : list) {
+            prompt.append(rs.report).append("\n");
+            if (prompt.length() >= ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                break;
+            }
+        }
+        prompt.append("\n");
+        prompt.append("根据上述已知信息，简洁和专业的来回答用户的问题。问题是：简明扼要地总结一下这个人的特点。");
+        String summary = this.service.syncGenerateText(this.unitName, prompt.toString(), new GenerativeOption(),
+                null, null);
+        return summary;
     }
 
     /*

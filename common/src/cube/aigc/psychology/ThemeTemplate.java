@@ -45,15 +45,16 @@ public class ThemeTemplate {
 
     public ThemeTemplate(String name, JSONObject json) {
         this.theme = Theme.parse(name);
-        this.paragraphPromptFormatList = new ArrayList<>();
         JSONObject prompt = json.getJSONObject("prompt");
-        JSONArray array = prompt.getJSONArray("paragraphs");
-        for (int i = 0; i < array.length(); ++i) {
-            this.paragraphPromptFormatList.add(new ParagraphPromptFormat(array.getJSONObject(i)));
-        }
 
         if (prompt.has("representation")) {
             this.representationPromptFormat = new RepresentationPromptFormat(prompt.getJSONObject("representation"));
+        }
+
+        this.paragraphPromptFormatList = new ArrayList<>();
+        JSONArray array = prompt.getJSONArray("paragraphs");
+        for (int i = 0; i < array.length(); ++i) {
+            this.paragraphPromptFormatList.add(new ParagraphPromptFormat(array.getJSONObject(i)));
         }
     }
 
@@ -110,13 +111,14 @@ public class ThemeTemplate {
         return prompt;
     }
 
-    public String formatBehaviorPrompt(String representation, int age, String gender, String markedRepresentation) {
+    public String formatRepresentationDescriptionPrompt(String representation,
+                                                        int age, String gender, String markedRepresentation) {
         if (null == this.representationPromptFormat) {
             return null;
         }
 
-        return String.format(this.representationPromptFormat.behavior,
-                representation, markedRepresentation, age, filterGender(gender));
+        return String.format(this.representationPromptFormat.description,
+                age, filterGender(gender), markedRepresentation);
     }
 
     public String formatSuggestionPrompt(String representation) {
@@ -188,12 +190,12 @@ public class ThemeTemplate {
 
     public class RepresentationPromptFormat {
 
-        public final String behavior;
+        public final String description;
 
         public final String suggestion;
 
         public RepresentationPromptFormat(JSONObject json) {
-            this.behavior = json.getString("behavior");
+            this.description = json.getString("description");
             this.suggestion = json.getString("suggestion");
         }
     }

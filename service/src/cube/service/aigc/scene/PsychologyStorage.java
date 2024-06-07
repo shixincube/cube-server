@@ -30,7 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.MBTIFeature;
-import cube.aigc.psychology.composition.BehaviorSuggestion;
+import cube.aigc.psychology.composition.DescriptionSuggestion;
 import cube.aigc.psychology.composition.ReportSuggestion;
 import cube.aigc.psychology.composition.Scale;
 import cube.common.Storagable;
@@ -94,6 +94,9 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("finished_timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.DEFAULT_0
+            }),
+            new StorageField("summary", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             }),
             new StorageField("evaluation_data", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
@@ -354,7 +357,7 @@ public class PsychologyStorage implements Storagable {
         }
 
         if (null != report.getBehaviorList()) {
-            for (BehaviorSuggestion bs : report.getBehaviorList()) {
+            for (DescriptionSuggestion bs : report.getBehaviorList()) {
                 this.storage.executeInsert(this.reportBehaviorTable, new StorageField[] {
                         new StorageField("report_sn", report.sn),
                         new StorageField("term", bs.term.word),
@@ -387,6 +390,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("file_code", report.getFileCode()),
                 new StorageField("theme", report.getTheme().code),
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
+                new StorageField("summary", report.getSummary()),
                 new StorageField("evaluation_data", report.getEvaluationReport().toJSON().toString()),
                 new StorageField("mbti_code",
                         (null != report.getMBTIFeature()) ? report.getMBTIFeature().getCode() : null)
@@ -499,6 +503,10 @@ public class PsychologyStorage implements Storagable {
                 data.get("file_code").getString(), Theme.parse(data.get("theme").getString()),
                 data.get("finished_timestamp").getLong());
 
+        if (!data.get("summary").isNullValue()) {
+            report.setSummary(data.get("summary").getString());
+        }
+
         if (!data.get("evaluation_data").isNullValue()) {
             String content = JSONUtils.filter(data.get("evaluation_data").getString().trim());
             EvaluationReport evaluationReport = new EvaluationReport(new JSONObject(content));
@@ -514,10 +522,10 @@ public class PsychologyStorage implements Storagable {
                 this.reportBehaviorFields, new Conditional[] {
                         Conditional.createEqualTo("report_sn", report.sn)
                 });
-        List<BehaviorSuggestion> behaviorList = new ArrayList<>();
+        List<DescriptionSuggestion> behaviorList = new ArrayList<>();
         for (StorageField[] behaviorFields : fields) {
             Map<String, StorageField> bf = StorageFields.get(behaviorFields);
-            BehaviorSuggestion bs = new BehaviorSuggestion(
+            DescriptionSuggestion bs = new DescriptionSuggestion(
                     Term.parse(bf.get("term").getString()),
                     bf.get("description").getString(),
                     bf.get("behavior").getString(),

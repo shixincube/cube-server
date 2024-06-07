@@ -135,7 +135,7 @@ public class EvaluationScore implements JSONable {
         return word + "的建议";
     }
 
-    private String generateWord() {
+    public String generateWord() {
         double score = this.positiveScore - this.negativeScore;
 
         StringBuilder buf = new StringBuilder();

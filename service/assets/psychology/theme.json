@@ -2,7 +2,7 @@
     "Generic": {
         "prompt": {
             "representation": {
-                "behavior": "根据%s的心理特征描述，描述一个%s的%d岁%s性的心理特征。",
+                "description": "%d岁%s性%s对个体的影响是什么？",
                 "suggestion": "根据%s的心理特征描述，简洁和专业地给出建议。"
             },
             "paragraphs": [{
@@ -18,7 +18,7 @@
     "Stress": {
         "prompt": {
             "representation": {
-                "behavior": "已知信息：%s。\n\n结合以上已知信息，描述一个具有%s心理特征的%d岁%s性在工作或学习中遇到压力时会有哪些表现？",
+                "description": "已知信息：%s。\n\n结合以上已知信息，描述一个具有%s心理特征的%d岁%s性在工作或学习中遇到压力时会有哪些表现？",
                 "suggestion": "已知信息：\n%s。\n\n根据已知信息，描述一个%s的%d岁%s性的心理特征。"
             },
             "paragraphs": [{

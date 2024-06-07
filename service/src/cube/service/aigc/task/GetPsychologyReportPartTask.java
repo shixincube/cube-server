@@ -31,7 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.psychology.PsychologyReport;
-import cube.aigc.psychology.composition.BehaviorSuggestion;
+import cube.aigc.psychology.composition.DescriptionSuggestion;
 import cube.aigc.psychology.composition.ReportSuggestion;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -104,9 +104,9 @@ public class GetPsychologyReportPartTask extends ServiceTask {
         responseData.put("reportState", report.getState().code);
 
         if (behaviorText) {
-            List<BehaviorSuggestion> list = report.getBehaviorList();
+            List<DescriptionSuggestion> list = report.getBehaviorList();
             JSONArray array = new JSONArray();
-            for (BehaviorSuggestion bs : list) {
+            for (DescriptionSuggestion bs : list) {
                 array.put(bs.toJSON());
             }
             responseData.put("behaviorTextList", array);

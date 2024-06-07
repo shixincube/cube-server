@@ -30,7 +30,7 @@ import cube.aigc.psychology.Term;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
-public class BehaviorSuggestion implements JSONable {
+public class DescriptionSuggestion implements JSONable {
 
     public Term term;
 
@@ -40,14 +40,14 @@ public class BehaviorSuggestion implements JSONable {
 
     public String suggestion;
 
-    public BehaviorSuggestion(JSONObject json) {
+    public DescriptionSuggestion(JSONObject json) {
         this.term = Term.parse(json.getString("term"));
         this.description = json.getString("description");
         this.behavior = json.getString("behavior");
         this.suggestion = json.getString("suggestion");
     }
 
-    public BehaviorSuggestion(Term term, String description, String behavior, String suggestion) {
+    public DescriptionSuggestion(Term term, String description, String behavior, String suggestion) {
         this.term = term;
         this.description = description;
         this.behavior = behavior;
