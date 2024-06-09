@@ -237,6 +237,10 @@ public class AIGCChannel extends Entity {
 //        return record;
 //    }
 
+    public List<GenerativeRecord> getHistories() {
+        return this.history;
+    }
+
     public List<GenerativeRecord> getLastHistory(int num) {
         List<GenerativeRecord> list = new ArrayList<>(num);
 

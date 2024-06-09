@@ -550,6 +550,11 @@ public class AIGCService extends AbstractModule {
     }
 
     public AIGCUnit selectUnitByName(String unitName) {
+        AIGCUnit idleUnit = this.selectIdleUnitByName(unitName);
+        if (null != idleUnit) {
+            return idleUnit;
+        }
+
         ArrayList<AIGCUnit> candidates = new ArrayList<>();
 
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
@@ -1036,7 +1041,8 @@ public class AIGCService extends AbstractModule {
                 StringBuilder result = new StringBuilder();
 
                 this.generateText(channel, unit, maq.articleQuery.query, maq.articleQuery.query,
-                        new GenerativeOption(), null, null, false, false, new GenerateTextListener() {
+                        new GenerativeOption(), null, 0, null,
+                        null, false, false, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                         maq.articleQuery.answer = record.answer.replaceAll(",", "，");
@@ -1076,8 +1082,9 @@ public class AIGCService extends AbstractModule {
      * @param content
      * @param unitName
      * @param option
-     * @param numHistories
-     * @param records
+     * @param histories
+     * @param maxHistories
+     * @param attachments
      * @param categories
      * @param recordable
      * @param searchable
@@ -1086,8 +1093,8 @@ public class AIGCService extends AbstractModule {
      * @return
      */
     public boolean generateText(String channelCode, String content, String unitName, GenerativeOption option,
-                                int numHistories, List<GenerativeRecord> records, List<String> categories,
-                                boolean recordable, boolean searchable, boolean networking,
+                                List<GenerativeRecord> histories, int maxHistories, List<GenerativeRecord> attachments,
+                                List<String> categories, boolean recordable, boolean searchable, boolean networking,
                                 GenerateTextListener listener) {
         if (!this.isStarted()) {
             Logger.w(AIGCService.class, "#generateText - Service is NOT ready");
@@ -1124,10 +1131,7 @@ public class AIGCService extends AbstractModule {
         }
         else {
             if (null != unitName) {
-                unit = this.selectIdleUnitByName(unitName);
-                if (null == unit) {
-                    unit = this.selectUnitByName(unitName);
-                }
+                unit = this.selectUnitByName(unitName);
             }
             else {
                 unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
@@ -1143,8 +1147,9 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, content, option, categories, records, listener);
-        meta.numHistories = numHistories;
+        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, content, option, categories,
+                histories, attachments, listener);
+        meta.maxHistories = maxHistories;
         meta.searchEnabled = searchable && this.enabledSearch;
         meta.recordHistoryEnabled = recordable;
         meta.networkingEnabled = networking;
@@ -1284,15 +1289,18 @@ public class AIGCService extends AbstractModule {
      * @param query
      * @param prompt
      * @param option
-     * @param records
+     * @param histories
+     * @param maxHistories
+     * @param attachments
      * @param categories
      * @param searchable
      * @param recordable
      * @param listener
      */
     public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt, GenerativeOption option,
-                             List<GenerativeRecord> records, List<String> categories,
-                             boolean searchable, boolean recordable, GenerateTextListener listener) {
+                             List<GenerativeRecord> histories, int maxHistories, List<GenerativeRecord> attachments,
+                             List<String> categories, boolean searchable, boolean recordable,
+                             GenerateTextListener listener) {
         if (this.useAgent) {
             unit = Agent.getInstance().getUnit();
         }
@@ -1303,7 +1311,9 @@ public class AIGCService extends AbstractModule {
             return;
         }
 
-        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, prompt, option, categories, records, listener);
+        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, prompt, option, categories,
+                histories, attachments, listener);
+        meta.setMaxHistories(maxHistories);
         meta.setOriginalQuery(query);
         meta.setSearchEnabled(searchable);
         meta.setRecordHistoryEnabled(recordable);
@@ -2606,11 +2616,13 @@ public class AIGCService extends AbstractModule {
 
         protected GenerativeOption option;
 
-        protected List<GenerativeRecord> records;
-
         protected List<String> categories;
 
-        protected int numHistories;
+        protected List<GenerativeRecord> histories;
+
+        protected int maxHistories;
+
+        protected List<GenerativeRecord> attachments;
 
         protected GenerateTextListener listener;
 
@@ -2623,7 +2635,9 @@ public class AIGCService extends AbstractModule {
         protected boolean networkingEnabled = false;
 
         public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, GenerativeOption option,
-                                    List<String> categories, List<GenerativeRecord> records,
+                                    List<String> categories,
+                                    List<GenerativeRecord> histories,
+                                    List<GenerativeRecord> attachments,
                                     GenerateTextListener listener) {
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
@@ -2633,8 +2647,9 @@ public class AIGCService extends AbstractModule {
             this.content = content;
             this.option = option;
             this.categories = categories;
-            this.records = records;
-            this.numHistories = (null != records) ? records.size() : 0;
+            this.histories = histories;
+            this.attachments = attachments;
+            this.maxHistories = 0;
             this.listener = listener;
 
             this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName(), this.participant.getDomain().getName());
@@ -2664,6 +2679,10 @@ public class AIGCService extends AbstractModule {
             this.history.queryContent = originalQuery;
         }
 
+        public void setMaxHistories(int max) {
+            this.maxHistories = max;
+        }
+
         @Override
         public void process() {
             this.channel.setLastUnitMetaSn(this.sn);
@@ -2685,10 +2704,10 @@ public class AIGCService extends AbstractModule {
             if (complexContext.isSimplex()) {
                 // 一般文本
 
-                int maxHistories = 10;
+                int maxHistories = Math.min(10, this.maxHistories);
                 if (ModelConfig.isExtraLongPromptUnit(this.unit.getCapability().getName())) {
                     // 考虑到用量，限制在20轮
-                    maxHistories = 20;
+                    maxHistories = Math.min(20, this.maxHistories);
                 }
 
                 // 提示词长度限制
@@ -2702,8 +2721,8 @@ public class AIGCService extends AbstractModule {
                 data.put("option", this.option.toJSON());
 
                 boolean useQueryAttachment = false;
-                if (null != this.records) {
-                    for (GenerativeRecord record : this.records) {
+                if (null != this.attachments) {
+                    for (GenerativeRecord record : this.attachments) {
                         if (record.hasQueryFile() || record.hasQueryAddition()) {
                             useQueryAttachment = true;
                             break;
@@ -2716,7 +2735,7 @@ public class AIGCService extends AbstractModule {
                     StringBuilder buf = new StringBuilder();
                     int bufLen = 0;
 
-                    for (GenerativeRecord record : this.records) {
+                    for (GenerativeRecord record : this.attachments) {
                         if (record.hasQueryAddition()) {
                             for (String text : record.queryAdditions) {
                                 String[] qaBuf = text.split("\n");
@@ -2792,66 +2811,67 @@ public class AIGCService extends AbstractModule {
                     } catch (Exception e) {
                         Logger.w(this.getClass(), "#process", e);
                     }
-
-                    // 无历史记录
-                    data.put("history", new JSONArray());
                 }
-                else {
-                    // 处理多轮历史记录
-                    int lengthCount = 0;
-                    List<GenerativeRecord> candidateRecords = new ArrayList<>();
-                    if (null == this.records) {
-                        int validNumHistories = Math.min(this.numHistories, maxHistories);
-                        if (validNumHistories > 0) {
-                            List<GenerativeRecord> records = this.channel.getLastHistory(validNumHistories);
-                            // 正序列表转为倒序以便计算上下文长度
-                            Collections.reverse(records);
-                            for (GenerativeRecord record : records) {
-                                // 判断长度
-                                lengthCount += record.totalWords();
-                                if (lengthCount > lengthLimit) {
-                                    // 长度越界
-                                    break;
-                                }
-                                // 加入候选
-                                candidateRecords.add(record);
-                            }
-                            // 候选列表的倒序转为正序
-                            Collections.reverse(candidateRecords);
-                        }
-                    }
-                    else {
-                        for (int i = this.records.size() - 1; i >= 0; --i) {
-                            GenerativeRecord record = this.records.get(i);
-                            lengthCount += record.totalWords();
+
+                // 处理多轮历史记录
+                int lengthCount = data.getString("content").length();
+                List<GenerativeRecord> candidateRecords = new ArrayList<>();
+                if (null == this.histories) {
+                    int validNumHistories = maxHistories;
+                    if (validNumHistories > 0) {
+                        List<GenerativeRecord> records = this.channel.getLastHistory(validNumHistories);
+                        // 正序列表转为倒序以便计算上下文长度
+                        Collections.reverse(records);
+                        for (GenerativeRecord record : records) {
                             // 判断长度
+                            lengthCount += record.totalWords();
                             if (lengthCount > lengthLimit) {
                                 // 长度越界
                                 break;
                             }
                             // 加入候选
                             candidateRecords.add(record);
-                            if (candidateRecords.size() >= maxHistories) {
-                                break;
-                            }
                         }
-                        // 翻转顺序
+                        // 候选列表的倒序转为正序
                         Collections.reverse(candidateRecords);
                     }
-
-                    // 加入分类释义
-                    if (null != this.categories && !this.categories.isEmpty()) {
-                        this.fillRecords(candidateRecords, this.categories, lengthLimit - lengthCount,
-                                this.unit.getCapability().getName());
-                    }
-
-                    // 写入数组
-                    JSONArray history = new JSONArray();
-                    for (GenerativeRecord record : candidateRecords) {
-                        history.put(record.toJSON());
-                    }
-                    data.put("history", history);
                 }
+                else {
+                    for (int i = this.histories.size() - 1; i >= 0; --i) {
+                        GenerativeRecord record = this.histories.get(i);
+                        if (record.hasQueryFile() || record.hasQueryAddition()) {
+                            // 为了兼容旧版本，排除掉附件类型
+                            continue;
+                        }
+
+                        lengthCount += record.totalWords();
+                        // 判断长度
+                        if (lengthCount > lengthLimit) {
+                            // 长度越界
+                            break;
+                        }
+                        // 加入候选
+                        candidateRecords.add(record);
+                        if (candidateRecords.size() >= maxHistories) {
+                            break;
+                        }
+                    }
+                    // 翻转顺序
+                    Collections.reverse(candidateRecords);
+                }
+
+                // 加入分类释义
+                if (null != this.categories && !this.categories.isEmpty()) {
+                    this.fillRecords(candidateRecords, this.categories, lengthLimit - lengthCount,
+                            this.unit.getCapability().getName());
+                }
+
+                // 写入多轮对话历史数组
+                JSONArray history = new JSONArray();
+                for (GenerativeRecord record : candidateRecords) {
+                    history.put(record.toJSON());
+                }
+                data.put("history", history);
 
                 // 启用搜索或者启用联网信息检索都执行搜索
                 if (this.searchEnabled || this.networkingEnabled) {
@@ -2882,7 +2902,7 @@ public class AIGCService extends AbstractModule {
                             responseText, complexContext);
                 }
                 else if (useAgent) {
-                    String responseText = Agent.getInstance().generateText(channel.getCode(), this.content, this.records);
+                    String responseText = Agent.getInstance().generateText(channel.getCode(), this.content, this.histories);
                     if (null != responseText) {
                         // 过滤中文字符
                         responseText = this.filterChinese(this.unit, responseText);
@@ -3166,9 +3186,10 @@ public class AIGCService extends AbstractModule {
         public ConversationUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
                                     AIGCConversationParameter parameter,
                                     ConversationListener listener) {
-            super(unit, channel, content, parameter.toGenerativeOption(), parameter.categories, parameter.records, null);
+            super(unit, channel, content, parameter.toGenerativeOption(), parameter.categories,
+                    parameter.records, null, null);
             this.listener = this.generateListener;
-            this.numHistories = parameter.histories;
+            this.maxHistories = parameter.histories;
             this.searchEnabled = parameter.searchable;
             this.recordHistoryEnabled = parameter.recordable;
             this.networkingEnabled = parameter.networking;

@@ -406,6 +406,34 @@ public class EvaluationReport implements JSONable {
     }
 
     /**
+     * 返回特征列表，删除与评估分重叠的数据。
+     *
+     * @return
+     */
+    public List<Representation> getRepresentationListWithoutEvaluationScore() {
+        List<Representation> result = new ArrayList<>();
+        result.addAll(this.representationList);
+
+        for (Representation representation : this.representationList) {
+            // 匹配和评分表一致的特征
+            Indicator indicator = RepresentationStrategy.matchIndicator(representation.knowledgeStrategy.getTerm());
+            if (null != indicator) {
+                result.remove(representation);
+            }
+        }
+
+        // 删除"理想化" Idealization
+        for (Representation representation : result) {
+            if (representation.knowledgeStrategy.getTerm() == Term.Idealization) {
+                result.remove(representation);
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * 通过和表征对比、排序，返回评估得分。
      *
      * @return

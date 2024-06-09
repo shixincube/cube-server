@@ -30,6 +30,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.AnswerSheet;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.Scale;
@@ -518,6 +519,37 @@ public class PsychologyScene {
         }
 
         return scale.scoring();
+    }
+
+    public GenerativeRecord buildAddition(long reportSN, boolean representations) {
+        PsychologyReport report = this.getPsychologyReport(reportSN);
+        if (null == report) {
+            Logger.w(this.getClass(), "#buildAddition - Can NOT find report: " + reportSN);
+            return null;
+        }
+
+        StringBuilder data = new StringBuilder("个人心理特征是：");
+        for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
+            String word = es.generateWord();
+            if (null == word) {
+                continue;
+            }
+            data.append(word).append("、");
+        }
+
+        if (representations) {
+            for (Representation representation : report.getEvaluationReport().getRepresentationListWithoutEvaluationScore()) {
+                data.append(representation.description).append("、");
+            }
+        }
+
+        data.delete(data.length() - 1, data.length());
+        data.append("。");
+
+        GenerativeRecord result = new GenerativeRecord(new String[] {
+                data.toString()
+        });
+        return result;
     }
 
     private Painting processPainting(AIGCUnit unit, FileLabel fileLabel) {

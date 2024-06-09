@@ -46,7 +46,7 @@ import cube.service.aigc.scene.PsychologySceneListener;
 import org.json.JSONObject;
 
 /**
- * 预测心理学绘画任务。
+ * 生成心理学报告任务。
  */
 public class GeneratePsychologyReportTask extends ServiceTask {
 

@@ -1532,8 +1532,8 @@ public class KnowledgeBase {
                     prompt +
                     "\n----------------------------------------");
             final List<KnowledgeSource> sources = promptMetadata.mergeSources();
-            this.service.generateText(channel, unit, query, prompt, new GenerativeOption(), paraphrases,
-                    null, false, true, new GenerateTextListener() {
+            this.service.generateText(channel, unit, query, prompt, new GenerativeOption(), null, 0,
+                    paraphrases, null, false, true, new GenerateTextListener() {
                 @Override
                 public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                     // 结果记录
@@ -2137,7 +2137,8 @@ public class KnowledgeBase {
                     String prompt = Consts.formatQuestion(buf.toString(), matchingSchema.getComprehensiveQuery());
 
                     service.generateText(channel, unit, matchingSchema.getComprehensiveQuery(), prompt, new GenerativeOption(),
-                            null, null, false, false, new GenerateTextListener() {
+                            null, 0, null, null, false, false,
+                            new GenerateTextListener() {
                         @Override
                         public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                             activateProgress.setCode(AIGCStateCode.Ok.code);
@@ -2189,7 +2190,8 @@ public class KnowledgeBase {
             String prompt = Consts.formatQuestion(text, matchingSchema.getSectionQuery());
 
             this.service.generateText(channel, unit, matchingSchema.getSectionQuery(),
-                prompt, new GenerativeOption(), null, null, false, false, new GenerateTextListener() {
+                prompt, new GenerativeOption(), null, 0, null, null,
+                    false, false, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                         synchronized (pipelineRecordList) {
