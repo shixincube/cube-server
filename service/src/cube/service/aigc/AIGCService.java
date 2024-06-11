@@ -1319,6 +1319,12 @@ public class AIGCService extends AbstractModule {
         meta.setRecordHistoryEnabled(recordable);
         meta.setNetworkingEnabled(false);
 
+        if (Logger.isDebugLevel()) {
+            if (null != histories) {
+                Logger.d(this.getClass(), "#generateText - histories size: " + histories.size());
+            }
+        }
+
         synchronized (this.generateQueueMap) {
             Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(unit.getQueryKey());
             if (null == queue) {

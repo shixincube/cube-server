@@ -364,6 +364,12 @@ public class Explorer {
         }
     }
 
+    /**
+     * 尝试匹配场景数据。
+     *
+     * @param content
+     * @return
+     */
     public Stage infer(String content) {
         TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
         List<Keyword> keywordList = analyzer.analyze(content, 10);

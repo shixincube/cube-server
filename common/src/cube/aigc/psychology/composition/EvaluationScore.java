@@ -381,9 +381,9 @@ public class EvaluationScore implements JSONable {
                 }
                 break;
             default:
-                buf.append("个体的");
+                buf.append("有");
                 buf.append(this.indicator.name);
-                buf.append("心理特点");
+                buf.append("心理特征");
                 break;
         }
         return buf.toString();
