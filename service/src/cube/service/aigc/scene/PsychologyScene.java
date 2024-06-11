@@ -150,6 +150,10 @@ public class PsychologyScene {
         }
     }
 
+    public String getUnitName() {
+        return this.unitName;
+    }
+
     public boolean checkPsychologyPainting(AuthToken authToken, String fileCode) {
         FileLabel fileLabel = this.aigcService.getFile(authToken.getDomain(), fileCode);
         if (null == fileLabel) {
@@ -528,7 +532,10 @@ public class PsychologyScene {
             return null;
         }
 
-        StringBuilder data = new StringBuilder("个人心理特征是：");
+        StringBuilder data = new StringBuilder("当前讨论对象（个体）的年龄是");
+        data.append(report.getAttribute().age).append("岁");
+        data.append("，性别是").append(report.getAttribute().getGenderText()).append("性");
+        data.append("，其心理特征是：");
         for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
             String word = es.generateWord();
             if (null == word) {
@@ -549,6 +556,41 @@ public class PsychologyScene {
         GenerativeRecord result = new GenerativeRecord(new String[] {
                 data.toString()
         });
+        return result;
+    }
+
+    public GenerativeRecord buildHistory(long reportSN, boolean representations) {
+        PsychologyReport report = this.getPsychologyReport(reportSN);
+        if (null == report) {
+            Logger.w(this.getClass(), "#buildHistory - Can NOT find report: " + reportSN);
+            return null;
+        }
+
+        StringBuilder query = new StringBuilder();
+        StringBuilder answer = new StringBuilder();
+
+        query.append("当前我们讨论的对象（个体）有哪些特征？");
+
+        answer.append("我们现在讨论对象（个体）的年龄是");
+        answer.append(report.getAttribute().age).append("岁");
+        answer.append("，性别是").append(report.getAttribute().getGenderText()).append("性");
+        answer.append("，其心理特征是：");
+        for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
+            String word = es.generateWord();
+            if (null == word) {
+                continue;
+            }
+            answer.append(word).append("、");
+        }
+        if (representations) {
+            for (Representation representation : report.getEvaluationReport().getRepresentationListWithoutEvaluationScore()) {
+                answer.append(representation.description).append("、");
+            }
+        }
+        answer.delete(answer.length() - 1, answer.length());
+        answer.append("。");
+
+        GenerativeRecord result = new GenerativeRecord(this.unitName, query.toString(), answer.toString());
         return result;
     }
 

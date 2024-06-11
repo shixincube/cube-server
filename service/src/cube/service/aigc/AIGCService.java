@@ -2704,10 +2704,10 @@ public class AIGCService extends AbstractModule {
             if (complexContext.isSimplex()) {
                 // 一般文本
 
-                int maxHistories = Math.min(10, this.maxHistories);
+                int recommendHistories = 10;
                 if (ModelConfig.isExtraLongPromptUnit(this.unit.getCapability().getName())) {
                     // 考虑到用量，限制在20轮
-                    maxHistories = Math.min(20, this.maxHistories);
+                    recommendHistories = 20;
                 }
 
                 // 提示词长度限制
@@ -2817,7 +2817,7 @@ public class AIGCService extends AbstractModule {
                 int lengthCount = data.getString("content").length();
                 List<GenerativeRecord> candidateRecords = new ArrayList<>();
                 if (null == this.histories) {
-                    int validNumHistories = maxHistories;
+                    int validNumHistories = this.maxHistories;
                     if (validNumHistories > 0) {
                         List<GenerativeRecord> records = this.channel.getLastHistory(validNumHistories);
                         // 正序列表转为倒序以便计算上下文长度
@@ -2837,7 +2837,7 @@ public class AIGCService extends AbstractModule {
                     }
                 }
                 else {
-                    for (int i = this.histories.size() - 1; i >= 0; --i) {
+                    for (int i = 0; i < this.histories.size(); ++i) {
                         GenerativeRecord record = this.histories.get(i);
                         if (record.hasQueryFile() || record.hasQueryAddition()) {
                             // 为了兼容旧版本，排除掉附件类型
@@ -2852,7 +2852,7 @@ public class AIGCService extends AbstractModule {
                         }
                         // 加入候选
                         candidateRecords.add(record);
-                        if (candidateRecords.size() >= maxHistories) {
+                        if (candidateRecords.size() >= recommendHistories) {
                             break;
                         }
                     }

@@ -46,14 +46,16 @@ import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.PsychologyScene;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * 心理学相关的对话任务。
  */
-public class PsychologyChatTask extends ServiceTask {
+public class PsychologyConversationTask extends ServiceTask {
 
-    public PsychologyChatTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public PsychologyConversationTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -93,7 +95,7 @@ public class PsychologyChatTask extends ServiceTask {
         }
 
         // 获取单元
-        AIGCUnit unit = service.selectUnitByName(ModelConfig.BAIZE_UNIT);
+        AIGCUnit unit = service.selectUnitByName(PsychologyScene.getInstance().getUnitName());
         if (null == unit) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
@@ -101,36 +103,65 @@ public class PsychologyChatTask extends ServiceTask {
             return;
         }
 
+        int maxHistories = 5;
+        List<GenerativeRecord> histories = null;
+        List<GenerativeRecord> attachments = null;
 
-        if (!channel.getHistories().isEmpty()) {
+        if (channel.getHistories().isEmpty()) {
+            GenerativeRecord addition = PsychologyScene.getInstance().buildAddition(reportSn, false);
+            if (null == addition) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));
+                markResponseTime();
+                return;
+            }
+
+            attachments = Collections.singletonList(addition);
+        }
+        else {
             // 非空历史
+            histories = new ArrayList<>();
+            GenerativeRecord trick = PsychologyScene.getInstance().buildHistory(reportSn, false);
+            if (null == trick) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));
+                markResponseTime();
+                return;
+            }
 
+            histories.add(trick);
+
+            for (GenerativeRecord history : channel.getHistories()) {
+                histories.add(history);
+                if (histories.size() >= maxHistories) {
+                    break;
+                }
+            }
         }
 
-        GenerativeRecord addition = PsychologyScene.getInstance().buildAddition(reportSn, false);
-
-        service.generateText(channel, unit, query, query, new GenerativeOption(), null, 0,
-                Collections.singletonList(addition),null, false, true, new GenerateTextListener() {
+        // 使用指定模型生成结果
+        service.generateText(channel, unit, query, query, new GenerativeOption(), histories, 0,
+                attachments, null, false, true, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
-
+                        if (null != record) {
+                            cellet.speak(talkContext,
+                                    makeResponse(dialect, packet, AIGCStateCode.Ok.code,
+                                            record.toCompactJSON()));
+                        }
+                        else {
+                            cellet.speak(talkContext,
+                                    makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                        }
+                        markResponseTime();
                     }
 
                     @Override
                     public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
-
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                        markResponseTime();
                     }
                 });
-
-        ConversationResponse response = null;
-        if (null != response) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, response.toJSON()));
-        }
-        else {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
-        }
-        markResponseTime();
     }
 }

@@ -426,6 +426,8 @@ public enum AIGCAction {
      */
     SubmitPsychologyAnswerSheet("submitPsychologyAnswerSheet"),
 
+    
+
     /**
      * 预测图片元素。
      */
