@@ -35,8 +35,7 @@ import cube.aigc.atom.Atom;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.ChartReaction;
-import cube.common.entity.ChartSeries;
+import cube.common.entity.Chart;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -80,40 +79,39 @@ public class ChartDataTask extends ServiceTask {
         String action = requestData.getString("action");
 
         try {
-            if (action.equalsIgnoreCase("insertReaction")) {
-                JSONObject json = requestData.getJSONObject("reaction");
-                boolean overwrite = requestData.has("overwrite") && requestData.getBoolean("overwrite");
-                ChartReaction reaction = new ChartReaction(json);
-                if (service.getStorage().insertChartReaction(reaction, overwrite)) {
+//            if (action.equalsIgnoreCase("insertReaction")) {
+//                JSONObject json = requestData.getJSONObject("reaction");
+//                boolean overwrite = requestData.has("overwrite") && requestData.getBoolean("overwrite");
+//                ChartReaction reaction = new ChartReaction(json);
+//                if (service.getStorage().insertChartReaction(reaction, overwrite)) {
+//                    this.cellet.speak(this.talkContext,
+//                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, new JSONObject()));
+//                    markResponseTime();
+//                    return;
+//                }
+//            }
+//            else if (action.equalsIgnoreCase("deleteReaction")) {
+//                String primary = requestData.getString("primary");
+//                if (service.getStorage().deleteChartReaction(primary)) {
+//                    this.cellet.speak(this.talkContext,
+//                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, new JSONObject()));
+//                    markResponseTime();
+//                    return;
+//                }
+//            }
+            if (action.equalsIgnoreCase("insertChart")) {
+                JSONObject json = requestData.getJSONObject("chart");
+                Chart chart = new Chart(json);
+                if (service.getStorage().insertChart(chart)) {
                     this.cellet.speak(this.talkContext,
                             this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, new JSONObject()));
                     markResponseTime();
                     return;
                 }
             }
-            else if (action.equalsIgnoreCase("deleteReaction")) {
-                String primary = requestData.getString("primary");
-                if (service.getStorage().deleteChartReaction(primary)) {
-                    this.cellet.speak(this.talkContext,
-                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, new JSONObject()));
-                    markResponseTime();
-                    return;
-                }
-            }
-            else if (action.equalsIgnoreCase("insertSeries")) {
-                JSONObject json = requestData.getJSONObject("series");
-                boolean overwrite = requestData.has("overwrite") && requestData.getBoolean("overwrite");
-                ChartSeries series = new ChartSeries(json);
-                if (service.getStorage().insertChartSeries(series, overwrite)) {
-                    this.cellet.speak(this.talkContext,
-                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, new JSONObject()));
-                    markResponseTime();
-                    return;
-                }
-            }
-            else if (action.equalsIgnoreCase("deleteSeries")) {
+            else if (action.equalsIgnoreCase("deleteChart")) {
                 String name = requestData.getString("name");
-                if (service.getStorage().deleteChartSeries(name)) {
+                if (service.getStorage().deleteChart(name)) {
                     this.cellet.speak(this.talkContext,
                             this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, new JSONObject()));
                     markResponseTime();

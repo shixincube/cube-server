@@ -27,11 +27,11 @@
 package cube.service.aigc.module;
 
 import cell.util.Utils;
-import cube.aigc.Sentiment;
-import cube.common.entity.*;
-import cube.common.state.AIGCStateCode;
+import cube.common.entity.AIGCChannel;
+import cube.common.entity.AttachmentResource;
+import cube.common.entity.ChartResource;
+import cube.common.entity.Entity;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.GenerateTextListener;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -75,11 +75,11 @@ public class Stage extends Entity {
             PublicOpinion publicOpinion = (PublicOpinion) mod;
 
             if (!this.chartResources.isEmpty()) {
-                ChartResource chartResource = this.chartResources.get(0);
+                /*ChartResource chartResource = this.chartResources.get(0);
                 // 获取时间线
-                ChartSeries.Timeline timeline = chartResource.chartSeries.timeline;
-                ChartSeries.TimePoint starting = timeline.first();
-                ChartSeries.TimePoint ending = timeline.last();
+                Chart.Timeline timeline = chartResource.chart.timeline;
+                Chart.TimePoint starting = timeline.first();
+                Chart.TimePoint ending = timeline.last();
 
                 AtomicInteger total = new AtomicInteger(0);
                 AtomicInteger callCount = new AtomicInteger(0);
@@ -87,7 +87,7 @@ public class Stage extends Entity {
                 List<PublicOpinion.ArticleQuery> result = new ArrayList<>();
 
                 List<PublicOpinion.ArticleQuery> negativeQueries = publicOpinion.makeEvaluatingArticleQueries(
-                        chartResource.chartSeries.label, Sentiment.Negative,
+                        chartResource.chart.label, Sentiment.Negative,
                         starting.year, starting.month, starting.date, ending.date);
                 if (!negativeQueries.isEmpty()) {
                     total.addAndGet(negativeQueries.size());
@@ -118,7 +118,7 @@ public class Stage extends Entity {
                 }
 
                 List<PublicOpinion.ArticleQuery> positiveQueries = publicOpinion.makeEvaluatingArticleQueries(
-                        chartResource.chartSeries.label, Sentiment.Positive,
+                        chartResource.chart.label, Sentiment.Positive,
                         starting.year, starting.month, starting.date, ending.date);
                 if (!positiveQueries.isEmpty()) {
                     total.addAndGet(positiveQueries.size());
@@ -150,34 +150,34 @@ public class Stage extends Entity {
 
                 if (total.get() == 0) {
                     callback(0, callCount, publicOpinion, result, listener);
-                }
+                }*/
             }
         }
     }
 
-    private PublicOpinion.ArticleQuery findArticleQuery(List<PublicOpinion.ArticleQuery> queryList, String query) {
-        for (PublicOpinion.ArticleQuery articleQuery : queryList) {
-            if (articleQuery.query.equals(query)) {
-                return articleQuery;
-            }
-        }
-        return null;
-    }
+//    private PublicOpinion.ArticleQuery findArticleQuery(List<PublicOpinion.ArticleQuery> queryList, String query) {
+//        for (PublicOpinion.ArticleQuery articleQuery : queryList) {
+//            if (articleQuery.query.equals(query)) {
+//                return articleQuery;
+//            }
+//        }
+//        return null;
+//    }
 
-    private void callback(int targetTotal, AtomicInteger callCount, Module module,
-                          List<PublicOpinion.ArticleQuery> articleQueryList, StageListener listener) {
-        // 更新计数
-        int count = callCount.incrementAndGet();
-        if (targetTotal <= count) {
-            // 结束
-            ArrayList<String> list = new ArrayList<>();
-            for (PublicOpinion.ArticleQuery articleQuery : articleQueryList) {
-                list.add(articleQuery.output());
-            }
-
-            listener.onPerform(this, module, list);
-        }
-    }
+//    private void callback(int targetTotal, AtomicInteger callCount, Module module,
+//                          List<PublicOpinion.ArticleQuery> articleQueryList, StageListener listener) {
+//        // 更新计数
+//        int count = callCount.incrementAndGet();
+//        if (targetTotal <= count) {
+//            // 结束
+//            ArrayList<String> list = new ArrayList<>();
+//            for (PublicOpinion.ArticleQuery articleQuery : articleQueryList) {
+//                list.add(articleQuery.output());
+//            }
+//
+//            listener.onPerform(this, module, list);
+//        }
+//    }
 
     @Override
     public JSONObject toJSON() {

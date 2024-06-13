@@ -26,8 +26,7 @@
 
 package cube.aigc.atom;
 
-import cube.common.entity.ChartSeries;
-import org.json.JSONArray;
+import cube.common.entity.Chart;
 
 import java.util.*;
 
@@ -36,7 +35,7 @@ public class Molecule {
     public Molecule() {
     }
 
-    public ChartSeries build(List<Atom> atomList, List<String> labelList) {
+    public Chart build(List<Atom> atomList, List<String> labelList) {
         // 从数据库里模糊匹配的词可能相关性很低，过滤规则：
         // 1. 最少2两个词命中
         // 2. 保留命中最多的 Atom 列表
@@ -104,11 +103,13 @@ public class Molecule {
             });
         }
 
-        return generateChartSeries(sameLabelMap.values());
+        return generateChart(sameLabelMap.values());
     }
 
-    private ChartSeries generateChartSeries(Collection<LinkedList<Atom>> list) {
-        ArrayList<ChartSeries> seriesList = new ArrayList<>();
+    private Chart generateChart(Collection<LinkedList<Atom>> list) {
+        return null;
+
+        /*ArrayList<Chart> seriesList = new ArrayList<>();
 
         for (LinkedList<Atom> atoms : list) {
             Atom first = atoms.get(0);
@@ -131,13 +132,13 @@ public class Molecule {
                 data.put(atom.value);
             }
 
-            ChartSeries chartSeries = new ChartSeries(name, desc, System.currentTimeMillis());
-            chartSeries.setXAxis(xAxis);
-            chartSeries.setData("line", data, legend);
-            chartSeries.setXAxisDesc(xAxisDesc);
-            chartSeries.setTimeline(atoms);
-            chartSeries.label = words[0];
-            seriesList.add(chartSeries);
+            Chart chart = new Chart(name, desc, System.currentTimeMillis());
+            chart.setXAxis(xAxis);
+            chart.setData("line", data, legend);
+            chart.setXAxisDesc(xAxisDesc);
+            chart.setTimeline(atoms);
+            chart.label = words[0];
+            seriesList.add(chart);
         }
 
         // 仅一条数据
@@ -146,11 +147,11 @@ public class Molecule {
         }
 
         // 合并多条数据
-        ChartSeries result = seriesList.get(0);
+        Chart result = seriesList.get(0);
         for (int i = 1; i < seriesList.size(); ++i) {
             result.mergeSeries(seriesList.get(i));
         }
 
-        return result;
+        return result;*/
     }
 }

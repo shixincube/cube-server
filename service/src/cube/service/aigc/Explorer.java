@@ -439,7 +439,7 @@ public class Explorer {
 
         ChartInference chartInference = new ChartInference();
 
-        if (!collider.chartSeriesList.isEmpty()) {
+        if (!collider.chartList.isEmpty()) {
             /*
             // 判断上下文是否需要进行推算
             boolean inference = false;
@@ -457,9 +457,9 @@ public class Explorer {
             }
             */
 
-            for (ChartSeries chartSeries : collider.chartSeriesList) {
+            for (Chart chart : collider.chartList) {
                 // 创建资源
-                ChartResource resource = new ChartResource(chartSeries.desc, chartSeries);
+                ChartResource resource = new ChartResource(chart.desc, chart);
                 chartInference.chartResources.add(resource);
             }
         }
@@ -481,12 +481,12 @@ public class Explorer {
                     @Override
                     public void onClick(Event event) {
                         AtomCollider collider = (AtomCollider) event.target.getContext();
-                        ChartSeries chartSeries = matchChartSeries(collider.labelList,
+                        Chart chart = matchChartSeries(collider.labelList,
                                 collider.recommendYear,
                                 collider.recommendMonth > 0 ? collider.recommendMonth : collider.month,
                                 collider.date);
-                        if (null != chartSeries) {
-                            ChartResource resource = new ChartResource(chartSeries.desc, chartSeries);
+                        if (null != chart) {
+                            ChartResource resource = new ChartResource(chart.desc, chart);
                             event.finish(resource);
                         }
                     }
@@ -511,14 +511,14 @@ public class Explorer {
         return false;
     }
 
-    private ChartSeries matchChartSeries(List<String> labels, int year, int month, int date) {
+    private Chart matchChartSeries(List<String> labels, int year, int month, int date) {
         AtomCollider collider = new AtomCollider(this.service.getStorage());
         collider.collapse(labels, year, month, date);
-        if (collider.chartSeriesList.isEmpty()) {
+        if (collider.chartList.isEmpty()) {
             return null;
         }
 
-        return collider.chartSeriesList.get(0);
+        return collider.chartList.get(0);
     }
 
     public EventResult fireEvent(Event event) {
@@ -678,17 +678,6 @@ public class Explorer {
         }
     }
 
-    private class ChartReactionWrap {
-
-        protected ChartReaction reaction;
-
-        protected int matchingNum;
-
-        protected ChartReactionWrap(ChartReaction reaction, int matchingNum) {
-            this.reaction = reaction;
-            this.matchingNum = matchingNum;
-        }
-    }
 
     private class PageReaderTask implements Runnable {
 

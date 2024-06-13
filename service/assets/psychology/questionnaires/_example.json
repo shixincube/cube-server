@@ -1,5 +1,6 @@
 {
 	"name": "量表示例",
+	"instruction": "指导语",
 	"sections": [{
 		"title": "第一部分",
 		"content": "哪一答案最接近地描述了你通常的思考和行为方式。",

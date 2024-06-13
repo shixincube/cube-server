@@ -32,9 +32,14 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 问卷。
+ */
 public class Questionnaire {
 
     public String name;
+
+    public String instruction;
 
     public List<QuestionSection> questionSections;
 
@@ -45,6 +50,7 @@ public class Questionnaire {
 
     protected void build(JSONObject structure) {
         this.name = structure.getString("name");
+        this.instruction = structure.getString("instruction");
         this.questionSections = new ArrayList<>();
         if (structure.has("sections")) {
             JSONArray array = structure.getJSONArray("sections");
@@ -145,7 +151,8 @@ public class Questionnaire {
 
     public String toMarkdown() {
         StringBuilder buf = new StringBuilder();
-        buf.append("# ").append(this.name).append("\n");
+        buf.append("# ").append(this.name).append("\n\n");
+        buf.append(this.instruction).append("\n\n");
         buf.append("\n");
         for (QuestionSection section : this.questionSections) {
             buf.append("## ").append(section.title).append("\n\n");

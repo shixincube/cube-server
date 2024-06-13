@@ -29,7 +29,7 @@ package cube.service.aigc.resource;
 import cube.aigc.Consts;
 import cube.aigc.atom.Atom;
 import cube.aigc.atom.Molecule;
-import cube.common.entity.ChartSeries;
+import cube.common.entity.Chart;
 import cube.service.aigc.AIGCStorage;
 import cube.util.TextUtils;
 
@@ -50,7 +50,7 @@ public class AtomCollider {
     public int month = 0;
     public int date = 0;
 
-    public List<ChartSeries> chartSeriesList;
+    public List<Chart> chartList;
 
     public String recommendWord = null;
 
@@ -61,7 +61,7 @@ public class AtomCollider {
     public AtomCollider(AIGCStorage storage) {
         this.storage = storage;
         this.labelList = new ArrayList<>();
-        this.chartSeriesList = new ArrayList<>();
+        this.chartList = new ArrayList<>();
     }
 
     public void collapse(List<String> labels, int year, int month, int date) {
@@ -78,9 +78,9 @@ public class AtomCollider {
         List<Atom> atomList = this.storage.fullMatching(this.labelList, yearDesc, monthDesc, dateDesc);
         // 将 Atom 列表生成位图表序列
         Molecule molecule = new Molecule();
-        ChartSeries result = molecule.build(atomList, this.labelList);
+        Chart result = molecule.build(atomList, this.labelList);
         if (null != result) {
-            this.chartSeriesList.add(result);
+            this.chartList.add(result);
         }
     }
 
@@ -132,9 +132,9 @@ public class AtomCollider {
         List<Atom> atomList = this.storage.fullMatching(this.labelList, yearDesc, monthDesc, dateDesc);
         // 将 Atom 列表生成位图表序列
         Molecule molecule = new Molecule();
-        ChartSeries result = molecule.build(atomList, this.labelList);
+        Chart result = molecule.build(atomList, this.labelList);
         if (null != result) {
-            this.chartSeriesList.add(result);
+            this.chartList.add(result);
             return;
         }
 

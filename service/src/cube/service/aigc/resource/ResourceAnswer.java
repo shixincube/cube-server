@@ -83,7 +83,7 @@ public class ResourceAnswer {
             }
             else if (res instanceof ChartResource) {
                 ChartResource resource = (ChartResource) res;
-                result = Consts.formatChartAnswer(resource.title);
+                result = Consts.formatChartAnswer(resource.getTitle());
             }
             else if (res instanceof AttachmentResource) {
                 result = Consts.ANSWER_SILENT;
@@ -143,7 +143,7 @@ public class ResourceAnswer {
                 for (ComplexResource res : this.complexContext.getResources()) {
                     ChartResource resource = (ChartResource) res;
                     buf.append("* ");
-                    buf.append(Consts.formatChartSomeOneAnswer(resource.chartSeries.desc));
+                    buf.append(Consts.formatChartSomeOneAnswer(resource.getChart().desc));
                     buf.append("\n");
                 }
             }

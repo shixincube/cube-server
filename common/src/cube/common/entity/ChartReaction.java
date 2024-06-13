@@ -32,6 +32,7 @@ import org.json.JSONObject;
 
 import java.util.List;
 
+@Deprecated
 public class ChartReaction implements JSONable {
 
     public long sn;

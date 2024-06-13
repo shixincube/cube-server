@@ -26,30 +26,21 @@
 
 package cube.common.entity;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 图表资源。
  */
 public class ChartResource extends ComplexResource {
 
-    public String title;
+    private String title;
 
-    public String titleAlign = "center";
+    private Chart chart;
 
-    public Legend legend;
-
-    public ChartSeries chartSeries;
-
-    public ChartResource(String title, ChartSeries chartSeries) {
+    public ChartResource(String title, Chart chart) {
         super(Subject.Chart);
         this.title = title;
-        this.chartSeries = chartSeries;
-        this.parseLegend();
+        this.chart = chart;
     }
 
     public ChartResource(JSONObject json) {
@@ -57,51 +48,36 @@ public class ChartResource extends ComplexResource {
 
         JSONObject payload = json.getJSONObject("payload");
         this.title = payload.getString("title");
-        this.titleAlign = payload.getString("titleAlign");
-        this.chartSeries = new ChartSeries(payload.getJSONObject("series"));
-
-        if (payload.has("legend")) {
-            this.legend = new Legend(payload.getJSONObject("legend"));
-        }
+        this.chart = new Chart(payload.getJSONObject("chart"));
     }
 
-    public String makeDataPlainString() {
-        StringBuilder buf = new StringBuilder();
-        buf.append(this.title).append("。\n");
-        buf.append(this.chartSeries.name).append("：\n");
-
-        for (ChartSeries.Series series : this.chartSeries.seriesList) {
-            String legend = series.name;
-
-            for (int i = 0; i < this.chartSeries.xAxis.size(); ++i) {
-                String desc = this.chartSeries.xAxisDesc.get(i);
-                int value = series.getValue(i);
-                buf.append(desc).append(legend).append("：").append(value)
-                    .append("。\n");
-            }
-
-            buf.append("\n");
-        }
-        return buf.toString();
+    public String getTitle() {
+        return this.title;
     }
 
-    private void parseLegend() {
-        if (this.chartSeries.seriesList.size() <= 1) {
-            return;
-        }
-
-        List<String> names = new ArrayList<>();
-
-        for (ChartSeries.Series series : this.chartSeries.seriesList) {
-            if (null == series.name) {
-                return;
-            }
-
-            names.add(series.name);
-        }
-
-        this.legend = new Legend(names);
+    public Chart getChart() {
+        return this.chart;
     }
+
+//    public String makeDataPlainString() {
+//        StringBuilder buf = new StringBuilder();
+//        buf.append(this.title).append("。\n");
+//        buf.append(this.chart.name).append("：\n");
+//
+//        for (Chart.Series series : this.chart.seriesList) {
+//            String legend = series.name;
+//
+//            for (int i = 0; i < this.chart.xAxis.size(); ++i) {
+//                String desc = this.chart.xAxisDesc.get(i);
+//                int value = series.getValue(i);
+//                buf.append(desc).append(legend).append("：").append(value)
+//                    .append("。\n");
+//            }
+//
+//            buf.append("\n");
+//        }
+//        return buf.toString();
+//    }
 
     @Override
     public JSONObject toJSON() {
@@ -109,12 +85,7 @@ public class ChartResource extends ComplexResource {
 
         JSONObject payload = new JSONObject();
         payload.put("title", this.title);
-        payload.put("titleAlign", this.titleAlign);
-        payload.put("series", this.chartSeries.toJSON());
-
-        if (null != this.legend) {
-            payload.put("legend", this.legend.toJSON());
-        }
+        payload.put("chart", this.chart.toJSON());
 
         json.put("payload", payload);
         return json;
@@ -123,33 +94,5 @@ public class ChartResource extends ComplexResource {
     @Override
     public JSONObject toCompactJSON() {
         return this.toJSON();
-    }
-
-
-    public class Legend {
-
-        public String orient = "horizontal";
-
-        public JSONArray data;
-
-        public Legend(List<String> list) {
-            this.data = new JSONArray();
-            for (String name : list) {
-                this.data.put(name);
-            }
-        }
-
-        public Legend(JSONObject json) {
-            this.orient = json.getString("orient");
-            this.data = json.getJSONArray("data");
-        }
-
-        public JSONObject toJSON() {
-            JSONObject json = new JSONObject();
-            json.put("orient", this.orient);
-            json.put("bottom", 10);
-            json.put("data", this.data);
-            return json;
-        }
     }
 }
