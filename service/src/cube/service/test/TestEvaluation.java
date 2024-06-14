@@ -50,8 +50,8 @@ public class TestEvaluation {
         }
     }
 
-    public static void testLoadScale() {
-        System.out.println("testLoadScale");
+    public static void testMBTIScale() {
+        System.out.println("testMBTIScale");
 
         Scale scale = Resource.getInstance().loadScaleByFilename("mbti-16personalities");
 //        System.out.println(scale.toMarkdown());
@@ -72,9 +72,44 @@ public class TestEvaluation {
         System.out.println(conclusion.toString(4));
     }
 
+    public static void testSCL90Scale() {
+        System.out.println("testSCL90Scale");
+
+        Scale scale = Resource.getInstance().loadScaleByFilename("SCL-90");
+        for (Question question : scale.getQuestions()) {
+            switch (Utils.randomInt(1, 5)) {
+                case 1:
+                    question.chooseAnswer("A");
+                    break;
+                case 2:
+                    question.chooseAnswer("B");
+                    break;
+                case 3:
+                    question.chooseAnswer("C");
+                    break;
+                case 4:
+                    question.chooseAnswer("D");
+                    break;
+                case 5:
+                    question.chooseAnswer("E");
+                    break;
+                default:
+                    break;
+            }
+        }
+        System.out.println("Complete: " + scale.isComplete());
+
+        System.out.println("----------------------------------------");
+
+        JSONObject conclusion = scale.scoring().toJSON();
+        System.out.println(conclusion.toString(4));
+    }
+
     public static void main(String[] args) {
 //        testListScales();
 
-        testLoadScale();
+//        testMBTIScale();
+
+        testSCL90Scale();
     }
 }
