@@ -1,0 +1,150 @@
+{
+    "category": {
+        "Personality": {
+            "name": "人格",
+            "scales": [
+                {
+                    "classification": "个性",
+                    "factors": [
+                        "外向性（内向性）",
+                        "神经质（高/低）",
+                        "精神性（高/低）",
+                        "掩饰性（高/低）"
+                    ],
+                    "title": "艾森克人格量表",
+                    "file": "EysenckPersonalityQuestionnaire"
+                },
+                {
+                    "classification": "大五人格",
+                    "factors": [
+                        "外向性（内向性）",
+                        "宜人性（高/低）",
+                        "尽责性（高/低）",
+                        "神经质（高/低）",
+                        "开放性（高/低）"
+                    ],
+                    "title": "大五人格量表",
+                    "file": "NEOFiveFactorInventory"
+                },
+                {
+                    "classification": "16种人格因素",
+                    "factors": [
+                        "乐群性",
+                        "聪慧性",
+                        "稳定性",
+                        "恃强性",
+                        "兴奋性",
+                        "有恒性",
+                        "敢为性",
+                        "敏感性",
+                        "怀疑性",
+                        "幻想性",
+                        "世故性",
+                        "忧虑性",
+                        "实验性",
+                        "独立性",
+                        "自律性",
+                        "紧张性"
+                    ],
+                    "title": "卡特尔16种人格测验",
+                    "file": "16PersonalityFactorsQuestionnaire"
+                },
+                {
+                    "classification": "16型人格",
+                    "factors": [
+                        "外向（E）",
+                        "内向（I）",
+                        "感觉（S）",
+                        "直觉（N）",
+                        "思考（T）",
+                        "情感（F）",
+                        "知觉（P）",
+                        "判断（J）"
+                    ],
+                    "title": "MBTI性格测试",
+                    "file": "mbti-16personalities"
+                }
+            ]
+        },
+        "Emotion": {
+            "name": "情绪",
+            "scales": [
+                {
+                    "classification": "情绪状态",
+                    "factors": [
+                        "积极情绪",
+                        "消极情绪"
+                    ],
+                    "title": "积极与消极情感量表",
+                    "file": "PositiveNegativeAffectSchedule"
+                }
+            ]
+        },
+        "Cognition": {
+            "name": "认知",
+            "scales": [
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "file": ""
+                }
+            ]
+        },
+        "Behavior": {
+            "name": "行为",
+            "scales": [
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "file": ""
+                }
+            ]
+        },
+        "InterpersonalRelationship": {
+            "name": "人际关系",
+            "scales": [
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "file": ""
+                }
+            ]
+        },
+        "SelfAssessment": {
+            "name": "自我评价",
+            "scales": [
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "file": ""
+                }
+            ]
+        },
+        "MentalHealth": {
+            "name": "心理健康",
+            "scales": [
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "file": ""
+                }
+            ]
+        },
+        "Capacity": {
+            "name": "能力",
+            "scales": [
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "file": ""
+                }
+            ]
+        }
+    }
+}

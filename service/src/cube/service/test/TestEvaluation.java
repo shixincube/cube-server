@@ -53,7 +53,7 @@ public class TestEvaluation {
     public static void testMBTIScale() {
         System.out.println("testMBTIScale");
 
-        Scale scale = Resource.getInstance().loadScaleByFilename("mbti-16personalities");
+        Scale scale = Resource.getInstance().loadScaleByFilename("MBTI-16Personalities");
 //        System.out.println(scale.toMarkdown());
 
         System.out.println("Complete: " + scale.isComplete());

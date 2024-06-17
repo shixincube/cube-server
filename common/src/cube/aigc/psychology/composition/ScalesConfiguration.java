@@ -1,0 +1,130 @@
+/*
+ * This source file is part of Cube.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2020-2024 Ambrose Xu.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+package cube.aigc.psychology.composition;
+
+import cell.util.log.Logger;
+import cube.util.JSONUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 量表配置信息。
+ */
+public class ScalesConfiguration {
+
+    public final static String CATEGORY_PERSONALITY = "Personality";
+    public final static String CATEGORY_EMOTION = "Emotion";
+    public final static String CATEGORY_COGNITION = "Cognition";
+    public final static String CATEGORY_BEHAVIOR = "Behavior";
+    public final static String CATEGORY_INTERPERSONAL_RELATIONSHIP = "InterpersonalRelationship";
+    public final static String CATEGORY_SELF_ASSESSMENT = "SelfAssessment";
+    public final static String CATEGORY_MENTAL_HEALTH = "MentalHealth";
+    public final static String CATEGORY_CAPACITY = "Capacity";
+
+    private File configFile =  new File("./assets/psychology/scale.json");
+
+    private Category personality;
+    private Category emotion;
+    private Category cognition;
+    private Category behavior;
+    private Category interpersonalRelationship;
+    private Category selfAssessment;
+    private Category mentalHealth;
+    private Category capacity;
+
+    public ScalesConfiguration() {
+        this.load();
+    }
+
+    private void load() {
+        JSONObject data = null;
+        try {
+            byte[] bytes = Files.readAllBytes(Paths.get(this.configFile.getAbsolutePath()));
+            data = new JSONObject(new String(bytes, StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (null == data) {
+            Logger.w(this.getClass(), "#load - Read configuration file failed: " + this.configFile.getAbsolutePath());
+            return;
+        }
+
+        this.personality = new Category(data.getJSONObject(CATEGORY_PERSONALITY));
+        this.emotion = new Category(data.getJSONObject(CATEGORY_EMOTION));
+        this.cognition = new Category(data.getJSONObject(CATEGORY_COGNITION));
+        this.behavior = new Category(data.getJSONObject(CATEGORY_BEHAVIOR));
+        this.interpersonalRelationship = new Category(data.getJSONObject(CATEGORY_INTERPERSONAL_RELATIONSHIP));
+        this.selfAssessment = new Category(data.getJSONObject(CATEGORY_SELF_ASSESSMENT));
+        this.mentalHealth = new Category(data.getJSONObject(CATEGORY_MENTAL_HEALTH));
+        this.capacity = new Category(data.getJSONObject(CATEGORY_CAPACITY));
+    }
+
+
+    public class Category {
+
+        public final String name;
+
+        public final List<Configuration> scales = new ArrayList<>();
+
+        public Category(JSONObject json) {
+            this.name = json.getString("name");
+
+            JSONArray array = json.getJSONArray("scales");
+            for (int i = 0; i < array.length(); ++i) {
+                Configuration configuration = new Configuration(array.getJSONObject(i));
+                this.scales.add(configuration);
+            }
+        }
+    }
+
+
+    public class Configuration {
+
+        public String classification;
+
+        public List<String> factors;
+
+        public String title;
+
+        public String file;
+
+        public Configuration(JSONObject json) {
+            this.classification = json.getString("classification");
+            this.factors = JSONUtils.toStringList(json.getJSONArray("factors"));
+            this.title = json.getString("title");
+            this.file = json.getString("file");
+        }
+    }
+}
