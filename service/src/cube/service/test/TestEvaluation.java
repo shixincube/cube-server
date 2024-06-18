@@ -31,6 +31,7 @@ import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.Answer;
 import cube.aigc.psychology.composition.Question;
 import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.composition.ScalesConfiguration;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -39,6 +40,17 @@ import java.util.List;
 public class TestEvaluation {
 
     public static void testEvaluationReport() {
+    }
+
+    public static void testScalesConfiguration() {
+        System.out.println("testScalesConfiguration");
+
+        ScalesConfiguration configuration = new ScalesConfiguration();
+
+        ScalesConfiguration.Category category = configuration.getCategory(ScalesConfiguration.CATEGORY_PERSONALITY);
+        System.out.println("Name: " + category.name);
+
+        System.out.println("----------------------------------------");
     }
 
     public static void testListScales() {
@@ -106,10 +118,12 @@ public class TestEvaluation {
     }
 
     public static void main(String[] args) {
+        testScalesConfiguration();
+
 //        testListScales();
 
 //        testMBTIScale();
 
-        testSCL90Scale();
+//        testSCL90Scale();
     }
 }

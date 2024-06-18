@@ -67,6 +67,29 @@ public class ScalesConfiguration {
         this.load();
     }
 
+    public Category getCategory(String category) {
+        switch (category) {
+            case CATEGORY_PERSONALITY:
+                return this.personality;
+            case CATEGORY_EMOTION:
+                return this.emotion;
+            case CATEGORY_COGNITION:
+                return this.cognition;
+            case CATEGORY_BEHAVIOR:
+                return this.behavior;
+            case CATEGORY_INTERPERSONAL_RELATIONSHIP:
+                return this.interpersonalRelationship;
+            case CATEGORY_SELF_ASSESSMENT:
+                return this.selfAssessment;
+            case CATEGORY_MENTAL_HEALTH:
+                return this.mentalHealth;
+            case CATEGORY_CAPACITY:
+                return this.capacity;
+            default:
+                return null;
+        }
+    }
+
     private void load() {
         JSONObject data = null;
         try {
@@ -81,14 +104,15 @@ public class ScalesConfiguration {
             return;
         }
 
-        this.personality = new Category(data.getJSONObject(CATEGORY_PERSONALITY));
-        this.emotion = new Category(data.getJSONObject(CATEGORY_EMOTION));
-        this.cognition = new Category(data.getJSONObject(CATEGORY_COGNITION));
-        this.behavior = new Category(data.getJSONObject(CATEGORY_BEHAVIOR));
-        this.interpersonalRelationship = new Category(data.getJSONObject(CATEGORY_INTERPERSONAL_RELATIONSHIP));
-        this.selfAssessment = new Category(data.getJSONObject(CATEGORY_SELF_ASSESSMENT));
-        this.mentalHealth = new Category(data.getJSONObject(CATEGORY_MENTAL_HEALTH));
-        this.capacity = new Category(data.getJSONObject(CATEGORY_CAPACITY));
+        JSONObject categoryJSON = data.getJSONObject("category");
+        this.personality = new Category(categoryJSON.getJSONObject(CATEGORY_PERSONALITY));
+        this.emotion = new Category(categoryJSON.getJSONObject(CATEGORY_EMOTION));
+        this.cognition = new Category(categoryJSON.getJSONObject(CATEGORY_COGNITION));
+        this.behavior = new Category(categoryJSON.getJSONObject(CATEGORY_BEHAVIOR));
+        this.interpersonalRelationship = new Category(categoryJSON.getJSONObject(CATEGORY_INTERPERSONAL_RELATIONSHIP));
+        this.selfAssessment = new Category(categoryJSON.getJSONObject(CATEGORY_SELF_ASSESSMENT));
+        this.mentalHealth = new Category(categoryJSON.getJSONObject(CATEGORY_MENTAL_HEALTH));
+        this.capacity = new Category(categoryJSON.getJSONObject(CATEGORY_CAPACITY));
     }
 
 
@@ -107,6 +131,29 @@ public class ScalesConfiguration {
                 this.scales.add(configuration);
             }
         }
+
+        public Configuration find(String classification) {
+            for (Configuration configuration : this.scales) {
+                if (configuration.classification.contains(classification)) {
+                    return configuration;
+                }
+            }
+
+            return null;
+        }
+
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("name", this.name);
+
+            JSONArray array = new JSONArray();
+            for (Configuration configuration : this.scales) {
+                array.put(configuration.toJSON());
+            }
+            json.put("scales", array);
+
+            return json;
+        }
     }
 
 
@@ -118,13 +165,22 @@ public class ScalesConfiguration {
 
         public String title;
 
-        public String file;
+        public String name;
 
         public Configuration(JSONObject json) {
             this.classification = json.getString("classification");
             this.factors = JSONUtils.toStringList(json.getJSONArray("factors"));
             this.title = json.getString("title");
-            this.file = json.getString("file");
+            this.name = json.getString("name");
+        }
+
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("classification", this.classification);
+            json.put("title", this.title);
+            json.put("name", this.name);
+            json.put("factors", JSONUtils.toStringArray(this.factors));
+            return json;
         }
     }
 }

@@ -12,7 +12,7 @@
                         "掩饰性（高/低）"
                     ],
                     "title": "艾森克人格量表",
-                    "file": "EysenckPersonalityQuestionnaire"
+                    "name": "EysenckPersonalityQuestionnaire"
                 },
                 {
                     "classification": "大五人格",
@@ -24,7 +24,7 @@
                         "开放性（高/低）"
                     ],
                     "title": "大五人格量表",
-                    "file": "NEOFiveFactorInventory"
+                    "name": "NEOFiveFactorInventory"
                 },
                 {
                     "classification": "16种人格因素",
@@ -47,7 +47,7 @@
                         "紧张性"
                     ],
                     "title": "卡特尔16种人格测验",
-                    "file": "16PersonalityFactorsQuestionnaire"
+                    "name": "16PersonalityFactorsQuestionnaire"
                 },
                 {
                     "classification": "16型人格",
@@ -62,7 +62,7 @@
                         "判断（J）"
                     ],
                     "title": "MBTI性格测试",
-                    "file": "mbti-16personalities"
+                    "name": "MBTI-16Personalities"
                 }
             ]
         },
@@ -76,7 +76,86 @@
                         "消极情绪"
                     ],
                     "title": "积极与消极情感量表",
-                    "file": "PositiveNegativeAffectSchedule"
+                    "name": "PositiveNegativeAffectSchedule"
+                },
+                {
+                    "classification": "情绪状态",
+                    "factors": [
+                        "紧张",
+                        "抑郁",
+                        "愤怒",
+                        "疲劳",
+                        "活力",
+                        "混杂"
+                    ],
+                    "title": "情绪状态问卷",
+                    "name": "ProfileOfMoodStates"
+                },
+                {
+                    "classification": "抑郁",
+                    "factors": [],
+                    "title": "抑郁自评量表",
+                    "name": "Self-ratingDepressionScale"
+                },
+                {
+                    "classification": "抑郁",
+                    "factors": [],
+                    "title": "贝克抑郁自评量表",
+                    "name": "BeckDepressionInventory"
+                },
+                {
+                    "classification": "抑郁",
+                    "factors": [],
+                    "title": "流调中心用抑郁量表",
+                    "name": "CenterForEpidemiologicStudiesDepressionScale"
+                },
+                {
+                    "classification": "焦虑",
+                    "factors": [],
+                    "title": "焦虑自评量表",
+                    "name": "Self-ratingAnxietyScale"
+                },
+                {
+                    "classification": "焦虑",
+                    "factors": [],
+                    "title": "状态一特质焦虑问卷",
+                    "name": "State-TraitAnxietyInventory"
+                },
+                {
+                    "classification": "愤怒",
+                    "factors": [],
+                    "title": "状态-特质愤怒表达量表",
+                    "name": "State-TraitAngerExpressionInventory"
+                },
+                {
+                    "classification": "愤怒",
+                    "factors": [],
+                    "title": "Buss-Perry攻击性量表",
+                    "name": "Buss-PerryAggressionQuestionnaire"
+                },
+                {
+                    "classification": "愤怒",
+                    "factors": [],
+                    "title": "工作愤怒量表",
+                    "name": "WorkplaceAngerScale"
+                },
+                {
+                    "classification": "害羞",
+                    "factors": [],
+                    "title": "羞怯量表",
+                    "name": "ShynessScale"
+                },
+                {
+                    "classification": "害羞",
+                    "factors": [],
+                    "title": "社交回避及苦恼量表",
+                    "name": "SocialAvoidanceAndDistressScale"
+                },
+                {
+                    "classification": "内疚",
+                    "factors": [],
+                    "title": "内疚和羞耻倾向量表",
+                    "name": "GuiltAndShamePronenessScale"
                 }
             ]
         },
@@ -84,10 +163,70 @@
             "name": "认知",
             "scales": [
                 {
-                    "classification": "",
+                    "classification": "注意",
                     "factors": [],
-                    "title": "",
-                    "file": ""
+                    "title": "注意控制量表",
+                    "name": "AttentionalControlScale"
+                },
+                {
+                    "classification": "注意",
+                    "factors": [],
+                    "title": "正念觉知注意量表",
+                    "name": "MindfulAttentionAwarenessScale"
+                },
+                {
+                    "classification": "记忆",
+                    "factors": [],
+                    "title": "数字广度测试",
+                    "name": "DigitSpan"
+                },
+                {
+                    "classification": "自我控制",
+                    "factors": [
+                        "冲动控制"
+                    ],
+                    "title": "简式自我控制量表",
+                    "name": "BriefSelfControlScale"
+                },
+                {
+                    "classification": "自我控制",
+                    "factors": [
+                        "冲动控制",
+                        "健康习惯",
+                        "抵御诱惑",
+                        "专注工作",
+                        "节制娱乐"
+                    ],
+                    "title": "大学生自我控制量表",
+                    "name": "SelfControlScale"
+                },
+                {
+                    "classification": "执行功能",
+                    "factors": [
+                        "抑制控制"
+                    ],
+                    "title": "行为抑制系统量表",
+                    "name": "BehavioralInhibitionSystemScale"
+                },
+                {
+                    "classification": "执行功能",
+                    "factors": [
+                        "认知灵活性"
+                    ],
+                    "title": "认知灵活性量表",
+                    "name": "CognitiveFlexibilityScale"
+                },
+                {
+                    "classification": "智商",
+                    "factors": [],
+                    "title": "韦克斯勒成人智力量表",
+                    "name": "WechslerAdultIntelligenceScale"
+                },
+                {
+                    "classification": "智商",
+                    "factors": [],
+                    "title": "瑞文标准推理测试",
+                    "name": "RavenProgressiveMatrices"
                 }
             ]
         },
@@ -95,10 +234,80 @@
             "name": "行为",
             "scales": [
                 {
-                    "classification": "",
+                    "classification": "攻击行为",
+                    "factors": [
+                        "身体攻击",
+                        "言语攻击",
+                        "愤怒",
+                        "敌意"
+                    ],
+                    "title": "Buss-Perry攻击性量表",
+                    "name": "Buss-PerryAggressionQuestionnaire"
+                },
+                {
+                    "classification": "攻击行为",
+                    "factors": [
+                        "反应性攻击",
+                        "主动性攻击"
+                    ],
+                    "title": "简版反应性–主动性攻击问卷",
+                    "name": "Reactive-ProactiveAggressionQuestionnaire"
+                },
+                {
+                    "classification": "冲动行为",
+                    "factors": [
+                        "非计划冲动性",
+                        "行动冲动性",
+                        "认知冲动性"
+                    ],
+                    "title": "Barratt冲动量表",
+                    "name": "BarrattImpulsivenessScaleVersion11"
+                },
+                {
+                    "classification": "冲动行为",
+                    "factors": [
+                        "功能性冲动",
+                        "非功能性冲动"
+                    ],
+                    "title": "Dickman冲动性量表",
+                    "name": "DickmanImpulsivityInventory"
+                },
+                {
+                    "classification": "成瘾行为",
                     "factors": [],
-                    "title": "",
-                    "file": ""
+                    "title": "网络成瘾测试量表",
+                    "name": "InternetAddictionTest"
+                },
+                {
+                    "classification": "成瘾行为",
+                    "factors": [],
+                    "title": "游戏成瘾量表",
+                    "name": "GameAddictionScale"
+                },
+                {
+                    "classification": "亲社会行为",
+                    "factors": [
+                        "对他人的同情、理解和援助"
+                    ],
+                    "title": "亲社会倾向量表",
+                    "name": "ProsocialTendencyMeasure"
+                },
+                {
+                    "classification": "应对方式",
+                    "factors": [
+                        "积极应对",
+                        "消极应对",
+                        "情感寻求支持",
+                        "问题解决"
+                    ],
+                    "title": "应对方式问卷",
+                    "name": "CopingOrientationToProblemsExperienced"
+                },
+                {
+                    "classification": "应对方式",
+                    "factors": [],
+                    "title": "简易应对问卷",
+                    "name": "BriefCOPE"
                 }
             ]
         },
@@ -109,7 +318,73 @@
                     "classification": "",
                     "factors": [],
                     "title": "",
-                    "file": ""
+                    "name": ""
+                },
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "name": ""
+                },
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "name": ""
+                },
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "name": ""
+                },
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "name": ""
+                },
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "name": ""
+                },
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "name": ""
+                },
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "name": ""
+                },
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "name": ""
+                },
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "name": ""
+                },
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "name": ""
+                },
+                {
+                    "classification": "",
+                    "factors": [],
+                    "title": "",
+                    "name": ""
                 }
             ]
         },
@@ -120,7 +395,7 @@
                     "classification": "",
                     "factors": [],
                     "title": "",
-                    "file": ""
+                    "name": ""
                 }
             ]
         },
@@ -131,7 +406,7 @@
                     "classification": "",
                     "factors": [],
                     "title": "",
-                    "file": ""
+                    "name": ""
                 }
             ]
         },
@@ -142,7 +417,7 @@
                     "classification": "",
                     "factors": [],
                     "title": "",
-                    "file": ""
+                    "name": ""
                 }
             ]
         }

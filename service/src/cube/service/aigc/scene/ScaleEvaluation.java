@@ -26,15 +26,36 @@
 
 package cube.service.aigc.scene;
 
+import cell.util.log.Logger;
 import cube.aigc.psychology.EvaluationReport;
+import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.algorithm.AttentionSuggestion;
 import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.composition.ScalesConfiguration;
 
+/**
+ * 量表评估器。
+ */
 public class ScaleEvaluation {
 
     public ScaleEvaluation() {
     }
 
     public Scale recommendScale(EvaluationReport evaluationReport) {
-        return null;
+        AttentionSuggestion attentionSuggestion = evaluationReport.getAttentionSuggestion();
+        if (AttentionSuggestion.NoAttention == attentionSuggestion) {
+            Logger.d(this.getClass(), "#recommendScale - No attention");
+            return null;
+        }
+
+        ScalesConfiguration configuration = new ScalesConfiguration();
+        ScalesConfiguration.Category category = configuration.getCategory(ScalesConfiguration.CATEGORY_MENTAL_HEALTH);
+        ScalesConfiguration.Configuration con = category.find("精神症状");
+        if (null == con) {
+            Logger.d(this.getClass(), "#recommendScale - Can NOT find scale configuration");
+            return null;
+        }
+
+        return Resource.getInstance().loadScaleByFilename(con.name);
     }
 }

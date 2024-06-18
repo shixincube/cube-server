@@ -525,6 +525,23 @@ public class PsychologyScene {
         return scale.scoring();
     }
 
+    /**
+     * 根据报告内容推荐量表。
+     *
+     * @param reportSn
+     * @return
+     */
+    public Scale recommendScale(long reportSn) {
+        PsychologyReport report = this.getPsychologyReport(reportSn);
+        if (null == report) {
+            Logger.w(this.getClass(), "#recommendScale - Can NOT find report: " + reportSn);
+            return null;
+        }
+
+        ScaleEvaluation evaluation = new ScaleEvaluation();
+        return evaluation.recommendScale(report.getEvaluationReport());
+    }
+
     public GenerativeRecord buildAddition(long reportSN, boolean representations) {
         PsychologyReport report = this.getPsychologyReport(reportSN);
         if (null == report) {
