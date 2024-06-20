@@ -120,6 +120,9 @@ public class PsychologyScene {
             JSONObject unitConfig = config.getJSONObject("unit");
             this.unitName = unitConfig.getString("name");
             this.unitContextLength = unitConfig.getInt("contextLength");
+
+            // 设置存储器
+            PsychologyDataManager.getInstance().setService(aigcService);
         } catch (Exception e) {
             e.printStackTrace();
             Logger.w(this.getClass(), "#start", e);
@@ -427,6 +430,9 @@ public class PsychologyScene {
                     // 存储
                     storage.writePsychologyReport(reportTask.report);
                     storage.writePainting(reportTask.report.sn, reportTask.fileLabel.getFileCode(), painting);
+
+                    // 使用数据管理器生成关联数据
+                    PsychologyDataManager.getInstance().writeReportChart(reportTask.report);
 
                     // 从正在执行队列移除
                     runningTaskQueue.remove(reportTask);

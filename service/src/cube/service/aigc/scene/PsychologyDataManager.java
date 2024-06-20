@@ -27,8 +27,12 @@
 package cube.service.aigc.scene;
 
 import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.entity.Chart;
+import cube.service.aigc.AIGCService;
+import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -38,6 +42,8 @@ public class PsychologyDataManager {
 
     private final static PsychologyDataManager instance = new PsychologyDataManager();
 
+    private AIGCService aigcService;
+
     private PsychologyDataManager() {
     }
 
@@ -45,12 +51,56 @@ public class PsychologyDataManager {
         return PsychologyDataManager.instance;
     }
 
+    public void setService(AIGCService aigcService) {
+        this.aigcService = aigcService;
+    }
+
+    public Chart readReportChart(long reportSn) {
+        if (null == this.aigcService) {
+            return null;
+        }
+
+        return this.aigcService.getStorage().readLastChart(String.valueOf(reportSn));
+    }
+
     public boolean writeReportChart(PsychologyReport report) {
-        Chart chart = new Chart(String.valueOf(report.sn), "", report.timestamp);
+        if (null == this.aigcService) {
+            return false;
+        }
+
+        Chart chart = new Chart(String.valueOf(report.sn),
+                "$" + report.sn + "$", report.timestamp);
         chart.setLegend(Arrays.asList("负权重分", "正权重分"));
+        chart.setXAxis(Chart.AXIS_TYPE_VALUE);
 
+        Chart.Axis yAxis = chart.setYAxis(Chart.AXIS_TYPE_CATEGORY);
+        yAxis.axisTick = new JSONObject();
+        yAxis.axisTick.put("show", false);
 
+        yAxis.data = new ArrayList<>();
+        for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
+            yAxis.data.add(es.indicator.name);
+        }
 
-        return false;
+        Chart.Series series = chart.addSeries("负权重分", "bar");
+        series.stack = "Total";
+        series.setLabel(true).position = "left";
+        series.emphasis = new JSONObject();
+        series.emphasis.put("focus", "series");
+        for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
+            series.data.add(- (int) Math.round(es.negativeScore * 100));
+        }
+
+        series = chart.addSeries("正权重分", "bar");
+        series.stack = "Total";
+        series.setLabel(true).position = "right";
+        series.emphasis = new JSONObject();
+        series.emphasis.put("focus", "series");
+        for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
+            series.data.add((int) Math.round(es.positiveScore * 100));
+        }
+
+        // 插入数据库
+        return this.aigcService.getStorage().insertChart(chart);
     }
 }

@@ -121,9 +121,10 @@ public class Chart implements JSONable {
         return this.xAxis.isEmpty() ? null : this.xAxis.get(0);
     }
 
-    public void setYAxis(String type) {
+    public Axis setYAxis(String type) {
         this.yAxis.clear();
         this.yAxis.add(new Axis(type));
+        return this.yAxis.get(0);
     }
 
     public Axis getYAxis() {
@@ -132,6 +133,7 @@ public class Chart implements JSONable {
 
     public Series addSeries(String name, String type) {
         Series series = new Series(name, type);
+        this.seriesList.add(series);
         return series;
     }
 
@@ -366,6 +368,12 @@ public class Chart implements JSONable {
             if (json.has("label")) {
                 this.label = new Label(json.getJSONObject("label"));
             }
+        }
+
+        public Label setLabel(boolean show) {
+            this.label = new Label();
+            this.label.show = show;
+            return this.label;
         }
 
         private void parseDataArray(JSONArray dataArray) {

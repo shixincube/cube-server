@@ -313,8 +313,18 @@ public class EvaluationReport implements JSONable {
                 "pessimism:" + pessimism);
 
         // 根据年龄就行修正
-        if (this.attribute.age >= 35) {
-            score -= 1;
+        if (this.attribute.age >= 35 && this.attribute.age <= 50) {
+            if (score >= 5) {
+                score = 3;
+            }
+        }
+        else if (this.attribute.age > 50) {
+            if (score >= 5) {
+                score = 3;
+            }
+            else if (score >= 3) {
+                score = 2;
+            }
         }
 
         if (score > 0) {

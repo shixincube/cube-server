@@ -315,76 +315,136 @@
             "name": "人际关系",
             "scales": [
                 {
-                    "classification": "",
-                    "factors": [],
-                    "title": "",
-                    "name": ""
+                    "classification": "亲子关系",
+                    "factors": [
+                        "情感交流",
+                        "积极沟通",
+                        "自我主义",
+                        "问题解决",
+                        "家庭规则"
+                    ],
+                    "title": "亲子关系量表",
+                    "name": "Parent-ChildRelationshipInventory"
                 },
                 {
-                    "classification": "",
-                    "factors": [],
-                    "title": "",
-                    "name": ""
+                    "classification": "亲子关系",
+                    "factors": [
+                        "接纳/拒绝",
+                        "心理自主/心理受控",
+                        "严厉/放纵"
+                    ],
+                    "title": "父母教育方式评价量表",
+                    "name": "EgnaMinnenBarndomsUppfostran"
                 },
                 {
-                    "classification": "",
+                    "classification": "亲密关系",
                     "factors": [],
-                    "title": "",
-                    "name": ""
+                    "title": "关系评估量表",
+                    "name": "RelationshipAssessmentScale"
                 },
                 {
-                    "classification": "",
-                    "factors": [],
-                    "title": "",
-                    "name": ""
+                    "classification": "依恋",
+                    "factors": [
+                        "安全型",
+                        "恐惧型",
+                        "专注型",
+                        "冷漠型"
+                    ],
+                    "title": "亲密关系经历量表",
+                    "name": "ExperiencesInCloseRelationshipsScale"
                 },
                 {
-                    "classification": "",
+                    "classification": "依恋",
                     "factors": [],
-                    "title": "",
-                    "name": ""
+                    "title": "成人依恋量表",
+                    "name": "AdultAttachmentScale"
                 },
                 {
-                    "classification": "",
-                    "factors": [],
-                    "title": "",
-                    "name": ""
+                    "classification": "友谊",
+                    "factors": [
+                        "亲密性",
+                        "支持",
+                        "冲突"
+                    ],
+                    "title": "友谊质量量表",
+                    "name": "FriendshipQualityScale"
                 },
                 {
-                    "classification": "",
-                    "factors": [],
-                    "title": "",
-                    "name": ""
+                    "classification": "恋爱",
+                    "factors": [
+                        "浪漫型",
+                        "同伴型",
+                        "现实型",
+                        "游戏型",
+                        "占有型",
+                        "奉献型"
+                    ],
+                    "title": "爱情态度量表",
+                    "name": "LoveAttitudeScale"
                 },
                 {
-                    "classification": "",
-                    "factors": [],
-                    "title": "",
-                    "name": ""
+                    "classification": "恋爱",
+                    "factors": [
+                        "关怀",
+                        "依附",
+                        "亲密"
+                    ],
+                    "title": "鲁宾的爱情量表",
+                    "name": "RubinLoveScale"
                 },
                 {
-                    "classification": "",
-                    "factors": [],
-                    "title": "",
-                    "name": ""
+                    "classification": "恋爱",
+                    "factors": [
+                        "亲密",
+                        "激情",
+                        "承诺"
+                    ],
+                    "title": "爱情三元量表",
+                    "name": "SternbergLoveTriangleScale"
                 },
                 {
-                    "classification": "",
+                    "classification": "信任",
                     "factors": [],
-                    "title": "",
-                    "name": ""
+                    "title": "人际信任量表",
+                    "name": "InterpersonalTrustScale"
                 },
                 {
-                    "classification": "",
+                    "classification": "信任",
                     "factors": [],
-                    "title": "",
-                    "name": ""
+                    "title": "信任量表",
+                    "name": "TrustScale"
                 },
                 {
-                    "classification": "",
+                    "classification": "社会支持",
+                    "factors": [
+                        "家庭支持",
+                        "朋友支持",
+                        "他人支持"
+                    ],
+                    "title": "领悟社会支持量表",
+                    "name": "PerceivedSocialSupportScale"
+                },
+                {
+                    "classification": "社会支持",
                     "factors": [],
-                    "title": "",
-                    "name": ""
+                    "title": "社会支持评定量表",
+                    "name": "SocialSupportRatingScale"
+                },
+                {
+                    "classification": "职业关系",
+                    "factors": [
+                        "员工与领导的关系"
+                    ],
+                    "title": "关系能量量表",
+                    "name": "RelationalEnergyScale"
+                },
+                {
+                    "classification": "职业关系",
+                    "factors": [
+                        "同事关系"
+                    ],
+                    "title": "人际冲突量表",
+                    "name": "InterpersonalConflictAtWorkScale"
                 }
             ]
         },
@@ -392,10 +452,52 @@
             "name": "自我评价",
             "scales": [
                 {
-                    "classification": "",
+                    "classification": "自尊",
                     "factors": [],
-                    "title": "",
-                    "name": ""
+                    "title": "罗森伯格自尊量表",
+                    "name": "RosenbergSelf-EsteemScale"
+                },
+                {
+                    "classification": "自我效能感",
+                    "factors": [],
+                    "title": "一般自我效能感量表",
+                    "name": "GeneralSelf-EfficacyScale"
+                },
+                {
+                    "classification": "自我效能感",
+                    "factors": [
+                        "社交困难",
+                        "社交信心",
+                        "分享兴趣",
+                        "主动建立友谊"
+                    ],
+                    "title": "学生社会自我效能感问卷",
+                    "name": "SocialSelf-EfficacyScaleForStudents"
+                },
+                {
+                    "classification": "主观幸福感",
+                    "factors": [
+                        "情感",
+                        "认知"
+                    ],
+                    "title": "主观幸福感量表",
+                    "name": "SubjectiveWell-Being"
+                },
+                {
+                    "classification": "主观幸福感",
+                    "factors": [
+                        "生活满意度"
+                    ],
+                    "title": "生活满意度指数A",
+                    "name": "LifeSatisfactionIndexA"
+                },
+                {
+                    "classification": "主观幸福感",
+                    "factors": [
+                        "生活满意度"
+                    ],
+                    "title": "生活满意度指数B",
+                    "name": "LifeSatisfactionIndexB"
                 }
             ]
         },
@@ -403,10 +505,52 @@
             "name": "心理健康",
             "scales": [
                 {
-                    "classification": "",
-                    "factors": [],
-                    "title": "",
-                    "name": ""
+                    "classification": "精神症状",
+                    "factors": [
+                        "躯体化",
+                        "强迫症状",
+                        "人际关系敏感",
+                        "抑郁",
+                        "焦虑",
+                        "敌对",
+                        "恐怖",
+                        "偏执",
+                        "精神病性",
+                        "其他"
+                    ],
+                    "title": "90项症状清单",
+                    "name": "SCL-90"
+                },
+                {
+                    "classification": "心理弹性",
+                    "factors": [
+                        "坚韧性",
+                        "力量性",
+                        "乐观性"
+                    ],
+                    "title": "心理弹性量表",
+                    "name": "Connor-DavidsonResilienceScale"
+                },
+                {
+                    "classification": "压力",
+                    "factors": [
+                        "工作量",
+                        "工作控制",
+                        "工作满意度"
+                    ],
+                    "title": "工作压力量表",
+                    "name": "JobStressSurvey"
+                },
+                {
+                    "classification": "疲劳",
+                    "factors": [
+                        "体力疲劳",
+                        "心理疲劳",
+                        "情绪疲劳",
+                        "认知疲劳"
+                    ],
+                    "title": "多维疲劳库存量表",
+                    "name": "MultidimensionalFatigueInventory"
                 }
             ]
         },
@@ -414,10 +558,23 @@
             "name": "能力",
             "scales": [
                 {
-                    "classification": "",
+                    "classification": "职业相性",
+                    "factors": [
+                        "现实型（R）",
+                        "研究型（I）",
+                        "艺术型（A）",
+                        "社会型（S）",
+                        "企业型（E）",
+                        "常规型（C）"
+                    ],
+                    "title": "霍兰德职业兴趣量表",
+                    "name": "HollandCode"
+                },
+                {
+                    "classification": "工作状态和满意度",
                     "factors": [],
-                    "title": "",
-                    "name": ""
+                    "title": "工作旺盛感量表",
+                    "name": "ThrivingAtWorkScale"
                 }
             ]
         }
