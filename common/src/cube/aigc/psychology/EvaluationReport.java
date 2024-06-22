@@ -367,14 +367,6 @@ public class EvaluationReport implements JSONable {
         return this.representationList;
     }
 
-//    public List<Representation> getRepresentationListOrderByCorrelation() {
-//        List<Representation> result = new ArrayList<>(this.representationTopN);
-//        for (int i = 0, len = Math.min(this.representationTopN, this.representationList.size()); i < len; ++i) {
-//            result.add(this.representationList.get(i));
-//        }
-//        return result;
-//    }
-
     /**
      * 通过和评分结果进行对比排序，返回表征列表。
      *
@@ -503,6 +495,14 @@ public class EvaluationReport implements JSONable {
                 result.remove(result.size() - 1);
             }
         }
+
+        // 按照优先级排序
+        Collections.sort(evaluationScores, new Comparator<EvaluationScore>() {
+            @Override
+            public int compare(EvaluationScore es1, EvaluationScore es2) {
+                return es2.indicator.priority - es1.indicator.priority;
+            }
+        });
 
         // "人际关系"移到最后
         if (result.get(0).indicator == Indicator.InterpersonalRelation) {

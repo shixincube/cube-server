@@ -132,17 +132,19 @@ public class Evaluation {
         Person person = this.painting.getPerson();
         if (null != person) {
             if (person instanceof StickMan) {
-                // 排除火柴人
-                person = null;
+//                if (this.painting.getAttribute().age > 45) {
+//                    // 大龄人群，排除火柴人
+//                    person = null;
+//                }
 
                 result.addFeature(Term.Creativity, Tendency.Negative);
                 result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.3, 0.4));
 
-                for (Person p : this.painting.getPersons()) {
-                    if (!(p instanceof StickMan)) {
-                        person = p;
-                    }
-                }
+//                for (Person p : this.painting.getPersons()) {
+//                    if (!(p instanceof StickMan)) {
+//                        person = p;
+//                    }
+//                }
             }
         }
 
@@ -1314,7 +1316,8 @@ public class Evaluation {
                     if (person.texture.standardDeviation >= 0.42 && person.texture.hierarchy <= 0.05) {
                         // 涂鸦的人
                         result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
-                        Logger.d(this.getClass(), "#evalPerson - Person is doodle - \n" + person.texture.toJSON().toString(4));
+                        Logger.d(this.getClass(), "#evalPerson - Person is doodle - \n" +
+                                person.texture.toJSON().toString(4));
                     }
                 }
             }
