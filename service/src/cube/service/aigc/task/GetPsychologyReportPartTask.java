@@ -78,11 +78,13 @@ public class GetPsychologyReportPartTask extends ServiceTask {
         long sn = 0;
         boolean behaviorText = false;
         boolean reportText = false;
+        boolean scoreChart = false;
 
         try {
             sn = packet.data.getLong("sn");
             behaviorText = packet.data.has("behaviorText") && packet.data.getBoolean("behaviorText");
             reportText = packet.data.has("reportText") && packet.data.getBoolean("reportText");
+            scoreChart = packet.data.has("scoreChart") && packet.data.getBoolean("scoreChart");
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -119,6 +121,10 @@ public class GetPsychologyReportPartTask extends ServiceTask {
                 array.put(rs.toJSON());
             }
             responseData.put("reportTextList", array);
+        }
+
+        if (scoreChart) {
+
         }
 
         this.cellet.speak(this.talkContext,

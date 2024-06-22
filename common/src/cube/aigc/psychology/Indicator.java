@@ -36,7 +36,7 @@ public enum Indicator {
     /**
      * 精神病性。
      */
-    Psychosis("精神病性", "Psychosis", 90),
+    Psychosis("精神病性", "Psychosis", 20),
 
     /**
      * 外倾。
@@ -61,7 +61,7 @@ public enum Indicator {
     /**
      * 自恋。
      */
-    Narcissism("自恋", "Narcissism", 60),
+    Narcissism("自恋", "Narcissism", 50),
 
     /**
      * 自信。
@@ -71,12 +71,12 @@ public enum Indicator {
     /**
      * 自尊。
      */
-    SelfEsteem("自尊", "SelfEsteem", 50),
+    SelfEsteem("自尊", "SelfEsteem", 30),
 
     /**
      * 社会适应性。
      */
-    SocialAdaptability("社会适应性", "SocialAdaptability", 80),
+    SocialAdaptability("社会适应性", "SocialAdaptability", 70),
 
     /**
      * 独立。
@@ -86,22 +86,22 @@ public enum Indicator {
     /**
      * 理想主义。
      */
-    Idealism("理想主义", "Idealism", 60),
+    Idealism("理想主义", "Idealism", 10),
 
     /**
      * 现实主义。
      */
-    Realism("现实主义", "Realism", 60),
+    Realism("现实主义", "Realism", 10),
 
     /**
      * 情感。
      */
-    Emotion("情感", "Emotion", 70),
+    Emotion("情感", "Emotion", 60),
 
     /**
      * 自我意识。
      */
-    SelfConsciousness("自我意识", "SelfConsciousness", 50),
+    SelfConsciousness("自我意识", "SelfConsciousness", 20),
 
     /**
      * 思考。
@@ -116,27 +116,27 @@ public enum Indicator {
     /**
      * 强迫。
      */
-    Obsession("强迫", "Obsession", 80),
+    Obsession("强迫", "Obsession", 90),
 
     /**
      * 压抑。
      */
-    Constrain("压抑", "Constrain", 70),
+    Constrain("压抑", "Constrain", 60),
 
     /**
      * 自我控制。
      */
-    SelfControl("自我控制", "SelfControl", 60),
+    SelfControl("自我控制", "SelfControl", 30),
 
     /**
      * 焦虑。
      */
-    Anxiety("焦虑", "Anxiety", 70),
+    Anxiety("焦虑", "Anxiety", 90),
 
     /**
      * 抑郁。
      */
-    Depression("抑郁", "Depression", 80),
+    Depression("抑郁", "Depression", 90),
 
     /**
      * 单纯。
@@ -191,7 +191,7 @@ public enum Indicator {
     /**
      * 创造力。
      */
-    Creativity("创造力", "Creativity", 70),
+    Creativity("创造力", "Creativity", 80),
 
     /**
      * 冲动。

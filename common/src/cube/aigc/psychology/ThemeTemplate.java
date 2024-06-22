@@ -111,14 +111,12 @@ public class ThemeTemplate {
         return prompt;
     }
 
-    public String formatRepresentationDescriptionPrompt(String representation,
-                                                        int age, String gender, String markedRepresentation) {
+    public String formatRepresentationDescriptionPrompt(String markedRepresentation) {
         if (null == this.representationPromptFormat) {
             return null;
         }
 
-        return String.format(this.representationPromptFormat.description,
-                age, filterGender(gender), markedRepresentation);
+        return String.format(this.representationPromptFormat.description, markedRepresentation);
     }
 
     public String formatSuggestionPrompt(String representation) {

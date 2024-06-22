@@ -234,13 +234,13 @@ public class PsychologyScene {
      * @param attribute
      * @param fileLabel
      * @param theme
-     * @param maxBehaviorTexts
      * @param maxIndicatorTexts
+     * @param generatesDescription
      * @param listener
      * @return
      */
     public synchronized PsychologyReport generateEvaluationReport(AIGCChannel channel, Attribute attribute,
-                FileLabel fileLabel, Theme theme, int maxBehaviorTexts, int maxIndicatorTexts,
+                FileLabel fileLabel, Theme theme, int maxIndicatorTexts, boolean generatesDescription,
                 PsychologySceneListener listener) {
         // 判断属性限制
         if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
@@ -265,7 +265,7 @@ public class PsychologyScene {
                 attribute, fileLabel, theme);
 
         ReportTask task = new ReportTask(channel, attribute, fileLabel, theme,
-                maxBehaviorTexts, maxIndicatorTexts, listener, report);
+                generatesDescription, maxIndicatorTexts, listener, report);
 
         this.taskQueue.offer(task);
 
@@ -371,7 +371,7 @@ public class PsychologyScene {
 
                     // 根据图像推理报告
                     Workflow workflow = processReport(reportTask.channel, painting, reportTask.theme,
-                            reportTask.maxBehaviorTexts, reportTask.maxIndicatorTexts, new WorkflowListener() {
+                            reportTask.maxIndicatorTexts, reportTask.generatesDescription, new WorkflowListener() {
                                 @Override
                                 public void onInferCompleted(Workflow workflow) {
                                     synchronized (workflow) {
@@ -645,7 +645,7 @@ public class PsychologyScene {
     }
 
     private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme,
-                                   int maxBehaviorText, int maxIndicatorText, WorkflowListener listener) {
+                                   int maxIndicatorText, boolean generatesDescription, WorkflowListener listener) {
         Evaluation evaluation = (null == painting) ?
                 new Evaluation(new Attribute("male", 28)) : new Evaluation(painting);
 
@@ -663,7 +663,7 @@ public class PsychologyScene {
         workflow.setUnitName(this.unitName, this.unitContextLength);
 
         // 制作报告
-        return workflow.make(theme, maxBehaviorText, maxIndicatorText, listener);
+        return workflow.make(theme, maxIndicatorText, generatesDescription, listener);
     }
 
     public void onTick(long now) {
@@ -686,23 +686,23 @@ public class PsychologyScene {
 
         protected Theme theme;
 
-        protected int maxBehaviorTexts;
-
         protected int maxIndicatorTexts;
+
+        protected boolean generatesDescription;
 
         protected PsychologySceneListener listener;
 
         protected PsychologyReport report;
 
         public ReportTask(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
-                          Theme theme, int maxBehaviorTexts, int maxIndicatorTexts,
+                          Theme theme, boolean generatesDescription, int maxIndicatorTexts,
                           PsychologySceneListener listener, PsychologyReport report) {
             this.channel = channel;
             this.attribute = attribute;
             this.fileLabel = fileLabel;
             this.theme = theme;
-            this.maxBehaviorTexts = Math.min(maxBehaviorTexts, 10);
-            this.maxIndicatorTexts = Math.min(maxIndicatorTexts, 10);
+            this.generatesDescription = generatesDescription;
+            this.maxIndicatorTexts = Math.min(maxIndicatorTexts, 5);
             this.listener = listener;
             this.report = report;
         }

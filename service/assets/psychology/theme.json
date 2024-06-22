@@ -2,7 +2,7 @@
     "Generic": {
         "prompt": {
             "representation": {
-                "description": "结合%d岁%s性的特征，描述%s对个体的影响是什么？",
+                "description": "%s对个体的影响是什么？",
                 "suggestion": "根据%s的心理特征描述，简洁和专业地给出建议。"
             },
             "paragraphs": [{

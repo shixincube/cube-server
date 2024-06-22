@@ -155,8 +155,8 @@ public class PsychologyStorage implements Storagable {
             new StorageField("indicator", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("tendency", LiteralBase.INT, new Constraint[] {
-                    Constraint.NOT_NULL, Constraint.DEFAULT_0
+            new StorageField("title", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL,
             }),
             new StorageField("report", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
@@ -373,7 +373,7 @@ public class PsychologyStorage implements Storagable {
                 this.storage.executeInsert(this.reportTextTable, new StorageField[] {
                         new StorageField("report_sn", report.sn),
                         new StorageField("indicator", rs.indicator.name),
-                        new StorageField("tendency", rs.tendency),
+                        new StorageField("title", rs.title),
                         new StorageField("report", EmojiFilter.filterEmoji(rs.report)),
                         new StorageField("suggestion", EmojiFilter.filterEmoji(rs.suggestion))
                 });
@@ -543,7 +543,7 @@ public class PsychologyStorage implements Storagable {
             Map<String, StorageField> tf = StorageFields.get(textFields);
             ReportSuggestion rs = new ReportSuggestion(
                     Indicator.parse(tf.get("indicator").getString()),
-                    tf.get("tendency").getInt(),
+                    tf.get("title").getString(),
                     tf.get("report").getString(),
                     tf.get("suggestion").getString()
             );

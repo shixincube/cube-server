@@ -57,6 +57,8 @@ public class EvaluationReport implements JSONable {
 
     private Attribute attribute;
 
+    private Reference reference;
+
     private List<Representation> representationList;
 
     private ScoreAccelerator scoreAccelerator;
@@ -65,12 +67,13 @@ public class EvaluationReport implements JSONable {
 
     private boolean hesitating = false;
 
-    public EvaluationReport(Attribute attribute, EvaluationFeature evaluationFeature) {
-        this(attribute, Collections.singletonList((evaluationFeature)));
+    public EvaluationReport(Attribute attribute, Reference reference, EvaluationFeature evaluationFeature) {
+        this(attribute, reference, Collections.singletonList((evaluationFeature)));
     }
 
-    public EvaluationReport(Attribute attribute, List<EvaluationFeature> evaluationFeatureList) {
+    public EvaluationReport(Attribute attribute, Reference reference, List<EvaluationFeature> evaluationFeatureList) {
         this.attribute = attribute;
+        this.reference = reference;
         this.representationList = new ArrayList<>();
         this.scoreAccelerator = new ScoreAccelerator();
         this.attentionSuggestion = AttentionSuggestion.NoAttention;
@@ -79,6 +82,8 @@ public class EvaluationReport implements JSONable {
 
     public EvaluationReport(JSONObject json) {
         this.attribute = new Attribute(json.getJSONObject("attribute"));
+        this.reference = json.has("reference") ?
+                Reference.parse(json.getString("reference")) : Reference.Normal;
         this.representationList = new ArrayList<>();
         JSONArray array = json.getJSONArray("representationList");
         for (int i = 0; i < array.length(); ++i) {
@@ -95,6 +100,10 @@ public class EvaluationReport implements JSONable {
 
     public Attribute getAttribute() {
         return this.attribute;
+    }
+
+    public Reference getReference() {
+        return this.reference;
     }
 
     public ScoreAccelerator getScoreAccelerator() {
@@ -159,6 +168,11 @@ public class EvaluationReport implements JSONable {
     }
 
     private void calcAttentionSuggestion() {
+        if (this.reference == Reference.Normal) {
+            this.attentionSuggestion = AttentionSuggestion.NoAttention;
+            return;
+        }
+
         int score = 0;
         boolean depression = false;
         double depressionScore = 0;
@@ -220,10 +234,6 @@ public class EvaluationReport implements JSONable {
                     break;
                 case SenseOfSecurity:
                     if (es.negativeScore - es.positiveScore > 0.6) {
-                        senseOfSecurity = true;
-                        score += 2;
-                    }
-                    else if (es.negativeScore - es.positiveScore >= 0.5) {
                         senseOfSecurity = true;
                         score += 1;
                     }
@@ -520,7 +530,15 @@ public class EvaluationReport implements JSONable {
     }
 
     public List<EvaluationScore> getEvaluationScores() {
-        return this.scoreAccelerator.getEvaluationScores();
+        List<EvaluationScore> result = new ArrayList<>(this.scoreAccelerator.getEvaluationScores());
+        // 排序
+        Collections.sort(result, new Comparator<EvaluationScore>() {
+            @Override
+            public int compare(EvaluationScore s1, EvaluationScore s2) {
+                return s2.indicator.priority - s1.indicator.priority;
+            }
+        });
+        return result;
     }
 
     public int numEvaluationScores() {
@@ -531,6 +549,7 @@ public class EvaluationReport implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("attribute", this.attribute.toJSON());
+        json.put("reference", this.reference.name);
 
         JSONArray array = new JSONArray();
         for (Representation representation : this.representationList) {
@@ -557,6 +576,7 @@ public class EvaluationReport implements JSONable {
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
         json.put("attribute", this.attribute.toJSON());
+        json.put("reference", this.reference.name);
 
         JSONArray array = new JSONArray();
         for (Representation representation : this.representationList) {

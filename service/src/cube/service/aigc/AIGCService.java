@@ -1777,13 +1777,14 @@ public class AIGCService extends AbstractModule {
      * @param attribute
      * @param fileCode
      * @param theme
-     * @param maxBehaviorTexts
      * @param maxIndicatorTexts
+     * @param generatesDescription
      * @param listener
      * @return
      */
     public PsychologyReport generatePsychologyReport(String token, Attribute attribute, String fileCode,
-                                                     Theme theme, int maxBehaviorTexts, int maxIndicatorTexts,
+                                                     Theme theme, int maxIndicatorTexts,
+                                                     boolean generatesDescription,
                                                      PsychologySceneListener listener) {
         if (!this.isStarted()) {
             return null;
@@ -1818,7 +1819,7 @@ public class AIGCService extends AbstractModule {
 
         // 生成报告
         PsychologyReport report = PsychologyScene.getInstance().generateEvaluationReport(channel,
-                attribute, fileLabel, theme, maxBehaviorTexts, maxIndicatorTexts, listener);
+                attribute, fileLabel, theme, maxIndicatorTexts, generatesDescription, listener);
 
         return report;
     }

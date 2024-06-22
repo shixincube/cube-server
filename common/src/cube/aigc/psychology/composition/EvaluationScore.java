@@ -261,7 +261,7 @@ public class EvaluationScore implements JSONable {
             case SenseOfSecurity:
                 if (score >= 0.5) {
                     buf.append("安全感较好");
-                } else if (score > 0.3) {
+                } else if (score >= -0.3) {
                     buf.append("安全感合格");
                 } else {
                     buf.append("安全感很差");
@@ -327,8 +327,10 @@ public class EvaluationScore implements JSONable {
                 }
                 break;
             case InterpersonalRelation:
-                if (score >= 1.3) {
+                if (score >= 3.5) {
                     buf.append("人际关系很受朋友欢迎");
+                } else if (score >= 2.1) {
+                    buf.append("人际关系良好");
                 } else if (score >= 1.0) {
                     buf.append("人际关系有点距离感");
                 } else if (score > 0.1) {
@@ -383,7 +385,7 @@ public class EvaluationScore implements JSONable {
             default:
                 buf.append("有");
                 buf.append(this.indicator.name);
-                buf.append("心理特征");
+                buf.append("特征");
                 break;
         }
         return buf.toString();

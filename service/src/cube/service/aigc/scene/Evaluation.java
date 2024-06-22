@@ -59,6 +59,8 @@ public class Evaluation {
 
     private SpaceLayout spaceLayout;
 
+    private Reference reference;
+
     public Evaluation(Attribute attribute) {
         this.painting = new Painting(attribute);
     }
@@ -67,6 +69,7 @@ public class Evaluation {
         this.painting = painting;
         this.canvasSize = painting.getCanvasSize();
         this.spaceLayout = new SpaceLayout(painting);
+        this.reference = Reference.Normal;
     }
 
     public EvaluationFeature evalSpaceStructure() {
@@ -83,6 +86,9 @@ public class Evaluation {
             if (areaRatio <= 0.08) {
                 result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.7, 0.8));
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
+
+                // 画幅小，偏模
+                this.reference = Reference.Abnormal;
             }
             else if (areaRatio >= (2.0d / 3.0d)) {
                 result.addFeature(Term.SelfExistence, Tendency.Positive);
@@ -469,6 +475,10 @@ public class Evaluation {
         }
         else {
             // 房、树、人三元素中仅有一种元素
+
+            // 偏模
+            this.reference = Reference.Abnormal;
+
             boolean onlyHouse = (null != house);
             boolean onlyTree = (null != tree);
             boolean onlyPerson = (null != person);
@@ -673,7 +683,7 @@ public class Evaluation {
         }
 
         if (null != tree) {
-
+            // TODO
         }
 
         if (null != person) {
@@ -688,8 +698,26 @@ public class Evaluation {
             else if (ratio > 0.3) {
                 // 人的面积非常大
                 result.addFeature(Term.SelfInflated, Tendency.Positive);
-                result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.1, 0.2));
+                result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.5, 0.6));
             }
+        }
+
+        // 判断画面对称性
+
+        boolean symmetry = this.calcSymmetry(this.painting.getTrees());
+        if (symmetry) {
+            result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.6, 0.7));
+        }
+
+        symmetry = this.calcSymmetry(this.painting.getHouses());
+        if (symmetry) {
+            result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.6, 0.7));
+        }
+
+        symmetry = this.calcSymmetry(this.painting.getPersons());
+        if (symmetry) {
+            result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.6, 0.7));
         }
 
         return result;
@@ -1072,7 +1100,7 @@ public class Evaluation {
             }
 
             // 水果数量
-            if (tree.numFruits() >= 5 && tree.numFruits() < 8) {
+            if (tree.numFruits() >= 4 && tree.numFruits() < 8) {
                 result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.4, 0.5));
             }
             else if (tree.numFruits() >= 8) {
@@ -1223,7 +1251,7 @@ public class Evaluation {
                     // 短发
                     result.addFeature(Term.DesireForControl, Tendency.Positive);
 
-                    result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.6, 0.7));
+                    result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.3, 0.4));
                 }
                 else if (person.hasCurlyHair()) {
                     // 卷发
@@ -1839,7 +1867,7 @@ public class Evaluation {
                 EvaluationFeature feature = new EvaluationFeature();
                 feature.addScore(Indicator.Unknown, 1, FloatUtils.random(0.8, 0.9));
                 list.add(feature);
-                report = new EvaluationReport(this.painting.getAttribute(), list);
+                report = new EvaluationReport(this.painting.getAttribute(), this.reference, list);
                 return report;
             }
 
@@ -1852,7 +1880,7 @@ public class Evaluation {
             results.add(this.evalOthers());
             // 矫正
             results = this.correct(results);
-            report = new EvaluationReport(this.painting.getAttribute(), results);
+            report = new EvaluationReport(this.painting.getAttribute(), this.reference, results);
         }
         else {
             Logger.w(this.getClass(), "#makeEvaluationReport - Only for test");
@@ -1863,7 +1891,7 @@ public class Evaluation {
                 int index = Utils.randomInt(0, Term.values().length - 1);
                 result.addFeature(Term.values()[index], Tendency.Positive);
             }
-            report = new EvaluationReport(this.painting.getAttribute(), result);
+            report = new EvaluationReport(this.painting.getAttribute(), this.reference, result);
         }
 
         return report;
@@ -1940,6 +1968,31 @@ public class Evaluation {
 
         fsd.addFrameStructure(list.get(list.size() - 1).structure);
         return fsd;
+    }
+
+    private boolean calcSymmetry(List<? extends Thing> thingList) {
+        if (null == thingList || thingList.isEmpty()) {
+            return false;
+        }
+
+        int centerX = (int) Math.round(this.canvasSize.width * 0.5);
+        List<Thing> leftList = new ArrayList<>();
+        List<Thing> rightList = new ArrayList<>();
+
+        for (Thing thing : thingList) {
+            if (thing.box.x1 < centerX) {
+                leftList.add(thing);
+            }
+            else if (thing.box.x0 > centerX) {
+                rightList.add(thing);
+            }
+        }
+
+        if (!leftList.isEmpty() && !rightList.isEmpty()) {
+            return true;
+        }
+
+        return false;
     }
 
     public class FrameStructureDescription {

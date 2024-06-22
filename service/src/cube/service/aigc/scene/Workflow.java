@@ -107,7 +107,7 @@ public class Workflow {
         return report;
     }
 
-    public Workflow make(Theme theme, int maxBehaviorTexts, int maxIndicatorTexts, WorkflowListener listener) {
+    public Workflow make(Theme theme, int maxIndicatorTexts, boolean generatesDescription, WorkflowListener listener) {
         // 获取模板
         ThemeTemplate template = Resource.getInstance().getThemeTemplate(theme.code);
 
@@ -145,11 +145,11 @@ public class Workflow {
         // 生成概述
         this.summary = this.inferSummary(this.reportTextList);
 
-        // 推理行为特征
+        // 推理描述
         (new Thread() {
             @Override
             public void run() {
-                behaviorTextList = inferDescription(template, age, gender, maxBehaviorTexts, false);
+                behaviorTextList = inferDescription(template, age, gender, generatesDescription, false);
                 if (behaviorTextList.isEmpty()) {
                     Logger.w(this.getClass(), "#make - Description text error");
                 }
@@ -284,7 +284,8 @@ public class Workflow {
     }
 
     private List<DescriptionSuggestion> inferDescription(ThemeTemplate template, int age, String gender,
-                                                         int maxRepresentation, boolean inferSuggestion) {
+                                                         boolean generatesDescription,
+                                                         boolean generatesSuggestion) {
         List<DescriptionSuggestion> result = new ArrayList<>();
 
         List<Representation> representations = this.evaluationReport.getRepresentationListByEvaluationScore(100);
@@ -310,33 +311,35 @@ public class Workflow {
             representation.description = marked;
         }
 
-        for (Representation representation : representations) {
-            Logger.d(this.getClass(), "#inferDescription - representation: " + representation.description);
+        if (generatesDescription) {
+            int maxRepresentation = 5;
+            for (Representation representation : representations) {
+                Logger.d(this.getClass(), "#inferDescription - representation: " + representation.description);
 
-            try {
-                // 推理表征
-                String prompt = template.formatRepresentationDescriptionPrompt(representation.knowledgeStrategy.getTerm().word,
-                        age, gender, representation.description);
-                String description = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                        null, null);
-
-                String suggestion = "";
-                if (inferSuggestion) {
-                    prompt = template.formatSuggestionPrompt(representation.knowledgeStrategy.getTerm().word);
-                    suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                try {
+                    // 推理表征
+                    String prompt = template.formatRepresentationDescriptionPrompt(representation.description);
+                    String description = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                             null, null);
-                }
 
-                if (null != description && null != suggestion) {
-                    result.add(new DescriptionSuggestion(representation.knowledgeStrategy.getTerm(),
-                            representation.description, description, suggestion));
-
-                    if (result.size() >= maxRepresentation) {
-                        break;
+                    String suggestion = "";
+                    if (generatesSuggestion) {
+                        prompt = template.formatSuggestionPrompt(representation.knowledgeStrategy.getTerm().word);
+                        suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                                null, null);
                     }
+
+                    if (null != description && null != suggestion) {
+                        result.add(new DescriptionSuggestion(representation.knowledgeStrategy.getTerm(),
+                                representation.description, description, suggestion));
+
+                        if (result.size() >= maxRepresentation) {
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#inferDescription", e);
                 }
-            } catch (Exception e) {
-                Logger.e(this.getClass(), "#inferDescription", e);
             }
         }
 
@@ -364,7 +367,7 @@ public class Workflow {
                     null, null);
 
             if (null != report && null != suggestion) {
-                result.add(new ReportSuggestion(es.indicator, es.positiveScore >= es.negativeScore ? 1 : -1,
+                result.add(new ReportSuggestion(es.indicator, es.generateWord(),
                         report, suggestion));
 
                 if (result.size() >= maxIndicatorTexts) {
