@@ -84,7 +84,7 @@ public class Evaluation {
 
         if (areaRatio > 0) {
             if (areaRatio <= 0.08) {
-                result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.7, 0.8));
+                result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
 
                 // 画幅小，偏模
@@ -1592,7 +1592,7 @@ public class Evaluation {
 
         if (other.has(Label.MusicalNotation)) {
             // 音乐符号
-            result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.1, 0.2));
         }
 
         if (other.has(Label.TV)) {
@@ -1726,7 +1726,7 @@ public class Evaluation {
         if (other.has(Label.Skull)) {
             // 骷髅
             result.addFeature(Term.WorldWeariness, Tendency.Positive);
-            result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.6, 0.7));
         }
 
         if (other.has(Label.Glasses)) {

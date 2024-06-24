@@ -31,39 +31,42 @@ public enum SixDimension {
     /**
      * 情绪。
      */
-    Emotion("Emotion"),
+    Emotion("Emotion", "情绪"),
 
     /**
      * 认知。
      */
-    Cognition("Cognition"),
+    Cognition("Cognition", "认知"),
 
     /**
      * 行为。
      */
-    Behavior("Behavior"),
+    Behavior("Behavior", "行为"),
 
     /**
      * 人际关系。
      */
-    InterpersonalRelationship("InterpersonalRelationship"),
+    InterpersonalRelationship("InterpersonalRelationship", "人际关系"),
 
     /**
      * 自我评价。
      */
-    SelfAssessment("SelfAssessment"),
+    SelfAssessment("SelfAssessment", "自我评价"),
 
     /**
      * 心理健康。
      */
-    MentalHealth("MentalHealth"),
+    MentalHealth("MentalHealth", "心理健康"),
 
     ;
 
     public final String name;
 
-    SixDimension(String name) {
+    public final String displayName;
+
+    SixDimension(String name, String displayName) {
         this.name = name;
+        this.displayName = displayName;
     }
 
     public static SixDimension parse(String name) {

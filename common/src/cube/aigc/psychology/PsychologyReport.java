@@ -375,7 +375,7 @@ public class PsychologyReport implements JSONable {
             buf.append("| ---- | ---- | ---- |");
             for (SixDimension dimension : SixDimension.values()) {
                 buf.append("\n");
-                buf.append("|").append(dimension.name);
+                buf.append("|").append(dimension.displayName);
                 buf.append("|").append(this.dimensionScore.getDimensionScore(dimension));
                 buf.append("|").append(this.normDimensionScore.getDimensionScore(dimension));
                 buf.append("|");
@@ -410,7 +410,7 @@ public class PsychologyReport implements JSONable {
 
         if (null != this.behaviorTextList && !this.behaviorTextList.isEmpty()) {
             buf.append("\n");
-            buf.append("**行为特征：**");
+            buf.append("**分析描述：**");
             buf.append("\n");
             for (DescriptionSuggestion descriptionSuggestion : this.behaviorTextList) {
                 buf.append("\n");

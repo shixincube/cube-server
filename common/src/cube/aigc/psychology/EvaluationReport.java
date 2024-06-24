@@ -186,14 +186,14 @@ public class EvaluationReport implements JSONable {
         for (EvaluationScore es : this.scoreAccelerator.getEvaluationScores()) {
             switch (es.indicator) {
                 case Psychosis:
-                    if (es.positiveScore > 0.8) {
-                        score += 5;
-                    }
-                    else if (es.positiveScore > 0.4) {
+                    if (es.positiveScore > 0.9) {
                         score += 4;
                     }
-                    else if (es.positiveScore > 0.2) {
+                    else if (es.positiveScore > 0.6) {
                         score += 3;
+                    }
+                    else if (es.positiveScore > 0.3) {
+                        score += 2;
                     }
                     break;
                 case SocialAdaptability:
