@@ -83,7 +83,7 @@ public class Evaluation {
                 "," + spaceLayout.getBottomMargin() + "," + spaceLayout.getLeftMargin());
 
         if (areaRatio > 0) {
-            if (areaRatio <= 0.08) {
+            if (areaRatio <= 0.09) {
                 result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
 
@@ -95,8 +95,7 @@ public class Evaluation {
 
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.Narcissism, 1, FloatUtils.random(0.2, 0.3));
-                // FIXME 画幅大，社会适应性正分
-//                result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.5, 0.6));
+                result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.5, 0.6));
             }
             else if (areaRatio < (1.0d / 6.0d)) {
                 result.addFeature(Term.SelfEsteem, Tendency.Negative);
@@ -107,15 +106,6 @@ public class Evaluation {
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.4, 0.5));
-            }
-            else {
-                result.addFeature(Term.SelfEsteem, Tendency.Negative);
-                result.addFeature(Term.SelfConfidence, Tendency.Negative);
-
-                result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
-                result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.2, 0.3));
-                // FIXME 画幅大，社会适应性正分
-//                result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.2, 0.3));
             }
         }
 
@@ -128,25 +118,7 @@ public class Evaluation {
 
         House house = this.painting.getHouse();
         Tree tree = this.painting.getTree();
-
         Person person = this.painting.getPerson();
-        if (null != person) {
-            if (person instanceof StickMan) {
-//                if (this.painting.getAttribute().age > 45) {
-//                    // 大龄人群，排除火柴人
-//                    person = null;
-//                }
-
-                result.addFeature(Term.Creativity, Tendency.Negative);
-                result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.3, 0.4));
-
-//                for (Person p : this.painting.getPersons()) {
-//                    if (!(p instanceof StickMan)) {
-//                        person = p;
-//                    }
-//                }
-            }
-        }
 
         if (null != house && null != tree && null != person) {
             // 位置关系，使用 box 计算位置
@@ -220,6 +192,13 @@ public class Evaluation {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
 
+            if (((float)ha / this.spaceLayout.getPaintingArea()) < 0.1
+                    && ((float)ta / this.spaceLayout.getPaintingArea()) < 0.1
+                    && ((float)pa / this.spaceLayout.getPaintingArea()) < 0.1) {
+                // 非常模
+                this.reference = Reference.Abnormal;
+            }
+
             // 距离
             int distHT = house.distance(tree);
             int distPH = person.distance(house);
@@ -254,18 +233,18 @@ public class Evaluation {
 
             if (distHT > 10 && distPH > 10 && distTP > 10) {
                 // HTP 距离大，判断所占画幅大小
-                double paintingArea = this.spaceLayout.getPaintingBox().calculateArea() * 0.9;
-                double rH = house.boundingBox.calculateArea() * 0.9 / paintingArea;
-                double rT = tree.boundingBox.calculateArea() * 0.9 / paintingArea;
-                double rP = person.boundingBox.calculateArea() * 0.9 / paintingArea;
+                double paintingArea = this.spaceLayout.getPaintingArea();
+                double rH = house.area / paintingArea;
+                double rT = tree.area / paintingArea;
+                double rP = person.area / paintingArea;
                 Logger.d(this.getClass(), "#evalSpaceStructure - Area ratio: " + rH + "," + rT + "," + rP);
-                if (rH < 0.1 || rT < 0.1 || rP < 0.1) {
+                if ((rH < 0.1 && rT < 0.1) || (rH < 0.1 && rP < 0.1) || (rT < 0.1 && rP < 0.1)) {
                     result.addFeature(Term.SocialPowerlessness, Tendency.Positive);
                     result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
                 }
             }
 
-            // 三者都有，抑郁大幅修正
+            // 三者都有
             if (house.numComponents() > 2 && tree.numComponents() > 2 && person.numComponents() > 1) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.75, 0.85));
             }
@@ -323,11 +302,16 @@ public class Evaluation {
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
             }
 
-            // 房的面积非常小
             double hR = (double)ha / (double)this.spaceLayout.getPaintingArea();
             if (hR < 0.1) {
+                // 房的面积非常小
                 result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
+
+                double tR = (double)ta / (double)this.spaceLayout.getPaintingArea();
+                if (tR < 0.1) {
+                    this.reference = Reference.Abnormal;
+                }
             }
 
             // 间距
@@ -336,10 +320,7 @@ public class Evaluation {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
             }
 
-            // 没有人
-            Logger.d(this.getClass(), "#evalSpaceStructure [Depression] : No person");
-            result.addScore(Indicator.Depression, 1,
-                    hR < 0.1 ? FloatUtils.random(1.0, 1.1) : FloatUtils.random(0.5, 0.6));
+
         }
         else if (null != house && null != person) {
             // 位置关系，使用 box 计算位置
@@ -400,6 +381,11 @@ public class Evaluation {
             if (hR < 0.1) {
                 result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
+
+                double pR = (double)pa / (double)this.spaceLayout.getPaintingArea();
+                if (pR <= 0.09) {
+                    this.reference = Reference.Abnormal;
+                }
             }
 
             // 间距
@@ -472,8 +458,10 @@ public class Evaluation {
             }
 
             double tR = (double)ta / (double)this.spaceLayout.getPaintingArea();
-            result.addScore(Indicator.Depression, 1,
-                    tR < 0.1 ? FloatUtils.random(1.0, 1.1) : FloatUtils.random(0.5, 0.6));
+            double pR = (double)pa / (double)this.spaceLayout.getPaintingArea();
+            if (pR <= 0.09 && tR < 0.1) {
+                this.reference = Reference.Abnormal;
+            }
         }
         else {
             // 房、树、人三元素中仅有一种元素
@@ -514,7 +502,7 @@ public class Evaluation {
 
         // 面积比例，建议不高于 0.010
         double tinyRatio = 0.008;
-        int paintingArea = this.spaceLayout.getPaintingBox().calculateArea();
+        long paintingArea = this.spaceLayout.getPaintingArea();
         if (null != person) {
             // 人整体大小
             int personArea = person.area;
@@ -576,18 +564,18 @@ public class Evaluation {
 
             if (doodles >= 2) {
                 // 画面有1/2画幅涂鸦
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
             }
             else if (doodles >= 1) {
                 // 画面有1/4画幅涂鸦
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.4, 0.5));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
             }
 
             // 画面稀疏
             if (sparseness >= 4) {
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.7, 0.8));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
             }
             else if (sparseness >= 3) {
@@ -595,11 +583,11 @@ public class Evaluation {
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
             }
             else if (sparseness >= 2) {
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
             }
             else if (sparseness >= 1) {
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
             }
         }
@@ -1134,16 +1122,23 @@ public class Evaluation {
             return result;
         }
 
+        int numStickMan = 0;
         for (Person person : this.painting.getPersons()) {
-            // 人类型
             if (person instanceof StickMan) {
                 // 火柴人
-                result.addFeature(Term.Defensiveness, Tendency.Positive);
+                ++numStickMan;
 
-                result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.5, 0.6));
-                result.addScore(Indicator.InterpersonalRelation, -1, FloatUtils.random(0.4, 0.5));
-                break;
+                if (numStickMan == 1) {
+                    result.addFeature(Term.Defensiveness, Tendency.Positive);
+                    result.addFeature(Term.Creativity, Tendency.Negative);
+
+                    result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.3, 0.4));
+                }
             }
+        }
+
+        if (numStickMan >= 3) {
+            result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.5, 0.6));
         }
 
         for (Person person : this.painting.getPersons()) {
