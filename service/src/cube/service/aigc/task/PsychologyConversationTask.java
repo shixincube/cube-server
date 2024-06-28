@@ -74,6 +74,7 @@ public class PsychologyConversationTask extends ServiceTask {
 
         String channelCode = null;
         long reportSn = 0;
+        List<Long> reportSnList = null;
         String query = null;
         try {
             channelCode = packet.data.getString("channelCode");
