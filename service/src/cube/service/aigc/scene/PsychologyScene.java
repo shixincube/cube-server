@@ -31,10 +31,7 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Representation;
-import cube.aigc.psychology.composition.AnswerSheet;
-import cube.aigc.psychology.composition.EvaluationScore;
-import cube.aigc.psychology.composition.Scale;
-import cube.aigc.psychology.composition.ScaleResult;
+import cube.aigc.psychology.composition.*;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.Packet;
@@ -395,7 +392,7 @@ public class PsychologyScene {
                     // 填写数据
                     workflow.fillReport(reportTask.report);
                     // 更新行为推理状态
-                    reportTask.report.behaviorInferenceState = AIGCStateCode.Processing;
+                    reportTask.report.inferenceState = AIGCStateCode.Processing;
 
                     // 生成 Markdown 调试信息
                     reportTask.report.makeMarkdown(false);
@@ -522,6 +519,7 @@ public class PsychologyScene {
 
         scale.submitAnswer(answerSheet);
         this.storage.writeScale(scale);
+        this.storage.writeAnswerSheet(answerSheet);
 
         if (!scale.isComplete()) {
             Logger.d(this.getClass(), "#submitAnswerSheet - Scale complete: false");
@@ -548,10 +546,10 @@ public class PsychologyScene {
         return evaluation.recommendScale(report.getEvaluationReport());
     }
 
-    public GenerativeRecord buildAddition(long reportSN, boolean representations) {
-        PsychologyReport report = this.getPsychologyReport(reportSN);
+    public GenerativeRecord buildAddition(ReportRelevance relevance, boolean representations) {
+        PsychologyReport report = this.getPsychologyReport(relevance.reportSn);
         if (null == report) {
-            Logger.w(this.getClass(), "#buildAddition - Can NOT find report: " + reportSN);
+            Logger.w(this.getClass(), "#buildAddition - Can NOT find report: " + relevance.reportSn);
             return null;
         }
 
@@ -582,10 +580,10 @@ public class PsychologyScene {
         return result;
     }
 
-    public GenerativeRecord buildHistory(long reportSN, boolean representations) {
-        PsychologyReport report = this.getPsychologyReport(reportSN);
+    public GenerativeRecord buildHistory(ReportRelevance relevance, boolean representations) {
+        PsychologyReport report = this.getPsychologyReport(relevance.reportSn);
         if (null == report) {
-            Logger.w(this.getClass(), "#buildHistory - Can NOT find report: " + reportSN);
+            Logger.w(this.getClass(), "#buildHistory - Can NOT find report: " + relevance.reportSn);
             return null;
         }
 

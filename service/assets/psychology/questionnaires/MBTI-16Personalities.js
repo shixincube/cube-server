@@ -185,16 +185,16 @@ function scoring(answers) {
         W3 >= 0 ? 'T' : 'F',
         W4 >= 0 ? 'P' : 'J',
     ];
-    
+
     var score = new ScaleScore();
-    score.addItem('I', I);
-    score.addItem('E', E);
-    score.addItem('S', S);
-    score.addItem('N', N);
-    score.addItem('T', T);
-    score.addItem('F', F);
-    score.addItem('P', P);
-    score.addItem('J', J);
+    score.addItem('I', '内倾', I);
+    score.addItem('E', '外倾', E);
+    score.addItem('S', '感觉', S);
+    score.addItem('N', '直觉', N);
+    score.addItem('T', '思考', T);
+    score.addItem('F', '情感', F);
+    score.addItem('P', '知觉', P);
+    score.addItem('J', '判断', J);
 
     return {
         result: features.join(''),

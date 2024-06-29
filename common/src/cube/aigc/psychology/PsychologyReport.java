@@ -30,7 +30,10 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.aigc.psychology.algorithm.Representation;
-import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.composition.EvaluationScore;
+import cube.aigc.psychology.composition.ReportSuggestion;
+import cube.aigc.psychology.composition.SixDimension;
+import cube.aigc.psychology.composition.SixDimensionScore;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
@@ -80,13 +83,11 @@ public class PsychologyReport implements JSONable {
 
     private String summary;
 
-    private List<DescriptionSuggestion> behaviorTextList;
+//    private List<DescriptionSuggestion> behaviorTextList;
 
     private List<ReportSuggestion> reportTextList;
 
-    private List<ReportParagraph> paragraphList;
-
-    public AIGCStateCode behaviorInferenceState = AIGCStateCode.Processing;
+    public AIGCStateCode inferenceState = AIGCStateCode.Ok;
 
     public PsychologyReport(long contactId, Attribute attribute, FileLabel fileLabel, Theme theme) {
         this.sn = Utils.generateSerialNumber();
@@ -155,14 +156,14 @@ public class PsychologyReport implements JSONable {
             this.evaluationReport = new EvaluationReport(json.getJSONObject("evaluation"));
         }
 
-        if (json.has("behaviorTextList")) {
-            this.behaviorTextList = new ArrayList<>();
-            JSONArray array = json.getJSONArray("behaviorTextList");
-            for (int i = 0; i < array.length(); ++i) {
-                DescriptionSuggestion bs = new DescriptionSuggestion(array.getJSONObject(i));
-                this.behaviorTextList.add(bs);
-            }
-        }
+//        if (json.has("behaviorTextList")) {
+//            this.behaviorTextList = new ArrayList<>();
+//            JSONArray array = json.getJSONArray("behaviorTextList");
+//            for (int i = 0; i < array.length(); ++i) {
+//                DescriptionSuggestion bs = new DescriptionSuggestion(array.getJSONObject(i));
+//                this.behaviorTextList.add(bs);
+//            }
+//        }
 
         if (json.has("reportTextList")) {
             this.reportTextList = new ArrayList<>();
@@ -170,14 +171,6 @@ public class PsychologyReport implements JSONable {
             for (int i = 0; i < array.length(); ++i) {
                 ReportSuggestion rs = new ReportSuggestion(array.getJSONObject(i));
                 this.reportTextList.add(rs);
-            }
-        }
-
-        if (json.has("paragraphList")) {
-            this.paragraphList = new ArrayList<>();
-            JSONArray array = json.getJSONArray("paragraphList");
-            for (int i = 0; i < array.length(); ++i) {
-                this.paragraphList.add(new ReportParagraph(array.getJSONObject(i)));
             }
         }
     }
@@ -209,21 +202,6 @@ public class PsychologyReport implements JSONable {
     public void setDimensionalScore(SixDimensionScore score, SixDimensionScore normScore) {
         this.dimensionScore = score;
         this.normDimensionScore = normScore;
-    }
-
-    public void setBehaviorList(List<DescriptionSuggestion> textList) {
-        this.behaviorTextList = new ArrayList<>();
-        this.behaviorTextList.addAll(textList);
-
-        if (!this.behaviorTextList.isEmpty()) {
-            this.behaviorInferenceState = AIGCStateCode.Ok;
-        } else {
-            this.behaviorInferenceState = AIGCStateCode.Failure;
-        }
-    }
-
-    public List<DescriptionSuggestion> getBehaviorList() {
-        return this.behaviorTextList;
     }
 
     public void setReportTextList(List<ReportSuggestion> textList) {
@@ -274,22 +252,6 @@ public class PsychologyReport implements JSONable {
 
     public String getFileCode() {
         return (null != this.fileCode) ? this.fileCode : this.fileLabel.getFileCode();
-    }
-
-    public List<ReportParagraph> getParagraphs() {
-        return this.paragraphList;
-    }
-
-    public void setParagraphs(List<ReportParagraph> list) {
-        this.paragraphList = new ArrayList<>();
-        this.paragraphList.addAll(list);
-    }
-
-    public void addParagraph(ReportParagraph paragraph) {
-        if (null == this.paragraphList) {
-            this.paragraphList = new ArrayList<>();
-        }
-        this.paragraphList.add(paragraph);
     }
 
     public boolean isNull() {
@@ -408,24 +370,18 @@ public class PsychologyReport implements JSONable {
             buf.append("\n\n");
         }
 
-        if (null != this.behaviorTextList && !this.behaviorTextList.isEmpty()) {
-            buf.append("\n");
-            buf.append("**分析描述：**");
-            buf.append("\n");
-            for (DescriptionSuggestion descriptionSuggestion : this.behaviorTextList) {
-                buf.append("\n");
-                buf.append("> **描述**：").append(descriptionSuggestion.behavior).append("\n");
-                buf.append("> **建议**：\n").append(descriptionSuggestion.suggestion).append("\n");
-                buf.append("\n***\n");
-            }
-            buf.append("\n");
-        }
-
-        if (outputParagraph && null != this.paragraphList) {
-            for (ReportParagraph paragraph : this.paragraphList) {
-                buf.append(paragraph.markdown(true));
-            }
-        }
+//        if (null != this.behaviorTextList && !this.behaviorTextList.isEmpty()) {
+//            buf.append("\n");
+//            buf.append("**分析描述：**");
+//            buf.append("\n");
+//            for (DescriptionSuggestion descriptionSuggestion : this.behaviorTextList) {
+//                buf.append("\n");
+//                buf.append("> **描述**：").append(descriptionSuggestion.behavior).append("\n");
+//                buf.append("> **建议**：\n").append(descriptionSuggestion.suggestion).append("\n");
+//                buf.append("\n***\n");
+//            }
+//            buf.append("\n");
+//        }
 
         this.markdown = buf.toString();
         return this.markdown;
@@ -450,14 +406,6 @@ public class PsychologyReport implements JSONable {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
 
-        if (null != this.behaviorTextList) {
-            JSONArray jsonArray = new JSONArray();
-            for (DescriptionSuggestion bs : this.behaviorTextList) {
-                jsonArray.put(bs.toJSON());
-            }
-            json.put("behaviorTextList", jsonArray);
-        }
-
         if (null != this.reportTextList) {
             JSONArray jsonArray = new JSONArray();
             for (ReportSuggestion rs : this.reportTextList) {
@@ -466,41 +414,16 @@ public class PsychologyReport implements JSONable {
             json.put("reportTextList", jsonArray);
         }
 
-        if (null != this.paragraphList) {
-            JSONArray array = new JSONArray();
-            for (ReportParagraph paragraph : this.paragraphList) {
-                array.put(paragraph.toJSON());
-            }
-            json.put("paragraphList", array);
-        }
-
         return json;
     }
 
     public void extendTextList(JSONObject json) {
-        if (json.has("behaviorTextList")) {
-            this.behaviorTextList = new ArrayList<>();
-            JSONArray array = json.getJSONArray("behaviorTextList");
-            for (int i = 0; i < array.length(); ++i) {
-                DescriptionSuggestion bs = new DescriptionSuggestion(array.getJSONObject(i));
-                this.behaviorTextList.add(bs);
-            }
-        }
-
         if (json.has("reportTextList")) {
             this.reportTextList = new ArrayList<>();
             JSONArray array = json.getJSONArray("reportTextList");
             for (int i = 0; i < array.length(); ++i) {
                 ReportSuggestion rs = new ReportSuggestion(array.getJSONObject(i));
                 this.reportTextList.add(rs);
-            }
-        }
-
-        if (json.has("paragraphList")) {
-            this.paragraphList = new ArrayList<>();
-            JSONArray array = json.getJSONArray("paragraphList");
-            for (int i = 0; i < array.length(); ++i) {
-                this.paragraphList.add(new ReportParagraph(array.getJSONObject(i)));
             }
         }
     }
@@ -513,28 +436,12 @@ public class PsychologyReport implements JSONable {
             json.put("markdown", this.markdown);
         }
 
-        if (null != this.behaviorTextList) {
-            JSONArray jsonArray = new JSONArray();
-            for (DescriptionSuggestion bs : this.behaviorTextList) {
-                jsonArray.put(bs.toJSON());
-            }
-            json.put("behaviorTextList", jsonArray);
-        }
-
         if (null != this.reportTextList) {
             JSONArray jsonArray = new JSONArray();
             for (ReportSuggestion rs : this.reportTextList) {
                 jsonArray.put(rs.toJSON());
             }
             json.put("reportTextList", jsonArray);
-        }
-
-        if (null != this.paragraphList) {
-            JSONArray array = new JSONArray();
-            for (ReportParagraph paragraph : this.paragraphList) {
-                array.put(paragraph.toJSON());
-            }
-            json.put("paragraphList", array);
         }
 
         return json;

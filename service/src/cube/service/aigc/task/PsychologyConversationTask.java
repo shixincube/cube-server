@@ -32,6 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.ConversationResponse;
 import cube.aigc.ModelConfig;
+import cube.aigc.psychology.composition.ReportRelevance;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
@@ -44,6 +45,7 @@ import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.PsychologyScene;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -73,12 +75,15 @@ public class PsychologyConversationTask extends ServiceTask {
         }
 
         String channelCode = null;
-        long reportSn = 0;
-        List<Long> reportSnList = null;
+        List<ReportRelevance> reportSnList = null;
         String query = null;
         try {
             channelCode = packet.data.getString("channelCode");
-            reportSn = packet.data.getLong("reportSn");
+            JSONArray array = packet.data.getJSONArray("relevance");
+            reportSnList = new ArrayList<>();
+            for (int i = 0; i < array.length(); ++i) {
+                reportSnList.add(new ReportRelevance(array.getJSONObject(i)));
+            }
             query = packet.data.getString("query");
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
@@ -108,8 +113,9 @@ public class PsychologyConversationTask extends ServiceTask {
         List<GenerativeRecord> histories = null;
         List<GenerativeRecord> attachments = null;
 
+        ReportRelevance relevance = reportSnList.get(0);
         if (channel.getHistories().isEmpty()) {
-            GenerativeRecord addition = PsychologyScene.getInstance().buildAddition(reportSn, false);
+            GenerativeRecord addition = PsychologyScene.getInstance().buildAddition(relevance, false);
             if (null == addition) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));
@@ -122,7 +128,7 @@ public class PsychologyConversationTask extends ServiceTask {
         else {
             // 非空历史
             histories = new ArrayList<>();
-            GenerativeRecord trick = PsychologyScene.getInstance().buildHistory(reportSn, false);
+            GenerativeRecord trick = PsychologyScene.getInstance().buildHistory(relevance, false);
             if (null == trick) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));

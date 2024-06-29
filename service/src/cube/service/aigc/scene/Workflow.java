@@ -63,13 +63,13 @@ public class Workflow {
 
     private SixDimensionScore normDimensionScore;
 
-    private List<DescriptionSuggestion> behaviorTextList;
+//    private List<DescriptionSuggestion> behaviorTextList;
 
     private List<ReportSuggestion> reportTextList;
 
     private String summary = null;
 
-    private List<ReportParagraph> paragraphList;
+//    private List<ReportParagraph> paragraphList;
 
     private String unitName = ModelConfig.BAIZE_UNIT;
 
@@ -79,9 +79,8 @@ public class Workflow {
         this.evaluationReport = evaluationReport;
         this.channel = channel;
         this.service = service;
-        this.behaviorTextList = new ArrayList<>();
+//        this.behaviorTextList = new ArrayList<>();
         this.reportTextList = new ArrayList<>();
-        this.paragraphList = new ArrayList<>();
     }
 
     public void setUnitName(String unitName, int maxContext) {
@@ -101,9 +100,8 @@ public class Workflow {
         }
 
         report.setSummary(this.summary);
-        report.setBehaviorList(this.behaviorTextList);
+//        report.setBehaviorList(this.behaviorTextList);
         report.setReportTextList(this.reportTextList);
-        report.setParagraphs(this.paragraphList);
         return report;
     }
 
@@ -149,13 +147,13 @@ public class Workflow {
         (new Thread() {
             @Override
             public void run() {
-                behaviorTextList = inferDescription(template, age, gender, generatesDescription, false);
-                if (behaviorTextList.isEmpty()) {
+                List<DescriptionSuggestion> descList = inferDescription(template, age, gender, generatesDescription, false);
+                if (descList.isEmpty()) {
                     Logger.w(this.getClass(), "#make - Description text error");
                 }
 
                 if (Logger.isDebugLevel()) {
-                    Logger.d(this.getClass(), "#make - Description list size: " + behaviorTextList.size());
+                    Logger.d(this.getClass(), "#make - Description list size: " + descList.size());
                 }
 
                 listener.onInferCompleted(Workflow.this);
@@ -389,7 +387,7 @@ public class Workflow {
             }
         }
         prompt.append("\n");
-        prompt.append("根据上述已知信息，简洁和专业的来回答用户的问题。问题是：简明扼要地总结一下这个人的特点。");
+        prompt.append("根据上述已知信息，简洁和专业的来回答用户的问题。问题是：简明扼要地总结一下这个人的心理特质。");
         String summary = this.service.syncGenerateText(this.unitName, prompt.toString(), new GenerativeOption(),
                 null, null);
         return summary;

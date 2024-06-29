@@ -31,12 +31,28 @@ import org.json.JSONObject;
 
 public class ReportRelevance implements JSONable {
 
-    public ReportRelevance() {
+    public String name;
+
+    public long reportSn;
+
+    public String description;
+
+    public ReportRelevance(String name, long reportSn) {
+        this.name = name;
+        this.reportSn = reportSn;
+    }
+
+    public ReportRelevance(JSONObject json) {
+        this.name = json.getString("name");
+        this.reportSn = json.getLong("reportSn");
     }
 
     @Override
     public JSONObject toJSON() {
-        return null;
+        JSONObject json = new JSONObject();
+        json.put("name", this.name);
+        json.put("reportSn", this.reportSn);
+        return json;
     }
 
     @Override

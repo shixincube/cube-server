@@ -36,6 +36,7 @@ import java.util.List;
 /**
  * 报告段落。
  */
+@Deprecated
 public class ReportParagraph implements JSONable {
 
     public String title;

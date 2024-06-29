@@ -57,6 +57,8 @@ public class Scale extends Questionnaire implements JSONable {
 
     private long timestamp;
 
+    private ScaleResult result;
+
     public Scale(File structureFile) {
         this.sn = Utils.generateSerialNumber();
         this.structureFile = structureFile;
@@ -78,6 +80,10 @@ public class Scale extends Questionnaire implements JSONable {
         }
         else {
             this.timestamp = System.currentTimeMillis();
+        }
+
+        if (json.has("result")) {
+            this.result = new ScaleResult(json.getJSONObject("result"));
         }
     }
 
@@ -146,7 +152,8 @@ public class Scale extends Questionnaire implements JSONable {
             scaleScore = (ScaleScore) returnVal.get("score");
         }
 
-        return new ScaleResult(result, scaleScore, this);
+        this.result = new ScaleResult(result, scaleScore, this);
+        return this.result;
     }
 
     /**
@@ -175,6 +182,9 @@ public class Scale extends Questionnaire implements JSONable {
         }
         json.put("sections", sections);
         json.put("scoringScript", this.scoringScript);
+        if (null != this.result) {
+            json.put("result", this.result.toJSON());
+        }
         return json;
     }
 

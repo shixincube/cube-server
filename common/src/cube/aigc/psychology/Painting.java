@@ -27,6 +27,7 @@
 package cube.aigc.psychology;
 
 import cell.util.log.Logger;
+import cube.aigc.psychology.algorithm.PaintingType;
 import cube.aigc.psychology.composition.Line;
 import cube.aigc.psychology.composition.Texture;
 import cube.aigc.psychology.material.*;
@@ -47,6 +48,8 @@ import java.util.*;
  * 画面空间元素描述。
  */
 public class Painting implements JSONable {
+
+    private PaintingType type;
 
     private long elapsed;
 
@@ -71,12 +74,15 @@ public class Painting implements JSONable {
     private JSONArray materials;
 
     public Painting(Attribute attribute) {
+        this.type = PaintingType.HouseTreePerson;
         this.attribute = attribute;
         this.otherSet = new OtherSet();
         this.quadrants = new ArrayList<>();
     }
 
     public Painting(JSONObject json) {
+        this.type = json.has("type") ?
+                PaintingType.parse(json.getString("type")) : PaintingType.HouseTreePerson;
         this.elapsed = json.getLong("elapsed");
         this.canvasSize = new Size(json.getJSONObject("size"));
 
@@ -732,6 +738,7 @@ public class Painting implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("type", this.type.name);
         json.put("elapsed", this.elapsed);
         json.put("size", this.canvasSize.toJSON());
 

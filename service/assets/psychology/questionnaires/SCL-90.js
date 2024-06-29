@@ -141,16 +141,16 @@ function scoring(answers) {
 
 
     var score = new ScaleScore();
-    score.addItem('T_Somatization', T_Somatization);
-    score.addItem('T_Obsession', T_Obsession);
-    score.addItem('T_InterpersonalRelation', T_InterpersonalRelation);
-    score.addItem('T_Depression', T_Depression);
-    score.addItem('T_Anxiety', T_Anxiety);
-    score.addItem('T_Hostile', T_Hostile);
-    score.addItem('T_Horror', T_Horror);
-    score.addItem('T_Paranoid', T_Paranoid);
-    score.addItem('T_Psychosis', T_Psychosis);
-    score.addItem('T_SleepAndDiet', T_SleepAndDiet);
+    score.addItem('T_Somatization', '躯体化症状', T_Somatization);
+    score.addItem('T_Obsession', '强迫症状', T_Obsession);
+    score.addItem('T_InterpersonalRelation', '人际关系问题', T_InterpersonalRelation);
+    score.addItem('T_Depression', '抑郁症状', T_Depression);
+    score.addItem('T_Anxiety', '焦虑症状', T_Anxiety);
+    score.addItem('T_Hostile', '敌对性症状', T_Hostile);
+    score.addItem('T_Horror', '恐怖症状', T_Horror);
+    score.addItem('T_Paranoid', '偏执症状', T_Paranoid);
+    score.addItem('T_Psychosis', '精神病性症状', T_Psychosis);
+    score.addItem('T_SleepAndDiet', '睡眠及饮食问题', T_SleepAndDiet);
 
     // 计算常模
     var desc = [
