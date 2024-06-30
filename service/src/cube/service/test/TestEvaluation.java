@@ -118,11 +118,11 @@ public class TestEvaluation {
     }
 
     public static void main(String[] args) {
-        testScalesConfiguration();
+//        testScalesConfiguration();
 
 //        testListScales();
 
-//        testMBTIScale();
+        testMBTIScale();
 
 //        testSCL90Scale();
     }

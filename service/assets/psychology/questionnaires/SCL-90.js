@@ -167,7 +167,7 @@ function scoring(answers) {
     ];
 
     return {
-        result: desc.join(''),
+        content: desc.join(''),
         score: score
     }
 }

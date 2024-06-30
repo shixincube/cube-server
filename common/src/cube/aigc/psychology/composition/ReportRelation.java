@@ -29,7 +29,7 @@ package cube.aigc.psychology.composition;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
-public class ReportRelevance implements JSONable {
+public class ReportRelation implements JSONable {
 
     public String name;
 
@@ -37,12 +37,12 @@ public class ReportRelevance implements JSONable {
 
     public String description;
 
-    public ReportRelevance(String name, long reportSn) {
+    public ReportRelation(String name, long reportSn) {
         this.name = name;
         this.reportSn = reportSn;
     }
 
-    public ReportRelevance(JSONObject json) {
+    public ReportRelation(JSONObject json) {
         this.name = json.getString("name");
         this.reportSn = json.getLong("reportSn");
     }

@@ -546,7 +546,7 @@ public class PsychologyScene {
         return evaluation.recommendScale(report.getEvaluationReport());
     }
 
-    public GenerativeRecord buildAddition(ReportRelevance relevance, boolean representations) {
+    public GenerativeRecord buildAddition(ReportRelation relevance, boolean representations) {
         PsychologyReport report = this.getPsychologyReport(relevance.reportSn);
         if (null == report) {
             Logger.w(this.getClass(), "#buildAddition - Can NOT find report: " + relevance.reportSn);
@@ -580,7 +580,7 @@ public class PsychologyScene {
         return result;
     }
 
-    public GenerativeRecord buildHistory(ReportRelevance relevance, boolean representations) {
+    public GenerativeRecord buildHistory(ReportRelation relevance, boolean representations) {
         PsychologyReport report = this.getPsychologyReport(relevance.reportSn);
         if (null == report) {
             Logger.w(this.getClass(), "#buildHistory - Can NOT find report: " + relevance.reportSn);

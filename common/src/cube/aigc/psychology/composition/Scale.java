@@ -143,16 +143,16 @@ public class Scale extends Questionnaire implements JSONable {
             return null;
         }
 
-        String result = "";
+        String content = "";
         ScaleScore scaleScore = new ScaleScore();
-        if (returnVal.containsKey("result")) {
-            result = returnVal.get("result").toString();
+        if (returnVal.containsKey("content")) {
+            content = returnVal.get("content").toString();
         }
         if (returnVal.containsKey("score")) {
             scaleScore = (ScaleScore) returnVal.get("score");
         }
 
-        this.result = new ScaleResult(result, scaleScore, this);
+        this.result = new ScaleResult(content, scaleScore, this);
         return this.result;
     }
 

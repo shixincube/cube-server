@@ -30,7 +30,7 @@ import org.json.JSONObject;
 
 public class ScaleResult {
 
-    public String result;
+    public String content;
 
     public ScaleScore score;
 
@@ -40,16 +40,16 @@ public class ScaleResult {
         this.complete = scale.isComplete();
     }
 
-    public ScaleResult(String result, ScaleScore score, Scale scale) {
-        this.result = result;
+    public ScaleResult(String content, ScaleScore score, Scale scale) {
+        this.content = content;
         this.score = score;
         this.complete = scale.isComplete();
     }
 
     public ScaleResult(JSONObject json) {
         this.complete = json.getBoolean("complete");
-        if (json.has("result")) {
-            this.result = json.getString("result");
+        if (json.has("content")) {
+            this.content = json.getString("content");
         }
         if (json.has("score")) {
             this.score = new ScaleScore(json.getJSONObject("score"));
@@ -59,8 +59,8 @@ public class ScaleResult {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("complete", this.complete);
-        if (null != this.result) {
-            json.put("result", this.result);
+        if (null != this.content) {
+            json.put("content", this.content);
         }
         if (null != this.score) {
             json.put("score", this.score.toJSON());

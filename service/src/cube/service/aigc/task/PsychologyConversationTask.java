@@ -30,9 +30,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.aigc.ConversationResponse;
-import cube.aigc.ModelConfig;
-import cube.aigc.psychology.composition.ReportRelevance;
+import cube.aigc.psychology.composition.ReportRelation;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
@@ -75,14 +73,14 @@ public class PsychologyConversationTask extends ServiceTask {
         }
 
         String channelCode = null;
-        List<ReportRelevance> reportSnList = null;
+        List<ReportRelation> reportSnList = null;
         String query = null;
         try {
             channelCode = packet.data.getString("channelCode");
             JSONArray array = packet.data.getJSONArray("relevance");
             reportSnList = new ArrayList<>();
             for (int i = 0; i < array.length(); ++i) {
-                reportSnList.add(new ReportRelevance(array.getJSONObject(i)));
+                reportSnList.add(new ReportRelation(array.getJSONObject(i)));
             }
             query = packet.data.getString("query");
         } catch (Exception e) {
@@ -113,7 +111,7 @@ public class PsychologyConversationTask extends ServiceTask {
         List<GenerativeRecord> histories = null;
         List<GenerativeRecord> attachments = null;
 
-        ReportRelevance relevance = reportSnList.get(0);
+        ReportRelation relevance = reportSnList.get(0);
         if (channel.getHistories().isEmpty()) {
             GenerativeRecord addition = PsychologyScene.getInstance().buildAddition(relevance, false);
             if (null == addition) {
