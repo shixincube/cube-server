@@ -110,7 +110,11 @@ public class Scale extends Questionnaire implements JSONable {
     }
 
     public ScaleResult scoring() {
-        Path scoringScriptFile = Paths.get(this.structureFile.getParent(), this.scoringScript);
+        return this.scoring(this.structureFile.getParentFile());
+    }
+
+    public ScaleResult scoring(File path) {
+        Path scoringScriptFile = Paths.get(path.getAbsolutePath(), this.scoringScript);
         if (!Files.exists(scoringScriptFile)) {
             Logger.w(this.getClass(), "#scoring - Scoring script file error: "
                     + scoringScriptFile.toFile().getAbsolutePath());

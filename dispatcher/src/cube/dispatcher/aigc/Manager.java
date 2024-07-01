@@ -35,6 +35,7 @@ import cube.aigc.attachment.ui.Event;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PsychologyReport;
 import cube.aigc.psychology.composition.AnswerSheet;
+import cube.aigc.psychology.composition.ReportRelation;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScaleResult;
 import cube.auth.AuthToken;
@@ -2143,10 +2144,10 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public JSONObject executePsychologyConversation(String token, String channelCode,
-                                                    long reportSn, String query) {
+                                                    JSONArray reportRelations, String query) {
         JSONObject data = new JSONObject();
         data.put("channelCode", channelCode);
-        data.put("reportSn", reportSn);
+        data.put("relations", reportRelations);
         data.put("query", query);
         Packet packet = new Packet(AIGCAction.PsychologyConversation.name, data);
         ActionDialect request = packet.toDialect();

@@ -35,6 +35,8 @@ public class AIGCChatHistory extends Entity {
 
     public final long sn;
 
+    public String channelCode;
+
     public String unit;
 
     public long queryContactId;

@@ -29,6 +29,7 @@ package cube.dispatcher.aigc.handler;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
@@ -40,7 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 public class PsychologyConversation extends ContextHandler {
 
     public PsychologyConversation() {
-        super("/aigc/psychology/conversation");
+        super("/aigc/psychology/converse");
         setHandler(new Handler());
     }
 
@@ -68,10 +69,10 @@ public class PsychologyConversation extends ContextHandler {
             try {
                 JSONObject requestData = this.readBodyAsJSONObject(request);
                 String channelCode = requestData.getString("channelCode");
-                long reportSn = requestData.getLong("reportSn");
+                JSONArray relations = requestData.getJSONArray("relations");
                 String query = requestData.getString("query");
 
-                JSONObject json = Manager.getInstance().executePsychologyConversation(token, channelCode, reportSn, query);
+                JSONObject json = Manager.getInstance().executePsychologyConversation(token, channelCode, relations, query);
                 if (null == json) {
                     this.respond(response, HttpStatus.BAD_REQUEST_400);
                     this.complete();

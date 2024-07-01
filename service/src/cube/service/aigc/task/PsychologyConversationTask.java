@@ -47,7 +47,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -73,14 +72,14 @@ public class PsychologyConversationTask extends ServiceTask {
         }
 
         String channelCode = null;
-        List<ReportRelation> reportSnList = null;
+        List<ReportRelation> reportRelationList = null;
         String query = null;
         try {
             channelCode = packet.data.getString("channelCode");
-            JSONArray array = packet.data.getJSONArray("relevance");
-            reportSnList = new ArrayList<>();
+            JSONArray array = packet.data.getJSONArray("relations");
+            reportRelationList = new ArrayList<>();
             for (int i = 0; i < array.length(); ++i) {
-                reportSnList.add(new ReportRelation(array.getJSONObject(i)));
+                reportRelationList.add(new ReportRelation(array.getJSONObject(i)));
             }
             query = packet.data.getString("query");
         } catch (Exception e) {
@@ -111,22 +110,19 @@ public class PsychologyConversationTask extends ServiceTask {
         List<GenerativeRecord> histories = null;
         List<GenerativeRecord> attachments = null;
 
-        ReportRelation relevance = reportSnList.get(0);
         if (channel.getHistories().isEmpty()) {
-            GenerativeRecord addition = PsychologyScene.getInstance().buildAddition(relevance, false);
-            if (null == addition) {
+            attachments = PsychologyScene.getInstance().buildAdditions(reportRelationList, false);
+            if (null == attachments) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));
                 markResponseTime();
                 return;
             }
-
-            attachments = Collections.singletonList(addition);
         }
         else {
             // 非空历史
             histories = new ArrayList<>();
-            GenerativeRecord trick = PsychologyScene.getInstance().buildHistory(relevance, false);
+            GenerativeRecord trick = PsychologyScene.getInstance().buildHistory(reportRelationList, false);
             if (null == trick) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));

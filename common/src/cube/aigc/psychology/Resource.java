@@ -188,6 +188,10 @@ public class Resource {
         return this.sixDimProjection;
     }
 
+    public File getQuestionnairesPath() {
+        return this.questionnairesPath;
+    }
+
     public List<File> listScaleFiles() {
         List<File> result = new ArrayList<>();
         File[] files = this.questionnairesPath.listFiles(new FilenameFilter() {

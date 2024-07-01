@@ -47,10 +47,7 @@ import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -526,7 +523,12 @@ public class PsychologyScene {
             return new ScaleResult(scale);
         }
 
-        return scale.scoring();
+        try {
+            return scale.scoring(Resource.getInstance().getQuestionnairesPath());
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#submitAnswerSheet", e);
+            return null;
+        }
     }
 
     /**
@@ -546,44 +548,56 @@ public class PsychologyScene {
         return evaluation.recommendScale(report.getEvaluationReport());
     }
 
-    public GenerativeRecord buildAddition(ReportRelation relevance, boolean representations) {
-        PsychologyReport report = this.getPsychologyReport(relevance.reportSn);
-        if (null == report) {
-            Logger.w(this.getClass(), "#buildAddition - Can NOT find report: " + relevance.reportSn);
-            return null;
-        }
+    public List<GenerativeRecord> buildAdditions(List<ReportRelation> relations, boolean representations) {
+        List<GenerativeRecord> result = null;
 
-        StringBuilder data = new StringBuilder("当前讨论对象（个体）的年龄是");
-        data.append(report.getAttribute().age).append("岁");
-        data.append("，性别是").append(report.getAttribute().getGenderText()).append("性");
-        data.append("，其心理特征是：");
-        for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
-            String word = es.generateWord();
-            if (null == word) {
-                continue;
+        if (relations.size() == 1) {
+            ReportRelation relation = relations.get(0);
+            PsychologyReport report = this.getPsychologyReport(relation.reportSn);
+            if (null == report) {
+                Logger.w(this.getClass(), "#buildAddition - Can NOT find report: " + relation.reportSn);
+                return null;
             }
-            data.append(word).append("、");
-        }
 
-        if (representations) {
-            for (Representation representation : report.getEvaluationReport().getRepresentationListWithoutEvaluationScore()) {
-                data.append(representation.description).append("、");
+            StringBuilder data = new StringBuilder("当前讨论对象（个体）的年龄是");
+            data.append(report.getAttribute().age).append("岁");
+            data.append("，性别是").append(report.getAttribute().getGenderText()).append("性");
+            data.append("，其心理特征是：");
+            for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
+                String word = es.generateWord();
+                if (null == word) {
+                    continue;
+                }
+                data.append(word).append("、");
             }
+
+            if (representations) {
+                for (Representation representation : report.getEvaluationReport().getRepresentationListWithoutEvaluationScore()) {
+                    data.append(representation.description).append("、");
+                }
+            }
+
+            data.delete(data.length() - 1, data.length());
+            data.append("。");
+
+            result = new ArrayList<>();
+            GenerativeRecord item = new GenerativeRecord(new String[] {
+                    data.toString()
+            });
+            result.add(item);
+        }
+        else {
+            result = new ArrayList<>();
         }
 
-        data.delete(data.length() - 1, data.length());
-        data.append("。");
-
-        GenerativeRecord result = new GenerativeRecord(new String[] {
-                data.toString()
-        });
         return result;
     }
 
-    public GenerativeRecord buildHistory(ReportRelation relevance, boolean representations) {
-        PsychologyReport report = this.getPsychologyReport(relevance.reportSn);
+    public GenerativeRecord buildHistory(List<ReportRelation> relations, boolean representations) {
+        ReportRelation relation = relations.get(0);
+        PsychologyReport report = this.getPsychologyReport(relation.reportSn);
         if (null == report) {
-            Logger.w(this.getClass(), "#buildHistory - Can NOT find report: " + relevance.reportSn);
+            Logger.w(this.getClass(), "#buildHistory - Can NOT find report: " + relation.reportSn);
             return null;
         }
 
