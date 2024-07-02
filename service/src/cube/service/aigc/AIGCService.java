@@ -2659,7 +2659,8 @@ public class AIGCService extends AbstractModule {
             this.maxHistories = 0;
             this.listener = listener;
 
-            this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName(), this.participant.getDomain().getName());
+            this.history = new AIGCChatHistory(this.sn, this.channel.getCode(), unit.getCapability().getName(),
+                    this.participant.getDomain().getName());
             this.history.queryContactId = channel.getAuthToken().getContactId();
             this.history.queryTime = System.currentTimeMillis();
             this.history.queryContent = content;
@@ -3340,7 +3341,7 @@ public class AIGCService extends AbstractModule {
             this.text = text;
             this.listener = listener;
 
-            this.history = new AIGCChatHistory(this.sn, unit.getCapability().getName(),
+            this.history = new AIGCChatHistory(this.sn, channel.getCode(), unit.getCapability().getName(),
                     channel.getDomain().getName());
             this.history.queryContactId = channel.getAuthToken().getContactId();
             this.history.queryTime = System.currentTimeMillis();

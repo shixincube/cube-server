@@ -59,11 +59,16 @@ public class ChatHistory extends ContextHandler {
                 return;
             }
 
+            String channel = null;
             long contactId = 0;
             int feedback = -1;
             long start = 0;
             long end = 0;
             try {
+                if (null != request.getParameter("channel")) {
+                    channel = request.getParameter("channel");
+                }
+
                 if (null != request.getParameter("cid")) {
                     contactId = Long.parseLong(request.getParameter("cid"));
                 }
@@ -85,7 +90,8 @@ public class ChatHistory extends ContextHandler {
                 return;
             }
 
-            JSONObject responseData = Manager.getInstance().queryChatHistory(token, contactId, feedback, start, end);
+            JSONObject responseData = Manager.getInstance().queryChatHistory(token, channel,
+                    contactId, feedback, start, end);
             if (null == responseData) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();

@@ -35,7 +35,7 @@ public class AIGCChatHistory extends Entity {
 
     public final long sn;
 
-    public String channelCode;
+    public final String channelCode;
 
     public String unit;
 
@@ -55,20 +55,23 @@ public class AIGCChatHistory extends Entity {
 
     public long contextId = 0;
 
-    public AIGCChatHistory(long sn, String unit, String domain) {
-        super(0L, domain);
+    public AIGCChatHistory(long sn, String channelCode, String unit, String domain) {
+        super(0L, (null != domain ? domain : ""));
         this.sn = sn;
+        this.channelCode = channelCode;
         this.unit = unit;
     }
 
-    public AIGCChatHistory(long id, long sn, String domain) {
-        super(id, domain);
+    public AIGCChatHistory(long id, long sn, String channelCode, String domain) {
+        super(id, (null != domain ? domain : ""));
         this.sn = sn;
+        this.channelCode = channelCode;
     }
 
     public AIGCChatHistory(JSONObject json) {
         super(json);
         this.sn = json.getLong("sn");
+        this.channelCode = json.has("channel") ? json.getString("channel") : "-";
         this.unit = json.getString("unit");
         this.queryContactId = json.getLong("queryContactId");
         this.queryTime = json.getLong("queryTime");
@@ -84,6 +87,7 @@ public class AIGCChatHistory extends Entity {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("sn", this.sn);
+        json.put("channel", this.channelCode);
         json.put("unit", this.unit);
         json.put("queryContactId", this.queryContactId);
         json.put("queryTime", this.queryTime);

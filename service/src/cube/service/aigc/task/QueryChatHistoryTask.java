@@ -41,6 +41,8 @@ import cube.service.aigc.AIGCService;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -74,12 +76,16 @@ public class QueryChatHistoryTask extends ServiceTask {
             return;
         }
 
+        String channel = null;
         long contactId = 0;
         int feedback = -1;
         long start = 0;
         long end = 0;
 
         try {
+            if (packet.data.has("channel")) {
+                channel = packet.data.getString("channel");
+            }
             if (packet.data.has("contactId")) {
                 contactId = packet.data.getLong("contactId");
             }
@@ -104,7 +110,10 @@ public class QueryChatHistoryTask extends ServiceTask {
 
         List<AIGCChatHistory> historyList = null;
 
-        if (contactId != 0) {
+        if (null != channel) {
+            historyList = service.getStorage().readChatHistoryByChannel(channel, start, end);
+        }
+        else if (contactId != 0) {
             historyList = service.getStorage().readChatHistoryByContactId(contactId, token.getDomain(), start, end);
         }
         else if (feedback != -1) {
@@ -117,6 +126,13 @@ public class QueryChatHistoryTask extends ServiceTask {
             markResponseTime();
             return;
         }
+
+        Collections.sort(historyList, new Comparator<AIGCChatHistory>() {
+            @Override
+            public int compare(AIGCChatHistory h1, AIGCChatHistory h2) {
+                return (int)(h1.queryTime - h2.queryTime);
+            }
+        });
 
         JSONArray array = new JSONArray();
         for (AIGCChatHistory history : historyList) {

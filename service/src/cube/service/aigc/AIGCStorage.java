@@ -176,6 +176,9 @@ public class AIGCStorage implements Storagable {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("channel", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("unit", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -775,7 +778,8 @@ public class AIGCStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            AIGCChatHistory history = new AIGCChatHistory(data.get("id").getLong(), data.get("sn").getLong(), domain);
+            AIGCChatHistory history = new AIGCChatHistory(data.get("id").getLong(), data.get("sn").getLong(),
+                    data.get("channel").getString(), domain);
             history.unit = data.get("unit").getString();
             history.queryContactId = data.get("query_cid").getLong();
             history.queryTime = data.get("query_time").getLong();
@@ -811,7 +815,40 @@ public class AIGCStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            AIGCChatHistory history = new AIGCChatHistory(data.get("id").getLong(), data.get("sn").getLong(), domain);
+            AIGCChatHistory history = new AIGCChatHistory(data.get("id").getLong(), data.get("sn").getLong(),
+                    data.get("channel").getString(), domain);
+            history.unit = data.get("unit").getString();
+            history.queryContactId = data.get("query_cid").getLong();
+            history.queryTime = data.get("query_time").getLong();
+            history.queryContent = data.get("query_content").getString();
+            history.answerContactId = data.get("answer_cid").getLong();
+            history.answerTime = data.get("answer_time").getLong();
+            history.answerContent = data.get("answer_content").getString();
+            history.feedback = data.get("feedback").getInt();
+            history.contextId = data.get("context_id").getLong();
+            list.add(history);
+        }
+
+        return list;
+    }
+
+    public List<AIGCChatHistory> readChatHistoryByChannel(String channelCode, long startTime, long endTime) {
+        List<AIGCChatHistory> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.queryAnswerTable,
+                this.queryAnswerFields, new Conditional[] {
+                        Conditional.createEqualTo("channel", channelCode),
+                        Conditional.createAnd(),
+                        Conditional.createGreaterThanEqual(new StorageField("query_time", startTime)),
+                        Conditional.createAnd(),
+                        Conditional.createLessThanEqual(new StorageField("query_time", endTime))
+                });
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            AIGCChatHistory history = new AIGCChatHistory(data.get("id").getLong(), data.get("sn").getLong(),
+                    data.get("channel").getString(),
+                    data.get("query_domain").isNullValue() ? null : data.get("query_domain").getString());
             history.unit = data.get("unit").getString();
             history.queryContactId = data.get("query_cid").getLong();
             history.queryTime = data.get("query_time").getLong();
@@ -830,8 +867,10 @@ public class AIGCStorage implements Storagable {
     public void writeChatHistory(AIGCChatHistory history) {
         this.storage.executeInsert(this.queryAnswerTable, new StorageField[] {
                 new StorageField("sn", history.sn),
+                new StorageField("channel", history.channelCode),
                 new StorageField("unit", history.unit),
                 new StorageField("query_cid", history.queryContactId),
+                new StorageField("query_domain", history.getDomain().getName()),
                 new StorageField("query_time", history.queryTime),
                 new StorageField("query_content", EmojiFilter.filterEmoji(history.queryContent)),
                 new StorageField("answer_cid", history.answerContactId),

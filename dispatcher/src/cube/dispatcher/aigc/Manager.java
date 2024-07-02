@@ -1061,8 +1061,11 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public JSONObject queryChatHistory(String token, long contactId, int feedback, long start, long end) {
+    public JSONObject queryChatHistory(String token, String channelCode, long contactId, int feedback, long start, long end) {
         JSONObject requestData = new JSONObject();
+        if (null != channelCode) {
+            requestData.put("channel", channelCode);
+        }
         requestData.put("contactId", contactId);
         requestData.put("feedback", feedback);
         requestData.put("start", start);
