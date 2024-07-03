@@ -24,53 +24,55 @@
  * SOFTWARE.
  */
 
-package cube.vision;
-
-import cube.common.JSONable;
-import org.json.JSONObject;
+package cube.aigc.psychology.composition;
 
 /**
- * 点描述。
+ * 大五人格。
  */
-public class Point implements JSONable {
+public enum TheBigFive {
 
-    public double x;
+    /**
+     * 宜人性。
+     */
+    Obligingness("Obligingness", "宜人性"),
 
-    public double y;
+    /**
+     * 尽责性。
+     */
+    Conscientiousness("Conscientiousness", "尽责性"),
 
-    public Point(double x, double y) {
-        this.x = x;
-        this.y = y;
+    /**
+     * 外向性。
+     */
+    Extraversion("Extraversion", "外向性"),
+
+    /**
+     * 进取性。
+     */
+    Achievement("Achievement", "进取性"),
+
+    /**
+     * 情绪性。
+     */
+    Neuroticism("Neuroticism", "情绪性"),
+
+    ;
+
+    public final String code;
+
+    public final String name;
+
+    TheBigFive(String code, String name) {
+        this.code = code;
+        this.name = name;
     }
 
-    public Point(JSONObject json) {
-        this.x = json.getDouble("x");
-        this.y = json.getDouble("y");
-    }
-
-    public double distance(Point other) {
-        return Math.sqrt((other.x - x) * (other.x - x) + (other.y - y) * (other.y - y));
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-        buf.append(this.x);
-        buf.append(",");
-        buf.append(this.y);
-        return buf.toString();
-    }
-
-    @Override
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("x", this.x);
-        json.put("y", this.y);
-        return json;
-    }
-
-    @Override
-    public JSONObject toCompactJSON() {
-        return this.toJSON();
+    public final static TheBigFive parse(String codeOrName) {
+        for (TheBigFive tbf : TheBigFive.values()) {
+            if (tbf.code.equalsIgnoreCase(codeOrName) || tbf.name.equals(codeOrName)) {
+                return tbf;
+            }
+        }
+        return null;
     }
 }

@@ -26,5 +26,13 @@
 
 package cube.service.aigc.scene;
 
+import cube.aigc.psychology.composition.EvaluationScore;
+
+import java.util.List;
+
 public class PersonalityEvaluation {
+
+    public PersonalityEvaluation(List<EvaluationScore> scoreList) {
+
+    }
 }

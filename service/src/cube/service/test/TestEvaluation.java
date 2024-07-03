@@ -28,6 +28,7 @@ package cube.service.test;
 
 import cell.util.Utils;
 import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.algorithm.BigFiveFeature;
 import cube.aigc.psychology.composition.Answer;
 import cube.aigc.psychology.composition.Question;
 import cube.aigc.psychology.composition.Scale;
@@ -117,13 +118,29 @@ public class TestEvaluation {
         System.out.println(conclusion.toString(4));
     }
 
+    public static void testTheBigFive() {
+        System.out.println("testTheBigFive");
+
+        BigFiveFeature feature = new BigFiveFeature(
+                ((double) Utils.randomInt(100, 1000)) / 100.0d,
+                ((double) Utils.randomInt(100, 1000)) / 100.0d,
+                ((double) Utils.randomInt(100, 1000)) / 100.0d,
+                ((double) Utils.randomInt(100, 1000)) / 100.0d,
+                ((double) Utils.randomInt(100, 1000)) / 100.0d
+        );
+
+        System.out.println(feature.toJSON().toString(4));
+    }
+
     public static void main(String[] args) {
 //        testScalesConfiguration();
 
 //        testListScales();
 
-        testMBTIScale();
+//        testMBTIScale();
 
 //        testSCL90Scale();
+
+        testTheBigFive();
     }
 }
