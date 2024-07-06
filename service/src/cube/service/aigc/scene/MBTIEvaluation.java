@@ -202,6 +202,7 @@ public class MBTIEvaluation {
         int seed = 0;
         for (EvaluationScore score : scoreList) {
             seed += score.value;
+
             switch (score.indicator) {
                 case Extroversion:
                     list.add(new MBTICandidate(MyersBriggsTypeIndicator.Extraversion, 1, true));
@@ -266,10 +267,10 @@ public class MBTIEvaluation {
                     }
                     break;
                 case Idealism:
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Sensing, 0.5));
+                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Intuition, 0.5));
                     list.add(new MBTICandidate(MyersBriggsTypeIndicator.Feeling, 0.5));
                     if (score.positiveScore > score.negativeScore) {
-                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Perceiving, 0.5));
+                        list.add(new MBTICandidate(MyersBriggsTypeIndicator.Judging, 0.5));
                     }
                     break;
                 case Emotion:
@@ -288,9 +289,9 @@ public class MBTIEvaluation {
                     }
                     break;
                 case Realism:
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Intuition, 0.6));
+                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Sensing, 0.6));
                     list.add(new MBTICandidate(MyersBriggsTypeIndicator.Thinking, 0.5));
-                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Judging, 0.5));
+                    list.add(new MBTICandidate(MyersBriggsTypeIndicator.Perceiving, 0.5));
                     break;
                 case Thought:
                     list.add(new MBTICandidate(MyersBriggsTypeIndicator.Sensing, 0.6));

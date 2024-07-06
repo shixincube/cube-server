@@ -34,12 +34,12 @@ import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.composition.Texture;
+import cube.aigc.psychology.composition.TheBigFive;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.Leg;
 import cube.util.FloatUtils;
 import cube.vision.BoundingBox;
-import cube.vision.Box;
 import cube.vision.Point;
 import cube.vision.Size;
 
@@ -89,6 +89,8 @@ public class Evaluation {
 
                 // 画幅小，偏模
                 this.reference = Reference.Abnormal;
+
+                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(0.5, 1.5));
             }
             else if (areaRatio >= (2.0d / 3.0d)) {
                 result.addFeature(Term.SelfExistence, Tendency.Positive);
@@ -96,6 +98,8 @@ public class Evaluation {
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.Narcissism, 1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.5, 0.6));
+
+                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(7.5, 8.0));
             }
             else if (areaRatio < (1.0d / 6.0d)) {
                 result.addFeature(Term.SelfEsteem, Tendency.Negative);
@@ -106,6 +110,11 @@ public class Evaluation {
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.4, 0.5));
+
+                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(1.5, 3.5));
+            }
+            else {
+                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(4.5, 6.5));
             }
         }
 
@@ -176,12 +185,16 @@ public class Evaluation {
                 result.addFeature(Term.PayAttentionToFamily, Tendency.Positive);
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
+
+                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(5.5, 7.5));
             }
             if (ta >= ha && ta >= pa) {
                 // 树大
                 result.addFeature(Term.SocialDemand, Tendency.Positive);
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
+
+                result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(5.5, 7.5));
             }
             if (pa >= ha && pa >= ta) {
                 // 人大
@@ -190,13 +203,10 @@ public class Evaluation {
                 result.addFeature(Term.SelfControl, Tendency.Negative);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
-            }
 
-            if (((float)ha / this.spaceLayout.getPaintingArea()) < 0.1
-                    && ((float)ta / this.spaceLayout.getPaintingArea()) < 0.1
-                    && ((float)pa / this.spaceLayout.getPaintingArea()) < 0.1) {
-                // 非常模
-                this.reference = Reference.Abnormal;
+                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(4.5, 6.5));
+
+                result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(5.5, 7.5));
             }
 
             // 距离
@@ -294,6 +304,8 @@ public class Evaluation {
                 result.addFeature(Term.PayAttentionToFamily, Tendency.Positive);
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
+
+                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(6.5, 8.5));
             }
             else {
                 // 树大
@@ -302,25 +314,11 @@ public class Evaluation {
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
             }
 
-            double hR = (double)ha / (double)this.spaceLayout.getPaintingArea();
-            if (hR < 0.1) {
-                // 房的面积非常小
-                result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
-                result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
-
-                double tR = (double)ta / (double)this.spaceLayout.getPaintingArea();
-                if (tR < 0.1) {
-                    this.reference = Reference.Abnormal;
-                }
-            }
-
             // 间距
             Logger.d(this.getClass(), "#evalSpaceStructure - distance: HT - " + house.distance(tree));
             if (house.distance(tree) > 0) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
             }
-
-
         }
         else if (null != house && null != person) {
             // 位置关系，使用 box 计算位置
@@ -366,6 +364,8 @@ public class Evaluation {
                 result.addFeature(Term.PayAttentionToFamily, Tendency.Positive);
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
+
+                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(6.5, 8.5));
             }
             else {
                 // 人大
@@ -376,25 +376,11 @@ public class Evaluation {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
 
-            // 房的面积非常小
-            double hR = (double)ha / (double)this.spaceLayout.getPaintingArea();
-            if (hR < 0.1) {
-                result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
-                result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
-
-                double pR = (double)pa / (double)this.spaceLayout.getPaintingArea();
-                if (pR <= 0.09) {
-                    this.reference = Reference.Abnormal;
-                }
-            }
-
             // 间距
             Logger.d(this.getClass(), "#evalSpaceStructure - distance: PH - " + house.distance(person));
             if (house.distance(person) > 0) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
             }
-            result.addScore(Indicator.Depression, 1,
-                    hR < 0.1 ? FloatUtils.random(1.0, 1.1) : FloatUtils.random(0.5, 0.6));
         }
         else if (null != tree && null != person) {
             // 位置关系，使用 box 计算位置
@@ -455,12 +441,6 @@ public class Evaluation {
             Logger.d(this.getClass(), "#evalSpaceStructure - distance: TP - " + tree.distance(person));
             if (tree.distance(person) > 0) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1, 0.2));
-            }
-
-            double tR = (double)ta / (double)this.spaceLayout.getPaintingArea();
-            double pR = (double)pa / (double)this.spaceLayout.getPaintingArea();
-            if (pR <= 0.09 && tR < 0.1) {
-                this.reference = Reference.Abnormal;
             }
         }
         else {
@@ -630,6 +610,8 @@ public class Evaluation {
             result.addFeature(Term.EnvironmentalDependence, Tendency.Positive);
 
             result.addScore(Indicator.Independence, 1, FloatUtils.random(0.2, 0.3));
+
+            result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(6.5, 8.5));
         }
         else if (this.spaceLayout.getTopMargin() > maxThreshold
                 || this.spaceLayout.getRightMargin() > maxThreshold
@@ -639,12 +621,18 @@ public class Evaluation {
             result.addFeature(Term.EnvironmentalAlienation, Tendency.Positive);
 
             result.addScore(Indicator.Independence, -1, FloatUtils.random(0.2, 0.3));
+
+            result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(2.5, 3.5));
         }
 
-        // 房、树、人各自的空间结构
+        // 房、树、人各自的大小
         House house = this.painting.getHouse();
         Tree tree = this.painting.getTree();
         Person person = this.painting.getPerson();
+
+        double hAreaRatio = (null != house) ? (double)house.area / (double)this.spaceLayout.getPaintingArea() : -1;
+        double tAreaRatio = (null != tree) ? (double)tree.area / (double)this.spaceLayout.getPaintingArea() : -1;
+        double pAreaRatio = (null != person) ? (double)person.area / (double)this.spaceLayout.getPaintingArea() : -1;
 
         // 左半边中线位置
         int halfLeftCenterX = (int) Math.round(this.canvasSize.width * 0.5 * 0.5);
@@ -664,33 +652,62 @@ public class Evaluation {
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
             }
 
-            double ratio = (double)house.area / (double)this.spaceLayout.getPaintingArea();
-            if (ratio < 0.1) {
+            if (hAreaRatio < 0.1) {
                 // 房的面积非常小
                 result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
+
+                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(1.0, 3.0));
+
+                if (tAreaRatio > 0 && tAreaRatio < 0.1) {
+                    this.reference = Reference.Abnormal;
+                }
+                else if (pAreaRatio > 0 && pAreaRatio <= 0.09) {
+                    this.reference = Reference.Abnormal;
+                }
             }
+
+            result.addScore(Indicator.Depression, 1,
+                    hAreaRatio < 0.1 ? FloatUtils.random(1.0, 1.1) : FloatUtils.random(0.5, 0.6));
         }
 
         if (null != tree) {
-            // TODO
+            if (tAreaRatio < 0.1) {
+                // 树的面积非常小
+                result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(1.5, 3.5));
+            }
         }
 
         if (null != person) {
-            double ratio = (double)person.area / (double)this.spaceLayout.getPaintingArea();
-            if (ratio < 0.09) {
+            if (pAreaRatio < 0.09) {
                 // 人的面积非常小
                 result.addFeature(Term.SenseOfSecurity, Tendency.Negative);
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
+
+                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(1.5, 3.5));
             }
-            else if (ratio > 0.3) {
+            else if (pAreaRatio > 0.3) {
                 // 人的面积非常大
                 result.addFeature(Term.SelfInflated, Tendency.Positive);
                 result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.1, 0.2));
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.5, 0.6));
+
+                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(8.5, 9.5));
             }
+        }
+
+        if (pAreaRatio > 0 && pAreaRatio <= 0.09 && tAreaRatio > 0 && tAreaRatio < 0.1) {
+            // 非常模
+            this.reference = Reference.Abnormal;
+        }
+        else if (hAreaRatio > 0 && hAreaRatio < 0.1
+                && tAreaRatio < 0.1
+                && pAreaRatio < 0.1) {
+            // 非常模
+            this.reference = Reference.Abnormal;
         }
 
         // 判断画面对称性
@@ -778,12 +795,15 @@ public class Evaluation {
                     result.addFeature(Term.Future, Tendency.Positive);
 
                     result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
+
+                    result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(7.0, 9.0));
                 }
 
                 if (house.getRoofAreaRatio() > 0.3f) {
                     // 房顶面积大
                     result.addFeature(Term.HighPressure, Tendency.Positive);
                     result.addFeature(Term.Escapism, Tendency.Positive);
+
                     result.addScore(Indicator.Stress, 1, FloatUtils.random(0.4, 0.5));
                 }
             }
@@ -927,6 +947,8 @@ public class Evaluation {
 
                 result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.SelfControl, 1, FloatUtils.random(0.6, 0.7));
+
+                result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(7.0, 8.0));
             }
             else if (Label.WillowTree == tree.getLabel()) {
                 hasTrunk = true;
@@ -973,6 +995,8 @@ public class Evaluation {
                     result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
                     result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.3, 0.4));
                     result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.3, 0.4));
+
+                    result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(1.5, 3.5));
                 }
                 else if (ratio >= 0.18d && ratio < 0.3d) {
                     // 粗细适度
@@ -985,6 +1009,8 @@ public class Evaluation {
                     result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.2, 0.3));
                     result.addScore(Indicator.Depression, -1, FloatUtils.random(0.4, 0.5));
                     Logger.d(this.getClass(), "#evalTree [Depression] : -1");
+
+                    result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(6.5, 7.0));
                 }
                 else {
                     // 很粗
@@ -1056,6 +1082,8 @@ public class Evaluation {
                 result.addFeature(Term.PursuitOfAchievement, Tendency.Positive);
 
                 result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
+
+                result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(7.0, 7.5));
 
                 double[] areaRatios = tree.getFruitAreaRatios();
                 if (null != areaRatios) {
@@ -1141,6 +1169,16 @@ public class Evaluation {
             result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.5, 0.6));
         }
 
+        // 人是否有足够细节
+        boolean detailed = false;
+        for (Person person : this.painting.getPersons()) {
+            // 判断细节
+            if (person.numComponents() >= 4) {
+                detailed = true;
+            }
+            
+        }
+
         for (Person person : this.painting.getPersons()) {
             // 性别
             if (person.getGender() == Person.Gender.Female) {
@@ -1175,6 +1213,8 @@ public class Evaluation {
 
                         result.addScore(Indicator.Impulsion, 1, FloatUtils.random(0.6, 0.7));
                         result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.6, 0.7));
+
+                        result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(1.0, 3.0));
                     }
                 }
             }
@@ -1243,6 +1283,8 @@ public class Evaluation {
                     result.addFeature(Term.Simple, Tendency.Positive);
 
                     result.addScore(Indicator.Impulsion, 1, FloatUtils.random(0.6, 0.7));
+
+                    result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(0.5, 2.5));
                 }
                 else if (person.hasShortHair()) {
                     // 短发
@@ -1261,6 +1303,8 @@ public class Evaluation {
                     result.addFeature(Term.Aggression, Tendency.Positive);
 
                     result.addScore(Indicator.Hostile, 1, FloatUtils.random(0.6, 0.7));
+
+                    result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(0.5, 1.5));
                 }
             }
 
@@ -1342,6 +1386,8 @@ public class Evaluation {
         if (other.has(Label.Bed)) {
             // 床
             result.addScore(Indicator.Family, -1, FloatUtils.random(0.7, 0.8));
+
+            result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(1.0, 2.5));
         }
 
         if (other.has(Label.Sun)) {
@@ -1457,11 +1503,15 @@ public class Evaluation {
         if (other.has(Label.Torch)) {
             // 火炬
             result.addScore(Indicator.Hostile, 1, FloatUtils.random(0.3, 0.4));
+
+            result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(2.5, 3.5));
         }
 
         if (other.has(Label.Bonfire)) {
             // 火堆
             result.addScore(Indicator.Hostile, 1, FloatUtils.random(0.3, 0.4));
+
+            result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(2.5, 3.5));
         }
 
         if (other.has(Label.Bird)) {
@@ -1493,6 +1543,8 @@ public class Evaluation {
             // 牛
             result.addScore(Indicator.Struggle, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
+
+            result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(8.0, 9.5));
         }
 
         if (other.has(Label.Sheep)) {
@@ -1573,6 +1625,8 @@ public class Evaluation {
             result.addFeature(Term.PursuitOfAchievement, Tendency.Positive);
             result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
+
+            result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(7.5, 8.5));
         }
 
         if (other.has(Label.Watch)) {
@@ -1615,6 +1669,8 @@ public class Evaluation {
         if (other.has(Label.Gun)) {
             // 枪
             result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.7, 0.8));
+
+            result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(0.5, 1.5));
         }
 
         if (other.has(Label.Sword)) {
@@ -1679,6 +1735,8 @@ public class Evaluation {
             result.addFeature(Term.PursuitOfAchievement, Tendency.Positive);
             result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
+
+            result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(7.0, 9.0));
         }
 
         if (other.has(Label.Stairs)) {
@@ -1686,6 +1744,8 @@ public class Evaluation {
             result.addFeature(Term.EnvironmentalAlienation, Tendency.Positive);
             result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
+
+            result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(7.0, 9.0));
         }
 
         if (other.has(Label.Birdcage)) {

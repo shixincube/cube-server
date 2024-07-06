@@ -28,6 +28,7 @@ package cube.aigc.psychology;
 
 import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
+import cube.aigc.psychology.composition.TheBigFive;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -42,9 +43,12 @@ public class EvaluationFeature {
 
     private List<Score> scores;
 
+    private List<FiveFactor> fiveFactors;
+
     public EvaluationFeature() {
         this.features = new ArrayList<>();
         this.scores = new ArrayList<>();
+        this.fiveFactors = new ArrayList<>();
     }
 
     public void addFeature(Term term, Tendency tendency) {
@@ -105,6 +109,15 @@ public class EvaluationFeature {
         this.scores.remove(score);
     }
 
+    public void addFiveFactor(TheBigFive theBigFive, double weight) {
+        FiveFactor fiveFactor = new FiveFactor(theBigFive, weight);
+        this.fiveFactors.add(fiveFactor);
+    }
+
+    public List<FiveFactor> getFiveFactors() {
+        return this.fiveFactors;
+    }
+
     public class Feature {
 
         public Term term;
@@ -114,6 +127,18 @@ public class EvaluationFeature {
         public Feature(Term term, Tendency tendency) {
             this.term = term;
             this.tendency = tendency;
+        }
+    }
+
+    public class FiveFactor {
+
+        public TheBigFive theBigFive;
+
+        public double weight;
+
+        public FiveFactor(TheBigFive theBigFive, double weight) {
+            this.theBigFive = theBigFive;
+            this.weight = weight;
         }
     }
 }

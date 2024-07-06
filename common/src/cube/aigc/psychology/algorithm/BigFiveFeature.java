@@ -150,9 +150,9 @@ public class BigFiveFeature implements JSONable {
             3.5, 3.5, 5.5));
 
     /**
-     * 伪装者。
+     * 适应者。
      */
-    public final static BigFiveFeature Pretender = new BigFiveFeature("Pretender", "伪装者",
+    public final static BigFiveFeature Adapter = new BigFiveFeature("Adapter", "适应者",
             new TemplateValue(5.5, 5.5,
             5.5, 5.5, 5.5));
 
@@ -227,7 +227,7 @@ public class BigFiveFeature implements JSONable {
                 Supporter,
                 Controller,
                 Expert,
-                Pretender
+                Adapter
         };
 
         Point p1 = new Point(10 - this.obligingness, 10);
@@ -249,14 +249,18 @@ public class BigFiveFeature implements JSONable {
             }
         }
 
-        // 通才和伪装者的质心一致，额外处理
-        if (feature == BigFiveFeature.Generalist || feature == BigFiveFeature.Pretender) {
+        // 通才、适应者和专家的画像矩形的质心一致，额外处理
+        if (feature == BigFiveFeature.Generalist || feature == BigFiveFeature.Adapter || feature == BigFiveFeature.Expert) {
             if (this.obligingness >= 7.0 && this.conscientiousness >= 7.0 &&
                 this.extraversion >= 7.0 && this.achievement >= 7.0) {
                 feature = BigFiveFeature.Generalist;
             }
+            else if (this.obligingness >= 4.5 && this.conscientiousness >= 4.5 &&
+                    this.extraversion >= 4.5 && this.achievement >= 4.5) {
+                feature = BigFiveFeature.Adapter;
+            }
             else {
-                feature = BigFiveFeature.Pretender;
+                feature = BigFiveFeature.Expert;
             }
         }
 
@@ -273,7 +277,7 @@ public class BigFiveFeature implements JSONable {
     }
 
     public String generatePrompt() {
-        return this.displayName + "的报告内容";
+        return this.displayName + "画像报告";
     }
 
     @Override

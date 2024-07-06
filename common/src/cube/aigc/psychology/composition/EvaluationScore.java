@@ -82,6 +82,10 @@ public class EvaluationScore implements JSONable {
         this.negativeScore = json.getDouble("negativeScore");
     }
 
+    public double calcScore() {
+        return this.positiveScore - this.negativeScore;
+    }
+
     public void scoring(Score score) {
         this.hit += 1;
         // 原始分
