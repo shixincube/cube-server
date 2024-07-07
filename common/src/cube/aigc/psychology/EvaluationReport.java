@@ -67,6 +67,8 @@ public class EvaluationReport implements JSONable {
 
     private boolean hesitating = false;
 
+    private PersonalityAccelerator personalityAccelerator;
+
     public EvaluationReport(Attribute attribute, Reference reference, EvaluationFeature evaluationFeature) {
         this(attribute, reference, Collections.singletonList((evaluationFeature)));
     }
@@ -77,6 +79,7 @@ public class EvaluationReport implements JSONable {
         this.representationList = new ArrayList<>();
         this.scoreAccelerator = new ScoreAccelerator();
         this.attentionSuggestion = AttentionSuggestion.NoAttention;
+        this.personalityAccelerator = new PersonalityAccelerator(evaluationFeatureList);
         this.build(evaluationFeatureList);
     }
 

@@ -100,21 +100,27 @@ public class Evaluation {
                 result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.5, 0.6));
 
                 result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(7.5, 8.0));
+                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(6.0, 6.5));
             }
             else if (areaRatio < (1.0d / 6.0d)) {
                 result.addFeature(Term.SelfEsteem, Tendency.Negative);
                 result.addFeature(Term.SelfConfidence, Tendency.Negative);
                 result.addFeature(Term.SocialAdaptability, Tendency.Negative);
 
-                result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.4, 0.5));
 
                 result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(1.5, 3.5));
             }
+            else if (areaRatio < (1.0d / 7.0d)) {
+                result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.2, 0.3));
+
+                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(1.0, 2.0));
+            }
             else {
                 result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(4.5, 6.5));
+                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(3.0, 4.0));
             }
         }
 
@@ -171,6 +177,8 @@ public class Evaluation {
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(4.5, 5.5));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -227,9 +235,11 @@ public class Evaluation {
 
             if (count > 1) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.2 * count, 0.25 * count));
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(1.0, 2.0));
             }
             else if (count > 0) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1 * count, 0.15 * count));
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(2.0, 3.0));
             }
 
             if (distTP < 0) {
@@ -257,6 +267,8 @@ public class Evaluation {
             // 三者都有
             if (house.numComponents() > 2 && tree.numComponents() > 2 && person.numComponents() > 1) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.75, 0.85));
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(3.5, 4.5));
             }
         }
         else if (null != house && null != tree) {
@@ -292,6 +304,8 @@ public class Evaluation {
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(4.5, 5.5));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -352,6 +366,8 @@ public class Evaluation {
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(4.5, 5.5));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -415,6 +431,8 @@ public class Evaluation {
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(4.5, 5.5));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -491,6 +509,8 @@ public class Evaluation {
                 result.addFeature(Term.SenseOfSecurity, Tendency.Negative);
 
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(5.5, 6.5));
             }
         }
 
@@ -546,29 +566,41 @@ public class Evaluation {
                 // 画面有1/2画幅涂鸦
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(7.0, 8.0));
             }
             else if (doodles >= 1) {
                 // 画面有1/4画幅涂鸦
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.4, 0.5));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(6.5, 7.5));
             }
 
             // 画面稀疏
             if (sparseness >= 4) {
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(8.0, 9.0));
             }
             else if (sparseness >= 3) {
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(7.5, 8.5));
             }
             else if (sparseness >= 2) {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(7.0, 8.0));
             }
             else if (sparseness >= 1) {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(6.0, 7.0));
             }
         }
 
@@ -582,18 +614,26 @@ public class Evaluation {
         if (description.isWholeTop()) {
             // 整体顶部
             result.addFeature(Term.Idealization, Tendency.Positive);
+
+            result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(5.0, 6.0));
         }
         else if (description.isWholeBottom()) {
             // 整体底部
             result.addFeature(Term.Instinct, Tendency.Positive);
+
+            result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(4.0, 5.0));
         }
         else if (description.isWholeLeft()) {
             // 整体左边
             result.addFeature(Term.Nostalgia, Tendency.Positive);
+
+            result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(2.0, 3.0));
         }
         else if (description.isWholeRight()) {
             // 整体右边
             result.addFeature(Term.Future, Tendency.Positive);
+
+            result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(7.0, 8.0));
         }
 
 //        spaceLayout.getTopMargin() + "," + spaceLayout.getRightMargin() +
@@ -602,27 +642,56 @@ public class Evaluation {
         // 空间构图
         double minThreshold = this.canvasSize.width * 0.025f;
         double maxThreshold = this.canvasSize.width * 0.15f;
-        if (this.spaceLayout.getTopMargin() < minThreshold
-                || this.spaceLayout.getRightMargin() < minThreshold
-                || this.spaceLayout.getBottomMargin() < minThreshold
-                || this.spaceLayout.getLeftMargin() < minThreshold) {
+
+        int minMarginCount = 0;
+        int maxMarginCount = 0;
+
+        if (this.spaceLayout.getTopMargin() < minThreshold) {
+            ++minMarginCount;
+        }
+        if (this.spaceLayout.getRightMargin() < minThreshold) {
+            ++minMarginCount;
+        }
+        if (this.spaceLayout.getBottomMargin() < minThreshold) {
+            ++minMarginCount;
+        }
+        if (this.spaceLayout.getLeftMargin() < minThreshold) {
+            ++minMarginCount;
+        }
+
+        if (this.spaceLayout.getTopMargin() > maxThreshold) {
+            ++maxMarginCount;
+        }
+        if (this.spaceLayout.getRightMargin() > maxThreshold) {
+            ++maxMarginCount;
+        }
+        if (this.spaceLayout.getBottomMargin() > maxThreshold) {
+            ++maxMarginCount;
+        }
+        if (this.spaceLayout.getLeftMargin() > maxThreshold) {
+            ++maxMarginCount;
+        }
+
+        if (minMarginCount > 1) {
             // 达到边缘
             result.addFeature(Term.EnvironmentalDependence, Tendency.Positive);
 
             result.addScore(Indicator.Independence, 1, FloatUtils.random(0.2, 0.3));
 
-            result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(6.5, 8.5));
+            result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(5.5, 6.5));
         }
-        else if (this.spaceLayout.getTopMargin() > maxThreshold
-                || this.spaceLayout.getRightMargin() > maxThreshold
-                || this.spaceLayout.getBottomMargin() > maxThreshold
-                || this.spaceLayout.getLeftMargin() > maxThreshold) {
+
+        if (maxMarginCount > 1) {
             // 未达边缘
             result.addFeature(Term.EnvironmentalAlienation, Tendency.Positive);
 
             result.addScore(Indicator.Independence, -1, FloatUtils.random(0.2, 0.3));
 
             result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(2.5, 3.5));
+        }
+
+        if (minMarginCount >= 2) {
+            result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(8.0, 8.5));
         }
 
         // 房、树、人各自的大小
@@ -657,6 +726,8 @@ public class Evaluation {
                 result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
 
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
+
                 result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(1.0, 3.0));
 
                 if (tAreaRatio > 0 && tAreaRatio < 0.1) {
@@ -667,8 +738,12 @@ public class Evaluation {
                 }
             }
 
-            result.addScore(Indicator.Depression, 1,
-                    hAreaRatio < 0.1 ? FloatUtils.random(1.0, 1.1) : FloatUtils.random(0.5, 0.6));
+            if (hAreaRatio < 0.08) {
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(5.5, 6.5));
+            }
+            else {
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(4.5, 5.5));
+            }
         }
 
         if (null != tree) {
@@ -687,7 +762,7 @@ public class Evaluation {
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(1.5, 3.5));
+                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(1.5, 3.0));
             }
             else if (pAreaRatio > 0.3) {
                 // 人的面积非常大
@@ -813,6 +888,8 @@ public class Evaluation {
                 result.addFeature(Term.Maverick, Tendency.Positive);
 
                 result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
+
+                result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(8.5, 9.0));
             }
 
             // 烟囱
@@ -820,6 +897,8 @@ public class Evaluation {
                 result.addFeature(Term.PursueInterpersonalRelationships, Tendency.Positive);
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.6, 0.7));
+
+                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(6.0, 7.0));
             }
 
             // 门和窗
@@ -846,6 +925,8 @@ public class Evaluation {
                         result.addFeature(Term.PursueInterpersonalRelationships, Tendency.Positive);
 
                         result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.6, 0.7));
+
+                        result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(6.5, 7.5));
                     }
                 }
 
@@ -902,6 +983,8 @@ public class Evaluation {
                 // 涂鸦的房子
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
                 Logger.d(this.getClass(), "#evalHouse - House is doodle - " + house.texture.toJSON().toString(4));
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(7.5, 8.5));
             }
         }
 
@@ -936,6 +1019,8 @@ public class Evaluation {
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(6.5, 7.5));
 
                 Logger.d(this.getClass(), "#evalTree [Depression] : dead tree");
             }
@@ -977,6 +1062,8 @@ public class Evaluation {
 
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
+
+                result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(8.0, 9.0));
             }
             else {
                 // 常青树
@@ -1001,6 +1088,8 @@ public class Evaluation {
                 else if (ratio >= 0.18d && ratio < 0.3d) {
                     // 粗细适度
                     result.addScore(Indicator.Pessimism, -1, FloatUtils.random(0.3, 0.4));
+
+                    result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(4.5, 5.5));
                 }
                 else if (ratio >= 0.3d && ratio < 0.7d) {
                     // 粗
@@ -1016,6 +1105,8 @@ public class Evaluation {
                     // 很粗
                     Score score = result.addScore(Indicator.Depression, -1, FloatUtils.random(0.6, 0.7));
                     Logger.d(this.getClass(), "#evalTree [Depression] : " + score.value);
+
+                    result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(1.5, 2.5));
                 }
             }
 
@@ -1084,6 +1175,7 @@ public class Evaluation {
                 result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
 
                 result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(7.0, 7.5));
+                result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(7.5, 8.0));
 
                 double[] areaRatios = tree.getFruitAreaRatios();
                 if (null != areaRatios) {
@@ -1131,6 +1223,8 @@ public class Evaluation {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalTree - Tree is doodle - \n" + tree.texture.toJSON().toString(4));
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(6.5, 7.5));
             }
         }
 
@@ -1169,14 +1263,33 @@ public class Evaluation {
             result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.5, 0.6));
         }
 
+        if (numStickMan > 0) {
+            // 人物没细节
+            result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(2.0, 3.0));
+        }
+
         // 人是否有足够细节
         boolean detailed = false;
+        boolean faceDetailed = false;
         for (Person person : this.painting.getPersons()) {
             // 判断细节
             if (person.numComponents() >= 4) {
                 detailed = true;
             }
-            
+
+            if (person.numFaceComponents() >= 3) {
+                faceDetailed = true;
+            }
+        }
+
+        if (detailed && faceDetailed) {
+            result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(7.0, 8.0));
+        }
+        else if (detailed || faceDetailed) {
+            result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(4.5, 6.5));
+        }
+        else {
+            result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(2.0, 3.0));
         }
 
         for (Person person : this.painting.getPersons()) {
@@ -1231,6 +1344,8 @@ public class Evaluation {
             }
             else {
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.6, 0.7));
+
+                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(4.0, 5.0));
             }
 
             // 眼
@@ -1333,6 +1448,8 @@ public class Evaluation {
 
                 result.addScore(Indicator.EvaluationFromOutside, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Paranoid, 1, FloatUtils.random(0.6, 0.7));
+
+                result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(8.0, 9.0));
             }
 
             // 腿
@@ -1344,6 +1461,8 @@ public class Evaluation {
                         // 腿的距离较近
                         result.addFeature(Term.Cautious, Tendency.Positive);
                         result.addFeature(Term.Introversion, Tendency.Positive);
+
+                        result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(4.0, 5.0));
                     }
                 }
             }
@@ -1357,6 +1476,8 @@ public class Evaluation {
                         result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
                         Logger.d(this.getClass(), "#evalPerson - Person is doodle - \n" +
                                 person.texture.toJSON().toString(4));
+
+                        result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(5.0, 6.0));
                     }
                 }
             }
@@ -1449,6 +1570,7 @@ public class Evaluation {
             result.addFeature(Term.Extroversion, Tendency.Positive);
             result.addFeature(Term.PursuitOfAchievement, Tendency.Normal);
             result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.7, 0.8));
+            result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(8.5, 9.5));
             counter += 1;
         }
 
@@ -1605,6 +1727,7 @@ public class Evaluation {
             result.addFeature(Term.SelfConfidence, Tendency.Positive);
             result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.5, 0.6));
+            result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(7.0, 8.0));
             counter += 1;
         }
 
@@ -1632,11 +1755,15 @@ public class Evaluation {
         if (other.has(Label.Watch)) {
             // 表
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
+
+            result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(4.0, 5.0));
         }
 
         if (other.has(Label.Clock)) {
             // 钟
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
+
+            result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(4.0, 5.0));
         }
 
         if (other.has(Label.MusicalNotation)) {
@@ -1728,6 +1855,8 @@ public class Evaluation {
         if (other.has(Label.Crossroads)) {
             // 十字路口
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
+
+            result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(5.0, 5.5));
         }
 
         if (other.has(Label.Ladder)) {
@@ -1770,6 +1899,7 @@ public class Evaluation {
             // 飞机
             result.addFeature(Term.Escapism, Tendency.Positive);
             result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
+            result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(6.5, 7.5));
         }
 
         if (other.has(Label.Bike)) {

@@ -144,6 +144,31 @@ public class Person extends Thing {
         this.head = head;
     }
 
+    /**
+     * 返回脸部元素数量。
+     *
+     * @return
+     */
+    public int numFaceComponents() {
+        int num = 0;
+        if (null != this.eyeList) {
+            num += this.eyeList.size();
+        }
+        if (null != this.nose) {
+            num += 1;
+        }
+        if (null != this.mouth) {
+            num += 1;
+        }
+        if (null != this.earList) {
+            num += this.earList.size();
+        }
+        if (null != this.hairList) {
+            num += this.hairList.size();
+        }
+        return num;
+    }
+
     public void addBraid(Braid braid) {
         if (null == this.braidList) {
             this.braidList = new ArrayList<>();

@@ -134,11 +134,11 @@ public class EvaluationFeature {
 
         public TheBigFive theBigFive;
 
-        public double weight;
+        public double source;
 
-        public FiveFactor(TheBigFive theBigFive, double weight) {
+        public FiveFactor(TheBigFive theBigFive, double source) {
             this.theBigFive = theBigFive;
-            this.weight = weight;
+            this.source = source;
         }
     }
 }
