@@ -139,8 +139,8 @@ public class TestEvaluation {
 
 //        testMBTIScale();
 
-//        testSCL90Scale();
+        testSCL90Scale();
 
-        testTheBigFive();
+//        testTheBigFive();
     }
 }

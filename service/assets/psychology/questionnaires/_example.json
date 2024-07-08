@@ -1,5 +1,6 @@
 {
-	"name": "量表示例",
+	"name": "ScaleExampleFile",
+	"displayName": "示例量表",
 	"instruction": "指导语",
 	"sections": [{
 		"title": "第一部分",

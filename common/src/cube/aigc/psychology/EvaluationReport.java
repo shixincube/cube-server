@@ -30,6 +30,7 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.algorithm.*;
 import cube.aigc.psychology.composition.EvaluationScore;
+import cube.aigc.psychology.composition.Scale;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -44,15 +45,6 @@ import java.util.List;
  */
 public class EvaluationReport implements JSONable {
 
-    /**
-     * 问题检出时依赖的关键指标。
-     */
-    public final Indicator[] KEY_INDICATORS = new Indicator[] {
-            Indicator.Psychosis,
-            Indicator.SocialAdaptability,
-            Indicator.Depression
-    };
-
     public final static String UNIT = ModelConfig.BAIZE_UNIT;
 
     private Attribute attribute;
@@ -63,11 +55,13 @@ public class EvaluationReport implements JSONable {
 
     private ScoreAccelerator scoreAccelerator;
 
+    private PersonalityAccelerator personalityAccelerator;
+
     private AttentionSuggestion attentionSuggestion;
 
-    private boolean hesitating = false;
+    private List<Scale> additionScales;
 
-    private PersonalityAccelerator personalityAccelerator;
+    private boolean hesitating = false;
 
     public EvaluationReport(Attribute attribute, Reference reference, EvaluationFeature evaluationFeature) {
         this(attribute, reference, Collections.singletonList((evaluationFeature)));
@@ -80,6 +74,7 @@ public class EvaluationReport implements JSONable {
         this.scoreAccelerator = new ScoreAccelerator();
         this.attentionSuggestion = AttentionSuggestion.NoAttention;
         this.personalityAccelerator = new PersonalityAccelerator(evaluationFeatureList);
+        this.additionScales = new ArrayList<>();
         this.build(evaluationFeatureList);
     }
 
@@ -87,13 +82,26 @@ public class EvaluationReport implements JSONable {
         this.attribute = new Attribute(json.getJSONObject("attribute"));
         this.reference = json.has("reference") ?
                 Reference.parse(json.getString("reference")) : Reference.Normal;
+
         this.representationList = new ArrayList<>();
         JSONArray array = json.getJSONArray("representationList");
         for (int i = 0; i < array.length(); ++i) {
             this.representationList.add(new Representation(array.getJSONObject(i)));
         }
+
         this.scoreAccelerator = new ScoreAccelerator(json.getJSONObject("accelerator"));
+        this.personalityAccelerator = json.has("personality") ?
+                new PersonalityAccelerator(json.getJSONObject("personality")) : null;
         this.attentionSuggestion = AttentionSuggestion.parse(json.getInt("attention"));
+
+        this.additionScales = new ArrayList<>();
+        if (json.has("additionScales")) {
+            array = json.getJSONArray("additionScales");
+            for (int i = 0; i < array.length(); ++i) {
+                this.additionScales.add(new Scale(array.getJSONObject(i)));
+            }
+        }
+
         this.hesitating = json.has("hesitating") && json.getBoolean("hesitating");
     }
 
@@ -111,6 +119,10 @@ public class EvaluationReport implements JSONable {
 
     public ScoreAccelerator getScoreAccelerator() {
         return this.scoreAccelerator;
+    }
+
+    public PersonalityAccelerator getPersonalityAccelerator() {
+        return this.personalityAccelerator;
     }
 
     public AttentionSuggestion getAttentionSuggestion() {
@@ -351,6 +363,10 @@ public class EvaluationReport implements JSONable {
                 this.attentionSuggestion = AttentionSuggestion.GeneralAttention;
             }
         }
+
+        if (score >= 3 || this.reference == Reference.Abnormal) {
+            this.additionScales.add(Resource.getInstance().loadScaleByName("SCL-90"));
+        }
     }
 
     public Representation getRepresentation(Term term) {
@@ -562,15 +578,25 @@ public class EvaluationReport implements JSONable {
 
         json.put("accelerator", this.scoreAccelerator.toJSON());
 
+        if (null != this.personalityAccelerator) {
+            json.put("personality", this.personalityAccelerator.toJSON());
+        }
+
         json.put("attention", this.attentionSuggestion.level);
+
+        array = new JSONArray();
+        for (Scale scale : this.additionScales) {
+            array.put(scale.toCompactJSON());
+        }
+        json.put("additionScales", this.additionScales);
 
         json.put("hesitating", this.hesitating);
 
-        JSONArray priorityArray = new JSONArray();
-        for (EvaluationScore es : this.getEvaluationScoresByRepresentation()) {
-            priorityArray.put(es.toJSON());
-        }
-        json.put("priorities", priorityArray);
+//        JSONArray priorityArray = new JSONArray();
+//        for (EvaluationScore es : this.getEvaluationScoresByRepresentation()) {
+//            priorityArray.put(es.toJSON());
+//        }
+//        json.put("priorities", priorityArray);
 
         return json;
     }
@@ -589,15 +615,23 @@ public class EvaluationReport implements JSONable {
 
         json.put("accelerator", this.scoreAccelerator.toCompactJSON());
 
+        json.put("personality", this.personalityAccelerator.toCompactJSON());
+
         json.put("attention", this.attentionSuggestion.level);
+
+        array = new JSONArray();
+        for (Scale scale : this.additionScales) {
+            array.put(scale.toCompactJSON());
+        }
+        json.put("additionScales", this.additionScales);
 
         json.put("hesitating", this.hesitating);
 
-        JSONArray priorityArray = new JSONArray();
-        for (EvaluationScore es : this.getEvaluationScoresByRepresentation()) {
-            priorityArray.put(es.toCompactJSON());
-        }
-        json.put("priorities", priorityArray);
+//        JSONArray priorityArray = new JSONArray();
+//        for (EvaluationScore es : this.getEvaluationScoresByRepresentation()) {
+//            priorityArray.put(es.toCompactJSON());
+//        }
+//        json.put("priorities", priorityArray);
 
         return json;
     }

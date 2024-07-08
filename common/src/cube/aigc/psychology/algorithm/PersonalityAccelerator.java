@@ -26,10 +26,12 @@
 
 package cube.aigc.psychology.algorithm;
 
+import cell.util.log.Logger;
 import cube.aigc.psychology.EvaluationFeature;
 import cube.aigc.psychology.composition.TheBigFive;
 import cube.common.JSONable;
 import cube.util.FloatUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -81,10 +83,15 @@ public class PersonalityAccelerator implements JSONable  {
 
     private List<FiveFactor> fiveFactorList;
 
-    private BigFiveFeature feature;
+    private BigFiveFeature bigFiveFeature;
 
     public PersonalityAccelerator(JSONObject json) {
-
+        this.fiveFactorList = new ArrayList<>();
+        JSONArray fiveFactors = json.getJSONArray("fiveFactors");
+        for (int i = 0; i < fiveFactors.length(); ++i) {
+            this.fiveFactorList.add(new FiveFactor(fiveFactors.getJSONObject(i)));
+        }
+        this.bigFiveFeature = new BigFiveFeature(json.getJSONObject("bigFiveFeature"));
     }
 
     public PersonalityAccelerator(List<EvaluationFeature> evaluationFeatureList) {
@@ -133,22 +140,32 @@ public class PersonalityAccelerator implements JSONable  {
         if (obligingness.total == 0) {
             obligingness.score = FloatUtils.random(5.0, 5.5);
             obligingness.total = 1;
+
+            Logger.d(this.getClass(), "#build - No obligingness");
         }
         if (conscientiousness.total == 0) {
             conscientiousness.score = FloatUtils.random(5.0, 5.5);
             conscientiousness.total = 1;
+
+            Logger.d(this.getClass(), "#build - No conscientiousness");
         }
         if (extraversion.total == 0) {
             extraversion.score = FloatUtils.random(5.0, 5.5);
             extraversion.total = 1;
+
+            Logger.d(this.getClass(), "#build - No extraversion");
         }
         if (achievement.total == 0) {
             achievement.score = FloatUtils.random(5.0, 5.5);
             achievement.total = 1;
+
+            Logger.d(this.getClass(), "#build - No achievement");
         }
         if (neuroticism.total == 0) {
             neuroticism.score = FloatUtils.random(5.0, 5.5);
             neuroticism.total = 1;
+
+            Logger.d(this.getClass(), "#build - No neuroticism");
         }
 
         this.fiveFactorList.add(obligingness);
@@ -163,18 +180,18 @@ public class PersonalityAccelerator implements JSONable  {
         double achievementScore = achievement.score / achievement.total;
         double neuroticismScore = neuroticism.score / neuroticism.total;
 
-        this.feature = new BigFiveFeature(obligingnessScore, conscientiousnessScore, extraversionScore,
+        this.bigFiveFeature = new BigFiveFeature(obligingnessScore, conscientiousnessScore, extraversionScore,
                 achievementScore, neuroticismScore);
     }
 
     public BigFiveFeature getBigFiveFeature() {
-        return this.feature;
+        return this.bigFiveFeature;
     }
 
     public MBTIFeature getMBTIFeature() {
         for (int i = 0; i < this.bigFiveFeatures.length; ++i) {
             BigFiveFeature bigFiveFeature = this.bigFiveFeatures[i];
-            if (this.feature.getName().equals(bigFiveFeature.getName())) {
+            if (this.bigFiveFeature.getName().equals(bigFiveFeature.getName())) {
                 return this.mbtiFeatures[i];
             }
         }
@@ -185,6 +202,15 @@ public class PersonalityAccelerator implements JSONable  {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+
+        JSONArray fiveFactors = new JSONArray();
+        for (FiveFactor factor : this.fiveFactorList) {
+            fiveFactors.put(factor.toJSON());
+        }
+        json.put("fiveFactors", fiveFactors);
+
+        json.put("bigFiveFeature", this.bigFiveFeature.toJSON());
+
         return json;
     }
 
@@ -207,7 +233,9 @@ public class PersonalityAccelerator implements JSONable  {
         }
 
         public FiveFactor(JSONObject json) {
-
+            this.theBigFive = TheBigFive.parse(json.getString("bigFive"));
+            this.score = json.getDouble("score");
+            this.total = json.getDouble("total");
         }
 
         public JSONObject toJSON() {

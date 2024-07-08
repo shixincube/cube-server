@@ -28,6 +28,7 @@ package cube.aigc.psychology;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.psychology.algorithm.BigFiveFeature;
 import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.EvaluationScore;
@@ -75,7 +76,7 @@ public class PsychologyReport implements JSONable {
 
     private EvaluationReport evaluationReport;
 
-    private MBTIFeature mbtiFeature;
+//    private MBTIFeature mbtiFeature;
 
     private SixDimensionScore dimensionScore;
 
@@ -137,9 +138,9 @@ public class PsychologyReport implements JSONable {
             this.markdown = json.getString("markdown");
         }
 
-        if (json.has("mbti")) {
-            this.mbtiFeature = new MBTIFeature(json.getJSONObject("mbti"));
-        }
+//        if (json.has("mbti")) {
+//            this.mbtiFeature = new MBTIFeature(json.getJSONObject("mbti"));
+//        }
 
         if (json.has("dimensionScore")) {
             this.dimensionScore = new SixDimensionScore(json.getJSONObject("dimensionScore"));
@@ -189,14 +190,6 @@ public class PsychologyReport implements JSONable {
 
     public EvaluationReport getEvaluationReport() {
         return this.evaluationReport;
-    }
-
-    public void setMBTIFeature(MBTIFeature mbtiFeature) {
-        this.mbtiFeature = mbtiFeature;
-    }
-
-    public MBTIFeature getMBTIFeature() {
-        return this.mbtiFeature;
     }
 
     public void setDimensionalScore(SixDimensionScore score, SixDimensionScore normScore) {
@@ -345,14 +338,24 @@ public class PsychologyReport implements JSONable {
             buf.append("\n");
         }
 
-        if (null != this.mbtiFeature) {
+        if (null != this.evaluationReport && null != this.evaluationReport.getPersonalityAccelerator()) {
+            BigFiveFeature bigFiveFeature = this.evaluationReport.getPersonalityAccelerator().getBigFiveFeature();
             buf.append("\n\n");
-            buf.append("**MBTI 性格倾向**");
+            buf.append("**大五人格**");
             buf.append("\n\n");
-            buf.append("- **性格类型** ：").append(this.mbtiFeature.getName())
-                    .append(" （").append(this.mbtiFeature.getCode()).append("）");
+            buf.append("- **人格画像** ：").append(bigFiveFeature.getDisplayName());
             buf.append("\n\n");
-            buf.append("- **性格描述** ：").append(this.mbtiFeature.getDescription());
+            buf.append("- **人格描述** ：").append(bigFiveFeature.getDescription());
+            buf.append("\n\n");
+
+            MBTIFeature mbtiFeature = this.evaluationReport.getPersonalityAccelerator().getMBTIFeature();
+            buf.append("\n\n");
+            buf.append("**MBTI 性格**");
+            buf.append("\n\n");
+            buf.append("- **性格类型** ：").append(mbtiFeature.getName())
+                    .append(" （").append(mbtiFeature.getCode()).append("）");
+            buf.append("\n\n");
+            buf.append("- **性格描述** ：").append(mbtiFeature.getDescription());
             buf.append("\n\n");
         }
 
@@ -468,10 +471,6 @@ public class PsychologyReport implements JSONable {
         json.put("finishedTimestamp", this.finishedTimestamp);
         json.put("state", this.state.code);
 
-        if (null != this.mbtiFeature) {
-            json.put("mbti", this.mbtiFeature.toJSON());
-        }
-
         if (null != this.dimensionScore) {
             json.put("dimensionScore", this.dimensionScore.toJSON());
         }
@@ -490,6 +489,15 @@ public class PsychologyReport implements JSONable {
             json.put("attention", attention);
 
             json.put("evaluation", this.evaluationReport.toCompactJSON());
+
+            if (null != this.evaluationReport.getPersonalityAccelerator()) {
+                BigFiveFeature bigFiveFeature = this.evaluationReport.getPersonalityAccelerator().getBigFiveFeature();
+                MBTIFeature mbtiFeature = this.evaluationReport.getPersonalityAccelerator().getMBTIFeature();
+                JSONObject personality = new JSONObject();
+                personality.put("theBigFive", bigFiveFeature.toJSON());
+                personality.put("mbti", mbtiFeature.toJSON());
+                json.put("personality", personality);
+            }
         }
         return json;
     }

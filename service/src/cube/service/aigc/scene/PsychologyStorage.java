@@ -103,9 +103,6 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("evaluation_data", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
-            }),
-            new StorageField("mbti_code", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
             })
     };
 
@@ -418,9 +415,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("theme", report.getTheme().code),
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("summary", report.getSummary()),
-                new StorageField("evaluation_data", report.getEvaluationReport().toJSON().toString()),
-                new StorageField("mbti_code",
-                        (null != report.getMBTIFeature()) ? report.getMBTIFeature().getCode() : null)
+                new StorageField("evaluation_data", report.getEvaluationReport().toJSON().toString())
         });
     }
 
@@ -580,11 +575,6 @@ public class PsychologyStorage implements Storagable {
             String content = JSONUtils.filter(data.get("evaluation_data").getString().trim());
             EvaluationReport evaluationReport = new EvaluationReport(new JSONObject(content));
             report.setEvaluationReport(evaluationReport);
-        }
-
-        if (!data.get("mbti_code").isNullValue()) {
-            MBTIFeature feature = new MBTIFeature(data.get("mbti_code").getString());
-            report.setMBTIFeature(feature);
         }
 
         List<StorageField[]> fields = null;

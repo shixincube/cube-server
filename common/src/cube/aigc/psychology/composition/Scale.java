@@ -197,6 +197,7 @@ public class Scale extends Questionnaire implements JSONable {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
         json.put("name", this.name);
+        json.put("displayName", this.displayName);
         json.put("instruction", this.instruction);
         if (null != this.attribute) {
             json.put("attribute", this.attribute.toJSON());

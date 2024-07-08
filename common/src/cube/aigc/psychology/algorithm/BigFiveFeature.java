@@ -191,6 +191,8 @@ public class BigFiveFeature implements JSONable {
 
     private String displayName;
 
+    private String description = "";
+
     private TemplateValue templateValue;
 
     public BigFiveFeature(String name, String displayName, TemplateValue templateValue) {
@@ -207,6 +209,37 @@ public class BigFiveFeature implements JSONable {
         this.achievement = achievement;
         this.neuroticism = neuroticism;
         this.build();
+    }
+
+    public BigFiveFeature(JSONObject json) {
+        this.name = json.getString("name");
+        this.displayName = json.getString("displayName");
+        this.description = json.getString("description");
+        JSONArray scores = json.getJSONArray("scores");
+        for (int i = 0; i < scores.length(); ++i) {
+            JSONObject factor = scores.getJSONObject(i);
+            String code = factor.getString("code");
+            double score = factor.getDouble("score");
+            switch (TheBigFive.parse(code)) {
+                case Obligingness:
+                    this.obligingness = score;
+                    break;
+                case Conscientiousness:
+                    this.conscientiousness = score;
+                    break;
+                case Extraversion:
+                    this.extraversion = score;
+                    break;
+                case Achievement:
+                    this.achievement = score;
+                    break;
+                case Neuroticism:
+                    this.neuroticism = score;
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     private void build() {
@@ -276,6 +309,14 @@ public class BigFiveFeature implements JSONable {
         return this.displayName;
     }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDescription() {
+        return this.description;
+    }
+
     public String generatePrompt() {
         return this.displayName + "画像报告";
     }
@@ -285,6 +326,7 @@ public class BigFiveFeature implements JSONable {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
         json.put("displayName", this.displayName);
+        json.put("description", this.description);
 
         JSONArray scoreArray = new JSONArray();
 

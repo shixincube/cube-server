@@ -29,6 +29,7 @@ package cube.service.aigc.scene;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.DescriptionSuggestion;
 import cube.aigc.psychology.composition.EvaluationScore;
@@ -53,7 +54,7 @@ public class Workflow {
 
     private EvaluationReport evaluationReport;
 
-    private MBTIEvaluation mbtiEvaluation;
+//    private MBTIEvaluation mbtiEvaluation;
 
     private AIGCChannel channel;
 
@@ -91,10 +92,6 @@ public class Workflow {
     public PsychologyReport fillReport(PsychologyReport report) {
         report.setEvaluationReport(this.evaluationReport);
 
-        if (null != this.mbtiEvaluation) {
-            report.setMBTIFeature(this.mbtiEvaluation.getResult());
-        }
-
         if (null != this.dimensionScore && null != this.normDimensionScore) {
             report.setDimensionalScore(this.dimensionScore, this.normDimensionScore);
         }
@@ -111,10 +108,6 @@ public class Workflow {
 
         int age = this.evaluationReport.getAttribute().age;
         String gender = this.evaluationReport.getAttribute().gender;
-
-        // MBTI 评估
-        this.mbtiEvaluation = new MBTIEvaluation(this.evaluationReport.getRepresentationList(),
-            this.evaluationReport.getEvaluationScores());
 
         // 六维得分计算
         try {
@@ -142,6 +135,12 @@ public class Workflow {
 
         // 生成概述
         this.summary = this.inferSummary(this.reportTextList);
+
+        // 生成人格描述
+        String personality = this.inferPersonality(this.evaluationReport.getPersonalityAccelerator());
+        if (null != personality) {
+            this.evaluationReport.getPersonalityAccelerator().getBigFiveFeature().setDescription(personality);
+        }
 
         // 推理描述
         (new Thread() {
@@ -342,6 +341,24 @@ public class Workflow {
         }
 
         return result;
+    }
+
+    /**
+     * 推理人格。
+     *
+     * @param personalityAccelerator
+     * @return
+     */
+    private String inferPersonality(PersonalityAccelerator personalityAccelerator) {
+        String prompt = personalityAccelerator.getBigFiveFeature().generatePrompt();
+        String report = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                null, null);
+        if (null == report) {
+            Logger.w(this.getClass(), "#inferPersonality - report is null: " + prompt);
+            return null;
+        }
+
+        return report;
     }
 
     private List<ReportSuggestion> inferScore(List<EvaluationScore> scoreList, int maxIndicatorTexts) {

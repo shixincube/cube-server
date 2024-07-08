@@ -327,6 +327,7 @@ public class MBTIFeature implements JSONable {
         JSONObject json = this.toCompactJSON();
         json.put("code", this.getCode());
         json.put("name", this.name);
+        json.put("displayName", this.name);
         json.put("description", this.description);
         return json;
     }

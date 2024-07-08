@@ -39,6 +39,8 @@ public class Questionnaire {
 
     public String name;
 
+    public String displayName;
+
     public String instruction;
 
     public List<QuestionSection> questionSections;
@@ -50,6 +52,7 @@ public class Questionnaire {
 
     protected void build(JSONObject structure) {
         this.name = structure.getString("name");
+        this.displayName = structure.getString("displayName");
         this.instruction = structure.getString("instruction");
         this.questionSections = new ArrayList<>();
         if (structure.has("sections")) {
