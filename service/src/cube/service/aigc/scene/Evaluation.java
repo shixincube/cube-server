@@ -84,7 +84,7 @@ public class Evaluation {
 
         if (areaRatio > 0) {
             if (areaRatio <= 0.09) {
-                result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.6, 0.7));
+                result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
 
                 // 画幅小，偏模

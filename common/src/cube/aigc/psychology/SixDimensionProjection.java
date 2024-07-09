@@ -78,13 +78,14 @@ public class SixDimensionProjection {
                     continue;
                 }
 
-                double delta = score.positiveScore - score.negativeScore;
-                if (delta > 0) {
-                    sum += delta * 10d * weight.getValue();
-                }
+                double delta = score.calcScore();
+//                if (delta > 0) {
+//                    sum += delta * 10d * weight.getValue();
+//                }
+                sum += delta * weight.getValue() * 10d;
             }
 
-            result.record(dim, (int) Math.round(sum));
+            result.record(dim, Math.max(0, (int) Math.round(sum)));
         }
 
         return result;

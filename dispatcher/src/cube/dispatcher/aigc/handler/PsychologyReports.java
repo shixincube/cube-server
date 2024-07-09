@@ -26,6 +26,7 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cell.util.log.Logger;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PsychologyReport;
 import cube.aigc.psychology.Theme;
@@ -124,6 +125,7 @@ public class PsychologyReports extends ContextHandler {
                     this.complete();
                 }
             } catch (Exception e) {
+                Logger.e(this.getClass(), "#doGet", e);
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
             }

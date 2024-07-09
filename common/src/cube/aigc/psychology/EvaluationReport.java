@@ -352,7 +352,7 @@ public class EvaluationReport implements JSONable {
             }
         }
 
-        if (score > 0) {
+        if (score >= 1) {
             if (score >= 5) {
                 this.attentionSuggestion = AttentionSuggestion.SpecialAttention;
             }
@@ -588,7 +588,7 @@ public class EvaluationReport implements JSONable {
         for (Scale scale : this.additionScales) {
             array.put(scale.toCompactJSON());
         }
-        json.put("additionScales", this.additionScales);
+        json.put("additionScales", array);
 
         json.put("hesitating", this.hesitating);
 
@@ -615,7 +615,9 @@ public class EvaluationReport implements JSONable {
 
         json.put("accelerator", this.scoreAccelerator.toCompactJSON());
 
-        json.put("personality", this.personalityAccelerator.toCompactJSON());
+        if (null != this.personalityAccelerator) {
+            json.put("personality", this.personalityAccelerator.toCompactJSON());
+        }
 
         json.put("attention", this.attentionSuggestion.level);
 
@@ -623,7 +625,7 @@ public class EvaluationReport implements JSONable {
         for (Scale scale : this.additionScales) {
             array.put(scale.toCompactJSON());
         }
-        json.put("additionScales", this.additionScales);
+        json.put("additionScales", array);
 
         json.put("hesitating", this.hesitating);
 

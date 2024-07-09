@@ -28,6 +28,8 @@ package cube.util;
 
 import cell.util.Utils;
 
+import java.util.Arrays;
+
 public final class FloatUtils {
 
     private FloatUtils() {
@@ -39,9 +41,43 @@ public final class FloatUtils {
         return ((double) num) / scale;
     }
 
+    public static double[] softmax(double[] input) {
+        double[] output = new double[input.length];
+        double total = Arrays.stream(input).map(Math::exp).sum();
+        for (int i = 0; i < input.length; ++i) {
+            output[i] = Math.exp(input[i]) / total;
+        }
+        return output;
+    }
+
+    public static double[] normalization(double[] input, double min, double max) {
+        double inputMax = Arrays.stream(input).max().getAsDouble();
+        double inputMin = Arrays.stream(input).min().getAsDouble();
+        double[] output = new double[input.length];
+        for (int i = 0; i < input.length; ++i) {
+            output[i] = (max - min) * (input[i] - inputMin) / (inputMax - inputMin) + min;
+        }
+        return output;
+    }
+
     public static void main(String[] args) {
-        System.out.println(FloatUtils.random(0.1, 0.2));
-        System.out.println(FloatUtils.random(0.5, 0.7));
-        System.out.println(FloatUtils.random(0.9, 1.0));
+        double[] input = new double[] {
+                -10.8,
+                -0.56,
+                FloatUtils.random(0.1, 0.2),
+                FloatUtils.random(0.5, 0.7),
+                FloatUtils.random(0.3, 0.4),
+                FloatUtils.random(0.9, 1.0)
+        };
+        double[] output = FloatUtils.softmax(input);
+        for (double v : output) {
+            System.out.println(v);
+        }
+        System.out.println("----------------------------------------");
+
+        double[] result = FloatUtils.normalization(output, 1, 100);
+        for (double v : result) {
+            System.out.println(v);
+        }
     }
 }
