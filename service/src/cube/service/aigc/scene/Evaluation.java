@@ -89,6 +89,7 @@ public class Evaluation {
 
                 // 画幅小，偏模
                 this.reference = Reference.Abnormal;
+                Logger.d(this.getClass(), "#evalSpaceStructure - Abnormal: 画幅小");
 
                 result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(0.5, 1.5));
             }
@@ -100,7 +101,7 @@ public class Evaluation {
                 result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.5, 0.6));
 
                 result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(7.5, 8.0));
-                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(6.0, 6.5));
+                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(7.0, 7.5));
             }
             else if (areaRatio < (1.0d / 6.0d)) {
                 result.addFeature(Term.SelfEsteem, Tendency.Negative);
@@ -194,7 +195,7 @@ public class Evaluation {
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(5.5, 7.5));
+                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(7.5, 8.5));
             }
             if (ta >= ha && ta >= pa) {
                 // 树大
@@ -202,7 +203,7 @@ public class Evaluation {
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(5.5, 7.5));
+                result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(7.5, 8.5));
             }
             if (pa >= ha && pa >= ta) {
                 // 人大
@@ -212,9 +213,8 @@ public class Evaluation {
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(4.5, 6.5));
-
-                result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(5.5, 7.5));
+                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(4.5, 5.5));
+                result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(5.5, 6.5));
             }
 
             // 距离
@@ -262,6 +262,8 @@ public class Evaluation {
                     result.addFeature(Term.SocialPowerlessness, Tendency.Positive);
                     result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
                 }
+
+                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(6.5, 7.5));
             }
 
             // 三者都有
@@ -466,6 +468,7 @@ public class Evaluation {
 
             // 偏模
             this.reference = Reference.Abnormal;
+            Logger.d(this.getClass(), "#evalSpaceStructure - Abnormal: 房、树、人三元素中仅有一种元素");
 
             boolean onlyHouse = (null != house);
             boolean onlyTree = (null != tree);
@@ -510,7 +513,7 @@ public class Evaluation {
 
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(5.5, 6.5));
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(6.5, 7.5));
             }
         }
 
@@ -565,9 +568,10 @@ public class Evaluation {
             if (doodles >= 2) {
                 // 画面有1/2画幅涂鸦
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.9, 1.0));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
 
-                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(7.0, 9.0));
             }
             else if (doodles >= 1) {
                 // 画面有1/4画幅涂鸦
@@ -602,6 +606,11 @@ public class Evaluation {
 
                 result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(6.0, 7.0));
             }
+
+            if (doodles >= 2 && sparseness >= 2) {
+                this.reference = Reference.Abnormal;
+                Logger.d(this.getClass(), "#evalSpaceStructure - Abnormal: 画幅大面积涂鸦且图形稀疏");
+            }
         }
 
         return result;
@@ -615,7 +624,7 @@ public class Evaluation {
             // 整体顶部
             result.addFeature(Term.Idealization, Tendency.Positive);
 
-            result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(5.0, 6.0));
+            result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(7.0, 8.0));
         }
         else if (description.isWholeBottom()) {
             // 整体底部
@@ -728,13 +737,15 @@ public class Evaluation {
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
 
-                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(1.0, 3.0));
+                result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(1.0, 2.0));
 
-                if (tAreaRatio > 0 && tAreaRatio < 0.1) {
+                if (tAreaRatio > 0 && tAreaRatio < 0.09) {
                     this.reference = Reference.Abnormal;
+                    Logger.d(this.getClass(), "#evalFrameStructure - Abnormal: 房面积非常小，树面积非常小");
                 }
-                else if (pAreaRatio > 0 && pAreaRatio <= 0.09) {
+                else if (pAreaRatio > 0 && pAreaRatio <= 0.08) {
                     this.reference = Reference.Abnormal;
+                    Logger.d(this.getClass(), "#evalFrameStructure - Abnormal: 房面积非常小，人面积非常小");
                 }
             }
 
@@ -774,15 +785,17 @@ public class Evaluation {
             }
         }
 
-        if (pAreaRatio > 0 && pAreaRatio <= 0.09 && tAreaRatio > 0 && tAreaRatio < 0.1) {
-            // 非常模
+        if (pAreaRatio > 0 && pAreaRatio <= 0.09 && tAreaRatio > 0 && tAreaRatio < 0.09) {
+            // 偏模
             this.reference = Reference.Abnormal;
+            Logger.d(this.getClass(), "#evalFrameStructure - Abnormal: 人面积非常小，树面积非常小");
         }
         else if (hAreaRatio > 0 && hAreaRatio < 0.1
-                && tAreaRatio < 0.1
-                && pAreaRatio < 0.1) {
-            // 非常模
+                && tAreaRatio > 0 && tAreaRatio < 0.09
+                && pAreaRatio > 0 && pAreaRatio < 0.09) {
+            // 偏模
             this.reference = Reference.Abnormal;
+            Logger.d(this.getClass(), "#evalFrameStructure - Abnormal: 房面积非常小，人面积非常小，树面积非常小");
         }
 
         // 判断画面对称性
@@ -1083,7 +1096,7 @@ public class Evaluation {
                     result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.3, 0.4));
                     result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.3, 0.4));
 
-                    result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(1.5, 3.5));
+                    result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(1.5, 2.5));
                 }
                 else if (ratio >= 0.18d && ratio < 0.3d) {
                     // 粗细适度
@@ -1224,7 +1237,7 @@ public class Evaluation {
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalTree - Tree is doodle - \n" + tree.texture.toJSON().toString(4));
 
-                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(6.5, 7.5));
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(7.5, 8.5));
             }
         }
 
@@ -1233,6 +1246,8 @@ public class Evaluation {
             result.addFeature(Term.Introversion, Tendency.Positive);
 
             result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
+
+            result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(8.0, 8.5));
         }
 
         return result;
@@ -1341,11 +1356,13 @@ public class Evaluation {
                 result.addFeature(Term.SelfConfidence, Tendency.Negative);
 
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.6, 0.7));
+
+                result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(1.0, 2.0));
             }
             else {
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(4.0, 5.0));
+                result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(7.0, 8.0));
             }
 
             // 眼
@@ -1399,13 +1416,15 @@ public class Evaluation {
 
                     result.addScore(Indicator.Impulsion, 1, FloatUtils.random(0.6, 0.7));
 
-                    result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(0.5, 2.5));
+                    result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(0.5, 1.5));
                 }
                 else if (person.hasShortHair()) {
                     // 短发
                     result.addFeature(Term.DesireForControl, Tendency.Positive);
 
                     result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.3, 0.4));
+
+                    result.addFiveFactor(TheBigFive.Achievement, FloatUtils.random(8.5, 9.5));
                 }
                 else if (person.hasCurlyHair()) {
                     // 卷发
@@ -1465,6 +1484,8 @@ public class Evaluation {
                         result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(4.0, 5.0));
                     }
                 }
+
+                result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(7.5, 8.5));
             }
 
             // 判断人是否涂鸦
@@ -1477,7 +1498,7 @@ public class Evaluation {
                         Logger.d(this.getClass(), "#evalPerson - Person is doodle - \n" +
                                 person.texture.toJSON().toString(4));
 
-                        result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(5.0, 6.0));
+                        result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(5.5, 6.5));
                     }
                 }
             }
@@ -1856,7 +1877,7 @@ public class Evaluation {
             // 十字路口
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
 
-            result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(5.0, 5.5));
+            result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(7.0, 7.5));
         }
 
         if (other.has(Label.Ladder)) {
@@ -2055,6 +2076,9 @@ public class Evaluation {
                 EvaluationFeature feature = new EvaluationFeature();
                 feature.addScore(Indicator.Unknown, 1, FloatUtils.random(0.8, 0.9));
                 list.add(feature);
+
+                this.reference = Reference.Abnormal;
+                Logger.d(this.getClass(), "#makeEvaluationReport - reference: " + this.reference.name);
                 report = new EvaluationReport(this.painting.getAttribute(), this.reference, list);
                 return report;
             }

@@ -34,7 +34,7 @@ import org.json.JSONObject;
  */
 public class Attribute implements JSONable {
 
-    public final static int MAX_AGE = 70;
+    public final static int MAX_AGE = 65;
 
     public final static int MIN_AGE = 12;
 
@@ -42,14 +42,18 @@ public class Attribute implements JSONable {
 
     public final int age;
 
-    public Attribute(String gender, int age) {
+    public final boolean strict;
+
+    public Attribute(String gender, int age, boolean strict) {
         this.gender = gender;
         this.age = age;
+        this.strict = strict;
     }
 
     public Attribute(JSONObject json) {
         this.gender = json.getString("gender");
         this.age = json.getInt("age");
+        this.strict = json.has("strict") && json.getBoolean("strict");
     }
 
     public boolean isMale() {
@@ -75,6 +79,7 @@ public class Attribute implements JSONable {
         JSONObject json = new JSONObject();
         json.put("gender", this.gender);
         json.put("age", this.age);
+        json.put("strict", this.strict);
         return json;
     }
 

@@ -408,11 +408,13 @@ public class PsychologyScene {
                     reportTask.channel.setProcessing(false);
 
                     // 等待推理完成
-                    synchronized (workflow) {
-                        try {
-                            workflow.wait(4 * 60 * 1000);
-                        } catch (InterruptedException e) {
-                            Logger.e(PsychologyScene.class, "#workflow.wait", e);
+                    if (!workflow.inferCompleted.get()) {
+                        synchronized (workflow) {
+                            try {
+                                workflow.wait(3 * 60 * 1000);
+                            } catch (InterruptedException e) {
+                                Logger.e(PsychologyScene.class, "#workflow.wait", e);
+                            }
                         }
                     }
 
@@ -659,7 +661,7 @@ public class PsychologyScene {
     private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme,
                                    int maxIndicatorText, boolean generatesDescription, WorkflowListener listener) {
         Evaluation evaluation = (null == painting) ?
-                new Evaluation(new Attribute("male", 28)) : new Evaluation(painting);
+                new Evaluation(new Attribute("male", 28, false)) : new Evaluation(painting);
 
         // 生成评估报告
         EvaluationReport report = evaluation.makeEvaluationReport();

@@ -29,7 +29,6 @@ package cube.service.aigc.scene;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
-import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.aigc.psychology.composition.AnswerSheet;
 import cube.aigc.psychology.composition.ReportSuggestion;
 import cube.aigc.psychology.composition.Scale;
@@ -88,6 +87,9 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("age", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("strict", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
             }),
             new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
@@ -411,6 +413,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("name", report.getName()),
                 new StorageField("gender", report.getAttribute().gender),
                 new StorageField("age", report.getAttribute().age),
+                new StorageField("strict", report.getAttribute().strict ? 1 : 0),
                 new StorageField("file_code", report.getFileCode()),
                 new StorageField("theme", report.getTheme().code),
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
@@ -563,7 +566,8 @@ public class PsychologyStorage implements Storagable {
 
         PsychologyReport report = new PsychologyReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
                 data.get("timestamp").getLong(), data.get("name").getString(),
-                new Attribute(data.get("gender").getString(), data.get("age").getInt()),
+                new Attribute(data.get("gender").getString(), data.get("age").getInt(),
+                        data.get("strict").getInt() == 1),
                 data.get("file_code").getString(), Theme.parse(data.get("theme").getString()),
                 data.get("finished_timestamp").getLong());
 

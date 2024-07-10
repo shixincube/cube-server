@@ -74,7 +74,8 @@ public class GeneratePsychologyScaleTask extends ServiceTask {
         try {
             String scaleName = packet.data.getString("name");
             Attribute attribute = new Attribute(packet.data.getString("gender"),
-                    packet.data.getInt("age"));
+                    packet.data.getInt("age"),
+                    packet.data.has("strict") && packet.data.getBoolean("strict"));
 
             Scale scale = PsychologyScene.getInstance().generateScale(scaleName, attribute);
             if (null != scale) {

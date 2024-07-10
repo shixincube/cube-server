@@ -85,7 +85,7 @@ public class SixDimensionProjection {
                 sum += delta * weight.getValue() * 10d;
             }
 
-            result.record(dim, Math.max(0, (int) Math.round(sum)));
+            result.record(dim, Math.max(1, (int) Math.round(sum)));
         }
 
         return result;

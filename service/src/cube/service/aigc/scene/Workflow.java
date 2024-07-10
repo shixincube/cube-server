@@ -42,6 +42,7 @@ import cube.util.TextUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 工作流。
@@ -51,6 +52,8 @@ public class Workflow {
     public final static String HighTrick = "明显";
     public final static String NormalTrick = "具有";
     public final static String LowTrick = "缺乏";//"不足";
+
+    public AtomicBoolean inferCompleted = new AtomicBoolean(false);
 
     private EvaluationReport evaluationReport;
 
@@ -147,13 +150,11 @@ public class Workflow {
             @Override
             public void run() {
                 List<DescriptionSuggestion> descList = inferDescription(template, age, gender, generatesDescription, false);
-                if (descList.isEmpty()) {
-                    Logger.w(this.getClass(), "#make - Description text error");
-                }
-
                 if (Logger.isDebugLevel()) {
                     Logger.d(this.getClass(), "#make - Description list size: " + descList.size());
                 }
+
+                inferCompleted.set(true);
 
                 listener.onInferCompleted(Workflow.this);
             }

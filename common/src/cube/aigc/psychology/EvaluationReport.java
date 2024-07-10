@@ -176,6 +176,8 @@ public class EvaluationReport implements JSONable {
         // 计算关注
         this.calcAttentionSuggestion();
 
+        Logger.i(this.getClass(), "#build - reference: " + this.reference.name);
+
         // 判断 hesitating
         if (this.representationList.size() <= 7 || this.scoreAccelerator.getEvaluationScores().size() <= 5) {
             this.hesitating = true;
@@ -183,10 +185,10 @@ public class EvaluationReport implements JSONable {
     }
 
     private void calcAttentionSuggestion() {
-        if (this.reference == Reference.Normal) {
-            this.attentionSuggestion = AttentionSuggestion.NoAttention;
-            return;
-        }
+//        if (this.reference == Reference.Normal) {
+//            this.attentionSuggestion = AttentionSuggestion.NoAttention;
+//            return;
+//        }
 
         int score = 0;
         boolean depression = false;
@@ -196,7 +198,7 @@ public class EvaluationReport implements JSONable {
         boolean anxiety = false;
         boolean optimism = false;
         boolean pessimism = false;
-        boolean obsession = false;
+//        boolean obsession = false;
 
         for (EvaluationScore es : this.scoreAccelerator.getEvaluationScores()) {
             switch (es.indicator) {
@@ -224,19 +226,19 @@ public class EvaluationReport implements JSONable {
                     break;
                 case Depression:
                     depressionScore = es.positiveScore - es.negativeScore;
-                    if (depressionScore >= 0.9) {
+                    if (depressionScore >= 1.0) {
                         depression = true;
                         score += 3;
                     }
-                    else if (depressionScore > 0.7) {
+                    else if (depressionScore > 0.8) {
                         depression = true;
                         score += 2;
                     }
-                    else if (depressionScore > 0.5) {
+                    else if (depressionScore > 0.6) {
                         depression = true;
                         score += 1;
                     }
-                    else if (depressionScore > 0.3) {
+                    else if (depressionScore > 0.4) {
                         depression = true;
                         score += 1;
                     }
@@ -260,27 +262,31 @@ public class EvaluationReport implements JSONable {
                     }
                     break;
                 case Anxiety:
-                    if (es.positiveScore - es.negativeScore > 1.1) {
+                    if (es.positiveScore - es.negativeScore > 1.5) {
+                        anxiety = true;
+                        score += 2;
+                    }
+                    else if (es.positiveScore - es.negativeScore > 0.8) {
                         anxiety = true;
                         score += 1;
                     }
-                    else if (es.positiveScore - es.negativeScore > 0.4) {
+                    else if (es.positiveScore - es.negativeScore >= 0.1) {
                         anxiety = true;
                     }
                     else if (es.positiveScore - es.negativeScore < 0.1) {
                         score -= 1;
                     }
                     break;
-                case Obsession:
-                    if (es.positiveScore > 0.6) {
-                        obsession = true;
-                        score += 2;
-                    }
-                    else if (es.positiveScore > 0.4) {
-                        obsession = true;
-                        score += 1;
-                    }
-                    break;
+//                case Obsession:
+//                    if (es.positiveScore > 0.6) {
+//                        obsession = true;
+//                        score += 2;
+//                    }
+//                    else if (es.positiveScore > 0.4) {
+//                        obsession = true;
+//                        score += 1;
+//                    }
+//                    break;
                 case Optimism:
                     if (es.positiveScore - es.negativeScore > 1.0) {
                         optimism = true;
@@ -319,12 +325,15 @@ public class EvaluationReport implements JSONable {
             score += 1;
             Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && anxiety)");
         }
-        if (depression && pessimism) {
-            score += 1;
-            Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && pessimism)");
-        }
+//        if (depression && pessimism) {
+//            score += 1;
+//            Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && pessimism)");
+//        }
 
         if (optimism) {
+            score -= 1;
+        }
+        if (!depression && !anxiety) {
             score -= 1;
         }
 
@@ -333,7 +342,7 @@ public class EvaluationReport implements JSONable {
                 "senseOfSecurity:" + senseOfSecurity + " | " +
                 "stress:" + stress + " | " +
                 "anxiety:" + anxiety + " | " +
-                "obsession:" + obsession + " | " +
+//                "obsession:" + obsession + " | " +
                 "optimism:" + optimism + " | " +
                 "pessimism:" + pessimism);
 
@@ -352,9 +361,16 @@ public class EvaluationReport implements JSONable {
             }
         }
 
-        if (score >= 1) {
+        // 根据 strict 修正
+        if (!this.attribute.strict) {
+            score -= 1;
+        }
+
+        if (score > 0) {
             if (score >= 5) {
                 this.attentionSuggestion = AttentionSuggestion.SpecialAttention;
+
+                this.reference = Reference.Abnormal;
             }
             else if (score >= 3) {
                 this.attentionSuggestion = AttentionSuggestion.FocusedAttention;
