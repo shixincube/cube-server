@@ -27,6 +27,7 @@
 package cube.service.aigc.scene;
 
 import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.Reference;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.vision.Size;
 
@@ -38,8 +39,13 @@ public class PaintingEvaluation {
 
     private SpaceLayout spaceLayout;
 
+    private Reference reference;
+
     public PaintingEvaluation(Painting painting) {
         this.painting = painting;
+        this.canvasSize = painting.getCanvasSize();
+        this.spaceLayout = new SpaceLayout(painting);
+        this.reference = Reference.Normal;
     }
 
     private double evalNormal() {

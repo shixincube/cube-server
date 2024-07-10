@@ -1962,6 +1962,9 @@ public class Evaluation {
         int depressionCount = 0;
         double depression = 0;
 
+        double anxiety = 0;
+        double obsession = 0;
+
         if (this.painting.getAttribute().age < 18) {
             // 针对年龄的修订
             double w = 1d - Math.sin(this.painting.getAttribute().age * 0.041);
@@ -2002,6 +2005,16 @@ public class Evaluation {
                 } else {
                     depression -= s.weight;
                 }
+            }
+
+            scores = ef.getScores(Indicator.Anxiety);
+            for (Score s : scores) {
+                anxiety += s.value > 0 ? s.weight : -s.weight;
+            }
+
+            scores = ef.getScores(Indicator.Obsession);
+            for (Score s : scores) {
+                obsession += s.value > 0 ? s.weight : -s.weight;
             }
         }
 
@@ -2055,6 +2068,17 @@ public class Evaluation {
                     ef.removeScore(psychosis);
                 }
             }
+        }
+
+        // 三个核心指标
+        if (depression == 0) {
+            list.get(list.size() - 1).addScore(Indicator.Depression, 1, 0);
+        }
+        if (anxiety == 0) {
+            list.get(list.size() - 1).addScore(Indicator.Anxiety, 1, 0);
+        }
+        if (obsession == 0) {
+            list.get(list.size() - 1).addScore(Indicator.Obsession, 1, 0);
         }
 
         return list;

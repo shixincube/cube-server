@@ -242,10 +242,10 @@ public class EvaluationReport implements JSONable {
                         depression = true;
                         score += 1;
                     }
-                    else if (depressionScore >= 0.1) {
+                    else if (depressionScore > 0) {
                         depression = true;
                     }
-                    else if (depressionScore < 0.1) {
+                    else if (depressionScore < 0) {
                         score -= 1;
                     }
                     break;
@@ -262,18 +262,19 @@ public class EvaluationReport implements JSONable {
                     }
                     break;
                 case Anxiety:
-                    if (es.positiveScore - es.negativeScore > 1.5) {
+                    double anxietyScore = es.positiveScore - es.negativeScore;
+                    if (anxietyScore > 1.5) {
                         anxiety = true;
                         score += 2;
                     }
-                    else if (es.positiveScore - es.negativeScore > 0.8) {
+                    else if (anxietyScore > 0.8) {
                         anxiety = true;
                         score += 1;
                     }
-                    else if (es.positiveScore - es.negativeScore >= 0.1) {
+                    else if (anxietyScore > 0) {
                         anxiety = true;
                     }
-                    else if (es.positiveScore - es.negativeScore < 0.1) {
+                    else if (anxietyScore < 0) {
                         score -= 1;
                     }
                     break;
