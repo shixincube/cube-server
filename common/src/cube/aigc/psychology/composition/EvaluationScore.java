@@ -114,7 +114,7 @@ public class EvaluationScore implements JSONable {
     }
 
     public String generateReportPrompt() {
-        if (this.hit == 0) {
+        if (this.hit == 0 || (this.positiveScore == 0 && this.negativeScore == 0)) {
             return null;
         }
 
@@ -127,7 +127,7 @@ public class EvaluationScore implements JSONable {
     }
 
     public String generateSuggestionPrompt() {
-        if (this.hit == 0) {
+        if (this.hit == 0 || (this.positiveScore == 0 && this.negativeScore == 0)) {
             return null;
         }
 
@@ -145,7 +145,7 @@ public class EvaluationScore implements JSONable {
         StringBuilder buf = new StringBuilder();
         switch (this.indicator) {
             case Obsession:
-                if (score > 0.2 && score <= 0.4) {
+                if (score >= 0.2 && score <= 0.4) {
                     buf.append("轻度强迫症");
                 } else if (score > 0.4 && score <= 0.8) {
                     buf.append("中度强迫症");
@@ -167,7 +167,7 @@ public class EvaluationScore implements JSONable {
                 }
                 break;
             case Anxiety:
-                if (score > 0.3 && score <= 0.7) {
+                if (score >= 0.2 && score <= 0.7) {
                     buf.append("轻度焦虑");
                 } else if (score > 0.7 && score <= 1.1) {
                     buf.append("中度焦虑");

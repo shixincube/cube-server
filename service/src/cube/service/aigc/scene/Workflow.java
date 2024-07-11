@@ -405,7 +405,7 @@ public class Workflow {
             }
         }
         prompt.append("\n");
-        prompt.append("根据上述已知信息，简洁和专业的来回答用户的问题。问题是：简明扼要地总结一下这个人的心理特质。");
+        prompt.append("根据上述已知信息，简洁和专业的来回答用户的问题。问题是：简明扼要地总结一下这个人的心理症状。");
         String summary = this.service.syncGenerateText(this.unitName, prompt.toString(), new GenerativeOption(),
                 null, null);
         return summary;
