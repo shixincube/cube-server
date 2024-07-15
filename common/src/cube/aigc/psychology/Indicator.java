@@ -94,9 +94,9 @@ public enum Indicator {
     Realism("现实主义", "Realism", 10),
 
     /**
-     * 情感。
+     * 情绪。
      */
-    Emotion("情感", "Emotion", 60),
+    Emotion("情绪", "Emotion", 60),
 
     /**
      * 自我意识。

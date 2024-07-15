@@ -111,7 +111,7 @@ public class PsychologyConversationTask extends ServiceTask {
         List<GenerativeRecord> attachments = null;
 
         if (channel.getHistories().isEmpty()) {
-            attachments = PsychologyScene.getInstance().buildAdditions(reportRelationList, false);
+            attachments = PsychologyScene.getInstance().buildAdditions(reportRelationList);
             if (null == attachments) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));
@@ -122,7 +122,7 @@ public class PsychologyConversationTask extends ServiceTask {
         else {
             // 非空历史
             histories = new ArrayList<>();
-            GenerativeRecord trick = PsychologyScene.getInstance().buildHistory(reportRelationList, false);
+            GenerativeRecord trick = PsychologyScene.getInstance().buildHistory(reportRelationList);
             if (null == trick) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));

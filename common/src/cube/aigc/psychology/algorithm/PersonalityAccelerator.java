@@ -192,7 +192,7 @@ public class PersonalityAccelerator implements JSONable  {
         for (int i = 0; i < this.bigFiveFeatures.length; ++i) {
             BigFiveFeature bigFiveFeature = this.bigFiveFeatures[i];
             if (this.bigFiveFeature.getName().equals(bigFiveFeature.getName())) {
-                return this.mbtiFeatures[i];
+                return new MBTIFeature(this.mbtiFeatures[i].getCode());
             }
         }
 

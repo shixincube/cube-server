@@ -41,6 +41,7 @@ import cube.common.state.AIGCStateCode;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -90,11 +91,14 @@ public class PsychologyReport implements JSONable {
 
     public AIGCStateCode inferenceState = AIGCStateCode.Ok;
 
+    private static final SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyyMMddHH");
+
     public PsychologyReport(long contactId, Attribute attribute, FileLabel fileLabel, Theme theme) {
         this.sn = Utils.generateSerialNumber();
         this.contactId = contactId;
         this.timestamp = System.currentTimeMillis();
-        this.name = theme.name + "-" + Utils.gsDateFormat.format(new Date(this.timestamp));
+        this.name = "BZ-" + sDateFormat.format(new Date(this.timestamp)) +
+                String.format("%04d", Utils.randomInt(1, 9999));
         this.attribute = attribute;
         this.fileLabel = fileLabel;
         this.theme = theme;

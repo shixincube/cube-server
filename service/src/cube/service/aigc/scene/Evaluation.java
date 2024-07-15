@@ -2081,6 +2081,13 @@ public class Evaluation {
             list.get(list.size() - 1).addScore(Indicator.Obsession, 1, 0);
         }
 
+        if (!this.painting.getAttribute().strict) {
+            // 删除精神病性指标描述
+            for (EvaluationFeature ef : list) {
+                ef.removeScores(Indicator.Psychosis);
+            }
+        }
+
         return list;
     }
 
