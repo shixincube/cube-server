@@ -391,6 +391,31 @@ public final class TextUtils {
     }
 
     /**
+     * 修正中文字符之间的空格。
+     *
+     * @param input
+     * @return
+     */
+    public static String fixChineseBlank(String input) {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0, len = input.length(); i < len; ++i) {
+            String w = input.substring(i, i + 1);
+            result.append(w);
+
+            Matcher m = sChineseWord.matcher(w);
+            boolean matches = m.matches();
+
+            if (matches && (i + 1) < len) {
+                String n = input.substring(i + 1, i + 2);
+                if (n.equals(" ")) {
+                    i = i + 1;
+                }
+            }
+        }
+        return result.toString();
+    }
+
+    /**
      * 是否是词。
      *
      * @param word

@@ -550,8 +550,8 @@ public class PsychologyScene {
         return evaluation.recommendScale(report.getEvaluationReport());
     }
 
-    public List<GenerativeRecord> buildAdditions(List<ReportRelation> relations) {
-        List<GenerativeRecord> result = null;
+    public String buildPrompt(List<ReportRelation> relations, String query) {
+        StringBuilder result = new StringBuilder();
 
         if (relations.size() == 1) {
             ReportRelation relation = relations.get(0);
@@ -561,51 +561,17 @@ public class PsychologyScene {
                 return null;
             }
 
-            StringBuilder data = new StringBuilder("当前讨论对象（个体）的年龄是");
-            data.append(report.getAttribute().age).append("岁");
-            data.append("，性别是").append(report.getAttribute().getGenderText()).append("性");
-            data.append("，其心理症状是：");
-            int count = 0;
-            for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
-                String word = es.generateWord();
-                if (null == word) {
-                    continue;
-                }
-                data.append(word).append("、");
-                ++count;
-                if (count > 7) {
-                    break;
-                }
-            }
-            data.delete(data.length() - 1, data.length());
-            data.append("。");
-
-            if (null != report.getEvaluationReport().getPersonalityAccelerator()) {
-                data.append("此人的大五人格画像是");
-                data.append(report.getEvaluationReport().getPersonalityAccelerator().getBigFiveFeature().getDisplayName());
-                data.append("。\n");
-            }
-
-//            if (representations) {
-//                for (Representation representation : report.getEvaluationReport().getRepresentationListWithoutEvaluationScore()) {
-//                    data.append(representation.description).append("、");
-//                }
-//            }
-
-            result = new ArrayList<>();
-            GenerativeRecord item = new GenerativeRecord(new String[] {
-                    data.toString()
-            });
-            result.add(item);
+            QueryRevolver queryRevolver = new QueryRevolver();
+            result.append(queryRevolver.generatePrompt(report, query));
         }
         else {
-            result = new ArrayList<>();
+            result.append(query);
         }
 
-        return result;
+        return result.toString();
     }
 
-    public GenerativeRecord buildHistory(List<ReportRelation> relations) {
+    public GenerativeRecord buildHistory(List<ReportRelation> relations, String currentQuery) {
         ReportRelation relation = relations.get(0);
         PsychologyReport report = this.getPsychologyReport(relation.reportSn);
         if (null == report) {
@@ -616,26 +582,31 @@ public class PsychologyScene {
         StringBuilder query = new StringBuilder();
         StringBuilder answer = new StringBuilder();
 
-        query.append("当前我们讨论的对象（个体）有哪些特征？");
-
-        answer.append("我们现在讨论对象（个体）的年龄是");
+        query.append("当前我们讨论的对象（个体）有哪些信息？");
+        answer.append("我们现在讨论的对象（个体）的年龄是");
         answer.append(report.getAttribute().age).append("岁");
         answer.append("，性别是").append(report.getAttribute().getGenderText()).append("性");
-        answer.append("，其心理特征是：");
+        answer.append("，其心理症状是：");
+        int count = 0;
         for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
             String word = es.generateWord();
             if (null == word) {
                 continue;
             }
             answer.append(word).append("、");
+            ++count;
+            if (count > 7) {
+                break;
+            }
         }
-//        if (representations) {
-//            for (Representation representation : report.getEvaluationReport().getRepresentationListWithoutEvaluationScore()) {
-//                answer.append(representation.description).append("、");
-//            }
-//        }
         answer.delete(answer.length() - 1, answer.length());
         answer.append("。");
+
+        if (null != report.getEvaluationReport().getPersonalityAccelerator()) {
+            answer.append("此人的大五人格画像是“");
+            answer.append(report.getEvaluationReport().getPersonalityAccelerator().getBigFiveFeature().getDisplayName());
+            answer.append("”。");
+        }
 
         GenerativeRecord result = new GenerativeRecord(this.unitName, query.toString(), answer.toString());
         return result;

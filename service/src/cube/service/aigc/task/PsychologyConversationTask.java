@@ -108,11 +108,11 @@ public class PsychologyConversationTask extends ServiceTask {
 
         int maxHistories = 5;
         List<GenerativeRecord> histories = null;
-        List<GenerativeRecord> attachments = null;
+        String prompt = query;
 
         if (channel.getHistories().isEmpty()) {
-            attachments = PsychologyScene.getInstance().buildAdditions(reportRelationList);
-            if (null == attachments) {
+            prompt = PsychologyScene.getInstance().buildPrompt(reportRelationList, query);
+            if (null == prompt) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));
                 markResponseTime();
@@ -122,7 +122,7 @@ public class PsychologyConversationTask extends ServiceTask {
         else {
             // 非空历史
             histories = new ArrayList<>();
-            GenerativeRecord trick = PsychologyScene.getInstance().buildHistory(reportRelationList);
+            GenerativeRecord trick = PsychologyScene.getInstance().buildHistory(reportRelationList, query);
             if (null == trick) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));
@@ -141,8 +141,8 @@ public class PsychologyConversationTask extends ServiceTask {
         }
 
         // 使用指定模型生成结果
-        service.generateText(channel, unit, query, query, new GenerativeOption(), histories, 0,
-                attachments, null, false, true, new GenerateTextListener() {
+        service.generateText(channel, unit, query, prompt, new GenerativeOption(), histories, 0,
+                null, null, false, true, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
                         if (null != record) {
