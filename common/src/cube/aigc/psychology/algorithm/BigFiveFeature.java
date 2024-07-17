@@ -157,9 +157,9 @@ public class BigFiveFeature implements JSONable {
             5.5, 5.5, 5.5));
 
 
-    private final double HighScore = 7.0;
+    public final static double HighScore = 7.0;
 
-    private final double LowScore = 4.0;
+    public final static double LowScore = 4.0;
 
 
     /**
@@ -167,25 +167,35 @@ public class BigFiveFeature implements JSONable {
      */
     private double obligingness;
 
+    private String obligingnessContent = "";
+
     /**
      * 尽责性。
      */
     private double conscientiousness;
+
+    private String conscientiousnessContent = "";
 
     /**
      * 外向性。
      */
     private double extraversion;
 
+    private String extraversionContent = "";
+
     /**
      * 进取性。
      */
     private double achievement;
 
+    private String achievementContent = "";
+
     /**
      * 情绪性。
      */
     private double neuroticism;
+
+    private String neuroticismContent = "";
 
     private String name;
 
@@ -220,21 +230,27 @@ public class BigFiveFeature implements JSONable {
             JSONObject factor = scores.getJSONObject(i);
             String code = factor.getString("code");
             double score = factor.getDouble("score");
+            String content = factor.has("content") ? factor.getString("content") : "";
             switch (TheBigFive.parse(code)) {
                 case Obligingness:
                     this.obligingness = score;
+                    this.obligingnessContent = content;
                     break;
                 case Conscientiousness:
                     this.conscientiousness = score;
+                    this.conscientiousnessContent = content;
                     break;
                 case Extraversion:
                     this.extraversion = score;
+                    this.extraversionContent = content;
                     break;
                 case Achievement:
                     this.achievement = score;
+                    this.achievementContent = content;
                     break;
                 case Neuroticism:
                     this.neuroticism = score;
+                    this.neuroticismContent = content;
                     break;
                 default:
                     break;
@@ -317,8 +333,88 @@ public class BigFiveFeature implements JSONable {
         return this.description;
     }
 
-    public String generatePrompt() {
+    public String generateReportPrompt() {
         return this.displayName + "画像报告";
+    }
+
+    public String generateObligingnessPrompt() {
+        if (this.obligingness >= HighScore) {
+            return "高分宜人性表现";
+        }
+        else if (this.obligingness <= LowScore) {
+            return "低分宜人性表现";
+        }
+        else {
+            return "宜人性得分一般的表现是什么？";
+        }
+    }
+
+    public void setObligingnessContent(String content) {
+        this.obligingnessContent = content;
+    }
+
+    public String generateConscientiousnessPrompt() {
+        if (this.conscientiousness >= HighScore) {
+            return "高分尽责性表现";
+        }
+        else if (this.conscientiousness <= LowScore) {
+            return "低分尽责性表现";
+        }
+        else {
+            return "尽责性得分一般的表现是什么？";
+        }
+    }
+
+    public void setConscientiousnessContent(String content) {
+        this.conscientiousnessContent = content;
+    }
+
+    public String generateExtraversionPrompt() {
+        if (this.extraversion >= HighScore) {
+            return "高分外向性表现";
+        }
+        else if (this.extraversion <= LowScore) {
+            return "低分外向性表现";
+        }
+        else {
+            return "外向性得分一般的表现是什么？";
+        }
+    }
+
+    public void setExtraversionContent(String content) {
+        this.extraversionContent = content;
+    }
+
+    public String generateAchievementPrompt() {
+        if (this.achievement >= HighScore) {
+            return "高分进取性表现";
+        }
+        else if (this.achievement <= LowScore) {
+            return "低分进取性表现";
+        }
+        else {
+            return "进取性得分一般的表现是什么？";
+        }
+    }
+
+    public void setAchievementContent(String content) {
+        this.achievementContent = content;
+    }
+
+    public String generateNeuroticismPrompt() {
+        if (this.neuroticism >= HighScore) {
+            return "高分情绪性表现";
+        }
+        else if (this.neuroticism <= LowScore) {
+            return "低分情绪性表现";
+        }
+        else {
+            return "情绪性得分一般的表现是什么？";
+        }
+    }
+
+    public void setNeuroticismContent(String content) {
+        this.neuroticismContent = content;
     }
 
     @Override
@@ -334,30 +430,35 @@ public class BigFiveFeature implements JSONable {
         obligingness.put("name", TheBigFive.Obligingness.name);
         obligingness.put("code", TheBigFive.Obligingness.code);
         obligingness.put("score", this.obligingness);
+        obligingness.put("content", this.obligingnessContent);
         scoreArray.put(obligingness);
 
         JSONObject conscientiousness = new JSONObject();
         conscientiousness.put("name", TheBigFive.Conscientiousness.name);
         conscientiousness.put("code", TheBigFive.Conscientiousness.code);
         conscientiousness.put("score", this.conscientiousness);
+        conscientiousness.put("content", this.conscientiousnessContent);
         scoreArray.put(conscientiousness);
 
         JSONObject extraversion = new JSONObject();
         extraversion.put("name", TheBigFive.Extraversion.name);
         extraversion.put("code", TheBigFive.Extraversion.code);
         extraversion.put("score", this.extraversion);
+        extraversion.put("content", this.extraversionContent);
         scoreArray.put(extraversion);
 
         JSONObject achievement = new JSONObject();
         achievement.put("name", TheBigFive.Achievement.name);
         achievement.put("code", TheBigFive.Achievement.code);
         achievement.put("score", this.achievement);
+        achievement.put("content", this.achievementContent);
         scoreArray.put(achievement);
 
         JSONObject neuroticism = new JSONObject();
         neuroticism.put("name", TheBigFive.Neuroticism.name);
         neuroticism.put("code", TheBigFive.Neuroticism.code);
         neuroticism.put("score", this.neuroticism);
+        neuroticism.put("content", this.neuroticismContent);
         scoreArray.put(neuroticism);
 
         json.put("scores", scoreArray);

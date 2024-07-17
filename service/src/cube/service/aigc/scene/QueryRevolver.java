@@ -70,7 +70,7 @@ public class QueryRevolver {
         int count = 0;
         for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
             String word = es.generateWord();
-            if (null == word) {
+            if (null == word || word.length() == 0) {
                 continue;
             }
             result.append(word).append("、");

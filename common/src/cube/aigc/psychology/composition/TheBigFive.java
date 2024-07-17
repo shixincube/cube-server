@@ -67,12 +67,12 @@ public enum TheBigFive {
         this.name = name;
     }
 
-    public final static TheBigFive parse(String codeOrName) {
+    public static TheBigFive parse(String codeOrName) {
         for (TheBigFive tbf : TheBigFive.values()) {
             if (tbf.code.equalsIgnoreCase(codeOrName) || tbf.name.equals(codeOrName)) {
                 return tbf;
             }
         }
-        return null;
+        return Neuroticism;
     }
 }

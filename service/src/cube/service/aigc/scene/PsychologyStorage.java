@@ -368,20 +368,6 @@ public class PsychologyStorage implements Storagable {
     }
 
     public boolean writePsychologyReport(PsychologyReport report) {
-//        if (null != report.getParagraphs()) {
-//            for (ReportParagraph paragraph : report.getParagraphs()) {
-//                this.storage.executeInsert(this.reportParagraphTable, new StorageField[] {
-//                        new StorageField("report_sn", report.sn),
-//                        new StorageField("title", paragraph.title),
-//                        new StorageField("score", paragraph.score),
-//                        new StorageField("description", paragraph.description),
-//                        new StorageField("opinion", paragraph.opinion),
-//                        new StorageField("features", JSONUtils.toStringArray(paragraph.getFeatures()).toString()),
-//                        new StorageField("suggestions", JSONUtils.toStringArray(paragraph.getSuggestions()).toString())
-//                });
-//            }
-//        }
-
 //        if (null != report.getBehaviorList()) {
 //            for (DescriptionSuggestion bs : report.getBehaviorList()) {
 //                this.storage.executeInsert(this.reportBehaviorTable, new StorageField[] {
@@ -406,6 +392,13 @@ public class PsychologyStorage implements Storagable {
             }
         }
 
+        this.storage.executeDelete(this.reportTable, new Conditional[] {
+                Conditional.createEqualTo("sn", report.sn)
+        });
+
+        String dataString = report.getEvaluationReport().toJSON().toString();
+        dataString = JSONUtils.escape(dataString);
+
         return this.storage.executeInsert(this.reportTable, new StorageField[] {
                 new StorageField("sn", report.sn),
                 new StorageField("contact_id", report.contactId),
@@ -418,7 +411,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("theme", report.getTheme().code),
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("summary", report.getSummary()),
-                new StorageField("evaluation_data", report.getEvaluationReport().toJSON().toString())
+                new StorageField("evaluation_data", dataString)
         });
     }
 
@@ -576,8 +569,23 @@ public class PsychologyStorage implements Storagable {
         }
 
         if (!data.get("evaluation_data").isNullValue()) {
-            String content = JSONUtils.filter(data.get("evaluation_data").getString().trim());
-            EvaluationReport evaluationReport = new EvaluationReport(new JSONObject(content));
+            JSONObject dataJson = null;
+            try {
+                dataJson = new JSONObject(data.get("evaluation_data").getString().trim());
+            } catch (Exception e) {
+                try {
+                    dataJson = new JSONObject(JSONUtils.filter(data.get("evaluation_data").getString().trim()));
+                } catch (Exception se) {
+                    Logger.e(this.getClass(), "#makeReport", se);
+                }
+            }
+
+            if (null == dataJson) {
+                Logger.w(this.getClass(), "#makeReport - `evaluation_data` data error: " + report.sn);
+                return null;
+            }
+
+            EvaluationReport evaluationReport = new EvaluationReport(dataJson);
             report.setEvaluationReport(evaluationReport);
         }
 
@@ -615,26 +623,6 @@ public class PsychologyStorage implements Storagable {
             textList.add(rs);
         }
         report.setReportTextList(textList);
-
-//        List<StorageField[]> paragraphResult = this.storage.executeQuery(this.reportParagraphTable,
-//                this.reportParagraphFields, new Conditional[] {
-//                        Conditional.createEqualTo("report_sn", report.sn)
-//                });
-//        for (StorageField[] paragraphFields : paragraphResult) {
-//            Map<String, StorageField> pd = StorageFields.get(paragraphFields);
-//            ReportParagraph paragraph = new ReportParagraph(pd.get("title").getString(),
-//                    pd.get("score").getInt(), pd.get("description").getString(), pd.get("opinion").getString());
-//
-//            String arrayString = pd.get("features").getString();
-//            JSONArray array = new JSONArray(arrayString);
-//            paragraph.addFeatures(JSONUtils.toStringList(array));
-//
-//            arrayString = pd.get("suggestions").getString();
-//            array = new JSONArray(arrayString);
-//            paragraph.addSuggestions(JSONUtils.toStringList(array));
-//
-//            report.addParagraph(paragraph);
-//        }
 
         // 生成 Markdown
         report.makeMarkdown(false);

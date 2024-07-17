@@ -140,10 +140,7 @@ public class Workflow {
         this.summary = this.inferSummary(this.reportTextList);
 
         // 生成人格描述
-        String personality = this.inferPersonality(this.evaluationReport.getPersonalityAccelerator());
-        if (null != personality) {
-            this.evaluationReport.getPersonalityAccelerator().getBigFiveFeature().setDescription(personality);
-        }
+        this.inferPersonality(this.evaluationReport.getPersonalityAccelerator());
 
         // 推理描述
         (new Thread() {
@@ -350,16 +347,73 @@ public class Workflow {
      * @param personalityAccelerator
      * @return
      */
-    private String inferPersonality(PersonalityAccelerator personalityAccelerator) {
-        String prompt = personalityAccelerator.getBigFiveFeature().generatePrompt();
-        String report = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+    private boolean inferPersonality(PersonalityAccelerator personalityAccelerator) {
+        String prompt = personalityAccelerator.getBigFiveFeature().generateReportPrompt();
+        String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                 null, null);
-        if (null == report) {
+        if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - report is null: " + prompt);
-            return null;
+            return false;
+        }
+        // 设置描述
+        personalityAccelerator.getBigFiveFeature().setDescription(answer);
+
+        // 宜人性
+        prompt = personalityAccelerator.getBigFiveFeature().generateObligingnessPrompt();
+        answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                null, null);
+        if (null == answer) {
+            Logger.w(this.getClass(), "#inferPersonality - Obligingness content error: " + prompt);
+        }
+        else {
+            personalityAccelerator.getBigFiveFeature().setObligingnessContent(answer);
         }
 
-        return report;
+        // 尽责性
+        prompt = personalityAccelerator.getBigFiveFeature().generateConscientiousnessPrompt();
+        answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                null, null);
+        if (null == answer) {
+            Logger.w(this.getClass(), "#inferPersonality - Conscientiousness content error: " + prompt);
+        }
+        else {
+            personalityAccelerator.getBigFiveFeature().setConscientiousnessContent(answer);
+        }
+
+        // 外向性
+        prompt = personalityAccelerator.getBigFiveFeature().generateExtraversionPrompt();
+        answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                null, null);
+        if (null == answer) {
+            Logger.w(this.getClass(), "#inferPersonality - Extraversion content error: " + prompt);
+        }
+        else {
+            personalityAccelerator.getBigFiveFeature().setExtraversionContent(answer);
+        }
+
+        // 进取性
+        prompt = personalityAccelerator.getBigFiveFeature().generateAchievementPrompt();
+        answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                null, null);
+        if (null == answer) {
+            Logger.w(this.getClass(), "#inferPersonality - Achievement content error: " + prompt);
+        }
+        else {
+            personalityAccelerator.getBigFiveFeature().setAchievementContent(answer);
+        }
+
+        // 情绪性
+        prompt = personalityAccelerator.getBigFiveFeature().generateNeuroticismPrompt();
+        answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                null, null);
+        if (null == answer) {
+            Logger.w(this.getClass(), "#inferPersonality - Neuroticism content error: " + prompt);
+        }
+        else {
+            personalityAccelerator.getBigFiveFeature().setNeuroticismContent(answer);
+        }
+
+        return true;
     }
 
     private List<ReportSuggestion> inferScore(List<EvaluationScore> scoreList, int maxIndicatorTexts) {

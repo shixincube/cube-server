@@ -191,4 +191,16 @@ public final class JSONUtils {
     public static String filter(String text) {
         return text.replaceAll("\\n", "\\\\n");
     }
+
+    public static String escape(String text) {
+        return text.replaceAll("\\\\", "\\\\\\\\");
+    }
+
+//    public static void main(String[] args) {
+//        JSONObject json = new JSONObject();
+//        json.put("reference", "Abnormal");
+//        json.put("name", "X\"JW\"\n下一行");
+//        System.out.println(json.toString());
+//        System.out.println(escape(json.toString()));
+//    }
 }

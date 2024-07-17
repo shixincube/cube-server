@@ -159,6 +159,10 @@ public class PsychologyScene {
         }
 
         AIGCUnit unit = this.aigcService.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
+        if (null == unit) {
+            Logger.w(this.getClass(), "#checkPsychologyPainting - No psychology unit: " + fileCode);
+            return false;
+        }
 
         JSONObject data = new JSONObject();
         data.put("fileLabel", fileLabel.toJSON());
@@ -590,7 +594,7 @@ public class PsychologyScene {
         int count = 0;
         for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
             String word = es.generateWord();
-            if (null == word) {
+            if (null == word || word.length() == 0) {
                 continue;
             }
             answer.append(word).append("、");
