@@ -53,6 +53,12 @@ import java.util.List;
  */
 public class Evaluation {
 
+    private final double houseAreaRatioThreshold = 0.069;
+
+    private final double treeAreaRatioThreshold = 0.06;
+
+    private final double personAreaRatioThreshold = 0.02;
+
     private Painting painting;
 
     private Size canvasSize;
@@ -260,7 +266,7 @@ public class Evaluation {
                 Logger.d(this.getClass(), "#evalSpaceStructure - Area ratio: " + rH + "," + rT + "," + rP);
                 if ((rH < 0.1 && rT < 0.1) || (rH < 0.1 && rP < 0.1) || (rT < 0.1 && rP < 0.1)) {
                     result.addFeature(Term.SocialPowerlessness, Tendency.Positive);
-                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
+                    result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.3, 0.4));
                 }
 
                 result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(6.5, 7.5));
@@ -583,28 +589,30 @@ public class Evaluation {
 
             // 画面稀疏
             if (sparseness >= 4) {
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.2, 0.3));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
-                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(8.0, 9.0));
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(2.0, 3.0));
             }
             else if (sparseness >= 3) {
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
+//                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
+                result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.2, 0.3));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
-                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(7.5, 8.5));
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(3.0, 4.0));
             }
             else if (sparseness >= 2) {
-                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
-                Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
-
-                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(7.0, 8.0));
-            }
-            else if (sparseness >= 1) {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
-                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(6.0, 7.0));
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(4.0, 5.0));
+            }
+            else if (sparseness >= 1) {
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.4, 0.5));
+                Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
+
+                result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(5.0, 6.0));
             }
 
             if (doodles >= 2 && sparseness >= 2) {
@@ -712,6 +720,9 @@ public class Evaluation {
         double tAreaRatio = (null != tree) ? (double)tree.area / (double)this.spaceLayout.getPaintingArea() : -1;
         double pAreaRatio = (null != person) ? (double)person.area / (double)this.spaceLayout.getPaintingArea() : -1;
 
+        Logger.d(this.getClass(), "#evalFrameStructure - Area ratio: " + hAreaRatio +
+                "/" + tAreaRatio + "/" + pAreaRatio);
+
         // 左半边中线位置
         int halfLeftCenterX = (int) Math.round(this.canvasSize.width * 0.5 * 0.5);
         // 右半边中线位置
@@ -730,7 +741,7 @@ public class Evaluation {
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
             }
 
-            if (hAreaRatio < 0.1) {
+            if (hAreaRatio < this.houseAreaRatioThreshold) {
                 // 房的面积非常小
                 result.addFeature(Term.PayAttentionToFamily, Tendency.Negative);
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
@@ -739,17 +750,17 @@ public class Evaluation {
 
                 result.addFiveFactor(TheBigFive.Obligingness, FloatUtils.random(1.0, 2.0));
 
-                if (tAreaRatio > 0 && tAreaRatio < 0.09) {
+                if (tAreaRatio > 0 && tAreaRatio < this.treeAreaRatioThreshold) {
                     this.reference = Reference.Abnormal;
                     Logger.d(this.getClass(), "#evalFrameStructure - Abnormal: 房面积非常小，树面积非常小");
                 }
-                else if (pAreaRatio > 0 && pAreaRatio <= 0.08) {
+                else if (pAreaRatio > 0 && pAreaRatio <= this.personAreaRatioThreshold) {
                     this.reference = Reference.Abnormal;
                     Logger.d(this.getClass(), "#evalFrameStructure - Abnormal: 房面积非常小，人面积非常小");
                 }
             }
 
-            if (hAreaRatio < 0.08) {
+            if (hAreaRatio < this.houseAreaRatioThreshold) {
                 result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(5.5, 6.5));
             }
             else {
@@ -758,24 +769,24 @@ public class Evaluation {
         }
 
         if (null != tree) {
-            if (tAreaRatio < 0.1) {
+            if (tAreaRatio < this.treeAreaRatioThreshold) {
                 // 树的面积非常小
                 result.addFiveFactor(TheBigFive.Conscientiousness, FloatUtils.random(1.5, 3.5));
             }
         }
 
         if (null != person) {
-            if (pAreaRatio < 0.09) {
+            if (pAreaRatio < this.personAreaRatioThreshold) {
                 // 人的面积非常小
                 result.addFeature(Term.SenseOfSecurity, Tendency.Negative);
 
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
 
                 result.addFiveFactor(TheBigFive.Extraversion, FloatUtils.random(1.5, 3.0));
             }
-            else if (pAreaRatio > 0.3) {
+            else if (pAreaRatio > 0.09) {
                 // 人的面积非常大
                 result.addFeature(Term.SelfInflated, Tendency.Positive);
                 result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.1, 0.2));
@@ -785,14 +796,15 @@ public class Evaluation {
             }
         }
 
-        if (pAreaRatio > 0 && pAreaRatio <= 0.09 && tAreaRatio > 0 && tAreaRatio < 0.09) {
+        if (pAreaRatio > 0 && pAreaRatio <= this.personAreaRatioThreshold
+                && tAreaRatio > 0 && tAreaRatio < this.treeAreaRatioThreshold) {
             // 偏模
             this.reference = Reference.Abnormal;
             Logger.d(this.getClass(), "#evalFrameStructure - Abnormal: 人面积非常小，树面积非常小");
         }
-        else if (hAreaRatio > 0 && hAreaRatio < 0.1
-                && tAreaRatio > 0 && tAreaRatio < 0.09
-                && pAreaRatio > 0 && pAreaRatio < 0.09) {
+        else if (hAreaRatio > 0 && hAreaRatio < this.houseAreaRatioThreshold
+                && tAreaRatio > 0 && tAreaRatio < this.treeAreaRatioThreshold
+                && pAreaRatio > 0 && pAreaRatio < this.personAreaRatioThreshold) {
             // 偏模
             this.reference = Reference.Abnormal;
             Logger.d(this.getClass(), "#evalFrameStructure - Abnormal: 房面积非常小，人面积非常小，树面积非常小");
