@@ -32,7 +32,7 @@ import cube.aigc.psychology.algorithm.BigFiveFeature;
 import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.EvaluationScore;
-import cube.aigc.psychology.composition.ReportSuggestion;
+import cube.aigc.psychology.composition.ReportSection;
 import cube.aigc.psychology.composition.SixDimension;
 import cube.aigc.psychology.composition.SixDimensionScore;
 import cube.common.JSONable;
@@ -87,7 +87,7 @@ public class PsychologyReport implements JSONable {
 
 //    private List<DescriptionSuggestion> behaviorTextList;
 
-    private List<ReportSuggestion> reportTextList;
+    private List<ReportSection> reportTextList;
 
     public AIGCStateCode inferenceState = AIGCStateCode.Ok;
 
@@ -174,7 +174,7 @@ public class PsychologyReport implements JSONable {
             this.reportTextList = new ArrayList<>();
             JSONArray array = json.getJSONArray("reportTextList");
             for (int i = 0; i < array.length(); ++i) {
-                ReportSuggestion rs = new ReportSuggestion(array.getJSONObject(i));
+                ReportSection rs = new ReportSection(array.getJSONObject(i));
                 this.reportTextList.add(rs);
             }
         }
@@ -201,12 +201,12 @@ public class PsychologyReport implements JSONable {
         this.normDimensionScore = normScore;
     }
 
-    public void setReportTextList(List<ReportSuggestion> textList) {
+    public void setReportTextList(List<ReportSection> textList) {
         this.reportTextList = new ArrayList<>();
         this.reportTextList.addAll(textList);
     }
 
-    public List<ReportSuggestion> getReportTextList() {
+    public List<ReportSection> getReportTextList() {
         return this.reportTextList;
     }
 
@@ -367,7 +367,7 @@ public class PsychologyReport implements JSONable {
             buf.append("\n");
             buf.append("**报告文本：**");
             buf.append("\n");
-            for (ReportSuggestion rs : this.reportTextList) {
+            for (ReportSection rs : this.reportTextList) {
                 buf.append("\n");
                 buf.append("> **").append(rs.title).append("** \n");
                 buf.append("> **报告**：").append(rs.report).append("\n");
@@ -415,7 +415,7 @@ public class PsychologyReport implements JSONable {
 
         if (null != this.reportTextList) {
             JSONArray jsonArray = new JSONArray();
-            for (ReportSuggestion rs : this.reportTextList) {
+            for (ReportSection rs : this.reportTextList) {
                 jsonArray.put(rs.toJSON());
             }
             json.put("reportTextList", jsonArray);
@@ -429,7 +429,7 @@ public class PsychologyReport implements JSONable {
             this.reportTextList = new ArrayList<>();
             JSONArray array = json.getJSONArray("reportTextList");
             for (int i = 0; i < array.length(); ++i) {
-                ReportSuggestion rs = new ReportSuggestion(array.getJSONObject(i));
+                ReportSection rs = new ReportSection(array.getJSONObject(i));
                 this.reportTextList.add(rs);
             }
         }
@@ -445,7 +445,7 @@ public class PsychologyReport implements JSONable {
 
         if (null != this.reportTextList) {
             JSONArray jsonArray = new JSONArray();
-            for (ReportSuggestion rs : this.reportTextList) {
+            for (ReportSection rs : this.reportTextList) {
                 jsonArray.put(rs.toJSON());
             }
             json.put("reportTextList", jsonArray);

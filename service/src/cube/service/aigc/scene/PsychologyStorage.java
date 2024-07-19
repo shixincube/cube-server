@@ -30,7 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.AnswerSheet;
-import cube.aigc.psychology.composition.ReportSuggestion;
+import cube.aigc.psychology.composition.ReportSection;
 import cube.aigc.psychology.composition.Scale;
 import cube.common.Storagable;
 import cube.core.Conditional;
@@ -381,7 +381,7 @@ public class PsychologyStorage implements Storagable {
 //        }
 
         if (null != report.getReportTextList()) {
-            for (ReportSuggestion rs : report.getReportTextList()) {
+            for (ReportSection rs : report.getReportTextList()) {
                 this.storage.executeInsert(this.reportTextTable, new StorageField[] {
                         new StorageField("report_sn", report.sn),
                         new StorageField("indicator", rs.indicator.name),
@@ -611,10 +611,10 @@ public class PsychologyStorage implements Storagable {
                 this.reportTextFields, new Conditional[] {
                         Conditional.createEqualTo("report_sn", report.sn)
                 });
-        List<ReportSuggestion> textList = new ArrayList<>();
+        List<ReportSection> textList = new ArrayList<>();
         for (StorageField[] textFields : fields) {
             Map<String, StorageField> tf = StorageFields.get(textFields);
-            ReportSuggestion rs = new ReportSuggestion(
+            ReportSection rs = new ReportSection(
                     Indicator.parse(tf.get("indicator").getString()),
                     tf.get("title").getString(),
                     tf.get("report").getString(),

@@ -33,7 +33,7 @@ import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.DescriptionSuggestion;
 import cube.aigc.psychology.composition.EvaluationScore;
-import cube.aigc.psychology.composition.ReportSuggestion;
+import cube.aigc.psychology.composition.ReportSection;
 import cube.aigc.psychology.composition.SixDimensionScore;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GenerativeOption;
@@ -69,11 +69,9 @@ public class Workflow {
 
 //    private List<DescriptionSuggestion> behaviorTextList;
 
-    private List<ReportSuggestion> reportTextList;
+    private List<ReportSection> reportTextList;
 
     private String summary = null;
-
-//    private List<ReportParagraph> paragraphList;
 
     private String unitName = ModelConfig.BAIZE_UNIT;
 
@@ -156,111 +154,6 @@ public class Workflow {
                 listener.onInferCompleted(Workflow.this);
             }
         }).start();
-
-        /* FIXME XJW 以下步骤不再推荐使用
-        for (String title : template.getTitles()) {
-            this.paragraphList.add(new ReportParagraph(title));
-        }
-
-        // 生成表征内容
-        boolean paragraphInferrable = false;
-        if (paragraphInferrable) {
-    //        String representation = this.spliceRepresentationInterpretation();
-            List<String> representations = this.spliceBehaviorList(this.behaviorList);
-            if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#make - representation num: " + representations.size());
-            }
-
-            // 逐一生成提示词并推理
-            for (int i = 0; i < this.paragraphList.size(); ++i) {
-                ReportParagraph paragraph = this.paragraphList.get(i);
-
-                // 生成标题的上下文内容
-                List<GenerativeRecord> records = new ArrayList<>();
-                records.add(new GenerativeRecord(this.unitName, paragraph.title,
-                        template.getExplain(i)));
-                if (Logger.isDebugLevel()) {
-                    Logger.d(this.getClass(), "#make - \"" + paragraph.title + "\" context num: " + records.size());
-                }
-
-                // 推理特征
-                StringBuilder result = new StringBuilder();
-                for (String representation : representations) {
-                    String prompt = template.formatFeaturePrompt(i, representation);
-                    String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                            records, null);
-                    if (null == answer) {
-                        Logger.w(this.getClass(), "#make - Infer feature failed");
-                        break;
-                    }
-                    // 记录结果
-                    result.append(answer).append("\n");
-                }
-
-                List<String> list = this.extractList(result.toString());
-                if (list.isEmpty()) {
-                    Logger.w(this.getClass(), "#make - extract feature list error");
-                    break;
-                }
-                // 添加特性
-                paragraph.addFeatures(this.plainText(list, false));
-
-                // 推理描述
-                result = new StringBuilder();
-                List<List<String>> featuresList = TextUtils.splitList(paragraph.getFeatures(), this.maxContext);
-                for (List<String> features : featuresList) {
-                    // 将特征结果进行拼合
-                    String prompt = template.formatDescriptionPrompt(i, this.spliceList(features));
-                    String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                            records, null);
-                    if (null == answer) {
-                        Logger.w(this.getClass(), "#make - Infer description failed");
-                        break;
-                    }
-                    // 记录结果
-                    result.append(answer).append("\n");
-                }
-
-                // 转平滑文本，过滤噪音
-                String description = this.filterNoise(result.toString());
-                paragraph.setDescription(description);
-
-                // 推理建议
-                result = new StringBuilder();
-                for (String representation : representations) {
-                    String prompt = template.formatSuggestionPrompt(i, representation);
-                    String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                            records, null);
-                    if (null == answer) {
-                        Logger.w(this.getClass(), "#make - Infer suggestion failed");
-                        break;
-                    }
-                    // 记录结果
-                    result.append(answer).append("\n");
-                }
-                // 添加建议
-                paragraph.addSuggestions(this.extractList(result.toString()));
-
-                // 推理意见
-                result = new StringBuilder();
-                List<List<String>> suggestionsList = TextUtils.splitList(paragraph.getSuggestions(), this.maxContext);
-                for (List<String> suggestions : suggestionsList) {
-                    String prompt = template.formatOpinionPrompt(i, this.spliceList(suggestions));
-                    String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                            records, null);
-                    if (null == answer) {
-                        Logger.w(this.getClass(), "#make - Infer opinion failed");
-                        break;
-                    }
-                    // 记录结果
-                    result.append(answer).append("\n");
-                }
-
-                // 转平滑文本，过滤噪音
-                String opinion = this.filterNoise(result.toString());
-                paragraph.setOpinion(opinion);
-            }
-        }*/
 
         return this;
     }
@@ -416,8 +309,8 @@ public class Workflow {
         return true;
     }
 
-    private List<ReportSuggestion> inferScore(List<EvaluationScore> scoreList, int maxIndicatorTexts) {
-        List<ReportSuggestion> result = new ArrayList<>();
+    private List<ReportSection> inferScore(List<EvaluationScore> scoreList, int maxIndicatorTexts) {
+        List<ReportSection> result = new ArrayList<>();
         for (EvaluationScore es : scoreList) {
             Logger.d(this.getClass(), "#inferScore - score: " + es.indicator.name);
 
@@ -437,7 +330,7 @@ public class Workflow {
                     null, null);
 
             if (null != report && null != suggestion) {
-                result.add(new ReportSuggestion(es.indicator, es.generateWord(),
+                result.add(new ReportSection(es.indicator, es.generateWord(),
                         report, suggestion));
 
                 if (result.size() >= maxIndicatorTexts) {
@@ -449,10 +342,10 @@ public class Workflow {
         return result;
     }
 
-    private String inferSummary(List<ReportSuggestion> list) {
+    private String inferSummary(List<ReportSection> list) {
         // 生成概述
         StringBuilder prompt = new StringBuilder("已知信息：\n");
-        for (ReportSuggestion rs : list) {
+        for (ReportSection rs : list) {
             prompt.append(rs.report).append("\n");
             if (prompt.length() >= ModelConfig.BAIZE_CONTEXT_LIMIT) {
                 break;
@@ -464,56 +357,6 @@ public class Workflow {
                 null, null);
         return summary;
     }
-
-    /*
-    private List<String> spliceBehaviorList(List<String> behaviorList) {
-        List<String> result = new ArrayList<>();
-        StringBuilder buf = new StringBuilder();
-
-        for (String text : behaviorList) {
-            List<String> list = this.extractList(text);
-            for (String content : list) {
-                if (TextUtils.startsWithNumberSign(content)) {
-                    int index = content.indexOf(".");
-                    content = content.substring(index + 1).trim();
-
-                    if (buf.length() + content.length() > this.maxContext) {
-                        result.add(buf.toString());
-                        buf = new StringBuilder();
-                    }
-
-                    buf.append(content).append("\n");
-                }
-            }
-        }
-
-        result.add(buf.toString());
-        return result;
-    }
-
-    private String spliceRepresentationInterpretation() {
-        StringBuilder buf = new StringBuilder();
-        for (Representation representation : this.evaluationReport.getRepresentationListByEvaluationScore(100)) {
-            buf.append(representation.knowledgeStrategy.getInterpretation()).append("\n");
-            if (buf.length() > this.maxContext - 100) {
-                Logger.w(this.getClass(), "#spliceRepresentationInterpretation - Context length is overflow: " + buf.length());
-                break;
-            }
-        }
-        buf.delete(buf.length() - 1, buf.length());
-        return buf.toString();
-    }
-
-    private List<GenerativeRecord> makeRepresentationContext(List<Representation> list) {
-        List<GenerativeRecord> result = new ArrayList<>();
-        for (Representation representation : list) {
-            GenerativeRecord record = new GenerativeRecord(this.unitName,
-                    representation.knowledgeStrategy.getComment().word,
-                    representation.knowledgeStrategy.getInterpretation());
-            result.add(record);
-        }
-        return result;
-    }*/
 
     /**
      * 将内容里的列表数据提取到列表里。

@@ -31,7 +31,7 @@ import cube.common.JSONable;
 import cube.util.TextUtils;
 import org.json.JSONObject;
 
-public class ReportSuggestion implements JSONable {
+public class ReportSection implements JSONable {
 
     public Indicator indicator;
 
@@ -41,7 +41,7 @@ public class ReportSuggestion implements JSONable {
 
     public String suggestion;
 
-    public ReportSuggestion(JSONObject json) {
+    public ReportSection(JSONObject json) {
         this.indicator = Indicator.parse(json.getString("indicator"));
         this.report = TextUtils.fixChineseBlank(json.getString("report").trim());
         this.suggestion = TextUtils.fixChineseBlank(json.getString("suggestion").trim());
@@ -49,7 +49,7 @@ public class ReportSuggestion implements JSONable {
                 : this.indicator.name;
     }
 
-    public ReportSuggestion(Indicator indicator, String title, String report, String suggestion) {
+    public ReportSection(Indicator indicator, String title, String report, String suggestion) {
         this.indicator = indicator;
         this.title = TextUtils.fixChineseBlank(title.trim());
         this.report = TextUtils.fixChineseBlank(report.trim());
