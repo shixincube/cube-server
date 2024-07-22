@@ -60,9 +60,9 @@ public class ReportSection implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("indicator", this.indicator.name);
+        json.put("title", this.title);
         json.put("report", this.report);
         json.put("suggestion", this.suggestion);
-        json.put("title", this.title);
         return json;
     }
 

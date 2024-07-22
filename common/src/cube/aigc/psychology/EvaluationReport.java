@@ -205,54 +205,61 @@ public class EvaluationReport implements JSONable {
                 case Psychosis:
                     if (es.positiveScore > 0.9) {
                         score += 4;
+                        Logger.d(this.getClass(), "Attention: Psychosis +4");
                     }
                     else if (es.positiveScore > 0.6) {
                         score += 3;
+                        Logger.d(this.getClass(), "Attention: Psychosis +3");
                     }
                     else if (es.positiveScore > 0.3) {
                         score += 2;
+                        Logger.d(this.getClass(), "Attention: Psychosis +2");
                     }
                     break;
                 case SocialAdaptability:
                     double delta = es.negativeScore - es.positiveScore;
                     if (delta > 0) {
-                        if (delta > 0.7) {
+                        if (delta > 0.9) {
                             score += 2;
+                            Logger.d(this.getClass(), "Attention: SocialAdaptability +2");
                         }
-                        else if (delta >= 0.2) {
+                        else if (delta >= 0.5) {
                             score += 1;
+                            Logger.d(this.getClass(), "Attention: SocialAdaptability +1");
                         }
                     }
                     break;
                 case Depression:
                     depressionScore = es.positiveScore - es.negativeScore;
-                    if (depressionScore >= 1.0) {
+                    if (depressionScore >= 1.2) {
                         depression = true;
                         score += 3;
+                        Logger.d(this.getClass(), "Attention: Depression +3");
                     }
                     else if (depressionScore > 0.8) {
                         depression = true;
                         score += 2;
-                    }
-                    else if (depressionScore > 0.6) {
-                        depression = true;
-                        score += 1;
+                        Logger.d(this.getClass(), "Attention: Depression +2");
                     }
                     else if (depressionScore > 0.4) {
                         depression = true;
                         score += 1;
+                        Logger.d(this.getClass(), "Attention: Depression +1");
                     }
                     else if (depressionScore > 0) {
                         depression = true;
+                        Logger.d(this.getClass(), "Attention: Depression 0");
                     }
                     else if (depressionScore < 0) {
                         score -= 1;
+                        Logger.d(this.getClass(), "Attention: Depression -1");
                     }
                     break;
                 case SenseOfSecurity:
                     if (es.negativeScore - es.positiveScore > 0.6) {
                         senseOfSecurity = true;
                         score += 1;
+                        Logger.d(this.getClass(), "Attention: SenseOfSecurity +1");
                     }
                     break;
                 case Stress:
@@ -266,16 +273,20 @@ public class EvaluationReport implements JSONable {
                     if (anxietyScore > 1.5) {
                         anxiety = true;
                         score += 2;
+                        Logger.d(this.getClass(), "Attention: Anxiety +2");
                     }
                     else if (anxietyScore > 0.8) {
                         anxiety = true;
                         score += 1;
+                        Logger.d(this.getClass(), "Attention: Anxiety +1");
                     }
                     else if (anxietyScore > 0) {
                         anxiety = true;
+                        Logger.d(this.getClass(), "Attention: Anxiety 0");
                     }
                     else if (anxietyScore < 0) {
                         score -= 1;
+                        Logger.d(this.getClass(), "Attention: Anxiety -1");
                     }
                     break;
 //                case Obsession:
@@ -292,11 +303,13 @@ public class EvaluationReport implements JSONable {
                     if (es.positiveScore - es.negativeScore > 1.0) {
                         optimism = true;
                         score -= 1;
+                        Logger.d(this.getClass(), "Attention: Optimism -1");
                     }
                     else if (es.positiveScore - es.negativeScore > 0.5) {
                         optimism = true;
                         if (depressionScore >= 0.4) {
                             score -= 1;
+                            Logger.d(this.getClass(), "Attention: Optimism -1");
                         }
                     }
                     break;
@@ -308,6 +321,7 @@ public class EvaluationReport implements JSONable {
                 case Unknown:
                     // 绘图未被识别
                     score = 4;
+                    Logger.d(this.getClass(), "Attention: Unknown =4");
                     break;
                 default:
                     break;
@@ -351,6 +365,7 @@ public class EvaluationReport implements JSONable {
         if (this.attribute.age >= 35 && this.attribute.age <= 50) {
             if (score >= 5) {
                 score = 3;
+                Logger.d(this.getClass(), "Attention: (age >= 35) =3");
             }
         }
         else if (this.attribute.age > 50) {
@@ -365,6 +380,7 @@ public class EvaluationReport implements JSONable {
         // 根据 strict 修正
         if (!this.attribute.strict) {
             score -= 1;
+            Logger.d(this.getClass(), "Attention: strict -1");
         }
 
         if (score > 0) {
@@ -373,7 +389,7 @@ public class EvaluationReport implements JSONable {
 
                 this.reference = Reference.Abnormal;
             }
-            else if (score >= 3) {
+            else if (score >= 4) {
                 this.attentionSuggestion = AttentionSuggestion.FocusedAttention;
             }
             else {
@@ -381,7 +397,7 @@ public class EvaluationReport implements JSONable {
             }
         }
 
-        if (score >= 3 || this.reference == Reference.Abnormal) {
+        if (score >= 4 || this.reference == Reference.Abnormal) {
             this.additionScales.add(Resource.getInstance().loadScaleByName("SCL-90"));
         }
     }
