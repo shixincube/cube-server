@@ -26,31 +26,7 @@
 
 package cube.aigc.psychology;
 
-/**
- * 测试主题。
- */
-public enum Theme {
+import cube.common.JSONable;
 
-    Generic("通用", "Generic")
-    
-    ;
-
-    public final String name;
-
-    public final String code;
-
-    Theme(String name, String code) {
-        this.name = name;
-        this.code = code;
-    }
-
-    public static Theme parse(String nameOrCode) {
-        for (Theme th : Theme.values()) {
-            if (th.name.equals(nameOrCode) || th.code.equalsIgnoreCase(nameOrCode)) {
-                return th;
-            }
-        }
-
-        return null;
-    }
+public abstract class Report implements JSONable {
 }

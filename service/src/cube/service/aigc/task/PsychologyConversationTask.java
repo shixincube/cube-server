@@ -34,15 +34,13 @@ import cube.aigc.psychology.composition.ReportRelation;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCUnit;
-import cube.common.entity.GenerativeOption;
 import cube.common.entity.GenerativeRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
-import cube.service.aigc.scene.PsychologyScene;
+import cube.service.aigc.scene.ConversationWorker;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -91,78 +89,34 @@ public class PsychologyConversationTask extends ServiceTask {
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
-        // 获取频道
-        AIGCChannel channel = service.getChannel(channelCode);
-        if (null == channel) {
-            channel = service.createChannel(token, channelCode, channelCode);
-        }
-
-        // 获取单元
-        AIGCUnit unit = service.selectUnitByName(PsychologyScene.getInstance().getUnitName());
-        if (null == unit) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.UnitError.code, new JSONObject()));
-            markResponseTime();
-            return;
-        }
-
-        int maxHistories = 5;
-        List<GenerativeRecord> histories = null;
-        String prompt = query;
-
-        if (channel.getHistories().isEmpty()) {
-            prompt = PsychologyScene.getInstance().buildPrompt(reportRelationList, query);
-            if (null == prompt) {
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));
-                markResponseTime();
-                return;
-            }
-        }
-        else {
-            // 非空历史
-            histories = new ArrayList<>();
-            GenerativeRecord trick = PsychologyScene.getInstance().buildHistory(reportRelationList, query);
-            if (null == trick) {
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));
-                markResponseTime();
-                return;
-            }
-
-            histories.add(trick);
-
-            for (GenerativeRecord history : channel.getHistories()) {
-                histories.add(history);
-                if (histories.size() >= maxHistories) {
-                    break;
+        ConversationWorker worker = new ConversationWorker(service);
+        AIGCStateCode stateCode = worker.work(token, channelCode, reportRelationList, query, new GenerateTextListener() {
+            @Override
+            public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
+                if (null != record) {
+                    cellet.speak(talkContext,
+                            makeResponse(dialect, packet, AIGCStateCode.Ok.code,
+                                    record.toCompactJSON()));
                 }
+                else {
+                    cellet.speak(talkContext,
+                            makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                }
+                markResponseTime();
             }
+
+            @Override
+            public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
+                cellet.speak(talkContext,
+                        makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                markResponseTime();
+            }
+        });
+
+        if (AIGCStateCode.Ok != stateCode) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, stateCode.code, new JSONObject()));
+            markResponseTime();
         }
-
-        // 使用指定模型生成结果
-        service.generateText(channel, unit, query, prompt, new GenerativeOption(), histories, 0,
-                null, null, false, true, new GenerateTextListener() {
-                    @Override
-                    public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
-                        if (null != record) {
-                            cellet.speak(talkContext,
-                                    makeResponse(dialect, packet, AIGCStateCode.Ok.code,
-                                            record.toCompactJSON()));
-                        }
-                        else {
-                            cellet.speak(talkContext,
-                                    makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
-                        }
-                        markResponseTime();
-                    }
-
-                    @Override
-                    public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
-                        cellet.speak(talkContext,
-                                makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
-                        markResponseTime();
-                    }
-                });
     }
 }

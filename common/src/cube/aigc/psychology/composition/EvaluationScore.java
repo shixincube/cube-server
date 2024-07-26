@@ -317,8 +317,10 @@ public class EvaluationScore implements JSONable {
             case SocialAdaptability:
                 if (score >= 0.3) {
                     buf.append("社会适应性良好");
-                } else {
+                } else if (score <= -0.2) {
                     buf.append("社会适应性较差");
+                } else {
+                    return null;
                 }
                 break;
             case Family:

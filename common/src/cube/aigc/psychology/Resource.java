@@ -54,8 +54,6 @@ public class Resource {
      */
     public final static String Instruction = "请你在纸上至少画出“房、树、人”三个元素（其他元素任意选择），共同构成一副有意义的画面。绘画时间10到15分钟。";
 
-    public final static String ReportTextFormat = "%s的报告描述";
-
     private File termDescriptionFile = new File("assets/psychology/interpretation.json");
     private long termDescriptionLastModified = 0;
     private List<KnowledgeStrategy> knowledgeStrategies;
@@ -124,7 +122,7 @@ public class Resource {
         return null;
     }
 
-    public ThemeTemplate getThemeTemplate(String name) {
+    public ThemeTemplate getThemeTemplate(Theme theme) {
         if (this.themeFile.exists()) {
             if (this.themeFile.lastModified() != this.themeLastModified) {
                 this.themeLastModified = this.themeFile.lastModified();
@@ -145,7 +143,7 @@ public class Resource {
             }
         }
 
-        return this.themeTemplates.get(name);
+        return this.themeTemplates.get(theme.code);
     }
 
     public Benchmark getBenchmark() {

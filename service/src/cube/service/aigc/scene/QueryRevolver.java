@@ -26,8 +26,16 @@
 
 package cube.service.aigc.scene;
 
+import cube.aigc.ModelConfig;
 import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.ThemeTemplate;
 import cube.aigc.psychology.composition.EvaluationScore;
+import cube.aigc.psychology.composition.ReportRelation;
+import cube.common.entity.GenerativeRecord;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class QueryRevolver {
 
@@ -57,42 +65,126 @@ public class QueryRevolver {
             "管理方法"
     };
 
+    private String[] keywordQueryPersonality = new String[] {
+            "性格", "人格", "胜任"
+    };
+
     public QueryRevolver() {
     }
 
-    public String generatePrompt(PsychologyReport report, String query) {
+    public String generatePrompt(ReportRelation relation, PsychologyReport report, String query, boolean extraLong) {
         StringBuilder result = new StringBuilder();
 
-        result.append("当前讨论对象（个体）的年龄是");
-        result.append(report.getAttribute().age).append("岁");
-        result.append("，性别是").append(report.getAttribute().getGenderText()).append("性");
-        result.append("，其心理症状是：");
+        if (extraLong) {
+            ThemeTemplate template = Resource.getInstance().getThemeTemplate(report.getTheme());
+
+            result.append("已知信息：\n当前讨论的受测人的名称是：").append(relation.name).append("，");
+            result.append("年龄是：").append(report.getAttribute().age).append("岁，");
+            result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
+            result.append("受测人的心理表现有：");
+            List<String> symptomContent = this.extractSymptomContent(template,
+                    report.getEvaluationReport().getEvaluationScores());
+            for (String content : symptomContent) {
+                result.append(content);
+            }
+
+            if (result.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                result.append("此人的大五人格画像是“").append(report.getEvaluationReport()
+                        .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("”。");
+                result.append(this.filterPersonalityDescription(report.getEvaluationReport()
+                        .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
+            }
+
+            result.append("\n根据上述已知信息，简洁和专业的来回答用户的问题。不允许在答案中添加编造成分。问题是：");
+            result.append(query);
+        }
+        else {
+            result.append("当前讨论的受测人的名称是：").append(relation.name).append("，");
+            result.append("年龄是：").append(report.getAttribute().age).append("岁，");
+            result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
+            result.append("其心理症状有：");
+            int count = 0;
+            for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
+                String word = es.generateWord();
+                if (null == word || word.length() == 0) {
+                    continue;
+                }
+                result.append(word).append("、");
+                ++count;
+                if (count > 7) {
+                    break;
+                }
+            }
+            result.delete(result.length() - 1, result.length());
+            result.append("。");
+
+            if (null != report.getEvaluationReport().getPersonalityAccelerator()) {
+                result.append("此人的大五人格画像是“");
+                result.append(report.getEvaluationReport().getPersonalityAccelerator().getBigFiveFeature().getDisplayName());
+                result.append("”。");
+            }
+
+            // 增加人格描述
+            result.append(this.generateFragment(report, query));
+
+            result.append("根据上述信息，作为专业的心理咨询师，请回答：").append(query);
+        }
+
+        return result.toString();
+    }
+
+    public GenerativeRecord generateSupplement(ReportRelation relation, PsychologyReport report) {
+        StringBuilder query = new StringBuilder();
+        StringBuilder answer = new StringBuilder();
+
+        query.append("当前我们讨论的个人（受测人）有哪些信息？");
+        answer.append("我们现在讨论的受测人的名称是：").append(relation.name).append("，");
+        answer.append("年龄是：").append(report.getAttribute().age).append("岁，");
+        answer.append("性别是：").append(report.getAttribute().getGenderText()).append("性，");
+        answer.append("其心理症状是：");
         int count = 0;
         for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
             String word = es.generateWord();
             if (null == word || word.length() == 0) {
                 continue;
             }
-            result.append(word).append("、");
+            answer.append(word).append("、");
             ++count;
             if (count > 7) {
                 break;
             }
         }
-        result.delete(result.length() - 1, result.length());
-        result.append("。");
+        answer.delete(answer.length() - 1, answer.length());
+        answer.append("。");
 
         if (null != report.getEvaluationReport().getPersonalityAccelerator()) {
-            result.append("此人的大五人格画像是“");
-            result.append(report.getEvaluationReport().getPersonalityAccelerator().getBigFiveFeature().getDisplayName());
-            result.append("”。");
+            answer.append("此人的大五人格画像是“");
+            answer.append(report.getEvaluationReport().getPersonalityAccelerator().getBigFiveFeature().getDisplayName());
+            answer.append("”。");
         }
 
-        result.append(this.generateFragment(report, query));
+        GenerativeRecord result = new GenerativeRecord(ModelConfig.BAIZE_UNIT, query.toString(), answer.toString());
+        return result;
+    }
 
-        result.append("请回答：").append(query);
+    private List<String> extractSymptomContent(ThemeTemplate theme, List<EvaluationScore> list) {
+        List<String> result = new ArrayList<>();
 
-        return result.toString();
+        for (EvaluationScore es : list) {
+            String word = es.generateWord();
+            if (null == word) {
+                continue;
+            }
+
+            ThemeTemplate.SymptomContent symptomContent = theme.findSymptomContent(word);
+            if (null == symptomContent) {
+                continue;
+            }
+
+            result.add(symptomContent.content + "\n");
+        }
+
+        return result;
     }
 
     private String generateFragment(PsychologyReport report, String query) {
@@ -151,5 +243,9 @@ public class QueryRevolver {
         }
 
         return result.toString();
+    }
+
+    private String filterPersonalityDescription(String desc) {
+        return desc.replaceAll("你", "他");
     }
 }

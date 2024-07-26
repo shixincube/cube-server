@@ -46,6 +46,7 @@ import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
+import javax.management.Query;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -554,6 +555,16 @@ public class PsychologyScene {
         return evaluation.recommendScale(report.getEvaluationReport());
     }
 
+    /**
+     * 生成量表报告。
+     *
+     * @param scale
+     * @return
+     */
+    public ScaleReport generateScaleReport(Scale scale) {
+        return null;
+    }
+
     public String buildPrompt(List<ReportRelation> relations, String query) {
         StringBuilder result = new StringBuilder();
 
@@ -561,12 +572,12 @@ public class PsychologyScene {
             ReportRelation relation = relations.get(0);
             PsychologyReport report = this.getPsychologyReport(relation.reportSn);
             if (null == report) {
-                Logger.w(this.getClass(), "#buildAddition - Can NOT find report: " + relation.reportSn);
+                Logger.w(this.getClass(), "#buildPrompt - Can NOT find report: " + relation.reportSn);
                 return null;
             }
 
             QueryRevolver queryRevolver = new QueryRevolver();
-            result.append(queryRevolver.generatePrompt(report, query));
+            result.append(queryRevolver.generatePrompt(relation, report, query, true));
         }
         else {
             result.append(query);
@@ -583,37 +594,8 @@ public class PsychologyScene {
             return null;
         }
 
-        StringBuilder query = new StringBuilder();
-        StringBuilder answer = new StringBuilder();
-
-        query.append("当前我们讨论的对象（个体）有哪些信息？");
-        answer.append("我们现在讨论的对象（个体）的年龄是");
-        answer.append(report.getAttribute().age).append("岁");
-        answer.append("，性别是").append(report.getAttribute().getGenderText()).append("性");
-        answer.append("，其心理症状是：");
-        int count = 0;
-        for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
-            String word = es.generateWord();
-            if (null == word || word.length() == 0) {
-                continue;
-            }
-            answer.append(word).append("、");
-            ++count;
-            if (count > 7) {
-                break;
-            }
-        }
-        answer.delete(answer.length() - 1, answer.length());
-        answer.append("。");
-
-        if (null != report.getEvaluationReport().getPersonalityAccelerator()) {
-            answer.append("此人的大五人格画像是“");
-            answer.append(report.getEvaluationReport().getPersonalityAccelerator().getBigFiveFeature().getDisplayName());
-            answer.append("”。");
-        }
-
-        GenerativeRecord result = new GenerativeRecord(this.unitName, query.toString(), answer.toString());
-        return result;
+        QueryRevolver revolver = new QueryRevolver();
+        return revolver.generateSupplement(relation, report);
     }
 
     private Painting processPainting(AIGCUnit unit, FileLabel fileLabel) {

@@ -105,7 +105,7 @@ public class Workflow {
 
     public Workflow make(Theme theme, int maxIndicatorTexts, boolean generatesDescription, WorkflowListener listener) {
         // 获取模板
-        ThemeTemplate template = Resource.getInstance().getThemeTemplate(theme.code);
+        ThemeTemplate template = Resource.getInstance().getThemeTemplate(theme);
 
         int age = this.evaluationReport.getAttribute().age;
         String gender = this.evaluationReport.getAttribute().gender;
@@ -144,7 +144,7 @@ public class Workflow {
         (new Thread() {
             @Override
             public void run() {
-                List<DescriptionSuggestion> descList = inferDescription(template, age, gender, generatesDescription, false);
+                List<DescriptionSuggestion> descList = inferDescription(template, age, gender, generatesDescription);
                 if (Logger.isDebugLevel()) {
                     Logger.d(this.getClass(), "#make - Description list size: " + descList.size());
                 }
@@ -172,8 +172,7 @@ public class Workflow {
     }
 
     private List<DescriptionSuggestion> inferDescription(ThemeTemplate template, int age, String gender,
-                                                         boolean generatesDescription,
-                                                         boolean generatesSuggestion) {
+                                                         boolean generatesDescription) {
         List<DescriptionSuggestion> result = new ArrayList<>();
 
         List<Representation> representations = this.evaluationReport.getRepresentationListByEvaluationScore(100);
@@ -200,35 +199,35 @@ public class Workflow {
         }
 
         if (generatesDescription) {
-            int maxRepresentation = 5;
-            for (Representation representation : representations) {
-                Logger.d(this.getClass(), "#inferDescription - representation: " + representation.description);
-
-                try {
-                    // 推理表征
-                    String prompt = template.formatRepresentationDescriptionPrompt(representation.description);
-                    String description = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                            null, null);
-
-                    String suggestion = "";
-                    if (generatesSuggestion) {
-                        prompt = template.formatSuggestionPrompt(representation.knowledgeStrategy.getTerm().word);
-                        suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                                null, null);
-                    }
-
-                    if (null != description && null != suggestion) {
-                        result.add(new DescriptionSuggestion(representation.knowledgeStrategy.getTerm(),
-                                representation.description, description, suggestion));
-
-                        if (result.size() >= maxRepresentation) {
-                            break;
-                        }
-                    }
-                } catch (Exception e) {
-                    Logger.e(this.getClass(), "#inferDescription", e);
-                }
-            }
+//            int maxRepresentation = 5;
+//            for (Representation representation : representations) {
+//                Logger.d(this.getClass(), "#inferDescription - representation: " + representation.description);
+//
+//                try {
+//                    // 推理表征
+//                    String prompt = template.formatRepresentationDescriptionPrompt(representation.description);
+//                    String description = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+//                            null, null);
+//
+//                    String suggestion = "";
+//                    if (generatesSuggestion) {
+//                        prompt = template.formatSuggestionPrompt(representation.knowledgeStrategy.getTerm().word);
+//                        suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+//                                null, null);
+//                    }
+//
+//                    if (null != description && null != suggestion) {
+//                        result.add(new DescriptionSuggestion(representation.knowledgeStrategy.getTerm(),
+//                                representation.description, description, suggestion));
+//
+//                        if (result.size() >= maxRepresentation) {
+//                            break;
+//                        }
+//                    }
+//                } catch (Exception e) {
+//                    Logger.e(this.getClass(), "#inferDescription", e);
+//                }
+//            }
         }
 
         return result;

@@ -48,10 +48,11 @@ public class KnowledgeStrategy implements JSONable {
 
     private String remark;
 
-    private List<Scene> sceneList;
+    private String explain;
 
     public KnowledgeStrategy(JSONObject json) {
-        this.term = Term.parse(json.getString("comment"));
+        this.term = json.has("term") ?
+                Term.parse(json.getString("term")) : Term.parse(json.getString("comment"));
 
         if (json.has("interpretation")) {
             this.interpretation = json.getString("interpretation");
@@ -62,12 +63,8 @@ public class KnowledgeStrategy implements JSONable {
         if (json.has("remark")) {
             this.remark = json.getString("remark");
         }
-        this.sceneList = new ArrayList<>();
-        if (json.has("scenes")) {
-            JSONArray array = json.getJSONArray("scenes");
-            for (int i = 0; i < array.length(); ++i) {
-                this.sceneList.add(new Scene(array.getJSONObject(i)));
-            }
+        if (json.has("explain")) {
+            this.explain = json.getString("explain");
         }
     }
 
@@ -79,21 +76,16 @@ public class KnowledgeStrategy implements JSONable {
         return this.interpretation;
     }
 
-    public Scene getScene(Theme theme) {
-        for (Scene scene : this.sceneList) {
-            if (scene.theme == theme) {
-                return scene;
-            }
-        }
-        return null;
-    }
-
     public String getAdvise() {
         return this.advise;
     }
 
     public String getRemark() {
         return this.remark;
+    }
+
+    public String getExplain() {
+        return this.explain;
     }
 
     @Override
@@ -125,26 +117,16 @@ public class KnowledgeStrategy implements JSONable {
         if (null != this.remark) {
             json.put("remark", this.remark);
         }
+        if (null != this.explain) {
+            json.put("explain", this.explain);
+        }
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
-        json.put("comment", this.term.word);
+        json.put("term", this.term.word);
         return json;
-    }
-
-
-    public class Scene {
-
-        public Theme theme;
-
-        public String explain;
-
-        public Scene(JSONObject json) {
-            this.theme = Theme.parse(json.getString("theme"));
-            this.explain = json.getString("explain");
-        }
     }
 }

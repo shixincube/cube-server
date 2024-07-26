@@ -26,6 +26,7 @@
 
 package cube.aigc.psychology;
 
+import cell.util.log.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -39,162 +40,44 @@ public class ThemeTemplate {
 
     public final Theme theme;
 
-    private List<ParagraphPromptFormat> paragraphPromptFormatList;
-
-    private RepresentationPromptFormat representationPromptFormat;
+    private List<SymptomContent> symptomPrompts;
 
     public ThemeTemplate(String name, JSONObject json) {
         this.theme = Theme.parse(name);
+        this.symptomPrompts = new ArrayList<>();
+
         JSONObject prompt = json.getJSONObject("prompt");
-
-        if (prompt.has("representation")) {
-            this.representationPromptFormat = new RepresentationPromptFormat(prompt.getJSONObject("representation"));
-        }
-
-        this.paragraphPromptFormatList = new ArrayList<>();
-        JSONArray array = prompt.getJSONArray("paragraphs");
-        for (int i = 0; i < array.length(); ++i) {
-            this.paragraphPromptFormatList.add(new ParagraphPromptFormat(array.getJSONObject(i)));
-        }
-    }
-
-    public List<String> getTitles() {
-        List<String> list = new ArrayList<>();
-        for (ParagraphPromptFormat ppf : this.paragraphPromptFormatList) {
-            list.add(ppf.title);
-        }
-        return list;
-    }
-
-    public String getExplain(int index) {
-        if (index >= this.paragraphPromptFormatList.size()) {
-            return null;
-        }
-        return this.paragraphPromptFormatList.get(index).explain;
-    }
-
-    public String formatFeaturePrompt(int index, String representationText) {
-        if (index >= this.paragraphPromptFormatList.size()) {
-            return null;
-        }
-
-        ParagraphPromptFormat format = this.paragraphPromptFormatList.get(index);
-        String prompt = String.format(format.featureFormat, representationText);
-        return prompt;
-    }
-
-    public String formatDescriptionPrompt(int index, String descriptionText) {
-        if (index >= this.paragraphPromptFormatList.size()) {
-            return null;
-        }
-        ParagraphPromptFormat format = this.paragraphPromptFormatList.get(index);
-        String prompt = String.format(format.descriptionFormat, descriptionText);
-        return prompt;
-    }
-
-    public String formatSuggestionPrompt(int index, String representationText) {
-        if (index >= this.paragraphPromptFormatList.size()) {
-            return null;
-        }
-
-        ParagraphPromptFormat format = this.paragraphPromptFormatList.get(index);
-        String prompt = String.format(format.suggestionFormat, representationText);
-        return prompt;
-    }
-
-    public String formatOpinionPrompt(int index, String suggestionText) {
-        if (index >= this.paragraphPromptFormatList.size()) {
-            return null;
-        }
-        ParagraphPromptFormat format = this.paragraphPromptFormatList.get(index);
-        String prompt = String.format(format.opinionFormat, suggestionText);
-        return prompt;
-    }
-
-    public String formatRepresentationDescriptionPrompt(String markedRepresentation) {
-        if (null == this.representationPromptFormat) {
-            return null;
-        }
-
-        return String.format(this.representationPromptFormat.description, markedRepresentation);
-    }
-
-    public String formatSuggestionPrompt(String representation) {
-        if (null == this.representationPromptFormat) {
-            return null;
-        }
-
-        return String.format(this.representationPromptFormat.suggestion,
-                representation);
-    }
-
-    private String filterGender(String gender) {
-        if (gender.equalsIgnoreCase("male")) {
-            return "男";
-        }
-        else if (gender.equalsIgnoreCase("female")) {
-            return "女";
-        }
-        else if (gender.contains("男")) {
-            return "男";
-        }
-        else {
-            return "女";
+        if (prompt.has("symptoms")) {
+            try {
+                JSONArray array = prompt.getJSONArray("symptoms");
+                for (int i = 0; i < array.length(); ++i) {
+                    this.symptomPrompts.add(new SymptomContent(array.getJSONObject(i)));
+                }
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "", e);
+            }
         }
     }
 
-    /*
-    public static ThemeTemplate makeStressThemeTemplate() {
-        ThemeTemplate template = null;
-        return template;
-    }
+    public SymptomContent findSymptomContent(String text) {
+        for (SymptomContent sc : this.symptomPrompts) {
+            if (text.contains(sc.word)) {
+                return sc;
+            }
+        }
 
-    public static ThemeTemplate makeFamilyRelationshipsThemeTemplate() {
         return null;
     }
 
-    public static ThemeTemplate makeIntimacyThemeTemplate() {
-        return null;
-    }
+    public class SymptomContent {
 
-    public static ThemeTemplate makeCognitionThemeTemplate() {;
-        return null;
-    }
-    */
+        public final String word;
 
-    public class ParagraphPromptFormat {
+        public final String content;
 
-        public final String title;
-
-        public String explain;
-
-        public String featureFormat;
-
-        public String descriptionFormat;
-
-        public String suggestionFormat;
-
-        public String opinionFormat;
-
-        public ParagraphPromptFormat(JSONObject json) {
-            this.title = json.getString("title");
-            this.explain = json.getString("explain");
-            this.featureFormat = json.getString("feature");
-            this.descriptionFormat = json.getString("description");
-            this.suggestionFormat = json.getString("suggestion");
-            this.opinionFormat = json.getString("opinion");
-        }
-    }
-
-    public class RepresentationPromptFormat {
-
-        public final String description;
-
-        public final String suggestion;
-
-        public RepresentationPromptFormat(JSONObject json) {
-            this.description = json.getString("description");
-            this.suggestion = json.getString("suggestion");
+        public SymptomContent(JSONObject json) {
+            this.word = json.getString("word");
+            this.content = json.getString("content");
         }
     }
 }
