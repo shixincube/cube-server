@@ -34,7 +34,7 @@ import cube.aigc.*;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
 import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Theme;
 import cube.aigc.publicopinion.PublicOpinionTaskName;
 import cube.auth.AuthConsts;
@@ -1782,10 +1782,10 @@ public class AIGCService extends AbstractModule {
      * @param listener
      * @return
      */
-    public PsychologyReport generatePsychologyReport(String token, Attribute attribute, String fileCode,
-                                                     Theme theme, int maxIndicatorTexts,
-                                                     boolean generatesDescription,
-                                                     PsychologySceneListener listener) {
+    public PaintingReport generatePsychologyReport(String token, Attribute attribute, String fileCode,
+                                                   Theme theme, int maxIndicatorTexts,
+                                                   boolean generatesDescription,
+                                                   PsychologySceneListener listener) {
         if (!this.isStarted()) {
             return null;
         }
@@ -1818,7 +1818,7 @@ public class AIGCService extends AbstractModule {
         }
 
         // 生成报告
-        PsychologyReport report = PsychologyScene.getInstance().generateEvaluationReport(channel,
+        PaintingReport report = PsychologyScene.getInstance().generateEvaluationReport(channel,
                 attribute, fileLabel, theme, maxIndicatorTexts, generatesDescription, listener);
 
         return report;

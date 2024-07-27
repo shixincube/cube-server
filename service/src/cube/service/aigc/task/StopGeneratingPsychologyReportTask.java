@@ -30,7 +30,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.PaintingReport;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
@@ -81,7 +81,7 @@ public class StopGeneratingPsychologyReportTask extends ServiceTask {
             return;
         }
 
-        PsychologyReport report = PsychologyScene.getInstance().stopGenerating(sn);
+        PaintingReport report = PsychologyScene.getInstance().stopGenerating(sn);
         if (null != report) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, report.toCompactJSON()));

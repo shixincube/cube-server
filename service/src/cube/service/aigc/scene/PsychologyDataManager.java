@@ -26,7 +26,7 @@
 
 package cube.service.aigc.scene;
 
-import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.entity.Chart;
 import cube.service.aigc.AIGCService;
@@ -63,7 +63,7 @@ public class PsychologyDataManager {
         return this.aigcService.getStorage().readLastChart(String.valueOf(reportSn));
     }
 
-    public boolean writeReportChart(PsychologyReport report) {
+    public boolean writeReportChart(PaintingReport report) {
         if (null == this.aigcService) {
             return false;
         }

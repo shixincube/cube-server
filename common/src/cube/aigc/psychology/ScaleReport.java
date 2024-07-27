@@ -26,5 +26,14 @@
 
 package cube.aigc.psychology;
 
-public class ScaleReport {
+/**
+ * 心理学量表报告。
+ */
+public class ScaleReport extends Report {
+
+    public ScaleReport(long contactId, Attribute attribute) {
+        super(contactId, attribute);
+    }
+
+
 }

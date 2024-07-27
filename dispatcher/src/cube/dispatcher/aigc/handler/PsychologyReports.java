@@ -28,7 +28,7 @@ package cube.dispatcher.aigc.handler;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Theme;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
@@ -71,7 +71,7 @@ public class PsychologyReports extends ContextHandler {
                 int behaviorTexts = data.has("behaviorTexts") ? data.getInt("behaviorTexts") : 5;
                 int indicatorTexts = data.has("indicatorTexts") ? data.getInt("indicatorTexts") : 5;
 
-                PsychologyReport report =
+                PaintingReport report =
                         Manager.getInstance().generatePsychologyReport(token, attribute, fileCode,
                                 theme, behaviorTexts, indicatorTexts);
                 if (null != report) {
@@ -101,7 +101,7 @@ public class PsychologyReports extends ContextHandler {
                 String snString = request.getParameter("sn");
                 if (null != snString) {
                     long sn = Long.parseLong(snString);
-                    PsychologyReport report = Manager.getInstance().getPsychologyReport(token, sn, markdown);
+                    PaintingReport report = Manager.getInstance().getPsychologyReport(token, sn, markdown);
                     if (null != report) {
                         this.respondOk(response, report.toJSON());
                     }

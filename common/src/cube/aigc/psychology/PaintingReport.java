@@ -35,31 +35,19 @@ import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.ReportSection;
 import cube.aigc.psychology.composition.SixDimension;
 import cube.aigc.psychology.composition.SixDimensionScore;
-import cube.common.JSONable;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 /**
- * 心理学报告。
+ * 心理学绘画报告。
  */
-public class PsychologyReport implements JSONable {
-
-    public final long sn;
-
-    public final long contactId;
-
-    public final long timestamp;
-
-    private String name;
-
-    private Attribute attribute;
+public class PaintingReport extends Report {
 
     private FileLabel fileLabel;
 
@@ -77,41 +65,22 @@ public class PsychologyReport implements JSONable {
 
     private EvaluationReport evaluationReport;
 
-//    private MBTIFeature mbtiFeature;
-
     private SixDimensionScore dimensionScore;
 
     private SixDimensionScore normDimensionScore;
 
-    private String summary;
-
-//    private List<DescriptionSuggestion> behaviorTextList;
-
     private List<ReportSection> reportTextList;
 
-    public AIGCStateCode inferenceState = AIGCStateCode.Ok;
-
-    private static final SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyyMMddHH");
-
-    public PsychologyReport(long contactId, Attribute attribute, FileLabel fileLabel, Theme theme) {
-        this.sn = Utils.generateSerialNumber();
-        this.contactId = contactId;
-        this.timestamp = System.currentTimeMillis();
-        this.name = "BZ-" + sDateFormat.format(new Date(this.timestamp)) +
-                String.format("%04d", Utils.randomInt(1, 9999));
-        this.attribute = attribute;
+    public PaintingReport(long contactId, Attribute attribute, FileLabel fileLabel, Theme theme) {
+        super(contactId, attribute);
         this.fileLabel = fileLabel;
         this.theme = theme;
         this.state = AIGCStateCode.Processing;
     }
 
-    public PsychologyReport(long sn, long contactId, long timestamp, String name, Attribute attribute,
-                            String fileCode, Theme theme, long finishedTimestamp) {
-        this.sn = sn;
-        this.contactId = contactId;
-        this.timestamp = timestamp;
-        this.name = name;
-        this.attribute = attribute;
+    public PaintingReport(long sn, long contactId, long timestamp, String name, Attribute attribute,
+                          String fileCode, Theme theme, long finishedTimestamp) {
+        super(sn, contactId, timestamp, name, attribute);
         this.fileCode = fileCode;
         this.theme = theme;
         this.finished = true;
@@ -119,12 +88,8 @@ public class PsychologyReport implements JSONable {
         this.state = AIGCStateCode.Ok;
     }
 
-    public PsychologyReport(JSONObject json) {
-        this.sn = json.getLong("sn");
-        this.contactId = json.getLong("contactId");
-        this.timestamp = json.getLong("timestamp");
-        this.name = json.getString("name");
-        this.attribute = new Attribute(json.getJSONObject("attribute"));
+    public PaintingReport(JSONObject json) {
+        super(json);
 
         if (json.has("fileLabel")) {
             this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
@@ -142,10 +107,6 @@ public class PsychologyReport implements JSONable {
             this.markdown = json.getString("markdown");
         }
 
-//        if (json.has("mbti")) {
-//            this.mbtiFeature = new MBTIFeature(json.getJSONObject("mbti"));
-//        }
-
         if (json.has("dimensionScore")) {
             this.dimensionScore = new SixDimensionScore(json.getJSONObject("dimensionScore"));
         }
@@ -153,22 +114,9 @@ public class PsychologyReport implements JSONable {
             this.normDimensionScore = new SixDimensionScore(json.getJSONObject("normDimensionScore"));
         }
 
-        if (json.has("summary")) {
-            this.summary = json.getString("summary");
-        }
-
         if (json.has("evaluation")) {
             this.evaluationReport = new EvaluationReport(json.getJSONObject("evaluation"));
         }
-
-//        if (json.has("behaviorTextList")) {
-//            this.behaviorTextList = new ArrayList<>();
-//            JSONArray array = json.getJSONArray("behaviorTextList");
-//            for (int i = 0; i < array.length(); ++i) {
-//                DescriptionSuggestion bs = new DescriptionSuggestion(array.getJSONObject(i));
-//                this.behaviorTextList.add(bs);
-//            }
-//        }
 
         if (json.has("reportTextList")) {
             this.reportTextList = new ArrayList<>();
@@ -178,14 +126,6 @@ public class PsychologyReport implements JSONable {
                 this.reportTextList.add(rs);
             }
         }
-    }
-
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
-
-    public String getSummary() {
-        return this.summary;
     }
 
     public void setEvaluationReport(EvaluationReport evaluationReport) {
@@ -208,14 +148,6 @@ public class PsychologyReport implements JSONable {
 
     public List<ReportSection> getReportTextList() {
         return this.reportTextList;
-    }
-
-    public String getName() {
-        return this.name;
-    }
-
-    public Attribute getAttribute() {
-        return this.attribute;
     }
 
     public Theme getTheme() {
@@ -377,19 +309,6 @@ public class PsychologyReport implements JSONable {
             buf.append("\n\n");
         }
 
-//        if (null != this.behaviorTextList && !this.behaviorTextList.isEmpty()) {
-//            buf.append("\n");
-//            buf.append("**分析描述：**");
-//            buf.append("\n");
-//            for (DescriptionSuggestion descriptionSuggestion : this.behaviorTextList) {
-//                buf.append("\n");
-//                buf.append("> **描述**：").append(descriptionSuggestion.behavior).append("\n");
-//                buf.append("> **建议**：\n").append(descriptionSuggestion.suggestion).append("\n");
-//                buf.append("\n***\n");
-//            }
-//            buf.append("\n");
-//        }
-
         this.markdown = buf.toString();
         return this.markdown;
     }
@@ -456,12 +375,7 @@ public class PsychologyReport implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        JSONObject json = new JSONObject();
-        json.put("sn", this.sn);
-        json.put("contactId", this.contactId);
-        json.put("name", this.name);
-        json.put("attribute", this.attribute.toJSON());
-
+        JSONObject json = super.toJSON();
         if (null != this.fileLabel) {
             json.put("fileLabel", this.fileLabel.toCompactJSON());
         }
@@ -470,7 +384,7 @@ public class PsychologyReport implements JSONable {
         }
 
         json.put("theme", this.theme.name);
-        json.put("timestamp", this.timestamp);
+
         json.put("finished", this.finished);
         json.put("finishedTimestamp", this.finishedTimestamp);
         json.put("state", this.state.code);
@@ -480,10 +394,6 @@ public class PsychologyReport implements JSONable {
         }
         if (null != this.normDimensionScore) {
             json.put("normDimensionScore", this.normDimensionScore.toJSON());
-        }
-
-        if (null != this.summary) {
-            json.put("summary", this.summary);
         }
 
         if (null != this.evaluationReport) {

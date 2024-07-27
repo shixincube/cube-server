@@ -30,8 +30,10 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
-import cube.aigc.psychology.algorithm.Representation;
-import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.composition.AnswerSheet;
+import cube.aigc.psychology.composition.ReportRelation;
+import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.composition.ScaleResult;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.Packet;
@@ -46,9 +48,11 @@ import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
-import javax.management.Query;
 import java.io.File;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -79,7 +83,7 @@ public class PsychologyScene {
     /**
      * Key：报告序列号。
      */
-    private Map<Long, PsychologyReport> psychologyReportMap;
+    private Map<Long, PaintingReport> psychologyReportMap;
 
     private PsychologyScene() {
         this.taskQueue = new ConcurrentLinkedQueue<>();
@@ -191,8 +195,8 @@ public class PsychologyScene {
         }
     }
 
-    public PsychologyReport getPsychologyReport(long sn) {
-        PsychologyReport report = this.psychologyReportMap.get(sn);
+    public PaintingReport getPsychologyReport(long sn) {
+        PaintingReport report = this.psychologyReportMap.get(sn);
         if (null != report) {
             return report;
         }
@@ -215,9 +219,9 @@ public class PsychologyScene {
         return this.storage.countPsychologyReports(contactId, startTime, endTime);
     }
 
-    public List<PsychologyReport> getPsychologyReports(long contactId, long startTime, long endTime, int pageIndex) {
-        List<PsychologyReport> list = this.storage.readPsychologyReports(contactId, startTime, endTime, pageIndex);
-        for (PsychologyReport report : list) {
+    public List<PaintingReport> getPsychologyReports(long contactId, long startTime, long endTime, int pageIndex) {
+        List<PaintingReport> list = this.storage.readPsychologyReports(contactId, startTime, endTime, pageIndex);
+        for (PaintingReport report : list) {
             FileLabel fileLabel = this.aigcService.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
             if (null != fileLabel) {
                 report.setFileLabel(fileLabel);
@@ -238,9 +242,9 @@ public class PsychologyScene {
      * @param listener
      * @return
      */
-    public synchronized PsychologyReport generateEvaluationReport(AIGCChannel channel, Attribute attribute,
-                FileLabel fileLabel, Theme theme, int maxIndicatorTexts, boolean generatesDescription,
-                PsychologySceneListener listener) {
+    public synchronized PaintingReport generateEvaluationReport(AIGCChannel channel, Attribute attribute,
+                                                                FileLabel fileLabel, Theme theme, int maxIndicatorTexts, boolean generatesDescription,
+                                                                PsychologySceneListener listener) {
         // 判断属性限制
         if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
             Logger.w(this.getClass(), "#generateEvaluationReport - Age param overflow: " +
@@ -260,7 +264,7 @@ public class PsychologyScene {
             return null;
         }
 
-        PsychologyReport report = new PsychologyReport(channel.getAuthToken().getContactId(),
+        PaintingReport report = new PaintingReport(channel.getAuthToken().getContactId(),
                 attribute, fileLabel, theme);
 
         ReportTask task = new ReportTask(channel, attribute, fileLabel, theme,
@@ -370,14 +374,7 @@ public class PsychologyScene {
 
                     // 根据图像推理报告
                     Workflow workflow = processReport(reportTask.channel, painting, reportTask.theme,
-                            reportTask.maxIndicatorTexts, reportTask.generatesDescription, new WorkflowListener() {
-                                @Override
-                                public void onInferCompleted(Workflow workflow) {
-                                    synchronized (workflow) {
-                                        workflow.notifyAll();
-                                    }
-                                }
-                            });
+                            reportTask.maxIndicatorTexts);
 
                     if (null == workflow) {
                         // 推理生成报告失败
@@ -393,8 +390,6 @@ public class PsychologyScene {
 
                     // 填写数据
                     workflow.fillReport(reportTask.report);
-                    // 更新行为推理状态
-                    reportTask.report.inferenceState = AIGCStateCode.Processing;
 
                     // 生成 Markdown 调试信息
                     reportTask.report.makeMarkdown(false);
@@ -411,17 +406,6 @@ public class PsychologyScene {
                     reportTask.report.setFinished(true);
                     reportTask.listener.onReportEvaluateCompleted(reportTask.report);
                     reportTask.channel.setProcessing(false);
-
-                    // 等待推理完成
-                    if (!workflow.inferCompleted.get()) {
-                        synchronized (workflow) {
-                            try {
-                                workflow.wait(3 * 60 * 1000);
-                            } catch (InterruptedException e) {
-                                Logger.e(PsychologyScene.class, "#workflow.wait", e);
-                            }
-                        }
-                    }
 
                     // 填写数据
                     workflow.fillReport(reportTask.report);
@@ -450,8 +434,8 @@ public class PsychologyScene {
         return report;
     }
 
-    public PsychologyReport stopGenerating(long sn) {
-        PsychologyReport report = this.psychologyReportMap.get(sn);
+    public PaintingReport stopGenerating(long sn) {
+        PaintingReport report = this.psychologyReportMap.get(sn);
         if (null == report) {
             // 没有找到报告
             Logger.i(this.getClass(), "#stopGenerating - Can NOT find report: " + sn);
@@ -545,7 +529,7 @@ public class PsychologyScene {
      * @return
      */
     public Scale recommendScale(long reportSn) {
-        PsychologyReport report = this.getPsychologyReport(reportSn);
+        PaintingReport report = this.getPsychologyReport(reportSn);
         if (null == report) {
             Logger.w(this.getClass(), "#recommendScale - Can NOT find report: " + reportSn);
             return null;
@@ -570,7 +554,7 @@ public class PsychologyScene {
 
         if (relations.size() == 1) {
             ReportRelation relation = relations.get(0);
-            PsychologyReport report = this.getPsychologyReport(relation.reportSn);
+            PaintingReport report = this.getPsychologyReport(relation.reportSn);
             if (null == report) {
                 Logger.w(this.getClass(), "#buildPrompt - Can NOT find report: " + relation.reportSn);
                 return null;
@@ -588,7 +572,7 @@ public class PsychologyScene {
 
     public GenerativeRecord buildHistory(List<ReportRelation> relations, String currentQuery) {
         ReportRelation relation = relations.get(0);
-        PsychologyReport report = this.getPsychologyReport(relation.reportSn);
+        PaintingReport report = this.getPsychologyReport(relation.reportSn);
         if (null == report) {
             Logger.w(this.getClass(), "#buildHistory - Can NOT find report: " + relation.reportSn);
             return null;
@@ -626,7 +610,7 @@ public class PsychologyScene {
     }
 
     private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme,
-                                   int maxIndicatorText, boolean generatesDescription, WorkflowListener listener) {
+                                   int maxIndicatorText) {
         Evaluation evaluation = (null == painting) ?
                 new Evaluation(new Attribute("male", 28, false)) : new Evaluation(painting);
 
@@ -644,13 +628,13 @@ public class PsychologyScene {
         workflow.setUnitName(this.unitName, this.unitContextLength);
 
         // 制作报告
-        return workflow.make(theme, maxIndicatorText, generatesDescription, listener);
+        return workflow.make(theme, maxIndicatorText);
     }
 
     public void onTick(long now) {
-        Iterator<Map.Entry<Long, PsychologyReport>> iter = this.psychologyReportMap.entrySet().iterator();
+        Iterator<Map.Entry<Long, PaintingReport>> iter = this.psychologyReportMap.entrySet().iterator();
         while (iter.hasNext()) {
-            PsychologyReport report = iter.next().getValue();
+            PaintingReport report = iter.next().getValue();
             if (now - report.timestamp > 72 * 60 * 60 * 1000) {
                 iter.remove();
             }
@@ -669,15 +653,16 @@ public class PsychologyScene {
 
         protected int maxIndicatorTexts;
 
+        @Deprecated
         protected boolean generatesDescription;
 
         protected PsychologySceneListener listener;
 
-        protected PsychologyReport report;
+        protected PaintingReport report;
 
         public ReportTask(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
                           Theme theme, boolean generatesDescription, int maxIndicatorTexts,
-                          PsychologySceneListener listener, PsychologyReport report) {
+                          PsychologySceneListener listener, PaintingReport report) {
             this.channel = channel;
             this.attribute = attribute;
             this.fileLabel = fileLabel;

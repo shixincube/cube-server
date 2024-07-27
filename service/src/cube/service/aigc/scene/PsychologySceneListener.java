@@ -27,7 +27,7 @@
 package cube.service.aigc.scene;
 
 import cube.aigc.psychology.Painting;
-import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.PaintingReport;
 import cube.common.entity.FileLabel;
 
 /**
@@ -35,15 +35,15 @@ import cube.common.entity.FileLabel;
  */
 public interface PsychologySceneListener {
 
-    void onPaintingPredict(PsychologyReport report, FileLabel file);
+    void onPaintingPredict(PaintingReport report, FileLabel file);
 
-    void onPaintingPredictCompleted(PsychologyReport report, FileLabel file, Painting painting);
+    void onPaintingPredictCompleted(PaintingReport report, FileLabel file, Painting painting);
 
-    void onPaintingPredictFailed(PsychologyReport report);
+    void onPaintingPredictFailed(PaintingReport report);
 
-    void onReportEvaluate(PsychologyReport report);
+    void onReportEvaluate(PaintingReport report);
 
-    void onReportEvaluateCompleted(PsychologyReport report);
+    void onReportEvaluateCompleted(PaintingReport report);
 
-    void onReportEvaluateFailed(PsychologyReport report);
+    void onReportEvaluateFailed(PaintingReport report);
 }

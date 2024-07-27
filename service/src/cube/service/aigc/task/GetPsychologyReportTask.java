@@ -30,7 +30,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.PaintingReport;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
@@ -97,7 +97,7 @@ public class GetPsychologyReportTask extends ServiceTask {
         }
 
         if (0 != sn) {
-            PsychologyReport report = PsychologyScene.getInstance().getPsychologyReport(sn);
+            PaintingReport report = PsychologyScene.getInstance().getPsychologyReport(sn);
             if (null != report) {
                 JSONObject reportJson = null;
                 if (markdown) {
@@ -124,10 +124,10 @@ public class GetPsychologyReportTask extends ServiceTask {
         else if (0 != contactId && 0 != startTime && 0 != endTime) {
             int num = PsychologyScene.getInstance().numPsychologyReports(contactId, startTime, endTime);
 
-            List<PsychologyReport> list = PsychologyScene.getInstance().getPsychologyReports(contactId,
+            List<PaintingReport> list = PsychologyScene.getInstance().getPsychologyReports(contactId,
                     startTime, endTime, pageIndex);
             JSONArray array = new JSONArray();
-            for (PsychologyReport report : list) {
+            for (PaintingReport report : list) {
                 array.put(report.toCompactJSON());
             }
 

@@ -31,7 +31,6 @@ import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.algorithm.Representation;
-import cube.aigc.psychology.composition.DescriptionSuggestion;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.ReportSection;
 import cube.aigc.psychology.composition.SixDimensionScore;
@@ -42,7 +41,6 @@ import cube.util.TextUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 工作流。
@@ -52,8 +50,6 @@ public class Workflow {
     public final static String HighTrick = "明显";
     public final static String NormalTrick = "具有";
     public final static String LowTrick = "缺乏";//"不足";
-
-    public AtomicBoolean inferCompleted = new AtomicBoolean(false);
 
     private EvaluationReport evaluationReport;
 
@@ -67,8 +63,6 @@ public class Workflow {
 
     private SixDimensionScore normDimensionScore;
 
-//    private List<DescriptionSuggestion> behaviorTextList;
-
     private List<ReportSection> reportTextList;
 
     private String summary = null;
@@ -81,7 +75,6 @@ public class Workflow {
         this.evaluationReport = evaluationReport;
         this.channel = channel;
         this.service = service;
-//        this.behaviorTextList = new ArrayList<>();
         this.reportTextList = new ArrayList<>();
     }
 
@@ -90,7 +83,7 @@ public class Workflow {
         this.maxContext = maxContext - 60;
     }
 
-    public PsychologyReport fillReport(PsychologyReport report) {
+    public PaintingReport fillReport(PaintingReport report) {
         report.setEvaluationReport(this.evaluationReport);
 
         if (null != this.dimensionScore && null != this.normDimensionScore) {
@@ -98,15 +91,11 @@ public class Workflow {
         }
 
         report.setSummary(this.summary);
-//        report.setBehaviorList(this.behaviorTextList);
         report.setReportTextList(this.reportTextList);
         return report;
     }
 
-    public Workflow make(Theme theme, int maxIndicatorTexts, boolean generatesDescription, WorkflowListener listener) {
-        // 获取模板
-        ThemeTemplate template = Resource.getInstance().getThemeTemplate(theme);
-
+    public Workflow make(Theme theme, int maxIndicatorTexts) {
         int age = this.evaluationReport.getAttribute().age;
         String gender = this.evaluationReport.getAttribute().gender;
 
@@ -140,20 +129,8 @@ public class Workflow {
         // 生成人格描述
         this.inferPersonality(this.evaluationReport.getPersonalityAccelerator());
 
-        // 推理描述
-        (new Thread() {
-            @Override
-            public void run() {
-                List<DescriptionSuggestion> descList = inferDescription(template, age, gender, generatesDescription);
-                if (Logger.isDebugLevel()) {
-                    Logger.d(this.getClass(), "#make - Description list size: " + descList.size());
-                }
-
-                inferCompleted.set(true);
-
-                listener.onInferCompleted(Workflow.this);
-            }
-        }).start();
+        // 特征描述
+        this.makeDescription();
 
         return this;
     }
@@ -171,10 +148,7 @@ public class Workflow {
         return result;
     }
 
-    private List<DescriptionSuggestion> inferDescription(ThemeTemplate template, int age, String gender,
-                                                         boolean generatesDescription) {
-        List<DescriptionSuggestion> result = new ArrayList<>();
-
+    private void makeDescription() {
         List<Representation> representations = this.evaluationReport.getRepresentationListByEvaluationScore(100);
         for (Representation representation : representations) {
             String marked = null;
@@ -197,40 +171,6 @@ public class Workflow {
             // 设置短描述
             representation.description = marked;
         }
-
-        if (generatesDescription) {
-//            int maxRepresentation = 5;
-//            for (Representation representation : representations) {
-//                Logger.d(this.getClass(), "#inferDescription - representation: " + representation.description);
-//
-//                try {
-//                    // 推理表征
-//                    String prompt = template.formatRepresentationDescriptionPrompt(representation.description);
-//                    String description = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-//                            null, null);
-//
-//                    String suggestion = "";
-//                    if (generatesSuggestion) {
-//                        prompt = template.formatSuggestionPrompt(representation.knowledgeStrategy.getTerm().word);
-//                        suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-//                                null, null);
-//                    }
-//
-//                    if (null != description && null != suggestion) {
-//                        result.add(new DescriptionSuggestion(representation.knowledgeStrategy.getTerm(),
-//                                representation.description, description, suggestion));
-//
-//                        if (result.size() >= maxRepresentation) {
-//                            break;
-//                        }
-//                    }
-//                } catch (Exception e) {
-//                    Logger.e(this.getClass(), "#inferDescription", e);
-//                }
-//            }
-        }
-
-        return result;
     }
 
     /**

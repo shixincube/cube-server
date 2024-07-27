@@ -33,7 +33,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Painting;
-import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Theme;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -102,35 +102,35 @@ public class GeneratePsychologyReportTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        PsychologyReport report = service.generatePsychologyReport(token, attribute, fileCode, theme,
+        PaintingReport report = service.generatePsychologyReport(token, attribute, fileCode, theme,
                 maxIndicatorTexts, generatesDescription, new PsychologySceneListener() {
             @Override
-            public void onPaintingPredict(PsychologyReport report, FileLabel file) {
+            public void onPaintingPredict(PaintingReport report, FileLabel file) {
                 Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredict - " + token);
             }
 
             @Override
-            public void onPaintingPredictCompleted(PsychologyReport report, FileLabel file, Painting painting) {
+            public void onPaintingPredictCompleted(PaintingReport report, FileLabel file, Painting painting) {
                 Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredictCompleted - " + token);
             }
 
             @Override
-            public void onPaintingPredictFailed(PsychologyReport report) {
+            public void onPaintingPredictFailed(PaintingReport report) {
                 Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredictFailed - " + token);
             }
 
             @Override
-            public void onReportEvaluate(PsychologyReport report) {
+            public void onReportEvaluate(PaintingReport report) {
                 Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluate - " + token);
             }
 
             @Override
-            public void onReportEvaluateCompleted(PsychologyReport report) {
+            public void onReportEvaluateCompleted(PaintingReport report) {
                 Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted - " + token);
             }
 
             @Override
-            public void onReportEvaluateFailed(PsychologyReport report) {
+            public void onReportEvaluateFailed(PaintingReport report) {
                 Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateFailed - " + token);
             }
         });

@@ -27,7 +27,7 @@
 package cube.service.aigc.scene;
 
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.ThemeTemplate;
 import cube.aigc.psychology.composition.EvaluationScore;
@@ -43,26 +43,32 @@ public class QueryRevolver {
             "思维方式",
             "思考方式",
             "思维方法",
-            "思考方法"
+            "思考方法",
+            "思维",
+            "思考"
     };
 
     private String[] keywordCommunicationStyle = new String[] {
             "沟通风格",
             "沟通方式",
             "沟通方法",
-            "沟通能力"
+            "沟通能力",
+            "沟通",
+            "交流"
     };
 
     private String[] keywordWorkEnvironment = new String[] {
             "工作环境偏好",
             "工作环境喜好",
-            "工作环境倾向"
+            "工作环境倾向",
+            "工作环境"
     };
 
     private String[] keywordManagementRecommendations = new String[] {
             "管理建议",
             "管理方式",
-            "管理方法"
+            "管理方法",
+            "管理"
     };
 
     private String[] keywordQueryPersonality = new String[] {
@@ -72,7 +78,7 @@ public class QueryRevolver {
     public QueryRevolver() {
     }
 
-    public String generatePrompt(ReportRelation relation, PsychologyReport report, String query, boolean extraLong) {
+    public String generatePrompt(ReportRelation relation, PaintingReport report, String query, boolean extraLong) {
         StringBuilder result = new StringBuilder();
 
         if (extraLong) {
@@ -86,6 +92,9 @@ public class QueryRevolver {
                     report.getEvaluationReport().getEvaluationScores());
             for (String content : symptomContent) {
                 result.append(content);
+                if (result.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                    break;
+                }
             }
 
             if (result.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
@@ -95,7 +104,12 @@ public class QueryRevolver {
                         .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
             }
 
-            result.append("\n根据上述已知信息，简洁和专业的来回答用户的问题。不允许在答案中添加编造成分。问题是：");
+            if (result.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                result.append("\n");
+                result.append(this.generateFragment(report, query));
+            }
+
+            result.append("\n根据上述已知信息，同时综合使用心理学专业知识，回答用户的问题。问题是：");
             result.append(query);
         }
         else {
@@ -133,7 +147,7 @@ public class QueryRevolver {
         return result.toString();
     }
 
-    public GenerativeRecord generateSupplement(ReportRelation relation, PsychologyReport report) {
+    public GenerativeRecord generateSupplement(ReportRelation relation, PaintingReport report) {
         StringBuilder query = new StringBuilder();
         StringBuilder answer = new StringBuilder();
 
@@ -187,7 +201,7 @@ public class QueryRevolver {
         return result;
     }
 
-    private String generateFragment(PsychologyReport report, String query) {
+    private String generateFragment(PaintingReport report, String query) {
         StringBuilder result = new StringBuilder();
 
         if (null != report.getEvaluationReport().getPersonalityAccelerator()) {

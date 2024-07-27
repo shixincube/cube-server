@@ -33,9 +33,8 @@ import cell.util.log.Logger;
 import cube.aigc.*;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.PsychologyReport;
+import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.AnswerSheet;
-import cube.aigc.psychology.composition.ReportRelation;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScaleResult;
 import cube.auth.AuthToken;
@@ -1823,9 +1822,9 @@ public class Manager implements Tickable, PerformerListener {
      * @param indicatorTexts
      * @return
      */
-    public PsychologyReport generatePsychologyReport(String token, Attribute attribute,
-                                                     String fileCode, String theme,
-                                                     int behaviorTexts, int indicatorTexts) {
+    public PaintingReport generatePsychologyReport(String token, Attribute attribute,
+                                                   String fileCode, String theme,
+                                                   int behaviorTexts, int indicatorTexts) {
         JSONObject data = new JSONObject();
         data.put("attribute", attribute.toJSON());
         data.put("fileCode", fileCode);
@@ -1849,7 +1848,7 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
-        PsychologyReport report = new PsychologyReport(Packet.extractDataPayload(responsePacket));
+        PaintingReport report = new PaintingReport(Packet.extractDataPayload(responsePacket));
         return report;
     }
 
@@ -1917,7 +1916,7 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public PsychologyReport getPsychologyReport(String token, long sn, boolean markdown) {
+    public PaintingReport getPsychologyReport(String token, long sn, boolean markdown) {
         // 第一步，获取基础数据
         JSONObject data = new JSONObject();
         data.put("sn", sn);
@@ -1940,7 +1939,7 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         // 解析报告
-        PsychologyReport report = new PsychologyReport(Packet.extractDataPayload(responsePacket));
+        PaintingReport report = new PaintingReport(Packet.extractDataPayload(responsePacket));
 
         // 第二步，获取文本数据
         data = new JSONObject();

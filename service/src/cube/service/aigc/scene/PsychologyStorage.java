@@ -309,7 +309,7 @@ public class PsychologyStorage implements Storagable {
         }
     }
 
-    public PsychologyReport readPsychologyReport(long sn) {
+    public PaintingReport readPsychologyReport(long sn) {
         List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
                 new Conditional[] {
                         Conditional.createEqualTo("sn", sn)
@@ -318,12 +318,12 @@ public class PsychologyStorage implements Storagable {
             return null;
         }
 
-        PsychologyReport report = this.makeReport(result.get(0));
+        PaintingReport report = this.makeReport(result.get(0));
         return report;
     }
 
-    public List<PsychologyReport> readPsychologyReports(long contactId) {
-        List<PsychologyReport> list = new ArrayList<>();
+    public List<PaintingReport> readPsychologyReports(long contactId) {
+        List<PaintingReport> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
                 new Conditional[] {
@@ -331,7 +331,7 @@ public class PsychologyStorage implements Storagable {
                 });
 
         for (StorageField[] fields : result) {
-            PsychologyReport report = this.makeReport(fields);
+            PaintingReport report = this.makeReport(fields);
             // 添加到列表
             list.add(report);
         }
@@ -346,8 +346,8 @@ public class PsychologyStorage implements Storagable {
         return result.get(0)[0].getInt();
     }
 
-    public List<PsychologyReport> readPsychologyReports(long contactId, long starTime, long endTime, int pageIndex) {
-        List<PsychologyReport> list = new ArrayList<>();
+    public List<PaintingReport> readPsychologyReports(long contactId, long starTime, long endTime, int pageIndex) {
+        List<PaintingReport> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
                 new Conditional[] {
@@ -360,14 +360,14 @@ public class PsychologyStorage implements Storagable {
                 });
 
         for (StorageField[] fields : result) {
-            PsychologyReport report = this.makeReport(fields);
+            PaintingReport report = this.makeReport(fields);
             list.add(report);
         }
 
         return list;
     }
 
-    public boolean writePsychologyReport(PsychologyReport report) {
+    public boolean writePsychologyReport(PaintingReport report) {
 //        if (null != report.getBehaviorList()) {
 //            for (DescriptionSuggestion bs : report.getBehaviorList()) {
 //                this.storage.executeInsert(this.reportBehaviorTable, new StorageField[] {
@@ -554,10 +554,10 @@ public class PsychologyStorage implements Storagable {
         }
     }
 
-    private PsychologyReport makeReport(StorageField[] storageFields) {
+    private PaintingReport makeReport(StorageField[] storageFields) {
         Map<String, StorageField> data = StorageFields.get(storageFields);
 
-        PsychologyReport report = new PsychologyReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
+        PaintingReport report = new PaintingReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
                 data.get("timestamp").getLong(), data.get("name").getString(),
                 new Attribute(data.get("gender").getString(), data.get("age").getInt(),
                         data.get("strict").getInt() == 1),
