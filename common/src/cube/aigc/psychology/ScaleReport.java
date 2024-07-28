@@ -26,12 +26,16 @@
 
 package cube.aigc.psychology;
 
+import cube.aigc.psychology.composition.Scale;
+
 /**
  * 心理学量表报告。
  */
 public class ScaleReport extends Report {
 
-    public ScaleReport(long contactId, Attribute attribute) {
+    private Scale scale;
+
+    public ScaleReport(long contactId, Attribute attribute, Scale scale) {
         super(contactId, attribute);
     }
 

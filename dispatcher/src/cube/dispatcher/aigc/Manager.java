@@ -1818,18 +1818,15 @@ public class Manager implements Tickable, PerformerListener {
      * @param attribute
      * @param fileCode
      * @param theme
-     * @param behaviorTexts
      * @param indicatorTexts
      * @return
      */
     public PaintingReport generatePsychologyReport(String token, Attribute attribute,
-                                                   String fileCode, String theme,
-                                                   int behaviorTexts, int indicatorTexts) {
+                                                   String fileCode, String theme, int indicatorTexts) {
         JSONObject data = new JSONObject();
         data.put("attribute", attribute.toJSON());
         data.put("fileCode", fileCode);
         data.put("theme", theme);
-        data.put("behaviors", behaviorTexts);
         data.put("indicators", indicatorTexts);
 
         Packet packet = new Packet(AIGCAction.GeneratePsychologyReport.name, data);

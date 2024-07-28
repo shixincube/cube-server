@@ -76,7 +76,7 @@ public class SubmitPsychologyAnswerSheetTask extends ServiceTask {
             ScaleResult scaleResult = PsychologyScene.getInstance().submitAnswerSheet(answerSheet);
             if (null != scaleResult) {
                 this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, scaleResult.toJSON()));
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, scaleResult.toCompactJSON()));
                 markResponseTime();
             }
             else {

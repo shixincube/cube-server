@@ -78,14 +78,12 @@ public class GeneratePsychologyReportTask extends ServiceTask {
         String fileCode = null;
         String themeName = null;
         int maxIndicatorTexts = 3;
-        boolean generatesDescription = false;
 
         try {
             attribute = new Attribute(packet.data.getJSONObject("attribute"));
             fileCode = packet.data.getString("fileCode");
             themeName = packet.data.getString("theme");
             maxIndicatorTexts = packet.data.has("indicators") ? packet.data.getInt("indicators") : 5;
-            generatesDescription = packet.data.has("description") && packet.data.getBoolean("description");
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -103,7 +101,7 @@ public class GeneratePsychologyReportTask extends ServiceTask {
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         PaintingReport report = service.generatePsychologyReport(token, attribute, fileCode, theme,
-                maxIndicatorTexts, generatesDescription, new PsychologySceneListener() {
+                maxIndicatorTexts, new PsychologySceneListener() {
             @Override
             public void onPaintingPredict(PaintingReport report, FileLabel file) {
                 Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredict - " + token);

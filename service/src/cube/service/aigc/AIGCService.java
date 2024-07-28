@@ -1778,13 +1778,11 @@ public class AIGCService extends AbstractModule {
      * @param fileCode
      * @param theme
      * @param maxIndicatorTexts
-     * @param generatesDescription
      * @param listener
      * @return
      */
     public PaintingReport generatePsychologyReport(String token, Attribute attribute, String fileCode,
                                                    Theme theme, int maxIndicatorTexts,
-                                                   boolean generatesDescription,
                                                    PsychologySceneListener listener) {
         if (!this.isStarted()) {
             return null;
@@ -1819,7 +1817,7 @@ public class AIGCService extends AbstractModule {
 
         // 生成报告
         PaintingReport report = PsychologyScene.getInstance().generateEvaluationReport(channel,
-                attribute, fileLabel, theme, maxIndicatorTexts, generatesDescription, listener);
+                attribute, fileLabel, theme, maxIndicatorTexts, listener);
 
         return report;
     }

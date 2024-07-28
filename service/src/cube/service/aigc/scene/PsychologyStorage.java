@@ -69,6 +69,8 @@ public class PsychologyStorage implements Storagable {
 
     private final String scaleAnswerTable = "psychology_scale_answer";
 
+
+
     private final StorageField[] reportFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY
@@ -487,6 +489,9 @@ public class PsychologyStorage implements Storagable {
                     Conditional.createEqualTo("sn", scale.getSN())
             });
 
+        String dataString = scale.toJSON().toString();
+        dataString = JSONUtils.escape(dataString);
+
         if (result.isEmpty()) {
             return this.storage.executeInsert(this.scaleTable, new StorageField[] {
                     new StorageField("sn", scale.getSN()),
@@ -495,7 +500,7 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("gender", scale.getAttribute().gender),
                     new StorageField("age", scale.getAttribute().age),
                     new StorageField("complete", scale.isComplete() ? 1 : 0),
-                    new StorageField("data", scale.toJSON().toString())
+                    new StorageField("data", dataString)
             });
         }
         else {
@@ -505,7 +510,7 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("gender", scale.getAttribute().gender),
                     new StorageField("age", scale.getAttribute().age),
                     new StorageField("complete", scale.isComplete() ? 1 : 0),
-                    new StorageField("data", scale.toJSON().toString())
+                    new StorageField("data", dataString)
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", scale.getSN())
             });

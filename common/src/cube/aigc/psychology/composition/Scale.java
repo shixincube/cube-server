@@ -123,6 +123,7 @@ public class Scale extends Questionnaire implements JSONable {
 
         StringBuilder script = new StringBuilder();
         script.append("var ScaleScore = Java.type('cube.aigc.psychology.composition.ScaleScore');\n");
+        script.append("var ScalePrompt = Java.type('cube.aigc.psychology.composition.ScalePrompt');\n");
         try {
             script.append(new String(Files.readAllBytes(scoringScriptFile), StandardCharsets.UTF_8));
         } catch (Exception e) {
@@ -149,14 +150,18 @@ public class Scale extends Questionnaire implements JSONable {
 
         String content = "";
         ScaleScore scaleScore = new ScaleScore();
+        ScalePrompt scalePrompt = new ScalePrompt();
         if (returnVal.containsKey("content")) {
             content = returnVal.get("content").toString();
         }
         if (returnVal.containsKey("score")) {
             scaleScore = (ScaleScore) returnVal.get("score");
         }
+        if (returnVal.containsKey("prompt")) {
+            scalePrompt = (ScalePrompt) returnVal.get("prompt");
+        }
 
-        this.result = new ScaleResult(content, scaleScore, this);
+        this.result = new ScaleResult(content, scaleScore, scalePrompt, this);
         return this.result;
     }
 

@@ -35,6 +35,60 @@ function explain(score) {
     }
 }
 
+function makePrompt(list) {
+    var prompt = new ScalePrompt();
+
+    list.forEach(function(element) {
+        var score = element["score"];
+        var name = element["name"];
+        var factor = element["factor"];
+
+        var data = {
+            "score": score,
+            "name": name,
+            "factor": factor
+        };
+
+        if (score <= 2.0) {
+            if (factor === 'InterpersonalRelation' || factor === 'SleepAndDiet') {
+                data["description"] = '无明显' + name + '的描述和表现';
+                data["suggestion"] = '无明显' + name + '的建议';
+            } else {
+                data["description"] = '无明显' + name + '症状的描述和表现';
+                data["suggestion"] = '无明显' + name + '症状的建议';
+            }
+        } else if (score <= 2.9) {
+            if (factor === 'InterpersonalRelation' || factor === 'SleepAndDiet') {
+                data["description"] = '有较轻' + name + '的描述和表现';
+                data["suggestion"] = '有较轻' + name + '的建议';
+            } else {
+                data["description"] = '有较轻' + name + '症状的描述和表现';
+                data["suggestion"] = '有较轻' + name + '症状的建议';
+            }
+        } else if (score <= 3.8) {
+            if (factor === 'InterpersonalRelation' || factor === 'SleepAndDiet') {
+                data["description"] = '有' + name + '的描述和表现';
+                data["suggestion"] = '有' + name + '的建议';
+            } else {
+                data["description"] = '有' + name + '倾向的描述和表现';
+                data["suggestion"] = '有' + name + '倾向的建议';
+            }
+        } else {
+            if (factor === 'InterpersonalRelation' || factor === 'SleepAndDiet') {
+                data["description"] = '有明显' + name + '的描述和表现';
+                data["suggestion"] = '有明显' + name + '的建议';
+            } else {
+                data["description"] = '有明显' + name + '倾向的描述和表现';
+                data["suggestion"] = '有明显' + name + '倾向的建议';
+            }
+        }
+
+        prompt.addPrompt(data);
+    });
+
+    return prompt;
+}
+
 
 function scoring(answers) {
     var index = 0;
@@ -141,22 +195,22 @@ function scoring(answers) {
 
 
     var score = new ScaleScore();
-    score.addItem('T_Somatization', '躯体化症状', T_Somatization);
-    score.addItem('T_Obsession', '强迫症状', T_Obsession);
-    score.addItem('T_InterpersonalRelation', '人际关系问题', T_InterpersonalRelation);
-    score.addItem('T_Depression', '抑郁症状', T_Depression);
-    score.addItem('T_Anxiety', '焦虑症状', T_Anxiety);
-    score.addItem('T_Hostile', '敌对性症状', T_Hostile);
-    score.addItem('T_Horror', '恐怖症状', T_Horror);
-    score.addItem('T_Paranoid', '偏执症状', T_Paranoid);
-    score.addItem('T_Psychosis', '精神病性症状', T_Psychosis);
-    score.addItem('T_SleepAndDiet', '睡眠及饮食问题', T_SleepAndDiet);
+    score.addItem('Somatization', '躯体化症状', T_Somatization);
+    score.addItem('Obsession', '强迫症状', T_Obsession);
+    score.addItem('InterpersonalRelation', '人际关系敏感', T_InterpersonalRelation);
+    score.addItem('Depression', '抑郁症状', T_Depression);
+    score.addItem('Anxiety', '焦虑症状', T_Anxiety);
+    score.addItem('Hostile', '敌对性症状', T_Hostile);
+    score.addItem('Horror', '恐怖症状', T_Horror);
+    score.addItem('Paranoid', '偏执症状', T_Paranoid);
+    score.addItem('Psychosis', '精神病性症状', T_Psychosis);
+    score.addItem('SleepAndDiet', '睡眠及饮食问题', T_SleepAndDiet);
 
     // 计算常模
     var desc = [
         '* ' + explain(T_Somatization) + '躯体化症状\n\n',
         '* ' + explain(T_Obsession) + '强迫症状\n\n',
-        '* ' + explain(T_InterpersonalRelation) + '人际关系问题\n\n',
+        '* ' + explain(T_InterpersonalRelation) + '人际关系敏感\n\n',
         '* ' + explain(T_Depression) + '抑郁症状\n\n',
         '* ' + explain(T_Anxiety) + '焦虑症状\n\n',
         '* ' + explain(T_Hostile) + '敌对性症状\n\n',
@@ -166,8 +220,51 @@ function scoring(answers) {
         '* ' + explain(T_SleepAndDiet) + '睡眠及饮食问题\n\n'
     ];
 
+    var prompt = makePrompt([{
+        "score": T_Somatization,
+        "factor": 'Somatization',
+        "name": '躯体化',
+    }, {
+        "score": T_Obsession,
+        "factor": 'Obsession',
+        "name": '强迫',
+    }, {
+        "score": T_InterpersonalRelation,
+        "factor": 'InterpersonalRelation',
+        "name": '人际关系敏感',
+    }, {
+        "score": T_Depression,
+        "factor": 'Depression',
+        "name": '抑郁',
+    }, {
+        "score": T_Anxiety,
+        "factor": 'Anxiety',
+        "name": '焦虑',
+    }, {
+        "score": T_Hostile,
+        "factor": 'Hostile',
+        "name": '敌对',
+    }, {
+        "score": T_Horror,
+        "factor": 'Horror',
+        "name": '恐怖',
+    }, {
+        "score": T_Paranoid,
+        "factor": 'Paranoid',
+        "name": '偏执',
+    }, {
+        "score": T_Psychosis,
+        "factor": 'Psychosis',
+        "name": '精神病性',
+    }, {
+        "score": T_SleepAndDiet,
+        "factor": 'SleepAndDiet',
+        "name": '睡眠及饮食问题',
+    }]);
+
     return {
         content: desc.join(''),
-        score: score
+        score: score,
+        prompt: prompt
     }
 }

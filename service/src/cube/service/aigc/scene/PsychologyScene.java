@@ -238,12 +238,11 @@ public class PsychologyScene {
      * @param fileLabel
      * @param theme
      * @param maxIndicatorTexts
-     * @param generatesDescription
      * @param listener
      * @return
      */
     public synchronized PaintingReport generateEvaluationReport(AIGCChannel channel, Attribute attribute,
-                                                                FileLabel fileLabel, Theme theme, int maxIndicatorTexts, boolean generatesDescription,
+                                                                FileLabel fileLabel, Theme theme, int maxIndicatorTexts,
                                                                 PsychologySceneListener listener) {
         // 判断属性限制
         if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
@@ -267,8 +266,7 @@ public class PsychologyScene {
         PaintingReport report = new PaintingReport(channel.getAuthToken().getContactId(),
                 attribute, fileLabel, theme);
 
-        ReportTask task = new ReportTask(channel, attribute, fileLabel, theme,
-                generatesDescription, maxIndicatorTexts, listener, report);
+        ReportTask task = new ReportTask(channel, attribute, fileLabel, theme, maxIndicatorTexts, listener, report);
 
         this.taskQueue.offer(task);
 
@@ -522,6 +520,8 @@ public class PsychologyScene {
         }
     }
 
+
+
     /**
      * 根据报告内容推荐量表。
      *
@@ -653,24 +653,27 @@ public class PsychologyScene {
 
         protected int maxIndicatorTexts;
 
-        @Deprecated
-        protected boolean generatesDescription;
-
         protected PsychologySceneListener listener;
 
         protected PaintingReport report;
 
         public ReportTask(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
-                          Theme theme, boolean generatesDescription, int maxIndicatorTexts,
+                          Theme theme, int maxIndicatorTexts,
                           PsychologySceneListener listener, PaintingReport report) {
             this.channel = channel;
             this.attribute = attribute;
             this.fileLabel = fileLabel;
             this.theme = theme;
-            this.generatesDescription = generatesDescription;
             this.maxIndicatorTexts = Math.min(maxIndicatorTexts, 5);
             this.listener = listener;
             this.report = report;
+        }
+    }
+
+    public class ScaleReportTask {
+
+        public ScaleReportTask(AIGCChannel channel, Attribute attribute) {
+
         }
     }
 }
