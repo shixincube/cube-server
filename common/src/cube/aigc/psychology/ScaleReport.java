@@ -27,6 +27,14 @@
 package cube.aigc.psychology;
 
 import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.composition.ScaleFactor;
+import cube.aigc.psychology.composition.ScalePrompt;
+import cube.aigc.psychology.composition.ScaleResult;
+import cube.common.state.AIGCStateCode;
+import org.json.JSONArray;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 心理学量表报告。
@@ -35,9 +43,37 @@ public class ScaleReport extends Report {
 
     private Scale scale;
 
-    public ScaleReport(long contactId, Attribute attribute, Scale scale) {
-        super(contactId, attribute);
+    private List<ScaleFactor> factors;
+
+    private boolean finished = false;
+
+    private long finishedTimestamp;
+
+    private AIGCStateCode state;
+
+    public ScaleReport(long contactId, Scale scale) {
+        super(scale.getSN(), contactId, System.currentTimeMillis(), scale.getAttribute());
+        this.scale = scale;
+        this.factors = new ArrayList<>();
+
+        ScaleResult result = this.scale.getResult();
+        for (ScalePrompt.Factor prompt : result.prompt.getFactors()) {
+            String displayName = result.matchFactorName(prompt.factor);
+            if (null == displayName) {
+                continue;
+            }
+            this.factors.add(new ScaleFactor(prompt.factor, displayName, prompt.score));
+        }
+
+        this.state = AIGCStateCode.Processing;
     }
 
+    public ScaleReport(long sn, long contactId, long timestamp, Attribute attribute, JSONArray factorArray) {
+        super(sn, contactId, timestamp, attribute);
+        this.factors = new ArrayList<>();
+    }
 
+    public List<ScaleFactor> getFactors() {
+        return this.factors;
+    }
 }

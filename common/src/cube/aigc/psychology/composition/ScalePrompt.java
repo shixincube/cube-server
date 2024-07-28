@@ -72,7 +72,9 @@ public class ScalePrompt implements JSONable {
         }
     }
 
-
+    public List<Factor> getFactors() {
+        return this.factors;
+    }
 
     @Override
     public JSONObject toJSON() {

@@ -63,6 +63,10 @@ public class ScaleResult implements JSONable {
         }
     }
 
+    public String matchFactorName(String key) {
+        return this.score.getItemName(key);
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = this.toCompactJSON();

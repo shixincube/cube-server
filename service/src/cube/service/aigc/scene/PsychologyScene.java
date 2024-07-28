@@ -30,10 +30,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
-import cube.aigc.psychology.composition.AnswerSheet;
-import cube.aigc.psychology.composition.ReportRelation;
-import cube.aigc.psychology.composition.Scale;
-import cube.aigc.psychology.composition.ScaleResult;
+import cube.aigc.psychology.composition.*;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.Packet;
@@ -80,6 +77,10 @@ public class PsychologyScene {
 
     private AtomicInteger numRunningTasks;
 
+    private Queue<ScaleReportTask> scaleTaskQueue;
+
+    private AtomicInteger numRunningScaleTasks;
+
     /**
      * Key：报告序列号。
      */
@@ -89,6 +90,8 @@ public class PsychologyScene {
         this.taskQueue = new ConcurrentLinkedQueue<>();
         this.runningTaskQueue = new ConcurrentLinkedQueue<>();
         this.numRunningTasks = new AtomicInteger(0);
+        this.scaleTaskQueue = new ConcurrentLinkedQueue<>();
+        this.numRunningScaleTasks = new AtomicInteger(0);
         this.psychologyReportMap = new ConcurrentHashMap<>();
     }
 
@@ -256,7 +259,7 @@ public class PsychologyScene {
             return null;
         }
 
-        // 判断并发数量
+        // 并发数量
         int numUnit = this.aigcService.numUnitsByName(ModelConfig.BAIZE_UNIT);
         if (0 == numUnit) {
             Logger.e(this.getClass(), "#generateEvaluationReport - No baize unit");
@@ -520,8 +523,6 @@ public class PsychologyScene {
         }
     }
 
-
-
     /**
      * 根据报告内容推荐量表。
      *
@@ -545,8 +546,50 @@ public class PsychologyScene {
      * @param scale
      * @return
      */
-    public ScaleReport generateScaleReport(Scale scale) {
-        return null;
+    public ScaleReport generateScaleReport(AIGCChannel channel, Scale scale) {
+        if (!scale.isComplete()) {
+            Logger.e(this.getClass(), "#generateScaleReport - Scale is NOT complete");
+            return null;
+        }
+
+        // 并发数量
+        int numUnit = this.aigcService.numUnitsByName(ModelConfig.BAIZE_UNIT);
+        if (0 == numUnit) {
+            Logger.e(this.getClass(), "#generateScaleReport - No baize unit");
+            return null;
+        }
+
+        ScaleReport report = new ScaleReport(channel.getAuthToken().getContactId(), scale);
+
+        ScaleReportTask task = new ScaleReportTask(channel, report);
+
+        this.scaleTaskQueue.offer(task);
+
+        if (this.numRunningScaleTasks.get() >= numUnit) {
+            // 执行任务数大于单元数
+            return report;
+        }
+
+        this.numRunningScaleTasks.incrementAndGet();
+
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Logger.i(PsychologyScene.class, "Generating thread start");
+
+                ScaleReportTask scaleReportTask = scaleTaskQueue.poll();
+                while (null != scaleReportTask) {
+                    processScaleReport(scaleReportTask);
+
+                    scaleReportTask = scaleTaskQueue.poll();
+                }
+
+                numRunningScaleTasks.decrementAndGet();
+            }
+        });
+        thread.start();
+
+        return report;
     }
 
     public String buildPrompt(List<ReportRelation> relations, String query) {
@@ -631,6 +674,12 @@ public class PsychologyScene {
         return workflow.make(theme, maxIndicatorText);
     }
 
+    private void processScaleReport(ScaleReportTask task) {
+        for (ScaleFactor factor : task.scaleReport.getFactors()) {
+
+        }
+    }
+
     public void onTick(long now) {
         Iterator<Map.Entry<Long, PaintingReport>> iter = this.psychologyReportMap.entrySet().iterator();
         while (iter.hasNext()) {
@@ -672,8 +721,13 @@ public class PsychologyScene {
 
     public class ScaleReportTask {
 
-        public ScaleReportTask(AIGCChannel channel, Attribute attribute) {
+        protected AIGCChannel channel;
 
+        protected ScaleReport scaleReport;
+
+        public ScaleReportTask(AIGCChannel channel, ScaleReport scaleReport) {
+            this.channel = channel;
+            this.scaleReport = scaleReport;
         }
     }
 }

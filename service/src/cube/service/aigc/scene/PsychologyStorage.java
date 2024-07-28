@@ -59,17 +59,11 @@ public class PsychologyStorage implements Storagable {
 
     private final String reportTextTable = "psychology_report_text";
 
-    @Deprecated
-    private final String reportBehaviorTable = "psychology_report_behavior";
-
-    @Deprecated
-    private final String reportParagraphTable = "psychology_report_paragraph";
-
     private final String scaleTable = "psychology_scale";
 
     private final String scaleAnswerTable = "psychology_scale_answer";
 
-
+    private final String scaleReportTable = "psychology_scale_report";
 
     private final StorageField[] reportFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
@@ -128,28 +122,6 @@ public class PsychologyStorage implements Storagable {
             })
     };
 
-    @Deprecated
-    private final StorageField[] reportBehaviorFields = new StorageField[] {
-            new StorageField("id", LiteralBase.LONG, new Constraint[] {
-                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
-            }),
-            new StorageField("report_sn", LiteralBase.LONG, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("term", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("description", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("behavior", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("suggestion", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            })
-    };
-
     private final StorageField[] reportTextFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
@@ -167,34 +139,6 @@ public class PsychologyStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("suggestion", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            })
-    };
-
-    @Deprecated
-    private final StorageField[] reportParagraphFields = new StorageField[] {
-            new StorageField("id", LiteralBase.LONG, new Constraint[] {
-                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
-            }),
-            new StorageField("report_sn", LiteralBase.LONG, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("title", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("score", LiteralBase.INT, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("description", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("opinion", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("features", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("suggestions", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             })
     };
@@ -241,6 +185,33 @@ public class PsychologyStorage implements Storagable {
             })
     };
 
+    private final StorageField[] scaleReportFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("gender", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("age", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("strict", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
+            }),
+            new StorageField("factor_data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
     private Storage storage;
 
     public final int limit = 5;
@@ -275,26 +246,12 @@ public class PsychologyStorage implements Storagable {
             }
         }
 
-//        if (!this.storage.exist(this.reportBehaviorTable)) {
-//            // 不存在，建新表
-//            if (this.storage.executeCreate(this.reportBehaviorTable, this.reportBehaviorFields)) {
-//                Logger.i(this.getClass(), "Created table '" + this.reportBehaviorTable + "' successfully");
-//            }
-//        }
-
         if (!this.storage.exist(this.reportTextTable)) {
             // 不存在，建新表
             if (this.storage.executeCreate(this.reportTextTable, this.reportTextFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.reportTextTable + "' successfully");
             }
         }
-
-//        if (!this.storage.exist(this.reportParagraphTable)) {
-//            // 不存在，建新表
-//            if (this.storage.executeCreate(this.reportParagraphTable, this.reportParagraphFields)) {
-//                Logger.i(this.getClass(), "Created table '" + this.reportParagraphTable + "' successfully");
-//            }
-//        }
 
         if (!this.storage.exist(this.scaleTable)) {
             // 不存在，建新表
@@ -307,6 +264,13 @@ public class PsychologyStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.scaleAnswerTable, this.scaleAnswerFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.scaleAnswerTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.scaleReportTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.scaleReportTable, this.scaleReportFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.scaleReportTable + "' successfully");
             }
         }
     }
@@ -557,6 +521,20 @@ public class PsychologyStorage implements Storagable {
                     Conditional.createEqualTo("scale_sn", answerSheet.scaleSn)
             });
         }
+    }
+
+    public ScaleReport readScaleReport(long sn) {
+        List<StorageField[]> result = this.storage.executeQuery(this.scaleReportTable, this.scaleReportFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("sn", sn)
+                });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        return null;
     }
 
     private PaintingReport makeReport(StorageField[] storageFields) {

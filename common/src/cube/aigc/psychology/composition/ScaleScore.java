@@ -62,6 +62,15 @@ public class ScaleScore implements JSONable {
         return this.items.get(name);
     }
 
+    public String getItemName(String key) {
+        JSONObject data = this.items.get(key);
+        if (null == data) {
+            return null;
+        }
+
+        return data.getString("name");
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

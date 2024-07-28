@@ -109,6 +109,10 @@ public class Scale extends Questionnaire implements JSONable {
         }
     }
 
+    public ScaleResult getResult() {
+        return this.result;
+    }
+
     public ScaleResult scoring() {
         return this.scoring(this.structureFile.getParentFile());
     }

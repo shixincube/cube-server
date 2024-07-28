@@ -61,6 +61,15 @@ public abstract class Report implements JSONable {
         this.attribute = attribute;
     }
 
+    public Report(long sn, long contactId, long timestamp, Attribute attribute) {
+        this.sn = sn;
+        this.contactId = contactId;
+        this.timestamp = timestamp;
+        this.name = "BZ-" + sDateFormat.format(new Date(this.timestamp)) +
+                String.format("%04d", Utils.randomInt(1, 9999));
+        this.attribute = attribute;
+    }
+
     public Report(long sn, long contactId, long timestamp, String name, Attribute attribute) {
         this.sn = sn;
         this.contactId = contactId;
