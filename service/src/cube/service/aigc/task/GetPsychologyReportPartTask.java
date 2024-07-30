@@ -75,13 +75,11 @@ public class GetPsychologyReportPartTask extends ServiceTask {
         }
 
         long sn = 0;
-//        boolean behaviorText = false;
         boolean reportText = false;
         boolean scoreChart = false;
 
         try {
             sn = packet.data.getLong("sn");
-//            behaviorText = packet.data.has("behaviorText") && packet.data.getBoolean("behaviorText");
             reportText = packet.data.has("reportText") && packet.data.getBoolean("reportText");
             scoreChart = packet.data.has("scoreChart") && packet.data.getBoolean("scoreChart");
         } catch (Exception e) {
@@ -91,7 +89,7 @@ public class GetPsychologyReportPartTask extends ServiceTask {
             return;
         }
 
-        PaintingReport report = PsychologyScene.getInstance().getPsychologyReport(sn);
+        PaintingReport report = PsychologyScene.getInstance().getPaintingReport(sn);
         if (null == report) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
@@ -101,17 +99,7 @@ public class GetPsychologyReportPartTask extends ServiceTask {
 
         JSONObject responseData = new JSONObject();
         responseData.put("sn", sn);
-//        responseData.put("behaviorState", report.inferenceState.code);
         responseData.put("reportState", report.getState().code);
-
-//        if (behaviorText) {
-//            List<DescriptionSuggestion> list = report.getBehaviorList();
-//            JSONArray array = new JSONArray();
-//            for (DescriptionSuggestion bs : list) {
-//                array.put(bs.toJSON());
-//            }
-//            responseData.put("behaviorTextList", array);
-//        }
 
         if (reportText) {
             List<ReportSection> list = report.getReportTextList();

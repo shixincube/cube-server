@@ -26,24 +26,16 @@
 
 package cube.service.aigc.scene;
 
-import cube.aigc.psychology.Painting;
-import cube.aigc.psychology.PaintingReport;
-import cube.common.entity.FileLabel;
+import cube.aigc.psychology.ScaleReport;
 
 /**
- * 心理学测试报告事件监听器。
+ * 量表报告事件监听器。
  */
-public interface PsychologySceneListener {
+public interface ScaleReportListener {
 
-    void onPaintingPredict(PaintingReport report, FileLabel file);
+    void onReportEvaluating(ScaleReport report);
 
-    void onPaintingPredictCompleted(PaintingReport report, FileLabel file, Painting painting);
+    void onReportEvaluateCompleted(ScaleReport report);
 
-    void onPaintingPredictFailed(PaintingReport report);
-
-    void onReportEvaluate(PaintingReport report);
-
-    void onReportEvaluateCompleted(PaintingReport report);
-
-    void onReportEvaluateFailed(PaintingReport report);
+    void onReportEvaluateFailed(ScaleReport report);
 }

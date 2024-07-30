@@ -191,7 +191,7 @@ public class PaintingReport extends Report {
         return (null == this.evaluationReport);
     }
 
-    public String makeMarkdown(boolean outputParagraph) {
+    public String makeMarkdown() {
         StringBuilder buf = new StringBuilder();
         buf.append("# ").append(this.theme.name).append("报告");
 

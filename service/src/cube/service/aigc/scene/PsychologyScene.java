@@ -35,10 +35,7 @@ import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
-import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCUnit;
-import cube.common.entity.FileLabel;
-import cube.common.entity.GenerativeRecord;
+import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.storage.StorageType;
@@ -84,7 +81,7 @@ public class PsychologyScene {
     /**
      * Key：报告序列号。
      */
-    private Map<Long, PaintingReport> psychologyReportMap;
+    private Map<Long, Report> reportMap;
 
     private PsychologyScene() {
         this.taskQueue = new ConcurrentLinkedQueue<>();
@@ -92,7 +89,7 @@ public class PsychologyScene {
         this.numRunningTasks = new AtomicInteger(0);
         this.scaleTaskQueue = new ConcurrentLinkedQueue<>();
         this.numRunningScaleTasks = new AtomicInteger(0);
-        this.psychologyReportMap = new ConcurrentHashMap<>();
+        this.reportMap = new ConcurrentHashMap<>();
     }
 
     public static PsychologyScene getInstance() {
@@ -198,13 +195,13 @@ public class PsychologyScene {
         }
     }
 
-    public PaintingReport getPsychologyReport(long sn) {
-        PaintingReport report = this.psychologyReportMap.get(sn);
-        if (null != report) {
-            return report;
+    public PaintingReport getPaintingReport(long sn) {
+        Report current = this.reportMap.get(sn);
+        if (current instanceof PaintingReport) {
+            return (PaintingReport) current;
         }
 
-        report = this.storage.readPsychologyReport(sn);
+        PaintingReport report = this.storage.readPsychologyReport(sn);
         if (null == report) {
             return null;
         }
@@ -244,9 +241,9 @@ public class PsychologyScene {
      * @param listener
      * @return
      */
-    public synchronized PaintingReport generateEvaluationReport(AIGCChannel channel, Attribute attribute,
+    public synchronized PaintingReport generatePredictingReport(AIGCChannel channel, Attribute attribute,
                                                                 FileLabel fileLabel, Theme theme, int maxIndicatorTexts,
-                                                                PsychologySceneListener listener) {
+                                                                PaintingReportListener listener) {
         // 判断属性限制
         if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
             Logger.w(this.getClass(), "#generateEvaluationReport - Age param overflow: " +
@@ -273,7 +270,7 @@ public class PsychologyScene {
 
         this.taskQueue.offer(task);
 
-        this.psychologyReportMap.put(report.sn, report);
+        this.reportMap.put(report.sn, report);
 
         // 判断并发数量
         if (this.numRunningTasks.get() >= numUnit) {
@@ -344,7 +341,7 @@ public class PsychologyScene {
                     loadConfig();
 
                     // 绘图预测
-                    reportTask.listener.onPaintingPredict(reportTask.report, reportTask.fileLabel);
+                    reportTask.listener.onPaintingPredicting(reportTask.report, reportTask.fileLabel);
 
                     Painting painting = processPainting(unit, reportTask.fileLabel);
                     if (null == painting) {
@@ -371,7 +368,7 @@ public class PsychologyScene {
                     reportTask.listener.onPaintingPredictCompleted(reportTask.report, reportTask.fileLabel, painting);
 
                     // 开始进行评估
-                    reportTask.listener.onReportEvaluate(reportTask.report);
+                    reportTask.listener.onReportEvaluating(reportTask.report);
 
                     // 根据图像推理报告
                     Workflow workflow = processReport(reportTask.channel, painting, reportTask.theme,
@@ -393,7 +390,7 @@ public class PsychologyScene {
                     workflow.fillReport(reportTask.report);
 
                     // 生成 Markdown 调试信息
-                    reportTask.report.makeMarkdown(false);
+                    reportTask.report.makeMarkdown();
 
                     // 设置状态
                     if (reportTask.report.isNull()) {
@@ -411,7 +408,7 @@ public class PsychologyScene {
                     // 填写数据
                     workflow.fillReport(reportTask.report);
                     // 生成 Markdown 调试信息
-                    reportTask.report.makeMarkdown(false);
+                    reportTask.report.makeMarkdown();
 
                     // 存储
                     storage.writePsychologyReport(reportTask.report);
@@ -436,12 +433,14 @@ public class PsychologyScene {
     }
 
     public PaintingReport stopGenerating(long sn) {
-        PaintingReport report = this.psychologyReportMap.get(sn);
-        if (null == report) {
+        Report current = this.reportMap.get(sn);
+        if (!(current instanceof PaintingReport)) {
             // 没有找到报告
             Logger.i(this.getClass(), "#stopGenerating - Can NOT find report: " + sn);
             return null;
         }
+
+        PaintingReport report = (PaintingReport) current;
 
         if (report.getState() == AIGCStateCode.Ok) {
             // 已经生成的报告不能停止
@@ -530,7 +529,7 @@ public class PsychologyScene {
      * @return
      */
     public Scale recommendScale(long reportSn) {
-        PaintingReport report = this.getPsychologyReport(reportSn);
+        PaintingReport report = this.getPaintingReport(reportSn);
         if (null == report) {
             Logger.w(this.getClass(), "#recommendScale - Can NOT find report: " + reportSn);
             return null;
@@ -543,12 +542,19 @@ public class PsychologyScene {
     /**
      * 生成量表报告。
      *
+     * @param channel
      * @param scale
+     * @param listener
      * @return
      */
-    public ScaleReport generateScaleReport(AIGCChannel channel, Scale scale) {
+    public ScaleReport generateScaleReport(AIGCChannel channel, Scale scale, ScaleReportListener listener) {
         if (!scale.isComplete()) {
-            Logger.e(this.getClass(), "#generateScaleReport - Scale is NOT complete");
+            Logger.e(this.getClass(), "#generateScaleReport - Scale is NOT complete: " + scale.getSN());
+            return null;
+        }
+
+        if (this.reportMap.containsKey(scale.getSN())) {
+            Logger.e(this.getClass(), "#generateScaleReport - Submits data repeatedly: " + scale.getSN());
             return null;
         }
 
@@ -561,7 +567,10 @@ public class PsychologyScene {
 
         ScaleReport report = new ScaleReport(channel.getAuthToken().getContactId(), scale);
 
-        ScaleReportTask task = new ScaleReportTask(channel, report);
+        ScaleReportTask task = new ScaleReportTask(channel, scale, report);
+
+        // 缓存到内存
+        this.reportMap.put(report.sn, report);
 
         this.scaleTaskQueue.offer(task);
 
@@ -579,7 +588,30 @@ public class PsychologyScene {
 
                 ScaleReportTask scaleReportTask = scaleTaskQueue.poll();
                 while (null != scaleReportTask) {
-                    processScaleReport(scaleReportTask);
+                    // 回调
+                    listener.onReportEvaluating(scaleReportTask.scaleReport);
+
+                    // 生成报告
+                    AIGCStateCode state = processScaleReport(scaleReportTask);
+                    if (state == AIGCStateCode.Ok) {
+                        // 写入数据库
+                        storage.writeScaleReport(scaleReportTask.scaleReport);
+
+                        // 变更状态
+                        scaleReportTask.scaleReport.setFinished(true);
+                        scaleReportTask.scaleReport.setState(AIGCStateCode.Ok);
+
+                        // 回调
+                        listener.onReportEvaluateCompleted(scaleReportTask.scaleReport);
+                    }
+                    else {
+                        // 变更状态
+                        scaleReportTask.scaleReport.setFinished(true);
+                        scaleReportTask.scaleReport.setState(state);
+
+                        // 回调
+                        listener.onReportEvaluateFailed(scaleReportTask.scaleReport);
+                    }
 
                     scaleReportTask = scaleTaskQueue.poll();
                 }
@@ -592,12 +624,27 @@ public class PsychologyScene {
         return report;
     }
 
+    public ScaleReport getScaleReport(long sn) {
+        Report current = this.reportMap.get(sn);
+        if (current instanceof ScaleReport) {
+            return (ScaleReport) current;
+        }
+
+        ScaleReport report = this.storage.readScaleReport(sn);
+        if (null == report) {
+            Logger.w(this.getClass(), "#getScaleReport - Can NOT find scale report: " + sn);
+            return null;
+        }
+
+        return report;
+    }
+
     public String buildPrompt(List<ReportRelation> relations, String query) {
         StringBuilder result = new StringBuilder();
 
         if (relations.size() == 1) {
             ReportRelation relation = relations.get(0);
-            PaintingReport report = this.getPsychologyReport(relation.reportSn);
+            PaintingReport report = this.getPaintingReport(relation.reportSn);
             if (null == report) {
                 Logger.w(this.getClass(), "#buildPrompt - Can NOT find report: " + relation.reportSn);
                 return null;
@@ -615,7 +662,7 @@ public class PsychologyScene {
 
     public GenerativeRecord buildHistory(List<ReportRelation> relations, String currentQuery) {
         ReportRelation relation = relations.get(0);
-        PaintingReport report = this.getPsychologyReport(relation.reportSn);
+        PaintingReport report = this.getPaintingReport(relation.reportSn);
         if (null == report) {
             Logger.w(this.getClass(), "#buildHistory - Can NOT find report: " + relation.reportSn);
             return null;
@@ -674,16 +721,36 @@ public class PsychologyScene {
         return workflow.make(theme, maxIndicatorText);
     }
 
-    private void processScaleReport(ScaleReportTask task) {
+    private AIGCStateCode processScaleReport(ScaleReportTask task) {
         for (ScaleFactor factor : task.scaleReport.getFactors()) {
+            ScalePrompt.Factor prompt = task.scale.getResult().prompt.getFactor(factor.name);
+            if (null == prompt) {
+                Logger.w(this.getClass(), "#processScaleReport - Can NOT find prompt: " + factor.name);
+                return AIGCStateCode.IllegalOperation;
+            }
 
+            String description = this.aigcService.syncGenerateText(this.unitName, prompt.description, new GenerativeOption(),
+                    null, null);
+
+            String suggestion = this.aigcService.syncGenerateText(this.unitName, prompt.suggestion, new GenerativeOption(),
+                    null, null);
+
+            if (null == description || null == suggestion) {
+                Logger.w(this.getClass(), "#processScaleReport - Generates description & suggestion error: " + factor.name);
+                return AIGCStateCode.UnitError;
+            }
+
+            factor.description = description;
+            factor.suggestion = suggestion;
         }
+
+        return AIGCStateCode.Ok;
     }
 
     public void onTick(long now) {
-        Iterator<Map.Entry<Long, PaintingReport>> iter = this.psychologyReportMap.entrySet().iterator();
+        Iterator<Map.Entry<Long, Report>> iter = this.reportMap.entrySet().iterator();
         while (iter.hasNext()) {
-            PaintingReport report = iter.next().getValue();
+            Report report = iter.next().getValue();
             if (now - report.timestamp > 72 * 60 * 60 * 1000) {
                 iter.remove();
             }
@@ -702,13 +769,13 @@ public class PsychologyScene {
 
         protected int maxIndicatorTexts;
 
-        protected PsychologySceneListener listener;
+        protected PaintingReportListener listener;
 
         protected PaintingReport report;
 
         public ReportTask(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
                           Theme theme, int maxIndicatorTexts,
-                          PsychologySceneListener listener, PaintingReport report) {
+                          PaintingReportListener listener, PaintingReport report) {
             this.channel = channel;
             this.attribute = attribute;
             this.fileLabel = fileLabel;
@@ -723,10 +790,13 @@ public class PsychologyScene {
 
         protected AIGCChannel channel;
 
+        protected Scale scale;
+
         protected ScaleReport scaleReport;
 
-        public ScaleReportTask(AIGCChannel channel, ScaleReport scaleReport) {
+        public ScaleReportTask(AIGCChannel channel, Scale scale, ScaleReport scaleReport) {
             this.channel = channel;
+            this.scale = scale;
             this.scaleReport = scaleReport;
         }
     }

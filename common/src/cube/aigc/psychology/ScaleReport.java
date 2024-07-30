@@ -32,6 +32,7 @@ import cube.aigc.psychology.composition.ScalePrompt;
 import cube.aigc.psychology.composition.ScaleResult;
 import cube.common.state.AIGCStateCode;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,9 +72,56 @@ public class ScaleReport extends Report {
     public ScaleReport(long sn, long contactId, long timestamp, Attribute attribute, JSONArray factorArray) {
         super(sn, contactId, timestamp, attribute);
         this.factors = new ArrayList<>();
+        this.setFactors(factorArray);
+        this.state = AIGCStateCode.Ok;
+        this.finished = true;
+        this.finishedTimestamp = timestamp;
     }
 
     public List<ScaleFactor> getFactors() {
         return this.factors;
+    }
+
+    public JSONArray getFactorsAsJSONArray() {
+        JSONArray array = new JSONArray();
+        for (ScaleFactor factor : this.factors) {
+            array.put(factor.toJSON());
+        }
+        return array;
+    }
+
+    public void setFactors(JSONArray array) {
+        for (int i = 0; i < array.length(); ++i) {
+            this.factors.add(new ScaleFactor(array.getJSONObject(i)));
+        }
+    }
+
+    public void setFinished(boolean value) {
+        this.finished = value;
+        this.finishedTimestamp = System.currentTimeMillis();
+    }
+
+    public boolean isFinished() {
+        return this.finished;
+    }
+
+    public void setState(AIGCStateCode state) {
+        this.state = state;
+    }
+
+    public AIGCStateCode getState() {
+        return this.state;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = super.toJSON();
+
+        json.put("finished", this.finished);
+        json.put("finishedTimestamp", this.finishedTimestamp);
+        json.put("state", this.state.code);
+
+        json.put("factors", this.getFactorsAsJSONArray());
+        return json;
     }
 }

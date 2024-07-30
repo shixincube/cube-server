@@ -35,7 +35,9 @@ import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.Theme;
+import cube.aigc.psychology.composition.Scale;
 import cube.aigc.publicopinion.PublicOpinionTaskName;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
@@ -67,7 +69,8 @@ import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.ResourceAnswer;
 import cube.service.aigc.scene.PsychologyScene;
-import cube.service.aigc.scene.PsychologySceneListener;
+import cube.service.aigc.scene.PaintingReportListener;
+import cube.service.aigc.scene.ScaleReportListener;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactHook;
@@ -1771,7 +1774,7 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
-     * 心理学绘画测验。
+     * 生成心理学绘画测验报告。
      *
      * @param token
      * @param attribute
@@ -1781,9 +1784,9 @@ public class AIGCService extends AbstractModule {
      * @param listener
      * @return
      */
-    public PaintingReport generatePsychologyReport(String token, Attribute attribute, String fileCode,
-                                                   Theme theme, int maxIndicatorTexts,
-                                                   PsychologySceneListener listener) {
+    public PaintingReport generatePaintingReport(String token, Attribute attribute, String fileCode,
+                                                 Theme theme, int maxIndicatorTexts,
+                                                 PaintingReportListener listener) {
         if (!this.isStarted()) {
             return null;
         }
@@ -1816,8 +1819,44 @@ public class AIGCService extends AbstractModule {
         }
 
         // 生成报告
-        PaintingReport report = PsychologyScene.getInstance().generateEvaluationReport(channel,
+        PaintingReport report = PsychologyScene.getInstance().generatePredictingReport(channel,
                 attribute, fileLabel, theme, maxIndicatorTexts, listener);
+
+        return report;
+    }
+
+    /**
+     * 生成心理学量表测验报告。
+     *
+     * @param token
+     * @param scaleSn
+     * @param listener
+     * @return
+     */
+    public ScaleReport generateScaleReport(String token, long scaleSn, ScaleReportListener listener) {
+        if (!this.isStarted()) {
+            return null;
+        }
+
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthToken authToken = authService.getToken(token);
+        if (null == authToken) {
+            Logger.w(this.getClass(), "#generateScaleReport - Token error: " + token);
+            return null;
+        }
+
+        Scale scale = PsychologyScene.getInstance().getScale(scaleSn);
+        if (null == scale) {
+            Logger.w(this.getClass(), "#generateScaleReport - No scale, sn: " + scaleSn);
+            return null;
+        }
+
+        AIGCChannel channel = this.getChannelByToken(token);
+        if (null == channel) {
+            channel = this.createChannel(token, "Baize", Utils.randomString(16));
+        }
+
+        ScaleReport report = PsychologyScene.getInstance().generateScaleReport(channel, scale, listener);
 
         return report;
     }

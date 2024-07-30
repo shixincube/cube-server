@@ -76,6 +76,16 @@ public class ScalePrompt implements JSONable {
         return this.factors;
     }
 
+    public Factor getFactor(String name) {
+        for (Factor factor : this.factors) {
+            if (factor.factor.equals(name) || factor.name.equals(name)) {
+                return factor;
+            }
+        }
+
+        return null;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

@@ -31,10 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
-import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.Painting;
-import cube.aigc.psychology.PaintingReport;
-import cube.aigc.psychology.Theme;
+import cube.aigc.psychology.*;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.FileLabel;
@@ -42,7 +39,8 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.scene.PsychologySceneListener;
+import cube.service.aigc.scene.PaintingReportListener;
+import cube.service.aigc.scene.ScaleReportListener;
 import org.json.JSONObject;
 
 /**
@@ -67,80 +65,121 @@ public class GeneratePsychologyReportTask extends ServiceTask {
             return;
         }
 
-        if (!packet.data.has("fileCode") || !packet.data.has("theme") || !packet.data.has("attribute")) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+        if (packet.data.has("fileCode") && packet.data.has("theme") && packet.data.has("attribute")) {
+            Attribute attribute = null;
+            String fileCode = null;
+            String themeName = null;
+            int maxIndicatorTexts = 3;
+
+            try {
+                attribute = new Attribute(packet.data.getJSONObject("attribute"));
+                fileCode = packet.data.getString("fileCode");
+                themeName = packet.data.getString("theme");
+                maxIndicatorTexts = packet.data.has("indicators") ? packet.data.getInt("indicators") : 5;
+            } catch (Exception e) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+                markResponseTime();
+                return;
+            }
+
+            Theme theme = Theme.parse(themeName);
+            if (null == theme) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+                markResponseTime();
+                return;
+            }
+
+            AIGCService service = ((AIGCCellet) this.cellet).getService();
+            PaintingReport report = service.generatePaintingReport(token, attribute, fileCode, theme,
+                    maxIndicatorTexts, new PaintingReportListener() {
+                        @Override
+                        public void onPaintingPredicting(PaintingReport report, FileLabel file) {
+                            Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredicting - " + token);
+                        }
+
+                        @Override
+                        public void onPaintingPredictCompleted(PaintingReport report, FileLabel file, Painting painting) {
+                            Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredictCompleted - " + token);
+                        }
+
+                        @Override
+                        public void onPaintingPredictFailed(PaintingReport report) {
+                            Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredictFailed - " + token);
+                        }
+
+                        @Override
+                        public void onReportEvaluating(PaintingReport report) {
+                            Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluating - " + token);
+                        }
+
+                        @Override
+                        public void onReportEvaluateCompleted(PaintingReport report) {
+                            Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted - " + token);
+                        }
+
+                        @Override
+                        public void onReportEvaluateFailed(PaintingReport report) {
+                            Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateFailed - " + token);
+                        }
+                    });
+
+            if (null != report) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, report.toJSON()));
+            }
+            else {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+            }
             markResponseTime();
-            return;
         }
+        else if (packet.data.has("scaleSn")) {
+            long scaleSn = 0;
 
-        Attribute attribute = null;
-        String fileCode = null;
-        String themeName = null;
-        int maxIndicatorTexts = 3;
+            try {
+                scaleSn = packet.data.getLong("scaleSn");
+            } catch (Exception e) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+                markResponseTime();
+                return;
+            }
 
-        try {
-            attribute = new Attribute(packet.data.getJSONObject("attribute"));
-            fileCode = packet.data.getString("fileCode");
-            themeName = packet.data.getString("theme");
-            maxIndicatorTexts = packet.data.has("indicators") ? packet.data.getInt("indicators") : 5;
-        } catch (Exception e) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+            AIGCService service = ((AIGCCellet) this.cellet).getService();
+
+            ScaleReport report = service.generateScaleReport(token, scaleSn, new ScaleReportListener() {
+                @Override
+                public void onReportEvaluating(ScaleReport report) {
+                    Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluating - " + token);
+                }
+
+                @Override
+                public void onReportEvaluateCompleted(ScaleReport report) {
+                    Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted - " + token);
+                }
+
+                @Override
+                public void onReportEvaluateFailed(ScaleReport report) {
+                    Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateFailed - " + token);
+                }
+            });
+
+            if (null != report) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, report.toJSON()));
+            }
+            else {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+            }
             markResponseTime();
-            return;
-        }
-
-        Theme theme = Theme.parse(themeName);
-        if (null == theme) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
-            markResponseTime();
-            return;
-        }
-
-        AIGCService service = ((AIGCCellet) this.cellet).getService();
-        PaintingReport report = service.generatePsychologyReport(token, attribute, fileCode, theme,
-                maxIndicatorTexts, new PsychologySceneListener() {
-            @Override
-            public void onPaintingPredict(PaintingReport report, FileLabel file) {
-                Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredict - " + token);
-            }
-
-            @Override
-            public void onPaintingPredictCompleted(PaintingReport report, FileLabel file, Painting painting) {
-                Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredictCompleted - " + token);
-            }
-
-            @Override
-            public void onPaintingPredictFailed(PaintingReport report) {
-                Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredictFailed - " + token);
-            }
-
-            @Override
-            public void onReportEvaluate(PaintingReport report) {
-                Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluate - " + token);
-            }
-
-            @Override
-            public void onReportEvaluateCompleted(PaintingReport report) {
-                Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted - " + token);
-            }
-
-            @Override
-            public void onReportEvaluateFailed(PaintingReport report) {
-                Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateFailed - " + token);
-            }
-        });
-
-        if (null != report) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, report.toJSON()));
         }
         else {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+            markResponseTime();
         }
-        markResponseTime();
     }
 }

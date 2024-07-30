@@ -42,6 +42,7 @@ import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.EmojiFilter;
 import cube.util.JSONUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -534,7 +535,34 @@ public class PsychologyStorage implements Storagable {
         }
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
-        return null;
+
+        Attribute attribute = new Attribute(data.get("gender").getString(), data.get("age").getInt(),
+                data.get("strict").getInt() != 0);
+
+        ScaleReport report = null;
+        try {
+            report = new ScaleReport(sn, data.get("contact_id").getLong(), data.get("timestamp").getLong(),
+                    attribute, new JSONArray(data.get("factor_data").getString()));
+        } catch (Exception e) {
+            Logger.w(this.getClass(), "#readScaleReport", e);
+        }
+        return report;
+    }
+
+    public boolean writeScaleReport(ScaleReport scaleReport) {
+        String dataString = scaleReport.getFactorsAsJSONArray().toString();
+        dataString = JSONUtils.escape(dataString);
+
+        return this.storage.executeInsert(this.scaleReportTable, new StorageField[] {
+                new StorageField("sn", scaleReport.sn),
+                new StorageField("contact_id", scaleReport.contactId),
+                new StorageField("timestamp", scaleReport.timestamp),
+                new StorageField("name", scaleReport.getName()),
+                new StorageField("gender", scaleReport.getAttribute().gender),
+                new StorageField("age", scaleReport.getAttribute().age),
+                new StorageField("strict", scaleReport.getAttribute().strict ? 1 : 0),
+                new StorageField("factor_data", dataString)
+        });
     }
 
     private PaintingReport makeReport(StorageField[] storageFields) {
@@ -608,7 +636,7 @@ public class PsychologyStorage implements Storagable {
         report.setReportTextList(textList);
 
         // 生成 Markdown
-        report.makeMarkdown(false);
+        report.makeMarkdown();
 
         return report;
     }

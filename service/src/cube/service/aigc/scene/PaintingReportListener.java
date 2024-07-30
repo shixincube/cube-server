@@ -24,42 +24,26 @@
  * SOFTWARE.
  */
 
-package cube.aigc.psychology.composition;
+package cube.service.aigc.scene;
 
-import org.json.JSONObject;
+import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.PaintingReport;
+import cube.common.entity.FileLabel;
 
 /**
- * 量表因子。
+ * 绘画报告事件监听器。
  */
-public class ScaleFactor {
+public interface PaintingReportListener {
 
-    public String name;
+    void onPaintingPredicting(PaintingReport report, FileLabel file);
 
-    public String displayName;
+    void onPaintingPredictCompleted(PaintingReport report, FileLabel file, Painting painting);
 
-    public double score;
+    void onPaintingPredictFailed(PaintingReport report);
 
-    public String description = "";
+    void onReportEvaluating(PaintingReport report);
 
-    public String suggestion = "";
+    void onReportEvaluateCompleted(PaintingReport report);
 
-    public ScaleFactor(String name, String displayName, double score) {
-        this.name = name;
-        this.displayName = displayName;
-        this.score = score;
-    }
-
-    public ScaleFactor(JSONObject json) {
-
-    }
-
-    public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("name", this.name);
-        json.put("displayName", this.displayName);
-        json.put("score", score);
-        json.put("description", this.description);
-        json.put("suggestion", this.suggestion);
-        return json;
-    }
+    void onReportEvaluateFailed(PaintingReport report);
 }

@@ -31,6 +31,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.ScaleReport;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
@@ -97,7 +98,8 @@ public class GetPsychologyReportTask extends ServiceTask {
         }
 
         if (0 != sn) {
-            PaintingReport report = PsychologyScene.getInstance().getPsychologyReport(sn);
+            // 绘画报告
+            PaintingReport report = PsychologyScene.getInstance().getPaintingReport(sn);
             if (null != report) {
                 JSONObject reportJson = null;
                 if (markdown) {
@@ -113,12 +115,21 @@ public class GetPsychologyReportTask extends ServiceTask {
                         reportJson.put("queuePosition", PsychologyScene.getInstance().getGeneratingQueuePosition(sn));
                     }
                 }
+
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, reportJson));
             }
             else {
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                // 量表报告
+                ScaleReport scaleReport = PsychologyScene.getInstance().getScaleReport(sn);
+                if (null != scaleReport) {
+                    this.cellet.speak(this.talkContext,
+                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, scaleReport.toJSON()));
+                }
+                else {
+                    this.cellet.speak(this.talkContext,
+                            this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                }
             }
         }
         else if (0 != contactId && 0 != startTime && 0 != endTime) {
@@ -137,6 +148,10 @@ public class GetPsychologyReportTask extends ServiceTask {
             responseData.put("list", array);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
+        }
+        else {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, packet.data));
         }
 
         markResponseTime();
