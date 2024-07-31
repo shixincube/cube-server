@@ -58,12 +58,14 @@ public class ScaleReport extends Report {
         this.factors = new ArrayList<>();
 
         ScaleResult result = this.scale.getResult();
-        for (ScalePrompt.Factor prompt : result.prompt.getFactors()) {
-            String displayName = result.matchFactorName(prompt.factor);
-            if (null == displayName) {
-                continue;
+        if (null != result && null != result.prompt) {
+            for (ScalePrompt.Factor prompt : result.prompt.getFactors()) {
+                String displayName = result.matchFactorName(prompt.factor);
+                if (null == displayName) {
+                    continue;
+                }
+                this.factors.add(new ScaleFactor(prompt.factor, displayName, prompt.score));
             }
-            this.factors.add(new ScaleFactor(prompt.factor, displayName, prompt.score));
         }
 
         this.state = AIGCStateCode.Processing;
@@ -76,6 +78,18 @@ public class ScaleReport extends Report {
         this.state = AIGCStateCode.Ok;
         this.finished = true;
         this.finishedTimestamp = timestamp;
+    }
+
+    public ScaleReport(JSONObject json) {
+        super(json);
+        this.finished = json.getBoolean("finished");
+        this.finishedTimestamp = json.getLong("finishedTimestamp");
+        this.state = AIGCStateCode.parse(json.getInt("state"));
+        this.factors = new ArrayList<>();
+        JSONArray array = json.getJSONArray("factors");
+        for (int i = 0; i < array.length(); ++i) {
+            this.factors.add(new ScaleFactor(array.getJSONObject(i)));
+        }
     }
 
     public List<ScaleFactor> getFactors() {
@@ -123,5 +137,10 @@ public class ScaleReport extends Report {
 
         json.put("factors", this.getFactorsAsJSONArray());
         return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

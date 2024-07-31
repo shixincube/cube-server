@@ -34,6 +34,8 @@ import cube.aigc.*;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.Report;
+import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.composition.AnswerSheet;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScaleResult;
@@ -1849,8 +1851,32 @@ public class Manager implements Tickable, PerformerListener {
         return report;
     }
 
+    public ScaleReport generatePsychologyReport(String token, long scaleSn) {
+        JSONObject data = new JSONObject();
+        data.put("scaleSn", scaleSn);
+
+        Packet packet = new Packet(AIGCAction.GeneratePsychologyReport.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#generatePsychologyReport - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#generatePsychologyReport - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        ScaleReport report = new ScaleReport(Packet.extractDataPayload(responsePacket));
+        return report;
+    }
+
     /**
-     * 查询心理学绘图预测报告。
+     * 查询心理学报告。
      *
      * @param token
      * @param contactId
@@ -1913,7 +1939,7 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public PaintingReport getPsychologyReport(String token, long sn, boolean markdown) {
+    public Report getPsychologyReport(String token, long sn, boolean markdown) {
         // 第一步，获取基础数据
         JSONObject data = new JSONObject();
         data.put("sn", sn);
@@ -1936,7 +1962,13 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         // 解析报告
-        PaintingReport report = new PaintingReport(Packet.extractDataPayload(responsePacket));
+        JSONObject reportJson = Packet.extractDataPayload(responsePacket);
+        if (reportJson.has("factors") && !reportJson.has("fileLabel")) {
+            // 量表报告
+            return new ScaleReport(reportJson);
+        }
+
+        PaintingReport report = new PaintingReport(reportJson);
 
         // 第二步，获取文本数据
         data = new JSONObject();

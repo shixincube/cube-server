@@ -27,9 +27,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cell.util.log.Logger;
-import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.PaintingReport;
-import cube.aigc.psychology.Theme;
+import cube.aigc.psychology.*;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -65,19 +63,34 @@ public class PsychologyReports extends ContextHandler {
 
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
-                Attribute attribute = new Attribute(data.getJSONObject("attribute"));
-                String fileCode = data.getString("fileCode");
-                String theme = data.has("theme") ? data.getString("theme") : Theme.Generic.code;
-                int indicatorTexts = data.has("indicatorTexts") ? data.getInt("indicatorTexts") : 5;
 
-                PaintingReport report =
-                        Manager.getInstance().generatePsychologyReport(token, attribute, fileCode,
-                                theme, indicatorTexts);
-                if (null != report) {
-                    this.respondOk(response, report.toJSON());
+                if (data.has("fileCode")) {
+                    Attribute attribute = new Attribute(data.getJSONObject("attribute"));
+                    String fileCode = data.getString("fileCode");
+                    String theme = data.has("theme") ? data.getString("theme") : Theme.Generic.code;
+                    int indicatorTexts = data.has("indicatorTexts") ? data.getInt("indicatorTexts") : 5;
+
+                    PaintingReport report =
+                            Manager.getInstance().generatePsychologyReport(token, attribute, fileCode,
+                                    theme, indicatorTexts);
+                    if (null != report) {
+                        this.respondOk(response, report.toJSON());
+                    }
+                    else {
+                        this.respond(response, HttpStatus.NOT_FOUND_404);
+                    }
+                }
+                else if (data.has("scaleSn")) {
+                    ScaleReport report = Manager.getInstance().generatePsychologyReport(token, data.getLong("scaleSn"));
+                    if (null != report) {
+                        this.respondOk(response, report.toJSON());
+                    }
+                    else {
+                        this.respond(response, HttpStatus.NOT_FOUND_404);
+                    }
                 }
                 else {
-                    this.respond(response, HttpStatus.NOT_FOUND_404);
+                    this.respond(response, HttpStatus.FORBIDDEN_403);
                 }
                 this.complete();
             } catch (Exception e) {
@@ -96,11 +109,11 @@ public class PsychologyReports extends ContextHandler {
             }
 
             try {
-                boolean markdown = null != request.getParameter("markdown") && Boolean.parseBoolean(request.getParameter("markdown"));
+                boolean markdown = (null != request.getParameter("markdown")) && Boolean.parseBoolean(request.getParameter("markdown"));
                 String snString = request.getParameter("sn");
                 if (null != snString) {
                     long sn = Long.parseLong(snString);
-                    PaintingReport report = Manager.getInstance().getPsychologyReport(token, sn, markdown);
+                    Report report = Manager.getInstance().getPsychologyReport(token, sn, markdown);
                     if (null != report) {
                         this.respondOk(response, report.toJSON());
                     }

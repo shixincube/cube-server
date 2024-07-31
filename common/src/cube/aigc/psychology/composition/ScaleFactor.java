@@ -50,14 +50,18 @@ public class ScaleFactor {
     }
 
     public ScaleFactor(JSONObject json) {
-
+        this.name = json.getString("name");
+        this.displayName = json.getString("displayName");
+        this.score = json.getDouble("score");
+        this.description = json.getString("description");
+        this.suggestion = json.getString("suggestion");
     }
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
         json.put("displayName", this.displayName);
-        json.put("score", score);
+        json.put("score", this.score);
         json.put("description", this.description);
         json.put("suggestion", this.suggestion);
         return json;

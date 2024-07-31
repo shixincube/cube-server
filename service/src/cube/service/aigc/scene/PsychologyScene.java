@@ -515,7 +515,11 @@ public class PsychologyScene {
         }
 
         try {
-            return scale.scoring(Resource.getInstance().getQuestionnairesPath());
+            ScaleResult scaleResult = scale.scoring(Resource.getInstance().getQuestionnairesPath());
+            if (null != scaleResult) {
+                this.storage.writeScale(scale);
+            }
+            return scaleResult;
         } catch (Exception e) {
             Logger.e(this.getClass(), "#submitAnswerSheet", e);
             return null;

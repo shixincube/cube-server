@@ -26,6 +26,7 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cell.util.log.Logger;
 import cube.aigc.psychology.composition.AnswerSheet;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScaleResult;
@@ -74,6 +75,7 @@ public class PsychologyScaleOperation extends ContextHandler {
                 }
                 this.complete();
             } catch (Exception e) {
+                Logger.w(this.getClass(), "", e);
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
                 this.complete();
             }

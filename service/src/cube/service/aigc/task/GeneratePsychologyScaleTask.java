@@ -79,8 +79,12 @@ public class GeneratePsychologyScaleTask extends ServiceTask {
 
             Scale scale = PsychologyScene.getInstance().generateScale(scaleName, attribute);
             if (null != scale) {
+                JSONObject scaleJson = scale.toJSON();
+                scaleJson.remove("scoringScript");
+                scaleJson.remove("result");
+
                 this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, scale.toJSON()));
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, scaleJson));
                 markResponseTime();
             }
             else {

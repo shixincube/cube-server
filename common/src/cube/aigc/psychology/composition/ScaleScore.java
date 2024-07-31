@@ -51,10 +51,11 @@ public class ScaleScore implements JSONable {
         }
     }
 
-    public void addItem(String key, String name, Object value) {
+    public void addItem(String key, String name, Object value, ScaleFactorLevel level) {
         JSONObject pair = new JSONObject();
         pair.put("name", name);
         pair.put("value", value);
+        pair.put("level", level.toJSON());
         this.items.put(key, pair);
     }
 

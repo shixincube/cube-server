@@ -23,15 +23,15 @@ var SleepAndDietItems = [13, 25, 47, 50, 70, 75, 82];
 
 function explain(score) {
     if (score <= 0.5) {
-        return '没有';
+        return FactorLevel.None;
     } else if (score <= 1.5) {
-        return '略有';
+        return FactorLevel.Slight;
     } else if (score <= 2.5) {
-        return '轻度';
+        return FactorLevel.Mild;
     } else if (score <= 3.5) {
-        return '中度';
+        return FactorLevel.Moderate;
     } else {
-        return '重度';
+        return FactorLevel.Severe;
     }
 }
 
@@ -195,29 +195,29 @@ function scoring(answers) {
 
 
     var score = new ScaleScore();
-    score.addItem('Somatization', '躯体化症状', T_Somatization);
-    score.addItem('Obsession', '强迫症状', T_Obsession);
-    score.addItem('InterpersonalRelation', '人际关系敏感', T_InterpersonalRelation);
-    score.addItem('Depression', '抑郁症状', T_Depression);
-    score.addItem('Anxiety', '焦虑症状', T_Anxiety);
-    score.addItem('Hostile', '敌对性症状', T_Hostile);
-    score.addItem('Horror', '恐怖症状', T_Horror);
-    score.addItem('Paranoid', '偏执症状', T_Paranoid);
-    score.addItem('Psychosis', '精神病性症状', T_Psychosis);
-    score.addItem('SleepAndDiet', '睡眠及饮食问题', T_SleepAndDiet);
+    score.addItem('Somatization', '躯体化症状', T_Somatization, explain(T_Somatization));
+    score.addItem('Obsession', '强迫症状', T_Obsession, explain(T_Obsession));
+    score.addItem('InterpersonalRelation', '人际关系敏感', T_InterpersonalRelation, explain(T_InterpersonalRelation));
+    score.addItem('Depression', '抑郁症状', T_Depression, explain(T_Depression));
+    score.addItem('Anxiety', '焦虑症状', T_Anxiety, explain(T_Anxiety));
+    score.addItem('Hostile', '敌对性症状', T_Hostile, explain(T_Hostile));
+    score.addItem('Horror', '恐怖症状', T_Horror, explain(T_Horror));
+    score.addItem('Paranoid', '偏执症状', T_Paranoid, explain(T_Paranoid));
+    score.addItem('Psychosis', '精神病性症状', T_Psychosis, explain(T_Psychosis));
+    score.addItem('SleepAndDiet', '睡眠及饮食问题', T_SleepAndDiet, explain(T_SleepAndDiet));
 
     // 计算常模
     var desc = [
-        '* ' + explain(T_Somatization) + '躯体化症状\n\n',
-        '* ' + explain(T_Obsession) + '强迫症状\n\n',
-        '* ' + explain(T_InterpersonalRelation) + '人际关系敏感\n\n',
-        '* ' + explain(T_Depression) + '抑郁症状\n\n',
-        '* ' + explain(T_Anxiety) + '焦虑症状\n\n',
-        '* ' + explain(T_Hostile) + '敌对性症状\n\n',
-        '* ' + explain(T_Horror) + '恐怖症状\n\n',
-        '* ' + explain(T_Paranoid) + '偏执症状\n\n',
-        '* ' + explain(T_Psychosis) + '精神病性症状\n\n',
-        '* ' + explain(T_SleepAndDiet) + '睡眠及饮食问题\n\n'
+        '* ' + explain(T_Somatization).prefix + '躯体化症状\n\n',
+        '* ' + explain(T_Obsession).prefix + '强迫症状\n\n',
+        '* ' + explain(T_InterpersonalRelation).prefix + '人际关系敏感\n\n',
+        '* ' + explain(T_Depression).prefix + '抑郁症状\n\n',
+        '* ' + explain(T_Anxiety).prefix + '焦虑症状\n\n',
+        '* ' + explain(T_Hostile).prefix + '敌对性症状\n\n',
+        '* ' + explain(T_Horror).prefix + '恐怖症状\n\n',
+        '* ' + explain(T_Paranoid).prefix + '偏执症状\n\n',
+        '* ' + explain(T_Psychosis).prefix + '精神病性症状\n\n',
+        '* ' + explain(T_SleepAndDiet).prefix + '睡眠及饮食问题\n\n'
     ];
 
     var prompt = makePrompt([{

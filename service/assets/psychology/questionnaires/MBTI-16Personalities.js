@@ -16,6 +16,14 @@ var Z34_QN = [64, 66, 70, 81, 87];
 var Z56_QN = [68, 72, 75, 77, 80, 83, 86, 89, 92];
 var Z78_QN = [65, 67, 69, 71, 73, 78, 84, 90];
 
+function explain(score) {
+    if (score <= 10) {
+        return FactorLevel.Mild;
+    } else {
+        return FactorLevel.Severe;
+    }
+}
+
 function scoring(answers) {
     var X1, X2, X3, X4, X5, X6, X7, X8;
     var Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8;
@@ -243,14 +251,14 @@ function scoring(answers) {
         '**性格描述** ：', description, '\n\n' ];
 
     var score = new ScaleScore();
-    score.addItem('I', '内倾', I);
-    score.addItem('E', '外倾', E);
-    score.addItem('S', '感觉', S);
-    score.addItem('N', '直觉', N);
-    score.addItem('T', '思考', T);
-    score.addItem('F', '情感', F);
-    score.addItem('P', '知觉', P);
-    score.addItem('J', '判断', J);
+    score.addItem('I', '内倾', I, explain(I));
+    score.addItem('E', '外倾', E, explain(E));
+    score.addItem('S', '感觉', S, explain(S));
+    score.addItem('N', '直觉', N, explain(N));
+    score.addItem('T', '思考', T, explain(T));
+    score.addItem('F', '情感', F, explain(F));
+    score.addItem('P', '知觉', P, explain(P));
+    score.addItem('J', '判断', J, explain(J));
 
     return {
         content: content.join(''),

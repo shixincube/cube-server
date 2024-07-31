@@ -30,6 +30,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.Scale;
 import cube.benchmark.ResponseTime;
@@ -75,6 +76,7 @@ public class GetPsychologyScaleTask extends ServiceTask {
             Scale scale = null;
             long sn = packet.data.has("sn") ? packet.data.getLong("sn") : 0;
             String name = packet.data.has("name") ? packet.data.getString("name") : null;
+
             if (0 != sn) {
                 scale = PsychologyScene.getInstance().getScale(sn);
             }
@@ -83,8 +85,12 @@ public class GetPsychologyScaleTask extends ServiceTask {
             }
 
             if (null != scale) {
+                JSONObject scaleJson = scale.toJSON();
+                scaleJson.remove("scoringScript");
+                scaleJson.remove("result");
+
                 this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, scale.toJSON()));
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, scaleJson));
                 markResponseTime();
             }
             else {
@@ -93,6 +99,7 @@ public class GetPsychologyScaleTask extends ServiceTask {
                 markResponseTime();
             }
         } catch (Exception e) {
+            Logger.w(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();

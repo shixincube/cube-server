@@ -126,6 +126,7 @@ public class Scale extends Questionnaire implements JSONable {
         }
 
         StringBuilder script = new StringBuilder();
+        script.append("var FactorLevel = Java.type('cube.aigc.psychology.composition.ScaleFactorLevel');\n");
         script.append("var ScaleScore = Java.type('cube.aigc.psychology.composition.ScaleScore');\n");
         script.append("var ScalePrompt = Java.type('cube.aigc.psychology.composition.ScalePrompt');\n");
         try {

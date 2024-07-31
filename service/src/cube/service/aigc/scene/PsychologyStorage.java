@@ -433,13 +433,14 @@ public class PsychologyStorage implements Storagable {
                 new Conditional[] {
                         Conditional.createEqualTo("sn", sn)
                 });
+
         if (result.isEmpty()) {
             return null;
         }
 
         Map<String, StorageField> fields = StorageFields.get(result.get(0));
         try {
-            String dataStr = JSONUtils.filter(fields.get("data").getString());
+            String dataStr = fields.get("data").getString();
             return new Scale(new JSONObject(dataStr));
         } catch (Exception e) {
             Logger.e(this.getClass(), "#readScale", e);
