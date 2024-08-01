@@ -640,6 +640,9 @@ public class PsychologyScene {
             return null;
         }
 
+        Scale scale = this.getScale(sn);
+        report.setScale(scale);
+
         return report;
     }
 
@@ -648,14 +651,22 @@ public class PsychologyScene {
 
         if (relations.size() == 1) {
             ReportRelation relation = relations.get(0);
-            PaintingReport report = this.getPaintingReport(relation.reportSn);
-            if (null == report) {
-                Logger.w(this.getClass(), "#buildPrompt - Can NOT find report: " + relation.reportSn);
-                return null;
+            PaintingReport paintingReport = this.getPaintingReport(relation.reportSn);
+            if (null != paintingReport) {
+                QueryRevolver queryRevolver = new QueryRevolver();
+                result.append(queryRevolver.generatePrompt(relation, paintingReport, query, true));
             }
-
-            QueryRevolver queryRevolver = new QueryRevolver();
-            result.append(queryRevolver.generatePrompt(relation, report, query, true));
+            else {
+                ScaleReport scaleReport = this.getScaleReport(relation.reportSn);
+                if (null != scaleReport) {
+                    QueryRevolver queryRevolver = new QueryRevolver();
+                    result.append(queryRevolver.generatePrompt(relation, scaleReport, query, true));
+                }
+                else {
+                    Logger.w(this.getClass(), "#buildPrompt - Can NOT find report: " + relation.reportSn);
+                    return null;
+                }
+            }
         }
         else {
             result.append(query);
@@ -666,14 +677,19 @@ public class PsychologyScene {
 
     public GenerativeRecord buildHistory(List<ReportRelation> relations, String currentQuery) {
         ReportRelation relation = relations.get(0);
-        PaintingReport report = this.getPaintingReport(relation.reportSn);
+
+        Report report = this.getPaintingReport(relation.reportSn);
         if (null == report) {
-            Logger.w(this.getClass(), "#buildHistory - Can NOT find report: " + relation.reportSn);
-            return null;
+            report = this.getScaleReport(relation.reportSn);
+
+            if (null == report) {
+                Logger.w(this.getClass(), "#buildHistory - Can NOT find report: " + relation.reportSn);
+                return null;
+            }
         }
 
         QueryRevolver revolver = new QueryRevolver();
-        return revolver.generateSupplement(relation, report);
+        return revolver.generateSupplement(relation, report, currentQuery, true);
     }
 
     private Painting processPainting(AIGCUnit unit, FileLabel fileLabel) {

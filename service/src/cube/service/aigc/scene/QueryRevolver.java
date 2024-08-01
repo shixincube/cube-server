@@ -26,12 +26,12 @@
 
 package cube.service.aigc.scene;
 
+import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.PaintingReport;
-import cube.aigc.psychology.Resource;
-import cube.aigc.psychology.ThemeTemplate;
+import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.ReportRelation;
+import cube.aigc.psychology.composition.ScaleFactor;
 import cube.common.entity.GenerativeRecord;
 
 import java.util.ArrayList;
@@ -78,35 +78,67 @@ public class QueryRevolver {
     public QueryRevolver() {
     }
 
-    public String generatePrompt(ReportRelation relation, PaintingReport report, String query, boolean extraLong) {
+    public String generatePrompt(ReportRelation relation, Report report, String query, boolean extraLong) {
         StringBuilder result = new StringBuilder();
 
         if (extraLong) {
-            ThemeTemplate template = Resource.getInstance().getThemeTemplate(report.getTheme());
-
             result.append("已知信息：\n当前讨论的受测人的名称是：").append(relation.name).append("，");
             result.append("年龄是：").append(report.getAttribute().age).append("岁，");
             result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
-            result.append("受测人的心理表现有：");
-            List<String> symptomContent = this.extractSymptomContent(template,
-                    report.getEvaluationReport().getEvaluationScores());
-            for (String content : symptomContent) {
-                result.append(content);
-                if (result.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
-                    break;
+
+            if (report instanceof PaintingReport) {
+                result.append("受测人的心理表现有：");
+
+                PaintingReport paintingReport = (PaintingReport) report;
+
+                ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
+
+                List<String> symptomContent = this.extractSymptomContent(template,
+                        paintingReport.getEvaluationReport().getEvaluationScores());
+                for (String content : symptomContent) {
+                    result.append(content);
+                    if (result.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                        break;
+                    }
+                }
+
+                if (result.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                    result.append("此人的大五人格画像是“").append(paintingReport.getEvaluationReport()
+                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("”。");
+                    result.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
+                            .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
+                }
+
+                if (result.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                    result.append("\n");
+                    result.append(this.generateFragment(report, query));
                 }
             }
+            else if (report instanceof ScaleReport) {
+                ScaleReport scaleReport = (ScaleReport) report;
+                if (null != scaleReport.getScale()) {
+                    result.append(scaleReport.getScale().displayName);
+                    result.append("量表的测验结果是：\n");
+                }
+                else {
+                    result.append("受测人的心理表现有：\n");
+                }
 
-            if (result.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
-                result.append("此人的大五人格画像是“").append(report.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("”。");
-                result.append(this.filterPersonalityDescription(report.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
-            }
+                for (ScaleFactor factor : scaleReport.getFactors()) {
+                    result.append("\n* ").append(factor.description);
+                    if (result.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                        break;
+                    }
+                }
 
-            if (result.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                result.append("\n对于上述心理表现给出以下建议：\n");
+                for (ScaleFactor factor : scaleReport.getFactors()) {
+                    result.append("\n* ").append(factor.suggestion);
+                    if (result.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                        break;
+                    }
+                }
                 result.append("\n");
-                result.append(this.generateFragment(report, query));
             }
 
             result.append("\n根据上述已知信息，同时综合使用心理学专业知识，回答用户的问题。问题是：");
@@ -116,29 +148,47 @@ public class QueryRevolver {
             result.append("当前讨论的受测人的名称是：").append(relation.name).append("，");
             result.append("年龄是：").append(report.getAttribute().age).append("岁，");
             result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
-            result.append("其心理症状有：");
-            int count = 0;
-            for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
-                String word = es.generateWord();
-                if (null == word || word.length() == 0) {
-                    continue;
+
+            if (report instanceof PaintingReport) {
+                result.append("其心理症状有：");
+
+                PaintingReport paintingReport = (PaintingReport) report;
+
+                int count = 0;
+                for (EvaluationScore es : paintingReport.getEvaluationReport().getEvaluationScores()) {
+                    String word = es.generateWord();
+                    if (null == word || word.length() == 0) {
+                        continue;
+                    }
+                    result.append(word).append("、");
+                    ++count;
+                    if (count > 7) {
+                        break;
+                    }
                 }
-                result.append(word).append("、");
-                ++count;
-                if (count > 7) {
-                    break;
+                result.delete(result.length() - 1, result.length());
+                result.append("。");
+
+                if (null != paintingReport.getEvaluationReport().getPersonalityAccelerator()) {
+                    result.append("此人的大五人格画像是“");
+                    result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                            .getBigFiveFeature().getDisplayName());
+                    result.append("”。");
                 }
             }
-            result.delete(result.length() - 1, result.length());
-            result.append("。");
-
-            if (null != report.getEvaluationReport().getPersonalityAccelerator()) {
-                result.append("此人的大五人格画像是“");
-                result.append(report.getEvaluationReport().getPersonalityAccelerator().getBigFiveFeature().getDisplayName());
-                result.append("”。");
+            else if (report instanceof ScaleReport) {
+                ScaleReport scaleReport = (ScaleReport) report;
+                if (null != scaleReport.getScale()) {
+                    result.append(scaleReport.getScale().displayName);
+                    result.append("量表的测验结果是：\n");
+                    result.append(scaleReport.getScale().getResult().content).append("\n");
+                }
+                else {
+                    Logger.w(this.getClass(), "#generatePrompt - Scale report data error: " + report.sn);
+                }
             }
 
-            // 增加人格描述
+            // 增加人格相关描述
             result.append(this.generateFragment(report, query));
 
             result.append("根据上述信息，作为专业的心理咨询师，请回答：").append(query);
@@ -147,34 +197,109 @@ public class QueryRevolver {
         return result.toString();
     }
 
-    public GenerativeRecord generateSupplement(ReportRelation relation, PaintingReport report) {
+    public GenerativeRecord generateSupplement(ReportRelation relation, Report report,
+                                               String currentQuery, boolean extraLong) {
         StringBuilder query = new StringBuilder();
         StringBuilder answer = new StringBuilder();
 
-        query.append("当前我们讨论的个人（受测人）有哪些信息？");
-        answer.append("我们现在讨论的受测人的名称是：").append(relation.name).append("，");
+        query.append("当前讨论的受测人有哪些信息？");
+
+        answer.append("当前讨论的受测人的名称是：").append(relation.name).append("，");
         answer.append("年龄是：").append(report.getAttribute().age).append("岁，");
-        answer.append("性别是：").append(report.getAttribute().getGenderText()).append("性，");
-        answer.append("其心理症状是：");
-        int count = 0;
-        for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
-            String word = es.generateWord();
-            if (null == word || word.length() == 0) {
-                continue;
+        answer.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
+
+        if (extraLong) {
+            if (report instanceof PaintingReport) {
+                answer.append("受测人的心理表现有：");
+
+                PaintingReport paintingReport = (PaintingReport) report;
+
+                ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
+
+                List<String> symptomContent = this.extractSymptomContent(template,
+                        paintingReport.getEvaluationReport().getEvaluationScores());
+                for (String content : symptomContent) {
+                    answer.append(content);
+                    if (answer.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                        break;
+                    }
+                }
+
+                if (answer.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                    answer.append("此人的大五人格画像是“").append(paintingReport.getEvaluationReport()
+                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("”。");
+                    answer.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
+                            .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
+                }
+
+                if (answer.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                    answer.append("\n");
+                    answer.append(this.generateFragment(report, currentQuery));
+                }
             }
-            answer.append(word).append("、");
-            ++count;
-            if (count > 7) {
-                break;
+            else if (report instanceof ScaleReport) {
+                ScaleReport scaleReport = (ScaleReport) report;
+                if (null != scaleReport.getScale()) {
+                    answer.append(scaleReport.getScale().displayName);
+                    answer.append("量表的测验结果是：\n");
+                }
+                else {
+                    answer.append("受测人的心理表现有：\n");
+                }
+
+                for (ScaleFactor factor : scaleReport.getFactors()) {
+                    answer.append("\n* ").append(factor.description);
+                    if (answer.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                        break;
+                    }
+                }
+
+                answer.append("\n对于上述心理表现给出以下建议：\n");
+                for (ScaleFactor factor : scaleReport.getFactors()) {
+                    answer.append("\n* ").append(factor.suggestion);
+                    if (answer.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                        break;
+                    }
+                }
             }
         }
-        answer.delete(answer.length() - 1, answer.length());
-        answer.append("。");
+        else {
+            if (report instanceof PaintingReport) {
+                PaintingReport paintingReport = (PaintingReport) report;
 
-        if (null != report.getEvaluationReport().getPersonalityAccelerator()) {
-            answer.append("此人的大五人格画像是“");
-            answer.append(report.getEvaluationReport().getPersonalityAccelerator().getBigFiveFeature().getDisplayName());
-            answer.append("”。");
+                answer.append("其心理症状是：");
+                int count = 0;
+                for (EvaluationScore es : paintingReport.getEvaluationReport().getEvaluationScores()) {
+                    String word = es.generateWord();
+                    if (null == word || word.length() == 0) {
+                        continue;
+                    }
+                    answer.append(word).append("、");
+                    ++count;
+                    if (count > 7) {
+                        break;
+                    }
+                }
+                answer.delete(answer.length() - 1, answer.length());
+                answer.append("。");
+
+                if (null != paintingReport.getEvaluationReport().getPersonalityAccelerator()) {
+                    answer.append("此人的大五人格画像是“");
+                    answer.append(paintingReport.getEvaluationReport().getPersonalityAccelerator().getBigFiveFeature().getDisplayName());
+                    answer.append("”。");
+                }
+            }
+            else if (report instanceof ScaleReport) {
+                ScaleReport scaleReport = (ScaleReport) report;
+                if (null != scaleReport.getScale()) {
+                    answer.append(scaleReport.getScale().displayName);
+                    answer.append("量表的测验结果是：\n");
+                    answer.append(scaleReport.getScale().getResult().content).append("\n");
+                }
+                else {
+                    Logger.w(this.getClass(), "#generateSupplement - Scale report data error: " + report.sn);
+                }
+            }
         }
 
         GenerativeRecord result = new GenerativeRecord(ModelConfig.BAIZE_UNIT, query.toString(), answer.toString());
@@ -201,58 +326,62 @@ public class QueryRevolver {
         return result;
     }
 
-    private String generateFragment(PaintingReport report, String query) {
+    private String generateFragment(Report report, String query) {
         StringBuilder result = new StringBuilder();
 
-        if (null != report.getEvaluationReport().getPersonalityAccelerator()) {
-            result.append("回答问题时可使用以下知识：");
+        if (report instanceof PaintingReport) {
+            PaintingReport paintingReport = (PaintingReport) report;
 
-            for (String word : this.keywordThinkingStyle) {
-                if (query.contains(word)) {
-                    result.append("“");
-                    result.append(report.getEvaluationReport().getPersonalityAccelerator()
-                            .getBigFiveFeature().getDisplayName());
-                    result.append("的思维方式”，");
-                    break;
+            if (null != paintingReport.getEvaluationReport().getPersonalityAccelerator()) {
+                result.append("回答问题时可使用以下知识：");
+
+                for (String word : this.keywordThinkingStyle) {
+                    if (query.contains(word)) {
+                        result.append("“");
+                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                                .getBigFiveFeature().getDisplayName());
+                        result.append("的思维方式”，");
+                        break;
+                    }
                 }
-            }
 
-            for (String word : this.keywordCommunicationStyle) {
-                if (query.contains(word)) {
-                    result.append("“");
-                    result.append(report.getEvaluationReport().getPersonalityAccelerator()
-                            .getBigFiveFeature().getDisplayName());
-                    result.append("的沟通风格”，");
-                    break;
+                for (String word : this.keywordCommunicationStyle) {
+                    if (query.contains(word)) {
+                        result.append("“");
+                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                                .getBigFiveFeature().getDisplayName());
+                        result.append("的沟通风格”，");
+                        break;
+                    }
                 }
-            }
 
-            for (String word : this.keywordWorkEnvironment) {
-                if (query.contains(word)) {
-                    result.append("“");
-                    result.append(report.getEvaluationReport().getPersonalityAccelerator()
-                            .getBigFiveFeature().getDisplayName());
-                    result.append("的工作环境偏好”，");
-                    break;
+                for (String word : this.keywordWorkEnvironment) {
+                    if (query.contains(word)) {
+                        result.append("“");
+                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                                .getBigFiveFeature().getDisplayName());
+                        result.append("的工作环境偏好”，");
+                        break;
+                    }
                 }
-            }
 
-            for (String word : this.keywordManagementRecommendations) {
-                if (query.contains(word)) {
-                    result.append("“");
-                    result.append(report.getEvaluationReport().getPersonalityAccelerator()
-                            .getBigFiveFeature().getDisplayName());
-                    result.append("的管理建议”，");
-                    break;
+                for (String word : this.keywordManagementRecommendations) {
+                    if (query.contains(word)) {
+                        result.append("“");
+                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                                .getBigFiveFeature().getDisplayName());
+                        result.append("的管理建议”，");
+                        break;
+                    }
                 }
-            }
 
-            if (result.length() <= 17) {
-                result.delete(0, result.length());
-            }
-            else {
-                result.delete(result.length() - 1, result.length());
-                result.append("。");
+                if (result.length() <= 17) {
+                    result.delete(0, result.length());
+                }
+                else {
+                    result.delete(result.length() - 1, result.length());
+                    result.append("。");
+                }
             }
         }
 

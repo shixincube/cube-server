@@ -127,6 +127,14 @@ public class ScaleReport extends Report {
         return this.state;
     }
 
+    public Scale getScale() {
+        return this.scale;
+    }
+
+    public void setScale(Scale scale) {
+        this.scale = scale;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
