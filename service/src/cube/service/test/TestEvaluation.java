@@ -29,7 +29,6 @@ package cube.service.test;
 import cell.util.Utils;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.algorithm.BigFiveFeature;
-import cube.aigc.psychology.composition.Answer;
 import cube.aigc.psychology.composition.Question;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScalesConfiguration;

@@ -73,6 +73,10 @@ public class Resource {
     private File questionnairesPath = new File("assets/psychology/questionnaires/");
     private Map<String, File> scaleNameFileMap = new ConcurrentHashMap<>();
 
+    private File datasetFile = new File("assets/psychology/dataset.json");
+    private long datasetFileModified = 0;
+    private Dataset dataset;
+
     private final static Resource instance = new Resource();
 
     private Resource() {
@@ -128,7 +132,7 @@ public class Resource {
                 this.themeLastModified = this.themeFile.lastModified();
                 this.themeTemplates.clear();
 
-                Logger.i(this.getClass(), "Read the theme template file: " + this.themeFile.getAbsolutePath());
+                Logger.i(this.getClass(), "Read theme template file: " + this.themeFile.getAbsolutePath());
 
                 try {
                     byte[] data = Files.readAllBytes(Paths.get(this.themeFile.getAbsolutePath()));
@@ -259,5 +263,24 @@ public class Resource {
             Logger.w(this.getClass(), "#loadScaleByFilename - File format error: " + file.getAbsolutePath(), e);
             return null;
         }
+    }
+
+    public Dataset loadDataset() {
+        if (this.datasetFile.exists()) {
+            if (this.datasetFile.lastModified() != this.datasetFileModified) {
+                this.datasetFileModified = this.datasetFile.lastModified();
+
+                Logger.i(this.getClass(), "Read dataset file: " + this.datasetFile.getAbsolutePath());
+
+                try {
+                    byte[] data = Files.readAllBytes(Paths.get(this.datasetFile.getAbsolutePath()));
+                    this.dataset = new Dataset(new JSONArray(new String(data, StandardCharsets.UTF_8)));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return this.dataset;
     }
 }
