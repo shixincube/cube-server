@@ -70,7 +70,7 @@ public class Dataset {
     }
 
     public boolean hasAnalyzed() {
-        return this.questionKeywordMap.size() == this.contentMap.size();
+        return !this.questionKeywordMap.isEmpty();
     }
 
     public Collection<String> getQuestions() {
