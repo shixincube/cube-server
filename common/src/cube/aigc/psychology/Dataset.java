@@ -29,6 +29,8 @@ package cube.aigc.psychology;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -36,8 +38,11 @@ public class Dataset {
 
     private Map<String, Content> contentMap;
 
+    private Map<String, String[]> questionKeywordMap;
+
     public Dataset(JSONArray array) {
         this.contentMap = new ConcurrentHashMap<>();
+        this.questionKeywordMap = new ConcurrentHashMap<>();
         this.load(array);
     }
 
@@ -64,7 +69,56 @@ public class Dataset {
         }
     }
 
+    public boolean hasAnalyzed() {
+        return this.questionKeywordMap.size() == this.contentMap.size();
+    }
 
+    public Collection<String> getQuestions() {
+        return this.contentMap.keySet();
+    }
+
+    public void fillQuestionKeywords(String question, String[] keywords) {
+        this.questionKeywordMap.put(question, keywords);
+    }
+
+    public String getContentByKeywords(String[] keywords, int length) {
+        String question = null;
+        Iterator<Map.Entry<String, String[]>> iter = this.questionKeywordMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, String[]> entry = iter.next();
+            String[] value = entry.getValue();
+
+            boolean hit = true;
+            for (int i = 0; i < value.length && i < keywords.length && i < length; ++i) {
+                String cur = value[i];
+                String word = keywords[i];
+                if (!cur.equalsIgnoreCase(word)) {
+                    hit = false;
+                    break;
+                }
+            }
+
+            if (hit) {
+                question = entry.getKey();
+                break;
+            }
+        }
+
+        if (null == question) {
+            return null;
+        }
+
+        return this.getContent(question);
+    }
+
+    public String getContent(String question) {
+        Content content = this.contentMap.get(question);
+        if (null == content) {
+            return null;
+        }
+
+        return content.mainContent;
+    }
 
     public class Content {
 

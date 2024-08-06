@@ -37,7 +37,8 @@ import cube.aigc.psychology.composition.SixDimensionScore;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GenerativeOption;
 import cube.service.aigc.AIGCService;
-import cube.util.TextUtils;
+import cube.service.tokenizer.keyword.Keyword;
+import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +51,8 @@ public class Workflow {
     public final static String HighTrick = "明显";
     public final static String NormalTrick = "具有";
     public final static String LowTrick = "缺乏";//"不足";
+
+    private boolean speed = true;
 
     private EvaluationReport evaluationReport;
 
@@ -71,6 +74,10 @@ public class Workflow {
 
     private int maxContext = ModelConfig.BAIZE_CONTEXT_LIMIT - 60;
 
+    public Workflow(AIGCService service) {
+        this.service = service;
+    }
+
     public Workflow(EvaluationReport evaluationReport, AIGCChannel channel, AIGCService service) {
         this.evaluationReport = evaluationReport;
         this.channel = channel;
@@ -81,6 +88,10 @@ public class Workflow {
     public void setUnitName(String unitName, int maxContext) {
         this.unitName = unitName;
         this.maxContext = maxContext - 60;
+    }
+
+    public boolean isSpeed() {
+        return this.speed;
     }
 
     public PaintingReport fillReport(PaintingReport report) {
@@ -181,8 +192,14 @@ public class Workflow {
      */
     private boolean inferPersonality(PersonalityAccelerator personalityAccelerator) {
         String prompt = personalityAccelerator.getBigFiveFeature().generateReportPrompt();
-        String answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                null, null);
+        String answer = null;
+        if (this.speed) {
+            answer = this.infer(prompt);
+        }
+        if (null == answer) {
+            answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                    null, null);
+        }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - report is null: " + prompt);
             return false;
@@ -192,8 +209,14 @@ public class Workflow {
 
         // 宜人性
         prompt = personalityAccelerator.getBigFiveFeature().generateObligingnessPrompt();
-        answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                null, null);
+        answer = null;
+        if (this.speed) {
+            answer = this.infer(prompt);
+        }
+        if (null == answer) {
+            answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                    null, null);
+        }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - Obligingness content error: " + prompt);
         }
@@ -203,8 +226,14 @@ public class Workflow {
 
         // 尽责性
         prompt = personalityAccelerator.getBigFiveFeature().generateConscientiousnessPrompt();
-        answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                null, null);
+        answer = null;
+        if (this.speed) {
+            answer = this.infer(prompt);
+        }
+        if (null == answer) {
+            answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                    null, null);
+        }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - Conscientiousness content error: " + prompt);
         }
@@ -214,8 +243,14 @@ public class Workflow {
 
         // 外向性
         prompt = personalityAccelerator.getBigFiveFeature().generateExtraversionPrompt();
-        answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                null, null);
+        answer = null;
+        if (this.speed) {
+            answer = this.infer(prompt);
+        }
+        if (null == answer) {
+            answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                    null, null);
+        }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - Extraversion content error: " + prompt);
         }
@@ -225,8 +260,14 @@ public class Workflow {
 
         // 进取性
         prompt = personalityAccelerator.getBigFiveFeature().generateAchievementPrompt();
-        answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                null, null);
+        answer = null;
+        if (this.speed) {
+            answer = this.infer(prompt);
+        }
+        if (null == answer) {
+            answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                    null, null);
+        }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - Achievement content error: " + prompt);
         }
@@ -236,8 +277,14 @@ public class Workflow {
 
         // 情绪性
         prompt = personalityAccelerator.getBigFiveFeature().generateNeuroticismPrompt();
-        answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                null, null);
+        answer = null;
+        if (this.speed) {
+            answer = this.infer(prompt);
+        }
+        if (null == answer) {
+            answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                    null, null);
+        }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - Neuroticism content error: " + prompt);
         }
@@ -258,15 +305,32 @@ public class Workflow {
                 // 不需要进行报告推理，下一个
                 continue;
             }
-            String report = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                    null, null);
+
+            String report = null;
+
+            if (this.speed) {
+                report = this.infer(prompt);
+            }
+            if (null == report) {
+                report = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                        null, null);
+            }
 
             prompt = es.generateSuggestionPrompt();
             if (null == prompt) {
+                // 不进行推理，下一个
                 continue;
             }
-            String suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
-                    null, null);
+
+            String suggestion = null;
+
+            if (this.speed) {
+                suggestion = this.infer(prompt);
+            }
+            if (null == suggestion) {
+                suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                        null, null);
+            }
 
             if (null != report && null != suggestion) {
                 result.add(new ReportSection(es.indicator, es.generateWord(),
@@ -297,13 +361,54 @@ public class Workflow {
         return summary;
     }
 
+    public String infer(String query) {
+        Dataset dataset = Resource.getInstance().loadDataset();
+        if (null == dataset) {
+            Logger.w(this.getClass(), "#infer - Read dataset failed");
+            return null;
+        }
+
+        synchronized (dataset) {
+            if (!dataset.hasAnalyzed()) {
+                for (String question : dataset.getQuestions()) {
+                    TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
+                    List<Keyword> keywordList = analyzer.analyze(question, 5);
+                    if (keywordList.isEmpty()) {
+                        continue;
+                    }
+
+                    List<String> keywords = new ArrayList<>();
+                    for (Keyword keyword : keywordList) {
+                        keywords.add(keyword.getWord());
+                    }
+                    // 填充问题关键词
+                    dataset.fillQuestionKeywords(question, keywords.toArray(new String[0]));
+                }
+            }
+        }
+
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
+        List<Keyword> keywordList = analyzer.analyze(query, 5);
+        if (keywordList.isEmpty()) {
+            Logger.w(this.getClass(), "#infer - Query keyword is none");
+            return null;
+        }
+
+        List<String> keywords = new ArrayList<>();
+        for (Keyword keyword : keywordList) {
+            keywords.add(keyword.getWord());
+        }
+
+        return dataset.getContentByKeywords(keywords.toArray(new String[0]), 5);
+    }
+
     /**
      * 将内容里的列表数据提取到列表里。
      *
      * @param content
      * @return
      */
-    private List<String> extractList(String content) {
+    /*private List<String> extractList(String content) {
         List<String> result = new ArrayList<>();
         String[] buf = content.split("\n");
         List<String> lines = new ArrayList<>();
@@ -338,30 +443,18 @@ public class Workflow {
         }
 
         return result;
-    }
+    }*/
 
-    /**
-     * 将列表合并成文本内容。
-     *
-     * @param list
-     * @return
-     */
-    private String spliceList(List<String> list) {
+    /*private String spliceList(List<String> list) {
         StringBuilder buf = new StringBuilder();
         for (String text : list) {
             buf.append(text).append("\n");
         }
         buf.delete(buf.length() - 1, buf.length());
         return buf.toString();
-    }
+    }*/
 
-    /**
-     *
-     * @param list
-     * @param sequenceFilter 是否过滤段落序号。
-     * @return
-     */
-    private List<String> plainText(List<String> list, boolean sequenceFilter) {
+    /*private List<String> plainText(List<String> list, boolean sequenceFilter) {
         List<String> result = new ArrayList<>(list.size());
         for (String text : list) {
             String content = text;
@@ -389,9 +482,9 @@ public class Workflow {
             result.add(content);
         }
         return result;
-    }
+    }*/
 
-    private String filterNoise(String text) {
+    /*private String filterNoise(String text) {
         List<String> content = new ArrayList<>();
 
         // 按行读取
@@ -452,5 +545,5 @@ public class Workflow {
             buf.append(c).append("。");
         }
         return buf.toString();
-    }
+    }*/
 }

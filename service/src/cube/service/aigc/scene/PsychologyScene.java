@@ -122,6 +122,11 @@ public class PsychologyScene {
 
             // 设置存储器
             PsychologyDataManager.getInstance().setService(aigcService);
+
+            // 激活数据集
+            Workflow workflow = new Workflow(aigcService);
+            String r = workflow.infer("白泽");
+            Logger.i(this.getClass(), "#start - Active dataset: " + r);
         } catch (Exception e) {
             e.printStackTrace();
             Logger.w(this.getClass(), "#start", e);
@@ -742,6 +747,8 @@ public class PsychologyScene {
     }
 
     private AIGCStateCode processScaleReport(ScaleReportTask task) {
+        Workflow workflow = new Workflow(this.aigcService);
+
         for (ScaleFactor factor : task.scaleReport.getFactors()) {
             ScalePrompt.Factor prompt = task.scale.getResult().prompt.getFactor(factor.name);
             if (null == prompt) {
@@ -749,11 +756,23 @@ public class PsychologyScene {
                 return AIGCStateCode.IllegalOperation;
             }
 
-            String description = this.aigcService.syncGenerateText(this.unitName, prompt.description, new GenerativeOption(),
-                    null, null);
+            String description = null;
+            if (workflow.isSpeed()) {
+                description = workflow.infer(prompt.description);
+            }
+            if (null == description) {
+                description = this.aigcService.syncGenerateText(this.unitName, prompt.description, new GenerativeOption(),
+                        null, null);
+            }
 
-            String suggestion = this.aigcService.syncGenerateText(this.unitName, prompt.suggestion, new GenerativeOption(),
-                    null, null);
+            String suggestion = null;
+            if (workflow.isSpeed()) {
+                suggestion = workflow.infer(prompt.suggestion);
+            }
+            if (null == suggestion) {
+                suggestion = this.aigcService.syncGenerateText(this.unitName, prompt.suggestion, new GenerativeOption(),
+                        null, null);
+            }
 
             if (null == description || null == suggestion) {
                 Logger.w(this.getClass(), "#processScaleReport - Generates description & suggestion error: " + factor.name);
