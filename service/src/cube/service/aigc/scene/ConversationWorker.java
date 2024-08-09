@@ -60,10 +60,12 @@ public class ConversationWorker {
             return AIGCStateCode.UnitError;
         }
 
-        int maxHistories = 5;
-        List<GenerativeRecord> histories = null;
-        String prompt = query;
+//        int maxHistories = 5;
 
+        List<GenerativeRecord> histories = null;
+        String prompt = PsychologyScene.getInstance().buildPrompt(reportRelationList, query);
+
+        /** FIXME 2024-08-09 放弃使用历史记录方式
         if (channel.getHistories().isEmpty()) {
             prompt = PsychologyScene.getInstance().buildPrompt(reportRelationList, query);
             if (null == prompt) {
@@ -86,7 +88,7 @@ public class ConversationWorker {
                     break;
                 }
             }
-        }
+        }*/
 
         // 使用指定模型生成结果
         service.generateText(channel, unit, query, prompt, new GenerativeOption(), histories, 0,

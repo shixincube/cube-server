@@ -32,6 +32,9 @@ import cube.vision.Point;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 大五人格特征。
  */
@@ -279,6 +282,207 @@ public class BigFiveFeature implements JSONable {
                 Adapter
         };
 
+        int index = 0;
+
+        ApproximateValue[] approximateValues = new ApproximateValue[features.length];
+        for (BigFiveFeature feature : features) {
+            ApproximateValue value = feature.calcApproximate(this.obligingness, this.conscientiousness,
+                    this.extraversion, this.achievement);
+            approximateValues[index++] = value;
+        }
+
+        int hit4Idx = -1;
+        List<Integer> hit3IdxList = new ArrayList<>();
+        List<Integer> hit2IdxList = new ArrayList<>();
+        List<Integer> hit1IdxList = new ArrayList<>();
+
+        int hitIndex = -1;
+
+        index = 0;
+        for (ApproximateValue value : approximateValues) {
+            int num = value.getNumOfNearValues();
+            if (num == 4) {
+                hit4Idx = index;
+            } else if (num == 3) {
+                hit3IdxList.add(index);
+            } else if (num == 2) {
+                hit2IdxList.add(index);
+            } else if (num == 1) {
+                hit1IdxList.add(index);
+            }
+            ++index;
+        }
+
+        BigFiveFeature feature = null;
+
+        if (hit4Idx > -1) {
+            feature = features[hit4Idx];
+        }
+        else if (!hit3IdxList.isEmpty()) {
+            hitIndex = this.extractIndex(approximateValues, hit3IdxList);
+        }
+        else if (!hit2IdxList.isEmpty()) {
+            hitIndex = this.extractIndexByTrend(approximateValues, hit2IdxList);
+        }
+        else if (!hit1IdxList.isEmpty()) {
+            hitIndex = this.extractIndexByTrend(approximateValues, hit1IdxList);
+        }
+        else {
+            hitIndex = this.extractIndexByTrendAcc(approximateValues);
+        }
+
+        if (hitIndex > -1) {
+            feature = features[hitIndex];
+        }
+
+        if (null == feature) {
+            feature = this.guess();
+        }
+
+        // 通才、适应者和专家额外处理
+        if (feature == BigFiveFeature.Generalist || feature == BigFiveFeature.Adapter || feature == BigFiveFeature.Expert) {
+            if (this.obligingness >= 7.0 && this.conscientiousness >= 7.0 &&
+                    this.extraversion >= 7.0 && this.achievement >= 7.0) {
+                feature = BigFiveFeature.Generalist;
+            }
+            else if (this.obligingness >= 4.5 && this.conscientiousness >= 4.5 &&
+                    this.extraversion >= 4.5 && this.achievement >= 4.5) {
+                feature = BigFiveFeature.Adapter;
+            }
+            else {
+                feature = BigFiveFeature.Expert;
+            }
+        }
+
+        this.name = feature.name;
+        this.displayName = feature.displayName;
+    }
+
+    private int extractIndex(ApproximateValue[] approximateValues, List<Integer> indexList) {
+        double minValue = Double.MAX_VALUE - 1;
+        int candidate = -1;
+        for (Integer index : indexList) {
+            ApproximateValue value = approximateValues[index];
+            if (!value.nearObligingness && Math.abs(value.deltaObligingness) < minValue) {
+                minValue = Math.abs(value.deltaObligingness);
+                candidate = index;
+            }
+            if (!value.nearConscientiousness && Math.abs(value.deltaConscientiousness) < minValue) {
+                minValue = Math.abs(value.deltaConscientiousness);
+                candidate = index;
+            }
+            if (!value.nearExtraversion && Math.abs(value.deltaExtraversion) < minValue) {
+                minValue = Math.abs(value.deltaExtraversion);
+                candidate = index;
+            }
+            if (!value.nearAchievement && Math.abs(value.deltaAchievement) < minValue) {
+                minValue = Math.abs(value.deltaAchievement);
+                candidate = index;
+            }
+        }
+        return candidate;
+    }
+
+    private int extractIndexByTrend(ApproximateValue[] approximateValues, List<Integer> indexList) {
+        List<Integer> tendencyCount = new ArrayList<>();
+        for (Integer index : indexList) {
+            ApproximateValue value = approximateValues[index];
+            int count = 0;
+            if (value.tendencyObligingness != 0) {
+                count += 1;
+            }
+            if (value.tendencyConscientiousness != 0) {
+                count += 1;
+            }
+            if (value.tendencyExtraversion != 0) {
+                count += 1;
+            }
+            if (value.tendencyAchievement != 0) {
+                count += 1;
+            }
+            tendencyCount.add(count);
+        }
+
+        int index = 0;
+        int max = -1;
+        for (int i = 0; i < tendencyCount.size(); ++i) {
+            int count = tendencyCount.get(i);
+            if (count > max) {
+                max = count;
+                index = i;
+            }
+        }
+
+        return indexList.get(index);
+    }
+
+    private int extractIndexByTrendAcc(ApproximateValue[] approximateValues) {
+        List<Integer> indexList = new ArrayList<>();
+        for (int i = 0; i < approximateValues.length; ++i) {
+            ApproximateValue value = approximateValues[i];
+            int numTendency = value.getNumOfTendency();
+            if (numTendency == 4) {
+                return i;
+            }
+
+            indexList.add(i);
+        }
+
+        List<Double> accValueList = new ArrayList<>();
+        double accValue = 0;
+        for (Integer index : indexList) {
+            ApproximateValue value = approximateValues[index];
+            accValue = 0;
+            if (0 == value.tendencyObligingness) {
+                accValue += Math.abs(value.deltaObligingness);
+            }
+            if (0 == value.tendencyConscientiousness) {
+                accValue += Math.abs(value.deltaConscientiousness);
+            }
+            if (0 == value.tendencyExtraversion) {
+                accValue += Math.abs(value.deltaExtraversion);
+            }
+            if (0 == value.tendencyAchievement) {
+                accValue += Math.abs(value.deltaAchievement);
+            }
+            accValueList.add(accValue);
+        }
+
+        int index = -1;
+        double minValue = Double.MAX_VALUE - 1;
+        for (int i = 0; i < accValueList.size(); ++i) {
+            double acc = accValueList.get(i);
+            if (acc < minValue) {
+                minValue = acc;
+                index = i;
+            }
+        }
+
+        return indexList.get(index);
+    }
+
+
+    private BigFiveFeature guess() {
+        BigFiveFeature[] features = new BigFiveFeature[] {
+                Generalist,
+                Advocate,
+                Entrepreneur,
+                Traditionalist,
+                Developer,
+                Promoter,
+                Realist,
+                Idealist,
+                Instructor,
+                Demonstrator,
+                Guide,
+                Architect,
+                Explorer,
+                Supporter,
+                Controller,
+                Expert,
+                Adapter
+        };
+
         Point p1 = new Point(10 - this.obligingness, 10);
         Point p2 = new Point(10, 10 + this.conscientiousness);
         Point p3 = new Point(10 + this.extraversion, 10);
@@ -313,8 +517,7 @@ public class BigFiveFeature implements JSONable {
             }
         }
 
-        this.name = feature.name;
-        this.displayName = feature.displayName;
+        return feature;
     }
 
     public String getName() {
@@ -323,6 +526,81 @@ public class BigFiveFeature implements JSONable {
 
     public String getDisplayName() {
         return this.displayName;
+    }
+
+    public ApproximateValue calcApproximate(double obligingness, double conscientiousness, double extraversion,
+                                            double achievement) {
+        if (null == this.templateValue) {
+            return null;
+        }
+
+        ApproximateValue value = new ApproximateValue();
+
+        if (this.templateValue.obligingness >= HighScore && obligingness >= HighScore) {
+            value.nearObligingness = true;
+        }
+        else if (this.templateValue.obligingness <= LowScore && obligingness <= LowScore) {
+            value.nearObligingness = true;
+        }
+
+        value.deltaObligingness = this.templateValue.obligingness - obligingness;
+
+        if (obligingness < 5.5 && this.templateValue.obligingness < 4.5) {
+            value.tendencyObligingness = -1;
+        }
+        else if (obligingness >= 5.5 && this.templateValue.obligingness > 6.5) {
+            value.tendencyObligingness = 1;
+        }
+
+        if (this.templateValue.conscientiousness >= HighScore && conscientiousness >= HighScore) {
+            value.nearConscientiousness = true;
+        }
+        else if (this.templateValue.conscientiousness <= LowScore && conscientiousness <= LowScore) {
+            value.nearConscientiousness = true;
+        }
+
+        value.deltaConscientiousness = this.templateValue.conscientiousness - conscientiousness;
+
+        if (conscientiousness < 5.5 && this.templateValue.conscientiousness < 4.5) {
+            value.tendencyConscientiousness = -1;
+        }
+        else if (conscientiousness >= 5.5 && this.templateValue.conscientiousness > 6.5) {
+            value.tendencyConscientiousness = 1;
+        }
+
+        if (this.templateValue.extraversion >= HighScore && extraversion >= HighScore) {
+            value.nearExtraversion = true;
+        }
+        else if (this.templateValue.extraversion <= LowScore && extraversion <= LowScore) {
+            value.nearExtraversion = true;
+        }
+
+        value.deltaExtraversion = this.templateValue.extraversion - extraversion;
+
+        if (extraversion < 5.5 && this.templateValue.extraversion < 4.5) {
+            value.tendencyExtraversion = -1;
+        }
+        else if (extraversion >= 5.5 && this.templateValue.extraversion > 6.5) {
+            value.tendencyExtraversion = 1;
+        }
+
+        if (this.templateValue.achievement >= HighScore && achievement >= HighScore) {
+            value.nearAchievement = true;
+        }
+        else if (this.templateValue.achievement <= LowScore && achievement <= LowScore) {
+            value.nearAchievement = true;
+        }
+
+        value.deltaAchievement = this.templateValue.achievement - achievement;
+
+        if (achievement < 5.5 && this.templateValue.achievement < 4.5) {
+            value.tendencyAchievement = -1;
+        }
+        else if (achievement >= 5.5 && this.templateValue.achievement > 6.5) {
+            value.tendencyAchievement = 1;
+        }
+
+        return value;
     }
 
     public void setDescription(String description) {
@@ -345,7 +623,7 @@ public class BigFiveFeature implements JSONable {
             return "低分宜人性表现";
         }
         else {
-            return "宜人性得分一般的表现是什么？";
+            return "宜人性一般的表现";
         }
     }
 
@@ -361,7 +639,7 @@ public class BigFiveFeature implements JSONable {
             return "低分尽责性表现";
         }
         else {
-            return "尽责性得分一般的表现是什么？";
+            return "尽责性一般的表现";
         }
     }
 
@@ -377,7 +655,7 @@ public class BigFiveFeature implements JSONable {
             return "低分外向性表现";
         }
         else {
-            return "外向性得分一般的表现是什么？";
+            return "外向性一般的表现";
         }
     }
 
@@ -393,7 +671,7 @@ public class BigFiveFeature implements JSONable {
             return "低分进取性表现";
         }
         else {
-            return "进取性得分一般的表现是什么？";
+            return "进取性一般的表现";
         }
     }
 
@@ -409,7 +687,7 @@ public class BigFiveFeature implements JSONable {
             return "低分情绪性表现";
         }
         else {
-            return "情绪性得分一般的表现是什么？";
+            return "情绪性一般的表现";
         }
     }
 
@@ -470,6 +748,38 @@ public class BigFiveFeature implements JSONable {
         return this.toJSON();
     }
 
+    public TemplateValue getTemplateValue() {
+        return this.templateValue;
+    }
+
+    public static BigFiveFeature match(String nameOrDisplayName) {
+        BigFiveFeature[] features = new BigFiveFeature[] {
+                Generalist,
+                Advocate,
+                Entrepreneur,
+                Traditionalist,
+                Developer,
+                Promoter,
+                Realist,
+                Idealist,
+                Instructor,
+                Demonstrator,
+                Guide,
+                Architect,
+                Explorer,
+                Supporter,
+                Controller,
+                Expert,
+                Adapter
+        };
+        for (BigFiveFeature feature : features) {
+            if (feature.name.equalsIgnoreCase(nameOrDisplayName)
+                    || feature.displayName.equalsIgnoreCase(nameOrDisplayName)) {
+                return feature;
+            }
+        }
+        return null;
+    }
 
     private static Point getCentroid(Point[] points) {
         double totalArea = 0;
@@ -541,6 +851,72 @@ public class BigFiveFeature implements JSONable {
             this.centroid = getCentroid(new Point[] {
                     p1, p2, p3, p4
             });
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder buf = new StringBuilder();
+            buf.append("obligingness: ").append(this.obligingness).append("\n");
+            buf.append("conscientiousness: ").append(this.conscientiousness).append("\n");
+            buf.append("extraversion: ").append(this.extraversion).append("\n");
+            buf.append("achievement: ").append(this.achievement).append("\n");
+            buf.append("neuroticism: ").append(this.neuroticism);
+            return buf.toString();
+        }
+    }
+
+    private class ApproximateValue {
+
+        protected boolean nearObligingness = false;
+        protected boolean nearConscientiousness = false;
+        protected boolean nearExtraversion = false;
+        protected boolean nearAchievement = false;
+
+        protected int tendencyObligingness = 0;
+        protected int tendencyConscientiousness = 0;
+        protected int tendencyExtraversion = 0;
+        protected int tendencyAchievement = 0;
+
+        protected double deltaObligingness = 0;
+        protected double deltaConscientiousness = 0;
+        protected double deltaExtraversion = 0;
+        protected double deltaAchievement = 0;
+
+        protected ApproximateValue() {
+        }
+
+        public int getNumOfNearValues() {
+            int num = 0;
+            if (this.nearObligingness) {
+                num += 1;
+            }
+            if (this.nearConscientiousness) {
+                num += 1;
+            }
+            if (this.nearExtraversion) {
+                num += 1;
+            }
+            if (this.nearAchievement) {
+                num += 1;
+            }
+            return num;
+        }
+
+        public int getNumOfTendency() {
+            int num = 0;
+            if (0 != this.tendencyObligingness) {
+                num += 1;
+            }
+            if (0 != this.tendencyConscientiousness) {
+                num += 1;
+            }
+            if (0 != this.tendencyExtraversion) {
+                num += 1;
+            }
+            if (0 != this.tendencyAchievement) {
+                num += 1;
+            }
+            return num;
         }
     }
 }

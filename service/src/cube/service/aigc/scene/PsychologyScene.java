@@ -658,13 +658,13 @@ public class PsychologyScene {
             ReportRelation relation = relations.get(0);
             PaintingReport paintingReport = this.getPaintingReport(relation.reportSn);
             if (null != paintingReport) {
-                QueryRevolver queryRevolver = new QueryRevolver();
+                QueryRevolver queryRevolver = new QueryRevolver(this.aigcService.getTokenizer());
                 result.append(queryRevolver.generatePrompt(relation, paintingReport, query, true));
             }
             else {
                 ScaleReport scaleReport = this.getScaleReport(relation.reportSn);
                 if (null != scaleReport) {
-                    QueryRevolver queryRevolver = new QueryRevolver();
+                    QueryRevolver queryRevolver = new QueryRevolver(this.aigcService.getTokenizer());
                     result.append(queryRevolver.generatePrompt(relation, scaleReport, query, true));
                 }
                 else {
@@ -693,7 +693,7 @@ public class PsychologyScene {
             }
         }
 
-        QueryRevolver revolver = new QueryRevolver();
+        QueryRevolver revolver = new QueryRevolver(this.aigcService.getTokenizer());
         return revolver.generateSupplement(relation, report, currentQuery, true);
     }
 
@@ -740,7 +740,7 @@ public class PsychologyScene {
         }
 
         // 设置使用的单元
-        workflow.setUnitName(this.unitName, this.unitContextLength);
+        workflow.setUnitName(this.unitName);
 
         // 制作报告
         return workflow.make(theme, maxIndicatorText);

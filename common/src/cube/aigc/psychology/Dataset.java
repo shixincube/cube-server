@@ -88,6 +88,10 @@ public class Dataset {
             Map.Entry<String, String[]> entry = iter.next();
             String[] value = entry.getValue();
 
+            if (Math.abs(value.length - keywords.length) >= 2) {
+                continue;
+            }
+
             boolean hit = true;
             for (int i = 0; i < value.length && i < keywords.length && i < length; ++i) {
                 String cur = value[i];

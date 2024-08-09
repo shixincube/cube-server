@@ -72,8 +72,6 @@ public class Workflow {
 
     private String unitName = ModelConfig.BAIZE_UNIT;
 
-    private int maxContext = ModelConfig.BAIZE_CONTEXT_LIMIT - 60;
-
     public Workflow(AIGCService service) {
         this.service = service;
     }
@@ -85,9 +83,8 @@ public class Workflow {
         this.reportTextList = new ArrayList<>();
     }
 
-    public void setUnitName(String unitName, int maxContext) {
+    public void setUnitName(String unitName) {
         this.unitName = unitName;
-        this.maxContext = maxContext - 60;
     }
 
     public boolean isSpeed() {
@@ -197,6 +194,8 @@ public class Workflow {
             answer = this.infer(prompt);
         }
         if (null == answer) {
+            Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
+
             answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                     null, null);
         }
@@ -211,9 +210,11 @@ public class Workflow {
         prompt = personalityAccelerator.getBigFiveFeature().generateObligingnessPrompt();
         answer = null;
         if (this.speed) {
+            Logger.d(this.getClass(), "#inferPersonality - Obligingness prompt: \"" + prompt + "\"");
             answer = this.infer(prompt);
         }
         if (null == answer) {
+            Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
             answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                     null, null);
         }
@@ -228,9 +229,11 @@ public class Workflow {
         prompt = personalityAccelerator.getBigFiveFeature().generateConscientiousnessPrompt();
         answer = null;
         if (this.speed) {
+            Logger.d(this.getClass(), "#inferPersonality - Conscientiousness prompt: \"" + prompt + "\"");
             answer = this.infer(prompt);
         }
         if (null == answer) {
+            Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
             answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                     null, null);
         }
@@ -245,9 +248,11 @@ public class Workflow {
         prompt = personalityAccelerator.getBigFiveFeature().generateExtraversionPrompt();
         answer = null;
         if (this.speed) {
+            Logger.d(this.getClass(), "#inferPersonality - Extraversion prompt: \"" + prompt + "\"");
             answer = this.infer(prompt);
         }
         if (null == answer) {
+            Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
             answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                     null, null);
         }
@@ -262,9 +267,11 @@ public class Workflow {
         prompt = personalityAccelerator.getBigFiveFeature().generateAchievementPrompt();
         answer = null;
         if (this.speed) {
+            Logger.d(this.getClass(), "#inferPersonality - Achievement prompt: \"" + prompt + "\"");
             answer = this.infer(prompt);
         }
         if (null == answer) {
+            Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
             answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                     null, null);
         }
@@ -279,9 +286,11 @@ public class Workflow {
         prompt = personalityAccelerator.getBigFiveFeature().generateNeuroticismPrompt();
         answer = null;
         if (this.speed) {
+            Logger.d(this.getClass(), "#inferPersonality - Neuroticism prompt: \"" + prompt + "\"");
             answer = this.infer(prompt);
         }
         if (null == answer) {
+            Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
             answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                     null, null);
         }
@@ -312,6 +321,8 @@ public class Workflow {
                 report = this.infer(prompt);
             }
             if (null == report) {
+                Logger.w(this.getClass(), "#inferScore - No report for \"" + prompt + "\"");
+
                 report = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                         null, null);
             }
@@ -328,6 +339,8 @@ public class Workflow {
                 suggestion = this.infer(prompt);
             }
             if (null == suggestion) {
+                Logger.w(this.getClass(), "#inferScore - No suggestion for \"" + prompt + "\"");
+
                 suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
                         null, null);
             }
@@ -355,9 +368,21 @@ public class Workflow {
             }
         }
         prompt.append("\n");
-        prompt.append("根据上述已知信息，简洁和专业的来回答用户的问题。问题是：简明扼要地总结一下这个人的心理症状。");
+        prompt.append("根据上述已知信息，简洁和专业的来回答用户的问题。问题是：总结一下这个人的心理症状。");
         String summary = this.service.syncGenerateText(this.unitName, prompt.toString(), new GenerativeOption(),
                 null, null);
+
+        if (null == summary || summary.contains("我遇到一些问题")) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            summary = this.service.syncGenerateText(this.unitName, prompt.toString(), new GenerativeOption(),
+                    null, null);
+        }
+
         return summary;
     }
 

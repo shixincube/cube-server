@@ -33,6 +33,8 @@ import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.ReportRelation;
 import cube.aigc.psychology.composition.ScaleFactor;
 import cube.common.entity.GenerativeRecord;
+import cube.service.tokenizer.Tokenizer;
+import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,19 +77,22 @@ public class QueryRevolver {
             "性格", "人格", "胜任"
     };
 
-    public QueryRevolver() {
+    private Tokenizer tokenizer;
+
+    public QueryRevolver(Tokenizer tokenizer) {
+        this.tokenizer = tokenizer;
     }
 
     public String generatePrompt(ReportRelation relation, Report report, String query, boolean extraLong) {
         StringBuilder result = new StringBuilder();
 
         if (extraLong) {
-            result.append("已知信息：\n当前讨论的受测人的名称是：").append(relation.name).append("，");
+            result.append("已知信息：\n当前此人的名称是：").append(relation.name).append("，");
             result.append("年龄是：").append(report.getAttribute().age).append("岁，");
             result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
 
             if (report instanceof PaintingReport) {
-                result.append("受测人的心理表现有：");
+                result.append("受测人的情况如下：");
 
                 PaintingReport paintingReport = (PaintingReport) report;
 
@@ -103,8 +108,10 @@ public class QueryRevolver {
                 }
 
                 if (result.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
-                    result.append("此人的大五人格画像是“").append(paintingReport.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("”。");
+                    result.append("\n受测人的大五人格画像是").append(paintingReport.getEvaluationReport()
+                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("。");
+                    result.append(paintingReport.getEvaluationReport()
+                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("：");
                     result.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
                             .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
                 }
@@ -150,7 +157,7 @@ public class QueryRevolver {
             result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
 
             if (report instanceof PaintingReport) {
-                result.append("其心理症状有：");
+                result.append("此人的情况如下：");
 
                 PaintingReport paintingReport = (PaintingReport) report;
 
@@ -170,7 +177,7 @@ public class QueryRevolver {
                 result.append("。");
 
                 if (null != paintingReport.getEvaluationReport().getPersonalityAccelerator()) {
-                    result.append("此人的大五人格画像是“");
+                    result.append("受测人的大五人格画像是“");
                     result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
                             .getBigFiveFeature().getDisplayName());
                     result.append("”。");
@@ -194,7 +201,7 @@ public class QueryRevolver {
             result.append("根据上述信息，作为专业的心理咨询师，请回答：").append(query);
         }
 
-        return result.toString();
+        return this.filterSubjectNoun(result.toString());
     }
 
     public GenerativeRecord generateSupplement(ReportRelation relation, Report report,
@@ -210,7 +217,7 @@ public class QueryRevolver {
 
         if (extraLong) {
             if (report instanceof PaintingReport) {
-                answer.append("受测人的心理表现有：");
+                answer.append("受测人的情况如下：");
 
                 PaintingReport paintingReport = (PaintingReport) report;
 
@@ -226,8 +233,8 @@ public class QueryRevolver {
                 }
 
                 if (answer.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
-                    answer.append("此人的大五人格画像是“").append(paintingReport.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("”。");
+                    answer.append("\n受测人的大五人格画像是").append(paintingReport.getEvaluationReport()
+                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("。");
                     answer.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
                             .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
                 }
@@ -284,9 +291,9 @@ public class QueryRevolver {
                 answer.append("。");
 
                 if (null != paintingReport.getEvaluationReport().getPersonalityAccelerator()) {
-                    answer.append("此人的大五人格画像是“");
+                    answer.append("受测人的大五人格画像是");
                     answer.append(paintingReport.getEvaluationReport().getPersonalityAccelerator().getBigFiveFeature().getDisplayName());
-                    answer.append("”。");
+                    answer.append("。");
                 }
             }
             else if (report instanceof ScaleReport) {
@@ -333,44 +340,93 @@ public class QueryRevolver {
             PaintingReport paintingReport = (PaintingReport) report;
 
             if (null != paintingReport.getEvaluationReport().getPersonalityAccelerator()) {
-                result.append("回答问题时可使用以下知识：");
+//                result.append("回答问题时可使用以下知识：");
+                result.append("\n");
 
                 for (String word : this.keywordThinkingStyle) {
                     if (query.contains(word)) {
-                        result.append("“");
-                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
-                                .getBigFiveFeature().getDisplayName());
-                        result.append("的思维方式”，");
+//                        result.append("“");
+//                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
+//                                .getBigFiveFeature().getDisplayName());
+//                        result.append("的思维方式”，");
+
+                        String q = paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                                .getBigFiveFeature().getDisplayName() + "的思维方式";
+                        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+                        List<String> keywords = analyzer.analyzeOnlyWords(q, 10);
+
+                        Dataset dataset = Resource.getInstance().loadDataset();
+                        String a = dataset.getContentByKeywords(keywords.toArray(new String[0]), 5);
+                        if (null != a) {
+                            result.append(a);
+                        }
+
                         break;
                     }
                 }
 
                 for (String word : this.keywordCommunicationStyle) {
                     if (query.contains(word)) {
-                        result.append("“");
-                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
-                                .getBigFiveFeature().getDisplayName());
-                        result.append("的沟通风格”，");
+//                        result.append("“");
+//                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
+//                                .getBigFiveFeature().getDisplayName());
+//                        result.append("的沟通风格”，");
+
+                        String q = paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                                .getBigFiveFeature().getDisplayName() + "的沟通风格";
+                        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+                        List<String> keywords = analyzer.analyzeOnlyWords(q, 10);
+
+                        Dataset dataset = Resource.getInstance().loadDataset();
+                        String a = dataset.getContentByKeywords(keywords.toArray(new String[0]), 5);
+                        if (null != a) {
+                            result.append(a);
+                        }
+
                         break;
                     }
                 }
 
                 for (String word : this.keywordWorkEnvironment) {
                     if (query.contains(word)) {
-                        result.append("“");
-                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
-                                .getBigFiveFeature().getDisplayName());
-                        result.append("的工作环境偏好”，");
+//                        result.append("“");
+//                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
+//                                .getBigFiveFeature().getDisplayName());
+//                        result.append("的工作环境偏好”，");
+
+                        String q = paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                                .getBigFiveFeature().getDisplayName() + "的工作环境偏好";
+                        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+                        List<String> keywords = analyzer.analyzeOnlyWords(q, 10);
+
+                        Dataset dataset = Resource.getInstance().loadDataset();
+                        String a = dataset.getContentByKeywords(keywords.toArray(new String[0]), 5);
+                        if (null != a) {
+                            result.append(a);
+                        }
+
                         break;
                     }
                 }
 
                 for (String word : this.keywordManagementRecommendations) {
                     if (query.contains(word)) {
-                        result.append("“");
-                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
-                                .getBigFiveFeature().getDisplayName());
-                        result.append("的管理建议”，");
+//                        result.append("“");
+//                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
+//                                .getBigFiveFeature().getDisplayName());
+//                        result.append("的管理建议”，");
+
+                        String q = paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                                .getBigFiveFeature().getDisplayName() + "的管理建议";
+                        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+                        List<String> keywords = analyzer.analyzeOnlyWords(q, 10);
+
+                        Dataset dataset = Resource.getInstance().loadDataset();
+                        String a = dataset.getContentByKeywords(keywords.toArray(new String[0]), 5);
+                        if (null != a) {
+                            result.append(a);
+                        }
+
                         break;
                     }
                 }
@@ -379,9 +435,12 @@ public class QueryRevolver {
                     result.delete(0, result.length());
                 }
                 else {
-                    result.delete(result.length() - 1, result.length());
-                    result.append("。");
+                    result.append("\n");
                 }
+//                else {
+//                    result.delete(result.length() - 1, result.length());
+//                    result.append("。");
+//                }
             }
         }
 
@@ -390,5 +449,9 @@ public class QueryRevolver {
 
     private String filterPersonalityDescription(String desc) {
         return desc.replaceAll("你", "他");
+    }
+
+    private String filterSubjectNoun(String content) {
+        return content.replaceAll("受测人", "他");
     }
 }

@@ -36,7 +36,7 @@ public class ModelConfig implements JSONable {
 
     public static int EXTRA_LONG_CONTEXT_LIMIT = 5000;
 
-    public static int BAIZE_CONTEXT_LIMIT = 1000;
+    public static int BAIZE_CONTEXT_LIMIT = 2000;
 
     public static int BAIZE_NEXT_CONTEXT_LIMIT = 3000;
 

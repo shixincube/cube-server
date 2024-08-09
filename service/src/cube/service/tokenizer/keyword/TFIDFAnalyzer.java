@@ -72,6 +72,15 @@ public class TFIDFAnalyzer {
         return keywordList;
     }
 
+    public List<String> analyzeOnlyWords(String content, int topN) {
+        List<Keyword> list = this.analyze(content, topN);
+        List<String> result = new ArrayList<>();
+        for (Keyword keyword : list) {
+            result.add(keyword.getWord());
+        }
+        return result;
+    }
+
     /**
      * tf值计算公式
      * tf=N(i,j)/(sum(N(k,j) for all k))
