@@ -102,12 +102,12 @@ public class QueryRevolver {
                         paintingReport.getEvaluationReport().getEvaluationScores());
                 for (String content : symptomContent) {
                     result.append(content);
-                    if (result.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                    if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                         break;
                     }
                 }
 
-                if (result.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                     result.append("\n受测人的大五人格画像是").append(paintingReport.getEvaluationReport()
                             .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("。");
                     result.append(paintingReport.getEvaluationReport()
@@ -116,7 +116,7 @@ public class QueryRevolver {
                             .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
                 }
 
-                if (result.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                     result.append("\n");
                     result.append(this.generateFragment(report, query));
                 }
@@ -133,7 +133,7 @@ public class QueryRevolver {
 
                 for (ScaleFactor factor : scaleReport.getFactors()) {
                     result.append("\n* ").append(factor.description);
-                    if (result.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                    if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                         break;
                     }
                 }
@@ -141,7 +141,7 @@ public class QueryRevolver {
                 result.append("\n对于上述心理表现给出以下建议：\n");
                 for (ScaleFactor factor : scaleReport.getFactors()) {
                     result.append("\n* ").append(factor.suggestion);
-                    if (result.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                    if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                         break;
                     }
                 }
@@ -227,19 +227,19 @@ public class QueryRevolver {
                         paintingReport.getEvaluationReport().getEvaluationScores());
                 for (String content : symptomContent) {
                     answer.append(content);
-                    if (answer.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                    if (answer.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                         break;
                     }
                 }
 
-                if (answer.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                if (answer.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                     answer.append("\n受测人的大五人格画像是").append(paintingReport.getEvaluationReport()
                             .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("。");
                     answer.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
                             .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
                 }
 
-                if (answer.length() < ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                if (answer.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                     answer.append("\n");
                     answer.append(this.generateFragment(report, currentQuery));
                 }
@@ -256,7 +256,7 @@ public class QueryRevolver {
 
                 for (ScaleFactor factor : scaleReport.getFactors()) {
                     answer.append("\n* ").append(factor.description);
-                    if (answer.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                    if (answer.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                         break;
                     }
                 }
@@ -264,7 +264,7 @@ public class QueryRevolver {
                 answer.append("\n对于上述心理表现给出以下建议：\n");
                 for (ScaleFactor factor : scaleReport.getFactors()) {
                     answer.append("\n* ").append(factor.suggestion);
-                    if (answer.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                    if (answer.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                         break;
                     }
                 }

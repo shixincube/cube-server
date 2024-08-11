@@ -10,6 +10,6 @@
 
 	"unit": {
 		"name": "Baize",
-		"contextLength" : 2000
+		"contextLength" : 5000
 	}
 }

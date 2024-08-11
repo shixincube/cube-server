@@ -40,7 +40,6 @@ public class ModelConfig implements JSONable {
 
     public static int BAIZE_NEXT_CONTEXT_LIMIT = 3000;
 
-
     public final static String[] TEXT_TO_IMAGE_UNIT = new String[] { "DallE" };
 
     public final static String[] EXTRA_LONG_PROMPT_UNIT = new String[]{ "GPT", "Gemini", "Wenxin" };
@@ -51,16 +50,19 @@ public class ModelConfig implements JSONable {
 
     public final static String BAIZE_NEXT_UNIT = "BaizeNext";
 
+    public final static String INFINITE_UNIT = "GLM";
+
     public final static String PSYCHOLOGY_UNIT = "Psychology";
 
     private final static String[][] UNIT_MAP_MODEL = new String[][] {
-            new String[] { "Chat", "BaizeM" },
+            new String[] { "Chat", "Robot" },
             new String[] { "GPT", "GPT" },
             new String[] { "DallE", "DallE" },
             new String[] { "Gemini", "Gemini" },
             new String[] { "Wenxin", "Wenxin" },
             new String[] { "Baize", "Baize" },
-            new String[] { "BaizeNext", "BaizeNext" }
+            new String[] { "BaizeNext", "BaizeNext" },
+            new String[] { "GLM", "BaizeX" },
     };
 
     private final String model;

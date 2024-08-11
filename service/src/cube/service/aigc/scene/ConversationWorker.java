@@ -26,6 +26,7 @@
 
 package cube.service.aigc.scene;
 
+import cube.aigc.ModelConfig;
 import cube.aigc.psychology.composition.ReportRelation;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCUnit;
@@ -35,10 +36,11 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ConversationWorker {
+
+    private String unitName = ModelConfig.INFINITE_UNIT;
 
     private AIGCService service;
 
@@ -49,15 +51,18 @@ public class ConversationWorker {
     public AIGCStateCode work(String token, String channelCode, List<ReportRelation> reportRelationList,
                               String query, GenerateTextListener listener) {
         // 获取频道
-        AIGCChannel channel = service.getChannel(channelCode);
+        AIGCChannel channel = this.service.getChannel(channelCode);
         if (null == channel) {
-            channel = service.createChannel(token, channelCode, channelCode);
+            channel = this.service.createChannel(token, channelCode, channelCode);
         }
 
         // 获取单元
-        AIGCUnit unit = service.selectUnitByName(PsychologyScene.getInstance().getUnitName());
+        AIGCUnit unit = this.service.selectUnitByName(this.unitName);
         if (null == unit) {
-            return AIGCStateCode.UnitError;
+            unit = this.service.selectUnitByName(PsychologyScene.getInstance().getUnitName());
+            if (null == unit) {
+                return AIGCStateCode.UnitError;
+            }
         }
 
 //        int maxHistories = 5;
