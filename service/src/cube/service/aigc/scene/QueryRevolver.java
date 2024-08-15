@@ -87,12 +87,12 @@ public class QueryRevolver {
         StringBuilder result = new StringBuilder();
 
         if (extraLong) {
-            result.append("已知信息：\n当前此人的名称是：").append(relation.name).append("，");
+            result.append("已知信息：\n当前受测人的名称是：").append(relation.name).append("，");
             result.append("年龄是：").append(report.getAttribute().age).append("岁，");
             result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
 
             if (report instanceof PaintingReport) {
-                result.append("受测人的情况如下：");
+                result.append("受测人的情况如下：\n");
 
                 PaintingReport paintingReport = (PaintingReport) report;
 
@@ -106,12 +106,14 @@ public class QueryRevolver {
                         break;
                     }
                 }
+                result.append("\n");
 
                 if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                     result.append("\n受测人的大五人格画像是").append(paintingReport.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("。");
+                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("。\n");
+                    // 性格特点
                     result.append(paintingReport.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("：");
+                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("的性格特点：");
                     result.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
                             .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
                 }

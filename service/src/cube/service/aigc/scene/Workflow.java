@@ -33,6 +33,7 @@ import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.ReportSection;
+import cube.aigc.psychology.composition.SixDimension;
 import cube.aigc.psychology.composition.SixDimensionScore;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GenerativeOption;
@@ -115,6 +116,19 @@ public class Workflow {
             List<EvaluationScore> scoreList = Resource.getInstance().getBenchmark().getEvaluationScores(age);
             scoreList = this.filter(this.evaluationReport.getEvaluationScores(), scoreList);
             this.normDimensionScore = Resource.getInstance().getSixDimProjection().calc(scoreList);
+
+            // 校准视觉效果
+            for (SixDimension dim : SixDimension.values()) {
+                int norm = this.normDimensionScore.getDimensionScore(dim);
+                int score = this.dimensionScore.getDimensionScore(dim);
+                if (norm < 10) {
+                    this.normDimensionScore.record(dim, norm * 3);
+                    this.dimensionScore.record(dim, (int) Math.round(score * 1.8));
+                } else if (norm < 20) {
+                    this.normDimensionScore.record(dim, norm * 2);
+                    this.dimensionScore.record(dim, (int) Math.round(score * 1.4));
+                }
+            }
         } catch (Exception e) {
             Logger.w(this.getClass(), "#make", e);
         }

@@ -29,6 +29,7 @@ package cube.aigc.psychology;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.SixDimension;
 import cube.aigc.psychology.composition.SixDimensionScore;
+import cube.util.FloatUtils;
 import org.json.JSONObject;
 
 import java.util.Iterator;
@@ -67,6 +68,11 @@ public class SixDimensionProjection {
     public synchronized SixDimensionScore calc(List<EvaluationScore> scoreList) {
         SixDimensionScore result = new SixDimensionScore();
 
+        SixDimension[] sixDimensions = new SixDimension[6];
+        double[] values = new double[6];
+        int index = 0;
+        double totalFive = 0;
+
         for (Map.Entry<SixDimension, Projection> e : this.projections.entrySet()) {
             SixDimension dim = e.getKey();
 
@@ -85,7 +91,19 @@ public class SixDimensionProjection {
                 sum += delta * weight.getValue() * 10d;
             }
 
-            result.record(dim, Math.max(1, (int) Math.round(sum)));
+            sixDimensions[index] = dim;
+            values[index++] = sum;
+            if (dim != SixDimension.MentalHealth) {
+                totalFive += sum;
+            }
+        }
+
+        for (int i = 0; i < values.length; ++i) {
+            if (sixDimensions[i] == SixDimension.MentalHealth) {
+                values[i] += totalFive / 5.0;
+            }
+
+            result.record(sixDimensions[i], Math.max(1, (int) Math.round(values[i])));
         }
 
         return result;

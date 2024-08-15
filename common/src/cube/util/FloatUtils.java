@@ -62,8 +62,6 @@ public final class FloatUtils {
 
     public static void main(String[] args) {
         double[] input = new double[] {
-                -10.8,
-                -0.56,
                 FloatUtils.random(0.1, 0.2),
                 FloatUtils.random(0.5, 0.7),
                 FloatUtils.random(0.3, 0.4),

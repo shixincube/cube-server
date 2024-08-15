@@ -145,11 +145,11 @@ public class EvaluationScore implements JSONable {
         StringBuilder buf = new StringBuilder();
         switch (this.indicator) {
             case Obsession:
-                if (score >= 0.1 && score <= 0.4) {
+                if (score >= 0.1 && score <= 0.8) {
                     buf.append("轻度强迫症");
-                } else if (score > 0.4 && score <= 0.8) {
+                } else if (score > 0.8 && score <= 1.2) {
                     buf.append("中度强迫症");
-                } else if (score > 0.8) {
+                } else if (score > 1.2) {
                     buf.append("重度强迫症");
                 } else {
                     return null;

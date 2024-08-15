@@ -118,7 +118,7 @@
             "SelfConsciousness": {
                 "positive": {
                     "min": 0.0,
-                    "max": 0.4
+                    "max": 0.8
                 },
                 "negative": {
                     "min": 0.0,
@@ -258,7 +258,7 @@
             "InterpersonalRelation": {
                 "positive": {
                     "min": 0.0,
-                    "max": 0.5
+                    "max": 0.9
                 },
                 "negative": {
                     "min": 0.0,
@@ -516,7 +516,7 @@
             "SenseOfSecurity": {
                 "positive": {
                     "min": 0.0,
-                    "max": 0.2
+                    "max": 0.8
                 },
                 "negative": {
                     "min": 0.0,
@@ -804,7 +804,7 @@
             "SelfEsteem": {
                 "positive": {
                     "min": 0.0,
-                    "max": 0.0
+                    "max": 0.8
                 },
                 "negative": {
                     "min": 0.0,
@@ -864,7 +864,7 @@
             "Realism": {
                 "positive": {
                     "min": 0.0,
-                    "max": 0.7
+                    "max": 1.5
                 },
                 "negative": {
                     "min": 0.0,

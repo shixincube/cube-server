@@ -26,6 +26,7 @@
 
 package cube.service.aigc.scene;
 
+import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.composition.ReportRelation;
 import cube.common.entity.AIGCChannel;
@@ -59,6 +60,8 @@ public class ConversationWorker {
         // 获取单元
         AIGCUnit unit = this.service.selectUnitByName(this.unitName);
         if (null == unit) {
+            Logger.w(this.getClass(), "#work - Can NOT find unit \"" + this.unitName + "\"");
+
             unit = this.service.selectUnitByName(PsychologyScene.getInstance().getUnitName());
             if (null == unit) {
                 return AIGCStateCode.UnitError;
@@ -96,7 +99,7 @@ public class ConversationWorker {
         }*/
 
         // 使用指定模型生成结果
-        service.generateText(channel, unit, query, prompt, new GenerativeOption(), histories, 0,
+        this.service.generateText(channel, unit, query, prompt, new GenerativeOption(), histories, 0,
                 null, null, false, true, listener);
 
         return AIGCStateCode.Ok;

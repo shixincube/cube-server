@@ -549,7 +549,7 @@ public class EvaluationReport implements JSONable {
         }
 
         // 按照优先级排序
-        Collections.sort(evaluationScores, new Comparator<EvaluationScore>() {
+        Collections.sort(result, new Comparator<EvaluationScore>() {
             @Override
             public int compare(EvaluationScore es1, EvaluationScore es2) {
                 return es2.indicator.priority - es1.indicator.priority;
