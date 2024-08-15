@@ -75,6 +75,7 @@ public class EvaluationScore implements JSONable {
             this.negativeWeight = weight;
             this.negativeScore = Math.abs(value) * weight;
         }
+        this.rate = this.getIndicatorRate();
     }
 
     public EvaluationScore(JSONObject json) {
@@ -85,6 +86,9 @@ public class EvaluationScore implements JSONable {
         this.negativeScore = json.getDouble("negativeScore");
         if (json.has("rate")) {
             this.rate = IndicatorRate.parse(json.getJSONObject("rate"));
+        }
+        else {
+            this.rate = this.getIndicatorRate();
         }
     }
 

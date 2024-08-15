@@ -237,7 +237,7 @@ public class PaintingReport extends Report {
                 buf.append("\n\n");
                 buf.append("| 评分项目 | 评级 | 计分 | 计数 | 正权重分 | 负权重分 |");
                 buf.append("\n");
-                buf.append("| ---- | ---- | ---- | ---- | ---- |");
+                buf.append("| ---- | ---- | ---- | ---- | ---- | ---- |");
                 for (EvaluationScore score : this.evaluationReport.getEvaluationScores()) {
                     buf.append("\n");
                     buf.append("|").append(score.indicator.name);

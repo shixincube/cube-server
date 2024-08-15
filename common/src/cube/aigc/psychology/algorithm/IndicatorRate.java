@@ -36,7 +36,7 @@ public enum IndicatorRate {
     /**
      * 无。
      */
-    None(0, "无"),
+    None(0, "略"),
 
     /**
      * 很低。
