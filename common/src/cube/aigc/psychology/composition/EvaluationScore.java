@@ -27,6 +27,7 @@
 package cube.aigc.psychology.composition;
 
 import cube.aigc.psychology.Indicator;
+import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.algorithm.Score;
 import cube.common.JSONable;
 import org.json.JSONObject;
@@ -54,6 +55,8 @@ public class EvaluationScore implements JSONable {
 
     public double negativeScore = 0;
 
+    public IndicatorRate rate;
+
     public EvaluationScore(Indicator indicator) {
         this.indicator = indicator;
     }
@@ -80,6 +83,9 @@ public class EvaluationScore implements JSONable {
         this.value = json.getInt("value");
         this.positiveScore = json.getDouble("positiveScore");
         this.negativeScore = json.getDouble("negativeScore");
+        if (json.has("rate")) {
+            this.rate = IndicatorRate.parse(json.getJSONObject("rate"));
+        }
     }
 
     public double calcScore() {
@@ -140,199 +146,199 @@ public class EvaluationScore implements JSONable {
     }
 
     public String generateWord() {
-        double score = this.positiveScore - this.negativeScore;
-
+        IndicatorRate rate = this.getIndicatorRate();
         StringBuilder buf = new StringBuilder();
         switch (this.indicator) {
             case Obsession:
-                if (score >= 0.1 && score <= 0.8) {
+                if (rate == IndicatorRate.Low) {
                     buf.append("轻度强迫症");
-                } else if (score > 0.8 && score <= 1.2) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("中度强迫症");
-                } else if (score > 1.2) {
+                } else if (rate == IndicatorRate.High) {
                     buf.append("重度强迫症");
                 } else {
                     return null;
                 }
                 break;
             case Depression:
-                if (score > 0.3 && score <= 0.7) {
+                if (rate == IndicatorRate.Low) {
                     buf.append("轻度抑郁");
-                } else if (score > 0.7 && score <= 1.1) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("中度抑郁");
-                } else if (score > 1.1) {
+                } else if (rate == IndicatorRate.High) {
                     buf.append("严重抑郁");
                 } else {
                     return null;
                 }
                 break;
             case Anxiety:
-                if (score >= 0.2 && score <= 0.7) {
+                if (rate == IndicatorRate.Low) {
                     buf.append("轻度焦虑");
-                } else if (score > 0.7 && score <= 1.1) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("中度焦虑");
-                } else if (score > 1.1) {
+                } else if (rate == IndicatorRate.High) {
                     buf.append("严重焦虑");
                 } else {
                     return null;
                 }
                 break;
             case Hostile:
-                if (score > 0.2 && score <= 0.4) {
+                if (rate == IndicatorRate.Low) {
                     buf.append("轻微敌对");
-                } else if (score > 0.4 && score <= 0.8) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("中度敌对");
-                } else if (score > 0.8) {
+                } else if (rate == IndicatorRate.High) {
                     buf.append("严重敌对");
                 } else {
                     return null;
                 }
                 break;
             case Paranoid:
-                if (score > 0.2 && score <= 0.5) {
+                if (rate == IndicatorRate.Low) {
                     buf.append("轻微偏执");
-                } else if (score > 0.5 && score <= 0.8) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("中度偏执");
-                } else if (score > 0.8) {
+                } else if (rate == IndicatorRate.High) {
                     buf.append("严重偏执");
                 } else {
                     return null;
                 }
                 break;
             case SelfControl:
-                if (score >= 0.8) {
+                if (rate == IndicatorRate.High) {
                     buf.append("自我控制较好");
-                } else if (score >= 0.0) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("自我控制一般");
                 } else {
                     buf.append("自我控制较差");
                 }
                 break;
             case Creativity:
-                if (score >= 1.2) {
+                if (rate == IndicatorRate.High) {
                     buf.append("有较强的创造力");
-                } else if (score >= 0.5) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("有一定的创造力");
                 } else {
                     buf.append("创造力一般");
                 }
                 break;
             case SelfConsciousness:
-                if (score > 0.5) {
+                if (rate == IndicatorRate.High) {
                     buf.append("自我意识强");
-                } else if (score > 0.3) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("自我意识中等");
                 } else {
                     buf.append("自我意识不强");
                 }
                 break;
             case Confidence:
-                if (score > 1.0) {
+                if (rate == IndicatorRate.High) {
                     buf.append("自信心很强");
-                } else if (score > 0.3) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("自信心较强");
-                } else if (score > -0.3) {
+                } else if (rate == IndicatorRate.Low) {
                     buf.append("自信心不足");
                 } else {
                     return null;
                 }
                 break;
             case Independence:
-                if (score > 0.3) {
+                if (rate == IndicatorRate.High) {
                     buf.append("较为独立");
                 } else {
                     buf.append("较为依赖环境");
                 }
                 break;
             case EvaluationFromOutside:
-                if (score >= 1.0) {
+                if (rate == IndicatorRate.High) {
                     buf.append("非常重视外在评价");
-                } else if (score > 0.3) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("较为重视外在评价");
                 } else {
                     buf.append("一般重视外在评价");
                 }
                 break;
             case AchievementMotivation:
-                if (score > 1.0) {
+                if (rate == IndicatorRate.High) {
                     buf.append("很强的成就动机");
-                } else if (score > 0.6) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("中度的成就动机");
                 } else {
                     buf.append("较弱的成就动机");
                 }
                 break;
             case SenseOfSecurity:
-                if (score >= 0.5) {
+                if (rate == IndicatorRate.High) {
                     buf.append("安全感较好");
-                } else if (score >= -0.3) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("安全感合格");
                 } else {
                     buf.append("安全感很差");
                 }
                 break;
             case Attacking:
-                if (score > 0.7) {
+                if (rate == IndicatorRate.High) {
                     buf.append("很强的攻击性");
-                } else if (score > 0.4) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("中度的攻击性");
                 } else {
                     buf.append("较小的攻击性");
                 }
                 break;
             case Impulsion:
-                if (score > 1.0) {
+                if (rate == IndicatorRate.High) {
                     buf.append("重度冲动性");
-                } else if (score > 0.5) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("中度冲动性");
                 } else {
                     buf.append("轻微冲动性");
                 }
                 break;
             case Narcissism:
-                if (score > 1.0) {
+                if (rate == IndicatorRate.High) {
                     buf.append("重度自恋");
-                } else if (score > 0.5) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("中度自恋");
                 } else {
                     buf.append("轻度自恋");
                 }
                 break;
             case Emotion:
-                if (score > 0.3) {
+                if (rate == IndicatorRate.High) {
                     buf.append("情绪较为稳定");
                 } else {
                     buf.append("情绪较不稳定");
                 }
                 break;
             case Constrain:
-                if (score > 1.0) {
+                if (rate == IndicatorRate.High) {
                     buf.append("重度压抑");
-                } else if (score > 0.5) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("中度压抑");
                 } else {
                     buf.append("不太压抑");
                 }
                 break;
             case SocialAdaptability:
-                if (score >= 0.3) {
+                if (rate == IndicatorRate.High) {
                     buf.append("社会适应性良好");
-                } else if (score <= -0.2) {
+                } else if (rate == IndicatorRate.Low) {
                     buf.append("社会适应性较差");
                 } else {
                     return null;
                 }
                 break;
             case Family:
-                if (score > 1.0) {
+                if (rate == IndicatorRate.High) {
                     buf.append("较为重视家庭关系");
-                } else if (score > 0.8) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("一般重视家庭关系");
                 } else {
                     buf.append("不太重视家庭关系");
                 }
                 break;
             case InterpersonalRelation:
+                double score = this.positiveScore - this.negativeScore;
                 if (score >= 3.5) {
                     buf.append("人际关系很受朋友欢迎");
                 } else if (score >= 2.1) {
@@ -350,39 +356,39 @@ public class EvaluationScore implements JSONable {
                 }
                 break;
             case Idealism:
-                if (score >= 0.3) {
+                if (rate == IndicatorRate.High) {
                     buf.append("理想主义者");
                 } else {
                     return null;
                 }
                 break;
             case Realism:
-                if (score >= 0.3) {
+                if (rate == IndicatorRate.High) {
                     buf.append("现实主义者");
                 } else {
                     return null;
                 }
                 break;
             case Optimism:
-                if (score > 0.1) {
+                if (rate == IndicatorRate.High) {
                     buf.append("乐观者");
                 } else {
                     return null;
                 }
                 break;
             case Pessimism:
-                if (score > 0.1) {
+                if (rate == IndicatorRate.High) {
                     buf.append("悲观者");
                 } else {
                     return null;
                 }
                 break;
             case Psychosis:
-                if (score > 1.5) {
+                if (rate == IndicatorRate.High) {
                     buf.append("重度精神病性");
-                } else if ( score > 1.0) {
+                } else if (rate == IndicatorRate.Medium) {
                     buf.append("中度精神病性");
-                } else if (score > 0.5) {
+                } else if (rate == IndicatorRate.Low) {
                     buf.append("轻度精神病性");
                 } else {
                     return null;
@@ -392,6 +398,239 @@ public class EvaluationScore implements JSONable {
                 return null;
         }
         return buf.toString();
+    }
+
+    public IndicatorRate getIndicatorRate() {
+        double score = this.positiveScore - this.negativeScore;
+
+        IndicatorRate rate = IndicatorRate.None;
+        switch (this.indicator) {
+            case Obsession:
+                if (score >= 0.1 && score <= 0.8) {
+                    rate = IndicatorRate.Low;
+                } else if (score > 0.8 && score <= 1.2) {
+                    rate = IndicatorRate.Medium;
+                } else if (score > 1.2) {
+                    rate = IndicatorRate.High;
+                }
+                break;
+            case Depression:
+                if (score > 0.3 && score <= 0.7) {
+                    rate = IndicatorRate.Low;
+                } else if (score > 0.7 && score <= 1.1) {
+                    rate = IndicatorRate.Medium;
+                } else if (score > 1.1) {
+                    rate = IndicatorRate.High;
+                }
+                break;
+            case Anxiety:
+                if (score >= 0.2 && score <= 0.7) {
+                    rate = IndicatorRate.Low;
+                } else if (score > 0.7 && score <= 1.1) {
+                    rate = IndicatorRate.Medium;
+                } else if (score > 1.1) {
+                    rate = IndicatorRate.High;
+                }
+                break;
+            case Hostile:
+                if (score > 0.2 && score <= 0.4) {
+                    rate = IndicatorRate.Low;
+                } else if (score > 0.4 && score <= 0.8) {
+                    rate = IndicatorRate.Medium;
+                } else if (score > 0.8) {
+                    rate = IndicatorRate.High;
+                }
+                break;
+            case Paranoid:
+                if (score > 0.2 && score <= 0.5) {
+                    rate = IndicatorRate.Low;
+                } else if (score > 0.5 && score <= 0.8) {
+                    rate = IndicatorRate.Medium;
+                } else if (score > 0.8) {
+                    rate = IndicatorRate.High;
+                }
+                break;
+            case SelfControl:
+                if (score >= 0.8) {
+                    rate = IndicatorRate.High;
+                } else if (score >= 0.0) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case Creativity:
+                if (score >= 1.2) {
+                    rate = IndicatorRate.High;
+                } else if (score >= 0.5) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case SelfConsciousness:
+                if (score > 0.5) {
+                    rate = IndicatorRate.High;
+                } else if (score > 0.3) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case Confidence:
+                if (score > 1.0) {
+                    rate = IndicatorRate.High;
+                } else if (score > 0.3) {
+                    rate = IndicatorRate.Medium;
+                } else if (score > -0.3) {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case Independence:
+                if (score > 0.3) {
+                    rate = IndicatorRate.High;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case EvaluationFromOutside:
+                if (score >= 1.0) {
+                    rate = IndicatorRate.High;
+                } else if (score > 0.3) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case AchievementMotivation:
+                if (score > 1.0) {
+                    rate = IndicatorRate.High;
+                } else if (score > 0.6) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case SenseOfSecurity:
+                if (score >= 0.5) {
+                    rate = IndicatorRate.High;
+                } else if (score >= -0.3) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case Attacking:
+                if (score > 0.7) {
+                    rate = IndicatorRate.High;
+                } else if (score > 0.4) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case Impulsion:
+                if (score > 1.0) {
+                    rate = IndicatorRate.High;
+                } else if (score > 0.5) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case Narcissism:
+                if (score > 1.0) {
+                    rate = IndicatorRate.High;
+                } else if (score >= 0.5) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case Emotion:
+                if (score >= 0.4) {
+                    rate = IndicatorRate.High;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case Constrain:
+                if (score >= 1.1) {
+                    rate = IndicatorRate.High;
+                } else if (score > 0.5) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case SocialAdaptability:
+                if (score >= 0.3) {
+                    rate = IndicatorRate.High;
+                } else if (score <= -0.2) {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case Family:
+                if (score > 1.0) {
+                    rate = IndicatorRate.High;
+                } else if (score > 0.8) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case InterpersonalRelation:
+                if (score >= 3.5) {
+                    rate = IndicatorRate.Highest;
+                } else if (score >= 2.1) {
+                    rate = IndicatorRate.High;
+                } else if (score >= 1.0) {
+                    rate = IndicatorRate.Medium;
+                } else if (score > 0.1) {
+                    rate = IndicatorRate.Medium;
+                } else if (score > -0.3 ) {
+                    rate = IndicatorRate.Low;
+                } else if (score > -0.8 ) {
+                    rate = IndicatorRate.Low;
+                } else {
+                    rate = IndicatorRate.Lowest;
+                }
+                break;
+            case Idealism:
+                if (score >= 0.3) {
+                    rate = IndicatorRate.High;
+                }
+                break;
+            case Realism:
+                if (score >= 0.3) {
+                    rate = IndicatorRate.High;
+                }
+                break;
+            case Optimism:
+                if (score > 0.1) {
+                    rate = IndicatorRate.High;
+                }
+                break;
+            case Pessimism:
+                if (score > 0.1) {
+                    rate = IndicatorRate.High;
+                }
+                break;
+            case Psychosis:
+                if (score > 1.5) {
+                    rate = IndicatorRate.High;
+                } else if ( score > 1.0) {
+                    rate = IndicatorRate.Medium;
+                } else if (score > 0.5) {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            default:
+                break;
+        }
+
+        this.rate = rate;
+        return rate;
     }
 
     @Override
@@ -419,6 +658,7 @@ public class EvaluationScore implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("indicator", this.indicator.name);
+        json.put("rate", (null != this.rate) ? this.rate.toJSON() : this.getIndicatorRate().toJSON());
         json.put("hit", this.hit);
         json.put("value", this.value);
         json.put("positiveScore", this.positiveScore);

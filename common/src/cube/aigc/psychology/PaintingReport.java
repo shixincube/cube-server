@@ -235,12 +235,13 @@ public class PaintingReport extends Report {
                 buf.append("\n");
                 buf.append("**评分表**");
                 buf.append("\n\n");
-                buf.append("| 评分项目 | 计分 | 计数 | 正权重分 | 负权重分 |");
+                buf.append("| 评分项目 | 评级 | 计分 | 计数 | 正权重分 | 负权重分 |");
                 buf.append("\n");
                 buf.append("| ---- | ---- | ---- | ---- | ---- |");
                 for (EvaluationScore score : this.evaluationReport.getEvaluationScores()) {
                     buf.append("\n");
                     buf.append("|").append(score.indicator.name);
+                    buf.append("|").append(score.rate.value).append(" - ").append(score.rate.displayName);
                     buf.append("|").append(score.value);
                     buf.append("|").append(score.hit);
                     buf.append("|").append(score.positiveScore);
