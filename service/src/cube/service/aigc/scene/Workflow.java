@@ -69,7 +69,7 @@ public class Workflow {
 
     private List<ReportSection> reportTextList;
 
-    private String summary = null;
+    private String summary = "";
 
     private String unitName = ModelConfig.BAIZE_UNIT;
 
@@ -102,6 +102,10 @@ public class Workflow {
         report.setSummary(this.summary);
         report.setReportTextList(this.reportTextList);
         return report;
+    }
+
+    public boolean isUnknown() {
+        return this.evaluationReport.isUnknown();
     }
 
     public Workflow make(Theme theme, int maxIndicatorTexts) {

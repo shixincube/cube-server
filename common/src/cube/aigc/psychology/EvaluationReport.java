@@ -61,6 +61,8 @@ public class EvaluationReport implements JSONable {
 
     private List<Scale> additionScales;
 
+    private boolean unknown = false;
+
     private boolean hesitating = false;
 
     public EvaluationReport(Attribute attribute, Reference reference, EvaluationFeature evaluationFeature) {
@@ -105,6 +107,10 @@ public class EvaluationReport implements JSONable {
         this.hesitating = json.has("hesitating") && json.getBoolean("hesitating");
     }
 
+    public boolean isUnknown() {
+        return this.unknown;
+    }
+
     public boolean isEmpty() {
         return this.representationList.isEmpty();
     }
@@ -135,6 +141,11 @@ public class EvaluationReport implements JSONable {
 
     private void build(List<EvaluationFeature> resultList) {
         for (EvaluationFeature result : resultList) {
+            if (null != result.getScore(Indicator.Unknown)) {
+                this.unknown = true;
+                return;
+            }
+
             for (EvaluationFeature.Feature feature : result.getFeatures()) {
                 Representation representation = this.getRepresentation(feature.term);
                 if (null == representation) {

@@ -87,6 +87,11 @@ public enum AIGCStateCode {
     NoData(23),
 
     /**
+     * 无效数据。
+     */
+    InvalidData(24),
+
+    /**
      * 不被接受的非法操作。
      */
     IllegalOperation(25),

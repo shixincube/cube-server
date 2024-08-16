@@ -381,7 +381,7 @@ public class PsychologyScene {
 
                     if (null == workflow) {
                         // 推理生成报告失败
-                        Logger.w(PsychologyScene.class, "#generateEvaluationReport - onReportEvaluateFailed: " +
+                        Logger.w(PsychologyScene.class, "#generateEvaluationReport - onReportEvaluateFailed (IllegalOperation): " +
                                 reportTask.fileLabel.getFileCode());
                         runningTaskQueue.remove(reportTask);
                         reportTask.channel.setProcessing(false);
@@ -393,6 +393,18 @@ public class PsychologyScene {
 
                     // 填写数据
                     workflow.fillReport(reportTask.report);
+
+                    if (workflow.isUnknown()) {
+                        // 未能处理的图片
+                        Logger.w(PsychologyScene.class, "#generateEvaluationReport - onReportEvaluateFailed (InvalidData): " +
+                                reportTask.fileLabel.getFileCode());
+                        runningTaskQueue.remove(reportTask);
+                        reportTask.channel.setProcessing(false);
+                        reportTask.report.setState(AIGCStateCode.InvalidData);
+                        reportTask.report.setFinished(true);
+                        reportTask.listener.onReportEvaluateFailed(reportTask.report);
+                        continue;
+                    }
 
                     // 生成 Markdown 调试信息
                     reportTask.report.makeMarkdown();
