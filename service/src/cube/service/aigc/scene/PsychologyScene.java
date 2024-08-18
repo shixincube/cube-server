@@ -671,13 +671,13 @@ public class PsychologyScene {
             PaintingReport paintingReport = this.getPaintingReport(relation.reportSn);
             if (null != paintingReport) {
                 QueryRevolver queryRevolver = new QueryRevolver(this.aigcService.getTokenizer());
-                result.append(queryRevolver.generatePrompt(relation, paintingReport, query, true));
+                result.append(queryRevolver.generatePrompt(relation, paintingReport, query));
             }
             else {
                 ScaleReport scaleReport = this.getScaleReport(relation.reportSn);
                 if (null != scaleReport) {
                     QueryRevolver queryRevolver = new QueryRevolver(this.aigcService.getTokenizer());
-                    result.append(queryRevolver.generatePrompt(relation, scaleReport, query, true));
+                    result.append(queryRevolver.generatePrompt(relation, scaleReport, query));
                 }
                 else {
                     Logger.w(this.getClass(), "#buildPrompt - Can NOT find report: " + relation.reportSn);
@@ -706,7 +706,7 @@ public class PsychologyScene {
         }
 
         QueryRevolver revolver = new QueryRevolver(this.aigcService.getTokenizer());
-        return revolver.generateSupplement(relation, report, currentQuery, true);
+        return revolver.generateSupplement(relation, report, currentQuery);
     }
 
     private Painting processPainting(AIGCUnit unit, FileLabel fileLabel) {
