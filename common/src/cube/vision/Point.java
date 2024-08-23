@@ -52,6 +52,28 @@ public class Point implements JSONable {
         return Math.sqrt((other.x - x) * (other.x - x) + (other.y - y) * (other.y - y));
     }
 
+    public Point scale(double value) {
+        return new Point(this.x * value, this.y * value);
+    }
+
+    /**
+     * 返回多边形质心。
+     *
+     * @param points 多边形各个点。
+     * @return 返回多边形质心。
+     */
+    public static Point getCentroid(Point[] points) {
+        double sumX = 0;
+        double sumY = 0;
+
+        for (Point p : points) {
+            sumX += p.x;
+            sumY += p.y;
+        }
+
+        return new Point(sumX / (double) points.length, sumY / (double) points.length);
+    }
+
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();

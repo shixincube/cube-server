@@ -173,13 +173,102 @@ public class QueryRevolver {
         return this.filterSubjectNoun(result.toString());
     }
 
-    private String fixName(String name, String gender, int age) {
-        if (age <= 22) {
-            return name.charAt(0) + "同学";
+    public String generatePrompt(List<ReportRelation> relations, List<Report> reports, String query) {
+        StringBuilder result = new StringBuilder();
+
+        result.append("已知信息：\n\n");
+        result.append("现有").append(relations.size()).append("个人的相关信息如下：\n\n");
+
+        for (int i = 0; i < relations.size(); ++i) {
+            ReportRelation relation = relations.get(i);
+            Report report = reports.get(i);
+            String name = relation.name;
+//            String name = this.fixName(relation.name, report.getAttribute().getGenderText(), report.getAttribute().age);
+            result.append("## ").append(name).append("\n\n");
+            result.append(name).append("的年龄是：").append(report.getAttribute().age).append("岁，");
+            result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
+
+            if (report instanceof PaintingReport) {
+                result.append(name).append("的情况如下：\n");
+
+                PaintingReport paintingReport = (PaintingReport) report;
+
+                ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
+
+                List<String> symptomContent = this.extractSymptomContent(template,
+                        paintingReport.getEvaluationReport().getEvaluationScores());
+                for (String content : symptomContent) {
+                    result.append(content);
+                    if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
+                        break;
+                    }
+                }
+                result.append("\n");
+
+                if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
+                    result.append("\n");
+                    result.append(name).append("的大五人格画像是").append(paintingReport.getEvaluationReport()
+                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("。\n");
+                    // 性格特点
+                    result.append(paintingReport.getEvaluationReport()
+                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("的性格特点：");
+                    result.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
+                            .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
+                }
+
+                if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
+                    result.append("\n");
+                    result.append(this.generateFragment(report, query));
+                }
+            }
+            else if (report instanceof ScaleReport) {
+                ScaleReport scaleReport = (ScaleReport) report;
+                if (null != scaleReport.getScale()) {
+                    result.append(scaleReport.getScale().displayName);
+                    result.append("量表的测验结果是：\n");
+                }
+                else {
+                    result.append(name).append("的心理表现有：\n");
+                }
+
+                for (ScaleFactor factor : scaleReport.getFactors()) {
+                    result.append("\n* ").append(factor.description);
+                    if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
+                        break;
+                    }
+                }
+
+                result.append("\n对于上述心理表现给出以下建议：\n");
+                for (ScaleFactor factor : scaleReport.getFactors()) {
+                    result.append("\n* ").append(factor.suggestion);
+                    if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
+                        break;
+                    }
+                }
+                result.append("\n");
+            }
+
+            if (result.substring(result.length() - 1).equals("\n")) {
+                result.append("\n");
+            }
+            else {
+                result.append("\n\n");
+            }
         }
-        else {
-            return name.charAt(0) + (gender.contains("男") ? "先生" : "女士");
+
+        result.append("\n根据上述已知信息，同时综合使用心理学专业知识，");
+
+        for (String word : this.keywordSuggestion) {
+            if (query.contains(word)) {
+                result.append("建议里不要出现用药信息");
+                break;
+            }
         }
+
+        result.append("，请回答用户的问题。问题是：");
+        result.append(query);
+
+        return this.filterSubjectNoun(result.toString());
     }
 
     public GenerativeRecord generateSupplement(ReportRelation relation, Report report, String currentQuery) {
@@ -250,6 +339,15 @@ public class QueryRevolver {
 
         GenerativeRecord result = new GenerativeRecord(ModelConfig.BAIZE_UNIT, query.toString(), answer.toString());
         return result;
+    }
+
+    private String fixName(String name, String gender, int age) {
+        if (age <= 22) {
+            return name.charAt(0) + "同学";
+        }
+        else {
+            return name.charAt(0) + (gender.contains("男") ? "先生" : "女士");
+        }
     }
 
     private List<String> extractSymptomContent(ThemeTemplate theme, List<EvaluationScore> list) {

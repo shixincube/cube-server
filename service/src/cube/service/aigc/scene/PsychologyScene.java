@@ -43,10 +43,7 @@ import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -686,7 +683,35 @@ public class PsychologyScene {
             }
         }
         else {
-            result.append(query);
+            List<ReportRelation> relationList = new ArrayList<>();
+            List<Report> reportList = new ArrayList<>();
+
+            for (ReportRelation relation : relations) {
+                Report report = null;
+                PaintingReport paintingReport = this.getPaintingReport(relation.reportSn);
+                if (null == paintingReport) {
+                    ScaleReport scaleReport = this.getScaleReport(relation.reportSn);
+                    report = scaleReport;
+                }
+                else {
+                    report = paintingReport;
+                }
+                if (null == report) {
+                    Logger.w(this.getClass(), "#buildPrompt - Can NOT find report: " + relation.reportSn);
+                    continue;
+                }
+
+                relationList.add(relation);
+                reportList.add(report);
+            }
+
+            if (relationList.isEmpty() || reportList.isEmpty()) {
+                Logger.w(this.getClass(), "#buildPrompt - No data for building prompt");
+                return null;
+            }
+
+            QueryRevolver queryRevolver = new QueryRevolver(this.aigcService.getTokenizer());
+            result.append(queryRevolver.generatePrompt(relationList, reportList, query));
         }
 
         return result.toString();
@@ -770,6 +795,8 @@ public class PsychologyScene {
 
             String description = null;
             if (workflow.isSpeed()) {
+                Logger.d(this.getClass(), "processScaleReport - factor prompt: " +
+                        prompt.name + " - " + prompt.description);
                 description = workflow.infer(prompt.description);
             }
             if (null == description) {
@@ -779,6 +806,8 @@ public class PsychologyScene {
 
             String suggestion = null;
             if (workflow.isSpeed()) {
+                Logger.d(this.getClass(), "processScaleReport - factor prompt: " +
+                        prompt.name + " - " + prompt.suggestion);
                 suggestion = workflow.infer(prompt.suggestion);
             }
             if (null == suggestion) {
@@ -786,7 +815,7 @@ public class PsychologyScene {
                         null, null);
             }
 
-            if (null == description || null == suggestion) {
+            if (null == description || null == suggestion || description.length() == 0 || suggestion.length() == 0) {
                 Logger.w(this.getClass(), "#processScaleReport - Generates description & suggestion error: " + factor.name);
                 return AIGCStateCode.UnitError;
             }

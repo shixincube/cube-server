@@ -28,20 +28,47 @@ package cube.aigc.psychology.algorithm;
 
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.ReportRelation;
+import cube.vision.Point;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 大五人格分析。
+ */
 public class BigFiveRevolver {
 
     public BigFiveRevolver() {
     }
 
-    public List<String> generatePanoramaPrompt(List<ReportRelation> relations, List<PaintingReport> reports) {
-        List<String> result = new ArrayList<>();
+    public Panorama generatePanorama(List<ReportRelation> relations, List<PaintingReport> reports) {
+        Panorama panorama = new Panorama();
+
+        for (int i = 0; i < reports.size(); ++i) {
+            PaintingReport report = reports.get(i);
+            Point c = this.calcCoordinate(report.getEvaluationReport().getPersonalityAccelerator().getBigFiveFeature());
+
+        }
+
+        return panorama;
+    }
+
+    private Point calcCoordinate(BigFiveFeature feature) {
+        Point pObligingness = new Point(0, -feature.getObligingness());
+        Point pExtraversion = new Point(-feature.getExtraversion(), 0);
+        Point pAchievement = new Point(0, feature.getAchievement());
+        Point pConscientiousness = new Point(feature.getConscientiousness(), 0);
+        return Point.getCentroid(new Point[] { pObligingness, pExtraversion, pAchievement, pConscientiousness });
+    }
 
 
+    public class Panorama {
 
-        return result;
+        private List<Point> coordinates = new ArrayList<>();
+
+//        private
+
+        public Panorama() {
+        }
     }
 }

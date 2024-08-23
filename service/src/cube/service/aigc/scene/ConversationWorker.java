@@ -73,6 +73,11 @@ public class ConversationWorker {
         List<GenerativeRecord> histories = null;
         String prompt = PsychologyScene.getInstance().buildPrompt(reportRelationList, query);
 
+        if (null == prompt) {
+            Logger.e(this.getClass(), "#work - Builds prompt failed");
+            return AIGCStateCode.NoData;
+        }
+
         /** FIXME 2024-08-09 放弃使用历史记录方式
         if (channel.getHistories().isEmpty()) {
             prompt = PsychologyScene.getInstance().buildPrompt(reportRelationList, query);

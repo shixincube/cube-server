@@ -488,7 +488,7 @@ public class BigFiveFeature implements JSONable {
         Point p3 = new Point(10 + this.extraversion, 10);
         Point p4 = new Point(10, 10 - this.achievement);
         // 计算质心
-        Point centroid = getCentroid(new Point[] {
+        Point centroid = Point.getCentroid(new Point[] {
                 p1, p2, p3, p4
         });
 
@@ -526,6 +526,26 @@ public class BigFiveFeature implements JSONable {
 
     public String getDisplayName() {
         return this.displayName;
+    }
+
+    public double getObligingness() {
+        return this.obligingness;
+    }
+
+    public double getConscientiousness() {
+        return this.conscientiousness;
+    }
+
+    public double getExtraversion() {
+        return this.extraversion;
+    }
+
+    public double getAchievement() {
+        return this.achievement;
+    }
+
+    public double getNeuroticism() {
+        return this.neuroticism;
     }
 
     public ApproximateValue calcApproximate(double obligingness, double conscientiousness, double extraversion,
@@ -781,31 +801,6 @@ public class BigFiveFeature implements JSONable {
         return null;
     }
 
-    private static Point getCentroid(Point[] points) {
-        double totalArea = 0;
-        double totalX = 0;
-        double totalY = 0;
-
-        for (int i = 0; i < points.length; ++i) {
-            if (i + 1 >= points.length) {
-                break;
-            }
-
-            Point a = points[i + 1];
-            Point b = points[i];
-
-            double area = 0.5 * (a.x * b.y - b.x * a.y);    // 计算面积
-            double x = (a.x + b.x) / 3.0;   // x 方向质心
-            double y = (a.y + b.y) / 3.0;   // y 方向质心
-
-            totalArea += area;
-            totalX += area * x;
-            totalY += area * y;
-        }
-
-        return new Point(totalX / totalArea, totalY / totalArea);
-    }
-
 
     public static class TemplateValue {
         /**
@@ -848,7 +843,7 @@ public class BigFiveFeature implements JSONable {
             Point p3 = new Point(10 + extraversion, 10);
             Point p4 = new Point(10, 10 - achievement);
 
-            this.centroid = getCentroid(new Point[] {
+            this.centroid = Point.getCentroid(new Point[] {
                     p1, p2, p3, p4
             });
         }
