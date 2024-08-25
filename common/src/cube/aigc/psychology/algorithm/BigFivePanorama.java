@@ -26,8 +26,45 @@
 
 package cube.aigc.psychology.algorithm;
 
-public class BigFivePanorama {
+public enum BigFivePanorama {
 
-    BigFivePanorama() {
+    /**
+     * 宜人性/外向性。
+     */
+    ObligingnessExtraversion(-1, -1),
+
+    /**
+     * 外向性/进取性。
+     */
+    ExtraversionAchievement(-1, 1),
+
+    /**
+     * 进去性/尽责性。
+     */
+    AchievementConscientiousness(1, 1),
+
+    /**
+     * 尽责性/宜人性。
+     */
+    ConscientiousnessObligingness(1, -1)
+
+    ;
+
+    public final int xOri;
+
+    public final int yOri;
+
+    BigFivePanorama(int xOri, int yOri) {
+        this.xOri = xOri;
+        this.yOri = yOri;
+    }
+
+    public static BigFivePanorama parse(double x, double y) {
+        for (BigFivePanorama bfp : BigFivePanorama.values()) {
+            if (bfp.xOri < 0 && x < 0 && bfp.yOri < 0 && y < 0) {
+                return bfp;
+            }
+        }
+        return ObligingnessExtraversion;
     }
 }

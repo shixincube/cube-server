@@ -342,12 +342,13 @@ public class QueryRevolver {
     }
 
     private String fixName(String name, String gender, int age) {
-        if (age <= 22) {
-            return name.charAt(0) + "同学";
-        }
-        else {
-            return name.charAt(0) + (gender.contains("男") ? "先生" : "女士");
-        }
+        return name;
+//        if (age <= 22) {
+//            return name.charAt(0) + "同学";
+//        }
+//        else {
+//            return name.charAt(0) + (gender.contains("男") ? "先生" : "女士");
+//        }
     }
 
     private List<String> extractSymptomContent(ThemeTemplate theme, List<EvaluationScore> list) {
