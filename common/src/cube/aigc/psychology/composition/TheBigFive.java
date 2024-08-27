@@ -26,6 +26,8 @@
 
 package cube.aigc.psychology.composition;
 
+import org.json.JSONObject;
+
 /**
  * 大五人格。
  */
@@ -65,6 +67,13 @@ public enum TheBigFive {
     TheBigFive(String code, String name) {
         this.code = code;
         this.name = name;
+    }
+
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("code", this.code);
+        json.put("name", this.name);
+        return json;
     }
 
     public static TheBigFive parse(String codeOrName) {

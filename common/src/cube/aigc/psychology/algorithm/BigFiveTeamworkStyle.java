@@ -26,45 +26,58 @@
 
 package cube.aigc.psychology.algorithm;
 
-public enum BigFivePanorama {
+import cube.vision.Point;
+
+public enum BigFiveTeamworkStyle {
 
     /**
-     * 宜人性/外向性。
+     * 竞争。
      */
-    ObligingnessExtraversion(-1, -1),
+    Competition("Competition"),
 
     /**
-     * 外向性/进取性。
+     * 协作。
      */
-    ExtraversionAchievement(-1, 1),
+    Collaboration("Collaboration"),
 
     /**
-     * 进去性/尽责性。
+     * 顺应。
      */
-    AchievementConscientiousness(1, 1),
+    Accommodation("Accommodation"),
 
     /**
-     * 尽责性/宜人性。
+     * 回避。
      */
-    ConscientiousnessObligingness(1, -1)
+    Avoidance("Avoidance"),
+
+    /**
+     * 折中。
+     */
+    Compromise("Compromise")
 
     ;
 
-    public final int xOri;
+    public final String name;
 
-    public final int yOri;
-
-    BigFivePanorama(int xOri, int yOri) {
-        this.xOri = xOri;
-        this.yOri = yOri;
+    BigFiveTeamworkStyle(String name) {
+        this.name = name;
     }
 
-    public static BigFivePanorama parse(double x, double y) {
-        for (BigFivePanorama bfp : BigFivePanorama.values()) {
-            if (bfp.xOri < 0 && x < 0 && bfp.yOri < 0 && y < 0) {
-                return bfp;
-            }
+    public static BigFiveTeamworkStyle parse(Point coordinate) {
+        if (coordinate.x < -5.0 && coordinate.y > 5.0) {
+            return Competition;
         }
-        return ObligingnessExtraversion;
+        else if (coordinate.x > 5.0 && coordinate.y > 5.0) {
+            return Collaboration;
+        }
+        else if (coordinate.x > 5.0 && coordinate.y < -5.0) {
+            return Accommodation;
+        }
+        else if (coordinate.x < -5.0 && coordinate.y < -5.0) {
+            return Avoidance;
+        }
+        else {
+            return Compromise;
+        }
     }
 }

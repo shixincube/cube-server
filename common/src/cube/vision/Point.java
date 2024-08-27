@@ -56,6 +56,11 @@ public class Point implements JSONable {
         return new Point(this.x * value, this.y * value);
     }
 
+    public static Point vector(Point startPoint, Point endPoint) {
+        return new Point(endPoint.x - startPoint.x,
+                endPoint.y - startPoint.y);
+    }
+
     /**
      * 返回多边形质心。
      *
@@ -72,6 +77,12 @@ public class Point implements JSONable {
         }
 
         return new Point(sumX / (double) points.length, sumY / (double) points.length);
+    }
+
+    public static double pointLocation(Point startPoint, Point endPoint, Point basePoint) {
+        Point vector = Point.vector(startPoint, endPoint);
+        Point sV = Point.vector(startPoint, basePoint);
+        return vector.x * sV.y - vector.y * sV.x;
     }
 
     @Override
