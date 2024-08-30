@@ -193,25 +193,19 @@ public class PaintingReport extends Report {
 
     public String makeMarkdown() {
         StringBuilder buf = new StringBuilder();
-        buf.append("# ").append(this.theme.name).append("报告");
 
-        buf.append("\n\n");
         buf.append("> ").append(this.attribute.getGenderText());
         buf.append("    ").append(this.attribute.getAgeText());
-        buf.append("\n> ").append(Utils.gsDateFormat.format(new Date(this.timestamp))).append("\n");
-
-        if (null != this.summary) {
-            buf.append("\n\n");
-            buf.append("**概述**\n");
-            buf.append(this.summary);
-            buf.append("\n");
-        }
+        buf.append("\n\n> ").append(Utils.gsDateFormat.format(new Date(this.timestamp))).append("\n");
 
         if (null != this.evaluationReport) {
             buf.append("\n\n");
             buf.append("**Hesitating**：");
             buf.append(this.evaluationReport.isHesitating() ? "***是***" : "***否***");
-            buf.append("\n");
+            buf.append("\n\n");
+
+            buf.append("## 基础数据");
+            buf.append("\n\n");
 
             if (this.evaluationReport.numRepresentations() > 0) {
                 buf.append("\n\n");
@@ -259,6 +253,13 @@ public class PaintingReport extends Report {
             buf.append("\n");
         }
 
+        if (null != this.summary) {
+            buf.append("\n\n");
+            buf.append("**概述**\n\n");
+            buf.append(this.summary);
+            buf.append("\n");
+        }
+
         if (null != this.dimensionScore && null != this.normDimensionScore) {
             buf.append("\n");
             buf.append("**六维评价**\n\n");
@@ -276,35 +277,36 @@ public class PaintingReport extends Report {
         }
 
         if (null != this.evaluationReport && null != this.evaluationReport.getPersonalityAccelerator()) {
+            buf.append("## 人格特质");
+
             BigFiveFeature bigFiveFeature = this.evaluationReport.getPersonalityAccelerator().getBigFiveFeature();
             buf.append("\n\n");
             buf.append("**大五人格**");
             buf.append("\n\n");
-            buf.append("- **人格画像** ：").append(bigFiveFeature.getDisplayName());
+            buf.append("**人格画像** ：").append(bigFiveFeature.getDisplayName());
             buf.append("\n\n");
-            buf.append("- **人格描述** ：").append(bigFiveFeature.getDescription());
+            buf.append("**人格描述** ：\n\n").append(bigFiveFeature.getDescription());
             buf.append("\n\n");
 
             MBTIFeature mbtiFeature = this.evaluationReport.getPersonalityAccelerator().getMBTIFeature();
             buf.append("\n\n");
             buf.append("**MBTI 性格**");
             buf.append("\n\n");
-            buf.append("- **性格类型** ：").append(mbtiFeature.getName())
+            buf.append("**性格类型** ：").append(mbtiFeature.getName())
                     .append(" （").append(mbtiFeature.getCode()).append("）");
             buf.append("\n\n");
-            buf.append("- **性格描述** ：").append(mbtiFeature.getDescription());
+            buf.append("**性格描述** ：\n\n").append(mbtiFeature.getDescription());
             buf.append("\n\n");
         }
 
         if (null != this.reportTextList) {
-            buf.append("\n");
-            buf.append("**报告文本：**");
-            buf.append("\n");
+            buf.append("## 报告文本");
+            buf.append("\n\n");
             for (ReportSection rs : this.reportTextList) {
                 buf.append("\n");
-                buf.append("> **").append(rs.title).append("** \n");
-                buf.append("> **报告**：").append(rs.report).append("\n");
-                buf.append("> **建议**：\n").append(rs.suggestion).append("\n");
+                buf.append("**").append(rs.title).append("** \n\n");
+                buf.append("**报告**：\n\n").append(rs.report).append("\n\n");
+                buf.append("**建议**：\n\n").append(rs.suggestion).append("\n\n");
                 buf.append("\n***\n");
             }
             buf.append("\n\n");

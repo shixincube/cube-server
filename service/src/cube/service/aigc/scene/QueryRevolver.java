@@ -158,16 +158,16 @@ public class QueryRevolver {
             result.append("\n");
         }
 
-        result.append("\n根据上述已知信息，同时综合使用心理学专业知识，");
+        result.append("\n根据上述已知信息，简洁和专业的来回答用户的问题。");
 
         for (String word : this.keywordSuggestion) {
             if (query.contains(word)) {
-                result.append("建议里不要出现用药信息");
+                result.append("答案里不要出现药品信息。");
                 break;
             }
         }
 
-        result.append("，请回答用户的问题。问题是：");
+        result.append("问题是：");
         result.append(query);
 
         return this.filterSubjectNoun(result.toString());
@@ -256,16 +256,16 @@ public class QueryRevolver {
             }
         }
 
-        result.append("\n根据上述已知信息，同时综合使用心理学专业知识，");
+        result.append("\n根据上述已知信息，简洁和专业的来回答用户的问题。");
 
         for (String word : this.keywordSuggestion) {
             if (query.contains(word)) {
-                result.append("建议里不要出现用药信息");
+                result.append("答案里不要出现药品信息。");
                 break;
             }
         }
 
-        result.append("，请回答用户的问题。问题是：");
+        result.append("问题是：");
         result.append(query);
 
         return this.filterSubjectNoun(result.toString());

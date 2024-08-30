@@ -29,9 +29,7 @@ package cube.service.aigc.scene;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
-import cube.aigc.psychology.composition.AnswerSheet;
-import cube.aigc.psychology.composition.ReportSection;
-import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.composition.*;
 import cube.common.Storagable;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -289,21 +287,10 @@ public class PsychologyStorage implements Storagable {
         return report;
     }
 
-    public List<PaintingReport> readPsychologyReports(long contactId) {
-        List<PaintingReport> list = new ArrayList<>();
-
-        List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
-                new Conditional[] {
-                        Conditional.createEqualTo("contact_id", contactId)
-                });
-
-        for (StorageField[] fields : result) {
-            PaintingReport report = this.makeReport(fields);
-            // 添加到列表
-            list.add(report);
-        }
-
-        return list;
+    public int countPsychologyReports() {
+        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(*) FROM " + this.reportTable +
+                " WHERE finished_timestamp<>0");
+        return result.get(0)[0].getInt();
     }
 
     public int countPsychologyReports(long contactId, long starTime, long endTime) {
@@ -313,17 +300,14 @@ public class PsychologyStorage implements Storagable {
         return result.get(0)[0].getInt();
     }
 
-    public List<PaintingReport> readPsychologyReports(long contactId, long starTime, long endTime, int pageIndex) {
+    public List<PaintingReport> readPsychologyReports(int pageIndex, int pageSize, boolean descending) {
         List<PaintingReport> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
                 new Conditional[] {
-                        Conditional.createEqualTo("contact_id", contactId),
-                        Conditional.createAnd(),
-                        Conditional.createGreaterThanEqual(new StorageField("timestamp", starTime)),
-                        Conditional.createAnd(),
-                        Conditional.createLessThanEqual(new StorageField("timestamp", endTime)),
-                        Conditional.createLimitOffset(this.limit, pageIndex * this.limit)
+                        Conditional.createUnequalTo("finished_timestamp", (long) 0),
+                        Conditional.createOrderBy("timestamp", descending),
+                        Conditional.createLimitOffset(pageSize, pageIndex * pageSize)
                 });
 
         for (StorageField[] fields : result) {
@@ -335,18 +319,6 @@ public class PsychologyStorage implements Storagable {
     }
 
     public boolean writePsychologyReport(PaintingReport report) {
-//        if (null != report.getBehaviorList()) {
-//            for (DescriptionSuggestion bs : report.getBehaviorList()) {
-//                this.storage.executeInsert(this.reportBehaviorTable, new StorageField[] {
-//                        new StorageField("report_sn", report.sn),
-//                        new StorageField("term", bs.term.word),
-//                        new StorageField("description", bs.description),
-//                        new StorageField("behavior", EmojiFilter.filterEmoji(bs.behavior)),
-//                        new StorageField("suggestion", EmojiFilter.filterEmoji(bs.suggestion))
-//                });
-//            }
-//        }
-
         if (null != report.getReportTextList()) {
             for (ReportSection rs : report.getReportTextList()) {
                 this.storage.executeInsert(this.reportTextTable, new StorageField[] {
@@ -580,6 +552,8 @@ public class PsychologyStorage implements Storagable {
             report.setSummary(data.get("summary").getString());
         }
 
+        EvaluationReport evaluationReport = null;
+
         if (!data.get("evaluation_data").isNullValue()) {
             JSONObject dataJson = null;
             try {
@@ -597,7 +571,7 @@ public class PsychologyStorage implements Storagable {
                 return null;
             }
 
-            EvaluationReport evaluationReport = new EvaluationReport(dataJson);
+            evaluationReport = new EvaluationReport(dataJson);
             report.setEvaluationReport(evaluationReport);
         }
 
@@ -636,9 +610,44 @@ public class PsychologyStorage implements Storagable {
         }
         report.setReportTextList(textList);
 
+        // 六维
+        SixDimensionScore dimensionScore = Resource.getInstance()
+                .getSixDimProjection().calc(evaluationReport.getEvaluationScores());
+
+        List<EvaluationScore> scoreList = Resource.getInstance().getBenchmark().getEvaluationScores(report.getAttribute().age);
+        scoreList = this.filter(evaluationReport.getEvaluationScores(), scoreList);
+        SixDimensionScore normDimensionScore = Resource.getInstance().getSixDimProjection().calc(scoreList);
+
+        // 校准视觉效果
+        for (SixDimension dim : SixDimension.values()) {
+            int norm = normDimensionScore.getDimensionScore(dim);
+            int score = dimensionScore.getDimensionScore(dim);
+            if (norm < 10) {
+                normDimensionScore.record(dim, norm * 3);
+                dimensionScore.record(dim, (int) Math.round(score * 1.8));
+            } else if (norm < 20) {
+                normDimensionScore.record(dim, norm * 2);
+                dimensionScore.record(dim, (int) Math.round(score * 1.4));
+            }
+        }
+        report.setDimensionalScore(dimensionScore, normDimensionScore);
+
         // 生成 Markdown
         report.makeMarkdown();
 
         return report;
+    }
+
+    private List<EvaluationScore> filter(List<EvaluationScore> indicatorList, List<EvaluationScore> sources) {
+        List<EvaluationScore> result = new ArrayList<>();
+        for (EvaluationScore es : indicatorList) {
+            Indicator indicator = es.indicator;
+            for (EvaluationScore score : sources) {
+                if (score.indicator == indicator) {
+                    result.add(score);
+                }
+            }
+        }
+        return result;
     }
 }

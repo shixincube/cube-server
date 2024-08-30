@@ -123,11 +123,11 @@ public class PsychologyReports extends ContextHandler {
                     this.complete();
                 }
                 else {
-                    long cid = Long.parseLong(request.getParameter("cid"));
-                    long start = Long.parseLong(request.getParameter("start"));
-                    long end = Long.parseLong(request.getParameter("end"));
                     int page = Integer.parseInt(request.getParameter("page"));
-                    JSONObject data = Manager.getInstance().getPsychologyReports(token, cid, start, end, page, markdown);
+                    int size = Integer.parseInt(request.getParameter("size"));
+                    boolean descending = (null != request.getParameter("desc")) ?
+                            Boolean.parseBoolean(request.getParameter("desc")) : true;
+                    JSONObject data = Manager.getInstance().getPsychologyReports(token, page, size, descending);
                     if (null != data) {
                         this.respondOk(response, data);
                     }

@@ -77,19 +77,19 @@ public class GetPsychologyReportTask extends ServiceTask {
         long sn = 0;
         boolean markdown = false;
         boolean texts = false;
-        long contactId = 0;
-        long startTime = 0;
-        long endTime = 0;
+
         int pageIndex = 0;
+        int pageSize = 0;
+        boolean descending = true;
 
         try {
             sn = packet.data.has("sn") ? packet.data.getLong("sn") : 0;
             texts = packet.data.has("texts") && packet.data.getBoolean("texts");
             markdown = packet.data.has("markdown") && packet.data.getBoolean("markdown");
-            contactId = packet.data.has("cid") ? packet.data.getLong("cid") : 0;
-            startTime = packet.data.has("start") ? packet.data.getLong("start") : 0;
-            endTime = packet.data.has("end") ? packet.data.getLong("end") : 0;
+
             pageIndex = packet.data.has("page") ? packet.data.getInt("page") : 0;
+            pageSize = packet.data.has("size") ? packet.data.getInt("size") : 0;
+            descending = packet.data.has("desc") ? packet.data.getBoolean("desc") : true;
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -132,11 +132,10 @@ public class GetPsychologyReportTask extends ServiceTask {
                 }
             }
         }
-        else if (0 != contactId && 0 != startTime && 0 != endTime) {
-            int num = PsychologyScene.getInstance().numPsychologyReports(contactId, startTime, endTime);
+        else if (0 != pageSize) {
+            int num = PsychologyScene.getInstance().numPsychologyReports();
 
-            List<PaintingReport> list = PsychologyScene.getInstance().getPsychologyReports(contactId,
-                    startTime, endTime, pageIndex);
+            List<PaintingReport> list = PsychologyScene.getInstance().getPsychologyReports(pageIndex, pageSize, descending);
             JSONArray array = new JSONArray();
             for (PaintingReport report : list) {
                 array.put(report.toCompactJSON());
@@ -145,6 +144,7 @@ public class GetPsychologyReportTask extends ServiceTask {
             JSONObject responseData = new JSONObject();
             responseData.put("total", num);
             responseData.put("page", pageIndex);
+            responseData.put("size", pageSize);
             responseData.put("list", array);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));

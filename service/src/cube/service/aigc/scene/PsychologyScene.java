@@ -217,12 +217,16 @@ public class PsychologyScene {
         return report;
     }
 
+    public int numPsychologyReports() {
+        return this.storage.countPsychologyReports();
+    }
+
     public int numPsychologyReports(long contactId, long startTime, long endTime) {
         return this.storage.countPsychologyReports(contactId, startTime, endTime);
     }
 
-    public List<PaintingReport> getPsychologyReports(long contactId, long startTime, long endTime, int pageIndex) {
-        List<PaintingReport> list = this.storage.readPsychologyReports(contactId, startTime, endTime, pageIndex);
+    public List<PaintingReport> getPsychologyReports(int pageIndex, int pageSize, boolean descending) {
+        List<PaintingReport> list = this.storage.readPsychologyReports(pageIndex, pageSize, descending);
         for (PaintingReport report : list) {
             FileLabel fileLabel = this.aigcService.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
             if (null != fileLabel) {
@@ -732,6 +736,12 @@ public class PsychologyScene {
 
         QueryRevolver revolver = new QueryRevolver(this.aigcService.getTokenizer());
         return revolver.generateSupplement(relation, report, currentQuery);
+    }
+
+    public String searchDataset(String query) {
+        Dataset dataset = Resource.getInstance().loadDataset();
+        
+        return null;
     }
 
     private Painting processPainting(AIGCUnit unit, FileLabel fileLabel) {

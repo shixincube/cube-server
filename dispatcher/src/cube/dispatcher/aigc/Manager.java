@@ -1879,38 +1879,33 @@ public class Manager implements Tickable, PerformerListener {
      * 查询心理学报告。
      *
      * @param token
-     * @param contactId
-     * @param startTime
-     * @param endTime
      * @param pageIndex
-     * @param markdown
+     * @param pageSize
+     * @param descending
      * @return
      */
-    public JSONObject getPsychologyReports(String token, long contactId, long startTime, long endTime, int pageIndex,
-                                           boolean markdown) {
-        if (endTime < startTime) {
+    public JSONObject getPsychologyReports(String token, int pageIndex, int pageSize, boolean descending) {
+        if (pageSize <= 0) {
             return null;
         }
 
         JSONObject data = new JSONObject();
-        data.put("cid", contactId);
-        data.put("start", startTime);
-        data.put("end", endTime);
         data.put("page", pageIndex);
-        data.put("markdown", markdown);
+        data.put("size", pageSize);
+        data.put("desc", descending);
         Packet packet = new Packet(AIGCAction.GetPsychologyReport.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
         ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
-            Logger.w(this.getClass(), "#getPsychologyReport - No response");
+            Logger.w(this.getClass(), "#getPsychologyReports - No response");
             return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#getPsychologyReport - Response state is " + Packet.extractCode(responsePacket));
+            Logger.w(this.getClass(), "#getPsychologyReports - Response state is " + Packet.extractCode(responsePacket));
             return null;
         }
 
