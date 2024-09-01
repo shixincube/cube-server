@@ -227,10 +227,15 @@ public class PsychologyScene {
 
     public List<PaintingReport> getPsychologyReports(int pageIndex, int pageSize, boolean descending) {
         List<PaintingReport> list = this.storage.readPsychologyReports(pageIndex, pageSize, descending);
-        for (PaintingReport report : list) {
+        Iterator<PaintingReport> iter = list.iterator();
+        while (iter.hasNext()) {
+            PaintingReport report = iter.next();
             FileLabel fileLabel = this.aigcService.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
             if (null != fileLabel) {
                 report.setFileLabel(fileLabel);
+            }
+            else {
+                iter.remove();
             }
         }
         return list;

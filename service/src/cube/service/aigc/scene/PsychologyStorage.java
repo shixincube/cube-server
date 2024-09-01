@@ -64,6 +64,8 @@ public class PsychologyStorage implements Storagable {
 
     private final String scaleReportTable = "psychology_scale_report";
 
+    private final String paintingLabelTable = "psychology_painting_label";
+
     private final StorageField[] reportFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY
@@ -209,6 +211,18 @@ public class PsychologyStorage implements Storagable {
             new StorageField("factor_data", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             })
+    };
+
+    private final StorageField[] paintingLabelFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
     };
 
     private Storage storage;

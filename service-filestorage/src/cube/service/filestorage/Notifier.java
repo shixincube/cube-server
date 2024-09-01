@@ -67,6 +67,10 @@ public class Notifier {
                 }
                 return response;
             }
+            else {
+                Logger.w(this.getClass(), "Can NOT find file: " + fileCode);
+                return null;
+            }
         }
         else if (FileStorageAction.PutFile.name.equals(action)) {
             JSONObject jsonData = data.getJSONObject("fileLabel");
