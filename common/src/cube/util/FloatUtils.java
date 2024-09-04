@@ -62,18 +62,16 @@ public final class FloatUtils {
 
     public static void main(String[] args) {
         double[] input = new double[] {
-                FloatUtils.random(0.1, 0.2),
-                FloatUtils.random(0.5, 0.7),
-                FloatUtils.random(0.3, 0.4),
-                FloatUtils.random(0.9, 1.0)
+                11, 11, 12, 20, 17, 76
         };
-        double[] output = FloatUtils.softmax(input);
-        for (double v : output) {
-            System.out.println(v);
-        }
-        System.out.println("----------------------------------------");
 
-        double[] result = FloatUtils.normalization(output, 1, 100);
+//        double[] output = FloatUtils.softmax(input);
+//        for (double v : output) {
+//            System.out.println(v);
+//        }
+//        System.out.println("----------------------------------------");
+
+        double[] result = FloatUtils.normalization(input, 1, 100);
         for (double v : result) {
             System.out.println(v);
         }

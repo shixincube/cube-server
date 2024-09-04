@@ -69,13 +69,13 @@ public class GeneratePsychologyReportTask extends ServiceTask {
             Attribute attribute = null;
             String fileCode = null;
             String themeName = null;
-            int maxIndicatorTexts = 3;
+            int maxIndicatorTexts = 10;
 
             try {
                 attribute = new Attribute(packet.data.getJSONObject("attribute"));
                 fileCode = packet.data.getString("fileCode");
                 themeName = packet.data.getString("theme");
-                maxIndicatorTexts = packet.data.has("indicators") ? packet.data.getInt("indicators") : 5;
+                maxIndicatorTexts = packet.data.has("indicators") ? packet.data.getInt("indicators") : 10;
             } catch (Exception e) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));

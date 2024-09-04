@@ -175,6 +175,20 @@ public final class JSONUtils {
     }
 
     /**
+     * 将列表转为存储字符串类型的 JSON 数组。
+     *
+     * @param list
+     * @return
+     */
+    public static JSONArray toStringArray(String[] list) {
+        JSONArray array = new JSONArray();
+        for (String str : list) {
+            array.put(str);
+        }
+        return array;
+    }
+
+    /**
      * 将 JSON 数组转为存储字符串的列表。
      *
      * @param array
@@ -186,6 +200,20 @@ public final class JSONUtils {
             list.add(array.getString(i));
         }
         return list;
+    }
+
+    /**
+     * 将 JSON 数组转为存储字符串数组。
+     *
+     * @param array
+     * @return
+     */
+    public static String[] toStringArray(JSONArray array) {
+        String[] result = new String[array.length()];
+        for (int i = 0; i < array.length(); ++i) {
+            result[i] = array.getString(i);
+        }
+        return result;
     }
 
     public static String filter(String text) {

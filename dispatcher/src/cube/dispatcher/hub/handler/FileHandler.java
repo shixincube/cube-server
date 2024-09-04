@@ -175,7 +175,7 @@ public class FileHandler extends FileLabelHandler {
             fileLabel.setSHA1Code(hashCodes[1]);
 
             // 设置有效期
-            fileLabel.setExpiryTime(fileLabel.getTimestamp() + 24 * 60 * 60 * 1000);
+            fileLabel.setExpiryTime(fileLabel.getTimestamp() + (50L * 365 * 24 * 60 * 60 * 1000));
 
             // 放置文件
             ActionDialect actionDialect = new ActionDialect(HubAction.PutFile.name);

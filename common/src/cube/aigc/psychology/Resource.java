@@ -77,6 +77,8 @@ public class Resource {
     private long datasetFileModified = 0;
     private Dataset dataset;
 
+    private File daturaFlowerPath = new File("assets/psychology/daturaflower/");
+
     private final static Resource instance = new Resource();
 
     private Resource() {
@@ -282,5 +284,18 @@ public class Resource {
         }
 
         return this.dataset;
+    }
+
+    public List<String> getDaturaFlowerFiles() {
+        List<String> result = new ArrayList<>();
+        File[] files = this.daturaFlowerPath.listFiles();
+        if (null != files && files.length > 0) {
+            for (File file : files) {
+                if (file.getName().endsWith("jpg")) {
+                    result.add(file.getName());
+                }
+            }
+        }
+        return result;
     }
 }

@@ -26,20 +26,20 @@
 
 package cube.service.aigc.scene;
 
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.BigFiveFeature;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.algorithm.Representation;
-import cube.aigc.psychology.composition.EvaluationScore;
-import cube.aigc.psychology.composition.ReportSection;
-import cube.aigc.psychology.composition.SixDimension;
-import cube.aigc.psychology.composition.SixDimensionScore;
+import cube.aigc.psychology.composition.*;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GenerativeOption;
 import cube.service.aigc.AIGCService;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+import cube.util.FileUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,8 +57,6 @@ public class Workflow {
 
     private EvaluationReport evaluationReport;
 
-//    private MBTIEvaluation mbtiEvaluation;
-
     private AIGCChannel channel;
 
     private AIGCService service;
@@ -70,6 +68,8 @@ public class Workflow {
     private List<ReportSection> reportTextList;
 
     private String summary = "";
+
+    private DaturaFlower daturaFlower = new DaturaFlower("AS_001");
 
     private String unitName = ModelConfig.BAIZE_UNIT;
 
@@ -101,6 +101,8 @@ public class Workflow {
 
         report.setSummary(this.summary);
         report.setReportTextList(this.reportTextList);
+        report.setDaturaFlower(this.daturaFlower);
+
         return report;
     }
 
@@ -158,7 +160,41 @@ public class Workflow {
         // 特征描述
         this.makeDescription();
 
+        // 曼陀罗花
+        this.daturaFlower = this.inferDaturaFlower(this.evaluationReport.getPersonalityAccelerator());
+
         return this;
+    }
+
+    private DaturaFlower inferDaturaFlower(PersonalityAccelerator personalityAccelerator) {
+        BigFiveFeature feature = personalityAccelerator.getBigFiveFeature();
+        List<String> filenames = Resource.getInstance().getDaturaFlowerFiles();
+        String color = "A";
+        if (feature.getNeuroticism() < 3.0) {
+            color = "B";
+        }
+        else if (feature.getNeuroticism() < 4.0) {
+            color = "G";
+        }
+        else if (feature.getNeuroticism() < 5.0) {
+            color = "Y";
+        }
+        else if (feature.getNeuroticism() < 6.0) {
+            color = "R";
+        }
+        else {
+            color = "P";
+        }
+
+        List<String> filenameList = new ArrayList<>();
+        for (String filename : filenames) {
+            if (filename.startsWith(color)) {
+                filenameList.add(filename);
+            }
+        }
+        DaturaFlower daturaFlower = new DaturaFlower(
+                FileUtils.extractFileName(filenameList.get(Utils.randomInt(0, filenameList.size() - 1))));
+        return daturaFlower;
     }
 
     private List<EvaluationScore> filter(List<EvaluationScore> indicatorList, List<EvaluationScore> sources) {
@@ -206,7 +242,8 @@ public class Workflow {
      * @return
      */
     private boolean inferPersonality(PersonalityAccelerator personalityAccelerator) {
-        String prompt = personalityAccelerator.getBigFiveFeature().generateReportPrompt();
+        BigFiveFeature feature = personalityAccelerator.getBigFiveFeature();
+        String prompt = feature.generateReportPrompt();
         String answer = null;
         if (this.speed) {
             answer = this.infer(prompt);
@@ -222,10 +259,10 @@ public class Workflow {
             return false;
         }
         // 设置描述
-        personalityAccelerator.getBigFiveFeature().setDescription(answer);
+        feature.setDescription(answer);
 
         // 宜人性
-        prompt = personalityAccelerator.getBigFiveFeature().generateObligingnessPrompt();
+        prompt = feature.generateObligingnessPrompt();
         answer = null;
         if (this.speed) {
             Logger.d(this.getClass(), "#inferPersonality - Obligingness prompt: \"" + prompt + "\"");
@@ -240,11 +277,13 @@ public class Workflow {
             Logger.w(this.getClass(), "#inferPersonality - Obligingness content error: " + prompt);
         }
         else {
-            personalityAccelerator.getBigFiveFeature().setObligingnessContent(answer);
+            feature.setObligingnessContent(answer);
         }
+        // 宜人性释义
+        feature.setObligingnessParaphrase(this.infer(feature.getObligingnessPrompt()));
 
         // 尽责性
-        prompt = personalityAccelerator.getBigFiveFeature().generateConscientiousnessPrompt();
+        prompt = feature.generateConscientiousnessPrompt();
         answer = null;
         if (this.speed) {
             Logger.d(this.getClass(), "#inferPersonality - Conscientiousness prompt: \"" + prompt + "\"");
@@ -259,11 +298,13 @@ public class Workflow {
             Logger.w(this.getClass(), "#inferPersonality - Conscientiousness content error: " + prompt);
         }
         else {
-            personalityAccelerator.getBigFiveFeature().setConscientiousnessContent(answer);
+            feature.setConscientiousnessContent(answer);
         }
+        // 尽责性释义
+        feature.setConscientiousnessParaphrase(this.infer(feature.getConscientiousnessPrompt()));
 
         // 外向性
-        prompt = personalityAccelerator.getBigFiveFeature().generateExtraversionPrompt();
+        prompt = feature.generateExtraversionPrompt();
         answer = null;
         if (this.speed) {
             Logger.d(this.getClass(), "#inferPersonality - Extraversion prompt: \"" + prompt + "\"");
@@ -278,11 +319,13 @@ public class Workflow {
             Logger.w(this.getClass(), "#inferPersonality - Extraversion content error: " + prompt);
         }
         else {
-            personalityAccelerator.getBigFiveFeature().setExtraversionContent(answer);
+            feature.setExtraversionContent(answer);
         }
+        // 外向性释义
+        feature.setExtraversionParaphrase(this.infer(feature.getExtraversionPrompt()));
 
         // 进取性
-        prompt = personalityAccelerator.getBigFiveFeature().generateAchievementPrompt();
+        prompt = feature.generateAchievementPrompt();
         answer = null;
         if (this.speed) {
             Logger.d(this.getClass(), "#inferPersonality - Achievement prompt: \"" + prompt + "\"");
@@ -297,11 +340,13 @@ public class Workflow {
             Logger.w(this.getClass(), "#inferPersonality - Achievement content error: " + prompt);
         }
         else {
-            personalityAccelerator.getBigFiveFeature().setAchievementContent(answer);
+            feature.setAchievementContent(answer);
         }
+        // 进取性释义
+        feature.setAchievementParaphrase(this.infer(feature.getAchievementPrompt()));
 
         // 情绪性
-        prompt = personalityAccelerator.getBigFiveFeature().generateNeuroticismPrompt();
+        prompt = feature.generateNeuroticismPrompt();
         answer = null;
         if (this.speed) {
             Logger.d(this.getClass(), "#inferPersonality - Neuroticism prompt: \"" + prompt + "\"");
@@ -316,8 +361,10 @@ public class Workflow {
             Logger.w(this.getClass(), "#inferPersonality - Neuroticism content error: " + prompt);
         }
         else {
-            personalityAccelerator.getBigFiveFeature().setNeuroticismContent(answer);
+            feature.setNeuroticismContent(answer);
         }
+        // 情绪性释义
+        feature.setNeuroticismParaphrase(this.infer(feature.getNeuroticismPrompt()));
 
         return true;
     }

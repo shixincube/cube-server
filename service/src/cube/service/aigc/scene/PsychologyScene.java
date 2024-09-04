@@ -875,7 +875,7 @@ public class PsychologyScene {
             this.attribute = attribute;
             this.fileLabel = fileLabel;
             this.theme = theme;
-            this.maxIndicatorTexts = Math.min(maxIndicatorTexts, 5);
+            this.maxIndicatorTexts = Math.min(maxIndicatorTexts, 36);
             this.listener = listener;
             this.report = report;
         }

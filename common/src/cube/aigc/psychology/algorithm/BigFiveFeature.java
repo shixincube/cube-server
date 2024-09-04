@@ -28,6 +28,7 @@ package cube.aigc.psychology.algorithm;
 
 import cube.aigc.psychology.composition.TheBigFive;
 import cube.common.JSONable;
+import cube.util.JSONUtils;
 import cube.vision.Point;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -170,35 +171,102 @@ public class BigFiveFeature implements JSONable {
      */
     private double obligingness;
 
+    private String obligingnessParaphrase = "";
+
     private String obligingnessContent = "";
+
+    private ScoreAnnotation obligingnessAnnotation = new ScoreAnnotation(
+            new String[] {
+                    "有同情心、关心别人。", "愿意支持别人。", "和善、对人真诚。", "开明、能理解信任别人。"
+            }, new String[] {
+                    "过于天真、易受骗。", "思维简单、易感。", "心太软、过于温和。"
+            }, new String[] {
+                    "讲求实际。", "机敏。", "精明。", "务实、在商言商。"
+            }, new String[] {
+                    "以自我为中心。", "过于激进、愤世嫉俗。", "有攻击性、负面看人。", "缺乏同情心。"
+            });
 
     /**
      * 尽责性。
      */
     private double conscientiousness;
 
+    private String conscientiousnessParaphrase = "";
+
     private String conscientiousnessContent = "";
+
+    private ScoreAnnotation conscientiousnessAnnotation = new ScoreAnnotation(
+            new String[] {
+                    "有计划、未雨绸缪。", "忠诚可靠、有职业道德。", "尽职尽责、实干。", "尊重维护秩序、结构。"
+            }, new String[] {
+                    "独裁主义。", "过于内向。", "狭隘、不够宽容。", "拒绝变革。"
+            }, new String[] {
+                    "有创造性。", "放荡不羁、不受局限。", "思想自由、思维开阔。", "临场发挥较好。"
+            }, new String[] {
+                    "责任心不强、不谨慎。", "不可靠。", "不集中、专注性不够。", "无计划性。"
+            });
 
     /**
      * 外向性。
      */
     private double extraversion;
 
+    private String extraversionParaphrase = "";
+
     private String extraversionContent = "";
+
+    private ScoreAnnotation extraversionAnnotation = new ScoreAnnotation(
+            new String[] {
+                    "积极的、精力充沛的。", "热情外向的。", "好交际的。", "乐观的、友善的。"
+            }, new String[] {
+                    "易于分心、不够专注。", "过于爱展现自己。", "容易打断他人、不顾他人感受。", "容易超出能力许下承诺。"
+            }, new String[] {
+                    "安静。", "谨慎。", "含蓄、内敛。"
+            }, new String[] {
+                    "冷淡、漠不关心。", "狭隘。", "不爱交际、沉默寡言。"
+            });
 
     /**
      * 进取性。
      */
     private double achievement;
 
+    private String achievementParaphrase = "";
+
     private String achievementContent = "";
+
+    private ScoreAnnotation achievementAnnotation = new ScoreAnnotation(
+            new String[] {
+                    "有支配力、有决心。", "坚定的、完全投入的。", "有推动力的。", "以目标为导向的。"
+            }, new String[] {
+                    "固执己见。", "好辩论。", "压制他人。"
+            }, new String[] {
+                    "有伸缩性、灵活。", "适应性强。", "愿意聆听别人意见、与人合作。"
+            }, new String[] {
+                    "太容易被说服。", "依赖性很重。", "优柔寡断、犹豫不决。"
+            });
 
     /**
      * 情绪性。
      */
     private double neuroticism;
 
+    private String neuroticismParaphrase = "";
+
     private String neuroticismContent = "";
+
+    private ScoreAnnotation neuroticismAnnotation = new ScoreAnnotation(
+            new String[] {
+                    "易动感情、易兴奋。", "反应快。", "感染力和带动性，能鼓舞人心。", "有洞察力，会不断提问和澄清。", "乐于学习和发展。"
+            }, new String[] {
+                    "反复无常、难以预测。", "感情用事、心烦意乱。", "忧虑、缺乏信心。", "易变、不一致。",
+                    "直到某项任务结束，否则不愿意停止。", "需要反复确认。", "易受工作环境和他人的影响。"
+            }, new String[] {
+                    "稳定、不慌乱。", "有一贯性、可预测。", "自信、冷静，逆境中顺其自然。", "善于应对危机。", "积极向上，能够自我激励。"
+            }, new String[] {
+                    "自满、高估自己的能力。", "低估风险。", "拒绝成长，认为智力维度比个人后天发展更重要。", "不易动情。",
+                    "缺乏激情、沉闷。", "感觉不到他人的焦虑。"
+            });
 
     private String name;
 
@@ -233,26 +301,32 @@ public class BigFiveFeature implements JSONable {
             JSONObject factor = scores.getJSONObject(i);
             String code = factor.getString("code");
             double score = factor.getDouble("score");
+            String paraphrase = factor.has("paraphrase") ? factor.getString("paraphrase") : "";
             String content = factor.has("content") ? factor.getString("content") : "";
             switch (TheBigFive.parse(code)) {
                 case Obligingness:
                     this.obligingness = score;
+                    this.obligingnessParaphrase = paraphrase;
                     this.obligingnessContent = content;
                     break;
                 case Conscientiousness:
                     this.conscientiousness = score;
+                    this.conscientiousnessParaphrase = paraphrase;
                     this.conscientiousnessContent = content;
                     break;
                 case Extraversion:
                     this.extraversion = score;
+                    this.extraversionParaphrase = paraphrase;
                     this.extraversionContent = content;
                     break;
                 case Achievement:
                     this.achievement = score;
+                    this.achievementParaphrase = paraphrase;
                     this.achievementContent = content;
                     break;
                 case Neuroticism:
                     this.neuroticism = score;
+                    this.neuroticismParaphrase = paraphrase;
                     this.neuroticismContent = content;
                     break;
                 default:
@@ -631,6 +705,61 @@ public class BigFiveFeature implements JSONable {
         return this.description;
     }
 
+    public String getObligingnessPrompt() {
+        return "宜人性是什么意思？";
+    }
+
+    public void setObligingnessParaphrase(String value) {
+        if (null == value) {
+            return;
+        }
+        this.obligingnessParaphrase = value;
+    }
+
+    public String getConscientiousnessPrompt() {
+        return "尽责性是什么意思？";
+    }
+
+    public void setConscientiousnessParaphrase(String value) {
+        if (null == value) {
+            return;
+        }
+        this.conscientiousnessParaphrase = value;
+    }
+
+    public String getExtraversionPrompt() {
+        return "外向性是什么意思？";
+    }
+
+    public void setExtraversionParaphrase(String value) {
+        if (null == value) {
+            return;
+        }
+        this.extraversionParaphrase = value;
+    }
+
+    public String getAchievementPrompt() {
+        return "进取性是什么意思？";
+    }
+
+    public void setAchievementParaphrase(String value) {
+        if (null == value) {
+            return;
+        }
+        this.achievementParaphrase = value;
+    }
+
+    public String getNeuroticismPrompt() {
+        return "情绪性是什么意思？";
+    }
+
+    public void setNeuroticismParaphrase(String value) {
+        if (null == value) {
+            return;
+        }
+        this.neuroticismParaphrase = value;
+    }
+
     public String generateReportPrompt() {
         return this.displayName + "画像报告";
     }
@@ -727,36 +856,46 @@ public class BigFiveFeature implements JSONable {
         JSONObject obligingness = new JSONObject();
         obligingness.put("name", TheBigFive.Obligingness.name);
         obligingness.put("code", TheBigFive.Obligingness.code);
+        obligingness.put("paraphrase", this.obligingnessParaphrase);
         obligingness.put("score", this.obligingness);
         obligingness.put("content", this.obligingnessContent);
+        obligingness.put("annotation", this.obligingnessAnnotation.toJSON());
         scoreArray.put(obligingness);
 
         JSONObject conscientiousness = new JSONObject();
         conscientiousness.put("name", TheBigFive.Conscientiousness.name);
         conscientiousness.put("code", TheBigFive.Conscientiousness.code);
+        conscientiousness.put("paraphrase", this.conscientiousnessParaphrase);
         conscientiousness.put("score", this.conscientiousness);
         conscientiousness.put("content", this.conscientiousnessContent);
+        conscientiousness.put("annotation", this.conscientiousnessAnnotation.toJSON());
         scoreArray.put(conscientiousness);
 
         JSONObject extraversion = new JSONObject();
         extraversion.put("name", TheBigFive.Extraversion.name);
         extraversion.put("code", TheBigFive.Extraversion.code);
+        extraversion.put("paraphrase", this.extraversionParaphrase);
         extraversion.put("score", this.extraversion);
         extraversion.put("content", this.extraversionContent);
+        extraversion.put("annotation", this.extraversionAnnotation.toJSON());
         scoreArray.put(extraversion);
 
         JSONObject achievement = new JSONObject();
         achievement.put("name", TheBigFive.Achievement.name);
         achievement.put("code", TheBigFive.Achievement.code);
+        achievement.put("paraphrase", this.achievementParaphrase);
         achievement.put("score", this.achievement);
         achievement.put("content", this.achievementContent);
+        achievement.put("annotation", this.achievementAnnotation.toJSON());
         scoreArray.put(achievement);
 
         JSONObject neuroticism = new JSONObject();
         neuroticism.put("name", TheBigFive.Neuroticism.name);
         neuroticism.put("code", TheBigFive.Neuroticism.code);
+        neuroticism.put("paraphrase", this.neuroticismParaphrase);
         neuroticism.put("score", this.neuroticism);
         neuroticism.put("content", this.neuroticismContent);
+        neuroticism.put("annotation", this.neuroticismAnnotation.toJSON());
         scoreArray.put(neuroticism);
 
         json.put("scores", scoreArray);
@@ -799,6 +938,42 @@ public class BigFiveFeature implements JSONable {
             }
         }
         return null;
+    }
+
+
+    public class ScoreAnnotation {
+
+        protected String[] highAdvantages;
+
+        protected String[] highDisadvantages;
+
+        protected String[] lowAdvantages;
+
+        protected String[] lowDisadvantages;
+
+        public ScoreAnnotation(String[] highAdvantages, String[] highDisadvantages,
+                               String[] lowAdvantages, String[] lowDisadvantages) {
+            this.highAdvantages = highAdvantages;
+            this.highDisadvantages = highDisadvantages;
+            this.lowAdvantages = lowAdvantages;
+            this.lowDisadvantages = lowDisadvantages;
+        }
+
+        public ScoreAnnotation(JSONObject json) {
+            this.highAdvantages = JSONUtils.toStringArray(json.getJSONArray("highAdvantages"));
+            this.highDisadvantages = JSONUtils.toStringArray(json.getJSONArray("highDisadvantages"));
+            this.lowAdvantages = JSONUtils.toStringArray(json.getJSONArray("lowAdvantages"));
+            this.lowDisadvantages = JSONUtils.toStringArray(json.getJSONArray("lowDisadvantages"));
+        }
+
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("highAdvantages", JSONUtils.toStringArray(this.highAdvantages));
+            json.put("highDisadvantages", JSONUtils.toStringArray(this.highDisadvantages));
+            json.put("lowAdvantages", JSONUtils.toStringArray(this.lowAdvantages));
+            json.put("lowDisadvantages", JSONUtils.toStringArray(this.lowDisadvantages));
+            return json;
+        }
     }
 
 

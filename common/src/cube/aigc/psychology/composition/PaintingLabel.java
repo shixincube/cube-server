@@ -42,21 +42,14 @@ public class PaintingLabel implements JSONable {
 
     private String description;
 
-    private List<Representation> representations;
-
     private List<EvaluationScore> evaluationScores;
+
+    private List<Representation> representations;
 
     public PaintingLabel(JSONObject json) {
         this.sn = json.getLong("sn");
         this.timestamp = json.getLong("timestamp");
         this.description = json.getString("description");
-        if (json.has("representations")) {
-            this.representations = new ArrayList<>();
-            JSONArray array = json.getJSONArray("representations");
-            for (int i = 0; i < array.length(); ++i) {
-                this.representations.add(new Representation(array.getJSONObject(i)));
-            }
-        }
         if (json.has("evaluationScores")) {
             this.evaluationScores = new ArrayList<>();
             JSONArray array = json.getJSONArray("evaluationScores");
@@ -64,6 +57,27 @@ public class PaintingLabel implements JSONable {
                 this.evaluationScores.add(new EvaluationScore(array.getJSONObject(i)));
             }
         }
+        if (json.has("representations")) {
+            this.representations = new ArrayList<>();
+            JSONArray array = json.getJSONArray("representations");
+            for (int i = 0; i < array.length(); ++i) {
+                this.representations.add(new Representation(array.getJSONObject(i)));
+            }
+        }
+    }
+
+    public PaintingLabel(long sn, long timestamp, String description, JSONArray evaluationScores) {
+        this.sn = sn;
+        this.timestamp = timestamp;
+        this.description = description;
+        this.evaluationScores = new ArrayList<>();
+        for (int i = 0; i < evaluationScores.length(); ++i) {
+            this.evaluationScores.add(new EvaluationScore(evaluationScores.getJSONObject(i)));
+        }
+    }
+
+    public void setRepresentations(JSONArray array) {
+
     }
 
     @Override
@@ -72,19 +86,19 @@ public class PaintingLabel implements JSONable {
         json.put("sn", this.sn);
         json.put("timestamp", this.timestamp);
         json.put("description", this.description);
-        if (null != this.representations) {
-            JSONArray array = new JSONArray();
-            for (Representation representation : this.representations) {
-                array.put(representation.toJSON());
-            }
-            json.put("representations", array);
-        }
         if (null != this.evaluationScores) {
             JSONArray array = new JSONArray();
             for (EvaluationScore score : this.evaluationScores) {
                 array.put(score.toJSON());
             }
             json.put("evaluationScores", array);
+        }
+        if (null != this.representations) {
+            JSONArray array = new JSONArray();
+            for (Representation representation : this.representations) {
+                array.put(representation.toJSON());
+            }
+            json.put("representations", array);
         }
         return json;
     }

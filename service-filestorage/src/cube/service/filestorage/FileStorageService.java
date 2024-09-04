@@ -84,7 +84,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 默认的文件有效时长。
      */
-    private long defaultFileDuration = 30L * 24 * 60 * 60 * 1000;
+    private long defaultFileDuration = 50L * 365 * 24 * 60 * 60 * 1000;
 
     /**
      * 文件大小门限。
@@ -94,7 +94,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 每个联系人的最大存储空间。
      */
-    private long defaultMaxSpaceSizeForContact = (long) 10 * 1024 * 1024 * 1024;
+    private long defaultMaxSpaceSizeForContact = 1024L * 1024 * 1024 * 1024 * 1024;
 
     /**
      * 默认客户端上传速率阀值。

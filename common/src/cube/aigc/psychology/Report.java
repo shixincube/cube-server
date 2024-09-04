@@ -56,7 +56,7 @@ public abstract class Report implements JSONable {
         this.sn = Utils.generateSerialNumber();
         this.contactId = contactId;
         this.timestamp = System.currentTimeMillis();
-        this.name = "BZ-" + sDateFormat.format(new Date(this.timestamp)) +
+        this.name = "AXL-" + sDateFormat.format(new Date(this.timestamp)) +
                 String.format("%04d", Utils.randomInt(1, 9999));
         this.attribute = attribute;
     }
@@ -65,7 +65,7 @@ public abstract class Report implements JSONable {
         this.sn = sn;
         this.contactId = contactId;
         this.timestamp = timestamp;
-        this.name = "BZ-" + sDateFormat.format(new Date(this.timestamp)) +
+        this.name = "AXL-" + sDateFormat.format(new Date(this.timestamp)) +
                 String.format("%04d", Utils.randomInt(1, 9999));
         this.attribute = attribute;
     }

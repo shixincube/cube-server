@@ -1811,6 +1811,11 @@ public class AIGCService extends AbstractModule {
             return null;
         }
 
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#generatePsychologyReport - max indicator texts: " + maxIndicatorTexts +
+                    " , file: " + fileCode);
+        }
+
         FileLabel fileLabel = new FileLabel(fileLabelJson);
 
         AIGCChannel channel = this.getChannelByToken(token);

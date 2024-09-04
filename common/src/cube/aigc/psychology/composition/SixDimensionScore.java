@@ -26,6 +26,7 @@
 
 package cube.aigc.psychology.composition;
 
+import cube.util.FloatUtils;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -55,6 +56,19 @@ public class SixDimensionScore {
 
     public int getDimensionScore(SixDimension sixDimension) {
         return this.scores.get(sixDimension);
+    }
+
+    public void normalization() {
+        double[] values = new double[this.scores.size()];
+        int index = 0;
+        for (Map.Entry<SixDimension, Integer> entry : this.scores.entrySet()) {
+            values[index++] = entry.getValue();
+        }
+        double[] output = FloatUtils.normalization(values, 1, 100);
+        index = 0;
+        for (Map.Entry<SixDimension, Integer> entry : this.scores.entrySet()) {
+            entry.setValue((int) Math.floor(output[index++]));
+        }
     }
 
     public JSONObject toJSON() {

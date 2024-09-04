@@ -31,10 +31,7 @@ import cell.util.log.Logger;
 import cube.aigc.psychology.algorithm.BigFiveFeature;
 import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.aigc.psychology.algorithm.Representation;
-import cube.aigc.psychology.composition.EvaluationScore;
-import cube.aigc.psychology.composition.ReportSection;
-import cube.aigc.psychology.composition.SixDimension;
-import cube.aigc.psychology.composition.SixDimensionScore;
+import cube.aigc.psychology.composition.*;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
 import org.json.JSONArray;
@@ -70,6 +67,8 @@ public class PaintingReport extends Report {
     private SixDimensionScore normDimensionScore;
 
     private List<ReportSection> reportTextList;
+
+    private DaturaFlower daturaFlower;
 
     public PaintingReport(long contactId, Attribute attribute, FileLabel fileLabel, Theme theme) {
         super(contactId, attribute);
@@ -116,6 +115,10 @@ public class PaintingReport extends Report {
 
         if (json.has("evaluation")) {
             this.evaluationReport = new EvaluationReport(json.getJSONObject("evaluation"));
+        }
+
+        if (json.has("daturaFlower")) {
+            this.daturaFlower = new DaturaFlower(json.getJSONObject("daturaFlower"));
         }
 
         if (json.has("reportTextList")) {
@@ -191,6 +194,10 @@ public class PaintingReport extends Report {
         return (null == this.evaluationReport);
     }
 
+    public void setDaturaFlower(DaturaFlower daturaFlower) {
+        this.daturaFlower = daturaFlower;
+    }
+
     public String makeMarkdown() {
         StringBuilder buf = new StringBuilder();
 
@@ -208,6 +215,12 @@ public class PaintingReport extends Report {
             buf.append("\n\n");
 
             if (this.evaluationReport.numRepresentations() > 0) {
+                buf.append("\n");
+                buf.append("**Reference**：");
+                buf.append(this.evaluationReport.getReference() == Reference.Normal ?
+                        "正常" : "非正常");
+                buf.append("\n");
+
                 buf.append("\n\n");
                 buf.append("**特征表**");
                 buf.append("\n\n");
@@ -288,15 +301,15 @@ public class PaintingReport extends Report {
             buf.append("**人格描述** ：\n\n").append(bigFiveFeature.getDescription());
             buf.append("\n\n");
 
-            MBTIFeature mbtiFeature = this.evaluationReport.getPersonalityAccelerator().getMBTIFeature();
-            buf.append("\n\n");
-            buf.append("**MBTI 性格**");
-            buf.append("\n\n");
-            buf.append("**性格类型** ：").append(mbtiFeature.getName())
-                    .append(" （").append(mbtiFeature.getCode()).append("）");
-            buf.append("\n\n");
-            buf.append("**性格描述** ：\n\n").append(mbtiFeature.getDescription());
-            buf.append("\n\n");
+//            MBTIFeature mbtiFeature = this.evaluationReport.getPersonalityAccelerator().getMBTIFeature();
+//            buf.append("\n\n");
+//            buf.append("**MBTI 性格**");
+//            buf.append("\n\n");
+//            buf.append("**性格类型** ：").append(mbtiFeature.getName())
+//                    .append(" （").append(mbtiFeature.getCode()).append("）");
+//            buf.append("\n\n");
+//            buf.append("**性格描述** ：\n\n").append(mbtiFeature.getDescription());
+//            buf.append("\n\n");
         }
 
         if (null != this.reportTextList) {
@@ -416,6 +429,11 @@ public class PaintingReport extends Report {
                 json.put("personality", personality);
             }
         }
+
+        if (null != this.daturaFlower) {
+            json.put("daturaFlower", this.daturaFlower.toJSON());
+        }
+
         return json;
     }
 }

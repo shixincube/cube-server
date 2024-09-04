@@ -88,21 +88,24 @@ public class Dataset {
             Map.Entry<String, String[]> entry = iter.next();
             String[] value = entry.getValue();
 
-            if (Math.abs(value.length - keywords.length) >= 2) {
+            if (Math.abs(value.length - keywords.length) > 1) {
                 continue;
             }
 
-            boolean hit = true;
+            int hit = 0;
             for (int i = 0; i < value.length && i < keywords.length && i < length; ++i) {
                 String cur = value[i];
                 String word = keywords[i];
-                if (!cur.equalsIgnoreCase(word)) {
-                    hit = false;
-                    break;
+                if (cur.equalsIgnoreCase(word)) {
+                    ++hit;
                 }
             }
 
-            if (hit) {
+            if (hit == 1 && value.length == 1) {
+                question = entry.getKey();
+                break;
+            }
+            else if (hit > 0 && hit >= Math.min(value.length, keywords.length)) {
                 question = entry.getKey();
                 break;
             }
