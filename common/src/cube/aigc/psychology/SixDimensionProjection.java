@@ -106,9 +106,6 @@ public class SixDimensionProjection {
             result.record(sixDimensions[i], Math.max(1, (int) Math.round(values[i])));
         }
 
-        // 正则化
-        result.normalization();
-
         return result;
     }
 

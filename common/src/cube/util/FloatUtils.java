@@ -60,9 +60,19 @@ public final class FloatUtils {
         return output;
     }
 
+    public static double[] scale(double[] input, double max) {
+        double inputMax = Arrays.stream(input).max().getAsDouble();
+        double scale = (max / inputMax);
+        double[] output = new double[input.length];
+        for (int i = 0; i < input.length; ++i) {
+            output[i] = input[i] * scale;
+        }
+        return output;
+    }
+
     public static void main(String[] args) {
         double[] input = new double[] {
-                11, 11, 12, 20, 17, 76
+                34, 20, 36, 26, 11, 22
         };
 
 //        double[] output = FloatUtils.softmax(input);
@@ -71,9 +81,17 @@ public final class FloatUtils {
 //        }
 //        System.out.println("----------------------------------------");
 
-        double[] result = FloatUtils.normalization(input, 1, 100);
+        double inputMin = Arrays.stream(input).min().getAsDouble();
+        double[] result = FloatUtils.normalization(input, inputMin, 100);
         for (double v : result) {
             System.out.println(v);
         }
+        System.out.println("----------------------------------------");
+
+        result = FloatUtils.scale(input, 100);
+        for (double v : result) {
+            System.out.println(v);
+        }
+        System.out.println("----------------------------------------");
     }
 }

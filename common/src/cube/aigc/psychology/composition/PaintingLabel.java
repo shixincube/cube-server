@@ -76,8 +76,50 @@ public class PaintingLabel implements JSONable {
         }
     }
 
-    public void setRepresentations(JSONArray array) {
+    public long getSn() {
+        return this.sn;
+    }
 
+    public long getTimestamp() {
+        return this.timestamp;
+    }
+
+    public String getDescription() {
+        return this.description;
+    }
+
+    public List<EvaluationScore> getEvaluationScores() {
+        return this.evaluationScores;
+    }
+
+    public JSONArray getEvaluationScoresAsJSONArray() {
+        JSONArray array = new JSONArray();
+        for (EvaluationScore score : this.evaluationScores) {
+            array.put(score.toJSON());
+        }
+        return array;
+    }
+
+    public List<Representation> getRepresentations() {
+        return this.representations;
+    }
+
+    public JSONArray getRepresentationsAsJSONArray() {
+        if (null == this.representations) {
+            return null;
+        }
+        JSONArray array = new JSONArray();
+        for (Representation representation : this.representations) {
+            array.put(representation.toJSON());
+        }
+        return array;
+    }
+
+    public void setRepresentations(JSONArray array) {
+        this.representations = new ArrayList<>();
+        for (int i = 0; i < array.length(); ++i) {
+            this.representations.add(new Representation(array.getJSONObject(i)));
+        }
     }
 
     @Override
@@ -87,18 +129,10 @@ public class PaintingLabel implements JSONable {
         json.put("timestamp", this.timestamp);
         json.put("description", this.description);
         if (null != this.evaluationScores) {
-            JSONArray array = new JSONArray();
-            for (EvaluationScore score : this.evaluationScores) {
-                array.put(score.toJSON());
-            }
-            json.put("evaluationScores", array);
+            json.put("evaluationScores", this.getEvaluationScoresAsJSONArray());
         }
         if (null != this.representations) {
-            JSONArray array = new JSONArray();
-            for (Representation representation : this.representations) {
-                array.put(representation.toJSON());
-            }
-            json.put("representations", array);
+            json.put("representations", this.getRepresentationsAsJSONArray());
         }
         return json;
     }

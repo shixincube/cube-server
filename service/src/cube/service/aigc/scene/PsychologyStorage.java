@@ -102,6 +102,9 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("evaluation_data", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
+            }),
+            new StorageField("datura_flower", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 
@@ -380,7 +383,9 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("theme", report.getTheme().code),
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("summary", report.getSummary()),
-                new StorageField("evaluation_data", dataString)
+                new StorageField("evaluation_data", dataString),
+                new StorageField("datura_flower", (null != report.getDaturaFlower() ?
+                        report.getDaturaFlower().toJSON().toString() : null))
         });
     }
 
@@ -581,11 +586,37 @@ public class PsychologyStorage implements Storagable {
         PaintingLabel label = new PaintingLabel(data.get("sn").getLong(), data.get("timestamp").getLong(),
                 data.get("description").getString(), new JSONArray(data.get("evaluation_scores").getString()));
 
+        if (!data.get("representations").isNullValue()) {
+            label.setRepresentations(new JSONArray(data.get("representations").getString()));
+        }
+
         return label;
     }
 
     public boolean writePaintingLabel(PaintingLabel label) {
-        return false;
+        List<StorageField[]> result = this.storage.executeQuery(this.paintingLabelTable, this.paintingLabelFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("sn", label.getSn())
+                });
+
+        if (result.isEmpty()) {
+            return this.storage.executeInsert(this.paintingLabelTable, new StorageField[] {
+                    new StorageField("sn", label.getSn()),
+                    new StorageField("timestamp", label.getTimestamp()),
+                    new StorageField("description", label.getDescription()),
+                    new StorageField("evaluation_scores", label.getEvaluationScoresAsJSONArray().toString()),
+                    new StorageField("representations",
+                            (null != label.getRepresentations()) ?
+                                    label.getRepresentationsAsJSONArray().toString() : null)
+            });
+        }
+        else {
+            return this.storage.executeUpdate(this.paintingLabelTable, new StorageField[] {
+
+            }, new Conditional[] {
+                    Conditional.createEqualTo("sn", label.getSn())
+            });
+        }
     }
 
     private PaintingReport makeReport(StorageField[] storageFields) {
@@ -600,6 +631,13 @@ public class PsychologyStorage implements Storagable {
 
         if (!data.get("summary").isNullValue()) {
             report.setSummary(data.get("summary").getString());
+        }
+
+        if (!data.get("datura_flower").isNullValue()) {
+            report.setDaturaFlower(new DaturaFlower(new JSONObject(data.get("datura_flower").getString())));
+        }
+        else {
+            report.setDaturaFlower(new DaturaFlower("AS_001"));
         }
 
         EvaluationReport evaluationReport = null;
@@ -670,8 +708,15 @@ public class PsychologyStorage implements Storagable {
 
         // 校准视觉效果
         for (SixDimension dim : SixDimension.values()) {
-            int norm = normDimensionScore.getDimensionScore(dim);
             int score = dimensionScore.getDimensionScore(dim);
+            if (score < 10) {
+                dimensionScore.record(dim, (int) Math.round(score * 2.5));
+            }
+            else if (score < 20) {
+                dimensionScore.record(dim, (int) Math.round(score * 2));
+            }
+
+            int norm = normDimensionScore.getDimensionScore(dim);
             if (norm < 10) {
                 normDimensionScore.record(dim, norm * 3);
                 dimensionScore.record(dim, (int) Math.round(score * 1.8));
@@ -680,6 +725,8 @@ public class PsychologyStorage implements Storagable {
                 dimensionScore.record(dim, (int) Math.round(score * 1.4));
             }
         }
+        dimensionScore.normalization();
+        normDimensionScore.normalization();
         report.setDimensionalScore(dimensionScore, normDimensionScore);
 
         // 生成 Markdown

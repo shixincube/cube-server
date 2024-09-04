@@ -125,8 +125,15 @@ public class Workflow {
 
             // 校准视觉效果
             for (SixDimension dim : SixDimension.values()) {
-                int norm = this.normDimensionScore.getDimensionScore(dim);
                 int score = this.dimensionScore.getDimensionScore(dim);
+                if (score < 10) {
+                    this.dimensionScore.record(dim, (int) Math.round(score * 2.5));
+                }
+                else if (score < 20) {
+                    this.dimensionScore.record(dim, (int) Math.round(score * 2));
+                }
+
+                int norm = this.normDimensionScore.getDimensionScore(dim);
                 if (norm < 10) {
                     this.normDimensionScore.record(dim, norm * 3);
                     this.dimensionScore.record(dim, (int) Math.round(score * 1.8));
@@ -135,6 +142,10 @@ public class Workflow {
                     this.dimensionScore.record(dim, (int) Math.round(score * 1.4));
                 }
             }
+
+            // 正则化
+            this.dimensionScore.normalization();
+            this.normDimensionScore.normalization();
         } catch (Exception e) {
             Logger.w(this.getClass(), "#make", e);
         }

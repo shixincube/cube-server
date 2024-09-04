@@ -64,7 +64,7 @@ public class SixDimensionScore {
         for (Map.Entry<SixDimension, Integer> entry : this.scores.entrySet()) {
             values[index++] = entry.getValue();
         }
-        double[] output = FloatUtils.normalization(values, 1, 100);
+        double[] output = FloatUtils.scale(values, 100);
         index = 0;
         for (Map.Entry<SixDimension, Integer> entry : this.scores.entrySet()) {
             entry.setValue((int) Math.floor(output[index++]));

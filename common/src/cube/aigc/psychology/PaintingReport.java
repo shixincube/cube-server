@@ -198,6 +198,10 @@ public class PaintingReport extends Report {
         this.daturaFlower = daturaFlower;
     }
 
+    public DaturaFlower getDaturaFlower() {
+        return this.daturaFlower;
+    }
+
     public String makeMarkdown() {
         StringBuilder buf = new StringBuilder();
 
@@ -300,6 +304,25 @@ public class PaintingReport extends Report {
             buf.append("\n\n");
             buf.append("**人格描述** ：\n\n").append(bigFiveFeature.getDescription());
             buf.append("\n\n");
+            buf.append("**维度得分** ：\n\n");
+            buf.append("| 维度 | 得分 | 评价 |\n");
+            buf.append("| ---- | ---- | ---- |");
+            buf.append("\n|宜人性|").append(bigFiveFeature.getObligingness()).append("|");
+            buf.append(bigFiveFeature.getObligingness() <= BigFiveFeature.LowScore ? "低" :
+                    (bigFiveFeature.getObligingness() >= BigFiveFeature.HighScore ? "高" : "中")).append("|");
+            buf.append("\n|尽责性|").append(bigFiveFeature.getConscientiousness()).append("|");
+            buf.append(bigFiveFeature.getConscientiousness() <= BigFiveFeature.LowScore ? "低" :
+                    (bigFiveFeature.getConscientiousness() >= BigFiveFeature.HighScore ? "高" : "中")).append("|");
+            buf.append("\n|外向性|").append(bigFiveFeature.getExtraversion()).append("|");
+            buf.append(bigFiveFeature.getExtraversion() <= BigFiveFeature.LowScore ? "低" :
+                    (bigFiveFeature.getExtraversion() >= BigFiveFeature.HighScore ? "高" : "中")).append("|");
+            buf.append("\n|进取性|").append(bigFiveFeature.getAchievement()).append("|");
+            buf.append(bigFiveFeature.getAchievement() <= BigFiveFeature.LowScore ? "低" :
+                    (bigFiveFeature.getAchievement() >= BigFiveFeature.HighScore ? "高" : "中")).append("|");
+            buf.append("\n|情绪性|").append(bigFiveFeature.getNeuroticism()).append("|");
+            buf.append(bigFiveFeature.getNeuroticism() <= BigFiveFeature.LowScore ? "低" :
+                    (bigFiveFeature.getNeuroticism() >= BigFiveFeature.HighScore ? "高" : "中")).append("|");
+            buf.append("\n\n");
 
 //            MBTIFeature mbtiFeature = this.evaluationReport.getPersonalityAccelerator().getMBTIFeature();
 //            buf.append("\n\n");
@@ -322,6 +345,13 @@ public class PaintingReport extends Report {
                 buf.append("**建议**：\n\n").append(rs.suggestion).append("\n\n");
                 buf.append("\n***\n");
             }
+            buf.append("\n\n");
+        }
+
+        if (null != this.daturaFlower) {
+            buf.append("\n\n");
+            buf.append("## 曼陀罗绘画\n\n");
+            buf.append("![曼陀罗绘画](").append(this.daturaFlower.url).append(")");
             buf.append("\n\n");
         }
 
@@ -422,10 +452,10 @@ public class PaintingReport extends Report {
 
             if (null != this.evaluationReport.getPersonalityAccelerator()) {
                 BigFiveFeature bigFiveFeature = this.evaluationReport.getPersonalityAccelerator().getBigFiveFeature();
-                MBTIFeature mbtiFeature = this.evaluationReport.getPersonalityAccelerator().getMBTIFeature();
+//                MBTIFeature mbtiFeature = this.evaluationReport.getPersonalityAccelerator().getMBTIFeature();
                 JSONObject personality = new JSONObject();
                 personality.put("theBigFive", bigFiveFeature.toJSON());
-                personality.put("mbti", mbtiFeature.toJSON());
+//                personality.put("mbti", mbtiFeature.toJSON());
                 json.put("personality", personality);
             }
         }
