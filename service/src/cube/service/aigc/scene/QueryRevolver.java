@@ -394,7 +394,7 @@ public class QueryRevolver {
                         List<String> keywords = analyzer.analyzeOnlyWords(q, 10);
 
                         Dataset dataset = Resource.getInstance().loadDataset();
-                        String a = dataset.getContentByKeywords(keywords.toArray(new String[0]), 5);
+                        String a = dataset.matchContent(keywords.toArray(new String[0]), 5);
                         if (null != a) {
                             result.append(a);
                         }
@@ -416,7 +416,7 @@ public class QueryRevolver {
                         List<String> keywords = analyzer.analyzeOnlyWords(q, 10);
 
                         Dataset dataset = Resource.getInstance().loadDataset();
-                        String a = dataset.getContentByKeywords(keywords.toArray(new String[0]), 5);
+                        String a = dataset.matchContent(keywords.toArray(new String[0]), 5);
                         if (null != a) {
                             result.append(a);
                         }
@@ -438,7 +438,7 @@ public class QueryRevolver {
                         List<String> keywords = analyzer.analyzeOnlyWords(q, 10);
 
                         Dataset dataset = Resource.getInstance().loadDataset();
-                        String a = dataset.getContentByKeywords(keywords.toArray(new String[0]), 5);
+                        String a = dataset.matchContent(keywords.toArray(new String[0]), 5);
                         if (null != a) {
                             result.append(a);
                         }
@@ -460,7 +460,7 @@ public class QueryRevolver {
                         List<String> keywords = analyzer.analyzeOnlyWords(q, 10);
 
                         Dataset dataset = Resource.getInstance().loadDataset();
-                        String a = dataset.getContentByKeywords(keywords.toArray(new String[0]), 5);
+                        String a = dataset.matchContent(keywords.toArray(new String[0]), 5);
                         if (null != a) {
                             result.append(a);
                         }
@@ -483,6 +483,11 @@ public class QueryRevolver {
         }
 
         return result.toString();
+    }
+
+    private String generateKnowledge(String query) {
+
+        return null;
     }
 
     private String filterPersonalityDescription(String desc) {

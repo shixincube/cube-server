@@ -68,9 +68,6 @@ public class ConversationWorker {
             }
         }
 
-//        int maxHistories = 5;
-
-        List<GenerativeRecord> histories = null;
         String prompt = PsychologyScene.getInstance().buildPrompt(reportRelationList, query);
 
         if (null == prompt) {
@@ -104,7 +101,7 @@ public class ConversationWorker {
         }*/
 
         // 使用指定模型生成结果
-        this.service.generateText(channel, unit, query, prompt, new GenerativeOption(), histories, 0,
+        this.service.generateText(channel, unit, query, prompt, new GenerativeOption(), null, 0,
                 null, null, false, true, listener);
 
         return AIGCStateCode.Ok;

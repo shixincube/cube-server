@@ -743,10 +743,12 @@ public class PsychologyScene {
         return revolver.generateSupplement(relation, report, currentQuery);
     }
 
-    public String searchDataset(String query) {
-        Dataset dataset = Resource.getInstance().loadDataset();
-        
-        return null;
+    public PaintingLabel getPaintingLabel(long sn) {
+        return this.storage.readPaintingLabel(sn);
+    }
+
+    public void writePaintingLabel(PaintingLabel label) {
+        this.storage.writePaintingLabel(label);
     }
 
     private Painting processPainting(AIGCUnit unit, FileLabel fileLabel) {

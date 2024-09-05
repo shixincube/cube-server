@@ -432,6 +432,16 @@ public enum AIGCAction {
     PsychologyConversation("psychologyConversation"),
 
     /**
+     * 获取绘画标注。
+     */
+    GetPaintingLabel("getPaintingLabel"),
+
+    /**
+     * 设置绘画标注。
+     */
+    SetPaintingLabel("setPaintingLabel"),
+
+    /**
      * 预测图片元素。
      */
     // PredictImage("predictImage"),

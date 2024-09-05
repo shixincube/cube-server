@@ -29,7 +29,6 @@ package cube.aigc.psychology;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.SixDimension;
 import cube.aigc.psychology.composition.SixDimensionScore;
-import cube.util.FloatUtils;
 import org.json.JSONObject;
 
 import java.util.Iterator;
@@ -103,7 +102,8 @@ public class SixDimensionProjection {
                 values[i] += totalFive / 5.0;
             }
 
-            result.record(sixDimensions[i], Math.max(1, (int) Math.round(values[i])));
+            result.record(sixDimensions[i],
+                    Math.min(Math.max(1, (int) Math.round(values[i])), 100));
         }
 
         return result;

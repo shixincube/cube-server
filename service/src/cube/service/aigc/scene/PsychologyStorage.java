@@ -612,7 +612,12 @@ public class PsychologyStorage implements Storagable {
         }
         else {
             return this.storage.executeUpdate(this.paintingLabelTable, new StorageField[] {
-
+                    new StorageField("timestamp", label.getTimestamp()),
+                    new StorageField("description", label.getDescription()),
+                    new StorageField("evaluation_scores", label.getEvaluationScoresAsJSONArray().toString()),
+                    new StorageField("representations",
+                            (null != label.getRepresentations()) ?
+                                    label.getRepresentationsAsJSONArray().toString() : null)
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", label.getSn())
             });
@@ -664,22 +669,6 @@ public class PsychologyStorage implements Storagable {
         }
 
         List<StorageField[]> fields = null;
-
-//        List<StorageField[]> fields = this.storage.executeQuery(this.reportBehaviorTable,
-//                this.reportBehaviorFields, new Conditional[] {
-//                        Conditional.createEqualTo("report_sn", report.sn)
-//                });
-//        List<DescriptionSuggestion> behaviorList = new ArrayList<>();
-//        for (StorageField[] behaviorFields : fields) {
-//            Map<String, StorageField> bf = StorageFields.get(behaviorFields);
-//            DescriptionSuggestion bs = new DescriptionSuggestion(
-//                    Term.parse(bf.get("term").getString()),
-//                    bf.get("description").getString(),
-//                    bf.get("behavior").getString(),
-//                    bf.get("suggestion").getString());
-//            behaviorList.add(bs);
-//        }
-//        report.setBehaviorList(behaviorList);
 
         fields = this.storage.executeQuery(this.reportTextTable,
                 this.reportTextFields, new Conditional[] {
