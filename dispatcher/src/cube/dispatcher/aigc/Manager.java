@@ -37,6 +37,7 @@ import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Report;
 import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.composition.AnswerSheet;
+import cube.aigc.psychology.composition.PaintingLabel;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScaleResult;
 import cube.auth.AuthToken;
@@ -167,6 +168,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new PsychologyScales());
         httpServer.addContextHandler(new PsychologyScaleOperation());
         httpServer.addContextHandler(new PsychologyConversation());
+        httpServer.addContextHandler(new PaintingLabels());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -2192,6 +2194,52 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject getPaintingLabels(String token, long reportSn) {
+        JSONObject data = new JSONObject();
+        data.put("sn", reportSn);
+        Packet packet = new Packet(AIGCAction.GetPaintingLabel.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 90 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#getPaintingLabels - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getPaintingLabels - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public boolean submitPaintingLabels(String token, long sn, JSONArray labels) {
+        JSONObject data = new JSONObject();
+        data.put("sn", sn);
+        data.put("labels", labels);
+
+        Packet packet = new Packet(AIGCAction.SetPaintingLabel.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 90 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#submitPaintingLabels - No response");
+            return false;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#submitPaintingLabels - Response state is " + Packet.extractCode(responsePacket));
+            return false;
+        }
+
+        return true;
     }
 
     @Override

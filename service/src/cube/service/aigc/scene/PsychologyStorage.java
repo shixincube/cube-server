@@ -221,7 +221,7 @@ public class PsychologyStorage implements Storagable {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
-                    Constraint.UNIQUE
+                    Constraint.NOT_NULL
             }),
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
@@ -573,34 +573,45 @@ public class PsychologyStorage implements Storagable {
         });
     }
 
-    public PaintingLabel readPaintingLabel(long sn) {
+    public List<PaintingLabel> readPaintingLabels(long sn) {
+        List<PaintingLabel> list = new ArrayList<>();
         List<StorageField[]> result = this.storage.executeQuery(this.paintingLabelTable, this.paintingLabelFields,
                 new Conditional[] {
                         Conditional.createEqualTo("sn", sn)
                 });
+
         if (result.isEmpty()) {
-            return null;
+            return list;
         }
 
-        Map<String, StorageField> data = StorageFields.get(result.get(0));
-        PaintingLabel label = new PaintingLabel(data.get("sn").getLong(), data.get("timestamp").getLong(),
-                data.get("description").getString(), new JSONArray(data.get("evaluation_scores").getString()));
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            PaintingLabel label = new PaintingLabel(data.get("sn").getLong(), data.get("timestamp").getLong(),
+                    data.get("description").getString(), new JSONArray(data.get("evaluation_scores").getString()));
 
-        if (!data.get("representations").isNullValue()) {
-            label.setRepresentations(new JSONArray(data.get("representations").getString()));
+            if (!data.get("representations").isNullValue()) {
+                label.setRepresentations(new JSONArray(data.get("representations").getString()));
+            }
+
+            list.add(label);
         }
 
-        return label;
+        return list;
     }
 
-    public boolean writePaintingLabel(PaintingLabel label) {
-        List<StorageField[]> result = this.storage.executeQuery(this.paintingLabelTable, this.paintingLabelFields,
-                new Conditional[] {
-                        Conditional.createEqualTo("sn", label.getSn())
-                });
+    public boolean deletePaintingLabel(long sn) {
+        return this.storage.executeDelete(this.paintingLabelTable, new Conditional[] {
+                Conditional.createEqualTo("sn", sn)
+        });
+    }
 
-        if (result.isEmpty()) {
-            return this.storage.executeInsert(this.paintingLabelTable, new StorageField[] {
+    public boolean writePaintingLabels(List<PaintingLabel> labels) {
+        if (labels.isEmpty()) {
+            return false;
+        }
+
+        for (PaintingLabel label : labels) {
+            this.storage.executeInsert(this.paintingLabelTable, new StorageField[] {
                     new StorageField("sn", label.getSn()),
                     new StorageField("timestamp", label.getTimestamp()),
                     new StorageField("description", label.getDescription()),
@@ -610,18 +621,8 @@ public class PsychologyStorage implements Storagable {
                                     label.getRepresentationsAsJSONArray().toString() : null)
             });
         }
-        else {
-            return this.storage.executeUpdate(this.paintingLabelTable, new StorageField[] {
-                    new StorageField("timestamp", label.getTimestamp()),
-                    new StorageField("description", label.getDescription()),
-                    new StorageField("evaluation_scores", label.getEvaluationScoresAsJSONArray().toString()),
-                    new StorageField("representations",
-                            (null != label.getRepresentations()) ?
-                                    label.getRepresentationsAsJSONArray().toString() : null)
-            }, new Conditional[] {
-                    Conditional.createEqualTo("sn", label.getSn())
-            });
-        }
+
+        return true;
     }
 
     private PaintingReport makeReport(StorageField[] storageFields) {

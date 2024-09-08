@@ -39,11 +39,12 @@ import cube.service.aigc.scene.PsychologyScene;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class GetPaintingLabelTask extends ServiceTask {
+public class SetPaintingLabelTask extends ServiceTask {
 
-    public GetPaintingLabelTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public SetPaintingLabelTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -61,8 +62,16 @@ public class GetPaintingLabelTask extends ServiceTask {
         }
 
         long sn = 0;
+        List<PaintingLabel> labels = null;
         try {
             sn = packet.data.getLong("sn");
+
+            labels = new ArrayList<>();
+            JSONArray array = packet.data.getJSONArray("labels");
+            for (int i = 0; i < array.length(); ++i) {
+                PaintingLabel label = new PaintingLabel(array.getJSONObject(i));
+                labels.add(label);
+            }
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -70,18 +79,18 @@ public class GetPaintingLabelTask extends ServiceTask {
             return;
         }
 
-        JSONObject data = new JSONObject();
-        data.put("sn", sn);
-
-        JSONArray array = new JSONArray();
-        List<PaintingLabel> labels = PsychologyScene.getInstance().getPaintingLabels(sn);
-        for (PaintingLabel label : labels) {
-            array.put(label.toJSON());
+        if (!PsychologyScene.getInstance().writePaintingLabels(labels)) {
+            // 出错
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+            markResponseTime();
+            return;
         }
-        data.put("labels", array);
 
+        JSONObject responseData = new JSONObject();
+        responseData.put("sn", sn);
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, data));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
         markResponseTime();
     }
 }

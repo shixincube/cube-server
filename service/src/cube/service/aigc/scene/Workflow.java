@@ -500,7 +500,7 @@ public class Workflow {
             keywords.add(keyword.getWord());
         }
 
-        return dataset.getContentByKeywords(keywords.toArray(new String[0]), 5);
+        return dataset.matchContent(keywords.toArray(new String[0]), 5);
     }
 
     /**

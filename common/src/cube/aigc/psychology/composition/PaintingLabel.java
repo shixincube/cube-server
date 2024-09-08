@@ -124,10 +124,7 @@ public class PaintingLabel implements JSONable {
 
     @Override
     public JSONObject toJSON() {
-        JSONObject json = new JSONObject();
-        json.put("sn", this.sn);
-        json.put("timestamp", this.timestamp);
-        json.put("description", this.description);
+        JSONObject json = this.toCompactJSON();
         if (null != this.evaluationScores) {
             json.put("evaluationScores", this.getEvaluationScoresAsJSONArray());
         }
@@ -139,6 +136,10 @@ public class PaintingLabel implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
+        json.put("timestamp", this.timestamp);
+        json.put("description", this.description);
+        return json;
     }
 }

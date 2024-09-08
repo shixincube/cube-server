@@ -743,12 +743,16 @@ public class PsychologyScene {
         return revolver.generateSupplement(relation, report, currentQuery);
     }
 
-    public PaintingLabel getPaintingLabel(long sn) {
-        return this.storage.readPaintingLabel(sn);
+    public List<PaintingLabel> getPaintingLabels(long sn) {
+        return this.storage.readPaintingLabels(sn);
     }
 
-    public void writePaintingLabel(PaintingLabel label) {
-        this.storage.writePaintingLabel(label);
+    public boolean writePaintingLabels(List<PaintingLabel> labels) {
+        if (labels.isEmpty()) {
+            return false;
+        }
+        this.storage.deletePaintingLabel(labels.get(0).getSn());
+        return this.storage.writePaintingLabels(labels);
     }
 
     private Painting processPainting(AIGCUnit unit, FileLabel fileLabel) {

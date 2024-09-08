@@ -92,7 +92,7 @@ public class TestEvaluation {
             keywords.add(keyword.getWord());
         }
 
-        String answer = dataset.getContentByKeywords(keywords.toArray(new String[0]), 5);
+        String answer = dataset.matchContent(keywords.toArray(new String[0]), 5);
         System.out.println("Answer:\n" + answer);
     }
 
