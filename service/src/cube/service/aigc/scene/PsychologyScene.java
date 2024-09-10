@@ -747,11 +747,12 @@ public class PsychologyScene {
         return this.storage.readPaintingLabels(sn);
     }
 
-    public boolean writePaintingLabels(List<PaintingLabel> labels) {
+    public boolean writePaintingLabels(long sn, List<PaintingLabel> labels) {
+        this.storage.deletePaintingLabel(sn);
+
         if (labels.isEmpty()) {
-            return false;
+            return true;
         }
-        this.storage.deletePaintingLabel(labels.get(0).getSn());
         return this.storage.writePaintingLabels(labels);
     }
 

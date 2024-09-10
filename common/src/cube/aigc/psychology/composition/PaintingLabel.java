@@ -95,7 +95,9 @@ public class PaintingLabel implements JSONable {
     public JSONArray getEvaluationScoresAsJSONArray() {
         JSONArray array = new JSONArray();
         for (EvaluationScore score : this.evaluationScores) {
-            array.put(score.toJSON());
+            JSONObject scoreJson = score.toJSON();
+            scoreJson.put("indicator", score.indicator.code);
+            array.put(scoreJson);
         }
         return array;
     }

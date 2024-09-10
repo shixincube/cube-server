@@ -79,7 +79,7 @@ public class SetPaintingLabelTask extends ServiceTask {
             return;
         }
 
-        if (!PsychologyScene.getInstance().writePaintingLabels(labels)) {
+        if (!PsychologyScene.getInstance().writePaintingLabels(sn, labels)) {
             // 出错
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

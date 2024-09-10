@@ -373,7 +373,12 @@ public class EvaluationReport implements JSONable {
                 "pessimism:" + pessimism);
 
         // 根据年龄就行修正
-        if (this.attribute.age >= 35 && this.attribute.age <= 50) {
+        if (this.attribute.age > 20 && this.attribute.age < 35) {
+            if (score >= 5) {
+
+            }
+        }
+        else if (this.attribute.age >= 35 && this.attribute.age <= 50) {
             if (score >= 5) {
                 score = 3;
                 Logger.d(this.getClass(), "Attention: (age >= 35) =3");
@@ -389,10 +394,10 @@ public class EvaluationReport implements JSONable {
         }
 
         // 根据 strict 修正
-        if (!this.attribute.strict) {
-            score -= 1;
-            Logger.d(this.getClass(), "Attention: strict -1");
-        }
+//        if (!this.attribute.strict) {
+//            score -= 1;
+//            Logger.d(this.getClass(), "Attention: strict -1");
+//        }
 
         if (score > 0) {
             if (score >= 5) {
@@ -513,9 +518,7 @@ public class EvaluationReport implements JSONable {
      *
      * @return
      */
-    public List<EvaluationScore> getEvaluationScoresByRepresentation() {
-        int num = 10;
-
+    public List<EvaluationScore> getEvaluationScoresByRepresentation(int maxNum) {
         List<Indicator> indicators = new ArrayList<>();
         for (Representation representation : this.representationList) {
             // 匹配和评分表一致的特征
@@ -542,19 +545,19 @@ public class EvaluationReport implements JSONable {
             }
         }
 
-        if (result.size() < num) {
+        if (result.size() < maxNum) {
             // 补充
             for (EvaluationScore es : evaluationScores) {
                 if (!result.contains(es)) {
                     result.add(es);
-                    if (result.size() >= num) {
+                    if (result.size() >= maxNum) {
                         break;
                     }
                 }
             }
         }
         else {
-            while (result.size() > num) {
+            while (result.size() > maxNum) {
                 result.remove(result.size() - 1);
             }
         }

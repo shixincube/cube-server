@@ -98,12 +98,12 @@ public class SixDimensionProjection {
         }
 
         for (int i = 0; i < values.length; ++i) {
-            if (sixDimensions[i] == SixDimension.MentalHealth) {
-                values[i] += totalFive / 5.0;
+            if (sixDimensions[i] == SixDimension.MentalHealth && values[i] < 10) {
+                values[i] = totalFive / 5.0;
             }
 
             result.record(sixDimensions[i],
-                    Math.min(Math.max(1, (int) Math.round(values[i])), 100));
+                    Math.min(Math.max(1, (int) Math.round(values[i])), 99));
         }
 
         return result;

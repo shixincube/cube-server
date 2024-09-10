@@ -151,7 +151,7 @@ public class Workflow {
         }
 
         // 评估分推理
-        List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation();
+        List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation(Indicator.values().length);
         this.reportTextList = this.inferScore(scoreList, maxIndicatorTexts);
         if (this.reportTextList.isEmpty()) {
             Logger.w(this.getClass(), "#make - Report text error");
