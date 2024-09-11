@@ -40,23 +40,23 @@ import java.util.List;
 
 public class QueryRevolver {
 
-    private String[] keywordThinkingStyle = new String[] {
-            "思维方式",
-            "思考方式",
-            "思维方法",
-            "思考方法",
-            "思维",
-            "思考"
-    };
+//    private String[] keywordThinkingStyle = new String[] {
+//            "思维方式",
+//            "思考方式",
+//            "思维方法",
+//            "思考方法",
+//            "思维",
+//            "思考"
+//    };
 
-    private String[] keywordCommunicationStyle = new String[] {
-            "沟通风格",
-            "沟通方式",
-            "沟通方法",
-            "沟通能力",
-            "沟通",
-            "交流"
-    };
+//    private String[] keywordCommunicationStyle = new String[] {
+//            "沟通风格",
+//            "沟通方式",
+//            "沟通方法",
+//            "沟通能力",
+//            "沟通",
+//            "交流"
+//    };
 
     private String[] keywordWorkEnvironment = new String[] {
             "工作环境偏好",
@@ -378,52 +378,43 @@ public class QueryRevolver {
             PaintingReport paintingReport = (PaintingReport) report;
 
             if (null != paintingReport.getEvaluationReport().getPersonalityAccelerator()) {
-//                result.append("回答问题时可使用以下知识：");
                 result.append("\n");
+                String question = null;
+                String answer = null;
+                TFIDFAnalyzer analyzer = null;
+                List<String> keywords = null;
 
-                for (String word : this.keywordThinkingStyle) {
-                    if (query.contains(word)) {
-//                        result.append("“");
-//                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
-//                                .getBigFiveFeature().getDisplayName());
-//                        result.append("的思维方式”，");
+//                for (String word : this.keywordThinkingStyle) {
+//                    if (query.contains(word))
+                question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                        .getBigFiveFeature().getDisplayName() + "的思维方式";
+                analyzer = new TFIDFAnalyzer(this.tokenizer);
+                keywords = analyzer.analyzeOnlyWords(question, 10);
 
-                        String q = paintingReport.getEvaluationReport().getPersonalityAccelerator()
-                                .getBigFiveFeature().getDisplayName() + "的思维方式";
-                        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
-                        List<String> keywords = analyzer.analyzeOnlyWords(q, 10);
-
-                        Dataset dataset = Resource.getInstance().loadDataset();
-                        String a = dataset.matchContent(keywords.toArray(new String[0]), 5);
-                        if (null != a) {
-                            result.append(a);
-                        }
-
-                        break;
-                    }
+                answer = Resource.getInstance().loadDataset().matchContent(keywords.toArray(new String[0]), 5);
+                if (null != answer) {
+                    result.append(question).append("：");
+                    result.append(answer).append("\n\n");
                 }
+//                        break;
+//                    }
+//                }
 
-                for (String word : this.keywordCommunicationStyle) {
-                    if (query.contains(word)) {
-//                        result.append("“");
-//                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
-//                                .getBigFiveFeature().getDisplayName());
-//                        result.append("的沟通风格”，");
+//                for (String word : this.keywordCommunicationStyle) {
+//                    if (query.contains(word)) {
+                question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                        .getBigFiveFeature().getDisplayName() + "的沟通风格";
+                analyzer = new TFIDFAnalyzer(this.tokenizer);
+                keywords = analyzer.analyzeOnlyWords(question, 10);
 
-                        String q = paintingReport.getEvaluationReport().getPersonalityAccelerator()
-                                .getBigFiveFeature().getDisplayName() + "的沟通风格";
-                        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
-                        List<String> keywords = analyzer.analyzeOnlyWords(q, 10);
-
-                        Dataset dataset = Resource.getInstance().loadDataset();
-                        String a = dataset.matchContent(keywords.toArray(new String[0]), 5);
-                        if (null != a) {
-                            result.append(a);
-                        }
-
-                        break;
-                    }
+                answer = Resource.getInstance().loadDataset().matchContent(keywords.toArray(new String[0]), 5);
+                if (null != answer) {
+                    result.append(question).append("：");
+                    result.append(answer).append("\n\n");
                 }
+//                        break;
+//                    }
+//                }
 
                 for (String word : this.keywordWorkEnvironment) {
                     if (query.contains(word)) {
@@ -432,15 +423,15 @@ public class QueryRevolver {
 //                                .getBigFiveFeature().getDisplayName());
 //                        result.append("的工作环境偏好”，");
 
-                        String q = paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                        question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
                                 .getBigFiveFeature().getDisplayName() + "的工作环境偏好";
-                        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
-                        List<String> keywords = analyzer.analyzeOnlyWords(q, 10);
+                        analyzer = new TFIDFAnalyzer(this.tokenizer);
+                        keywords = analyzer.analyzeOnlyWords(question, 10);
 
-                        Dataset dataset = Resource.getInstance().loadDataset();
-                        String a = dataset.matchContent(keywords.toArray(new String[0]), 5);
-                        if (null != a) {
-                            result.append(a);
+                        answer = Resource.getInstance().loadDataset().matchContent(keywords.toArray(new String[0]), 5);
+                        if (null != answer) {
+                            result.append(question).append("：");
+                            result.append(answer).append("\n\n");
                         }
 
                         break;
@@ -454,15 +445,15 @@ public class QueryRevolver {
 //                                .getBigFiveFeature().getDisplayName());
 //                        result.append("的管理建议”，");
 
-                        String q = paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                        question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
                                 .getBigFiveFeature().getDisplayName() + "的管理建议";
-                        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
-                        List<String> keywords = analyzer.analyzeOnlyWords(q, 10);
+                        analyzer = new TFIDFAnalyzer(this.tokenizer);
+                        keywords = analyzer.analyzeOnlyWords(question, 10);
 
-                        Dataset dataset = Resource.getInstance().loadDataset();
-                        String a = dataset.matchContent(keywords.toArray(new String[0]), 5);
-                        if (null != a) {
-                            result.append(a);
+                        answer = Resource.getInstance().loadDataset().matchContent(keywords.toArray(new String[0]), 5);
+                        if (null != answer) {
+                            result.append(question).append("：");
+                            result.append(answer).append("\n\n");
                         }
 
                         break;
@@ -471,9 +462,6 @@ public class QueryRevolver {
 
                 if (result.length() <= 17) {
                     result.delete(0, result.length());
-                }
-                else {
-                    result.append("\n");
                 }
 //                else {
 //                    result.delete(result.length() - 1, result.length());

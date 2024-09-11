@@ -375,7 +375,8 @@ public class EvaluationReport implements JSONable {
         // 根据年龄就行修正
         if (this.attribute.age > 20 && this.attribute.age < 35) {
             if (score >= 5) {
-
+                score -= 1;
+                Logger.d(this.getClass(), "Attention: (age > 20) -=1");
             }
         }
         else if (this.attribute.age >= 35 && this.attribute.age <= 50) {
@@ -393,12 +394,6 @@ public class EvaluationReport implements JSONable {
             }
         }
 
-        // 根据 strict 修正
-//        if (!this.attribute.strict) {
-//            score -= 1;
-//            Logger.d(this.getClass(), "Attention: strict -1");
-//        }
-
         if (score > 0) {
             if (score >= 5) {
                 this.attentionSuggestion = AttentionSuggestion.SpecialAttention;
@@ -415,6 +410,15 @@ public class EvaluationReport implements JSONable {
 
         if (score >= 4 || this.reference == Reference.Abnormal) {
             this.additionScales.add(Resource.getInstance().loadScaleByName("SCL-90"));
+        }
+
+        // 根据 strict 修正
+        if (this.attribute.strict) {
+            if (this.reference == Reference.Abnormal && this.attentionSuggestion == AttentionSuggestion.NoAttention) {
+                // 如果非模态，将非关注标注为一般关注
+                this.attentionSuggestion = AttentionSuggestion.GeneralAttention;
+                Logger.d(this.getClass(), "Attention: strict Abnormal");
+            }
         }
     }
 
