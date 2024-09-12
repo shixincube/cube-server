@@ -381,15 +381,15 @@ public class EvaluationReport implements JSONable {
         }
         else if (this.attribute.age >= 35 && this.attribute.age <= 50) {
             if (score >= 5) {
-                score = 3;
-                Logger.d(this.getClass(), "Attention: (age >= 35) =3");
+                score -= 2;
+                Logger.d(this.getClass(), "Attention: (age >= 35) -=2");
             }
         }
         else if (this.attribute.age > 50) {
             if (score >= 5) {
                 score = 3;
             }
-            else if (score >= 3) {
+            else if (score >= 4) {
                 score = 2;
             }
         }
