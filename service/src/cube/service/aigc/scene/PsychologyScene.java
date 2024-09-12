@@ -785,8 +785,8 @@ public class PsychologyScene {
 
     private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme,
                                    int maxIndicatorText) {
-        Evaluation evaluation = (null == painting) ?
-                new Evaluation(new Attribute("male", 28, false)) : new Evaluation(painting);
+        HTPEvaluation evaluation = (null == painting) ?
+                new HTPEvaluation(new Attribute("male", 28, false)) : new HTPEvaluation(painting);
 
         // 生成评估报告
         EvaluationReport report = evaluation.makeEvaluationReport();
