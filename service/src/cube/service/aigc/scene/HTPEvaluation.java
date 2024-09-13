@@ -76,7 +76,52 @@ public class HTPEvaluation extends Evaluation {
         this.reference = Reference.Normal;
     }
 
-    public EvaluationFeature evalSpaceStructure() {
+    @Override
+    public EvaluationReport makeEvaluationReport() {
+        EvaluationReport report = null;
+
+        if (null != this.painting && null != this.spaceLayout) {
+            // 判断绘画是否是有效绘画
+            if (!this.painting.isValid()) {
+                Logger.w(this.getClass(), "#makeEvaluationReport - Painting is NOT valid");
+                List<EvaluationFeature> list = new ArrayList<>();
+                EvaluationFeature feature = new EvaluationFeature();
+                feature.addScore(Indicator.Unknown, 1, FloatUtils.random(0.8, 0.9));
+                list.add(feature);
+
+                this.reference = Reference.Abnormal;
+                Logger.d(this.getClass(), "#makeEvaluationReport - reference: " + this.reference.name);
+                report = new EvaluationReport(this.painting.getAttribute(), this.reference, list);
+                return report;
+            }
+
+            List<EvaluationFeature> results = new ArrayList<>();
+            results.add(this.evalSpaceStructure());
+            results.add(this.evalFrameStructure());
+            results.add(this.evalHouse());
+            results.add(this.evalTree());
+            results.add(this.evalPerson());
+            results.add(this.evalOthers());
+            // 矫正
+            results = this.correct(results);
+            report = new EvaluationReport(this.painting.getAttribute(), this.reference, results);
+        }
+        else {
+            Logger.w(this.getClass(), "#makeEvaluationReport - Only for test");
+            // 仅用于测试
+            EvaluationFeature result = new EvaluationFeature();
+            int num = Utils.randomInt(3, 5);
+            for (int i = 0; i < num; ++i) {
+                int index = Utils.randomInt(0, Term.values().length - 1);
+                result.addFeature(Term.values()[index], Tendency.Positive);
+            }
+            report = new EvaluationReport(this.painting.getAttribute(), this.reference, result);
+        }
+
+        return report;
+    }
+
+    private EvaluationFeature evalSpaceStructure() {
         EvaluationFeature result = new EvaluationFeature();
 
         // 画面大小比例
@@ -622,7 +667,7 @@ public class HTPEvaluation extends Evaluation {
         return result;
     }
 
-    public EvaluationFeature evalFrameStructure() {
+    private EvaluationFeature evalFrameStructure() {
         EvaluationFeature result = new EvaluationFeature();
 
         FrameStructureDescription description = this.calcFrameStructure(this.spaceLayout.getPaintingBox());
@@ -828,7 +873,7 @@ public class HTPEvaluation extends Evaluation {
         return result;
     }
 
-    public EvaluationFeature evalHouse() {
+    private EvaluationFeature evalHouse() {
         EvaluationFeature result = new EvaluationFeature();
         if (null == this.painting.getHouses()) {
             return result;
@@ -1014,7 +1059,7 @@ public class HTPEvaluation extends Evaluation {
         return result;
     }
 
-    public EvaluationFeature evalTree() {
+    private EvaluationFeature evalTree() {
         EvaluationFeature result = new EvaluationFeature();
         if (null == this.painting.getTrees()) {
             return result;
@@ -1263,7 +1308,7 @@ public class HTPEvaluation extends Evaluation {
         return result;
     }
 
-    public EvaluationFeature evalPerson() {
+    private EvaluationFeature evalPerson() {
         EvaluationFeature result = new EvaluationFeature();
         if (null == this.painting.getPersons()) {
             return result;
@@ -1522,7 +1567,7 @@ public class HTPEvaluation extends Evaluation {
         return result;
     }
 
-    public EvaluationFeature evalOthers() {
+    private EvaluationFeature evalOthers() {
         EvaluationFeature result = new EvaluationFeature();
 
         OtherSet other = this.painting.getOther();
@@ -2099,55 +2144,6 @@ public class HTPEvaluation extends Evaluation {
         }
 
         return list;
-    }
-
-    /**
-     * 生成评估报告。
-     *
-     * @return
-     */
-    public EvaluationReport makeEvaluationReport() {
-        EvaluationReport report = null;
-
-        if (null != this.painting && null != this.spaceLayout) {
-            // 判断绘画是否是有效绘画
-            if (!this.painting.isValid()) {
-                Logger.w(this.getClass(), "#makeEvaluationReport - Painting is NOT valid");
-                List<EvaluationFeature> list = new ArrayList<>();
-                EvaluationFeature feature = new EvaluationFeature();
-                feature.addScore(Indicator.Unknown, 1, FloatUtils.random(0.8, 0.9));
-                list.add(feature);
-
-                this.reference = Reference.Abnormal;
-                Logger.d(this.getClass(), "#makeEvaluationReport - reference: " + this.reference.name);
-                report = new EvaluationReport(this.painting.getAttribute(), this.reference, list);
-                return report;
-            }
-
-            List<EvaluationFeature> results = new ArrayList<>();
-            results.add(this.evalSpaceStructure());
-            results.add(this.evalFrameStructure());
-            results.add(this.evalHouse());
-            results.add(this.evalTree());
-            results.add(this.evalPerson());
-            results.add(this.evalOthers());
-            // 矫正
-            results = this.correct(results);
-            report = new EvaluationReport(this.painting.getAttribute(), this.reference, results);
-        }
-        else {
-            Logger.w(this.getClass(), "#makeEvaluationReport - Only for test");
-            // 仅用于测试
-            EvaluationFeature result = new EvaluationFeature();
-            int num = Utils.randomInt(3, 5);
-            for (int i = 0; i < num; ++i) {
-                int index = Utils.randomInt(0, Term.values().length - 1);
-                result.addFeature(Term.values()[index], Tendency.Positive);
-            }
-            report = new EvaluationReport(this.painting.getAttribute(), this.reference, result);
-        }
-
-        return report;
     }
 
     private FrameStructureDescription calcFrameStructure(BoundingBox bbox) {

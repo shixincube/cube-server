@@ -26,8 +26,12 @@
 
 package cube.service.aigc.scene;
 
+import cube.aigc.psychology.EvaluationReport;
 import cube.aigc.psychology.Painting;
 
+/**
+ * 评估器。
+ */
 public abstract class Evaluation {
 
     protected Painting painting;
@@ -35,4 +39,11 @@ public abstract class Evaluation {
     public Evaluation(Painting painting) {
         this.painting = painting;
     }
+
+    /**
+     * 生成评估报告。
+     *
+     * @return
+     */
+    public abstract EvaluationReport makeEvaluationReport();
 }

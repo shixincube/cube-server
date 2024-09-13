@@ -339,6 +339,8 @@ public class EvaluationReport implements JSONable {
             }
         }
 
+        Logger.d(this.getClass(), "#calcAttentionSuggestion - Raw Score: " + score);
+
         if (depression && senseOfSecurity) {
             score += 1;
             Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && senseOfSecurity)");
@@ -356,9 +358,13 @@ public class EvaluationReport implements JSONable {
 //            Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && pessimism)");
 //        }
 
-        if (optimism) {
-            score -= 1;
+        // 根据 strict 修正
+        if (this.attribute.strict) {
+            if (optimism) {
+                score -= 1;
+            }
         }
+
         if (!depression && !anxiety) {
             score -= 1;
         }
@@ -412,12 +418,18 @@ public class EvaluationReport implements JSONable {
             this.additionScales.add(Resource.getInstance().loadScaleByName("SCL-90"));
         }
 
-        // 根据 strict 修正
-        if (this.attribute.strict) {
-            if (this.reference == Reference.Abnormal && this.attentionSuggestion == AttentionSuggestion.NoAttention) {
-                // 如果非模态，将非关注标注为一般关注
-                this.attentionSuggestion = AttentionSuggestion.GeneralAttention;
-                Logger.d(this.getClass(), "Attention: strict Abnormal");
+        if (this.reference == Reference.Abnormal) {
+            if (this.attribute.age <= 22) {
+                // 调整为重点关注
+                this.attentionSuggestion = AttentionSuggestion.FocusedAttention;
+                Logger.d(this.getClass(), "Attention: Focused attention");
+            }
+            else {
+                if (this.attentionSuggestion == AttentionSuggestion.NoAttention) {
+                    // 如果非模态，将非关注标注为一般关注
+                    this.attentionSuggestion = AttentionSuggestion.GeneralAttention;
+                    Logger.d(this.getClass(), "Attention: General attention");
+                }
             }
         }
     }
