@@ -2018,10 +2018,9 @@ public class Manager implements Tickable, PerformerListener {
         return report;
     }
 
-    public JSONObject getPsychologyReportPart(String token, long sn, boolean behaviorText, boolean reportText) {
+    public JSONObject getPsychologyReportPart(String token, long sn, boolean reportText) {
         JSONObject data = new JSONObject();
         data.put("sn", sn);
-        data.put("behaviorText", behaviorText);
         data.put("reportText", reportText);
         Packet packet = new Packet(AIGCAction.GetPsychologyReportPart.name, data);
         ActionDialect request = packet.toDialect();

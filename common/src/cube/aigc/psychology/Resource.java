@@ -77,6 +77,8 @@ public class Resource {
     private long datasetFileModified = 0;
     private Dataset dataset;
 
+    private File attentionScriptFile = new File("assets/psychology/scripts/attention.js");
+
     private File daturaFlowerPath = new File("assets/psychology/daturaflower/");
 
     private final static Resource instance = new Resource();
@@ -278,12 +280,25 @@ public class Resource {
                     byte[] data = Files.readAllBytes(Paths.get(this.datasetFile.getAbsolutePath()));
                     this.dataset = new Dataset(new JSONArray(new String(data, StandardCharsets.UTF_8)));
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.e(this.getClass(), "#loadDataset", e);
                 }
             }
         }
 
         return this.dataset;
+    }
+
+    public String loadAttentionScript() {
+        if (this.attentionScriptFile.exists()) {
+            try {
+                byte[] data = Files.readAllBytes(Paths.get(this.attentionScriptFile.getAbsolutePath()));
+                return new String(data, StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#loadAttentionScript", e);
+            }
+        }
+
+        return null;
     }
 
     public List<String> getDaturaFlowerFiles() {

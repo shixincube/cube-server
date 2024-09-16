@@ -117,7 +117,7 @@ public class ScoreAccelerator implements JSONable {
         Collections.sort(result, new Comparator<EvaluationScore>() {
             @Override
             public int compare(EvaluationScore s1, EvaluationScore s2) {
-                return s2.hit - s1.hit;
+                return s2.indicator.priority - s1.indicator.priority;
             }
         });
 

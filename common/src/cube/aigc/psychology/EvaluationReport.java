@@ -32,9 +32,14 @@ import cube.aigc.psychology.algorithm.*;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.Scale;
 import cube.common.JSONable;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -185,7 +190,9 @@ public class EvaluationReport implements JSONable {
         });
 
         // 计算关注
-        this.calcAttentionSuggestion();
+        if (!this.calcAttention()) {
+            this.recheckAttention();
+        }
 
         Logger.i(this.getClass(), "#build - reference: " + this.reference.name);
 
@@ -195,7 +202,57 @@ public class EvaluationReport implements JSONable {
         }
     }
 
-    private void calcAttentionSuggestion() {
+    private boolean calcAttention() {
+        StringBuilder script = new StringBuilder();
+        script.append("var Attribute = Java.type('cube.aigc.psychology.Attribute');\n");
+        script.append("var Indicator = Java.type('cube.aigc.psychology.Indicator');\n");
+        script.append("var Reference = Java.type('cube.aigc.psychology.Reference');\n");
+        script.append("var IndicatorRate = Java.type('cube.aigc.psychology.algorithm.IndicatorRate');\n");
+        script.append("var Attention = Java.type('cube.aigc.psychology.algorithm.AttentionSuggestion');\n");
+        script.append("var Score = Java.type('cube.aigc.psychology.composition.EvaluationScore');\n");
+        script.append("var Logger = Java.type('cell.util.log.Logger');\n");
+        try {
+            script.append(Resource.getInstance().loadAttentionScript());
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#calcAttention", e);
+            return false;
+        }
+
+        ScriptObjectMirror returnVal = null;
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("nashorn");
+        try {
+            engine.eval(script.toString());
+            Invocable invocable = (Invocable) engine;
+            returnVal = (ScriptObjectMirror) invocable.invokeFunction("calc", this.attribute,
+                    this.getEvaluationScores(), this.reference);
+        } catch (ScriptException | NoSuchMethodException e) {
+            Logger.e(this.getClass(), "#calcAttention", e);
+            return false;
+        }
+
+        if (null == returnVal) {
+            Logger.w(this.getClass(), "#calcAttention - Return value is null");
+            return false;
+        }
+
+        if (returnVal.containsKey("attention")) {
+            this.attentionSuggestion = (AttentionSuggestion) returnVal.get("attention");
+        }
+        if (returnVal.containsKey("reference")) {
+            this.reference = (Reference) returnVal.get("reference");
+        }
+        if (returnVal.containsKey("additionScale")) {
+            String scaleName = (String) returnVal.get("additionScale");
+            if (scaleName.length() > 2) {
+                this.additionScales.add(Resource.getInstance().loadScaleByName(scaleName));
+            }
+        }
+
+        return true;
+    }
+
+    private void recheckAttention() {
 //        if (this.reference == Reference.Normal) {
 //            this.attentionSuggestion = AttentionSuggestion.NoAttention;
 //            return;
@@ -207,9 +264,9 @@ public class EvaluationReport implements JSONable {
         boolean senseOfSecurity = false;
         boolean stress = false;
         boolean anxiety = false;
+        boolean obsession = false;
         boolean optimism = false;
         boolean pessimism = false;
-//        boolean obsession = false;
 
         for (EvaluationScore es : this.scoreAccelerator.getEvaluationScores()) {
             switch (es.indicator) {
@@ -300,16 +357,13 @@ public class EvaluationReport implements JSONable {
                         Logger.d(this.getClass(), "Attention: Anxiety -1");
                     }
                     break;
-//                case Obsession:
-//                    if (es.positiveScore > 0.6) {
-//                        obsession = true;
-//                        score += 2;
-//                    }
-//                    else if (es.positiveScore > 0.4) {
-//                        obsession = true;
-//                        score += 1;
-//                    }
-//                    break;
+                case Obsession:
+                    if (es.positiveScore - es.negativeScore > 0.8) {
+                        obsession = true;
+                        score += 1;
+                        Logger.d(this.getClass(), "Attention: Obsession +1");
+                    }
+                    break;
                 case Optimism:
                     if (es.positiveScore - es.negativeScore > 1.0) {
                         optimism = true;
@@ -318,10 +372,6 @@ public class EvaluationReport implements JSONable {
                     }
                     else if (es.positiveScore - es.negativeScore > 0.5) {
                         optimism = true;
-                        if (depressionScore >= 0.4) {
-                            score -= 1;
-                            Logger.d(this.getClass(), "Attention: Optimism -1");
-                        }
                     }
                     break;
                 case Pessimism:
@@ -339,44 +389,44 @@ public class EvaluationReport implements JSONable {
             }
         }
 
-        Logger.d(this.getClass(), "#calcAttentionSuggestion - Raw Score: " + score);
+        Logger.d(this.getClass(), "#recheckAttention - Raw Score: " + score);
 
         if (depression && senseOfSecurity) {
             score += 1;
-            Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && senseOfSecurity)");
+            Logger.d(this.getClass(), "#recheckAttention - (depression && senseOfSecurity)");
         }
         if (depression && stress) {
             score += 1;
-            Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && stress)");
+            Logger.d(this.getClass(), "#recheckAttention - (depression && stress)");
         }
         if (depression && anxiety) {
             score += 1;
-            Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && anxiety)");
-        }
-//        if (depression && pessimism) {
-//            score += 1;
-//            Logger.d(this.getClass(), "#calcAttentionSuggestion - (depression && pessimism)");
-//        }
-
-        // 根据 strict 修正
-        if (this.attribute.strict) {
-            if (optimism) {
-                score -= 1;
-            }
+            Logger.d(this.getClass(), "#recheckAttention - (depression && anxiety)");
         }
 
         if (!depression && !anxiety) {
             score -= 1;
+            Logger.d(this.getClass(), "#recheckAttention - (!depression && !anxiety)");
         }
 
-        Logger.d(this.getClass(), "#calcAttentionSuggestion - score: " + score + " - " +
+        Logger.d(this.getClass(), "#recheckAttention - score: " + score + " - " +
                 "depression:" + depression + " | " +
                 "senseOfSecurity:" + senseOfSecurity + " | " +
                 "stress:" + stress + " | " +
                 "anxiety:" + anxiety + " | " +
-//                "obsession:" + obsession + " | " +
+                "obsession:" + obsession + " | " +
                 "optimism:" + optimism + " | " +
                 "pessimism:" + pessimism);
+
+        // 根据 strict 修正
+        if (this.attribute.strict) {
+            if (optimism) {
+                if (depressionScore >= 0.4) {
+                    score -= 1;
+                    Logger.d(this.getClass(), "Attention: strict -> Optimism -1");
+                }
+            }
+        }
 
         // 根据年龄就行修正
         if (this.attribute.age > 20 && this.attribute.age < 35) {
@@ -420,9 +470,15 @@ public class EvaluationReport implements JSONable {
 
         if (this.reference == Reference.Abnormal) {
             if (this.attribute.age <= 22) {
-                // 调整为重点关注
-                this.attentionSuggestion = AttentionSuggestion.FocusedAttention;
-                Logger.d(this.getClass(), "Attention: Focused attention");
+                if (this.attentionSuggestion == AttentionSuggestion.FocusedAttention) {
+                    // 调整为特殊关注
+                    this.attentionSuggestion = AttentionSuggestion.SpecialAttention;
+                }
+                else if (this.attentionSuggestion == AttentionSuggestion.NoAttention) {
+                    // 调整为重点关注
+                    this.attentionSuggestion = AttentionSuggestion.FocusedAttention;
+                    Logger.d(this.getClass(), "Attention: Focused attention");
+                }
             }
             else {
                 if (this.attentionSuggestion == AttentionSuggestion.NoAttention) {
