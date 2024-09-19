@@ -52,10 +52,10 @@ public class PsychologyHelper {
                 rate = 1;
             } else if (score >= 80) {
                 query = "六维分析中" + dim.displayName + "维度得分高的表现";
-                rate = 2;
+                rate = 3;
             } else {
                 query = "六维分析中" + dim.displayName + "维度得分中等的表现";
-                rate = 3;
+                rate = 2;
             }
 
             List<String> keywordList = analyzer.analyzeOnlyWords(query, 7);
