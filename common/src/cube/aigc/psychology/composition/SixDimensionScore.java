@@ -27,26 +27,53 @@
 package cube.aigc.psychology.composition;
 
 import cube.util.FloatUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class SixDimensionScore {
 
     private Map<SixDimension, Integer> scores;
 
+    private Map<SixDimension, String> descriptions;
+
     public SixDimensionScore() {
         this.scores = new LinkedHashMap<>();
+        this.descriptions = new LinkedHashMap<>();
     }
 
     public SixDimensionScore(JSONObject json) {
         this.scores = new LinkedHashMap<>();
-        Iterator<String> iter = json.keys();
-        while (iter.hasNext()) {
-            String key = iter.next();
-            int value = json.getInt(key);
-            SixDimension sixDimension = SixDimension.parse(key);
-            this.scores.put(sixDimension, value);
+        this.descriptions = new LinkedHashMap<>();
+        if (json.has("factors") && json.has("scores") && json.has("descriptions")) {
+            // 新结构
+            JSONArray factors = json.getJSONArray("factors");
+            JSONArray scores = json.getJSONArray("scores");
+            JSONArray descriptions = json.getJSONArray("descriptions");
+            for (int i = 0; i < factors.length(); ++i) {
+                String factor = factors.getString(i);
+                int score = scores.getInt(i);
+                String description = descriptions.getString(i);
+                SixDimension sixDimension = SixDimension.parse(factor);
+                this.scores.put(sixDimension, score);
+                this.descriptions.put(sixDimension, description);
+            }
+        }
+        else {
+            // 旧结构
+            Iterator<String> iter = json.keys();
+            while (iter.hasNext()) {
+                String key = iter.next();
+                SixDimension sixDimension = SixDimension.parse(key);
+                if (null == sixDimension) {
+                    continue;
+                }
+                int value = json.getInt(key);
+                this.scores.put(sixDimension, value);
+            }
         }
     }
 
@@ -54,8 +81,16 @@ public class SixDimensionScore {
         this.scores.put(dim, value);
     }
 
+    public void record(SixDimension dim, String description) {
+        this.descriptions.put(dim, description);
+    }
+
     public int getDimensionScore(SixDimension sixDimension) {
         return this.scores.get(sixDimension);
+    }
+
+    public String getDimensionDescription(SixDimension sixDimension) {
+        return this.descriptions.get(sixDimension);
     }
 
     public void normalization() {
@@ -73,9 +108,31 @@ public class SixDimensionScore {
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+
+        // 旧结构
         for (Map.Entry<SixDimension, Integer> e : this.scores.entrySet()) {
             json.put(e.getKey().name, e.getValue().intValue());
         }
+
+        // 新结构
+        JSONArray factors = new JSONArray();
+        JSONArray scores = new JSONArray();
+        JSONArray descriptions = new JSONArray();
+        for (Map.Entry<SixDimension, Integer> e : this.scores.entrySet()) {
+            factors.put(e.getKey().name);
+            scores.put(e.getValue().intValue());
+
+            String desc = this.descriptions.get(e.getKey());
+            if (null != desc) {
+                descriptions.put(desc);
+            }
+        }
+        json.put("factors", factors);
+        json.put("scores", scores);
+        if (descriptions.length() > 0) {
+            json.put("descriptions", descriptions);
+        }
+
         return json;
     }
 }

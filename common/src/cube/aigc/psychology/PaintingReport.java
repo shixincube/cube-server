@@ -290,7 +290,13 @@ public class PaintingReport extends Report {
                 buf.append("|").append(this.normDimensionScore.getDimensionScore(dimension));
                 buf.append("|");
             }
-            buf.append("\n");
+            buf.append("\n\n");
+
+            for (SixDimension dimension : SixDimension.values()) {
+                buf.append("**" + dimension.displayName + "**维度描述：");
+                buf.append(this.dimensionScore.getDimensionDescription(dimension));
+                buf.append("\n\n");
+            }
         }
 
         if (null != this.evaluationReport && null != this.evaluationReport.getPersonalityAccelerator()) {

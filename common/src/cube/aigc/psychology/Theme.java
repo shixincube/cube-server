@@ -31,7 +31,9 @@ package cube.aigc.psychology;
  */
 public enum Theme {
 
-    Generic("通用", "Generic")
+    Generic("通用", "Generic"),
+
+    HouseTreePersonPainting("房树人绘画", "HTP"),
     
     ;
 

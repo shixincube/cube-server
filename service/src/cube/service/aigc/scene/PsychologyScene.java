@@ -108,7 +108,7 @@ public class PsychologyScene {
                 this.storage = new PsychologyStorage(StorageType.MySQL, storage);
             }
 
-            this.storage.open();
+            this.storage.open(this.aigcService.getTokenizer());
             this.storage.execSelfChecking(null);
 
             this.lastConfigModified = System.currentTimeMillis();

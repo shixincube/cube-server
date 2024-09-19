@@ -35,6 +35,7 @@ import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
+import cube.service.tokenizer.Tokenizer;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
@@ -239,10 +240,17 @@ public class PsychologyStorage implements Storagable {
 
     private Storage storage;
 
+    private Tokenizer tokenizer;
+
     public final int limit = 5;
 
     public PsychologyStorage(StorageType type, JSONObject config) {
         this.storage = StorageFactory.getInstance().createStorage(type, "PsychologyStorage", config);
+    }
+
+    public void open(Tokenizer tokenizer) {
+        this.tokenizer = tokenizer;
+        this.open();
     }
 
     @Override
@@ -717,6 +725,10 @@ public class PsychologyStorage implements Storagable {
         }
         dimensionScore.normalization();
         normDimensionScore.normalization();
+
+        // 描述
+        PsychologyHelper.fillDimensionScoreDescription(this.tokenizer, dimensionScore);
+
         report.setDimensionalScore(dimensionScore, normDimensionScore);
 
         // 生成 Markdown

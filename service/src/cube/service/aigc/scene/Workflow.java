@@ -146,6 +146,9 @@ public class Workflow {
             // 正则化
             this.dimensionScore.normalization();
             this.normDimensionScore.normalization();
+
+            // 描述
+            PsychologyHelper.fillDimensionScoreDescription(this.service.getTokenizer(), this.dimensionScore);
         } catch (Exception e) {
             Logger.w(this.getClass(), "#make", e);
         }
@@ -473,7 +476,7 @@ public class Workflow {
             if (!dataset.hasAnalyzed()) {
                 for (String question : dataset.getQuestions()) {
                     TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
-                    List<Keyword> keywordList = analyzer.analyze(question, 5);
+                    List<Keyword> keywordList = analyzer.analyze(question, 7);
                     if (keywordList.isEmpty()) {
                         continue;
                     }
