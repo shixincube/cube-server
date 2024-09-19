@@ -46,25 +46,24 @@ public class PsychologyHelper {
         for (SixDimension dim : SixDimension.values()) {
             int score = sds.getDimensionScore(dim);
             String query = null;
+            int rate = 0;
             if (score <= 40) {
                 query = "六维分析中" + dim.displayName + "维度得分低的表现";
+                rate = 1;
             } else if (score >= 80) {
                 query = "六维分析中" + dim.displayName + "维度得分高的表现";
+                rate = 2;
             } else {
                 query = "六维分析中" + dim.displayName + "维度得分中等的表现";
+                rate = 3;
             }
 
             List<String> keywordList = analyzer.analyzeOnlyWords(query, 7);
 
-            for (String word : keywordList) {
-                System.out.print(word + ", ");
-            }
-            System.out.println();
-
             Dataset dataset = Resource.getInstance().loadDataset();
             String answer = dataset.matchContent(keywordList.toArray(new String[0]), 7);
             if (null != answer) {
-                sds.record(dim, answer);
+                sds.record(dim, rate, answer);
             }
             else {
                 Logger.e(PsychologyHelper.class, "#fillDimensionScoreDescription - Answer is null: " + query);

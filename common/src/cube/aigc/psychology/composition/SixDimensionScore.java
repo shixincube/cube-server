@@ -40,26 +40,33 @@ public class SixDimensionScore {
 
     private Map<SixDimension, String> descriptions;
 
+    private Map<SixDimension, Integer> rates;
+
     public SixDimensionScore() {
         this.scores = new LinkedHashMap<>();
         this.descriptions = new LinkedHashMap<>();
+        this.rates = new LinkedHashMap<>();
     }
 
     public SixDimensionScore(JSONObject json) {
         this.scores = new LinkedHashMap<>();
         this.descriptions = new LinkedHashMap<>();
+        this.rates = new LinkedHashMap<>();
         if (json.has("factors") && json.has("scores") && json.has("descriptions")) {
             // 新结构
             JSONArray factors = json.getJSONArray("factors");
             JSONArray scores = json.getJSONArray("scores");
             JSONArray descriptions = json.getJSONArray("descriptions");
+            JSONArray rates = json.getJSONArray("rates");
             for (int i = 0; i < factors.length(); ++i) {
                 String factor = factors.getString(i);
                 int score = scores.getInt(i);
                 String description = descriptions.getString(i);
+                int rate = rates.getInt(i);
                 SixDimension sixDimension = SixDimension.parse(factor);
                 this.scores.put(sixDimension, score);
                 this.descriptions.put(sixDimension, description);
+                this.rates.put(sixDimension, rate);
             }
         }
         else {
@@ -81,7 +88,8 @@ public class SixDimensionScore {
         this.scores.put(dim, value);
     }
 
-    public void record(SixDimension dim, String description) {
+    public void record(SixDimension dim, int rate, String description) {
+        this.rates.put(dim, rate);
         this.descriptions.put(dim, description);
     }
 
@@ -118,6 +126,7 @@ public class SixDimensionScore {
         JSONArray factors = new JSONArray();
         JSONArray scores = new JSONArray();
         JSONArray descriptions = new JSONArray();
+        JSONArray rates = new JSONArray();
         for (Map.Entry<SixDimension, Integer> e : this.scores.entrySet()) {
             factors.put(e.getKey().name);
             scores.put(e.getValue().intValue());
@@ -126,11 +135,14 @@ public class SixDimensionScore {
             if (null != desc) {
                 descriptions.put(desc);
             }
+
+            rates.put(this.rates.get(e.getKey()));
         }
         json.put("factors", factors);
         json.put("scores", scores);
         if (descriptions.length() > 0) {
             json.put("descriptions", descriptions);
+            json.put("rates", rates);
         }
 
         return json;
