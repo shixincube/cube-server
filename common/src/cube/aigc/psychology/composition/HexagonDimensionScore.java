@@ -34,21 +34,21 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class SixDimensionScore {
+public class HexagonDimensionScore {
 
-    private Map<SixDimension, Integer> scores;
+    private Map<HexagonDimension, Integer> scores;
 
-    private Map<SixDimension, String> descriptions;
+    private Map<HexagonDimension, String> descriptions;
 
-    private Map<SixDimension, Integer> rates;
+    private Map<HexagonDimension, Integer> rates;
 
-    public SixDimensionScore() {
+    public HexagonDimensionScore() {
         this.scores = new LinkedHashMap<>();
         this.descriptions = new LinkedHashMap<>();
         this.rates = new LinkedHashMap<>();
     }
 
-    public SixDimensionScore(JSONObject json) {
+    public HexagonDimensionScore(JSONObject json) {
         this.scores = new LinkedHashMap<>();
         this.descriptions = new LinkedHashMap<>();
         this.rates = new LinkedHashMap<>();
@@ -63,10 +63,10 @@ public class SixDimensionScore {
                 int score = scores.getInt(i);
                 String description = descriptions.getString(i);
                 int rate = rates.getInt(i);
-                SixDimension sixDimension = SixDimension.parse(factor);
-                this.scores.put(sixDimension, score);
-                this.descriptions.put(sixDimension, description);
-                this.rates.put(sixDimension, rate);
+                HexagonDimension hexagonDimension = HexagonDimension.parse(factor);
+                this.scores.put(hexagonDimension, score);
+                this.descriptions.put(hexagonDimension, description);
+                this.rates.put(hexagonDimension, rate);
             }
         }
         else {
@@ -74,42 +74,42 @@ public class SixDimensionScore {
             Iterator<String> iter = json.keys();
             while (iter.hasNext()) {
                 String key = iter.next();
-                SixDimension sixDimension = SixDimension.parse(key);
-                if (null == sixDimension) {
+                HexagonDimension hexagonDimension = HexagonDimension.parse(key);
+                if (null == hexagonDimension) {
                     continue;
                 }
                 int value = json.getInt(key);
-                this.scores.put(sixDimension, value);
+                this.scores.put(hexagonDimension, value);
             }
         }
     }
 
-    public void record(SixDimension dim, int value) {
+    public void record(HexagonDimension dim, int value) {
         this.scores.put(dim, value);
     }
 
-    public void record(SixDimension dim, int rate, String description) {
+    public void record(HexagonDimension dim, int rate, String description) {
         this.rates.put(dim, rate);
         this.descriptions.put(dim, description);
     }
 
-    public int getDimensionScore(SixDimension sixDimension) {
-        return this.scores.get(sixDimension);
+    public int getDimensionScore(HexagonDimension hexagonDimension) {
+        return this.scores.get(hexagonDimension);
     }
 
-    public String getDimensionDescription(SixDimension sixDimension) {
-        return this.descriptions.get(sixDimension);
+    public String getDimensionDescription(HexagonDimension hexagonDimension) {
+        return this.descriptions.get(hexagonDimension);
     }
 
     public void normalization() {
         double[] values = new double[this.scores.size()];
         int index = 0;
-        for (Map.Entry<SixDimension, Integer> entry : this.scores.entrySet()) {
+        for (Map.Entry<HexagonDimension, Integer> entry : this.scores.entrySet()) {
             values[index++] = entry.getValue();
         }
         double[] output = FloatUtils.scale(values, 100);
         index = 0;
-        for (Map.Entry<SixDimension, Integer> entry : this.scores.entrySet()) {
+        for (Map.Entry<HexagonDimension, Integer> entry : this.scores.entrySet()) {
             entry.setValue((int) Math.floor(output[index++]));
         }
     }
@@ -118,7 +118,7 @@ public class SixDimensionScore {
         JSONObject json = new JSONObject();
 
         // 旧结构
-        for (Map.Entry<SixDimension, Integer> e : this.scores.entrySet()) {
+        for (Map.Entry<HexagonDimension, Integer> e : this.scores.entrySet()) {
             json.put(e.getKey().name, e.getValue().intValue());
         }
 
@@ -127,7 +127,7 @@ public class SixDimensionScore {
         JSONArray scores = new JSONArray();
         JSONArray descriptions = new JSONArray();
         JSONArray rates = new JSONArray();
-        for (Map.Entry<SixDimension, Integer> e : this.scores.entrySet()) {
+        for (Map.Entry<HexagonDimension, Integer> e : this.scores.entrySet()) {
             factors.put(e.getKey().name);
             scores.put(e.getValue().intValue());
 

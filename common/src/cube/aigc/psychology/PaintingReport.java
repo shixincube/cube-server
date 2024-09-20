@@ -29,7 +29,6 @@ package cube.aigc.psychology;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.algorithm.BigFiveFeature;
-import cube.aigc.psychology.algorithm.MBTIFeature;
 import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.FileLabel;
@@ -62,9 +61,9 @@ public class PaintingReport extends Report {
 
     private EvaluationReport evaluationReport;
 
-    private SixDimensionScore dimensionScore;
+    private HexagonDimensionScore dimensionScore;
 
-    private SixDimensionScore normDimensionScore;
+    private HexagonDimensionScore normDimensionScore;
 
     private List<ReportSection> reportTextList;
 
@@ -107,10 +106,10 @@ public class PaintingReport extends Report {
         }
 
         if (json.has("dimensionScore")) {
-            this.dimensionScore = new SixDimensionScore(json.getJSONObject("dimensionScore"));
+            this.dimensionScore = new HexagonDimensionScore(json.getJSONObject("dimensionScore"));
         }
         if (json.has("normDimensionScore")) {
-            this.normDimensionScore = new SixDimensionScore(json.getJSONObject("normDimensionScore"));
+            this.normDimensionScore = new HexagonDimensionScore(json.getJSONObject("normDimensionScore"));
         }
 
         if (json.has("evaluation")) {
@@ -139,7 +138,7 @@ public class PaintingReport extends Report {
         return this.evaluationReport;
     }
 
-    public void setDimensionalScore(SixDimensionScore score, SixDimensionScore normScore) {
+    public void setDimensionalScore(HexagonDimensionScore score, HexagonDimensionScore normScore) {
         this.dimensionScore = score;
         this.normDimensionScore = normScore;
     }
@@ -283,7 +282,7 @@ public class PaintingReport extends Report {
             buf.append("| 维度 | 得分 | 标准分 |");
             buf.append("\n");
             buf.append("| ---- | ---- | ---- |");
-            for (SixDimension dimension : SixDimension.values()) {
+            for (HexagonDimension dimension : HexagonDimension.values()) {
                 buf.append("\n");
                 buf.append("|").append(dimension.displayName);
                 buf.append("|").append(this.dimensionScore.getDimensionScore(dimension));
@@ -292,7 +291,7 @@ public class PaintingReport extends Report {
             }
             buf.append("\n\n");
 
-            for (SixDimension dimension : SixDimension.values()) {
+            for (HexagonDimension dimension : HexagonDimension.values()) {
                 buf.append("**" + dimension.displayName + "**维度描述：");
                 buf.append(this.dimensionScore.getDimensionDescription(dimension));
                 buf.append("\n\n");

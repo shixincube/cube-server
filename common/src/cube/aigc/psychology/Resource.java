@@ -66,9 +66,9 @@ public class Resource {
     private long benchmarkScoreLastModified = 0;
     private Benchmark benchmark;
 
-    private File sixDimProjectionFile = new File("assets/psychology/projection.json");
-    private long sixDimProjectionModified = 0;
-    private SixDimensionProjection sixDimProjection;
+    private File hexDimProjectionFile = new File("assets/psychology/projection.json");
+    private long hexDimProjectionModified = 0;
+    private HexagonDimensionProjection hexDimProjection;
 
     private File questionnairesPath = new File("assets/psychology/questionnaires/");
     private Map<String, File> scaleNameFileMap = new ConcurrentHashMap<>();
@@ -174,24 +174,24 @@ public class Resource {
         return this.benchmark;
     }
 
-    public SixDimensionProjection getSixDimProjection() {
-        if (this.sixDimProjectionFile.exists()) {
-            if (this.sixDimProjectionFile.lastModified() != this.sixDimProjectionModified) {
-                this.sixDimProjectionModified = this.sixDimProjectionFile.lastModified();
+    public HexagonDimensionProjection getHexDimProjection() {
+        if (this.hexDimProjectionFile.exists()) {
+            if (this.hexDimProjectionFile.lastModified() != this.hexDimProjectionModified) {
+                this.hexDimProjectionModified = this.hexDimProjectionFile.lastModified();
 
-                Logger.i(this.getClass(), "Read projection file: " + this.sixDimProjectionFile.getAbsolutePath());
+                Logger.i(this.getClass(), "Read projection file: " + this.hexDimProjectionFile.getAbsolutePath());
 
                 try {
-                    byte[] data = Files.readAllBytes(Paths.get(this.sixDimProjectionFile.getAbsolutePath()));
+                    byte[] data = Files.readAllBytes(Paths.get(this.hexDimProjectionFile.getAbsolutePath()));
                     JSONObject json = new JSONObject(new String(data, StandardCharsets.UTF_8));
-                    this.sixDimProjection = new SixDimensionProjection(json);
+                    this.hexDimProjection = new HexagonDimensionProjection(json);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }
 
-        return this.sixDimProjection;
+        return this.hexDimProjection;
     }
 
     public File getQuestionnairesPath() {

@@ -29,8 +29,8 @@ package cube.service.aigc.scene;
 import cell.util.log.Logger;
 import cube.aigc.psychology.Dataset;
 import cube.aigc.psychology.Resource;
-import cube.aigc.psychology.composition.SixDimension;
-import cube.aigc.psychology.composition.SixDimensionScore;
+import cube.aigc.psychology.composition.HexagonDimension;
+import cube.aigc.psychology.composition.HexagonDimensionScore;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
@@ -41,9 +41,9 @@ public class PsychologyHelper {
     private PsychologyHelper() {
     }
 
-    public static void fillDimensionScoreDescription(Tokenizer tokenizer, SixDimensionScore sds) {
+    public static void fillDimensionScoreDescription(Tokenizer tokenizer, HexagonDimensionScore sds) {
         TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
-        for (SixDimension dim : SixDimension.values()) {
+        for (HexagonDimension dim : HexagonDimension.values()) {
             int score = sds.getDimensionScore(dim);
             String query = null;
             int rate = 0;

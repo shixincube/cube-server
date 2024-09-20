@@ -61,9 +61,9 @@ public class Workflow {
 
     private AIGCService service;
 
-    private SixDimensionScore dimensionScore;
+    private HexagonDimensionScore dimensionScore;
 
-    private SixDimensionScore normDimensionScore;
+    private HexagonDimensionScore normDimensionScore;
 
     private List<ReportSection> reportTextList;
 
@@ -117,14 +117,14 @@ public class Workflow {
         // 六维得分计算
         try {
             this.dimensionScore = Resource.getInstance()
-                    .getSixDimProjection().calc(this.evaluationReport.getEvaluationScores());
+                    .getHexDimProjection().calc(this.evaluationReport.getEvaluationScores());
 
             List<EvaluationScore> scoreList = Resource.getInstance().getBenchmark().getEvaluationScores(age);
             scoreList = this.filter(this.evaluationReport.getEvaluationScores(), scoreList);
-            this.normDimensionScore = Resource.getInstance().getSixDimProjection().calc(scoreList);
+            this.normDimensionScore = Resource.getInstance().getHexDimProjection().calc(scoreList);
 
             // 校准视觉效果
-            for (SixDimension dim : SixDimension.values()) {
+            for (HexagonDimension dim : HexagonDimension.values()) {
                 int score = this.dimensionScore.getDimensionScore(dim);
                 if (score < 10) {
                     this.dimensionScore.record(dim, (int) Math.round(score * 2.5));

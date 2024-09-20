@@ -27,8 +27,8 @@
 package cube.aigc.psychology;
 
 import cube.aigc.psychology.composition.EvaluationScore;
-import cube.aigc.psychology.composition.SixDimension;
-import cube.aigc.psychology.composition.SixDimensionScore;
+import cube.aigc.psychology.composition.HexagonDimension;
+import cube.aigc.psychology.composition.HexagonDimensionScore;
 import org.json.JSONObject;
 
 import java.util.Iterator;
@@ -36,19 +36,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SixDimensionProjection {
+public class HexagonDimensionProjection {
 
-    private Map<SixDimension, Projection> projections;
+    private Map<HexagonDimension, Projection> projections;
 
-    public SixDimensionProjection(JSONObject json) {
+    public HexagonDimensionProjection(JSONObject json) {
         this.projections = new LinkedHashMap<>();
 
         Iterator<String> iter = json.keys();
         while (iter.hasNext()) {
             String key = iter.next();
 
-            SixDimension sixDimension = SixDimension.parse(key);
-            Projection projection = new Projection(sixDimension);
+            HexagonDimension hexagonDimension = HexagonDimension.parse(key);
+            Projection projection = new Projection(hexagonDimension);
 
             JSONObject value = json.getJSONObject(key);
             Iterator<String> indicatorIter = value.keys();
@@ -60,20 +60,20 @@ public class SixDimensionProjection {
                 projection.weights.put(indicator, weight);
             }
 
-            this.projections.put(sixDimension, projection);
+            this.projections.put(hexagonDimension, projection);
         }
     }
 
-    public synchronized SixDimensionScore calc(List<EvaluationScore> scoreList) {
-        SixDimensionScore result = new SixDimensionScore();
+    public synchronized HexagonDimensionScore calc(List<EvaluationScore> scoreList) {
+        HexagonDimensionScore result = new HexagonDimensionScore();
 
-        SixDimension[] sixDimensions = new SixDimension[6];
+        HexagonDimension[] hexagonDimensions = new HexagonDimension[6];
         double[] values = new double[6];
         int index = 0;
         double totalFive = 0;
 
-        for (Map.Entry<SixDimension, Projection> e : this.projections.entrySet()) {
-            SixDimension dim = e.getKey();
+        for (Map.Entry<HexagonDimension, Projection> e : this.projections.entrySet()) {
+            HexagonDimension dim = e.getKey();
 
             Projection projection = e.getValue();
             double sum = 0;
@@ -90,19 +90,19 @@ public class SixDimensionProjection {
                 sum += delta * weight.getValue() * 10d;
             }
 
-            sixDimensions[index] = dim;
+            hexagonDimensions[index] = dim;
             values[index++] = sum;
-            if (dim != SixDimension.MentalHealth) {
+            if (dim != HexagonDimension.MentalHealth) {
                 totalFive += sum;
             }
         }
 
         for (int i = 0; i < values.length; ++i) {
-            if (sixDimensions[i] == SixDimension.MentalHealth && values[i] < 10) {
+            if (hexagonDimensions[i] == HexagonDimension.MentalHealth && values[i] < 10) {
                 values[i] = totalFive / 5.0;
             }
 
-            result.record(sixDimensions[i],
+            result.record(hexagonDimensions[i],
                     Math.min(Math.max(1, (int) Math.round(values[i])), 99));
         }
 
@@ -122,12 +122,12 @@ public class SixDimensionProjection {
 
     public class Projection {
 
-        public SixDimension sixDimension;
+        public HexagonDimension hexagonDimension;
 
         public Map<Indicator, Double> weights;
 
-        public Projection(SixDimension sixDimension) {
-            this.sixDimension = sixDimension;
+        public Projection(HexagonDimension hexagonDimension) {
+            this.hexagonDimension = hexagonDimension;
             this.weights = new LinkedHashMap<>();
         }
     }

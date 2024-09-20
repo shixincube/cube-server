@@ -26,7 +26,7 @@
 
 package cube.aigc.psychology.composition;
 
-public enum SixDimension {
+public enum HexagonDimension {
 
     /**
      * 情绪。
@@ -64,13 +64,13 @@ public enum SixDimension {
 
     public final String displayName;
 
-    SixDimension(String name, String displayName) {
+    HexagonDimension(String name, String displayName) {
         this.name = name;
         this.displayName = displayName;
     }
 
-    public static SixDimension parse(String name) {
-        for (SixDimension sd : SixDimension.values()) {
+    public static HexagonDimension parse(String name) {
+        for (HexagonDimension sd : HexagonDimension.values()) {
             if (sd.name.equalsIgnoreCase(name)) {
                 return sd;
             }
