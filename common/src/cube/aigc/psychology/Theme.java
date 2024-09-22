@@ -33,8 +33,14 @@ public enum Theme {
 
     Generic("通用", "Generic"),
 
-    HouseTreePersonPainting("房树人绘画", "HTP"),
-    
+    HouseTreePerson("房树人绘画", "HTP"),
+
+    PersonInTheRain("雨中人绘画", "PIR"),
+
+    TreeTest("树木绘画", "TT"),
+
+    SelfPortrait("自画像", "SP"),
+
     ;
 
     public final String name;

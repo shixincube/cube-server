@@ -242,6 +242,33 @@ public class Conditional {
     }
 
     /**
+     * 创建不等于运算。
+     *
+     * @param field 字段描述。
+     * @return
+     */
+    public static Conditional createUnequalTo(StorageField field) {
+        String value = field.getValue().toString();
+
+        if (field.getLiteralBase() == LiteralBase.BOOL) {
+            value = (field.getBoolean() ? "1" : "0");
+        }
+        else if (field.getLiteralBase() == LiteralBase.STRING) {
+            value = "'" + value + "'";
+        }
+
+        String table = field.getTableName();
+        if (null != table) {
+            return new Conditional(Quote + table + Quote + "." + Quote + field.getName() + Quote + "<>" + value,
+                    true);
+        }
+        else {
+            return new Conditional(Quote + field.getName() + Quote + "<>" + value,
+                    true);
+        }
+    }
+
+    /**
      * 创建大于运算。
      *
      * @param field 字段描述。
@@ -346,6 +373,25 @@ public class Conditional {
     public static Conditional createOrderBy(String fieldName, boolean desc) {
         StringBuilder buf = new StringBuilder();
         buf.append("ORDER BY ").append(Quote).append(fieldName).append(Quote);
+        if (desc) {
+            buf.append(" DESC");
+        }
+        return new Conditional(buf.toString());
+    }
+
+    /**
+     * 创建 ORDER BY 条件。
+     *
+     * @param tableName 表名。
+     * @param fieldName 字段名。
+     * @param desc 是否倒序。
+     * @return 返回条件句式实例。
+     */
+    public static Conditional createOrderBy(String tableName, String fieldName, boolean desc) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("ORDER BY ");
+        buf.append(Quote).append(tableName).append(Quote).append(".");
+        buf.append(Quote).append(fieldName).append(Quote);
         if (desc) {
             buf.append(" DESC");
         }

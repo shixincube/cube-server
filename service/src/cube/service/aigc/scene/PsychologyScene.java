@@ -225,8 +225,28 @@ public class PsychologyScene {
         return this.storage.countPsychologyReports(contactId, startTime, endTime);
     }
 
+    public int numPsychologyReports(int state) {
+        return this.storage.countPsychologyReports(state);
+    }
+
     public List<PaintingReport> getPsychologyReports(int pageIndex, int pageSize, boolean descending) {
         List<PaintingReport> list = this.storage.readPsychologyReports(pageIndex, pageSize, descending);
+        Iterator<PaintingReport> iter = list.iterator();
+        while (iter.hasNext()) {
+            PaintingReport report = iter.next();
+            FileLabel fileLabel = this.aigcService.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
+            if (null != fileLabel) {
+                report.setFileLabel(fileLabel);
+            }
+            else {
+                iter.remove();
+            }
+        }
+        return list;
+    }
+
+    public List<PaintingReport> getPsychologyReportsWithState(int pageIndex, int pageSize, boolean descending, int state) {
+        List<PaintingReport> list = this.storage.readPsychologyReports(pageIndex, pageSize, descending, state);
         Iterator<PaintingReport> iter = list.iterator();
         while (iter.hasNext()) {
             PaintingReport report = iter.next();
@@ -754,6 +774,10 @@ public class PsychologyScene {
             return true;
         }
         return this.storage.writePaintingLabels(labels);
+    }
+
+    public boolean writePaintingReportState(long sn, int state) {
+        return this.storage.writePaintingManagementState(sn, state);
     }
 
     private Painting processPainting(AIGCUnit unit, FileLabel fileLabel) {

@@ -36,6 +36,10 @@ import java.util.List;
 
 public class PaintingLabel implements JSONable {
 
+    public final static int STATE_NORMAL = 0;
+
+    public final static int STATE_IGNORE = 1;
+
     private long sn;
 
     private long timestamp;

@@ -442,6 +442,11 @@ public enum AIGCAction {
     SetPaintingLabel("setPaintingLabel"),
 
     /**
+     * 设置绘画报告状态。
+     */
+    SetPaintingReportState("setPaintingReportState"),
+
+    /**
      * 预测图片元素。
      */
     // PredictImage("predictImage"),

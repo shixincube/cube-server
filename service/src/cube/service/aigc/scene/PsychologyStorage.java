@@ -67,6 +67,8 @@ public class PsychologyStorage implements Storagable {
 
     private final String paintingLabelTable = "psychology_painting_label";
 
+    private final String paintingReportManagementTable = "psychology_painting_report_mgmt";
+
     private final StorageField[] reportFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY
@@ -107,6 +109,22 @@ public class PsychologyStorage implements Storagable {
             new StorageField("datura_flower", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             })
+    };
+
+    private final StorageField[] reportFieldsForQuery = new StorageField[] {
+            new StorageField(reportTable, "sn", LiteralBase.LONG),
+            new StorageField(reportTable, "contact_id", LiteralBase.LONG),
+            new StorageField(reportTable, "timestamp", LiteralBase.LONG),
+            new StorageField(reportTable, "name", LiteralBase.STRING),
+            new StorageField(reportTable, "gender", LiteralBase.STRING),
+            new StorageField(reportTable, "age", LiteralBase.INT),
+            new StorageField(reportTable, "strict", LiteralBase.INT),
+            new StorageField(reportTable, "file_code", LiteralBase.STRING),
+            new StorageField(reportTable, "theme", LiteralBase.STRING),
+            new StorageField(reportTable, "finished_timestamp", LiteralBase.LONG),
+            new StorageField(reportTable, "summary", LiteralBase.STRING),
+            new StorageField(reportTable, "evaluation_data", LiteralBase.STRING),
+            new StorageField(reportTable, "datura_flower", LiteralBase.STRING)
     };
 
     private final StorageField[] paintingFields = new StorageField[] {
@@ -238,6 +256,21 @@ public class PsychologyStorage implements Storagable {
             })
     };
 
+    private final StorageField[] paintingReportManagementFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("report_sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.UNIQUE
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
+            })
+    };
+
     private Storage storage;
 
     private Tokenizer tokenizer;
@@ -313,6 +346,36 @@ public class PsychologyStorage implements Storagable {
                 Logger.i(this.getClass(), "Created table '" + this.paintingLabelTable + "' successfully");
             }
         }
+
+        if (!this.storage.exist(this.paintingReportManagementTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.paintingReportManagementTable, this.paintingReportManagementFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.paintingReportManagementTable + "' successfully");
+            }
+        }
+
+        // 检查管理表里是否有遗漏数据
+        this.recheckReportManagementTable();
+    }
+
+    private void recheckReportManagementTable() {
+        List<StorageField[]> result = this.storage.executeQuery(this.reportTable, new StorageField[] {
+                new StorageField("sn", LiteralBase.LONG)
+        });
+        for (StorageField[] fields : result) {
+            long sn = fields[0].getLong();
+            List<StorageField[]> mgmtResult = this.storage.executeQuery(this.paintingReportManagementTable,
+                    new StorageField[] { new StorageField("state", LiteralBase.INT) },
+                    new Conditional[] { Conditional.createEqualTo("report_sn", sn) });
+            if (mgmtResult.isEmpty()) {
+                Logger.w(this.getClass(), "#recheckReportManagementTable - Insert state to report: " + sn);
+                this.storage.executeInsert(this.paintingReportManagementTable, new StorageField[] {
+                        new StorageField("report_sn", sn),
+                        new StorageField("timestamp", System.currentTimeMillis()),
+                        new StorageField("state", 0)
+                });
+            }
+        }
     }
 
     public PaintingReport readPsychologyReport(long sn) {
@@ -341,6 +404,18 @@ public class PsychologyStorage implements Storagable {
         return result.get(0)[0].getInt();
     }
 
+    public int countPsychologyReports(int state) {
+        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(sn) FROM " +
+                this.reportTable + "," + this.paintingReportManagementTable +
+                " WHERE " +
+                this.reportTable + ".sn=" + this.paintingReportManagementTable + ".report_sn" +
+                " AND " +
+                this.paintingReportManagementTable + ".state=" + state +
+                " AND " +
+                this.reportTable + ".finished_timestamp<>0");
+        return result.get(0)[0].getInt();
+    }
+
     public List<PaintingReport> readPsychologyReports(int pageIndex, int pageSize, boolean descending) {
         List<PaintingReport> list = new ArrayList<>();
 
@@ -359,7 +434,43 @@ public class PsychologyStorage implements Storagable {
         return list;
     }
 
+    public List<PaintingReport> readPsychologyReports(int pageIndex, int pageSize, boolean descending, int state) {
+        List<PaintingReport> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(new String[] {
+                        this.reportTable,
+                        this.paintingReportManagementTable
+                }, this.reportFieldsForQuery,
+                new Conditional[] {
+                        Conditional.createEqualTo(
+                                new StorageField(this.paintingReportManagementTable, "report_sn", LiteralBase.LONG),
+                                new StorageField(this.reportTable, "sn", LiteralBase.LONG)),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo(new StorageField(this.paintingReportManagementTable, "state",
+                                LiteralBase.INT, state)),
+                        Conditional.createAnd(),
+                        Conditional.createUnequalTo(new StorageField(this.reportTable, "finished_timestamp",
+                                LiteralBase.LONG, (long) 0)),
+                        Conditional.createOrderBy(this.reportTable, "timestamp", descending),
+                        Conditional.createLimitOffset(pageSize, pageIndex * pageSize)
+                });
+
+        for (StorageField[] fields : result) {
+            PaintingReport report = this.makeReport(fields);
+            list.add(report);
+        }
+
+        return list;
+    }
+
     public boolean writePsychologyReport(PaintingReport report) {
+        // 插入状态
+        if (!this.storage.executeInsert(this.paintingReportManagementTable, new StorageField[] {
+                new StorageField("report_sn", report.sn),
+                new StorageField("timestamp", System.currentTimeMillis()),
+                new StorageField("state", 0)
+        }));
+
         if (null != report.getReportTextList()) {
             for (ReportSection rs : report.getReportTextList()) {
                 this.storage.executeInsert(this.reportTextTable, new StorageField[] {
@@ -631,6 +742,29 @@ public class PsychologyStorage implements Storagable {
         }
 
         return true;
+    }
+
+    public int readPaintingManagementState(long reportSn) {
+        List<StorageField[]> result = this.storage.executeQuery(this.paintingReportManagementTable,
+                this.paintingReportManagementFields, new Conditional[] {
+                        Conditional.createEqualTo("report_sn", reportSn)
+                });
+
+        if (result.isEmpty()) {
+            return PaintingLabel.STATE_NORMAL;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        return data.get("state").getInt();
+    }
+
+    public boolean writePaintingManagementState(long reportSn, int state) {
+        return this.storage.executeUpdate(this.paintingReportManagementTable, new StorageField[] {
+                new StorageField("timestamp", System.currentTimeMillis()),
+                new StorageField("state", state)
+        }, new Conditional[] {
+                Conditional.createEqualTo("report_sn", reportSn)
+        });
     }
 
     private PaintingReport makeReport(StorageField[] storageFields) {

@@ -81,6 +81,7 @@ public class GetPsychologyReportTask extends ServiceTask {
         int pageIndex = 0;
         int pageSize = 0;
         boolean descending = true;
+        int state = -1;
 
         try {
             sn = packet.data.has("sn") ? packet.data.getLong("sn") : 0;
@@ -90,6 +91,7 @@ public class GetPsychologyReportTask extends ServiceTask {
             pageIndex = packet.data.has("page") ? packet.data.getInt("page") : 0;
             pageSize = packet.data.has("size") ? packet.data.getInt("size") : 0;
             descending = packet.data.has("desc") ? packet.data.getBoolean("desc") : true;
+            state = packet.data.has("state") ? packet.data.getInt("state") : -1;
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -133,9 +135,12 @@ public class GetPsychologyReportTask extends ServiceTask {
             }
         }
         else if (0 != pageSize) {
-            int num = PsychologyScene.getInstance().numPsychologyReports();
+            int num = (state == -1) ? PsychologyScene.getInstance().numPsychologyReports() :
+                    PsychologyScene.getInstance().numPsychologyReports(state);
 
-            List<PaintingReport> list = PsychologyScene.getInstance().getPsychologyReports(pageIndex, pageSize, descending);
+            List<PaintingReport> list = (state == -1) ?
+                    PsychologyScene.getInstance().getPsychologyReports(pageIndex, pageSize, descending) :
+                    PsychologyScene.getInstance().getPsychologyReportsWithState(pageIndex, pageSize, descending, state);
             JSONArray array = new JSONArray();
             for (PaintingReport report : list) {
                 array.put(report.toCompactJSON());

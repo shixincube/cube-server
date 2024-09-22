@@ -1895,6 +1895,7 @@ public class Manager implements Tickable, PerformerListener {
         data.put("page", pageIndex);
         data.put("size", pageSize);
         data.put("desc", descending);
+        data.put("state", 0);
         Packet packet = new Packet(AIGCAction.GetPsychologyReport.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
@@ -2239,6 +2240,10 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return true;
+    }
+
+    public void setPaintingReportState(long sn, int state) {
+
     }
 
     @Override
