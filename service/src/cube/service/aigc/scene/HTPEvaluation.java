@@ -633,14 +633,14 @@ public class HTPEvaluation extends Evaluation {
             // 画面稀疏
             if (sparseness >= 4) {
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.2, 0.3));
-                result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
                 result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(2.0, 3.0));
             }
             else if (sparseness >= 3) {
 //                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
-                result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
                 result.addFiveFactor(TheBigFive.Neuroticism, FloatUtils.random(3.0, 4.0));
