@@ -53,6 +53,8 @@ public class Workflow {
     public final static String NormalTrick = "具有";
     public final static String LowTrick = "缺乏";//"不足";
 
+    private final static String PERSONALITY_FORMAT = "已知信息：\n%s\n\n根据上述信息，回答问题：总结他的性格特点。";
+
     private boolean speed = true;
 
     private EvaluationReport evaluationReport;
@@ -272,6 +274,14 @@ public class Workflow {
             Logger.w(this.getClass(), "#inferPersonality - report is null: " + prompt);
             return false;
         }
+        // 对数据集数据进行推理
+        prompt = String.format(PERSONALITY_FORMAT, answer.replaceAll("你", "他"));
+        String fixAnswer = this.service.syncGenerateText(ModelConfig.INFINITE_UNIT, prompt, new GenerativeOption(),
+                null, null);
+        if (null != fixAnswer) {
+            answer = fixAnswer;
+        }
+
         // 设置描述
         feature.setDescription(answer);
 

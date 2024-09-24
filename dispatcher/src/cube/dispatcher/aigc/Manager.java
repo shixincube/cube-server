@@ -169,6 +169,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new PsychologyScaleOperation());
         httpServer.addContextHandler(new PsychologyConversation());
         httpServer.addContextHandler(new PaintingLabels());
+        httpServer.addContextHandler(new PsychologyPaintingReportState());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -2242,8 +2243,27 @@ public class Manager implements Tickable, PerformerListener {
         return true;
     }
 
-    public void setPaintingReportState(long sn, int state) {
+    public boolean setPaintingReportState(String token, long sn, int state) {
+        JSONObject data = new JSONObject();
+        data.put("sn", sn);
+        data.put("state", state);
+        Packet packet = new Packet(AIGCAction.SetPaintingReportState.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
 
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#setPaintingReportState - No response");
+            return false;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#setPaintingReportState - Response state is " + Packet.extractCode(responsePacket));
+            return false;
+        }
+
+        return true;
     }
 
     @Override
