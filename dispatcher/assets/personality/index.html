@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>大五人格全家福</title>
+    <link rel="stylesheet" href="style/bootstrap.min.css">
+    <style>
+        .chart-container {
+            height: 200px;
+        }
+        .chart-container div {
+            height: 100%;
+            max-width: 270px;
+        }
+        .feature p {
+            font-size: 14px;
+            text-indent: 2em;
+        }
+        .footer {
+            font-size: 14px;
+            color: grey;
+        }
+        .footer a {
+            font-size: 14px;
+            color: grey;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<script type="text/javascript" src="script/echarts.min.js"></script>
+    <div class="text-center mt-5">
+        <p class="fs-2">大五人格画像全家福</p>
+    </div>
+    <div class="container">
+        <div class="row mb-3">
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Generalist"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">通才</h3>
+                            <p>通才喜欢接触不同的新鲜事物，让人感觉精力非常充访，做事风风火火，能很快适应不同的环境。他们非常善于与人打交道，常常能够为团队带来新的想法，很容易成为团队的焦点。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Adapter"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">适应者</h3>
+                            <p>适应者深谱“己所不欲、勿施于人”的道理，不会将自己的想法强加于人，对于他人的不同观点和作风，适应者始终保持包容的态度。但正是因为这样的兼容并蓄，所以很难表达出自己真正的意见。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Expert"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">专家</h3>
+                            <p>专家的性格特点是相对克制的、缄默的，在社交场合很少会主动发言，也很难鼓励专家发表目己的看法，有时甚至可能被支配性强的人忽视。专家在一段时间内只做一件任务清晰的工作，表现出“两耳不闻窗外事，一心只读圣贤书”的特点。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Idealist"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">理想者</h3>
+                            <p>理想者习惯在专注的领域里潜心研究，通常会关心哲学、社会类的课题。理想者有着深厚和坚定的个人信念，这种信念来源于他们对工作生活的思考，但他们的信念只能慢慢地传达开来。理想者向往拥有自由的空间并有机会践行，如果得到打破常规冲出藩篱的机会，他们会非常愿意尝试，并尽自己最大的努力。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Demonstrator"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">演示者</h3>
+                            <p>演示者为人潇洒，热衷集体行动，喜欢开开心心地和大伙聚在一起。演示者很轻易地就能融入不同的环境，与不同的人建立良好的人际关系。面对问题时，他们很快就能做出判断，提出的观点也很简单务实。他们往往精力旺盛、涉猪广泛，喜欢接触新鲜事物，对于感兴趣的事情很容易做出承诺。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Promoter"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">推广者</h3>
+                            <p>推广者外向、直率，富有想象力，喜欢思考并发表自己的观点。无论在什么地方，他们总是能够快速成为别人注意的焦点。推广者是一个坚定的目标导向者，内心清楚地知道目己的谈话目的。推广者不太喜欢一个人做事，如果没有其他人的陪伴，可能很快就会降低热情。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Realist"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">实效者</h3>
+                            <p>实效者最大特点是一旦下定决心便会勇往直前，有很强的使命感。他们在工作中会特别专注，在实效者看来，高效完成目标永是第一位的。所以，与他们共事时，他人可以很放心地把任务交给他们。但是，实效者一般显得不太关注其他人的需求。实效者会用比较苛刻的眼光看待事情，他们不仅用高标准来要求自己，也会要求其他人达到一样的水平。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Instructor"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">辅导教练</h3>
+                            <p>辅导教练有着很高的理想和原则，富有同情心，有着强烈要帮助别人的意愿。他们看上去文静不易被人注意，与他们相处或许需要一段“热身”的时间才能接近。辅导教练严于律己，做事有效率。他们是发自内心地关心别人，有着很高的道德准则，会有礼貌地对待周围的每个人。虽然不善于交际，但能够细心地感知他人的需求，并且能够快速做出反应，因此他们不会错过任何一条求助信息。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Guide"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">引导者</h3>
+                            <p>引导者在人群中是比较受欢迎的，他们的热情奔放会让人难以抵挡。引导者性格外向，在团队里与大部分人都能建立起良好的工作关系。他们会真正关注别人的遭遇，发自内心地关心别人的感受。引导者怀着一颗包容之心，理解和体谅其他人的难处，他们会把别人的利益放在目己之上，是大多数人眼里的“好兄弟”“好姐妹”。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Advocate"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">倡导者</h3>
+                            <p>倡导者性格外向，喜欢结交朋友，并且擅长与人互动。他们精力充沛，有着广泛的兴趣，在人群中是典型的活跃分子，特别擅长提出令人兴奋的点子。倡导者做事比较冲动，不是特别循序渐进，而是具有较强伸缩性，大多数时候，他们仍能以目标为导向。倡导者能愉快地与不同层级的人物沟通，他们不会武断地把人定性或者是贴标签，而是能包容地接受他人。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Entrepreneur"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">创业者</h3>
+                            <p>创业者对于自己要走的道路非常清晰，对于什么是该走的方向、什么是该用的方法，都能够做到了然于心。他们相当自信，有独立见解而显得鹤立鸡群，激情洋溢，追求新事物时会略显激进。创业者能够维系重要的人际关系，对于不重要的，则不会花费太多的心思。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Traditionalist"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">传统者</h3>
+                            <p>传统者一般小心谨慎，注重个人隐私，喜欢与人保持一定的距离，其他人需要经过一段时间的接触才能真正了解他们。遇到新事物或挑战，传统者更倾向于采纳保守的办法，而不轻易做出新的尝试。传统者会关心他人，给那些行为端正、有成果产出的人提供支持，对待原则性问题不会轻易妥协退让。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Developer"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">开发者</h3>
+                            <p>开发者充满热情、富有同情心，容易让人对其产生好感。他们理解并同情他人，在别人需要帮助的时候主动地伸出援助之手，会让他人备感温暖。开发者会非常坚定地保护和捍卫自己的团队成员，加上你有较强的道德观念和责任感，在关键场合会站出来为他人说话、维护他人。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Architect"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">建筑师</h3>
+                            <p>建筑师鹤立鸡群，关注目标，追求个人实现，富有想象力和创造力。他们能够高度专注，有强烈的目标意识。他们了解目己想要什么，会把自己的需求放在首位，喜欢承担责任。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Explorer"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">探索者</h3>
+                            <p>探索者热烈拥抱着变革和突破，对别人提出的建议积极反应，愿意采纳和实行新理念。他们在新任务上显得非常有精力、有热情，并且善于在同一时间内处理多件任务，但在处理问题的持久性和耐力上差了一些。因为探索者的关注点太多、不聚焦，所以很容易就把注意力从眼前的任务分散出去。探索者不容易被规则束缚，有一颗蠢蠢欲动的心，有时会显得杂乱无章、过于散漫。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Supporter"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">支持者</h3>
+                            <p>支持者最大的特点就是充满爱心，能够容忍各种类型的人，即使内心看不惯某些人，但是当这些人需要帮助时，他们也非常乐意帮助。支持者喜欢把别人的需求放在首位，希望让别人都满意。支持者有时候看起来会有些天真，他们经常会把人往好的方面想，愿意信任别人，并给予第二次机会。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6 mt-3">
+                <div class="row">
+                    <div class="col-5 chart-container">
+                        <div id="Controller"></div>
+                    </div>
+                    <div class="col-7">
+                        <div class="feature">
+                            <h3 class="fs-4 text-body-emphasis">控制者</h3>
+                            <p>控制者是喜欢控制事情发展节奏、心思缜密的一群人。他们喜欢在组织运作的系统内尽职地工作，只要是被要求做到的事情，他们都能做到位，而且会确保工作质量属于最高水平。控制者做事非常小心谨慎，不能容忍犯一些低级错误。控制者一般看起来比较传统保守、保持缄默，对人际和外界变化不是非常关心。控制者对任何事情都需要有请晰的指导方针和议程，不喜欢风险。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-3">
+        <p class="footer"><a href="https://ai-xinli.com" target="_blank">爱心理 AI-xinli.com</a></p>
+    </div>
+
+<script type="text/javascript">
+const color = [ '#ff682b', '#f9ca1c' ];
+const radar = {
+    radius: 50,
+    indicator: [
+        { name: '情绪性', max: 10 },
+        { name: '进取性', max: 10 },
+        { name: '外向性', max: 10 },
+        { name: '尽责性', max: 10 },
+        { name: '宜人性', max: 10 }
+    ]
+};
+var option;
+var dom;
+
+// 通才
+dom = document.getElementById('Generalist');
+var chartGeneralist = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Generalist',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 7.5, 7.5, 7.5, 7.5],
+                    name: 'Generalist'
+                }
+            ]
+        }
+    ]
+};
+chartGeneralist.setOption(option);
+
+// 适应者
+dom = document.getElementById('Adapter');
+var chartAdapter = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Adapter',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 5.5, 5.5, 5.5, 5.5],
+                    name: 'Adapter'
+                }
+            ]
+        }
+    ]
+};
+chartAdapter.setOption(option);
+
+// 专家
+dom = document.getElementById('Expert');
+var chartExpert = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Expert',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 3.5, 3.5, 3.5, 3.5],
+                    name: 'Expert'
+                }
+            ]
+        }
+    ]
+};
+chartExpert.setOption(option);
+
+// 理想者
+dom = document.getElementById('Idealist');
+var chartIdealist = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Idealist',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 7.5, 3.5, 3.5, 7.5],
+                    name: 'Idealist'
+                }
+            ]
+        }
+    ]
+};
+chartIdealist.setOption(option);
+
+// 演示者
+dom = document.getElementById('Demonstrator');
+var chartDemonstrator = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Demonstrator',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 3.5, 7.5, 7.5, 3.5],
+                    name: 'Demonstrator'
+                }
+            ]
+        }
+    ]
+};
+chartDemonstrator.setOption(option);
+
+// 推广者
+dom = document.getElementById('Promoter');
+var chartPromoter = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Promoter',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 7.5, 7.5, 3.5, 3.5],
+                    name: 'Promoter'
+                }
+            ]
+        }
+    ]
+};
+chartPromoter.setOption(option);
+
+// 实效者
+dom = document.getElementById('Realist');
+var chartRealist = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Realist',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 7.5, 3.5, 7.5, 3.5],
+                    name: 'Realist'
+                }
+            ]
+        }
+    ]
+};
+chartRealist.setOption(option);
+
+// 辅导教练
+dom = document.getElementById('Instructor');
+var chartInstructor = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Instructor',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 3.5, 3.5, 7.5, 7.5],
+                    name: 'Instructor'
+                }
+            ]
+        }
+    ]
+};
+chartInstructor.setOption(option);
+
+// 引导者
+dom = document.getElementById('Guide');
+var chartGuide = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Guide',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 3.5, 7.5, 3.5, 7.5],
+                    name: 'Guide'
+                }
+            ]
+        }
+    ]
+};
+chartGuide.setOption(option);
+
+// 倡导者
+dom = document.getElementById('Advocate');
+var chartAdvocate = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Advocate',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 7.5, 7.5, 3.5, 7.5],
+                    name: 'Advocate'
+                }
+            ]
+        }
+    ]
+};
+chartAdvocate.setOption(option);
+
+// 创业者
+dom = document.getElementById('Entrepreneur');
+var chartEntrepreneur = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Entrepreneur',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 7.5, 7.5, 7.5, 3.5],
+                    name: 'Entrepreneur'
+                }
+            ]
+        }
+    ]
+};
+chartEntrepreneur.setOption(option);
+
+// 传统者
+dom = document.getElementById('Traditionalist');
+var chartTraditionalist = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Traditionalist',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 7.5, 3.5, 7.5, 7.5],
+                    name: 'Traditionalist'
+                }
+            ]
+        }
+    ]
+};
+chartTraditionalist.setOption(option);
+
+// 开发者
+dom = document.getElementById('Developer');
+var chartDeveloper = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Developer',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 3.5, 7.5, 7.5, 7.5],
+                    name: 'Developer'
+                }
+            ]
+        }
+    ]
+};
+chartDeveloper.setOption(option);
+
+// 建筑师
+dom = document.getElementById('Architect');
+var chartArchitect = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Architect',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 7.5, 3.5, 3.5, 3.5],
+                    name: 'Architect'
+                }
+            ]
+        }
+    ]
+};
+chartArchitect.setOption(option);
+
+// 探索者
+dom = document.getElementById('Explorer');
+var chartExplorer = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Explorer',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 3.5, 7.5, 3.5, 3.5],
+                    name: 'Explorer'
+                }
+            ]
+        }
+    ]
+};
+chartExplorer.setOption(option);
+
+// 支持者
+dom = document.getElementById('Supporter');
+var chartSupporter = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Supporter',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 3.5, 3.5, 3.5, 7.5],
+                    name: 'Supporter'
+                }
+            ]
+        }
+    ]
+};
+chartSupporter.setOption(option);
+
+// 控制者
+dom = document.getElementById('Controller');
+var chartController = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+});
+option = {
+    color: color,
+    radar: radar,
+    series: [
+        {
+            name: 'Controller',
+            type: 'radar',
+            data: [
+                {
+                    value: [5.5, 3.5, 3.5, 7.5, 3.5],
+                    name: 'Controller'
+                }
+            ]
+        }
+    ]
+};
+chartController.setOption(option);
+
+window.addEventListener('resize', chartGeneralist.resize);
+window.addEventListener('resize', chartAdapter.resize);
+window.addEventListener('resize', chartExpert.resize);
+window.addEventListener('resize', chartIdealist.resize);
+window.addEventListener('resize', chartDemonstrator.resize);
+window.addEventListener('resize', chartPromoter.resize);
+window.addEventListener('resize', chartRealist.resize);
+window.addEventListener('resize', chartInstructor.resize);
+window.addEventListener('resize', chartGuide.resize);
+window.addEventListener('resize', chartAdvocate.resize);
+window.addEventListener('resize', chartEntrepreneur.resize);
+window.addEventListener('resize', chartTraditionalist.resize);
+window.addEventListener('resize', chartDeveloper.resize);
+window.addEventListener('resize', chartArchitect.resize);
+window.addEventListener('resize', chartExplorer.resize);
+window.addEventListener('resize', chartSupporter.resize);
+window.addEventListener('resize', chartController.resize);
+</script>
+</body>
