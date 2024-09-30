@@ -26,7 +26,7 @@
 
 package cube.aigc.psychology.algorithm;
 
-import cube.aigc.psychology.composition.TheBigFive;
+import cube.aigc.psychology.composition.BigFivePersonality;
 import cube.common.JSONable;
 import cube.util.JSONUtils;
 import cube.vision.Point;
@@ -303,7 +303,7 @@ public class BigFiveFeature implements JSONable {
             double score = factor.getDouble("score");
             String paraphrase = factor.has("paraphrase") ? factor.getString("paraphrase") : "";
             String content = factor.has("content") ? factor.getString("content") : "";
-            switch (TheBigFive.parse(code)) {
+            switch (BigFivePersonality.parse(code)) {
                 case Obligingness:
                     this.obligingness = score;
                     this.obligingnessParaphrase = paraphrase;
@@ -854,8 +854,8 @@ public class BigFiveFeature implements JSONable {
         JSONArray scoreArray = new JSONArray();
 
         JSONObject obligingness = new JSONObject();
-        obligingness.put("name", TheBigFive.Obligingness.name);
-        obligingness.put("code", TheBigFive.Obligingness.code);
+        obligingness.put("name", BigFivePersonality.Obligingness.name);
+        obligingness.put("code", BigFivePersonality.Obligingness.code);
         obligingness.put("paraphrase", this.obligingnessParaphrase);
         obligingness.put("score", this.obligingness);
         obligingness.put("content", this.obligingnessContent);
@@ -863,8 +863,8 @@ public class BigFiveFeature implements JSONable {
         scoreArray.put(obligingness);
 
         JSONObject conscientiousness = new JSONObject();
-        conscientiousness.put("name", TheBigFive.Conscientiousness.name);
-        conscientiousness.put("code", TheBigFive.Conscientiousness.code);
+        conscientiousness.put("name", BigFivePersonality.Conscientiousness.name);
+        conscientiousness.put("code", BigFivePersonality.Conscientiousness.code);
         conscientiousness.put("paraphrase", this.conscientiousnessParaphrase);
         conscientiousness.put("score", this.conscientiousness);
         conscientiousness.put("content", this.conscientiousnessContent);
@@ -872,8 +872,8 @@ public class BigFiveFeature implements JSONable {
         scoreArray.put(conscientiousness);
 
         JSONObject extraversion = new JSONObject();
-        extraversion.put("name", TheBigFive.Extraversion.name);
-        extraversion.put("code", TheBigFive.Extraversion.code);
+        extraversion.put("name", BigFivePersonality.Extraversion.name);
+        extraversion.put("code", BigFivePersonality.Extraversion.code);
         extraversion.put("paraphrase", this.extraversionParaphrase);
         extraversion.put("score", this.extraversion);
         extraversion.put("content", this.extraversionContent);
@@ -881,8 +881,8 @@ public class BigFiveFeature implements JSONable {
         scoreArray.put(extraversion);
 
         JSONObject achievement = new JSONObject();
-        achievement.put("name", TheBigFive.Achievement.name);
-        achievement.put("code", TheBigFive.Achievement.code);
+        achievement.put("name", BigFivePersonality.Achievement.name);
+        achievement.put("code", BigFivePersonality.Achievement.code);
         achievement.put("paraphrase", this.achievementParaphrase);
         achievement.put("score", this.achievement);
         achievement.put("content", this.achievementContent);
@@ -890,8 +890,8 @@ public class BigFiveFeature implements JSONable {
         scoreArray.put(achievement);
 
         JSONObject neuroticism = new JSONObject();
-        neuroticism.put("name", TheBigFive.Neuroticism.name);
-        neuroticism.put("code", TheBigFive.Neuroticism.code);
+        neuroticism.put("name", BigFivePersonality.Neuroticism.name);
+        neuroticism.put("code", BigFivePersonality.Neuroticism.code);
         neuroticism.put("paraphrase", this.neuroticismParaphrase);
         neuroticism.put("score", this.neuroticism);
         neuroticism.put("content", this.neuroticismContent);

@@ -26,6 +26,7 @@
 
 package cube.aigc.psychology.composition;
 
+import cell.util.Utils;
 import cube.util.FloatUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -102,12 +103,21 @@ public class HexagonDimensionScore {
     }
 
     public void normalization() {
+        int max = 0;
+        for (Integer v : this.scores.values()) {
+            if (v > max) {
+                max = v;
+            }
+        }
+        max = max + max > 99 ?
+                Math.max(max, (70 + Utils.randomInt(1, 9))) : (max + max);
+
         double[] values = new double[this.scores.size()];
         int index = 0;
         for (Map.Entry<HexagonDimension, Integer> entry : this.scores.entrySet()) {
             values[index++] = entry.getValue();
         }
-        double[] output = FloatUtils.scale(values, 100);
+        double[] output = FloatUtils.scale(values, max);
         index = 0;
         for (Map.Entry<HexagonDimension, Integer> entry : this.scores.entrySet()) {
             entry.setValue((int) Math.floor(output[index++]));

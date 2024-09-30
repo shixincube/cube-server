@@ -26,9 +26,8 @@
 
 package cube.aigc.psychology.algorithm;
 
-import cube.aigc.psychology.composition.TheBigFive;
+import cube.aigc.psychology.composition.BigFivePersonality;
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 public enum BigFivePanoramaQuadrant {
 
@@ -58,22 +57,22 @@ public enum BigFivePanoramaQuadrant {
 
     public final int yOri;
 
-    public final TheBigFive[] quadrant;
+    public final BigFivePersonality[] quadrant;
 
     BigFivePanoramaQuadrant(int xOri, int yOri) {
         this.xOri = xOri;
         this.yOri = yOri;
         if (xOri < 0 && yOri < 0) {
-            this.quadrant = new TheBigFive[] { TheBigFive.Obligingness, TheBigFive.Extraversion };
+            this.quadrant = new BigFivePersonality[] { BigFivePersonality.Obligingness, BigFivePersonality.Extraversion };
         }
         else if (xOri < 0 && yOri > 0) {
-            this.quadrant = new TheBigFive[] { TheBigFive.Extraversion, TheBigFive.Achievement };
+            this.quadrant = new BigFivePersonality[] { BigFivePersonality.Extraversion, BigFivePersonality.Achievement };
         }
         else if (xOri > 0 && yOri > 0) {
-            this.quadrant = new TheBigFive[] { TheBigFive.Achievement, TheBigFive.Conscientiousness };
+            this.quadrant = new BigFivePersonality[] { BigFivePersonality.Achievement, BigFivePersonality.Conscientiousness };
         }
         else {
-            this.quadrant = new TheBigFive[] { TheBigFive.Conscientiousness, TheBigFive.Obligingness };
+            this.quadrant = new BigFivePersonality[] { BigFivePersonality.Conscientiousness, BigFivePersonality.Obligingness };
         }
     }
 

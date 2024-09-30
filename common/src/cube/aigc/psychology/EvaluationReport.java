@@ -469,7 +469,7 @@ public class EvaluationReport implements JSONable {
         }
 
         if (this.reference == Reference.Abnormal) {
-            if (this.attribute.age <= 22) {
+            if (this.attribute.age <= 11) {
                 if (this.attentionSuggestion == AttentionSuggestion.FocusedAttention) {
                     // 调整为特殊关注
                     this.attentionSuggestion = AttentionSuggestion.SpecialAttention;

@@ -205,7 +205,7 @@ function calc(attribute, scores, reference) {
     }
 
     if (fixReference.name == Reference.Abnormal.name) {
-        if (attribute.age <= 22) {
+        if (attribute.age <= 11) {
             if (attention.level == Attention.FocusedAttention.level) {
                 // 调整为特殊关注
                 attention = Attention.SpecialAttention;
@@ -217,7 +217,7 @@ function calc(attribute, scores, reference) {
             }
         }
         else {
-            if (attention.level == AttentionSuggestion.NoAttention.level) {
+            if (attention.level == Attention.NoAttention.level) {
                 // 如果非模态，将非关注标注为一般关注
                 attention = Attention.GeneralAttention;
                 Logger.d('attention.js', "Attention: General attention");

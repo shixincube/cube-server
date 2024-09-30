@@ -31,7 +31,7 @@ import org.json.JSONObject;
 /**
  * 大五人格。
  */
-public enum TheBigFive {
+public enum BigFivePersonality {
 
     /**
      * 宜人性。
@@ -64,7 +64,7 @@ public enum TheBigFive {
 
     public final String name;
 
-    TheBigFive(String code, String name) {
+    BigFivePersonality(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -76,8 +76,8 @@ public enum TheBigFive {
         return json;
     }
 
-    public static TheBigFive parse(String codeOrName) {
-        for (TheBigFive tbf : TheBigFive.values()) {
+    public static BigFivePersonality parse(String codeOrName) {
+        for (BigFivePersonality tbf : BigFivePersonality.values()) {
             if (tbf.code.equalsIgnoreCase(codeOrName) || tbf.name.equals(codeOrName)) {
                 return tbf;
             }

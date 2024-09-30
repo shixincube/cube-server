@@ -102,8 +102,13 @@ public class HexagonDimensionProjection {
                 values[i] = totalFive / 5.0;
             }
 
-            result.record(hexagonDimensions[i],
-                    Math.min(Math.max(1, (int) Math.round(values[i])), 99));
+            // 当分数较低时调整到低分下限
+            int value = Math.min(Math.max(1, (int) Math.round(values[i])), 99);
+            while (value <= 20) {
+                value += value;
+            }
+
+            result.record(hexagonDimensions[i], value);
         }
 
         return result;

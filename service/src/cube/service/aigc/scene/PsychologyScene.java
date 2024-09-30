@@ -850,24 +850,28 @@ public class PsychologyScene {
                         null, null);
             }
 
-            String suggestion = null;
-            if (workflow.isSpeed()) {
-                Logger.d(this.getClass(), "processScaleReport - factor prompt: " +
-                        prompt.name + " - " + prompt.suggestion);
-                suggestion = workflow.infer(prompt.suggestion);
-            }
-            if (null == suggestion) {
-                suggestion = this.aigcService.syncGenerateText(this.unitName, prompt.suggestion, new GenerativeOption(),
-                        null, null);
-            }
-
-            if (null == description || null == suggestion || description.length() == 0 || suggestion.length() == 0) {
-                Logger.w(this.getClass(), "#processScaleReport - Generates description & suggestion error: " + factor.name);
+            if (null == description || description.length() == 0) {
+                Logger.w(this.getClass(), "#processScaleReport - Generates description error: " + factor.name);
                 return AIGCStateCode.UnitError;
             }
 
+            // 描述
             factor.description = description;
-            factor.suggestion = suggestion;
+
+            if (null != prompt.suggestion && prompt.suggestion.length() > 3) {
+                String suggestion = null;
+                if (workflow.isSpeed()) {
+                    Logger.d(this.getClass(), "processScaleReport - factor prompt: " +
+                            prompt.name + " - " + prompt.suggestion);
+                    suggestion = workflow.infer(prompt.suggestion);
+                }
+                if (null == suggestion) {
+                    suggestion = this.aigcService.syncGenerateText(this.unitName, prompt.suggestion, new GenerativeOption(),
+                            null, null);
+                }
+
+                factor.suggestion = (null != suggestion) ? suggestion : "";
+            }
         }
 
         return AIGCStateCode.Ok;

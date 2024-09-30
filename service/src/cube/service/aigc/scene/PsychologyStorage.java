@@ -355,7 +355,7 @@ public class PsychologyStorage implements Storagable {
         }
 
         // 检查管理表里是否有遗漏数据
-        this.recheckReportManagementTable();
+//        this.recheckReportManagementTable();
     }
 
     private void recheckReportManagementTable() {

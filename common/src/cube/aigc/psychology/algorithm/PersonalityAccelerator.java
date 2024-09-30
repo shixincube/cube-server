@@ -28,7 +28,7 @@ package cube.aigc.psychology.algorithm;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.EvaluationFeature;
-import cube.aigc.psychology.composition.TheBigFive;
+import cube.aigc.psychology.composition.BigFivePersonality;
 import cube.common.JSONable;
 import cube.util.FloatUtils;
 import org.json.JSONArray;
@@ -101,16 +101,16 @@ public class PersonalityAccelerator implements JSONable  {
     private void build(List<EvaluationFeature> evaluationFeatureList) {
         this.fiveFactorList = new ArrayList<>();
 
-        FiveFactor obligingness = new FiveFactor(TheBigFive.Obligingness);
-        FiveFactor conscientiousness = new FiveFactor(TheBigFive.Conscientiousness);
-        FiveFactor extraversion = new FiveFactor(TheBigFive.Extraversion);
-        FiveFactor achievement = new FiveFactor(TheBigFive.Achievement);
-        FiveFactor neuroticism = new FiveFactor(TheBigFive.Neuroticism);
+        FiveFactor obligingness = new FiveFactor(BigFivePersonality.Obligingness);
+        FiveFactor conscientiousness = new FiveFactor(BigFivePersonality.Conscientiousness);
+        FiveFactor extraversion = new FiveFactor(BigFivePersonality.Extraversion);
+        FiveFactor achievement = new FiveFactor(BigFivePersonality.Achievement);
+        FiveFactor neuroticism = new FiveFactor(BigFivePersonality.Neuroticism);
 
         for (EvaluationFeature ef : evaluationFeatureList) {
             List<EvaluationFeature.FiveFactor> list = ef.getFiveFactors();
             for (EvaluationFeature.FiveFactor factor : list) {
-                switch (factor.theBigFive) {
+                switch (factor.bigFivePersonality) {
                     case Obligingness:
                         obligingness.score += factor.source;
                         obligingness.total += 1;
@@ -222,25 +222,25 @@ public class PersonalityAccelerator implements JSONable  {
 
     public class FiveFactor {
 
-        public TheBigFive theBigFive;
+        public BigFivePersonality bigFivePersonality;
 
         public double score = 0;
 
         public double total = 0;
 
-        public FiveFactor(TheBigFive theBigFive) {
-            this.theBigFive = theBigFive;
+        public FiveFactor(BigFivePersonality bigFivePersonality) {
+            this.bigFivePersonality = bigFivePersonality;
         }
 
         public FiveFactor(JSONObject json) {
-            this.theBigFive = TheBigFive.parse(json.getString("bigFive"));
+            this.bigFivePersonality = BigFivePersonality.parse(json.getString("bigFive"));
             this.score = json.getDouble("score");
             this.total = json.getDouble("total");
         }
 
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
-            json.put("bigFive", this.theBigFive.code);
+            json.put("bigFive", this.bigFivePersonality.code);
             json.put("score", this.score);
             json.put("total", this.total);
             return json;
