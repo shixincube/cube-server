@@ -763,6 +763,10 @@ public class PsychologyScene {
         return revolver.generateSupplement(relation, report, currentQuery);
     }
 
+    public Painting getPainting(long reportSn) {
+        return this.storage.readPainting(reportSn);
+    }
+
     public List<PaintingLabel> getPaintingLabels(long sn) {
         return this.storage.readPaintingLabels(sn);
     }

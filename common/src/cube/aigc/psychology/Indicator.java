@@ -28,6 +28,8 @@ package cube.aigc.psychology;
 
 import org.json.JSONObject;
 
+import java.util.*;
+
 /**
  * 评价指标。
  */
@@ -36,82 +38,82 @@ public enum Indicator {
     /**
      * 精神病性。
      */
-    Psychosis("精神病性", "Psychosis", 20),
+    Psychosis("精神病性", "Psychosis", 10),
 
     /**
      * 外倾。
      */
-    Extroversion("外倾", "Extroversion", 70),
+    Extroversion("外倾", "Extroversion", 78),
 
     /**
      * 内倾。
      */
-    Introversion("内倾", "Introversion", 70),
+    Introversion("内倾", "Introversion", 77),
 
     /**
      * 乐观。
      */
-    Optimism("乐观", "Optimism", 80),
+    Optimism("乐观", "Optimism", 81),
 
     /**
      * 悲观。
      */
-    Pessimism("悲观", "Pessimism", 80),
+    Pessimism("悲观", "Pessimism", 82),
 
     /**
      * 自恋。
      */
-    Narcissism("自恋", "Narcissism", 50),
+    Narcissism("自恋", "Narcissism", 49),
 
     /**
      * 自信。
      */
-    Confidence("自信", "Confidence", 60),
+    Confidence("自信", "Confidence", 64),
 
     /**
      * 自尊。
      */
-    SelfEsteem("自尊", "SelfEsteem", 30),
+    SelfEsteem("自尊", "SelfEsteem", 35),
 
     /**
      * 社会适应性。
      */
-    SocialAdaptability("社会适应性", "SocialAdaptability", 70),
+    SocialAdaptability("社会适应性", "SocialAdaptability", 51),
 
     /**
      * 独立。
      */
-    Independence("独立", "Independence", 70),
+    Independence("独立", "Independence", 61),
 
     /**
      * 理想主义。
      */
-    Idealism("理想主义", "Idealism", 10),
+    Idealism("理想主义", "Idealism", 12),
 
     /**
      * 现实主义。
      */
-    Realism("现实主义", "Realism", 10),
+    Realism("现实主义", "Realism", 11),
 
     /**
      * 情绪。
      */
-    Emotion("情绪", "Emotion", 60),
+    Emotion("情绪", "Emotion", 63),
 
     /**
      * 自我意识。
      */
-    SelfConsciousness("自我意识", "SelfConsciousness", 20),
+    SelfConsciousness("自我意识", "SelfConsciousness", 19),
 
     /**
      * 思考。
      */
-    Thought("思考", "Thought", 70),
+    Thought("思考", "Thought", 71),
 
     /**
      * 安全感。
      */
-    SenseOfSecurity("安全感", "SenseOfSecurity", 80),
+    SenseOfSecurity("安全感", "SenseOfSecurity", 81),
 
     /**
      * 强迫。
@@ -121,37 +123,37 @@ public enum Indicator {
     /**
      * 压抑。
      */
-    Constrain("压抑", "Constrain", 60),
+    Constrain("压抑", "Constrain", 62),
 
     /**
      * 自我控制。
      */
-    SelfControl("自我控制", "SelfControl", 30),
+    SelfControl("自我控制", "SelfControl", 29),
 
     /**
      * 焦虑。
      */
-    Anxiety("焦虑", "Anxiety", 90),
+    Anxiety("焦虑", "Anxiety", 91),
 
     /**
      * 抑郁。
      */
-    Depression("抑郁", "Depression", 90),
+    Depression("抑郁", "Depression", 92),
 
     /**
      * 单纯。
      */
-    Simple("单纯", "Simple", 40),
+    Simple("单纯", "Simple", 32),
 
     /**
      * 温顺。
      */
-    Meekness("温顺", "Meekness", 40),
+    Meekness("温顺", "Meekness", 31),
 
     /**
      * 敌对。
      */
-    Hostile("敌对", "Hostile", 50),
+    Hostile("敌对", "Hostile", 53),
 
     /**
      * 攻击性。
@@ -161,42 +163,42 @@ public enum Indicator {
     /**
      * 家庭关系。
      */
-    Family("家庭关系", "Family", 30),
+    Family("家庭关系", "Family", 32),
 
     /**
      * 人际关系。
      */
-    InterpersonalRelation("人际关系", "InterpersonalRelation", 30),
+    InterpersonalRelation("人际关系", "InterpersonalRelation", 33),
 
     /**
      * 外在评价。
      */
-    EvaluationFromOutside("外在评价", "EvaluationFromOutside", 40),
+    EvaluationFromOutside("外在评价", "EvaluationFromOutside", 41),
 
     /**
      * 偏执。
      */
-    Paranoid("偏执", "Paranoid", 50),
+    Paranoid("偏执", "Paranoid", 54),
 
     /**
      * 成就动机。
      */
-    AchievementMotivation("成就动机", "AchievementMotivation", 50),
+    AchievementMotivation("成就动机", "AchievementMotivation", 55),
 
     /**
      * 压力。
      */
-    Stress("压力", "Stress", 70),
+    Stress("压力", "Stress", 74),
 
     /**
      * 创造力。
      */
-    Creativity("创造力", "Creativity", 80),
+    Creativity("创造力", "Creativity", 88),
 
     /**
      * 冲动。
      */
-    Impulsion("冲动", "Impulsion", 60),
+    Impulsion("冲动", "Impulsion", 61),
 
     /**
      * 奋斗。
@@ -206,7 +208,7 @@ public enum Indicator {
     /**
      * 道德感。
      */
-    MoralSense("道德感", "MoralSense", 30),
+    MoralSense("道德感", "MoralSense", 31),
 
     /**
      * 向往自由。
@@ -247,5 +249,18 @@ public enum Indicator {
         }
 
         return Unknown;
+    }
+
+    public static List<Indicator> sortByPriority() {
+        List<Indicator> result = new ArrayList<>();
+        result.addAll(Arrays.asList(values()));
+        result.remove(Unknown); // 删除 Unknown
+        Collections.sort(result, new Comparator<Indicator>() {
+            @Override
+            public int compare(Indicator i1, Indicator i2) {
+                return i2.priority - i1.priority;
+            }
+        });
+        return result;
     }
 }
