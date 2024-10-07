@@ -1,5 +1,7 @@
 package cube.service.test;
 
+import cube.service.aigc.dataset.LensDataset;
+
 import java.io.File;
 
 public class TestLens {

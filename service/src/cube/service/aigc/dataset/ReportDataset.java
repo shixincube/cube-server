@@ -1,4 +1,4 @@
-package cube.service.test;
+package cube.service.aigc.dataset;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.Indicator;
@@ -7,7 +7,6 @@ import cube.aigc.psychology.composition.EvaluationScore;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +35,10 @@ public class ReportDataset {
             buf = new StringBuilder();
             for (PaintingReport report : this.reports) {
                 List<EvaluationScore> scores = report.getEvaluationReport().getEvaluationScores();
+                if (scores.size() < 5) {
+                    Logger.w(this.getClass(), "#saveReportScoreToFile - score list is empty: " + report.sn);
+                    continue;
+                }
                 scores = this.alignScores(scores);
                 for (EvaluationScore score : scores) {
                     buf.append(score.calcScore()).append(",");
