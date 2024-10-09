@@ -62,7 +62,7 @@ function calc(attribute, scores, reference) {
                 }
                 break;
             case Indicator.SenseOfSecurity.code:
-                if (score.negativeScore - score.positiveScore > 0.6) {
+                if (score.negativeScore - score.positiveScore > 0.7) {
                     bSenseOfSecurity = true;
                     nScore += 1;
                     Logger.d('attention.js', 'Attention: SenseOfSecurity +1');
@@ -128,11 +128,11 @@ function calc(attribute, scores, reference) {
         nScore += 1;
         Logger.d('attention.js', "(depression && senseOfSecurity)");
     }
-    if (bDepression && bStress) {
+    else if (bDepression && bStress) {
         nScore += 1;
         Logger.d('attention.js', "(depression && stress)");
     }
-    if (bDepression && bAnxiety) {
+    else if (bDepression && bAnxiety) {
         nScore += 1;
         Logger.d('attention.js', "(depression && anxiety)");
     }
@@ -191,6 +191,7 @@ function calc(attribute, scores, reference) {
         if (nScore >= 5) {
             attention = Attention.SpecialAttention;
             fixReference = Reference.Abnormal;
+            Logger.d('attention.js', "Attention: Fix reference to Abnormal (score>=5)");
         }
         else if (nScore >= 4) {
             attention = Attention.FocusedAttention;

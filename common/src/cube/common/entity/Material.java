@@ -93,7 +93,7 @@ public class Material implements JSONable {
      * 返回两个 Material 间的最短距离。
      *
      * @param other
-     * @return 如果范围负数表示与指定的 Material 发生碰撞，没有间距，返回的值是碰撞面积。
+     * @return 如果返回负数表示与指定的 Material 发生碰撞，没有间距，返回的值是碰撞面积。
      */
     public int distance(Material other) {
         int area = this.box.calculateCollisionArea(other.box);

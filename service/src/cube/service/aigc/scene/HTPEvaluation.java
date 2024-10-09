@@ -577,7 +577,7 @@ public class HTPEvaluation extends Evaluation {
 
                 if (texture.isValid()) {
                     // 判断画面涂鸦效果
-                    if (texture.density > 0.8 && texture.max < 2.0) {
+                    if (texture.density > 0.8 && texture.max < 2.0 && texture.hierarchy > 0.02) {
                         doodles += 1;
                     }
 

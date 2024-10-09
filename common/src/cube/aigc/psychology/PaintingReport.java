@@ -69,6 +69,8 @@ public class PaintingReport extends Report {
 
     private DaturaFlower daturaFlower;
 
+    public Painting painting;
+
     public PaintingReport(long contactId, Attribute attribute, FileLabel fileLabel, Theme theme) {
         super(contactId, attribute);
         this.fileLabel = fileLabel;
@@ -210,6 +212,7 @@ public class PaintingReport extends Report {
 
         if (null != this.evaluationReport) {
             buf.append("\n\n");
+            buf.append("**Version**：").append(this.evaluationReport.getVersion()).append("\n\n");
             buf.append("**Hesitating**：");
             buf.append(this.evaluationReport.isHesitating() ? "***是***" : "***否***");
             buf.append("\n\n");

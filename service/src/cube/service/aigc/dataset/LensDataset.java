@@ -32,9 +32,7 @@ public class LensDataset {
     public LensDataset() {
     }
 
-
-
-    public void saveAsDataset(File srcFile, File destFile) {
+    public void saveAsScoreDataset(File srcFile, File destFile) {
         List<PaintingReport> reports = new ArrayList<>();
 
         try {
@@ -58,6 +56,10 @@ public class LensDataset {
         dataset.saveReportScoreToFile(destFile);
     }
 
+    public void saveAsVisionDataset(File srcFile, File destFile) {
+
+    }
+
     public void writeToFile(File file) {
         JSONArray data = new JSONArray();
         int pageIndex = 0;
@@ -71,10 +73,19 @@ public class LensDataset {
             }
 
             for (int i = 0; i < list.length(); ++i) {
-                data.put(list.getJSONObject(i));
-
+                JSONObject json = list.getJSONObject(i);
+                long sn = json.getLong("sn");
                 // 获取对应的绘画
-                
+                Painting painting = this.requestPaintingData(sn);
+                if (null != painting) {
+                    json.put("painting", painting.toJSON());
+                }
+                else {
+                    Logger.w(this.getClass(), "get painting data error: " + sn);
+                }
+
+                // 写入数据
+                data.put(json);
             }
         }
 

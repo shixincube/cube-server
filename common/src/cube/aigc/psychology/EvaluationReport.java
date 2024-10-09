@@ -70,6 +70,8 @@ public class EvaluationReport implements JSONable {
 
     private boolean hesitating = false;
 
+    private String version = Version.toVersionString();
+
     public EvaluationReport(Attribute attribute, Reference reference, EvaluationFeature evaluationFeature) {
         this(attribute, reference, Collections.singletonList((evaluationFeature)));
     }
@@ -86,6 +88,9 @@ public class EvaluationReport implements JSONable {
     }
 
     public EvaluationReport(JSONObject json) {
+        if (json.has("version")) {
+            this.version = json.getString("version");
+        }
         this.attribute = new Attribute(json.getJSONObject("attribute"));
         this.reference = json.has("reference") ?
                 Reference.parse(json.getString("reference")) : Reference.Normal;
@@ -110,6 +115,10 @@ public class EvaluationReport implements JSONable {
         }
 
         this.hesitating = json.has("hesitating") && json.getBoolean("hesitating");
+    }
+
+    public String getVersion() {
+        return this.version;
     }
 
     public boolean isUnknown() {
@@ -395,11 +404,11 @@ public class EvaluationReport implements JSONable {
             score += 1;
             Logger.d(this.getClass(), "#recheckAttention - (depression && senseOfSecurity)");
         }
-        if (depression && stress) {
+        else if (depression && stress) {
             score += 1;
             Logger.d(this.getClass(), "#recheckAttention - (depression && stress)");
         }
-        if (depression && anxiety) {
+        else if (depression && anxiety) {
             score += 1;
             Logger.d(this.getClass(), "#recheckAttention - (depression && anxiety)");
         }
@@ -455,6 +464,7 @@ public class EvaluationReport implements JSONable {
                 this.attentionSuggestion = AttentionSuggestion.SpecialAttention;
 
                 this.reference = Reference.Abnormal;
+                Logger.d(this.getClass(), "Attention: Fix reference to Abnormal (score>=5)");
             }
             else if (score >= 4) {
                 this.attentionSuggestion = AttentionSuggestion.FocusedAttention;
@@ -686,6 +696,7 @@ public class EvaluationReport implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("version", this.version);
         json.put("attribute", this.attribute.toJSON());
         json.put("reference", this.reference.name);
 
@@ -723,6 +734,7 @@ public class EvaluationReport implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
+        json.put("version", this.version);
         json.put("attribute", this.attribute.toJSON());
         json.put("reference", this.reference.name);
 

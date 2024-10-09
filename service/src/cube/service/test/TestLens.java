@@ -18,12 +18,12 @@ public class TestLens {
         File destFile = new File("./storage/tmp/lens_dataset.csv");
 
         LensDataset lensDataset = new LensDataset();
-        lensDataset.saveAsDataset(srcFile, destFile);
+        lensDataset.saveAsScoreDataset(srcFile, destFile);
     }
 
     public static void main(String[] args) {
-//        testDownloadDataset();
+        testDownloadDataset();
 
-        testSave();
+//        testSave();
     }
 }
