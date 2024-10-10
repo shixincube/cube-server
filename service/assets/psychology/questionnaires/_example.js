@@ -8,7 +8,7 @@ function scoring(answers) {
     score.addItem('Name', 'DisplayName', 5.5, FactorLevel.None);
 
     return {
-        result: "",
+        content: "",
         score: score
     }
 }

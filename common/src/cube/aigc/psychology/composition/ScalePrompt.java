@@ -53,6 +53,10 @@ public class ScalePrompt implements JSONable {
         }
     }
 
+    public boolean isEmpty() {
+        return this.factors.isEmpty();
+    }
+
     public void addPrompt(Object value) {
         if (value instanceof ScriptObjectMirror) {
             ScriptObjectMirror som = (ScriptObjectMirror) value;

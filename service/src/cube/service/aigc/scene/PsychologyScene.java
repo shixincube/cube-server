@@ -605,6 +605,11 @@ public class PsychologyScene {
             return null;
         }
 
+        if (null == scale.getResult().prompt || scale.getResult().prompt.isEmpty()) {
+            Logger.w(this.getClass(), "#generateScaleReport - Scale prompt data is empty: " + scale.getSN());
+            return null;
+        }
+
         // 并发数量
         int numUnit = this.aigcService.numUnitsByName(ModelConfig.BAIZE_UNIT);
         if (0 == numUnit) {

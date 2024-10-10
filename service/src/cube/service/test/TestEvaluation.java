@@ -226,6 +226,51 @@ public class TestEvaluation {
         System.out.println(conclusion.toString(4));
     }
 
+    public static void testPADScale() {
+        System.out.println("testPADScale");
+
+        Scale scale = Resource.getInstance().loadScaleByName("PAD");
+        for (Question question : scale.getQuestions()) {
+            switch (Utils.randomInt(1, 9)) {
+                case 1:
+                    question.chooseAnswer("A");
+                    break;
+                case 2:
+                    question.chooseAnswer("B");
+                    break;
+                case 3:
+                    question.chooseAnswer("C");
+                    break;
+                case 4:
+                    question.chooseAnswer("D");
+                    break;
+                case 5:
+                    question.chooseAnswer("E");
+                    break;
+                case 6:
+                    question.chooseAnswer("F");
+                    break;
+                case 7:
+                    question.chooseAnswer("G");
+                    break;
+                case 8:
+                    question.chooseAnswer("H");
+                    break;
+                case 9:
+                    question.chooseAnswer("I");
+                    break;
+                default:
+                    break;
+            }
+        }
+        System.out.println("Complete: " + scale.isComplete());
+
+        System.out.println("----------------------------------------");
+
+        JSONObject conclusion = scale.scoring().toJSON();
+        System.out.println(conclusion.toString(4));
+    }
+
     public static void main(String[] args) {
 //        testDataset();
 
@@ -239,6 +284,8 @@ public class TestEvaluation {
 
 //        testSCL90Scale();
 
-        testBigFiveScale();
+//        testBigFiveScale();
+
+        testPADScale();
     }
 }
