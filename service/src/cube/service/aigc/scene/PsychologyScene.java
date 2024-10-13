@@ -768,6 +768,10 @@ public class PsychologyScene {
         return revolver.generateSupplement(relation, report, currentQuery);
     }
 
+    public String buildPrompt(CustomRelation relation, String query) {
+        return null;
+    }
+
     public Painting getPainting(long reportSn) {
         return this.storage.readPainting(reportSn);
     }

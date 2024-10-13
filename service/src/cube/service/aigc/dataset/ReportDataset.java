@@ -2,6 +2,8 @@ package cube.service.aigc.dataset;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.Indicator;
+import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.PaintingAccelerator;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.EvaluationScore;
 
@@ -13,13 +15,24 @@ import java.util.List;
 
 public class ReportDataset {
 
-    private List<PaintingReport> reports;
-
-    public ReportDataset(List<PaintingReport> list) {
-        this.reports = new ArrayList<>(list);
+    public ReportDataset() {
     }
 
-    public void saveReportScoreToFile(File file) {
+    public void saveVisionDataToFile(List<Painting> paintings, File file) {
+        FileOutputStream stream = null;
+
+        try {
+            StringBuilder buf = new StringBuilder();
+
+            for (Painting painting : paintings) {
+                PaintingAccelerator accelerator = new PaintingAccelerator(painting);
+            }
+        } catch (Exception e) {
+
+        }
+    }
+
+    public void saveReportScoreToFile(List<PaintingReport> reports, File file) {
         FileOutputStream stream = null;
 
         try {
@@ -33,7 +46,7 @@ public class ReportDataset {
             stream.write(buf.toString().getBytes(StandardCharsets.UTF_8));
 
             buf = new StringBuilder();
-            for (PaintingReport report : this.reports) {
+            for (PaintingReport report : reports) {
                 List<EvaluationScore> scores = report.getEvaluationReport().getEvaluationScores();
                 if (scores.size() < 5) {
                     Logger.w(this.getClass(), "#saveReportScoreToFile - score list is empty: " + report.sn);

@@ -28,11 +28,11 @@ package cube.service.aigc.scene;
 
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
+import cube.aigc.psychology.composition.CustomRelation;
 import cube.aigc.psychology.composition.ReportRelation;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCUnit;
 import cube.common.entity.GenerativeOption;
-import cube.common.entity.GenerativeRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
@@ -101,6 +101,37 @@ public class ConversationWorker {
         }*/
 
         // 使用指定模型生成结果
+        this.service.generateText(channel, unit, query, prompt, new GenerativeOption(), null, 0,
+                null, null, false, true, listener);
+
+        return AIGCStateCode.Ok;
+    }
+
+    public AIGCStateCode work(String token, String channelCode, CustomRelation relation,
+                              String query, GenerateTextListener listener) {
+        // 获取频道
+        AIGCChannel channel = this.service.getChannel(channelCode);
+        if (null == channel) {
+            channel = this.service.createChannel(token, channelCode, channelCode);
+        }
+
+        // 获取单元
+        AIGCUnit unit = this.service.selectUnitByName(this.unitName);
+        if (null == unit) {
+            Logger.w(this.getClass(), "#work - Can NOT find unit \"" + this.unitName + "\"");
+
+            unit = this.service.selectUnitByName(PsychologyScene.getInstance().getUnitName());
+            if (null == unit) {
+                return AIGCStateCode.UnitError;
+            }
+        }
+
+        String prompt = PsychologyScene.getInstance().buildPrompt(relation, query);
+        if (null == prompt) {
+            Logger.e(this.getClass(), "#work - Builds prompt failed");
+            return AIGCStateCode.NoData;
+        }
+
         this.service.generateText(channel, unit, query, prompt, new GenerativeOption(), null, 0,
                 null, null, false, true, listener);
 

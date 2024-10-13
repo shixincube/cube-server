@@ -660,6 +660,10 @@ public class Painting implements JSONable {
         return this.houseList;
     }
 
+    public boolean hasHouse() {
+        return (null != this.houseList && !this.houseList.isEmpty());
+    }
+
     public void addTree(Tree tree) {
         if (null == this.treeList) {
             this.treeList = new ArrayList<>();
@@ -681,6 +685,10 @@ public class Painting implements JSONable {
         return this.treeList;
     }
 
+    public boolean hasTree() {
+        return (null != this.treeList && !this.treeList.isEmpty());
+    }
+
     public void addPerson(Person person) {
         if (null == this.personList) {
             this.personList = new ArrayList<>();
@@ -700,6 +708,10 @@ public class Painting implements JSONable {
 
     public List<Person> getPersons() {
         return this.personList;
+    }
+
+    public boolean hasPerson() {
+        return (null != this.personList && !this.personList.isEmpty());
     }
 
     public OtherSet getOther() {

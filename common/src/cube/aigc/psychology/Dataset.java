@@ -29,10 +29,7 @@ package cube.aigc.psychology;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Dataset {
@@ -119,14 +116,37 @@ public class Dataset {
         return this.getContent(question);
     }
 
-    public List<String> searchContent(String[] keywords) {
+    /**
+     *
+     * @param keywords 关键词列表。
+     * @param matching 匹配数量。
+     * @return
+     */
+    public List<String> searchContent(String[] keywords, int matching) {
+        List<String> result = new ArrayList<>();
+
         Iterator<Map.Entry<String, String[]>> iter = this.questionKeywordMap.entrySet().iterator();
         while (iter.hasNext()) {
             Map.Entry<String, String[]> entry = iter.next();
             String[] queryWords = entry.getValue();
-
+            int count = 0;
+            for (String keyword : keywords) {
+                for (String qw : queryWords) {
+                    if (keyword.equals(qw)) {
+                        ++count;
+                        break;
+                    }
+                }
+            }
+            if (count >= matching) {
+                String content = this.getContent(entry.getKey());
+                if (null != content) {
+                    result.add(content);
+                }
+            }
         }
-        return null;
+
+        return result;
     }
 
     public String getContent(String question) {

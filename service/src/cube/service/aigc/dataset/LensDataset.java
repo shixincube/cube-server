@@ -52,12 +52,34 @@ public class LensDataset {
 
         Logger.i(this.getClass(), "Report num: " + reports.size());
 
-        ReportDataset dataset = new ReportDataset(reports);
-        dataset.saveReportScoreToFile(destFile);
+        ReportDataset dataset = new ReportDataset();
+        dataset.saveReportScoreToFile(reports, destFile);
     }
 
     public void saveAsVisionDataset(File srcFile, File destFile) {
+        List<Painting> paintings = new ArrayList<>();
 
+        try {
+            Logger.d(this.getClass(), "Reads file: " + srcFile.getAbsolutePath());
+
+            byte[] data = Files.readAllBytes(Paths.get(srcFile.getAbsolutePath()));
+            JSONArray array = new JSONArray(new String(data, StandardCharsets.UTF_8));
+
+            for (int i = 0; i < array.length(); ++i) {
+                JSONObject json = array.getJSONObject(i);
+                if (json.has("painting")) {
+                    Painting painting = new Painting(json.getJSONObject("painting"));
+                    paintings.add(painting);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Logger.i(this.getClass(), "Painting num: " + paintings.size());
+
+        ReportDataset dataset = new ReportDataset();
+        dataset.saveVisionDataToFile(paintings, destFile);
     }
 
     public void writeToFile(File file) {

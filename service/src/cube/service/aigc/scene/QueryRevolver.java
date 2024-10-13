@@ -28,6 +28,7 @@ package cube.service.aigc.scene;
 
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.composition.CustomRelation;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.ReportRelation;
 import cube.aigc.psychology.composition.ScaleFactor;
@@ -341,6 +342,21 @@ public class QueryRevolver {
         return result;
     }
 
+    public String generatePrompt(CustomRelation relation, String query) {
+        String knowledge = this.generateKnowledge(query);
+        if (null == knowledge || knowledge.length() < 2) {
+            return query;
+        }
+
+        StringBuilder result = new StringBuilder();
+        result.append("已知信息：\n");
+        result.append(knowledge).append("\n\n");
+        result.append("根据以上信息，专业地回答问题。问题是：");
+        result.append(query);
+
+        return result.toString();
+    }
+
     private String fixName(String name, String gender, int age) {
         return name;
 //        if (age <= 22) {
@@ -474,8 +490,20 @@ public class QueryRevolver {
     }
 
     private String generateKnowledge(String query) {
+        String fixQuery = query.replaceAll("你", "爱心理");
 
-        return null;
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+        List<String> keywords = analyzer.analyzeOnlyWords(fixQuery, 7);
+
+        StringBuilder buf = new StringBuilder();
+
+        Dataset dataset = Resource.getInstance().loadDataset();
+        List<String> list = dataset.searchContent(keywords.toArray(new String[0]), 2);
+        for (String content : list) {
+            buf.append(content).append("\n\n");
+        }
+
+        return buf.toString();
     }
 
     private String filterPersonalityDescription(String desc) {
