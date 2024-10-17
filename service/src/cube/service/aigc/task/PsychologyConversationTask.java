@@ -30,6 +30,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.aigc.psychology.composition.CustomRelation;
 import cube.aigc.psychology.composition.ReportRelation;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -71,14 +72,23 @@ public class PsychologyConversationTask extends ServiceTask {
 
         String channelCode = null;
         List<ReportRelation> reportRelationList = null;
+        CustomRelation customRelation = null;
         String query = null;
         try {
             channelCode = packet.data.getString("channelCode");
-            JSONArray array = packet.data.getJSONArray("relations");
-            reportRelationList = new ArrayList<>();
-            for (int i = 0; i < array.length(); ++i) {
-                reportRelationList.add(new ReportRelation(array.getJSONObject(i)));
+
+            if (packet.data.has("relations")) {
+                JSONArray array = packet.data.getJSONArray("relations");
+                reportRelationList = new ArrayList<>();
+                for (int i = 0; i < array.length(); ++i) {
+                    reportRelationList.add(new ReportRelation(array.getJSONObject(i)));
+                }
             }
+
+            if (packet.data.has("custom")) {
+                customRelation = new CustomRelation(packet.data.getJSONObject("custom"));
+            }
+
             query = packet.data.getString("query");
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
@@ -90,28 +100,56 @@ public class PsychologyConversationTask extends ServiceTask {
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         ConversationWorker worker = new ConversationWorker(service);
-        AIGCStateCode stateCode = worker.work(token, channelCode, reportRelationList, query, new GenerateTextListener() {
-            @Override
-            public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
-                if (null != record) {
-                    cellet.speak(talkContext,
-                            makeResponse(dialect, packet, AIGCStateCode.Ok.code,
-                                    record.toCompactJSON()));
+        AIGCStateCode stateCode = AIGCStateCode.Failure;
+
+        if (null != reportRelationList) {
+            stateCode = worker.work(token, channelCode, reportRelationList, query, new GenerateTextListener() {
+                @Override
+                public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
+                    if (null != record) {
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.Ok.code,
+                                        record.toCompactJSON()));
+                    }
+                    else {
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                    }
+                    markResponseTime();
                 }
-                else {
+
+                @Override
+                public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                     cellet.speak(talkContext,
                             makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                    markResponseTime();
                 }
-                markResponseTime();
-            }
+            });
+        }
+        else if (null != customRelation) {
+            stateCode = worker.work(token, channelCode, customRelation, query, new GenerateTextListener() {
+                @Override
+                public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
+                    if (null != record) {
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.Ok.code,
+                                        record.toCompactJSON()));
+                    }
+                    else {
+                        cellet.speak(talkContext,
+                                makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                    }
+                    markResponseTime();
+                }
 
-            @Override
-            public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
-                cellet.speak(talkContext,
-                        makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
-                markResponseTime();
-            }
-        });
+                @Override
+                public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
+                    cellet.speak(talkContext,
+                            makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                    markResponseTime();
+                }
+            });
+        }
 
         if (AIGCStateCode.Ok != stateCode) {
             this.cellet.speak(this.talkContext,
