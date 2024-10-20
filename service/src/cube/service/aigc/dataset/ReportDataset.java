@@ -26,6 +26,7 @@ public class ReportDataset {
 
             for (Painting painting : paintings) {
                 PaintingAccelerator accelerator = new PaintingAccelerator(painting);
+
             }
         } catch (Exception e) {
 

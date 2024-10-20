@@ -28,6 +28,8 @@ package cube.aigc.psychology;
 
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.material.Label;
+import cube.aigc.psychology.material.Thing;
+import cube.aigc.psychology.material.other.OtherSet;
 import cube.common.entity.Material;
 import cube.vision.Point;
 import cube.vision.Size;
@@ -36,6 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PaintingAccelerator {
+
+    private final double aligningSize = 1280;
 
     private Painting painting;
 
@@ -50,13 +54,52 @@ public class PaintingAccelerator {
         return this.parameter;
     }
 
+    public String outputParameterAsCSV(boolean head) {
+        StringBuilder buf = new StringBuilder();
+        if (head) {
+            buf.append("frame_area_ratio");
+            buf.append(",").append("whole_t_max");
+            buf.append(",").append("whole_t_avg");
+            buf.append(",").append("whole_t_density");
+            buf.append(",").append("whole_t_hierarchy");
+            buf.append(",").append("whole_t_sd");
+            buf.append(",").append("quadrant1_t_max");
+            buf.append(",").append("quadrant1_t_avg");
+            buf.append(",").append("quadrant1_t_density");
+            buf.append(",").append("quadrant1_t_hierarchy");
+            buf.append(",").append("quadrant1_t_sd");
+            buf.append(",").append("quadrant2_t_max");
+            buf.append(",").append("quadrant2_t_avg");
+            buf.append(",").append("quadrant2_t_density");
+            buf.append(",").append("quadrant2_t_hierarchy");
+            buf.append(",").append("quadrant2_t_sd");
+            buf.append(",").append("quadrant3_t_max");
+            buf.append(",").append("quadrant3_t_avg");
+            buf.append(",").append("quadrant3_t_density");
+            buf.append(",").append("quadrant3_t_hierarchy");
+            buf.append(",").append("quadrant3_t_sd");
+            buf.append(",").append("quadrant4_t_max");
+            buf.append(",").append("quadrant4_t_avg");
+            buf.append(",").append("quadrant4_t_density");
+            buf.append(",").append("quadrant4_t_hierarchy");
+            buf.append(",").append("quadrant4_t_sd");
+            buf.append(",").append("house1");
+        }
+
+        return buf.toString();
+    }
+
     private void build() {
         this.parameter = new Parameter();
         SpaceLayout spaceLayout = new SpaceLayout(this.painting);
 
         this.parameter.frameAreaRatio = spaceLayout.getAreaRatio();
+
         this.parameter.wholeTextureMax = this.painting.getWhole().max;
+        this.parameter.wholeTextureAvg = this.painting.getWhole().avg;
         this.parameter.wholeTextureDensity = this.painting.getWhole().density;
+        this.parameter.wholeTextureHierarchy = this.painting.getWhole().hierarchy;
+        this.parameter.wholeTextureStandardDeviation = this.painting.getWhole().standardDeviation;
 
         this.parameter.quadrant1TextureMax = this.painting.getQuadrants().get(0).max;
         this.parameter.quadrant1TextureAvg = this.painting.getQuadrants().get(0).avg;
@@ -88,6 +131,13 @@ public class PaintingAccelerator {
                 // 默认列表是面积正序，所以这里获取列表里第一个，面积最小的一个
                 this.parameter.house2 = new MaterialParameter(this.painting.getHouses().get(0));
             }
+            else {
+                this.parameter.house2 = new MaterialParameter(Label.House);
+            }
+        }
+        else {
+            this.parameter.house1 = new MaterialParameter(Label.House);
+            this.parameter.house2 = new MaterialParameter(Label.House);
         }
 
         if (this.painting.hasTree()) {
@@ -96,6 +146,13 @@ public class PaintingAccelerator {
                 // 默认列表是面积正序，所以这里获取列表里第一个，面积最小的一个
                 this.parameter.tree2 = new MaterialParameter(this.painting.getTrees().get(0));
             }
+            else {
+                this.parameter.tree2 = new MaterialParameter(Label.Tree);
+            }
+        }
+        else {
+            this.parameter.tree1 = new MaterialParameter(Label.Tree);
+            this.parameter.tree2 = new MaterialParameter(Label.Tree);
         }
 
         if (this.painting.hasPerson()) {
@@ -103,6 +160,28 @@ public class PaintingAccelerator {
             if (this.painting.getPersons().size() > 1) {
                 // 默认列表是面积正序，所以这里获取列表里第一个，面积最小的一个
                 this.parameter.person2 = new MaterialParameter(this.painting.getPersons().get(0));
+            }
+            else {
+                this.parameter.person2 = new MaterialParameter(Label.Person);
+            }
+        }
+        else {
+            this.parameter.person1 = new MaterialParameter(Label.Person);
+            this.parameter.person2 = new MaterialParameter(Label.Person);
+        }
+
+        OtherSet otherSet = this.painting.getOther();
+        // 将所有标签都加入
+        for (Label label : Label.values()) {
+            if (Label.isOther(label)) {
+                Thing thing = otherSet.get(label);
+                if (null != thing) {
+                    this.parameter.materials.add(new MaterialParameter(thing));
+                }
+                else {
+                    // 不存在的标签
+                    this.parameter.materials.add(new MaterialParameter(label));
+                }
             }
         }
     }
@@ -112,8 +191,10 @@ public class PaintingAccelerator {
         public double frameAreaRatio = 0;
 
         public double wholeTextureMax = 0;
-
+        public double wholeTextureAvg = 0;
         public double wholeTextureDensity = 0;
+        public double wholeTextureHierarchy = 0;
+        public double wholeTextureStandardDeviation = 0;
 
         public double quadrant1TextureMax = 0;
         public double quadrant1TextureAvg = 0;
@@ -174,10 +255,37 @@ public class PaintingAccelerator {
 
         public double textureStandardDeviation = 0;
 
+        public MaterialParameter(Label label) {
+            this.label = label;
+            this.center = new Point(0, 0);
+        }
+
         public MaterialParameter(Material material) {
             this.label = Label.parse(material.label);
-            Size size = painting.getCanvasSize();
 
+            Size size = painting.getCanvasSize();
+            double r = aligningSize / size.width;
+            double cpX = material.box.getCenterPoint().x * r;
+            double cpY = material.box.getCenterPoint().y * r;
+
+            this.center = new Point(cpX, cpY);
+
+            this.areaRatio = ((double) material.area) / (double) painting.getCanvasSize().calculateArea();
+
+            this.textureMax = material.texture.max;
+            this.textureHierarchy = material.texture.hierarchy;
+            this.textureDensity = material.texture.density;
+            this.textureStandardDeviation = material.texture.standardDeviation;
+        }
+
+        public String outputCSV() {
+            StringBuilder buf = new StringBuilder();
+            return buf.toString();
+        }
+
+        public String outputCSVHead() {
+            StringBuilder buf = new StringBuilder();
+            return buf.toString();
         }
     }
 }

@@ -87,6 +87,20 @@ public class House extends Thing {
         this.area = Math.round(this.boundingBox.calculateArea() * 0.86f);
     }
 
+    @Override
+    public List<Thing> getSubThings(Label label) {
+        List<Thing> things = null;
+        switch (label) {
+            case HouseSidewall:
+                if (null != this.sidewallList) {
+                    things = new ArrayList<>(this.sidewallList);
+                }
+            default:
+                break;
+        }
+        return things;
+    }
+
     public void addSidewall(Sidewall sidewall) {
         if (null == this.sidewallList) {
             this.sidewallList = new ArrayList<>();
