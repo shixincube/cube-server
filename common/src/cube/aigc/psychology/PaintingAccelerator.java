@@ -27,6 +27,7 @@
 package cube.aigc.psychology;
 
 import cube.aigc.psychology.composition.SpaceLayout;
+import cube.aigc.psychology.material.House;
 import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Thing;
 import cube.aigc.psychology.material.other.OtherSet;
@@ -83,7 +84,8 @@ public class PaintingAccelerator {
             buf.append(",").append("quadrant4_t_density");
             buf.append(",").append("quadrant4_t_hierarchy");
             buf.append(",").append("quadrant4_t_sd");
-            buf.append(",").append("house1");
+            buf.append(",").append(formatMaterialParameterCSV("house1"));
+            buf.append(",").append(formatMaterialParameterCSV("house2"));
         }
 
         return buf.toString();
@@ -184,6 +186,19 @@ public class PaintingAccelerator {
                 }
             }
         }
+    }
+
+    private String formatMaterialParameterCSV(String prefix) {
+        StringBuilder buf = new StringBuilder();
+        buf.append(prefix).append("_").append("center_x");
+        buf.append(",").append(prefix).append("_").append("center_y");
+        buf.append(",").append(prefix).append("_").append("area_ratio");
+        buf.append(",").append(prefix).append("_").append("t_max");
+        buf.append(",").append(prefix).append("_").append("t_avg");
+        buf.append(",").append(prefix).append("_").append("t_density");
+        buf.append(",").append(prefix).append("_").append("t_hierarchy");
+        buf.append(",").append(prefix).append("_").append("t_sd");
+        return buf.toString();
     }
 
     public class Parameter {

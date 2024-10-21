@@ -41,7 +41,7 @@ public class House extends Thing {
 
     private List<Sidewall> sidewallList;
 
-    private Roof roof;
+    private List<Roof> roofList;
 
     private List<RoofSkylight> roofSkylightList;
 
@@ -63,10 +63,6 @@ public class House extends Thing {
 
     public House(JSONObject json) {
         super(json);
-
-        if (json.has("roof")) {
-            this.roof = new Roof(json.getJSONObject("roof"));
-        }
     }
 
     public House(BoundingBox boundingBox, Box box) {
@@ -95,6 +91,57 @@ public class House extends Thing {
                 if (null != this.sidewallList) {
                     things = new ArrayList<>(this.sidewallList);
                 }
+                break;
+            case HouseRoof:
+                if (null != this.roofList) {
+                    things = new ArrayList<>(this.roofList);
+                }
+                break;
+            case HouseRoofSkylight:
+                if (null != this.roofSkylightList) {
+                    things = new ArrayList<>(this.roofSkylightList);
+                }
+                break;
+            case HouseChimney:
+                if (null != this.chimneyList) {
+                    things = new ArrayList<>(this.chimneyList);
+                }
+                break;
+            case HouseWindow:
+                if (null != this.windowList) {
+                    things = new ArrayList<>(this.windowList);
+                }
+                break;
+            case HouseDoor:
+                if (null != this.doorList) {
+                    things = new ArrayList<>(this.doorList);
+                }
+                break;
+            case HouseCurtain:
+                if (null != this.curtainList) {
+                    things = new ArrayList<>(this.curtainList);
+                }
+                break;
+            case HouseWindowRailing:
+                if (null != this.windowRailingList) {
+                    things = new ArrayList<>(this.windowRailingList);
+                }
+                break;
+            case HouseSmoke:
+                if (null != this.smokeList) {
+                    things = new ArrayList<>(this.smokeList);
+                }
+                break;
+            case HouseFence:
+                if (null != this.fenceList) {
+                    things = new ArrayList<>(this.fenceList);
+                }
+                break;
+            case HousePath:
+                if (null != this.pathList) {
+                    things = new ArrayList<>(this.pathList);
+                }
+                break;
             default:
                 break;
         }
@@ -116,16 +163,19 @@ public class House extends Thing {
         return (null != this.sidewallList);
     }
 
-    public void setRoof(Roof roof) {
-        this.roof = roof;
+    public void addRoof(Roof roof) {
+        if (null == this.roofList) {
+            this.roofList = new ArrayList<>();
+        }
+        this.roofList.add(roof);
     }
 
     public Roof getRoof() {
-        return this.roof;
+        return this.roofList.get(0);
     }
 
     public boolean hasRoof() {
-        return (null != this.roof);
+        return (null != this.roofList);
     }
 
     /**
@@ -135,11 +185,11 @@ public class House extends Thing {
      * @return
      */
     public double getRoofAreaRatio() {
-        if (null == this.roof) {
+        if (null == this.roofList) {
             return 0;
         }
 
-        return ((double) this.roof.area)
+        return ((double) this.roofList.get(0).area)
                 / ((double) this.area);
     }
 
@@ -150,11 +200,11 @@ public class House extends Thing {
      * @return
      */
     public double getRoofHeightRatio() {
-        if (null == this.roof) {
+        if (null == this.roofList) {
             return 0;
         }
 
-        return ((double) this.roof.box.height)
+        return ((double) this.roofList.get(0).box.height)
                 / ((double) this.box.height);
     }
 
@@ -387,8 +437,8 @@ public class House extends Thing {
     @Override
     public int numComponents() {
         int num = 0;
-        if (null != roof) {
-            num += 1;
+        if (null != roofList) {
+            num += roofList.size();
         }
         if (null != roofSkylightList) {
             num += roofSkylightList.size();
@@ -417,9 +467,6 @@ public class House extends Thing {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        if (null != this.roof) {
-            json.put("roof", this.roof.toJSON());
-        }
         return json;
     }
 }

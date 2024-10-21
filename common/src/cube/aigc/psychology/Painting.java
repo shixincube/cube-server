@@ -296,7 +296,7 @@ public class Painting implements JSONable {
                 break;
             case HouseRoof:
             case HouseRoofTextured:
-                house.setRoof((Roof) thing);
+                house.addRoof((Roof) thing);
                 if (house.isBackwardReasoning()) {
                     house.refreshBox(thing.boundingBox, thing.box);
                 }

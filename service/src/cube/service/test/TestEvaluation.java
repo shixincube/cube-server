@@ -226,6 +226,39 @@ public class TestEvaluation {
         System.out.println(conclusion.toString(4));
     }
 
+    public static void testPANASScale() {
+        System.out.println("testPANASScale");
+
+        Scale scale = Resource.getInstance().loadScaleByName("PANAS");
+        for (Question question : scale.getQuestions()) {
+            switch (Utils.randomInt(1, 5)) {
+                case 1:
+                    question.chooseAnswer("A");
+                    break;
+                case 2:
+                    question.chooseAnswer("B");
+                    break;
+                case 3:
+                    question.chooseAnswer("C");
+                    break;
+                case 4:
+                    question.chooseAnswer("D");
+                    break;
+                case 5:
+                    question.chooseAnswer("E");
+                    break;
+                default:
+                    break;
+            }
+        }
+        System.out.println("Complete: " + scale.isComplete());
+
+        System.out.println("----------------------------------------");
+
+        JSONObject conclusion = scale.scoring().toJSON();
+        System.out.println(conclusion.toString(4));
+    }
+
     public static void testPADScale() {
         System.out.println("testPADScale");
 
@@ -286,6 +319,8 @@ public class TestEvaluation {
 
 //        testBigFiveScale();
 
-        testPADScale();
+        testPANASScale();
+
+//        testPADScale();
     }
 }

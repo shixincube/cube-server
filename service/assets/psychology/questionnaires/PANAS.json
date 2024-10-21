@@ -1,0 +1,411 @@
+{
+	"name": "PANAS",
+	"displayName": "正性与负性情绪量表",
+	"instruction": "请阅读每一个词语并根据你最近1-2星期的实际情况在相应的答案上进行选择。",
+	"sections": [{
+		"title": "",
+		"content": "",
+		"questions": [{
+			"sn": 1,
+			"choice": "single",
+			"content": "感兴趣的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 2,
+			"choice": "single",
+			"content": "心烦的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 3,
+			"choice": "single",
+			"content": "精神活力高的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 4,
+			"choice": "single",
+			"content": "心神不宁的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 5,
+			"choice": "single",
+			"content": "劲头足的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 6,
+			"choice": "single",
+			"content": "内疚的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 7,
+			"choice": "single",
+			"content": "恐惧的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 8,
+			"choice": "single",
+			"content": "敌意的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 9,
+			"choice": "single",
+			"content": "热情的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 10,
+			"choice": "single",
+			"content": "自豪的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 11,
+			"choice": "single",
+			"content": "易怒的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 12,
+			"choice": "single",
+			"content": "警觉性高的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 13,
+			"choice": "single",
+			"content": "害羞的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 14,
+			"choice": "single",
+			"content": "备受鼓舞的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 15,
+			"choice": "single",
+			"content": "紧张的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 16,
+			"choice": "single",
+			"content": "意志坚定的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 17,
+			"choice": "single",
+			"content": "注意力集中的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 18,
+			"choice": "single",
+			"content": "坐立不安的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 19,
+			"choice": "single",
+			"content": "有活力的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}, {
+			"sn": 20,
+			"choice": "single",
+			"content": "害怕的",
+			"answers": [{
+				"code": "A",
+				"content": "A. 几乎没有"
+			}, {
+				"code": "B",
+				"content": "B. 比较少"
+			}, {
+				"code": "C",
+				"content": "C. 中等程度"
+			}, {
+				"code": "D",
+				"content": "D. 比较多"
+			}, {
+				"code": "E",
+				"content": "E. 极其多"
+			}]
+		}]
+	}],
+	"scoringScript": "PANAS.js"
+}
