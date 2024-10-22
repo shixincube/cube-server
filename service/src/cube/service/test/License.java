@@ -83,6 +83,7 @@ public class License {
     public static void main(String[] args) {
         License license = new License();
 
+        // 生成签名串
         if (!license.signLicense("./license/")) {
             System.out.println("Sign failed");
             return;
@@ -91,6 +92,7 @@ public class License {
             System.out.println("Sign success");
         }
 
+        // 校验签名串
 //        if (license.verifyLicence("./license/")) {
 //            System.out.println("Sign is correct");
 //        }

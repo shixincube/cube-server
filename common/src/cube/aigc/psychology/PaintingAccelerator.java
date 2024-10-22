@@ -85,6 +85,8 @@ public class PaintingAccelerator {
             buf.append(",").append("quadrant4_t_hierarchy");
             buf.append(",").append("quadrant4_t_sd");
             buf.append(",").append(formatMaterialParameterCSV("house1"));
+            buf.append(",").append(formatMaterialParameterCSV("house1_roof"));
+            buf.append(",").append(formatMaterialParameterCSV("house1_roof_skylight"));
             buf.append(",").append(formatMaterialParameterCSV("house2"));
         }
 
@@ -192,6 +194,10 @@ public class PaintingAccelerator {
         StringBuilder buf = new StringBuilder();
         buf.append(prefix).append("_").append("center_x");
         buf.append(",").append(prefix).append("_").append("center_y");
+        buf.append(",").append(prefix).append("_").append("location_x");
+        buf.append(",").append(prefix).append("_").append("location_y");
+        buf.append(",").append(prefix).append("_").append("size_width");
+        buf.append(",").append(prefix).append("_").append("size_height");
         buf.append(",").append(prefix).append("_").append("area_ratio");
         buf.append(",").append(prefix).append("_").append("t_max");
         buf.append(",").append(prefix).append("_").append("t_avg");
@@ -260,6 +266,10 @@ public class PaintingAccelerator {
 
         public Point center;
 
+        public Point location;
+
+        public Size size;
+
         public double areaRatio = 0;
 
         public double textureMax = 0;
@@ -273,6 +283,8 @@ public class PaintingAccelerator {
         public MaterialParameter(Label label) {
             this.label = label;
             this.center = new Point(0, 0);
+            this.location = new Point(0, 0);
+            this.size = new Size(0, 0);
         }
 
         public MaterialParameter(Material material) {
@@ -280,10 +292,13 @@ public class PaintingAccelerator {
 
             Size size = painting.getCanvasSize();
             double r = aligningSize / size.width;
+
             double cpX = material.box.getCenterPoint().x * r;
             double cpY = material.box.getCenterPoint().y * r;
-
             this.center = new Point(cpX, cpY);
+
+            this.location = new Point(material.box.x0 * r, material.box.y0 * r);
+            this.size = new Size((int)(r * (double) material.box.width), (int)(r * (double) material.box.height));
 
             this.areaRatio = ((double) material.area) / (double) painting.getCanvasSize().calculateArea();
 

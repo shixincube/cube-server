@@ -95,5 +95,7 @@ public abstract class Thing extends Material {
         return result;
     }
 
-    abstract public List<Thing> getSubThings(Label label);
+    public List<Thing> getSubThings(Label label) {
+        return null;
+    }
 }

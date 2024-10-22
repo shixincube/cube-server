@@ -28,11 +28,11 @@ package cube.license;
 
 public class CertificateInfo {
 
-    public static String PRIVATE_KEY_FILE = "CubeLicense.keystore";
+    public static String PRIVATE_KEY_FILE = "BaizeLicense.keystore";
 
     public static String CER_FILE = "license.cer";
 
-    public static String PRIVATE_ALIAS = "CubeLicense";
+    public static String PRIVATE_ALIAS = "BaizeLicense";
 
     public static String KEYSTORE_PASSWORD = "cubeteam";
 
