@@ -46,6 +46,9 @@ public class PaintingAccelerator {
 
     private Parameter parameter;
 
+    private House house1;
+    private House house2;
+
     public PaintingAccelerator(Painting painting) {
         this.painting = painting;
         this.build();
@@ -55,41 +58,112 @@ public class PaintingAccelerator {
         return this.parameter;
     }
 
-    public String outputParameterAsCSV(boolean head) {
+    public String outputCSVHead() {
         StringBuilder buf = new StringBuilder();
-        if (head) {
-            buf.append("frame_area_ratio");
-            buf.append(",").append("whole_t_max");
-            buf.append(",").append("whole_t_avg");
-            buf.append(",").append("whole_t_density");
-            buf.append(",").append("whole_t_hierarchy");
-            buf.append(",").append("whole_t_sd");
-            buf.append(",").append("quadrant1_t_max");
-            buf.append(",").append("quadrant1_t_avg");
-            buf.append(",").append("quadrant1_t_density");
-            buf.append(",").append("quadrant1_t_hierarchy");
-            buf.append(",").append("quadrant1_t_sd");
-            buf.append(",").append("quadrant2_t_max");
-            buf.append(",").append("quadrant2_t_avg");
-            buf.append(",").append("quadrant2_t_density");
-            buf.append(",").append("quadrant2_t_hierarchy");
-            buf.append(",").append("quadrant2_t_sd");
-            buf.append(",").append("quadrant3_t_max");
-            buf.append(",").append("quadrant3_t_avg");
-            buf.append(",").append("quadrant3_t_density");
-            buf.append(",").append("quadrant3_t_hierarchy");
-            buf.append(",").append("quadrant3_t_sd");
-            buf.append(",").append("quadrant4_t_max");
-            buf.append(",").append("quadrant4_t_avg");
-            buf.append(",").append("quadrant4_t_density");
-            buf.append(",").append("quadrant4_t_hierarchy");
-            buf.append(",").append("quadrant4_t_sd");
-            buf.append(",").append(formatMaterialParameterCSV("house1"));
-            buf.append(",").append(formatMaterialParameterCSV("house1_roof"));
-            buf.append(",").append(formatMaterialParameterCSV("house1_roof_skylight"));
-            buf.append(",").append(formatMaterialParameterCSV("house2"));
-        }
+        buf.append("frame_area_ratio");
+        buf.append(",").append("whole_t_max");
+        buf.append(",").append("whole_t_avg");
+        buf.append(",").append("whole_t_density");
+        buf.append(",").append("whole_t_hierarchy");
+        buf.append(",").append("whole_t_sd");
+        buf.append(",").append("quadrant1_t_max");
+        buf.append(",").append("quadrant1_t_avg");
+        buf.append(",").append("quadrant1_t_density");
+        buf.append(",").append("quadrant1_t_hierarchy");
+        buf.append(",").append("quadrant1_t_sd");
+        buf.append(",").append("quadrant2_t_max");
+        buf.append(",").append("quadrant2_t_avg");
+        buf.append(",").append("quadrant2_t_density");
+        buf.append(",").append("quadrant2_t_hierarchy");
+        buf.append(",").append("quadrant2_t_sd");
+        buf.append(",").append("quadrant3_t_max");
+        buf.append(",").append("quadrant3_t_avg");
+        buf.append(",").append("quadrant3_t_density");
+        buf.append(",").append("quadrant3_t_hierarchy");
+        buf.append(",").append("quadrant3_t_sd");
+        buf.append(",").append("quadrant4_t_max");
+        buf.append(",").append("quadrant4_t_avg");
+        buf.append(",").append("quadrant4_t_density");
+        buf.append(",").append("quadrant4_t_hierarchy");
+        buf.append(",").append("quadrant4_t_sd");
+        buf.append(",").append(formatMaterialParameterCSVHead("house1"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house1_roof"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house1_roof_skylight"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house1_chimney"));
 
+        buf.append(",").append(formatMaterialParameterCSVHead("house2"));
+        buf.append("\n");
+        return buf.toString();
+    }
+
+    public String outputParameterAsCSV() {
+        StringBuilder buf = new StringBuilder();
+
+        buf.append(this.parameter.frameAreaRatio);
+        buf.append(",").append(this.parameter.wholeTextureMax);
+        buf.append(",").append(this.parameter.wholeTextureAvg);
+        buf.append(",").append(this.parameter.wholeTextureDensity);
+        buf.append(",").append(this.parameter.wholeTextureHierarchy);
+        buf.append(",").append(this.parameter.wholeTextureStandardDeviation);
+
+        buf.append(",").append(this.parameter.quadrant1TextureMax);
+        buf.append(",").append(this.parameter.quadrant1TextureAvg);
+        buf.append(",").append(this.parameter.quadrant1TextureDensity);
+        buf.append(",").append(this.parameter.quadrant1TextureHierarchy);
+        buf.append(",").append(this.parameter.quadrant1TextureStandardDeviation);
+
+        buf.append(",").append(this.parameter.quadrant2TextureMax);
+        buf.append(",").append(this.parameter.quadrant2TextureAvg);
+        buf.append(",").append(this.parameter.quadrant2TextureDensity);
+        buf.append(",").append(this.parameter.quadrant2TextureHierarchy);
+        buf.append(",").append(this.parameter.quadrant2TextureStandardDeviation);
+
+        buf.append(",").append(this.parameter.quadrant3TextureMax);
+        buf.append(",").append(this.parameter.quadrant3TextureAvg);
+        buf.append(",").append(this.parameter.quadrant3TextureDensity);
+        buf.append(",").append(this.parameter.quadrant3TextureHierarchy);
+        buf.append(",").append(this.parameter.quadrant3TextureStandardDeviation);
+
+        buf.append(",").append(this.parameter.quadrant4TextureMax);
+        buf.append(",").append(this.parameter.quadrant4TextureAvg);
+        buf.append(",").append(this.parameter.quadrant4TextureDensity);
+        buf.append(",").append(this.parameter.quadrant4TextureHierarchy);
+        buf.append(",").append(this.parameter.quadrant4TextureStandardDeviation);
+
+        buf.append(",").append(this.parameter.house1.outputCSV());
+        buf.append(",").append(this.outputHouseParameterAsCSV(this.house1));
+
+        return buf.toString();
+    }
+
+    private String outputHouseParameterAsCSV(House house) {
+        MaterialParameter blank = new MaterialParameter(Label.Unknown);
+
+        StringBuilder buf = new StringBuilder();
+        if (null != house) {
+            if (null != house.getRoof()) {
+                buf.append(new MaterialParameter(house.getRoof()).outputCSV());
+            } else {
+                buf.append(blank.outputCSV());
+            }
+
+            if (null != house.getSubThings(Label.HouseRoofSkylight)) {
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseRoofSkylight).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (null != house.getSubThings(Label.HouseChimney)) {
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseChimney).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+        }
+        else {
+            buf.append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+        }
         return buf.toString();
     }
 
@@ -130,8 +204,10 @@ public class PaintingAccelerator {
         this.parameter.quadrant4TextureStandardDeviation = this.painting.getQuadrants().get(3).standardDeviation;
 
         if (this.painting.hasHouse()) {
+            this.house1 = this.painting.getHouse();
             this.parameter.house1 = new MaterialParameter(this.painting.getHouse());
             if (this.painting.getHouses().size() > 1) {
+                this.house2 = this.painting.getHouses().get(0);
                 // 默认列表是面积正序，所以这里获取列表里第一个，面积最小的一个
                 this.parameter.house2 = new MaterialParameter(this.painting.getHouses().get(0));
             }
@@ -190,7 +266,7 @@ public class PaintingAccelerator {
         }
     }
 
-    private String formatMaterialParameterCSV(String prefix) {
+    private String formatMaterialParameterCSVHead(String prefix) {
         StringBuilder buf = new StringBuilder();
         buf.append(prefix).append("_").append("center_x");
         buf.append(",").append(prefix).append("_").append("center_y");
@@ -274,6 +350,8 @@ public class PaintingAccelerator {
 
         public double textureMax = 0;
 
+        public double textureAvg = 0;
+
         public double textureHierarchy = 0;
 
         public double textureDensity = 0;
@@ -303,18 +381,26 @@ public class PaintingAccelerator {
             this.areaRatio = ((double) material.area) / (double) painting.getCanvasSize().calculateArea();
 
             this.textureMax = material.texture.max;
-            this.textureHierarchy = material.texture.hierarchy;
+            this.textureAvg = material.texture.avg;
             this.textureDensity = material.texture.density;
+            this.textureHierarchy = material.texture.hierarchy;
             this.textureStandardDeviation = material.texture.standardDeviation;
         }
 
         public String outputCSV() {
             StringBuilder buf = new StringBuilder();
-            return buf.toString();
-        }
-
-        public String outputCSVHead() {
-            StringBuilder buf = new StringBuilder();
+            buf.append(this.center.x);
+            buf.append(",").append(this.center.y);
+            buf.append(",").append(this.location.x);
+            buf.append(",").append(this.location.y);
+            buf.append(",").append(this.size.width);
+            buf.append(",").append(this.size.height);
+            buf.append(",").append(this.areaRatio);
+            buf.append(",").append(this.textureMax);
+            buf.append(",").append(this.textureAvg);
+            buf.append(",").append(this.textureDensity);
+            buf.append(",").append(this.textureHierarchy);
+            buf.append(",").append(this.textureStandardDeviation);
             return buf.toString();
         }
     }

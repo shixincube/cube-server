@@ -33,7 +33,7 @@ public class Version {
 
     public final static int MAJOR = 0;
 
-    public final static int MINOR = 69;
+    public final static int MINOR = 70;
 
     public final static int REVISION = 0;
 

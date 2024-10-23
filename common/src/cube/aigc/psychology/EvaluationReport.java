@@ -157,6 +157,7 @@ public class EvaluationReport implements JSONable {
         for (EvaluationFeature result : resultList) {
             if (null != result.getScore(Indicator.Unknown)) {
                 this.unknown = true;
+                this.attentionSuggestion = AttentionSuggestion.FocusedAttention;
                 return;
             }
 

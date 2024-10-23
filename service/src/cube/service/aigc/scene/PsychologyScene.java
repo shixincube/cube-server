@@ -428,7 +428,14 @@ public class PsychologyScene {
                         reportTask.channel.setProcessing(false);
                         reportTask.report.setState(AIGCStateCode.InvalidData);
                         reportTask.report.setFinished(true);
-                        reportTask.listener.onReportEvaluateFailed(reportTask.report);
+
+                        // 存储
+                        storage.writePsychologyReport(reportTask.report);
+                        storage.writePainting(reportTask.report.sn, reportTask.fileLabel.getFileCode(), painting);
+
+                        // 按照正常状态返回
+                        reportTask.listener.onReportEvaluateCompleted(reportTask.report);
+//                        reportTask.listener.onReportEvaluateFailed(reportTask.report);
                         continue;
                     }
 

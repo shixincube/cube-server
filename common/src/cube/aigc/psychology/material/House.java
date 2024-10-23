@@ -171,6 +171,10 @@ public class House extends Thing {
     }
 
     public Roof getRoof() {
+        if (null == this.roofList) {
+            return null;
+        }
+
         return this.roofList.get(0);
     }
 
