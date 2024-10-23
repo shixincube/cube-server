@@ -158,6 +158,7 @@ public class EvaluationReport implements JSONable {
             if (null != result.getScore(Indicator.Unknown)) {
                 this.unknown = true;
                 this.attentionSuggestion = AttentionSuggestion.FocusedAttention;
+                this.additionScales.add(Resource.getInstance().loadScaleByName("SCL-90"));
                 return;
             }
 

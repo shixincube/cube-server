@@ -122,7 +122,7 @@ public class PsychologyScene {
 
             // 激活数据集
             Workflow workflow = new Workflow(aigcService);
-            String r = workflow.infer("白泽");
+            String r = workflow.infer("白泽京智");
             Logger.i(this.getClass(), "#start - Active dataset: " + r);
         } catch (Exception e) {
             e.printStackTrace();
@@ -422,7 +422,7 @@ public class PsychologyScene {
 
                     if (workflow.isUnknown()) {
                         // 未能处理的图片
-                        Logger.w(PsychologyScene.class, "#generateEvaluationReport - onReportEvaluateFailed (InvalidData): " +
+                        Logger.w(PsychologyScene.class, "#generateEvaluationReport - onReportEvaluateCompleted (InvalidData): " +
                                 reportTask.fileLabel.getFileCode());
                         runningTaskQueue.remove(reportTask);
                         reportTask.channel.setProcessing(false);
