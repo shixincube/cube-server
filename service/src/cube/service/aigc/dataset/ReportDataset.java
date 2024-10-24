@@ -9,6 +9,7 @@ import cube.aigc.psychology.composition.EvaluationScore;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,17 +20,47 @@ public class ReportDataset {
     }
 
     public void saveVisionDataToFile(List<Painting> paintings, File file) {
-        FileOutputStream stream = null;
+        FileOutputStream fs = null;
+        boolean head = false;
+        int columns = 0;
 
         try {
-            StringBuilder buf = new StringBuilder();
+            fs = new FileOutputStream(file);
 
             for (Painting painting : paintings) {
+                String content = null;
+
                 PaintingAccelerator accelerator = new PaintingAccelerator(painting);
+                if (!head) {
+                    head = true;
+                    content = accelerator.outputCSVHead();
+                    columns = content.split(",").length;
+                }
+                else {
+                    content = accelerator.outputParameterAsCSV();
+                    int num = content.split(",").length;
+                    if (columns != num) {
+                        content = null;
+                        Logger.w(this.getClass(), "#saveVisionDataToFile - The number of columns is inconsistent : " +
+                                columns + " != " + num);
+                    }
+                }
 
+                if (null != content) {
+                    fs.write(content.getBytes(StandardCharsets.UTF_8));
+                }
             }
-        } catch (Exception e) {
 
+            fs.flush();
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#saveVisionDataToFile", e);
+        } finally {
+            if (null != fs) {
+                try {
+                    fs.close();
+                } catch (IOException e) {
+                }
+            }
         }
     }
 
@@ -62,7 +93,7 @@ public class ReportDataset {
             stream.write(buf.toString().getBytes(StandardCharsets.UTF_8));
             stream.flush();
         } catch (Exception e) {
-            Logger.e(this.getClass(), "", e);
+            Logger.e(this.getClass(), "#saveReportScoreToFile", e);
         } finally {
             try {
                 stream.close();

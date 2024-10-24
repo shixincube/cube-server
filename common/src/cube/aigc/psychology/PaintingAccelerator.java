@@ -27,9 +27,7 @@
 package cube.aigc.psychology;
 
 import cube.aigc.psychology.composition.SpaceLayout;
-import cube.aigc.psychology.material.House;
-import cube.aigc.psychology.material.Label;
-import cube.aigc.psychology.material.Thing;
+import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.other.OtherSet;
 import cube.common.entity.Material;
 import cube.vision.Point;
@@ -48,6 +46,12 @@ public class PaintingAccelerator {
 
     private House house1;
     private House house2;
+
+    private Tree tree1;
+    private Tree tree2;
+
+    private Person person1;
+    private Person person2;
 
     public PaintingAccelerator(Painting painting) {
         this.painting = painting;
@@ -86,12 +90,51 @@ public class PaintingAccelerator {
         buf.append(",").append("quadrant4_t_density");
         buf.append(",").append("quadrant4_t_hierarchy");
         buf.append(",").append("quadrant4_t_sd");
+
         buf.append(",").append(formatMaterialParameterCSVHead("house1"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house1_sidewall"));
         buf.append(",").append(formatMaterialParameterCSVHead("house1_roof"));
         buf.append(",").append(formatMaterialParameterCSVHead("house1_roof_skylight"));
         buf.append(",").append(formatMaterialParameterCSVHead("house1_chimney"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house1_window"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house1_door"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house1_curtain"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house1_window_railing"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house1_smoke"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house1_fence"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house1_path"));
 
         buf.append(",").append(formatMaterialParameterCSVHead("house2"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house2_sidewall"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house2_roof"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house2_roof_skylight"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house2_chimney"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house2_window"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house2_door"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house2_curtain"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house2_window_railing"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house2_smoke"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house2_fence"));
+        buf.append(",").append(formatMaterialParameterCSVHead("house2_path"));
+
+        buf.append(",").append(formatMaterialParameterCSVHead("tree1"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree1_trunk"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree1_branch"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree1_canopy"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree1_root"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree1_fruit"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree1_hole"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree1_drooping"));
+
+        buf.append(",").append(formatMaterialParameterCSVHead("tree2"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree2_trunk"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree2_branch"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree2_canopy"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree2_root"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree2_fruit"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree2_hole"));
+        buf.append(",").append(formatMaterialParameterCSVHead("tree2_drooping"));
+
         buf.append("\n");
         return buf.toString();
     }
@@ -133,6 +176,16 @@ public class PaintingAccelerator {
         buf.append(",").append(this.parameter.house1.outputCSV());
         buf.append(",").append(this.outputHouseParameterAsCSV(this.house1));
 
+        buf.append(",").append(this.parameter.house2.outputCSV());
+        buf.append(",").append(this.outputHouseParameterAsCSV(this.house2));
+
+        buf.append(",").append(this.parameter.tree1.outputCSV());
+        buf.append(",").append(this.outputTreeParameterAsCSV(this.tree1));
+
+        buf.append(",").append(this.parameter.tree2.outputCSV());
+        buf.append(",").append(this.outputTreeParameterAsCSV(this.tree2));
+
+        buf.append("\n");
         return buf.toString();
     }
 
@@ -141,10 +194,16 @@ public class PaintingAccelerator {
 
         StringBuilder buf = new StringBuilder();
         if (null != house) {
-            if (null != house.getRoof()) {
-                buf.append(new MaterialParameter(house.getRoof()).outputCSV());
+            if (null != house.getSubThings(Label.HouseSidewall)) {
+                buf.append(new MaterialParameter(house.getSubThings(Label.HouseSidewall).get(0)).outputCSV());
             } else {
                 buf.append(blank.outputCSV());
+            }
+
+            if (null != house.getSubThings(Label.HouseRoof)) {
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseRoof).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
             }
 
             if (null != house.getSubThings(Label.HouseRoofSkylight)) {
@@ -158,9 +217,118 @@ public class PaintingAccelerator {
             } else {
                 buf.append(",").append(blank.outputCSV());
             }
+
+            if (null != house.getSubThings(Label.HouseWindow)) {
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseWindow).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (null != house.getSubThings(Label.HouseDoor)) {
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseDoor).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (null != house.getSubThings(Label.HouseCurtain)) {
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseCurtain).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (null != house.getSubThings(Label.HouseWindowRailing)) {
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseWindowRailing).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (null != house.getSubThings(Label.HouseSmoke)) {
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseSmoke).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (null != house.getSubThings(Label.HouseFence)) {
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseFence).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (null != house.getSubThings(Label.HousePath)) {
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HousePath).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
         }
         else {
             buf.append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+        }
+        return buf.toString();
+    }
+
+    private String outputTreeParameterAsCSV(Tree tree) {
+        MaterialParameter blank = new MaterialParameter(Label.Unknown);
+
+        StringBuilder buf = new StringBuilder();
+        if (null != tree) {
+            if (null != tree.getSubThings(Label.TreeTrunk)) {
+                buf.append(new MaterialParameter(tree.getSubThings(Label.TreeTrunk).get(0)).outputCSV());
+            } else {
+                buf.append(blank.outputCSV());
+            }
+
+            if (null != tree.getSubThings(Label.TreeBranch)) {
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeBranch).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (null != tree.getSubThings(Label.TreeCanopy)) {
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeCanopy).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (null != tree.getSubThings(Label.TreeRoot)) {
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeRoot).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (null != tree.getSubThings(Label.TreeFruit)) {
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeFruit).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (null != tree.getSubThings(Label.TreeHole)) {
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeHole).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (null != tree.getSubThings(Label.TreeDrooping)) {
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeDrooping).get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+        }
+        else {
+            buf.append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
             buf.append(",").append(blank.outputCSV());
             buf.append(",").append(blank.outputCSV());
         }

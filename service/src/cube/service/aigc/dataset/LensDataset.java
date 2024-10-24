@@ -82,7 +82,7 @@ public class LensDataset {
         dataset.saveVisionDataToFile(paintings, destFile);
     }
 
-    public void writeToFile(File file) {
+    public void downloadToFile(File file) {
         JSONArray data = new JSONArray();
         int pageIndex = 0;
 

@@ -75,6 +75,51 @@ public class Tree extends Thing {
         this.area = Math.round(this.boundingBox.calculateArea() * 0.72f);
     }
 
+    @Override
+    public List<Thing> getSubThings(Label label) {
+        List<Thing> things = null;
+        switch (label) {
+            case TreeTrunk:
+                if (null != this.trunkList) {
+                    things = new ArrayList<>(this.trunkList);
+                }
+                break;
+            case TreeBranch:
+                if (null != this.branchList) {
+                    things = new ArrayList<>(this.branchList);
+                }
+                break;
+            case TreeCanopy:
+                if (null != this.canopyList) {
+                    things = new ArrayList<>(this.canopyList);
+                }
+                break;
+            case TreeRoot:
+                if (null != this.rootList) {
+                    things = new ArrayList<>(this.rootList);
+                }
+                break;
+            case TreeFruit:
+                if (null != this.fruitList) {
+                    things = new ArrayList<>(this.fruitList);
+                }
+                break;
+            case TreeHole:
+                if (null != this.holeList) {
+                    things = new ArrayList<>(this.holeList);
+                }
+                break;
+            case TreeDrooping:
+                if (null != this.droopingLeavesList) {
+                    things = new ArrayList<>(this.droopingLeavesList);
+                }
+                break;
+            default:
+                break;
+        }
+        return things;
+    }
+
     public void addTrunk(Trunk trunk) {
         if (null == this.trunkList) {
             this.trunkList = new ArrayList<>();

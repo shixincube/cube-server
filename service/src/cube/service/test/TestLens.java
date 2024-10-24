@@ -10,20 +10,30 @@ public class TestLens {
         LensDataset lensDataset = new LensDataset();
 
         File file = new File("./storage/tmp/lens_reports.json");
-        lensDataset.writeToFile(file);
+        lensDataset.downloadToFile(file);
     }
 
-    public static void testSave() {
+    public static void testSaveScore() {
         File srcFile = new File("./storage/tmp/lens_reports.json");
-        File destFile = new File("./storage/tmp/lens_dataset.csv");
+        File destFile = new File("./storage/tmp/lens_score.csv");
 
         LensDataset lensDataset = new LensDataset();
         lensDataset.saveAsScoreDataset(srcFile, destFile);
     }
 
-    public static void main(String[] args) {
-        testDownloadDataset();
+    public static void testSaveVision() {
+        File srcFile = new File("./storage/tmp/lens_reports.json");
+        File destFile = new File("./storage/tmp/lens_vision.csv");
 
-//        testSave();
+        LensDataset lensDataset = new LensDataset();
+        lensDataset.saveAsVisionDataset(srcFile, destFile);
+    }
+
+    public static void main(String[] args) {
+//        testDownloadDataset();
+
+//        testSaveScore();
+
+        testSaveVision();
     }
 }
