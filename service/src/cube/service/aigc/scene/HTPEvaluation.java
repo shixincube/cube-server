@@ -580,6 +580,9 @@ public class HTPEvaluation extends Evaluation {
                     if (texture.density > 0.8 && texture.max < 2.0 && texture.hierarchy > 0.02) {
                         doodles += 1;
                     }
+                    else if (texture.density >= 0.5 && texture.max >= 4.0) {
+                        doodles += 1;
+                    }
 
                     if ((texture.max >= 2.0 || texture.max == 0.0) && texture.density < 0.8) {
                         // max 大于2或者等于0画面线条可能很粗，不判断画面疏密性
@@ -616,14 +619,15 @@ public class HTPEvaluation extends Evaluation {
 
             if (doodles >= 2) {
                 // 画面有1/2画幅涂鸦
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
-                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.9, 1.0));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.8, 0.9));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
 
                 result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.0, 9.0));
             }
             else if (doodles >= 1) {
                 // 画面有1/4画幅涂鸦
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.0, 0.01));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.4, 0.5));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
 
@@ -1054,6 +1058,12 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.5, 8.5));
             }
+        }
+
+        if (houseList.size() > 2) {
+            Logger.d(this.getClass(), "#evalHouse - Number of houses : " + houseList.size());
+            result.addScore(Indicator.Anxiety, -1, FloatUtils.random(0.3, 0.4));
+            result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.6, 0.7));
         }
 
         return result;

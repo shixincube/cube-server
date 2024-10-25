@@ -464,7 +464,7 @@ public class EvaluationScore implements JSONable {
                 }
                 break;
             case Creativity:
-                if (score >= 1.2) {
+                if (score >= 0.6) {
                     rate = IndicatorRate.High;
                 } else if (score >= 0.3) {
                     rate = IndicatorRate.Medium;

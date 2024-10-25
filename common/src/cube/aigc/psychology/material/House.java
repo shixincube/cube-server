@@ -148,6 +148,22 @@ public class House extends Thing {
         return things;
     }
 
+    @Override
+    public boolean isDoodle() {
+        // 涂鸦特征：轮廓密度高，层密度低
+        if (this.texture.isValid()) {
+            // 判断最大值
+            if (this.texture.max >= 1.0 && this.texture.density > 0.2) {
+                // 判断标准差和层密度
+                if (this.texture.standardDeviation >= 0.4 && this.texture.hierarchy <= 0.03) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public void addSidewall(Sidewall sidewall) {
         if (null == this.sidewallList) {
             this.sidewallList = new ArrayList<>();

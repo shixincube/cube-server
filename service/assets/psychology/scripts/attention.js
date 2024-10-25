@@ -197,7 +197,13 @@ function calc(attribute, scores, reference) {
             attention = Attention.FocusedAttention;
         }
         else {
-            attention = Attention.GeneralAttention;
+            if (nScore == 1 && fixReference.name == Reference.Normal.name) {
+                Logger.d('attention.js', "Attention: Reference is normal and score is 1");
+                attention = Attention.NoAttention;
+            }
+            else {
+                attention = Attention.GeneralAttention;
+            }
         }
     }
 

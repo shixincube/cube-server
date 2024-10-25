@@ -83,6 +83,9 @@ public class Material implements JSONable {
                 if (this.texture.standardDeviation >= 0.4 && this.texture.hierarchy <= 0.03) {
                     return true;
                 }
+                else if (this.texture.density >= 0.5) {
+                    return true;
+                }
             }
         }
 

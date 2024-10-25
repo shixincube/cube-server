@@ -325,7 +325,7 @@ public class EvaluationReport implements JSONable {
                         score += 1;
                         Logger.d(this.getClass(), "Attention: Depression +1");
                     }
-                    else if (depressionScore > 0) {
+                    else if (depressionScore > 0.01) {
                         depression = true;
                         Logger.d(this.getClass(), "Attention: Depression 0");
                     }
@@ -472,7 +472,13 @@ public class EvaluationReport implements JSONable {
                 this.attentionSuggestion = AttentionSuggestion.FocusedAttention;
             }
             else {
-                this.attentionSuggestion = AttentionSuggestion.GeneralAttention;
+                if (score == 1 && this.reference == Reference.Normal) {
+                    Logger.d(this.getClass(), "Attention: Reference is normal and score is 1");
+                    this.attentionSuggestion = AttentionSuggestion.NoAttention;
+                }
+                else {
+                    this.attentionSuggestion = AttentionSuggestion.GeneralAttention;
+                }
             }
         }
 

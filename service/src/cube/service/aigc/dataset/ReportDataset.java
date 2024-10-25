@@ -35,15 +35,16 @@ public class ReportDataset {
                     head = true;
                     content = accelerator.outputCSVHead();
                     columns = content.split(",").length;
+
+                    Logger.i(this.getClass(), "#saveVisionDataToFile - columns: " + columns);
                 }
-                else {
-                    content = accelerator.outputParameterAsCSV();
-                    int num = content.split(",").length;
-                    if (columns != num) {
-                        content = null;
-                        Logger.w(this.getClass(), "#saveVisionDataToFile - The number of columns is inconsistent : " +
-                                columns + " != " + num);
-                    }
+
+                content = accelerator.outputParameterAsCSV();
+                int num = content.split(",").length;
+                if (columns != num) {
+                    content = null;
+                    Logger.w(this.getClass(), "#saveVisionDataToFile - The number of columns is inconsistent : " +
+                            columns + " != " + num);
                 }
 
                 if (null != content) {

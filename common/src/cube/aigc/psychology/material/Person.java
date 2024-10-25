@@ -119,6 +119,119 @@ public class Person extends Thing {
         this.area = Math.round(this.boundingBox.calculateArea() * 0.76f);
     }
 
+    @Override
+    public List<Thing> getSubThings(Label label) {
+        List<Thing> things = null;
+        switch (label) {
+            case PersonBraid:
+                if (null != this.braidList) {
+                    things = new ArrayList<>(this.braidList);
+                }
+                break;
+            case PersonHead:
+                if (null != this.head) {
+                    things = new ArrayList<>();
+                    things.add(this.head);
+                }
+                break;
+            case PersonHair:
+                if (null != this.hairList) {
+                    things = new ArrayList<>(this.hairList);
+                }
+                break;
+            case PersonCap:
+                if (null != this.cap) {
+                    things = new ArrayList<>();
+                    things.add(this.cap);
+                }
+                break;
+            case PersonEye:
+                if (null != this.eyeList) {
+                    things = new ArrayList<>(this.eyeList);
+                }
+                break;
+            case PersonEyebrow:
+                if (null != this.eyebrowList) {
+                    things = new ArrayList<>(this.eyebrowList);
+                }
+                break;
+            case PersonNose:
+                if (null != this.nose) {
+                    things = new ArrayList<>();
+                    things.add(this.nose);
+                }
+                break;
+            case PersonEar:
+                if (null != this.earList) {
+                    things = new ArrayList<>(this.earList);
+                }
+                break;
+            case PersonMouth:
+                if (null != this.mouth) {
+                    things = new ArrayList<>();
+                    things.add(this.mouth);
+                }
+                break;
+            case PersonBody:
+                if (null != this.body) {
+                    things = new ArrayList<>();
+                    things.add(this.body);
+                }
+                break;
+            case PersonArm:
+                if (null != this.armList) {
+                    things = new ArrayList<>(this.armList);
+                }
+                break;
+            case PersonPalm:
+                if (null != this.palmList) {
+                    things = new ArrayList<>(this.palmList);
+                }
+                break;
+            case PersonLeg:
+                if (null != this.legList) {
+                    things = new ArrayList<>(this.legList);
+                }
+                break;
+            case PersonFoot:
+                if (null != this.footList) {
+                    things = new ArrayList<>(this.footList);
+                }
+                break;
+            case PersonMask:
+                if (null != this.mask) {
+                    things = new ArrayList<>();
+                    things.add(this.mask);
+                }
+                break;
+            case PersonHairAccessories:
+                if (null != this.hairAccessoryList) {
+                    things = new ArrayList<>(this.hairAccessoryList);
+                }
+                break;
+            case PersonSkirt:
+                if (null != this.skirt) {
+                    things = new ArrayList<>();
+                    things.add(this.skirt);
+                }
+                break;
+            case PersonItem:
+                if (null != this.itemList) {
+                    things = new ArrayList<>(this.itemList);
+                }
+                break;
+            case PersonGlasses:
+                if (null != this.eyeglass) {
+                    things = new ArrayList<>();
+                    things.add(this.eyeglass);
+                }
+                break;
+            default:
+                break;
+        }
+        return things;
+    }
+
     public void setHead(Head head) {
         this.head = head;
     }

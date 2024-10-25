@@ -175,15 +175,18 @@ public class PaintingAccelerator {
 
         buf.append(",").append(this.parameter.house1.outputCSV());
         buf.append(",").append(this.outputHouseParameterAsCSV(this.house1));
-
         buf.append(",").append(this.parameter.house2.outputCSV());
         buf.append(",").append(this.outputHouseParameterAsCSV(this.house2));
 
         buf.append(",").append(this.parameter.tree1.outputCSV());
         buf.append(",").append(this.outputTreeParameterAsCSV(this.tree1));
-
         buf.append(",").append(this.parameter.tree2.outputCSV());
         buf.append(",").append(this.outputTreeParameterAsCSV(this.tree2));
+
+        buf.append(",").append(this.parameter.person1.outputCSV());
+        buf.append(",").append(this.outputPersonParameterAsCSV(this.person1));
+        buf.append(",").append(this.parameter.person2.outputCSV());
+        buf.append(",").append(this.outputPersonParameterAsCSV(this.person2));
 
         buf.append("\n");
         return buf.toString();
@@ -325,6 +328,65 @@ public class PaintingAccelerator {
         }
         else {
             buf.append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+        }
+        return buf.toString();
+    }
+
+    private String outputPersonParameterAsCSV(Person person) {
+        MaterialParameter blank = new MaterialParameter(Label.Unknown);
+
+        StringBuilder buf = new StringBuilder();
+        if (null != person) {
+            if (null != person.getBraids()) {
+                buf.append(new MaterialParameter(person.getBraids().get(0)).outputCSV());
+            } else {
+                buf.append(blank.outputCSV());
+            }
+
+            if (null != person.getHead()) {
+                buf.append(",").append(new MaterialParameter(person.getHead()).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (person.hasHair()) {
+                buf.append(",").append(new MaterialParameter(person.getHairs().get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (person.hasCap()) {
+                buf.append(",").append(new MaterialParameter(person.getCap()).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+
+            if (person.hasEye()) {
+                buf.append(",").append(new MaterialParameter(person.getEyes().get(0)).outputCSV());
+            } else {
+                buf.append(",").append(blank.outputCSV());
+            }
+        }
+        else {
+            buf.append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
+            buf.append(",").append(blank.outputCSV());
             buf.append(",").append(blank.outputCSV());
             buf.append(",").append(blank.outputCSV());
             buf.append(",").append(blank.outputCSV());
