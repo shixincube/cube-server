@@ -1850,20 +1850,25 @@ public class AIGCService extends AbstractModule {
             return null;
         }
 
-        Scale scale = PsychologyScene.getInstance().getScale(scaleSn);
-        if (null == scale) {
-            Logger.w(this.getClass(), "#generateScaleReport - No scale, sn: " + scaleSn);
+        try {
+            Scale scale = PsychologyScene.getInstance().getScale(scaleSn);
+            if (null == scale) {
+                Logger.w(this.getClass(), "#generateScaleReport - No scale, sn: " + scaleSn);
+                return null;
+            }
+
+            AIGCChannel channel = this.getChannelByToken(token);
+            if (null == channel) {
+                channel = this.createChannel(token, "Baize", Utils.randomString(16));
+            }
+
+            ScaleReport report = PsychologyScene.getInstance().generateScaleReport(channel, scale, listener);
+
+            return report;
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#generateScaleReport", e);
             return null;
         }
-
-        AIGCChannel channel = this.getChannelByToken(token);
-        if (null == channel) {
-            channel = this.createChannel(token, "Baize", Utils.randomString(16));
-        }
-
-        ScaleReport report = PsychologyScene.getInstance().generateScaleReport(channel, scale, listener);
-
-        return report;
     }
 
     public boolean automaticSpeechRecognition(String domain, String fileCode, AutomaticSpeechRecognitionListener listener) {

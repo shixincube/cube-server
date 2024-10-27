@@ -72,26 +72,26 @@ public final class FloatUtils {
 
     public static void main(String[] args) {
         double[] input = new double[] {
-                34, 20, 36, 26, 11, 22
+                34, 20, 36, 26, 11, 22, 0.2, 192
         };
 
-//        double[] output = FloatUtils.softmax(input);
-//        for (double v : output) {
+        double[] output = FloatUtils.softmax(input);
+        for (double v : output) {
+            System.out.println(v);
+        }
+        System.out.println("----------------------------------------");
+
+//        double inputMin = Arrays.stream(input).min().getAsDouble();
+//        double[] result = FloatUtils.normalization(input, inputMin, 100);
+//        for (double v : result) {
 //            System.out.println(v);
 //        }
 //        System.out.println("----------------------------------------");
 
-        double inputMin = Arrays.stream(input).min().getAsDouble();
-        double[] result = FloatUtils.normalization(input, inputMin, 100);
-        for (double v : result) {
-            System.out.println(v);
-        }
-        System.out.println("----------------------------------------");
-
-        result = FloatUtils.scale(input, 100);
-        for (double v : result) {
-            System.out.println(v);
-        }
-        System.out.println("----------------------------------------");
+//        result = FloatUtils.scale(input, 100);
+//        for (double v : result) {
+//            System.out.println(v);
+//        }
+//        System.out.println("----------------------------------------");
     }
 }

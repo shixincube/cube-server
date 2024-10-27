@@ -62,7 +62,61 @@ public class PaintingAccelerator {
         return this.parameter;
     }
 
-    public String outputCSVHead() {
+    public double[] parameters() {
+        double[] data = new double[1754];
+//        buf.append(this.parameter.frameAreaRatio);
+//        buf.append(",").append(this.parameter.wholeTextureMax);
+//        buf.append(",").append(this.parameter.wholeTextureAvg);
+//        buf.append(",").append(this.parameter.wholeTextureDensity);
+//        buf.append(",").append(this.parameter.wholeTextureHierarchy);
+//        buf.append(",").append(this.parameter.wholeTextureStandardDeviation);
+//
+//        buf.append(",").append(this.parameter.quadrant1TextureMax);
+//        buf.append(",").append(this.parameter.quadrant1TextureAvg);
+//        buf.append(",").append(this.parameter.quadrant1TextureDensity);
+//        buf.append(",").append(this.parameter.quadrant1TextureHierarchy);
+//        buf.append(",").append(this.parameter.quadrant1TextureStandardDeviation);
+//
+//        buf.append(",").append(this.parameter.quadrant2TextureMax);
+//        buf.append(",").append(this.parameter.quadrant2TextureAvg);
+//        buf.append(",").append(this.parameter.quadrant2TextureDensity);
+//        buf.append(",").append(this.parameter.quadrant2TextureHierarchy);
+//        buf.append(",").append(this.parameter.quadrant2TextureStandardDeviation);
+//
+//        buf.append(",").append(this.parameter.quadrant3TextureMax);
+//        buf.append(",").append(this.parameter.quadrant3TextureAvg);
+//        buf.append(",").append(this.parameter.quadrant3TextureDensity);
+//        buf.append(",").append(this.parameter.quadrant3TextureHierarchy);
+//        buf.append(",").append(this.parameter.quadrant3TextureStandardDeviation);
+//
+//        buf.append(",").append(this.parameter.quadrant4TextureMax);
+//        buf.append(",").append(this.parameter.quadrant4TextureAvg);
+//        buf.append(",").append(this.parameter.quadrant4TextureDensity);
+//        buf.append(",").append(this.parameter.quadrant4TextureHierarchy);
+//        buf.append(",").append(this.parameter.quadrant4TextureStandardDeviation);
+//
+//        buf.append(",").append(this.parameter.house1.formatCSV());
+//        buf.append(",").append(this.outputHouseParameterAsCSV(this.house1));
+//        buf.append(",").append(this.parameter.house2.formatCSV());
+//        buf.append(",").append(this.outputHouseParameterAsCSV(this.house2));
+//
+//        buf.append(",").append(this.parameter.tree1.formatCSV());
+//        buf.append(",").append(this.outputTreeParameterAsCSV(this.tree1));
+//        buf.append(",").append(this.parameter.tree2.formatCSV());
+//        buf.append(",").append(this.outputTreeParameterAsCSV(this.tree2));
+//
+//        buf.append(",").append(this.parameter.person1.formatCSV());
+//        buf.append(",").append(this.outputPersonParameterAsCSV(this.person1));
+//        buf.append(",").append(this.parameter.person2.formatCSV());
+//        buf.append(",").append(this.outputPersonParameterAsCSV(this.person2));
+//
+//        for (MaterialParameter mp : this.parameter.materials) {
+//            buf.append(",").append(mp.formatCSV());
+//        }
+        return null;
+    }
+
+    public String formatCSVHead() {
         StringBuilder buf = new StringBuilder();
         buf.append("frame_area_ratio");
         buf.append(",").append("whole_t_max");
@@ -91,55 +145,67 @@ public class PaintingAccelerator {
         buf.append(",").append("quadrant4_t_hierarchy");
         buf.append(",").append("quadrant4_t_sd");
 
-        buf.append(",").append(formatMaterialParameterCSVHead("house1"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house1_sidewall"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house1_roof"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house1_roof_skylight"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house1_chimney"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house1_window"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house1_door"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house1_curtain"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house1_window_railing"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house1_smoke"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house1_fence"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house1_path"));
+        for (int i = 1; i <= 2; ++i) {
+            String prefix = "house" + i;
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_sidewall"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_roof"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_roof_skylight"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_chimney"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_window"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_door"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_curtain"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_window_railing"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_smoke"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_fence"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_path"));
+        }
 
-        buf.append(",").append(formatMaterialParameterCSVHead("house2"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house2_sidewall"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house2_roof"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house2_roof_skylight"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house2_chimney"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house2_window"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house2_door"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house2_curtain"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house2_window_railing"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house2_smoke"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house2_fence"));
-        buf.append(",").append(formatMaterialParameterCSVHead("house2_path"));
+        for (int i = 1; i <= 2; ++i) {
+            String prefix = "tree" + i;
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_trunk"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_branch"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_canopy"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_root"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_fruit"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_hole"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_drooping"));
+        }
 
-        buf.append(",").append(formatMaterialParameterCSVHead("tree1"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree1_trunk"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree1_branch"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree1_canopy"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree1_root"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree1_fruit"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree1_hole"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree1_drooping"));
+        for (int i = 1; i <= 2; ++i) {
+            String prefix = "person" + i;
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_braid"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_head"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_hair"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_cap"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_eye"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_eyebrow"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_nose"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_ear"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_mouth"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_body"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_arm"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_palm"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_leg"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_foot"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_mask"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_hair_accessory"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_skirt"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_item"));
+            buf.append(",").append(formatMaterialParameterCSVHead(prefix + "_eyeglass"));
+        }
 
-        buf.append(",").append(formatMaterialParameterCSVHead("tree2"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree2_trunk"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree2_branch"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree2_canopy"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree2_root"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree2_fruit"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree2_hole"));
-        buf.append(",").append(formatMaterialParameterCSVHead("tree2_drooping"));
+        for (MaterialParameter mp : this.parameter.materials) {
+            buf.append(",").append(formatMaterialParameterCSVHead(mp.label.name.substring(2)));
+        }
 
         buf.append("\n");
         return buf.toString();
     }
 
-    public String outputParameterAsCSV() {
+    public String formatParameterAsCSV() {
         StringBuilder buf = new StringBuilder();
 
         buf.append(this.parameter.frameAreaRatio);
@@ -173,226 +239,403 @@ public class PaintingAccelerator {
         buf.append(",").append(this.parameter.quadrant4TextureHierarchy);
         buf.append(",").append(this.parameter.quadrant4TextureStandardDeviation);
 
-        buf.append(",").append(this.parameter.house1.outputCSV());
-        buf.append(",").append(this.outputHouseParameterAsCSV(this.house1));
-        buf.append(",").append(this.parameter.house2.outputCSV());
-        buf.append(",").append(this.outputHouseParameterAsCSV(this.house2));
+        buf.append(",").append(this.parameter.house1.formatCSV());
+        buf.append(",").append(this.formatHouseParameterAsCSV(this.house1));
+        buf.append(",").append(this.parameter.house2.formatCSV());
+        buf.append(",").append(this.formatHouseParameterAsCSV(this.house2));
 
-        buf.append(",").append(this.parameter.tree1.outputCSV());
-        buf.append(",").append(this.outputTreeParameterAsCSV(this.tree1));
-        buf.append(",").append(this.parameter.tree2.outputCSV());
-        buf.append(",").append(this.outputTreeParameterAsCSV(this.tree2));
+        buf.append(",").append(this.parameter.tree1.formatCSV());
+        buf.append(",").append(this.formatTreeParameterAsCSV(this.tree1));
+        buf.append(",").append(this.parameter.tree2.formatCSV());
+        buf.append(",").append(this.formatTreeParameterAsCSV(this.tree2));
 
-        buf.append(",").append(this.parameter.person1.outputCSV());
-        buf.append(",").append(this.outputPersonParameterAsCSV(this.person1));
-        buf.append(",").append(this.parameter.person2.outputCSV());
-        buf.append(",").append(this.outputPersonParameterAsCSV(this.person2));
+        buf.append(",").append(this.parameter.person1.formatCSV());
+        buf.append(",").append(this.formatPersonParameterAsCSV(this.person1));
+        buf.append(",").append(this.parameter.person2.formatCSV());
+        buf.append(",").append(this.formatPersonParameterAsCSV(this.person2));
+
+        for (MaterialParameter mp : this.parameter.materials) {
+            buf.append(",").append(mp.formatCSV());
+        }
 
         buf.append("\n");
         return buf.toString();
     }
 
-    private String outputHouseParameterAsCSV(House house) {
+    private double[] houseParameters(House house) {
+        double[] result = new double[11 * 12];
+        MaterialParameter blank = new MaterialParameter(Label.Unknown);
+
+        if (null != house) {
+            if (null != house.getSubThings(Label.HouseSidewall)) {
+                double[] data = new MaterialParameter(house.getSubThings(Label.HouseSidewall).get(0)).parameters();
+                System.arraycopy(data, 0, result, 0, 12);
+            } else {
+                System.arraycopy(blank.parameters(), 0, result, 0, 12);
+            }
+
+//            if (null != house.getSubThings(Label.HouseRoof)) {
+//                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseRoof).get(0)).formatCSV());
+//            } else {
+//                buf.append(",").append(blank.formatCSV());
+//            }
+//
+//            if (null != house.getSubThings(Label.HouseRoofSkylight)) {
+//                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseRoofSkylight).get(0)).formatCSV());
+//            } else {
+//                buf.append(",").append(blank.formatCSV());
+//            }
+//
+//            if (null != house.getSubThings(Label.HouseChimney)) {
+//                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseChimney).get(0)).formatCSV());
+//            } else {
+//                buf.append(",").append(blank.formatCSV());
+//            }
+//
+//            if (null != house.getSubThings(Label.HouseWindow)) {
+//                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseWindow).get(0)).formatCSV());
+//            } else {
+//                buf.append(",").append(blank.formatCSV());
+//            }
+//
+//            if (null != house.getSubThings(Label.HouseDoor)) {
+//                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseDoor).get(0)).formatCSV());
+//            } else {
+//                buf.append(",").append(blank.formatCSV());
+//            }
+//
+//            if (null != house.getSubThings(Label.HouseCurtain)) {
+//                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseCurtain).get(0)).formatCSV());
+//            } else {
+//                buf.append(",").append(blank.formatCSV());
+//            }
+//
+//            if (null != house.getSubThings(Label.HouseWindowRailing)) {
+//                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseWindowRailing).get(0)).formatCSV());
+//            } else {
+//                buf.append(",").append(blank.formatCSV());
+//            }
+//
+//            if (null != house.getSubThings(Label.HouseSmoke)) {
+//                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseSmoke).get(0)).formatCSV());
+//            } else {
+//                buf.append(",").append(blank.formatCSV());
+//            }
+//
+//            if (null != house.getSubThings(Label.HouseFence)) {
+//                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseFence).get(0)).formatCSV());
+//            } else {
+//                buf.append(",").append(blank.formatCSV());
+//            }
+//
+//            if (null != house.getSubThings(Label.HousePath)) {
+//                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HousePath).get(0)).formatCSV());
+//            } else {
+//                buf.append(",").append(blank.formatCSV());
+//            }
+        }
+        else {
+//            buf.append(blank.formatCSV());
+//            buf.append(",").append(blank.formatCSV());
+//            buf.append(",").append(blank.formatCSV());
+//            buf.append(",").append(blank.formatCSV());
+//            buf.append(",").append(blank.formatCSV());
+//            buf.append(",").append(blank.formatCSV());
+//            buf.append(",").append(blank.formatCSV());
+//            buf.append(",").append(blank.formatCSV());
+//            buf.append(",").append(blank.formatCSV());
+//            buf.append(",").append(blank.formatCSV());
+//            buf.append(",").append(blank.formatCSV());
+        }
+
+        return result;
+    }
+
+    private String formatHouseParameterAsCSV(House house) {
         MaterialParameter blank = new MaterialParameter(Label.Unknown);
 
         StringBuilder buf = new StringBuilder();
         if (null != house) {
             if (null != house.getSubThings(Label.HouseSidewall)) {
-                buf.append(new MaterialParameter(house.getSubThings(Label.HouseSidewall).get(0)).outputCSV());
+                buf.append(new MaterialParameter(house.getSubThings(Label.HouseSidewall).get(0)).formatCSV());
             } else {
-                buf.append(blank.outputCSV());
+                buf.append(blank.formatCSV());
             }
 
             if (null != house.getSubThings(Label.HouseRoof)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseRoof).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseRoof).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != house.getSubThings(Label.HouseRoofSkylight)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseRoofSkylight).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseRoofSkylight).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != house.getSubThings(Label.HouseChimney)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseChimney).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseChimney).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != house.getSubThings(Label.HouseWindow)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseWindow).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseWindow).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != house.getSubThings(Label.HouseDoor)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseDoor).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseDoor).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != house.getSubThings(Label.HouseCurtain)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseCurtain).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseCurtain).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != house.getSubThings(Label.HouseWindowRailing)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseWindowRailing).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseWindowRailing).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != house.getSubThings(Label.HouseSmoke)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseSmoke).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseSmoke).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != house.getSubThings(Label.HouseFence)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseFence).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseFence).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != house.getSubThings(Label.HousePath)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HousePath).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HousePath).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
         }
         else {
-            buf.append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
+            buf.append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
         }
         return buf.toString();
     }
 
-    private String outputTreeParameterAsCSV(Tree tree) {
+    private String formatTreeParameterAsCSV(Tree tree) {
         MaterialParameter blank = new MaterialParameter(Label.Unknown);
 
         StringBuilder buf = new StringBuilder();
         if (null != tree) {
             if (null != tree.getSubThings(Label.TreeTrunk)) {
-                buf.append(new MaterialParameter(tree.getSubThings(Label.TreeTrunk).get(0)).outputCSV());
+                buf.append(new MaterialParameter(tree.getSubThings(Label.TreeTrunk).get(0)).formatCSV());
             } else {
-                buf.append(blank.outputCSV());
+                buf.append(blank.formatCSV());
             }
 
             if (null != tree.getSubThings(Label.TreeBranch)) {
-                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeBranch).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeBranch).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != tree.getSubThings(Label.TreeCanopy)) {
-                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeCanopy).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeCanopy).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != tree.getSubThings(Label.TreeRoot)) {
-                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeRoot).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeRoot).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != tree.getSubThings(Label.TreeFruit)) {
-                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeFruit).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeFruit).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != tree.getSubThings(Label.TreeHole)) {
-                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeHole).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeHole).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (null != tree.getSubThings(Label.TreeDrooping)) {
-                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeDrooping).get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeDrooping).get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
         }
         else {
-            buf.append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
+            buf.append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
         }
         return buf.toString();
     }
 
-    private String outputPersonParameterAsCSV(Person person) {
+    private String formatPersonParameterAsCSV(Person person) {
         MaterialParameter blank = new MaterialParameter(Label.Unknown);
 
         StringBuilder buf = new StringBuilder();
         if (null != person) {
             if (null != person.getBraids()) {
-                buf.append(new MaterialParameter(person.getBraids().get(0)).outputCSV());
+                buf.append(new MaterialParameter(person.getBraids().get(0)).formatCSV());
             } else {
-                buf.append(blank.outputCSV());
+                buf.append(blank.formatCSV());
             }
 
             if (null != person.getHead()) {
-                buf.append(",").append(new MaterialParameter(person.getHead()).outputCSV());
+                buf.append(",").append(new MaterialParameter(person.getHead()).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (person.hasHair()) {
-                buf.append(",").append(new MaterialParameter(person.getHairs().get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(person.getHairs().get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (person.hasCap()) {
-                buf.append(",").append(new MaterialParameter(person.getCap()).outputCSV());
+                buf.append(",").append(new MaterialParameter(person.getCap()).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
             }
 
             if (person.hasEye()) {
-                buf.append(",").append(new MaterialParameter(person.getEyes().get(0)).outputCSV());
+                buf.append(",").append(new MaterialParameter(person.getEyes().get(0)).formatCSV());
             } else {
-                buf.append(",").append(blank.outputCSV());
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (person.hasEyebrow()) {
+                buf.append(",").append(new MaterialParameter(person.getEyebrows().get(0)).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (person.hasNose()) {
+                buf.append(",").append(new MaterialParameter(person.getNose()).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (person.hasEar()) {
+                buf.append(",").append(new MaterialParameter(person.getEars().get(0)).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (person.hasMouth()) {
+                buf.append(",").append(new MaterialParameter(person.getMouth()).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (person.hasBody()) {
+                buf.append(",").append(new MaterialParameter(person.getBody()).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (person.hasArm()) {
+                buf.append(",").append(new MaterialParameter(person.getArms().get(0)).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (person.hasPalm()) {
+                buf.append(",").append(new MaterialParameter(person.getPalms().get(0)).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (person.hasLeg()) {
+                buf.append(",").append(new MaterialParameter(person.getLegs().get(0)).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (person.hasFoot()) {
+                buf.append(",").append(new MaterialParameter(person.getFoot().get(0)).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (null != person.getMask()) {
+                buf.append(",").append(new MaterialParameter(person.getMask()).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (person.hasHairAccessory()) {
+                buf.append(",").append(new MaterialParameter(person.getHairAccessories().get(0)).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (null != person.getSkirt()) {
+                buf.append(",").append(new MaterialParameter(person.getSkirt()).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (null != person.getItems()) {
+                buf.append(",").append(new MaterialParameter(person.getItems().get(0)).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
+            }
+
+            if (null != person.getGlasses()) {
+                buf.append(",").append(new MaterialParameter(person.getGlasses()).formatCSV());
+            } else {
+                buf.append(",").append(blank.formatCSV());
             }
         }
         else {
-            buf.append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
-            buf.append(",").append(blank.outputCSV());
+            buf.append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
+            buf.append(",").append(blank.formatCSV());
         }
         return buf.toString();
     }
@@ -617,7 +860,24 @@ public class PaintingAccelerator {
             this.textureStandardDeviation = material.texture.standardDeviation;
         }
 
-        public String outputCSV() {
+        public double[] parameters() {
+            double[] data = new double[12];
+            data[0] = this.center.x;
+            data[1] = this.center.y;
+            data[2] = this.location.x;
+            data[3] = this.location.y;
+            data[4] = this.size.width;
+            data[5] = this.size.height;
+            data[6] = this.areaRatio;
+            data[7] = this.textureMax;
+            data[8] = this.textureAvg;
+            data[9] = this.textureDensity;
+            data[10] = this.textureHierarchy;
+            data[11] = this.textureStandardDeviation;
+            return data;
+        }
+
+        public String formatCSV() {
             StringBuilder buf = new StringBuilder();
             buf.append(this.center.x);
             buf.append(",").append(this.center.y);

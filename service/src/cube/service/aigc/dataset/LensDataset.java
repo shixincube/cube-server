@@ -80,6 +80,9 @@ public class LensDataset {
 
         ReportDataset dataset = new ReportDataset();
         dataset.saveVisionDataToFile(paintings, destFile);
+
+        // 制作归一化数据
+        dataset.makeNormalizationFile(destFile);
     }
 
     public void downloadToFile(File file) {

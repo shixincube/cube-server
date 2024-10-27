@@ -301,6 +301,12 @@ public class PsychologyStorage implements Storagable {
         if (!this.storage.exist(this.reportTable)) {
             // 不存在，建新表
             if (this.storage.executeCreate(this.reportTable, this.reportFields)) {
+                // evaluation_data 字段修改为 MEDIUMTEXT
+                /*
+                ALTER TABLE `psychology_report` CHANGE COLUMN `evaluation_data` `evaluation_data` MEDIUMTEXT NULL DEFAULT NULL ;
+                */
+                this.storage.execute("ALTER TABLE `" + this.reportTable +
+                        "` CHANGE COLUMN `evaluation_data` `evaluation_data` MEDIUMTEXT NULL DEFAULT NULL");
                 Logger.i(this.getClass(), "Created table '" + this.reportTable + "' successfully");
             }
         }

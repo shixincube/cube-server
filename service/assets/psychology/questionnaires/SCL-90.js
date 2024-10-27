@@ -43,6 +43,7 @@ function makePrompt(list) {
         var name = element["name"];
         var factor = element["factor"];
 
+        score = 0.0001 + score;
         var data = {
             "score": score,
             "name": name,
@@ -92,7 +93,7 @@ function makePrompt(list) {
 
 function scoring(answers) {
     var index = 0;
-    var sum = 0;
+    var sum = 0.0;
 
 
     for (var i = 0; i < SomatizationItems.length; ++i) {
@@ -101,7 +102,7 @@ function scoring(answers) {
         var score = SCORE_MAP[answer.code];
         sum += score;
     }
-    var T_Somatization = sum / SomatizationItems.length;
+    var T_Somatization = sum / SomatizationItems.length + 0.0;
 
 
     sum = 0;
@@ -111,7 +112,7 @@ function scoring(answers) {
         var score = SCORE_MAP[answer.code];
         sum += score;
     }
-    var T_Obsession = sum / ObsessionItems.length;
+    var T_Obsession = sum / ObsessionItems.length + 0.0;
 
 
     sum = 0;
@@ -121,7 +122,7 @@ function scoring(answers) {
         var score = SCORE_MAP[answer.code];
         sum += score;
     }
-    var T_InterpersonalRelation = sum / InterpersonalRelationItems.length;
+    var T_InterpersonalRelation = sum / InterpersonalRelationItems.length + 0.0;
 
 
     sum = 0;
@@ -131,7 +132,7 @@ function scoring(answers) {
         var score = SCORE_MAP[answer.code];
         sum += score;
     }
-    var T_Depression = sum / DepressionItems.length;
+    var T_Depression = sum / DepressionItems.length + 0.0;
 
 
     sum = 0;
@@ -141,7 +142,7 @@ function scoring(answers) {
         var score = SCORE_MAP[answer.code];
         sum += score;
     }
-    var T_Anxiety = sum / AnxietyItems.length;
+    var T_Anxiety = sum / AnxietyItems.length + 0.0;
 
 
     sum = 0;
@@ -151,7 +152,7 @@ function scoring(answers) {
         var score = SCORE_MAP[answer.code];
         sum += score;
     }
-    var T_Hostile = sum / HostileItems.length;
+    var T_Hostile = sum / HostileItems.length + 0.0;
 
 
     sum = 0;
@@ -161,7 +162,7 @@ function scoring(answers) {
         var score = SCORE_MAP[answer.code];
         sum += score;
     }
-    var T_Horror = sum / HorrorItems.length;
+    var T_Horror = sum / HorrorItems.length + 0.0;
 
 
     sum = 0;
@@ -171,7 +172,7 @@ function scoring(answers) {
         var score = SCORE_MAP[answer.code];
         sum += score;
     }
-    var T_Paranoid = sum / ParanoidItems.length;
+    var T_Paranoid = sum / ParanoidItems.length + 0.0;
 
 
     sum = 0;
@@ -181,7 +182,7 @@ function scoring(answers) {
         var score = SCORE_MAP[answer.code];
         sum += score;
     }
-    var T_Psychosis = sum / PsychosisItems.length;
+    var T_Psychosis = sum / PsychosisItems.length + 0.0;
 
 
     sum = 0;
@@ -191,7 +192,7 @@ function scoring(answers) {
         var score = SCORE_MAP[answer.code];
         sum += score;
     }
-    var T_SleepAndDiet = sum / SleepAndDietItems.length;
+    var T_SleepAndDiet = sum / SleepAndDietItems.length + 0.0;
 
 
     var score = new ScaleScore();

@@ -61,16 +61,29 @@ public class ScalePrompt implements JSONable {
         if (value instanceof ScriptObjectMirror) {
             ScriptObjectMirror som = (ScriptObjectMirror) value;
             Factor factor = new Factor();
-            if (som.containsKey("factor"))
+            if (som.containsKey("factor")) {
                 factor.factor = (String) som.get("factor");
-            if (som.containsKey("score"))
-                factor.score = (Double) som.get("score");
-            if (som.containsKey("name"))
+            }
+            if (som.containsKey("score")) {
+                try {
+                    factor.score = (Double) som.get("score");
+                } catch (Exception e) {
+                    try {
+                        factor.score = (Integer) som.get("score");
+                    } catch (Exception ie) {
+                        factor.score = 0.0;
+                    }
+                }
+            }
+            if (som.containsKey("name")) {
                 factor.name = (String) som.get("name");
-            if (som.containsKey("description"))
+            }
+            if (som.containsKey("description")) {
                 factor.description = (String) som.get("description");
-            if (som.containsKey("suggestion"))
+            }
+            if (som.containsKey("suggestion")) {
                 factor.suggestion = (String) som.get("suggestion");
+            }
 
             this.factors.add(factor);
         }

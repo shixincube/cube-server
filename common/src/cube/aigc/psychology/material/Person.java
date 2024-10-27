@@ -494,6 +494,10 @@ public class Person extends Thing {
         return this.armList;
     }
 
+    public boolean hasArm() {
+        return (null != this.armList);
+    }
+
     public boolean hasTwoArms() {
         return (null != this.armList && this.armList.size() >= 2);
     }
@@ -519,6 +523,10 @@ public class Person extends Thing {
         return this.palmList;
     }
 
+    public boolean hasPalm() {
+        return (null != palmList);
+    }
+
     public void addLeg(Leg leg) {
         if (null == this.legList) {
             this.legList = new ArrayList<>();
@@ -528,6 +536,10 @@ public class Person extends Thing {
 
     public List<Leg> getLegs() {
         return this.legList;
+    }
+
+    public boolean hasLeg() {
+        return (null != this.legList);
     }
 
     public boolean hasTwoLegs() {
@@ -569,6 +581,10 @@ public class Person extends Thing {
 
     public List<Foot> getFoot() {
         return this.footList;
+    }
+
+    public boolean hasFoot() {
+        return (null != this.footList);
     }
 
     public void setSkirt(Skirt skirt) {

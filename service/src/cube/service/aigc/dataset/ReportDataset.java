@@ -6,10 +6,10 @@ import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PaintingAccelerator;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.EvaluationScore;
+import cube.util.FileUtils;
+import cube.util.FloatUtils;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +17,54 @@ import java.util.List;
 public class ReportDataset {
 
     public ReportDataset() {
+    }
+
+    public void makeNormalizationFile(File file) {
+        BufferedReader reader = null;
+        FileOutputStream os = null;
+
+        File output = new File(file.getParentFile(),
+                FileUtils.extractFileName(file.getName()) + "_normalization.csv");
+        Logger.i(this.getClass(), "#convertNormalFile - Output file: " + output.getAbsolutePath());
+
+        try {
+            os = new FileOutputStream(output);
+            reader = new BufferedReader(new FileReader(file));
+            String line = null;
+            int row = 0;
+            while (null != (line = reader.readLine())) {
+                if (0 == row) {
+                    os.write(line.getBytes(StandardCharsets.UTF_8));
+                }
+                else {
+                    String[] array = line.split(",");
+                    double[] data = new double[array.length];
+                    for (int i = 0; i < array.length; ++i) {
+                        data[i] = Double.parseDouble(array[i]);
+                    }
+                    double[] result = FloatUtils.normalization(data, 0, 100);
+                    StringBuilder buf = new StringBuilder();
+
+                }
+                ++row;
+
+                Logger.i(this.getClass(), "#convertNormalFile - processing: " + row + " row");
+            }
+        } catch (Exception e) {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (IOException ioe) {
+                }
+            }
+
+            if (null != os) {
+                try {
+                    os.close();
+                } catch (IOException ioe) {
+                }
+            }
+        }
     }
 
     public void saveVisionDataToFile(List<Painting> paintings, File file) {
@@ -33,13 +81,16 @@ public class ReportDataset {
                 PaintingAccelerator accelerator = new PaintingAccelerator(painting);
                 if (!head) {
                     head = true;
-                    content = accelerator.outputCSVHead();
+                    content = accelerator.formatCSVHead();
+                    // 写入头
+                    fs.write(content.getBytes(StandardCharsets.UTF_8));
+
                     columns = content.split(",").length;
 
                     Logger.i(this.getClass(), "#saveVisionDataToFile - columns: " + columns);
                 }
 
-                content = accelerator.outputParameterAsCSV();
+                content = accelerator.formatParameterAsCSV();
                 int num = content.split(",").length;
                 if (columns != num) {
                     content = null;

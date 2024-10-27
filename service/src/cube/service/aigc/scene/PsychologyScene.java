@@ -612,7 +612,7 @@ public class PsychologyScene {
             return null;
         }
 
-        if (null == scale.getResult().prompt || scale.getResult().prompt.isEmpty()) {
+        if (null == scale.getResult() || null == scale.getResult().prompt || scale.getResult().prompt.isEmpty()) {
             Logger.w(this.getClass(), "#generateScaleReport - Scale prompt data is empty: " + scale.getSN());
             return null;
         }
