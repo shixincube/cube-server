@@ -145,6 +145,10 @@ public class PaintingReport extends Report {
         this.normDimensionScore = normScore;
     }
 
+    public HexagonDimensionScore getDimensionScore() {
+        return this.dimensionScore;
+    }
+
     public void setReportTextList(List<ReportSection> textList) {
         this.reportTextList = new ArrayList<>();
         this.reportTextList.addAll(textList);

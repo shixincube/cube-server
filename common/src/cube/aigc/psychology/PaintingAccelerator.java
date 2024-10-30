@@ -201,7 +201,6 @@ public class PaintingAccelerator {
             buf.append(",").append(formatMaterialParameterCSVHead(mp.label.name.substring(2)));
         }
 
-        buf.append("\n");
         return buf.toString();
     }
 
@@ -258,7 +257,6 @@ public class PaintingAccelerator {
             buf.append(",").append(mp.formatCSV());
         }
 
-        buf.append("\n");
         return buf.toString();
     }
 

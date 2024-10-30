@@ -27,10 +27,10 @@
 package cube.service.test;
 
 import cell.util.Utils;
-import cell.util.log.Logger;
 import cube.aigc.psychology.Dataset;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.algorithm.BigFiveFeature;
+import cube.aigc.psychology.composition.AnswerSheet;
 import cube.aigc.psychology.composition.Question;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScalesConfiguration;
@@ -230,27 +230,53 @@ public class TestEvaluation {
         System.out.println("testPANASScale");
 
         Scale scale = Resource.getInstance().loadScaleByName("PANAS");
+
+        AnswerSheet answerSheet = new AnswerSheet(scale.getSN());
         for (Question question : scale.getQuestions()) {
             switch (Utils.randomInt(1, 5)) {
                 case 1:
-                    question.chooseAnswer("A");
+                    answerSheet.submit(question.sn, "A");
                     break;
                 case 2:
-                    question.chooseAnswer("B");
+                    answerSheet.submit(question.sn, "B");
                     break;
                 case 3:
-                    question.chooseAnswer("C");
+                    answerSheet.submit(question.sn, "C");
                     break;
                 case 4:
-                    question.chooseAnswer("D");
+                    answerSheet.submit(question.sn, "D");
                     break;
                 case 5:
-                    question.chooseAnswer("E");
+                    answerSheet.submit(question.sn, "E");
                     break;
                 default:
                     break;
             }
         }
+        scale.submitAnswer(answerSheet);
+        System.out.println("Valid: " + answerSheet.isValid());
+
+//        for (Question question : scale.getQuestions()) {
+//            switch (Utils.randomInt(1, 5)) {
+//                case 1:
+//                    question.chooseAnswer("A");
+//                    break;
+//                case 2:
+//                    question.chooseAnswer("B");
+//                    break;
+//                case 3:
+//                    question.chooseAnswer("C");
+//                    break;
+//                case 4:
+//                    question.chooseAnswer("D");
+//                    break;
+//                case 5:
+//                    question.chooseAnswer("E");
+//                    break;
+//                default:
+//                    break;
+//            }
+//        }
         System.out.println("Complete: " + scale.isComplete());
 
         System.out.println("----------------------------------------");

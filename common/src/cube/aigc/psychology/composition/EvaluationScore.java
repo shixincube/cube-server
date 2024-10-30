@@ -92,6 +92,13 @@ public class EvaluationScore implements JSONable {
         }
     }
 
+    public IndicatorRate getRate() {
+        if (null == this.rate) {
+            this.rate = this.getIndicatorRate();
+        }
+        return this.rate;
+    }
+
     public double calcScore() {
         return this.positiveScore - this.negativeScore;
     }

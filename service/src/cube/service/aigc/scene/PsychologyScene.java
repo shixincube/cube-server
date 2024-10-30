@@ -559,6 +559,10 @@ public class PsychologyScene {
         this.storage.writeScale(scale);
         this.storage.writeAnswerSheet(answerSheet);
 
+        if (!answerSheet.isValid()) {
+            Logger.w(this.getClass(), "#submitAnswerSheet - The answer is NOT valid: " + scale.getSN());
+        }
+
         if (!scale.isComplete()) {
             Logger.d(this.getClass(), "#submitAnswerSheet - Scale complete: false");
             return new ScaleResult(scale);
@@ -804,7 +808,7 @@ public class PsychologyScene {
         JSONObject data = new JSONObject();
         data.put("fileLabel", fileLabel.toJSON());
         Packet request = new Packet(AIGCAction.PredictPsychologyPainting.name, data);
-        ActionDialect dialect = this.aigcService.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+        ActionDialect dialect = this.aigcService.getCellet().transmit(unit.getContext(), request.toDialect(), 120 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(), "#processPainting - Predict image unit error");
             return null;

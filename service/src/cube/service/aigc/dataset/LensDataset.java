@@ -7,10 +7,7 @@ import cube.aigc.psychology.PaintingReport;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -21,18 +18,19 @@ import java.util.List;
 
 public class LensDataset {
 
-    private String host = "127.0.0.1";
+    private String host = "211.157.179.37";
 
     private int port = 7010;
 
-    private String token = "NEFaMVUtMoXqdPakIHpNlXesBHjDBkQY";
+//    private String token = "NEFaMVUtMoXqdPakIHpNlXesBHjDBkQY";    // 127.0.0.1
+    private String token = "duWmraPkxAqrwkHWNAKKxQpIRQDDDKcM";      // 211.157.179.37
 
     private String workPath = "./storage/tmp/";
 
     public LensDataset() {
     }
 
-    public void saveAsScoreDataset(File srcFile, File destFile) {
+    public void saveScoreDataset(File srcFile, File destFile) {
         List<PaintingReport> reports = new ArrayList<>();
 
         try {
@@ -56,7 +54,7 @@ public class LensDataset {
         dataset.saveReportScoreToFile(reports, destFile);
     }
 
-    public void saveAsVisionDataset(File srcFile, File destFile) {
+    public void saveVisionDataset(File srcFile, File destFile) {
         List<Painting> paintings = new ArrayList<>();
 
         try {
@@ -85,7 +83,102 @@ public class LensDataset {
         dataset.makeNormalizationFile(destFile);
     }
 
-    public void downloadToFile(File file) {
+    public void saveVisionScoreDataset(File srcFile, File destFile) {
+        List<PaintingReport> reports = new ArrayList<>();
+        List<Painting> paintings = new ArrayList<>();
+
+        try {
+            Logger.d(this.getClass(), "Reads file: " + srcFile.getAbsolutePath());
+
+            byte[] data = Files.readAllBytes(Paths.get(srcFile.getAbsolutePath()));
+            JSONArray array = new JSONArray(new String(data, StandardCharsets.UTF_8));
+
+            for (int i = 0; i < array.length(); ++i) {
+                JSONObject json = array.getJSONObject(i);
+                if (json.has("painting")) {
+                    // 报告
+                    PaintingReport report = new PaintingReport(json);
+                    reports.add(report);
+
+                    // 绘画
+                    Painting painting = new Painting(json.getJSONObject("painting"));
+                    paintings.add(painting);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Logger.i(this.getClass(), "Report num: " + reports.size());
+
+        ReportDataset dataset = new ReportDataset();
+        dataset.saveVisionAndScoreToFile(paintings, reports, destFile);
+    }
+
+    public void downloadBySNList(File listFile, File destFile) {
+        List<Long> snList = this.loadSerialNumberList(listFile);
+        Logger.i(this.getClass(), "#downloadBySNList - Number of SN: " + snList.size());
+
+        try {
+            JSONArray list = new JSONArray();
+
+            for (long sn : snList) {
+                JSONObject json = this.requestReportData(sn);
+                // 获取对应的绘画
+                Painting painting = this.requestPaintingData(sn);
+                if (null != painting) {
+                    json.put("painting", painting.toJSON());
+                }
+                else {
+                    Logger.w(this.getClass(), "get painting data error: " + sn);
+                    continue;
+                }
+
+                list.put(json);
+                Logger.i(this.getClass(), "#downloadBySNList - Download report: " + sn);
+            }
+
+            Logger.i(this.getClass(), "#downloadBySNList - Total reports: " + list.length());
+
+            Files.write(Paths.get(destFile.getAbsolutePath()),
+                    list.toString(4).getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#downloadBySNList", e);
+        }
+    }
+
+    private List<Long> loadSerialNumberList(File file) {
+        List<Long> snList = new ArrayList<>();
+
+        BufferedReader reader = null;
+
+        try {
+            reader = new BufferedReader(new FileReader(file));
+            String line = null;
+            while (null != (line = reader.readLine())) {
+                try {
+                    String[] items = line.split(",");
+                    long sn = Long.parseLong(items[0]);
+                    snList.add(sn);
+                } catch (Exception e) {
+                    // Nothing
+                }
+            }
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#loadSerialNumberList", e);
+        } finally {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        return snList;
+    }
+
+    public void downloadAllReports(File file) {
         JSONArray data = new JSONArray();
         int pageIndex = 0;
 
@@ -132,6 +225,59 @@ public class LensDataset {
                 }
             }
         }
+    }
+
+    private JSONObject requestReportData(long sn) {
+        StringBuilder urlString = new StringBuilder("http://");
+        urlString.append(this.host);
+        urlString.append(":").append(this.port);
+        urlString.append("/aigc/psychology/report/");
+        urlString.append(this.token);
+        urlString.append("?sn=").append(sn);
+
+        HttpURLConnection connection = null;
+
+        FlexibleByteBuffer buf = new FlexibleByteBuffer(100 * 1024);
+
+        try {
+            URL url = new URL(urlString.toString());
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("Connection", "keep-alive");
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.setUseCaches(true);
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            // 连接
+            connection.connect();
+            int code = connection.getResponseCode();
+            if (code == HttpURLConnection.HTTP_OK) {
+                InputStream is = connection.getInputStream();
+                byte[] bytes = new byte[10240];
+                int length = 0;
+                while ((length = is.read(bytes)) > 0) {
+                    buf.put(bytes, 0, length);
+                }
+            }
+
+            buf.flip();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            if (null != connection) {
+                connection.disconnect();
+            }
+        }
+
+        try {
+            JSONObject data = new JSONObject(new String(buf.array(), 0, buf.limit()));
+            return data;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     private JSONArray requestReportData(int pageIndex) {

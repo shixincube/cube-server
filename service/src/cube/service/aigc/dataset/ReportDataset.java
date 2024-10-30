@@ -6,17 +6,60 @@ import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PaintingAccelerator;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.EvaluationScore;
+import cube.aigc.psychology.composition.HexagonDimension;
+import cube.aigc.psychology.composition.HexagonDimensionScore;
 import cube.util.FileUtils;
 import cube.util.FloatUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class ReportDataset {
 
     public ReportDataset() {
+    }
+
+    public void makeDatasetFromScaleData(File reportJsonFile, File scaleCSVFile, File datasetFile) throws Exception {
+        byte[] data = Files.readAllBytes(Paths.get(reportJsonFile.getAbsolutePath()));
+        JSONArray reportJSONArray = new JSONArray(new String(data, StandardCharsets.UTF_8));
+
+        Map<Long, ScaleDataRow> rowMap = new LinkedHashMap<>();
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(scaleCSVFile));
+            String line = null;
+            while (null != (line = reader.readLine())) {
+                if (line.contains("序列")) {
+                    continue;
+                }
+                ScaleDataRow row = new ScaleDataRow(line);
+                rowMap.put(row.sn, row);
+            }
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            if (null != reader) {
+                reader.close();
+            }
+        }
+
+        for (int i = 0; i < reportJSONArray.length(); ++i) {
+            JSONObject json = reportJSONArray.getJSONObject(i);
+            JSONObject paintingJson = json.getJSONObject("painting");
+            PaintingReport report = new PaintingReport(json);
+            Painting painting = new Painting(paintingJson);
+            report.painting = painting;
+
+            // Inputs
+            
+
+            // Outputs
+        }
     }
 
     public void makeNormalizationFile(File file) {
@@ -25,7 +68,7 @@ public class ReportDataset {
 
         File output = new File(file.getParentFile(),
                 FileUtils.extractFileName(file.getName()) + "_normalization.csv");
-        Logger.i(this.getClass(), "#convertNormalFile - Output file: " + output.getAbsolutePath());
+        Logger.i(this.getClass(), "#makeNormalizationFile - Output file: " + output.getAbsolutePath());
 
         try {
             os = new FileOutputStream(output);
@@ -35,6 +78,7 @@ public class ReportDataset {
             while (null != (line = reader.readLine())) {
                 if (0 == row) {
                     os.write(line.getBytes(StandardCharsets.UTF_8));
+                    os.write("\n".getBytes(StandardCharsets.UTF_8));
                 }
                 else {
                     String[] array = line.split(",");
@@ -42,13 +86,22 @@ public class ReportDataset {
                     for (int i = 0; i < array.length; ++i) {
                         data[i] = Double.parseDouble(array[i]);
                     }
+                    // 归一化
                     double[] result = FloatUtils.normalization(data, 0, 100);
                     StringBuilder buf = new StringBuilder();
-
+                    int ti = result.length - 1;
+                    for (int i = 0; i < result.length; ++i) {
+                        buf.append(result[i]);
+                        if (i != ti) {
+                            buf.append(",");
+                        }
+                    }
+                    buf.append("\n");
+                    os.write(buf.toString().getBytes(StandardCharsets.UTF_8));
                 }
                 ++row;
 
-                Logger.i(this.getClass(), "#convertNormalFile - processing: " + row + " row");
+                Logger.i(this.getClass(), "#makeNormalizationFile - processing: " + row + " row");
             }
         } catch (Exception e) {
             if (null != reader) {
@@ -65,6 +118,86 @@ public class ReportDataset {
                 }
             }
         }
+    }
+
+    public boolean saveVisionAndScoreToFile(List<Painting> paintingList, List<PaintingReport> reportList, File file) {
+        if (reportList.size() != paintingList.size()) {
+            Logger.w(this.getClass(), "#saveVisionAndIndicatorToFile - List length error");
+            return false;
+        }
+
+        FileOutputStream os = null;
+        boolean head = false;
+
+        int inputLen = 0;
+        int outputLen = 0;
+
+        try {
+            os = new FileOutputStream(file);
+
+            for (int i = 0; i < paintingList.size(); ++i) {
+                Painting painting = paintingList.get(i);
+                PaintingReport report = reportList.get(i);
+
+                PaintingAccelerator accelerator = new PaintingAccelerator(painting);
+
+                StringBuilder buf = new StringBuilder();
+
+                if (!head) {
+                    head = true;
+                    buf.append(accelerator.formatCSVHead());
+
+                    String[] array = buf.toString().split(",");
+                    inputLen = array.length;
+
+                    // 以 | 分隔
+                    buf.append(",").append("|");
+
+                    for (Indicator indicator : Indicator.sortByPriority()) {
+                        buf.append(",").append(indicator.code.toLowerCase(Locale.ROOT));
+                        outputLen += 1;
+                    }
+                    for (HexagonDimension hd : HexagonDimension.values()) {
+                        buf.append(",").append(hd.name.toLowerCase(Locale.ROOT));
+                        outputLen += 1;
+                    }
+                    buf.append("\n");
+                    os.write(buf.toString().getBytes(StandardCharsets.UTF_8));
+
+                    buf = new StringBuilder();
+                }
+
+                buf.append(accelerator.formatParameterAsCSV());
+                buf.append(",").append("|");
+                List<EvaluationScore> scores = report.getEvaluationReport().getEvaluationScores();
+                scores = this.alignScores(scores);
+                for (EvaluationScore score : scores) {
+//                    buf.append(",").append(score.calcScore());
+                    buf.append(",").append(score.getRate().value);
+                }
+                HexagonDimensionScore dimensionScore = report.getDimensionScore();
+                for (HexagonDimension hd : HexagonDimension.values()) {
+                    int score = dimensionScore.getDimensionScore(hd);
+                    buf.append(",").append(score);
+                }
+                buf.append("\n");
+                os.write(buf.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#saveVisionAndIndicatorToFile", e);
+        } finally {
+            if (null != os) {
+                try {
+                    os.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        Logger.i(this.getClass(), "#saveVisionAndIndicatorToFile - Input params length: " + inputLen);
+        Logger.i(this.getClass(), "#saveVisionAndIndicatorToFile - Output params length: " + outputLen);
+
+        return true;
     }
 
     public void saveVisionDataToFile(List<Painting> paintings, File file) {
@@ -84,6 +217,7 @@ public class ReportDataset {
                     content = accelerator.formatCSVHead();
                     // 写入头
                     fs.write(content.getBytes(StandardCharsets.UTF_8));
+                    fs.write("\n".getBytes(StandardCharsets.UTF_8));
 
                     columns = content.split(",").length;
 
@@ -100,6 +234,7 @@ public class ReportDataset {
 
                 if (null != content) {
                     fs.write(content.getBytes(StandardCharsets.UTF_8));
+                    fs.write("\n".getBytes(StandardCharsets.UTF_8));
                 }
             }
 
@@ -176,5 +311,18 @@ public class ReportDataset {
         }
 
         return result;
+    }
+
+
+    public class ScaleDataRow {
+
+        public long sn;
+
+        public double[] data;
+
+        public ScaleDataRow(String csvString) {
+        }
+
+
     }
 }
