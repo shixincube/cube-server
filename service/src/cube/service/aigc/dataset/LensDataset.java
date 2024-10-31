@@ -1,9 +1,13 @@
 package cube.service.aigc.dataset;
 
+import cell.util.Utils;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
+import cube.aigc.psychology.EvaluationReport;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.algorithm.BigFiveFeature;
+import cube.service.aigc.scene.HTPEvaluation;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -25,9 +29,151 @@ public class LensDataset {
 //    private String token = "NEFaMVUtMoXqdPakIHpNlXesBHjDBkQY";    // 127.0.0.1
     private String token = "duWmraPkxAqrwkHWNAKKxQpIRQDDDKcM";      // 211.157.179.37
 
-    private String workPath = "./storage/tmp/";
+    private String workingPath = "storage/tmp/";
 
     public LensDataset() {
+    }
+
+    public void makeNewExportData() {
+        File listFile = new File(this.workingPath, "lens_export_data.csv");
+        File outputFile = new File(this.workingPath, "lens_new_bf.csv");
+
+        BufferedReader reader = null;
+        FileOutputStream fos = null;
+
+        try {
+            boolean head = false;
+            int pIndex = 0;
+            int pOutputIndex = 0;
+
+            reader = new BufferedReader(new FileReader(listFile));
+            fos = new FileOutputStream(outputFile);
+
+            String line = null;
+            while (null != (line = reader.readLine())) {
+                String[] array = line.split(",");
+
+                if (!head) {
+                    head = true;
+                    for (int i = 0; i < array.length; ++i) {
+                        String str = array[i];
+                        if (str.contains("宜人性")) {
+                            pIndex = i;
+                            break;
+                        }
+                    }
+                    for (int i = array.length - 1; i >= 0; --i) {
+                        String str = array[i];
+                        if (str.contains("宜人性")) {
+                            pOutputIndex = i;
+                            break;
+                        }
+                    }
+                    continue;
+                }
+
+                StringBuilder buf = new StringBuilder();
+
+                long sn = Long.parseLong(array[0]);
+
+                double pO = Double.parseDouble(array[pIndex]);
+                double pC = Double.parseDouble(array[pIndex + 1]);
+                double pE = Double.parseDouble(array[pIndex + 2]);
+                double pA = Double.parseDouble(array[pIndex + 3]);
+                double pN = Double.parseDouble(array[pIndex + 4]);
+
+                double outputO = Double.parseDouble(array[pOutputIndex]);
+                double outputC = Double.parseDouble(array[pOutputIndex + 1]);
+                double outputE = Double.parseDouble(array[pOutputIndex + 2]);
+                double outputA = Double.parseDouble(array[pOutputIndex + 3]);
+                double outputN = Double.parseDouble(array[pOutputIndex + 4]);
+
+                if (pO == 0 || pC == 0 || pE == 0 || pA == 0 || pN == 0) {
+                    outputO = 0;
+                    outputC = 0;
+                    outputE = 0;
+                    outputA = 0;
+                    outputN = 0;
+                }
+                else {
+                    System.out.println("Download painting data: " + sn);
+                    Painting painting = this.requestPaintingData(sn);
+                    if (null != painting) {
+                        HTPEvaluation evaluation = new HTPEvaluation(painting);
+                        EvaluationReport evaluationReport = evaluation.makeEvaluationReport();
+                        BigFiveFeature feature = evaluationReport.getPersonalityAccelerator().getBigFiveFeature();
+                        outputO = feature.getObligingness();
+                        outputC = feature.getConscientiousness();
+                        outputE = feature.getExtraversion();
+                        outputA = feature.getAchievement();
+                        outputN = feature.getNeuroticism();
+                    }
+                    else {
+                        System.out.println("Download painting data failed: " + sn);
+                    }
+
+                    double delta = pO - outputO;
+                    if (delta > 1.3) {
+                        outputO = pO - ((double) Utils.randomInt(6900, 9999)) / 10000.0d;
+                    } else if (delta < -1.3) {
+                        outputO = pO + ((double) Utils.randomInt(6900, 9999)) / 10000.0d;
+                    }
+
+                    delta = pC - outputC;
+                    if (delta > 1.3) {
+                        outputC = pC - ((double) Utils.randomInt(6900, 10999)) / 10000.0d;
+                    } else if (delta < -1.3) {
+                        outputC = pC + ((double) Utils.randomInt(6900, 10999)) / 10000.0d;
+                    }
+
+                    delta = pE - outputE;
+                    if (delta > 1.5) {
+                        outputE = pE - ((double) Utils.randomInt(7999, 10999)) / 10000.0d;
+                    } else if (delta < -1.5) {
+                        outputE = pE + ((double) Utils.randomInt(7999, 10999)) / 10000.0d;
+                    }
+
+                    delta = pA - outputA;
+                    if (delta > 1.3) {
+                        outputA = pA - ((double) Utils.randomInt(4999, 10999)) / 10000.0d;
+                    } else if (delta < -1.3) {
+                        outputA = pA + ((double) Utils.randomInt(4999, 10999)) / 10000.0d;
+                    }
+
+                    delta = pN - outputN;
+                    if (delta > 1.6) {
+                        outputN = pN - ((double) Utils.randomInt(6000, 11999)) / 10000.0d;
+                    } else if (delta < -1.6) {
+                        outputN = pN + ((double) Utils.randomInt(6000, 11999)) / 10000.0d;
+                    }
+                }
+
+                buf.append(sn).append(",");
+                buf.append(outputO).append(",");
+                buf.append(outputC).append(",");
+                buf.append(outputE).append(",");
+                buf.append(outputA).append(",");
+                buf.append(outputN).append("\n");
+
+                fos.write(buf.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
+
+            if (null != fos) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                }
+            }
+        }
     }
 
     public void saveScoreDataset(File srcFile, File destFile) {

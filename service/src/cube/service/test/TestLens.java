@@ -63,6 +63,9 @@ public class TestLens {
 
 //        testSaveVisionScore();
 
-        testMakeDataset();
+//        testMakeDataset();
+
+        LensDataset dataset = new LensDataset();
+        dataset.makeNewExportData();
     }
 }
