@@ -5,6 +5,7 @@ import cube.aigc.psychology.Indicator;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PaintingAccelerator;
 import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.composition.BigFivePersonality;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.HexagonDimension;
 import cube.aigc.psychology.composition.HexagonDimensionScore;
@@ -48,18 +49,59 @@ public class ReportDataset {
             }
         }
 
+        StringBuilder buf = new StringBuilder();
+        int total = 0;
+
         for (int i = 0; i < reportJSONArray.length(); ++i) {
+            ++total;
+
             JSONObject json = reportJSONArray.getJSONObject(i);
             JSONObject paintingJson = json.getJSONObject("painting");
-            PaintingReport report = new PaintingReport(json);
-            Painting painting = new Painting(paintingJson);
-            report.painting = painting;
-
-            // Inputs
-            
 
             // Outputs
+            ScaleDataRow row = rowMap.get(json.getLong("sn"));
+            if (null == row) {
+                Logger.e(this.getClass(), "#makeDatasetFromScaleData - No scale data: " + json.getLong("sn"));
+                continue;
+            }
+
+            // Inputs
+//            PaintingReport report = new PaintingReport(json);
+            Painting painting = new Painting(paintingJson);
+//            report.painting = painting;
+            PaintingAccelerator accelerator = new PaintingAccelerator(painting);
+
+            if (1 == total) {
+                buf.append(accelerator.formatCSVHead());
+                buf.append(",").append("|");
+                buf.append(",").append("somatization");
+                buf.append(",").append("obsession");
+                buf.append(",").append("interpersonal");
+                buf.append(",").append("depression");
+                buf.append(",").append("anxiety");
+                buf.append(",").append("hostile");
+                buf.append(",").append("horror");
+                buf.append(",").append("paranoid");
+                buf.append(",").append("psychosis");
+                buf.append(",").append("sleep_diet");
+                buf.append(",").append("scl_90_total");
+                buf.append(",").append("positive_affect");
+                buf.append(",").append("negative_affect");
+                for (BigFivePersonality bfp : BigFivePersonality.values()) {
+                    buf.append(",").append(bfp.code.toLowerCase(Locale.ROOT));
+                }
+                buf.append("\n");
+            }
+
+            buf.append(accelerator.formatParameterAsCSV());
+            buf.append(",").append("|");
+            for (double value : row.data) {
+                buf.append(",").append(value);
+            }
+            buf.append("\n");
         }
+
+        Files.write(Paths.get(datasetFile.getAbsolutePath()), buf.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     public void makeNormalizationFile(File file) {
@@ -321,8 +363,12 @@ public class ReportDataset {
         public double[] data;
 
         public ScaleDataRow(String csvString) {
+            String[] array = csvString.split(",");
+            this.sn = Long.parseLong(array[0]);
+            this.data = new double[18];
+            for (int i = 0; i < this.data.length; ++i) {
+                this.data[i] = Double.parseDouble(array[i + 4]);
+            }
         }
-
-
     }
 }

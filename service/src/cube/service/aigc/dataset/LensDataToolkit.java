@@ -20,7 +20,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LensDataset {
+public class LensDataToolkit {
 
     private String host = "211.157.179.37";
 
@@ -31,7 +31,7 @@ public class LensDataset {
 
     private String workingPath = "storage/tmp/";
 
-    public LensDataset() {
+    public LensDataToolkit() {
     }
 
     public void makeNewExportData() {
