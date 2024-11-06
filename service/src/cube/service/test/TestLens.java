@@ -45,13 +45,19 @@ public class TestLens {
         ReportDataset dataset = new ReportDataset();
         File reportDataFile = new File("storage/tmp/lens_export_reports_all.json");
         File scaleDataFile = new File("storage/tmp/lens_export_data.csv");
-        File datasetFile = new File("storage/tmp/lens_dataset_1030.csv");
+        File datasetFile = new File("storage/tmp/lens_dataset_1106.csv");
 
         try {
             dataset.makeDatasetFromScaleData(reportDataFile, scaleDataFile, datasetFile);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static void testMakeNormalizationFile() {
+        File file = new File("storage/tmp/lens_dataset_1030.csv");
+        ReportDataset dataset = new ReportDataset();
+        dataset.makeNormalizationFile(file);
     }
 
     public static void main(String[] args) {
@@ -64,6 +70,8 @@ public class TestLens {
 //        testSaveVisionScore();
 
         testMakeDataset();
+
+//        testMakeNormalizationFile();
 
 //        LensDataToolkit dataset = new LensDataToolkit();
 //        dataset.makeNewExportData();

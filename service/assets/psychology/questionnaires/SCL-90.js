@@ -24,11 +24,11 @@ var SleepAndDietItems = [13, 25, 47, 50, 70, 75, 82];
 function explain(score) {
     if (score <= 0.5) {
         return FactorLevel.None;
-    } else if (score <= 1.5) {
+    } else if (score < 2.0) {
         return FactorLevel.Slight;
-    } else if (score <= 2.5) {
+    } else if (score < 3.0) {
         return FactorLevel.Mild;
-    } else if (score <= 3.5) {
+    } else if (score < 3.9) {
         return FactorLevel.Moderate;
     } else {
         return FactorLevel.Severe;

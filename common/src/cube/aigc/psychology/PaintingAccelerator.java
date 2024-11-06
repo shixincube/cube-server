@@ -38,7 +38,9 @@ import java.util.List;
 
 public class PaintingAccelerator {
 
-    private final double aligningSize = 1280;
+    private final double aligningSize = 1280.0;
+
+    private final double aligningPixel = 10.0;
 
     private Painting painting;
 
@@ -204,72 +206,72 @@ public class PaintingAccelerator {
         return buf.toString();
     }
 
-    public String formatParameterAsCSV() {
+    public String formatParameterAsCSV(boolean normalization) {
         StringBuilder buf = new StringBuilder();
 
         buf.append(this.parameter.frameAreaRatio);
-        buf.append(",").append(this.parameter.wholeTextureMax);
-        buf.append(",").append(this.parameter.wholeTextureAvg);
+        buf.append(",").append(normalization ? this.parameter.wholeTextureMax / aligningPixel : this.parameter.wholeTextureMax);
+        buf.append(",").append(normalization ? this.parameter.wholeTextureAvg / aligningPixel : this.parameter.wholeTextureAvg);
         buf.append(",").append(this.parameter.wholeTextureDensity);
         buf.append(",").append(this.parameter.wholeTextureHierarchy);
         buf.append(",").append(this.parameter.wholeTextureStandardDeviation);
 
-        buf.append(",").append(this.parameter.quadrant1TextureMax);
-        buf.append(",").append(this.parameter.quadrant1TextureAvg);
+        buf.append(",").append(normalization ? this.parameter.quadrant1TextureMax / aligningPixel : this.parameter.quadrant1TextureMax);
+        buf.append(",").append(normalization ? this.parameter.quadrant1TextureAvg / aligningPixel : this.parameter.quadrant1TextureAvg);
         buf.append(",").append(this.parameter.quadrant1TextureDensity);
         buf.append(",").append(this.parameter.quadrant1TextureHierarchy);
         buf.append(",").append(this.parameter.quadrant1TextureStandardDeviation);
 
-        buf.append(",").append(this.parameter.quadrant2TextureMax);
-        buf.append(",").append(this.parameter.quadrant2TextureAvg);
+        buf.append(",").append(normalization ? this.parameter.quadrant2TextureMax / aligningPixel : this.parameter.quadrant2TextureMax);
+        buf.append(",").append(normalization ? this.parameter.quadrant2TextureAvg / aligningPixel : this.parameter.quadrant2TextureAvg);
         buf.append(",").append(this.parameter.quadrant2TextureDensity);
         buf.append(",").append(this.parameter.quadrant2TextureHierarchy);
         buf.append(",").append(this.parameter.quadrant2TextureStandardDeviation);
 
-        buf.append(",").append(this.parameter.quadrant3TextureMax);
-        buf.append(",").append(this.parameter.quadrant3TextureAvg);
+        buf.append(",").append(normalization ? this.parameter.quadrant3TextureMax / aligningPixel : this.parameter.quadrant3TextureMax);
+        buf.append(",").append(normalization ? this.parameter.quadrant3TextureAvg / aligningPixel : this.parameter.quadrant3TextureAvg);
         buf.append(",").append(this.parameter.quadrant3TextureDensity);
         buf.append(",").append(this.parameter.quadrant3TextureHierarchy);
         buf.append(",").append(this.parameter.quadrant3TextureStandardDeviation);
 
-        buf.append(",").append(this.parameter.quadrant4TextureMax);
-        buf.append(",").append(this.parameter.quadrant4TextureAvg);
+        buf.append(",").append(normalization ? this.parameter.quadrant4TextureMax / aligningPixel : this.parameter.quadrant4TextureMax);
+        buf.append(",").append(normalization ? this.parameter.quadrant4TextureAvg / aligningPixel : this.parameter.quadrant4TextureAvg);
         buf.append(",").append(this.parameter.quadrant4TextureDensity);
         buf.append(",").append(this.parameter.quadrant4TextureHierarchy);
         buf.append(",").append(this.parameter.quadrant4TextureStandardDeviation);
 
-        buf.append(",").append(this.parameter.house1.formatCSV());
-        buf.append(",").append(this.formatHouseParameterAsCSV(this.house1));
-        buf.append(",").append(this.parameter.house2.formatCSV());
-        buf.append(",").append(this.formatHouseParameterAsCSV(this.house2));
+        buf.append(",").append(this.parameter.house1.formatCSV(normalization));
+        buf.append(",").append(this.formatHouseParameterAsCSV(this.house1, normalization));
+        buf.append(",").append(this.parameter.house2.formatCSV(normalization));
+        buf.append(",").append(this.formatHouseParameterAsCSV(this.house2, normalization));
 
-        buf.append(",").append(this.parameter.tree1.formatCSV());
-        buf.append(",").append(this.formatTreeParameterAsCSV(this.tree1));
-        buf.append(",").append(this.parameter.tree2.formatCSV());
-        buf.append(",").append(this.formatTreeParameterAsCSV(this.tree2));
+        buf.append(",").append(this.parameter.tree1.formatCSV(normalization));
+        buf.append(",").append(this.formatTreeParameterAsCSV(this.tree1, normalization));
+        buf.append(",").append(this.parameter.tree2.formatCSV(normalization));
+        buf.append(",").append(this.formatTreeParameterAsCSV(this.tree2, normalization));
 
-        buf.append(",").append(this.parameter.person1.formatCSV());
-        buf.append(",").append(this.formatPersonParameterAsCSV(this.person1));
-        buf.append(",").append(this.parameter.person2.formatCSV());
-        buf.append(",").append(this.formatPersonParameterAsCSV(this.person2));
+        buf.append(",").append(this.parameter.person1.formatCSV(normalization));
+        buf.append(",").append(this.formatPersonParameterAsCSV(this.person1, normalization));
+        buf.append(",").append(this.parameter.person2.formatCSV(normalization));
+        buf.append(",").append(this.formatPersonParameterAsCSV(this.person2, normalization));
 
         for (MaterialParameter mp : this.parameter.materials) {
-            buf.append(",").append(mp.formatCSV());
+            buf.append(",").append(mp.formatCSV(normalization));
         }
 
         return buf.toString();
     }
 
-    private double[] houseParameters(House house) {
+    private double[] houseParameters(House house, boolean normalization) {
         double[] result = new double[11 * 12];
         MaterialParameter blank = new MaterialParameter(Label.Unknown);
 
         if (null != house) {
             if (null != house.getSubThings(Label.HouseSidewall)) {
-                double[] data = new MaterialParameter(house.getSubThings(Label.HouseSidewall).get(0)).parameters();
+                double[] data = new MaterialParameter(house.getSubThings(Label.HouseSidewall).get(0)).parameters(normalization);
                 System.arraycopy(data, 0, result, 0, 12);
             } else {
-                System.arraycopy(blank.parameters(), 0, result, 0, 12);
+                System.arraycopy(blank.parameters(normalization), 0, result, 0, 12);
             }
 
 //            if (null != house.getSubThings(Label.HouseRoof)) {
@@ -349,291 +351,291 @@ public class PaintingAccelerator {
         return result;
     }
 
-    private String formatHouseParameterAsCSV(House house) {
+    private String formatHouseParameterAsCSV(House house, boolean normalization) {
         MaterialParameter blank = new MaterialParameter(Label.Unknown);
 
         StringBuilder buf = new StringBuilder();
         if (null != house) {
             if (null != house.getSubThings(Label.HouseSidewall)) {
-                buf.append(new MaterialParameter(house.getSubThings(Label.HouseSidewall).get(0)).formatCSV());
+                buf.append(new MaterialParameter(house.getSubThings(Label.HouseSidewall).get(0)).formatCSV(normalization));
             } else {
-                buf.append(blank.formatCSV());
+                buf.append(blank.formatCSV(normalization));
             }
 
             if (null != house.getSubThings(Label.HouseRoof)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseRoof).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseRoof).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != house.getSubThings(Label.HouseRoofSkylight)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseRoofSkylight).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseRoofSkylight).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != house.getSubThings(Label.HouseChimney)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseChimney).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseChimney).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != house.getSubThings(Label.HouseWindow)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseWindow).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseWindow).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != house.getSubThings(Label.HouseDoor)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseDoor).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseDoor).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != house.getSubThings(Label.HouseCurtain)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseCurtain).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseCurtain).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != house.getSubThings(Label.HouseWindowRailing)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseWindowRailing).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseWindowRailing).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != house.getSubThings(Label.HouseSmoke)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseSmoke).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseSmoke).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != house.getSubThings(Label.HouseFence)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseFence).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HouseFence).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != house.getSubThings(Label.HousePath)) {
-                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HousePath).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(house.getSubThings(Label.HousePath).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
         }
         else {
-            buf.append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
+            buf.append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
         }
         return buf.toString();
     }
 
-    private String formatTreeParameterAsCSV(Tree tree) {
+    private String formatTreeParameterAsCSV(Tree tree, boolean normalization) {
         MaterialParameter blank = new MaterialParameter(Label.Unknown);
 
         StringBuilder buf = new StringBuilder();
         if (null != tree) {
             if (null != tree.getSubThings(Label.TreeTrunk)) {
-                buf.append(new MaterialParameter(tree.getSubThings(Label.TreeTrunk).get(0)).formatCSV());
+                buf.append(new MaterialParameter(tree.getSubThings(Label.TreeTrunk).get(0)).formatCSV(normalization));
             } else {
-                buf.append(blank.formatCSV());
+                buf.append(blank.formatCSV(normalization));
             }
 
             if (null != tree.getSubThings(Label.TreeBranch)) {
-                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeBranch).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeBranch).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != tree.getSubThings(Label.TreeCanopy)) {
-                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeCanopy).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeCanopy).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != tree.getSubThings(Label.TreeRoot)) {
-                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeRoot).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeRoot).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != tree.getSubThings(Label.TreeFruit)) {
-                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeFruit).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeFruit).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != tree.getSubThings(Label.TreeHole)) {
-                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeHole).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeHole).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != tree.getSubThings(Label.TreeDrooping)) {
-                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeDrooping).get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(tree.getSubThings(Label.TreeDrooping).get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
         }
         else {
-            buf.append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
+            buf.append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
         }
         return buf.toString();
     }
 
-    private String formatPersonParameterAsCSV(Person person) {
+    private String formatPersonParameterAsCSV(Person person, boolean normalization) {
         MaterialParameter blank = new MaterialParameter(Label.Unknown);
 
         StringBuilder buf = new StringBuilder();
         if (null != person) {
             if (null != person.getBraids()) {
-                buf.append(new MaterialParameter(person.getBraids().get(0)).formatCSV());
+                buf.append(new MaterialParameter(person.getBraids().get(0)).formatCSV(normalization));
             } else {
-                buf.append(blank.formatCSV());
+                buf.append(blank.formatCSV(normalization));
             }
 
             if (null != person.getHead()) {
-                buf.append(",").append(new MaterialParameter(person.getHead()).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getHead()).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (person.hasHair()) {
-                buf.append(",").append(new MaterialParameter(person.getHairs().get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getHairs().get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (person.hasCap()) {
-                buf.append(",").append(new MaterialParameter(person.getCap()).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getCap()).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (person.hasEye()) {
-                buf.append(",").append(new MaterialParameter(person.getEyes().get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getEyes().get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (person.hasEyebrow()) {
-                buf.append(",").append(new MaterialParameter(person.getEyebrows().get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getEyebrows().get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (person.hasNose()) {
-                buf.append(",").append(new MaterialParameter(person.getNose()).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getNose()).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (person.hasEar()) {
-                buf.append(",").append(new MaterialParameter(person.getEars().get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getEars().get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (person.hasMouth()) {
-                buf.append(",").append(new MaterialParameter(person.getMouth()).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getMouth()).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (person.hasBody()) {
-                buf.append(",").append(new MaterialParameter(person.getBody()).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getBody()).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (person.hasArm()) {
-                buf.append(",").append(new MaterialParameter(person.getArms().get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getArms().get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (person.hasPalm()) {
-                buf.append(",").append(new MaterialParameter(person.getPalms().get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getPalms().get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (person.hasLeg()) {
-                buf.append(",").append(new MaterialParameter(person.getLegs().get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getLegs().get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (person.hasFoot()) {
-                buf.append(",").append(new MaterialParameter(person.getFoot().get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getFoot().get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != person.getMask()) {
-                buf.append(",").append(new MaterialParameter(person.getMask()).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getMask()).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (person.hasHairAccessory()) {
-                buf.append(",").append(new MaterialParameter(person.getHairAccessories().get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getHairAccessories().get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != person.getSkirt()) {
-                buf.append(",").append(new MaterialParameter(person.getSkirt()).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getSkirt()).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != person.getItems()) {
-                buf.append(",").append(new MaterialParameter(person.getItems().get(0)).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getItems().get(0)).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
 
             if (null != person.getGlasses()) {
-                buf.append(",").append(new MaterialParameter(person.getGlasses()).formatCSV());
+                buf.append(",").append(new MaterialParameter(person.getGlasses()).formatCSV(normalization));
             } else {
-                buf.append(",").append(blank.formatCSV());
+                buf.append(",").append(blank.formatCSV(normalization));
             }
         }
         else {
-            buf.append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
-            buf.append(",").append(blank.formatCSV());
+            buf.append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
+            buf.append(",").append(blank.formatCSV(normalization));
         }
         return buf.toString();
     }
@@ -858,34 +860,34 @@ public class PaintingAccelerator {
             this.textureStandardDeviation = material.texture.standardDeviation;
         }
 
-        public double[] parameters() {
+        public double[] parameters(boolean normalization) {
             double[] data = new double[12];
-            data[0] = this.center.x;
-            data[1] = this.center.y;
-            data[2] = this.location.x;
-            data[3] = this.location.y;
-            data[4] = this.size.width;
-            data[5] = this.size.height;
+            data[0] = normalization ? this.center.x / aligningSize : this.center.x;
+            data[1] = normalization ? this.center.y / aligningSize : this.center.y;
+            data[2] = normalization ? this.location.x / aligningSize : this.location.x;
+            data[3] = normalization ? this.location.y / aligningSize : this.location.y;
+            data[4] = normalization ? this.size.width / aligningSize : this.size.width;
+            data[5] = normalization ? this.size.height / aligningSize : this.size.height;
             data[6] = this.areaRatio;
-            data[7] = this.textureMax;
-            data[8] = this.textureAvg;
+            data[7] = normalization ? this.textureMax / aligningPixel : this.textureMax;
+            data[8] = normalization ? this.textureAvg / aligningPixel : this.textureAvg;
             data[9] = this.textureDensity;
             data[10] = this.textureHierarchy;
             data[11] = this.textureStandardDeviation;
             return data;
         }
 
-        public String formatCSV() {
+        public String formatCSV(boolean normalization) {
             StringBuilder buf = new StringBuilder();
-            buf.append(this.center.x);
-            buf.append(",").append(this.center.y);
-            buf.append(",").append(this.location.x);
-            buf.append(",").append(this.location.y);
-            buf.append(",").append(this.size.width);
-            buf.append(",").append(this.size.height);
+            buf.append(normalization ? this.center.x / aligningSize : this.center.x);
+            buf.append(",").append(normalization ? this.center.y / aligningSize : this.center.y);
+            buf.append(",").append(normalization ? this.location.x / aligningSize : this.location.x);
+            buf.append(",").append(normalization ? this.location.y / aligningSize : this.location.y);
+            buf.append(",").append(normalization ? this.size.width / aligningSize : this.size.width);
+            buf.append(",").append(normalization ? this.size.height / aligningSize : this.size.height);
             buf.append(",").append(this.areaRatio);
-            buf.append(",").append(this.textureMax);
-            buf.append(",").append(this.textureAvg);
+            buf.append(",").append(normalization ? this.textureMax / aligningPixel : this.textureMax);
+            buf.append(",").append(normalization ? this.textureAvg / aligningPixel : this.textureAvg);
             buf.append(",").append(this.textureDensity);
             buf.append(",").append(this.textureHierarchy);
             buf.append(",").append(this.textureStandardDeviation);

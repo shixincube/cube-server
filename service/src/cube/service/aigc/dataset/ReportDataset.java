@@ -93,8 +93,10 @@ public class ReportDataset {
                 buf.append("\n");
             }
 
-            buf.append(accelerator.formatParameterAsCSV());
+            buf.append(accelerator.formatParameterAsCSV(true));
             buf.append(",").append("|");
+            // 归一化
+            row.normalization();
             for (double value : row.data) {
                 buf.append(",").append(value);
             }
@@ -124,15 +126,26 @@ public class ReportDataset {
                 }
                 else {
                     String[] array = line.split(",");
-                    double[] data = new double[array.length];
+                    double[] data = new double[array.length - 1];
+                    int separatorIndex = 0;
+                    int dataIndex = 0;
                     for (int i = 0; i < array.length; ++i) {
-                        data[i] = Double.parseDouble(array[i]);
+                        String str = array[i];
+                        if (str.equals("|")) {
+                            separatorIndex = i;
+                            continue;
+                        }
+                        data[dataIndex] = Double.parseDouble(str);
+                        ++dataIndex;
                     }
                     // 归一化
                     double[] result = FloatUtils.normalization(data, 0, 100);
                     StringBuilder buf = new StringBuilder();
                     int ti = result.length - 1;
                     for (int i = 0; i < result.length; ++i) {
+                        if (separatorIndex == i) {
+                            buf.append("|,");
+                        }
                         buf.append(result[i]);
                         if (i != ti) {
                             buf.append(",");
@@ -141,11 +154,14 @@ public class ReportDataset {
                     buf.append("\n");
                     os.write(buf.toString().getBytes(StandardCharsets.UTF_8));
                 }
+
                 ++row;
 
                 Logger.i(this.getClass(), "#makeNormalizationFile - processing: " + row + " row");
             }
         } catch (Exception e) {
+            Logger.e(this.getClass(), "#makeNormalizationFile", e);
+
             if (null != reader) {
                 try {
                     reader.close();
@@ -209,7 +225,7 @@ public class ReportDataset {
                     buf = new StringBuilder();
                 }
 
-                buf.append(accelerator.formatParameterAsCSV());
+                buf.append(accelerator.formatParameterAsCSV(false));
                 buf.append(",").append("|");
                 List<EvaluationScore> scores = report.getEvaluationReport().getEvaluationScores();
                 scores = this.alignScores(scores);
@@ -266,7 +282,7 @@ public class ReportDataset {
                     Logger.i(this.getClass(), "#saveVisionDataToFile - columns: " + columns);
                 }
 
-                content = accelerator.formatParameterAsCSV();
+                content = accelerator.formatParameterAsCSV(false);
                 int num = content.split(",").length;
                 if (columns != num) {
                     content = null;
@@ -368,6 +384,18 @@ public class ReportDataset {
             this.data = new double[18];
             for (int i = 0; i < this.data.length; ++i) {
                 this.data[i] = Double.parseDouble(array[i + 4]);
+            }
+        }
+
+        public void normalization() {
+            for (int i = 0; i < 10; ++i) {
+                this.data[i] = this.data[i] / 10.0d;
+            }
+            this.data[10] = this.data[10] / 100.0d;
+            this.data[11] = this.data[11] / 100.0d;
+            this.data[12] = this.data[12] / 100.0d;
+            for (int i = 13; i < 18; ++i) {
+                this.data[i] = this.data[i] / 10.0d;
             }
         }
     }
