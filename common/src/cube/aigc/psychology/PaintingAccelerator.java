@@ -212,31 +212,31 @@ public class PaintingAccelerator {
         buf.append(this.parameter.frameAreaRatio);
         buf.append(",").append(normalization ? this.parameter.wholeTextureMax / aligningPixel : this.parameter.wholeTextureMax);
         buf.append(",").append(normalization ? this.parameter.wholeTextureAvg / aligningPixel : this.parameter.wholeTextureAvg);
-        buf.append(",").append(this.parameter.wholeTextureDensity);
+        buf.append(",").append(normalization ? this.parameter.wholeTextureDensity * 0.5 : this.parameter.wholeTextureDensity);
         buf.append(",").append(this.parameter.wholeTextureHierarchy);
         buf.append(",").append(this.parameter.wholeTextureStandardDeviation);
 
         buf.append(",").append(normalization ? this.parameter.quadrant1TextureMax / aligningPixel : this.parameter.quadrant1TextureMax);
         buf.append(",").append(normalization ? this.parameter.quadrant1TextureAvg / aligningPixel : this.parameter.quadrant1TextureAvg);
-        buf.append(",").append(this.parameter.quadrant1TextureDensity);
+        buf.append(",").append(normalization ? this.parameter.quadrant1TextureDensity * 0.5 : this.parameter.quadrant1TextureDensity);
         buf.append(",").append(this.parameter.quadrant1TextureHierarchy);
         buf.append(",").append(this.parameter.quadrant1TextureStandardDeviation);
 
         buf.append(",").append(normalization ? this.parameter.quadrant2TextureMax / aligningPixel : this.parameter.quadrant2TextureMax);
         buf.append(",").append(normalization ? this.parameter.quadrant2TextureAvg / aligningPixel : this.parameter.quadrant2TextureAvg);
-        buf.append(",").append(this.parameter.quadrant2TextureDensity);
+        buf.append(",").append(normalization ? this.parameter.quadrant2TextureDensity * 0.5 : this.parameter.quadrant2TextureDensity);
         buf.append(",").append(this.parameter.quadrant2TextureHierarchy);
         buf.append(",").append(this.parameter.quadrant2TextureStandardDeviation);
 
         buf.append(",").append(normalization ? this.parameter.quadrant3TextureMax / aligningPixel : this.parameter.quadrant3TextureMax);
         buf.append(",").append(normalization ? this.parameter.quadrant3TextureAvg / aligningPixel : this.parameter.quadrant3TextureAvg);
-        buf.append(",").append(this.parameter.quadrant3TextureDensity);
+        buf.append(",").append(normalization ? this.parameter.quadrant3TextureDensity * 0.5 : this.parameter.quadrant3TextureDensity);
         buf.append(",").append(this.parameter.quadrant3TextureHierarchy);
         buf.append(",").append(this.parameter.quadrant3TextureStandardDeviation);
 
         buf.append(",").append(normalization ? this.parameter.quadrant4TextureMax / aligningPixel : this.parameter.quadrant4TextureMax);
         buf.append(",").append(normalization ? this.parameter.quadrant4TextureAvg / aligningPixel : this.parameter.quadrant4TextureAvg);
-        buf.append(",").append(this.parameter.quadrant4TextureDensity);
+        buf.append(",").append(normalization ? this.parameter.quadrant4TextureDensity * 0.5 : this.parameter.quadrant4TextureDensity);
         buf.append(",").append(this.parameter.quadrant4TextureHierarchy);
         buf.append(",").append(this.parameter.quadrant4TextureStandardDeviation);
 
@@ -871,7 +871,7 @@ public class PaintingAccelerator {
             data[6] = this.areaRatio;
             data[7] = normalization ? this.textureMax / aligningPixel : this.textureMax;
             data[8] = normalization ? this.textureAvg / aligningPixel : this.textureAvg;
-            data[9] = this.textureDensity;
+            data[9] = normalization ? this.textureDensity * 0.5 : this.textureDensity;
             data[10] = this.textureHierarchy;
             data[11] = this.textureStandardDeviation;
             return data;
@@ -888,7 +888,7 @@ public class PaintingAccelerator {
             buf.append(",").append(this.areaRatio);
             buf.append(",").append(normalization ? this.textureMax / aligningPixel : this.textureMax);
             buf.append(",").append(normalization ? this.textureAvg / aligningPixel : this.textureAvg);
-            buf.append(",").append(this.textureDensity);
+            buf.append(",").append(normalization ? this.textureDensity * 0.5 : this.textureDensity);
             buf.append(",").append(this.textureHierarchy);
             buf.append(",").append(this.textureStandardDeviation);
             return buf.toString();
