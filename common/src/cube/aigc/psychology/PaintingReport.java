@@ -67,7 +67,7 @@ public class PaintingReport extends Report {
 
     private List<ReportSection> reportTextList;
 
-    private DaturaFlower daturaFlower;
+    private MandalaFlower mandalaFlower;
 
     public Painting painting;
 
@@ -118,8 +118,11 @@ public class PaintingReport extends Report {
             this.evaluationReport = new EvaluationReport(json.getJSONObject("evaluation"));
         }
 
-        if (json.has("daturaFlower")) {
-            this.daturaFlower = new DaturaFlower(json.getJSONObject("daturaFlower"));
+        if (json.has("mandalaFlower")) {
+            this.mandalaFlower = new MandalaFlower(json.getJSONObject("mandalaFlower"));
+        } else if (json.has("daturaFlower")) {
+            // 兼容旧版本
+            this.mandalaFlower = new MandalaFlower(json.getJSONObject("daturaFlower"));
         }
 
         if (json.has("reportTextList")) {
@@ -199,12 +202,12 @@ public class PaintingReport extends Report {
         return (null == this.evaluationReport);
     }
 
-    public void setDaturaFlower(DaturaFlower daturaFlower) {
-        this.daturaFlower = daturaFlower;
+    public void setMandalaFlower(MandalaFlower mandalaFlower) {
+        this.mandalaFlower = mandalaFlower;
     }
 
-    public DaturaFlower getDaturaFlower() {
-        return this.daturaFlower;
+    public MandalaFlower getMandalaFlower() {
+        return this.mandalaFlower;
     }
 
     public String makeMarkdown() {
@@ -360,10 +363,10 @@ public class PaintingReport extends Report {
             buf.append("\n\n");
         }
 
-        if (null != this.daturaFlower) {
+        if (null != this.mandalaFlower) {
             buf.append("\n\n");
             buf.append("## 曼陀罗绘画\n\n");
-            buf.append("![曼陀罗绘画](").append(this.daturaFlower.url).append(")");
+            buf.append("![曼陀罗绘画](").append(this.mandalaFlower.url).append(")");
             buf.append("\n\n");
         }
 
@@ -472,8 +475,10 @@ public class PaintingReport extends Report {
             }
         }
 
-        if (null != this.daturaFlower) {
-            json.put("daturaFlower", this.daturaFlower.toJSON());
+        if (null != this.mandalaFlower) {
+            json.put("mandalaFlower", this.mandalaFlower.toJSON());
+            // 兼容旧版本
+            json.put("daturaFlower", this.mandalaFlower.toJSON());
         }
 
         return json;

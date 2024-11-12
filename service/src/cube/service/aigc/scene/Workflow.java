@@ -71,7 +71,7 @@ public class Workflow {
 
     private String summary = "";
 
-    private DaturaFlower daturaFlower = new DaturaFlower("AS_001");
+    private MandalaFlower mandalaFlower = new MandalaFlower("AS_001");
 
     private String unitName = ModelConfig.BAIZE_UNIT;
 
@@ -103,7 +103,7 @@ public class Workflow {
 
         report.setSummary(this.summary);
         report.setReportTextList(this.reportTextList);
-        report.setDaturaFlower(this.daturaFlower);
+        report.setMandalaFlower(this.mandalaFlower);
 
         return report;
     }
@@ -177,14 +177,14 @@ public class Workflow {
         this.makeDescription();
 
         // 曼陀罗花
-        this.daturaFlower = this.inferDaturaFlower(this.evaluationReport.getPersonalityAccelerator());
+        this.mandalaFlower = this.inferMandalaFlower(this.evaluationReport.getPersonalityAccelerator());
 
         return this;
     }
 
-    private DaturaFlower inferDaturaFlower(PersonalityAccelerator personalityAccelerator) {
+    private MandalaFlower inferMandalaFlower(PersonalityAccelerator personalityAccelerator) {
         BigFiveFeature feature = personalityAccelerator.getBigFiveFeature();
-        List<String> filenames = Resource.getInstance().getDaturaFlowerFiles();
+        List<String> filenames = Resource.getInstance().getMandalaFlowerFiles();
         String color = "A";
         if (feature.getNeuroticism() < 3.0) {
             color = "B";
@@ -208,9 +208,9 @@ public class Workflow {
                 filenameList.add(filename);
             }
         }
-        DaturaFlower daturaFlower = new DaturaFlower(
+        MandalaFlower mandalaFlower = new MandalaFlower(
                 FileUtils.extractFileName(filenameList.get(Utils.randomInt(0, filenameList.size() - 1))));
-        return daturaFlower;
+        return mandalaFlower;
     }
 
     private List<EvaluationScore> filter(List<EvaluationScore> indicatorList, List<EvaluationScore> sources) {

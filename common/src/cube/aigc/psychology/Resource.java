@@ -79,7 +79,7 @@ public class Resource {
 
     private File attentionScriptFile = new File("assets/psychology/scripts/attention.js");
 
-    private File daturaFlowerPath = new File("assets/psychology/daturaflower/");
+    private File mandalaFlowerPath = new File("assets/psychology/mandalaflower/");
 
     private final static Resource instance = new Resource();
 
@@ -301,9 +301,9 @@ public class Resource {
         return null;
     }
 
-    public List<String> getDaturaFlowerFiles() {
+    public List<String> getMandalaFlowerFiles() {
         List<String> result = new ArrayList<>();
-        File[] files = this.daturaFlowerPath.listFiles();
+        File[] files = this.mandalaFlowerPath.listFiles();
         if (null != files && files.length > 0) {
             for (File file : files) {
                 if (file.getName().endsWith("jpg")) {

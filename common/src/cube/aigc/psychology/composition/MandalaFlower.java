@@ -29,18 +29,18 @@ package cube.aigc.psychology.composition;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
-public class DaturaFlower implements JSONable {
+public class MandalaFlower implements JSONable {
 
     public String name;
 
     public String url;
 
-    public DaturaFlower(String name) {
+    public MandalaFlower(String name) {
         this.name = name;
-        this.url = "http://static.shixincube.com/data/daturaflower/" + name + ".jpg";
+        this.url = "http://static.shixincube.com/data/mandala/" + name + ".jpg";
     }
 
-    public DaturaFlower(JSONObject json) {
+    public MandalaFlower(JSONObject json) {
         this.name = json.getString("name");
         this.url = json.getString("url");
     }

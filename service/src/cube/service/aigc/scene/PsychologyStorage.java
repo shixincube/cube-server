@@ -106,7 +106,7 @@ public class PsychologyStorage implements Storagable {
             new StorageField("evaluation_data", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
-            new StorageField("datura_flower", LiteralBase.STRING, new Constraint[] {
+            new StorageField("mandala_flower", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             })
     };
@@ -124,7 +124,7 @@ public class PsychologyStorage implements Storagable {
             new StorageField(reportTable, "finished_timestamp", LiteralBase.LONG),
             new StorageField(reportTable, "summary", LiteralBase.STRING),
             new StorageField(reportTable, "evaluation_data", LiteralBase.STRING),
-            new StorageField(reportTable, "datura_flower", LiteralBase.STRING)
+            new StorageField(reportTable, "mandala_flower", LiteralBase.STRING)
     };
 
     private final StorageField[] paintingFields = new StorageField[] {
@@ -509,8 +509,8 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("summary", report.getSummary()),
                 new StorageField("evaluation_data", dataString),
-                new StorageField("datura_flower", (null != report.getDaturaFlower() ?
-                        report.getDaturaFlower().toJSON().toString() : null))
+                new StorageField("mandala_flower", (null != report.getMandalaFlower() ?
+                        report.getMandalaFlower().toJSON().toString() : null))
         });
     }
 
@@ -787,11 +787,11 @@ public class PsychologyStorage implements Storagable {
             report.setSummary(data.get("summary").getString());
         }
 
-        if (!data.get("datura_flower").isNullValue()) {
-            report.setDaturaFlower(new DaturaFlower(new JSONObject(data.get("datura_flower").getString())));
+        if (!data.get("mandala_flower").isNullValue()) {
+            report.setMandalaFlower(new MandalaFlower(new JSONObject(data.get("mandala_flower").getString())));
         }
         else {
-            report.setDaturaFlower(new DaturaFlower("AS_001"));
+            report.setMandalaFlower(new MandalaFlower("AS_001"));
         }
 
         EvaluationReport evaluationReport = null;
