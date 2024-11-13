@@ -686,16 +686,35 @@ public class PsychologyStorage implements Storagable {
         String dataString = scaleReport.getFactorsAsJSONArray().toString();
         dataString = JSONUtils.escape(dataString);
 
-        return this.storage.executeInsert(this.scaleReportTable, new StorageField[] {
-                new StorageField("sn", scaleReport.sn),
-                new StorageField("contact_id", scaleReport.contactId),
-                new StorageField("timestamp", scaleReport.timestamp),
-                new StorageField("name", scaleReport.getName()),
-                new StorageField("gender", scaleReport.getAttribute().gender),
-                new StorageField("age", scaleReport.getAttribute().age),
-                new StorageField("strict", scaleReport.getAttribute().strict ? 1 : 0),
-                new StorageField("factor_data", dataString)
-        });
+        List<StorageField[]> result = this.storage.executeQuery(this.scaleReportTable, this.scaleReportFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("sn", scaleReport.sn)
+                });
+        if (result.isEmpty()) {
+            return this.storage.executeInsert(this.scaleReportTable, new StorageField[] {
+                    new StorageField("sn", scaleReport.sn),
+                    new StorageField("contact_id", scaleReport.contactId),
+                    new StorageField("timestamp", scaleReport.timestamp),
+                    new StorageField("name", scaleReport.getName()),
+                    new StorageField("gender", scaleReport.getAttribute().gender),
+                    new StorageField("age", scaleReport.getAttribute().age),
+                    new StorageField("strict", scaleReport.getAttribute().strict ? 1 : 0),
+                    new StorageField("factor_data", dataString)
+            });
+        }
+        else {
+            return this.storage.executeUpdate(this.scaleReportTable, new StorageField[] {
+                    new StorageField("contact_id", scaleReport.contactId),
+                    new StorageField("timestamp", scaleReport.timestamp),
+                    new StorageField("name", scaleReport.getName()),
+                    new StorageField("gender", scaleReport.getAttribute().gender),
+                    new StorageField("age", scaleReport.getAttribute().age),
+                    new StorageField("strict", scaleReport.getAttribute().strict ? 1 : 0),
+                    new StorageField("factor_data", dataString)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("sn", scaleReport.sn)
+            });
+        }
     }
 
     public List<PaintingLabel> readPaintingLabels(long sn) {

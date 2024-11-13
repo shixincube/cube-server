@@ -111,6 +111,10 @@ public class AIGCUnit extends Entity {
         this.failures.add(new Failure(code, timestamp, contactId));
     }
 
+    public int numFailure() {
+        return this.failures.size();
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();

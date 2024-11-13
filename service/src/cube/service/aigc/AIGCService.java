@@ -558,6 +558,7 @@ public class AIGCService extends AbstractModule {
             return idleUnit;
         }
 
+        boolean random = true;  // 是否随机
         ArrayList<AIGCUnit> candidates = new ArrayList<>();
 
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
@@ -566,6 +567,9 @@ public class AIGCService extends AbstractModule {
             if (unit.getCapability().getName().equals(unitName) &&
                 unit.getContext().isValid()) {
                 candidates.add(unit);
+                if (unit.numFailure() > 0) {
+                    random = false;
+                }
             }
         }
 
@@ -578,8 +582,16 @@ public class AIGCService extends AbstractModule {
             return candidates.get(0);
         }
 
-        // 先进行一次随机选择
-        AIGCUnit unit = candidates.get(Utils.randomInt(0, num - 1));
+        // 按照发生错误的数量，从低到高排序
+        Collections.sort(candidates, new Comparator<AIGCUnit>() {
+            @Override
+            public int compare(AIGCUnit u1, AIGCUnit u2) {
+                return u1.numFailure() - u2.numFailure();
+            }
+        });
+
+        // 先进行一次选择
+        AIGCUnit unit = random ? candidates.get(Utils.randomInt(0, num - 1)) : candidates.get(0);
 
         iter = candidates.iterator();
         while (iter.hasNext()) {
@@ -591,11 +603,11 @@ public class AIGCService extends AbstractModule {
         }
 
         if (candidates.isEmpty()) {
-            // 所有单元都在运行，返回随机选择
+            // 所有单元都在运行，返回选择
             return unit;
         }
 
-        unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
+        unit = random ? candidates.get(Utils.randomInt(0, candidates.size() - 1)) : candidates.get(0);
         return unit;
     }
 

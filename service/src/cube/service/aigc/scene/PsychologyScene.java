@@ -333,36 +333,15 @@ public class PsychologyScene {
                     reportTask.channel.setProcessing(true);
 
                     // 获取单元
-                    AIGCUnit unit = aigcService.selectIdleUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
+                    AIGCUnit unit = aigcService.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
                     if (null == unit) {
-                        // 等待空闲单元
-                        int retryCount = 0;
-                        while (retryCount < 10) {
-                            Logger.w(this.getClass(), "#processPainting - Unit is busy");
-                            ++retryCount;
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            unit = aigcService.selectIdleUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
-                            if (null != unit) {
-                                break;
-                            }
-                        }
-                    }
-
-                    if (null == unit) {
-                        unit = aigcService.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
-                        if (null == unit) {
-                            // 没有可用单元
-                            runningTaskQueue.remove(reportTask);
-                            reportTask.channel.setProcessing(false);
-                            reportTask.report.setState(AIGCStateCode.UnitError);
-                            reportTask.report.setFinished(true);
-                            reportTask.listener.onPaintingPredictFailed(reportTask.report);
-                            continue;
-                        }
+                        // 没有可用单元
+                        runningTaskQueue.remove(reportTask);
+                        reportTask.channel.setProcessing(false);
+                        reportTask.report.setState(AIGCStateCode.UnitError);
+                        reportTask.report.setFinished(true);
+                        reportTask.listener.onPaintingPredictFailed(reportTask.report);
+                        continue;
                     }
 
                     // 更新单元状态
@@ -379,6 +358,9 @@ public class PsychologyScene {
                         // 预测绘图失败
                         Logger.w(PsychologyScene.class, "#generateEvaluationReport - onPaintingPredictFailed: " +
                                 reportTask.fileLabel.getFileCode());
+                        // 记录故障
+                        unit.markFailure(AIGCStateCode.FileError.code, System.currentTimeMillis(),
+                                reportTask.channel.getAuthToken().getContactId());
                         // 更新单元状态
                         unit.setRunning(false);
                         runningTaskQueue.remove(reportTask);
