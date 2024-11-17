@@ -1,14 +1,12 @@
 package cube.service.aigc.dataset;
 
 import cell.util.log.Logger;
-import cube.aigc.psychology.Indicator;
-import cube.aigc.psychology.Painting;
-import cube.aigc.psychology.PaintingAccelerator;
-import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.BigFivePersonality;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.HexagonDimension;
 import cube.aigc.psychology.composition.HexagonDimensionScore;
+import cube.service.aigc.scene.HTPEvaluation;
 import cube.util.FileUtils;
 import cube.util.FloatUtils;
 import org.json.JSONArray;
@@ -25,10 +23,7 @@ public class ReportDataset {
     public ReportDataset() {
     }
 
-    public void makeDatasetFromScaleData(File reportJsonFile, File scaleCSVFile, File datasetFile) throws Exception {
-        byte[] data = Files.readAllBytes(Paths.get(reportJsonFile.getAbsolutePath()));
-        JSONArray reportJSONArray = new JSONArray(new String(data, StandardCharsets.UTF_8));
-
+    public void makeEvaluationDatasetFromScaleData(File reportJsonFile, File scaleCSVFile, File datasetFile) throws Exception {
         Map<Long, ScaleDataRow> rowMap = new LinkedHashMap<>();
         BufferedReader reader = null;
         try {
@@ -48,6 +43,61 @@ public class ReportDataset {
                 reader.close();
             }
         }
+
+        byte[] data = Files.readAllBytes(Paths.get(reportJsonFile.getAbsolutePath()));
+        JSONArray reportJSONArray = new JSONArray(new String(data, StandardCharsets.UTF_8));
+
+        int total = 0;
+
+        StringBuilder buf = new StringBuilder();
+        for (Indicator indicator : Indicator.sortByPriority()) {
+            if (indicator == Indicator.Unknown || indicator == Indicator.Psychosis) {
+                continue;
+            }
+            buf.append(indicator.code.toLowerCase(Locale.ROOT)).append(",");
+        }
+        buf.delete(buf.length() - 1, buf.length());
+        buf.append("\n");
+
+        for (int i = 0; i < reportJSONArray.length(); ++i) {
+            ++total;
+
+            JSONObject json = reportJSONArray.getJSONObject(i);
+            JSONObject paintingJson = json.getJSONObject("painting");
+
+            Painting painting = new Painting(paintingJson);
+            HTPEvaluation evaluation = new HTPEvaluation(painting);
+            EvaluationReport report = evaluation.makeEvaluationReport();
+            List<EvaluationScore> list = report.getFullEvaluationScores();
+            for (EvaluationScore score : list) {
+
+            }
+        }
+    }
+
+    public void makePaintingDatasetFromScaleData(File reportJsonFile, File scaleCSVFile, File datasetFile) throws Exception {
+        Map<Long, ScaleDataRow> rowMap = new LinkedHashMap<>();
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(scaleCSVFile));
+            String line = null;
+            while (null != (line = reader.readLine())) {
+                if (line.contains("序列")) {
+                    continue;
+                }
+                ScaleDataRow row = new ScaleDataRow(line);
+                rowMap.put(row.sn, row);
+            }
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            if (null != reader) {
+                reader.close();
+            }
+        }
+
+        byte[] data = Files.readAllBytes(Paths.get(reportJsonFile.getAbsolutePath()));
+        JSONArray reportJSONArray = new JSONArray(new String(data, StandardCharsets.UTF_8));
 
         StringBuilder buf = new StringBuilder();
         int total = 0;
@@ -71,6 +121,11 @@ public class ReportDataset {
 //            report.painting = painting;
             PaintingAccelerator accelerator = new PaintingAccelerator(painting);
 
+            if (!accelerator.isValid()) {
+                Logger.w(this.getClass(), "#makeDatasetFromScaleData - Painting is NOT valid: " + json.getLong("sn"));
+                continue;
+            }
+
             if (1 == total) {
                 buf.append(accelerator.formatCSVHead());
                 buf.append(",").append("|");
@@ -84,7 +139,6 @@ public class ReportDataset {
                 buf.append(",").append("paranoid");
                 buf.append(",").append("psychosis");
                 buf.append(",").append("sleep_diet");
-                buf.append(",").append("scl_90_total");
                 buf.append(",").append("positive_affect");
                 buf.append(",").append("negative_affect");
                 for (BigFivePersonality bfp : BigFivePersonality.values()) {
@@ -381,9 +435,14 @@ public class ReportDataset {
         public ScaleDataRow(String csvString) {
             String[] array = csvString.split(",");
             this.sn = Long.parseLong(array[0]);
-            this.data = new double[18];
-            for (int i = 0; i < this.data.length; ++i) {
+            this.data = new double[17];
+            for (int i = 0; i < 10; ++i) {
                 this.data[i] = Double.parseDouble(array[i + 4]);
+            }
+            this.data[10] = Double.parseDouble(array[11 + 4]);
+            this.data[11] = Double.parseDouble(array[12 + 4]);
+            for (int i = 12; i < 17; ++i) {
+                this.data[i] = Double.parseDouble(array[i + 1 + 4]);
             }
         }
 
@@ -393,8 +452,7 @@ public class ReportDataset {
             }
             this.data[10] = this.data[10] / 100.0d;
             this.data[11] = this.data[11] / 100.0d;
-            this.data[12] = this.data[12] / 100.0d;
-            for (int i = 13; i < 18; ++i) {
+            for (int i = 12; i < 17; ++i) {
                 this.data[i] = this.data[i] / 10.0d;
             }
         }

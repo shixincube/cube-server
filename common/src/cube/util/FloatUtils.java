@@ -50,6 +50,16 @@ public final class FloatUtils {
         return output;
     }
 
+    public static double[] normalization(double[] input) {
+        double inputMax = Arrays.stream(input).max().getAsDouble();
+        double inputMin = Arrays.stream(input).min().getAsDouble();
+        double[] output = new double[input.length];
+        for (int i = 0; i < input.length; ++i) {
+            output[i] = (input[i] - inputMin) / (inputMax - inputMin);
+        }
+        return output;
+    }
+
     public static double[] normalization(double[] input, double min, double max) {
         double inputMax = Arrays.stream(input).max().getAsDouble();
         double inputMin = Arrays.stream(input).min().getAsDouble();

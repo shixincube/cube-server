@@ -30,6 +30,7 @@ import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.other.OtherSet;
 import cube.common.entity.Material;
+import cube.util.FloatUtils;
 import cube.vision.Point;
 import cube.vision.Size;
 
@@ -38,9 +39,19 @@ import java.util.List;
 
 public class PaintingAccelerator {
 
-    private final double aligningSize = 1280.0;
+    private final double scaleSize = 1280.0;
 
-    private final double aligningPixel = 10.0;
+    private final double aligningAreaRatio = 100.0;
+
+    private final double aligningSize = 1.0 / 960.0;
+
+    private final double aligningPixel = 1.0 / 10.0;
+
+    private final double aligningDensity = 1.0 / 2.0;
+
+    private final double aligningHierarchy = 1.0 / 5.0;
+
+    private final double aligningSd = 1.0 / 5.0;
 
     private Painting painting;
 
@@ -62,6 +73,10 @@ public class PaintingAccelerator {
 
     public Parameter getParameter() {
         return this.parameter;
+    }
+
+    public boolean isValid() {
+        return this.parameter.frameAreaRatio != 0;
     }
 
     public double[] parameters() {
@@ -210,35 +225,35 @@ public class PaintingAccelerator {
         StringBuilder buf = new StringBuilder();
 
         buf.append(this.parameter.frameAreaRatio);
-        buf.append(",").append(normalization ? this.parameter.wholeTextureMax / aligningPixel : this.parameter.wholeTextureMax);
-        buf.append(",").append(normalization ? this.parameter.wholeTextureAvg / aligningPixel : this.parameter.wholeTextureAvg);
-        buf.append(",").append(normalization ? this.parameter.wholeTextureDensity * 0.5 : this.parameter.wholeTextureDensity);
-        buf.append(",").append(this.parameter.wholeTextureHierarchy);
-        buf.append(",").append(this.parameter.wholeTextureStandardDeviation);
+        buf.append(",").append(normalization ? this.parameter.wholeTextureMax * aligningPixel : this.parameter.wholeTextureMax);
+        buf.append(",").append(normalization ? this.parameter.wholeTextureAvg * aligningPixel : this.parameter.wholeTextureAvg);
+        buf.append(",").append(normalization ? this.parameter.wholeTextureDensity * aligningDensity : this.parameter.wholeTextureDensity);
+        buf.append(",").append(normalization ? this.parameter.wholeTextureHierarchy * aligningHierarchy : this.parameter.wholeTextureHierarchy);
+        buf.append(",").append(normalization ? this.parameter.wholeTextureStandardDeviation * aligningSd : this.parameter.wholeTextureStandardDeviation);
 
-        buf.append(",").append(normalization ? this.parameter.quadrant1TextureMax / aligningPixel : this.parameter.quadrant1TextureMax);
-        buf.append(",").append(normalization ? this.parameter.quadrant1TextureAvg / aligningPixel : this.parameter.quadrant1TextureAvg);
-        buf.append(",").append(normalization ? this.parameter.quadrant1TextureDensity * 0.5 : this.parameter.quadrant1TextureDensity);
-        buf.append(",").append(this.parameter.quadrant1TextureHierarchy);
-        buf.append(",").append(this.parameter.quadrant1TextureStandardDeviation);
+        buf.append(",").append(normalization ? this.parameter.quadrant1TextureMax * aligningPixel : this.parameter.quadrant1TextureMax);
+        buf.append(",").append(normalization ? this.parameter.quadrant1TextureAvg * aligningPixel : this.parameter.quadrant1TextureAvg);
+        buf.append(",").append(normalization ? this.parameter.quadrant1TextureDensity * aligningDensity : this.parameter.quadrant1TextureDensity);
+        buf.append(",").append(normalization ? this.parameter.quadrant1TextureHierarchy * aligningHierarchy : this.parameter.quadrant1TextureHierarchy);
+        buf.append(",").append(normalization ? this.parameter.quadrant1TextureStandardDeviation * aligningSd : this.parameter.quadrant1TextureStandardDeviation);
 
-        buf.append(",").append(normalization ? this.parameter.quadrant2TextureMax / aligningPixel : this.parameter.quadrant2TextureMax);
-        buf.append(",").append(normalization ? this.parameter.quadrant2TextureAvg / aligningPixel : this.parameter.quadrant2TextureAvg);
-        buf.append(",").append(normalization ? this.parameter.quadrant2TextureDensity * 0.5 : this.parameter.quadrant2TextureDensity);
-        buf.append(",").append(this.parameter.quadrant2TextureHierarchy);
-        buf.append(",").append(this.parameter.quadrant2TextureStandardDeviation);
+        buf.append(",").append(normalization ? this.parameter.quadrant2TextureMax * aligningPixel : this.parameter.quadrant2TextureMax);
+        buf.append(",").append(normalization ? this.parameter.quadrant2TextureAvg * aligningPixel : this.parameter.quadrant2TextureAvg);
+        buf.append(",").append(normalization ? this.parameter.quadrant2TextureDensity * aligningDensity : this.parameter.quadrant2TextureDensity);
+        buf.append(",").append(normalization ? this.parameter.quadrant2TextureHierarchy * aligningHierarchy : this.parameter.quadrant2TextureHierarchy);
+        buf.append(",").append(normalization ? this.parameter.quadrant2TextureStandardDeviation * aligningSd: this.parameter.quadrant2TextureStandardDeviation);
 
-        buf.append(",").append(normalization ? this.parameter.quadrant3TextureMax / aligningPixel : this.parameter.quadrant3TextureMax);
-        buf.append(",").append(normalization ? this.parameter.quadrant3TextureAvg / aligningPixel : this.parameter.quadrant3TextureAvg);
-        buf.append(",").append(normalization ? this.parameter.quadrant3TextureDensity * 0.5 : this.parameter.quadrant3TextureDensity);
-        buf.append(",").append(this.parameter.quadrant3TextureHierarchy);
-        buf.append(",").append(this.parameter.quadrant3TextureStandardDeviation);
+        buf.append(",").append(normalization ? this.parameter.quadrant3TextureMax * aligningPixel : this.parameter.quadrant3TextureMax);
+        buf.append(",").append(normalization ? this.parameter.quadrant3TextureAvg * aligningPixel : this.parameter.quadrant3TextureAvg);
+        buf.append(",").append(normalization ? this.parameter.quadrant3TextureDensity * aligningDensity : this.parameter.quadrant3TextureDensity);
+        buf.append(",").append(normalization ? this.parameter.quadrant3TextureHierarchy * aligningHierarchy : this.parameter.quadrant3TextureHierarchy);
+        buf.append(",").append(normalization ? this.parameter.quadrant3TextureStandardDeviation * aligningSd : this.parameter.quadrant3TextureStandardDeviation);
 
-        buf.append(",").append(normalization ? this.parameter.quadrant4TextureMax / aligningPixel : this.parameter.quadrant4TextureMax);
-        buf.append(",").append(normalization ? this.parameter.quadrant4TextureAvg / aligningPixel : this.parameter.quadrant4TextureAvg);
-        buf.append(",").append(normalization ? this.parameter.quadrant4TextureDensity * 0.5 : this.parameter.quadrant4TextureDensity);
-        buf.append(",").append(this.parameter.quadrant4TextureHierarchy);
-        buf.append(",").append(this.parameter.quadrant4TextureStandardDeviation);
+        buf.append(",").append(normalization ? this.parameter.quadrant4TextureMax * aligningPixel : this.parameter.quadrant4TextureMax);
+        buf.append(",").append(normalization ? this.parameter.quadrant4TextureAvg * aligningPixel : this.parameter.quadrant4TextureAvg);
+        buf.append(",").append(normalization ? this.parameter.quadrant4TextureDensity * aligningDensity : this.parameter.quadrant4TextureDensity);
+        buf.append(",").append(normalization ? this.parameter.quadrant4TextureHierarchy * aligningHierarchy : this.parameter.quadrant4TextureHierarchy);
+        buf.append(",").append(normalization ? this.parameter.quadrant4TextureStandardDeviation * aligningSd : this.parameter.quadrant4TextureStandardDeviation);
 
         buf.append(",").append(this.parameter.house1.formatCSV(normalization));
         buf.append(",").append(this.formatHouseParameterAsCSV(this.house1, normalization));
@@ -257,6 +272,22 @@ public class PaintingAccelerator {
 
         for (MaterialParameter mp : this.parameter.materials) {
             buf.append(",").append(mp.formatCSV(normalization));
+        }
+
+        if (normalization) {
+            String[] seg = buf.toString().split(",");
+            double[] data = new double[seg.length];
+            for (int i = 0; i < data.length; ++i) {
+                data[i] = Double.parseDouble(seg[i]);
+            }
+            double[] normalizationValues = FloatUtils.normalization(data, 0.0, 1.0);
+            buf = new StringBuilder();
+            for (int i = 0; i < normalizationValues.length; ++i) {
+                buf.append(normalizationValues[i]);
+                if (i < normalizationValues.length - 1) {
+                    buf.append(",");
+                }
+            }
         }
 
         return buf.toString();
@@ -842,7 +873,7 @@ public class PaintingAccelerator {
             this.label = Label.parse(material.label);
 
             Size size = painting.getCanvasSize();
-            double r = aligningSize / size.width;
+            double r = scaleSize / size.width;
 
             double cpX = material.box.getCenterPoint().x * r;
             double cpY = material.box.getCenterPoint().y * r;
@@ -862,35 +893,35 @@ public class PaintingAccelerator {
 
         public double[] parameters(boolean normalization) {
             double[] data = new double[12];
-            data[0] = normalization ? this.center.x / aligningSize : this.center.x;
-            data[1] = normalization ? this.center.y / aligningSize : this.center.y;
-            data[2] = normalization ? this.location.x / aligningSize : this.location.x;
-            data[3] = normalization ? this.location.y / aligningSize : this.location.y;
-            data[4] = normalization ? this.size.width / aligningSize : this.size.width;
-            data[5] = normalization ? this.size.height / aligningSize : this.size.height;
-            data[6] = this.areaRatio;
-            data[7] = normalization ? this.textureMax / aligningPixel : this.textureMax;
-            data[8] = normalization ? this.textureAvg / aligningPixel : this.textureAvg;
-            data[9] = normalization ? this.textureDensity * 0.5 : this.textureDensity;
-            data[10] = this.textureHierarchy;
-            data[11] = this.textureStandardDeviation;
+            data[0] = normalization ? this.center.x * aligningSize : this.center.x;
+            data[1] = normalization ? this.center.y * aligningSize : this.center.y;
+            data[2] = normalization ? this.location.x * aligningSize : this.location.x;
+            data[3] = normalization ? this.location.y * aligningSize : this.location.y;
+            data[4] = normalization ? this.size.width * aligningSize : this.size.width;
+            data[5] = normalization ? this.size.height * aligningSize : this.size.height;
+            data[6] = normalization ? this.areaRatio * aligningAreaRatio : this.areaRatio;
+            data[7] = normalization ? this.textureMax * aligningPixel : this.textureMax;
+            data[8] = normalization ? this.textureAvg * aligningPixel : this.textureAvg;
+            data[9] = normalization ? this.textureDensity * aligningDensity : this.textureDensity;
+            data[10] = normalization ? this.textureHierarchy * aligningHierarchy : this.textureHierarchy;
+            data[11] = normalization ? this.textureStandardDeviation * aligningSd : this.textureStandardDeviation;
             return data;
         }
 
         public String formatCSV(boolean normalization) {
             StringBuilder buf = new StringBuilder();
-            buf.append(normalization ? this.center.x / aligningSize : this.center.x);
-            buf.append(",").append(normalization ? this.center.y / aligningSize : this.center.y);
-            buf.append(",").append(normalization ? this.location.x / aligningSize : this.location.x);
-            buf.append(",").append(normalization ? this.location.y / aligningSize : this.location.y);
-            buf.append(",").append(normalization ? this.size.width / aligningSize : this.size.width);
-            buf.append(",").append(normalization ? this.size.height / aligningSize : this.size.height);
-            buf.append(",").append(this.areaRatio);
-            buf.append(",").append(normalization ? this.textureMax / aligningPixel : this.textureMax);
-            buf.append(",").append(normalization ? this.textureAvg / aligningPixel : this.textureAvg);
-            buf.append(",").append(normalization ? this.textureDensity * 0.5 : this.textureDensity);
-            buf.append(",").append(this.textureHierarchy);
-            buf.append(",").append(this.textureStandardDeviation);
+            buf.append(normalization ? this.center.x * aligningSize : this.center.x);
+            buf.append(",").append(normalization ? this.center.y * aligningSize : this.center.y);
+            buf.append(",").append(normalization ? this.location.x * aligningSize : this.location.x);
+            buf.append(",").append(normalization ? this.location.y * aligningSize : this.location.y);
+            buf.append(",").append(normalization ? this.size.width * aligningSize : this.size.width);
+            buf.append(",").append(normalization ? this.size.height * aligningSize : this.size.height);
+            buf.append(",").append(normalization ? this.areaRatio * aligningAreaRatio : this.areaRatio);
+            buf.append(",").append(normalization ? this.textureMax * aligningPixel : this.textureMax);
+            buf.append(",").append(normalization ? this.textureAvg * aligningPixel : this.textureAvg);
+            buf.append(",").append(normalization ? this.textureDensity * aligningDensity : this.textureDensity);
+            buf.append(",").append(normalization ? this.textureHierarchy * aligningHierarchy : this.textureHierarchy);
+            buf.append(",").append(normalization ? this.textureStandardDeviation * aligningSd : this.textureStandardDeviation);
             return buf.toString();
         }
     }

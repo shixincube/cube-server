@@ -127,6 +127,16 @@ public class ScoreAccelerator implements JSONable {
         return result;
     }
 
+    public EvaluationScore getEvaluationScore(Indicator indicator) {
+        List<EvaluationScore> list = this.getEvaluationScores();
+        for (EvaluationScore es : list) {
+            if (es.indicator == indicator) {
+                return es;
+            }
+        }
+        return null;
+    }
+
     private EvaluationScore findEvaluationScore(List<EvaluationScore> list, Indicator indicator) {
         for (EvaluationScore es : list) {
             if (es.indicator == indicator) {

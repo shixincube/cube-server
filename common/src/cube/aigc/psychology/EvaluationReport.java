@@ -697,6 +697,24 @@ public class EvaluationReport implements JSONable {
         return result;
     }
 
+    public List<EvaluationScore> getFullEvaluationScores() {
+        List<EvaluationScore> list = new ArrayList<>();
+        for (Indicator indicator : Indicator.sortByPriority()) {
+            if (indicator == Indicator.Unknown || indicator == Indicator.Psychosis) {
+                continue;
+            }
+
+            EvaluationScore score = this.scoreAccelerator.getEvaluationScore(indicator);
+            if (null != score) {
+                list.add(score);
+            }
+            else {
+                list.add(new EvaluationScore(indicator));
+            }
+        }
+        return list;
+    }
+
     public int numEvaluationScores() {
         return this.scoreAccelerator.getEvaluationScores().size();
     }

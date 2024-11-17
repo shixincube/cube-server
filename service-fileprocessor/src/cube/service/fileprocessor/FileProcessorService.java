@@ -96,7 +96,7 @@ public class FileProcessorService extends AbstractModule {
     /**
      * 文件有效期。超过有效期自动删除。
      */
-    private long fileExpires = (long)15 * (long)24 * (long)60 * (long)60 * (long)1000;
+    private long fileExpires = (long)10000 * (long)24 * (long)60 * (long)60 * (long)1000;
 
     public FileProcessorService(ExecutorService executor, FileProcessorServiceCellet cellet) {
         super();
