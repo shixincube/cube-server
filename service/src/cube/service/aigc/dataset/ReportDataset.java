@@ -20,10 +20,17 @@ import java.util.*;
 
 public class ReportDataset {
 
+    public final static int OUTPUT_SCL = 1;
+
+    public final static int OUTPUT_PANAS = 2;
+
+    public final static int OUTPUT_BFP = 3;
+
     public ReportDataset() {
     }
 
-    public void makeEvaluationDatasetFromScaleData(File reportJsonFile, File scaleCSVFile, File datasetFile) throws Exception {
+    public void makeEvaluationDatasetFromScaleData(int outputType, File reportJsonFile, File scaleCSVFile,
+                                                   File datasetFile) throws Exception {
         Map<Long, ScaleDataRow> rowMap = new LinkedHashMap<>();
         BufferedReader reader = null;
         try {
@@ -34,6 +41,9 @@ public class ReportDataset {
                     continue;
                 }
                 ScaleDataRow row = new ScaleDataRow(line);
+                if (!row.isValid()) {
+                    continue;
+                }
                 rowMap.put(row.sn, row);
             }
         } catch (Exception e) {
@@ -49,6 +59,7 @@ public class ReportDataset {
 
         int total = 0;
 
+        // 表头
         StringBuilder buf = new StringBuilder();
         for (Indicator indicator : Indicator.sortByPriority()) {
             if (indicator == Indicator.Unknown || indicator == Indicator.Psychosis) {
@@ -56,23 +67,105 @@ public class ReportDataset {
             }
             buf.append(indicator.code.toLowerCase(Locale.ROOT)).append(",");
         }
-        buf.delete(buf.length() - 1, buf.length());
+        buf.append("|");
+        switch (outputType) {
+            case OUTPUT_SCL:
+                buf.append(",").append("somatization");
+                buf.append(",").append("obsession");
+                buf.append(",").append("interpersonal");
+                buf.append(",").append("depression");
+                buf.append(",").append("anxiety");
+                buf.append(",").append("hostile");
+                buf.append(",").append("horror");
+                buf.append(",").append("paranoid");
+                buf.append(",").append("psychosis");
+                buf.append(",").append("sleep_diet");
+                break;
+            case OUTPUT_PANAS:
+                buf.append(",").append("positive_affect");
+                buf.append(",").append("negative_affect");
+                break;
+            case OUTPUT_BFP:
+                for (BigFivePersonality bfp : BigFivePersonality.values()) {
+                    buf.append(",").append(bfp.code.toLowerCase(Locale.ROOT));
+                }
+                break;
+            default:
+                break;
+        }
         buf.append("\n");
 
         for (int i = 0; i < reportJSONArray.length(); ++i) {
-            ++total;
-
             JSONObject json = reportJSONArray.getJSONObject(i);
             JSONObject paintingJson = json.getJSONObject("painting");
 
+            // Outputs
+            ScaleDataRow row = rowMap.get(json.getLong("sn"));
+            if (null == row) {
+                Logger.e(this.getClass(), "#makeEvaluationDatasetFromScaleData - No scale data: " + json.getLong("sn"));
+                continue;
+            }
+
+            // Inputs
             Painting painting = new Painting(paintingJson);
+            if (!painting.isValid()) {
+                Logger.w(this.getClass(), "#makeEvaluationDatasetFromScaleData - Painting is NOT valid: " + json.getLong("sn"));
+                continue;
+            }
             HTPEvaluation evaluation = new HTPEvaluation(painting);
             EvaluationReport report = evaluation.makeEvaluationReport();
-            List<EvaluationScore> list = report.getFullEvaluationScores();
-            for (EvaluationScore score : list) {
 
+            List<EvaluationScore> list = report.getFullEvaluationScores();
+            double[] scores = new double[list.size()];
+            for (int n = 0; n < scores.length; ++n) {
+                EvaluationScore score = list.get(n);
+                scores[n] = score.calcScore();
             }
+
+            // 归一化
+            boolean skip = false;
+            scores = FloatUtils.softmax(scores);
+            for (double s : scores) {
+                if (Math.abs(s) <= 0.0009) {
+                    skip = true;
+                    break;
+                }
+            }
+            if (skip) {
+                Logger.w(this.getClass(), "#makeEvaluationDatasetFromScaleData - Skip: " + json.getLong("sn"));
+                continue;
+            }
+
+            for (double score : scores) {
+                buf.append(score).append(",");
+            }
+            buf.append("|");
+            // 归一化
+            double[] outputs = null;
+            switch (outputType) {
+                case OUTPUT_SCL:
+                    outputs = row.splitSCL(1);
+                    break;
+                case OUTPUT_PANAS:
+                    outputs = row.splitPANAS(1);
+                    break;
+                case OUTPUT_BFP:
+                    outputs = row.splitBFP(1);
+                    break;
+                default:
+                    break;
+            }
+            for (double value : outputs) {
+                buf.append(",").append(value);
+            }
+            buf.append("\n");
+
+            ++total;
         }
+
+        Files.write(Paths.get(datasetFile.getAbsolutePath()), buf.toString().getBytes(StandardCharsets.UTF_8));
+
+        Logger.i(this.getClass(), "#makeEvaluationDatasetFromScaleData - Total: " + total + "/" + reportJSONArray.length());
     }
 
     public void makePaintingDatasetFromScaleData(File reportJsonFile, File scaleCSVFile, File datasetFile) throws Exception {
@@ -111,7 +204,7 @@ public class ReportDataset {
             // Outputs
             ScaleDataRow row = rowMap.get(json.getLong("sn"));
             if (null == row) {
-                Logger.e(this.getClass(), "#makeDatasetFromScaleData - No scale data: " + json.getLong("sn"));
+                Logger.e(this.getClass(), "#makePaintingDatasetFromScaleData - No scale data: " + json.getLong("sn"));
                 continue;
             }
 
@@ -122,7 +215,7 @@ public class ReportDataset {
             PaintingAccelerator accelerator = new PaintingAccelerator(painting);
 
             if (!accelerator.isValid()) {
-                Logger.w(this.getClass(), "#makeDatasetFromScaleData - Painting is NOT valid: " + json.getLong("sn"));
+                Logger.w(this.getClass(), "#makePaintingDatasetFromScaleData - Painting is NOT valid: " + json.getLong("sn"));
                 continue;
             }
 
@@ -446,15 +539,52 @@ public class ReportDataset {
             }
         }
 
-        public void normalization() {
+        public boolean isValid() {
+            if (this.data[0] == this.data[1] &&
+                this.data[1] == this.data[2] &&
+                this.data[2] == this.data[3] &&
+                this.data[3] == this.data[4] ) {
+                return false;
+            }
+            return true;
+        }
+
+        public double[] splitSCL(double scale) {
+            double[] values = new double[10];
+            for (int i = 0; i < values.length; ++i) {
+                values[i] = this.data[i] * scale;
+            }
+            return values;
+        }
+
+        public double[] splitPANAS(double scale) {
+            double[] values = new double[2];
+            values[0] = this.data[10] * scale;
+            values[1] = this.data[11] * scale;
+            return values;
+        }
+
+        public double[] splitBFP(double scale) {
+            double[] values = new double[5];
+            values[0] = this.data[12] * scale;
+            values[1] = this.data[13] * scale;
+            values[2] = this.data[14] * scale;
+            values[3] = this.data[15] * scale;
+            values[4] = this.data[16] * scale;
+            return values;
+        }
+
+        public double[] normalization() {
+            double[] result = new double[this.data.length];
             for (int i = 0; i < 10; ++i) {
-                this.data[i] = this.data[i] / 10.0d;
+                result[i] = this.data[i] / 10.0d;
             }
-            this.data[10] = this.data[10] / 100.0d;
-            this.data[11] = this.data[11] / 100.0d;
+            result[10] = this.data[10] / 100.0d;
+            result[11] = this.data[11] / 100.0d;
             for (int i = 12; i < 17; ++i) {
-                this.data[i] = this.data[i] / 10.0d;
+                result[i] = this.data[i] / 10.0d;
             }
+            return result;
         }
     }
 }

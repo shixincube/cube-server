@@ -34,6 +34,82 @@ public class LensDataToolkit {
     public LensDataToolkit() {
     }
 
+    public void mergeScaleCSV(File[] fileList, File mergedFile) {
+        StringBuilder buf = new StringBuilder();
+        boolean head = false;
+
+        int rowCounts = 0;
+        for (File file : fileList) {
+            BufferedReader reader = null;
+            try {
+                Logger.i(this.getClass(), "#mergeScaleCSV - Reads file: " + file.getName());
+                reader = new BufferedReader(new FileReader(file));
+                String line = null;
+                while (null != (line = reader.readLine())) {
+                    if (!head) {
+                        head = true;
+                        buf.append(line).append("\n");
+                    }
+
+                    if (line.contains("序列")) {
+                        continue;
+                    }
+
+                    buf.append(line).append("\n");
+                    ++rowCounts;
+                }
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#mergeScaleCSV", e);
+            } finally {
+                if (null != reader) {
+                    try {
+                        reader.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+        }
+
+        try {
+            Files.write(Paths.get(mergedFile.getAbsolutePath()), buf.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            Logger.e(this.getClass(), "#mergeScaleCSV", e);
+        }
+
+        Logger.i(this.getClass(), "#mergeScaleCSV - Merged total: " + rowCounts);
+    }
+
+    public void mergeReportJSON(File[] fileList, File mergedFile) {
+        int total = 0;
+        JSONArray content = new JSONArray();
+        for (File file : fileList) {
+            try {
+                Logger.i(this.getClass(), "#mergeReportJSON - Reads file: " + file.getName());
+                byte[] data = Files.readAllBytes(Paths.get(file.getAbsolutePath()));
+                JSONArray array = new JSONArray(new String(data, StandardCharsets.UTF_8));
+                for (int i = 0; i < array.length(); ++i) {
+                    JSONObject json = array.getJSONObject(i);
+                    content.put(json);
+                    ++total;
+                }
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#mergeReportJSON", e);
+            }
+        }
+
+        try {
+            Files.write(Paths.get(mergedFile.getAbsolutePath()),
+                    content.toString(4).getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            Logger.e(this.getClass(), "#mergeReportJSON", e);
+        }
+
+        Logger.i(this.getClass(), "#mergeReportJSON - Merged total: " + total);
+    }
+
+    /**
+     * @deprecated
+     */
     public void makeNewExportData() {
         File listFile = new File(this.workingPath, "lens_export_data.csv");
         File outputFile = new File(this.workingPath, "lens_new_bf.csv");
