@@ -31,7 +31,7 @@ import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
-import cube.aigc.psychology.composition.BigFivePersonality;
+import cube.aigc.psychology.composition.BigFiveFactor;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.composition.Texture;
@@ -140,7 +140,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 this.reference = Reference.Abnormal;
                 Logger.d(this.getClass(), "#evalSpaceStructure - Abnormal: 画幅小");
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(0.5, 1.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(0.5, 1.5));
             }
             else if (areaRatio >= (2.0d / 3.0d)) {
                 result.addFeature(Term.SelfExistence, Tendency.Positive);
@@ -149,8 +149,8 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.Narcissism, 1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.5, 0.6));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(7.5, 8.0));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(7.0, 7.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.5, 8.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(7.0, 7.5));
             }
             else if (areaRatio < (1.0d / 6.0d)) {
                 result.addFeature(Term.SelfEsteem, Tendency.Negative);
@@ -161,16 +161,16 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.4, 0.5));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(1.5, 3.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.5, 3.5));
             }
             else if (areaRatio < (1.0d / 7.0d)) {
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.2, 0.3));
 
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(1.0, 2.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(1.0, 2.0));
             }
             else {
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(4.5, 6.5));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(3.0, 4.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.5, 6.5));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(3.0, 4.0));
             }
         }
 
@@ -228,7 +228,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.5, 5.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.5, 5.5));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -244,7 +244,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(7.5, 8.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.5, 8.5));
             }
             if (ta >= ha && ta >= pa) {
                 // 树大
@@ -252,7 +252,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.5, 8.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.5, 8.5));
             }
             if (pa >= ha && pa >= ta) {
                 // 人大
@@ -262,8 +262,8 @@ public class HTPEvaluationEvo extends Evaluation {
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(4.5, 5.5));
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(5.5, 6.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.5, 5.5));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(5.5, 6.5));
             }
 
             // 距离
@@ -284,11 +284,11 @@ public class HTPEvaluationEvo extends Evaluation {
 
             if (count > 1) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.2 * count, 0.25 * count));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(1.0, 2.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(1.0, 2.0));
             }
             else if (count > 0) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1 * count, 0.15 * count));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(2.0, 3.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(2.0, 3.0));
             }
 
             if (distTP < 0) {
@@ -312,14 +312,14 @@ public class HTPEvaluationEvo extends Evaluation {
                     result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.3, 0.4));
                 }
 
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(6.5, 7.5));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(6.5, 7.5));
             }
 
             // 三者都有
             if (house.numComponents() > 2 && tree.numComponents() > 2 && person.numComponents() > 1) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.75, 0.85));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(3.5, 4.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(3.5, 4.5));
             }
         }
         else if (null != house && null != tree) {
@@ -356,7 +356,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.5, 5.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.5, 5.5));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -370,7 +370,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(6.5, 8.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(6.5, 8.5));
             }
             else {
                 // 树大
@@ -418,7 +418,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.5, 5.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.5, 5.5));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -432,7 +432,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(6.5, 8.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(6.5, 8.5));
             }
             else {
                 // 人大
@@ -483,7 +483,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.5, 5.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.5, 5.5));
             }
             else {
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
@@ -562,7 +562,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(6.5, 7.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(6.5, 7.5));
             }
         }
 
@@ -623,7 +623,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.8, 0.9));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.0, 9.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.0, 9.0));
             }
             else if (doodles >= 1) {
                 // 画面有1/4画幅涂鸦
@@ -631,7 +631,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.4, 0.5));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(6.5, 7.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(6.5, 7.5));
             }
 
             // 画面稀疏
@@ -640,26 +640,26 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(2.0, 3.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(2.0, 3.0));
             }
             else if (sparseness >= 3) {
 //                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
                 result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(3.0, 4.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(3.0, 4.0));
             }
             else if (sparseness >= 2) {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.0, 5.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.0, 5.0));
             }
             else if (sparseness >= 1) {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.4, 0.5));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(5.0, 6.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(5.0, 6.0));
             }
 
             if (doodles >= 2 && sparseness >= 2) {
@@ -679,25 +679,25 @@ public class HTPEvaluationEvo extends Evaluation {
             // 整体顶部
             result.addFeature(Term.Idealization, Tendency.Positive);
 
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(7.0, 8.0));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(7.0, 8.0));
         }
         else if (description.isWholeBottom()) {
             // 整体底部
             result.addFeature(Term.Instinct, Tendency.Positive);
 
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(4.0, 5.0));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(4.0, 5.0));
         }
         else if (description.isWholeLeft()) {
             // 整体左边
             result.addFeature(Term.Nostalgia, Tendency.Positive);
 
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(2.0, 3.0));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(2.0, 3.0));
         }
         else if (description.isWholeRight()) {
             // 整体右边
             result.addFeature(Term.Future, Tendency.Positive);
 
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(7.0, 8.0));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(7.0, 8.0));
         }
 
 //        spaceLayout.getTopMargin() + "," + spaceLayout.getRightMargin() +
@@ -742,7 +742,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
             result.addScore(Indicator.Independence, 1, FloatUtils.random(0.2, 0.3));
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(5.5, 6.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.5, 6.5));
         }
 
         if (maxMarginCount > 1) {
@@ -751,11 +751,11 @@ public class HTPEvaluationEvo extends Evaluation {
 
             result.addScore(Indicator.Independence, -1, FloatUtils.random(0.2, 0.3));
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(2.5, 3.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(2.5, 3.5));
         }
 
         if (minMarginCount >= 2) {
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.0, 8.5));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.0, 8.5));
         }
 
         // 房、树、人各自的大小
@@ -795,7 +795,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(1.0, 2.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.0, 2.0));
 
                 if (tAreaRatio > 0 && tAreaRatio < this.treeAreaRatioThreshold) {
                     this.reference = Reference.Abnormal;
@@ -808,17 +808,17 @@ public class HTPEvaluationEvo extends Evaluation {
             }
 
             if (hAreaRatio < this.houseAreaRatioThreshold) {
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(5.5, 6.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(5.5, 6.5));
             }
             else {
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.5, 5.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.5, 5.5));
             }
         }
 
         if (null != tree) {
             if (tAreaRatio < this.treeAreaRatioThreshold) {
                 // 树的面积非常小
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(1.5, 3.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(1.5, 3.5));
             }
         }
 
@@ -831,7 +831,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(1.5, 3.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(1.5, 3.0));
             }
             else if (pAreaRatio > 0.09) {
                 // 人的面积非常大
@@ -839,7 +839,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.1, 0.2));
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.5, 0.6));
 
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(8.5, 9.5));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.5, 9.5));
             }
         }
 
@@ -943,7 +943,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
                     result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
 
-                    result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 9.0));
+                    result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 9.0));
                 }
 
                 if (house.getRoofAreaRatio() > 0.3f) {
@@ -961,7 +961,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
                 result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.5, 9.0));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.5, 9.0));
             }
 
             // 烟囱
@@ -970,7 +970,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(6.0, 7.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(6.0, 7.0));
             }
 
             // 门和窗
@@ -998,7 +998,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
                         result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.6, 0.7));
 
-                        result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(6.5, 7.5));
+                        result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(6.5, 7.5));
                     }
                 }
 
@@ -1056,7 +1056,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
                 Logger.d(this.getClass(), "#evalHouse - House is doodle - " + house.texture.toJSON().toString(4));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.5, 8.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.5, 8.5));
             }
         }
 
@@ -1098,7 +1098,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(6.5, 7.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(6.5, 7.5));
 
                 Logger.d(this.getClass(), "#evalTree [Depression] : dead tree");
             }
@@ -1111,7 +1111,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.SelfControl, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 8.0));
             }
             else if (Label.WillowTree == tree.getLabel()) {
                 hasTrunk = true;
@@ -1141,7 +1141,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.0, 9.0));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.0, 9.0));
             }
             else {
                 // 常青树
@@ -1161,13 +1161,13 @@ public class HTPEvaluationEvo extends Evaluation {
                     result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.3, 0.4));
                     result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.3, 0.4));
 
-                    result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(1.5, 2.5));
+                    result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.5, 2.5));
                 }
                 else if (ratio >= 0.18d && ratio < 0.3d) {
                     // 粗细适度
                     result.addScore(Indicator.Pessimism, -1, FloatUtils.random(0.3, 0.4));
 
-                    result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.5, 5.5));
+                    result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.5, 5.5));
                 }
                 else if (ratio >= 0.3d && ratio < 0.7d) {
                     // 粗
@@ -1177,14 +1177,14 @@ public class HTPEvaluationEvo extends Evaluation {
                     result.addScore(Indicator.Depression, -1, FloatUtils.random(0.4, 0.5));
                     Logger.d(this.getClass(), "#evalTree [Depression] : -1");
 
-                    result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(6.5, 7.0));
+                    result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(6.5, 7.0));
                 }
                 else {
                     // 很粗
                     Score score = result.addScore(Indicator.Depression, -1, FloatUtils.random(0.6, 0.7));
                     Logger.d(this.getClass(), "#evalTree [Depression] : " + score.value);
 
-                    result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(1.5, 2.5));
+                    result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(1.5, 2.5));
                 }
             }
 
@@ -1252,8 +1252,8 @@ public class HTPEvaluationEvo extends Evaluation {
 
                 result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 7.5));
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(7.5, 8.0));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 7.5));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(7.5, 8.0));
 
                 double[] areaRatios = tree.getFruitAreaRatios();
                 if (null != areaRatios) {
@@ -1302,7 +1302,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalTree - Tree is doodle - \n" + tree.texture.toJSON().toString(4));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.5, 8.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.5, 8.5));
             }
         }
 
@@ -1312,7 +1312,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
             result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
 
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(8.0, 8.5));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(8.0, 8.5));
         }
 
         return result;
@@ -1345,7 +1345,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
         if (numStickMan > 0) {
             // 人物没细节
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(2.0, 3.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(2.0, 3.0));
         }
 
         // 人是否有足够细节
@@ -1363,13 +1363,13 @@ public class HTPEvaluationEvo extends Evaluation {
         }
 
         if (detailed && faceDetailed) {
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 8.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 8.0));
         }
         else if (detailed || faceDetailed) {
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(4.5, 6.5));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(4.5, 6.5));
         }
         else {
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(2.0, 3.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(2.0, 3.0));
         }
 
         for (Person person : this.painting.getPersons()) {
@@ -1407,7 +1407,7 @@ public class HTPEvaluationEvo extends Evaluation {
                         result.addScore(Indicator.Impulsion, 1, FloatUtils.random(0.6, 0.7));
                         result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.6, 0.7));
 
-                        result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(1.0, 3.0));
+                        result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(1.0, 3.0));
                     }
                 }
             }
@@ -1422,12 +1422,12 @@ public class HTPEvaluationEvo extends Evaluation {
 
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(1.0, 2.0));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(1.0, 2.0));
             }
             else {
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(7.0, 8.0));
             }
 
             // 眼
@@ -1481,7 +1481,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
                     result.addScore(Indicator.Impulsion, 1, FloatUtils.random(0.6, 0.7));
 
-                    result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(0.5, 1.5));
+                    result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(0.5, 1.5));
                 }
                 else if (person.hasShortHair()) {
                     // 短发
@@ -1489,7 +1489,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
                     result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.3, 0.4));
 
-                    result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.5, 9.5));
+                    result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.5, 9.5));
                 }
                 else if (person.hasCurlyHair()) {
                     // 卷发
@@ -1503,7 +1503,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
                     result.addScore(Indicator.Hostile, 1, FloatUtils.random(0.6, 0.7));
 
-                    result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(0.5, 1.5));
+                    result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(0.5, 1.5));
                 }
             }
 
@@ -1533,7 +1533,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 result.addScore(Indicator.EvaluationFromOutside, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Paranoid, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(8.0, 9.0));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(8.0, 9.0));
             }
 
             // 腿
@@ -1546,11 +1546,11 @@ public class HTPEvaluationEvo extends Evaluation {
                         result.addFeature(Term.Cautious, Tendency.Positive);
                         result.addFeature(Term.Introversion, Tendency.Positive);
 
-                        result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(4.0, 5.0));
+                        result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(4.0, 5.0));
                     }
                 }
 
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.5, 8.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.5, 8.5));
             }
 
             // 判断人是否涂鸦
@@ -1563,7 +1563,7 @@ public class HTPEvaluationEvo extends Evaluation {
                         Logger.d(this.getClass(), "#evalPerson - Person is doodle - \n" +
                                 person.texture.toJSON().toString(4));
 
-                        result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(5.5, 6.5));
+                        result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(5.5, 6.5));
                     }
                 }
             }
@@ -1594,7 +1594,7 @@ public class HTPEvaluationEvo extends Evaluation {
             // 床
             result.addScore(Indicator.Family, -1, FloatUtils.random(0.7, 0.8));
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(1.0, 2.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.0, 2.5));
         }
 
         if (other.has(Label.Sun)) {
@@ -1656,7 +1656,7 @@ public class HTPEvaluationEvo extends Evaluation {
             result.addFeature(Term.Extroversion, Tendency.Positive);
             result.addFeature(Term.PursuitOfAchievement, Tendency.Normal);
             result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.7, 0.8));
-            result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(8.5, 9.5));
+            result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.5, 9.5));
             counter += 1;
         }
 
@@ -1712,14 +1712,14 @@ public class HTPEvaluationEvo extends Evaluation {
             // 火炬
             result.addScore(Indicator.Hostile, 1, FloatUtils.random(0.3, 0.4));
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(2.5, 3.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(2.5, 3.5));
         }
 
         if (other.has(Label.Bonfire)) {
             // 火堆
             result.addScore(Indicator.Hostile, 1, FloatUtils.random(0.3, 0.4));
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(2.5, 3.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(2.5, 3.5));
         }
 
         if (other.has(Label.Bird)) {
@@ -1752,7 +1752,7 @@ public class HTPEvaluationEvo extends Evaluation {
             result.addScore(Indicator.Struggle, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
 
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(8.0, 9.5));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(8.0, 9.5));
         }
 
         if (other.has(Label.Sheep)) {
@@ -1813,7 +1813,7 @@ public class HTPEvaluationEvo extends Evaluation {
             result.addFeature(Term.SelfConfidence, Tendency.Positive);
             result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.5, 0.6));
-            result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(7.0, 8.0));
+            result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(7.0, 8.0));
             counter += 1;
         }
 
@@ -1835,21 +1835,21 @@ public class HTPEvaluationEvo extends Evaluation {
             result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
 
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.5, 8.5));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.5, 8.5));
         }
 
         if (other.has(Label.Watch)) {
             // 表
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
 
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.0, 5.0));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.0, 5.0));
         }
 
         if (other.has(Label.Clock)) {
             // 钟
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
 
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.0, 5.0));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.0, 5.0));
         }
 
         if (other.has(Label.MusicalNotation)) {
@@ -1883,7 +1883,7 @@ public class HTPEvaluationEvo extends Evaluation {
             // 枪
             result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.7, 0.8));
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(0.5, 1.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(0.5, 1.5));
         }
 
         if (other.has(Label.Sword)) {
@@ -1942,7 +1942,7 @@ public class HTPEvaluationEvo extends Evaluation {
             // 十字路口
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
 
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.0, 7.5));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.0, 7.5));
         }
 
         if (other.has(Label.Ladder)) {
@@ -1951,7 +1951,7 @@ public class HTPEvaluationEvo extends Evaluation {
             result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
 
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 9.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 9.0));
         }
 
         if (other.has(Label.Stairs)) {
@@ -1960,7 +1960,7 @@ public class HTPEvaluationEvo extends Evaluation {
             result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
 
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 9.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 9.0));
         }
 
         if (other.has(Label.Birdcage)) {
@@ -1985,7 +1985,7 @@ public class HTPEvaluationEvo extends Evaluation {
             // 飞机
             result.addFeature(Term.Escapism, Tendency.Positive);
             result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(6.5, 7.5));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(6.5, 7.5));
         }
 
         if (other.has(Label.Bike)) {

@@ -26,7 +26,7 @@
 
 package cube.aigc.psychology.algorithm;
 
-import cube.aigc.psychology.composition.BigFivePersonality;
+import cube.aigc.psychology.composition.BigFiveFactor;
 import cube.common.JSONable;
 import cube.util.JSONUtils;
 import cube.vision.Point;
@@ -39,124 +39,124 @@ import java.util.List;
 /**
  * 大五人格特征。
  */
-public class BigFiveFeature implements JSONable {
+public class BigFivePersonality implements JSONable {
 
     /**
      * 通才。
      */
-    public final static BigFiveFeature Generalist = new BigFiveFeature("Generalist", "通才",
+    public final static BigFivePersonality Generalist = new BigFivePersonality("Generalist", "通才",
             new TemplateValue(7.5, 7.5,
             7.5, 7.5, 5.5));
 
     /**
      * 倡导者。
      */
-    public final static BigFiveFeature Advocate = new BigFiveFeature("Advocate", "倡导者",
+    public final static BigFivePersonality Advocate = new BigFivePersonality("Advocate", "倡导者",
             new TemplateValue(7.5, 3.5,
             7.5, 7.5, 5.5));
 
     /**
      * 创业者。
      */
-    public final static BigFiveFeature Entrepreneur = new BigFiveFeature("Entrepreneur", "创业者",
+    public final static BigFivePersonality Entrepreneur = new BigFivePersonality("Entrepreneur", "创业者",
             new TemplateValue(3.5, 7.5,
             7.5, 7.5, 5.5));
 
     /**
      * 传统者。
      */
-    public final static BigFiveFeature Traditionalist = new BigFiveFeature("Traditionalist", "传统者",
+    public final static BigFivePersonality Traditionalist = new BigFivePersonality("Traditionalist", "传统者",
             new TemplateValue(7.5, 7.5,
             3.5, 7.5, 5.5));
 
     /**
      * 开发者。
      */
-    public final static BigFiveFeature Developer = new BigFiveFeature("Developer", "开发者",
+    public final static BigFivePersonality Developer = new BigFivePersonality("Developer", "开发者",
             new TemplateValue(7.5, 7.5,
             7.5, 3.5, 5.5));
 
     /**
      * 推广者。
      */
-    public final static BigFiveFeature Promoter = new BigFiveFeature("Promoter", "推广者",
+    public final static BigFivePersonality Promoter = new BigFivePersonality("Promoter", "推广者",
             new TemplateValue(3.5, 3.5,
             7.5, 7.5, 5.5));
 
     /**
      * 实效者。
      */
-    public final static BigFiveFeature Realist = new BigFiveFeature("Realist", "实效者",
+    public final static BigFivePersonality Realist = new BigFivePersonality("Realist", "实效者",
             new TemplateValue(3.5, 7.5,
             3.5, 7.5, 5.5));
 
     /**
      * 理想者。
      */
-    public final static BigFiveFeature Idealist = new BigFiveFeature("Idealist", "理想者",
+    public final static BigFivePersonality Idealist = new BigFivePersonality("Idealist", "理想者",
             new TemplateValue(7.5, 3.5,
             3.5, 7.5, 5.5));
 
     /**
      * 辅导教练。
      */
-    public final static BigFiveFeature Instructor = new BigFiveFeature("Instructor", "辅导教练",
+    public final static BigFivePersonality Instructor = new BigFivePersonality("Instructor", "辅导教练",
             new TemplateValue(7.5, 7.5,
             3.5, 3.5, 5.5));
 
     /**
      * 演示者。
      */
-    public final static BigFiveFeature Demonstrator = new BigFiveFeature("Demonstrator", "演示者",
+    public final static BigFivePersonality Demonstrator = new BigFivePersonality("Demonstrator", "演示者",
             new TemplateValue(3.5, 7.5,
             7.5, 3.5, 5.5));
 
     /**
      * 引导者。
      */
-    public final static BigFiveFeature Guide = new BigFiveFeature("Guide", "引导者",
+    public final static BigFivePersonality Guide = new BigFivePersonality("Guide", "引导者",
             new TemplateValue(7.5, 3.5,
             7.5, 3.5, 5.5));
 
     /**
      * 建筑师。
      */
-    public final static BigFiveFeature Architect = new BigFiveFeature("Architect", "建筑师",
+    public final static BigFivePersonality Architect = new BigFivePersonality("Architect", "建筑师",
             new TemplateValue(3.5, 3.5,
             3.5, 7.5, 5.5));
 
     /**
      * 探索者。
      */
-    public final static BigFiveFeature Explorer = new BigFiveFeature("Explorer", "探索者",
+    public final static BigFivePersonality Explorer = new BigFivePersonality("Explorer", "探索者",
             new TemplateValue(3.5, 3.5,
             7.5, 3.5, 5.5));
 
     /**
      * 支持者。
      */
-    public final static BigFiveFeature Supporter = new BigFiveFeature("Supporter", "支持者",
+    public final static BigFivePersonality Supporter = new BigFivePersonality("Supporter", "支持者",
             new TemplateValue(7.5, 3.5,
             3.5, 3.5, 5.5));
 
     /**
      * 控制者。
      */
-    public final static BigFiveFeature Controller = new BigFiveFeature("Controller", "控制者",
+    public final static BigFivePersonality Controller = new BigFivePersonality("Controller", "控制者",
             new TemplateValue(3.5, 7.5,
             3.5, 3.5, 5.5));
 
     /**
      * 专家。
      */
-    public final static BigFiveFeature Expert = new BigFiveFeature("Expert", "专家",
+    public final static BigFivePersonality Expert = new BigFivePersonality("Expert", "专家",
             new TemplateValue(3.5, 3.5,
             3.5, 3.5, 5.5));
 
     /**
      * 适应者。
      */
-    public final static BigFiveFeature Adapter = new BigFiveFeature("Adapter", "适应者",
+    public final static BigFivePersonality Adapter = new BigFivePersonality("Adapter", "适应者",
             new TemplateValue(5.5, 5.5,
             5.5, 5.5, 5.5));
 
@@ -276,14 +276,14 @@ public class BigFiveFeature implements JSONable {
 
     private TemplateValue templateValue;
 
-    public BigFiveFeature(String name, String displayName, TemplateValue templateValue) {
+    public BigFivePersonality(String name, String displayName, TemplateValue templateValue) {
         this.name = name;
         this.displayName = displayName;
         this.templateValue = templateValue;
     }
 
-    public BigFiveFeature(double obligingness, double conscientiousness,
-                          double extraversion, double achievement, double neuroticism) {
+    public BigFivePersonality(double obligingness, double conscientiousness,
+                              double extraversion, double achievement, double neuroticism) {
         this.obligingness = obligingness;
         this.conscientiousness = conscientiousness;
         this.extraversion = extraversion;
@@ -292,7 +292,7 @@ public class BigFiveFeature implements JSONable {
         this.build();
     }
 
-    public BigFiveFeature(JSONObject json) {
+    public BigFivePersonality(JSONObject json) {
         this.name = json.getString("name");
         this.displayName = json.getString("displayName");
         this.description = json.getString("description");
@@ -303,7 +303,7 @@ public class BigFiveFeature implements JSONable {
             double score = factor.getDouble("score");
             String paraphrase = factor.has("paraphrase") ? factor.getString("paraphrase") : "";
             String content = factor.has("content") ? factor.getString("content") : "";
-            switch (BigFivePersonality.parse(code)) {
+            switch (BigFiveFactor.parse(code)) {
                 case Obligingness:
                     this.obligingness = score;
                     this.obligingnessParaphrase = paraphrase;
@@ -335,8 +335,19 @@ public class BigFiveFeature implements JSONable {
         }
     }
 
+    public void reset(double obligingness, double conscientiousness,
+                      double extraversion, double achievement, double neuroticism) {
+        this.obligingness = obligingness;
+        this.conscientiousness = conscientiousness;
+        this.extraversion = extraversion;
+        this.achievement = achievement;
+        this.neuroticism = neuroticism;
+        this.build();
+    }
+
+
     private void build() {
-        BigFiveFeature[] features = new BigFiveFeature[] {
+        BigFivePersonality[] features = new BigFivePersonality[] {
                 Generalist,
                 Advocate,
                 Entrepreneur,
@@ -359,7 +370,7 @@ public class BigFiveFeature implements JSONable {
         int index = 0;
 
         ApproximateValue[] approximateValues = new ApproximateValue[features.length];
-        for (BigFiveFeature feature : features) {
+        for (BigFivePersonality feature : features) {
             ApproximateValue value = feature.calcApproximate(this.obligingness, this.conscientiousness,
                     this.extraversion, this.achievement);
             approximateValues[index++] = value;
@@ -387,7 +398,7 @@ public class BigFiveFeature implements JSONable {
             ++index;
         }
 
-        BigFiveFeature feature = null;
+        BigFivePersonality feature = null;
 
         if (hit4Idx > -1) {
             feature = features[hit4Idx];
@@ -414,17 +425,17 @@ public class BigFiveFeature implements JSONable {
         }
 
         // 通才、适应者和专家额外处理
-        if (feature == BigFiveFeature.Generalist || feature == BigFiveFeature.Adapter || feature == BigFiveFeature.Expert) {
+        if (feature == BigFivePersonality.Generalist || feature == BigFivePersonality.Adapter || feature == BigFivePersonality.Expert) {
             if (this.obligingness >= 7.0 && this.conscientiousness >= 7.0 &&
                     this.extraversion >= 7.0 && this.achievement >= 7.0) {
-                feature = BigFiveFeature.Generalist;
+                feature = BigFivePersonality.Generalist;
             }
             else if (this.obligingness >= 4.5 && this.conscientiousness >= 4.5 &&
                     this.extraversion >= 4.5 && this.achievement >= 4.5) {
-                feature = BigFiveFeature.Adapter;
+                feature = BigFivePersonality.Adapter;
             }
             else {
-                feature = BigFiveFeature.Expert;
+                feature = BigFivePersonality.Expert;
             }
         }
 
@@ -536,8 +547,8 @@ public class BigFiveFeature implements JSONable {
     }
 
 
-    private BigFiveFeature guess() {
-        BigFiveFeature[] features = new BigFiveFeature[] {
+    private BigFivePersonality guess() {
+        BigFivePersonality[] features = new BigFivePersonality[] {
                 Generalist,
                 Advocate,
                 Entrepreneur,
@@ -567,8 +578,8 @@ public class BigFiveFeature implements JSONable {
         });
 
         double distance = 100;
-        BigFiveFeature feature = null;
-        for (BigFiveFeature bff : features) {
+        BigFivePersonality feature = null;
+        for (BigFivePersonality bff : features) {
             double d = bff.templateValue.centroid.distance(centroid);
             if (d < distance) {
                 distance = d;
@@ -577,17 +588,17 @@ public class BigFiveFeature implements JSONable {
         }
 
         // 通才、适应者和专家的画像矩形的质心一致，额外处理
-        if (feature == BigFiveFeature.Generalist || feature == BigFiveFeature.Adapter || feature == BigFiveFeature.Expert) {
+        if (feature == BigFivePersonality.Generalist || feature == BigFivePersonality.Adapter || feature == BigFivePersonality.Expert) {
             if (this.obligingness >= 7.0 && this.conscientiousness >= 7.0 &&
                 this.extraversion >= 7.0 && this.achievement >= 7.0) {
-                feature = BigFiveFeature.Generalist;
+                feature = BigFivePersonality.Generalist;
             }
             else if (this.obligingness >= 4.5 && this.conscientiousness >= 4.5 &&
                     this.extraversion >= 4.5 && this.achievement >= 4.5) {
-                feature = BigFiveFeature.Adapter;
+                feature = BigFivePersonality.Adapter;
             }
             else {
-                feature = BigFiveFeature.Expert;
+                feature = BigFivePersonality.Expert;
             }
         }
 
@@ -854,8 +865,8 @@ public class BigFiveFeature implements JSONable {
         JSONArray scoreArray = new JSONArray();
 
         JSONObject obligingness = new JSONObject();
-        obligingness.put("name", BigFivePersonality.Obligingness.name);
-        obligingness.put("code", BigFivePersonality.Obligingness.code);
+        obligingness.put("name", BigFiveFactor.Obligingness.name);
+        obligingness.put("code", BigFiveFactor.Obligingness.code);
         obligingness.put("paraphrase", this.obligingnessParaphrase);
         obligingness.put("score", this.obligingness);
         obligingness.put("content", this.obligingnessContent);
@@ -863,8 +874,8 @@ public class BigFiveFeature implements JSONable {
         scoreArray.put(obligingness);
 
         JSONObject conscientiousness = new JSONObject();
-        conscientiousness.put("name", BigFivePersonality.Conscientiousness.name);
-        conscientiousness.put("code", BigFivePersonality.Conscientiousness.code);
+        conscientiousness.put("name", BigFiveFactor.Conscientiousness.name);
+        conscientiousness.put("code", BigFiveFactor.Conscientiousness.code);
         conscientiousness.put("paraphrase", this.conscientiousnessParaphrase);
         conscientiousness.put("score", this.conscientiousness);
         conscientiousness.put("content", this.conscientiousnessContent);
@@ -872,8 +883,8 @@ public class BigFiveFeature implements JSONable {
         scoreArray.put(conscientiousness);
 
         JSONObject extraversion = new JSONObject();
-        extraversion.put("name", BigFivePersonality.Extraversion.name);
-        extraversion.put("code", BigFivePersonality.Extraversion.code);
+        extraversion.put("name", BigFiveFactor.Extraversion.name);
+        extraversion.put("code", BigFiveFactor.Extraversion.code);
         extraversion.put("paraphrase", this.extraversionParaphrase);
         extraversion.put("score", this.extraversion);
         extraversion.put("content", this.extraversionContent);
@@ -881,8 +892,8 @@ public class BigFiveFeature implements JSONable {
         scoreArray.put(extraversion);
 
         JSONObject achievement = new JSONObject();
-        achievement.put("name", BigFivePersonality.Achievement.name);
-        achievement.put("code", BigFivePersonality.Achievement.code);
+        achievement.put("name", BigFiveFactor.Achievement.name);
+        achievement.put("code", BigFiveFactor.Achievement.code);
         achievement.put("paraphrase", this.achievementParaphrase);
         achievement.put("score", this.achievement);
         achievement.put("content", this.achievementContent);
@@ -890,8 +901,8 @@ public class BigFiveFeature implements JSONable {
         scoreArray.put(achievement);
 
         JSONObject neuroticism = new JSONObject();
-        neuroticism.put("name", BigFivePersonality.Neuroticism.name);
-        neuroticism.put("code", BigFivePersonality.Neuroticism.code);
+        neuroticism.put("name", BigFiveFactor.Neuroticism.name);
+        neuroticism.put("code", BigFiveFactor.Neuroticism.code);
         neuroticism.put("paraphrase", this.neuroticismParaphrase);
         neuroticism.put("score", this.neuroticism);
         neuroticism.put("content", this.neuroticismContent);
@@ -911,8 +922,8 @@ public class BigFiveFeature implements JSONable {
         return this.templateValue;
     }
 
-    public static BigFiveFeature match(String nameOrDisplayName) {
-        BigFiveFeature[] features = new BigFiveFeature[] {
+    public static BigFivePersonality match(String nameOrDisplayName) {
+        BigFivePersonality[] features = new BigFivePersonality[] {
                 Generalist,
                 Advocate,
                 Entrepreneur,
@@ -931,7 +942,7 @@ public class BigFiveFeature implements JSONable {
                 Expert,
                 Adapter
         };
-        for (BigFiveFeature feature : features) {
+        for (BigFivePersonality feature : features) {
             if (feature.name.equalsIgnoreCase(nameOrDisplayName)
                     || feature.displayName.equalsIgnoreCase(nameOrDisplayName)) {
                 return feature;

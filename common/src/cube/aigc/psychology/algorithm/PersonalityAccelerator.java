@@ -28,7 +28,8 @@ package cube.aigc.psychology.algorithm;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.EvaluationFeature;
-import cube.aigc.psychology.composition.BigFivePersonality;
+import cube.aigc.psychology.composition.BigFiveFactor;
+import cube.aigc.psychology.composition.FactorSet;
 import cube.common.JSONable;
 import cube.util.FloatUtils;
 import org.json.JSONArray;
@@ -42,26 +43,26 @@ import java.util.List;
  */
 public class PersonalityAccelerator implements JSONable  {
 
-    private BigFiveFeature[] bigFiveFeatures = new BigFiveFeature[] {
-            BigFiveFeature.Architect,
-            BigFiveFeature.Expert,
-            BigFiveFeature.Guide,
-            BigFiveFeature.Generalist,
-            BigFiveFeature.Idealist,
-            BigFiveFeature.Supporter,
-            BigFiveFeature.Developer,
-            BigFiveFeature.Advocate,
-            BigFiveFeature.Realist,
-            BigFiveFeature.Instructor,
-            BigFiveFeature.Promoter,
-            BigFiveFeature.Explorer,
-            BigFiveFeature.Traditionalist,
-            BigFiveFeature.Adapter,
-            BigFiveFeature.Entrepreneur,
-            BigFiveFeature.Demonstrator,
-            BigFiveFeature.Controller
+    private final static BigFivePersonality[] sBigFivePersonalities = new BigFivePersonality[] {
+            BigFivePersonality.Architect,
+            BigFivePersonality.Expert,
+            BigFivePersonality.Guide,
+            BigFivePersonality.Generalist,
+            BigFivePersonality.Idealist,
+            BigFivePersonality.Supporter,
+            BigFivePersonality.Developer,
+            BigFivePersonality.Advocate,
+            BigFivePersonality.Realist,
+            BigFivePersonality.Instructor,
+            BigFivePersonality.Promoter,
+            BigFivePersonality.Explorer,
+            BigFivePersonality.Traditionalist,
+            BigFivePersonality.Adapter,
+            BigFivePersonality.Entrepreneur,
+            BigFivePersonality.Demonstrator,
+            BigFivePersonality.Controller
     };
-    private MBTIFeature[] mbtiFeatures = new MBTIFeature[] {
+    private final static MBTIFeature[] sMBTIFeatures = new MBTIFeature[] {
             MBTIFeature.INTJ,
             MBTIFeature.INTP,
             MBTIFeature.ENTJ,
@@ -83,7 +84,16 @@ public class PersonalityAccelerator implements JSONable  {
 
     private List<FiveFactor> fiveFactorList;
 
-    private BigFiveFeature bigFiveFeature;
+    private BigFivePersonality bigFivePersonality;
+
+    /**
+     * 置信度。
+     */
+    public boolean obligingnessConfidence = false;
+    public boolean conscientiousnessConfidence = false;
+    public boolean extraversionConfidence = false;
+    public boolean achievementConfidence = false;
+    public boolean neuroticismConfidence = false;
 
     public PersonalityAccelerator(JSONObject json) {
         this.fiveFactorList = new ArrayList<>();
@@ -91,26 +101,57 @@ public class PersonalityAccelerator implements JSONable  {
         for (int i = 0; i < fiveFactors.length(); ++i) {
             this.fiveFactorList.add(new FiveFactor(fiveFactors.getJSONObject(i)));
         }
-        this.bigFiveFeature = new BigFiveFeature(json.getJSONObject("bigFiveFeature"));
+        if (json.has("bigFivePersonality")) {
+            this.bigFivePersonality = new BigFivePersonality(json.getJSONObject("bigFivePersonality"));
+        }
+        else if (json.has("bigFiveFeature")) {
+            this.bigFivePersonality = new BigFivePersonality(json.getJSONObject("bigFiveFeature"));
+        }
     }
 
     public PersonalityAccelerator(List<EvaluationFeature> evaluationFeatureList) {
         this.build(evaluationFeatureList);
     }
 
+    public PersonalityAccelerator(FactorSet factorSet) {
+        this.fiveFactorList = new ArrayList<>();
+        this.fiveFactorList.add(
+                new FiveFactor(BigFiveFactor.Obligingness, factorSet.personalityFactor.obligingness));
+        this.fiveFactorList.add(
+                new FiveFactor(BigFiveFactor.Conscientiousness, factorSet.personalityFactor.conscientiousness));
+        this.fiveFactorList.add(
+                new FiveFactor(BigFiveFactor.Extraversion, factorSet.personalityFactor.extraversion));
+        this.fiveFactorList.add(
+                new FiveFactor(BigFiveFactor.Achievement, factorSet.personalityFactor.achievement));
+        this.fiveFactorList.add(
+                new FiveFactor(BigFiveFactor.Neuroticism, factorSet.personalityFactor.neuroticism));
+
+        this.bigFivePersonality = new BigFivePersonality(factorSet.personalityFactor.obligingness,
+                factorSet.personalityFactor.conscientiousness,
+                factorSet.personalityFactor.extraversion,
+                factorSet.personalityFactor.achievement,
+                factorSet.personalityFactor.neuroticism);
+
+        this.obligingnessConfidence = true;
+        this.conscientiousnessConfidence = true;
+        this.extraversionConfidence = true;
+        this.achievementConfidence = true;
+        this.neuroticismConfidence = true;
+    }
+
     private void build(List<EvaluationFeature> evaluationFeatureList) {
         this.fiveFactorList = new ArrayList<>();
 
-        FiveFactor obligingness = new FiveFactor(BigFivePersonality.Obligingness);
-        FiveFactor conscientiousness = new FiveFactor(BigFivePersonality.Conscientiousness);
-        FiveFactor extraversion = new FiveFactor(BigFivePersonality.Extraversion);
-        FiveFactor achievement = new FiveFactor(BigFivePersonality.Achievement);
-        FiveFactor neuroticism = new FiveFactor(BigFivePersonality.Neuroticism);
+        FiveFactor obligingness = new FiveFactor(BigFiveFactor.Obligingness);
+        FiveFactor conscientiousness = new FiveFactor(BigFiveFactor.Conscientiousness);
+        FiveFactor extraversion = new FiveFactor(BigFiveFactor.Extraversion);
+        FiveFactor achievement = new FiveFactor(BigFiveFactor.Achievement);
+        FiveFactor neuroticism = new FiveFactor(BigFiveFactor.Neuroticism);
 
         for (EvaluationFeature ef : evaluationFeatureList) {
             List<EvaluationFeature.FiveFactor> list = ef.getFiveFactors();
             for (EvaluationFeature.FiveFactor factor : list) {
-                switch (factor.bigFivePersonality) {
+                switch (factor.bigFiveFactor) {
                     case Obligingness:
                         obligingness.score += factor.source;
                         obligingness.total += 1;
@@ -143,29 +184,48 @@ public class PersonalityAccelerator implements JSONable  {
 
             Logger.d(this.getClass(), "#build - No obligingness");
         }
+        else {
+            this.obligingnessConfidence = true;
+        }
+
         if (conscientiousness.total == 0) {
             conscientiousness.score = FloatUtils.random(5.0, 5.5);
             conscientiousness.total = 1;
 
             Logger.d(this.getClass(), "#build - No conscientiousness");
         }
+        else {
+            this.conscientiousnessConfidence = true;
+        }
+
         if (extraversion.total == 0) {
             extraversion.score = FloatUtils.random(5.0, 5.5);
             extraversion.total = 1;
 
             Logger.d(this.getClass(), "#build - No extraversion");
         }
+        else {
+            this.extraversionConfidence = true;
+        }
+
         if (achievement.total == 0) {
             achievement.score = FloatUtils.random(5.0, 5.5);
             achievement.total = 1;
 
             Logger.d(this.getClass(), "#build - No achievement");
         }
+        else {
+            this.achievementConfidence = true;
+        }
+
         if (neuroticism.total == 0) {
             neuroticism.score = FloatUtils.random(5.0, 5.5);
             neuroticism.total = 1;
 
             Logger.d(this.getClass(), "#build - No neuroticism");
+        }
+        else {
+            this.neuroticismConfidence = true;
         }
 
         this.fiveFactorList.add(obligingness);
@@ -180,19 +240,29 @@ public class PersonalityAccelerator implements JSONable  {
         double achievementScore = achievement.score / achievement.total;
         double neuroticismScore = neuroticism.score / neuroticism.total;
 
-        this.bigFiveFeature = new BigFiveFeature(obligingnessScore, conscientiousnessScore, extraversionScore,
+        this.bigFivePersonality = new BigFivePersonality(obligingnessScore, conscientiousnessScore, extraversionScore,
                 achievementScore, neuroticismScore);
     }
 
-    public BigFiveFeature getBigFiveFeature() {
-        return this.bigFiveFeature;
+    public BigFivePersonality getBigFivePersonality() {
+        return this.bigFivePersonality;
+    }
+
+    public void reset(double obligingness, double conscientiousness,
+                      double extraversion, double achievement, double neuroticism) {
+        this.fiveFactorList.get(0).score = obligingness;
+        this.fiveFactorList.get(1).score = conscientiousness;
+        this.fiveFactorList.get(2).score = extraversion;
+        this.fiveFactorList.get(3).score = achievement;
+        this.fiveFactorList.get(4).score = neuroticism;
+        this.bigFivePersonality.reset(obligingness, conscientiousness, extraversion, achievement, neuroticism);
     }
 
     public MBTIFeature getMBTIFeature() {
-        for (int i = 0; i < this.bigFiveFeatures.length; ++i) {
-            BigFiveFeature bigFiveFeature = this.bigFiveFeatures[i];
-            if (this.bigFiveFeature.getName().equals(bigFiveFeature.getName())) {
-                return new MBTIFeature(this.mbtiFeatures[i].getCode());
+        for (int i = 0; i < sBigFivePersonalities.length; ++i) {
+            BigFivePersonality bigFivePersonality = sBigFivePersonalities[i];
+            if (this.bigFivePersonality.getName().equals(bigFivePersonality.getName())) {
+                return new MBTIFeature(sMBTIFeatures[i].getCode());
             }
         }
 
@@ -209,7 +279,8 @@ public class PersonalityAccelerator implements JSONable  {
         }
         json.put("fiveFactors", fiveFactors);
 
-        json.put("bigFiveFeature", this.bigFiveFeature.toJSON());
+        json.put("bigFivePersonality", this.bigFivePersonality.toJSON());
+        json.put("bigFiveFeature", this.bigFivePersonality.toJSON());
 
         return json;
     }
@@ -222,25 +293,31 @@ public class PersonalityAccelerator implements JSONable  {
 
     public class FiveFactor {
 
-        public BigFivePersonality bigFivePersonality;
+        public BigFiveFactor bigFiveFactor;
 
         public double score = 0;
 
         public double total = 0;
 
-        public FiveFactor(BigFivePersonality bigFivePersonality) {
-            this.bigFivePersonality = bigFivePersonality;
+        public FiveFactor(BigFiveFactor bigFiveFactor) {
+            this.bigFiveFactor = bigFiveFactor;
+        }
+
+        public FiveFactor(BigFiveFactor bigFiveFactor, double score) {
+            this.bigFiveFactor = bigFiveFactor;
+            this.score = score;
+            this.total = 1;
         }
 
         public FiveFactor(JSONObject json) {
-            this.bigFivePersonality = BigFivePersonality.parse(json.getString("bigFive"));
+            this.bigFiveFactor = BigFiveFactor.parse(json.getString("bigFive"));
             this.score = json.getDouble("score");
             this.total = json.getDouble("total");
         }
 
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
-            json.put("bigFive", this.bigFivePersonality.code);
+            json.put("bigFive", this.bigFiveFactor.code);
             json.put("score", this.score);
             json.put("total", this.total);
             return json;

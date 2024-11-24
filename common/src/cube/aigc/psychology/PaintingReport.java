@@ -28,7 +28,7 @@ package cube.aigc.psychology;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.aigc.psychology.algorithm.BigFiveFeature;
+import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.FileLabel;
@@ -311,32 +311,32 @@ public class PaintingReport extends Report {
         if (null != this.evaluationReport && null != this.evaluationReport.getPersonalityAccelerator()) {
             buf.append("## 人格特质");
 
-            BigFiveFeature bigFiveFeature = this.evaluationReport.getPersonalityAccelerator().getBigFiveFeature();
+            BigFivePersonality bigFivePersonality = this.evaluationReport.getPersonalityAccelerator().getBigFivePersonality();
             buf.append("\n\n");
             buf.append("**大五人格**");
             buf.append("\n\n");
-            buf.append("**人格画像** ：").append(bigFiveFeature.getDisplayName());
+            buf.append("**人格画像** ：").append(bigFivePersonality.getDisplayName());
             buf.append("\n\n");
-            buf.append("**人格描述** ：\n\n").append(bigFiveFeature.getDescription());
+            buf.append("**人格描述** ：\n\n").append(bigFivePersonality.getDescription());
             buf.append("\n\n");
             buf.append("**维度得分** ：\n\n");
             buf.append("| 维度 | 得分 | 评价 |\n");
             buf.append("| ---- | ---- | ---- |");
-            buf.append("\n|宜人性|").append(bigFiveFeature.getObligingness()).append("|");
-            buf.append(bigFiveFeature.getObligingness() <= BigFiveFeature.LowScore ? "低" :
-                    (bigFiveFeature.getObligingness() >= BigFiveFeature.HighScore ? "高" : "中")).append("|");
-            buf.append("\n|尽责性|").append(bigFiveFeature.getConscientiousness()).append("|");
-            buf.append(bigFiveFeature.getConscientiousness() <= BigFiveFeature.LowScore ? "低" :
-                    (bigFiveFeature.getConscientiousness() >= BigFiveFeature.HighScore ? "高" : "中")).append("|");
-            buf.append("\n|外向性|").append(bigFiveFeature.getExtraversion()).append("|");
-            buf.append(bigFiveFeature.getExtraversion() <= BigFiveFeature.LowScore ? "低" :
-                    (bigFiveFeature.getExtraversion() >= BigFiveFeature.HighScore ? "高" : "中")).append("|");
-            buf.append("\n|进取性|").append(bigFiveFeature.getAchievement()).append("|");
-            buf.append(bigFiveFeature.getAchievement() <= BigFiveFeature.LowScore ? "低" :
-                    (bigFiveFeature.getAchievement() >= BigFiveFeature.HighScore ? "高" : "中")).append("|");
-            buf.append("\n|情绪性|").append(bigFiveFeature.getNeuroticism()).append("|");
-            buf.append(bigFiveFeature.getNeuroticism() <= BigFiveFeature.LowScore ? "低" :
-                    (bigFiveFeature.getNeuroticism() >= BigFiveFeature.HighScore ? "高" : "中")).append("|");
+            buf.append("\n|宜人性|").append(bigFivePersonality.getObligingness()).append("|");
+            buf.append(bigFivePersonality.getObligingness() <= BigFivePersonality.LowScore ? "低" :
+                    (bigFivePersonality.getObligingness() >= BigFivePersonality.HighScore ? "高" : "中")).append("|");
+            buf.append("\n|尽责性|").append(bigFivePersonality.getConscientiousness()).append("|");
+            buf.append(bigFivePersonality.getConscientiousness() <= BigFivePersonality.LowScore ? "低" :
+                    (bigFivePersonality.getConscientiousness() >= BigFivePersonality.HighScore ? "高" : "中")).append("|");
+            buf.append("\n|外向性|").append(bigFivePersonality.getExtraversion()).append("|");
+            buf.append(bigFivePersonality.getExtraversion() <= BigFivePersonality.LowScore ? "低" :
+                    (bigFivePersonality.getExtraversion() >= BigFivePersonality.HighScore ? "高" : "中")).append("|");
+            buf.append("\n|进取性|").append(bigFivePersonality.getAchievement()).append("|");
+            buf.append(bigFivePersonality.getAchievement() <= BigFivePersonality.LowScore ? "低" :
+                    (bigFivePersonality.getAchievement() >= BigFivePersonality.HighScore ? "高" : "中")).append("|");
+            buf.append("\n|情绪性|").append(bigFivePersonality.getNeuroticism()).append("|");
+            buf.append(bigFivePersonality.getNeuroticism() <= BigFivePersonality.LowScore ? "低" :
+                    (bigFivePersonality.getNeuroticism() >= BigFivePersonality.HighScore ? "高" : "中")).append("|");
             buf.append("\n\n");
 
 //            MBTIFeature mbtiFeature = this.evaluationReport.getPersonalityAccelerator().getMBTIFeature();
@@ -466,11 +466,9 @@ public class PaintingReport extends Report {
             json.put("evaluation", this.evaluationReport.toCompactJSON());
 
             if (null != this.evaluationReport.getPersonalityAccelerator()) {
-                BigFiveFeature bigFiveFeature = this.evaluationReport.getPersonalityAccelerator().getBigFiveFeature();
-//                MBTIFeature mbtiFeature = this.evaluationReport.getPersonalityAccelerator().getMBTIFeature();
+                BigFivePersonality bigFivePersonality = this.evaluationReport.getPersonalityAccelerator().getBigFivePersonality();
                 JSONObject personality = new JSONObject();
-                personality.put("theBigFive", bigFiveFeature.toJSON());
-//                personality.put("mbti", mbtiFeature.toJSON());
+                personality.put("theBigFive", bigFivePersonality.toJSON());
                 json.put("personality", personality);
             }
         }

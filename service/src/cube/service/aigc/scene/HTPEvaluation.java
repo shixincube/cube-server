@@ -34,7 +34,7 @@ import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.composition.Texture;
-import cube.aigc.psychology.composition.BigFivePersonality;
+import cube.aigc.psychology.composition.BigFiveFactor;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.Leg;
@@ -143,8 +143,8 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(1.0, 2.0));
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(3.0, 4.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.0, 2.0));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(3.0, 4.0));
 
                 if (printBigFive) {
                     System.out.println("CP-001");
@@ -159,7 +159,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.4, 0.5));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(1.5, 3.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.5, 3.5));
 
                 if (printBigFive) {
                     System.out.println("CP-002");
@@ -171,9 +171,9 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.5, 0.6));
                 result.addScore(Indicator.Optimism, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(6.5, 7.0));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(5.0, 6.0));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(8.0, 9.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(6.5, 7.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(5.0, 6.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(8.0, 9.0));
                 if (printBigFive) {
                     System.out.println("CP-098");
                 }
@@ -186,8 +186,8 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.5, 0.6));
                 result.addScore(Indicator.Optimism, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(7.5, 8.0));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.5, 8.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(7.0, 8.0));
                 if (printBigFive) {
                     System.out.println("CP-003");
                 }
@@ -198,11 +198,11 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(6.0, 7.0));
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 8.0));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(4.0, 5.0));
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(6.0, 7.0));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(3.0, 4.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(6.0, 7.0));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(4.0, 5.0));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(6.0, 7.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(3.0, 4.0));
 
                 if (printBigFive) {
                     System.out.println("CP-004");
@@ -247,10 +247,10 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Emotion, -1, FloatUtils.random(0.3, 0.4));
 
                 // FIXME 1030
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(5.0, 5.5));
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 8.0));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(3.0, 3.5));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(3.0, 4.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(3.0, 3.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(3.0, 4.0));
                 if (printBigFive) {
                     System.out.println("CP-005");
                 }
@@ -272,7 +272,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.5, 5.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.5, 5.5));
 
                 if (printBigFive) {
                     System.out.println("CP-006");
@@ -292,8 +292,8 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(7.5, 8.5));
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.5, 8.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(5.0, 5.5));
                 if (printBigFive) {
                     System.out.println("CP-007");
                 }
@@ -304,10 +304,10 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(5.0, 5.5));
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.5, 8.5));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(8.0, 8.5));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.5, 8.5));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.0, 8.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.0, 8.0));
                 if (printBigFive) {
                     System.out.println("CP-008");
                 }
@@ -320,8 +320,8 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(4.5, 5.5));
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(5.5, 6.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.5, 5.5));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(5.5, 6.5));
 
                 if (printBigFive) {
                     System.out.println("CP-009");
@@ -347,9 +347,9 @@ public class HTPEvaluation extends Evaluation {
             if (count > 1) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.2 * count, 0.25 * count));
                 // FIXME 1030
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(6.0, 7.0));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(7.0, 8.0));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(1.0, 2.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(6.0, 7.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(1.0, 2.0));
 
                 if (printBigFive) {
                     System.out.println("CP-010");
@@ -358,7 +358,7 @@ public class HTPEvaluation extends Evaluation {
             else if (count > 0) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1 * count, 0.15 * count));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(2.0, 3.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(2.0, 3.0));
                 if (printBigFive) {
                     System.out.println("CP-011");
                 }
@@ -385,8 +385,8 @@ public class HTPEvaluation extends Evaluation {
                     result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.3, 0.4));
                 }
 
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(6.5, 7.5));
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.5, 9.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(6.5, 7.5));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.5, 9.0));
                 if (printBigFive) {
                     System.out.println("CP-012");
                 }
@@ -396,9 +396,9 @@ public class HTPEvaluation extends Evaluation {
             if (house.numComponents() > 2 && tree.numComponents() > 2 && person.numComponents() > 1) {
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.75, 0.85));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(5.0, 5.5));
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 8.0));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(7.0, 8.0));
 
                 if (printBigFive) {
                     System.out.println("CP-013");
@@ -439,7 +439,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.5, 5.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.5, 5.5));
 
                 if (printBigFive) {
                     System.out.println("CP-014");
@@ -457,8 +457,8 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(7.5, 8.5));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(8.0, 9.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.5, 8.5));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.0, 9.0));
                 if (printBigFive) {
                     System.out.println("CP-015");
                 }
@@ -509,7 +509,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.5, 5.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.5, 5.5));
 
                 if (printBigFive) {
                     System.out.println("CP-016");
@@ -527,9 +527,9 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(7.0, 8.0));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(7.5, 8.0));
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(7.5, 8.0));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(5.0, 5.5));
                 if (printBigFive) {
                     System.out.println("CP-017");
                 }
@@ -583,7 +583,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.5, 5.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.5, 5.5));
 
                 if (printBigFive) {
                     System.out.println("CP-018");
@@ -666,8 +666,8 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(4.0, 5.0));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(5.0, 6.0));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(4.0, 5.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(5.0, 6.0));
                 if (printBigFive) {
                     System.out.println("CP-019");
                 }
@@ -731,8 +731,8 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.8, 0.9));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(4.0, 5.0));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.0, 9.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.0, 5.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.0, 9.0));
 
                 if (printBigFive) {
                     System.out.println("CP-020");
@@ -744,9 +744,9 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.4, 0.5));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(5.0, 5.5));
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(5.0, 5.5));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(5.0, 5.5));
                 if (printBigFive) {
                     System.out.println("CP-021");
                 }
@@ -758,7 +758,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(2.0, 3.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(2.0, 3.0));
 
                 if (printBigFive) {
                     System.out.println("CP-022");
@@ -769,8 +769,8 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(1.0, 1.5));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(3.0, 4.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(1.0, 1.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(3.0, 4.0));
                 if (printBigFive) {
                     System.out.println("CP-023");
                 }
@@ -779,9 +779,9 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(3.5, 4.0));
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(3.0, 4.0));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(3.5, 4.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(3.5, 4.0));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(3.0, 4.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(3.5, 4.0));
                 if (printBigFive) {
                     System.out.println("CP-024");
                 }
@@ -790,7 +790,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.4, 0.5));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(5.0, 6.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(5.0, 6.0));
 
                 if (printBigFive) {
                     System.out.println("CP-025");
@@ -814,11 +814,11 @@ public class HTPEvaluation extends Evaluation {
             // 整体顶部
             result.addFeature(Term.Idealization, Tendency.Positive);
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(7.0, 7.5));
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 8.0));
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(7.0, 8.0));
-            result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(4.0, 5.0));
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(3.0, 3.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.0, 7.5));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 8.0));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(7.0, 8.0));
+            result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(4.0, 5.0));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(3.0, 3.5));
             if (printBigFive) {
                 System.out.println("CP-026");
             }
@@ -827,10 +827,10 @@ public class HTPEvaluation extends Evaluation {
             // 整体底部
             result.addFeature(Term.Instinct, Tendency.Positive);
 
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(2.0, 2.5));
-            result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(3.0, 4.0));
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(7.0, 8.0));
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.0, 8.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(2.0, 2.5));
+            result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(3.0, 4.0));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(7.0, 8.0));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.0, 8.0));
             if (printBigFive) {
                 System.out.println("CP-027");
             }
@@ -839,7 +839,7 @@ public class HTPEvaluation extends Evaluation {
             // 整体左边
             result.addFeature(Term.Nostalgia, Tendency.Positive);
 
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(2.0, 3.0));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(2.0, 3.0));
 
             if (printBigFive) {
                 System.out.println("CP-028");
@@ -849,7 +849,7 @@ public class HTPEvaluation extends Evaluation {
             // 整体右边
             result.addFeature(Term.Future, Tendency.Positive);
 
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(7.0, 8.0));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(7.0, 8.0));
 
             if (printBigFive) {
                 System.out.println("CP-029");
@@ -898,9 +898,9 @@ public class HTPEvaluation extends Evaluation {
 
             result.addScore(Indicator.Independence, 1, FloatUtils.random(0.2, 0.3));
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(5.5, 6.0));
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 7.5));
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(2.0, 2.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.5, 6.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 7.5));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(2.0, 2.5));
             if (printBigFive) {
                 System.out.println("CP-030");
             }
@@ -912,29 +912,29 @@ public class HTPEvaluation extends Evaluation {
 
             result.addScore(Indicator.Independence, -1, FloatUtils.random(0.2, 0.3));
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(5.0, 6.0));
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(8.5, 9.5));
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(5.0, 5.5));
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(2.0, 2.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 6.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(8.5, 9.5));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(5.0, 5.5));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(2.0, 2.5));
             if (printBigFive) {
                 System.out.println("CP-031");
             }
         }
 
         if (minMarginCount >= 3) {
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(7.5, 8.0));
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(5.0, 5.5));
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.0, 8.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.5, 8.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(5.0, 5.5));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.0, 8.5));
             if (printBigFive) {
                 System.out.println("CP-097");
             }
         }
         else if (minMarginCount >= 2) {
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(7.5, 8.0));
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(5.0, 5.5));
-            result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(8.0, 8.5));
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.0, 8.5));
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(3.0, 3.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.5, 8.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(5.0, 5.5));
+            result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.0, 8.5));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.0, 8.5));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(3.0, 3.5));
             if (printBigFive) {
                 System.out.println("CP-032");
             }
@@ -977,9 +977,9 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(1.0, 2.0));
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(6.5, 7.0));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(2.0, 3.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.0, 2.0));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(6.5, 7.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(2.0, 3.0));
                 if (printBigFive) {
                     System.out.println("CP-033");
                 }
@@ -994,33 +994,33 @@ public class HTPEvaluation extends Evaluation {
                 }
             }
             else if (hAreaRatio < this.houseAreaRatioThreshold * 2) {
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(4.0, 4.5));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(4.0, 4.5));
 
                 if (printBigFive) {
                     System.out.println("CP-034");
                 }
             }
             else if (hAreaRatio > 0.3d) {
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.5, 9.0));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.5, 9.0));
                 if (printBigFive) {
                     System.out.println("CP-095");
                 }
             }
             else if (hAreaRatio > 0.2d) {
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(5.0, 5.5));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(2.0, 2.5));
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.0, 8.5));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.0, 7.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(2.0, 2.5));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.0, 8.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.0, 7.5));
                 if (printBigFive) {
                     System.out.println("CP-096");
                 }
             }
             else {
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(5.0, 5.5));
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(6.5, 7.5));
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.0, 9.0));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(8.0, 9.0));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.5, 5.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(6.5, 7.5));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.0, 9.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.0, 9.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.5, 5.5));
                 if (printBigFive) {
                     System.out.println("CP-035");
                 }
@@ -1030,9 +1030,9 @@ public class HTPEvaluation extends Evaluation {
         if (null != tree) {
             if (tAreaRatio < this.treeAreaRatioThreshold) {
                 // 树的面积非常小
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(5.0, 5.5));
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(2.5, 3.5));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(2.5, 3.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(2.5, 3.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(2.5, 3.0));
                 if (printBigFive) {
                     System.out.println("CP-036");
                 }
@@ -1048,9 +1048,9 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
 
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(4.0, 5.0));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(2.0, 3.0));
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(4.0, 4.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(4.0, 5.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(2.0, 3.0));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(4.0, 4.5));
 
                 if (printBigFive) {
                     System.out.println("CP-037");
@@ -1062,7 +1062,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.1, 0.2));
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.5, 0.6));
 
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(8.5, 9.5));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.5, 9.5));
 
                 if (printBigFive) {
                     System.out.println("CP-038");
@@ -1170,9 +1170,9 @@ public class HTPEvaluation extends Evaluation {
 
                     result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
 
-                    result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(8.0, 8.5));
-                    result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(8.0, 8.5));
-                    result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.0, 8.5));
+                    result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(8.0, 8.5));
+                    result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.0, 8.5));
+                    result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.0, 8.5));
 
                     if (printBigFive) {
                         System.out.println("CP-039");
@@ -1194,9 +1194,9 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(8.0, 8.5));
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.0, 8.5));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(8.0, 8.5));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.0, 8.5));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.0, 8.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(8.0, 8.5));
 
                 if (printBigFive) {
                     System.out.println("CP-040");
@@ -1209,10 +1209,10 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(4.0, 5.0));
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(4.0, 5.0));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(5.0, 5.5));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(5.5, 6.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.0, 5.0));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(4.0, 5.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(5.5, 6.0));
                 if (printBigFive) {
                     System.out.println("CP-041");
                 }
@@ -1243,7 +1243,7 @@ public class HTPEvaluation extends Evaluation {
 
                         result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.6, 0.7));
 
-                        result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(6.5, 7.5));
+                        result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(6.5, 7.5));
 
                         if (printBigFive) {
                             System.out.println("CP-042");
@@ -1305,7 +1305,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
                 Logger.d(this.getClass(), "#evalHouse - House is doodle - " + house.texture.toJSON().toString(4));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.5, 8.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.5, 8.5));
 
                 if (printBigFive) {
                     System.out.println("CP-043");
@@ -1352,7 +1352,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(6.5, 7.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(6.5, 7.5));
 
                 if (printBigFive) {
                     System.out.println("CP-044");
@@ -1369,7 +1369,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.SelfControl, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 8.0));
 
                 if (printBigFive) {
                     System.out.println("CP-045");
@@ -1403,7 +1403,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.0, 9.0));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.0, 9.0));
 
                 if (printBigFive) {
                     System.out.println("CP-046");
@@ -1427,7 +1427,7 @@ public class HTPEvaluation extends Evaluation {
                     result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.3, 0.4));
                     result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.3, 0.4));
 
-                    result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(1.5, 2.5));
+                    result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.5, 2.5));
 
                     if (printBigFive) {
                         System.out.println("CP-047");
@@ -1437,10 +1437,10 @@ public class HTPEvaluation extends Evaluation {
                     // 粗细适度
                     result.addScore(Indicator.Pessimism, -1, FloatUtils.random(0.3, 0.4));
 
-                    result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(5.0, 5.5));
-                    result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(7.0, 8.0));
-                    result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.0, 9.0));
-                    result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.0, 5.0));
+                    result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(5.0, 5.5));
+                    result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(7.0, 8.0));
+                    result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.0, 9.0));
+                    result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.0, 5.0));
                     if (printBigFive) {
                         System.out.println("CP-048");
                     }
@@ -1453,11 +1453,11 @@ public class HTPEvaluation extends Evaluation {
                     result.addScore(Indicator.Depression, -1, FloatUtils.random(0.3, 0.4));
                     Logger.d(this.getClass(), "#evalTree [Depression] : -1");
 
-                    result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(6.5, 7.5));
-                    result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.5, 8.0));
-                    result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(5.5, 6.0));
-                    result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.5, 9.0));
-                    result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(3.5, 4.0));
+                    result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(6.5, 7.5));
+                    result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.5, 8.0));
+                    result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(5.5, 6.0));
+                    result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.5, 9.0));
+                    result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(3.5, 4.0));
                     if (printBigFive) {
                         System.out.println("CP-049");
                     }
@@ -1470,9 +1470,9 @@ public class HTPEvaluation extends Evaluation {
                     result.addScore(Indicator.Depression, -1, FloatUtils.random(0.4, 0.5));
                     Logger.d(this.getClass(), "#evalTree [Depression] : -1");
 
-                    result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(6.5, 7.5));
-                    result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.5, 8.0));
-                    result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(2.0, 3.0));
+                    result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(6.5, 7.5));
+                    result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.5, 8.0));
+                    result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(2.0, 3.0));
                     if (printBigFive) {
                         System.out.println("CP-093");
                     }
@@ -1482,7 +1482,7 @@ public class HTPEvaluation extends Evaluation {
                     Score score = result.addScore(Indicator.Depression, -1, FloatUtils.random(0.6, 0.7));
                     Logger.d(this.getClass(), "#evalTree [Depression] : " + score.value);
 
-                    result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(1.5, 2.5));
+                    result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(1.5, 2.5));
 
                     if (printBigFive) {
                         System.out.println("CP-050");
@@ -1554,9 +1554,9 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 8.0));
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(7.5, 8.0));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(6.0, 7.0));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(7.5, 8.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(6.0, 7.0));
 
                 if (printBigFive) {
                     System.out.println("CP-051");
@@ -1611,9 +1611,9 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalTree - Tree is doodle - \n" + tree.texture.toJSON().toString(4));
 
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(6.5, 7.0));
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(5.0, 5.5));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(6.5, 7.0));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(6.5, 7.0));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(6.5, 7.0));
                 if (printBigFive) {
                     System.out.println("CP-052");
                 }
@@ -1621,17 +1621,17 @@ public class HTPEvaluation extends Evaluation {
         }
 
         if (countTreeDoodle >= 3) {
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(9.0, 9.5));
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(1.0, 1.5));
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(1.0, 1.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(9.0, 9.5));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(1.0, 1.5));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(1.0, 1.5));
             if (printBigFive) {
                 System.out.println("CP-091");
             }
         }
         else if (countTreeDoodle >= 2) {
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(7.0, 7.5));
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(2.0, 2.5));
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(2.0, 2.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.0, 7.5));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(2.0, 2.5));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(2.0, 2.5));
             if (printBigFive) {
                 System.out.println("CP-094");
             }
@@ -1643,9 +1643,9 @@ public class HTPEvaluation extends Evaluation {
 
             result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(5.0, 5.5));
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(4.0, 5.0));
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(6.0, 6.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(4.0, 5.0));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(6.0, 6.5));
             if (printBigFive) {
                 System.out.println("CP-053");
             }
@@ -1681,7 +1681,7 @@ public class HTPEvaluation extends Evaluation {
 
         if (numStickMan > 0) {
             // 人物没细节
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(2.0, 3.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(2.0, 3.0));
 
             if (printBigFive) {
                 System.out.println("CP-054");
@@ -1703,25 +1703,25 @@ public class HTPEvaluation extends Evaluation {
         }
 
         if (detailed && faceDetailed) {
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 8.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 8.0));
 
             if (printBigFive) {
                 System.out.println("CP-055");
             }
         }
         else if (detailed || faceDetailed) {
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(4.5, 6.5));
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(5.0, 5.5));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(4.5, 6.5));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(5.0, 5.5));
             if (printBigFive) {
                 System.out.println("CP-056");
             }
         }
         else {
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(4.5, 5.0));
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(2.0, 3.0));
-            result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(6.0, 6.5));
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(4.0, 4.5));
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(5.0, 6.0));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.5, 5.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(2.0, 3.0));
+            result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(6.0, 6.5));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(4.0, 4.5));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(5.0, 6.0));
             if (printBigFive) {
                 System.out.println("CP-057");
             }
@@ -1762,8 +1762,8 @@ public class HTPEvaluation extends Evaluation {
                         result.addScore(Indicator.Impulsion, 1, FloatUtils.random(0.6, 0.7));
                         result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.6, 0.7));
 
-                        result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(4.5, 5.0));
-                        result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(8.0, 8.5));
+                        result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(4.5, 5.0));
+                        result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(8.0, 8.5));
                         if (printBigFive) {
                             System.out.println("CP-058");
                         }
@@ -1788,9 +1788,9 @@ public class HTPEvaluation extends Evaluation {
             else {
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(5.0, 5.5));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(7.0, 8.0));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(7.0, 8.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.0, 8.0));
 
                 if (printBigFive) {
                     System.out.println("CP-059");
@@ -1848,7 +1848,7 @@ public class HTPEvaluation extends Evaluation {
 
                     result.addScore(Indicator.Impulsion, 1, FloatUtils.random(0.6, 0.7));
 
-                    result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(1.0, 2.0));
+                    result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(1.0, 2.0));
 
                     if (printBigFive) {
                         System.out.println("CP-060");
@@ -1860,7 +1860,7 @@ public class HTPEvaluation extends Evaluation {
 
                     result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.3, 0.4));
 
-                    result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(8.5, 9.5));
+                    result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.5, 9.5));
 
                     if (printBigFive) {
                         System.out.println("CP-061");
@@ -1878,7 +1878,7 @@ public class HTPEvaluation extends Evaluation {
 
                     result.addScore(Indicator.Hostile, 1, FloatUtils.random(0.6, 0.7));
 
-                    result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(0.5, 1.5));
+                    result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(0.5, 1.5));
 
                     if (printBigFive) {
                         System.out.println("CP-062");
@@ -1886,9 +1886,9 @@ public class HTPEvaluation extends Evaluation {
                 }
                 else {
                     // 有头发
-                    result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(5.5, 6.5));
-                    result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(5.0, 5.5));
-                    result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.5, 8.5));
+                    result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(5.5, 6.5));
+                    result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(5.0, 5.5));
+                    result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.5, 8.5));
 
                     if (printBigFive) {
                         System.out.println("CP-063");
@@ -1922,8 +1922,8 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.EvaluationFromOutside, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Paranoid, 1, FloatUtils.random(0.6, 0.7));
 
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(8.0, 9.0));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(8.0, 8.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(8.0, 9.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(8.0, 8.5));
 
                 if (printBigFive) {
                     System.out.println("CP-064");
@@ -1940,7 +1940,7 @@ public class HTPEvaluation extends Evaluation {
                         result.addFeature(Term.Cautious, Tendency.Positive);
                         result.addFeature(Term.Introversion, Tendency.Positive);
 
-                        result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(4.0, 5.0));
+                        result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(4.0, 5.0));
 
                         if (printBigFive) {
                             System.out.println("CP-065");
@@ -1948,8 +1948,8 @@ public class HTPEvaluation extends Evaluation {
                     }
                 }
 
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.5, 8.5));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(8.0, 8.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.5, 8.5));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.0, 8.5));
 
                 if (printBigFive) {
                     System.out.println("CP-066");
@@ -1966,7 +1966,7 @@ public class HTPEvaluation extends Evaluation {
                         Logger.d(this.getClass(), "#evalPerson - Person is doodle - \n" +
                                 person.texture.toJSON().toString(4));
 
-                        result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(5.5, 6.5));
+                        result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(5.5, 6.5));
 
                         if (printBigFive) {
                             System.out.println("CP-067");
@@ -2001,7 +2001,7 @@ public class HTPEvaluation extends Evaluation {
             // 床
             result.addScore(Indicator.Family, -1, FloatUtils.random(0.7, 0.8));
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(1.0, 2.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.0, 2.5));
 
             if (printBigFive) {
                 System.out.println("CP-068");
@@ -2021,11 +2021,11 @@ public class HTPEvaluation extends Evaluation {
                         + other.get(Label.Sun).texture.toJSON().toString(4));
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.7, 0.8));
 
-                result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(4.0, 4.5));
-                result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(2.0, 3.0));
-                result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(2.0, 3.0));
-                result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(3.0, 4.0));
-                result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(8.0, 8.5));
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.0, 4.5));
+                result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(2.0, 3.0));
+                result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(2.0, 3.0));
+                result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(3.0, 4.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(8.0, 8.5));
                 if (printBigFive) {
                     System.out.println("CP-092");
                 }
@@ -2076,7 +2076,7 @@ public class HTPEvaluation extends Evaluation {
             result.addFeature(Term.Extroversion, Tendency.Positive);
             result.addFeature(Term.PursuitOfAchievement, Tendency.Normal);
             result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.7, 0.8));
-            result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(8.5, 9.5));
+            result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.5, 9.5));
             if (printBigFive) {
                 System.out.println("CP-069");
             }
@@ -2135,7 +2135,7 @@ public class HTPEvaluation extends Evaluation {
             // 火炬
             result.addScore(Indicator.Hostile, 1, FloatUtils.random(0.3, 0.4));
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(2.5, 3.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(2.5, 3.5));
             if (printBigFive) {
                 System.out.println("CP-070");
             }
@@ -2145,7 +2145,7 @@ public class HTPEvaluation extends Evaluation {
             // 火堆
             result.addScore(Indicator.Hostile, 1, FloatUtils.random(0.3, 0.4));
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(2.5, 3.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(2.5, 3.5));
             if (printBigFive) {
                 System.out.println("CP-071");
             }
@@ -2181,7 +2181,7 @@ public class HTPEvaluation extends Evaluation {
             result.addScore(Indicator.Struggle, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
 
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(8.0, 9.5));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(8.0, 9.5));
             if (printBigFive) {
                 System.out.println("CP-072");
             }
@@ -2245,7 +2245,7 @@ public class HTPEvaluation extends Evaluation {
             result.addFeature(Term.SelfConfidence, Tendency.Positive);
             result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.5, 0.6));
-            result.addFiveFactor(BigFivePersonality.Extraversion, FloatUtils.random(7.0, 8.0));
+            result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(7.0, 8.0));
             if (printBigFive) {
                 System.out.println("CP-073");
             }
@@ -2270,7 +2270,7 @@ public class HTPEvaluation extends Evaluation {
             result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
             counter += 1;
 
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.5, 8.5));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.5, 8.5));
             if (printBigFive) {
                 System.out.println("CP-074");
             }
@@ -2280,7 +2280,7 @@ public class HTPEvaluation extends Evaluation {
             // 表
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
 
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.0, 5.0));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.0, 5.0));
             if (printBigFive) {
                 System.out.println("CP-075");
             }
@@ -2290,7 +2290,7 @@ public class HTPEvaluation extends Evaluation {
             // 钟
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
 
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(4.0, 5.0));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.0, 5.0));
             if (printBigFive) {
                 System.out.println("CP-076");
             }
@@ -2327,7 +2327,7 @@ public class HTPEvaluation extends Evaluation {
             // 枪
             result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.7, 0.8));
 
-            result.addFiveFactor(BigFivePersonality.Obligingness, FloatUtils.random(0.5, 1.5));
+            result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(0.5, 1.5));
             if (printBigFive) {
                 System.out.println("CP-077");
             }
@@ -2389,7 +2389,7 @@ public class HTPEvaluation extends Evaluation {
             // 十字路口
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
 
-            result.addFiveFactor(BigFivePersonality.Neuroticism, FloatUtils.random(7.0, 7.5));
+            result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.0, 7.5));
             if (printBigFive) {
                 System.out.println("CP-078");
             }
@@ -2401,7 +2401,7 @@ public class HTPEvaluation extends Evaluation {
             result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
 
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 9.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 9.0));
             if (printBigFive) {
                 System.out.println("CP-079");
             }
@@ -2413,7 +2413,7 @@ public class HTPEvaluation extends Evaluation {
             result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
 
-            result.addFiveFactor(BigFivePersonality.Conscientiousness, FloatUtils.random(7.0, 9.0));
+            result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 9.0));
             if (printBigFive) {
                 System.out.println("CP-080");
             }
@@ -2441,7 +2441,7 @@ public class HTPEvaluation extends Evaluation {
             // 飞机
             result.addFeature(Term.Escapism, Tendency.Positive);
             result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
-            result.addFiveFactor(BigFivePersonality.Achievement, FloatUtils.random(6.5, 7.5));
+            result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(6.5, 7.5));
             if (printBigFive) {
                 System.out.println("CP-081");
             }

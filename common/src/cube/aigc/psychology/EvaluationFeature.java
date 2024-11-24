@@ -28,7 +28,7 @@ package cube.aigc.psychology;
 
 import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
-import cube.aigc.psychology.composition.BigFivePersonality;
+import cube.aigc.psychology.composition.BigFiveFactor;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -109,8 +109,8 @@ public class EvaluationFeature {
         this.scores.remove(score);
     }
 
-    public void addFiveFactor(BigFivePersonality bigFivePersonality, double weight) {
-        FiveFactor fiveFactor = new FiveFactor(bigFivePersonality, weight);
+    public void addFiveFactor(BigFiveFactor bigFiveFactor, double weight) {
+        FiveFactor fiveFactor = new FiveFactor(bigFiveFactor, weight);
         this.fiveFactors.add(fiveFactor);
     }
 
@@ -132,12 +132,12 @@ public class EvaluationFeature {
 
     public class FiveFactor {
 
-        public BigFivePersonality bigFivePersonality;
+        public BigFiveFactor bigFiveFactor;
 
         public double source;
 
-        public FiveFactor(BigFivePersonality bigFivePersonality, double source) {
-            this.bigFivePersonality = bigFivePersonality;
+        public FiveFactor(BigFiveFactor bigFiveFactor, double source) {
+            this.bigFiveFactor = bigFiveFactor;
             this.source = source;
         }
     }

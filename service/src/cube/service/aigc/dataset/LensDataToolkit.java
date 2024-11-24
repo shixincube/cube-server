@@ -6,7 +6,7 @@ import cell.util.log.Logger;
 import cube.aigc.psychology.EvaluationReport;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PaintingReport;
-import cube.aigc.psychology.algorithm.BigFiveFeature;
+import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.service.aigc.scene.HTPEvaluation;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -177,7 +177,7 @@ public class LensDataToolkit {
                     if (null != painting) {
                         HTPEvaluation evaluation = new HTPEvaluation(painting);
                         EvaluationReport evaluationReport = evaluation.makeEvaluationReport();
-                        BigFiveFeature feature = evaluationReport.getPersonalityAccelerator().getBigFiveFeature();
+                        BigFivePersonality feature = evaluationReport.getPersonalityAccelerator().getBigFivePersonality();
                         outputO = feature.getObligingness();
                         outputC = feature.getConscientiousness();
                         outputE = feature.getExtraversion();

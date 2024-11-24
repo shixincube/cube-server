@@ -70,12 +70,12 @@ public class TestLens {
         File datasetBFP = new File("storage/tmp/lens_dataset_bfp.csv");
 
         try {
-            dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_SCL,
-                    reportDataFile, scaleDataFile, datasetSCL);
+//            dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_SCL,
+//                    reportDataFile, scaleDataFile, datasetSCL);
             dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_PANAS,
                     reportDataFile, scaleDataFile, datasetPANAS);
-            dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_BFP,
-                    reportDataFile, scaleDataFile, datasetBFP);
+//            dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_BFP,
+//                    reportDataFile, scaleDataFile, datasetBFP);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -2,7 +2,7 @@ package cube.service.aigc.dataset;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
-import cube.aigc.psychology.composition.BigFivePersonality;
+import cube.aigc.psychology.composition.BigFiveFactor;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.HexagonDimension;
 import cube.aigc.psychology.composition.HexagonDimensionScore;
@@ -86,7 +86,7 @@ public class ReportDataset {
                 buf.append(",").append("negative_affect");
                 break;
             case OUTPUT_BFP:
-                for (BigFivePersonality bfp : BigFivePersonality.values()) {
+                for (BigFiveFactor bfp : BigFiveFactor.values()) {
                     buf.append(",").append(bfp.code.toLowerCase(Locale.ROOT));
                 }
                 break;
@@ -126,7 +126,7 @@ public class ReportDataset {
             boolean skip = false;
             scores = FloatUtils.softmax(scores);
             for (double s : scores) {
-                if (Math.abs(s) <= 0.0009) {
+                if (Math.abs(s) <= 0.0001) {
                     skip = true;
                     break;
                 }
@@ -144,13 +144,13 @@ public class ReportDataset {
             double[] outputs = null;
             switch (outputType) {
                 case OUTPUT_SCL:
-                    outputs = row.splitSCL(1);
+                    outputs = row.splitSCL(0.1);
                     break;
                 case OUTPUT_PANAS:
-                    outputs = row.splitPANAS(1);
+                    outputs = row.splitPANAS(0.01);
                     break;
                 case OUTPUT_BFP:
-                    outputs = row.splitBFP(1);
+                    outputs = row.splitBFP(0.1);
                     break;
                 default:
                     break;
@@ -234,7 +234,7 @@ public class ReportDataset {
                 buf.append(",").append("sleep_diet");
                 buf.append(",").append("positive_affect");
                 buf.append(",").append("negative_affect");
-                for (BigFivePersonality bfp : BigFivePersonality.values()) {
+                for (BigFiveFactor bfp : BigFiveFactor.values()) {
                     buf.append(",").append(bfp.code.toLowerCase(Locale.ROOT));
                 }
                 buf.append("\n");
@@ -561,6 +561,25 @@ public class ReportDataset {
             double[] values = new double[2];
             values[0] = this.data[10] * scale;
             values[1] = this.data[11] * scale;
+            return values;
+        }
+
+        public double[] splitPANASWithLogit() {
+            double[] values = new double[2];
+            if (this.data[10] < 25) {
+                values[0] = 0;
+            } else if (this.data[10] >= 25 && this.data[10] <= 35) {
+                values[0] = 0.5;
+            } else {
+                values[0] = 1;
+            }
+            if (this.data[11] < 25) {
+                values[1] = 0;
+            } else if (this.data[11] >= 25 && this.data[11] <= 35) {
+                values[1] = 0.5;
+            } else {
+                values[1] = 1;
+            }
             return values;
         }
 

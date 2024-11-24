@@ -40,6 +40,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -371,9 +372,6 @@ public class PsychologyScene {
                         continue;
                     }
 
-                    // 更新单元状态
-                    unit.setRunning(false);
-
                     // 设置绘画属性
                     painting.setAttribute(reportTask.attribute);
 
@@ -384,8 +382,11 @@ public class PsychologyScene {
                     reportTask.listener.onReportEvaluating(reportTask.report);
 
                     // 根据图像推理报告
-                    Workflow workflow = processReport(reportTask.channel, painting, reportTask.theme,
+                    Workflow workflow = processReport(reportTask.channel, painting, reportTask.theme, unit,
                             reportTask.maxIndicatorTexts);
+
+                    // 更新单元状态
+                    unit.setRunning(false);
 
                     if (null == workflow) {
                         // 推理生成报告失败
@@ -420,6 +421,8 @@ public class PsychologyScene {
 //                        reportTask.listener.onReportEvaluateFailed(reportTask.report);
                         continue;
                     }
+
+
 
                     // 生成 Markdown 调试信息
                     reportTask.report.makeMarkdown();
@@ -790,7 +793,7 @@ public class PsychologyScene {
         JSONObject data = new JSONObject();
         data.put("fileLabel", fileLabel.toJSON());
         Packet request = new Packet(AIGCAction.PredictPsychologyPainting.name, data);
-        ActionDialect dialect = this.aigcService.getCellet().transmit(unit.getContext(), request.toDialect(), 120 * 1000);
+        ActionDialect dialect = this.aigcService.getCellet().transmit(unit.getContext(), request.toDialect(), 90 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(), "#processPainting - Predict image unit error");
             return null;
@@ -813,7 +816,7 @@ public class PsychologyScene {
         }
     }
 
-    private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme,
+    private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme, AIGCUnit unit,
                                    int maxIndicatorText) {
         HTPEvaluation evaluation = (null == painting) ?
                 new HTPEvaluation(new Attribute("male", 28, false)) : new HTPEvaluation(painting);
@@ -822,7 +825,6 @@ public class PsychologyScene {
         EvaluationReport report = evaluation.makeEvaluationReport();
 
         Workflow workflow = new Workflow(report, channel, this.aigcService);
-
         if (report.isEmpty()) {
             Logger.w(this.getClass(), "#processReport - No things in painting: " + channel.getAuthToken().getContactId());
             return workflow;
@@ -830,6 +832,32 @@ public class PsychologyScene {
 
         // 设置使用的单元
         workflow.setUnitName(this.unitName);
+
+        // 进行指标因子推理
+        JSONObject data = new JSONObject();
+        JSONArray indicators = new JSONArray();
+        for (EvaluationScore es : report.getFullEvaluationScores()) {
+            indicators.put(es.calcScore());
+        }
+        data.put("indicators", indicators);
+        Packet request = new Packet(AIGCAction.PredictPsychologyFactors.name, data);
+        ActionDialect dialect = this.aigcService.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+        if (null != dialect) {
+            Packet response = new Packet(dialect);
+            if (Packet.extractCode(response) == AIGCStateCode.Ok.code) {
+                JSONObject responseData = Packet.extractDataPayload(response);
+                FactorSet factorSet = new FactorSet(responseData.getJSONObject("result"));
+                // 合并因子集合
+                workflow.mergeFactorSet(factorSet);
+            }
+            else {
+                Logger.w(this.getClass(), "#processReport - Predict factor response state: " +
+                        Packet.extractCode(response));
+            }
+        }
+        else {
+            Logger.w(this.getClass(), "#processReport - Predict factor unit error");
+        }
 
         // 制作报告
         return workflow.make(theme, maxIndicatorText);

@@ -119,12 +119,12 @@ public class QueryRevolver {
 
             if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                 result.append("\n受测人的大五人格画像是").append(paintingReport.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("。\n");
+                        .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。\n");
                 // 性格特点
                 result.append(paintingReport.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("的性格特点：");
+                        .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
                 result.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
+                        .getPersonalityAccelerator().getBigFivePersonality().getDescription()));
             }
 
             if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -209,12 +209,12 @@ public class QueryRevolver {
                 if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                     result.append("\n");
                     result.append(name).append("的大五人格画像是").append(paintingReport.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("。\n");
+                            .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。\n");
                     // 性格特点
                     result.append(paintingReport.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("的性格特点：");
+                            .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
                     result.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
+                            .getPersonalityAccelerator().getBigFivePersonality().getDescription()));
                 }
 
                 if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -302,9 +302,9 @@ public class QueryRevolver {
 
             if (answer.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                 answer.append("\n受测人的大五人格画像是").append(paintingReport.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFiveFeature().getDisplayName()).append("。");
+                        .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。");
                 answer.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFiveFeature().getDescription()));
+                        .getPersonalityAccelerator().getBigFivePersonality().getDescription()));
             }
 
             if (answer.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -403,7 +403,7 @@ public class QueryRevolver {
 //                for (String word : this.keywordThinkingStyle) {
 //                    if (query.contains(word))
                 question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
-                        .getBigFiveFeature().getDisplayName() + "的思维方式";
+                        .getBigFivePersonality().getDisplayName() + "的思维方式";
                 analyzer = new TFIDFAnalyzer(this.tokenizer);
                 keywords = analyzer.analyzeOnlyWords(question, 10);
 
@@ -419,7 +419,7 @@ public class QueryRevolver {
 //                for (String word : this.keywordCommunicationStyle) {
 //                    if (query.contains(word)) {
                 question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
-                        .getBigFiveFeature().getDisplayName() + "的沟通风格";
+                        .getBigFivePersonality().getDisplayName() + "的沟通风格";
                 analyzer = new TFIDFAnalyzer(this.tokenizer);
                 keywords = analyzer.analyzeOnlyWords(question, 10);
 
@@ -440,7 +440,7 @@ public class QueryRevolver {
 //                        result.append("的工作环境偏好”，");
 
                         question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
-                                .getBigFiveFeature().getDisplayName() + "的工作环境偏好";
+                                .getBigFivePersonality().getDisplayName() + "的工作环境偏好";
                         analyzer = new TFIDFAnalyzer(this.tokenizer);
                         keywords = analyzer.analyzeOnlyWords(question, 10);
 
@@ -462,7 +462,7 @@ public class QueryRevolver {
 //                        result.append("的管理建议”，");
 
                         question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
-                                .getBigFiveFeature().getDisplayName() + "的管理建议";
+                                .getBigFivePersonality().getDisplayName() + "的管理建议";
                         analyzer = new TFIDFAnalyzer(this.tokenizer);
                         keywords = analyzer.analyzeOnlyWords(question, 10);
 

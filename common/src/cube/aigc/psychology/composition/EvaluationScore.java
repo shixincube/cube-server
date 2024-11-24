@@ -103,6 +103,14 @@ public class EvaluationScore implements JSONable {
         return this.positiveScore - this.negativeScore;
     }
 
+    public double calcScoreReLU() {
+        double value = this.positiveScore - this.negativeScore;
+        if (value < 0) {
+            return 0;
+        }
+        return value;
+    }
+
     public void scoring(Score score) {
         this.hit += 1;
         // 原始分

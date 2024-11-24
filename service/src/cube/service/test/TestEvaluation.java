@@ -29,7 +29,7 @@ package cube.service.test;
 import cell.util.Utils;
 import cube.aigc.psychology.Dataset;
 import cube.aigc.psychology.Resource;
-import cube.aigc.psychology.algorithm.BigFiveFeature;
+import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.composition.AnswerSheet;
 import cube.aigc.psychology.composition.Question;
 import cube.aigc.psychology.composition.Scale;
@@ -105,7 +105,7 @@ public class TestEvaluation {
         double achievement = FloatUtils.random(0.5, 10.0);
         double neuroticism = FloatUtils.random(0.5, 10.0);
 
-        BigFiveFeature feature = new BigFiveFeature(obligingness, conscientiousness, extraversion, achievement,
+        BigFivePersonality feature = new BigFivePersonality(obligingness, conscientiousness, extraversion, achievement,
                 neuroticism);
 
         System.out.println(feature.getDisplayName());
@@ -115,7 +115,7 @@ public class TestEvaluation {
         System.out.println("achievement: " + achievement);
         System.out.println("neuroticism: " + neuroticism);
         System.out.println("----------------------------------------");
-        System.out.println(BigFiveFeature.match(feature.getName()).getTemplateValue().toString());
+        System.out.println(BigFivePersonality.match(feature.getName()).getTemplateValue().toString());
     }
 
     public static void testScalesConfiguration() {

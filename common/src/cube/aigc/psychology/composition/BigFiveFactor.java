@@ -29,9 +29,9 @@ package cube.aigc.psychology.composition;
 import org.json.JSONObject;
 
 /**
- * 大五人格。
+ * 大五人格的各个因子。
  */
-public enum BigFivePersonality {
+public enum BigFiveFactor {
 
     /**
      * 宜人性。
@@ -64,7 +64,7 @@ public enum BigFivePersonality {
 
     public final String name;
 
-    BigFivePersonality(String code, String name) {
+    BigFiveFactor(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -76,8 +76,8 @@ public enum BigFivePersonality {
         return json;
     }
 
-    public static BigFivePersonality parse(String codeOrName) {
-        for (BigFivePersonality tbf : BigFivePersonality.values()) {
+    public static BigFiveFactor parse(String codeOrName) {
+        for (BigFiveFactor tbf : BigFiveFactor.values()) {
             if (tbf.code.equalsIgnoreCase(codeOrName) || tbf.name.equals(codeOrName)) {
                 return tbf;
             }

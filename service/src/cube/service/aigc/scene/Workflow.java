@@ -30,7 +30,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
-import cube.aigc.psychology.algorithm.BigFiveFeature;
+import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.*;
@@ -108,6 +108,42 @@ public class Workflow {
         return report;
     }
 
+    public void mergeFactorSet(FactorSet factorSet) {
+        Logger.d(this.getClass(), "#mergeExpertData");
+
+        this.evaluationReport.setFactorSet(factorSet);
+
+        PersonalityAccelerator expectedPersonality = new PersonalityAccelerator(factorSet);
+
+        PersonalityAccelerator actualPersonality = this.evaluationReport.getPersonalityAccelerator();
+
+        double obligingness = actualPersonality.getBigFivePersonality().getObligingness();
+        double conscientiousness = actualPersonality.getBigFivePersonality().getConscientiousness();
+        double extraversion = actualPersonality.getBigFivePersonality().getExtraversion();
+        double achievement = actualPersonality.getBigFivePersonality().getAchievement();
+
+        if (!actualPersonality.obligingnessConfidence) {
+            obligingness = expectedPersonality.getBigFivePersonality().getObligingness();
+        }
+        if (!actualPersonality.conscientiousnessConfidence) {
+            conscientiousness = expectedPersonality.getBigFivePersonality().getConscientiousness();
+        }
+        if (!actualPersonality.extraversionConfidence) {
+            extraversion = expectedPersonality.getBigFivePersonality().getExtraversion();
+        }
+        if (!actualPersonality.achievementConfidence) {
+            achievement = expectedPersonality.getBigFivePersonality().getAchievement();
+        }
+
+        // 情绪性
+        double neuroticism = expectedPersonality.getBigFivePersonality().getNeuroticism();
+
+        this.evaluationReport.getPersonalityAccelerator().reset(obligingness, conscientiousness,
+                extraversion, achievement, neuroticism);
+
+
+    }
+
     public boolean isUnknown() {
         return this.evaluationReport.isUnknown();
     }
@@ -183,7 +219,7 @@ public class Workflow {
     }
 
     private MandalaFlower inferMandalaFlower(PersonalityAccelerator personalityAccelerator) {
-        BigFiveFeature feature = personalityAccelerator.getBigFiveFeature();
+        BigFivePersonality feature = personalityAccelerator.getBigFivePersonality();
         List<String> filenames = Resource.getInstance().getMandalaFlowerFiles();
         String color = "A";
         if (feature.getNeuroticism() < 3.0) {
@@ -258,7 +294,7 @@ public class Workflow {
      * @return
      */
     private boolean inferPersonality(PersonalityAccelerator personalityAccelerator) {
-        BigFiveFeature feature = personalityAccelerator.getBigFiveFeature();
+        BigFivePersonality feature = personalityAccelerator.getBigFivePersonality();
         String prompt = feature.generateReportPrompt();
         String answer = null;
         if (this.speed) {

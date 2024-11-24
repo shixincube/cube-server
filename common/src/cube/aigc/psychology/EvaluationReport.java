@@ -30,6 +30,7 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.algorithm.*;
 import cube.aigc.psychology.composition.EvaluationScore;
+import cube.aigc.psychology.composition.FactorSet;
 import cube.aigc.psychology.composition.Scale;
 import cube.common.JSONable;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
@@ -65,6 +66,8 @@ public class EvaluationReport implements JSONable {
     private AttentionSuggestion attentionSuggestion;
 
     private List<Scale> additionScales;
+
+    private FactorSet factorSet;
 
     private boolean unknown = false;
 
@@ -114,6 +117,10 @@ public class EvaluationReport implements JSONable {
             }
         }
 
+        if (json.has("factorSet")) {
+            this.factorSet = new FactorSet(json.getJSONObject("factorSet"));
+        }
+
         this.hesitating = json.has("hesitating") && json.getBoolean("hesitating");
     }
 
@@ -143,6 +150,14 @@ public class EvaluationReport implements JSONable {
 
     public PersonalityAccelerator getPersonalityAccelerator() {
         return this.personalityAccelerator;
+    }
+
+    public void setPersonalityAccelerator(PersonalityAccelerator personality) {
+        this.personalityAccelerator = personality;
+    }
+
+    public void setFactorSet(FactorSet factorSet) {
+        this.factorSet = factorSet;
     }
 
     public AttentionSuggestion getAttentionSuggestion() {
@@ -746,14 +761,11 @@ public class EvaluationReport implements JSONable {
         }
         json.put("additionScales", array);
 
+        if (null != this.factorSet) {
+            json.put("factorSet", this.factorSet.toJSON());
+        }
+
         json.put("hesitating", this.hesitating);
-
-//        JSONArray priorityArray = new JSONArray();
-//        for (EvaluationScore es : this.getEvaluationScoresByRepresentation()) {
-//            priorityArray.put(es.toJSON());
-//        }
-//        json.put("priorities", priorityArray);
-
         return json;
     }
 
@@ -784,14 +796,11 @@ public class EvaluationReport implements JSONable {
         }
         json.put("additionScales", array);
 
+        if (null != this.factorSet) {
+            json.put("factorSet", this.factorSet.toJSON());
+        }
+
         json.put("hesitating", this.hesitating);
-
-//        JSONArray priorityArray = new JSONArray();
-//        for (EvaluationScore es : this.getEvaluationScoresByRepresentation()) {
-//            priorityArray.put(es.toCompactJSON());
-//        }
-//        json.put("priorities", priorityArray);
-
         return json;
     }
 }

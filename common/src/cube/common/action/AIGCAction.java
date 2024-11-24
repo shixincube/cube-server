@@ -397,6 +397,11 @@ public enum AIGCAction {
     PredictPsychologyPainting("predictPsychologyPainting"),
 
     /**
+     * 心理学指标因子预测。
+     */
+    PredictPsychologyFactors("predictPsychologyFactors"),
+
+    /**
      * 检查绘画。
      */
     CheckPsychologyPainting("checkPsychologyPainting"),

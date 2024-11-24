@@ -27,7 +27,6 @@
 package cube.aigc.psychology.algorithm;
 
 import cube.aigc.psychology.PaintingReport;
-import cube.aigc.psychology.composition.ReportRelation;
 import cube.vision.Point;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -50,7 +49,7 @@ public class BigFiveRevolver {
             PaintingReport report = reports.get(i);
             // 计算全景坐标
             Point coordinate = this.calcPanoramaCoordinate(
-                    report.getEvaluationReport().getPersonalityAccelerator().getBigFiveFeature());
+                    report.getEvaluationReport().getPersonalityAccelerator().getBigFivePersonality());
             // 计算象限
             BigFivePanoramaQuadrant quadrant = BigFivePanoramaQuadrant.parse(coordinate.x, coordinate.y);
             // 计算工作环
@@ -63,7 +62,7 @@ public class BigFiveRevolver {
         return panorama;
     }
 
-    private Point calcPanoramaCoordinate(BigFiveFeature feature) {
+    private Point calcPanoramaCoordinate(BigFivePersonality feature) {
         Point pObligingness = new Point(0, -feature.getObligingness());
         Point pExtraversion = new Point(-feature.getExtraversion(), 0);
         Point pAchievement = new Point(0, feature.getAchievement());
