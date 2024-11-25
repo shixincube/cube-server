@@ -31,7 +31,7 @@ public enum HexagonDimension {
     /**
      * 情绪。
      */
-    Emotion("Emotion", "情绪"),
+    Mood("Mood", "情绪"),
 
     /**
      * 认知。
@@ -70,10 +70,14 @@ public enum HexagonDimension {
     }
 
     public static HexagonDimension parse(String name) {
-        for (HexagonDimension sd : HexagonDimension.values()) {
-            if (sd.name.equalsIgnoreCase(name)) {
-                return sd;
+        for (HexagonDimension hd : HexagonDimension.values()) {
+            if (hd.name.equalsIgnoreCase(name)) {
+                return hd;
             }
+        }
+        // 兼容旧版本
+        if (name.equalsIgnoreCase("Emotion")) {
+            return HexagonDimension.Mood;
         }
         return null;
     }

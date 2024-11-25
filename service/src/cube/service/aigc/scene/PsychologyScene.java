@@ -278,20 +278,20 @@ public class PsychologyScene {
                                                                 PaintingReportListener listener) {
         // 判断属性限制
         if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
-            Logger.w(this.getClass(), "#generateEvaluationReport - Age param overflow: " +
+            Logger.w(this.getClass(), "#generatePredictingReport - Age param overflow: " +
                     attribute.age);
             return null;
         }
 
         if (null == channel) {
-            Logger.e(this.getClass(), "#generateEvaluationReport - Channel is null");
+            Logger.e(this.getClass(), "#generatePredictingReport - Channel is null");
             return null;
         }
 
         // 并发数量
         int numUnit = this.aigcService.numUnitsByName(ModelConfig.BAIZE_UNIT);
         if (0 == numUnit) {
-            Logger.e(this.getClass(), "#generateEvaluationReport - No baize unit");
+            Logger.e(this.getClass(), "#generatePredictingReport - No baize unit");
             return null;
         }
 
@@ -327,7 +327,7 @@ public class PsychologyScene {
 
                     // 判断频道是否繁忙
 //                    if (channel.isProcessing()) {
-//                        Logger.w(this.getClass(), "#generateEvaluationReport - Channel busy");
+//                        Logger.w(this.getClass(), "#generatePredictingReport - Channel busy");
 //                    }
 
                     // 设置为正在操作
@@ -357,7 +357,7 @@ public class PsychologyScene {
                     Painting painting = processPainting(unit, reportTask.fileLabel);
                     if (null == painting) {
                         // 预测绘图失败
-                        Logger.w(PsychologyScene.class, "#generateEvaluationReport - onPaintingPredictFailed: " +
+                        Logger.w(PsychologyScene.class, "#generatePredictingReport - onPaintingPredictFailed: " +
                                 reportTask.fileLabel.getFileCode());
                         // 记录故障
                         unit.markFailure(AIGCStateCode.FileError.code, System.currentTimeMillis(),
@@ -390,7 +390,7 @@ public class PsychologyScene {
 
                     if (null == workflow) {
                         // 推理生成报告失败
-                        Logger.w(PsychologyScene.class, "#generateEvaluationReport - onReportEvaluateFailed (IllegalOperation): " +
+                        Logger.w(PsychologyScene.class, "#generatePredictingReport - onReportEvaluateFailed (IllegalOperation): " +
                                 reportTask.fileLabel.getFileCode());
                         runningTaskQueue.remove(reportTask);
                         reportTask.channel.setProcessing(false);
@@ -405,7 +405,7 @@ public class PsychologyScene {
 
                     if (workflow.isUnknown()) {
                         // 未能处理的图片
-                        Logger.w(PsychologyScene.class, "#generateEvaluationReport - onReportEvaluateCompleted (InvalidData): " +
+                        Logger.w(PsychologyScene.class, "#generatePredictingReport - onReportEvaluateCompleted (InvalidData): " +
                                 reportTask.fileLabel.getFileCode());
                         runningTaskQueue.remove(reportTask);
                         reportTask.channel.setProcessing(false);
@@ -421,8 +421,6 @@ public class PsychologyScene {
 //                        reportTask.listener.onReportEvaluateFailed(reportTask.report);
                         continue;
                     }
-
-
 
                     // 生成 Markdown 调试信息
                     reportTask.report.makeMarkdown();

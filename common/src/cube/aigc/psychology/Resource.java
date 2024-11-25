@@ -154,6 +154,7 @@ public class Resource {
         return this.themeTemplates.get(theme.code);
     }
 
+    /*
     public Benchmark getBenchmark() {
         if (this.benchmarkScoreFile.exists()) {
             if (this.benchmarkScoreFile.lastModified() != this.benchmarkScoreLastModified) {
@@ -172,7 +173,7 @@ public class Resource {
         }
 
         return this.benchmark;
-    }
+    }*/
 
     public HexagonDimensionProjection getHexDimProjection() {
         if (this.hexDimProjectionFile.exists()) {

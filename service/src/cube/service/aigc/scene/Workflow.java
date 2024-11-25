@@ -109,7 +109,7 @@ public class Workflow {
     }
 
     public void mergeFactorSet(FactorSet factorSet) {
-        Logger.d(this.getClass(), "#mergeExpertData");
+        Logger.d(this.getClass(), "#mergeFactorSet");
 
         this.evaluationReport.setFactorSet(factorSet);
 
@@ -140,8 +140,6 @@ public class Workflow {
 
         this.evaluationReport.getPersonalityAccelerator().reset(obligingness, conscientiousness,
                 extraversion, achievement, neuroticism);
-
-
     }
 
     public boolean isUnknown() {
@@ -154,7 +152,7 @@ public class Workflow {
 
         // 六维得分计算
         try {
-            this.dimensionScore = Resource.getInstance()
+            /*this.dimensionScore = Resource.getInstance()
                     .getHexDimProjection().calc(this.evaluationReport.getEvaluationScores());
 
             List<EvaluationScore> scoreList = Resource.getInstance().getBenchmark().getEvaluationScores(age);
@@ -183,7 +181,11 @@ public class Workflow {
 
             // 正则化
             this.dimensionScore.normalization();
-            this.normDimensionScore.normalization();
+            this.normDimensionScore.normalization();*/
+
+            this.dimensionScore = new HexagonDimensionScore(this.evaluationReport.getFullEvaluationScores(),
+                    this.evaluationReport.getPaintingConfidence(), this.evaluationReport.getFactorSet());
+            this.normDimensionScore = new HexagonDimensionScore(80, 80, 80, 80, 80, 80);
 
             // 描述
             PsychologyHelper.fillDimensionScoreDescription(this.service.getTokenizer(), this.dimensionScore);

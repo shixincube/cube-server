@@ -856,7 +856,7 @@ public class PsychologyStorage implements Storagable {
         report.setReportTextList(textList);
 
         // 六维
-        HexagonDimensionScore dimensionScore = Resource.getInstance()
+        /*HexagonDimensionScore dimensionScore = Resource.getInstance()
                 .getHexDimProjection().calc(evaluationReport.getEvaluationScores());
 
         List<EvaluationScore> scoreList = Resource.getInstance().getBenchmark().getEvaluationScores(report.getAttribute().age);
@@ -884,6 +884,10 @@ public class PsychologyStorage implements Storagable {
         }
         dimensionScore.normalization();
         normDimensionScore.normalization();
+        */
+
+        HexagonDimensionScore dimensionScore = null;
+        HexagonDimensionScore normDimensionScore = null;
 
         // 描述
         PsychologyHelper.fillDimensionScoreDescription(this.tokenizer, dimensionScore);

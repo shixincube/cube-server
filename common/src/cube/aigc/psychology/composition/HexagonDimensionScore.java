@@ -27,12 +27,15 @@
 package cube.aigc.psychology.composition;
 
 import cell.util.Utils;
+import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.algorithm.PaintingConfidence;
 import cube.util.FloatUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class HexagonDimensionScore {
@@ -49,10 +52,26 @@ public class HexagonDimensionScore {
         this.rates = new LinkedHashMap<>();
     }
 
+    public HexagonDimensionScore(int mood, int cognition, int behavior, int interpersonalRelationship,
+                                 int selfAssessment, int mentalHealth) {
+        this();
+        this.record(HexagonDimension.Mood, mood);
+        this.record(HexagonDimension.Cognition, cognition);
+        this.record(HexagonDimension.Behavior, behavior);
+        this.record(HexagonDimension.InterpersonalRelationship, interpersonalRelationship);
+        this.record(HexagonDimension.SelfAssessment, selfAssessment);
+        this.record(HexagonDimension.MentalHealth, mentalHealth);
+    }
+
+    public HexagonDimensionScore(List<EvaluationScore> scoreList, PaintingConfidence confidence,
+                                 FactorSet factorSet) {
+        this();
+        HexagonDimensionScore candidate = Resource.getInstance().getHexDimProjection().calc(scoreList);
+        
+    }
+
     public HexagonDimensionScore(JSONObject json) {
-        this.scores = new LinkedHashMap<>();
-        this.descriptions = new LinkedHashMap<>();
-        this.rates = new LinkedHashMap<>();
+        this();
         if (json.has("factors") && json.has("scores") && json.has("descriptions")) {
             // 新结构
             JSONArray factors = json.getJSONArray("factors");
@@ -102,6 +121,9 @@ public class HexagonDimensionScore {
         return this.descriptions.get(hexagonDimension);
     }
 
+    /**
+     * @deprecated
+     */
     public void normalization() {
         int max = 0;
         for (Integer v : this.scores.values()) {
@@ -130,6 +152,9 @@ public class HexagonDimensionScore {
         // 旧结构
         for (Map.Entry<HexagonDimension, Integer> e : this.scores.entrySet()) {
             json.put(e.getKey().name, e.getValue().intValue());
+//            if (e.getKey() == HexagonDimension.Mood) {
+//                json.put("Emotion", e.getValue().intValue());
+//            }
         }
 
         // 新结构
@@ -140,6 +165,12 @@ public class HexagonDimensionScore {
         for (Map.Entry<HexagonDimension, Integer> e : this.scores.entrySet()) {
             factors.put(e.getKey().name);
             scores.put(e.getValue().intValue());
+
+            // 兼容旧版本
+//            if (e.getKey() == HexagonDimension.Mood) {
+//                factors.put("Emotion");
+//                scores.put(e.getValue().intValue());
+//            }
 
             String desc = this.descriptions.get(e.getKey());
             if (null != desc) {

@@ -57,6 +57,8 @@ public class EvaluationReport implements JSONable {
 
     private Reference reference;
 
+    private PaintingConfidence paintingConfidence;
+
     private List<Representation> representationList;
 
     private ScoreAccelerator scoreAccelerator;
@@ -75,13 +77,16 @@ public class EvaluationReport implements JSONable {
 
     private String version = Version.toVersionString();
 
-    public EvaluationReport(Attribute attribute, Reference reference, EvaluationFeature evaluationFeature) {
-        this(attribute, reference, Collections.singletonList((evaluationFeature)));
+    public EvaluationReport(Attribute attribute, Reference reference, PaintingConfidence paintingConfidence,
+                            EvaluationFeature evaluationFeature) {
+        this(attribute, reference, paintingConfidence, Collections.singletonList((evaluationFeature)));
     }
 
-    public EvaluationReport(Attribute attribute, Reference reference, List<EvaluationFeature> evaluationFeatureList) {
+    public EvaluationReport(Attribute attribute, Reference reference, PaintingConfidence paintingConfidence,
+                            List<EvaluationFeature> evaluationFeatureList) {
         this.attribute = attribute;
         this.reference = reference;
+        this.paintingConfidence = paintingConfidence;
         this.representationList = new ArrayList<>();
         this.scoreAccelerator = new ScoreAccelerator();
         this.attentionSuggestion = AttentionSuggestion.NoAttention;
@@ -119,6 +124,10 @@ public class EvaluationReport implements JSONable {
 
         if (json.has("factorSet")) {
             this.factorSet = new FactorSet(json.getJSONObject("factorSet"));
+        }
+
+        if (json.has("confidenceLevel")) {
+            this.paintingConfidence = new PaintingConfidence(json.getInt("confidenceLevel"));
         }
 
         this.hesitating = json.has("hesitating") && json.getBoolean("hesitating");
@@ -160,8 +169,16 @@ public class EvaluationReport implements JSONable {
         this.factorSet = factorSet;
     }
 
+    public FactorSet getFactorSet() {
+        return this.factorSet;
+    }
+
     public AttentionSuggestion getAttentionSuggestion() {
         return this.attentionSuggestion;
+    }
+
+    public PaintingConfidence getPaintingConfidence() {
+        return this.paintingConfidence;
     }
 
     public boolean isHesitating() {
@@ -798,6 +815,10 @@ public class EvaluationReport implements JSONable {
 
         if (null != this.factorSet) {
             json.put("factorSet", this.factorSet.toJSON());
+        }
+
+        if (null != this.paintingConfidence) {
+            json.put("confidenceLevel", this.paintingConfidence.getConfidenceLevel());
         }
 
         json.put("hesitating", this.hesitating);

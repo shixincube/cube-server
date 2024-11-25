@@ -36,6 +36,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ */
 public class HexagonDimensionProjection {
 
     private Map<HexagonDimension, Projection> projections;
@@ -67,7 +69,7 @@ public class HexagonDimensionProjection {
     public synchronized HexagonDimensionScore calc(List<EvaluationScore> scoreList) {
         HexagonDimensionScore result = new HexagonDimensionScore();
 
-        HexagonDimension[] hexagonDimensions = new HexagonDimension[6];
+        /*HexagonDimension[] hexagonDimensions = new HexagonDimension[6];
         double[] values = new double[6];
         int index = 0;
         double totalFive = 0;
@@ -109,7 +111,7 @@ public class HexagonDimensionProjection {
             }
 
             result.record(hexagonDimensions[i], value);
-        }
+        }*/
 
         return result;
     }
