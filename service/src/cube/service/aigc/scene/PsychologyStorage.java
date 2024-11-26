@@ -886,8 +886,9 @@ public class PsychologyStorage implements Storagable {
         normDimensionScore.normalization();
         */
 
-        HexagonDimensionScore dimensionScore = null;
-        HexagonDimensionScore normDimensionScore = null;
+        HexagonDimensionScore dimensionScore = new HexagonDimensionScore(evaluationReport.getFullEvaluationScores(),
+                evaluationReport.getPaintingConfidence(), evaluationReport.getFactorSet());
+        HexagonDimensionScore normDimensionScore = new HexagonDimensionScore(80, 80, 80, 80, 80, 80);
 
         // 描述
         PsychologyHelper.fillDimensionScoreDescription(this.tokenizer, dimensionScore);

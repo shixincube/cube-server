@@ -29,6 +29,7 @@ package cube.service.aigc.scene;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.PaintingConfidence;
 import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.BigFiveFactor;
@@ -91,7 +92,8 @@ public class HTPEvaluationEvo extends Evaluation {
 
                 this.reference = Reference.Abnormal;
                 Logger.d(this.getClass(), "#makeEvaluationReport - reference: " + this.reference.name);
-                report = new EvaluationReport(this.painting.getAttribute(), this.reference, list);
+                report = new EvaluationReport(this.painting.getAttribute(), this.reference,
+                        new PaintingConfidence(this.painting), list);
                 return report;
             }
 
@@ -104,7 +106,8 @@ public class HTPEvaluationEvo extends Evaluation {
             results.add(this.evalOthers());
             // 矫正
             results = this.correct(results);
-            report = new EvaluationReport(this.painting.getAttribute(), this.reference, results);
+            report = new EvaluationReport(this.painting.getAttribute(), this.reference,
+                    new PaintingConfidence(this.painting), results);
         }
         else {
             Logger.w(this.getClass(), "#makeEvaluationReport - Only for test");
@@ -115,7 +118,8 @@ public class HTPEvaluationEvo extends Evaluation {
                 int index = Utils.randomInt(0, Term.values().length - 1);
                 result.addFeature(Term.values()[index], Tendency.Positive);
             }
-            report = new EvaluationReport(this.painting.getAttribute(), this.reference, result);
+            report = new EvaluationReport(this.painting.getAttribute(), this.reference,
+                    new PaintingConfidence(this.painting), result);
         }
 
         return report;

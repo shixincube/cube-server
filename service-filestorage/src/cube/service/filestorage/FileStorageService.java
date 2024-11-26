@@ -99,12 +99,12 @@ public class FileStorageService extends AbstractModule {
     /**
      * 默认客户端上传速率阀值。
      */
-    private long defaultUploadThreshold = 1024 * 1024;
+    private long defaultUploadThreshold = 10 * 1024 * 1024;
 
     /**
      * 默认客户端下载速率阀值。
      */
-    private long defaultDownloadThreshold = 1024 * 1024;
+    private long defaultDownloadThreshold = 10 * 1024 * 1024;
 
     private FileStorageServiceCellet cellet;
 

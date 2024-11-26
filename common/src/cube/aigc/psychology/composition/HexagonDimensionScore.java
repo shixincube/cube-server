@@ -67,7 +67,63 @@ public class HexagonDimensionScore {
                                  FactorSet factorSet) {
         this();
         HexagonDimensionScore candidate = Resource.getInstance().getHexDimProjection().calc(scoreList);
-        
+        for (HexagonDimension hd : HexagonDimension.values()) {
+            this.record(hd, candidate.getDimensionScore(hd));
+        }
+
+        if (null != confidence) {
+            // 认知
+            switch (confidence.getConfidenceLevel()) {
+                case PaintingConfidence.LEVEL_HIGHER:
+                    this.record(HexagonDimension.Cognition,
+                            Utils.randomInt(this.getDimensionScore(HexagonDimension.Cognition), 99));
+                    break;
+                case PaintingConfidence.LEVEL_HIGH:
+                    this.record(HexagonDimension.Cognition, Utils.randomInt(80, 90));
+                    break;
+                case PaintingConfidence.LEVEL_NORMAL:
+                    this.record(HexagonDimension.Cognition, Utils.randomInt(70, 80));
+                    break;
+                case PaintingConfidence.LEVEL_LOW:
+                    this.record(HexagonDimension.Cognition, Utils.randomInt(60, 70));
+                    break;
+                case PaintingConfidence.LEVEL_LOWER:
+                    this.record(HexagonDimension.Cognition, Utils.randomInt(50, 60));
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (null != factorSet) {
+            // 情绪
+            if (factorSet.affectFactor.positive > factorSet.affectFactor.negative) {
+                if (factorSet.affectFactor.positive - factorSet.affectFactor.negative > 10) {
+                    this.record(HexagonDimension.Mood, Utils.randomInt(80, 90));
+                }
+                else {
+                    this.record(HexagonDimension.Mood, Utils.randomInt(70, 80));
+                }
+            }
+            else {
+                if (factorSet.affectFactor.negative - factorSet.affectFactor.positive > 10) {
+                    this.record(HexagonDimension.Mood, Utils.randomInt(50, 60));
+                }
+                else {
+                    this.record(HexagonDimension.Mood, Utils.randomInt(60, 70));
+                }
+            }
+
+            // 心理健康
+            if (factorSet.calcSymptomTotal() > 160) {
+                this.record(HexagonDimension.MentalHealth, Utils.randomInt(50, 59));
+            }
+            else {
+                if (this.getDimensionScore(HexagonDimension.MentalHealth) < 70) {
+                    this.record(HexagonDimension.MentalHealth, Utils.randomInt(70, 80));
+                }
+            }
+        }
     }
 
     public HexagonDimensionScore(JSONObject json) {
@@ -121,10 +177,7 @@ public class HexagonDimensionScore {
         return this.descriptions.get(hexagonDimension);
     }
 
-    /**
-     * @deprecated
-     */
-    public void normalization() {
+    /*public void normalization() {
         int max = 0;
         for (Integer v : this.scores.values()) {
             if (v > max) {
@@ -144,7 +197,7 @@ public class HexagonDimensionScore {
         for (Map.Entry<HexagonDimension, Integer> entry : this.scores.entrySet()) {
             entry.setValue((int) Math.floor(output[index++]));
         }
-    }
+    }*/
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

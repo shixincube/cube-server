@@ -24,6 +24,19 @@ public class FactorSet {
         this.affectFactor = new AffectFactor(affectArray);
     }
 
+    public int calcSymptomTotal() {
+        return (int) (this.symptomFactor.somatization * 12 +
+                this.symptomFactor.obsession * 10 +
+                this.symptomFactor.interpersonal * 9 +
+                this.symptomFactor.depression * 13 +
+                this.symptomFactor.anxiety * 10 +
+                this.symptomFactor.hostile * 6 +
+                this.symptomFactor.horror * 7 +
+                this.symptomFactor.paranoid * 6 +
+                this.symptomFactor.psychosis * 10 +
+                this.symptomFactor.sleepDiet * 7);
+    }
+
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("symptoms", this.symptomFactor.toArray());

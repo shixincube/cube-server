@@ -29,6 +29,7 @@ package cube.aigc.psychology;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.HexagonDimension;
 import cube.aigc.psychology.composition.HexagonDimensionScore;
+import cube.util.FloatUtils;
 import org.json.JSONObject;
 
 import java.util.Iterator;
@@ -68,6 +69,42 @@ public class HexagonDimensionProjection {
 
     public synchronized HexagonDimensionScore calc(List<EvaluationScore> scoreList) {
         HexagonDimensionScore result = new HexagonDimensionScore();
+
+        double[] scores = new double[scoreList.size()];
+        for (int i = 0; i < scores.length; ++i) {
+            EvaluationScore es = scoreList.get(i);
+            scores[i] = es.calcScore();
+        }
+
+        scores = FloatUtils.softmax(scores);
+
+        double[] hdScores = new double[HexagonDimension.values().length];
+
+        int index = 0;
+        for (HexagonDimension dim : HexagonDimension.values()) {
+            Projection projection = this.projections.get(dim);
+
+            double sum = 0;
+            for (int i = 0; i < scoreList.size(); ++i) {
+                EvaluationScore es = scoreList.get(i);
+                Double weight = projection.weights.get(es.indicator);
+                if (null == weight) {
+                    continue;
+                }
+                sum += scores[i] * 100 * weight;
+            }
+
+            hdScores[index] = sum;
+            ++index;
+        }
+
+        hdScores = FloatUtils.normalization(hdScores, 60, 99);
+        index = 0;
+        for (HexagonDimension dim : HexagonDimension.values()) {
+            double value = hdScores[index];
+            result.record(dim, (int) Math.ceil(value));
+            ++index;
+        }
 
         /*HexagonDimension[] hexagonDimensions = new HexagonDimension[6];
         double[] values = new double[6];
@@ -116,15 +153,15 @@ public class HexagonDimensionProjection {
         return result;
     }
 
-    private EvaluationScore getScore(Indicator indicator, List<EvaluationScore> scoreList) {
-        for (EvaluationScore score : scoreList) {
-            if (score.indicator == indicator) {
-                return score;
-            }
-        }
-
-        return null;
-    }
+//    private EvaluationScore getScore(Indicator indicator, List<EvaluationScore> scoreList) {
+//        for (EvaluationScore score : scoreList) {
+//            if (score.indicator == indicator) {
+//                return score;
+//            }
+//        }
+//
+//        return null;
+//    }
 
 
     public class Projection {
