@@ -372,6 +372,9 @@ public class PsychologyScene {
                         continue;
                     }
 
+                    // 更新单元状态
+                    unit.setRunning(false);
+
                     // 设置绘画属性
                     painting.setAttribute(reportTask.attribute);
 
@@ -384,9 +387,6 @@ public class PsychologyScene {
                     // 根据图像推理报告
                     Workflow workflow = processReport(reportTask.channel, painting, reportTask.theme, unit,
                             reportTask.maxIndicatorTexts);
-
-                    // 更新单元状态
-                    unit.setRunning(false);
 
                     if (null == workflow) {
                         // 推理生成报告失败

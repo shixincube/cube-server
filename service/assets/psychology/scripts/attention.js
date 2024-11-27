@@ -1,5 +1,5 @@
 
-function calc(attribute, scores, reference) {
+function calc(attribute, scores, factorSet, reference) {
     var nScore = 0;
     var fDelta = 0;
     var bDepression = false;
@@ -161,6 +161,34 @@ function calc(attribute, scores, reference) {
         }
     }
 
+    // 通过 FactorSet 修正
+    if (null != factorSet) {
+        Logger.d('attention.js', "Attention: Fix with the factor set data");
+        if (factorSet.symptomFactor.total > 160) {
+            Logger.d('attention.js', "Attention: FactorSet symptom total: " + factorSet.symptomFactor.total);
+            nScore += 1;
+        }
+
+        if (factorSet.symptomFactor.obsession > 3) {
+            Logger.d('attention.js', "Attention: FactorSet symptom (obsession > 3)");
+            nScore += 1;
+        }
+        else if (factorSet.symptomFactor.interpersonal > 3) {
+            Logger.d('attention.js', "Attention: FactorSet symptom (interpersonal > 3)");
+            nScore += 1;
+        }
+
+        if (factorSet.symptomFactor.depression > 2 && factorSet.symptomFactor.anxiety > 2) {
+            Logger.d('attention.js', "Attention: FactorSet symptom (depression > 2 && anxiety > 2)");
+            nScore += 1;
+        }
+        else if (factorSet.symptomFactor.obsession > 2 && factorSet.symptomFactor.interpersonal > 2 &&
+            factorSet.symptomFactor.anxiety > 2) {
+            Logger.d('attention.js', "Attention: FactorSet symptom (obsession > 2 && interpersonal > 2 && anxiety > 2)");
+            nScore += 1;
+        }
+    }
+
     // 根据年龄就行修正
     if (attribute.age > 20 && attribute.age < 35) {
         if (nScore >= 5) {
@@ -191,7 +219,7 @@ function calc(attribute, scores, reference) {
         if (nScore >= 5) {
             attention = Attention.SpecialAttention;
             fixReference = Reference.Abnormal;
-            Logger.d('attention.js', "Attention: Fix reference to Abnormal (score>=5)");
+            Logger.d('attention.js', "Attention: Fix reference to Abnormal (score >= 5)");
         }
         else if (nScore >= 4) {
             attention = Attention.FocusedAttention;

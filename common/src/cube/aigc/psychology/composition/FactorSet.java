@@ -68,6 +68,8 @@ public class FactorSet {
 
         public double sleepDiet;
 
+        public int total;
+
         public SymptomFactor(JSONArray array) {
             this.somatization = array.getJSONObject(0).getDouble("value");
             this.obsession = array.getJSONObject(1).getDouble("value");
@@ -79,6 +81,17 @@ public class FactorSet {
             this.paranoid = array.getJSONObject(7).getDouble("value");
             this.psychosis = array.getJSONObject(8).getDouble("value");
             this.sleepDiet = array.getJSONObject(9).getDouble("value");
+
+            this.total = (int) (this.somatization * 12 +
+                    this.obsession * 10 +
+                    this.interpersonal * 9 +
+                    this.depression * 13 +
+                    this.anxiety * 10 +
+                    this.hostile * 6 +
+                    this.horror * 7 +
+                    this.paranoid * 6 +
+                    this.psychosis * 10 +
+                    this.sleepDiet * 7);
         }
 
         public JSONArray toArray() {

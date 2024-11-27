@@ -245,6 +245,15 @@ public class EvaluationReport implements JSONable {
         }
     }
 
+    /**
+     * 重算关注等级。
+     */
+    public void rollAttention() {
+        if (!this.calcAttention()) {
+            this.recheckAttention();
+        }
+    }
+
     private boolean calcAttention() {
         StringBuilder script = new StringBuilder();
         script.append("var Attribute = Java.type('cube.aigc.psychology.Attribute');\n");
@@ -253,6 +262,7 @@ public class EvaluationReport implements JSONable {
         script.append("var IndicatorRate = Java.type('cube.aigc.psychology.algorithm.IndicatorRate');\n");
         script.append("var Attention = Java.type('cube.aigc.psychology.algorithm.AttentionSuggestion');\n");
         script.append("var Score = Java.type('cube.aigc.psychology.composition.EvaluationScore');\n");
+        script.append("var FactorSet = Java.type('cube.aigc.psychology.composition.FactorSet');\n");
         script.append("var Logger = Java.type('cell.util.log.Logger');\n");
         try {
             script.append(Resource.getInstance().loadAttentionScript());
@@ -268,7 +278,7 @@ public class EvaluationReport implements JSONable {
             engine.eval(script.toString());
             Invocable invocable = (Invocable) engine;
             returnVal = (ScriptObjectMirror) invocable.invokeFunction("calc", this.attribute,
-                    this.getEvaluationScores(), this.reference);
+                    this.getEvaluationScores(), this.factorSet, this.reference);
         } catch (ScriptException | NoSuchMethodException e) {
             Logger.e(this.getClass(), "#calcAttention", e);
             return false;

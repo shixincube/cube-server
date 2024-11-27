@@ -27,9 +27,9 @@
 package cube.aigc.psychology.composition;
 
 import cell.util.Utils;
+import cell.util.log.Logger;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.algorithm.PaintingConfidence;
-import cube.util.FloatUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -118,6 +118,17 @@ public class HexagonDimensionScore {
                     this.record(HexagonDimension.MentalHealth, Utils.randomInt(70, 80));
                 }
             }
+
+            // 人际敏感
+            if (factorSet.symptomFactor.interpersonal > 2.0) {
+                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(50, 59));
+            }
+            else if (factorSet.symptomFactor.interpersonal > 1.66) {
+                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(60, 70));
+            }
+            else {
+                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(80, 90));
+            }
         }
     }
 
@@ -190,16 +201,20 @@ public class HexagonDimensionScore {
         JSONArray scores = new JSONArray();
         JSONArray descriptions = new JSONArray();
         JSONArray rates = new JSONArray();
-        for (Map.Entry<HexagonDimension, Integer> e : this.scores.entrySet()) {
-            factors.put(e.getKey().name);
-            scores.put(e.getValue().intValue());
+        try {
+            for (Map.Entry<HexagonDimension, Integer> e : this.scores.entrySet()) {
+                factors.put(e.getKey().name);
+                scores.put(e.getValue().intValue());
 
-            String desc = this.descriptions.get(e.getKey());
-            if (null != desc) {
-                descriptions.put(desc);
+                String desc = this.descriptions.get(e.getKey());
+                if (null != desc) {
+                    descriptions.put(desc);
 
-                rates.put(this.rates.get(e.getKey()));
+                    rates.put(this.rates.get(e.getKey()));
+                }
             }
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#toJSON", e);
         }
         json.put("factors", factors);
         json.put("scores", scores);

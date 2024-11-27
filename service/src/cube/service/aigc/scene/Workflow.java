@@ -140,6 +140,9 @@ public class Workflow {
 
         this.evaluationReport.getPersonalityAccelerator().reset(obligingness, conscientiousness,
                 extraversion, achievement, neuroticism);
+
+        // 重算关注等级
+        this.evaluationReport.rollAttention();
     }
 
     public boolean isUnknown() {
