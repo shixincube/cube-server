@@ -298,7 +298,10 @@ public class EvaluationReport implements JSONable {
         if (returnVal.containsKey("additionScale")) {
             String scaleName = (String) returnVal.get("additionScale");
             if (scaleName.length() > 2) {
-                this.additionScales.add(Resource.getInstance().loadScaleByName(scaleName));
+                Scale scale = Resource.getInstance().loadScaleByName(scaleName);
+                if (!this.additionScales.contains(scale)) {
+                    this.additionScales.add(scale);
+                }
             }
         }
 
@@ -525,7 +528,10 @@ public class EvaluationReport implements JSONable {
         }
 
         if (score >= 4 || this.reference == Reference.Abnormal) {
-            this.additionScales.add(Resource.getInstance().loadScaleByName("SCL-90"));
+            Scale scale = Resource.getInstance().loadScaleByName("SCL-90");
+            if (!this.additionScales.contains(scale)) {
+                this.additionScales.add(scale);
+            }
         }
 
         if (this.reference == Reference.Abnormal) {

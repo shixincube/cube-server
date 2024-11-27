@@ -188,6 +188,23 @@ public class Scale extends Questionnaire implements JSONable {
     }
 
     @Override
+    public boolean equals(Object object) {
+        if (object instanceof Scale) {
+            Scale other = (Scale) object;
+            if (other.name.equalsIgnoreCase(this.name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name.hashCode();
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = this.toCompactJSON();
         JSONArray sections = new JSONArray();

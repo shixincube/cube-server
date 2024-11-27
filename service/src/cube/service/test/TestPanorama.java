@@ -1,20 +1,20 @@
 /*
  * This source file is part of Cube.
- * <p>
+ *
  * The MIT License (MIT)
- * <p>
+ *
  * Copyright (c) 2020-2024 Ambrose Xu.
- * <p>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p>
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * <p>
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,34 +24,33 @@
  * SOFTWARE.
  */
 
-package cube.service;
+package cube.service.test;
 
-/**
- * 版本信息。
- */
-public final class Version {
+import cube.aigc.psychology.PaintingReport;
+import org.json.JSONArray;
 
-    public final static int MAJOR = 3;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
-    public final static int MINOR = 0;
+public class TestPanorama {
 
-    public final static int REVISION = 136;
+    private static String sReportDataFile = "./storage/tmp/lens_export_reports_all.json";
 
-    private Version() {
+    public static void testGeneratePanorama() {
+        List<PaintingReport> list = new ArrayList<>();
+        try {
+            byte[] data = Files.readAllBytes(Paths.get(sReportDataFile));
+            JSONArray array = new JSONArray(new String(data, StandardCharsets.UTF_8));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    /**
-     * 转版本串。
-     *
-     * @return
-     */
-    public static String toVersionString() {
-        StringBuilder buf = new StringBuilder();
-        buf.append(MAJOR);
-        buf.append(".");
-        buf.append(MINOR);
-        buf.append(".");
-        buf.append(REVISION);
-        return buf.toString();
+    public static void main(String[] args) {
+        testGeneratePanorama();
     }
 }
