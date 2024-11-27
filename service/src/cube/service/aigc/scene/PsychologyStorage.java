@@ -886,14 +886,18 @@ public class PsychologyStorage implements Storagable {
         normDimensionScore.normalization();
         */
 
-        HexagonDimensionScore dimensionScore = new HexagonDimensionScore(evaluationReport.getFullEvaluationScores(),
-                evaluationReport.getPaintingConfidence(), evaluationReport.getFactorSet());
-        HexagonDimensionScore normDimensionScore = new HexagonDimensionScore(80, 80, 80, 80, 80, 80);
+        try {
+            HexagonDimensionScore dimensionScore = new HexagonDimensionScore(evaluationReport.getFullEvaluationScores(),
+                    evaluationReport.getPaintingConfidence(), evaluationReport.getFactorSet());
+            HexagonDimensionScore normDimensionScore = new HexagonDimensionScore(80, 80, 80, 80, 80, 80);
 
-        // 描述
-        PsychologyHelper.fillDimensionScoreDescription(this.tokenizer, dimensionScore);
+            // 描述
+            PsychologyHelper.fillDimensionScoreDescription(this.tokenizer, dimensionScore);
 
-        report.setDimensionalScore(dimensionScore, normDimensionScore);
+            report.setDimensionalScore(dimensionScore, normDimensionScore);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#makeReport", e);
+        }
 
         // 生成 Markdown
         report.makeMarkdown();

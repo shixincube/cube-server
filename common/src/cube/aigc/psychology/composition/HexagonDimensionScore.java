@@ -40,21 +40,17 @@ import java.util.Map;
 
 public class HexagonDimensionScore {
 
-    private Map<HexagonDimension, Integer> scores;
+    private Map<HexagonDimension, Integer> scores = new LinkedHashMap<>();
 
-    private Map<HexagonDimension, String> descriptions;
+    private Map<HexagonDimension, String> descriptions = new LinkedHashMap<>();
 
-    private Map<HexagonDimension, Integer> rates;
+    private Map<HexagonDimension, Integer> rates = new LinkedHashMap<>();
 
     public HexagonDimensionScore() {
-        this.scores = new LinkedHashMap<>();
-        this.descriptions = new LinkedHashMap<>();
-        this.rates = new LinkedHashMap<>();
     }
 
     public HexagonDimensionScore(int mood, int cognition, int behavior, int interpersonalRelationship,
                                  int selfAssessment, int mentalHealth) {
-        this();
         this.record(HexagonDimension.Mood, mood);
         this.record(HexagonDimension.Cognition, cognition);
         this.record(HexagonDimension.Behavior, behavior);
@@ -65,7 +61,6 @@ public class HexagonDimensionScore {
 
     public HexagonDimensionScore(List<EvaluationScore> scoreList, PaintingConfidence confidence,
                                  FactorSet factorSet) {
-        this();
         HexagonDimensionScore candidate = Resource.getInstance().getHexDimProjection().calc(scoreList);
         for (HexagonDimension hd : HexagonDimension.values()) {
             this.record(hd, candidate.getDimensionScore(hd));
@@ -76,7 +71,7 @@ public class HexagonDimensionScore {
             switch (confidence.getConfidenceLevel()) {
                 case PaintingConfidence.LEVEL_HIGHER:
                     this.record(HexagonDimension.Cognition,
-                            Utils.randomInt(this.getDimensionScore(HexagonDimension.Cognition), 99));
+                            Utils.randomInt(candidate.getDimensionScore(HexagonDimension.Cognition), 99));
                     break;
                 case PaintingConfidence.LEVEL_HIGH:
                     this.record(HexagonDimension.Cognition, Utils.randomInt(80, 90));
@@ -127,7 +122,6 @@ public class HexagonDimensionScore {
     }
 
     public HexagonDimensionScore(JSONObject json) {
-        this();
         if (json.has("factors") && json.has("scores") && json.has("descriptions")) {
             // 新结构
             JSONArray factors = json.getJSONArray("factors");
@@ -170,34 +164,15 @@ public class HexagonDimensionScore {
     }
 
     public int getDimensionScore(HexagonDimension hexagonDimension) {
+        if (!this.scores.containsKey(hexagonDimension)) {
+            return 0;
+        }
         return this.scores.get(hexagonDimension);
     }
 
     public String getDimensionDescription(HexagonDimension hexagonDimension) {
         return this.descriptions.get(hexagonDimension);
     }
-
-    /*public void normalization() {
-        int max = 0;
-        for (Integer v : this.scores.values()) {
-            if (v > max) {
-                max = v;
-            }
-        }
-        max = max + max > 99 ?
-                Math.max(max, (70 + Utils.randomInt(1, 9))) : (max + max);
-
-        double[] values = new double[this.scores.size()];
-        int index = 0;
-        for (Map.Entry<HexagonDimension, Integer> entry : this.scores.entrySet()) {
-            values[index++] = entry.getValue();
-        }
-        double[] output = FloatUtils.scale(values, max);
-        index = 0;
-        for (Map.Entry<HexagonDimension, Integer> entry : this.scores.entrySet()) {
-            entry.setValue((int) Math.floor(output[index++]));
-        }
-    }*/
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -219,18 +194,12 @@ public class HexagonDimensionScore {
             factors.put(e.getKey().name);
             scores.put(e.getValue().intValue());
 
-            // 兼容旧版本
-//            if (e.getKey() == HexagonDimension.Mood) {
-//                factors.put("Emotion");
-//                scores.put(e.getValue().intValue());
-//            }
-
             String desc = this.descriptions.get(e.getKey());
             if (null != desc) {
                 descriptions.put(desc);
-            }
 
-            rates.put(this.rates.get(e.getKey()));
+                rates.put(this.rates.get(e.getKey()));
+            }
         }
         json.put("factors", factors);
         json.put("scores", scores);

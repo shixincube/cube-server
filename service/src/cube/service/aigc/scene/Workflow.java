@@ -152,37 +152,6 @@ public class Workflow {
 
         // 六维得分计算
         try {
-            /*this.dimensionScore = Resource.getInstance()
-                    .getHexDimProjection().calc(this.evaluationReport.getEvaluationScores());
-
-            List<EvaluationScore> scoreList = Resource.getInstance().getBenchmark().getEvaluationScores(age);
-            scoreList = this.filter(this.evaluationReport.getEvaluationScores(), scoreList);
-            this.normDimensionScore = Resource.getInstance().getHexDimProjection().calc(scoreList);
-
-            // 校准视觉效果
-            for (HexagonDimension dim : HexagonDimension.values()) {
-                int score = this.dimensionScore.getDimensionScore(dim);
-                if (score < 10) {
-                    this.dimensionScore.record(dim, (int) Math.round(score * 2.5));
-                }
-                else if (score < 20) {
-                    this.dimensionScore.record(dim, (int) Math.round(score * 2));
-                }
-
-                int norm = this.normDimensionScore.getDimensionScore(dim);
-                if (norm < 10) {
-                    this.normDimensionScore.record(dim, norm * 3);
-                    this.dimensionScore.record(dim, (int) Math.round(score * 1.8));
-                } else if (norm < 20) {
-                    this.normDimensionScore.record(dim, norm * 2);
-                    this.dimensionScore.record(dim, (int) Math.round(score * 1.4));
-                }
-            }
-
-            // 正则化
-            this.dimensionScore.normalization();
-            this.normDimensionScore.normalization();*/
-
             this.dimensionScore = new HexagonDimensionScore(this.evaluationReport.getFullEvaluationScores(),
                     this.evaluationReport.getPaintingConfidence(), this.evaluationReport.getFactorSet());
             this.normDimensionScore = new HexagonDimensionScore(80, 80, 80, 80, 80, 80);
