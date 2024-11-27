@@ -29,15 +29,15 @@ package cube.aigc.psychology.algorithm;
 /**
  * 算法版本号。
  */
-public class Version {
+public class AlgorithmVersion {
 
     public final static int MAJOR = 0;
 
-    public final static int MINOR = 73;
+    public final static int MINOR = 74;
 
     public final static int REVISION = 0;
 
-    private Version() {
+    private AlgorithmVersion() {
     }
 
     public static String toVersionString() {

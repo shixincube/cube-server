@@ -75,7 +75,7 @@ public class EvaluationReport implements JSONable {
 
     private boolean hesitating = false;
 
-    private String version = Version.toVersionString();
+    private String version = AlgorithmVersion.toVersionString();
 
     public EvaluationReport(Attribute attribute, Reference reference, PaintingConfidence paintingConfidence,
                             EvaluationFeature evaluationFeature) {

@@ -257,8 +257,16 @@ function calc(attribute, scores, factorSet, reference) {
                 attention = Attention.GeneralAttention;
                 Logger.d('attention.js', "Attention: General attention");
             }
+
+            if (null != factorSet && factorSet.symptomFactor.total > 160) {
+                if (attention.level == Attention.GeneralAttention.level) {
+                    attention = Attention.FocusedAttention;
+                }
+            }
         }
     }
+
+    Logger.i('attention.js', "Attention: " + attention.level + " - " + attention.description);
 
     return {
         "attention": attention,
