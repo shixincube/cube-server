@@ -331,6 +331,8 @@ public class ReportDataset {
             return false;
         }
 
+        Attribute attribute = new Attribute("male", 18, false);
+
         FileOutputStream os = null;
         boolean head = false;
 
@@ -378,7 +380,7 @@ public class ReportDataset {
                 scores = this.alignScores(scores);
                 for (EvaluationScore score : scores) {
 //                    buf.append(",").append(score.calcScore());
-                    buf.append(",").append(score.getRate().value);
+                    buf.append(",").append(score.getRate(attribute).value);
                 }
                 HexagonDimensionScore dimensionScore = report.getDimensionScore();
                 for (HexagonDimension hd : HexagonDimension.values()) {

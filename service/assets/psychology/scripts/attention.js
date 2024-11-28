@@ -161,6 +161,12 @@ function calc(attribute, scores, factorSet, reference) {
         }
     }
 
+    // Projection
+    var projectionScore = nScore;
+    // 回滚条件
+    var rollbackState = fDepressionScore < 1.0 && bOptimism;
+    Logger.d('attention.js', "Attention: Rollback state: " + rollbackState + " - " + fDepressionScore);
+
     // 通过 FactorSet 修正
     if (null != factorSet) {
         Logger.d('attention.js', "Attention: Fix with the factor set data");
@@ -190,7 +196,25 @@ function calc(attribute, scores, factorSet, reference) {
     }
 
     // 根据年龄就行修正
-    if (attribute.age > 20 && attribute.age < 35) {
+    if (attribute.age <= 16) {
+        if (rollbackState) {
+            nScore = projectionScore;
+            nScore -= 2;
+            Logger.d('attention.js', "Attention: (age <= 16) roll back -=2");
+
+            if (null != factorSet) {
+                // 回滚
+                if (factorSet.symptomFactor.total > 160) {
+                    nScore -= 1;
+                }
+
+                if (factorSet.symptomFactor.obsession > 3 || factorSet.symptomFactor.interpersonal > 3) {
+                    nScore -= 1;
+                }
+            }
+        }
+    }
+    else if (attribute.age > 20 && attribute.age < 35) {
         if (nScore >= 5) {
             nScore -= 1;
             Logger.d('attention.js', "Attention: (age > 20) -=1");
@@ -258,7 +282,7 @@ function calc(attribute, scores, factorSet, reference) {
                 Logger.d('attention.js', "Attention: General attention");
             }
 
-            if (null != factorSet && factorSet.symptomFactor.total > 160) {
+            if (null != factorSet && factorSet.symptomFactor.total > 160 && !rollbackState) {
                 if (attention.level == Attention.GeneralAttention.level) {
                     attention = Attention.FocusedAttention;
                 }

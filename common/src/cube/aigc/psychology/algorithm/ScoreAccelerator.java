@@ -26,6 +26,7 @@
 
 package cube.aigc.psychology.algorithm;
 
+import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Indicator;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.JSONable;
@@ -95,9 +96,13 @@ public class ScoreAccelerator implements JSONable {
         return list;
     }
 
-    public List<EvaluationScore> getEvaluationScores() {
+    public List<EvaluationScore> getEvaluationScores(Attribute attribute) {
         if (null != this.evaluationScoreList) {
             return this.evaluationScoreList;
+        }
+
+        if (null == attribute) {
+            attribute = new Attribute("male", 18, false);
         }
 
         List<EvaluationScore> result = new ArrayList<>();
@@ -106,7 +111,7 @@ public class ScoreAccelerator implements JSONable {
         for (Score score : this.scoreList) {
             EvaluationScore es = this.findEvaluationScore(result, score.indicator);
             if (null == es) {
-                result.add(new EvaluationScore(score.indicator, score.value, score.weight));
+                result.add(new EvaluationScore(score.indicator, score.value, score.weight, attribute));
             }
             else {
                 es.scoring(score);
@@ -127,8 +132,8 @@ public class ScoreAccelerator implements JSONable {
         return result;
     }
 
-    public EvaluationScore getEvaluationScore(Indicator indicator) {
-        List<EvaluationScore> list = this.getEvaluationScores();
+    public EvaluationScore getEvaluationScore(Indicator indicator, Attribute attribute) {
+        List<EvaluationScore> list = this.getEvaluationScores(attribute);
         for (EvaluationScore es : list) {
             if (es.indicator == indicator) {
                 return es;
@@ -161,7 +166,7 @@ public class ScoreAccelerator implements JSONable {
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
         JSONArray list = new JSONArray();
-        for (EvaluationScore score : this.getEvaluationScores()) {
+        for (EvaluationScore score : this.getEvaluationScores(null)) {
             list.put(score.toJSON());
         }
         json.put("evaluations", list);

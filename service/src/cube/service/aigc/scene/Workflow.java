@@ -63,6 +63,8 @@ public class Workflow {
 
     private AIGCService service;
 
+    private Attribute attribute;
+
     private HexagonDimensionScore dimensionScore;
 
     private HexagonDimensionScore normDimensionScore;
@@ -75,11 +77,13 @@ public class Workflow {
 
     private String unitName = ModelConfig.BAIZE_UNIT;
 
-    public Workflow(AIGCService service) {
+    public Workflow(AIGCService service, Attribute attribute) {
         this.service = service;
+        this.attribute = attribute;
     }
 
     public Workflow(EvaluationReport evaluationReport, AIGCChannel channel, AIGCService service) {
+        this.attribute = evaluationReport.getAttribute();
         this.evaluationReport = evaluationReport;
         this.channel = channel;
         this.service = service;
@@ -408,7 +412,7 @@ public class Workflow {
         for (EvaluationScore es : scoreList) {
             Logger.d(this.getClass(), "#inferScore - score: " + es.indicator.name);
 
-            String prompt = es.generateReportPrompt();
+            String prompt = es.generateReportPrompt(this.attribute);
             if (null == prompt) {
                 // 不需要进行报告推理，下一个
                 continue;
@@ -426,7 +430,7 @@ public class Workflow {
                         null, null);
             }
 
-            prompt = es.generateSuggestionPrompt();
+            prompt = es.generateSuggestionPrompt(this.attribute);
             if (null == prompt) {
                 // 不进行推理，下一个
                 continue;
@@ -445,7 +449,7 @@ public class Workflow {
             }
 
             if (null != report && null != suggestion) {
-                result.add(new ReportSection(es.indicator, es.generateWord(),
+                result.add(new ReportSection(es.indicator, es.generateWord(this.attribute),
                         report, suggestion));
 
                 if (result.size() >= maxIndicatorTexts) {

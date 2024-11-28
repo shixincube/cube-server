@@ -108,7 +108,7 @@ public class QueryRevolver {
             ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
 
             List<String> symptomContent = this.extractSymptomContent(template,
-                    paintingReport.getEvaluationReport().getEvaluationScores());
+                    paintingReport.getEvaluationReport().getEvaluationScores(), report.getAttribute());
             for (String content : symptomContent) {
                 result.append(content);
                 if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -197,7 +197,7 @@ public class QueryRevolver {
                 ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
 
                 List<String> symptomContent = this.extractSymptomContent(template,
-                        paintingReport.getEvaluationReport().getEvaluationScores());
+                        paintingReport.getEvaluationReport().getEvaluationScores(), paintingReport.getAttribute());
                 for (String content : symptomContent) {
                     result.append(content);
                     if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -292,7 +292,7 @@ public class QueryRevolver {
             ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
 
             List<String> symptomContent = this.extractSymptomContent(template,
-                    paintingReport.getEvaluationReport().getEvaluationScores());
+                    paintingReport.getEvaluationReport().getEvaluationScores(), paintingReport.getAttribute());
             for (String content : symptomContent) {
                 answer.append(content);
                 if (answer.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -367,11 +367,11 @@ public class QueryRevolver {
 //        }
     }
 
-    private List<String> extractSymptomContent(ThemeTemplate theme, List<EvaluationScore> list) {
+    private List<String> extractSymptomContent(ThemeTemplate theme, List<EvaluationScore> list, Attribute attribute) {
         List<String> result = new ArrayList<>();
 
         for (EvaluationScore es : list) {
-            String word = es.generateWord();
+            String word = es.generateWord(attribute);
             if (null == word) {
                 continue;
             }

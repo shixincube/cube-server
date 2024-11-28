@@ -26,6 +26,7 @@
 
 package cube.aigc.psychology.composition;
 
+import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Indicator;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.algorithm.Score;
@@ -61,7 +62,7 @@ public class EvaluationScore implements JSONable {
         this.indicator = indicator;
     }
 
-    public EvaluationScore(Indicator indicator, int value, double weight) {
+    public EvaluationScore(Indicator indicator, int value, double weight, Attribute attribute) {
         this.indicator = indicator;
         this.hit = 1;
         this.value = value;
@@ -75,7 +76,7 @@ public class EvaluationScore implements JSONable {
             this.negativeWeight = weight;
             this.negativeScore = Math.abs(value) * weight;
         }
-        this.rate = this.getIndicatorRate();
+        this.rate = this.getIndicatorRate(attribute);
     }
 
     public EvaluationScore(JSONObject json) {
@@ -88,13 +89,13 @@ public class EvaluationScore implements JSONable {
             this.rate = IndicatorRate.parse(json.getJSONObject("rate"));
         }
         else {
-            this.rate = this.getIndicatorRate();
+            this.rate = this.getIndicatorRate(new Attribute("male", 18, false));
         }
     }
 
-    public IndicatorRate getRate() {
+    public IndicatorRate getRate(Attribute attribute) {
         if (null == this.rate) {
-            this.rate = this.getIndicatorRate();
+            this.rate = this.getIndicatorRate(attribute);
         }
         return this.rate;
     }
@@ -138,12 +139,12 @@ public class EvaluationScore implements JSONable {
         }
     }
 
-    public String generateReportPrompt() {
+    public String generateReportPrompt(Attribute attribute) {
         if (this.hit == 0 || (this.positiveScore == 0 && this.negativeScore == 0)) {
             return null;
         }
 
-        String word = this.generateWord();
+        String word = this.generateWord(attribute);
         if (null == word || word.length() == 0) {
             return null;
         }
@@ -151,12 +152,12 @@ public class EvaluationScore implements JSONable {
         return word + "的报告描述";
     }
 
-    public String generateSuggestionPrompt() {
+    public String generateSuggestionPrompt(Attribute attribute) {
         if (this.hit == 0 || (this.positiveScore == 0 && this.negativeScore == 0)) {
             return null;
         }
 
-        String word = this.generateWord();
+        String word = this.generateWord(attribute);
         if (null == word || word.length() == 0) {
             return null;
         }
@@ -164,8 +165,8 @@ public class EvaluationScore implements JSONable {
         return word + "的建议";
     }
 
-    public String generateWord() {
-        IndicatorRate rate = this.getIndicatorRate();
+    public String generateWord(Attribute attribute) {
+        IndicatorRate rate = this.getIndicatorRate(attribute);
         StringBuilder buf = new StringBuilder();
         switch (this.indicator) {
             case Obsession:
@@ -419,7 +420,7 @@ public class EvaluationScore implements JSONable {
         return buf.toString();
     }
 
-    public IndicatorRate getIndicatorRate() {
+    public IndicatorRate getIndicatorRate(Attribute attribute) {
         double score = this.positiveScore - this.negativeScore;
 
         IndicatorRate rate = IndicatorRate.None;
@@ -434,21 +435,43 @@ public class EvaluationScore implements JSONable {
                 }
                 break;
             case Depression:
-                if (score > 0.3 && score <= 0.7) {
-                    rate = IndicatorRate.Low;
-                } else if (score > 0.7 && score <= 1.1) {
-                    rate = IndicatorRate.Medium;
-                } else if (score > 1.1) {
-                    rate = IndicatorRate.High;
+                if (attribute.age < 18) {
+                    if (score > 1.0 && score <= 1.4) {
+                        rate = IndicatorRate.Low;
+                    } else if (score > 1.4 && score <= 2.0) {
+                        rate = IndicatorRate.Medium;
+                    } else if (score > 2.0) {
+                        rate = IndicatorRate.High;
+                    }
+                }
+                else {
+                    if (score > 0.3 && score <= 0.7) {
+                        rate = IndicatorRate.Low;
+                    } else if (score > 0.7 && score <= 1.1) {
+                        rate = IndicatorRate.Medium;
+                    } else if (score > 1.1) {
+                        rate = IndicatorRate.High;
+                    }
                 }
                 break;
             case Anxiety:
-                if (score >= 0.2 && score <= 0.7) {
-                    rate = IndicatorRate.Low;
-                } else if (score > 0.7 && score <= 1.1) {
-                    rate = IndicatorRate.Medium;
-                } else if (score > 1.1) {
-                    rate = IndicatorRate.High;
+                if (attribute.age < 18) {
+                    if (score >= 0.7 && score <= 1.1) {
+                        rate = IndicatorRate.Low;
+                    } else if (score > 1.1 && score <= 1.8) {
+                        rate = IndicatorRate.Medium;
+                    } else if (score > 1.8) {
+                        rate = IndicatorRate.High;
+                    }
+                }
+                else {
+                    if (score >= 0.2 && score <= 0.7) {
+                        rate = IndicatorRate.Low;
+                    } else if (score > 0.7 && score <= 1.1) {
+                        rate = IndicatorRate.Medium;
+                    } else if (score > 1.1) {
+                        rate = IndicatorRate.High;
+                    }
                 }
                 break;
             case Hostile:
@@ -677,7 +700,8 @@ public class EvaluationScore implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("indicator", this.indicator.name);
-        json.put("rate", (null != this.rate) ? this.rate.toJSON() : this.getIndicatorRate().toJSON());
+        json.put("rate", (null != this.rate) ? this.rate.toJSON() :
+                this.getIndicatorRate(new Attribute("male", 18, false)).toJSON());
         json.put("hit", this.hit);
         json.put("value", this.value);
         json.put("positiveScore", this.positiveScore);

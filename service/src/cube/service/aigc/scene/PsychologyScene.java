@@ -122,7 +122,7 @@ public class PsychologyScene {
             PsychologyDataManager.getInstance().setService(aigcService);
 
             // 激活数据集
-            Workflow workflow = new Workflow(aigcService);
+            Workflow workflow = new Workflow(aigcService, new Attribute("male", 18, false));
             String r = workflow.infer("白泽京智");
             Logger.i(this.getClass(), "#start - Active dataset: " + r);
         } catch (Exception e) {
@@ -862,7 +862,7 @@ public class PsychologyScene {
     }
 
     private AIGCStateCode processScaleReport(ScaleReportTask task) {
-        Workflow workflow = new Workflow(this.aigcService);
+        Workflow workflow = new Workflow(this.aigcService, task.scaleReport.getAttribute());
 
         for (ScaleFactor factor : task.scaleReport.getFactors()) {
             ScalePrompt.Factor prompt = task.scale.getResult().prompt.getFactor(factor.name);

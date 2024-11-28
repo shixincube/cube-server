@@ -240,7 +240,7 @@ public class EvaluationReport implements JSONable {
         Logger.i(this.getClass(), "#build - reference: " + this.reference.name);
 
         // 判断 hesitating
-        if (this.representationList.size() <= 7 || this.scoreAccelerator.getEvaluationScores().size() <= 5) {
+        if (this.representationList.size() <= 7 || this.scoreAccelerator.getEvaluationScores(this.attribute).size() <= 5) {
             this.hesitating = true;
         }
     }
@@ -324,7 +324,7 @@ public class EvaluationReport implements JSONable {
         boolean optimism = false;
         boolean pessimism = false;
 
-        for (EvaluationScore es : this.scoreAccelerator.getEvaluationScores()) {
+        for (EvaluationScore es : this.scoreAccelerator.getEvaluationScores(this.attribute)) {
             switch (es.indicator) {
                 case Psychosis:
                     if (es.positiveScore > 0.9) {
@@ -666,7 +666,7 @@ public class EvaluationReport implements JSONable {
             }
         }
 
-        List<EvaluationScore> evaluationScores = this.scoreAccelerator.getEvaluationScores();
+        List<EvaluationScore> evaluationScores = this.scoreAccelerator.getEvaluationScores(this.attribute);
 
         // 按照优先级排序
         Collections.sort(evaluationScores, new Comparator<EvaluationScore>() {
@@ -734,7 +734,7 @@ public class EvaluationReport implements JSONable {
     }
 
     public List<EvaluationScore> getEvaluationScores() {
-        List<EvaluationScore> result = new ArrayList<>(this.scoreAccelerator.getEvaluationScores());
+        List<EvaluationScore> result = new ArrayList<>(this.scoreAccelerator.getEvaluationScores(this.attribute));
         // 排序
         Collections.sort(result, new Comparator<EvaluationScore>() {
             @Override
@@ -752,7 +752,7 @@ public class EvaluationReport implements JSONable {
                 continue;
             }
 
-            EvaluationScore score = this.scoreAccelerator.getEvaluationScore(indicator);
+            EvaluationScore score = this.scoreAccelerator.getEvaluationScore(indicator, this.attribute);
             if (null != score) {
                 list.add(score);
             }
@@ -764,7 +764,7 @@ public class EvaluationReport implements JSONable {
     }
 
     public int numEvaluationScores() {
-        return this.scoreAccelerator.getEvaluationScores().size();
+        return this.scoreAccelerator.getEvaluationScores(this.attribute).size();
     }
 
     @Override
