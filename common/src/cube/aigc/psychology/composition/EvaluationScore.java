@@ -426,12 +426,23 @@ public class EvaluationScore implements JSONable {
         IndicatorRate rate = IndicatorRate.None;
         switch (this.indicator) {
             case Obsession:
-                if (score >= 0.1 && score <= 0.8) {
-                    rate = IndicatorRate.Low;
-                } else if (score > 0.8 && score <= 1.2) {
-                    rate = IndicatorRate.Medium;
-                } else if (score > 1.2) {
-                    rate = IndicatorRate.High;
+                if (attribute.age < 18) {
+                    if (score >= 0.6 && score <= 1.0) {
+                        rate = IndicatorRate.Low;
+                    } else if (score > 1.0 && score <= 1.6) {
+                        rate = IndicatorRate.Medium;
+                    } else if (score > 1.6) {
+                        rate = IndicatorRate.High;
+                    }
+                }
+                else {
+                    if (score >= 0.1 && score <= 0.8) {
+                        rate = IndicatorRate.Low;
+                    } else if (score > 0.8 && score <= 1.2) {
+                        rate = IndicatorRate.Medium;
+                    } else if (score > 1.2) {
+                        rate = IndicatorRate.High;
+                    }
                 }
                 break;
             case Depression:
@@ -456,11 +467,11 @@ public class EvaluationScore implements JSONable {
                 break;
             case Anxiety:
                 if (attribute.age < 18) {
-                    if (score >= 0.7 && score <= 1.1) {
+                    if (score >= 0.7 && score <= 0.9) {
                         rate = IndicatorRate.Low;
-                    } else if (score > 1.1 && score <= 1.8) {
+                    } else if (score > 0.9 && score <= 1.1) {
                         rate = IndicatorRate.Medium;
-                    } else if (score > 1.8) {
+                    } else if (score > 1.1) {
                         rate = IndicatorRate.High;
                     }
                 }
@@ -639,22 +650,29 @@ public class EvaluationScore implements JSONable {
                 }
                 break;
             case Idealism:
-                if (score >= 0.3) {
+                if (score >= 0.32) {
                     rate = IndicatorRate.High;
                 }
                 break;
             case Realism:
-                if (score >= 0.3) {
+                if (score >= 0.31) {
                     rate = IndicatorRate.High;
                 }
                 break;
             case Optimism:
-                if (score > 0.1) {
-                    rate = IndicatorRate.High;
+                if (attribute.age < 18) {
+                    if (score > 1.2) {
+                        rate = IndicatorRate.High;
+                    }
+                }
+                else {
+                    if (score > 0.9) {
+                        rate = IndicatorRate.High;
+                    }
                 }
                 break;
             case Pessimism:
-                if (score > 0.1) {
+                if (score > 0.2) {
                     rate = IndicatorRate.High;
                 }
                 break;

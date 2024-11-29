@@ -63,27 +63,26 @@ public class HexagonDimensionScore {
                                  FactorSet factorSet) {
         HexagonDimensionScore candidate = Resource.getInstance().getHexDimProjection().calc(scoreList);
         for (HexagonDimension hd : HexagonDimension.values()) {
-            this.record(hd, candidate.getDimensionScore(hd));
+            this.record(hd, candidate.getDimensionScore(hd) > 90 ? 89 : candidate.getDimensionScore(hd));
         }
 
         if (null != confidence) {
             // 认知
             switch (confidence.getConfidenceLevel()) {
                 case PaintingConfidence.LEVEL_HIGHER:
-                    this.record(HexagonDimension.Cognition,
-                            Utils.randomInt(candidate.getDimensionScore(HexagonDimension.Cognition), 99));
+                    this.record(HexagonDimension.Cognition, Utils.randomInt(80, 89));
                     break;
                 case PaintingConfidence.LEVEL_HIGH:
-                    this.record(HexagonDimension.Cognition, Utils.randomInt(80, 90));
+                    this.record(HexagonDimension.Cognition, Utils.randomInt(75, 80));
                     break;
                 case PaintingConfidence.LEVEL_NORMAL:
-                    this.record(HexagonDimension.Cognition, Utils.randomInt(70, 80));
+                    this.record(HexagonDimension.Cognition, Utils.randomInt(70, 75));
                     break;
                 case PaintingConfidence.LEVEL_LOW:
                     this.record(HexagonDimension.Cognition, Utils.randomInt(60, 70));
                     break;
                 case PaintingConfidence.LEVEL_LOWER:
-                    this.record(HexagonDimension.Cognition, Utils.randomInt(50, 60));
+                    this.record(HexagonDimension.Cognition, Utils.randomInt(55, 60));
                     break;
                 default:
                     break;
@@ -94,7 +93,7 @@ public class HexagonDimensionScore {
             // 情绪
             if (factorSet.affectFactor.positive > factorSet.affectFactor.negative) {
                 if (factorSet.affectFactor.positive - factorSet.affectFactor.negative > 10) {
-                    this.record(HexagonDimension.Mood, Utils.randomInt(80, 90));
+                    this.record(HexagonDimension.Mood, Utils.randomInt(80, 89));
                 }
                 else {
                     this.record(HexagonDimension.Mood, Utils.randomInt(70, 80));
@@ -102,7 +101,7 @@ public class HexagonDimensionScore {
             }
             else {
                 if (factorSet.affectFactor.negative - factorSet.affectFactor.positive > 10) {
-                    this.record(HexagonDimension.Mood, Utils.randomInt(50, 60));
+                    this.record(HexagonDimension.Mood, Utils.randomInt(55, 60));
                 }
                 else {
                     this.record(HexagonDimension.Mood, Utils.randomInt(60, 70));
@@ -111,7 +110,7 @@ public class HexagonDimensionScore {
 
             // 心理健康
             if (factorSet.calcSymptomTotal() > 160) {
-                this.record(HexagonDimension.MentalHealth, Utils.randomInt(50, 59));
+                this.record(HexagonDimension.MentalHealth, Utils.randomInt(55, 59));
             }
             else {
                 if (this.getDimensionScore(HexagonDimension.MentalHealth) < 70) {
@@ -121,13 +120,13 @@ public class HexagonDimensionScore {
 
             // 人际敏感
             if (factorSet.symptomFactor.interpersonal > 2.0) {
-                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(50, 59));
+                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(55, 59));
             }
             else if (factorSet.symptomFactor.interpersonal > 1.66) {
                 this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(60, 70));
             }
             else {
-                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(80, 90));
+                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(80, 89));
             }
         }
     }
