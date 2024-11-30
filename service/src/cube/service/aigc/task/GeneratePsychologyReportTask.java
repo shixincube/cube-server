@@ -32,6 +32,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.composition.Usage;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.FileLabel;
@@ -40,6 +41,7 @@ import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.scene.PaintingReportListener;
+import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.ScaleReportListener;
 import org.json.JSONObject;
 
@@ -70,12 +72,14 @@ public class GeneratePsychologyReportTask extends ServiceTask {
             String fileCode = null;
             String themeName = null;
             int maxIndicatorTexts = 10;
+            final StringBuilder remote = new StringBuilder();
 
             try {
                 attribute = new Attribute(packet.data.getJSONObject("attribute"));
                 fileCode = packet.data.getString("fileCode");
                 themeName = packet.data.getString("theme");
                 maxIndicatorTexts = packet.data.has("indicators") ? packet.data.getInt("indicators") : 10;
+                remote.append(packet.data.has("remote") ? packet.data.getString("remote") : "");
             } catch (Exception e) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -117,6 +121,9 @@ public class GeneratePsychologyReportTask extends ServiceTask {
                         @Override
                         public void onReportEvaluateCompleted(PaintingReport report) {
                             Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted - " + token);
+
+                            Usage usage = new Usage(service.getToken(token), remote.toString(), report);
+                            PsychologyScene.getInstance().recordUsage(usage);
                         }
 
                         @Override
@@ -137,9 +144,11 @@ public class GeneratePsychologyReportTask extends ServiceTask {
         }
         else if (packet.data.has("scaleSn")) {
             long scaleSn = 0;
+            final StringBuilder remote = new StringBuilder();
 
             try {
                 scaleSn = packet.data.getLong("scaleSn");
+                remote.append(packet.data.has("remote") ? packet.data.getString("remote") : "");
             } catch (Exception e) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -158,6 +167,13 @@ public class GeneratePsychologyReportTask extends ServiceTask {
                 @Override
                 public void onReportEvaluateCompleted(ScaleReport report) {
                     Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted - " + token);
+
+                    try {
+                        Usage usage = new Usage(service.getToken(token), remote.toString(), report);
+                        PsychologyScene.getInstance().recordUsage(usage);
+                    } catch (Exception e) {
+                        Logger.e(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted", e);
+                    }
                 }
 
                 @Override

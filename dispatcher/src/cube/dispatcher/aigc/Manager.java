@@ -1818,8 +1818,9 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     /**
-     * 执行心理学绘图预测。
+     * 生成心理测验报告。
      *
+     * @param remote
      * @param token
      * @param attribute
      * @param fileCode
@@ -1827,9 +1828,10 @@ public class Manager implements Tickable, PerformerListener {
      * @param indicatorTexts
      * @return
      */
-    public PaintingReport generatePsychologyReport(String token, Attribute attribute,
+    public PaintingReport generatePsychologyReport(String remote, String token, Attribute attribute,
                                                    String fileCode, String theme, int indicatorTexts) {
         JSONObject data = new JSONObject();
+        data.put("remote", remote);
         data.put("attribute", attribute.toJSON());
         data.put("fileCode", fileCode);
         data.put("theme", theme);
@@ -1855,8 +1857,17 @@ public class Manager implements Tickable, PerformerListener {
         return report;
     }
 
-    public ScaleReport generatePsychologyReport(String token, long scaleSn) {
+    /**
+     * 生成心理测验报告。
+     *
+     * @param remote
+     * @param token
+     * @param scaleSn
+     * @return
+     */
+    public ScaleReport generatePsychologyReport(String remote, String token, long scaleSn) {
         JSONObject data = new JSONObject();
+        data.put("remote", remote);
         data.put("scaleSn", scaleSn);
 
         Packet packet = new Packet(AIGCAction.GeneratePsychologyReport.name, data);

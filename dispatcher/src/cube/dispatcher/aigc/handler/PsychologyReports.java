@@ -71,8 +71,8 @@ public class PsychologyReports extends ContextHandler {
                     int indicatorTexts = data.has("indicatorTexts") ? data.getInt("indicatorTexts") : 10;
 
                     PaintingReport report =
-                            Manager.getInstance().generatePsychologyReport(token, attribute, fileCode,
-                                    theme, indicatorTexts);
+                            Manager.getInstance().generatePsychologyReport(request.getRemoteHost(), token, attribute,
+                                    fileCode, theme, indicatorTexts);
                     if (null != report) {
                         this.respondOk(response, report.toJSON());
                     }
@@ -81,7 +81,8 @@ public class PsychologyReports extends ContextHandler {
                     }
                 }
                 else if (data.has("scaleSn")) {
-                    ScaleReport report = Manager.getInstance().generatePsychologyReport(token, data.getLong("scaleSn"));
+                    ScaleReport report = Manager.getInstance().generatePsychologyReport(request.getRemoteHost(), token,
+                            data.getLong("scaleSn"));
                     if (null != report) {
                         this.respondOk(response, report.toJSON());
                     }

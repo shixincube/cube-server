@@ -30,6 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.*;
+import cube.auth.AuthToken;
 import cube.common.Storagable;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -68,6 +69,8 @@ public class PsychologyStorage implements Storagable {
     private final String paintingLabelTable = "psychology_painting_label";
 
     private final String paintingReportManagementTable = "psychology_painting_report_mgmt";
+
+    private final String usageTable = "psychology_usage";
 
     private final StorageField[] reportFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
@@ -271,6 +274,39 @@ public class PsychologyStorage implements Storagable {
             })
     };
 
+    private final StorageField[] usageFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("cid", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("token", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("remote", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("query", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("query_type", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("query_tokens", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("completion_tokens", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("completion_sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
     private Storage storage;
 
     private Tokenizer tokenizer;
@@ -357,6 +393,13 @@ public class PsychologyStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.paintingReportManagementTable, this.paintingReportManagementFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.paintingReportManagementTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.usageTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.usageTable, this.usageFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.usageTable + "' successfully");
             }
         }
 
@@ -789,6 +832,21 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("state", state)
         }, new Conditional[] {
                 Conditional.createEqualTo("report_sn", reportSn)
+        });
+    }
+
+    public boolean writeUsage(long cid, String token, long timestamp, String remote, String query,
+                              String queryType, long queryTokens, long completionTokens, long completionSN) {
+        return this.storage.executeInsert(this.usageTable, new StorageField[] {
+                new StorageField("cid", cid),
+                new StorageField("token", token),
+                new StorageField("timestamp", timestamp),
+                new StorageField("remote", remote),
+                new StorageField("query", query),
+                new StorageField("query_type", queryType),
+                new StorageField("query_tokens", queryTokens),
+                new StorageField("completion_tokens", completionTokens),
+                new StorageField("completion_sn", completionSN),
         });
     }
 

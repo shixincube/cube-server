@@ -50,7 +50,7 @@ public abstract class Report implements JSONable {
 
     protected Attribute attribute;
 
-    protected String summary;
+    protected String summary = "";
 
     public Report(long contactId, Attribute attribute) {
         this.sn = Utils.generateSerialNumber();

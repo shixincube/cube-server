@@ -1806,25 +1806,25 @@ public class AIGCService extends AbstractModule {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(token);
         if (null == authToken) {
-            Logger.w(this.getClass(), "#generatePsychologyReport - Token error: " + token);
+            Logger.w(this.getClass(), "#generatePaintingReport - Token error: " + token);
             return null;
         }
 
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
         if (null == fileStorage) {
-            Logger.e(this.getClass(), "#generatePsychologyReport - File storage service is not ready");
+            Logger.e(this.getClass(), "#generatePaintingReport - File storage service is not ready");
             return null;
         }
 
         GetFile getFile = new GetFile(authToken.getDomain(), fileCode);
         JSONObject fileLabelJson = fileStorage.notify(getFile);
         if (null == fileLabelJson) {
-            Logger.e(this.getClass(), "#generatePsychologyReport - Get file failed: " + fileCode);
+            Logger.e(this.getClass(), "#generatePaintingReport - Get file failed: " + fileCode);
             return null;
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#generatePsychologyReport - max indicator texts: " + maxIndicatorTexts +
+            Logger.d(this.getClass(), "#generatePaintingReport - max indicator texts: " + maxIndicatorTexts +
                     " , file: " + fileCode);
         }
 

@@ -159,6 +159,11 @@ public class PsychologyScene {
         return this.unitName;
     }
 
+    public boolean recordUsage(Usage usage) {
+        return this.storage.writeUsage(usage.cid, usage.token, usage.timestamp, usage.remoteHost, usage.query,
+                usage.queryType, usage.queryTokens, usage.completionTokens, usage.completionSN);
+    }
+
     public boolean checkPsychologyPainting(AuthToken authToken, String fileCode) {
         FileLabel fileLabel = this.aigcService.getFile(authToken.getDomain(), fileCode);
         if (null == fileLabel) {
@@ -377,6 +382,9 @@ public class PsychologyScene {
 
                     // 设置绘画属性
                     painting.setAttribute(reportTask.attribute);
+
+                    // 关联绘画
+                    reportTask.report.painting = painting;
 
                     // 绘图预测完成
                     reportTask.listener.onPaintingPredictCompleted(reportTask.report, reportTask.fileLabel, painting);
