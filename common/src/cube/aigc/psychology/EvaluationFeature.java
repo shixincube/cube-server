@@ -51,8 +51,8 @@ public class EvaluationFeature {
         this.fiveFactors = new ArrayList<>();
     }
 
-    public void addFeature(Term term, Tendency tendency) {
-        this.features.add(new Feature(term, tendency));
+    public void addFeature(String description, Term term, Tendency tendency) {
+        this.features.add(new Feature(description, term, tendency));
     }
 
     public List<Feature> getFeatures() {
@@ -120,11 +120,14 @@ public class EvaluationFeature {
 
     public class Feature {
 
+        public String description;
+
         public Term term;
 
         public Tendency tendency;
 
-        public Feature(Term term, Tendency tendency) {
+        public Feature(String description, Term term, Tendency tendency) {
+            this.description = description;
             this.term = term;
             this.tendency = tendency;
         }

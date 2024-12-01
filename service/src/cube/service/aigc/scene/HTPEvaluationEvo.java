@@ -32,16 +32,12 @@ import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.PaintingConfidence;
 import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
-import cube.aigc.psychology.composition.BigFiveFactor;
 import cube.aigc.psychology.composition.FrameStructure;
 import cube.aigc.psychology.composition.SpaceLayout;
-import cube.aigc.psychology.composition.Texture;
-import cube.aigc.psychology.material.*;
+import cube.aigc.psychology.material.Thing;
 import cube.aigc.psychology.material.other.OtherSet;
-import cube.aigc.psychology.material.person.Leg;
 import cube.util.FloatUtils;
 import cube.vision.BoundingBox;
-import cube.vision.Point;
 import cube.vision.Size;
 
 import java.util.ArrayList;
@@ -116,7 +112,7 @@ public class HTPEvaluationEvo extends Evaluation {
             int num = Utils.randomInt(3, 5);
             for (int i = 0; i < num; ++i) {
                 int index = Utils.randomInt(0, Term.values().length - 1);
-                result.addFeature(Term.values()[index], Tendency.Positive);
+                result.addFeature("", Term.values()[index], Tendency.Positive);
             }
             report = new EvaluationReport(this.painting.getAttribute(), this.reference,
                     new PaintingConfidence(this.painting), result);
@@ -128,6 +124,7 @@ public class HTPEvaluationEvo extends Evaluation {
     private EvaluationFeature evalSpaceStructure() {
         EvaluationFeature result = new EvaluationFeature();
 
+        /*
         // 画面大小比例
         double areaRatio = this.spaceLayout.getAreaRatio();
 
@@ -670,7 +667,7 @@ public class HTPEvaluationEvo extends Evaluation {
                 this.reference = Reference.Abnormal;
                 Logger.d(this.getClass(), "#evalSpaceStructure - Abnormal: 画幅大面积涂鸦且图形稀疏");
             }
-        }
+        }*/
 
         return result;
     }
@@ -678,6 +675,7 @@ public class HTPEvaluationEvo extends Evaluation {
     private EvaluationFeature evalFrameStructure() {
         EvaluationFeature result = new EvaluationFeature();
 
+        /*
         FrameStructureDescription description = this.calcFrameStructure(this.spaceLayout.getPaintingBox());
         if (description.isWholeTop()) {
             // 整体顶部
@@ -876,7 +874,7 @@ public class HTPEvaluationEvo extends Evaluation {
         symmetry = this.calcSymmetry(this.painting.getPersons());
         if (symmetry) {
             result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.6, 0.7));
-        }
+        }*/
 
         return result;
     }
@@ -887,7 +885,7 @@ public class HTPEvaluationEvo extends Evaluation {
             return result;
         }
 
-        List<House> houseList = this.painting.getHouses();
+        /*List<House> houseList = this.painting.getHouses();
         for (House house : houseList) {
             // 立体感
             if (house.hasSidewall()) {
@@ -1068,7 +1066,7 @@ public class HTPEvaluationEvo extends Evaluation {
             Logger.d(this.getClass(), "#evalHouse - Number of houses : " + houseList.size());
             result.addScore(Indicator.Anxiety, -1, FloatUtils.random(0.3, 0.4));
             result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.6, 0.7));
-        }
+        }*/
 
         return result;
     }
@@ -1080,7 +1078,7 @@ public class HTPEvaluationEvo extends Evaluation {
         }
 
         // 整个画面里没有树干
-        boolean hasTrunk = false;
+        /*boolean hasTrunk = false;
 
         List<Tree> treeList = this.painting.getTrees();
         for (Tree tree : treeList) {
@@ -1243,12 +1241,12 @@ public class HTPEvaluationEvo extends Evaluation {
                     result.addFeature(Term.Childish, Tendency.Positive);
                 }
             }
-            /* 树冠存在识别失败的可能性
-            else {
-                // 安全感缺失
-                result.addFeature(Comment.SenseOfSecurity, Tendency.Negative);
-                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.6, 0.7));
-            }*/
+            树冠存在识别失败的可能性
+//            else {
+//                // 安全感缺失
+//                result.addFeature(Comment.SenseOfSecurity, Tendency.Negative);
+//                result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.6, 0.7));
+//            }
 
             // 果实
             if (tree.hasFruit()) {
@@ -1317,7 +1315,7 @@ public class HTPEvaluationEvo extends Evaluation {
             result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
 
             result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(8.0, 8.5));
-        }
+        }*/
 
         return result;
     }
@@ -1328,7 +1326,7 @@ public class HTPEvaluationEvo extends Evaluation {
             return result;
         }
 
-        int numStickMan = 0;
+        /*int numStickMan = 0;
         for (Person person : this.painting.getPersons()) {
             if (person instanceof StickMan) {
                 // 火柴人
@@ -1576,7 +1574,7 @@ public class HTPEvaluationEvo extends Evaluation {
 //                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
 //                Logger.d(this.getClass(), "#evalPerson - Person is doodle - \n" + person.doodle.toJSON().toString(4));
 //            }
-        }
+        }*/
 
         return result;
     }
@@ -1586,7 +1584,7 @@ public class HTPEvaluationEvo extends Evaluation {
 
         OtherSet other = this.painting.getOther();
 
-        int counter = 0;
+        /*int counter = 0;
 
         if (other.has(Label.Table)) {
             // 桌子
@@ -2017,7 +2015,7 @@ public class HTPEvaluationEvo extends Evaluation {
         if (counter >= 2) {
             result.addFeature(Term.Creativity, Tendency.Positive);
             result.addScore(Indicator.Creativity, counter, FloatUtils.random(0.7, 0.8));
-        }
+        }*/
 
         return result;
     }

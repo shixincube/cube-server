@@ -80,7 +80,17 @@ public class Usage implements JSONable {
         this.completionSN = report.sn;
     }
 
-    public Usage() {
+    public Usage(long cid, String token, long timestamp, String remoteHost, String query, String queryType,
+                 long queryTokens, long completionTokens, long completionSN) {
+        this.cid = cid;
+        this.token = token;
+        this.timestamp = timestamp;
+        this.remoteHost = remoteHost;
+        this.query = query;
+        this.queryType = queryType;
+        this.queryTokens = queryTokens;
+        this.completionTokens = completionTokens;
+        this.completionSN = completionSN;
     }
 
     @Override
