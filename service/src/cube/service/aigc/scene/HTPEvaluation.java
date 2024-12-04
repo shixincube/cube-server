@@ -54,7 +54,7 @@ import java.util.List;
  */
 public class HTPEvaluation extends Evaluation {
 
-    private final double houseAreaRatioThreshold = 0.069;
+    private double houseAreaRatioThreshold = 0.069;
 
     private final double treeAreaRatioThreshold = 0.049;
 
@@ -97,6 +97,10 @@ public class HTPEvaluation extends Evaluation {
                 report = new EvaluationReport(this.painting.getAttribute(), this.reference,
                         new PaintingConfidence(this.painting), list);
                 return report;
+            }
+
+            if (this.painting.getAttribute().age < 16) {
+                this.houseAreaRatioThreshold = 0.055;
             }
 
             List<EvaluationFeature> results = new ArrayList<>();
@@ -769,13 +773,14 @@ public class HTPEvaluation extends Evaluation {
 
                 if (texture.isValid()) {
                     // 判断画面涂鸦效果
-                    if (texture.density > 0.8 && texture.max < 2.0 && texture.hierarchy > 0.02) {
+                    if (texture.avg >= 2.0 && texture.density > 0.8 && texture.hierarchy > 0.02) {
                         doodles += 1;
                     }
-                    else if (texture.density >= 0.5 && texture.max >= 4.0) {
+                    else if (texture.density >= 0.5 && texture.max >= 5.0) {
                         doodles += 1;
                     }
 
+                    // 判断画面稀疏感
                     if ((texture.max >= 2.0 || texture.max == 0.0) && texture.density < 0.8) {
                         // max 大于2或者等于0画面线条可能很粗，不判断画面疏密性
                         sparseness -= 1;
@@ -809,29 +814,44 @@ public class HTPEvaluation extends Evaluation {
                 sparseness -= 1;
             }
 
-            if (doodles >= 2) {
+            if (doodles >= 3) {
+                // 画面超过1/2画幅涂鸦
+                String desc = "画面中大部分画幅内容出现涂鸦";
+                result.addFeature(desc, Term.Anxiety, Tendency.Positive);
+
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.8, 0.9));
+
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.0, 5.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(8.0, 9.0));
+                if (printBigFive) {
+                    System.out.println("CP-099");
+                }
+            }
+            else if (doodles >= 2) {
                 // 画面有1/2画幅涂鸦
+                Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
+
                 String desc = "画面中部分画幅内容出现涂鸦";
                 result.addFeature(desc, Term.Anxiety, Tendency.Positive);
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.8, 0.9));
-                Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
 
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.0, 5.0));
-                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.0, 9.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.0, 8.0));
                 if (printBigFive) {
                     System.out.println("CP-020");
                 }
             }
             else if (doodles >= 1) {
                 // 画面有1/4画幅涂鸦
+                Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
+
                 String desc = "画面中小部分画幅内容出现涂鸦";
                 result.addFeature(desc, Term.Anxiety, Tendency.Positive);
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.0, 0.01));
-                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.4, 0.5));
-                Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.3, 0.4));
 
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
                 result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(5.0, 5.5));
@@ -1792,11 +1812,12 @@ public class HTPEvaluation extends Evaluation {
             // 判断树是否涂鸦
             if (tree.isDoodle()) {
                 // 涂鸦的树
+                Logger.d(this.getClass(), "#evalTree - Tree is doodle - \n" + tree.texture.toJSON().toString(4));
+
                 ++countTreeDoodle;
 
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
-                Logger.d(this.getClass(), "#evalTree - Tree is doodle - \n" + tree.texture.toJSON().toString(4));
 
                 result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(6.5, 7.0));
                 result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(5.0, 5.5));

@@ -33,7 +33,7 @@ public class AlgorithmVersion {
 
     public final static int MAJOR = 0;
 
-    public final static int MINOR = 75;
+    public final static int MINOR = 76;
 
     public final static int REVISION = 0;
 

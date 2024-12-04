@@ -78,14 +78,19 @@ public class Material implements JSONable {
         // 涂鸦特征：轮廓密度高，层密度低
         if (this.texture.isValid()) {
             // 判断最大值
-            if (this.texture.max >= 1.0) {
+            if (this.texture.avg > 2.0) {
                 // 判断标准差和层密度
                 if (this.texture.standardDeviation >= 0.4 && this.texture.hierarchy <= 0.03) {
                     return true;
                 }
-                else if (this.texture.density >= 0.5) {
+            }
+            else if (this.texture.max >= 1.0 && this.texture.max < 2.0) {
+                if (this.texture.hierarchy <= 0.03 && this.texture.density >= 0.3 && this.texture.density < 0.99) {
                     return true;
                 }
+//                else if (this.texture.density >= 0.5) {
+//                    return true;
+//                }
             }
         }
 

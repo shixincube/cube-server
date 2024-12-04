@@ -467,11 +467,11 @@ public class EvaluationScore implements JSONable {
                 break;
             case Anxiety:
                 if (attribute.age < 18) {
-                    if (score >= 0.7 && score <= 0.9) {
+                    if (score >= 0.8 && score <= 1.2) {
                         rate = IndicatorRate.Low;
-                    } else if (score > 0.9 && score <= 1.1) {
+                    } else if (score > 1.2 && score <= 1.6) {
                         rate = IndicatorRate.Medium;
-                    } else if (score > 1.1) {
+                    } else if (score > 1.6) {
                         rate = IndicatorRate.High;
                     }
                 }
