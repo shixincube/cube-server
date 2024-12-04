@@ -98,7 +98,7 @@ public enum Indicator {
     /**
      * 情绪。
      */
-    Emotion("情绪", "Emotion", 63),
+    Mood("情绪", "Mood", 63),
 
     /**
      * 自我意识。
@@ -246,6 +246,10 @@ public enum Indicator {
             if (indicator.name.equals(valueOrName) || indicator.code.equalsIgnoreCase(valueOrName)) {
                 return indicator;
             }
+        }
+
+        if (valueOrName.equalsIgnoreCase("Emotion")) {
+            return Mood;
         }
 
         return Unknown;

@@ -53,14 +53,14 @@ public class RepresentationStrategy {
             case Idealization:
                 return Indicator.Idealism;
             case DelicateEmotions:
-                return Indicator.Emotion;
+                return Indicator.Mood;
             case SelfExistence:
                 return Indicator.SelfConsciousness;
             case Luxurious:
                 return Indicator.Realism;
             case SenseOfSecurity:
                 return Indicator.SenseOfSecurity;
-            case HighPressure:
+            case MentalStress:
             case ExternalPressure:
                 return Indicator.Stress;
             case SelfControl:

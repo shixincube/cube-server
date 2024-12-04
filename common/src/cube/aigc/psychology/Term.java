@@ -62,6 +62,11 @@ public enum Term {
     Narcissism("自恋"),
 
     /**
+     * 自满。
+     */
+    Complacent("自满"),
+
+    /**
      * 社会适应性。
      */
     SocialAdaptability("社会适应性"),
@@ -112,6 +117,11 @@ public enum Term {
     Idealization("理想化"),
 
     /**
+     * 现实感。
+     */
+    Realization("现实感"),
+
+    /**
      * 本能。
      */
     Instinct("本能"),
@@ -159,7 +169,7 @@ public enum Term {
     /**
      * 心理压力。
      */
-    HighPressure("心理压力"),
+    MentalStress("心理压力"),
 
     /**
      * 外部压力。
@@ -194,7 +204,7 @@ public enum Term {
     /**
      * 情绪不安。
      */
-    EmotionalDisturbance("情绪不安"),
+    MoodDisturbance("情绪不安"),
 
     /**
      * 依赖性。
@@ -255,6 +265,11 @@ public enum Term {
      * 抑郁。
      */
     Depression("抑郁"),
+
+    /**
+     * 焦虑。
+     */
+    Anxiety("焦虑"),
 
     /**
      * 创造力。

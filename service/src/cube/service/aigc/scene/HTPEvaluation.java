@@ -140,12 +140,13 @@ public class HTPEvaluation extends Evaluation {
         if (areaRatio > 0) {
             if (areaRatio <= 0.09) {
                 // 画幅小，偏模
-                String desc = "画面的画幅相对画布面积非常小";
                 this.reference = Reference.Abnormal;
                 Logger.d(this.getClass(), "#evalSpaceStructure - Abnormal: 画幅小");
 
+                String desc = "画面的画幅相对画布面积非常小";
                 result.addFeature(desc, Term.SelfConfidence, Tendency.Negative);
-                result.addFeature(desc, Term.Depression, Tendency.Negative);
+                result.addFeature(desc, Term.SelfExistence, Tendency.Negative);
+                result.addFeature(desc, Term.SenseOfSecurity, Tendency.Negative);
 
                 result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.5, 0.6));
@@ -159,9 +160,8 @@ public class HTPEvaluation extends Evaluation {
             }
             else if (areaRatio < (1.0d / 6.0d)) {
                 String desc = "画面的画幅相对画布面积较小";
-
-                result.addFeature(desc, Term.SelfEsteem, Tendency.Negative);
                 result.addFeature(desc, Term.SelfConfidence, Tendency.Negative);
+                result.addFeature(desc, Term.SelfExistence, Tendency.Negative);
                 result.addFeature(desc, Term.SocialAdaptability, Tendency.Negative);
 
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.4, 0.5));
@@ -175,8 +175,9 @@ public class HTPEvaluation extends Evaluation {
             }
             else if (areaRatio >= 0.7d) {
                 String desc = "画面的画幅占画布整体面积较大";
-
+                result.addFeature(desc, Term.SelfExistence, Tendency.Positive);
                 result.addFeature(desc, Term.Extroversion, Tendency.Positive);
+                result.addFeature(desc, Term.Defensiveness, Tendency.Positive);
 
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.Narcissism, 1, FloatUtils.random(0.2, 0.3));
@@ -192,8 +193,9 @@ public class HTPEvaluation extends Evaluation {
             }
             else if (areaRatio >= 0.667d) {
                 String desc = "画面的画幅占画布整体面积较大";
-
                 result.addFeature(desc, Term.SelfExistence, Tendency.Positive);
+                result.addFeature(desc, Term.Extroversion, Tendency.Positive);
+                result.addFeature(desc, Term.Defensiveness, Tendency.Positive);
 
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.Narcissism, 1, FloatUtils.random(0.2, 0.3));
@@ -208,8 +210,9 @@ public class HTPEvaluation extends Evaluation {
             }
             else {
                 String desc = "画面的画幅占画布整体面积适中";
-
-                result.addFeature(desc, Term.SelfExistence, Tendency.Positive);
+                result.addFeature(desc, Term.SelfExistence, Tendency.Normal);
+                result.addFeature(desc, Term.Extroversion, Tendency.Normal);
+                result.addFeature(desc, Term.SelfConfidence, Tendency.Normal);
 
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SocialAdaptability, 1, FloatUtils.random(0.6, 0.7));
@@ -253,17 +256,17 @@ public class HTPEvaluation extends Evaluation {
             // 相对位置判断
             if (Math.abs(hc.y - tc.y) < evalRange && Math.abs(hc.y - pc.y) < evalRange) {
                 // 基本在一个水平线上
-                String desc = "画面中的主要元素：房、树、人等基本保持在一个水平线上";
-
+                String desc = "画面无远近感，空间布局单一";
                 result.addFeature(desc, Term.Stereotype, Tendency.Positive);
+                result.addFeature(desc, Term.Childish, Tendency.Positive);
+
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
             else {
                 // 位置分散
-                String desc = "画面中的主要元素：房、树、人等位置较分散";
-
-                result.addFeature(desc, Term.EmotionalStability, Tendency.Negative);
-                result.addScore(Indicator.Emotion, -1, FloatUtils.random(0.3, 0.4));
+                String desc = "画面中的主要元素位置较分散";
+                result.addFeature(desc, Term.EmotionalStability, Tendency.Positive);
+                result.addScore(Indicator.Mood, -1, FloatUtils.random(0.3, 0.4));
 
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
                 result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 8.0));
@@ -277,18 +280,19 @@ public class HTPEvaluation extends Evaluation {
             // 绝对位置判断
             if (houseTHalf && treeTHalf && personTHalf) {
                 // 整体偏上
-                String desc = "画面中的主要元素：房、树、人等位置偏向上半画幅";
-
+                String desc = "画面中的主要元素的构图偏向上半画幅";
                 result.addFeature(desc, Term.Idealization, Tendency.Positive);
+                result.addFeature(desc, Term.Fantasy, Tendency.Positive);
+                result.addFeature(desc, Term.PositiveExpectation, Tendency.Positive);
 
                 result.addScore(Indicator.Idealism, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.Mood, 1, FloatUtils.random(0.3, 0.4));
             }
             else if (houseBHalf && treeBHalf && personBHalf) {
                 // 整体偏下
-                String desc = "画面中的主要元素：房、树、人等位置偏向下半画幅";
-
-                result.addFeature(desc, Term.Idealization, Tendency.Negative);
+                String desc = "画面中的主要元素的构图偏向下半画幅";
+                result.addFeature(desc, Term.Instinct, Tendency.Positive);
+                result.addFeature(desc, Term.SenseOfSecurity, Tendency.Negative);
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
@@ -300,9 +304,8 @@ public class HTPEvaluation extends Evaluation {
                 }
             }
             else {
-                String desc = "画面中的主要元素：房、树、人等位置上下不一";
-
-                result.addFeature(desc, Term.Simple, Tendency.Positive);
+                String desc = "画面中主要元素在构图结构上整体结构分布分散";
+                result.addFeature(desc, Term.EnvironmentalFriendliness, Tendency.Positive);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
@@ -313,8 +316,7 @@ public class HTPEvaluation extends Evaluation {
             int pa = person.area;
             if (ha >= ta && ha >= pa) {
                 // 房大
-                String desc = "画面中某些主要元素整体面积较大";
-
+                String desc = "画面中房元素整体较大";
                 result.addFeature(desc, Term.PayAttentionToFamily, Tendency.Positive);
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
@@ -327,8 +329,7 @@ public class HTPEvaluation extends Evaluation {
             }
             if (ta >= ha && ta >= pa) {
                 // 树大
-                String desc = "画面中某些主要元素整体面积较大";
-
+                String desc = "画面中树元素整体较大";
                 result.addFeature(desc, Term.SocialDemand, Tendency.Positive);
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
@@ -343,8 +344,7 @@ public class HTPEvaluation extends Evaluation {
             }
             if (pa >= ha && pa >= ta) {
                 // 人大
-                String desc = "画面中某些主要元素整体面积较大";
-
+                String desc = "画面中人元素整体较大";
                 result.addFeature(desc, Term.SelfDemand, Tendency.Positive);
                 result.addFeature(desc, Term.SelfInflated, Tendency.Positive);
                 result.addFeature(desc, Term.SelfControl, Tendency.Negative);
@@ -375,8 +375,8 @@ public class HTPEvaluation extends Evaluation {
             }
 
             if (count > 1) {
-                String desc = "画面里各主要元素有各自清晰的位置空间";
-
+                String desc = "画面中各主要元素有各自清晰的位置空间";
+                result.addFeature(desc, Term.EmotionalIndifference, Tendency.Positive);
                 result.addFeature(desc, Term.Depression, Tendency.Negative);
 
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.2 * count, 0.25 * count));
@@ -389,8 +389,8 @@ public class HTPEvaluation extends Evaluation {
                 }
             }
             else if (count > 0) {
-                String desc = "画面里各主要元素有各自清晰的位置空间";
-
+                String desc = "画面中各主要元素在空间上远近适度";
+                result.addFeature(desc, Term.Realization, Tendency.Positive);
                 result.addFeature(desc, Term.Depression, Tendency.Negative);
 
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1 * count, 0.15 * count));
@@ -406,6 +406,8 @@ public class HTPEvaluation extends Evaluation {
                 int area = tree.box.calculateCollisionArea(person.box);
                 if (Math.abs((person.box.width * person.box.height) - area) < 100) {
                     // 人和树基本重叠
+                    String desc = "画面中人与树在空间位置上重叠";
+                    result.addFeature(desc, Term.Depression, Tendency.Positive);
                     result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                 }
             }
@@ -418,13 +420,13 @@ public class HTPEvaluation extends Evaluation {
                 double rP = person.area / paintingArea;
                 Logger.d(this.getClass(), "#evalSpaceStructure - Area ratio: " + rH + "," + rT + "," + rP);
                 if ((rH < 0.1 && rT < 0.1) || (rH < 0.1 && rP < 0.1) || (rT < 0.1 && rP < 0.1)) {
-                    String desc = "画面各主要元素大小较小";
-
+                    String desc = "画面中各主要元素所占空间较小";
                     result.addFeature(desc, Term.SocialPowerlessness, Tendency.Positive);
                     result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.3, 0.4));
                 }
 
-                String desc = "各主要元素之间距离适度";
+                String desc = "画面中各主要元素之间距离适度，远近合适";
+                result.addFeature(desc, Term.Realization, Tendency.Positive);
                 result.addFeature(desc, Term.Extroversion, Tendency.Positive);
                 result.addFeature(desc, Term.PursuitOfAchievement, Tendency.Positive);
 
@@ -437,12 +439,14 @@ public class HTPEvaluation extends Evaluation {
 
             // 三者都有
             if (house.numComponents() > 2 && tree.numComponents() > 2 && person.numComponents() > 1) {
+                String desc = "画面中的主要元素都绘制了若干细节元素";
+                result.addFeature(desc, Term.AttentionToDetail, Tendency.Positive);
+
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.75, 0.85));
 
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
                 result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 8.0));
                 result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(7.0, 8.0));
-
                 if (printBigFive) {
                     System.out.println("CP-013");
                 }
@@ -461,9 +465,9 @@ public class HTPEvaluation extends Evaluation {
 
             if (Math.abs(hc.y - tc.y) < evalRange) {
                 // 基本在一个水平线上
-                String desc = "";
-
+                String desc = "画面中主要元素在构图结构上无远近感";
                 result.addFeature(desc, Term.Stereotype, Tendency.Positive);
+                result.addFeature(desc, Term.Childish, Tendency.Positive);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
@@ -471,18 +475,20 @@ public class HTPEvaluation extends Evaluation {
             // 绝对位置判断
             if (houseTHalf && treeTHalf) {
                 // 整体偏上
-                String desc = "";
-
+                String desc = "画面中的主要元素的构图偏向上半画幅";
                 result.addFeature(desc, Term.Idealization, Tendency.Positive);
+                result.addFeature(desc, Term.Fantasy, Tendency.Positive);
+                result.addFeature(desc, Term.PositiveExpectation, Tendency.Positive);
 
                 result.addScore(Indicator.Idealism, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.Mood, 1, FloatUtils.random(0.3, 0.4));
             }
             else if (houseBHalf && treeBHalf) {
                 // 整体偏下
-                String desc = "";
-
-                result.addFeature(desc, Term.Idealization, Tendency.Negative);
+                String desc = "画面中的主要元素的构图偏向下半画幅";
+                result.addFeature(desc, Term.Realization, Tendency.Positive);
+                result.addFeature(desc, Term.Instinct, Tendency.Positive);
+                result.addFeature(desc, Term.SenseOfSecurity, Tendency.Negative);
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
@@ -494,6 +500,8 @@ public class HTPEvaluation extends Evaluation {
                 }
             }
             else {
+                String desc = "画面中主要元素在构图结构上整体结构分布分散";
+                result.addFeature(desc, Term.SelfExistence, Tendency.Normal);
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
 
@@ -501,8 +509,7 @@ public class HTPEvaluation extends Evaluation {
             int ta = tree.area;
             if (ha > ta) {
                 // 房大
-                String desc = "";
-
+                String desc = "画面中房元素整体结构明显";
                 result.addFeature(desc, Term.PayAttentionToFamily, Tendency.Positive);
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
@@ -515,8 +522,7 @@ public class HTPEvaluation extends Evaluation {
             }
             else {
                 // 树大
-                String desc = "";
-
+                String desc = "画面中树元素整体结构明显";
                 result.addFeature(desc, Term.SocialDemand, Tendency.Positive);
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
@@ -540,9 +546,9 @@ public class HTPEvaluation extends Evaluation {
 
             if (Math.abs(hc.y - pc.y) < evalRange) {
                 // 基本在一个水平线上
-                String desc = "";
-
+                String desc = "画面中主要元素在构图结构上无远近感";
                 result.addFeature(desc, Term.Stereotype, Tendency.Positive);
+                result.addFeature(desc, Term.Childish, Tendency.Positive);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
@@ -550,18 +556,20 @@ public class HTPEvaluation extends Evaluation {
             // 绝对位置判断
             if (houseTHalf && personTHalf) {
                 // 整体偏上
-                String desc = "";
-
+                String desc = "画面中的主要元素的构图偏向上半画幅";
                 result.addFeature(desc, Term.Idealization, Tendency.Positive);
+                result.addFeature(desc, Term.Fantasy, Tendency.Positive);
+                result.addFeature(desc, Term.PositiveExpectation, Tendency.Positive);
 
                 result.addScore(Indicator.Idealism, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.Mood, 1, FloatUtils.random(0.3, 0.4));
             }
             else if (houseBHalf && personBHalf) {
                 // 整体偏下
-                String desc = "";
-
-                result.addFeature(desc, Term.Idealization, Tendency.Negative);
+                String desc = "画面中的主要元素的构图偏向下半画幅";
+                result.addFeature(desc, Term.Realization, Tendency.Positive);
+                result.addFeature(desc, Term.Instinct, Tendency.Positive);
+                result.addFeature(desc, Term.SenseOfSecurity, Tendency.Negative);
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
@@ -573,6 +581,8 @@ public class HTPEvaluation extends Evaluation {
                 }
             }
             else {
+                String desc = "画面中主要元素在构图结构上整体结构分布分散";
+                result.addFeature(desc, Term.SelfExistence, Tendency.Normal);
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
 
@@ -580,8 +590,7 @@ public class HTPEvaluation extends Evaluation {
             int pa = person.area;
             if (ha > pa) {
                 // 房大
-                String desc = "";
-
+                String desc = "画面中房元素整体结构明显";
                 result.addFeature(desc, Term.PayAttentionToFamily, Tendency.Positive);
 
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.3, 0.4));
@@ -595,8 +604,7 @@ public class HTPEvaluation extends Evaluation {
             }
             else {
                 // 人大
-                String desc = "";
-
+                String desc = "画面中人元素整体结构明显";
                 result.addFeature(desc, Term.SelfDemand, Tendency.Positive);
                 result.addFeature(desc, Term.SelfInflated, Tendency.Positive);
                 result.addFeature(desc, Term.SelfControl, Tendency.Negative);
@@ -623,9 +631,9 @@ public class HTPEvaluation extends Evaluation {
 
             if (Math.abs(tc.y - pc.y) < evalRange) {
                 // 基本在一个水平线上
-                String desc = "";
-
+                String desc = "画面中主要元素在构图结构上无远近感";
                 result.addFeature(desc, Term.Stereotype, Tendency.Positive);
+                result.addFeature(desc, Term.Childish, Tendency.Positive);
 
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
@@ -633,30 +641,33 @@ public class HTPEvaluation extends Evaluation {
             // 绝对位置判断
             if (treeTHalf && personTHalf) {
                 // 整体偏上
-                String desc = "";
-
+                String desc = "画面中的主要元素的构图偏向上半画幅";
                 result.addFeature(desc, Term.Idealization, Tendency.Positive);
+                result.addFeature(desc, Term.Fantasy, Tendency.Positive);
+                result.addFeature(desc, Term.PositiveExpectation, Tendency.Positive);
 
                 result.addScore(Indicator.Idealism, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.Mood, 1, FloatUtils.random(0.3, 0.4));
             }
             else if (treeBHalf && personBHalf) {
                 // 整体偏下
-                String desc = "";
-
-                result.addFeature(desc, Term.Idealization, Tendency.Negative);
+                String desc = "画面中的主要元素的构图偏向下半画幅";
+                result.addFeature(desc, Term.Realization, Tendency.Positive);
+                result.addFeature(desc, Term.Instinct, Tendency.Positive);
+                result.addFeature(desc, Term.SenseOfSecurity, Tendency.Negative);
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Thought, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
 
                 result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(4.5, 5.5));
-
                 if (printBigFive) {
                     System.out.println("CP-018");
                 }
             }
             else {
+                String desc = "画面中主要元素在构图结构上整体结构分布分散";
+                result.addFeature(desc, Term.SelfExistence, Tendency.Normal);
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
 
@@ -664,16 +675,14 @@ public class HTPEvaluation extends Evaluation {
             int pa = person.area;
             if (ta > pa) {
                 // 树大
-                String desc = "";
-
+                String desc = "画面中树元素整体结构明显";
                 result.addFeature(desc, Term.SocialDemand, Tendency.Positive);
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
             }
             else {
                 // 人大
-                String desc = "";
-
+                String desc = "画面中人元素整体结构明显";
                 result.addFeature(desc, Term.SelfDemand, Tendency.Positive);
                 result.addFeature(desc, Term.SelfInflated, Tendency.Positive);
                 result.addFeature(desc, Term.SelfControl, Tendency.Negative);
@@ -693,6 +702,9 @@ public class HTPEvaluation extends Evaluation {
             // 偏模
             this.reference = Reference.Abnormal;
             Logger.d(this.getClass(), "#evalSpaceStructure - Abnormal: 房、树、人三元素中仅有一种元素");
+
+            String desc = "画面中主要元素少于指导数量";
+            result.addFeature(desc, Term.Escapism, Tendency.Positive);
 
             boolean onlyHouse = (null != house);
             boolean onlyTree = (null != tree);
@@ -733,8 +745,7 @@ public class HTPEvaluation extends Evaluation {
             int personArea = person.area;
             if (((double)personArea / (double)paintingArea) <= tinyRatio) {
                 // 人很小
-                String desc = "";
-
+                String desc = "画面中人元素整体构成结构所占空间较小";
                 result.addFeature(desc, Term.SenseOfSecurity, Tendency.Negative);
 
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.3, 0.4));
@@ -800,19 +811,24 @@ public class HTPEvaluation extends Evaluation {
 
             if (doodles >= 2) {
                 // 画面有1/2画幅涂鸦
+                String desc = "画面中部分画幅内容出现涂鸦";
+                result.addFeature(desc, Term.Anxiety, Tendency.Positive);
+
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.8, 0.9));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
 
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.0, 5.0));
                 result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.0, 9.0));
-
                 if (printBigFive) {
                     System.out.println("CP-020");
                 }
             }
             else if (doodles >= 1) {
                 // 画面有1/4画幅涂鸦
+                String desc = "画面中小部分画幅内容出现涂鸦";
+                result.addFeature(desc, Term.Anxiety, Tendency.Positive);
+
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.0, 0.01));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.4, 0.5));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space doodles: " + doodles);
@@ -827,18 +843,22 @@ public class HTPEvaluation extends Evaluation {
 
             // 画面稀疏
             if (sparseness >= 4) {
+                String desc = "画面整体绘画密度非常稀疏";
+                result.addFeature(desc, Term.Creativity, Tendency.Negative);
+
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
                 result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(2.0, 3.0));
-
                 if (printBigFive) {
                     System.out.println("CP-022");
                 }
             }
             else if (sparseness >= 3) {
-//                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
+                String desc = "画面整体绘画密度较稀疏";
+                result.addFeature(desc, Term.Creativity, Tendency.Negative);
+
                 result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
@@ -849,6 +869,9 @@ public class HTPEvaluation extends Evaluation {
                 }
             }
             else if (sparseness >= 2) {
+                String desc = "画面整体绘画密度稀疏";
+                result.addFeature(desc, Term.Anxiety, Tendency.Positive);
+
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
@@ -860,11 +883,13 @@ public class HTPEvaluation extends Evaluation {
                 }
             }
             else if (sparseness >= 1) {
+                String desc = "画面整体绘画密度有些许稀疏";
+                result.addFeature(desc, Term.Anxiety, Tendency.Positive);
+
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.4, 0.5));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
                 result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(5.0, 6.0));
-
                 if (printBigFive) {
                     System.out.println("CP-025");
                 }
@@ -873,6 +898,9 @@ public class HTPEvaluation extends Evaluation {
             if (doodles >= 2 && sparseness >= 2) {
                 this.reference = Reference.Abnormal;
                 Logger.d(this.getClass(), "#evalSpaceStructure - Abnormal: 画幅大面积涂鸦且图形稀疏");
+
+                String desc = "画面的画幅有涂鸦且画面稀疏";
+                result.addFeature(desc, Term.MentalStress, Tendency.Positive);
             }
         }
 
@@ -885,9 +913,10 @@ public class HTPEvaluation extends Evaluation {
         FrameStructureDescription description = this.calcFrameStructure(this.spaceLayout.getPaintingBox());
         if (description.isWholeTop()) {
             // 整体顶部
-            String desc = "";
-
+            String desc = "整个画幅结构偏向画布顶部";
             result.addFeature(desc, Term.Idealization, Tendency.Positive);
+            result.addFeature(desc, Term.Fantasy, Tendency.Positive);
+            result.addFeature(desc, Term.PositiveExpectation, Tendency.Positive);
 
             result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.0, 7.5));
             result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 8.0));
@@ -900,9 +929,9 @@ public class HTPEvaluation extends Evaluation {
         }
         else if (description.isWholeBottom()) {
             // 整体底部
-            String desc = "";
-
+            String desc = "整个画幅结构偏向画布底部";
             result.addFeature(desc, Term.Instinct, Tendency.Positive);
+            result.addFeature(desc, Term.SenseOfSecurity, Tendency.Negative);
 
             result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(2.0, 2.5));
             result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(3.0, 4.0));
@@ -914,8 +943,7 @@ public class HTPEvaluation extends Evaluation {
         }
         else if (description.isWholeLeft()) {
             // 整体左边
-            String desc = "";
-
+            String desc = "整个画幅结构偏向画布左边";
             result.addFeature(desc, Term.Nostalgia, Tendency.Positive);
 
             result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(2.0, 3.0));
@@ -925,8 +953,7 @@ public class HTPEvaluation extends Evaluation {
         }
         else if (description.isWholeRight()) {
             // 整体右边
-            String desc = "";
-
+            String desc = "整个画幅结构偏向画布右边";
             result.addFeature(desc, Term.Future, Tendency.Positive);
 
             result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(7.0, 8.0));
@@ -973,8 +1000,7 @@ public class HTPEvaluation extends Evaluation {
 
         if (minMarginCount > 1) {
             // 达到边缘
-            String desc = "";
-
+            String desc = "整个画幅结构达到画布边缘";
             result.addFeature(desc, Term.EnvironmentalDependence, Tendency.Positive);
 
             result.addScore(Indicator.Independence, 1, FloatUtils.random(0.2, 0.3));
@@ -989,8 +1015,7 @@ public class HTPEvaluation extends Evaluation {
 
         if (maxMarginCount > 1) {
             // 未达边缘
-            String desc = "";
-
+            String desc = "整个画幅结构未达到画布边缘";
             result.addFeature(desc, Term.EnvironmentalAlienation, Tendency.Positive);
 
             result.addScore(Indicator.Independence, -1, FloatUtils.random(0.2, 0.3));
@@ -1005,6 +1030,9 @@ public class HTPEvaluation extends Evaluation {
         }
 
         if (minMarginCount >= 3) {
+            String desc = "整个画幅结构达到画布边缘";
+            result.addFeature(desc, Term.PursuitOfAchievement, Tendency.Positive);
+
             result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.5, 8.0));
             result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(5.0, 5.5));
             result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.0, 8.5));
@@ -1013,6 +1041,9 @@ public class HTPEvaluation extends Evaluation {
             }
         }
         else if (minMarginCount >= 2) {
+            String desc = "整个画幅结构达到画布边缘";
+            result.addFeature(desc, Term.PursuitOfAchievement, Tendency.Positive);
+
             result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.5, 8.0));
             result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(5.0, 5.5));
             result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.0, 8.5));
@@ -1044,26 +1075,23 @@ public class HTPEvaluation extends Evaluation {
             int cX = (int) Math.round(house.boundingBox.x + house.boundingBox.width * 0.5);
             if (cX < halfLeftCenterX) {
                 // house 中线越过左半边中线
-                String desc = "";
-
+                String desc = "画面中房元素穿越左半边中线";
                 result.addFeature(desc, Term.PayAttentionToFamily, Tendency.Positive);
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
             }
             else if (cX > halfRightCenterX) {
                 // house 中线越过右半边中线
-                String desc = "";
-
+                String desc = "画面中房元素穿越右半边中线";
                 result.addFeature(desc, Term.PayAttentionToFamily, Tendency.Negative);
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
             }
 
             if (hAreaRatio < this.houseAreaRatioThreshold) {
                 // 房的面积非常小
-                String desc = "";
-
+                String desc = "画面中房元素整体占比非常小";
                 result.addFeature(desc, Term.PayAttentionToFamily, Tendency.Negative);
-                result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
 
+                result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
 
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.0, 2.0));
@@ -1076,20 +1104,26 @@ public class HTPEvaluation extends Evaluation {
                 if (tAreaRatio > 0 && tAreaRatio < this.treeAreaRatioThreshold) {
                     this.reference = Reference.Abnormal;
                     Logger.d(this.getClass(), "#evalFrameStructure - Abnormal: 房面积非常小，树面积非常小");
+                    desc = "画面中房元素和树元素整体占比非常小";
+                    result.addFeature(desc, Term.MentalStress, Tendency.Positive);
                 }
                 else if (pAreaRatio > 0 && pAreaRatio <= this.personAreaRatioThreshold) {
                     this.reference = Reference.Abnormal;
                     Logger.d(this.getClass(), "#evalFrameStructure - Abnormal: 房面积非常小，人面积非常小");
+                    desc = "画面中房元素和人元素整体占比非常小";
+                    result.addFeature(desc, Term.MentalStress, Tendency.Positive);
                 }
             }
             else if (hAreaRatio < this.houseAreaRatioThreshold * 2) {
                 result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(4.0, 4.5));
-
                 if (printBigFive) {
                     System.out.println("CP-034");
                 }
             }
             else if (hAreaRatio > 0.3d) {
+                String desc = "画面中房元素占比较大";
+                result.addFeature(desc, Term.SelfExistence, Tendency.Positive);
+
                 result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.5, 9.0));
                 if (printBigFive) {
                     System.out.println("CP-095");
@@ -1119,6 +1153,10 @@ public class HTPEvaluation extends Evaluation {
         if (null != tree) {
             if (tAreaRatio < this.treeAreaRatioThreshold) {
                 // 树的面积非常小
+                String desc = "画面中树的整理比例非常小";
+                result.addFeature(desc, Term.Introversion, Tendency.Positive);
+                result.addFeature(desc, Term.Depression, Tendency.Positive);
+
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
                 result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(2.5, 3.5));
                 result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(2.5, 3.0));
@@ -1131,8 +1169,8 @@ public class HTPEvaluation extends Evaluation {
         if (null != person) {
             if (pAreaRatio < this.personAreaRatioThreshold) {
                 // 人的面积非常小
-                String desc = "";
-
+                String desc = "画面中人的整理比例非常小";
+                result.addFeature(desc, Term.Depression, Tendency.Positive);
                 result.addFeature(desc, Term.SenseOfSecurity, Tendency.Negative);
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
@@ -1142,21 +1180,21 @@ public class HTPEvaluation extends Evaluation {
                 result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(4.0, 5.0));
                 result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(2.0, 3.0));
                 result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(4.0, 4.5));
-
                 if (printBigFive) {
                     System.out.println("CP-037");
                 }
             }
             else if (pAreaRatio > 0.09) {
                 // 人的面积非常大
-                String desc = "";
-
+                String desc = "画面中人的整理比例非常大";
+                result.addFeature(desc, Term.SelfConfidence, Tendency.Positive);
                 result.addFeature(desc, Term.SelfInflated, Tendency.Positive);
+                result.addFeature(desc, Term.Aggression, Tendency.Positive);
+
                 result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.1, 0.2));
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.5, 0.6));
 
                 result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.5, 9.5));
-
                 if (printBigFive) {
                     System.out.println("CP-038");
                 }
@@ -1207,8 +1245,7 @@ public class HTPEvaluation extends Evaluation {
         for (House house : houseList) {
             // 立体感
             if (house.hasSidewall()) {
-                String desc = "";
-
+                String desc = "房有立体感";
                 result.addFeature(desc, Term.Creativity, Tendency.Positive);
 
                 result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.7, 0.8));
@@ -1217,32 +1254,29 @@ public class HTPEvaluation extends Evaluation {
             // 房屋类型
             if (Label.Bungalow == house.getLabel()) {
                 // 平房
-                String desc = "";
-
+                String desc = "房元素是平房造型";
                 result.addFeature(desc, Term.Simple, Tendency.Positive);
 
                 result.addScore(Indicator.Simple, 1, FloatUtils.random(0.5, 0.6));
             }
             else if (Label.Villa == house.getLabel()) {
                 // 别墅
-                String desc = "";
-
+                String desc = "房元素是别墅造型";
                 result.addFeature(desc, Term.Luxurious, Tendency.Positive);
 
                 result.addScore(Indicator.EvaluationFromOutside, 1, FloatUtils.random(0.5, 0.6));
             }
             else if (Label.Building == house.getLabel()) {
                 // 楼房
-                String desc = "";
-
+                String desc = "房元素是楼房造型";
+                result.addFeature(desc, Term.PursuitOfAchievement, Tendency.Positive);
                 result.addFeature(desc, Term.Defensiveness, Tendency.Positive);
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.5, 0.6));
             }
             else if (Label.Fairyland == house.getLabel()) {
                 // 童话房
-                String desc = "";
-
+                String desc = "房元素是童话房造型";
                 result.addFeature(desc, Term.Fantasy, Tendency.Positive);
                 result.addFeature(desc, Term.Childish, Tendency.Normal);
 
@@ -1250,24 +1284,23 @@ public class HTPEvaluation extends Evaluation {
             }
             else if (Label.Temple == house.getLabel()) {
                 // 庙宇
-                String desc = "";
-
+                String desc = "房元素是庙宇造型";
                 result.addFeature(desc, Term.Extreme, Tendency.Positive);
 
                 result.addScore(Indicator.Paranoid, 1, FloatUtils.random(0.5, 0.6));
             }
             else if (Label.Grave == house.getLabel()) {
                 // 坟墓
-                String desc = "";
-
+                String desc = "房元素是坟墓造型";
                 result.addFeature(desc, Term.WorldWeariness, Tendency.Positive);
+
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.4, 0.5));
             }
 
             // 房顶
             if (house.hasRoof()) {
                 if (house.getRoof().isTextured()) {
-                    String desc = "";
-
+                    String desc = "房屋的房顶绘制了纹理或装饰";
                     result.addFeature(desc, Term.Perfectionism, Tendency.Normal);
 
                     result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.6, 0.7));
@@ -1275,8 +1308,8 @@ public class HTPEvaluation extends Evaluation {
 
                 if (house.getRoofHeightRatio() > 0.5f) {
                     // 房顶高
-                    String desc = "";
-
+                    String desc = "房屋的房顶较高";
+                    result.addFeature(desc, Term.Complacent, Tendency.Positive);
                     result.addFeature(desc, Term.Future, Tendency.Positive);
 
                     result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.6, 0.7));
@@ -1284,7 +1317,6 @@ public class HTPEvaluation extends Evaluation {
                     result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(8.0, 8.5));
                     result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.0, 8.5));
                     result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.0, 8.5));
-
                     if (printBigFive) {
                         System.out.println("CP-039");
                     }
@@ -1292,9 +1324,8 @@ public class HTPEvaluation extends Evaluation {
 
                 if (house.getRoofAreaRatio() > 0.3f) {
                     // 房顶面积大
-                    String desc = "";
-
-                    result.addFeature(desc, Term.HighPressure, Tendency.Positive);
+                    String desc = "房屋的房顶面积较大";
+                    result.addFeature(desc, Term.MentalStress, Tendency.Positive);
                     result.addFeature(desc, Term.Escapism, Tendency.Positive);
 
                     result.addScore(Indicator.Stress, 1, FloatUtils.random(0.4, 0.5));
@@ -1303,8 +1334,7 @@ public class HTPEvaluation extends Evaluation {
 
             // 天窗
             if (house.hasRoofSkylight()) {
-                String desc = "";
-
+                String desc = "房屋有天窗";
                 result.addFeature(desc, Term.Maverick, Tendency.Positive);
 
                 result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
@@ -1312,7 +1342,6 @@ public class HTPEvaluation extends Evaluation {
                 result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.0, 8.5));
                 result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(8.0, 8.5));
                 result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(8.0, 8.5));
-
                 if (printBigFive) {
                     System.out.println("CP-040");
                 }
@@ -1320,8 +1349,7 @@ public class HTPEvaluation extends Evaluation {
 
             // 烟囱
             if (house.hasChimney()) {
-                String desc = "";
-
+                String desc = "房屋有烟囱";
                 result.addFeature(desc, Term.PursueInterpersonalRelationships, Tendency.Positive);
 
                 result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.6, 0.7));
@@ -1337,7 +1365,7 @@ public class HTPEvaluation extends Evaluation {
 
             // 门和窗
             if (!house.hasDoor() && !house.hasWindow()) {
-                String desc = "";
+                String desc = "房屋没有门和窗";
                 result.addFeature(desc, Term.EmotionalIndifference, Tendency.Positive);
             }
             else {
@@ -1346,28 +1374,26 @@ public class HTPEvaluation extends Evaluation {
 
                     double areaRatio = house.getMaxDoorAreaRatio();
                     if (areaRatio < 0.05f) {
-                        String desc = "";
+                        String desc = "房屋的门很小";
                         result.addFeature(desc, Term.SocialPowerlessness, Tendency.Positive);
                     }
                     else if (areaRatio >= 0.15f) {
-                        String desc = "";
+                        String desc = "房屋的门很大";
                         result.addFeature(desc, Term.Dependence, Tendency.Positive);
                     }
                     else if (areaRatio > 0.12f) {
-                        String desc = "";
+                        String desc = "房屋的门较大";
                         result.addFeature(desc, Term.PursueInterpersonalRelationships, Tendency.Positive);
                     }
 
                     // 开启的门
                     if (house.hasOpenDoor()) {
-                        String desc = "";
-
+                        String desc = "房屋的门是打开的";
                         result.addFeature(desc, Term.PursueInterpersonalRelationships, Tendency.Positive);
 
                         result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.6, 0.7));
 
                         result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(6.5, 7.5));
-
                         if (printBigFive) {
                             System.out.println("CP-042");
                         }
@@ -1483,7 +1509,7 @@ public class HTPEvaluation extends Evaluation {
                 String desc = "";
 
                 // 枯树
-                result.addFeature(desc, Term.EmotionalDisturbance, Tendency.Positive);
+                result.addFeature(desc, Term.MoodDisturbance, Tendency.Positive);
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
@@ -1519,7 +1545,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addFeature(desc, Term.Sensitiveness, Tendency.Positive);
                 result.addFeature(desc, Term.Emotionality, Tendency.Positive);
 
-                result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.6, 0.7));
+                result.addScore(Indicator.Mood, 1, FloatUtils.random(0.6, 0.7));
             }
             else if (Label.CoconutTree == tree.getLabel()) {
                 hasTrunk = true;
@@ -1530,7 +1556,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addFeature(desc, Term.Emotionality, Tendency.Positive);
                 result.addFeature(desc, Term.Creativity, Tendency.Positive);
 
-                result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.6, 0.7));
+                result.addScore(Indicator.Mood, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.6, 0.7));
             }
             else if (Label.Bamboo == tree.getLabel()) {
@@ -1651,7 +1677,7 @@ public class HTPEvaluation extends Evaluation {
                 String desc = "";
 
                 result.addFeature(desc, Term.Trauma, Tendency.Positive);
-                result.addFeature(desc, Term.EmotionalDisturbance, Tendency.Positive);
+                result.addFeature(desc, Term.MoodDisturbance, Tendency.Positive);
 
                 result.addScore(Indicator.Stress, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.1, 0.2));
@@ -1897,7 +1923,7 @@ public class HTPEvaluation extends Evaluation {
                     // 男画女
                     String desc = "";
                     result.addFeature(desc, Term.SocialPowerlessness, Tendency.Positive);
-                    result.addScore(Indicator.Emotion, -1, FloatUtils.random(0.3, 0.4));
+                    result.addScore(Indicator.Mood, -1, FloatUtils.random(0.3, 0.4));
                     break;
                 }
             }
@@ -2310,7 +2336,7 @@ public class HTPEvaluation extends Evaluation {
         if (other.has(Label.Rain)) {
             // 雨
             String desc = "";
-            result.addFeature(desc, Term.HighPressure, Tendency.Positive);
+            result.addFeature(desc, Term.MentalStress, Tendency.Positive);
             result.addScore(Indicator.Stress, 1, FloatUtils.random(0.7, 0.8));
         }
 
@@ -2354,7 +2380,7 @@ public class HTPEvaluation extends Evaluation {
             // 猫
             String desc = "";
             result.addFeature(desc, Term.SocialDemand, Tendency.Positive);
-            result.addScore(Indicator.Emotion, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.Mood, 1, FloatUtils.random(0.7, 0.8));
             result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.3, 0.4));
             result.addScore(Indicator.Meekness, 1, FloatUtils.random(0.5, 0.6));
             counter += 1;
@@ -2460,7 +2486,7 @@ public class HTPEvaluation extends Evaluation {
             // 蛇
             String desc = "";
             result.addFeature(desc, Term.Trauma, Tendency.Positive);
-            result.addScore(Indicator.Emotion, -1, FloatUtils.random(0.3, 0.4));
+            result.addScore(Indicator.Mood, -1, FloatUtils.random(0.3, 0.4));
         }
 
         if (other.has(Label.Dragon)) {
@@ -2664,7 +2690,7 @@ public class HTPEvaluation extends Evaluation {
         if (other.has(Label.Bike)) {
             // 自行车
             String desc = "";
-            result.addFeature(desc, Term.EmotionalDisturbance, Tendency.Positive);
+            result.addFeature(desc, Term.MoodDisturbance, Tendency.Positive);
             counter += 1;
         }
 

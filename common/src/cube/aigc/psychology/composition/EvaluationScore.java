@@ -323,7 +323,7 @@ public class EvaluationScore implements JSONable {
                     buf.append("轻度自恋");
                 }
                 break;
-            case Emotion:
+            case Mood:
                 if (rate == IndicatorRate.High) {
                     buf.append("情绪较为稳定");
                 } else {
@@ -600,7 +600,7 @@ public class EvaluationScore implements JSONable {
                     rate = IndicatorRate.Low;
                 }
                 break;
-            case Emotion:
+            case Mood:
                 if (score >= 0.4) {
                     rate = IndicatorRate.High;
                 } else {

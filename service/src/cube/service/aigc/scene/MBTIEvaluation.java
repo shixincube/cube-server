@@ -102,7 +102,7 @@ public class MBTIEvaluation {
                     break;
                 case Perfectionism:
                     break;
-                case HighPressure:
+                case MentalStress:
                     break;
                 case ExternalPressure:
                     break;
@@ -116,7 +116,7 @@ public class MBTIEvaluation {
                     break;
                 case EmotionalStability:
                     break;
-                case EmotionalDisturbance:
+                case MoodDisturbance:
                     break;
                 case Dependence:
                     break;
@@ -273,7 +273,7 @@ public class MBTIEvaluation {
                         list.add(new MBTICandidate(MyersBriggsTypeIndicator.Judging, 0.5));
                     }
                     break;
-                case Emotion:
+                case Mood:
                     if (score.positiveScore > score.negativeScore) {
                         list.add(new MBTICandidate(MyersBriggsTypeIndicator.Extraversion, 0.5));
                         list.add(new MBTICandidate(MyersBriggsTypeIndicator.Feeling, 0.5));
