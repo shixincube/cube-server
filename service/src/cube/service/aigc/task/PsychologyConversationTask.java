@@ -109,7 +109,7 @@ public class PsychologyConversationTask extends ServiceTask {
                     if (null != record) {
                         cellet.speak(talkContext,
                                 makeResponse(dialect, packet, AIGCStateCode.Ok.code,
-                                        record.toCompactJSON()));
+                                        record.toTraceJSON()));
                     }
                     else {
                         cellet.speak(talkContext,
@@ -133,7 +133,7 @@ public class PsychologyConversationTask extends ServiceTask {
                     if (null != record) {
                         cellet.speak(talkContext,
                                 makeResponse(dialect, packet, AIGCStateCode.Ok.code,
-                                        record.toCompactJSON()));
+                                        record.toTraceJSON()));
                     }
                     else {
                         cellet.speak(talkContext,

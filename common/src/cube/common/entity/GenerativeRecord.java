@@ -32,6 +32,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -274,6 +275,21 @@ public class GenerativeRecord implements JSONable {
         if (json.has("query")) {
             json.remove("query");
         }
+        return json;
+    }
+
+    public JSONObject toTraceJSON() {
+        JSONObject json = this.toJSON();
+        if (json.has("query")) {
+            json.remove("query");
+        }
+        if (json.has("unit")) {
+            json.remove("unit");
+        }
+        json.put("unit", "AiXinLi");
+        json.put("company", "白泽京智");
+
+        json.put("date", Utils.gsDateFormat.format(new Date(this.timestamp)));
         return json;
     }
 }

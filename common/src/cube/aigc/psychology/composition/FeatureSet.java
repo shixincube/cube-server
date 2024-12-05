@@ -1,20 +1,20 @@
 /*
  * This source file is part of Cube.
- * <p>
+ *
  * The MIT License (MIT)
- * <p>
+ *
  * Copyright (c) 2020-2024 Ambrose Xu.
- * <p>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p>
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * <p>
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,34 +24,48 @@
  * SOFTWARE.
  */
 
-package cube.service;
+package cube.aigc.psychology.composition;
+
+import cube.aigc.psychology.EvaluationFeature;
+import cube.aigc.psychology.algorithm.Representation;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * 版本信息。
+ * 特征集。
  */
-public final class Version {
-
-    public final static int MAJOR = 3;
-
-    public final static int MINOR = 0;
-
-    public final static int REVISION = 142;
-
-    private Version() {
-    }
+public class FeatureSet {
 
     /**
-     * 转版本串。
-     *
-     * @return
+     * Key: 描述
      */
-    public static String toVersionString() {
+    public Map<String, List<Representation>> dataMap = new LinkedHashMap<>();
+
+    public FeatureSet() {
+    }
+
+    public void add(EvaluationFeature evaluationFeature, List<Representation> representations) {
+        for (EvaluationFeature.Feature feature : evaluationFeature.getFeatures()) {
+            List<Representation> list = this.dataMap.get(feature.description);
+            if (null == list) {
+                list = new ArrayList<>();
+                this.dataMap.put(feature.description, list);
+            }
+
+            for (Representation representation : representations) {
+                if (representation.knowledgeStrategy.getTerm() == feature.term) {
+                    list.add(representation);
+                    break;
+                }
+            }
+        }
+    }
+
+    public String makePrompt() {
         StringBuilder buf = new StringBuilder();
-        buf.append(MAJOR);
-        buf.append(".");
-        buf.append(MINOR);
-        buf.append(".");
-        buf.append(REVISION);
         return buf.toString();
     }
 }
