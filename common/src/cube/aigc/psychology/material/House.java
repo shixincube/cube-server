@@ -83,6 +83,10 @@ public class House extends Thing {
         this.area = Math.round(this.boundingBox.calculateArea() * 0.86f);
     }
 
+    public void refreshArea() {
+        this.area = Math.round(this.boundingBox.calculateArea() * 0.86f);
+    }
+
     @Override
     public List<Thing> getSubThings(Label label) {
         List<Thing> things = null;

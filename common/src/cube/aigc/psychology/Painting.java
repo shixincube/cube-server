@@ -353,6 +353,8 @@ public class Painting implements JSONable {
                 Logger.w(this.getClass(), "#buildHouse - Unknown label: " + thing.getLabel().name + " for building house");
                 break;
         }
+
+        house.refreshArea();
     }
 
     private void buildTree(Thing thing) {
@@ -419,6 +421,8 @@ public class Painting implements JSONable {
                 Logger.w(this.getClass(), "Unknown label: " + thing.getLabel().name + " for building tree");
                 break;
         }
+
+        tree.refreshArea();
     }
 
     private void buildPerson(Thing thing) {
@@ -546,6 +550,8 @@ public class Painting implements JSONable {
                 Logger.w(this.getClass(), "Unknown label: " + thing.getLabel().name + " for building person");
                 break;
         }
+
+        person.refreshArea();
     }
 
     /**

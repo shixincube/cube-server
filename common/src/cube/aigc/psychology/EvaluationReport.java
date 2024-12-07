@@ -222,6 +222,10 @@ public class EvaluationReport implements JSONable {
             }
         }
 
+        for (Representation representation : this.representationList) {
+            representation.makeDescription();
+        }
+
         // 排序
         this.representationList.sort(new Comparator<Representation>() {
             @Override

@@ -75,6 +75,10 @@ public class Tree extends Thing {
         this.area = Math.round(this.boundingBox.calculateArea() * 0.72f);
     }
 
+    public void refreshArea() {
+        this.area = Math.round(this.boundingBox.calculateArea() * 0.72f);
+    }
+
     @Override
     public List<Thing> getSubThings(Label label) {
         List<Thing> things = null;

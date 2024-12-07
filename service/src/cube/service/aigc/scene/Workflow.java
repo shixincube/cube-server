@@ -32,7 +32,6 @@ import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
-import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GenerativeOption;
@@ -49,9 +48,9 @@ import java.util.List;
  */
 public class Workflow {
 
-    public final static String HighTrick = "明显";
-    public final static String NormalTrick = "具有";
-    public final static String LowTrick = "缺乏";//"不足";
+//    public final static String HighTrick = "明显";
+//    public final static String NormalTrick = "具有";
+//    public final static String LowTrick = "缺乏";//"不足";
 
     private final static String PERSONALITY_FORMAT = "已知信息：\n%s\n\n根据上述信息，回答问题：总结他的性格特点。";
 
@@ -77,6 +76,8 @@ public class Workflow {
 
     private String unitName = ModelConfig.BAIZE_UNIT;
 
+    private PaintingFeatureSet paintingFeatureSet;
+
     public Workflow(AIGCService service, Attribute attribute) {
         this.service = service;
         this.attribute = attribute;
@@ -94,6 +95,14 @@ public class Workflow {
         this.unitName = unitName;
     }
 
+    public void setPaintingFeatureSet(PaintingFeatureSet featureSet) {
+        this.paintingFeatureSet = featureSet;
+    }
+
+    public PaintingFeatureSet getPaintingFeatureSet() {
+        return this.paintingFeatureSet;
+    }
+
     public boolean isSpeed() {
         return this.speed;
     }
@@ -108,6 +117,10 @@ public class Workflow {
         report.setSummary(this.summary);
         report.setReportTextList(this.reportTextList);
         report.setMandalaFlower(this.mandalaFlower);
+
+        if (null != this.paintingFeatureSet) {
+            this.paintingFeatureSet.setSN(report.sn);
+        }
 
         return report;
     }
@@ -188,7 +201,7 @@ public class Workflow {
         this.inferPersonality(this.evaluationReport.getPersonalityAccelerator());
 
         // 特征描述
-        this.makeDescription();
+//        this.makeDescription();
 
         // 曼陀罗花
         this.mandalaFlower = this.inferMandalaFlower(this.evaluationReport.getPersonalityAccelerator());
@@ -240,30 +253,30 @@ public class Workflow {
         return result;
     }
 
-    private void makeDescription() {
-        List<Representation> representations = this.evaluationReport.getRepresentationListByEvaluationScore(100);
-        for (Representation representation : representations) {
-            String marked = null;
-            // 趋势
-            if (representation.positiveCorrelation == representation.negativeCorrelation) {
-                marked = NormalTrick + representation.knowledgeStrategy.getTerm().word;
-            }
-            else if (representation.negativeCorrelation > 0 &&
-                    representation.positiveCorrelation < representation.negativeCorrelation) {
-                marked = LowTrick + representation.knowledgeStrategy.getTerm().word;
-            }
-            else if (representation.positiveCorrelation >= 3 ||
-                    (representation.positiveCorrelation - representation.negativeCorrelation) >= 4) {
-                marked = HighTrick + representation.knowledgeStrategy.getTerm().word;
-            }
-            else {
-                marked = NormalTrick + representation.knowledgeStrategy.getTerm().word;
-            }
-
-            // 设置短描述
-            representation.description = marked;
-        }
-    }
+//    private void makeDescription() {
+//        List<Representation> representations = this.evaluationReport.getRepresentationListByEvaluationScore(100);
+//        for (Representation representation : representations) {
+//            String marked = null;
+//            // 趋势
+//            if (representation.positiveCorrelation == representation.negativeCorrelation) {
+//                marked = NormalTrick + representation.knowledgeStrategy.getTerm().word;
+//            }
+//            else if (representation.negativeCorrelation > 0 &&
+//                    representation.positiveCorrelation < representation.negativeCorrelation) {
+//                marked = LowTrick + representation.knowledgeStrategy.getTerm().word;
+//            }
+//            else if (representation.positiveCorrelation >= 3 ||
+//                    (representation.positiveCorrelation - representation.negativeCorrelation) >= 4) {
+//                marked = HighTrick + representation.knowledgeStrategy.getTerm().word;
+//            }
+//            else {
+//                marked = NormalTrick + representation.knowledgeStrategy.getTerm().word;
+//            }
+//
+//            // 设置短描述
+//            representation.description = marked;
+//        }
+//    }
 
     /**
      * 推理人格。

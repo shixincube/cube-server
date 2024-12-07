@@ -32,10 +32,7 @@ import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.PaintingConfidence;
 import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
-import cube.aigc.psychology.composition.FrameStructure;
-import cube.aigc.psychology.composition.SpaceLayout;
-import cube.aigc.psychology.composition.Texture;
-import cube.aigc.psychology.composition.BigFiveFactor;
+import cube.aigc.psychology.composition.*;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.Leg;
@@ -65,6 +62,8 @@ public class HTPEvaluation extends Evaluation {
     private SpaceLayout spaceLayout;
 
     private Reference reference;
+
+    private PaintingFeatureSet paintingFeatureSet;
 
     private boolean printBigFive = false;
 
@@ -99,6 +98,7 @@ public class HTPEvaluation extends Evaluation {
                 return report;
             }
 
+            // 设置参数
             if (this.painting.getAttribute().age < 16) {
                 this.houseAreaRatioThreshold = 0.055;
             }
@@ -114,6 +114,8 @@ public class HTPEvaluation extends Evaluation {
             results = this.correct(results);
             report = new EvaluationReport(this.painting.getAttribute(), this.reference,
                     new PaintingConfidence(this.painting), results);
+
+            this.paintingFeatureSet = new PaintingFeatureSet(results, report.getRepresentationList());
         }
         else {
             Logger.w(this.getClass(), "#makeEvaluationReport - Only for test");
@@ -131,7 +133,11 @@ public class HTPEvaluation extends Evaluation {
         return report;
     }
 
-    private EvaluationFeature   evalSpaceStructure() {
+    public PaintingFeatureSet getPaintingFeatureSet() {
+        return this.paintingFeatureSet;
+    }
+
+    private EvaluationFeature evalSpaceStructure() {
         EvaluationFeature result = new EvaluationFeature();
 
         // 画面大小比例
@@ -1492,8 +1498,8 @@ public class HTPEvaluation extends Evaluation {
             }
         }
 
-        if (houseList.size() > 2) {
-            Logger.d(this.getClass(), "#evalHouse - Number of houses : " + houseList.size());
+        Logger.d(this.getClass(), "#evalHouse - Number of houses : " + houseList.size());
+        if (houseList.size() > 1) {
             result.addScore(Indicator.Anxiety, -1, FloatUtils.random(0.3, 0.4));
             result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.6, 0.7));
         }
@@ -1819,7 +1825,15 @@ public class HTPEvaluation extends Evaluation {
 
                 ++countTreeDoodle;
 
-                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
+                // 判断涂鸦树面积
+                if ((double)tree.area / (double)this.spaceLayout.getPaintingArea() > 0.28d) {
+                    String desc = "画面中的树有涂鸦效果且面积较大";
+                    result.addFeature(desc, Term.Anxiety, Tendency.Positive);
+
+                    result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
+                }
+
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.55, 0.65));
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
 
                 result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(6.5, 7.0));

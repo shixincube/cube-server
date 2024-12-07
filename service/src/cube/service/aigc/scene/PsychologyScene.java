@@ -423,6 +423,10 @@ public class PsychologyScene {
                         // 存储
                         storage.writePsychologyReport(reportTask.report);
                         storage.writePainting(reportTask.report.sn, reportTask.fileLabel.getFileCode(), painting);
+                        if (null != workflow.getPaintingFeatureSet()) {
+                            PaintingFeatureSet paintingFeatureSet = workflow.getPaintingFeatureSet();
+                            storage.writePaintingFeatureSet(paintingFeatureSet);
+                        }
 
                         // 按照正常状态返回
                         reportTask.listener.onReportEvaluateCompleted(reportTask.report);
@@ -454,6 +458,10 @@ public class PsychologyScene {
                     // 存储
                     storage.writePsychologyReport(reportTask.report);
                     storage.writePainting(reportTask.report.sn, reportTask.fileLabel.getFileCode(), painting);
+                    if (null != workflow.getPaintingFeatureSet()) {
+                        PaintingFeatureSet paintingFeatureSet = workflow.getPaintingFeatureSet();
+                        storage.writePaintingFeatureSet(paintingFeatureSet);
+                    }
 
                     // 使用数据管理器生成关联数据
                     PsychologyDataManager.getInstance().writeReportChart(reportTask.report);
@@ -771,7 +779,9 @@ public class PsychologyScene {
     }
 
     public String buildPrompt(CustomRelation relation, String query) {
-        return null;
+        StringBuilder result = new StringBuilder();
+        result.append(query);
+        return result.toString();
     }
 
     public Painting getPainting(long reportSn) {
@@ -838,6 +848,9 @@ public class PsychologyScene {
 
         // 设置使用的单元
         workflow.setUnitName(this.unitName);
+
+        // 设置绘画特征集
+        workflow.setPaintingFeatureSet(evaluation.getPaintingFeatureSet());
 
         // 进行指标因子推理
         JSONObject data = new JSONObject();

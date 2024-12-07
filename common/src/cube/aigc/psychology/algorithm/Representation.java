@@ -29,10 +29,16 @@ package cube.aigc.psychology.algorithm;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
+import java.util.List;
+
 /**
  * 表征含义。
  */
 public class Representation implements JSONable {
+
+    public final static String HighTrick = "明显";
+    public final static String NormalTrick = "具有";
+    public final static String LowTrick = "缺乏";//"不足";
 
     public KnowledgeStrategy knowledgeStrategy;
 
@@ -51,6 +57,27 @@ public class Representation implements JSONable {
         this.positiveCorrelation = json.getInt("positiveCorrelation");
         this.negativeCorrelation = json.getInt("negativeCorrelation");
         this.description = json.getString("description");
+    }
+
+    public void makeDescription() {
+        String marked = null;
+        // 趋势
+        if (this.positiveCorrelation == this.negativeCorrelation) {
+            marked = NormalTrick + this.knowledgeStrategy.getTerm().word;
+        }
+        else if (this.negativeCorrelation > 0 &&
+                this.positiveCorrelation < this.negativeCorrelation) {
+            marked = LowTrick + this.knowledgeStrategy.getTerm().word;
+        }
+        else if (this.positiveCorrelation >= 3 ||
+                (this.positiveCorrelation - this.negativeCorrelation) >= 4) {
+            marked = HighTrick + this.knowledgeStrategy.getTerm().word;
+        }
+        else {
+            marked = NormalTrick + this.knowledgeStrategy.getTerm().word;
+        }
+        // 设置短描述
+        this.description = marked;
     }
 
     @Override

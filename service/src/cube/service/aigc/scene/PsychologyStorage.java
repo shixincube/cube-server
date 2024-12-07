@@ -58,6 +58,8 @@ public class PsychologyStorage implements Storagable {
 
     private final String paintingTable = "psychology_painting";
 
+    private final String paintingFeatureSetTable = "psychology_painting_feature_set";
+
     private final String reportTextTable = "psychology_report_text";
 
     private final String scaleTable = "psychology_scale";
@@ -138,6 +140,21 @@ public class PsychologyStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] paintingFeatureSetFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
@@ -351,6 +368,15 @@ public class PsychologyStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.paintingTable, this.paintingFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.paintingTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.paintingFeatureSetTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.paintingFeatureSetTable, this.paintingFeatureSetFields)) {
+                this.storage.execute("ALTER TABLE `" + this.paintingFeatureSetTable +
+                        "` CHANGE COLUMN `data` `data` MEDIUMTEXT NULL DEFAULT NULL");
+                Logger.i(this.getClass(), "Created table '" + this.paintingFeatureSetTable + "' successfully");
             }
         }
 
@@ -599,6 +625,49 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("data", painting.toJSON().toString())
             }, new Conditional[] {
                     Conditional.createEqualTo("report_sn", sn)
+            });
+        }
+    }
+
+    public PaintingFeatureSet readPaintingFeatureSet(long sn) {
+        List<StorageField[]> result = this.storage.executeQuery(this.paintingFeatureSetTable, this.paintingFeatureSetFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("sn", sn)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> fields = StorageFields.get(result.get(0));
+        try {
+            return new PaintingFeatureSet(new JSONObject(fields.get("data").getString()));
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#readPaintingFeatureSet", e);
+            return null;
+        }
+    }
+
+    public boolean writePaintingFeatureSet(PaintingFeatureSet featureSet) {
+        List<StorageField[]> result = this.storage.executeQuery(this.paintingFeatureSetTable, this.paintingFeatureSetFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("sn", featureSet.getSN())
+                });
+
+        if (result.isEmpty()) {
+            // 插入
+            return this.storage.executeInsert(this.paintingFeatureSetTable, new StorageField[] {
+                    new StorageField("sn", featureSet.getSN()),
+                    new StorageField("timestamp", System.currentTimeMillis()),
+                    new StorageField("data", featureSet.toJSON().toString())
+            });
+        }
+        else {
+            // 更新
+            return this.storage.executeUpdate(this.paintingFeatureSetTable, new StorageField[] {
+                    new StorageField("timestamp", System.currentTimeMillis()),
+                    new StorageField("data", featureSet.toJSON().toString())
+            }, new Conditional[] {
+                    Conditional.createEqualTo("sn", featureSet.getSN())
             });
         }
     }
