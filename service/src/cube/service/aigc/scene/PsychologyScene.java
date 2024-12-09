@@ -711,13 +711,13 @@ public class PsychologyScene {
             ReportRelation relation = relations.get(0);
             PaintingReport paintingReport = this.getPaintingReport(relation.reportSn);
             if (null != paintingReport) {
-                QueryRevolver queryRevolver = new QueryRevolver(this.aigcService.getTokenizer());
+                QueryRevolver queryRevolver = new QueryRevolver(this.aigcService.getTokenizer(), this.storage);
                 result.append(queryRevolver.generatePrompt(relation, paintingReport, query));
             }
             else {
                 ScaleReport scaleReport = this.getScaleReport(relation.reportSn);
                 if (null != scaleReport) {
-                    QueryRevolver queryRevolver = new QueryRevolver(this.aigcService.getTokenizer());
+                    QueryRevolver queryRevolver = new QueryRevolver(this.aigcService.getTokenizer(), this.storage);
                     result.append(queryRevolver.generatePrompt(relation, scaleReport, query));
                 }
                 else {
@@ -754,7 +754,7 @@ public class PsychologyScene {
                 return null;
             }
 
-            QueryRevolver queryRevolver = new QueryRevolver(this.aigcService.getTokenizer());
+            QueryRevolver queryRevolver = new QueryRevolver(this.aigcService.getTokenizer(), this.storage);
             result.append(queryRevolver.generatePrompt(relationList, reportList, query));
         }
 
@@ -774,7 +774,7 @@ public class PsychologyScene {
             }
         }
 
-        QueryRevolver revolver = new QueryRevolver(this.aigcService.getTokenizer());
+        QueryRevolver revolver = new QueryRevolver(this.aigcService.getTokenizer(), this.storage);
         return revolver.generateSupplement(relation, report, currentQuery);
     }
 

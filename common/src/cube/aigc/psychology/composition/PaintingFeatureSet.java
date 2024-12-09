@@ -43,6 +43,8 @@ public class PaintingFeatureSet implements JSONable {
 
     private long sn;
 
+    private long timestamp = System.currentTimeMillis();
+
     /**
      * Key: 描述
      */
@@ -59,25 +61,38 @@ public class PaintingFeatureSet implements JSONable {
             this.sn = json.getLong("sn");
         }
 
+        if (json.has("timestamp")) {
+            this.timestamp = json.getLong("timestamp");
+        }
+
         JSONArray data = json.getJSONArray("data");
         for (int i = 0; i < data.length(); ++i) {
             JSONObject item = data.getJSONObject(i);
-            String desc = item.getString("desc");
 
-            JSONArray list = item.getJSONArray("list");
-            List<Representation> representations = new ArrayList<>();
-            for (int n = 0; n < list.length(); ++n) {
-                JSONObject representationJson = list.getJSONObject(n);
-                Representation representation = new Representation(representationJson);
-                representations.add(representation);
+            try {
+                String desc = item.getString("desc");
+
+                JSONArray list = item.getJSONArray("list");
+                List<Representation> representations = new ArrayList<>();
+                for (int n = 0; n < list.length(); ++n) {
+                    JSONObject representationJson = list.getJSONObject(n);
+                    Representation representation = new Representation(representationJson);
+                    representations.add(representation);
+                }
+
+                this.dataMap.put(desc, representations);
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "", e);
             }
-
-            this.dataMap.put(desc, representations);
         }
     }
 
     private void add(EvaluationFeature evaluationFeature, List<Representation> representations) {
         for (EvaluationFeature.Feature feature : evaluationFeature.getFeatures()) {
+            if (null == feature.description || feature.description.length() == 0) {
+                continue;
+            }
+
             List<Representation> list = this.dataMap.get(feature.description);
             if (null == list) {
                 list = new ArrayList<>();
@@ -101,10 +116,10 @@ public class PaintingFeatureSet implements JSONable {
         return this.sn;
     }
 
-    public String makePrompt() {
+    public String makePrompt(boolean knowledgeStrategy) {
         StringBuilder buf = new StringBuilder();
 
-        buf.append("绘画画面的心理特征如下：\n\n");
+        buf.append("绘画画面的心理特征如下：\n");
         Iterator<Map.Entry<String, List<Representation>>> iter = this.dataMap.entrySet().iterator();
         while (iter.hasNext()) {
             Map.Entry<String, List<Representation>> e = iter.next();
@@ -118,24 +133,27 @@ public class PaintingFeatureSet implements JSONable {
             buf.append("。\n");
         }
 
-        buf.append("\n");
-        buf.append("相关心理特征释义如下：\n\n");
-        iter = this.dataMap.entrySet().iterator();
-        List<Term> terms = new ArrayList<>();
-        while (iter.hasNext()) {
-            List<Representation> list = iter.next().getValue();
-            for (Representation representation : list) {
-                if (terms.contains(representation.knowledgeStrategy.getTerm())) {
-                    continue;
-                }
-                terms.add(representation.knowledgeStrategy.getTerm());
+        if (knowledgeStrategy) {
+            buf.append("\n");
+            buf.append("相关心理特征释义如下：\n\n");
+            iter = this.dataMap.entrySet().iterator();
+            List<Term> terms = new ArrayList<>();
+            while (iter.hasNext()) {
+                List<Representation> list = iter.next().getValue();
+                for (Representation representation : list) {
+                    if (terms.contains(representation.knowledgeStrategy.getTerm())) {
+                        continue;
+                    }
+                    terms.add(representation.knowledgeStrategy.getTerm());
 
-                buf.append("* **").append(representation.knowledgeStrategy.getTerm().word).append("**");
-                buf.append("的心理学释义是");
-                buf.append(representation.knowledgeStrategy.getInterpretation());
-                buf.append("。\n");
+                    buf.append("* **").append(representation.knowledgeStrategy.getTerm().word).append("**");
+                    buf.append("的心理学释义是");
+                    buf.append(representation.knowledgeStrategy.getInterpretation());
+                    buf.append("。\n");
+                }
             }
         }
+
         buf.append("\n");
 
         Logger.d(this.getClass(), "#makePrompt - Words: " + buf.length());
@@ -147,6 +165,7 @@ public class PaintingFeatureSet implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
+        json.put("timestamp", this.timestamp);
 
         JSONArray array = new JSONArray();
 

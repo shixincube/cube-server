@@ -640,7 +640,8 @@ public class PsychologyStorage implements Storagable {
 
         Map<String, StorageField> fields = StorageFields.get(result.get(0));
         try {
-            return new PaintingFeatureSet(new JSONObject(fields.get("data").getString()));
+            String jsonString = JSONUtils.filter(fields.get("data").getString());
+            return new PaintingFeatureSet(new JSONObject(jsonString));
         } catch (Exception e) {
             Logger.e(this.getClass(), "#readPaintingFeatureSet", e);
             return null;

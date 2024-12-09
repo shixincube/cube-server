@@ -26,12 +26,10 @@
 
 package cube.service.aigc.scene;
 
+import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
-import cube.aigc.psychology.composition.CustomRelation;
-import cube.aigc.psychology.composition.EvaluationScore;
-import cube.aigc.psychology.composition.ReportRelation;
-import cube.aigc.psychology.composition.ScaleFactor;
+import cube.aigc.psychology.composition.*;
 import cube.common.entity.GenerativeRecord;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -80,14 +78,21 @@ public class QueryRevolver {
             "解决"
     };
 
-    private String[] keywordQueryPersonality = new String[] {
-            "性格", "人格", "胜任"
+//    private String[] keywordQueryPersonality = new String[] {
+//            "性格", "人格", "胜任"
+//    };
+
+    private String[] paintingDesc = new String[] {
+            "画", "画面", "图画", "图像", "照片", "绘画"
     };
 
     private Tokenizer tokenizer;
 
-    public QueryRevolver(Tokenizer tokenizer) {
+    private PsychologyStorage storage;
+
+    public QueryRevolver(Tokenizer tokenizer, PsychologyStorage storage) {
         this.tokenizer = tokenizer;
+        this.storage = storage;
     }
 
     public String generatePrompt(ReportRelation relation, Report report, String query) {
@@ -116,6 +121,9 @@ public class QueryRevolver {
                 }
             }
             result.append("\n");
+
+            result.append("\n");
+            result.append(this.tryGeneratePaintingFeature(paintingReport, query));
 
             if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                 result.append("\n受测人的大五人格画像是").append(paintingReport.getEvaluationReport()
@@ -501,6 +509,38 @@ public class QueryRevolver {
         List<String> list = dataset.searchContent(keywords.toArray(new String[0]), 2);
         for (String content : list) {
             buf.append(content).append("\n\n");
+        }
+
+        return buf.toString();
+    }
+
+    private String tryGeneratePaintingFeature(PaintingReport paintingReport, String query) {
+        StringBuilder buf = new StringBuilder();
+
+        boolean hit = false;
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+        List<String> keywords = analyzer.analyzeOnlyWords(query, 10);
+        for (String keyword : keywords) {
+            for (String word : this.paintingDesc) {
+                if (keyword.contains(word)) {
+                    hit = true;
+                    break;
+                }
+            }
+            if (hit) {
+                break;
+            }
+        }
+
+        if (hit) {
+            PaintingFeatureSet featureSet = this.storage.readPaintingFeatureSet(paintingReport.sn);
+            if (null != featureSet) {
+                buf.append(featureSet.makePrompt(false));
+            }
+            else {
+                Logger.w(this.getClass(), "#tryGeneratePaintingFeature - Can NOT find painting feature set data: " +
+                        paintingReport.sn);
+            }
         }
 
         return buf.toString();
