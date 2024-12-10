@@ -26,6 +26,7 @@
 
 package cube.common.entity;
 
+import cell.util.Utils;
 import cube.aigc.psychology.composition.Texture;
 import cube.common.JSONable;
 import cube.vision.BoundingBox;
@@ -36,6 +37,8 @@ import org.json.JSONObject;
  * 图画里的素材描述。
  */
 public class Material implements JSONable {
+
+    public long sn;
 
     public String label;
 
@@ -52,9 +55,11 @@ public class Material implements JSONable {
     public Texture texture;
 
     public Material() {
+        this.sn = Utils.generateSerialNumber();
     }
 
     public Material(String label, BoundingBox boundingBox, Box box) {
+        this.sn = Utils.generateSerialNumber();
         this.label = label;
         this.boundingBox = boundingBox;
         this.box = box;
@@ -65,6 +70,11 @@ public class Material implements JSONable {
     }
 
     public Material(JSONObject json) {
+        if (json.has("sn")) {
+            this.sn = json.getLong("sn");
+        } else {
+            this.sn = Utils.generateSerialNumber();
+        }
         this.label = json.getString("label");
         this.prob = json.getDouble("prob");
         this.boundingBox = new BoundingBox(json.getJSONObject("bbox"));
@@ -143,6 +153,7 @@ public class Material implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
         json.put("label", this.label);
         json.put("prob", this.prob);
         json.put("bbox", this.boundingBox.toJSON());

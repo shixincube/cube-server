@@ -133,6 +133,10 @@ public class PaintingReport extends Report {
                 this.reportTextList.add(rs);
             }
         }
+
+        if (json.has("painting")) {
+            this.painting = new Painting(json.getJSONObject("painting"));
+        }
     }
 
     public void setEvaluationReport(EvaluationReport evaluationReport) {

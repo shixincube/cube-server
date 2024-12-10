@@ -30,7 +30,7 @@ public class ReportDataset {
     }
 
     public void makeEvaluationDatasetFromScaleData(int outputType, File reportJsonFile, File scaleCSVFile,
-                                                   File datasetFile) throws Exception {
+                                                   File datasetFile, boolean resetEvaluation) throws Exception {
         Map<Long, ScaleDataRow> rowMap = new LinkedHashMap<>();
         BufferedReader reader = null;
         try {
@@ -107,13 +107,20 @@ public class ReportDataset {
             }
 
             // Inputs
-            Painting painting = new Painting(paintingJson);
-            if (!painting.isValid()) {
-                Logger.w(this.getClass(), "#makeEvaluationDatasetFromScaleData - Painting is NOT valid: " + json.getLong("sn"));
-                continue;
+            EvaluationReport report = null;
+            if (resetEvaluation) {
+                Painting painting = new Painting(paintingJson);
+                if (!painting.isValid()) {
+                    Logger.w(this.getClass(), "#makeEvaluationDatasetFromScaleData - Painting is NOT valid: " + json.getLong("sn"));
+                    continue;
+                }
+                HTPEvaluation evaluation = new HTPEvaluation(painting);
+                report = evaluation.makeEvaluationReport();
             }
-            HTPEvaluation evaluation = new HTPEvaluation(painting);
-            EvaluationReport report = evaluation.makeEvaluationReport();
+            else {
+                PaintingReport paintingReport = new PaintingReport(json);
+                report = paintingReport.getEvaluationReport();
+            }
 
             List<EvaluationScore> list = report.getFullEvaluationScores();
             double[] scores = new double[list.size()];

@@ -3,11 +3,18 @@ package cube.service.aigc.dataset;
 import cell.util.Utils;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
+import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.EvaluationReport;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
+import cube.common.entity.FileLabel;
 import cube.service.aigc.scene.HTPEvaluation;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentProvider;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.util.StringContentProvider;
+import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -16,22 +23,141 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public class LensDataToolkit {
 
-    private String host = "211.157.179.37";
-
     private int port = 7010;
 
-//    private String token = "NEFaMVUtMoXqdPakIHpNlXesBHjDBkQY";    // 127.0.0.1
+    private String host = "211.157.179.37";
     private String token = "duWmraPkxAqrwkHWNAKKxQpIRQDDDKcM";      // 211.157.179.37
+
+    private String localHost = "127.0.0.1";
+    private String localToken = "NEFaMVUtMoXqdPakIHpNlXesBHjDBkQY";
 
     private String workingPath = "storage/tmp/";
 
     public LensDataToolkit() {
+    }
+
+    public void updateReportPainting(File dataJsonFile, File newJsonFile) {
+        JSONArray array = new JSONArray();
+
+        try {
+            byte[] data = Files.readAllBytes(Paths.get(dataJsonFile.getAbsolutePath()));
+            array = new JSONArray(new String(data, StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < array.length(); ++i) {
+            PaintingReport paintingReport = new PaintingReport(array.getJSONObject(i));
+            FileLabel fileLabel = uploadFile(workingPath + "images/", paintingReport.sn + ".jpg");
+            if (null == fileLabel) {
+                Logger.e(this.getClass(), "#updateReportPainting - Upload file error: " + paintingReport.sn);
+                continue;
+            }
+
+            PaintingReport newReport = this.generatePaintingReport(this.localHost, this.localToken,
+                    paintingReport.getAttribute(), fileLabel.getFileCode());
+
+            paintingReport.setEvaluationReport(newReport.getEvaluationReport());
+            if (null != newReport.painting) {
+                paintingReport.painting = newReport.painting;
+            }
+
+            JSONObject reportJson = paintingReport.toJSON();
+            if (null != paintingReport.painting) {
+                reportJson.put("painting", paintingReport.painting.toJSON());
+            }
+            array.put(i, reportJson);
+
+            Logger.i(this.getClass(), "#updateReportPainting - Process: " + (i + 1) + "/" + array.length());
+        }
+
+        try {
+            Files.write(Paths.get(newJsonFile.getAbsolutePath()),
+                    array.toString(4).getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private FileLabel uploadFile(String path, String filename) {
+        HttpClient client = new HttpClient();
+        try {
+            client.setConnectTimeout(10000);
+            client.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        FileLabel fileLabel = this.findFile(client, filename);
+        if (null == fileLabel) {
+            Logger.i(this.getClass(), "#uploadFile - Upload file: " + filename);
+
+            String url = "http://127.0.0.1:7010/filestorage/file/?token=" + localToken +
+                    "&filename=" + filename;
+            Path filepath = Paths.get(path, filename);
+            try {
+                ContentResponse response = client.POST(url).file(filepath).send();
+                if (response.getStatus() == HttpStatus.OK_200) {
+                    long start = System.currentTimeMillis();
+                    while (null == (fileLabel = this.findFile(client, filename))) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (Exception te) {
+                            te.printStackTrace();
+                        }
+                        if (System.currentTimeMillis() - start > 10000) {
+                            break;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            client.stop();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return fileLabel;
+    }
+
+    private FileLabel findFile(HttpClient client, String filename) {
+        String url = "http://127.0.0.1:7010/filestorage/operation/find/";
+        try {
+            JSONObject data = new JSONObject();
+            data.put("token", localToken);
+            data.put("fileName", filename);
+            ContentProvider provider = new StringContentProvider(data.toString());
+
+            ContentResponse response = client.POST(url).content(provider).send();
+            int state = response.getStatus();
+            if (state == HttpStatus.NOT_FOUND_404) {
+                Logger.d(this.getClass(), "#findFile - No file: " + filename);
+            }
+            else if (state == HttpStatus.OK_200) {
+                Logger.d(this.getClass(), "#findFile - File is OK: " + filename);
+                JSONObject responseJson = new JSONObject(response.getContentAsString());
+                return new FileLabel(responseJson.getJSONObject("data").getJSONArray("list").getJSONObject(0));
+            }
+            else {
+                Logger.e(this.getClass(), "#findFile - Find file failed: " + filename);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public void mergeScaleCSV(File[] fileList, File mergedFile) {
@@ -173,7 +299,7 @@ public class LensDataToolkit {
                 }
                 else {
                     System.out.println("Download painting data: " + sn);
-                    Painting painting = this.requestPaintingData(sn);
+                    Painting painting = this.requestPaintingData(this.host, this.token, sn);
                     if (null != painting) {
                         HTPEvaluation evaluation = new HTPEvaluation(painting);
                         EvaluationReport evaluationReport = evaluation.makeEvaluationReport();
@@ -345,9 +471,9 @@ public class LensDataToolkit {
             JSONArray list = new JSONArray();
 
             for (long sn : snList) {
-                JSONObject json = this.requestReportData(sn);
+                JSONObject json = this.requestReportData(this.host, this.token, sn);
                 // 获取对应的绘画
-                Painting painting = this.requestPaintingData(sn);
+                Painting painting = this.requestPaintingData(this.host, this.token, sn);
                 if (null != painting) {
                     json.put("painting", painting.toJSON());
                 }
@@ -416,7 +542,7 @@ public class LensDataToolkit {
                 JSONObject json = list.getJSONObject(i);
                 long sn = json.getLong("sn");
                 // 获取对应的绘画
-                Painting painting = this.requestPaintingData(sn);
+                Painting painting = this.requestPaintingData(this.host, this.token, sn);
                 if (null != painting) {
                     json.put("painting", painting.toJSON());
                 }
@@ -449,12 +575,61 @@ public class LensDataToolkit {
         }
     }
 
-    private JSONObject requestReportData(long sn) {
+    private PaintingReport generatePaintingReport(String host, String token, Attribute attribute, String fileCode) {
+        PaintingReport report = null;
+        HttpClient client = new HttpClient();
+
+        try {
+            client.start();
+
+            Logger.i(this.getClass(), "#generatePaintingReport - file: " + fileCode);
+
+            String url = "http://" + host + ":" + this.port + "/aigc/psychology/report/" + token;
+            JSONObject data = new JSONObject();
+            data.put("attribute", attribute.toJSON());
+            data.put("fileCode", fileCode);
+
+            ContentProvider provider = new StringContentProvider(data.toString());
+            ContentResponse response = client.POST(url).content(provider).send();
+            if (response.getStatus() == HttpStatus.OK_200) {
+                JSONObject responseJson = new JSONObject(response.getContentAsString());
+                long sn = responseJson.getLong("sn");
+                int state = responseJson.getInt("state");
+                responseJson = null;
+
+                while (state != 0 && state != 24) {
+                    Thread.sleep(3000);
+
+                    responseJson = this.requestReportData(host, token, sn);
+                    if (null == responseJson) {
+                        continue;
+                    }
+
+                    state = responseJson.getInt("state");
+                }
+
+                report = new PaintingReport(responseJson);
+
+                Thread.sleep(1000);
+
+                Painting painting = this.requestPaintingData(host, token, report.sn);
+                report.painting = painting;
+            }
+
+            client.stop();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return report;
+    }
+
+    private JSONObject requestReportData(String host, String token, long sn) {
         StringBuilder urlString = new StringBuilder("http://");
-        urlString.append(this.host);
+        urlString.append(host);
         urlString.append(":").append(this.port);
         urlString.append("/aigc/psychology/report/");
-        urlString.append(this.token);
+        urlString.append(token);
         urlString.append("?sn=").append(sn);
 
         HttpURLConnection connection = null;
@@ -564,12 +739,12 @@ public class LensDataToolkit {
         return null;
     }
 
-    private Painting requestPaintingData(long sn) {
+    private Painting requestPaintingData(String host, String token, long sn) {
         StringBuilder urlString = new StringBuilder("http://");
-        urlString.append(this.host);
+        urlString.append(host);
         urlString.append(":").append(this.port);
         urlString.append("/aigc/psychology/painting/");
-        urlString.append(this.token);
+        urlString.append(token);
         urlString.append("?sn=").append(sn);
 
         HttpURLConnection connection = null;
@@ -597,6 +772,9 @@ public class LensDataToolkit {
                 while ((length = is.read(bytes)) > 0) {
                     buf.put(bytes, 0, length);
                 }
+            }
+            else {
+                return null;
             }
 
             buf.flip();

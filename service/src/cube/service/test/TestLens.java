@@ -60,7 +60,7 @@ public class TestLens {
         lensDataToolkit.downloadBySNList(new File("storage/tmp/lens_export_data_p2.csv"), destFile);
     }
 
-    public static void makeEvaluationDataset() {
+    public static void remakeEvaluationDataset() {
         ReportDataset dataset = new ReportDataset();
         File reportDataFile = new File("storage/tmp/lens_export_reports_all.json");
         File scaleDataFile = new File("storage/tmp/lens_export_data_all.csv");
@@ -70,12 +70,33 @@ public class TestLens {
         File datasetBFP = new File("storage/tmp/lens_dataset_bfp.csv");
 
         try {
-//            dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_SCL,
-//                    reportDataFile, scaleDataFile, datasetSCL);
+            dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_SCL,
+                    reportDataFile, scaleDataFile, datasetSCL, true);
             dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_PANAS,
-                    reportDataFile, scaleDataFile, datasetPANAS);
-//            dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_BFP,
-//                    reportDataFile, scaleDataFile, datasetBFP);
+                    reportDataFile, scaleDataFile, datasetPANAS, true);
+            dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_BFP,
+                    reportDataFile, scaleDataFile, datasetBFP, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void makeEvaluationDataset() {
+        ReportDataset dataset = new ReportDataset();
+        File reportDataFile = new File("storage/tmp/lens_export_reports_updated.json");
+        File scaleDataFile = new File("storage/tmp/lens_export_data_all.csv");
+
+        File datasetSCL = new File("storage/tmp/lens_dataset_scl.csv");
+        File datasetPANAS = new File("storage/tmp/lens_dataset_panas.csv");
+        File datasetBFP = new File("storage/tmp/lens_dataset_bfp.csv");
+
+        try {
+            dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_SCL,
+                    reportDataFile, scaleDataFile, datasetSCL, false);
+            dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_PANAS,
+                    reportDataFile, scaleDataFile, datasetPANAS, false);
+            dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_BFP,
+                    reportDataFile, scaleDataFile, datasetBFP, false);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -104,7 +125,7 @@ public class TestLens {
 
 //        mergeData();
 
-        makeEvaluationDataset();
+//        remakeEvaluationDataset();
 
 //        testSaveScore();
 
@@ -116,7 +137,10 @@ public class TestLens {
 
 //        testMakeNormalizationFile();
 
-//        LensDataToolkit dataset = new LensDataToolkit();
-//        dataset.makeNewExportData();
+        LensDataToolkit toolkit = new LensDataToolkit();
+//        toolkit.makeNewExportData();
+        File file = new File("storage/tmp/lens_export_reports_all.json");
+        File newFile = new File("storage/tmp/lens_export_reports_updated.json");
+        toolkit.updateReportPainting(file, newFile);
     }
 }

@@ -31,6 +31,8 @@ package cube.common.action;
  */
 public enum CVAction {
 
+    
+
     FindContours("findContours"),
 
     Predict("predict"),
