@@ -83,7 +83,7 @@ public class QueryRevolver {
 //    };
 
     private String[] paintingDesc = new String[] {
-            "画", "画面", "图画", "图像", "照片", "绘画"
+            "画", "画面", "图画", "图像", "照片", "绘画", "看"
     };
 
     private Tokenizer tokenizer;

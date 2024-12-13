@@ -121,7 +121,7 @@ public class AIGCService extends AbstractModule {
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, Queue<NaturalLanguageTaskMeta>> nlTaskQueueMap;
+//    private Map<String, Queue<NaturalLanguageTaskMeta>> nlTaskQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
@@ -198,7 +198,7 @@ public class AIGCService extends AbstractModule {
         this.channelMap = new ConcurrentHashMap<>();
         this.generateQueueMap = new ConcurrentHashMap<>();
         this.conversationQueueMap = new ConcurrentHashMap<>();
-        this.nlTaskQueueMap = new ConcurrentHashMap<>();
+//        this.nlTaskQueueMap = new ConcurrentHashMap<>();
         this.sentimentQueueMap = new ConcurrentHashMap<>();
         this.summarizationQueueMap = new ConcurrentHashMap<>();
         this.textToImageQueueMap = new ConcurrentHashMap<>();
@@ -1487,13 +1487,13 @@ public class AIGCService extends AbstractModule {
         return false;
     }
 
-    /**
+    /*
      * 执行自然语言任务。
      *
      * @param task
      * @param listener
      * @return
-     */
+     * @deprecated 2024-12-13 废弃
     public boolean performNaturalLanguageTask(NLTask task, NaturalLanguageTaskListener listener) {
         if (!this.isStarted()) {
             return false;
@@ -1536,8 +1536,9 @@ public class AIGCService extends AbstractModule {
         }
 
         return true;
-    }
+    }*/
 
+    /* FIXME 2024-12-13 过时，废弃
     public boolean sentimentAnalysis(String text, SentimentAnalysisListener listener) {
         if (!this.isStarted()) {
             return false;
@@ -1574,7 +1575,7 @@ public class AIGCService extends AbstractModule {
         }
 
         return true;
-    }
+    }*/
 
     /**
      * 生成文本摘要。
@@ -2460,6 +2461,7 @@ public class AIGCService extends AbstractModule {
         this.currentConversationUnitMeta = null;
     }
 
+    /* FIXME 2024-12-13 废弃
     private void processNaturalLanguageTaskQueue(String queryKey) {
         Queue<NaturalLanguageTaskMeta> queue = this.nlTaskQueueMap.get(queryKey);
         if (null == queue) {
@@ -2483,7 +2485,7 @@ public class AIGCService extends AbstractModule {
         if (null != unit) {
             unit.setRunning(false);
         }
-    }
+    }*/
 
     private void processSentimentQueue(String queryKey) {
         Queue<SentimentUnitMeta> queue = this.sentimentQueueMap.get(queryKey);
@@ -3265,7 +3267,9 @@ public class AIGCService extends AbstractModule {
         }
     }
 
-
+    /**
+     * @deprecated
+     */
     private class NaturalLanguageTaskMeta {
 
         protected AIGCUnit unit;

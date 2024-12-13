@@ -32,16 +32,15 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.SentimentResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.SentimentAnalysisListener;
 import org.json.JSONObject;
 
 /**
  * 情感分析。
+ * @deprecated
  */
 public class SentimentTask extends ServiceTask {
 
@@ -66,6 +65,7 @@ public class SentimentTask extends ServiceTask {
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         // 执行 Sentiment Analysis
+        /* 废弃 2024-12-13
         boolean success = service.sentimentAnalysis(text, new SentimentAnalysisListener() {
             @Override
             public void onCompleted(SentimentResult result) {
@@ -86,6 +86,9 @@ public class SentimentTask extends ServiceTask {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
             markResponseTime();
-        }
+        }*/
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+        markResponseTime();
     }
 }

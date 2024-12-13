@@ -32,6 +32,7 @@ import org.json.JSONObject;
 
 /**
  * Natural Language Task
+ * @deprecated
  */
 public class NLTask implements JSONable {
 

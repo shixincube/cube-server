@@ -780,6 +780,9 @@ public class PsychologyScene {
 
     public String buildPrompt(CustomRelation relation, String query) {
         StringBuilder result = new StringBuilder();
+
+//        relation.name;
+
         result.append(query);
         return result.toString();
     }

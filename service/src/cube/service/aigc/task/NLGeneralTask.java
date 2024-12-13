@@ -37,11 +37,11 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.NaturalLanguageTaskListener;
 import org.json.JSONObject;
 
 /**
  * 自然语言通用任务。
+ * @deprecated 2024-12-13 废弃
  */
 public class NLGeneralTask extends ServiceTask {
 
@@ -66,7 +66,7 @@ public class NLGeneralTask extends ServiceTask {
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         // 执行 NL 任务
-        boolean success = service.performNaturalLanguageTask(task, new NaturalLanguageTaskListener() {
+        /*boolean success = service.performNaturalLanguageTask(task, new NaturalLanguageTaskListener() {
             @Override
             public void onCompleted(NLTask nlTask) {
                 cellet.speak(talkContext,
@@ -86,6 +86,6 @@ public class NLGeneralTask extends ServiceTask {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
             markResponseTime();
-        }
+        }*/
     }
 }

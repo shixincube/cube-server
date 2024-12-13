@@ -43,7 +43,7 @@ import javax.servlet.http.HttpServletResponse;
 public class Session extends ContextHandler {
 
     public final static String[] MODELS = new String[]{
-            "Baize", "GPT", "Wenxin", "Gemini", "DallE"
+            "Baize", "GPT", "YiYan", "Gemini", "DallE"
     };
 
     public Session() {

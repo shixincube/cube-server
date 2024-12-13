@@ -30,6 +30,7 @@ import cube.common.entity.NLTask;
 
 /**
  * 自然语言处理任务监听器。
+ * @deprecated 2024-12-13
  */
 public interface NaturalLanguageTaskListener {
 

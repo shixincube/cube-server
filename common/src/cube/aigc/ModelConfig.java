@@ -42,7 +42,7 @@ public class ModelConfig implements JSONable {
 
     public final static String[] TEXT_TO_IMAGE_UNIT = new String[] { "DallE" };
 
-    public final static String[] EXTRA_LONG_PROMPT_UNIT = new String[]{ "GPT", "Gemini", "Wenxin" };
+    public final static String[] EXTRA_LONG_PROMPT_UNIT = new String[]{ "GPT", "Gemini", "YiYan" };
 
     public final static String CHAT_UNIT = "Chat";
 
@@ -59,7 +59,7 @@ public class ModelConfig implements JSONable {
             new String[] { "GPT", "GPT" },
             new String[] { "DallE", "DallE" },
             new String[] { "Gemini", "Gemini" },
-            new String[] { "Wenxin", "Wenxin" },
+            new String[] { "YiYan", "YiYan" },
             new String[] { "Baize", "Baize" },
             new String[] { "BaizeNext", "BaizeNext" },
             new String[] { "GLM", "BaizeX" },

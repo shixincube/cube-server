@@ -154,16 +154,16 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new InjectOrGetTokenTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (AIGCAction.NaturalLanguageTask.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new NLGeneralTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.Sentiment.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new SentimentTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
+//        else if (AIGCAction.NaturalLanguageTask.name.equals(action)) {
+//            // 来自 Dispatcher 的请求
+//            this.execute(new NLGeneralTask(this, talkContext, primitive,
+//                    this.markResponseTime(action)));
+//        }
+//        else if (AIGCAction.Sentiment.name.equals(action)) {
+//            // 来自 Dispatcher 的请求
+//            this.execute(new SentimentTask(this, talkContext, primitive,
+//                    this.markResponseTime(action)));
+//        }
         else if (AIGCAction.Summarization.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new SummarizationTask(this, talkContext, primitive,
