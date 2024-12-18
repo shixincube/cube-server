@@ -187,6 +187,10 @@ public class AICapability implements JSONable {
 
         public final static String KnowledgeComprehension = "KnowledgeComprehension";
 
+        public final static String SemanticSearch = "SemanticSearch";
+
+        public final static String ParaphraseMining = "ParaphraseMining";
+
         private NaturalLanguageProcessing() {
         }
     }

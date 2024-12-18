@@ -35,6 +35,7 @@ import java.util.List;
 
 /**
  * 情绪分析结果。
+ * @deprecated
  */
 public class SentimentResult implements JSONable {
 

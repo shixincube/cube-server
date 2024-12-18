@@ -116,37 +116,30 @@ public class AIGCService extends AbstractModule {
      */
     private final Map<String, Queue<ConversationUnitMeta>> conversationQueueMap;
 
-    private volatile ConversationUnitMeta currentConversationUnitMeta;
+    /**
+     * Key 是 AIGC 的 Query Key
+     */
+    private Map<String, Queue<UnitMeta>> textToImageQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
      */
-//    private Map<String, Queue<NaturalLanguageTaskMeta>> nlTaskQueueMap;
+    private Map<String, Queue<UnitMeta>> summarizationQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, Queue<SentimentUnitMeta>> sentimentQueueMap;
+    private Map<String, Queue<UnitMeta>> extractKeywordsQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, Queue<SummarizationUnitMeta>> summarizationQueueMap;
+    private Map<String, Queue<UnitMeta>> semanticSearchQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, Queue<TextToImageUnitMeta>> textToImageQueueMap;
-
-    /**
-     * Key 是 AIGC 的 Query Key
-     */
-    private Map<String, Queue<ExtractKeywordsUnitMeta>> extractKeywordsQueueMap;
-
-    /**
-     * Key 是 AIGC 的 Query Key
-     */
-    private Map<String, Queue<ASRUnitMeta>> asrQueueMap;
+    private Map<String, Queue<UnitMeta>> asrQueueMap;
 
     /**
      * 最大频道数量。
@@ -198,11 +191,10 @@ public class AIGCService extends AbstractModule {
         this.channelMap = new ConcurrentHashMap<>();
         this.generateQueueMap = new ConcurrentHashMap<>();
         this.conversationQueueMap = new ConcurrentHashMap<>();
-//        this.nlTaskQueueMap = new ConcurrentHashMap<>();
-        this.sentimentQueueMap = new ConcurrentHashMap<>();
-        this.summarizationQueueMap = new ConcurrentHashMap<>();
         this.textToImageQueueMap = new ConcurrentHashMap<>();
+        this.summarizationQueueMap = new ConcurrentHashMap<>();
         this.extractKeywordsQueueMap = new ConcurrentHashMap<>();
+        this.semanticSearchQueueMap = new ConcurrentHashMap<>();
         this.asrQueueMap = new ConcurrentHashMap<>();
         this.tokenizer = new Tokenizer();
     }
@@ -1447,22 +1439,17 @@ public class AIGCService extends AbstractModule {
         if (null == record) {
             ConversationUnitMeta unitMeta = null;
 
-            if (null != this.currentConversationUnitMeta && this.currentConversationUnitMeta.sn == sn) {
-                unitMeta = this.currentConversationUnitMeta;
-            }
-            else {
-                synchronized (this.conversationQueueMap) {
-                    for (Queue<ConversationUnitMeta> queue : this.conversationQueueMap.values()) {
-                        for (ConversationUnitMeta meta : queue) {
-                            if (meta.sn == sn) {
-                                unitMeta = meta;
-                                break;
-                            }
-                        }
-
-                        if (null != unitMeta) {
+            synchronized (this.conversationQueueMap) {
+                for (Queue<ConversationUnitMeta> queue : this.conversationQueueMap.values()) {
+                    for (ConversationUnitMeta meta : queue) {
+                        if (meta.sn == sn) {
+                            unitMeta = meta;
                             break;
                         }
+                    }
+
+                    if (null != unitMeta) {
+                        break;
                     }
                 }
             }
@@ -1599,10 +1586,10 @@ public class AIGCService extends AbstractModule {
         // 修正文本内容
         String modified = text.replaceAll("\n", "。");
 
-        SummarizationUnitMeta meta = new SummarizationUnitMeta(unit, modified, listener);
+        UnitMeta meta = new SummarizationUnitMeta(unit, modified, listener);
 
         synchronized (this.summarizationQueueMap) {
-            Queue<SummarizationUnitMeta> queue = this.summarizationQueueMap.get(unit.getQueryKey());
+            Queue<UnitMeta> queue = this.summarizationQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
                 this.summarizationQueueMap.put(unit.getQueryKey(), queue);
@@ -1617,7 +1604,7 @@ public class AIGCService extends AbstractModule {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processSummarizationQueue(meta.unit.getQueryKey());
+                    processQueue(meta.unit.getQueryKey(), summarizationQueueMap);
                 }
             });
         }
@@ -1687,10 +1674,10 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        TextToImageUnitMeta meta = new TextToImageUnitMeta(unit, channel, text, listener);
+        UnitMeta meta = new TextToImageUnitMeta(unit, channel, text, listener);
 
         synchronized (this.textToImageQueueMap) {
-            Queue<TextToImageUnitMeta> queue = this.textToImageQueueMap.get(unit.getQueryKey());
+            Queue<UnitMeta> queue = this.textToImageQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
                 this.textToImageQueueMap.put(unit.getQueryKey(), queue);
@@ -1705,7 +1692,7 @@ public class AIGCService extends AbstractModule {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processTextToImageQueue(meta.unit.getQueryKey());
+                    processQueue(meta.unit.getQueryKey(), textToImageQueueMap);
                 }
             });
         }
@@ -1732,10 +1719,10 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        ExtractKeywordsUnitMeta meta = new ExtractKeywordsUnitMeta(unit, text, listener);
+        UnitMeta meta = new ExtractKeywordsUnitMeta(unit, text, listener);
 
         synchronized (this.extractKeywordsQueueMap) {
-            Queue<ExtractKeywordsUnitMeta> queue = this.extractKeywordsQueueMap.get(unit.getQueryKey());
+            Queue<UnitMeta> queue = this.extractKeywordsQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
                 this.extractKeywordsQueueMap.put(unit.getQueryKey(), queue);
@@ -1750,7 +1737,52 @@ public class AIGCService extends AbstractModule {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processExtractKeywordsQueue(meta.unit.getQueryKey());
+                    processQueue(meta.unit.getQueryKey(), extractKeywordsQueueMap);
+                }
+            });
+        }
+
+        return true;
+    }
+
+    /**
+     * 语义搜索。
+     *
+     * @param query
+     * @param listener
+     * @return
+     */
+    public boolean semanticSearch(String query, SemanticSearchListener listener) {
+        if (!this.isStarted()) {
+            return false;
+        }
+
+        // 查找有该能力的单元
+        AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.SemanticSearch);
+        if (null == unit) {
+            Logger.w(AIGCService.class, "No semantic search unit setup in server");
+            return false;
+        }
+
+        UnitMeta meta = new SemanticSearchUnitMeta(unit, query, listener);
+
+        synchronized (this.semanticSearchQueueMap) {
+            Queue<UnitMeta> queue = this.semanticSearchQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.semanticSearchQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    processQueue(meta.unit.getQueryKey(), semanticSearchQueueMap);
                 }
             });
         }
@@ -2050,10 +2082,10 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        ASRUnitMeta meta = new ASRUnitMeta(unit, sourceFile, localFileLabel, listener);
+        UnitMeta meta = new ASRUnitMeta(unit, sourceFile, localFileLabel, listener);
 
         synchronized (this.asrQueueMap) {
-            Queue<ASRUnitMeta> queue = this.asrQueueMap.get(unit.getQueryKey());
+            Queue<UnitMeta> queue = this.asrQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
                 this.asrQueueMap.put(unit.getQueryKey(), queue);
@@ -2068,7 +2100,7 @@ public class AIGCService extends AbstractModule {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processASRQueue(meta.unit.getQueryKey());
+                    processQueue(meta.unit.getQueryKey(), asrQueueMap);
                 }
             });
         }
@@ -2440,9 +2472,6 @@ public class AIGCService extends AbstractModule {
 
         ConversationUnitMeta meta = queue.poll();
         while (null != meta) {
-            // 设置当前值
-            this.currentConversationUnitMeta = meta;
-
             // 执行处理
             try {
                 meta.process();
@@ -2457,50 +2486,22 @@ public class AIGCService extends AbstractModule {
         if (null != unit) {
             unit.setRunning(false);
         }
-
-        this.currentConversationUnitMeta = null;
     }
 
-    /* FIXME 2024-12-13 废弃
-    private void processNaturalLanguageTaskQueue(String queryKey) {
-        Queue<NaturalLanguageTaskMeta> queue = this.nlTaskQueueMap.get(queryKey);
+    private void processQueue(String queryKey, Map<String, Queue<UnitMeta>> queueMap) {
+        Queue<UnitMeta> queue = queueMap.get(queryKey);
         if (null == queue) {
-            Logger.w(AIGCService.class, "No found unit: " + queryKey);
+            Logger.w(AIGCService.class, "#processQueue - No found unit: " + queryKey);
             return;
         }
 
-        NaturalLanguageTaskMeta meta = queue.poll();
+        UnitMeta meta = queue.poll();
         while (null != meta) {
             // 执行处理
             try {
                 meta.process();
             } catch (Exception e) {
-                Logger.e(this.getClass(), "#processNaturalLanguageTaskQueue - meta process", e);
-            }
-
-            meta = queue.poll();
-        }
-
-        AIGCUnit unit = this.unitMap.get(queryKey);
-        if (null != unit) {
-            unit.setRunning(false);
-        }
-    }*/
-
-    private void processSentimentQueue(String queryKey) {
-        Queue<SentimentUnitMeta> queue = this.sentimentQueueMap.get(queryKey);
-        if (null == queue) {
-            Logger.w(AIGCService.class, "#processSentimentQueue - No found unit: " + queryKey);
-            return;
-        }
-
-        SentimentUnitMeta meta = queue.poll();
-        while (null != meta) {
-            // 执行处理
-            try {
-                meta.process();
-            } catch (Exception e) {
-                Logger.e(this.getClass(), "#processSentimentQueue - meta process", e);
+                Logger.e(this.getClass(), "#processQueue - meta process", e);
             }
 
             meta = queue.poll();
@@ -2512,7 +2513,7 @@ public class AIGCService extends AbstractModule {
         }
     }
 
-    private void processSummarizationQueue(String queryKey) {
+    /*private void processSummarizationQueue(String queryKey) {
         Queue<SummarizationUnitMeta> queue = this.summarizationQueueMap.get(queryKey);
         if (null == queue) {
             Logger.w(AIGCService.class, "#processSummarizationQueue - No found unit: " + queryKey);
@@ -2535,9 +2536,9 @@ public class AIGCService extends AbstractModule {
         if (null != unit) {
             unit.setRunning(false);
         }
-    }
+    }*/
 
-    private void processTextToImageQueue(String queryKey) {
+    /*private void processTextToImageQueue(String queryKey) {
         Queue<TextToImageUnitMeta> queue = this.textToImageQueueMap.get(queryKey);
         if (null == queue) {
             Logger.w(AIGCService.class, "#processTextToImageQueue - No found unit: " + queryKey);
@@ -2560,9 +2561,9 @@ public class AIGCService extends AbstractModule {
         if (null != unit) {
             unit.setRunning(false);
         }
-    }
+    }*/
 
-    private void processExtractKeywordsQueue(String queryKey) {
+    /*private void processExtractKeywordsQueue(String queryKey) {
         Queue<ExtractKeywordsUnitMeta> queue = this.extractKeywordsQueueMap.get(queryKey);
         if (null == queue) {
             Logger.w(AIGCService.class, "#processExtractKeywordsQueue - No found unit: " + queryKey);
@@ -2585,9 +2586,9 @@ public class AIGCService extends AbstractModule {
         if (null != unit) {
             unit.setRunning(false);
         }
-    }
+    }*/
 
-    private void processASRQueue(String queryKey) {
+    /*private void processASRQueue(String queryKey) {
         Queue<ASRUnitMeta> queue = this.asrQueueMap.get(queryKey);
         if (null == queue) {
             Logger.w(AIGCService.class, "No found unit: " + queryKey);
@@ -2610,7 +2611,7 @@ public class AIGCService extends AbstractModule {
         if (null != unit) {
             unit.setRunning(false);
         }
-    }
+    }*/
 
     private boolean checkParticipantName(String name) {
         if (name.equalsIgnoreCase("AIGC") || name.equalsIgnoreCase("Cube") ||
@@ -2624,9 +2625,12 @@ public class AIGCService extends AbstractModule {
     }
 
 
-    private abstract class UnitMeta {
+    protected abstract class UnitMeta {
 
-        public UnitMeta() {
+        protected AIGCUnit unit;
+
+        public UnitMeta(AIGCUnit unit) {
+            this.unit = unit;
         }
 
         protected List<String> readFileContent(List<FileLabel> fileLabels) {
@@ -2672,8 +2676,6 @@ public class AIGCService extends AbstractModule {
 
         protected final long sn;
 
-        protected AIGCUnit unit;
-
         protected AIGCChannel channel;
 
         protected Contact participant;
@@ -2707,8 +2709,8 @@ public class AIGCService extends AbstractModule {
                                     List<GenerativeRecord> histories,
                                     List<GenerativeRecord> attachments,
                                     GenerateTextListener listener) {
+            super(unit);
             this.sn = Utils.generateSerialNumber();
-            this.unit = unit;
             this.channel = channel;
             this.participant = ContactManager.getInstance().getContact(channel.getAuthToken().getDomain(),
                     channel.getAuthToken().getContactId());
@@ -3267,10 +3269,46 @@ public class AIGCService extends AbstractModule {
         }
     }
 
-    /**
-     * @deprecated
-     */
-    private class NaturalLanguageTaskMeta {
+    private class SemanticSearchUnitMeta extends UnitMeta {
+
+        private String query;
+
+        private SemanticSearchListener listener;
+
+        public SemanticSearchUnitMeta(AIGCUnit unit, String query, SemanticSearchListener listener) {
+            super(unit);
+            this.query = query;
+            this.listener = listener;
+        }
+
+        @Override
+        public void process() {
+            JSONObject data = new JSONObject();
+            data.put("query", this.query);
+            Packet request = new Packet(AIGCAction.SemanticSearch.name, data);
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
+            if (null == dialect) {
+                Logger.w(AIGCService.class, "The semantic search unit error");
+                // 回调错误
+                this.listener.onFailed(this.query, AIGCStateCode.UnitError);
+                return;
+            }
+
+            List<QuestionAnswer> qaList = new ArrayList<>();
+
+            Packet response = new Packet(dialect);
+            JSONObject payload = Packet.extractDataPayload(response);
+            JSONArray resultList = payload.getJSONArray("result");
+            for (int i = 0; i < resultList.length(); ++i) {
+                QuestionAnswer qa = new QuestionAnswer(resultList.getJSONObject(i));
+                qaList.add(qa);
+            }
+
+            this.listener.onCompleted(this.query, qaList);
+        }
+    }
+
+    /*private class NaturalLanguageTaskMeta {
 
         protected AIGCUnit unit;
 
@@ -3304,9 +3342,9 @@ public class AIGCService extends AbstractModule {
 
             this.listener.onCompleted(new NLTask(type, resultList));
         }
-    }
+    }*/
 
-    private class SentimentUnitMeta {
+    /*private class SentimentUnitMeta {
 
         protected AIGCUnit unit;
 
@@ -3340,52 +3378,11 @@ public class AIGCService extends AbstractModule {
 
             this.listener.onCompleted(result);
         }
-    }
+    }*/
 
-    private class SummarizationUnitMeta {
-
-        protected AIGCUnit unit;
-
-        protected String text;
-
-        protected SummarizationListener listener;
-
-        public SummarizationUnitMeta(AIGCUnit unit, String text, SummarizationListener listener) {
-            this.unit = unit;
-            this.text = text;
-            this.listener = listener;
-        }
-
-        public void process() {
-            JSONObject data = new JSONObject();
-            data.put("text", this.text);
-
-            Packet request = new Packet(AIGCAction.Summarization.name, data);
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 60 * 1000);
-            if (null == dialect) {
-                Logger.w(AIGCService.class, "Summarization unit error");
-                // 回调错误
-                this.listener.onFailed(this.text, AIGCStateCode.UnitError);
-                return;
-            }
-
-            Packet response = new Packet(dialect);
-            JSONObject payload = Packet.extractDataPayload(response);
-            if (payload.has("summarization")) {
-                this.listener.onCompleted(this.text, payload.getString("summarization"));
-            }
-            else {
-                Logger.w(AIGCService.class, "Summarization unit return error");
-                this.listener.onFailed(this.text, AIGCStateCode.NoData);
-            }
-        }
-    }
-
-    private class TextToImageUnitMeta {
+    private class TextToImageUnitMeta extends UnitMeta {
 
         protected long sn;
-
-        protected AIGCUnit unit;
 
         protected AIGCChannel channel;
 
@@ -3398,6 +3395,7 @@ public class AIGCService extends AbstractModule {
         protected AIGCChatHistory history;
 
         public TextToImageUnitMeta(AIGCUnit unit, AIGCChannel channel, String text, TextToImageListener listener) {
+            super(unit);
             this.sn = Utils.generateSerialNumber();
             this.unit = unit;
             this.channel = channel;
@@ -3411,6 +3409,7 @@ public class AIGCService extends AbstractModule {
             this.history.queryContent = text;
         }
 
+        @Override
         public void process() {
             this.channel.setLastUnitMetaSn(this.sn);
 
@@ -3486,21 +3485,57 @@ public class AIGCService extends AbstractModule {
         }
     }
 
+    private class SummarizationUnitMeta extends UnitMeta {
 
-    private class ExtractKeywordsUnitMeta {
+        protected String text;
 
-        protected AIGCUnit unit;
+        protected SummarizationListener listener;
+
+        public SummarizationUnitMeta(AIGCUnit unit, String text, SummarizationListener listener) {
+            super(unit);
+            this.text = text;
+            this.listener = listener;
+        }
+
+        @Override
+        public void process() {
+            JSONObject data = new JSONObject();
+            data.put("text", this.text);
+
+            Packet request = new Packet(AIGCAction.Summarization.name, data);
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 60 * 1000);
+            if (null == dialect) {
+                Logger.w(AIGCService.class, "Summarization unit error");
+                // 回调错误
+                this.listener.onFailed(this.text, AIGCStateCode.UnitError);
+                return;
+            }
+
+            Packet response = new Packet(dialect);
+            JSONObject payload = Packet.extractDataPayload(response);
+            if (payload.has("summarization")) {
+                this.listener.onCompleted(this.text, payload.getString("summarization"));
+            }
+            else {
+                Logger.w(AIGCService.class, "Summarization unit return error");
+                this.listener.onFailed(this.text, AIGCStateCode.NoData);
+            }
+        }
+    }
+
+    private class ExtractKeywordsUnitMeta extends UnitMeta {
 
         protected String text;
 
         protected ExtractKeywordsListener listener;
 
         public ExtractKeywordsUnitMeta(AIGCUnit unit, String text, ExtractKeywordsListener listener) {
-            this.unit = unit;
+            super(unit);
             this.text = text;
             this.listener = listener;
         }
 
+        @Override
         public void process() {
             JSONObject data = new JSONObject();
             data.put("text", this.text);
@@ -3540,9 +3575,7 @@ public class AIGCService extends AbstractModule {
     }
 
 
-    private class ASRUnitMeta {
-
-        protected AIGCUnit unit;
+    private class ASRUnitMeta extends UnitMeta {
 
         protected FileLabel source;
 
@@ -3552,12 +3585,13 @@ public class AIGCService extends AbstractModule {
 
         public ASRUnitMeta(AIGCUnit unit, FileLabel source, FileLabel input,
                            AutomaticSpeechRecognitionListener listener) {
-            this.unit = unit;
+            super(unit);
             this.source = source;
             this.input = input;
             this.listener = listener;
         }
 
+        @Override
         public void process() {
             JSONObject data = new JSONObject();
             data.put("input", this.input.toJSON());

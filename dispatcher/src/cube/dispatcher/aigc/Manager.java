@@ -124,9 +124,8 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new Channel());
         httpServer.addContextHandler(new StopProcessing());
         httpServer.addContextHandler(new Chat());
-        httpServer.addContextHandler(new NLGeneralTask());
-        httpServer.addContextHandler(new Sentiment());
         httpServer.addContextHandler(new Summarization());
+        httpServer.addContextHandler(new SemanticSearch());
         httpServer.addContextHandler(new ObjectDetection());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
         httpServer.addContextHandler(new Conversation());
@@ -1461,26 +1460,25 @@ public class Manager implements Tickable, PerformerListener {
         return new KnowledgeQAProgress(Packet.extractDataPayload(responsePacket));
     }
 
-    public SentimentResult sentimentAnalysis(String text) {
+    public JSONObject semanticSearch(String query) {
         JSONObject data = new JSONObject();
-        data.put("text", text);
-        Packet packet = new Packet(AIGCAction.Sentiment.name, data);
+        data.put("query", query);
+        Packet packet = new Packet(AIGCAction.SemanticSearch.name, data);
 
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
         if (null == response) {
-            Logger.w(Manager.class, "#sentimentAnalysis - Response is null");
+            Logger.w(Manager.class, "#semanticSearch - Response is null");
             return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(Manager.class, "#sentimentAnalysis - Response state code : "
+            Logger.w(Manager.class, "#semanticSearch - Response state code : "
                     + Packet.extractCode(responsePacket));
             return null;
         }
 
-        SentimentResult result = new SentimentResult(Packet.extractDataPayload(responsePacket));
-        return result;
+        return Packet.extractDataPayload(responsePacket);
     }
 
     public String generateSummarization(String text) {
@@ -1504,7 +1502,7 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket).getString("summarization");
     }
 
-    public NLTask performNaturalLanguageTask(NLTask task) {
+    /*public NLTask performNaturalLanguageTask(NLTask task) {
         // 检查任务
         if (!task.check()) {
             // 任务参数不正确
@@ -1527,7 +1525,7 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return new NLTask(Packet.extractDataPayload(responsePacket));
-    }
+    }*/
 
     public ObjectDetectionFuture objectDetection(String token, String channelCode, JSONArray fileCodeList) {
         long sn = Utils.generateSerialNumber();

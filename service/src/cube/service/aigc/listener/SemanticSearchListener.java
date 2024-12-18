@@ -1,20 +1,20 @@
 /*
  * This source file is part of Cube.
- * <p>
+ *
  * The MIT License (MIT)
- * <p>
+ *
  * Copyright (c) 2020-2024 Ambrose Xu.
- * <p>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * <p>
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * <p>
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,34 +24,19 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher;
+package cube.service.aigc.listener;
+
+import cube.common.entity.QuestionAnswer;
+import cube.common.state.AIGCStateCode;
+
+import java.util.List;
 
 /**
- * 版本信息。
+ * 语义搜索监听器。
  */
-public final class Version {
+public interface SemanticSearchListener {
 
-    public final static int MAJOR = 3;
+    void onCompleted(String query, List<QuestionAnswer> result);
 
-    public final static int MINOR = 0;
-
-    public final static int REVISION = 84;
-
-    private Version() {
-    }
-
-    /**
-     * 转版本串。
-     *
-     * @return
-     */
-    public static String toVersionString() {
-        StringBuilder buf = new StringBuilder();
-        buf.append(MAJOR);
-        buf.append(".");
-        buf.append(MINOR);
-        buf.append(".");
-        buf.append(REVISION);
-        return buf.toString();
-    }
+    void onFailed(String query, AIGCStateCode stateCode);
 }

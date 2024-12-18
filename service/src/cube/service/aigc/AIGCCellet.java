@@ -169,6 +169,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new SummarizationTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.SemanticSearch.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new SemanticSearchTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.Segmentation.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new SegmentationTask(this, talkContext, primitive,

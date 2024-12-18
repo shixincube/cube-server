@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * 情感分析。
+ * @deprecated
  */
 public class Sentiment extends ContextHandler {
 
@@ -88,7 +89,7 @@ public class Sentiment extends ContextHandler {
             }
 
             // 情感分析
-            SentimentResult result = Manager.getInstance().sentimentAnalysis(text);
+            SentimentResult result = null;//Manager.getInstance().sentimentAnalysis(text);
             if (null == result) {
                 // 不允许该参与者申请或者服务故障
                 this.respond(response, HttpStatus.BAD_REQUEST_400);

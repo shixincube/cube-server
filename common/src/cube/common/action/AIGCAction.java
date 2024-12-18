@@ -127,11 +127,6 @@ public enum AIGCAction {
     QueryConversation("queryConversation"),
 
     /**
-     * 情感分析。
-     */
-    Sentiment("sentiment"),
-
-    /**
      * 生成摘要。
      */
     Summarization("summarization"),
@@ -142,9 +137,9 @@ public enum AIGCAction {
     ExtractKeywords("extractKeywords"),
 
     /**
-     * 自然语言通用任务。
+     * 语义搜索。
      */
-    NaturalLanguageTask("naturalLanguageTask"),
+    SemanticSearch("semanticSearch"),
 
     /**
      * 自动语音识别。
