@@ -33,6 +33,8 @@ public class CustomRelation implements JSONable {
 
     public String name = "";
 
+    public String description = "";
+
     public String number = "";
 
     public CustomRelation(JSONObject json) {

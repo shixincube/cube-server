@@ -78,6 +78,12 @@ public class Resource {
     private Dataset dataset;
 
     private File attentionScriptFile = new File("assets/psychology/scripts/attention.js");
+    private long attentionScriptFileModified = 0;
+    private String attentionScriptContent = null;
+
+    private File suggestionScriptFile = new File("assets/psychology/scripts/suggestion.js");
+    private long suggestionScriptFileModified = 0;
+    private String suggestionScriptFileContent = null;
 
     private File mandalaFlowerPath = new File("assets/psychology/mandalaflower/");
 
@@ -290,15 +296,34 @@ public class Resource {
 
     public String loadAttentionScript() {
         if (this.attentionScriptFile.exists()) {
-            try {
-                byte[] data = Files.readAllBytes(Paths.get(this.attentionScriptFile.getAbsolutePath()));
-                return new String(data, StandardCharsets.UTF_8);
-            } catch (Exception e) {
-                Logger.e(this.getClass(), "#loadAttentionScript", e);
+            if (this.attentionScriptFileModified != this.attentionScriptFile.lastModified()) {
+                try {
+                    byte[] data = Files.readAllBytes(Paths.get(this.attentionScriptFile.getAbsolutePath()));
+                    this.attentionScriptContent = new String(data, StandardCharsets.UTF_8);
+                    this.attentionScriptFileModified = this.attentionScriptFile.lastModified();
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#loadAttentionScript", e);
+                }
             }
         }
 
-        return null;
+        return this.attentionScriptContent;
+    }
+
+    public String loadSuggestionScript() {
+        if (this.suggestionScriptFile.exists()) {
+            if (this.suggestionScriptFileModified != this.suggestionScriptFile.lastModified()) {
+                try {
+                    byte[] data = Files.readAllBytes(Paths.get(this.suggestionScriptFile.getAbsolutePath()));
+                    this.suggestionScriptFileContent = new String(data, StandardCharsets.UTF_8);
+                    this.suggestionScriptFileModified = this.suggestionScriptFile.lastModified();
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#loadSuggestionScript", e);
+                }
+            }
+        }
+
+        return this.suggestionScriptFileContent;
     }
 
     public List<String> getMandalaFlowerFiles() {

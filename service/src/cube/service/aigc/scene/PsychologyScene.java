@@ -38,6 +38,7 @@ import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.listener.SemanticSearchListener;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import org.json.JSONArray;
@@ -779,11 +780,57 @@ public class PsychologyScene {
     }
 
     public String buildPrompt(CustomRelation relation, String query) {
-        StringBuilder result = new StringBuilder();
+        final StringBuilder result = new StringBuilder();
 
-//        relation.name;
+        boolean success = this.aigcService.semanticSearch(query, new SemanticSearchListener() {
+            @Override
+            public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
+                List<QuestionAnswer> list = new ArrayList<>();
+                for (QuestionAnswer qa : questionAnswers) {
+                    if (qa.getScore() > 0.8) {
+                        list.add(qa);
+                    }
+                }
 
-        result.append(query);
+                if (!list.isEmpty()) {
+                    result.append("已知信息：\n\n");
+                    for (QuestionAnswer qa : list) {
+                        for (String answer : qa.getAnswers()) {
+                            result.append(answer).append("\n");
+                        }
+                    }
+                    result.append("\n根据以上信息，专业地回答问题，如果无法从中得到答案，请说“暂时没有足够的相关信息。”，不允许在答案中添加编造成分。问题是：");
+                    result.append(query);
+                }
+
+                synchronized (result) {
+                    result.notify();
+                }
+            }
+
+            @Override
+            public void onFailed(String query, AIGCStateCode stateCode) {
+                synchronized (result) {
+                    result.notify();
+                }
+            }
+        });
+
+        if (success) {
+            synchronized (result) {
+                try {
+                    result.wait(10 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        if (result.length() == 0) {
+            result.append("专业地回答问题，在答案最后增加一句：“建议您可以问一些心理知识相关的问题。”，问题是：");
+            result.append(query);
+        }
+
         return result.toString();
     }
 

@@ -167,7 +167,7 @@ public class QueryRevolver {
             result.append("\n");
         }
 
-        result.append("\n根据上述已知信息，简洁和专业的来回答用户的问题。");
+        result.append("\n根据上述已知信息，专业地来回答用户的问题。");
 
         for (String word : this.keywordSuggestion) {
             if (query.contains(word)) {
@@ -186,19 +186,21 @@ public class QueryRevolver {
         StringBuilder result = new StringBuilder();
 
         result.append("已知信息：\n\n");
-        result.append("现有").append(relations.size()).append("个人的相关信息如下：\n\n");
+        result.append("受测人有").append(relations.size()).append("份报告信息如下：\n\n");
 
         for (int i = 0; i < relations.size(); ++i) {
             ReportRelation relation = relations.get(i);
             Report report = reports.get(i);
-            String name = relation.name;
-//            String name = this.fixName(relation.name, report.getAttribute().getGenderText(), report.getAttribute().age);
-            result.append("## ").append(name).append("\n\n");
-            result.append(name).append("的年龄是：").append(report.getAttribute().age).append("岁，");
+            result.append("# 报告").append(i + 1);
+            result.append("受测人的名称是：").append(this.fixName(
+                    relation.name,
+                    report.getAttribute().getGenderText(),
+                    report.getAttribute().age)).append("，");
+            result.append("年龄是：").append(report.getAttribute().age).append("岁，");
             result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
 
             if (report instanceof PaintingReport) {
-                result.append(name).append("的情况如下：\n");
+                result.append("受测人的情况如下：\n");
 
                 PaintingReport paintingReport = (PaintingReport) report;
 
@@ -216,7 +218,7 @@ public class QueryRevolver {
 
                 if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                     result.append("\n");
-                    result.append(name).append("的大五人格画像是").append(paintingReport.getEvaluationReport()
+                    result.append("受测人的大五人格画像是").append(paintingReport.getEvaluationReport()
                             .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。\n");
                     // 性格特点
                     result.append(paintingReport.getEvaluationReport()
@@ -237,7 +239,7 @@ public class QueryRevolver {
                     result.append("量表的测验结果是：\n");
                 }
                 else {
-                    result.append(name).append("的心理表现有：\n");
+                    result.append("受测人的心理表现有：\n");
                 }
 
                 for (ScaleFactor factor : scaleReport.getFactors()) {
@@ -265,7 +267,7 @@ public class QueryRevolver {
             }
         }
 
-        result.append("\n根据上述已知信息，简洁和专业的来回答用户的问题。");
+        result.append("\n根据上述已知信息，专业地来回答用户的问题。");
 
         for (String word : this.keywordSuggestion) {
             if (query.contains(word)) {

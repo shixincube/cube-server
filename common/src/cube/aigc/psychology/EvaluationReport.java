@@ -65,14 +65,21 @@ public class EvaluationReport implements JSONable {
 
     private PersonalityAccelerator personalityAccelerator;
 
-    private AttentionSuggestion attentionSuggestion;
+    private Attention attention;
 
     private List<Scale> additionScales;
+
+    private Suggestion suggestion;
 
     private FactorSet factorSet;
 
     private boolean unknown = false;
 
+    /**
+     * 模型进行特征推理时，特征熵是否影响了特征间相关性分析。
+     * 较低的特征熵会对表征产生负面影响，较少的特征聚合时由于权重集中降低了部分特征的联合推理准确度。
+     * 因此，该参数为真值时，说明特征熵较低影响了聚合计算，相反的，该参数为假值时，说明特征熵正常。
+     */
     private boolean hesitating = false;
 
     private String version = AlgorithmVersion.toVersionString();
@@ -89,7 +96,7 @@ public class EvaluationReport implements JSONable {
         this.paintingConfidence = paintingConfidence;
         this.representationList = new ArrayList<>();
         this.scoreAccelerator = new ScoreAccelerator();
-        this.attentionSuggestion = AttentionSuggestion.NoAttention;
+        this.attention = Attention.NoAttention;
         this.personalityAccelerator = new PersonalityAccelerator(evaluationFeatureList);
         this.additionScales = new ArrayList<>();
         this.build(evaluationFeatureList);
@@ -112,7 +119,7 @@ public class EvaluationReport implements JSONable {
         this.scoreAccelerator = new ScoreAccelerator(json.getJSONObject("accelerator"));
         this.personalityAccelerator = json.has("personality") ?
                 new PersonalityAccelerator(json.getJSONObject("personality")) : null;
-        this.attentionSuggestion = AttentionSuggestion.parse(json.getInt("attention"));
+        this.attention = Attention.parse(json.getInt("attention"));
 
         this.additionScales = new ArrayList<>();
         if (json.has("additionScales")) {
@@ -131,6 +138,13 @@ public class EvaluationReport implements JSONable {
         }
 
         this.hesitating = json.has("hesitating") && json.getBoolean("hesitating");
+
+        if (json.has("suggestion")) {
+            this.suggestion = new Suggestion(json.getJSONObject("suggestion"));
+        }
+        else {
+            this.calcSuggestion();
+        }
     }
 
     public String getVersion() {
@@ -173,8 +187,8 @@ public class EvaluationReport implements JSONable {
         return this.factorSet;
     }
 
-    public AttentionSuggestion getAttentionSuggestion() {
-        return this.attentionSuggestion;
+    public Attention getAttention() {
+        return this.attention;
     }
 
     public PaintingConfidence getPaintingConfidence() {
@@ -189,7 +203,7 @@ public class EvaluationReport implements JSONable {
         for (EvaluationFeature result : resultList) {
             if (null != result.getScore(Indicator.Unknown)) {
                 this.unknown = true;
-                this.attentionSuggestion = AttentionSuggestion.FocusedAttention;
+                this.attention = Attention.FocusedAttention;
                 this.additionScales.add(Resource.getInstance().loadScaleByName("SCL-90"));
                 return;
             }
@@ -236,6 +250,11 @@ public class EvaluationReport implements JSONable {
             }
         });
 
+        // 判断 hesitating
+        if (this.representationList.size() <= 7 || this.scoreAccelerator.getEvaluationScores(this.attribute).size() <= 5) {
+            this.hesitating = true;
+        }
+
         // 计算关注
         if (!this.calcAttention()) {
             this.recheckAttention();
@@ -243,18 +262,22 @@ public class EvaluationReport implements JSONable {
 
         Logger.i(this.getClass(), "#build - reference: " + this.reference.name);
 
-        // 判断 hesitating
-        if (this.representationList.size() <= 7 || this.scoreAccelerator.getEvaluationScores(this.attribute).size() <= 5) {
-            this.hesitating = true;
+        // 计算建议
+        if (!this.calcSuggestion()) {
+            this.recheckSuggestion();
         }
     }
 
     /**
      * 重算关注等级。
      */
-    public void rollAttention() {
+    public void rollAttentionSuggestion() {
         if (!this.calcAttention()) {
             this.recheckAttention();
+        }
+
+        if (!this.calcSuggestion()) {
+            this.recheckSuggestion();
         }
     }
 
@@ -264,7 +287,7 @@ public class EvaluationReport implements JSONable {
         script.append("var Indicator = Java.type('cube.aigc.psychology.Indicator');\n");
         script.append("var Reference = Java.type('cube.aigc.psychology.Reference');\n");
         script.append("var IndicatorRate = Java.type('cube.aigc.psychology.algorithm.IndicatorRate');\n");
-        script.append("var Attention = Java.type('cube.aigc.psychology.algorithm.AttentionSuggestion');\n");
+        script.append("var Attention = Java.type('cube.aigc.psychology.algorithm.Attention');\n");
         script.append("var Score = Java.type('cube.aigc.psychology.composition.EvaluationScore');\n");
         script.append("var FactorSet = Java.type('cube.aigc.psychology.composition.FactorSet');\n");
         script.append("var Logger = Java.type('cell.util.log.Logger');\n");
@@ -294,7 +317,7 @@ public class EvaluationReport implements JSONable {
         }
 
         if (returnVal.containsKey("attention")) {
-            this.attentionSuggestion = (AttentionSuggestion) returnVal.get("attention");
+            this.attention = (Attention) returnVal.get("attention");
         }
         if (returnVal.containsKey("reference")) {
             this.reference = (Reference) returnVal.get("reference");
@@ -314,7 +337,7 @@ public class EvaluationReport implements JSONable {
 
     private void recheckAttention() {
 //        if (this.reference == Reference.Normal) {
-//            this.attentionSuggestion = AttentionSuggestion.NoAttention;
+//            this.attentionSuggestion = Attention.NoAttention;
 //            return;
 //        }
 
@@ -512,21 +535,21 @@ public class EvaluationReport implements JSONable {
 
         if (score > 0) {
             if (score >= 5) {
-                this.attentionSuggestion = AttentionSuggestion.SpecialAttention;
+                this.attention = Attention.SpecialAttention;
 
                 this.reference = Reference.Abnormal;
                 Logger.d(this.getClass(), "Attention: Fix reference to Abnormal (score>=5)");
             }
             else if (score >= 4) {
-                this.attentionSuggestion = AttentionSuggestion.FocusedAttention;
+                this.attention = Attention.FocusedAttention;
             }
             else {
                 if (score == 1 && this.reference == Reference.Normal) {
                     Logger.d(this.getClass(), "Attention: Reference is normal and score is 1");
-                    this.attentionSuggestion = AttentionSuggestion.NoAttention;
+                    this.attention = Attention.NoAttention;
                 }
                 else {
-                    this.attentionSuggestion = AttentionSuggestion.GeneralAttention;
+                    this.attention = Attention.GeneralAttention;
                 }
             }
         }
@@ -540,23 +563,83 @@ public class EvaluationReport implements JSONable {
 
         if (this.reference == Reference.Abnormal) {
             if (this.attribute.age <= 11) {
-                if (this.attentionSuggestion == AttentionSuggestion.FocusedAttention) {
+                if (this.attention == Attention.FocusedAttention) {
                     // 调整为特殊关注
-                    this.attentionSuggestion = AttentionSuggestion.SpecialAttention;
+                    this.attention = Attention.SpecialAttention;
                 }
-                else if (this.attentionSuggestion == AttentionSuggestion.NoAttention) {
+                else if (this.attention == Attention.NoAttention) {
                     // 调整为重点关注
-                    this.attentionSuggestion = AttentionSuggestion.FocusedAttention;
+                    this.attention = Attention.FocusedAttention;
                     Logger.d(this.getClass(), "Attention: Focused attention");
                 }
             }
             else {
-                if (this.attentionSuggestion == AttentionSuggestion.NoAttention) {
+                if (this.attention == Attention.NoAttention) {
                     // 如果非模态，将非关注标注为一般关注
-                    this.attentionSuggestion = AttentionSuggestion.GeneralAttention;
+                    this.attention = Attention.GeneralAttention;
                     Logger.d(this.getClass(), "Attention: General attention");
                 }
             }
+        }
+    }
+
+    private boolean calcSuggestion() {
+        StringBuilder script = new StringBuilder();
+        script.append("var Attribute = Java.type('cube.aigc.psychology.Attribute');\n");
+        script.append("var Reference = Java.type('cube.aigc.psychology.Reference');\n");
+        script.append("var Attention = Java.type('cube.aigc.psychology.algorithm.Attention');\n");
+        script.append("var Suggestion = Java.type('cube.aigc.psychology.algorithm.Suggestion');\n");
+        script.append("var Logger = Java.type('cell.util.log.Logger');\n");
+        try {
+            script.append(Resource.getInstance().loadSuggestionScript());
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#calcSuggestion", e);
+            return false;
+        }
+
+        ScriptObjectMirror returnVal = null;
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("js");
+        try {
+            engine.eval(script.toString());
+            Invocable invocable = (Invocable) engine;
+            returnVal = (ScriptObjectMirror) invocable.invokeFunction("calc", this.attribute,
+                    this.attention, this.reference, this.hesitating);
+        } catch (ScriptException | NoSuchMethodException e) {
+            Logger.e(this.getClass(), "#calcSuggestion", e);
+            return false;
+        }
+
+        if (null == returnVal) {
+            Logger.w(this.getClass(), "#calcSuggestion - Return value is null");
+            return false;
+        }
+
+        if (returnVal.containsKey("suggestion")) {
+            this.suggestion = (Suggestion) returnVal.get("suggestion");
+        }
+
+        return true;
+    }
+
+    private void recheckSuggestion() {
+        this.suggestion = Suggestion.NoIntervention;
+        switch (this.attention) {
+            case NoAttention:
+                break;
+            case GeneralAttention:
+                if (this.hesitating || this.reference == Reference.Abnormal) {
+                    this.suggestion = Suggestion.ChattingService;
+                }
+                break;
+            case FocusedAttention:
+                this.suggestion = Suggestion.PsychologicalCounseling;
+                break;
+            case SpecialAttention:
+                this.suggestion = Suggestion.PsychiatryDepartment;
+                break;
+            default:
+                break;
         }
     }
 
@@ -790,7 +873,7 @@ public class EvaluationReport implements JSONable {
             json.put("personality", this.personalityAccelerator.toJSON());
         }
 
-        json.put("attention", this.attentionSuggestion.level);
+        json.put("attention", this.attention.level);
 
         array = new JSONArray();
         for (Scale scale : this.additionScales) {
@@ -803,6 +886,11 @@ public class EvaluationReport implements JSONable {
         }
 
         json.put("hesitating", this.hesitating);
+
+        if (null != this.suggestion) {
+            json.put("suggestion", this.suggestion.toJSON());
+        }
+
         return json;
     }
 
@@ -825,7 +913,7 @@ public class EvaluationReport implements JSONable {
             json.put("personality", this.personalityAccelerator.toCompactJSON());
         }
 
-        json.put("attention", this.attentionSuggestion.level);
+        json.put("attention", this.attention.level);
 
         array = new JSONArray();
         for (Scale scale : this.additionScales) {
@@ -842,6 +930,11 @@ public class EvaluationReport implements JSONable {
         }
 
         json.put("hesitating", this.hesitating);
+
+        if (null != this.suggestion) {
+            json.put("suggestion", this.suggestion.toJSON());
+        }
+
         return json;
     }
 }

@@ -26,7 +26,10 @@
 
 package cube.aigc.psychology.algorithm;
 
-public enum AttentionSuggestion {
+/**
+ * 关注建议。
+ */
+public enum Attention {
 
     /**
      * 特殊关注
@@ -59,13 +62,13 @@ public enum AttentionSuggestion {
 
     public final String description;
 
-    AttentionSuggestion(int level, String description) {
+    Attention(int level, String description) {
         this.level = level;
         this.description = description;
     }
 
-    public static AttentionSuggestion parse(int level) {
-        for (AttentionSuggestion as : AttentionSuggestion.values()) {
+    public static Attention parse(int level) {
+        for (Attention as : Attention.values()) {
             if (as.level == level) {
                 return as;
             }

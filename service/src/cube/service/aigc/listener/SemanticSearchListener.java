@@ -36,7 +36,7 @@ import java.util.List;
  */
 public interface SemanticSearchListener {
 
-    void onCompleted(String query, List<QuestionAnswer> result);
+    void onCompleted(String query, List<QuestionAnswer> questionAnswers);
 
     void onFailed(String query, AIGCStateCode stateCode);
 }

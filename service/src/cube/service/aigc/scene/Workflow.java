@@ -159,7 +159,7 @@ public class Workflow {
                 extraversion, achievement, neuroticism);
 
         // 重算关注等级
-        this.evaluationReport.rollAttention();
+        this.evaluationReport.rollAttentionSuggestion();
     }
 
     public boolean isUnknown() {

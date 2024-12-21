@@ -29,7 +29,7 @@ package cube.service.aigc.scene;
 import cell.util.log.Logger;
 import cube.aigc.psychology.EvaluationReport;
 import cube.aigc.psychology.Resource;
-import cube.aigc.psychology.algorithm.AttentionSuggestion;
+import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScalesConfiguration;
 
@@ -42,8 +42,8 @@ public class ScaleEvaluation {
     }
 
     public Scale recommendScale(EvaluationReport evaluationReport) {
-        AttentionSuggestion attentionSuggestion = evaluationReport.getAttentionSuggestion();
-        if (AttentionSuggestion.NoAttention == attentionSuggestion) {
+        Attention attention = evaluationReport.getAttention();
+        if (Attention.NoAttention == attention) {
             Logger.d(this.getClass(), "#recommendScale - No attention");
             return null;
         }

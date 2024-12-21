@@ -279,7 +279,7 @@ public class PaintingReport extends Report {
             buf.append("\n");
             buf.append("**是否需要关注**");
             buf.append("\n\n");
-            buf.append(this.evaluationReport.getAttentionSuggestion().description);
+            buf.append(this.evaluationReport.getAttention().description);
             buf.append("\n");
         }
 
@@ -463,8 +463,8 @@ public class PaintingReport extends Report {
 
         if (null != this.evaluationReport) {
             JSONObject attention = new JSONObject();
-            attention.put("level", this.evaluationReport.getAttentionSuggestion().level);
-            attention.put("desc", this.evaluationReport.getAttentionSuggestion().description);
+            attention.put("level", this.evaluationReport.getAttention().level);
+            attention.put("desc", this.evaluationReport.getAttention().description);
             json.put("attention", attention);
 
             json.put("evaluation", this.evaluationReport.toCompactJSON());
