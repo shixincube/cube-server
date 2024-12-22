@@ -467,7 +467,9 @@ public class PaintingReport extends Report {
             attention.put("desc", this.evaluationReport.getAttention().description);
             json.put("attention", attention);
 
-            json.put("evaluation", this.evaluationReport.toCompactJSON());
+            if (null != this.evaluationReport.getSuggestion()) {
+                json.put("suggestion", this.evaluationReport.getSuggestion().toJSON());
+            }
 
             if (null != this.evaluationReport.getPersonalityAccelerator()) {
                 BigFivePersonality bigFivePersonality = this.evaluationReport.getPersonalityAccelerator().getBigFivePersonality();
@@ -475,6 +477,8 @@ public class PaintingReport extends Report {
                 personality.put("theBigFive", bigFivePersonality.toJSON());
                 json.put("personality", personality);
             }
+
+            json.put("evaluation", this.evaluationReport.toCompactJSON());
         }
 
         if (null != this.mandalaFlower) {

@@ -143,7 +143,7 @@ public class EvaluationReport implements JSONable {
             this.suggestion = new Suggestion(json.getJSONObject("suggestion"));
         }
         else {
-            this.calcSuggestion();
+            this.recheckSuggestion();
         }
     }
 
@@ -189,6 +189,10 @@ public class EvaluationReport implements JSONable {
 
     public Attention getAttention() {
         return this.attention;
+    }
+
+    public Suggestion getSuggestion() {
+        return this.suggestion;
     }
 
     public PaintingConfidence getPaintingConfidence() {
@@ -932,7 +936,7 @@ public class EvaluationReport implements JSONable {
         json.put("hesitating", this.hesitating);
 
         if (null != this.suggestion) {
-            json.put("suggestion", this.suggestion.toJSON());
+            json.put("suggestion", this.suggestion.toCompactJSON());
         }
 
         return json;
