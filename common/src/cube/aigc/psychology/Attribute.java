@@ -27,6 +27,8 @@
 package cube.aigc.psychology;
 
 import cube.common.JSONable;
+import cube.util.FloatUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -34,7 +36,7 @@ import org.json.JSONObject;
  */
 public class Attribute implements JSONable {
 
-    public final static int MAX_AGE = 69;
+    public final static int MAX_AGE = 65;
 
     public final static int MIN_AGE = 11;
 
@@ -72,6 +74,22 @@ public class Attribute implements JSONable {
 
     public String getAgeText() {
         return this.age + "岁";
+    }
+
+    public double[] calcFactor() {
+        double[] data = FloatUtils.softmax(new double[] {
+                this.isMale() ? 0.9 : 0.1,
+                ((double) this.age) * 0.01
+        });
+        return data;
+    }
+
+    public JSONArray calcFactorToArray() {
+        double[] data = this.calcFactor();
+        JSONArray array = new JSONArray();
+        array.put(data[0]);
+        array.put(data[1]);
+        return array;
     }
 
     @Override

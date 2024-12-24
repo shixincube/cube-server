@@ -86,9 +86,9 @@ public class TestLens {
         File reportDataFile = new File("storage/tmp/lens_export_reports_updated.json");
         File scaleDataFile = new File("storage/tmp/lens_export_data_all.csv");
 
-        File datasetSCL = new File("storage/tmp/lens_dataset_scl_1211.csv");
-        File datasetPANAS = new File("storage/tmp/lens_dataset_panas_1211.csv");
-        File datasetBFP = new File("storage/tmp/lens_dataset_bfp_1211.csv");
+        File datasetSCL = new File("storage/tmp/lens_dataset_scl_1224.csv");
+        File datasetPANAS = new File("storage/tmp/lens_dataset_panas_1224.csv");
+        File datasetBFP = new File("storage/tmp/lens_dataset_bfp_1224.csv");
 
         try {
             dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_SCL,

@@ -61,6 +61,7 @@ public class ReportDataset {
 
         // 表头
         StringBuilder buf = new StringBuilder();
+        buf.append("gender").append(",").append("age").append(",");
         for (Indicator indicator : Indicator.sortByPriority()) {
             if (indicator == Indicator.Unknown || indicator == Indicator.Psychosis) {
                 continue;
@@ -142,6 +143,9 @@ public class ReportDataset {
                 Logger.w(this.getClass(), "#makeEvaluationDatasetFromScaleData - Skip: " + json.getLong("sn"));
                 continue;
             }
+
+            buf.append(row.getGender()).append(",");
+            buf.append(row.getAge()).append(",");
 
             for (double score : scores) {
                 buf.append(score).append(",");
@@ -537,80 +541,77 @@ public class ReportDataset {
         public ScaleDataRow(String csvString) {
             String[] array = csvString.split(",");
             this.sn = Long.parseLong(array[0]);
-            this.data = new double[17];
+            this.data = new double[19];
+
+            this.data[0] = array[2].contains("女") ? 0.1 : 0.9;
+            this.data[1] = Double.parseDouble(array[3]) * 0.01;
+
+            double[] base = FloatUtils.softmax(new double[]{ this.data[0], this.data[1] });
+            this.data[0] = base[0];
+            this.data[1] = base[1];
+
             for (int i = 0; i < 10; ++i) {
-                this.data[i] = Double.parseDouble(array[i + 4]);
+                this.data[i + 2] = Double.parseDouble(array[i + 4]);
             }
-            this.data[10] = Double.parseDouble(array[11 + 4]);
-            this.data[11] = Double.parseDouble(array[12 + 4]);
-            for (int i = 12; i < 17; ++i) {
-                this.data[i] = Double.parseDouble(array[i + 1 + 4]);
+            this.data[12] = Double.parseDouble(array[11 + 4]);
+            this.data[13] = Double.parseDouble(array[12 + 4]);
+            for (int i = 14; i < 19; ++i) {
+                this.data[i] = Double.parseDouble(array[i + 1 + 2]);
             }
         }
 
         public boolean isValid() {
-            if (this.data[0] == this.data[1] &&
-                this.data[1] == this.data[2] &&
-                this.data[2] == this.data[3] &&
-                this.data[3] == this.data[4] ) {
+            if (this.data[2] == this.data[3] &&
+                this.data[3] == this.data[4] &&
+                this.data[4] == this.data[5] &&
+                this.data[5] == this.data[6] ) {
                 return false;
             }
             return true;
         }
 
+        public double getGender() {
+            return this.data[0];
+        }
+
+        public double getAge() {
+            return this.data[1];
+        }
+
         public double[] splitSCL(double scale) {
             double[] values = new double[10];
             for (int i = 0; i < values.length; ++i) {
-                values[i] = this.data[i] * scale;
+                values[i] = this.data[i + 2] * scale;
             }
             return values;
         }
 
         public double[] splitPANAS(double scale) {
             double[] values = new double[2];
-            values[0] = this.data[10] * scale;
-            values[1] = this.data[11] * scale;
-            return values;
-        }
-
-        public double[] splitPANASWithLogit() {
-            double[] values = new double[2];
-            if (this.data[10] < 25) {
-                values[0] = 0;
-            } else if (this.data[10] >= 25 && this.data[10] <= 35) {
-                values[0] = 0.5;
-            } else {
-                values[0] = 1;
-            }
-            if (this.data[11] < 25) {
-                values[1] = 0;
-            } else if (this.data[11] >= 25 && this.data[11] <= 35) {
-                values[1] = 0.5;
-            } else {
-                values[1] = 1;
-            }
+            values[0] = this.data[12] * scale;
+            values[1] = this.data[13] * scale;
             return values;
         }
 
         public double[] splitBFP(double scale) {
             double[] values = new double[5];
-            values[0] = this.data[12] * scale;
-            values[1] = this.data[13] * scale;
-            values[2] = this.data[14] * scale;
-            values[3] = this.data[15] * scale;
-            values[4] = this.data[16] * scale;
+            values[0] = this.data[14] * scale;
+            values[1] = this.data[15] * scale;
+            values[2] = this.data[16] * scale;
+            values[3] = this.data[17] * scale;
+            values[4] = this.data[18] * scale;
             return values;
         }
 
         public double[] normalization() {
             double[] result = new double[this.data.length];
             for (int i = 0; i < 10; ++i) {
-                result[i] = this.data[i] / 10.0d;
+                result[i] = this.data[i + 2] / 10.0d;
             }
-            result[10] = this.data[10] / 100.0d;
-            result[11] = this.data[11] / 100.0d;
+            result[10] = this.data[12] / 100.0d;
+            result[11] = this.data[13] / 100.0d;
             for (int i = 12; i < 17; ++i) {
-                result[i] = this.data[i] / 10.0d;
+                result[i] = this.data[i + 2] / 10.0d;
             }
             return result;
         }

@@ -908,6 +908,7 @@ public class PsychologyScene {
         for (EvaluationScore es : report.getFullEvaluationScores()) {
             indicators.put(es.calcScore());
         }
+        data.put("attribute", report.getAttribute().calcFactorToArray());
         data.put("indicators", indicators);
         Packet request = new Packet(AIGCAction.PredictPsychologyFactors.name, data);
         ActionDialect dialect = this.aigcService.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
