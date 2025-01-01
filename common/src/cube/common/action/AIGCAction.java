@@ -142,6 +142,11 @@ public enum AIGCAction {
     SemanticSearch("semanticSearch"),
 
     /**
+     * 检索并重排名。
+     */
+    RetrieveReRank("retrieveReRank"),
+
+    /**
      * 自动语音识别。
      */
     AutomaticSpeechRecognition("automaticSpeechRecognition"),

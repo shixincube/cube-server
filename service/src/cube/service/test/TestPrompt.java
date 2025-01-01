@@ -18,12 +18,10 @@ public class TestPrompt {
     public static void testThemeData() {
         System.out.println("testThemeData");
 
-        Resource.getInstance().getThemeTemplate(Theme.Generic);
+//        Resource.getInstance().getThemeTemplate(Theme.Generic);
     }
 
     public static void main(String[] args) {
         testKnowledgeStrategy();
-
-        testThemeData();
     }
 }

@@ -139,6 +139,11 @@ public class AIGCService extends AbstractModule {
     /**
      * Key 是 AIGC 的 Query Key
      */
+    private Map<String, Queue<UnitMeta>> retrieveReRankQueueMap;
+
+    /**
+     * Key 是 AIGC 的 Query Key
+     */
     private Map<String, Queue<UnitMeta>> asrQueueMap;
 
     /**
@@ -195,6 +200,7 @@ public class AIGCService extends AbstractModule {
         this.summarizationQueueMap = new ConcurrentHashMap<>();
         this.extractKeywordsQueueMap = new ConcurrentHashMap<>();
         this.semanticSearchQueueMap = new ConcurrentHashMap<>();
+        this.retrieveReRankQueueMap = new ConcurrentHashMap<>();
         this.asrQueueMap = new ConcurrentHashMap<>();
         this.tokenizer = new Tokenizer();
     }
@@ -1791,6 +1797,51 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
+     * 检索并重排序。
+     *
+     * @param queries
+     * @param listener
+     * @return
+     */
+    public boolean retrieveReRank(List<String> queries, RetrieveReRankListener listener) {
+        if (!this.isStarted()) {
+            return false;
+        }
+
+        // 查找有该能力的单元
+        AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.RetrieveReRank);
+        if (null == unit) {
+            Logger.w(AIGCService.class, "No retrieve re-rank unit setup in server");
+            return false;
+        }
+
+        UnitMeta meta = new RetrieveReRankUnitMeta(unit, queries, listener);
+
+        synchronized (this.retrieveReRankQueueMap) {
+            Queue<UnitMeta> queue = this.retrieveReRankQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.retrieveReRankQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    processQueue(meta.unit.getQueryKey(), retrieveReRankQueueMap);
+                }
+            });
+        }
+
+        return true;
+    }
+
+    /**
      * 查询联系人的用量数据。
      *
      * @param contactId
@@ -3305,6 +3356,45 @@ public class AIGCService extends AbstractModule {
             }
 
             this.listener.onCompleted(this.query, qaList);
+        }
+    }
+
+    private class RetrieveReRankUnitMeta extends UnitMeta {
+
+        private List<String> queries;
+
+        private RetrieveReRankListener listener;
+
+        public RetrieveReRankUnitMeta(AIGCUnit unit, List<String> queries, RetrieveReRankListener listener) {
+            super(unit);
+            this.queries = queries;
+            this.listener = listener;
+        }
+
+        @Override
+        public void process() {
+            JSONObject data = new JSONObject();
+            data.put("queries", JSONUtils.toStringArray(this.queries));
+            Packet request = new Packet(AIGCAction.RetrieveReRank.name, data);
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
+            if (null == dialect) {
+                Logger.w(AIGCService.class, "The retrieve re-rank unit error");
+                // 回调错误
+                this.listener.onFailed(this.queries, AIGCStateCode.UnitError);
+                return;
+            }
+
+            List<RetrieveReRankResult> list = new ArrayList<>();
+
+            Packet response = new Packet(dialect);
+            JSONObject payload = Packet.extractDataPayload(response);
+            JSONArray resultList = payload.getJSONArray("result");
+            for (int i = 0; i < resultList.length(); ++i) {
+                RetrieveReRankResult result = new RetrieveReRankResult(resultList.getJSONObject(i));
+                list.add(result);
+            }
+
+            this.listener.onCompleted(list);
         }
     }
 

@@ -136,6 +136,7 @@ public class Resource {
         return null;
     }
 
+    /* FIXME 2025-01-01 作废
     public ThemeTemplate getThemeTemplate(Theme theme) {
         if (this.themeFile.exists()) {
             if (this.themeFile.lastModified() != this.themeLastModified) {
@@ -158,7 +159,7 @@ public class Resource {
         }
 
         return this.themeTemplates.get(theme.code);
-    }
+    }*/
 
     public Benchmark getBenchmark() {
         if (this.benchmarkScoreFile.exists()) {

@@ -31,6 +31,10 @@ import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.GenerativeRecord;
+import cube.common.entity.RetrieveReRankResult;
+import cube.common.state.AIGCStateCode;
+import cube.service.aigc.AIGCService;
+import cube.service.aigc.listener.RetrieveReRankListener;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
@@ -86,19 +90,22 @@ public class QueryRevolver {
             "画", "画面", "图画", "图像", "照片", "绘画", "看"
     };
 
+    private AIGCService service;
+
     private Tokenizer tokenizer;
 
     private PsychologyStorage storage;
 
-    public QueryRevolver(Tokenizer tokenizer, PsychologyStorage storage) {
-        this.tokenizer = tokenizer;
+    public QueryRevolver(AIGCService service, PsychologyStorage storage) {
+        this.service = service;
+        this.tokenizer = service.getTokenizer();
         this.storage = storage;
     }
 
     public String generatePrompt(ReportRelation relation, Report report, String query) {
         StringBuilder result = new StringBuilder();
 
-        result.append("已知信息：\n当前受测人的名称是：").append(this.fixName(
+        result.append("已知信息：\n\n当前受测人的名称是：").append(this.fixName(
                 relation.name,
                 report.getAttribute().getGenderText(),
                 report.getAttribute().age)).append("，");
@@ -106,23 +113,29 @@ public class QueryRevolver {
         result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
 
         if (report instanceof PaintingReport) {
-            result.append("受测人的情况如下：\n");
+            result.append("受测人有以下心理状态：\n");
 
             PaintingReport paintingReport = (PaintingReport) report;
 
-            ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
+//            ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
+//
+//            List<String> symptomContent = this.extractSymptomContent(template,
+//                    paintingReport.getEvaluationReport().getEvaluationScores(), report.getAttribute());
+//            for (String content : symptomContent) {
+//                result.append(content);
+//                if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
+//                    break;
+//                }
+//            }
 
-            List<String> symptomContent = this.extractSymptomContent(template,
-                    paintingReport.getEvaluationReport().getEvaluationScores(), report.getAttribute());
+            List<String> symptomContent = this.extractSymptomContent(paintingReport.getEvaluationReport().getEvaluationScores(),
+                    report.getAttribute());
             for (String content : symptomContent) {
-                result.append(content);
-                if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
-                    break;
-                }
+                result.append("* ").append(content).append("\n");
             }
             result.append("\n");
 
-            result.append("\n");
+            // 画面特征
             result.append(this.tryGeneratePaintingFeature(paintingReport, query));
 
             if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -200,19 +213,25 @@ public class QueryRevolver {
             result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
 
             if (report instanceof PaintingReport) {
-                result.append("受测人的情况如下：\n");
+                result.append("受测人有以下心理状态：\n");
 
                 PaintingReport paintingReport = (PaintingReport) report;
 
-                ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
+//                ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
+//                List<String> symptomContent = this.extractSymptomContent(template,
+//                        paintingReport.getEvaluationReport().getEvaluationScores(), paintingReport.getAttribute());
+//                for (String content : symptomContent) {
+//                    result.append(content);
+//                    if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
+//                        break;
+//                    }
+//                }
+//                result.append("\n");
 
-                List<String> symptomContent = this.extractSymptomContent(template,
-                        paintingReport.getEvaluationReport().getEvaluationScores(), paintingReport.getAttribute());
+                List<String> symptomContent = this.extractSymptomContent(paintingReport.getEvaluationReport().getEvaluationScores(),
+                        report.getAttribute());
                 for (String content : symptomContent) {
-                    result.append(content);
-                    if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
-                        break;
-                    }
+                    result.append("* ").append(content).append("\n");
                 }
                 result.append("\n");
 
@@ -295,20 +314,26 @@ public class QueryRevolver {
         answer.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
 
         if (report instanceof PaintingReport) {
-            answer.append("受测人的情况如下：");
+            answer.append("受测人的心理状态如下：");
 
             PaintingReport paintingReport = (PaintingReport) report;
 
-            ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
+//            ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
+//            List<String> symptomContent = this.extractSymptomContent(template,
+//                    paintingReport.getEvaluationReport().getEvaluationScores(), paintingReport.getAttribute());
+//            for (String content : symptomContent) {
+//                answer.append(content);
+//                if (answer.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
+//                    break;
+//                }
+//            }
 
-            List<String> symptomContent = this.extractSymptomContent(template,
-                    paintingReport.getEvaluationReport().getEvaluationScores(), paintingReport.getAttribute());
+            List<String> symptomContent = this.extractSymptomContent(paintingReport.getEvaluationReport().getEvaluationScores(),
+                    report.getAttribute());
             for (String content : symptomContent) {
-                answer.append(content);
-                if (answer.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
-                    break;
-                }
+                answer.append("* ").append(content).append("\n");
             }
+            answer.append("\n");
 
             if (answer.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                 answer.append("\n受测人的大五人格画像是").append(paintingReport.getEvaluationReport()
@@ -377,6 +402,12 @@ public class QueryRevolver {
 //        }
     }
 
+    /*
+     * @deprecated
+     * @param theme
+     * @param list
+     * @param attribute
+     * @return
     private List<String> extractSymptomContent(ThemeTemplate theme, List<EvaluationScore> list, Attribute attribute) {
         List<String> result = new ArrayList<>();
 
@@ -392,6 +423,55 @@ public class QueryRevolver {
             }
 
             result.add(symptomContent.content + "\n");
+        }
+
+        return result;
+    }*/
+
+    private List<String> extractSymptomContent(List<EvaluationScore> list, Attribute attribute) {
+        final List<String> result = new ArrayList<>();
+
+        List<String> queries = new ArrayList<>();
+        for (EvaluationScore es : list) {
+            String word = es.generateWord(attribute);
+            if (null == word) {
+                continue;
+            }
+
+            queries.add(word);
+        }
+
+        boolean success = this.service.retrieveReRank(queries, new RetrieveReRankListener() {
+            @Override
+            public void onCompleted(List<RetrieveReRankResult> retrieveReRankResults) {
+                for (RetrieveReRankResult retrieveReRankResult : retrieveReRankResults) {
+                    if (retrieveReRankResult.hasAnswer()) {
+                        RetrieveReRankResult.Answer answer = retrieveReRankResult.getAnswerList().get(0);
+                        result.add("**" + retrieveReRankResult.getAnswerList() + "**。" + retrieveReRankResult);
+                    }
+                }
+
+                synchronized (result) {
+                    result.notify();
+                }
+            }
+
+            @Override
+            public void onFailed(List<String> queries, AIGCStateCode stateCode) {
+                synchronized (result) {
+                    result.notify();
+                }
+            }
+        });
+
+        if (success) {
+            synchronized (result) {
+                try {
+                    result.wait(30 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return result;

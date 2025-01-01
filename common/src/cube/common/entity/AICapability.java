@@ -191,6 +191,8 @@ public class AICapability implements JSONable {
 
         public final static String ParaphraseMining = "ParaphraseMining";
 
+        public final static String RetrieveReRank = "RetrieveReRank";
+
         private NaturalLanguageProcessing() {
         }
     }
