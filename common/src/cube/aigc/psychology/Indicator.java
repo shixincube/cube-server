@@ -36,9 +36,39 @@ import java.util.*;
 public enum Indicator {
 
     /**
-     * 精神病性。
+     * 抑郁。
      */
-    Psychosis("精神病性", "Psychosis", 10),
+    Depression("抑郁", "Depression", 92),
+
+    /**
+     * 焦虑。
+     */
+    Anxiety("焦虑", "Anxiety", 91),
+
+    /**
+     * 强迫。
+     */
+    Obsession("强迫", "Obsession", 90),
+
+    /**
+     * 创造力。
+     */
+    Creativity("创造力", "Creativity", 88),
+
+    /**
+     * 悲观。
+     */
+    Pessimism("悲观", "Pessimism", 82),
+
+    /**
+     * 乐观。
+     */
+    Optimism("乐观", "Optimism", 81),
+
+    /**
+     * 安全感。
+     */
+    SenseOfSecurity("安全感", "SenseOfSecurity", 80),
 
     /**
      * 外倾。
@@ -51,59 +81,9 @@ public enum Indicator {
     Introversion("内倾", "Introversion", 77),
 
     /**
-     * 乐观。
+     * 压力。
      */
-    Optimism("乐观", "Optimism", 81),
-
-    /**
-     * 悲观。
-     */
-    Pessimism("悲观", "Pessimism", 82),
-
-    /**
-     * 自恋。
-     */
-    Narcissism("自恋", "Narcissism", 49),
-
-    /**
-     * 自信。
-     */
-    Confidence("自信", "Confidence", 64),
-
-    /**
-     * 自尊。
-     */
-    SelfEsteem("自尊", "SelfEsteem", 35),
-
-    /**
-     * 社会适应性。
-     */
-    SocialAdaptability("社会适应性", "SocialAdaptability", 51),
-
-    /**
-     * 独立。
-     */
-    Independence("独立", "Independence", 61),
-
-    /**
-     * 理想主义。
-     */
-    Idealism("理想主义", "Idealism", 12),
-
-    /**
-     * 现实主义。
-     */
-    Realism("现实主义", "Realism", 11),
-
-    /**
-     * 情绪。
-     */
-    Mood("情绪", "Mood", 63),
-
-    /**
-     * 自我意识。
-     */
-    SelfConsciousness("自我意识", "SelfConsciousness", 19),
+    Stress("压力", "Stress", 74),
 
     /**
      * 思考。
@@ -111,34 +91,84 @@ public enum Indicator {
     Thought("思考", "Thought", 71),
 
     /**
-     * 安全感。
+     * 冲动。
      */
-    SenseOfSecurity("安全感", "SenseOfSecurity", 81),
+    Impulsion("冲动", "Impulsion", 66),
 
     /**
-     * 强迫。
+     * 自信。
      */
-    Obsession("强迫", "Obsession", 90),
+    Confidence("自信", "Confidence", 64),
+
+    /**
+     * 情绪。
+     */
+    Mood("情绪", "Mood", 63),
 
     /**
      * 压抑。
      */
-    Constrain("压抑", "Constrain", 62),
+    Repression("压抑", "Repression", 62),
 
     /**
-     * 自我控制。
+     * 独立。
      */
-    SelfControl("自我控制", "SelfControl", 29),
+    Independence("独立", "Independence", 61),
 
     /**
-     * 焦虑。
+     * 成就动机。
      */
-    Anxiety("焦虑", "Anxiety", 91),
+    AchievementMotivation("成就动机", "AchievementMotivation", 55),
 
     /**
-     * 抑郁。
+     * 偏执。
      */
-    Depression("抑郁", "Depression", 92),
+    Paranoid("偏执", "Paranoid", 54),
+
+    /**
+     * 敌对。
+     */
+    Hostile("敌对", "Hostile", 53),
+
+    /**
+     * 社会适应性。
+     */
+    SocialAdaptability("社会适应性", "SocialAdaptability", 51),
+
+    /**
+     * 奋斗。
+     */
+    Struggle("奋斗", "Struggle", 50),
+
+    /**
+     * 自恋。
+     */
+    Narcissism("自恋", "Narcissism", 49),
+
+    /**
+     * 外在评价。
+     */
+    EvaluationFromOutside("外在评价", "EvaluationFromOutside", 41),
+
+    /**
+     * 攻击性。
+     */
+    Attacking("攻击性", "Attacking", 40),
+
+    /**
+     * 自尊。
+     */
+    SelfEsteem("自尊", "SelfEsteem", 35),
+
+    /**
+     * 家庭关系。
+     */
+    Family("家庭关系", "Family", 34),
+
+    /**
+     * 人际关系。
+     */
+    InterpersonalRelation("人际关系", "InterpersonalRelation", 33),
 
     /**
      * 单纯。
@@ -151,69 +181,39 @@ public enum Indicator {
     Meekness("温顺", "Meekness", 31),
 
     /**
-     * 敌对。
-     */
-    Hostile("敌对", "Hostile", 53),
-
-    /**
-     * 攻击性。
-     */
-    Attacking("攻击性", "Attacking", 40),
-
-    /**
-     * 家庭关系。
-     */
-    Family("家庭关系", "Family", 32),
-
-    /**
-     * 人际关系。
-     */
-    InterpersonalRelation("人际关系", "InterpersonalRelation", 33),
-
-    /**
-     * 外在评价。
-     */
-    EvaluationFromOutside("外在评价", "EvaluationFromOutside", 41),
-
-    /**
-     * 偏执。
-     */
-    Paranoid("偏执", "Paranoid", 54),
-
-    /**
-     * 成就动机。
-     */
-    AchievementMotivation("成就动机", "AchievementMotivation", 55),
-
-    /**
-     * 压力。
-     */
-    Stress("压力", "Stress", 74),
-
-    /**
-     * 创造力。
-     */
-    Creativity("创造力", "Creativity", 88),
-
-    /**
-     * 冲动。
-     */
-    Impulsion("冲动", "Impulsion", 61),
-
-    /**
-     * 奋斗。
-     */
-    Struggle("奋斗", "Struggle", 50),
-
-    /**
      * 道德感。
      */
-    MoralSense("道德感", "MoralSense", 31),
+    MoralSense("道德感", "MoralSense", 30),
+
+    /**
+     * 自我控制。
+     */
+    SelfControl("自我控制", "SelfControl", 29),
 
     /**
      * 向往自由。
      */
-    DesireForFreedom("向往自由", "DesireForFreedom", 30),
+    DesireForFreedom("向往自由", "DesireForFreedom", 28),
+
+    /**
+     * 自我意识。
+     */
+    SelfConsciousness("自我意识", "SelfConsciousness", 19),
+
+    /**
+     * 理想主义。
+     */
+    Idealism("理想主义", "Idealism", 12),
+
+    /**
+     * 现实主义。
+     */
+    Realism("现实主义", "Realism", 11),
+
+    /**
+     * 精神病性。
+     */
+    Psychosis("精神病性", "Psychosis", 10),
 
     /**
      * 未知。（服务无法进行处理）

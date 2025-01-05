@@ -143,9 +143,10 @@ public class QueryRevolver {
                         .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。\n");
                 // 性格特点
                 result.append(paintingReport.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
+                            .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
                 result.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFivePersonality().getDescription()));
+                            .getPersonalityAccelerator().getBigFivePersonality().getDescription(),
+                        paintingReport.getAttribute()));
             }
 
             if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -192,7 +193,7 @@ public class QueryRevolver {
         result.append("问题是：");
         result.append(query);
 
-        return this.filterSubjectNoun(result.toString());
+        return this.filterSubjectNoun(result.toString(), report.getAttribute());
     }
 
     public String generatePrompt(List<ReportRelation> relations, List<Report> reports, String query) {
@@ -241,9 +242,10 @@ public class QueryRevolver {
                             .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。\n");
                     // 性格特点
                     result.append(paintingReport.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
+                                .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
                     result.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFivePersonality().getDescription()));
+                                .getPersonalityAccelerator().getBigFivePersonality().getDescription(),
+                            paintingReport.getAttribute()));
                 }
 
                 if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -298,7 +300,7 @@ public class QueryRevolver {
         result.append("问题是：");
         result.append(query);
 
-        return this.filterSubjectNoun(result.toString());
+        return this.filterSubjectNoun(result.toString(), reports.get(0).getAttribute());
     }
 
     public GenerativeRecord generateSupplement(ReportRelation relation, Report report, String currentQuery) {
@@ -337,9 +339,10 @@ public class QueryRevolver {
 
             if (answer.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                 answer.append("\n受测人的大五人格画像是").append(paintingReport.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。");
+                            .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。");
                 answer.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFivePersonality().getDescription()));
+                            .getPersonalityAccelerator().getBigFivePersonality().getDescription(),
+                        paintingReport.getAttribute()));
             }
 
             if (answer.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -628,11 +631,11 @@ public class QueryRevolver {
         return buf.toString();
     }
 
-    private String filterPersonalityDescription(String desc) {
-        return desc.replaceAll("你", "他");
+    private String filterPersonalityDescription(String desc, Attribute attribute) {
+        return desc.replaceAll("你", attribute.isMale() ? "他" : "她");
     }
 
-    private String filterSubjectNoun(String content) {
+    private String filterSubjectNoun(String content, Attribute attribute) {
         return content.replaceAll("受测人", "他");
     }
 }

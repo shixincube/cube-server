@@ -2269,15 +2269,13 @@ public class KnowledgeBase {
         }
 
         JSONObject payload = new JSONObject();
-        // 检索路径
+        // 检索库
         payload.put("pathKey", (KnowledgeScope.Private == this.scope) ?
                 Long.toString(this.authToken.getContactId()) : this.authToken.getDomain());
         payload.put("contactId", this.authToken.getContactId());
         payload.put("name", this.baseInfo.name);
         payload.put("query", query);
         payload.put("topK", topK);
-        payload.put("fetchK", fetchK);
-        payload.put("brisk", brisk);
         Packet packet = new Packet(AIGCAction.GeneratePrompt.name, payload);
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect());

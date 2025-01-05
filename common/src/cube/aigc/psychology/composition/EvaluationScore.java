@@ -169,17 +169,6 @@ public class EvaluationScore implements JSONable {
         IndicatorRate rate = this.getIndicatorRate(attribute);
         StringBuilder buf = new StringBuilder();
         switch (this.indicator) {
-            case Obsession:
-                if (rate == IndicatorRate.Low) {
-                    buf.append("轻度强迫症");
-                } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度强迫症");
-                } else if (rate == IndicatorRate.High) {
-                    buf.append("重度强迫症");
-                } else {
-                    return null;
-                }
-                break;
             case Depression:
                 if (rate == IndicatorRate.Low) {
                     buf.append("轻度抑郁");
@@ -202,35 +191,15 @@ public class EvaluationScore implements JSONable {
                     return null;
                 }
                 break;
-            case Hostile:
+            case Obsession:
                 if (rate == IndicatorRate.Low) {
-                    buf.append("轻微敌对");
+                    buf.append("轻度强迫症");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度敌对");
+                    buf.append("中度强迫症");
                 } else if (rate == IndicatorRate.High) {
-                    buf.append("严重敌对");
+                    buf.append("重度强迫症");
                 } else {
                     return null;
-                }
-                break;
-            case Paranoid:
-                if (rate == IndicatorRate.Low) {
-                    buf.append("轻微偏执");
-                } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度偏执");
-                } else if (rate == IndicatorRate.High) {
-                    buf.append("严重偏执");
-                } else {
-                    return null;
-                }
-                break;
-            case SelfControl:
-                if (rate == IndicatorRate.High) {
-                    buf.append("自我控制较好");
-                } else if (rate == IndicatorRate.Medium) {
-                    buf.append("自我控制一般");
-                } else {
-                    buf.append("自我控制较差");
                 }
                 break;
             case Creativity:
@@ -242,13 +211,46 @@ public class EvaluationScore implements JSONable {
                     buf.append("创造力一般");
                 }
                 break;
-            case SelfConsciousness:
+            case Pessimism:
                 if (rate == IndicatorRate.High) {
-                    buf.append("自我意识强");
-                } else if (rate == IndicatorRate.Medium) {
-                    buf.append("自我意识中等");
+                    buf.append("悲观者");
                 } else {
-                    buf.append("自我意识不强");
+                    return null;
+                }
+                break;
+            case Optimism:
+                if (rate == IndicatorRate.High) {
+                    buf.append("乐观者");
+                } else {
+                    return null;
+                }
+                break;
+            case SenseOfSecurity:
+                if (rate == IndicatorRate.High) {
+                    buf.append("安全感较好");
+                } else if (rate == IndicatorRate.Medium) {
+                    buf.append("安全感合格");
+                } else {
+                    buf.append("安全感一般");
+                }
+                break;
+            case Extroversion:
+                if (rate == IndicatorRate.High) {
+                    buf.append("外倾");
+                }
+                break;
+            case Introversion:
+                if (rate == IndicatorRate.High) {
+                    buf.append("内倾");
+                }
+                break;
+            case Impulsion:
+                if (rate == IndicatorRate.High) {
+                    buf.append("重度冲动性");
+                } else if (rate == IndicatorRate.Medium) {
+                    buf.append("中度冲动性");
+                } else {
+                    buf.append("轻微冲动性");
                 }
                 break;
             case Confidence:
@@ -262,20 +264,27 @@ public class EvaluationScore implements JSONable {
                     return null;
                 }
                 break;
+            case Mood:
+                if (rate == IndicatorRate.High) {
+                    buf.append("情绪较为稳定");
+                } else {
+                    buf.append("情绪较不稳定");
+                }
+                break;
+            case Repression:
+                if (rate == IndicatorRate.High) {
+                    buf.append("重度压抑");
+                } else if (rate == IndicatorRate.Medium) {
+                    buf.append("中度压抑");
+                } else {
+                    buf.append("不太压抑");
+                }
+                break;
             case Independence:
                 if (rate == IndicatorRate.High) {
                     buf.append("较为独立");
                 } else {
                     buf.append("较为依赖环境");
-                }
-                break;
-            case EvaluationFromOutside:
-                if (rate == IndicatorRate.High) {
-                    buf.append("非常重视外在评价");
-                } else if (rate == IndicatorRate.Medium) {
-                    buf.append("较为重视外在评价");
-                } else {
-                    buf.append("一般重视外在评价");
                 }
                 break;
             case AchievementMotivation:
@@ -287,31 +296,35 @@ public class EvaluationScore implements JSONable {
                     buf.append("较弱的成就动机");
                 }
                 break;
-            case SenseOfSecurity:
-                if (rate == IndicatorRate.High) {
-                    buf.append("安全感较好");
+            case Paranoid:
+                if (rate == IndicatorRate.Low) {
+                    buf.append("轻微偏执");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("安全感合格");
+                    buf.append("中度偏执");
+                } else if (rate == IndicatorRate.High) {
+                    buf.append("严重偏执");
                 } else {
-                    buf.append("安全感很差");
+                    return null;
                 }
                 break;
-            case Attacking:
-                if (rate == IndicatorRate.High) {
-                    buf.append("很强的攻击性");
+            case Hostile:
+                if (rate == IndicatorRate.Low) {
+                    buf.append("轻微敌对");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度的攻击性");
+                    buf.append("中度敌对");
+                } else if (rate == IndicatorRate.High) {
+                    buf.append("严重敌对");
                 } else {
-                    buf.append("较小的攻击性");
+                    return null;
                 }
                 break;
-            case Impulsion:
+            case SocialAdaptability:
                 if (rate == IndicatorRate.High) {
-                    buf.append("重度冲动性");
-                } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度冲动性");
+                    buf.append("社会适应性良好");
+                } else if (rate == IndicatorRate.Low) {
+                    buf.append("社会适应性较差");
                 } else {
-                    buf.append("轻微冲动性");
+                    return null;
                 }
                 break;
             case Narcissism:
@@ -323,29 +336,22 @@ public class EvaluationScore implements JSONable {
                     buf.append("轻度自恋");
                 }
                 break;
-            case Mood:
+            case EvaluationFromOutside:
                 if (rate == IndicatorRate.High) {
-                    buf.append("情绪较为稳定");
-                } else {
-                    buf.append("情绪较不稳定");
-                }
-                break;
-            case Constrain:
-                if (rate == IndicatorRate.High) {
-                    buf.append("重度压抑");
+                    buf.append("非常重视外在评价");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度压抑");
+                    buf.append("较为重视外在评价");
                 } else {
-                    buf.append("不太压抑");
+                    buf.append("一般重视外在评价");
                 }
                 break;
-            case SocialAdaptability:
+            case Attacking:
                 if (rate == IndicatorRate.High) {
-                    buf.append("社会适应性良好");
-                } else if (rate == IndicatorRate.Low) {
-                    buf.append("社会适应性较差");
+                    buf.append("很强的攻击性");
+                } else if (rate == IndicatorRate.Medium) {
+                    buf.append("中度的攻击性");
                 } else {
-                    return null;
+                    buf.append("较小的攻击性");
                 }
                 break;
             case Family:
@@ -360,7 +366,7 @@ public class EvaluationScore implements JSONable {
             case InterpersonalRelation:
                 double score = this.positiveScore - this.negativeScore;
                 if (score >= 3.5) {
-                    buf.append("人际关系很受朋友欢迎");
+                    buf.append("人际关系很好");
                 } else if (score >= 2.1) {
                     buf.append("人际关系良好");
                 } else if (score >= 1.0) {
@@ -375,6 +381,24 @@ public class EvaluationScore implements JSONable {
                     buf.append("严重人际敏感");
                 }
                 break;
+            case SelfControl:
+                if (rate == IndicatorRate.High) {
+                    buf.append("自我控制较好");
+                } else if (rate == IndicatorRate.Medium) {
+                    buf.append("自我控制一般");
+                } else {
+                    buf.append("自我控制较差");
+                }
+                break;
+            case SelfConsciousness:
+                if (rate == IndicatorRate.High) {
+                    buf.append("自我意识强");
+                } else if (rate == IndicatorRate.Medium) {
+                    buf.append("自我意识中等");
+                } else {
+                    buf.append("自我意识不强");
+                }
+                break;
             case Idealism:
                 if (rate == IndicatorRate.High) {
                     buf.append("理想主义者");
@@ -385,20 +409,6 @@ public class EvaluationScore implements JSONable {
             case Realism:
                 if (rate == IndicatorRate.High) {
                     buf.append("现实主义者");
-                } else {
-                    return null;
-                }
-                break;
-            case Optimism:
-                if (rate == IndicatorRate.High) {
-                    buf.append("乐观者");
-                } else {
-                    return null;
-                }
-                break;
-            case Pessimism:
-                if (rate == IndicatorRate.High) {
-                    buf.append("悲观者");
                 } else {
                     return null;
                 }
@@ -425,26 +435,6 @@ public class EvaluationScore implements JSONable {
 
         IndicatorRate rate = IndicatorRate.None;
         switch (this.indicator) {
-            case Obsession:
-                if (attribute.age < 18) {
-                    if (score >= 0.6 && score <= 1.0) {
-                        rate = IndicatorRate.Low;
-                    } else if (score > 1.0 && score <= 1.6) {
-                        rate = IndicatorRate.Medium;
-                    } else if (score > 1.6) {
-                        rate = IndicatorRate.High;
-                    }
-                }
-                else {
-                    if (score >= 0.1 && score <= 0.8) {
-                        rate = IndicatorRate.Low;
-                    } else if (score > 0.8 && score <= 1.2) {
-                        rate = IndicatorRate.Medium;
-                    } else if (score > 1.2) {
-                        rate = IndicatorRate.High;
-                    }
-                }
-                break;
             case Depression:
                 if (attribute.age < 18) {
                     if (score > 1.0 && score <= 1.4) {
@@ -485,31 +475,24 @@ public class EvaluationScore implements JSONable {
                     }
                 }
                 break;
-            case Hostile:
-                if (score > 0.2 && score <= 0.4) {
-                    rate = IndicatorRate.Low;
-                } else if (score > 0.4 && score <= 0.8) {
-                    rate = IndicatorRate.Medium;
-                } else if (score > 0.8) {
-                    rate = IndicatorRate.High;
+            case Obsession:
+                if (attribute.age < 18) {
+                    if (score >= 0.6 && score <= 1.0) {
+                        rate = IndicatorRate.Low;
+                    } else if (score > 1.0 && score <= 1.6) {
+                        rate = IndicatorRate.Medium;
+                    } else if (score > 1.6) {
+                        rate = IndicatorRate.High;
+                    }
                 }
-                break;
-            case Paranoid:
-                if (score > 0.2 && score <= 0.5) {
-                    rate = IndicatorRate.Low;
-                } else if (score > 0.5 && score <= 0.8) {
-                    rate = IndicatorRate.Medium;
-                } else if (score > 0.8) {
-                    rate = IndicatorRate.High;
-                }
-                break;
-            case SelfControl:
-                if (score >= 0.8) {
-                    rate = IndicatorRate.High;
-                } else if (score >= 0.0) {
-                    rate = IndicatorRate.Medium;
-                } else {
-                    rate = IndicatorRate.Low;
+                else {
+                    if (score >= 0.1 && score <= 0.8) {
+                        rate = IndicatorRate.Low;
+                    } else if (score > 0.8 && score <= 1.2) {
+                        rate = IndicatorRate.Medium;
+                    } else if (score > 1.2) {
+                        rate = IndicatorRate.High;
+                    }
                 }
                 break;
             case Creativity:
@@ -521,10 +504,50 @@ public class EvaluationScore implements JSONable {
                     rate = IndicatorRate.Low;
                 }
                 break;
-            case SelfConsciousness:
-                if (score > 0.5) {
+            case Pessimism:
+                if (score > 0.2) {
                     rate = IndicatorRate.High;
-                } else if (score > 0.3) {
+                }
+                break;
+            case Optimism:
+                if (attribute.age < 18) {
+                    if (score > 1.2) {
+                        rate = IndicatorRate.High;
+                    }
+                }
+                else {
+                    if (score > 0.9) {
+                        rate = IndicatorRate.High;
+                    }
+                }
+                break;
+            case SenseOfSecurity:
+                if (score >= 0.5) {
+                    rate = IndicatorRate.High;
+                } else if (score >= -0.3) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case Extroversion:
+                if (score > 1.0) {
+                    rate = IndicatorRate.High;
+                } else if (score > 0.5) {
+                    rate = IndicatorRate.Medium;
+                }
+                break;
+            case Introversion:
+                if (score > 1.0) {
+                    rate = IndicatorRate.High;
+                } else if (score >= 0.5) {
+                    rate = IndicatorRate.Medium;
+                }
+                break;
+            case Impulsion:
+                if (score > 1.0) {
+                    rate = IndicatorRate.High;
+                } else if (score > 0.5) {
                     rate = IndicatorRate.Medium;
                 } else {
                     rate = IndicatorRate.Low;
@@ -539,18 +562,25 @@ public class EvaluationScore implements JSONable {
                     rate = IndicatorRate.Low;
                 }
                 break;
-            case Independence:
-                if (score > 0.3) {
+            case Mood:
+                if (score >= 0.4) {
                     rate = IndicatorRate.High;
+                } else if (score < -0.1) {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case Repression:
+                if (score >= 1.1) {
+                    rate = IndicatorRate.High;
+                } else if (score > 0.5) {
+                    rate = IndicatorRate.Medium;
                 } else {
                     rate = IndicatorRate.Low;
                 }
                 break;
-            case EvaluationFromOutside:
-                if (score >= 1.0) {
+            case Independence:
+                if (score > 0.3) {
                     rate = IndicatorRate.High;
-                } else if (score > 0.3) {
-                    rate = IndicatorRate.Medium;
                 } else {
                     rate = IndicatorRate.Low;
                 }
@@ -564,30 +594,28 @@ public class EvaluationScore implements JSONable {
                     rate = IndicatorRate.Low;
                 }
                 break;
-            case SenseOfSecurity:
-                if (score >= 0.5) {
-                    rate = IndicatorRate.High;
-                } else if (score >= -0.3) {
-                    rate = IndicatorRate.Medium;
-                } else {
+            case Paranoid:
+                if (score > 0.2 && score <= 0.5) {
                     rate = IndicatorRate.Low;
+                } else if (score > 0.5 && score <= 0.8) {
+                    rate = IndicatorRate.Medium;
+                } else if (score > 0.8) {
+                    rate = IndicatorRate.High;
                 }
                 break;
-            case Attacking:
-                if (score > 0.7) {
-                    rate = IndicatorRate.High;
-                } else if (score > 0.4) {
-                    rate = IndicatorRate.Medium;
-                } else {
+            case Hostile:
+                if (score > 0.2 && score <= 0.4) {
                     rate = IndicatorRate.Low;
+                } else if (score > 0.4 && score <= 0.8) {
+                    rate = IndicatorRate.Medium;
+                } else if (score > 0.8) {
+                    rate = IndicatorRate.High;
                 }
                 break;
-            case Impulsion:
-                if (score > 1.0) {
+            case SocialAdaptability:
+                if (score >= 0.3) {
                     rate = IndicatorRate.High;
-                } else if (score > 0.5) {
-                    rate = IndicatorRate.Medium;
-                } else {
+                } else if (score <= -0.2) {
                     rate = IndicatorRate.Low;
                 }
                 break;
@@ -600,26 +628,21 @@ public class EvaluationScore implements JSONable {
                     rate = IndicatorRate.Low;
                 }
                 break;
-            case Mood:
-                if (score >= 0.4) {
+            case EvaluationFromOutside:
+                if (score >= 1.0) {
                     rate = IndicatorRate.High;
-                } else {
-                    rate = IndicatorRate.Low;
-                }
-                break;
-            case Constrain:
-                if (score >= 1.1) {
-                    rate = IndicatorRate.High;
-                } else if (score > 0.5) {
+                } else if (score > 0.3) {
                     rate = IndicatorRate.Medium;
                 } else {
                     rate = IndicatorRate.Low;
                 }
                 break;
-            case SocialAdaptability:
-                if (score >= 0.3) {
+            case Attacking:
+                if (score > 0.7) {
                     rate = IndicatorRate.High;
-                } else if (score <= -0.2) {
+                } else if (score > 0.4) {
+                    rate = IndicatorRate.Medium;
+                } else {
                     rate = IndicatorRate.Low;
                 }
                 break;
@@ -649,6 +672,24 @@ public class EvaluationScore implements JSONable {
                     rate = IndicatorRate.Lowest;
                 }
                 break;
+            case SelfControl:
+                if (score >= 0.8) {
+                    rate = IndicatorRate.High;
+                } else if (score >= 0.0) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case SelfConsciousness:
+                if (score > 0.5) {
+                    rate = IndicatorRate.High;
+                } else if (score > 0.3) {
+                    rate = IndicatorRate.Medium;
+                } else {
+                    rate = IndicatorRate.Low;
+                }
+                break;
             case Idealism:
                 if (score >= 0.32) {
                     rate = IndicatorRate.High;
@@ -656,23 +697,6 @@ public class EvaluationScore implements JSONable {
                 break;
             case Realism:
                 if (score >= 0.31) {
-                    rate = IndicatorRate.High;
-                }
-                break;
-            case Optimism:
-                if (attribute.age < 18) {
-                    if (score > 1.2) {
-                        rate = IndicatorRate.High;
-                    }
-                }
-                else {
-                    if (score > 0.9) {
-                        rate = IndicatorRate.High;
-                    }
-                }
-                break;
-            case Pessimism:
-                if (score > 0.2) {
                     rate = IndicatorRate.High;
                 }
                 break;

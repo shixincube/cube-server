@@ -312,7 +312,7 @@ public class MBTIEvaluation {
                         list.add(new MBTICandidate(MyersBriggsTypeIndicator.Judging, 0.8));
                     }
                     break;
-                case Constrain:
+                case Repression:
                     list.add(new MBTICandidate(MyersBriggsTypeIndicator.Introversion, 0.1));
                     list.add(new MBTICandidate(MyersBriggsTypeIndicator.Sensing, 0.1));
                     break;

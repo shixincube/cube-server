@@ -2072,7 +2072,7 @@ public class HTPEvaluation extends Evaluation {
                     String desc = "人物有嘴";
                     result.addFeature(desc, Term.Strong, Tendency.Positive);
 
-                    result.addScore(Indicator.Constrain, 1, FloatUtils.random(0.6, 0.7));
+                    result.addScore(Indicator.Repression, 1, FloatUtils.random(0.6, 0.7));
                 }
             }
 
@@ -2153,7 +2153,7 @@ public class HTPEvaluation extends Evaluation {
                 String desc = "人物有帽子";
                 result.addFeature(desc, Term.Powerlessness, Tendency.Positive);
 
-                result.addScore(Indicator.Constrain, 1, FloatUtils.random(0.6, 0.7));
+                result.addScore(Indicator.Repression, 1, FloatUtils.random(0.6, 0.7));
             }
 
             // 手臂
