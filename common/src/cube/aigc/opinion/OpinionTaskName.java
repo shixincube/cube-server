@@ -24,12 +24,12 @@
  * SOFTWARE.
  */
 
-package cube.aigc.publicopinion;
+package cube.aigc.opinion;
 
 /**
  * 舆情任务名称。
  */
-public enum PublicOpinionTaskName {
+public enum OpinionTaskName {
 
     /**
      * 文章情感概述。
@@ -50,12 +50,12 @@ public enum PublicOpinionTaskName {
 
     public final String name;
 
-    PublicOpinionTaskName(String name) {
+    OpinionTaskName(String name) {
         this.name = name;
     }
 
-    public static PublicOpinionTaskName parse(String name) {
-        for (PublicOpinionTaskName potn : PublicOpinionTaskName.values()) {
+    public static OpinionTaskName parse(String name) {
+        for (OpinionTaskName potn : OpinionTaskName.values()) {
             if (potn.name.equals(name)) {
                 return potn;
             }

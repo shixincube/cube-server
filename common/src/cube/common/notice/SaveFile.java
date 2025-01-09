@@ -26,44 +26,17 @@
 
 package cube.common.notice;
 
-import org.json.JSONObject;
+import cube.common.action.FileStorageAction;
+import cube.common.entity.FileLabel;
 
 /**
- * 通知数据。
+ * 保存文件。
  */
-public class NoticeData extends JSONObject {
+public class SaveFile extends NoticeData {
 
-    public final static String ACTION = "action";
-
-    public final static String ASYNC_NOTIFIER = "_async_notifier";
-
-    public final static String CONTACT_ID = "contactId";
-
-    public final static String DOMAIN = "domain";
-
-    public final static String PARAMETER = "parameter";
-
-    public final static String CODE = "code";
-
-    public final static String DATA = "data";
-
-    public final static String FILE_CODE = "fileCode";
-
-    public final static String PATH = "path";
-
-    public final static String FILE_LABEL = "fileLabel";
-
-    public NoticeData(String action) {
-        super();
-        this.put(NoticeData.ACTION, action);
-    }
-
-    public NoticeData(JSONObject json, String... names) {
-        super(json, names);
-        this.put(NoticeData.ACTION, json.getString(NoticeData.ACTION));
-    }
-
-    public String getAction() {
-        return this.getString(NoticeData.ACTION);
+    public SaveFile(String path, FileLabel fileLabel) {
+        super(FileStorageAction.SaveFile.name);
+        this.put(NoticeData.PATH, path);
+        this.put(NoticeData.FILE_LABEL, fileLabel.toJSON());
     }
 }

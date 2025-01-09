@@ -30,7 +30,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Sentiment;
-import cube.aigc.publicopinion.Article;
+import cube.aigc.opinion.Article;
 import cube.common.Storagable;
 import cube.core.Conditional;
 import cube.core.Constraint;

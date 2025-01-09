@@ -38,7 +38,7 @@ import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.Theme;
 import cube.aigc.psychology.composition.Scale;
-import cube.aigc.publicopinion.PublicOpinionTaskName;
+import cube.aigc.opinion.OpinionTaskName;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.Packet;
@@ -293,6 +293,9 @@ public class AIGCService extends AbstractModule {
 
                 // 资源管理器
                 Explorer.getInstance().setup(AIGCService.this, tokenizer);
+
+                // 设置工具
+                ToolKit.getInstance().setService(AIGCService.this, fileStorage);
 
                 started.set(true);
                 Logger.i(AIGCService.class, "AIGC service is ready");
@@ -1004,14 +1007,14 @@ public class AIGCService extends AbstractModule {
             }
 
             String taskName = params.getString("task");
-            PublicOpinionTaskName task = PublicOpinionTaskName.parse(taskName);
+            OpinionTaskName task = OpinionTaskName.parse(taskName);
             if (null == task) {
                 Logger.d(this.getClass(), "#inferByModule - PublicOpinion task is unknown: " + taskName);
                 return null;
             }
 
-            if (task == PublicOpinionTaskName.ArticleSentimentSummary ||
-                task == PublicOpinionTaskName.ArticleSentimentClassification) {
+            if (task == OpinionTaskName.ArticleSentimentSummary ||
+                task == OpinionTaskName.ArticleSentimentClassification) {
                 if (!params.has("category") || !params.has("title")) {
                     Logger.d(this.getClass(), "#inferByModule - PublicOpinion module param error");
                     return null;
@@ -1025,7 +1028,7 @@ public class AIGCService extends AbstractModule {
                 PublicOpinion po = (PublicOpinion) module;
 
                 MutableArticleQuery maq = new MutableArticleQuery();
-                if (PublicOpinionTaskName.ArticleSentimentSummary == task) {
+                if (OpinionTaskName.ArticleSentimentSummary == task) {
                     maq.articleQuery = po.makeEvaluatingArticleQuery(category, title,
                             (null != sentiment) ? Sentiment.parse(sentiment) : null);
                 }

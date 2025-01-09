@@ -26,17 +26,18 @@
 
 package cube.util;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.EncodeHintType;
-import com.google.zxing.MultiFormatWriter;
-import com.google.zxing.WriterException;
+import com.google.zxing.*;
+import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.BitMatrix;
+import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import cube.vision.Color;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -112,14 +113,14 @@ public class CodeUtils {
     /**
      * 生成二维码图片。
      *
-     * @param outputFile
+     * @param output
      * @param content
      * @param imageWidth
      * @param imageHeight
      * @param color
      * @return
      */
-    public static boolean generateQRCode(File outputFile, String content,
+    public static boolean generateQRCode(File output, String content,
                                          int imageWidth, int imageHeight, Color color) {
         Map<EncodeHintType, Object> hints = new HashMap<>();
         // 设置内容编码
@@ -144,8 +145,8 @@ public class CodeUtils {
                 }
             }
 
-            String ext = FileUtils.extractFileExtension(outputFile.getName());
-            ImageIO.write(image, ext, outputFile);
+            String ext = FileUtils.extractFileExtension(output.getName());
+            ImageIO.write(image, ext, output);
         } catch (WriterException e) {
             e.printStackTrace();
             return false;
@@ -157,24 +158,176 @@ public class CodeUtils {
         return true;
     }
 
-    public static void main(String[] args) {
-        String string = "https://box.shixincube.com/box/first-prototype-box";
-        String protocol = CodeUtils.extractProtocol(string);
-        System.out.println("Protocol: " + protocol);
+    /**
+     * 生成条形码图片。
+     *
+     * @param output
+     * @param data
+     * @param width
+     * @param height
+     * @return
+     */
+    public static boolean generateBarCode(File output, String data, int width, int height) {
+        try {
+            BufferedImage image = CodeUtils.generateBarCode(data, width, height, null, null);
+            String ext = FileUtils.extractFileExtension(output.getName());
+            ImageIO.write(image, ext, output);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
 
-        if (protocol.equals("cube")) {
-            String[] segments = CodeUtils.extractCubeResourceSegments(string);
-            System.out.println("Segment: " + segments[0]);
-            System.out.println("Segment: " + segments[1]);
+    /**
+     * 生成条形码。
+     *
+     * @param data
+     * @param width
+     * @param height
+     * @param header
+     * @param footer
+     * @return
+     */
+    public static BufferedImage generateBarCode(String data, int width, int height, String header, String footer) {
+        BufferedImage image = null;
+        try {
+            Map<EncodeHintType, Object> hints = new HashMap<>();
+            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+
+            MultiFormatWriter writer = new MultiFormatWriter();
+            BitMatrix bitMatrix = writer.encode(data, BarcodeFormat.CODE_128, width, height, hints);
+
+            int hOffset = 64;
+            int bHeight = height - hOffset;
+
+            int barX = 0;
+
+            // 创建图像
+            image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            for (int x = 0; x < width; ++x) {
+                for (int y = 0; y < height; ++y) {
+                    if (y <= hOffset || y > bHeight) {
+                        image.setRGB(x, y, 0xFFFFFF);
+                    }
+                    else {
+                        // 黑白条
+                        image.setRGB(x, y, bitMatrix.get(x, y) ? 0 : 0xFFFFFF);
+                        if (barX == 0 && bitMatrix.get(x, y)) {
+                            barX = x;
+                        }
+                    }
+                }
+            }
+
+            Graphics2D g2d = (Graphics2D) image.getGraphics();
+
+            if (null != header) {
+                // 字体抗锯齿
+                g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                g2d.setFont(new Font("黑体", Font.PLAIN, 32));
+                g2d.setColor(java.awt.Color.BLACK);
+                g2d.drawString(header, barX, 32 + (int)(32 * 0.4));
+            }
+            if (null != footer) {
+                g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                g2d.setFont(new Font("黑体", Font.PLAIN, 32));
+                g2d.setColor(java.awt.Color.BLACK);
+                g2d.drawString(footer, barX, height - (int)(32 * 0.5));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        else {
-            System.out.println("Box: " + CodeUtils.isBoxDomain(string));
-            System.out.println("Domain: " + CodeUtils.extractBoxDomain(string));
+        return image;
+    }
+
+    /**
+     * 扫描图中条形码数据。
+     *
+     * @param input
+     * @return
+     */
+    public static String scanBarCode(File input) {
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(input);
+            BufferedImage image = ImageIO.read(fis);
+            if (null == image) {
+                return null;
+            }
+
+            LuminanceSource source = new BufferedImageLuminanceSource(image);
+            BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+
+            Map<DecodeHintType, Object> hints = new HashMap<>();
+            hints.put(DecodeHintType.CHARACTER_SET, "UTF-8");
+            hints.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
+
+            Result result = new MultiFormatReader().decode(bitmap, hints);
+            return result.getText();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (null != fis) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                }
+            }
         }
+
+        return null;
+    }
+
+    public static void main(String[] args) {
+//        String string = "https://box.shixincube.com/box/first-prototype-box";
+//        String protocol = CodeUtils.extractProtocol(string);
+//        System.out.println("Protocol: " + protocol);
+//
+//        if (protocol.equals("cube")) {
+//            String[] segments = CodeUtils.extractCubeResourceSegments(string);
+//            System.out.println("Segment: " + segments[0]);
+//            System.out.println("Segment: " + segments[1]);
+//        }
+//        else {
+//            System.out.println("Box: " + CodeUtils.isBoxDomain(string));
+//            System.out.println("Domain: " + CodeUtils.extractBoxDomain(string));
+//        }
 
 //        File qrFile = new File("service/storage/tmp/qrcode-yyzj.jpg");
 //        boolean success = CodeUtils.generateQRCode(qrFile, string, 400, 400,
 //                new Color("#000000"));
 //        System.out.println("Generate QRCode - " + success);
+
+        String data = "532201-0703-0011";
+//        File barFile = new File("service/storage/tmp/bar-bzjz.jpg");
+//        boolean success = CodeUtils.generateBarCode(barFile, data, 200, 80);
+//        System.out.println("Generate bar code - " + success);
+//        String result = CodeUtils.scanBarCode(barFile);
+//        System.out.println("Bar code data: " + result);
+
+        try {
+            int width = 500;
+            int height = 200;
+
+//            BufferedImage image = CodeUtils.generateBarCode(data, width, height,
+//                    "曲靖市第一中学", "高2011班    张伟");
+//            File barFile = new File("service/storage/tmp/bar-info.jpg");
+//            ImageIO.write(image, "jpg", barFile);
+
+            int offsetX = PrintUtils.PagerA4.width - width;
+            int offsetY = PrintUtils.PagerA4.height - height - 10;
+            BufferedImage code = CodeUtils.generateBarCode(data, width, height,
+                    "曲靖市第一中学", "高2011班    张伟");
+            BufferedImage pager = PrintUtils.createA4Pager(code, offsetX, offsetY);
+            File pagerFile = new File("service/storage/tmp/pager-demo.jpg");
+            ImageIO.write(pager, "jpg", pagerFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        File barFile = new File("service/storage/tmp/barcode.jpg");
+        String result = CodeUtils.scanBarCode(barFile);
+        System.out.println("Bar code data: " + result);
     }
 }

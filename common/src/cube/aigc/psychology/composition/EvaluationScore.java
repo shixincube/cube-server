@@ -514,8 +514,7 @@ public class EvaluationScore implements JSONable {
                     if (score > 1.2) {
                         rate = IndicatorRate.High;
                     }
-                }
-                else {
+                } else {
                     if (score > 0.9) {
                         rate = IndicatorRate.High;
                     }

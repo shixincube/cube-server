@@ -56,8 +56,8 @@ public class TestLens {
 //        File file = new File("./storage/tmp/lens_reports.json");
 //        lensDataset.downloadAllReports(file);
 
-        File destFile = new File("storage/tmp/lens_export_reports_p2.json");
-        lensDataToolkit.downloadBySNList(new File("storage/tmp/lens_export_data_p2.csv"), destFile);
+        File destFile = new File("storage/tmp/lens_export_reports_p4.json");
+        lensDataToolkit.downloadBySNList(new File("storage/tmp/lens_export_data_p4.csv"), destFile);
     }
 
     public static void remakeEvaluationDataset() {
@@ -121,13 +121,13 @@ public class TestLens {
     }
 
     public static void main(String[] args) {
-//        downloadDataset();
+        downloadDataset();
 
 //        mergeData();
 
 //        remakeEvaluationDataset();
 
-        makeEvaluationDataset();
+//        makeEvaluationDataset();
 
 //        testSaveScore();
 
@@ -139,11 +139,7 @@ public class TestLens {
 
 //        testMakeNormalizationFile();
 
-
-
 //        LensDataToolkit toolkit = new LensDataToolkit();
-//        toolkit.makeNewExportData();
-
 //        File file = new File("storage/tmp/lens_export_reports_all.json");
 //        File newFile = new File("storage/tmp/lens_export_reports_updated.json");
 //        toolkit.updateReportPainting(file, newFile);
