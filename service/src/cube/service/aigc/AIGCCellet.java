@@ -32,6 +32,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.common.action.AIGCAction;
+import cube.common.action.ToolKitAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.aigc.task.*;
@@ -508,6 +509,14 @@ public class AIGCCellet extends AbstractCellet {
             // 来自 Unit 的请求
             this.execute(new TeardownTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
+        }
+        else if (ToolKitAction.MakeBarCode.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new MakeBarCodeTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (ToolKitAction.ScanBarCode.name.equals(action)) {
+            // 来自 Dispatcher 的请求
         }
     }
 }

@@ -164,7 +164,7 @@ public class DeleteFileTask extends ServiceTask {
             for (FileLabel fileLabel : fileLabelList) {
                 array.put(fileLabel.toCompactJSON());
             }
-            result.put("fileList", array);
+            result.put("list", array);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
             markResponseTime();
@@ -187,7 +187,7 @@ public class DeleteFileTask extends ServiceTask {
             for (FileLabel fileLabel : fileLabelList) {
                 array.put(fileLabel.toCompactJSON());
             }
-            result.put("fileList", array);
+            result.put("list", array);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, FileStorageStateCode.Ok.code, result));
             markResponseTime();

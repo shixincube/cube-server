@@ -237,6 +237,26 @@ public class Performer implements TalkListener, Tickable {
     }
 
     /**
+     * 获取外部 HTTP 节点。
+     *
+     * @return 外部 HTTP 节点。
+     */
+    public Endpoint getExternalHttpEndpoint() {
+        return new Endpoint(this.properties.getProperty("external.http.host", "127.0.0.1"),
+                Integer.parseInt(this.properties.getProperty("external.http.port", "7010")));
+    }
+
+    /**
+     * 获取外部 HTTPS 节点。
+     *
+     * @return 外部 HTTPS 节点。
+     */
+    public Endpoint getExternalHttpsEndpoint() {
+        return new Endpoint(this.properties.getProperty("external.https.host", "127.0.0.1"),
+                Integer.parseInt(this.properties.getProperty("external.https.port", "7017")));
+    }
+
+    /**
      * 添加 Director 节点。
      * @param address 导演机的地址。
      * @param port 导演机的端口。

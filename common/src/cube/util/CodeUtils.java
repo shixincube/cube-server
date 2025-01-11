@@ -169,7 +169,7 @@ public class CodeUtils {
      */
     public static boolean generateBarCode(File output, String data, int width, int height) {
         try {
-            BufferedImage image = CodeUtils.generateBarCode(data, width, height, null, null);
+            BufferedImage image = CodeUtils.generateBarCode(data, width, height, null, null, 0);
             String ext = FileUtils.extractFileExtension(output.getName());
             ImageIO.write(image, ext, output);
         } catch (Exception e) {
@@ -187,9 +187,10 @@ public class CodeUtils {
      * @param height
      * @param header
      * @param footer
+     * @param fontSize
      * @return
      */
-    public static BufferedImage generateBarCode(String data, int width, int height, String header, String footer) {
+    public static BufferedImage generateBarCode(String data, int width, int height, String header, String footer, int fontSize) {
         BufferedImage image = null;
         try {
             Map<EncodeHintType, Object> hints = new HashMap<>();
@@ -198,7 +199,7 @@ public class CodeUtils {
             MultiFormatWriter writer = new MultiFormatWriter();
             BitMatrix bitMatrix = writer.encode(data, BarcodeFormat.CODE_128, width, height, hints);
 
-            int hOffset = 64;
+            int hOffset = fontSize * 2;
             int bHeight = height - hOffset;
 
             int barX = 0;
@@ -225,15 +226,15 @@ public class CodeUtils {
             if (null != header) {
                 // 字体抗锯齿
                 g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                g2d.setFont(new Font("黑体", Font.PLAIN, 32));
+                g2d.setFont(new Font("黑体", Font.PLAIN, fontSize));
                 g2d.setColor(java.awt.Color.BLACK);
-                g2d.drawString(header, barX, 32 + (int)(32 * 0.4));
+                g2d.drawString(header, barX, fontSize + (int)(fontSize * 0.4));
             }
             if (null != footer) {
                 g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                g2d.setFont(new Font("黑体", Font.PLAIN, 32));
+                g2d.setFont(new Font("黑体", Font.PLAIN, fontSize));
                 g2d.setColor(java.awt.Color.BLACK);
-                g2d.drawString(footer, barX, height - (int)(32 * 0.5));
+                g2d.drawString(footer, barX, height - (int)(fontSize * 0.5));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -315,13 +316,13 @@ public class CodeUtils {
 //            File barFile = new File("service/storage/tmp/bar-info.jpg");
 //            ImageIO.write(image, "jpg", barFile);
 
-            int offsetX = PrintUtils.PagerA4.width - width;
-            int offsetY = PrintUtils.PagerA4.height - height - 10;
+            int offsetX = PrintUtils.PaperA4Ultra.width - width;
+            int offsetY = PrintUtils.PaperA4Ultra.height - height - 10;
             BufferedImage code = CodeUtils.generateBarCode(data, width, height,
-                    "曲靖市第一中学", "高2011班    张伟");
-            BufferedImage pager = PrintUtils.createA4Pager(code, offsetX, offsetY);
-            File pagerFile = new File("service/storage/tmp/pager-demo.jpg");
-            ImageIO.write(pager, "jpg", pagerFile);
+                    "曲靖市第一中学", "高2011班    张伟", 32);
+            BufferedImage paper = PrintUtils.createPaper(PrintUtils.PaperA4Ultra, code, offsetX, offsetY);
+            File paperFile = new File("service/storage/tmp/paper-demo.jpg");
+            ImageIO.write(paper, "jpg", paperFile);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -14,7 +14,7 @@ public enum ToolKitAction {
     /**
      * 生成条形码。
      */
-    GenerateBarCode("generateBarCode"),
+    MakeBarCode("makeBarCode"),
 
     /**
      * 扫描条形码。

@@ -36,19 +36,23 @@ import java.awt.image.BufferedImage;
  */
 public class PrintUtils {
 
-    public final static Size PagerA4 = new Size(3508, 2479);
+    public final static Size PaperA4Ultra = new Size(3508, 2480);
 
-    public static BufferedImage createA4Pager() {
-        BufferedImage image = new BufferedImage(PagerA4.width, PagerA4.height, BufferedImage.TYPE_INT_RGB);
+    public final static Size PaperA4Normal = new Size(1754, 1240);
+
+    public final static Size PaperA4Small = new Size(1402, 992);
+
+    public static BufferedImage createPaper(Size size) {
+        BufferedImage image = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
         Graphics2D graphics = image.createGraphics();
         graphics.setBackground(Color.WHITE);
-        graphics.clearRect(0, 0, PagerA4.width, PagerA4.height);
+        graphics.clearRect(0, 0, size.width, size.height);
         graphics.dispose();
         return image;
     }
 
-    public static BufferedImage createA4Pager(BufferedImage content, int x, int y) {
-        BufferedImage image = PrintUtils.createA4Pager();
+    public static BufferedImage createPaper(Size size, BufferedImage content, int x, int y) {
+        BufferedImage image = PrintUtils.createPaper(size);
         Graphics2D g2d = image.createGraphics();
         g2d.drawImage(content, x, y, content.getWidth(), content.getHeight(), null);
         g2d.dispose();

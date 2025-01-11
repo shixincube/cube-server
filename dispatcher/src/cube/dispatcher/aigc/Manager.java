@@ -117,6 +117,10 @@ public class Manager implements Tickable, PerformerListener {
         App.getInstance().stop();
     }
 
+    public Performer getPerformer() {
+        return this.performer;
+    }
+
     private void setupHandler() {
         HttpServer httpServer = this.performer.getHttpServer();
 
@@ -179,6 +183,8 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Evaluate());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.KeepAlive());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Inject());
+
+        httpServer.addContextHandler(new MakeBarCode());
     }
 
     public boolean checkToken(String token) {
