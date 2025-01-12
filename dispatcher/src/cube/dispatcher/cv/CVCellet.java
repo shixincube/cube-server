@@ -30,6 +30,9 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.cv.handler.DetectBarCode;
+import cube.dispatcher.cv.handler.MakeBarCode;
+import cube.util.HttpServer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -65,6 +68,11 @@ public class CVCellet extends AbstractCellet {
     public boolean install() {
         this.performer = (Performer) this.getNucleus().getParameter("performer");
         CVCellet.sPerformer = this.performer;
+
+        HttpServer httpServer = this.performer.getHttpServer();
+        httpServer.addContextHandler(new MakeBarCode());
+        httpServer.addContextHandler(new DetectBarCode());
+
         return true;
     }
 

@@ -33,7 +33,7 @@ import cube.common.action.FileStorageAction;
 import cube.common.entity.Folder;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
-import cube.dispatcher.util.FileLabelHelper;
+import cube.dispatcher.util.FileLabels;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONArray;
@@ -158,7 +158,7 @@ public class FileOperationHandler extends CrossDomainHandler {
                 JSONArray list = Packet.extractDataPayload(responsePacket).getJSONArray("list");
                 for (int i = 0; i < list.length(); ++i) {
                     JSONObject json = list.getJSONObject(i);
-                    FileLabelHelper.reviseFileLabel(json, token, this.performer.getExternalHttpEndpoint(),
+                    FileLabels.reviseFileLabel(json, token, this.performer.getExternalHttpEndpoint(),
                             this.performer.getExternalHttpsEndpoint());
                 }
                 packetPayload.put("total", folder.numFiles);
@@ -193,7 +193,7 @@ public class FileOperationHandler extends CrossDomainHandler {
             JSONArray array = packetPayload.getJSONArray("list");
             for (int i = 0; i < array.length(); ++i) {
                 JSONObject json = array.getJSONObject(i);
-                FileLabelHelper.reviseFileLabel(json, token, this.performer.getExternalHttpEndpoint(),
+                FileLabels.reviseFileLabel(json, token, this.performer.getExternalHttpEndpoint(),
                         this.performer.getExternalHttpsEndpoint());
             }
             responseData = new Packet(FileStorageAction.ListFileLabels.name, packetPayload);
@@ -258,7 +258,7 @@ public class FileOperationHandler extends CrossDomainHandler {
         for (int i = 0; i < list.length(); ++i) {
             // 修订文件标签
             JSONObject fileLabelJson = list.getJSONObject(i);
-            FileLabelHelper.reviseFileLabel(fileLabelJson, token,
+            FileLabels.reviseFileLabel(fileLabelJson, token,
                     this.performer.getExternalHttpEndpoint(), this.performer.getExternalHttpsEndpoint());
         }
         responsePacket = new Packet(FileStorageAction.FindFile.name, responseData);
@@ -322,7 +322,7 @@ public class FileOperationHandler extends CrossDomainHandler {
         JSONArray list = responseData.getJSONArray("list");
         for (int i = 0; i < list.length(); ++i) {
             JSONObject json = list.getJSONObject(i);
-            FileLabelHelper.reviseFileLabel(json, token, this.performer.getExternalHttpEndpoint(),
+            FileLabels.reviseFileLabel(json, token, this.performer.getExternalHttpEndpoint(),
                     this.performer.getExternalHttpsEndpoint());
         }
         responsePacket = new Packet(FileStorageAction.DeleteFile.name, responseData);

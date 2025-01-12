@@ -112,6 +112,11 @@ public enum CVStateCode {
     FileError(32),
 
     /**
+     * 终端节点异常。
+     */
+    EndpointException(33),
+
+    /**
      * 内容长度越界。
      */
     ContentLengthOverflow(41),

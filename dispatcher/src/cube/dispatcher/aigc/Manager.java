@@ -50,7 +50,6 @@ import cube.dispatcher.PerformerListener;
 import cube.dispatcher.aigc.handler.Conversation;
 import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.aigc.handler.app.App;
-import cube.dispatcher.cv.handler.MakeBarCode;
 import cube.dispatcher.util.Tickable;
 import cube.util.HttpServer;
 import org.json.JSONArray;
@@ -182,8 +181,6 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Evaluate());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.KeepAlive());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Inject());
-
-        httpServer.addContextHandler(new MakeBarCode());
     }
 
     public boolean checkToken(String token) {

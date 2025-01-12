@@ -1,27 +1,7 @@
 /*
  * This source file is part of Cube.
  *
- * The MIT License (MIT)
- *
  * Copyright (c) 2020-2024 Ambrose Xu.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
  */
 
 package cube.service.cv;
@@ -34,6 +14,7 @@ import cell.util.log.Logger;
 import cube.common.action.CVAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.service.cv.task.DetectBarCodeTask;
 import cube.service.cv.task.MakeBarCodeTask;
 import cube.service.cv.task.SetupTask;
 import cube.service.cv.task.TeardownTask;
@@ -131,13 +112,25 @@ public class CVCellet extends AbstractCellet {
         ActionDialect dialect = new ActionDialect(primitive);
         String action = dialect.getName();
 
-        if (CVAction.MakeBarCode.name.equals(action)) {
+        if (dialect.containsParam(Responder.NotifierKey)) {
+            // 应答阻塞访问
+            for (Responder responder : this.responderList) {
+                if (responder.isResponse(dialect)) {
+                    responder.notifyResponse(dialect);
+                    this.responderList.remove(responder);
+                    break;
+                }
+            }
+        }
+        else if (CVAction.MakeBarCode.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new MakeBarCodeTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (CVAction.DetectBarCode.name.equals(action)) {
             // 来自 Dispatcher 的请求
+            this.execute(new DetectBarCodeTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
         }
         else if (CVAction.Setup.name.equals(action)) {
             // 来自 Endpoint 的请求

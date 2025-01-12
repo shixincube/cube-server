@@ -6,6 +6,7 @@
 
 package cube.common.entity;
 
+import cube.vision.Rectangle;
 import org.json.JSONObject;
 
 /**
@@ -21,6 +22,10 @@ public class BarCode extends Entity {
 
     public String data;
 
+    public String type = "CODE128";
+
+    public Rectangle rect;
+
     public int width;
 
     public int height;
@@ -34,6 +39,13 @@ public class BarCode extends Entity {
     public BarCode(JSONObject json) {
         super(json);
         this.data = json.getString("data");
+        if (json.has("type")) {
+            this.type = json.getString("type");
+        }
+        if (json.has("rect")) {
+            this.rect = new Rectangle(json.getJSONObject("rect"));
+        }
+
         this.width = json.has("width") ? json.getInt("width") : 500;
         this.height = json.has("height") ? json.getInt("height") : 200;
         this.header = json.has("header") ? json.getString("header") : null;
@@ -51,11 +63,34 @@ public class BarCode extends Entity {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("data", this.data);
+        json.put("type", this.type);
+
+        if (null != this.rect) {
+            json.put("rect", this.rect.toJSON());
+        }
+
         json.put("width", this.width);
         json.put("height", this.height);
-        json.put("header", this.header);
-        json.put("footer", this.footer);
+
+        if (null != this.header) {
+            json.put("header", this.header);
+        }
+        if (null != this.footer) {
+            json.put("footer", this.footer);
+        }
+
         json.put("fontSize", this.fontSize);
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        JSONObject json = super.toCompactJSON();
+        json.put("data", this.data);
+        json.put("type", this.type);
+        if (null != this.rect) {
+            json.put("rect", this.rect.toJSON());
+        }
         return json;
     }
 

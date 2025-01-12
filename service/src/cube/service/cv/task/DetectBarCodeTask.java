@@ -34,26 +34,24 @@ import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.BarCode;
-import cube.common.entity.FileLabel;
+import cube.common.entity.BarCodeInfo;
 import cube.common.state.CVStateCode;
 import cube.service.ServiceTask;
 import cube.service.cv.CVCellet;
 import cube.service.cv.CVService;
-import cube.service.cv.ToolKit;
-import cube.util.PrintUtils;
+import cube.service.cv.listener.DetectBarCodeListener;
+import cube.util.JSONUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 制作条码。
+ * 检测并解码条码。
  */
-public class MakeBarCodeTask extends ServiceTask {
+public class DetectBarCodeTask extends ServiceTask {
 
-    public MakeBarCodeTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public DetectBarCodeTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -86,64 +84,45 @@ public class MakeBarCodeTask extends ServiceTask {
             return;
         }
 
-        JSONArray result = new JSONArray();
-        int amount = 0;
-
-        boolean merge = packet.data.has("merge") && packet.data.getBoolean("merge");
-        String paper = packet.data.has("paper") ? packet.data.getString("paper") : null;
+        final long start = System.currentTimeMillis();
 
         try {
-            if (merge) {
-                List<BarCode> list = new ArrayList<>();
-                JSONArray array = packet.data.getJSONArray("list");
-                for (int i = 0; i < array.length(); ++i) {
-                    BarCode barCode = new BarCode(array.getJSONObject(i));
-                    list.add(barCode);
-                }
-                FileLabel fileLabel = ToolKit.getInstance().makeBarCodeA4Paper(token, list);
-                if (null != fileLabel) {
-                    ++amount;
-                    result.put(fileLabel.toJSON());
-                }
-            }
-            else {
-                JSONArray array = packet.data.getJSONArray("list");
-                for (int i = 0; i < array.length(); ++i) {
-                    JSONObject info = array.getJSONObject(i);
-                    BarCode barCode = new BarCode(info);
+            boolean success = service.detectBarCode(token, JSONUtils.toStringList(packet.data.getJSONArray("list")),
+                    new DetectBarCodeListener() {
+                        @Override
+                        public void onCompleted(List<BarCodeInfo> barCodeInfos) {
+                            JSONArray barCodeInfoArray = new JSONArray();
+                            for (BarCodeInfo info : barCodeInfos) {
+                                barCodeInfoArray.put(info.toJSON());
+                            }
 
-                    if (null != paper) {
-                        FileLabel fileLabel = ToolKit.getInstance().makeBarCodePaper(token, barCode, PrintUtils.PaperA4Ultra);
-                        if (null != fileLabel) {
-                            ++amount;
-                            result.put(fileLabel.toJSON());
+                            JSONObject responseJson = new JSONObject();
+                            responseJson.put("result", barCodeInfoArray);
+                            responseJson.put("elapsed", System.currentTimeMillis() - start);
+
+                            cellet.speak(talkContext,
+                                    makeResponse(dialect, packet, CVStateCode.Ok.code, responseJson));
+                            markResponseTime();
                         }
-                        else {
-                            result.put(new JSONObject());
+
+                        @Override
+                        public void onFailed(List<String> fileCodes, CVStateCode stateCode) {
+                            cellet.speak(talkContext,
+                                    makeResponse(dialect, packet, stateCode.code, new JSONObject()));
+                            markResponseTime();
                         }
-                    }
-                    else {
-                        FileLabel fileLabel = ToolKit.getInstance().makeBarCode(token, barCode);
-                        if (null != fileLabel) {
-                            ++amount;
-                            result.put(fileLabel.toJSON());
-                        }
-                        else {
-                            result.put(new JSONObject());
-                        }
-                    }
-                }
+                    });
+
+            if (!success) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, CVStateCode.InvalidData.code, new JSONObject()));
+                markResponseTime();
             }
         } catch (Exception e) {
             Logger.e(this.getClass(), "#run", e);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, CVStateCode.Failure.code, new JSONObject()));
+            markResponseTime();
         }
-
-        JSONObject responseJson = new JSONObject();
-        responseJson.put("list", result);
-        responseJson.put("amount", amount);
-
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, CVStateCode.Ok.code, responseJson));
-        markResponseTime();
     }
 }

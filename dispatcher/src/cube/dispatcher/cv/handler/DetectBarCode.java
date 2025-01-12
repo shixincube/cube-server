@@ -44,10 +44,10 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * 制作条形码。
  */
-public class MakeBarCode extends ContextHandler {
+public class DetectBarCode extends ContextHandler {
 
-    public MakeBarCode() {
-        super("/cv/barcode/make");
+    public DetectBarCode() {
+        super("/cv/barcode/detect");
         setHandler(new Handler());
     }
 
@@ -64,7 +64,7 @@ public class MakeBarCode extends ContextHandler {
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
 
-                Packet packet = new Packet(CVAction.MakeBarCode.name, data);
+                Packet packet = new Packet(CVAction.DetectBarCode.name, data);
                 ActionDialect requestAction = packet.toDialect();
                 requestAction.addParam("token", token);
 
@@ -86,16 +86,18 @@ public class MakeBarCode extends ContextHandler {
                 }
 
                 JSONObject responseData = Packet.extractDataPayload(responsePacket);
-                JSONArray list = responseData.getJSONArray("list");
-                for (int i = 0; i < list.length(); ++i) {
-                    JSONObject json = list.getJSONObject(i);
-                    FileLabels.reviseFileLabel(json, token,
+                JSONArray result = responseData.getJSONArray("result");
+                for (int i = 0; i < result.length(); ++i) {
+                    JSONObject json = result.getJSONObject(i);
+                    JSONObject fileLabelJson = json.getJSONObject("file");
+                    FileLabels.reviseFileLabel(fileLabelJson, token,
                             CVCellet.getPerformer().getExternalHttpEndpoint(),
                             CVCellet.getPerformer().getExternalHttpsEndpoint());
                 }
                 this.respondOk(response, responseData);
                 this.complete();
             } catch (Exception e) {
+                Logger.e(this.getClass(), "", e);
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
             }

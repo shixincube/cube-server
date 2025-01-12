@@ -9,9 +9,9 @@ package cube.dispatcher.util;
 import cell.core.net.Endpoint;
 import org.json.JSONObject;
 
-public class FileLabelHelper {
+public class FileLabels {
 
-    private FileLabelHelper() {
+    private FileLabels() {
     }
 
     public static JSONObject reviseFileLabel(JSONObject json, String token, Endpoint httpEndpoint, Endpoint httpsEndpoint) {
