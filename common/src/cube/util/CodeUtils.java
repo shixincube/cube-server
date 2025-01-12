@@ -327,8 +327,9 @@ public class CodeUtils {
             e.printStackTrace();
         }
 
-        File barFile = new File("service/storage/tmp/barcode.jpg");
-        String result = CodeUtils.scanBarCode(barFile);
-        System.out.println("Bar code data: " + result);
+//        File barFile = new File("service/storage/tmp/barcode.jpg");
+//        File barFile = new File("/Users/ambrose/Documents/Repositories/baize/test/data/painting_for_barcode_2.jpg");
+//        String result = CodeUtils.scanBarCode(barFile);
+//        System.out.println("Bar code data: " + result);
     }
 }

@@ -24,36 +24,41 @@
  * SOFTWARE.
  */
 
-package cube.common.action;
+package cube.service.cv.task;
+
+import cell.core.cellet.Cellet;
+import cell.core.talk.Primitive;
+import cell.core.talk.TalkContext;
+import cell.core.talk.dialect.ActionDialect;
+import cube.benchmark.ResponseTime;
+import cube.common.Packet;
+import cube.common.entity.Contact;
+import cube.common.state.CVStateCode;
+import cube.service.ServiceTask;
+import cube.service.cv.CVCellet;
+import cube.service.cv.CVService;
 
 /**
- * CV 动作。
+ * 配置 CV 服务。
  */
-public enum CVAction {
+public class SetupTask extends ServiceTask {
 
-    Setup("setup"),
+    public SetupTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+        super(cellet, talkContext, primitive, responseTime);
+    }
 
-    Teardown("teardown"),
+    @Override
+    public void run() {
+        ActionDialect dialect = new ActionDialect(this.primitive);
+        Packet packet = new Packet(dialect);
 
-    /**
-     * 生成条形码。
-     */
-    MakeBarCode("makeBarCode"),
+        Contact contact = new Contact(packet.data.getJSONObject("contact"));
 
-    /**
-     * 检测条形码。
-     */
-    DetectBarCode("detectBarCode"),
+        CVService service = ((CVCellet) this.cellet).getService();
+        service.setup(contact, this.talkContext);
 
-    FindContours("findContours"),
-
-    Predict("predict"),
-
-    ;
-
-    public final String name;
-
-    CVAction(String name) {
-        this.name = name;
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(dialect, packet, CVStateCode.Ok.code, contact.toCompactJSON()));
+        markResponseTime();
     }
 }

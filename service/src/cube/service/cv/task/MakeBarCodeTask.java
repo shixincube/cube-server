@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.service.aigc.task;
+package cube.service.cv.task;
 
 import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
@@ -36,11 +36,11 @@ import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.BarCode;
 import cube.common.entity.FileLabel;
-import cube.common.state.AIGCStateCode;
+import cube.common.state.CVStateCode;
 import cube.service.ServiceTask;
-import cube.service.aigc.AIGCCellet;
-import cube.service.aigc.AIGCService;
-import cube.service.aigc.ToolKit;
+import cube.service.cv.CVCellet;
+import cube.service.cv.CVService;
+import cube.service.cv.ToolKit;
 import cube.util.PrintUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -65,23 +65,23 @@ public class MakeBarCodeTask extends ServiceTask {
         String tokenCode = this.getTokenCode(dialect);
         if (null == tokenCode) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.NoToken.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, CVStateCode.NoToken.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        AIGCService service = ((AIGCCellet) this.cellet).getService();
+        CVService service = ((CVCellet) this.cellet).getService();
         AuthToken token = service.getToken(tokenCode);
         if (null == token) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, CVStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
         if (!packet.data.has("list")) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, CVStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
             return;
         }
@@ -143,7 +143,7 @@ public class MakeBarCodeTask extends ServiceTask {
         responseJson.put("amount", amount);
 
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseJson));
+                this.makeResponse(dialect, packet, CVStateCode.Ok.code, responseJson));
         markResponseTime();
     }
 }

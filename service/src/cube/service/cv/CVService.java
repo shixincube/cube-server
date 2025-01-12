@@ -1,37 +1,23 @@
 /*
  * This source file is part of Cube.
  *
- * The MIT License (MIT)
- *
- * Copyright (c) 2020-2024 Ambrose Xu.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Copyright (c) 2020-2025 Ambrose Xu.
  */
 
 package cube.service.cv;
 
-import cube.common.entity.FileLabel;
+import cell.core.talk.TalkContext;
+import cell.util.log.Logger;
+import cube.auth.AuthToken;
+import cube.common.entity.Contact;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
-import org.json.JSONObject;
+import cube.service.auth.AuthService;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 计算机视觉功能服务模块。
@@ -40,17 +26,22 @@ public class CVService extends AbstractModule {
 
     public final static String NAME = "CV";
 
-    public CVService() {
+    private CVCellet cellet;
+
+    private List<CVEndpoint> endpointList;
+
+    public CVService(CVCellet cellet) {
+        this.cellet = cellet;
+        this.endpointList = new ArrayList<>();
     }
 
     @Override
     public void start() {
-
     }
 
     @Override
     public void stop() {
-
+        this.endpointList.clear();
     }
 
     @Override
@@ -60,11 +51,45 @@ public class CVService extends AbstractModule {
 
     @Override
     public void onTick(Module module, Kernel kernel) {
-
     }
 
-    public JSONObject predict(FileLabel fileLabel) {
+    public void setup(Contact contact, TalkContext talkContext) {
+        synchronized (this.endpointList) {
+            for (CVEndpoint endpoint : this.endpointList) {
+                if (endpoint.contact.getId().longValue() == contact.getId().longValue()) {
+                    this.endpointList.remove(endpoint);
+                    break;
+                }
+            }
 
-        return null;
+            this.endpointList.add(new CVEndpoint(contact, talkContext));
+
+            Logger.i(this.getClass(), "#setup - Setup id: " + contact.getId());
+        }
+    }
+
+    public void teardown(Contact contact, TalkContext talkContext) {
+        synchronized (this.endpointList) {
+            for (CVEndpoint endpoint : this.endpointList) {
+                if (endpoint.contact.getId().longValue() == contact.getId().longValue()) {
+                    this.endpointList.remove(endpoint);
+                    break;
+                }
+            }
+
+            Logger.i(this.getClass(), "#teardown - Teardown id: " + contact.getId());
+        }
+    }
+
+    /**
+     * 获取令牌。
+     *
+     * @param tokenCode
+     * @return
+     */
+    public AuthToken getToken(String tokenCode) {
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthToken authToken = authService.getToken(tokenCode);
+        return authToken;
     }
 }

@@ -75,6 +75,7 @@ import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
+import cube.service.cv.ToolKit;
 import cube.service.tokenizer.Tokenizer;
 import cube.storage.StorageType;
 import cube.util.*;
@@ -2251,6 +2252,25 @@ public class AIGCService extends AbstractModule {
         })).start();
 
         return true;
+    }
+
+    /**
+     * 检测并解码图像中的条形码。
+     *
+     * @param domain
+     * @param fileCode
+     * @return
+     */
+    public String detectBarCode(String domain, String fileCode) {
+        FileLabel fileLabel = this.getFile(domain, fileCode);
+        if (null == fileLabel) {
+            Logger.w(this.getClass(), "#detectBarCode - Can NOT find file: " + fileCode);
+            return null;
+        }
+
+
+
+        return null;
     }
 
     public FileLabel getFile(String domain, String fileCode) {

@@ -327,7 +327,7 @@ public class Contact extends AbstractContact {
 
     @Override
     public boolean equals(Object object) {
-        if (null != object && object instanceof Contact) {
+        if (object instanceof Contact) {
             Contact other = (Contact) object;
             if (other.id.longValue() == this.id.longValue() && other.domain.equals(this.domain)) {
                 return true;

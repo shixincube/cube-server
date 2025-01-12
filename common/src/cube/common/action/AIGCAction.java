@@ -456,11 +456,6 @@ public enum AIGCAction {
      */
     SetPaintingReportState("setPaintingReportState"),
 
-    /**
-     * 预测图片元素。
-     */
-    // PredictImage("predictImage"),
-
     ;
 
     public final String name;

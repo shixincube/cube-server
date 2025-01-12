@@ -4,7 +4,7 @@
  * Copyright (c) 2020-2025 Ambrose Xu.
  */
 
-package cube.service.aigc;
+package cube.service.cv;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
@@ -14,6 +14,7 @@ import cube.common.entity.FileLabel;
 import cube.common.notice.GetFile;
 import cube.common.notice.SaveFile;
 import cube.core.AbstractModule;
+import cube.service.aigc.AIGCService;
 import cube.util.CodeUtils;
 import cube.util.FileUtils;
 import cube.util.PrintUtils;
@@ -251,7 +252,9 @@ public class ToolKit {
     private boolean mergeImageToPDF(String source, String output) {
         // 创建命令
         // "-quality", "100"
-        ProcessBuilder pb = new ProcessBuilder("/usr/local/bin/convert", source, output);
+        // Linux: /usr/bin/convert
+        // Mac: /usr/local/bin/convert
+        ProcessBuilder pb = new ProcessBuilder("/usr/bin/convert", source, output);
         pb.directory(new File(this.workingPath));
 
         Process process = null;

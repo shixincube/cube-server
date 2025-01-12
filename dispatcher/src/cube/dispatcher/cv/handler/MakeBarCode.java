@@ -24,15 +24,14 @@
  * SOFTWARE.
  */
 
-package cube.dispatcher.aigc.handler;
+package cube.dispatcher.cv.handler;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.common.Packet;
-import cube.common.action.ToolKitAction;
-import cube.common.state.AIGCStateCode;
-import cube.dispatcher.aigc.AIGCCellet;
-import cube.dispatcher.aigc.Manager;
+import cube.common.action.CVAction;
+import cube.common.state.CVStateCode;
+import cube.dispatcher.cv.CVCellet;
 import cube.dispatcher.util.FileLabelHelper;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -48,11 +47,11 @@ import javax.servlet.http.HttpServletResponse;
 public class MakeBarCode extends ContextHandler {
 
     public MakeBarCode() {
-        super("/tool/barcode/");
+        super("/cv/barcode/make");
         setHandler(new Handler());
     }
 
-    private class Handler extends AIGCHandler {
+    private class Handler extends CVHandler {
 
         public Handler() {
             super();
@@ -61,20 +60,15 @@ public class MakeBarCode extends ContextHandler {
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             String token = this.getLastRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
-                this.complete();
-                return;
-            }
 
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
 
-                Packet packet = new Packet(ToolKitAction.MakeBarCode.name, data);
+                Packet packet = new Packet(CVAction.MakeBarCode.name, data);
                 ActionDialect requestAction = packet.toDialect();
                 requestAction.addParam("token", token);
 
-                ActionDialect responseAction = Manager.getInstance().getPerformer().syncTransmit(AIGCCellet.NAME,
+                ActionDialect responseAction = CVCellet.getPerformer().syncTransmit(CVCellet.NAME,
                         requestAction, 60 * 1000);
                 if (null == responseAction) {
                     Logger.w(this.getClass(), "#doPost - Response is null");
@@ -84,7 +78,7 @@ public class MakeBarCode extends ContextHandler {
                 }
 
                 Packet responsePacket = new Packet(responseAction);
-                if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+                if (Packet.extractCode(responsePacket) != CVStateCode.Ok.code) {
                     Logger.w(this.getClass(), "#doPost - Response state is " + Packet.extractCode(responsePacket));
                     this.respond(response, HttpStatus.BAD_REQUEST_400);
                     this.complete();
@@ -96,8 +90,8 @@ public class MakeBarCode extends ContextHandler {
                 for (int i = 0; i < list.length(); ++i) {
                     JSONObject json = list.getJSONObject(i);
                     FileLabelHelper.reviseFileLabel(json, token,
-                            Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
-                            Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                            CVCellet.getPerformer().getExternalHttpEndpoint(),
+                            CVCellet.getPerformer().getExternalHttpsEndpoint());
                 }
                 this.respondOk(response, responseData);
                 this.complete();
