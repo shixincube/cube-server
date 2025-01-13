@@ -49,4 +49,9 @@ public class BarCodeInfo extends Entity {
         json.put("barcodes", array);
         return json;
     }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
 }

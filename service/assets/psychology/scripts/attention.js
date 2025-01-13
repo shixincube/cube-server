@@ -282,9 +282,20 @@ function calc(attribute, scores, factorSet, reference) {
                 Logger.d('attention.js', "Attention: General attention");
             }
 
-            if (null != factorSet && factorSet.symptomFactor.total > 160 && !rollbackState) {
-                if (attention.level == Attention.GeneralAttention.level) {
-                    attention = Attention.FocusedAttention;
+            if (attribute.age < 20) {
+                if (null != factorSet && factorSet.symptomFactor.total > 190 && !rollbackState) {
+                    if (attention.level == Attention.GeneralAttention.level) {
+                        attention = Attention.FocusedAttention;
+                        Logger.d('attention.js', "Attention (age<20 && factor>190): Focused attention");
+                    }
+                }
+            }
+            else {
+                if (null != factorSet && factorSet.symptomFactor.total > 160 && !rollbackState) {
+                    if (attention.level == Attention.GeneralAttention.level) {
+                        attention = Attention.FocusedAttention;
+                        Logger.d('attention.js', "Attention (age>20 && factor>160): Focused attention");
+                    }
                 }
             }
         }

@@ -103,29 +103,29 @@ public class TestLens {
     }
 
     public static void mergeData() {
-        File[] csvFiles = new File[] {
-                new File("storage/tmp/lens_export_data_p1.csv"),
-                new File("storage/tmp/lens_export_data_p2.csv")
-        };
-        File csvFile = new File("storage/tmp/lens_export_data_all.csv");
+//        File[] csvFiles = new File[] {
+//                new File("storage/tmp/lens_export_data_p1.csv"),
+//                new File("storage/tmp/lens_export_data_p2.csv")
+//        };
+//        File csvFile = new File("storage/tmp/lens_export_data_all.csv");
 
         File[] jsonFiles = new File[] {
                 new File("storage/tmp/lens_export_reports_p1.json"),
                 new File("storage/tmp/lens_export_reports_p2.json")
         };
-        File jsonFile = new File("storage/tmp/lens_export_reports_all.json");
+        File mergedJsonFile = new File("storage/tmp/lens_export_reports_all.json");
 
         LensDataToolkit lensDataToolkit = new LensDataToolkit();
-        lensDataToolkit.mergeScaleCSV(csvFiles, csvFile);
-        lensDataToolkit.mergeReportJSON(jsonFiles, jsonFile);
+//        lensDataToolkit.mergeScaleCSV(csvFiles, csvFile);
+        lensDataToolkit.mergeReportJSON(jsonFiles, mergedJsonFile);
     }
 
     public static void main(String[] args) {
-        downloadDataset();
+//        downloadDataset();
 
 //        mergeData();
 
-//        remakeEvaluationDataset();
+        remakeEvaluationDataset();
 
 //        makeEvaluationDataset();
 

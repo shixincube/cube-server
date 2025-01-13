@@ -132,6 +132,14 @@ public class CVService extends AbstractModule {
         return new FileLabel(fileLabelJson);
     }
 
+    /**
+     * 检测并解码条形码。
+     *
+     * @param token
+     * @param fileCodes
+     * @param listener
+     * @return
+     */
     public boolean detectBarCode(AuthToken token, List<String> fileCodes, DetectBarCodeListener listener) {
         final CVEndpoint endpoint = this.selectEndpoint();
         if (null == endpoint) {
@@ -139,6 +147,7 @@ public class CVService extends AbstractModule {
             return false;
         }
 
+        final int limit = 10;
         final List<FileLabel> fileLabels = new ArrayList<>();
         for (String fileCode : fileCodes) {
             FileLabel fileLabel = this.getFile(token.getDomain(), fileCode);
@@ -147,6 +156,10 @@ public class CVService extends AbstractModule {
                         fileLabel.getFileType() == FileType.PNG ||
                         fileLabel.getFileType() == FileType.BMP) {
                     fileLabels.add(fileLabel);
+                    if (fileLabels.size() >= limit) {
+                        // 超限
+                        break;
+                    }
                 }
             }
         }
