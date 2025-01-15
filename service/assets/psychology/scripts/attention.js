@@ -142,7 +142,7 @@ function calc(attribute, scores, factorSet, reference) {
         Logger.d('attention.js', "(!depression && !anxiety)");
     }
 
-    Logger.d('attention.js', "score: " + nScore + " - " +
+    Logger.d('attention.js', "Calc score: " + nScore + " - " +
         "depression:" + bDepression + " | " +
         "senseOfSecurity:" + bSenseOfSecurity + " | " +
         "stress:" + bStress + " | " +
@@ -169,7 +169,7 @@ function calc(attribute, scores, factorSet, reference) {
 
     // 通过 FactorSet 修正
     if (null != factorSet) {
-        Logger.d('attention.js', "Attention: Fix with the factor set data");
+        Logger.d('attention.js', "Attention: Fix with the factor set data, total: " + factorSet.symptomFactor.total);
         if (factorSet.symptomFactor.total > 160) {
             Logger.d('attention.js', "Attention: FactorSet symptom total: " + factorSet.symptomFactor.total);
             nScore += 1;
@@ -239,6 +239,8 @@ function calc(attribute, scores, factorSet, reference) {
     var fixReference = reference;
     var additionScale = "";
 
+    Logger.d('attention.js', 'Score: ' + nScore);
+
     if (nScore > 0) {
         if (nScore >= 5) {
             attention = Attention.SpecialAttention;
@@ -283,7 +285,7 @@ function calc(attribute, scores, factorSet, reference) {
             }
 
             if (attribute.age < 20) {
-                if (null != factorSet && factorSet.symptomFactor.total > 190 && !rollbackState) {
+                if (null != factorSet && factorSet.symptomFactor.total > 180 && !rollbackState) {
                     if (attention.level == Attention.GeneralAttention.level) {
                         attention = Attention.FocusedAttention;
                         Logger.d('attention.js', "Attention (age<20 && factor>190): Focused attention");

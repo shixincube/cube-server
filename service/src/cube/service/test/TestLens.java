@@ -35,6 +35,7 @@ public class TestLens {
         ReportDataset dataset = new ReportDataset();
         File reportDataFile = new File("storage/tmp/lens_export_reports.json");
         File scaleDataFile = new File("storage/tmp/lens_export_data.csv");
+
         File datasetFile = new File("storage/tmp/lens_dataset_1116.csv");
 
         try {
@@ -62,12 +63,12 @@ public class TestLens {
 
     public static void remakeEvaluationDataset() {
         ReportDataset dataset = new ReportDataset();
-        File reportDataFile = new File("storage/tmp/lens_export_reports_all.json");
-        File scaleDataFile = new File("storage/tmp/lens_export_data_all.csv");
+        File reportDataFile = new File("storage/tmp/lens_export_reports_2025.json");
+        File scaleDataFile = new File("storage/tmp/lens_export_data_2025.csv");
 
-        File datasetSCL = new File("storage/tmp/lens_dataset_scl.csv");
-        File datasetPANAS = new File("storage/tmp/lens_dataset_panas.csv");
-        File datasetBFP = new File("storage/tmp/lens_dataset_bfp.csv");
+        File datasetSCL = new File("storage/tmp/lens_dataset_scl_2025.csv");
+        File datasetPANAS = new File("storage/tmp/lens_dataset_panas_2025.csv");
+        File datasetBFP = new File("storage/tmp/lens_dataset_bfp_2025.csv");
 
         try {
             dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_SCL,
@@ -83,12 +84,12 @@ public class TestLens {
 
     public static void makeEvaluationDataset() {
         ReportDataset dataset = new ReportDataset();
-        File reportDataFile = new File("storage/tmp/lens_export_reports_updated.json");
-        File scaleDataFile = new File("storage/tmp/lens_export_data_all.csv");
+        File reportDataFile = new File("storage/tmp/lens_export_reports_2025_updated.json");
+        File scaleDataFile = new File("storage/tmp/lens_export_data_2025.csv");
 
-        File datasetSCL = new File("storage/tmp/lens_dataset_scl_1224.csv");
-        File datasetPANAS = new File("storage/tmp/lens_dataset_panas_1224.csv");
-        File datasetBFP = new File("storage/tmp/lens_dataset_bfp_1224.csv");
+        File datasetSCL = new File("storage/tmp/lens_dataset_scl_2025.csv");
+        File datasetPANAS = new File("storage/tmp/lens_dataset_panas_2025.csv");
+        File datasetBFP = new File("storage/tmp/lens_dataset_bfp_2025.csv");
 
         try {
             dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_SCL,
@@ -102,21 +103,44 @@ public class TestLens {
         }
     }
 
+    public static void splitTrainTestDataset() {
+        ReportDataset dataset = new ReportDataset();
+
+        File sourceSCL = new File("storage/tmp/lens_dataset_scl_2025.csv");
+        File trainSCL = new File("storage/tmp/lens_dataset_scl_2025_train.csv");
+        File testSCL = new File("storage/tmp/lens_dataset_scl_2025_test.csv");
+        dataset.splitTrainTestDataset(sourceSCL, trainSCL, testSCL, 0.1f);
+
+        File sourcePANAS = new File("storage/tmp/lens_dataset_panas_2025.csv");
+        File trainPANAS = new File("storage/tmp/lens_dataset_panas_2025_train.csv");
+        File testPANAS = new File("storage/tmp/lens_dataset_panas_2025_test.csv");
+        dataset.splitTrainTestDataset(sourcePANAS, trainPANAS, testPANAS, 0.1f);
+
+        File sourceBFP = new File("storage/tmp/lens_dataset_bfp_2025.csv");
+        File trainBFP = new File("storage/tmp/lens_dataset_bfp_2025_train.csv");
+        File testBFP = new File("storage/tmp/lens_dataset_bfp_2025_test.csv");
+        dataset.splitTrainTestDataset(sourceBFP, trainBFP, testBFP, 0.1f);
+    }
+
     public static void mergeData() {
-//        File[] csvFiles = new File[] {
-//                new File("storage/tmp/lens_export_data_p1.csv"),
-//                new File("storage/tmp/lens_export_data_p2.csv")
-//        };
-//        File csvFile = new File("storage/tmp/lens_export_data_all.csv");
+        File[] csvFiles = new File[] {
+                new File("storage/tmp/lens_export_data_p1.csv"),
+                new File("storage/tmp/lens_export_data_p2.csv"),
+                new File("storage/tmp/lens_export_data_p3.csv"),
+                new File("storage/tmp/lens_export_data_p4.csv")
+        };
+        File mergedCSVvFile = new File("storage/tmp/lens_export_data_2025.csv");
 
         File[] jsonFiles = new File[] {
                 new File("storage/tmp/lens_export_reports_p1.json"),
-                new File("storage/tmp/lens_export_reports_p2.json")
+                new File("storage/tmp/lens_export_reports_p2.json"),
+                new File("storage/tmp/lens_export_reports_p3.json"),
+                new File("storage/tmp/lens_export_reports_p4.json")
         };
-        File mergedJsonFile = new File("storage/tmp/lens_export_reports_all.json");
+        File mergedJsonFile = new File("storage/tmp/lens_export_reports_2025.json");
 
         LensDataToolkit lensDataToolkit = new LensDataToolkit();
-//        lensDataToolkit.mergeScaleCSV(csvFiles, csvFile);
+        lensDataToolkit.mergeScaleCSV(csvFiles, mergedCSVvFile);
         lensDataToolkit.mergeReportJSON(jsonFiles, mergedJsonFile);
     }
 
@@ -125,23 +149,23 @@ public class TestLens {
 
 //        mergeData();
 
-        remakeEvaluationDataset();
+//        remakeEvaluationDataset();
 
 //        makeEvaluationDataset();
+
+        splitTrainTestDataset();
+
+//        makePaintingDataset();
+
+//        LensDataToolkit toolkit = new LensDataToolkit();
+//        File file = new File("storage/tmp/lens_export_reports_2025.json");
+//        File newFile = new File("storage/tmp/lens_export_reports_2025_updated.json");
+//        toolkit.updateReportPainting(file, newFile);
 
 //        testSaveScore();
 
 //        testSaveVision();
 
 //        testSaveVisionScore();
-
-//        makePaintingDataset();
-
-//        testMakeNormalizationFile();
-
-//        LensDataToolkit toolkit = new LensDataToolkit();
-//        File file = new File("storage/tmp/lens_export_reports_all.json");
-//        File newFile = new File("storage/tmp/lens_export_reports_updated.json");
-//        toolkit.updateReportPainting(file, newFile);
     }
 }

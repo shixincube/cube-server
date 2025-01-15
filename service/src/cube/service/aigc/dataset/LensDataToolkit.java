@@ -27,8 +27,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 public class LensDataToolkit {
 
@@ -65,6 +63,10 @@ public class LensDataToolkit {
 
             PaintingReport newReport = this.generatePaintingReport(this.localHost, this.localToken,
                     paintingReport.getAttribute(), fileLabel.getFileCode());
+            if (null == newReport || null == newReport.getEvaluationReport()) {
+                Logger.e(this.getClass(), "#updateReportPainting - New report is null: " + paintingReport.sn);
+                continue;
+            }
 
             paintingReport.setEvaluationReport(newReport.getEvaluationReport());
             if (null != newReport.painting) {

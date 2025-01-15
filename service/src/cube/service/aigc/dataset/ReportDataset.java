@@ -1,5 +1,6 @@
 package cube.service.aigc.dataset;
 
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.BigFiveFactor;
@@ -27,6 +28,77 @@ public class ReportDataset {
     public final static int OUTPUT_BFP = 3;
 
     public ReportDataset() {
+    }
+
+    public void splitTrainTestDataset(File sourceDataset, File destTrainDataset, File destTestDataset, float testRatio) {
+        List<String> lines = new ArrayList<>();
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(sourceDataset));
+            String line = null;
+            while (null != (line = reader.readLine())) {
+                lines.add(line);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        String header = lines.remove(0);
+        int numTest = Math.round(lines.size() * testRatio);
+        // 生成测试集索引
+        List<Integer> testIndies = new ArrayList<>();
+        while (testIndies.size() < numTest) {
+            int index = Utils.randomInt(0, lines.size() - 1);
+            if (!testIndies.contains(index)) {
+                testIndies.add(index);
+            }
+        }
+
+        FileOutputStream trainFile = null;
+        FileOutputStream testFile = null;
+        try {
+            trainFile = new FileOutputStream(destTrainDataset);
+            testFile = new FileOutputStream(destTestDataset);
+
+            trainFile.write(header.getBytes(StandardCharsets.UTF_8));
+            trainFile.write("\n".getBytes(StandardCharsets.UTF_8));
+
+            testFile.write(header.getBytes(StandardCharsets.UTF_8));
+            testFile.write("\n".getBytes(StandardCharsets.UTF_8));
+
+            for (int i = 0; i < lines.size(); ++i) {
+                if (testIndies.contains(i)) {
+                    testFile.write((lines.get(i) + "\n").getBytes(StandardCharsets.UTF_8));
+                }
+
+                trainFile.write((lines.get(i) + "\n").getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (null != trainFile) {
+                try {
+                    trainFile.close();
+                } catch (IOException e) {
+                }
+            }
+            if (null != testFile) {
+                try {
+                    testFile.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        Logger.i(this.getClass(), "Total: " + lines.size() + ", train: " + lines.size()
+                + ", test: " + numTest);
     }
 
     public void makeEvaluationDatasetFromScaleData(int outputType, File reportJsonFile, File scaleCSVFile,
