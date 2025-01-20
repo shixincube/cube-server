@@ -28,7 +28,7 @@ package cube.aigc;
 
 import cell.util.Utils;
 import cube.common.JSONable;
-import cube.common.entity.GenerativeRecord;
+import cube.common.entity.GeneratingRecord;
 import cube.common.entity.KnowledgeQAResult;
 import cube.common.state.AIGCStateCode;
 import cube.util.EmojiFilter;
@@ -156,7 +156,7 @@ public class AppEvent implements JSONable {
     }
 
 
-    public static JSONObject createChatSuccessfulData(GenerativeRecord record) {
+    public static JSONObject createChatSuccessfulData(GeneratingRecord record) {
         JSONObject json = record.toJSON();
         json.put("code", AIGCStateCode.Ok.code);
         return json;

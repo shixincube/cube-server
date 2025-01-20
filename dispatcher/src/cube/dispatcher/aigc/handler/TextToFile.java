@@ -29,19 +29,19 @@ package cube.dispatcher.aigc.handler;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 通过指定模块进行任务推算。
- * @deprecated
+ * 文本生成文件。
  */
-public class InferByModule extends ContextHandler {
+public class TextToFile extends ContextHandler {
 
-    public InferByModule() {
-        super("/aigc/module/infer/");
+    public TextToFile() {
+        super("/aigc/text2file/");
         setHandler(new Handler());
     }
 
@@ -49,6 +49,42 @@ public class InferByModule extends ContextHandler {
 
         public Handler() {
             super();
+        }
+
+        @Override
+        public void doGet(HttpServletRequest request, HttpServletResponse response) {
+            String token = this.getLastRequestPath(request);
+            if (!Manager.getInstance().checkToken(token)) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.complete();
+                return;
+            }
+
+            String snString = request.getParameter("sn");
+            if (null == snString) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
+            long sn = 0;
+            try {
+                sn = Long.parseLong(snString);
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+
+            Manager.TextToFileFuture future = Manager.getInstance().getTextToFileFuture(sn);
+            if (null == future) {
+                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.complete();
+                return;
+            }
+
+            this.respondOk(response, future.toJSON());
+            this.complete();
         }
 
         @Override
@@ -61,20 +97,21 @@ public class InferByModule extends ContextHandler {
             }
 
             try {
-                JSONObject data = this.readBodyAsJSONObject(request);
-                String module = data.getString("module");
-                JSONObject param = data.getJSONObject("param");
-                JSONObject responseData = null;//Manager.getInstance().inferByModule(token, module, param);
-                if (null != responseData) {
-                    this.respondOk(response, responseData);
+                JSONObject json = this.readBodyAsJSONObject(request);
+                String text = json.getString("text");
+                JSONArray fileCodeList = json.getJSONArray("files");
+                Manager.TextToFileFuture future = Manager.getInstance().textToFile(token, text, fileCodeList);
+                if (null == future) {
+                    // 故障
+                    this.respond(response, HttpStatus.BAD_REQUEST_400);
                     this.complete();
+                    return;
                 }
-                else {
-                    this.respond(response, HttpStatus.NOT_FOUND_404);
-                    this.complete();
-                }
+
+                this.respondOk(response, future.toJSON());
+                this.complete();
             } catch (Exception e) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
             }
         }

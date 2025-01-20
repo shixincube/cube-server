@@ -52,7 +52,6 @@ import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -1417,7 +1416,7 @@ public class KnowledgeBase {
      */
     public boolean performKnowledgeQA(String channelCode, String unitName, String query,
                                       int searchTopK, int searchFetchK,
-                                      List<String> knowledgeCategories, List<GenerativeRecord> recordList,
+                                      List<String> knowledgeCategories, List<GeneratingRecord> recordList,
                                       KnowledgeQAListener listener) {
         query = query.replaceAll("\n", "");
 
@@ -1457,7 +1456,7 @@ public class KnowledgeBase {
                     channel.setLastUnitMetaSn(sn);
 
                     KnowledgeQAResult result = new KnowledgeQAResult(queryForResult, "");
-                    GenerativeRecord record = new GenerativeRecord(sn, unitName, queryForResult, EMPTY_BASE_ANSWER,
+                    GeneratingRecord record = new GeneratingRecord(sn, unitName, queryForResult, EMPTY_BASE_ANSWER,
                             System.currentTimeMillis(), new ComplexContext(ComplexContext.Type.Simplex));
                     result.record = record;
                     listener.onCompleted(channel, result);
@@ -1502,7 +1501,7 @@ public class KnowledgeBase {
         String prompt = this.optimizePrompt(unitName, promptMetadata, query, knowledgeCategories, attachmentContents);
 
         // 查询知识概念
-        List<GenerativeRecord> paraphrases = this.makeParaphrases(knowledgeCategories,
+        List<GeneratingRecord> paraphrases = this.makeParaphrases(knowledgeCategories,
                 ModelConfig.getPromptLengthLimit(unitName) - prompt.length(), unitName);
 
         final KnowledgeQAResult result = new KnowledgeQAResult(query, prompt);
@@ -1532,10 +1531,10 @@ public class KnowledgeBase {
                     prompt +
                     "\n----------------------------------------");
             final List<KnowledgeSource> sources = promptMetadata.mergeSources();
-            this.service.generateText(channel, unit, query, prompt, new GenerativeOption(), null, 0,
+            this.service.generateText(channel, unit, query, prompt, new GeneratingOption(), null, 0,
                     paraphrases, null, false, true, new GenerateTextListener() {
                 @Override
-                public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
+                public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                     // 结果记录
                     result.record = record;
 
@@ -1653,7 +1652,7 @@ public class KnowledgeBase {
                 // 将所有内容推送给模型推理
                 String prompt = Consts.formatExtractContent(content.toString(), query);
                 String result = this.service.syncGenerateText(ModelConfig.CHAT_UNIT, prompt,
-                        new GenerativeOption(), null, null);
+                        new GeneratingOption(), null, null);
                 if (null == result) {
                     Logger.w(this.getClass(), "#extractDocumentContent - "
                             + baseInfo.name + " - Unit error, no answer: " + this.baseInfo.name);
@@ -1707,7 +1706,7 @@ public class KnowledgeBase {
         }
     }
 
-    private List<GenerativeRecord> makeParaphrases(List<String> knowledgeCategories, int lengthLimit,
+    private List<GeneratingRecord> makeParaphrases(List<String> knowledgeCategories, int lengthLimit,
                                                    String unitName) {
         if (null == knowledgeCategories || lengthLimit < 1) {
             return null;
@@ -1722,14 +1721,14 @@ public class KnowledgeBase {
             paraphraseList.addAll(list);
         }
 
-        List<GenerativeRecord> result = new ArrayList<>();
+        List<GeneratingRecord> result = new ArrayList<>();
         int total = 0;
         for (KnowledgeParaphrase paraphrase : paraphraseList) {
             total += paraphrase.getWord().length() + paraphrase.getParaphrase().length();
             if (total >= lengthLimit) {
                 break;
             }
-            GenerativeRecord record = new GenerativeRecord(unitName,
+            GeneratingRecord record = new GeneratingRecord(unitName,
                     paraphrase.getWord(), paraphrase.getParaphrase());
             result.add(record);
         }
@@ -1743,11 +1742,11 @@ public class KnowledgeBase {
      * @param records
      * @return 返回仅当次需要处理的文本。
      */
-    private List<String> processQueryAttachments(List<GenerativeRecord> records) {
+    private List<String> processQueryAttachments(List<GeneratingRecord> records) {
         List<String> contents = new ArrayList<>();
         List<FileLabel> fileLabels = new ArrayList<>();
 
-        for (GenerativeRecord record : records) {
+        for (GeneratingRecord record : records) {
             if (record.hasQueryAddition()) {
                 for (String text : record.queryAdditions) {
                     String[] buf = text.split("\n");
@@ -1843,7 +1842,7 @@ public class KnowledgeBase {
                 String contentPrompt = Consts.formatQuestion(contentBuf.toString(), query);
                 // 对内容进行推理
                 String result = this.service.syncGenerateText(authToken, ModelConfig.CHAT_UNIT, contentPrompt,
-                        new GenerativeOption());
+                        new GeneratingOption());
                 if (null != result) {
                     // 添加结果
                     lineList.addFirst(result);
@@ -1930,7 +1929,7 @@ public class KnowledgeBase {
                     String articlePrompt = Consts.formatQuestion(buf.toString(), Consts.KNOWLEDGE_SECTION_PROMPT);
                     // 对文章内容进行推理
                     String articleResult = this.service.syncGenerateText(authToken, ModelConfig.CHAT_UNIT, articlePrompt,
-                            new GenerativeOption());
+                            new GeneratingOption());
                     if (null == articleResult) {
                         articleResult = article.summarization;
                     }
@@ -2087,7 +2086,7 @@ public class KnowledgeBase {
         this.activateProgress.defineTotalProgress(contentList.size() + 1);
 
         AtomicInteger count = new AtomicInteger(0);
-        List<GenerativeRecord> pipelineRecordList = new ArrayList<>();
+        List<GeneratingRecord> pipelineRecordList = new ArrayList<>();
 
         (new Thread(new Runnable() {
             @Override
@@ -2108,7 +2107,7 @@ public class KnowledgeBase {
                 if (!pipelineRecordList.isEmpty()) {
                     final int limit = 1500;
                     StringBuilder buf = new StringBuilder();
-                    for (GenerativeRecord record : pipelineRecordList) {
+                    for (GeneratingRecord record : pipelineRecordList) {
                         String[] paragraphs = record.answer.split("\n");
                         // 跳过第一行
                         for (int i = 1; i < paragraphs.length; ++i) {
@@ -2136,11 +2135,11 @@ public class KnowledgeBase {
 
                     String prompt = Consts.formatQuestion(buf.toString(), matchingSchema.getComprehensiveQuery());
 
-                    service.generateText(channel, unit, matchingSchema.getComprehensiveQuery(), prompt, new GenerativeOption(),
+                    service.generateText(channel, unit, matchingSchema.getComprehensiveQuery(), prompt, new GeneratingOption(),
                             null, 0, null, null, false, false,
                             new GenerateTextListener() {
                         @Override
-                        public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
+                        public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                             activateProgress.setCode(AIGCStateCode.Ok.code);
 
                             KnowledgeQAResult result = new KnowledgeQAResult(matchingSchema.getComprehensiveQuery(), prompt);
@@ -2190,10 +2189,10 @@ public class KnowledgeBase {
             String prompt = Consts.formatQuestion(text, matchingSchema.getSectionQuery());
 
             this.service.generateText(channel, unit, matchingSchema.getSectionQuery(),
-                prompt, new GenerativeOption(), null, 0, null, null,
+                prompt, new GeneratingOption(), null, 0, null, null,
                     false, false, new GenerateTextListener() {
                     @Override
-                    public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
+                    public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                         synchronized (pipelineRecordList) {
                             pipelineRecordList.add(record);
                         }

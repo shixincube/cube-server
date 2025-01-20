@@ -34,7 +34,7 @@ import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.GenerativeOption;
+import cube.common.entity.GeneratingOption;
 import cube.service.aigc.AIGCService;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -294,7 +294,7 @@ public class Workflow {
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
 
-            answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+            answer = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
                     null, null);
         }
         if (null == answer) {
@@ -303,7 +303,7 @@ public class Workflow {
         }
         // 对数据集数据进行推理
         prompt = String.format(PERSONALITY_FORMAT, answer.replaceAll("你", "他"));
-        String fixAnswer = this.service.syncGenerateText(ModelConfig.INFINITE_UNIT, prompt, new GenerativeOption(),
+        String fixAnswer = this.service.syncGenerateText(ModelConfig.INFINITE_UNIT, prompt, new GeneratingOption(),
                 null, null);
         if (null != fixAnswer) {
             answer = fixAnswer;
@@ -321,7 +321,7 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+            answer = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
                     null, null);
         }
         if (null == answer) {
@@ -342,7 +342,7 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+            answer = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
                     null, null);
         }
         if (null == answer) {
@@ -363,7 +363,7 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+            answer = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
                     null, null);
         }
         if (null == answer) {
@@ -384,7 +384,7 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+            answer = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
                     null, null);
         }
         if (null == answer) {
@@ -405,7 +405,7 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+            answer = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
                     null, null);
         }
         if (null == answer) {
@@ -439,7 +439,7 @@ public class Workflow {
             if (null == report) {
                 Logger.w(this.getClass(), "#inferScore - No report for \"" + prompt + "\"");
 
-                report = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                report = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
                         null, null);
             }
 
@@ -457,7 +457,7 @@ public class Workflow {
             if (null == suggestion) {
                 Logger.w(this.getClass(), "#inferScore - No suggestion for \"" + prompt + "\"");
 
-                suggestion = this.service.syncGenerateText(this.unitName, prompt, new GenerativeOption(),
+                suggestion = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
                         null, null);
             }
 
@@ -485,7 +485,7 @@ public class Workflow {
         }
         prompt.append("\n");
         prompt.append("根据上述已知信息，简洁和专业的来回答用户的问题。问题是：总结一下这个人的心理症状。");
-        String summary = this.service.syncGenerateText(this.unitName, prompt.toString(), new GenerativeOption(),
+        String summary = this.service.syncGenerateText(this.unitName, prompt.toString(), new GeneratingOption(),
                 null, null);
 
         if (null == summary || summary.contains("我遇到一些问题")) {
@@ -495,7 +495,7 @@ public class Workflow {
                 e.printStackTrace();
             }
 
-            summary = this.service.syncGenerateText(this.unitName, prompt.toString(), new GenerativeOption(),
+            summary = this.service.syncGenerateText(this.unitName, prompt.toString(), new GeneratingOption(),
                     null, null);
         }
 

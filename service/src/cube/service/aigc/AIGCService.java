@@ -38,7 +38,6 @@ import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.Theme;
 import cube.aigc.psychology.composition.Scale;
-import cube.aigc.opinion.OpinionTaskName;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.Packet;
@@ -48,6 +47,7 @@ import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
 import cube.common.notice.GetFile;
 import cube.common.notice.LoadFile;
+import cube.common.notice.SaveFile;
 import cube.common.state.AIGCStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -61,15 +61,13 @@ import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.*;
-import cube.service.aigc.module.ModuleManager;
-import cube.service.aigc.module.PublicOpinion;
 import cube.service.aigc.module.Stage;
 import cube.service.aigc.module.StageListener;
 import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.ResourceAnswer;
-import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.PaintingReportListener;
+import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.ScaleReportListener;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
@@ -84,7 +82,9 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -105,12 +105,12 @@ public class AIGCService extends AbstractModule {
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, AIGCUnit> unitMap;
+    private final Map<String, AIGCUnit> unitMap;
 
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, Queue<GenerateTextUnitMeta>> generateQueueMap;
+    private final Map<String, Queue<GenerateTextUnitMeta>> generateQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
@@ -120,32 +120,37 @@ public class AIGCService extends AbstractModule {
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, Queue<UnitMeta>> textToImageQueueMap;
+    private final Map<String, Queue<UnitMeta>> textToFileQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, Queue<UnitMeta>> summarizationQueueMap;
+    private final Map<String, Queue<UnitMeta>> textToImageQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, Queue<UnitMeta>> extractKeywordsQueueMap;
+    private final Map<String, Queue<UnitMeta>> summarizationQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, Queue<UnitMeta>> semanticSearchQueueMap;
+    private final Map<String, Queue<UnitMeta>> extractKeywordsQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, Queue<UnitMeta>> retrieveReRankQueueMap;
+    private final Map<String, Queue<UnitMeta>> semanticSearchQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private Map<String, Queue<UnitMeta>> asrQueueMap;
+    private final Map<String, Queue<UnitMeta>> retrieveReRankQueueMap;
+
+    /**
+     * Key 是 AIGC 的 Query Key
+     */
+    private final Map<String, Queue<UnitMeta>> asrQueueMap;
 
     /**
      * 最大频道数量。
@@ -180,6 +185,11 @@ public class AIGCService extends AbstractModule {
     private boolean enabledSearch = false;
 
     /**
+     * 工作路径。
+     */
+    private File workingPath = new File("storage/tmp/");
+
+    /**
      * 是否访问，仅用于本地测试
      */
     private boolean useAgent = false;
@@ -197,6 +207,7 @@ public class AIGCService extends AbstractModule {
         this.channelMap = new ConcurrentHashMap<>();
         this.generateQueueMap = new ConcurrentHashMap<>();
         this.conversationQueueMap = new ConcurrentHashMap<>();
+        this.textToFileQueueMap = new ConcurrentHashMap<>();
         this.textToImageQueueMap = new ConcurrentHashMap<>();
         this.summarizationQueueMap = new ConcurrentHashMap<>();
         this.extractKeywordsQueueMap = new ConcurrentHashMap<>();
@@ -218,6 +229,11 @@ public class AIGCService extends AbstractModule {
         (new Thread(new Runnable() {
             @Override
             public void run() {
+                if (!workingPath.exists()) {
+                    workingPath.mkdirs();
+                }
+                Logger.i(AIGCService.class, "AI Service - Working path: " + workingPath.getAbsolutePath());
+
                 // 启动心理学场景
                 PsychologyScene.getInstance().start(AIGCService.this);
 
@@ -986,8 +1002,10 @@ public class AIGCService extends AbstractModule {
      * @param moduleName
      * @param params
      * @return
+     *
+     * @deprecated
      */
-    public String inferByModule(String token, String moduleName, JSONObject params) {
+    /*public String inferByModule(String token, String moduleName, JSONObject params) {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(token);
         if (null == authToken) {
@@ -1058,10 +1076,10 @@ public class AIGCService extends AbstractModule {
                 StringBuilder result = new StringBuilder();
 
                 this.generateText(channel, unit, maq.articleQuery.query, maq.articleQuery.query,
-                        new GenerativeOption(), null, 0, null,
+                        new GeneratingOption(), null, 0, null,
                         null, false, false, new GenerateTextListener() {
                     @Override
-                    public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
+                    public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                         maq.articleQuery.answer = record.answer.replaceAll(",", "，");
                         synchronized (result) {
                             result.append(maq.articleQuery.output());
@@ -1090,27 +1108,27 @@ public class AIGCService extends AbstractModule {
         }
 
         return null;
-    }
+    }*/
 
     /**
      * 生成文本内容。
      *
-     * @param channelCode
-     * @param content
-     * @param unitName
-     * @param option
-     * @param histories
-     * @param maxHistories
-     * @param attachments
-     * @param categories
-     * @param recordable
-     * @param searchable
-     * @param networking
-     * @param listener
+     * @param channelCode 频道代码。
+     * @param content 内容。
+     * @param unitName 单元名。
+     * @param option 生成参数设置。
+     * @param histories 历史记录别表。
+     * @param maxHistories 最大历史记录数量。
+     * @param attachments 附件信息。
+     * @param categories 分类信息。
+     * @param recordable 是否记录到库。
+     * @param searchable 是否进行搜索。
+     * @param networking 是否进行联网操作。
+     * @param listener 监听器。
      * @return
      */
-    public boolean generateText(String channelCode, String content, String unitName, GenerativeOption option,
-                                List<GenerativeRecord> histories, int maxHistories, List<GenerativeRecord> attachments,
+    public boolean generateText(String channelCode, String content, String unitName, GeneratingOption option,
+                                List<GeneratingRecord> histories, int maxHistories, List<GeneratingRecord> attachments,
                                 List<String> categories, boolean recordable, boolean searchable, boolean networking,
                                 GenerateTextListener listener) {
         if (!this.isStarted()) {
@@ -1205,8 +1223,8 @@ public class AIGCService extends AbstractModule {
      * @param participantContact
      * @return
      */
-    public String syncGenerateText(String unitName, String prompt, GenerativeOption option,
-                                   List<GenerativeRecord> history, Contact participantContact) {
+    public String syncGenerateText(String unitName, String prompt, GeneratingOption option,
+                                   List<GeneratingRecord> history, Contact participantContact) {
         if (this.useAgent) {
             Logger.d(this.getClass(), "#syncGenerateText - Agent - \"" + unitName + "\" - history:"
                     + ((null != history) ? history.size() : 0));
@@ -1226,7 +1244,7 @@ public class AIGCService extends AbstractModule {
 
         JSONArray historyArray = new JSONArray();
         if (null != history) {
-            for (GenerativeRecord record : history) {
+            for (GeneratingRecord record : history) {
                 historyArray.put(record.toJSON());
             }
         }
@@ -1241,7 +1259,7 @@ public class AIGCService extends AbstractModule {
         data.put("content", prompt);
         data.put("participant", participant.toCompactJSON());
         data.put("history", historyArray);
-        data.put("option", (null == option) ? (new GenerativeOption()).toJSON() : option.toJSON());
+        data.put("option", (null == option) ? (new GeneratingOption()).toJSON() : option.toJSON());
 
         Packet request = new Packet(AIGCAction.Chat.name, data);
         ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(),
@@ -1283,7 +1301,7 @@ public class AIGCService extends AbstractModule {
      * @param option
      * @return
      */
-    public String syncGenerateText(AuthToken authToken, String unitName, String prompt, GenerativeOption option) {
+    public String syncGenerateText(AuthToken authToken, String unitName, String prompt, GeneratingOption option) {
         AIGCUnit unit = this.selectUnitByName(unitName);
         if (null == unit) {
             return null;
@@ -1314,8 +1332,8 @@ public class AIGCService extends AbstractModule {
      * @param recordable
      * @param listener
      */
-    public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt, GenerativeOption option,
-                             List<GenerativeRecord> histories, int maxHistories, List<GenerativeRecord> attachments,
+    public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt, GeneratingOption option,
+                             List<GeneratingRecord> histories, int maxHistories, List<GeneratingRecord> attachments,
                              List<String> categories, boolean searchable, boolean recordable,
                              GenerateTextListener listener) {
         if (this.useAgent) {
@@ -1445,7 +1463,7 @@ public class AIGCService extends AbstractModule {
             return null;
         }
 
-        GenerativeRecord record = channel.getRecord(sn);
+        GeneratingRecord record = channel.getRecord(sn);
         if (null == record) {
             ConversationUnitMeta unitMeta = null;
 
@@ -1703,6 +1721,55 @@ public class AIGCService extends AbstractModule {
                 @Override
                 public void run() {
                     processQueue(meta.unit.getQueryKey(), textToImageQueueMap);
+                }
+            });
+        }
+
+        return true;
+    }
+
+    /**
+     * 文本生成文件。
+     *
+     * @param channel 频道。
+     * @param text 文本内容。
+     * @param attachment 附件。
+     * @param listener 监听器。
+     * @return
+     */
+    public boolean generateFile(AIGCChannel channel, String text, GeneratingRecord attachment, TextToFileListener listener) {
+        if (!this.isStarted()) {
+            return false;
+        }
+
+        AIGCUnit unit = this.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
+        if (null == unit) {
+            unit = this.selectUnitByName(ModelConfig.BAIZE_UNIT);
+            if (null == unit) {
+                Logger.e(this.getClass(), "#generateFile - No unit, token: " + channel.getAuthToken().getCode());
+                return false;
+            }
+        }
+
+        UnitMeta meta = new TextToFileUnitMeta(unit, channel, text, attachment.queryFileLabels, listener);
+
+        synchronized (this.textToFileQueueMap) {
+            Queue<UnitMeta> queue = this.textToFileQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.textToFileQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    processQueue(meta.unit.getQueryKey(), textToFileQueueMap);
                 }
             });
         }
@@ -2254,25 +2321,6 @@ public class AIGCService extends AbstractModule {
         return true;
     }
 
-    /**
-     * 检测并解码图像中的条形码。
-     *
-     * @param domain
-     * @param fileCode
-     * @return
-     */
-    public String detectBarCode(String domain, String fileCode) {
-        FileLabel fileLabel = this.getFile(domain, fileCode);
-        if (null == fileLabel) {
-            Logger.w(this.getClass(), "#detectBarCode - Can NOT find file: " + fileCode);
-            return null;
-        }
-
-
-
-        return null;
-    }
-
     public FileLabel getFile(String domain, String fileCode) {
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
         if (null == fileStorage) {
@@ -2288,6 +2336,37 @@ public class AIGCService extends AbstractModule {
         }
 
         return new FileLabel(fileLabelJson);
+    }
+
+    public FileLabel saveAndDeleteFile(AuthToken authToken, String fileCode, File file, String filename) {
+        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        if (null == fileStorage) {
+            Logger.e(this.getClass(), "#saveFile - File storage service is not ready");
+            return null;
+        }
+
+        // 创建文件标签
+        FileLabel fileLabel = FileUtils.makeFileLabel(authToken.getDomain(), fileCode, authToken.getContactId(), file);
+        if (null != filename) {
+            fileLabel.setFileName(filename);
+        }
+
+        try {
+            JSONObject fileJson = fileStorage.notify(new SaveFile(file.getAbsolutePath(), fileLabel));
+            return new FileLabel(fileJson);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#saveFile - File storage service save failed", e);
+            return null;
+        } finally {
+            // 删除临时文件
+            if (file.exists()) {
+                try {
+                    file.delete();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     /**
@@ -2758,15 +2837,15 @@ public class AIGCService extends AbstractModule {
 
         protected String originalQuery;
 
-        protected GenerativeOption option;
+        protected GeneratingOption option;
 
         protected List<String> categories;
 
-        protected List<GenerativeRecord> histories;
+        protected List<GeneratingRecord> histories;
 
         protected int maxHistories;
 
-        protected List<GenerativeRecord> attachments;
+        protected List<GeneratingRecord> attachments;
 
         protected GenerateTextListener listener;
 
@@ -2778,10 +2857,10 @@ public class AIGCService extends AbstractModule {
 
         protected boolean networkingEnabled = false;
 
-        public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, GenerativeOption option,
+        public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, GeneratingOption option,
                                     List<String> categories,
-                                    List<GenerativeRecord> histories,
-                                    List<GenerativeRecord> attachments,
+                                    List<GeneratingRecord> histories,
+                                    List<GeneratingRecord> attachments,
                                     GenerateTextListener listener) {
             super(unit);
             this.sn = Utils.generateSerialNumber();
@@ -2842,7 +2921,7 @@ public class AIGCService extends AbstractModule {
             // 设置是否进行联网分析
             complexContext.setNetworking(this.networkingEnabled);
 
-            GenerativeRecord result = null;
+            GeneratingRecord result = null;
 
             final StringBuilder realPrompt = new StringBuilder(this.content);
 
@@ -2867,7 +2946,7 @@ public class AIGCService extends AbstractModule {
 
                 boolean useQueryAttachment = false;
                 if (null != this.attachments) {
-                    for (GenerativeRecord record : this.attachments) {
+                    for (GeneratingRecord record : this.attachments) {
                         if (record.hasQueryFile() || record.hasQueryAddition()) {
                             useQueryAttachment = true;
                             break;
@@ -2880,7 +2959,7 @@ public class AIGCService extends AbstractModule {
                     StringBuilder buf = new StringBuilder();
                     int bufLen = 0;
 
-                    for (GenerativeRecord record : this.attachments) {
+                    for (GeneratingRecord record : this.attachments) {
                         if (record.hasQueryAddition()) {
                             for (String text : record.queryAdditions) {
                                 String[] qaBuf = text.split("\n");
@@ -2960,14 +3039,14 @@ public class AIGCService extends AbstractModule {
 
                 // 处理多轮历史记录
                 int lengthCount = data.getString("content").length();
-                List<GenerativeRecord> candidateRecords = new ArrayList<>();
+                List<GeneratingRecord> candidateRecords = new ArrayList<>();
                 if (null == this.histories) {
                     int validNumHistories = this.maxHistories;
                     if (validNumHistories > 0) {
-                        List<GenerativeRecord> records = this.channel.getLastHistory(validNumHistories);
+                        List<GeneratingRecord> records = this.channel.getLastHistory(validNumHistories);
                         // 正序列表转为倒序以便计算上下文长度
                         Collections.reverse(records);
-                        for (GenerativeRecord record : records) {
+                        for (GeneratingRecord record : records) {
                             // 判断长度
                             lengthCount += record.totalWords();
                             if (lengthCount > lengthLimit) {
@@ -2983,7 +3062,7 @@ public class AIGCService extends AbstractModule {
                 }
                 else {
                     for (int i = 0; i < this.histories.size(); ++i) {
-                        GenerativeRecord record = this.histories.get(i);
+                        GeneratingRecord record = this.histories.get(i);
                         if (record.hasQueryFile() || record.hasQueryAddition()) {
                             // 为了兼容旧版本，排除掉附件类型
                             continue;
@@ -3013,7 +3092,7 @@ public class AIGCService extends AbstractModule {
 
                 // 写入多轮对话历史数组
                 JSONArray history = new JSONArray();
-                for (GenerativeRecord record : candidateRecords) {
+                for (GeneratingRecord record : candidateRecords) {
                     history.put(record.toJSON());
                 }
                 data.put("history", history);
@@ -3238,7 +3317,7 @@ public class AIGCService extends AbstractModule {
                     // 提取页面与提问匹配的信息
                     String prompt = Consts.formatExtractContent(buf.toString(), query);
                     String answer = syncGenerateText(this.channel.getAuthToken(), ModelConfig.CHAT_UNIT, prompt,
-                            new GenerativeOption());
+                            new GeneratingOption());
                     if (null != answer) {
                         // 记录内容
                         pageContent.append(answer);
@@ -3269,7 +3348,7 @@ public class AIGCService extends AbstractModule {
 
             // 对提取出来的内容进行推理
             String prompt = Consts.formatQuestion(pageContent.toString(), query);
-            String result = syncGenerateText(this.channel.getAuthToken(), unitName, prompt, new GenerativeOption());
+            String result = syncGenerateText(this.channel.getAuthToken(), unitName, prompt, new GeneratingOption());
             if (null == result) {
                 Logger.w(this.getClass(), "#performSearchPageQA - Infers page content failed, cid:"
                         + this.channel.getAuthToken().getContactId());
@@ -3286,8 +3365,8 @@ public class AIGCService extends AbstractModule {
             context.fixNetworkingResult(pages, result);
         }
 
-        protected void fillRecords(List<GenerativeRecord> recordList, List<String> categories, int lengthLimit,
-                                 String unitName) {
+        protected void fillRecords(List<GeneratingRecord> recordList, List<String> categories, int lengthLimit,
+                                   String unitName) {
             int total = 0;
             for (String category : categories) {
                 List<KnowledgeParaphrase> list = storage.readKnowledgeParaphrases(category);
@@ -3297,7 +3376,7 @@ public class AIGCService extends AbstractModule {
                         break;
                     }
 
-                    GenerativeRecord record = new GenerativeRecord(unitName,
+                    GeneratingRecord record = new GeneratingRecord(unitName,
                             paraphrase.getWord(), paraphrase.getParaphrase());
                     recordList.add(record);
                 }
@@ -3318,7 +3397,7 @@ public class AIGCService extends AbstractModule {
 
         protected GenerateTextListener generateListener = new GenerateTextListener() {
             @Override
-            public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
+            public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                 AIGCConversationResponse response = new AIGCConversationResponse(record);
                 conversationListener.onConversation(channel, response);
             }
@@ -3564,7 +3643,7 @@ public class AIGCService extends AbstractModule {
                 this.fileLabel.resetURLsToken(this.channel.getAuthToken().getCode());
 
                 // 记录
-                GenerativeRecord record = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
+                GeneratingRecord record = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
                         this.text, this.fileLabel);
                 this.listener.onCompleted(record);
 
@@ -3595,6 +3674,185 @@ public class AIGCService extends AbstractModule {
 
             // 重置状态
             this.channel.setProcessing(false);
+        }
+    }
+
+    private class TextToFileUnitMeta extends UnitMeta {
+
+        private long sn;
+
+        private AIGCChannel channel;
+
+        private String text;
+
+        private List<FileLabel> sources;
+
+        private TextToFileListener listener;
+
+        private int promptLimit = 800 * 1024;
+
+        public TextToFileUnitMeta(AIGCUnit unit, AIGCChannel channel, String text, List<FileLabel> sources, TextToFileListener listener) {
+            super(unit);
+            this.sn = Utils.generateSerialNumber();
+            this.channel = channel;
+            this.text = text;
+            this.sources = new ArrayList<>(sources);
+            this.listener = listener;
+        }
+
+        @Override
+        public void process() {
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onProcessing(channel);
+                }
+            });
+
+            List<FileLabel> queryFiles = new ArrayList<>();
+            StringBuilder answerBuf = new StringBuilder("已处理文件");
+            long processedSize = 0;
+            long generatingSize = 0;
+
+            FileType fileType = FileType.UNKNOWN;
+            JSONArray files = new JSONArray();
+            for (FileLabel fileLabel : this.sources) {
+                fileType = fileLabel.getFileType();
+                if (fileType == FileType.XLSX || fileType == FileType.XLS) {
+                    files.put(fileLabel.toJSON());
+                    queryFiles.add(fileLabel);
+
+                    answerBuf.append("“**").append(fileLabel.getFileName()).append("**”，");
+                    processedSize += fileLabel.getFileSize();
+                }
+            }
+            answerBuf.delete(answerBuf.length() - 1, answerBuf.length());
+            answerBuf.append("。");
+
+            ActionDialect dialect = null;
+            if (fileType == FileType.XLSX || fileType == FileType.XLS) {
+                JSONObject data = new JSONObject();
+                data.put("files", files);
+                Packet request = new Packet(FileProcessorAction.ReadExcel.name, data);
+                dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 60 * 1000, this.sn);
+                if (null == dialect) {
+                    Logger.w(this.getClass(), "File processor service error");
+                    // 回调错误
+                    this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
+                    return;
+                }
+            }
+            else {
+                Logger.w(this.getClass(), "Unsupported file type： " + fileType.getPreferredExtension());
+                // 回调错误
+                this.listener.onFailed(this.channel, AIGCStateCode.IllegalOperation);
+                return;
+            }
+
+            Packet response = new Packet(dialect);
+            JSONObject payload = Packet.extractDataPayload(response);
+            JSONArray fileResult = payload.getJSONArray("result");
+            if (fileResult.length() == 0) {
+                Logger.w(this.getClass(), "File error");
+                // 回调错误
+                this.listener.onFailed(this.channel, AIGCStateCode.FileError);
+                return;
+            }
+
+            String notice = null;
+            GeneratingRecord result = new GeneratingRecord(ModelConfig.BAIZE_UNIT, this.text, answerBuf.toString());
+            result.queryFileLabels = queryFiles;
+
+            for (int i = 0; i < fileResult.length(); ++i) {
+                JSONObject fileData = fileResult.getJSONObject(i);
+                String fileCode = fileData.getString("fileCode");
+                JSONArray sheets = fileData.getJSONArray("sheets");
+                for (int n = 0; n < sheets.length(); ++n) {
+                    JSONObject sheetJson = sheets.getJSONObject(n);
+                    String name = sheetJson.getString("name");
+                    String content = sheetJson.getString("content");
+
+                    if (content.length() > this.promptLimit) {
+                        Logger.w(this.getClass(), "#process - Content length exceeded the limit: " +
+                                content.length() + "/" + this.promptLimit);
+                        continue;
+                    }
+
+                    StringBuilder prompt = new StringBuilder();
+                    prompt.append("已知以下表格数据：\n\n");
+                    prompt.append("表格名称：").append(name).append("\n\n");
+                    prompt.append("表格数据内容：\n\n").append(content);
+                    prompt.append("\n\n");
+                    prompt.append(String.format(Consts.PROMPT_SUFFIX_FORMAT, this.text));
+
+                    String answer = syncGenerateText(ModelConfig.INFINITE_UNIT, prompt.toString(),
+                            null, null, null);
+                    if (null == answer) {
+                        Logger.w(this.getClass(), "#process - Generating failed: " + fileCode);
+                        continue;
+                    }
+
+                    String tmpNotice = this.extractNotice(answer);
+                    String csv = TextUtils.extractMarkdownTable(answer);
+
+                    if (null != tmpNotice) {
+                        notice = tmpNotice;
+                    }
+
+                    if (null != csv) {
+                        generatingSize += csv.length();
+
+                        // 文件码
+                        String tmpFileCode = FileUtils.makeFileCode(fileCode, channel.getAuthToken().getDomain(), name);
+                        Path path = Paths.get(workingPath.getAbsolutePath(), tmpFileCode + ".csv");
+                        try {
+                            // 写入文件
+                            Files.write(path, csv.getBytes(StandardCharsets.UTF_8));
+                        } catch (IOException e) {
+                            Logger.e(this.getClass(), "#process - File write failed: " + path.toString(), e);
+                        }
+
+                        FileLabel fileLabel = saveAndDeleteFile(this.channel.getAuthToken(),
+                                tmpFileCode, path.toFile(), name + ".csv");
+                        if (null != fileLabel) {
+                            result.addAnswerFileLabel(fileLabel);
+                        }
+                        else {
+                            Logger.e(this.getClass(), "#process - Save file failed: " + path.toString());
+                        }
+                    }
+                    else {
+                        Logger.e(this.getClass(), "#process - Extract markdown table failed: " + fileCode);
+                    }
+                }
+            }
+
+            if (null != result.answerFileLabels) {
+                answerBuf.append("处理的数据大小合计 ").append(FileUtils.scaleFileSize(processedSize)).append(" 。");
+                answerBuf.append("生成").append(result.answerFileLabels.size()).append("个文件，合计 ");
+                answerBuf.append(FileUtils.scaleFileSize(generatingSize)).append(" 。\n");
+            }
+
+            if (null != notice) {
+                answerBuf.append("\n").append(notice);
+            }
+
+            result.answer = answerBuf.toString();
+            listener.onCompleted(result);
+        }
+
+        private String extractNotice(String text) {
+            String[] lines = text.split("\n");
+            for (String line : lines) {
+                if (line.length() < 2) {
+                    continue;
+                }
+
+                if (line.contains("注意")) {
+                    return line;
+                }
+            }
+            return null;
         }
     }
 
@@ -3740,15 +3998,6 @@ public class AIGCService extends AbstractModule {
                     fileStorage.notify(deleteFile);
                 }
             }
-        }
-    }
-
-
-    protected class MutableArticleQuery {
-
-        public PublicOpinion.ArticleQuery articleQuery;
-
-        public MutableArticleQuery() {
         }
     }
 }

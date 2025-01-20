@@ -762,7 +762,7 @@ public class PsychologyScene {
         return result.toString();
     }
 
-    public GenerativeRecord buildHistory(List<ReportRelation> relations, String currentQuery) {
+    public GeneratingRecord buildHistory(List<ReportRelation> relations, String currentQuery) {
         ReportRelation relation = relations.get(0);
 
         Report report = this.getPaintingReport(relation.reportSn);
@@ -950,7 +950,7 @@ public class PsychologyScene {
                 description = workflow.infer(prompt.description);
             }
             if (null == description) {
-                description = this.aigcService.syncGenerateText(this.unitName, prompt.description, new GenerativeOption(),
+                description = this.aigcService.syncGenerateText(this.unitName, prompt.description, new GeneratingOption(),
                         null, null);
             }
 
@@ -970,7 +970,7 @@ public class PsychologyScene {
                     suggestion = workflow.infer(prompt.suggestion);
                 }
                 if (null == suggestion) {
-                    suggestion = this.aigcService.syncGenerateText(this.unitName, prompt.suggestion, new GenerativeOption(),
+                    suggestion = this.aigcService.syncGenerateText(this.unitName, prompt.suggestion, new GeneratingOption(),
                             null, null);
                 }
 

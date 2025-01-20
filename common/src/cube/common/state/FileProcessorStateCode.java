@@ -67,6 +67,11 @@ public enum FileProcessorStateCode {
     NoFile(14),
 
     /**
+     * 文件数据异常。
+     */
+    FileDataException(15),
+
+    /**
      * 与 CV 服务器无连接。
      */
     NoCVConnection(21),

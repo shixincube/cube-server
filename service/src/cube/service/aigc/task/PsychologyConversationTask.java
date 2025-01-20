@@ -35,7 +35,7 @@ import cube.aigc.psychology.composition.ReportRelation;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.GenerativeRecord;
+import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -105,7 +105,7 @@ public class PsychologyConversationTask extends ServiceTask {
         if (null != reportRelationList) {
             stateCode = worker.work(token, channelCode, reportRelationList, query, new GenerateTextListener() {
                 @Override
-                public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
+                public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                     if (null != record) {
                         cellet.speak(talkContext,
                                 makeResponse(dialect, packet, AIGCStateCode.Ok.code,
@@ -129,7 +129,7 @@ public class PsychologyConversationTask extends ServiceTask {
         else if (null != customRelation) {
             stateCode = worker.work(token, channelCode, customRelation, query, new GenerateTextListener() {
                 @Override
-                public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
+                public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                     if (null != record) {
                         cellet.speak(talkContext,
                                 makeResponse(dialect, packet, AIGCStateCode.Ok.code,

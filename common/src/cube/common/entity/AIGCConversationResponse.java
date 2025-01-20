@@ -105,7 +105,7 @@ public class AIGCConversationResponse implements JSONable {
         this.processing = json.getBoolean("processing");
     }
 
-    public AIGCConversationResponse(GenerativeRecord record) {
+    public AIGCConversationResponse(GeneratingRecord record) {
         this.sn = record.sn;
         this.unit = record.unit;
         this.query = record.query;
@@ -134,8 +134,8 @@ public class AIGCConversationResponse implements JSONable {
 //        }
 //    }
 
-    public GenerativeRecord toRecord() {
-        GenerativeRecord record = new GenerativeRecord(this.sn,
+    public GeneratingRecord toRecord() {
+        GeneratingRecord record = new GeneratingRecord(this.sn,
                 this.unit, this.query, this.answer, this.timestamp, this.context);
         return record;
     }

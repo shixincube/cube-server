@@ -167,6 +167,11 @@ public enum AIGCAction {
     TextToImage("textToImage"),
 
     /**
+     * 文本生成文件。
+     */
+    TextToFile("textToFile"),
+
+    /**
      * 搜索命令。
      */
     SearchCommand("searchCommand"),
@@ -364,7 +369,7 @@ public enum AIGCAction {
     /**
      * 通过功能模块进行推理。
      */
-    InferByModule("inferByModule"),
+//    InferByModule("inferByModule"),
 
     /**
      * 预推理。

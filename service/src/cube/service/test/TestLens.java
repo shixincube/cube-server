@@ -87,9 +87,9 @@ public class TestLens {
         File reportDataFile = new File("storage/tmp/lens_export_reports_2025_updated.json");
         File scaleDataFile = new File("storage/tmp/lens_export_data_2025.csv");
 
-        File datasetSCL = new File("storage/tmp/lens_dataset_scl_2025.csv");
-        File datasetPANAS = new File("storage/tmp/lens_dataset_panas_2025.csv");
-        File datasetBFP = new File("storage/tmp/lens_dataset_bfp_2025.csv");
+        File datasetSCL = new File("storage/tmp/lens_dataset_scl_v2.csv");
+        File datasetPANAS = new File("storage/tmp/lens_dataset_panas_v2.csv");
+        File datasetBFP = new File("storage/tmp/lens_dataset_bfp_v2.csv");
 
         try {
             dataset.makeEvaluationDatasetFromScaleData(ReportDataset.OUTPUT_SCL,
@@ -106,19 +106,19 @@ public class TestLens {
     public static void splitTrainTestDataset() {
         ReportDataset dataset = new ReportDataset();
 
-        File sourceSCL = new File("storage/tmp/lens_dataset_scl_2025.csv");
-        File trainSCL = new File("storage/tmp/lens_dataset_scl_2025_train.csv");
-        File testSCL = new File("storage/tmp/lens_dataset_scl_2025_test.csv");
+        File sourceSCL = new File("storage/tmp/lens_dataset_scl_v2.csv");
+        File trainSCL = new File("storage/tmp/lens_dataset_scl_v2_train.csv");
+        File testSCL = new File("storage/tmp/lens_dataset_scl_v2_test.csv");
         dataset.splitTrainTestDataset(sourceSCL, trainSCL, testSCL, 0.1f);
 
-        File sourcePANAS = new File("storage/tmp/lens_dataset_panas_2025.csv");
-        File trainPANAS = new File("storage/tmp/lens_dataset_panas_2025_train.csv");
-        File testPANAS = new File("storage/tmp/lens_dataset_panas_2025_test.csv");
+        File sourcePANAS = new File("storage/tmp/lens_dataset_panas_v2.csv");
+        File trainPANAS = new File("storage/tmp/lens_dataset_panas_v2_train.csv");
+        File testPANAS = new File("storage/tmp/lens_dataset_panas_v2_test.csv");
         dataset.splitTrainTestDataset(sourcePANAS, trainPANAS, testPANAS, 0.1f);
 
-        File sourceBFP = new File("storage/tmp/lens_dataset_bfp_2025.csv");
-        File trainBFP = new File("storage/tmp/lens_dataset_bfp_2025_train.csv");
-        File testBFP = new File("storage/tmp/lens_dataset_bfp_2025_test.csv");
+        File sourceBFP = new File("storage/tmp/lens_dataset_bfp_v2.csv");
+        File trainBFP = new File("storage/tmp/lens_dataset_bfp_v2_train.csv");
+        File testBFP = new File("storage/tmp/lens_dataset_bfp_v2_test.csv");
         dataset.splitTrainTestDataset(sourceBFP, trainBFP, testBFP, 0.1f);
     }
 

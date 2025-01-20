@@ -30,7 +30,7 @@ import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.common.entity.AIGCConversationResponse;
-import cube.common.entity.GenerativeOption;
+import cube.common.entity.GeneratingOption;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -100,7 +100,7 @@ public class Conversation extends ContextHandler {
             String pattern = Consts.PATTERN_CHAT;
             String content = null;
             String unit = ModelConfig.BAIZE_NEXT_UNIT;
-            GenerativeOption option = new GenerativeOption();
+            GeneratingOption option = new GeneratingOption();
             int histories = 0;
             JSONArray records = null;
             boolean recordable = false;
@@ -119,7 +119,7 @@ public class Conversation extends ContextHandler {
                 }
 
                 if (json.has("option")) {
-                    option = new GenerativeOption(json.getJSONObject("option"));
+                    option = new GeneratingOption(json.getJSONObject("option"));
                 }
 
                 if (json.has("histories")) {

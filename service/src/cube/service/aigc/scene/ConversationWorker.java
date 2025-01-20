@@ -32,7 +32,7 @@ import cube.aigc.psychology.composition.CustomRelation;
 import cube.aigc.psychology.composition.ReportRelation;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCUnit;
-import cube.common.entity.GenerativeOption;
+import cube.common.entity.GeneratingOption;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
@@ -101,7 +101,7 @@ public class ConversationWorker {
         }*/
 
         // 使用指定模型生成结果
-        this.service.generateText(channel, unit, query, prompt, new GenerativeOption(), null, 0,
+        this.service.generateText(channel, unit, query, prompt, new GeneratingOption(), null, 0,
                 null, null, false, true, listener);
 
         return AIGCStateCode.Ok;
@@ -132,7 +132,7 @@ public class ConversationWorker {
             return AIGCStateCode.NoData;
         }
 
-        this.service.generateText(channel, unit, query, prompt, new GenerativeOption(), null, 0,
+        this.service.generateText(channel, unit, query, prompt, new GeneratingOption(), null, 0,
                 null, null, false, true, listener);
 
         return AIGCStateCode.Ok;

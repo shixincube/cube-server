@@ -463,6 +463,8 @@ public class FileProcessorService extends AbstractModule {
         return cvResult;
     }
 
+
+
     /**
      * 创建图像处理器。
      *
@@ -1233,16 +1235,14 @@ public class FileProcessorService extends AbstractModule {
                     // 返回上下文描述
                     return context.toJSON();
                 }
-            }
-            else if (FileProcessorAction.Thumb.name.equals(action)) {
+            } else if (FileProcessorAction.Thumb.name.equals(action)) {
                 // 创建图片缩略图
                 String domain = data.getString(MakeThumb.DOMAIN);
                 String fileCode = data.getString(MakeThumb.FILE_CODE);
                 int quality = data.getInt(MakeThumb.QUALITY);
                 FileThumbnail thumbnail = this.makeThumbnail(domain, fileCode, quality);
                 return thumbnail;
-            }
-            else if (FileProcessorAction.OfficeConvertTo.name.equals(action)) {
+            } else if (FileProcessorAction.OfficeConvertTo.name.equals(action)) {
                 String domain = data.getString(OfficeConvertTo.DOMAIN);
                 String fileCode = data.getString(OfficeConvertTo.FILE_CODE);
                 String format = data.getJSONObject(OfficeConvertTo.PARAMETER).getString(OfficeConvertTo.FORMAT);
@@ -1256,16 +1256,14 @@ public class FileProcessorService extends AbstractModule {
                     // 返回上下文描述
                     return context.toJSON();
                 }
-            }
-            else if (FileProcessorAction.Video.name.equals(action)) {
+            } else if (FileProcessorAction.Video.name.equals(action)) {
                 String domain = data.getString("domain");
                 // 创建视频处理器
                 VideoProcessor processor = null;
                 if (data.has("fileCode")) {
                     processor = createVideoProcessor(domain,
                             data.getString("fileCode"), data.getJSONObject("parameter"));
-                }
-                else if (data.has("fileURL")) {
+                } else if (data.has("fileURL")) {
                     processor = createVideoProcessorByURL(domain,
                             data.getString("fileURL"), data.getJSONObject("parameter"));
                 }
@@ -1275,15 +1273,13 @@ public class FileProcessorService extends AbstractModule {
                         SnapshotContext context = new SnapshotContext();
                         processor.go(context);
                         return context.toJSON();
-                    }
-                    else if (processor instanceof ExtractAudioProcessor) {
+                    } else if (processor instanceof ExtractAudioProcessor) {
                         ExtractAudioContext context = new ExtractAudioContext();
                         processor.go(context);
                         return context.toJSON();
                     }
                 }
-            }
-            else if (FileProcessorAction.Audio.name.equals(action)) {
+            } else if (FileProcessorAction.Audio.name.equals(action)) {
                 String domain = data.getString("domain");
                 // 创建音频处理器
                 AudioProcessor processor = null;
@@ -1297,15 +1293,13 @@ public class FileProcessorService extends AbstractModule {
                         AudioCropContext context = new AudioCropContext();
                         processor.go(context);
                         return context.toJSON();
-                    }
-                    else if (processor instanceof AudioSamplingProcessor) {
+                    } else if (processor instanceof AudioSamplingProcessor) {
                         AudioSamplingContext context = new AudioSamplingContext();
                         processor.go(context);
                         return context.toJSON();
                     }
                 }
-            }
-            else if (FileProcessorAction.OCR.name.equals(action)) {
+            } else if (FileProcessorAction.OCR.name.equals(action)) {
                 String domain = data.getString("domain");
                 String fileCode = data.getString("fileCode");
                 // 创建 OCR 处理器
@@ -1315,8 +1309,7 @@ public class FileProcessorService extends AbstractModule {
                     processor.go(context);
                     return context.toJSON();
                 }
-            }
-            else if (FileProcessorAction.SubmitWorkflow.name.equals(action)) {
+            } else if (FileProcessorAction.SubmitWorkflow.name.equals(action)) {
                 JSONObject workflowJson = data.getJSONObject("workflow");
                 // 解析工作流
                 OperationWorkflow workflow = new OperationWorkflow(workflowJson);
@@ -1326,8 +1319,7 @@ public class FileProcessorService extends AbstractModule {
                 WorkflowContext context = new WorkflowContext(action);
                 context.setSuccessful(result);
                 return context.toJSON();
-            }
-            else if (FileProcessorAction.CancelWorkflow.name.equals(action)) {
+            } else if (FileProcessorAction.CancelWorkflow.name.equals(action)) {
                 // TODO
             }
         }

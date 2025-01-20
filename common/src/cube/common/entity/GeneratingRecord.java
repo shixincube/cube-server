@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * AIGC 内容生成记录。
  */
-public class GenerativeRecord implements JSONable {
+public class GeneratingRecord implements JSONable {
 
     public final long sn;
 
@@ -65,7 +65,7 @@ public class GenerativeRecord implements JSONable {
      *
      * @param queryAdditions
      */
-    public GenerativeRecord(String[] queryAdditions) {
+    public GeneratingRecord(String[] queryAdditions) {
         this.sn = Utils.generateSerialNumber();
         this.queryAdditions = queryAdditions;
         this.timestamp = System.currentTimeMillis();
@@ -76,13 +76,13 @@ public class GenerativeRecord implements JSONable {
      *
      * @param queryFileLabels
      */
-    public GenerativeRecord(List<FileLabel> queryFileLabels) {
+    public GeneratingRecord(List<FileLabel> queryFileLabels) {
         this.sn = Utils.generateSerialNumber();
         this.queryFileLabels = queryFileLabels;
         this.timestamp = System.currentTimeMillis();
     }
 
-    public GenerativeRecord(String unit, String query, String answer) {
+    public GeneratingRecord(String unit, String query, String answer) {
         this.sn = Utils.generateSerialNumber();
         this.unit = unit;
         this.query = query;
@@ -90,7 +90,7 @@ public class GenerativeRecord implements JSONable {
         this.timestamp = System.currentTimeMillis();
     }
 
-    public GenerativeRecord(long sn, String unit, String query, String answer, long timestamp, ComplexContext context) {
+    public GeneratingRecord(long sn, String unit, String query, String answer, long timestamp, ComplexContext context) {
         this.sn = sn;
         this.unit = unit;
         this.query = query;
@@ -99,7 +99,7 @@ public class GenerativeRecord implements JSONable {
         this.context = context;
     }
 
-    public GenerativeRecord(long sn, String unit, String query, FileLabel answerFileLabel, long timestamp) {
+    public GeneratingRecord(long sn, String unit, String query, FileLabel answerFileLabel, long timestamp) {
         this.sn = sn;
         this.unit = unit;
         this.query = query;
@@ -108,7 +108,7 @@ public class GenerativeRecord implements JSONable {
         this.timestamp = timestamp;
     }
 
-    public GenerativeRecord(JSONObject json) {
+    public GeneratingRecord(JSONObject json) {
         if (json.has("sn")) {
             this.sn = json.getLong("sn");
         }
@@ -178,6 +178,13 @@ public class GenerativeRecord implements JSONable {
         }
 
         return this.query.length() + ((null != this.answer) ? this.answer.length() : 0);
+    }
+
+    public void addAnswerFileLabel(FileLabel fileLabel) {
+        if (null == this.answerFileLabels) {
+            this.answerFileLabels = new ArrayList<>();
+        }
+        this.answerFileLabels.add(fileLabel);
     }
 
     public JSONArray outputAnswerFileLabelArray() {

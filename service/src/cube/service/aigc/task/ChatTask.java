@@ -37,8 +37,8 @@ import cube.aigc.ModelConfig;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.GenerativeOption;
-import cube.common.entity.GenerativeRecord;
+import cube.common.entity.GeneratingOption;
+import cube.common.entity.GeneratingRecord;
 import cube.common.entity.KnowledgeQAResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
@@ -82,8 +82,8 @@ public class ChatTask extends ServiceTask {
         String content = packet.data.getString("content").trim();
         String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : Consts.PATTERN_CHAT;
         String unit = packet.data.has("unit") ? packet.data.getString("unit") : ModelConfig.CHAT_UNIT;
-        GenerativeOption option = packet.data.has("option") ?
-                new GenerativeOption(packet.data.getJSONObject("option")) : new GenerativeOption();
+        GeneratingOption option = packet.data.has("option") ?
+                new GeneratingOption(packet.data.getJSONObject("option")) : new GeneratingOption();
         int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 10;
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
         boolean recordable = packet.data.has("recordable") && packet.data.getBoolean("recordable");
@@ -97,12 +97,12 @@ public class ChatTask extends ServiceTask {
             categories.add(categoryArray.getString(i));
         }
 
-        List<GenerativeRecord> recordList = null;
+        List<GeneratingRecord> recordList = null;
         if (null != records) {
             recordList = new ArrayList<>();
             try {
                 for (int i = 0; i < records.length(); ++i) {
-                    GenerativeRecord record = new GenerativeRecord(records.getJSONObject(i));
+                    GeneratingRecord record = new GeneratingRecord(records.getJSONObject(i));
                     recordList.add(record);
                 }
             } catch (Exception e) {
@@ -136,7 +136,7 @@ public class ChatTask extends ServiceTask {
                     }
 
                     @Override
-                    public void onCompleted(GenerativeRecord record) {
+                    public void onCompleted(GeneratingRecord record) {
                         cellet.speak(talkContext,
                                 makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
                         markResponseTime();
@@ -146,7 +146,7 @@ public class ChatTask extends ServiceTask {
                     public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                         if (stateCode == AIGCStateCode.Interrupted) {
                             // 被中断
-                            GenerativeRecord record = new GenerativeRecord(unit,
+                            GeneratingRecord record = new GeneratingRecord(unit,
                                     content, Consts.ANSWER_INTERRUPTED);
                             cellet.speak(talkContext,
                                     makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
@@ -165,7 +165,7 @@ public class ChatTask extends ServiceTask {
                 success = service.generateText(code, content, unit, option, recordList, histories,
                         recordList, categories, recordable, searchable, networking, new GenerateTextListener() {
                     @Override
-                    public void onGenerated(AIGCChannel channel, GenerativeRecord record) {
+                    public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                         cellet.speak(talkContext,
                                 makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));
                         markResponseTime();
@@ -184,7 +184,7 @@ public class ChatTask extends ServiceTask {
                     public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                         if (stateCode == AIGCStateCode.Interrupted) {
                             // 被中断
-                            GenerativeRecord record = new GenerativeRecord(unit,
+                            GeneratingRecord record = new GeneratingRecord(unit,
                                     content, Consts.ANSWER_INTERRUPTED);
                             cellet.speak(talkContext,
                                     makeResponse(dialect, packet, AIGCStateCode.Ok.code, record.toJSON()));

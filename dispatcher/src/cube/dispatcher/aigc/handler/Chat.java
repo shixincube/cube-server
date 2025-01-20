@@ -30,8 +30,8 @@ import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.GenerativeOption;
-import cube.common.entity.GenerativeRecord;
+import cube.common.entity.GeneratingOption;
+import cube.common.entity.GeneratingRecord;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -72,7 +72,7 @@ public class Chat extends ContextHandler {
             String content = null;
             String pattern = Consts.PATTERN_CHAT;
             String unit = ModelConfig.CHAT_UNIT;
-            GenerativeOption option = new GenerativeOption();
+            GeneratingOption option = new GeneratingOption();
             int histories = 0;
             JSONArray records = null;
             boolean recordable = true;
@@ -91,7 +91,7 @@ public class Chat extends ContextHandler {
                 }
 
                 if (json.has("option")) {
-                    option = new GenerativeOption(json.getJSONObject("option"));
+                    option = new GeneratingOption(json.getJSONObject("option"));
                 }
 
                 if (json.has("histories")) {
@@ -155,7 +155,7 @@ public class Chat extends ContextHandler {
                 // 已结束
                 if (null != future.record) {
                     // Record 转结果
-                    GenerativeRecord record = future.record;
+                    GeneratingRecord record = future.record;
                     JSONObject responseData = new JSONObject();
                     responseData.put("sn", record.sn);
                     responseData.put("participant", AI_NAME);

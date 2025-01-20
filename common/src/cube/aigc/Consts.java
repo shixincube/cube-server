@@ -75,6 +75,8 @@ public final class Consts {
 
     private final static int URL_ELLIPSIS_LIMIT = 56;
 
+    public final static String PROMPT_SUFFIX_FORMAT = "根据上述已知信息回答用户的问题。如果无法从中得到答案，请说“没有提供足够的相关信息”，不允许在答案中添加编造成分。问题是：%s";
+
     private final static String ASK_FORMAT = "已知信息：\n%s\n\n" +
             "根据上述已知信息，简洁和专业的来回答用户的问题。如果无法从中得到答案，请说“没有提供足够的相关信息”，不允许在答案中添加编造成分。问题是：%s";
 

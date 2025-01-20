@@ -27,7 +27,7 @@
 package cube.service.aigc.listener;
 
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.GenerativeRecord;
+import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 
 /**
@@ -35,7 +35,7 @@ import cube.common.state.AIGCStateCode;
  */
 public interface GenerateTextListener {
 
-    void onGenerated(AIGCChannel channel, GenerativeRecord record);
+    void onGenerated(AIGCChannel channel, GeneratingRecord record);
 
     void onFailed(AIGCChannel channel, AIGCStateCode stateCode);
 }

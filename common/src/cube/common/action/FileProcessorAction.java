@@ -97,6 +97,11 @@ public enum FileProcessorAction {
     Steganographic("steganographic"),
 
     /**
+     * 读取 Excel 文件。
+     */
+    ReadExcel("readExcel"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

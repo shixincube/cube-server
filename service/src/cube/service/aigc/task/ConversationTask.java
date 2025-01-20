@@ -77,8 +77,8 @@ public class ConversationTask extends ServiceTask {
         String code = packet.data.getString("code");
         String content = packet.data.getString("content").trim();
         String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : Consts.PATTERN_CHAT;
-        GenerativeOption option = packet.data.has("option") ?
-                new GenerativeOption(packet.data.getJSONObject("option")) : new GenerativeOption();
+        GeneratingOption option = packet.data.has("option") ?
+                new GeneratingOption(packet.data.getJSONObject("option")) : new GeneratingOption();
         int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 10;
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
         boolean recordable = packet.data.has("recordable") && packet.data.getBoolean("recordable");
@@ -92,12 +92,12 @@ public class ConversationTask extends ServiceTask {
             categories.add(categoryArray.getString(i));
         }
 
-        List<GenerativeRecord> recordList = null;
+        List<GeneratingRecord> recordList = null;
         if (null != records) {
             recordList = new ArrayList<>();
             try {
                 for (int i = 0; i < records.length(); ++i) {
-                    GenerativeRecord record = new GenerativeRecord(records.getJSONObject(i));
+                    GeneratingRecord record = new GeneratingRecord(records.getJSONObject(i));
                     recordList.add(record);
                 }
             } catch (Exception e) {

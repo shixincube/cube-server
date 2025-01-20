@@ -32,7 +32,7 @@ import org.json.JSONObject;
 /**
  * AIGC 生成选项。
  */
-public class GenerativeOption implements JSONable {
+public class GeneratingOption implements JSONable {
 
     public double temperature = 0.3;
 
@@ -44,10 +44,10 @@ public class GenerativeOption implements JSONable {
 
     public int maxNewTokens = 2048;
 
-    public GenerativeOption() {
+    public GeneratingOption() {
     }
 
-    public GenerativeOption(double temperature, double topP, double repetitionPenalty, int maxNewTokens, int topK) {
+    public GeneratingOption(double temperature, double topP, double repetitionPenalty, int maxNewTokens, int topK) {
         this.temperature = temperature;
         this.topP = topP;
         this.repetitionPenalty = repetitionPenalty;
@@ -55,7 +55,7 @@ public class GenerativeOption implements JSONable {
         this.topK = topK;
     }
 
-    public GenerativeOption(JSONObject json) {
+    public GeneratingOption(JSONObject json) {
         if (json.has("temperature")) {
             this.temperature = json.getDouble("temperature");
         }

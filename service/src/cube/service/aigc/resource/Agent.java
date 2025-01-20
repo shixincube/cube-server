@@ -92,12 +92,12 @@ public final class Agent {
         return this.unit;
     }
 
-    public String generateText(String channelCode, String content, List<GenerativeRecord> records) {
-        return this.generateText(channelCode, this.unit.getCapability().getName(), content, new GenerativeOption(), records);
+    public String generateText(String channelCode, String content, List<GeneratingRecord> records) {
+        return this.generateText(channelCode, this.unit.getCapability().getName(), content, new GeneratingOption(), records);
     }
 
-    public String generateText(String channelCode, String unitName, String content, GenerativeOption option,
-                               List<GenerativeRecord> records) {
+    public String generateText(String channelCode, String unitName, String content, GeneratingOption option,
+                               List<GeneratingRecord> records) {
         String code = channelCode;
         if (null == code) {
             code = this.channelCode;
@@ -108,7 +108,7 @@ public final class Agent {
         try {
             JSONArray recordArray = new JSONArray();
             if (null != records) {
-                for (GenerativeRecord record : records) {
+                for (GeneratingRecord record : records) {
                     recordArray.put(record.toJSON());
                 }
             }
@@ -119,7 +119,7 @@ public final class Agent {
             data.put("code", code);
             data.put("content", content);
             data.put("unit", unitName);
-            data.put("option", (null == option) ? (new GenerativeOption()).toJSON() : option);
+            data.put("option", (null == option) ? (new GeneratingOption()).toJSON() : option);
             data.put("histories", 0);
             data.put("pattern", Consts.PATTERN_CHAT);
             data.put("recordable", false);

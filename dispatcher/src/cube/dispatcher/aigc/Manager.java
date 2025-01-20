@@ -50,6 +50,7 @@ import cube.dispatcher.PerformerListener;
 import cube.dispatcher.aigc.handler.Conversation;
 import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.aigc.handler.app.App;
+import cube.dispatcher.util.FileLabels;
 import cube.dispatcher.util.Tickable;
 import cube.util.HttpServer;
 import org.json.JSONArray;
@@ -76,6 +77,11 @@ public class Manager implements Tickable, PerformerListener {
     /**
      * Key：操作序号。
      */
+    private Map<Long, TextToFileFuture> textToFileFutureMap;
+
+    /**
+     * Key：操作序号。
+     */
     private Map<Long, ObjectDetectionFuture> objectDetectionFutureMap;
 
     /**
@@ -91,6 +97,7 @@ public class Manager implements Tickable, PerformerListener {
     public void start(Performer performer) {
         this.performer = performer;
         this.validTokenMap = new ConcurrentHashMap<>();
+        this.textToFileFutureMap = new ConcurrentHashMap<>();
         this.objectDetectionFutureMap = new ConcurrentHashMap<>();
         this.asrFutureMap = new ConcurrentHashMap<>();
 
@@ -158,8 +165,9 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new QueryUsages());
         httpServer.addContextHandler(new ChatHistory());
         httpServer.addContextHandler(new PublicOpinionData());
-        httpServer.addContextHandler(new InferByModule());
+//        httpServer.addContextHandler(new InferByModule());
         httpServer.addContextHandler(new PreInfer());
+        httpServer.addContextHandler(new TextToFile());
 
         httpServer.addContextHandler(new PsychologyReports());
         httpServer.addContextHandler(new CheckPsychology());
@@ -1206,7 +1214,7 @@ public class Manager implements Tickable, PerformerListener {
      * @return
      */
     public ChatFuture chat(String token, String channelCode, String pattern, String content, String unit,
-                           GenerativeOption option, int histories, JSONArray records,
+                           GeneratingOption option, int histories, JSONArray records,
                            boolean recordable, boolean searchable, boolean networking,
                            JSONArray categories, int searchTopK, int searchFetchK) {
         JSONObject data = new JSONObject();
@@ -1274,7 +1282,7 @@ public class Manager implements Tickable, PerformerListener {
                     future.end = false;
                 }
                 else {
-                    GenerativeRecord record = new GenerativeRecord(responseData);
+                    GeneratingRecord record = new GeneratingRecord(responseData);
                     if (null == record.query) {
                         record.query = content;
                     }
@@ -1311,7 +1319,7 @@ public class Manager implements Tickable, PerformerListener {
      */
     public long executeConversation(String token, String channelCode, String pattern,
                              String content, int histories, JSONArray records,
-                             GenerativeOption option) {
+                             GeneratingOption option) {
         JSONObject data = new JSONObject();
         data.put("token", token);
         data.put("code", channelCode);
@@ -1528,6 +1536,30 @@ public class Manager implements Tickable, PerformerListener {
 
         return new NLTask(Packet.extractDataPayload(responsePacket));
     }*/
+
+    public TextToFileFuture textToFile(String token, String text, JSONArray fileCodeList) {
+        long sn = Utils.generateSerialNumber();
+
+        JSONObject data = new JSONObject();
+        data.put("sn", sn);
+        data.put("text", text);
+        data.put("files", fileCodeList);
+
+        Packet packet = new Packet(AIGCAction.TextToFile.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        TextToFileFuture future = new TextToFileFuture(sn, token, text, fileCodeList);
+        this.textToFileFutureMap.put(sn, future);
+        
+        this.performer.transmit(AIGCCellet.NAME, request);
+
+        return future;
+    }
+
+    public TextToFileFuture getTextToFileFuture(long sn) {
+        return this.textToFileFutureMap.get(sn);
+    }
 
     public ObjectDetectionFuture objectDetection(String token, String channelCode, JSONArray fileCodeList) {
         long sn = Utils.generateSerialNumber();
@@ -1770,7 +1802,14 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public JSONObject inferByModule(String token, String moduleName, JSONObject param) {
+    /*
+     * @deprecated
+     * @param token
+     * @param moduleName
+     * @param param
+     * @return
+     */
+    /*public JSONObject inferByModule(String token, String moduleName, JSONObject param) {
         JSONObject data = new JSONObject();
         data.put("module", moduleName);
         data.put("param", param);
@@ -1792,7 +1831,7 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return Packet.extractDataPayload(responsePacket);
-    }
+    }*/
 
     public JSONObject preInfer(String token, String content) {
         JSONObject data = new JSONObject();
@@ -2306,6 +2345,14 @@ public class Manager implements Tickable, PerformerListener {
             this.validTokenMap.clear();
             this.lastClearToken = now;
 
+            Iterator<Map.Entry<Long, TextToFileFuture>> ttfIter = this.textToFileFutureMap.entrySet().iterator();
+            while (ttfIter.hasNext()) {
+                Map.Entry<Long, TextToFileFuture> e = ttfIter.next();
+                if (now - e.getValue().timestamp > 30 * 60 * 1000) {
+                    ttfIter.remove();
+                }
+            }
+
             Iterator<Map.Entry<Long, ObjectDetectionFuture>> odIter = this.objectDetectionFutureMap.entrySet().iterator();
             while (odIter.hasNext()) {
                 Map.Entry<Long, ObjectDetectionFuture> e = odIter.next();
@@ -2333,7 +2380,55 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect actionDialect = new ActionDialect(primitive);
         String action = actionDialect.getName();
 
-        if (AIGCAction.ObjectDetection.name.equals(action)) {
+        if (AIGCAction.TextToFile.name.equals(action)) {
+            Packet responsePacket = new Packet(actionDialect);
+            // 状态码
+            int stateCode = Packet.extractCode(responsePacket);
+            JSONObject responseJson = Packet.extractDataPayload(responsePacket);
+            long sn = responseJson.getLong("sn");
+            TextToFileFuture future = this.textToFileFutureMap.get(sn);
+            if (stateCode == AIGCStateCode.Ok.code) {
+                try {
+                    future.stateCode = stateCode;
+
+                    JSONObject result = responseJson.getJSONObject("result");
+
+                    if (result.has("fileLabels")) {
+                        JSONArray array = result.getJSONArray("fileLabels");
+                        for (int i = 0; i < array.length(); ++i) {
+                            FileLabels.reviseFileLabel(array.getJSONObject(i), future.token,
+                                    this.performer.getExternalHttpEndpoint(), this.performer.getExternalHttpsEndpoint());
+                        }
+                    }
+
+                    if (result.has("answerFileLabels")) {
+                        JSONArray answerFileLabels = result.getJSONArray("answerFileLabels");
+                        for (int i = 0; i < answerFileLabels.length(); ++i) {
+                            FileLabels.reviseFileLabel(answerFileLabels.getJSONObject(i), future.token,
+                                    this.performer.getExternalHttpEndpoint(), this.performer.getExternalHttpsEndpoint());
+                        }
+                    }
+
+                    if (result.has("queryFileLabels")) {
+                        JSONArray queryFileLabels = result.getJSONArray("queryFileLabels");
+                        for (int i = 0; i < queryFileLabels.length(); ++i) {
+                            FileLabels.reviseFileLabel(queryFileLabels.getJSONObject(i), future.token,
+                                    this.performer.getExternalHttpEndpoint(), this.performer.getExternalHttpsEndpoint());
+                        }
+                    }
+
+                    future.result = result;
+                } catch (Exception e) {
+                    Logger.w(this.getClass(), "#onReceived", e);
+                }
+            }
+            else {
+                if (null != future) {
+                    future.stateCode = stateCode;
+                }
+            }
+        }
+        else if (AIGCAction.ObjectDetection.name.equals(action)) {
             Packet responsePacket = new Packet(actionDialect);
             // 状态码
             int stateCode = Packet.extractCode(responsePacket);
@@ -2398,7 +2493,7 @@ public class Manager implements Tickable, PerformerListener {
 
         public AIGCChannel channel;
 
-        public GenerativeRecord record;
+        public GeneratingRecord record;
 
         public KnowledgeQAResult knowledgeResult;
 
@@ -2406,7 +2501,7 @@ public class Manager implements Tickable, PerformerListener {
             this.channel = channel;
         }
 
-        protected ChatFuture(GenerativeRecord record) {
+        protected ChatFuture(GeneratingRecord record) {
             this.record = record;
         }
 
@@ -2426,11 +2521,54 @@ public class Manager implements Tickable, PerformerListener {
         }
     }
 
-    public class ObjectDetectionFuture implements JSONable {
+
+    public class TextToFileFuture implements JSONable {
+
+        protected final long sn;
 
         protected final long timestamp;
 
+        protected final String token;
+
+        protected String text;
+
+        protected JSONArray files;
+
+        protected JSONObject result;
+
+        protected int stateCode = AIGCStateCode.Processing.code;
+
+        public TextToFileFuture(long sn, String token, String text, JSONArray files) {
+            this.sn = sn;
+            this.token = token;
+            this.timestamp = System.currentTimeMillis();
+            this.text = text;
+            this.files = files;
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("sn", this.sn);
+            json.put("timestamp", this.timestamp);
+            json.put("state", this.stateCode);
+            if (null != this.result) {
+                json.put("result", this.result);
+            }
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
+        }
+    }
+
+    public class ObjectDetectionFuture implements JSONable {
+
         protected final long sn;
+
+        protected final long timestamp;
 
         protected String channelCode;
 

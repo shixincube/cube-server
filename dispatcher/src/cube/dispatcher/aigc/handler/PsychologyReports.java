@@ -29,6 +29,7 @@ package cube.dispatcher.aigc.handler;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.dispatcher.aigc.Manager;
+import cube.dispatcher.util.FileLabels;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
@@ -74,7 +75,13 @@ public class PsychologyReports extends ContextHandler {
                             Manager.getInstance().generatePsychologyReport(request.getRemoteHost(), token, attribute,
                                     fileCode, theme, indicatorTexts);
                     if (null != report) {
-                        this.respondOk(response, report.toJSON());
+                        JSONObject responseData = report.toJSON();
+                        if (responseData.has("fileLabel")) {
+                            FileLabels.reviseFileLabel(responseData.getJSONObject("fileLabel"), token,
+                                    Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                                    Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                        }
+                        this.respondOk(response, responseData);
                     }
                     else {
                         this.respond(response, HttpStatus.NOT_FOUND_404);
@@ -116,7 +123,13 @@ public class PsychologyReports extends ContextHandler {
                     long sn = Long.parseLong(snString);
                     Report report = Manager.getInstance().getPsychologyReport(token, sn, markdown);
                     if (null != report) {
-                        this.respondOk(response, report.toJSON());
+                        JSONObject responseData = report.toJSON();
+                        if (responseData.has("fileLabel")) {
+                            FileLabels.reviseFileLabel(responseData.getJSONObject("fileLabel"), token,
+                                    Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                                    Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                        }
+                        this.respondOk(response, responseData);
                     }
                     else {
                         this.respond(response, HttpStatus.NOT_FOUND_404);
@@ -130,6 +143,11 @@ public class PsychologyReports extends ContextHandler {
                             Boolean.parseBoolean(request.getParameter("desc")) : true;
                     JSONObject data = Manager.getInstance().getPsychologyReports(token, page, size, descending);
                     if (null != data) {
+                        if (data.has("fileLabel")) {
+                            FileLabels.reviseFileLabel(data.getJSONObject("fileLabel"), token,
+                                    Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                                    Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                        }
                         this.respondOk(response, data);
                     }
                     else {

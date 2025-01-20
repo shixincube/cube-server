@@ -112,7 +112,7 @@ public class ReportDataset {
                 if (line.contains("序列")) {
                     continue;
                 }
-                ScaleDataRow row = new ScaleDataRow(line);
+                ScaleDataRow row = new ScaleDataRow(line, false);
                 if (!row.isValid()) {
                     continue;
                 }
@@ -204,13 +204,14 @@ public class ReportDataset {
 
             // 归一化
             boolean skip = false;
-            scores = FloatUtils.softmax(scores);
-            for (double s : scores) {
-                if (Math.abs(s) <= 0.0001) {
-                    skip = true;
-                    break;
-                }
-            }
+            // Version 1 使用 softmax
+//             scores = FloatUtils.softmax(scores);
+//            for (double s : scores) {
+//                if (Math.abs(s) <= 0.0001) {
+//                    skip = true;
+//                    break;
+//                }
+//            }
             if (skip) {
                 Logger.w(this.getClass(), "#makeEvaluationDatasetFromScaleData - Skip: " + json.getLong("sn"));
                 continue;
@@ -261,7 +262,7 @@ public class ReportDataset {
                 if (line.contains("序列")) {
                     continue;
                 }
-                ScaleDataRow row = new ScaleDataRow(line);
+                ScaleDataRow row = new ScaleDataRow(line, true);
                 rowMap.put(row.sn, row);
             }
         } catch (Exception e) {
@@ -610,7 +611,7 @@ public class ReportDataset {
 
         public double[] data;
 
-        public ScaleDataRow(String csvString) {
+        public ScaleDataRow(String csvString, boolean softmax) {
             String[] array = csvString.split(",");
             this.sn = Long.parseLong(array[0]);
             this.data = new double[19];
@@ -618,9 +619,11 @@ public class ReportDataset {
             this.data[0] = array[2].contains("女") ? 0.1 : 0.9;
             this.data[1] = Double.parseDouble(array[3]) * 0.01;
 
-            double[] base = FloatUtils.softmax(new double[]{ this.data[0], this.data[1] });
-            this.data[0] = base[0];
-            this.data[1] = base[1];
+            if (softmax) {
+                double[] base = FloatUtils.softmax(new double[]{ this.data[0], this.data[1] });
+                this.data[0] = base[0];
+                this.data[1] = base[1];
+            }
 
             for (int i = 0; i < 10; ++i) {
                 this.data[i + 2] = Double.parseDouble(array[i + 4]);

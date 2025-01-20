@@ -40,6 +40,7 @@ import org.json.JSONObject;
 
 /**
  * 通过功能模组进行推理。
+ * @deprecated
  */
 public class InferByModuleTask extends ServiceTask {
 
@@ -71,7 +72,7 @@ public class InferByModuleTask extends ServiceTask {
         JSONObject param = packet.data.getJSONObject("param");
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        String result = service.inferByModule(token, moduleName, param);
+        String result = "";//service.inferByModule(token, moduleName, param);
         if (null == result) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

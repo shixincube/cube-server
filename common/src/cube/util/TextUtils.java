@@ -528,6 +528,64 @@ public final class TextUtils {
         }
     }
 
+    /**
+     * 提取 Markdown 格式的表格。
+     *
+     * @param text
+     * @return
+     */
+    public static String extractMarkdownTable(String text) {
+        String[] lines = text.split("\n");
+
+        int index = -1;
+        for (int i = 0; i < lines.length; ++i) {
+            String line = lines[i];
+            if (line.length() < 2) {
+                continue;
+            }
+            String tl = line.trim();
+            if ((tl.startsWith("|----") && tl.endsWith("----|")) ||
+                    (tl.startsWith("| ----") && tl.endsWith("---- |"))) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index <= 0) {
+            return null;
+        }
+
+        index -= 1;
+        StringBuilder buf = new StringBuilder();
+        for (int i = index; i < lines.length; ++i) {
+            String line = lines[i];
+            if (line.length() < 2) {
+                continue;
+            }
+            String tl = line.trim();
+            if (tl.startsWith("|") && tl.endsWith("|")) {
+                if (tl.contains("----")) {
+                    continue;
+                }
+
+                String[] items = tl.split("\\|");
+                for (String item : items) {
+                    if (item.length() == 0) {
+                        continue;
+                    }
+                    buf.append(item.trim()).append(",");
+                }
+                buf.delete(buf.length() - 1, buf.length());
+                buf.append("\n");
+            }
+            else {
+                break;
+            }
+        }
+
+        return buf.toString();
+    }
+
     public static void main(String[] args) {
 //        String[] data = {
 //                "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1",
@@ -600,16 +658,21 @@ public final class TextUtils {
 //            System.out.println(str);
 //        }
 
-        String[] list = new String[] {
-                "1. 是数字符号",
-                " 2. 不是数字符号",
-                "3 不是数字符号"
-        };
-        for (String str : list) {
-            System.out.println(TextUtils.startsWithNumberSign(str));
-            if (TextUtils.startsWithNumberSign(str)) {
-                System.out.println(str.substring(2).trim());
-            }
-        }
+//        String[] list = new String[] {
+//                "1. 是数字符号",
+//                " 2. 不是数字符号",
+//                "3 不是数字符号"
+//        };
+//        for (String str : list) {
+//            System.out.println(TextUtils.startsWithNumberSign(str));
+//            if (TextUtils.startsWithNumberSign(str)) {
+//                System.out.println(str.substring(2).trim());
+//            }
+//        }
+
+        String table = "| 序号 | 学号 | 姓名 | 出生日期 |\n|--------|--------|--------|--------|\n| 1 | 1781001 | 刘备 | 40485 |\n| 2 | 1781002 | 曹操 | 40402 |\n| 3 | 1781003 | 孙权 | 40473 |\n";
+        String data = "这是表格数据：\n\n" + table + "\n以上是表格信息";
+        String result = extractMarkdownTable(data);
+        System.out.println(result);
     }
 }

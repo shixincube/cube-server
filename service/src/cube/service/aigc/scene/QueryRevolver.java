@@ -30,7 +30,7 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.*;
-import cube.common.entity.GenerativeRecord;
+import cube.common.entity.GeneratingRecord;
 import cube.common.entity.RetrieveReRankResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
@@ -303,7 +303,7 @@ public class QueryRevolver {
         return this.filterSubjectNoun(result.toString(), reports.get(0).getAttribute());
     }
 
-    public GenerativeRecord generateSupplement(ReportRelation relation, Report report, String currentQuery) {
+    public GeneratingRecord generateSupplement(ReportRelation relation, Report report, String currentQuery) {
         StringBuilder query = new StringBuilder();
         StringBuilder answer = new StringBuilder();
 
@@ -376,7 +376,7 @@ public class QueryRevolver {
             }
         }
 
-        GenerativeRecord result = new GenerativeRecord(ModelConfig.BAIZE_UNIT, query.toString(), answer.toString());
+        GeneratingRecord result = new GeneratingRecord(ModelConfig.BAIZE_UNIT, query.toString(), answer.toString());
         return result;
     }
 
