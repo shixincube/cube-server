@@ -36,6 +36,7 @@ import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Report;
 import cube.aigc.psychology.ScaleReport;
+import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.composition.AnswerSheet;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScaleResult;
@@ -178,6 +179,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new PsychologyScaleOperation());
         httpServer.addContextHandler(new PsychologyConversation());
         httpServer.addContextHandler(new PsychologyPaintings());
+        httpServer.addContextHandler(new ResetReportAttention());
         httpServer.addContextHandler(new PaintingLabels());
         httpServer.addContextHandler(new PsychologyPaintingReportState());
 
@@ -2110,6 +2112,31 @@ public class Manager implements Tickable, PerformerListener {
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.w(this.getClass(), "#stopGeneratingPsychologyReport - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject resetReportAttention(String token, long sn, Attention attention) {
+        JSONObject data = new JSONObject();
+        data.put("sn", sn);
+        if (null != attention) {
+            data.put("attention", attention.level);
+        }
+        Packet packet = new Packet(AIGCAction.ResetReportAttention.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#resetReportAttention - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#resetReportAttention - Response state is " + Packet.extractCode(responsePacket));
             return null;
         }
 

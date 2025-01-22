@@ -367,11 +367,6 @@ public enum AIGCAction {
     PublicOpinionData("publicOpinionData"),
 
     /**
-     * 通过功能模块进行推理。
-     */
-//    InferByModule("inferByModule"),
-
-    /**
      * 预推理。
      */
     PreInfer("preInfer"),
@@ -410,6 +405,11 @@ public enum AIGCAction {
      * 检查绘画。
      */
     CheckPsychologyPainting("checkPsychologyPainting"),
+
+    /**
+     * 重置报告关注度。
+     */
+    ResetReportAttention("resetReportAttention"),
 
     /**
      * 获取心理学分数基线值。

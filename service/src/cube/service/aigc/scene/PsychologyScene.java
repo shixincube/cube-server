@@ -30,6 +30,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.composition.*;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
@@ -526,6 +527,33 @@ public class PsychologyScene {
             }
         }
         return -1;
+    }
+
+    public PaintingReport resetReportAttention(long reportSn, Attention newAttention) {
+        PaintingReport report = this.getPaintingReport(reportSn);
+        if (null == report) {
+            Logger.w(this.getClass(), "#resetReportAttention - Can NOT find report: " + reportSn);
+            return null;
+        }
+
+        EvaluationReport evaluationReport = report.getEvaluationReport();
+        Attention current = evaluationReport.getAttention();
+        if (null == newAttention) {
+            evaluationReport.rollAttentionSuggestion();
+        }
+        else {
+            evaluationReport.overlayAttentionSuggestion(newAttention);
+        }
+
+        Logger.i(this.getClass(), "#resetReportAttention - Reset attention: " +
+                current.level + " -> " + evaluationReport.getAttention().level);
+
+        if (!this.storage.updatePsychologyReport(report)) {
+            Logger.w(this.getClass(), "#resetReportAttention - Update report data error: " + reportSn);
+            return null;
+        }
+
+        return report;
     }
 
     public List<Scale> listScales() {

@@ -544,7 +544,14 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("report_sn", report.sn),
                 new StorageField("timestamp", System.currentTimeMillis()),
                 new StorageField("state", 0)
-        }));
+        })) {
+            this.storage.executeUpdate(this.paintingReportManagementTable, new StorageField[] {
+                    new StorageField("timestamp", System.currentTimeMillis()),
+                    new StorageField("state", 0)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("report_sn", report.sn)
+            });
+        }
 
         if (null != report.getReportTextList()) {
             for (ReportSection rs : report.getReportTextList()) {
@@ -580,6 +587,23 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("evaluation_data", dataString),
                 new StorageField("mandala_flower", (null != report.getMandalaFlower() ?
                         report.getMandalaFlower().toJSON().toString() : null))
+        });
+    }
+
+    public boolean updatePsychologyReport(PaintingReport report) {
+        String dataString = report.getEvaluationReport().toJSON().toString();
+        dataString = JSONUtils.escape(dataString);
+        
+        return this.storage.executeUpdate(this.reportTable, new StorageField[] {
+                new StorageField("timestamp", report.timestamp),
+                new StorageField("name", report.getName()),
+                new StorageField("gender", report.getAttribute().gender),
+                new StorageField("age", report.getAttribute().age),
+                new StorageField("finished_timestamp", report.getFinishedTimestamp()),
+                new StorageField("summary", report.getSummary()),
+                new StorageField("evaluation_data", dataString),
+        }, new Conditional[] {
+                Conditional.createEqualTo("sn", report.sn)
         });
     }
 

@@ -285,6 +285,19 @@ public class EvaluationReport implements JSONable {
         }
     }
 
+    /**
+     * 覆盖关注度。
+     *
+     * @param attention
+     */
+    public void overlayAttentionSuggestion(Attention attention) {
+        this.attention = attention;
+
+        if (!this.calcSuggestion()) {
+            this.recheckSuggestion();
+        }
+    }
+
     private boolean calcAttention() {
         StringBuilder script = new StringBuilder();
         script.append("var Attribute = Java.type('cube.aigc.psychology.Attribute');\n");

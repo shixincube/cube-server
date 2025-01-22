@@ -995,16 +995,6 @@ public class AIGCService extends AbstractModule {
         return this.recognizeContext(content, authToken);
     }
 
-    /**
-     * 使用模块进行推理。
-     *
-     * @param token
-     * @param moduleName
-     * @param params
-     * @return
-     *
-     * @deprecated
-     */
     /*public String inferByModule(String token, String moduleName, JSONObject params) {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(token);
@@ -3831,6 +3821,10 @@ public class AIGCService extends AbstractModule {
                 answerBuf.append("处理的数据大小合计 ").append(FileUtils.scaleFileSize(processedSize)).append(" 。");
                 answerBuf.append("生成").append(result.answerFileLabels.size()).append("个文件，合计 ");
                 answerBuf.append(FileUtils.scaleFileSize(generatingSize)).append(" 。\n");
+            }
+            else {
+                answerBuf.append("处理的数据大小合计 ").append(FileUtils.scaleFileSize(processedSize)).append(" 。");
+                answerBuf.append("但是未能正确读取数据，建议检查一下待处理文件。");
             }
 
             if (null != notice) {
