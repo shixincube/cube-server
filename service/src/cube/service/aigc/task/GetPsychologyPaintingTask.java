@@ -78,7 +78,7 @@ public class GetPsychologyPaintingTask extends ServiceTask {
 
             if (null != painting) {
                 this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, painting.toJSON()));
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, painting.toCompactJSON()));
                 markResponseTime();
             }
             else {

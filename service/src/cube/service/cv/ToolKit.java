@@ -14,7 +14,6 @@ import cube.common.entity.FileLabel;
 import cube.common.notice.GetFile;
 import cube.common.notice.SaveFile;
 import cube.core.AbstractModule;
-import cube.service.aigc.AIGCService;
 import cube.util.CodeUtils;
 import cube.util.FileUtils;
 import cube.util.PrintUtils;
@@ -39,11 +38,15 @@ public class ToolKit {
 
     private final static ToolKit instance = new ToolKit();
 
-    private AIGCService service;
-
     private AbstractModule fileStorageService;
 
+    // Linux: /usr/bin/convert
+    // Mac: /usr/local/bin/convert
+    private String convertCommand = "/usr/bin/convert";
+
     private final String workingPath = "storage/tmp/";
+
+    private final long fileTimeout = 30 * 60 * 1000;
 
     private ToolKit() {
     }
@@ -52,9 +55,12 @@ public class ToolKit {
         return ToolKit.instance;
     }
 
-    public void setService(AIGCService service, AbstractModule fileStorageService) {
-        this.service = service;
+    public void setService(AbstractModule fileStorageService) {
         this.fileStorageService = fileStorageService;
+
+        if (System.getProperty("os.name").contains("Mac OS")) {
+            this.convertCommand = "/usr/local/bin/convert";
+        }
     }
 
     public FileLabel makeBarCodeA4Paper(AuthToken authToken, List<BarCode> list) {
@@ -70,7 +76,11 @@ public class ToolKit {
         JSONObject fileLabelJson = this.fileStorageService.notify(new GetFile(authToken.getDomain(), fileCode));
         if (null != fileLabelJson) {
             // 文件已创建
-            return new FileLabel(fileLabelJson);
+            FileLabel fileLabel = new FileLabel(fileLabelJson);
+            // 判断超时
+            if (System.currentTimeMillis() - fileLabel.getCompletedTime() < this.fileTimeout) {
+                return fileLabel;
+            }
         }
 
         List<File> fileList = new ArrayList<>();
@@ -116,7 +126,11 @@ public class ToolKit {
         JSONObject fileLabelJson = this.fileStorageService.notify(new GetFile(authToken.getDomain(), fileCode));
         if (null != fileLabelJson) {
             // 文件已创建
-            return new FileLabel(fileLabelJson);
+            FileLabel fileLabel = new FileLabel(fileLabelJson);
+            // 判断超时
+            if (System.currentTimeMillis() - fileLabel.getCompletedTime() < this.fileTimeout) {
+                return fileLabel;
+            }
         }
 
         File file = this.makeBarCodePaperFile(fileCode, barCode, paperSize, true);
@@ -156,7 +170,7 @@ public class ToolKit {
             paper = newImage;
         }
 
-        /* 对码不能进行缩放
+        /* 条码不能进行缩放
         if (scale != 1) {
             int width = (int) (paper.getWidth() * scale);
             int height = (int) (paper.getHeight() * scale);
@@ -198,7 +212,11 @@ public class ToolKit {
         JSONObject fileLabelJson = this.fileStorageService.notify(new GetFile(authToken.getDomain(), fileCode));
         if (null != fileLabelJson) {
             // 文件已创建
-            return new FileLabel(fileLabelJson);
+            FileLabel fileLabel = new FileLabel(fileLabelJson);
+            // 判断超时
+            if (System.currentTimeMillis() - fileLabel.getCompletedTime() < this.fileTimeout) {
+                return fileLabel;
+            }
         }
 
         BufferedImage image = CodeUtils.generateBarCode(barCode.data, barCode.width, barCode.height,
@@ -252,9 +270,7 @@ public class ToolKit {
     private boolean mergeImageToPDF(String source, String output) {
         // 创建命令
         // "-quality", "100"
-        // Linux: /usr/bin/convert
-        // Mac: /usr/local/bin/convert
-        ProcessBuilder pb = new ProcessBuilder("/usr/bin/convert", source, output);
+        ProcessBuilder pb = new ProcessBuilder(this.convertCommand, source, output);
         pb.directory(new File(this.workingPath));
 
         Process process = null;

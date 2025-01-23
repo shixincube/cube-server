@@ -815,7 +815,11 @@ public class Painting implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = this.toJSON();
+        if (json.has("attribute")) {
+            json.remove("attribute");
+        }
+        return json;
     }
 
 

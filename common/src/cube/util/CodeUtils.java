@@ -26,6 +26,7 @@
 
 package cube.util;
 
+import cell.util.log.Logger;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.BitMatrix;
@@ -223,16 +224,26 @@ public class CodeUtils {
 
             Graphics2D g2d = (Graphics2D) image.getGraphics();
 
+            Font font = null;
+            try {
+//                font = Font.createFont(Font.TRUETYPE_FONT, new File("assets/SIMHEI.TTF"));
+//                font = font.deriveFont(Font.PLAIN, fontSize);
+                font = new Font("SimHei", Font.PLAIN, fontSize);
+            } catch (Exception e) {
+                Logger.e(CodeUtils.class, "#generateBarCode", e);
+            }
+
             if (null != header) {
                 // 字体抗锯齿
                 g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                g2d.setFont(new Font("黑体", Font.PLAIN, fontSize));
+                g2d.setFont(font);
                 g2d.setColor(java.awt.Color.BLACK);
                 g2d.drawString(header, barX, fontSize + (int)(fontSize * 0.4));
             }
             if (null != footer) {
+                // 字体抗锯齿
                 g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                g2d.setFont(new Font("黑体", Font.PLAIN, fontSize));
+                g2d.setFont(font);
                 g2d.setColor(java.awt.Color.BLACK);
                 g2d.drawString(footer, barX, height - (int)(fontSize * 0.5));
             }

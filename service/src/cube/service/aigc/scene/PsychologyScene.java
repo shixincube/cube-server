@@ -529,6 +529,15 @@ public class PsychologyScene {
         return -1;
     }
 
+    
+
+    /**
+     * 重置报告的关注等级数据。
+     *
+     * @param reportSn
+     * @param newAttention
+     * @return
+     */
     public PaintingReport resetReportAttention(long reportSn, Attention newAttention) {
         PaintingReport report = this.getPaintingReport(reportSn);
         if (null == report) {
@@ -865,6 +874,8 @@ public class PsychologyScene {
     public Painting getPainting(long reportSn) {
         return this.storage.readPainting(reportSn);
     }
+
+
 
     public List<PaintingLabel> getPaintingLabels(long sn) {
         return this.storage.readPaintingLabels(sn);

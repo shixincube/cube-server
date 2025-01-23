@@ -8,6 +8,7 @@ package cube.dispatcher.aigc.handler;
 
 import cube.aigc.psychology.algorithm.Attention;
 import cube.dispatcher.aigc.Manager;
+import cube.dispatcher.util.FileLabels;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
@@ -47,6 +48,12 @@ public class ResetReportAttention extends ContextHandler {
                         Attention.parse(data.getInt("attention")) : null;
                 JSONObject responseData = Manager.getInstance().resetReportAttention(token, sn, attention);
                 if (null != responseData) {
+                    if (responseData.has("fileLabel")) {
+                        FileLabels.reviseFileLabel(responseData.getJSONObject("fileLabel"), token,
+                                Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                                Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                    }
+
                     this.respondOk(response, responseData);
                     this.complete();
                 }

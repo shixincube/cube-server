@@ -311,9 +311,6 @@ public class AIGCService extends AbstractModule {
                 // 资源管理器
                 Explorer.getInstance().setup(AIGCService.this, tokenizer);
 
-                // 设置工具
-                ToolKit.getInstance().setService(AIGCService.this, fileStorage);
-
                 started.set(true);
                 Logger.i(AIGCService.class, "AIGC service is ready");
             }

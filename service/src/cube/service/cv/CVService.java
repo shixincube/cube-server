@@ -18,7 +18,6 @@ import cube.common.entity.BarCodeInfo;
 import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 import cube.common.notice.GetFile;
-import cube.common.state.AIGCStateCode;
 import cube.common.state.CVStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -56,6 +55,25 @@ public class CVService extends AbstractModule {
     @Override
     public void start() {
         this.executor = Executors.newCachedThreadPool();
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                // 设置工具
+                AbstractModule fileStorage = getKernel().getModule("FileStorage");
+                if (null != fileStorage) {
+                    while (!fileStorage.isStarted()) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+                ToolKit.getInstance().setService(fileStorage);
+            }
+        });
     }
 
     @Override

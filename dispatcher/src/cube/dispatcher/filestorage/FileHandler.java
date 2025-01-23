@@ -173,12 +173,14 @@ public class FileHandler extends CrossDomainHandler {
         String fileName = null;
 
         fileName = request.getParameter("filename");
+        if (null != fileName) {
+            fileName = URLDecoder.decode(fileName, "UTF-8");
+        }
 
         if (null != fileName &&
                 !request.getHeader(HttpHeader.CONTENT_TYPE.asString()).toLowerCase().contains("multipart/form-data")) {
             // 非 Form 格式
-            fileName = URLDecoder.decode(fileName, "UTF-8");
-
+//            fileName = URLDecoder.decode(fileName, "UTF-8");
             String sizeStr = request.getParameter("filesize");
             if (null == sizeStr) {
                 fileSize = total;
