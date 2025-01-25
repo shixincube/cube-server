@@ -108,6 +108,20 @@ public class GeneratingRecord implements JSONable {
         this.timestamp = timestamp;
     }
 
+    public GeneratingRecord(String query) {
+        this.sn = Utils.generateSerialNumber();
+        this.query = query;
+        this.timestamp = System.currentTimeMillis();
+    }
+
+    public GeneratingRecord(String query, FileLabel queryFileLabel) {
+        this.sn = Utils.generateSerialNumber();
+        this.query = query;
+        this.queryFileLabels = new ArrayList<>();
+        this.queryFileLabels.add(queryFileLabel);
+        this.timestamp = System.currentTimeMillis();
+    }
+
     public GeneratingRecord(JSONObject json) {
         if (json.has("sn")) {
             this.sn = json.getLong("sn");

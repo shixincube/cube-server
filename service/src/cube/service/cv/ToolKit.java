@@ -46,7 +46,7 @@ public class ToolKit {
 
     private final String workingPath = "storage/tmp/";
 
-    private final long fileTimeout = 30 * 60 * 1000;
+    private final long fileTimeout = 60 * 1000;
 
     private ToolKit() {
     }

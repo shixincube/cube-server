@@ -380,7 +380,7 @@ public class QueryRevolver {
         return result;
     }
 
-    public String generatePrompt(CustomRelation relation, String query) {
+    public String generatePrompt(GeneratingRecord record, String query) {
         String knowledge = this.generateKnowledge(query);
         if (null == knowledge || knowledge.length() < 2) {
             return query;

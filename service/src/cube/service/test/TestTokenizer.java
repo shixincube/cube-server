@@ -36,12 +36,35 @@ import java.util.List;
 
 public class TestTokenizer {
 
+    public double sentenceSimilarity(String sentenceA, String sentenceB, Tokenizer tokenizer) {
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
+        List<String> wordsA = analyzer.analyzeOnlyWords(sentenceA, 10);
+        List<String> wordsB = analyzer.analyzeOnlyWords(sentenceB, 10);
+        List<String> pole = null;
+        List<String> monkey = null;
+        if (wordsA.size() > wordsB.size()) {
+            pole = wordsA;
+            monkey = wordsB;
+        }
+        else {
+            pole = wordsB;
+            monkey = wordsA;
+        }
+        double count = 0;
+        for (String word : pole) {
+            if (monkey.contains(word)) {
+                count += 1.0;
+            }
+        }
+        return count / pole.size();
+    }
+
     public static void main(String[] args) {
         Tokenizer tokenizer = new Tokenizer();
 
         String[] sentences = new String[] {
-//                "北京最近一周的天气气温图表",
-//                "北京2023年6月的天气气温图表",
+                "北京最近一周的天气气温图表",
+                "北京2023年6月的天气气温图表",
 //                "这是一个伸手不见五指的黑夜。我叫孙悟空，我爱北京，我爱Python和C++。",
 //                "我不喜欢日本和服。",
 //                "雷猴回归人间。",
@@ -140,13 +163,17 @@ public class TestTokenizer {
 
         System.out.println("----------------------------------------");
 
-        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
-        for (String sentence : sentences) {
-            List<Keyword> keywordList = analyzer.analyze(sentence, 10);
-            for (Keyword keyword : keywordList) {
-                System.out.print(keyword.getWord() + ":" + keyword.getTfidfValue() + ", ");
-            }
-            System.out.println("");
-        }
+//        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
+//        for (String sentence : sentences) {
+//            List<Keyword> keywordList = analyzer.analyze(sentence, 10);
+//            for (Keyword keyword : keywordList) {
+//                System.out.print(keyword.getWord() + ":" + keyword.getTfidfValue() + ", ");
+//            }
+//            System.out.println("");
+//        }
+
+        TestTokenizer test = new TestTokenizer();
+        double source = test.sentenceSimilarity(sentences[0], sentences[3], tokenizer);
+        System.out.println(source);
     }
 }

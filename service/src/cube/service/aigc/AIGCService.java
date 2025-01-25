@@ -73,8 +73,8 @@ import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
-import cube.service.cv.ToolKit;
 import cube.service.tokenizer.Tokenizer;
+import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
 import cube.util.*;
 import org.json.JSONArray;
@@ -457,6 +457,10 @@ public class AIGCService extends AbstractModule {
 
     public Tokenizer getTokenizer() {
         return this.tokenizer;
+    }
+
+    public ExecutorService getExecutor() {
+        return this.executor;
     }
 
     public List<AIGCUnit> setupUnit(Contact contact, List<AICapability> capabilities, TalkContext context) {
@@ -2364,6 +2368,36 @@ public class AIGCService extends AbstractModule {
      */
     public List<String> segmentation(String text) {
         return this.tokenizer.sentenceProcess(text);
+    }
+
+    /**
+     * 句子相似度。
+     *
+     * @param sentenceA
+     * @param sentenceB
+     * @return
+     */
+    public double sentenceSimilarity(String sentenceA, String sentenceB) {
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+        List<String> wordsA = analyzer.analyzeOnlyWords(sentenceA, 10);
+        List<String> wordsB = analyzer.analyzeOnlyWords(sentenceB, 10);
+        List<String> pole = null;
+        List<String> monkey = null;
+        if (wordsA.size() > wordsB.size()) {
+            pole = wordsA;
+            monkey = wordsB;
+        }
+        else {
+            pole = wordsB;
+            monkey = wordsA;
+        }
+        double count = 0;
+        for (String word : pole) {
+            if (monkey.contains(word)) {
+                count += 1.0;
+            }
+        }
+        return count / pole.size();
     }
 
     /**

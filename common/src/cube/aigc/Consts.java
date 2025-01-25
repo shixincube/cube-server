@@ -91,6 +91,16 @@ public final class Consts {
 
     public final static String ANSWER_FIND_SOME_YEAR_DATA_FORMAT = "没有找到%s的数据，但是找到了%s的数据。";
 
+    /**
+     * 年龄近义词。
+     */
+    public final static String[] AGE_SYNONYMS = new String[] { "年龄", "年纪", "岁数", "年岁", "年华", "岁" };
+
+    /**
+     * 性别近义词。
+     */
+    public final static String[] GENDER_SYNONYMS = new String[] { "性别", "姓别", "男女" };
+
     public static String formatUrlFailureAnswer(String domain, String url) {
         return String.format(ANSWER_URL_FAILURE_FORMAT, domain, url);
     }
@@ -170,5 +180,14 @@ public final class Consts {
 
     public static String formatExtractContent(String content, String relatedText) {
         return String.format(EXTRACT_CONTENT_RELATIONSHIPS_FORMAT, content, relatedText);
+    }
+
+    public static boolean contains(String word, String[] list) {
+        for (String w : list) {
+            if (word.equalsIgnoreCase(w)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

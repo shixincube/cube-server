@@ -120,8 +120,8 @@ public class PsychologyScene {
             this.unitName = unitConfig.getString("name");
             this.unitContextLength = unitConfig.getInt("contextLength");
 
-            // 设置存储器
-            PsychologyDataManager.getInstance().setService(aigcService);
+            // 数据管理器设置
+            SceneManager.getInstance().setService(aigcService);
 
             // 激活数据集
             Workflow workflow = new Workflow(aigcService, new Attribute("male", 18, false));
@@ -466,7 +466,7 @@ public class PsychologyScene {
                     }
 
                     // 使用数据管理器生成关联数据
-                    PsychologyDataManager.getInstance().writeReportChart(reportTask.report);
+                    SceneManager.getInstance().writeReportChart(reportTask.report);
 
                     // 从正在执行队列移除
                     runningTaskQueue.remove(reportTask);
@@ -816,7 +816,7 @@ public class PsychologyScene {
         return revolver.generateSupplement(relation, report, currentQuery);
     }
 
-    public String buildPrompt(CustomRelation relation, String query) {
+    public String buildPrompt(GeneratingRecord context, String query) {
         final StringBuilder result = new StringBuilder();
 
         boolean success = this.aigcService.semanticSearch(query, new SemanticSearchListener() {
@@ -874,8 +874,6 @@ public class PsychologyScene {
     public Painting getPainting(long reportSn) {
         return this.storage.readPainting(reportSn);
     }
-
-
 
     public List<PaintingLabel> getPaintingLabels(long sn) {
         return this.storage.readPaintingLabels(sn);

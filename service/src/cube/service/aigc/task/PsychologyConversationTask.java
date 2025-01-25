@@ -30,7 +30,6 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.aigc.psychology.composition.CustomRelation;
 import cube.aigc.psychology.composition.ReportRelation;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -72,7 +71,7 @@ public class PsychologyConversationTask extends ServiceTask {
 
         String channelCode = null;
         List<ReportRelation> reportRelationList = null;
-        CustomRelation customRelation = null;
+        GeneratingRecord conversationContext = null;
         String query = null;
         try {
             channelCode = packet.data.getString("channelCode");
@@ -85,8 +84,8 @@ public class PsychologyConversationTask extends ServiceTask {
                 }
             }
 
-            if (packet.data.has("custom")) {
-                customRelation = new CustomRelation(packet.data.getJSONObject("custom"));
+            if (packet.data.has("context")) {
+                conversationContext = new GeneratingRecord(packet.data.getJSONObject("context"));
             }
 
             query = packet.data.getString("query");
@@ -126,8 +125,21 @@ public class PsychologyConversationTask extends ServiceTask {
                 }
             });
         }
-        else if (null != customRelation) {
-            stateCode = worker.work(token, channelCode, customRelation, query, new GenerateTextListener() {
+        else {
+            if (null == conversationContext) {
+                conversationContext = new GeneratingRecord(query);
+            }
+            else {
+                conversationContext.query = query;
+            }
+
+            // 获取频道
+            AIGCChannel channel = service.getChannel(channelCode);
+            if (null == channel) {
+                channel = service.createChannel(token, channelCode, channelCode);
+            }
+
+            stateCode = worker.work(token, channel, conversationContext, new GenerateTextListener() {
                 @Override
                 public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                     if (null != record) {

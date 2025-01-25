@@ -27,6 +27,7 @@
 package cube.service.aigc.scene;
 
 import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.entity.Chart;
 import cube.service.aigc.AIGCService;
@@ -34,25 +35,38 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 心理学模块数据管理器。
  */
-public class PsychologyDataManager {
+public class SceneManager {
 
-    private final static PsychologyDataManager instance = new PsychologyDataManager();
+    private final static SceneManager instance = new SceneManager();
 
     private AIGCService aigcService;
 
-    private PsychologyDataManager() {
+    private Map<String, ConversationContext> conversationContexts;
+
+    private SceneManager() {
+        this.conversationContexts = new ConcurrentHashMap<>();
     }
 
-    public static PsychologyDataManager getInstance() {
-        return PsychologyDataManager.instance;
+    public static SceneManager getInstance() {
+        return SceneManager.instance;
     }
 
     public void setService(AIGCService aigcService) {
         this.aigcService = aigcService;
+    }
+
+    public ConversationContext getConversationContext(String channelCode) {
+        return this.conversationContexts.get(channelCode);
+    }
+
+    public void putConversationContext(String channelCode, ConversationContext context) {
+        this.conversationContexts.put(channelCode, context);
     }
 
     public Chart readReportChart(long reportSn) {

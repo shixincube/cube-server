@@ -1,45 +1,39 @@
 /*
  * This source file is part of Cube.
  *
- * The MIT License (MIT)
- *
- * Copyright (c) 2020-2024 Ambrose Xu.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Copyright (c) 2020-2025 Ambrose Xu.
  */
 
 package cube.service.aigc.scene;
 
 import cell.util.log.Logger;
+import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.composition.CustomRelation;
+import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.composition.ConversationContext;
+import cube.aigc.psychology.composition.ConversationSubtask;
 import cube.aigc.psychology.composition.ReportRelation;
-import cube.common.entity.AIGCChannel;
-import cube.common.entity.AIGCUnit;
-import cube.common.entity.GeneratingOption;
+import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
+import cube.service.aigc.listener.SemanticSearchListener;
+import cube.util.FileType;
+import cube.util.TextUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ConversationWorker {
+
+    private final static String ANSWER_NO_FILE = "没有找到需要操作的文件，可以尝试重新上传一下文件。";
+
+    private final static String ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE =
+            "进行评测需要知道被测人的性别和年龄，请告诉我画这幅画的被测人的**性别**和**年龄**。";
+
+    private final static String ANSWER_NEED_TO_PROVIDE_GENDER = "我已经知道了这幅画的被测人的年龄，还需要您告知这位被测人的**性别**。";
+
+    private final static String ANSWER_NEED_TO_PROVIDE_AGE = "我已经知道了这幅画的被测人的性别，还需要您告知这位被测人的**年龄**。";
 
     private String unitName = ModelConfig.INFINITE_UNIT;
 
@@ -107,12 +101,117 @@ public class ConversationWorker {
         return AIGCStateCode.Ok;
     }
 
-    public AIGCStateCode work(String token, String channelCode, CustomRelation relation,
-                              String query, GenerateTextListener listener) {
-        // 获取频道
-        AIGCChannel channel = this.service.getChannel(channelCode);
-        if (null == channel) {
-            channel = this.service.createChannel(token, channelCode, channelCode);
+    public AIGCStateCode work(String token, AIGCChannel channel, GeneratingRecord context, GenerateTextListener listener) {
+        // 获取对话上下文
+        ConversationContext convCtx = SceneManager.getInstance().getConversationContext(channel.getCode());
+        if (null == convCtx) {
+            convCtx = new ConversationContext();
+            SceneManager.getInstance().putConversationContext(channel.getCode(), convCtx);
+        }
+        // 获取子任务
+        ConversationSubtask subtask = convCtx.getCurrentSubtask();
+        // Query
+        final String query = context.query;
+        if (null == subtask) {
+            // 匹配子任务
+            subtask = this.matchSubtask(query);
+        }
+
+        if (ConversationSubtask.PredictPainting == subtask) {
+            // 执行预测
+            if (null == convCtx.getCurrentFile()) {
+                // 获取文件
+                if (null != context.queryFileLabels) {
+                    // 判断文件是否存在
+                    List<FileLabel> fileList = this.checkFileLabels(context.queryFileLabels);
+                    if (null != fileList) {
+                        convCtx.setCurrentFile(fileList.get(0));
+                    }
+                }
+
+                if (null == convCtx.getCurrentFile()) {
+                    Logger.d(this.getClass(), "#work - No file: " + token + "/" + channel.getCode());
+                    GeneratingRecord record = new GeneratingRecord(query);
+                    record.answer = ANSWER_NO_FILE;
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onGenerated(channel, record);
+                        }
+                    });
+                    return AIGCStateCode.Ok;
+                }
+            }
+
+            if (null == convCtx.getCurrentAttribute()) {
+                // 当前文件
+                FileLabel fileLabel = convCtx.getCurrentFile();
+                // 提取属性
+                Attribute attribute = this.extractAttribute(query);
+                if (attribute.age == 0 && attribute.gender.length() == 0) {
+                    // 没有提供年龄和性别
+                    Logger.d(this.getClass(), "#work - No attribute: " + token + "/" + channel.getCode());
+
+                    GeneratingRecord record = new GeneratingRecord(query, fileLabel);
+                    record.answer = ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE;
+
+                    // 进入子任务
+                    convCtx.setCurrentSubtask(subtask);
+                    convCtx.record(record);
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onGenerated(channel, record);
+                        }
+                    });
+                    return AIGCStateCode.Ok;
+                }
+                else if (attribute.age == 0) {
+                    // 没有提供年龄
+                    Logger.d(this.getClass(), "#work - No attribute age: " + token + "/" + channel.getCode());
+
+                    GeneratingRecord record = new GeneratingRecord(query, fileLabel);
+                    record.answer = ANSWER_NEED_TO_PROVIDE_AGE;
+
+                    // 进入子任务
+                    convCtx.setCurrentSubtask(subtask);
+                    convCtx.record(record);
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onGenerated(channel, record);
+                        }
+                    });
+                    return AIGCStateCode.Ok;
+                }
+                else if (attribute.gender.length() == 0) {
+                    // 没有提供性别
+                    Logger.d(this.getClass(), "#work - No attribute gender: " + token + "/" + channel.getCode());
+
+                    GeneratingRecord record = new GeneratingRecord(query, fileLabel);
+                    record.answer = ANSWER_NEED_TO_PROVIDE_GENDER;
+
+                    // 进入子任务
+                    convCtx.setCurrentSubtask(subtask);
+                    convCtx.record(record);
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onGenerated(channel, record);
+                        }
+                    });
+                    return AIGCStateCode.Ok;
+                }
+                else {
+                    // 有属性
+                    convCtx.setCurrentAttribute(attribute);
+                }
+            }
+
+//            PsychologyScene.getInstance().generatePredictingReport(channel, convCtx.getCurrentAttribute());
+        }
+        else if (ConversationSubtask.ExplainPainting == subtask) {
+
         }
 
         // 获取单元
@@ -126,7 +225,7 @@ public class ConversationWorker {
             }
         }
 
-        String prompt = PsychologyScene.getInstance().buildPrompt(relation, query);
+        String prompt = PsychologyScene.getInstance().buildPrompt(context, query);
         if (null == prompt) {
             Logger.e(this.getClass(), "#work - Builds prompt failed");
             return AIGCStateCode.NoData;
@@ -136,5 +235,155 @@ public class ConversationWorker {
                 null, null, false, true, listener);
 
         return AIGCStateCode.Ok;
+    }
+
+    private List<FileLabel> checkFileLabels(List<FileLabel> fileLabels) {
+        if (null == fileLabels || fileLabels.isEmpty()) {
+            return null;
+        }
+
+        List<FileLabel> result = new ArrayList<>();
+        for (FileLabel fileLabel : fileLabels) {
+            FileLabel local = this.service.getFile(fileLabel.getDomain().getName(), fileLabel.getFileCode());
+            if (null != local) {
+                // 判断文件类型
+                if (local.getFileType() == FileType.JPEG ||
+                        local.getFileType() == FileType.PNG ||
+                        local.getFileType() == FileType.BMP) {
+                    result.add(local);
+                }
+            }
+        }
+
+        return (result.isEmpty()) ? null : result;
+    }
+
+    private ConversationSubtask matchSubtask(String query) {
+        final List<QuestionAnswer> list = new ArrayList<>();
+
+        // 尝试匹配子任务
+        boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
+            @Override
+            public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
+                list.addAll(questionAnswers);
+                synchronized (list) {
+                    list.notify();
+                }
+            }
+
+            @Override
+            public void onFailed(String query, AIGCStateCode stateCode) {
+                synchronized (list) {
+                    list.notify();
+                }
+            }
+        });
+
+        if (success) {
+            synchronized (list) {
+                try {
+                    list.wait(30 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        for (QuestionAnswer questionAnswer : list) {
+            if (questionAnswer.getScore() < 0.8) {
+                // 跳过得分低的问答
+                continue;
+            }
+            List<String> answers = questionAnswer.getAnswers();
+            for (String answer : answers) {
+                ConversationSubtask subtask = ConversationSubtask.extract(answer);
+                if (ConversationSubtask.Unknown != subtask) {
+                    return subtask;
+                }
+            }
+        }
+
+        return ConversationSubtask.Unknown;
+    }
+
+    private Attribute extractAttribute(String query) {
+        int age = 0;
+        String gender = "";
+
+        List<String> words = this.service.segmentation(query);
+        int ageIndex = -1;
+        int genderIndex = -1;
+        for (int i = 0; i < words.size(); ++i) {
+            String word = words.get(i);
+            if (Consts.contains(word, Consts.AGE_SYNONYMS)) {
+                ageIndex = i;
+            }
+            else if (Consts.contains(word, Consts.GENDER_SYNONYMS)) {
+                genderIndex = i;
+            }
+        }
+
+        if (ageIndex >= 0) {
+            int start = Math.max(0, ageIndex - 2);
+            for (int i = start; i < words.size(); ++i) {
+                String word = words.get(i);
+                word = word.trim();
+                if (TextUtils.isNumeric(word)) {
+                    try {
+                        age = Integer.parseInt(word);
+                        break;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        else {
+            for (int i = words.size() - 1; i >= 0; --i) {
+                String word = words.get(i);
+                word = word.trim();
+                if (TextUtils.isNumeric(word)) {
+                    try {
+                        int value = Integer.parseInt(word);
+                        if (value >= Attribute.MIN_AGE && value <= Attribute.MAX_AGE) {
+                            age = value;
+                            break;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        if (genderIndex >= 0) {
+            int start = Math.max(0, genderIndex - 2);
+            for (int i = start; i < words.size(); ++i) {
+                String word = words.get(i);
+                word = word.trim();
+                if (word.equals("男") || word.equalsIgnoreCase("male")) {
+                    gender = "male";
+                    break;
+                }
+                else if (word.equals("女") || word.equalsIgnoreCase("female")) {
+                    gender = "female";
+                    break;
+                }
+            }
+        }
+        else {
+            for (String word : words) {
+                if (word.equals("男") || word.equalsIgnoreCase("male")) {
+                    gender = "male";
+                    break;
+                }
+                else if (word.equals("女") || word.equalsIgnoreCase("female")) {
+                    gender = "female";
+                    break;
+                }
+            }
+        }
+
+        return new Attribute(gender, age, false);
     }
 }

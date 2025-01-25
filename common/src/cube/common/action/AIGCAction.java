@@ -447,11 +447,6 @@ public enum AIGCAction {
     GetPsychologyPainting("getPsychologyPainting"),
 
     /**
-     * 获取心理学绘画数据描述内容。
-     */
-    GetPsychologyPaintingDesc("getPsychologyPaintingDesc"),
-
-    /**
      * 获取绘画标注。
      */
     GetPaintingLabel("getPaintingLabel"),
