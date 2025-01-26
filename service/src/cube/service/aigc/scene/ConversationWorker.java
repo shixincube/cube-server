@@ -1,7 +1,7 @@
 /*
  * This source file is part of Cube.
  *
- * Copyright (c) 2020-2025 Ambrose Xu.
+ * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
 package cube.service.aigc.scene;
@@ -10,6 +10,9 @@ import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.Theme;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationSubtask;
 import cube.aigc.psychology.composition.ReportRelation;
@@ -208,7 +211,58 @@ public class ConversationWorker {
                 }
             }
 
-//            PsychologyScene.getInstance().generatePredictingReport(channel, convCtx.getCurrentAttribute());
+            PaintingReport report = PsychologyScene.getInstance().generatePredictingReport(channel, convCtx.getCurrentAttribute(),
+                    convCtx.getCurrentFile(), Theme.Generic, 5, new PaintingReportListener() {
+                        @Override
+                        public void onPaintingPredicting(PaintingReport report, FileLabel file) {
+
+                        }
+
+                        @Override
+                        public void onPaintingPredictCompleted(PaintingReport report, FileLabel file, Painting painting) {
+
+                        }
+
+                        @Override
+                        public void onPaintingPredictFailed(PaintingReport report) {
+
+                        }
+
+                        @Override
+                        public void onReportEvaluating(PaintingReport report) {
+
+                        }
+
+                        @Override
+                        public void onReportEvaluateCompleted(PaintingReport report) {
+
+                        }
+
+                        @Override
+                        public void onReportEvaluateFailed(PaintingReport report) {
+
+                        }
+                    });
+
+            if (null != report) {
+                // 开始成功报告
+                ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Complex);
+                complexContext.setInferring(true);
+
+
+
+                return AIGCStateCode.Ok;
+            }
+            else {
+                // 生成报告发生错误
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+
+                    }
+                });
+                return AIGCStateCode.Ok;
+            }
         }
         else if (ConversationSubtask.ExplainPainting == subtask) {
 
