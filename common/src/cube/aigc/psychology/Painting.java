@@ -16,6 +16,7 @@ import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.*;
 import cube.aigc.psychology.material.tree.*;
 import cube.common.JSONable;
+import cube.common.entity.FileLabel;
 import cube.vision.BoundingBox;
 import cube.vision.Box;
 import cube.vision.Size;
@@ -28,6 +29,10 @@ import java.util.*;
  * 画面空间元素描述。
  */
 public class Painting implements JSONable {
+
+    public final long timestamp;
+
+    public FileLabel fileLabel;
 
     private PaintingType type;
 
@@ -54,6 +59,7 @@ public class Painting implements JSONable {
     private JSONArray materials;
 
     public Painting(Attribute attribute) {
+        this.timestamp = System.currentTimeMillis();
         this.type = PaintingType.HouseTreePerson;
         this.attribute = attribute;
         this.otherSet = new OtherSet();
@@ -61,6 +67,7 @@ public class Painting implements JSONable {
     }
 
     public Painting(JSONObject json) {
+        this.timestamp = System.currentTimeMillis();
         this.type = json.has("type") ?
                 PaintingType.parse(json.getString("type")) : PaintingType.HouseTreePerson;
         this.elapsed = json.getLong("elapsed");
@@ -99,6 +106,15 @@ public class Painting implements JSONable {
         if (json.has("attribute")) {
             this.attribute = new Attribute(json.getJSONObject("attribute"));
         }
+    }
+
+    public List<Material> getMaterials() {
+        List<Material> materialList = new ArrayList<>();
+        for (int i = 0; i < this.materials.length(); ++i) {
+            Material material = new Material(this.materials.getJSONObject(i));
+            materialList.add(material);
+        }
+        return materialList;
     }
 
     private void parseList(JSONArray array, List targetList) {

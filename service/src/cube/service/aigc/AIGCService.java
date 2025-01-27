@@ -443,6 +443,10 @@ public class AIGCService extends AbstractModule {
         return this.executor;
     }
 
+    public File getWorkingPath() {
+        return this.workingPath;
+    }
+
     public List<AIGCUnit> setupUnit(Contact contact, List<AICapability> capabilities, TalkContext context) {
         List<AIGCUnit> result = new ArrayList<>(capabilities.size());
 
@@ -2307,6 +2311,23 @@ public class AIGCService extends AbstractModule {
         }
 
         return new FileLabel(fileLabelJson);
+    }
+
+    public File loadFile(String domain, String fileCode) {
+        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        if (null == fileStorage) {
+            Logger.e(this.getClass(), "#loadFile - File storage service is not ready");
+            return null;
+        }
+
+        LoadFile loadFile = new LoadFile(domain, fileCode);
+        try {
+            String path = fileStorage.notify(loadFile);
+            return new File(path);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#loadFile - File storage service load failed", e);
+            return null;
+        }
     }
 
     public FileLabel saveAndDeleteFile(AuthToken authToken, String fileCode, File file, String filename) {

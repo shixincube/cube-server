@@ -17,11 +17,13 @@ import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
+import cube.common.notice.LoadFile;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.SemanticSearchListener;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
+import cube.util.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -63,6 +65,11 @@ public class PsychologyScene {
      */
     private Map<Long, Report> reportMap;
 
+    /**
+     * Key：报告序列号。
+     */
+    private Map<Long, Painting> paintingMap;
+
     private PsychologyScene() {
         this.taskQueue = new ConcurrentLinkedQueue<>();
         this.runningTaskQueue = new ConcurrentLinkedQueue<>();
@@ -70,6 +77,7 @@ public class PsychologyScene {
         this.scaleTaskQueue = new ConcurrentLinkedQueue<>();
         this.numRunningScaleTasks = new AtomicInteger(0);
         this.reportMap = new ConcurrentHashMap<>();
+        this.paintingMap = new ConcurrentHashMap<>();
     }
 
     public static PsychologyScene getInstance() {
@@ -338,7 +346,7 @@ public class PsychologyScene {
                     // 加载配置
                     loadConfig();
 
-                    // 绘图预测
+                    // 预测
                     reportTask.listener.onPaintingPredicting(reportTask.report, reportTask.fileLabel);
 
                     Painting painting = processPainting(unit, reportTask.fileLabel);
@@ -364,6 +372,8 @@ public class PsychologyScene {
 
                     // 设置绘画属性
                     painting.setAttribute(reportTask.attribute);
+                    painting.fileLabel = reportTask.fileLabel;
+                    paintingMap.put(reportTask.report.sn, painting);
 
                     // 关联绘画
                     reportTask.report.painting = painting;
@@ -852,11 +862,51 @@ public class PsychologyScene {
     }
 
     public Painting getPainting(long reportSn) {
+        Painting painting = this.paintingMap.get(reportSn);
+        if (null != painting) {
+            return painting;
+        }
         return this.storage.readPainting(reportSn);
     }
 
-    public FileLabel getPredictedPainting(long reportSn) {
-        return null;
+    public FileLabel getPredictedPainting(AuthToken authToken, long reportSn) {
+        Painting painting = this.getPainting(reportSn);
+        if (null == painting) {
+            Logger.w(this.getClass(), "#getPredictedPainting - Can NOT find painting: " + reportSn);
+            return null;
+        }
+
+        if (null == painting.fileLabel) {
+            PaintingReport report = this.getPaintingReport(reportSn);
+            if (null == report) {
+                Logger.w(this.getClass(), "#getPredictedPainting - Can NOT find painting: " + reportSn);
+                return null;
+            }
+            // 设置文件
+            painting.fileLabel = report.getFileLabel();
+        }
+
+        File file = this.aigcService.loadFile(authToken.getDomain(), painting.fileLabel.getFileCode());
+        if (null == file) {
+            Logger.e(this.getClass(), "#getPredictedPainting - Can NOT find painting file: " +
+                    painting.fileLabel.getFileCode());
+            return null;
+        }
+
+        File outputFile = new File(this.aigcService.getWorkingPath(),
+                FileUtils.extractFileName(file.getName()) + "_tmp.jpg");
+        // 绘制预测视图
+        PaintingUtils.drawPredictView(file, painting, outputFile);
+        if (!outputFile.exists()) {
+            Logger.e(this.getClass(), "#getPredictedPainting - Drawing predict picture failed: " +
+                    painting.fileLabel.getFileCode());
+            return null;
+        }
+
+        String filename = reportSn + "_predict.jpg";
+        String tmpFileCode = FileUtils.makeFileCode(reportSn, authToken.getDomain(), filename);
+        FileLabel result = this.aigcService.saveAndDeleteFile(authToken, tmpFileCode, outputFile, filename);
+        return result;
     }
 
     public List<PaintingLabel> getPaintingLabels(long sn) {
@@ -1008,6 +1058,14 @@ public class PsychologyScene {
             Report report = iter.next().getValue();
             if (now - report.timestamp > 72 * 60 * 60 * 1000) {
                 iter.remove();
+            }
+        }
+
+        Iterator<Map.Entry<Long, Painting>> piter = this.paintingMap.entrySet().iterator();
+        while (piter.hasNext()) {
+            Painting painting = piter.next().getValue();
+            if (now - painting.timestamp > 72 * 60 * 60 * 1000) {
+                piter.remove();
             }
         }
     }

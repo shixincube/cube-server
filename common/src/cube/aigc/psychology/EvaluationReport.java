@@ -1,9 +1,7 @@
 /*
  * This source file is part of Cube.
  *
- * The MIT License (MIT)
- *
- * Copyright (c) 2023 - 2025 Ambrose Xu.
+ * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
 package cube.aigc.psychology;

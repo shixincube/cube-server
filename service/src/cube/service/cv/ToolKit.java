@@ -159,7 +159,7 @@ public class ToolKit {
             int newHeight = paper.getWidth();
             // 旋转 90
             AffineTransform affineTransform = new AffineTransform();
-            affineTransform.rotate(Math.toRadians(90), newWidth / 2, newHeight / 2);
+            affineTransform.rotate(Math.toRadians(90), newWidth / 2.0, newHeight / 2.0);
 
             BufferedImage newImage = new BufferedImage(newWidth, newHeight, paper.getType());
             Graphics2D g2d = newImage.createGraphics();
