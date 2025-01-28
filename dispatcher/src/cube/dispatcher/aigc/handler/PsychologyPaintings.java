@@ -7,6 +7,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cube.dispatcher.aigc.Manager;
+import cube.dispatcher.util.FileLabels;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
@@ -39,8 +40,20 @@ public class PsychologyPaintings extends ContextHandler {
 
             try {
                 long sn = Long.parseLong(request.getParameter("sn"));
-                JSONObject result = Manager.getInstance().getPsychologyPainting(token, sn);
+                boolean bbox = (null != request.getParameter("bbox")) ?
+                        Boolean.parseBoolean(request.getParameter("bbox")) : true;
+                boolean vparam = (null != request.getParameter("vparam")) ?
+                        Boolean.parseBoolean(request.getParameter("vparam")) : false;
+                double prob = (null != request.getParameter("prob")) ?
+                        Double.parseDouble(request.getParameter("prob")) : 0.5d;
+                JSONObject result = Manager.getInstance().getPsychologyPainting(token, sn, bbox, vparam, prob);
                 if (null != result) {
+                    if (result.has("fileCode") && result.has("fileURL")) {
+                        FileLabels.reviseFileLabel(result, token,
+                                Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                                Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                    }
+
                     this.respondOk(response, result);
                 }
                 else {

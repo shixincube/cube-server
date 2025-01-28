@@ -16,15 +16,16 @@ public class FileLabels {
 
     public static JSONObject reviseFileLabel(JSONObject json, String token, Endpoint httpEndpoint, Endpoint httpsEndpoint) {
         String fileCode = json.getString("fileCode");
+        String type = json.getString("fileType");
 
         if (json.has("fileURL") && null != httpEndpoint) {
             json.put("fileURL", "http://" + httpEndpoint.toString() + "/filestorage/file/?fc=" +
-                    fileCode + "&token=" + token);
+                    fileCode + "&token=" + token + "&type=" + type.toLowerCase());
         }
 
         if (json.has("fileSecureURL") && null != httpsEndpoint) {
             json.put("fileSecureURL", "https://" + httpsEndpoint.toString() + "/filestorage/file/?fc=" +
-                    fileCode + "&token=" + token);
+                    fileCode + "&token=" + token + "&type=" + type.toLowerCase());
         }
 
         if (json.has("directURL")) {

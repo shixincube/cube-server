@@ -17,6 +17,7 @@ import cube.aigc.psychology.material.person.*;
 import cube.aigc.psychology.material.tree.*;
 import cube.common.JSONable;
 import cube.common.entity.FileLabel;
+import cube.common.entity.Material;
 import cube.vision.BoundingBox;
 import cube.vision.Box;
 import cube.vision.Size;

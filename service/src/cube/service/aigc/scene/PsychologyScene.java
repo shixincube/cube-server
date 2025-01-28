@@ -17,7 +17,6 @@ import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
-import cube.common.notice.LoadFile;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.SemanticSearchListener;
@@ -869,7 +868,8 @@ public class PsychologyScene {
         return this.storage.readPainting(reportSn);
     }
 
-    public FileLabel getPredictedPainting(AuthToken authToken, long reportSn) {
+    public FileLabel getPredictedPainting(AuthToken authToken, long reportSn, boolean bbox, boolean vparam,
+                                          double probability) {
         Painting painting = this.getPainting(reportSn);
         if (null == painting) {
             Logger.w(this.getClass(), "#getPredictedPainting - Can NOT find painting: " + reportSn);
@@ -895,10 +895,18 @@ public class PsychologyScene {
 
         File outputFile = new File(this.aigcService.getWorkingPath(),
                 FileUtils.extractFileName(file.getName()) + "_tmp.jpg");
-        // 绘制预测视图
-        PaintingUtils.drawPredictView(file, painting, outputFile);
+
+        List<Material> materials = new ArrayList<>();
+        for (Material material : painting.getMaterials()) {
+            if (material.prob >= probability) {
+                materials.add(material);
+            }
+        }
+
+        // 绘制预测数据
+        PaintingUtils.drawMaterial(file, materials, bbox, vparam, outputFile);
         if (!outputFile.exists()) {
-            Logger.e(this.getClass(), "#getPredictedPainting - Drawing predict picture failed: " +
+            Logger.e(this.getClass(), "#getPredictedPainting - Drawing picture material box failed: " +
                     painting.fileLabel.getFileCode());
             return null;
         }

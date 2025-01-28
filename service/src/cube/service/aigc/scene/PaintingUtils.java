@@ -7,8 +7,7 @@
 package cube.service.aigc.scene;
 
 import cell.util.log.Logger;
-import cube.aigc.psychology.Painting;
-import cube.aigc.psychology.material.Material;
+import cube.common.entity.Material;
 import cube.vision.Color;
 
 import javax.imageio.ImageIO;
@@ -17,13 +16,14 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.io.File;
+import java.util.List;
 
 public class PaintingUtils {
 
     public final static Color[] ColorPalette = new Color[] {
             new Color(4, 42, 255),
             new Color(11, 219, 235),
-            new Color(243, 243, 243),
+            new Color(102, 178, 255),
             new Color(0, 223, 183),
             new Color(17, 31, 104),
             new Color(255, 111, 221),
@@ -45,10 +45,21 @@ public class PaintingUtils {
 
     private static int ColorIndex = 0;
 
+    private static Font DefaultFont = null;
+
+    static {
+        try {
+//            DefaultFont = Font.createFont(Font.TRUETYPE_FONT, new File("assets/SIMHEI.TTF"));
+            DefaultFont = new Font("Courier", Font.PLAIN, 20);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private PaintingUtils() {
     }
 
-    public static void drawPredictView(File rawFile, Painting painting, File outputFile) {
+    public static void drawMaterial(File rawFile, List<Material> materials, boolean bbox, boolean vparam, File outputFile) {
         try {
             BufferedImage image = ImageIO.read(rawFile);
 
@@ -59,20 +70,32 @@ public class PaintingUtils {
             // 设定图像大小
             image = resizeToDefault(image);
 
+            int fontSize = 16;
+
             Graphics2D g2d = image.createGraphics();
-            Stroke stroke = new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+            Stroke stroke = new BasicStroke(3.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
             g2d.setStroke(stroke);
 
-            for (Material material : painting.getMaterials()) {
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2d.setFont(DefaultFont.deriveFont(Font.PLAIN, fontSize));
+
+            for (Material material : materials) {
                 g2d.setColor(peekColor());
-                g2d.drawRect(material.boundingBox.x, material.boundingBox.y,
-                        material.boundingBox.width, material.boundingBox.height);
+
+                if (bbox) {
+                    g2d.drawRect(material.boundingBox.x, material.boundingBox.y,
+                            material.boundingBox.width, material.boundingBox.height);
+                }
+
+                if (vparam) {
+                    drawVisionParam(g2d, material, fontSize);
+                }
             }
             g2d.dispose();
 
             ImageIO.write(image, "JPEG", outputFile);
         } catch (Exception e) {
-            Logger.e(PaintingUtils.class, "#drawPredictView", e);
+            Logger.e(PaintingUtils.class, "#drawMaterialBox", e);
         }
     }
 
@@ -84,6 +107,18 @@ public class PaintingUtils {
             ColorIndex = 0;
         }
         return color;
+    }
+
+    private static void drawVisionParam(Graphics2D g2d, Material material, int fontSize) {
+        int x = material.boundingBox.x;
+        int y = material.boundingBox.y;
+        int xOffset = 4;
+        int yOffset = 4 + fontSize;
+
+        g2d.drawString(String.format("T-Max: %.2f", material.texture.max), x + xOffset, y + yOffset);
+        g2d.drawString(String.format("T-Avg: %.2f", material.texture.avg), x + xOffset, y + yOffset * 2);
+        g2d.drawString(String.format("Hierarchy: %.2f", material.texture.hierarchy), x + xOffset, y + yOffset * 3);
+        g2d.drawString(String.format("Density: %.2f", material.texture.density), x + xOffset, y + yOffset * 4);
     }
 
     public static BufferedImage rotateToLandscape(BufferedImage image) {

@@ -9,6 +9,7 @@ package cube.aigc.psychology;
 import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.BigFiveFactor;
+import cube.common.entity.Material;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -33,6 +34,10 @@ public class EvaluationFeature {
 
     public void addFeature(String description, Term term, Tendency tendency) {
         this.features.add(new Feature(description, term, tendency));
+    }
+
+    public void addFeature(String description, Term term, Tendency tendency, Material[] materials) {
+
     }
 
     public List<Feature> getFeatures() {
@@ -105,6 +110,8 @@ public class EvaluationFeature {
         public Term term;
 
         public Tendency tendency;
+
+        public Material[] sources;
 
         public Feature(String description, Term term, Tendency tendency) {
             this.description = description;

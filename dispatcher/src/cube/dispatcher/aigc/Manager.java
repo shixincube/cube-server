@@ -2255,9 +2255,12 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public JSONObject getPsychologyPainting(String token, long reportSn) {
+    public JSONObject getPsychologyPainting(String token, long reportSn, boolean bbox, boolean vparam, double prob) {
         JSONObject data = new JSONObject();
         data.put("sn", reportSn);
+        data.put("bbox", bbox);
+        data.put("vparam", vparam);
+        data.put("prob", prob);
         Packet packet = new Packet(AIGCAction.GetPsychologyPainting.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);

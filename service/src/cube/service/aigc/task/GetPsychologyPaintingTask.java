@@ -12,8 +12,10 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.psychology.Painting;
+import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -44,7 +46,8 @@ public class GetPsychologyPaintingTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        if (null == service.getToken(token)) {
+        AuthToken authToken = service.getToken(token);
+        if (null == authToken) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, new JSONObject()));
             markResponseTime();
@@ -52,13 +55,16 @@ public class GetPsychologyPaintingTask extends ServiceTask {
         }
 
         try {
-            Painting painting = null;
-            long sn = packet.data.has("sn") ? packet.data.getLong("sn") : 0;
-            painting = PsychologyScene.getInstance().getPainting(sn);
 
-            if (null != painting) {
+            long sn = packet.data.has("sn") ? packet.data.getLong("sn") : 0;
+            boolean bbox = packet.data.has("bbox") ? packet.data.getBoolean("bbox") : true;
+            boolean vparam = packet.data.has("vparam") ? packet.data.getBoolean("vparam") : false;
+            double prob = packet.data.has("prob") ? packet.data.getDouble("prob") : 0.5d;
+
+            FileLabel fileLabel = PsychologyScene.getInstance().getPredictedPainting(authToken, sn, bbox, vparam, prob);
+            if (null != fileLabel) {
                 this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, painting.toCompactJSON()));
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, fileLabel.toCompactJSON()));
                 markResponseTime();
             }
             else {
