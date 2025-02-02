@@ -25,12 +25,19 @@ public abstract class Thing extends Material {
      */
     protected boolean backwardReasoning = false;
 
+    public Thing(Thing other) {
+        super(other);
+        this.paintingLabel = other.paintingLabel;
+        this.backwardReasoning = other.backwardReasoning;
+    }
+
     public Thing(String label, BoundingBox boundingBox, Box box) {
         super(label, boundingBox, box);
         this.paintingLabel = Label.parse(this.label);
     }
 
     public Thing(Label paintingLabel) {
+        super(paintingLabel.name);
         this.paintingLabel = paintingLabel;
     }
 

@@ -116,9 +116,9 @@ public enum Indicator {
     SocialAdaptability("社会适应性", "SocialAdaptability", 51),
 
     /**
-     * 奋斗。
+     * 进取性。
      */
-    Struggle("奋斗", "Struggle", 50),
+    Struggle("进取性", "Struggle", 50),
 
     /**
      * 自恋。

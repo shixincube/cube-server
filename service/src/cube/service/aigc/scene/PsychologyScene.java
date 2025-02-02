@@ -11,7 +11,10 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
+import cube.aigc.psychology.algorithm.PerceptronThing;
+import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.material.Label;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.Packet;
@@ -384,9 +387,13 @@ public class PsychologyScene {
                     reportTask.listener.onReportEvaluating(reportTask.report);
 
                     // 根据图像推理报告
-                    Workflow workflow = processReport(reportTask.channel, painting, reportTask.theme, unit,
-                            reportTask.maxIndicatorTexts);
+                    Workflow workflow = processReport(reportTask.channel, painting, unit);
 
+                    // 修改状态
+                    reportTask.report.setState(AIGCStateCode.Inferencing);
+
+                    // 执行工作流，制作报告数据
+                    workflow = workflow.make(reportTask.theme, reportTask.maxIndicatorTexts);
                     if (null == workflow) {
                         // 推理生成报告失败
                         Logger.w(PsychologyScene.class, "#generatePredictingReport - onReportEvaluateFailed (IllegalOperation): " +
@@ -917,6 +924,131 @@ public class PsychologyScene {
         return result;
     }
 
+    public JSONObject getPaintingInferenceData(AuthToken authToken, long reportSn) {
+        PaintingReport report = this.getPaintingReport(reportSn);
+        if (report.getState() == AIGCStateCode.Ok || report.getState() == AIGCStateCode.Inferencing) {
+            JSONObject result = new JSONObject();
+            JSONArray nodes = new JSONArray();
+            JSONArray links = new JSONArray();
+
+            List<String> houseCompNodeNames = new ArrayList<>();
+            List<String> treeCompNodeNames = new ArrayList<>();
+            List<String> personCompNodeNames = new ArrayList<>();
+            List<String> otherCompNodeNames = new ArrayList<>();
+            List<String> otherNodeNames = new ArrayList<>();
+
+            EvaluationReport evaluationReport = report.getEvaluationReport();
+            List<Representation> list = evaluationReport.getRepresentationList();
+            for (Representation rep : list) {
+                JSONObject node = new JSONObject();
+                node.put("name", rep.knowledgeStrategy.getTerm().word);
+                nodes.put(node);
+
+                for (PerceptronThing thing : rep.things) {
+                    Label label = thing.getLabel();
+                    String name = thing.getName();
+
+                    if (houseCompNodeNames.contains(name) ||
+                            treeCompNodeNames.contains(name) ||
+                            personCompNodeNames.contains(name) ||
+                            otherCompNodeNames.contains(name) ||
+                            otherNodeNames.contains(name)) {
+                        continue;
+                    }
+
+                    if (Label.isHouseComponent(label)) {
+                        houseCompNodeNames.add(name);
+                    }
+                    else if (Label.isTreeComponent(label)) {
+                        treeCompNodeNames.add(name);
+                    }
+                    else if (Label.isPersonComponent(label)) {
+                        personCompNodeNames.add(name);
+                    }
+                    else if (Label.isOther(label)) {
+                        otherCompNodeNames.add(name);
+                    }
+                    else {
+                        otherNodeNames.add(name);
+                    }
+
+                    node = new JSONObject();
+                    node.put("name", name);
+                    nodes.put(node);
+                }
+            }
+
+            for (Representation rep : list) {
+                int value = rep.positiveCorrelation - rep.negativeCorrelation;
+                value = (value <= 0) ? 1 : value + 1;
+                for (PerceptronThing thing : rep.things) {
+                    String name = thing.getName();
+                    JSONObject link = new JSONObject();
+                    link.put("source", name);
+                    link.put("target", rep.knowledgeStrategy.getTerm().word);
+                    link.put("value", value);
+                    links.put(link);
+                }
+            }
+
+            // 组件关系
+            for (Representation rep : list) {
+                for (PerceptronThing thing : rep.things) {
+                    Label label = thing.getLabel();
+                    String name = thing.getName();
+                    if (Label.isHouse(label)) {
+                        for (String comp : houseCompNodeNames) {
+                            JSONObject link = new JSONObject();
+                            link.put("source", comp);
+                            link.put("target", name);
+                            link.put("value", 3);
+                            links.put(link);
+                        }
+                    }
+                    else if (Label.isTree(label)) {
+                        for (String comp : treeCompNodeNames) {
+                            JSONObject link = new JSONObject();
+                            link.put("source", comp);
+                            link.put("target", name);
+                            link.put("value", 4);
+                            links.put(link);
+                        }
+                    }
+                    else if (Label.isPerson(label)) {
+                        for (String comp : personCompNodeNames) {
+                            JSONObject link = new JSONObject();
+                            link.put("source", comp);
+                            link.put("target", name);
+                            link.put("value", 5);
+                            links.put(link);
+                        }
+                    }
+                }
+            }
+
+            // 子集关系
+            for (Representation rep : list) {
+                for (PerceptronThing thing : rep.things) {
+                    if (thing.hasChildren()) {
+                        for (PerceptronThing child : thing.getChildren()) {
+                            JSONObject link = new JSONObject();
+                            link.put("source", child.getName());
+                            link.put("target", thing.getName());
+                            link.put("value", thing.getValue());
+                            links.put(link);
+                        }
+                    }
+                }
+            }
+
+            result.put("nodes", nodes);
+            result.put("links", links);
+            return result;
+        }
+
+        return null;
+    }
+
     public List<PaintingLabel> getPaintingLabels(long sn) {
         return this.storage.readPaintingLabels(sn);
     }
@@ -961,8 +1093,7 @@ public class PsychologyScene {
         }
     }
 
-    private Workflow processReport(AIGCChannel channel, Painting painting, Theme theme, AIGCUnit unit,
-                                   int maxIndicatorText) {
+    private Workflow processReport(AIGCChannel channel, Painting painting, AIGCUnit unit) {
         HTPEvaluation evaluation = (null == painting) ?
                 new HTPEvaluation(new Attribute("male", 28, false)) : new HTPEvaluation(painting);
 
@@ -1008,8 +1139,7 @@ public class PsychologyScene {
             Logger.w(this.getClass(), "#processReport - Predict factor unit error");
         }
 
-        // 制作报告
-        return workflow.make(theme, maxIndicatorText);
+        return workflow;
     }
 
     private AIGCStateCode processScaleReport(ScaleReportTask task) {

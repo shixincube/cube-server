@@ -206,6 +206,9 @@ public class EvaluationReport implements JSONable {
                     this.representationList.add(representation);
                 }
 
+                // 添加关联的 Thing 实体
+                representation.addThings(feature.sources);
+
                 if (feature.tendency == Tendency.Negative) {
                     representation.negativeCorrelation += 1;
                 }

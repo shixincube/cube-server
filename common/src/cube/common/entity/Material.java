@@ -34,8 +34,20 @@ public class Material implements JSONable {
 
     public Texture texture;
 
-    public Material() {
+    public Material(String label) {
         this.sn = Utils.generateSerialNumber();
+        this.label = label;
+    }
+
+    public Material(Material other) {
+        this.sn = other.sn;
+        this.label = other.label;
+        this.prob = other.prob;
+        this.boundingBox = other.boundingBox;
+        this.box = other.box;
+        this.area = other.area;
+        this.color = other.color;
+        this.texture = other.texture;
     }
 
     public Material(String label, BoundingBox boundingBox, Box box) {

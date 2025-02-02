@@ -6,9 +6,12 @@
 
 package cube.aigc.psychology.algorithm;
 
+import cube.aigc.psychology.material.Thing;
 import cube.common.JSONable;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,8 +31,11 @@ public class Representation implements JSONable {
 
     public String description = "";
 
+    public List<PerceptronThing> things;
+
     public Representation(KnowledgeStrategy knowledgeStrategy) {
         this.knowledgeStrategy = knowledgeStrategy;
+        this.things = new ArrayList<>();
     }
 
     public Representation(JSONObject json) {
@@ -37,6 +43,24 @@ public class Representation implements JSONable {
         this.positiveCorrelation = json.getInt("positiveCorrelation");
         this.negativeCorrelation = json.getInt("negativeCorrelation");
         this.description = json.getString("description");
+        this.things = new ArrayList<>();
+        if (json.has("things")) {
+            JSONArray thingArray = json.getJSONArray("things");
+            for (int i = 0; i < thingArray.length(); ++i) {
+                PerceptronThing thing = new PerceptronThing(thingArray.getJSONObject(i));
+                this.things.add(thing);
+            }
+        }
+    }
+
+    public void addThings(Thing[] things) {
+        if (null == things || things.length == 0) {
+            return;
+        }
+        for (Thing thing : things) {
+            PerceptronThing pt = new PerceptronThing(thing);
+            this.things.add(pt);
+        }
     }
 
     public void makeDescription() {
@@ -83,6 +107,11 @@ public class Representation implements JSONable {
         json.put("positiveCorrelation", this.positiveCorrelation);
         json.put("negativeCorrelation", this.negativeCorrelation);
         json.put("description", this.description);
+        JSONArray array = new JSONArray();
+        for (PerceptronThing thing : this.things) {
+            array.put(thing.toJSON());
+        }
+        json.put("things", array);
         return json;
     }
 
@@ -93,6 +122,11 @@ public class Representation implements JSONable {
         json.put("positiveCorrelation", this.positiveCorrelation);
         json.put("negativeCorrelation", this.negativeCorrelation);
         json.put("description", this.description);
+        JSONArray array = new JSONArray();
+        for (PerceptronThing thing : this.things) {
+            array.put(thing.toCompactJSON());
+        }
+        json.put("things", array);
         return json;
     }
 }

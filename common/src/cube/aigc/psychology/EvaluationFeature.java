@@ -9,7 +9,7 @@ package cube.aigc.psychology;
 import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.BigFiveFactor;
-import cube.common.entity.Material;
+import cube.aigc.psychology.material.Thing;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -36,8 +36,12 @@ public class EvaluationFeature {
         this.features.add(new Feature(description, term, tendency));
     }
 
-    public void addFeature(String description, Term term, Tendency tendency, Material[] materials) {
+    public void addFeature(String description, Term term, Tendency tendency, Thing thing) {
+        this.features.add(new Feature(description, term, tendency, new Thing[] { thing }));
+    }
 
+    public void addFeature(String description, Term term, Tendency tendency, Thing[] things) {
+        this.features.add(new Feature(description, term, tendency, things));
     }
 
     public List<Feature> getFeatures() {
@@ -111,12 +115,19 @@ public class EvaluationFeature {
 
         public Tendency tendency;
 
-        public Material[] sources;
+        public Thing[] sources;
 
         public Feature(String description, Term term, Tendency tendency) {
             this.description = description;
             this.term = term;
             this.tendency = tendency;
+        }
+
+        public Feature(String description, Term term, Tendency tendency, Thing[] sources) {
+            this.description = description;
+            this.term = term;
+            this.tendency = tendency;
+            this.sources = sources;
         }
     }
 

@@ -312,6 +312,123 @@ public enum Label {
         return Label.Unknown;
     }
 
+    public static boolean isHouse(Label label) {
+        switch (label) {
+            case House:
+            case Bungalow:
+            case Villa:
+            case Building:
+            case Fairyland:
+            case Temple:
+            case Grave:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isHouseComponent(Label label) {
+        switch (label) {
+            case HouseSidewall:
+            case HouseRoof:
+            case HouseRoofTextured:
+            case HouseRoofSkylight:
+            case HouseChimney:
+            case HouseDoor:
+            case HouseDoorOpened:
+            case HouseDoorLocked:
+            case HouseWindow:
+            case HouseWindowOpened:
+            case HouseCurtain:
+            case HouseCurtainOpened:
+            case HouseWindowRailing:
+            case HouseSmoke:
+            case HouseFence:
+            case HousePath:
+            case HouseCurvePath:
+            case HouseCobbledPath:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isTree(Label label) {
+        switch (label) {
+            case Tree:
+            case DeciduousTree:
+            case DeadTree:
+            case PineTree:
+            case WillowTree:
+            case CoconutTree:
+            case Bamboo:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isTreeComponent(Label label) {
+        switch (label) {
+            case TreeTrunk:
+            case TreeBranch:
+            case TreeCanopy:
+            case TreeRoot:
+            case TreeFruit:
+            case TreeHole:
+            case TreeDrooping:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isPerson(Label label) {
+        switch (label) {
+            case Person:
+            case Man:
+            case Woman:
+            case Boy:
+            case Girl:
+            case StickMan:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isPersonComponent(Label label) {
+        switch (label) {
+            case PersonSideFace:
+            case PersonBraid:
+            case PersonHead:
+            case PersonHair:
+            case PersonStraightHair:
+            case PersonShortHair:
+            case PersonCurlyHair:
+            case PersonStandingHair:
+            case PersonCap:
+            case PersonEye:
+            case PersonEyebrow:
+            case PersonNose:
+            case PersonEar:
+            case PersonSkirt:
+            case PersonMouth:
+            case PersonBody:
+            case PersonArm:
+            case PersonPalm:
+            case PersonLeg:
+            case PersonFoot:
+            case PersonMask:
+            case PersonHairAccessories:
+            case PersonItem:
+            case PersonGlasses:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     public static boolean isOther(Label label) {
         switch (label) {
             case Table:

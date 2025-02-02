@@ -19,12 +19,17 @@ public enum AIGCStateCode {
     /**
      * 无效参数。
      */
-    InvalidParameter(5),
+    InvalidParameter(1),
 
     /**
      * 未找到指定数据。
      */
-    NotFound(6),
+    NotFound(3),
+
+    /**
+     * 数据结构错误。
+     */
+    DataStructureError(4),
 
     /**
      * 正在处理数据。
@@ -32,9 +37,9 @@ public enum AIGCStateCode {
     Processing(7),
 
     /**
-     * 数据结构错误。
+     * 推理中。
      */
-    DataStructureError(8),
+    Inferencing(8),
 
     /**
      * 遇到故障。

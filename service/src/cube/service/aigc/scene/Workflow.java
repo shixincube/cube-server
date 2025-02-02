@@ -147,8 +147,8 @@ public class Workflow {
     }
 
     public Workflow make(Theme theme, int maxIndicatorTexts) {
-        int age = this.evaluationReport.getAttribute().age;
-        String gender = this.evaluationReport.getAttribute().gender;
+//        int age = this.evaluationReport.getAttribute().age;
+//        String gender = this.evaluationReport.getAttribute().gender;
 
         // 六维得分计算
         try {

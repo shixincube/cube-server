@@ -55,22 +55,37 @@ public class GetPsychologyPaintingTask extends ServiceTask {
         }
 
         try {
-
             long sn = packet.data.has("sn") ? packet.data.getLong("sn") : 0;
+            boolean chart = packet.data.has("chart") ? packet.data.getBoolean("chart") : false;
             boolean bbox = packet.data.has("bbox") ? packet.data.getBoolean("bbox") : true;
             boolean vparam = packet.data.has("vparam") ? packet.data.getBoolean("vparam") : false;
             double prob = packet.data.has("prob") ? packet.data.getDouble("prob") : 0.5d;
 
-            FileLabel fileLabel = PsychologyScene.getInstance().getPredictedPainting(authToken, sn, bbox, vparam, prob);
-            if (null != fileLabel) {
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, fileLabel.toCompactJSON()));
-                markResponseTime();
+            if (chart) {
+                JSONObject data = PsychologyScene.getInstance().getPaintingInferenceData(authToken, sn);
+                if (null != data) {
+                    this.cellet.speak(this.talkContext,
+                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, data));
+                    markResponseTime();
+                }
+                else {
+                    this.cellet.speak(this.talkContext,
+                            this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                    markResponseTime();
+                }
             }
             else {
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
-                markResponseTime();
+                FileLabel fileLabel = PsychologyScene.getInstance().getPredictedPainting(authToken, sn, bbox, vparam, prob);
+                if (null != fileLabel) {
+                    this.cellet.speak(this.talkContext,
+                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, fileLabel.toCompactJSON()));
+                    markResponseTime();
+                }
+                else {
+                    this.cellet.speak(this.talkContext,
+                            this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                    markResponseTime();
+                }
             }
         } catch (Exception e) {
             Logger.w(this.getClass(), "#run", e);

@@ -28,6 +28,7 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.PerformerListener;
+import cube.dispatcher.aigc.handler.Chart;
 import cube.dispatcher.aigc.handler.Conversation;
 import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.aigc.handler.app.App;
@@ -145,8 +146,8 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new QueryAppEvents());
         httpServer.addContextHandler(new QueryUsages());
         httpServer.addContextHandler(new ChatHistory());
+        httpServer.addContextHandler(new Chart());
         httpServer.addContextHandler(new PublicOpinionData());
-//        httpServer.addContextHandler(new InferByModule());
         httpServer.addContextHandler(new PreInfer());
         httpServer.addContextHandler(new TextToFile());
 
@@ -2274,6 +2275,29 @@ public class Manager implements Tickable, PerformerListener {
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.w(this.getClass(), "#getPsychologyPainting - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject getPsychologyPaintingChart(String token, long reportSn) {
+        JSONObject data = new JSONObject();
+        data.put("sn", reportSn);
+        data.put("chart", true);
+        Packet packet = new Packet(AIGCAction.GetPsychologyPainting.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#getPsychologyPaintingChart - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getPsychologyPaintingChart - Response state is " + Packet.extractCode(responsePacket));
             return null;
         }
 
