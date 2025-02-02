@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ai-XinLi.com</title>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+            background-color: #FFFFFF;
+            overflow: hidden;
+        }
+        .chart-container {
+            padding: 0;
+            margin-top: 10px;
+            width: 100%;
+            height: 100%;
+        }
+        .chart-container div {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="chart-container">
+    <div id="main_chart"></div>
+</div>
+<script type="text/javascript" src="script/echarts.min.js"></script>
+<script type="text/javascript">
+var data = ${data};
+
+var dom = document.getElementById('main_chart');
+
+var fireResize = function() {
+    var width = document.documentElement.clientWidth || document.body.offsetWidth;
+    var height = document.documentElement.clientHeight || document.body.offsetHeight;
+    dom.style.width = parseInt(width) + 'px';
+    dom.style.height = parseInt(height) + 'px';
+    //console.log('WxH: ' + width + ' x ' + height);
+}
+
+fireResize();
+
+var option = {
+    title: {
+        text: 'Painting CoT Diagram',
+        left: 'center',
+        textAlign: 'center'
+    },
+    tooltip: {
+        trigger: 'item',
+        triggerOn: 'mouseover'
+    },
+    series: [
+        {
+            type: 'sankey',
+            data: data.nodes,
+            links: data.links,
+            emphasis: {
+                focus: 'adjacency'
+            },
+            lineStyle: {
+                color: 'gradient',
+                curveness: 0.5
+            }
+        }
+    ]
+};
+
+var chart = echarts.init(dom);
+chart.setOption(option);
+
+window.addEventListener('resize', chart.resize);
+window.addEventListener('resize', fireResize);
+</script>
+</body>
