@@ -9,13 +9,12 @@ package cube.service.aigc.scene;
 import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.Painting;
-import cube.aigc.psychology.PaintingReport;
-import cube.aigc.psychology.Theme;
-import cube.aigc.psychology.composition.ConversationContext;
-import cube.aigc.psychology.composition.ConversationSubtask;
-import cube.aigc.psychology.composition.ReportRelation;
+import cube.aigc.attachment.Attachment;
+import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.Attention;
+import cube.aigc.psychology.algorithm.BigFivePersonality;
+import cube.aigc.psychology.algorithm.PersonalityAccelerator;
+import cube.aigc.psychology.composition.*;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
@@ -37,6 +36,10 @@ public class ConversationWorker {
     private final static String ANSWER_NEED_TO_PROVIDE_GENDER = "我已经知道了这幅画的被测人的年龄，还需要您告知这位被测人的**性别**。";
 
     private final static String ANSWER_NEED_TO_PROVIDE_AGE = "我已经知道了这幅画的被测人的性别，还需要您告知这位被测人的**年龄**。";
+
+    private final static String ANSWER_FAILED = "我遇到了一些问题，请稍候再试。";
+
+    private final static String FORMAT_ANSWER_GENERATING = "正在为被测人生成报告，该被测人为%s性，年龄是%s。报告生成需要数分钟，请稍候……";
 
     private String unitName = ModelConfig.INFINITE_UNIT;
 
@@ -121,6 +124,8 @@ public class ConversationWorker {
         }
 
         if (ConversationSubtask.PredictPainting == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - PredictPainting: " + token + "/" + channel.getCode());
+
             // 执行预测
             if (null == convCtx.getCurrentFile()) {
                 // 获取文件
@@ -143,6 +148,16 @@ public class ConversationWorker {
                         }
                     });
                     return AIGCStateCode.Ok;
+                }
+            }
+            else {
+                // 更新文件
+                if (null != context.queryFileLabels) {
+                    // 判断文件是否存在
+                    List<FileLabel> fileList = this.checkFileLabels(context.queryFileLabels);
+                    if (null != fileList) {
+                        convCtx.setCurrentFile(fileList.get(0));
+                    }
                 }
             }
 
@@ -211,46 +226,79 @@ public class ConversationWorker {
                 }
             }
 
+            final ConversationContext constConvCtx = convCtx;
             PaintingReport report = PsychologyScene.getInstance().generatePredictingReport(channel, convCtx.getCurrentAttribute(),
                     convCtx.getCurrentFile(), Theme.Generic, 5, new PaintingReportListener() {
                         @Override
                         public void onPaintingPredicting(PaintingReport report, FileLabel file) {
-
+                            Logger.d(this.getClass(), "#onPaintingPredicting");
                         }
 
                         @Override
                         public void onPaintingPredictCompleted(PaintingReport report, FileLabel file, Painting painting) {
-
+                            Logger.d(this.getClass(), "#onPaintingPredictCompleted");
                         }
 
                         @Override
                         public void onPaintingPredictFailed(PaintingReport report) {
-
+                            GeneratingRecord record = constConvCtx.getRecent();
+                            if (null != record.context) {
+                                record.context.setInferring(false);
+                            }
                         }
 
                         @Override
                         public void onReportEvaluating(PaintingReport report) {
-
+                            Logger.d(this.getClass(), "#onReportEvaluating");
                         }
 
                         @Override
                         public void onReportEvaluateCompleted(PaintingReport report) {
-
+                            Logger.d(this.getClass(), "#onReportEvaluateCompleted - Clear current subtask");
+                            GeneratingRecord record = constConvCtx.getRecent();
+                            if (null != record.context) {
+                                record.context.setInferring(false);
+                            }
+                            record.answer = makeMarkdown(report);
+                            constConvCtx.clearCurrent();
                         }
 
                         @Override
                         public void onReportEvaluateFailed(PaintingReport report) {
-
+                            Logger.d(this.getClass(), "#onReportEvaluateFailed - Clear current subtask");
+                            GeneratingRecord record = constConvCtx.getRecent();
+                            if (null != record.context) {
+                                record.context.setInferring(false);
+                            }
+                            record.answer = ANSWER_FAILED;
+                            constConvCtx.clearCurrent();
                         }
                     });
 
             if (null != report) {
                 // 开始成功报告
+                final GeneratingRecord record = new GeneratingRecord(query, convCtx.getCurrentFile());
+
+                Attachment attachment = new ReportAttachment(report.sn);
+                AttachmentResource resource = new AttachmentResource(attachment);
+
                 ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Complex);
                 complexContext.setInferring(true);
+                complexContext.addResource(resource);
 
+                record.context = complexContext;
+                // 记录
+                convCtx.record(record);
 
-
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        record.answer = String.format(FORMAT_ANSWER_GENERATING,
+                                constConvCtx.getCurrentAttribute().getGenderText(),
+                                constConvCtx.getCurrentAttribute().getAgeText());
+                        listener.onGenerated(channel, record);
+                    }
+                });
                 return AIGCStateCode.Ok;
             }
             else {
@@ -258,7 +306,9 @@ public class ConversationWorker {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-
+                        GeneratingRecord record = new GeneratingRecord(query, constConvCtx.getCurrentFile());
+                        record.answer = ANSWER_FAILED;
+                        listener.onGenerated(channel, record);
                     }
                 });
                 return AIGCStateCode.Ok;
@@ -266,6 +316,10 @@ public class ConversationWorker {
         }
         else if (ConversationSubtask.ExplainPainting == subtask) {
 
+        }
+        else {
+            Logger.d(this.getClass(), "#work - General conversation");
+            convCtx.clearCurrent();
         }
 
         // 获取单元
@@ -279,7 +333,7 @@ public class ConversationWorker {
             }
         }
 
-        String prompt = PsychologyScene.getInstance().buildPrompt(context, query);
+        String prompt = PsychologyScene.getInstance().buildPrompt(convCtx, query);
         if (null == prompt) {
             Logger.e(this.getClass(), "#work - Builds prompt failed");
             return AIGCStateCode.NoData;
@@ -439,5 +493,81 @@ public class ConversationWorker {
         }
 
         return new Attribute(gender, age, false);
+    }
+
+    private String makeMarkdown(PaintingReport report) {
+        StringBuilder buf = new StringBuilder();
+        if (report.isNull()) {
+            buf.append("根据您提供的绘画文件，我没有发现有效的心理投射内容，建议您检查一下图片文件内容。");
+            return buf.toString();
+        }
+
+        EvaluationReport evalReport = report.getEvaluationReport();
+        buf.append("根据您提供的绘画图片，");
+        if (evalReport.isHesitating()) {
+            buf.append("我发现画面内容并不容易被识别。");
+        }
+        else {
+            buf.append("我已经按照心理学绘画投射理论进行了解读。");
+        }
+        buf.append("这位**").append(report.getAttribute().getAgeText()).append("**的**")
+                .append(report.getAttribute().getGenderText()).append("性**")
+                .append("被测人，");
+        buf.append("在这幅绘画中投射出了").append(evalReport.numRepresentations()).append("个心理表征，");
+        buf.append("相关的评测报告内容如下：\n\n");
+
+        buf.append("# 概述\n\n");
+        buf.append(report.getSummary()).append("\n\n");
+
+        if (evalReport.numEvaluationScores() > 0) {
+            buf.append("# 指标数据\n\n");
+            for (EvaluationScore score : evalReport.getEvaluationScores()) {
+                ReportSection section = report.getReportSection(score.indicator);
+                if (null == section) {
+                    continue;
+                }
+
+                buf.append("## ").append(section.title).append("\n\n");
+                buf.append("* **评级** ：").append(score.rate.value).append("级 （").append(score.rate.displayName).append("）\n\n");
+                buf.append("**【描述】**\n\n").append(section.report).append("\n\n");
+                buf.append("**【建议】**\n\n").append(section.suggestion).append("\n\n");
+            }
+            buf.append("\n");
+        }
+
+        PersonalityAccelerator personality = evalReport.getPersonalityAccelerator();
+        if (null != personality) {
+            BigFivePersonality bigFivePersonality = personality.getBigFivePersonality();
+            buf.append("# 大五人格\n\n");
+            buf.append("**【人格画像】** ：**").append(bigFivePersonality.getDisplayName()).append("**。\n\n");
+            buf.append("**【人格描述】** ：\n\n").append(bigFivePersonality.getDescription()).append("\n\n");
+            buf.append("**【维度描述】** ：\n\n");
+            buf.append("* **宜人性**（").append(bigFivePersonality.getObligingness()).append("）\n");
+            buf.append(bigFivePersonality.getObligingnessContent()).append("\n\n");
+            buf.append("* **尽责性**（").append(bigFivePersonality.getConscientiousness()).append("）\n");
+            buf.append(bigFivePersonality.getConscientiousnessContent()).append("\n\n");
+            buf.append("* **外向性**（").append(bigFivePersonality.getExtraversion()).append("）\n");
+            buf.append(bigFivePersonality.getExtraversionContent()).append("\n\n");
+            buf.append("* **进取性**（").append(bigFivePersonality.getAchievement()).append("）\n");
+            buf.append(bigFivePersonality.getAchievementContent()).append("\n\n");
+            buf.append("* **情绪性**（").append(bigFivePersonality.getNeuroticism()).append("）\n");
+            buf.append(bigFivePersonality.getNeuroticismContent()).append("\n\n");
+        }
+
+        buf.append("综上所述，通过各项评测描述可以帮助被测人对自身有一个清晰、客观、全面的认识，从而进行科学、有效的管理。通过对自身的心理状态、人格特质等方面的了解，认识到更多的可能性，从而对生活和工作方向提供参考。");
+        if (evalReport.getAttention().level <= Attention.GeneralAttention.level && !evalReport.isHesitating()) {
+            buf.append("被测人目前的心理状态尚可，应当积极保持良好的作息和积极的生活、工作习惯。遇到困难积极应对。");
+        }
+        else {
+            buf.append("被测人应当关注自己最近的心理状态变化，如果有需要应当积极需求帮助。");
+        }
+        buf.append("\n\n");
+
+        buf.append("需要注意的是：\n\n");
+        buf.append("1. **不要将测试结果当作永久的“标签”。**测试的结果仅仅是根据最近一周或者近期的感觉，其结果也只是表明短期内的心理健康状态，是可以调整变化的，不必产生心理负担。\n\n");
+        buf.append("2. **报告结果没有“好”与“坏”之分。**报告结果与个人道德品质无关，只反映你目前的心理状态，但不同的特点对于不同的工作、生活状态会存在“合适”和“不合适”的区别，从而表现出具体条件的优势和劣势。\n\n");
+        buf.append("3. **以整体的观点来看待测试结果。**很多测验都包含多个分测验，对于这类测验来说，不应该孤立地理解单个分测验的成绩。在评定一个人的特征时，一方面需要理解每一个分测验分数的意义，但更重要的是综合所有信息全面分析。\n\n");
+
+        return buf.toString();
     }
 }

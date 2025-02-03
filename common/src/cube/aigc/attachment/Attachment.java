@@ -24,6 +24,11 @@ public abstract class Attachment implements JSONable {
         this.type = type;
     }
 
+    public Attachment(String type, long id) {
+        this.id = id;
+        this.type = type;
+    }
+
     public Attachment(JSONObject json) {
         this.id = json.getLong("id");
         this.type = json.getString("type");

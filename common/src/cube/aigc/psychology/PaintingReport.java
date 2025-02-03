@@ -45,7 +45,7 @@ public class PaintingReport extends Report {
 
     private HexagonDimensionScore normDimensionScore;
 
-    private List<ReportSection> reportTextList;
+    private List<ReportSection> reportSectionList;
 
     private MandalaFlower mandalaFlower;
 
@@ -106,11 +106,11 @@ public class PaintingReport extends Report {
         }
 
         if (json.has("reportTextList")) {
-            this.reportTextList = new ArrayList<>();
+            this.reportSectionList = new ArrayList<>();
             JSONArray array = json.getJSONArray("reportTextList");
             for (int i = 0; i < array.length(); ++i) {
                 ReportSection rs = new ReportSection(array.getJSONObject(i));
-                this.reportTextList.add(rs);
+                this.reportSectionList.add(rs);
             }
         }
 
@@ -136,13 +136,26 @@ public class PaintingReport extends Report {
         return this.dimensionScore;
     }
 
-    public void setReportTextList(List<ReportSection> textList) {
-        this.reportTextList = new ArrayList<>();
-        this.reportTextList.addAll(textList);
+    public void setReportTextList(List<ReportSection> sectionList) {
+        this.reportSectionList = new ArrayList<>();
+        this.reportSectionList.addAll(sectionList);
     }
 
     public List<ReportSection> getReportTextList() {
-        return this.reportTextList;
+        return this.reportSectionList;
+    }
+
+    public ReportSection getReportSection(Indicator indicator) {
+        if (null == this.reportSectionList) {
+            return null;
+        }
+
+        for (ReportSection section : this.reportSectionList) {
+            if (section.indicator == indicator) {
+                return section;
+            }
+        }
+        return null;
     }
 
     public Theme getTheme() {
@@ -334,10 +347,10 @@ public class PaintingReport extends Report {
 //            buf.append("\n\n");
         }
 
-        if (null != this.reportTextList) {
+        if (null != this.reportSectionList) {
             buf.append("## 报告文本");
             buf.append("\n\n");
-            for (ReportSection rs : this.reportTextList) {
+            for (ReportSection rs : this.reportSectionList) {
                 buf.append("\n");
                 buf.append("**").append(rs.title).append("** \n\n");
                 buf.append("**报告**：\n\n").append(rs.report).append("\n\n");
@@ -377,9 +390,9 @@ public class PaintingReport extends Report {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
 
-        if (null != this.reportTextList) {
+        if (null != this.reportSectionList) {
             JSONArray jsonArray = new JSONArray();
-            for (ReportSection rs : this.reportTextList) {
+            for (ReportSection rs : this.reportSectionList) {
                 jsonArray.put(rs.toJSON());
             }
             json.put("reportTextList", jsonArray);
@@ -390,11 +403,11 @@ public class PaintingReport extends Report {
 
     public void extendTextList(JSONObject json) {
         if (json.has("reportTextList")) {
-            this.reportTextList = new ArrayList<>();
+            this.reportSectionList = new ArrayList<>();
             JSONArray array = json.getJSONArray("reportTextList");
             for (int i = 0; i < array.length(); ++i) {
                 ReportSection rs = new ReportSection(array.getJSONObject(i));
-                this.reportTextList.add(rs);
+                this.reportSectionList.add(rs);
             }
         }
     }
@@ -407,9 +420,9 @@ public class PaintingReport extends Report {
             json.put("markdown", this.markdown);
         }
 
-        if (null != this.reportTextList) {
+        if (null != this.reportSectionList) {
             JSONArray jsonArray = new JSONArray();
-            for (ReportSection rs : this.reportTextList) {
+            for (ReportSection rs : this.reportSectionList) {
                 jsonArray.put(rs.toJSON());
             }
             json.put("reportTextList", jsonArray);

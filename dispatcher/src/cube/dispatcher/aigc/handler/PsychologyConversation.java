@@ -7,6 +7,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cube.dispatcher.aigc.Manager;
+import cube.dispatcher.util.FileLabels;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONArray;
@@ -49,17 +50,43 @@ public class PsychologyConversation extends ContextHandler {
             try {
                 JSONObject requestData = this.readBodyAsJSONObject(request);
                 String channelCode = requestData.getString("channelCode");
-                JSONArray relations = requestData.getJSONArray("relations");
                 String query = requestData.getString("query");
+                JSONArray relations = requestData.has("relations") ?
+                        requestData.getJSONArray("relations") : null;
+                JSONObject context = requestData.has("context") ?
+                        requestData.getJSONObject("context") : null;
 
-                JSONObject json = Manager.getInstance().executePsychologyConversation(token, channelCode, relations, query);
-                if (null == json) {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
-                    this.complete();
-                    return;
+                JSONObject result = null;
+                if (null != relations) {
+                    result = Manager.getInstance().executePsychologyConversation(token, channelCode, relations, query);
+                }
+                else {
+                    result = Manager.getInstance().executePsychologyConversation(token, channelCode, context, query);
                 }
 
-                this.respondOk(response, json);
+                if (null != result) {
+                    if (result.has("queryFileLabels")) {
+                        JSONArray array = result.getJSONArray("queryFileLabels");
+                        for (int i = 0; i < array.length(); ++i) {
+                            FileLabels.reviseFileLabel(array.getJSONObject(i), token,
+                                    Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                                    Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                        }
+                    }
+                    if (result.has("answerFileLabels")) {
+                        JSONArray array = result.getJSONArray("answerFileLabels");
+                        for (int i = 0; i < array.length(); ++i) {
+                            FileLabels.reviseFileLabel(array.getJSONObject(i), token,
+                                    Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                                    Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                        }
+                    }
+
+                    this.respondOk(response, result);
+                }
+                else {
+                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                }
                 this.complete();
             } catch (Exception e) {
                 this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);

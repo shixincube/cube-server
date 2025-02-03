@@ -11,9 +11,11 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.psychology.composition.ReportRelation;
+import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
+import cube.common.entity.FileLabel;
 import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
@@ -49,6 +51,8 @@ public class PsychologyConversationTask extends ServiceTask {
             return;
         }
 
+        AIGCService service = ((AIGCCellet) this.cellet).getService();
+
         String channelCode = null;
         List<ReportRelation> reportRelationList = null;
         GeneratingRecord conversationContext = null;
@@ -65,7 +69,19 @@ public class PsychologyConversationTask extends ServiceTask {
             }
 
             if (packet.data.has("context")) {
-                conversationContext = new GeneratingRecord(packet.data.getJSONObject("context"));
+                JSONObject ctxJson = packet.data.getJSONObject("context");
+                if (ctxJson.has("fileCode")) {
+                    AuthToken authToken = service.getToken(token);
+                    FileLabel fileLabel = service.getFile(authToken.getDomain(), ctxJson.getString("fileCode"));
+                    if (null != fileLabel) {
+                        List<FileLabel> files = new ArrayList<>();
+                        files.add(fileLabel);
+                        conversationContext = new GeneratingRecord(files);
+                    }
+                }
+                else {
+                    conversationContext = new GeneratingRecord(packet.data.getJSONObject("context"));
+                }
             }
 
             query = packet.data.getString("query");
@@ -75,8 +91,6 @@ public class PsychologyConversationTask extends ServiceTask {
             markResponseTime();
             return;
         }
-
-        AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         ConversationWorker worker = new ConversationWorker(service);
         AIGCStateCode stateCode = AIGCStateCode.Failure;
@@ -137,7 +151,7 @@ public class PsychologyConversationTask extends ServiceTask {
                 @Override
                 public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                     cellet.speak(talkContext,
-                            makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                            makeResponse(dialect, packet, stateCode.code, packet.data));
                     markResponseTime();
                 }
             });

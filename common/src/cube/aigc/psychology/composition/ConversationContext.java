@@ -8,6 +8,7 @@ package cube.aigc.psychology.composition;
 
 import cube.aigc.psychology.Attribute;
 import cube.common.JSONable;
+import cube.common.entity.ComplexContext;
 import cube.common.entity.FileLabel;
 import cube.common.entity.GeneratingRecord;
 import org.json.JSONObject;
@@ -64,6 +65,12 @@ public class ConversationContext implements JSONable {
 
     public FileLabel getCurrentFile() {
         return this.currentFile;
+    }
+
+    public void clearCurrent() {
+        this.currentSubtask = null;
+        this.currentAttribute = null;
+        this.currentFile = null;
     }
 
     public FileLabel getRecentFile() {

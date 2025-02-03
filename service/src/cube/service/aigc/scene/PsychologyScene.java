@@ -812,7 +812,7 @@ public class PsychologyScene {
         return revolver.generateSupplement(relation, report, currentQuery);
     }
 
-    public String buildPrompt(GeneratingRecord context, String query) {
+    public String buildPrompt(ConversationContext context, String query) {
         final StringBuilder result = new StringBuilder();
 
         boolean success = this.aigcService.semanticSearch(query, new SemanticSearchListener() {

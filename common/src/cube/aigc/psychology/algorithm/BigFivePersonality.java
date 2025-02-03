@@ -771,6 +771,10 @@ public class BigFivePersonality implements JSONable {
         this.obligingnessContent = content;
     }
 
+    public String getObligingnessContent() {
+        return this.obligingnessContent;
+    }
+
     public String generateConscientiousnessPrompt() {
         if (this.conscientiousness >= HighScore) {
             return "高分尽责性表现";
@@ -785,6 +789,10 @@ public class BigFivePersonality implements JSONable {
 
     public void setConscientiousnessContent(String content) {
         this.conscientiousnessContent = content;
+    }
+
+    public String getConscientiousnessContent() {
+        return this.conscientiousnessContent;
     }
 
     public String generateExtraversionPrompt() {
@@ -803,6 +811,10 @@ public class BigFivePersonality implements JSONable {
         this.extraversionContent = content;
     }
 
+    public String getExtraversionContent() {
+        return this.extraversionContent;
+    }
+
     public String generateAchievementPrompt() {
         if (this.achievement >= HighScore) {
             return "高分进取性表现";
@@ -819,6 +831,10 @@ public class BigFivePersonality implements JSONable {
         this.achievementContent = content;
     }
 
+    public String getAchievementContent() {
+        return this.achievementContent;
+    }
+
     public String generateNeuroticismPrompt() {
         if (this.neuroticism >= HighScore) {
             return "高分情绪性表现";
@@ -833,6 +849,10 @@ public class BigFivePersonality implements JSONable {
 
     public void setNeuroticismContent(String content) {
         this.neuroticismContent = content;
+    }
+
+    public String getNeuroticismContent() {
+        return this.neuroticismContent;
     }
 
     @Override
