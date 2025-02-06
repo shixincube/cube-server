@@ -18,6 +18,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.scene.PsychologyHelper;
 import cube.service.aigc.scene.PsychologyScene;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -55,13 +56,13 @@ public class GetPsychologyReportPartTask extends ServiceTask {
         }
 
         long sn = 0;
-        boolean reportText = false;
-        boolean scoreChart = false;
+        boolean content = false;
+        boolean section = false;
 
         try {
             sn = packet.data.getLong("sn");
-            reportText = packet.data.has("reportText") && packet.data.getBoolean("reportText");
-            scoreChart = packet.data.has("scoreChart") && packet.data.getBoolean("scoreChart");
+            content = packet.data.has("content") && packet.data.getBoolean("content");
+            section = packet.data.has("section") && packet.data.getBoolean("section");
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -79,19 +80,22 @@ public class GetPsychologyReportPartTask extends ServiceTask {
 
         JSONObject responseData = new JSONObject();
         responseData.put("sn", sn);
-        responseData.put("reportState", report.getState().code);
+        responseData.put("state", report.getState().code);
 
-        if (reportText) {
-            List<ReportSection> list = report.getReportTextList();
-            JSONArray array = new JSONArray();
-            for (ReportSection rs : list) {
-                array.put(rs.toJSON());
+        if (report.getState().code == AIGCStateCode.Ok.code) {
+            if (content) {
+                String contentMarkdown = PsychologyHelper.makeMarkdown(report);
+                responseData.put("content", contentMarkdown);
             }
-            responseData.put("reportTextList", array);
-        }
 
-        if (scoreChart) {
-
+            if (section) {
+                List<ReportSection> list = report.getReportTextList();
+                JSONArray array = new JSONArray();
+                for (ReportSection rs : list) {
+                    array.put(rs.toJSON());
+                }
+                responseData.put("sections", array);
+            }
         }
 
         this.cellet.speak(this.talkContext,

@@ -174,6 +174,9 @@ public class AIGCStorage implements Storagable {
             new StorageField("query_content", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("query_files", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
             new StorageField("answer_cid", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -182,6 +185,12 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("answer_content", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("answer_files", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("context", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             }),
             // 人类反馈的得分
             new StorageField("feedback", LiteralBase.INT, new Constraint[] {
@@ -769,6 +778,36 @@ public class AIGCStorage implements Storagable {
             history.answerContent = data.get("answer_content").getString();
             history.feedback = data.get("feedback").getInt();
             history.contextId = data.get("context_id").getLong();
+
+            try {
+                if (!data.get("query_files").isNullValue()) {
+                    JSONArray array = new JSONArray(data.get("query_files").getString());
+                    List<FileLabel> files = new ArrayList<>();
+                    for (int i = 0; i < array.length(); ++i) {
+                        FileLabel file = new FileLabel(array.getJSONObject(i));
+                        files.add(file);
+                    }
+                    history.queryFileLabels = files;
+                }
+
+                if (!data.get("answer_files").isNullValue()) {
+                    JSONArray array = new JSONArray(data.get("answer_files").getString());
+                    List<FileLabel> files = new ArrayList<>();
+                    for (int i = 0; i < array.length(); ++i) {
+                        FileLabel file = new FileLabel(array.getJSONObject(i));
+                        files.add(file);
+                    }
+                    history.answerFileLabels = files;
+                }
+
+                if (!data.get("context").isNullValue()) {
+                    ComplexContext context = new ComplexContext(new JSONObject(data.get("context").getString()));
+                    history.context = context;
+                }
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#readChatHistoryByContactId", e);
+            }
+
             list.add(history);
         }
 
@@ -806,6 +845,36 @@ public class AIGCStorage implements Storagable {
             history.answerContent = data.get("answer_content").getString();
             history.feedback = data.get("feedback").getInt();
             history.contextId = data.get("context_id").getLong();
+
+            try {
+                if (!data.get("query_files").isNullValue()) {
+                    JSONArray array = new JSONArray(data.get("query_files").getString());
+                    List<FileLabel> files = new ArrayList<>();
+                    for (int i = 0; i < array.length(); ++i) {
+                        FileLabel file = new FileLabel(array.getJSONObject(i));
+                        files.add(file);
+                    }
+                    history.queryFileLabels = files;
+                }
+
+                if (!data.get("answer_files").isNullValue()) {
+                    JSONArray array = new JSONArray(data.get("answer_files").getString());
+                    List<FileLabel> files = new ArrayList<>();
+                    for (int i = 0; i < array.length(); ++i) {
+                        FileLabel file = new FileLabel(array.getJSONObject(i));
+                        files.add(file);
+                    }
+                    history.answerFileLabels = files;
+                }
+
+                if (!data.get("context").isNullValue()) {
+                    ComplexContext context = new ComplexContext(new JSONObject(data.get("context").getString()));
+                    history.context = context;
+                }
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#readChatHistoryByFeedback", e);
+            }
+
             list.add(history);
         }
 
@@ -838,6 +907,36 @@ public class AIGCStorage implements Storagable {
             history.answerContent = data.get("answer_content").getString();
             history.feedback = data.get("feedback").getInt();
             history.contextId = data.get("context_id").getLong();
+
+            try {
+                if (!data.get("query_files").isNullValue()) {
+                    JSONArray array = new JSONArray(data.get("query_files").getString());
+                    List<FileLabel> files = new ArrayList<>();
+                    for (int i = 0; i < array.length(); ++i) {
+                        FileLabel file = new FileLabel(array.getJSONObject(i));
+                        files.add(file);
+                    }
+                    history.queryFileLabels = files;
+                }
+
+                if (!data.get("answer_files").isNullValue()) {
+                    JSONArray array = new JSONArray(data.get("answer_files").getString());
+                    List<FileLabel> files = new ArrayList<>();
+                    for (int i = 0; i < array.length(); ++i) {
+                        FileLabel file = new FileLabel(array.getJSONObject(i));
+                        files.add(file);
+                    }
+                    history.answerFileLabels = files;
+                }
+
+                if (!data.get("context").isNullValue()) {
+                    ComplexContext context = new ComplexContext(new JSONObject(data.get("context").getString()));
+                    history.context = context;
+                }
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#readChatHistoryByChannel", e);
+            }
+
             list.add(history);
         }
 
@@ -845,6 +944,22 @@ public class AIGCStorage implements Storagable {
     }
 
     public void writeChatHistory(AIGCChatHistory history) {
+        JSONArray queryFiles = null;
+        if (null != history.queryFileLabels) {
+            queryFiles = new JSONArray();
+            for (FileLabel fileLabel : history.queryFileLabels) {
+                queryFiles.put(fileLabel.toJSON());
+            }
+        }
+
+        JSONArray answerFiles = null;
+        if (null != history.answerFileLabels) {
+            answerFiles = new JSONArray();
+            for (FileLabel fileLabel : history.answerFileLabels) {
+                answerFiles.put(fileLabel.toJSON());
+            }
+        }
+
         this.storage.executeInsert(this.queryAnswerTable, new StorageField[] {
                 new StorageField("sn", history.sn),
                 new StorageField("channel", history.channelCode),
@@ -853,9 +968,15 @@ public class AIGCStorage implements Storagable {
                 new StorageField("query_domain", history.getDomain().getName()),
                 new StorageField("query_time", history.queryTime),
                 new StorageField("query_content", EmojiFilter.filterEmoji(history.queryContent)),
+                (null != queryFiles) ? new StorageField("query_files", queryFiles.toString()) :
+                        new StorageField("query_files", LiteralBase.STRING),
                 new StorageField("answer_cid", history.answerContactId),
                 new StorageField("answer_time", history.answerTime),
                 new StorageField("answer_content", EmojiFilter.filterEmoji(history.answerContent)),
+                (null != answerFiles) ? new StorageField("answer_files", answerFiles.toString()) :
+                        new StorageField("answer_files", LiteralBase.STRING),
+                (null != history.context) ? new StorageField("context", history.context.toString()) :
+                        new StorageField("context", LiteralBase.STRING),
                 new StorageField("feedback", history.feedback),
                 new StorageField("context_id", history.contextId)
         });

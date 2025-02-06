@@ -2969,6 +2969,13 @@ public class AIGCService extends AbstractModule {
                 boolean useQueryAttachment = false;
                 if (null != this.attachments) {
                     for (GeneratingRecord record : this.attachments) {
+                        if (record.hasQueryFile()) {
+                            if (null == this.history.queryFileLabels) {
+                                this.history.queryFileLabels = new ArrayList<>();
+                            }
+                            this.history.queryFileLabels.addAll(record.queryFileLabels);
+                        }
+
                         if (record.hasQueryFile() || record.hasQueryAddition()) {
                             useQueryAttachment = true;
                             break;
@@ -3237,6 +3244,9 @@ public class AIGCService extends AbstractModule {
             this.history.answerContactId = unit.getContact().getId();
             this.history.answerTime = System.currentTimeMillis();
             this.history.answerContent = result.answer;
+
+            // 设置上下文
+            this.history.context = complexContext;
 
             // 重置状态位
             this.channel.setProcessing(false);
@@ -3673,6 +3683,9 @@ public class AIGCService extends AbstractModule {
                 this.history.answerContactId = this.unit.getContact().getId();
                 this.history.answerTime = System.currentTimeMillis();
                 this.history.answerContent = this.fileLabel.toCompactJSON().toString();
+
+                this.history.answerFileLabels = new ArrayList<>();
+                this.history.answerFileLabels.add(this.fileLabel);
 
                 executor.execute(new Runnable() {
                     @Override

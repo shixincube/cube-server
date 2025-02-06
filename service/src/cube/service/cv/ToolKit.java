@@ -150,8 +150,8 @@ public class ToolKit {
             return null;
         }
 
-        int offsetX = paperSize.width - barCode.width;
-        int offsetY = paperSize.height - barCode.height - 10;
+        int offsetX = paperSize.width - barCode.width - 20;
+        int offsetY = paperSize.height - barCode.height - 10 - 10;
         BufferedImage paper = PrintUtils.createPaper(paperSize, barCodeImage, offsetX, offsetY);
 
         if (!landscape) {

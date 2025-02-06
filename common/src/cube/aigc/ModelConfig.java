@@ -14,15 +14,13 @@ import org.json.JSONObject;
  */
 public class ModelConfig implements JSONable {
 
-    public static int EXTRA_LONG_CONTEXT_LIMIT = 8000;
+    public static int EXTRA_LONG_CONTEXT_LIMIT = 10000;
 
-    public static int BAIZE_CONTEXT_LIMIT = 2000;
+    public static int BAIZE_CONTEXT_LIMIT = 5000;
 
     public static int BAIZE_NEXT_CONTEXT_LIMIT = 5000;
 
     public final static String[] TEXT_TO_IMAGE_UNIT = new String[] { "DallE" };
-
-    public final static String[] EXTRA_LONG_PROMPT_UNIT = new String[]{ "GPT", "Gemini", "YiYan" };
 
     public final static String CHAT_UNIT = "Chat";
 
@@ -32,7 +30,11 @@ public class ModelConfig implements JSONable {
 
     public final static String INFINITE_UNIT = "GLM";
 
+    public final static String[] EXTRA_LONG_PROMPT_UNIT = new String[] { INFINITE_UNIT };
+
     public final static String PSYCHOLOGY_UNIT = "Psychology";
+
+    public final static String AIXINLI = "AiXinLi";
 
     private final static String[][] UNIT_MAP_MODEL = new String[][] {
             new String[] { "Chat", "Robot" },
@@ -41,7 +43,6 @@ public class ModelConfig implements JSONable {
             new String[] { "Gemini", "Gemini" },
             new String[] { "YiYan", "YiYan" },
             new String[] { "Baize", "Baize" },
-            new String[] { "BaizeNext", "BaizeNext" },
             new String[] { "GLM", "BaizeX" },
     };
 
@@ -181,7 +182,7 @@ public class ModelConfig implements JSONable {
             return EXTRA_LONG_CONTEXT_LIMIT;
         }
         else {
-            if (unitName.equalsIgnoreCase("BaizeNext")) {
+            if (unitName.equalsIgnoreCase(BAIZE_NEXT_UNIT)) {
                 return BAIZE_NEXT_CONTEXT_LIMIT;
             }
             else {

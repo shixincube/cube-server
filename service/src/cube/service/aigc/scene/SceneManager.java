@@ -6,10 +6,13 @@
 
 package cube.service.aigc.scene;
 
+import cell.util.Utils;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.EvaluationScore;
+import cube.common.entity.AIGCChatHistory;
 import cube.common.entity.Chart;
+import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
 import org.json.JSONObject;
 
@@ -47,6 +50,18 @@ public class SceneManager {
 
     public void putConversationContext(String channelCode, ConversationContext context) {
         this.conversationContexts.put(channelCode, context);
+    }
+
+    public void writeRecord(String channelCode, String unitName, GeneratingRecord record) {
+        AIGCChatHistory history = new AIGCChatHistory(Utils.generateSerialNumber(), channelCode, unitName, null);
+        history.queryContent = record.query;
+        history.queryTime = record.timestamp;
+        history.queryFileLabels = record.queryFileLabels;
+        history.answerContent = record.answer;
+        history.answerTime = System.currentTimeMillis();
+        history.answerFileLabels = record.answerFileLabels;
+        history.context = record.context;
+        this.aigcService.getStorage().writeChatHistory(history);
     }
 
     public Chart readReportChart(long reportSn) {

@@ -8,6 +8,8 @@ package cube.common.entity;
 
 import org.json.JSONObject;
 
+import java.util.List;
+
 /**
  * AIGC Chat 历史记录。
  */
@@ -25,11 +27,17 @@ public class AIGCChatHistory extends Entity {
 
     public String queryContent;
 
+    public List<FileLabel> queryFileLabels;
+
     public long answerContactId;
 
     public long answerTime;
 
     public String answerContent;
+
+    public List<FileLabel> answerFileLabels;
+
+    public ComplexContext context;
 
     public int feedback = 0;
 
@@ -77,6 +85,9 @@ public class AIGCChatHistory extends Entity {
         json.put("answerContent", this.answerContent);
         json.put("feedback", this.feedback);
         json.put("contextId", this.contextId);
+
+
+
         return json;
     }
 

@@ -37,7 +37,7 @@ public enum AIGCStateCode {
     Processing(7),
 
     /**
-     * 推理中。
+     * 正在推理中。
      */
     Inferencing(8),
 
