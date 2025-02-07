@@ -8,6 +8,7 @@ package cube.service.aigc.scene;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import com.sun.org.apache.xpath.internal.operations.Mod;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
@@ -286,8 +287,9 @@ public class PsychologyScene {
         }
 
         // 并发数量
-        int numUnit = this.aigcService.numUnitsByName(ModelConfig.BAIZE_UNIT);
-        if (0 == numUnit) {
+        int concurrency = this.aigcService.numUnitsByName(ModelConfig.BAIZE_NEXT_UNIT) +
+                this.aigcService.numUnitsByName(ModelConfig.BAIZE_UNIT);
+        if (0 == concurrency) {
             Logger.e(this.getClass(), "#generatePredictingReport - No baize unit");
             return null;
         }
@@ -302,7 +304,7 @@ public class PsychologyScene {
         this.reportMap.put(report.sn, report);
 
         // 判断并发数量
-        if (this.numRunningTasks.get() >= numUnit) {
+        if (this.numRunningTasks.get() >= concurrency) {
             // 并发数量等于单元数量，在队列中等待
             return report;
         }
@@ -321,11 +323,6 @@ public class PsychologyScene {
                     }
 
                     runningTaskQueue.offer(reportTask);
-
-                    // 判断频道是否繁忙
-//                    if (channel.isProcessing()) {
-//                        Logger.w(this.getClass(), "#generatePredictingReport - Channel busy");
-//                    }
 
                     // 设置为正在操作
                     reportTask.channel.setProcessing(true);

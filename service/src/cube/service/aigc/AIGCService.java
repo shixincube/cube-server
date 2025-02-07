@@ -535,6 +535,16 @@ public class AIGCService extends AbstractModule {
         return num;
     }
 
+    public boolean hasUnit(String unitName) {
+        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
+        while (iter.hasNext()) {
+            if (iter.next().getCapability().getName().equals(unitName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * 选择空闲的单元，如果没有空闲单元返回 <code>null</code> 值。
      *

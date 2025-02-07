@@ -220,44 +220,6 @@ public class Workflow {
         return mandalaFlower;
     }
 
-    private List<EvaluationScore> filter(List<EvaluationScore> indicatorList, List<EvaluationScore> sources) {
-        List<EvaluationScore> result = new ArrayList<>();
-        for (EvaluationScore es : indicatorList) {
-            Indicator indicator = es.indicator;
-            for (EvaluationScore score : sources) {
-                if (score.indicator == indicator) {
-                    result.add(score);
-                }
-            }
-        }
-        return result;
-    }
-
-//    private void makeDescription() {
-//        List<Representation> representations = this.evaluationReport.getRepresentationListByEvaluationScore(100);
-//        for (Representation representation : representations) {
-//            String marked = null;
-//            // 趋势
-//            if (representation.positiveCorrelation == representation.negativeCorrelation) {
-//                marked = NormalTrick + representation.knowledgeStrategy.getTerm().word;
-//            }
-//            else if (representation.negativeCorrelation > 0 &&
-//                    representation.positiveCorrelation < representation.negativeCorrelation) {
-//                marked = LowTrick + representation.knowledgeStrategy.getTerm().word;
-//            }
-//            else if (representation.positiveCorrelation >= 3 ||
-//                    (representation.positiveCorrelation - representation.negativeCorrelation) >= 4) {
-//                marked = HighTrick + representation.knowledgeStrategy.getTerm().word;
-//            }
-//            else {
-//                marked = NormalTrick + representation.knowledgeStrategy.getTerm().word;
-//            }
-//
-//            // 设置短描述
-//            representation.description = marked;
-//        }
-//    }
-
     /**
      * 推理人格。
      *
@@ -455,31 +417,66 @@ public class Workflow {
     }
 
     private String inferSummary(List<ReportSection> list) {
+        String unitName = null;
+        if (this.service.hasUnit(ModelConfig.BAIZE_NEXT_UNIT)) {
+            unitName = ModelConfig.BAIZE_NEXT_UNIT;
+        }
+        else if (this.service.hasUnit(ModelConfig.INFINITE_UNIT)) {
+            unitName = ModelConfig.INFINITE_UNIT;
+        }
+        else {
+            unitName = this.unitName;
+        }
+
+        StringBuilder summary = new StringBuilder();
+
         // 生成概述
-        StringBuilder prompt = new StringBuilder("已知信息：\n");
+        StringBuilder prompt = new StringBuilder("已知信息：\n\n");
+        prompt.append("您的心理评测结果如下：\n\n");
         for (ReportSection rs : list) {
-            prompt.append(rs.report).append("\n");
+//            prompt.append("* **").append(rs.title).append("** ：");
+            prompt.append(rs.report).append("\n\n");
             if (prompt.length() >= ModelConfig.BAIZE_CONTEXT_LIMIT) {
                 break;
             }
         }
         prompt.append("\n");
-        prompt.append("根据上述已知信息，简洁和专业的来回答用户的问题。问题是：总结一下这个人的心理症状。");
-        String summary = this.service.syncGenerateText(this.unitName, prompt.toString(), new GeneratingOption(),
+        prompt.append("根据上述已知信息，简洁和专业地来回答用户的问题。问题是：概述此人的心理评测结果，各内容之间分段展示。");
+        String result = this.service.syncGenerateText(unitName, prompt.toString(), new GeneratingOption(),
                 null, null);
 
-        if (null == summary || summary.contains("我遇到一些问题")) {
+        if (null == result || result.contains("我遇到一些问题") || result.contains("我遇到一些技术问题")) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
-            summary = this.service.syncGenerateText(this.unitName, prompt.toString(), new GeneratingOption(),
+            result = this.service.syncGenerateText(this.unitName, prompt.toString(), new GeneratingOption(),
                     null, null);
         }
+        if (null != result) {
+            summary.append(result);
+        }
 
-        return summary;
+        /*prompt = new StringBuilder("已知信息：\n\n");
+        prompt.append("您的心理评测建议如下：\n");
+        for (ReportSection rs : list) {
+            prompt.append(rs.suggestion).append("\n\n");
+            if (prompt.length() >= ModelConfig.BAIZE_CONTEXT_LIMIT) {
+                break;
+            }
+        }
+        prompt.append("\n");
+        prompt.append("根据上述已知信息，简洁和专业地来回答用户的问题。问题是：总结性地给出此人的心理评测建议，各内容之间分段展示。");
+        result = this.service.syncGenerateText(unitName, prompt.toString(), new GeneratingOption(),
+                null, null);
+        if (null != result) {
+            summary.append("\n\n");
+            summary.append(result);
+        }*/
+
+        return summary.toString();
     }
 
     public String infer(String query) {

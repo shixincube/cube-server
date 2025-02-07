@@ -43,6 +43,7 @@ public class ModelConfig implements JSONable {
             new String[] { "Gemini", "Gemini" },
             new String[] { "YiYan", "YiYan" },
             new String[] { "Baize", "Baize" },
+            new String[] { "BaizeNext", "BaizeNext" },
             new String[] { "GLM", "BaizeX" },
     };
 
