@@ -52,11 +52,14 @@ public class SceneManager {
         this.conversationContexts.put(channelCode, context);
     }
 
-    public void writeRecord(String channelCode, String unitName, GeneratingRecord record) {
-        AIGCChatHistory history = new AIGCChatHistory(Utils.generateSerialNumber(), channelCode, unitName, null);
+    public void writeRecord(String channelCode, String unitName, ConversationContext context, GeneratingRecord record) {
+        AIGCChatHistory history = new AIGCChatHistory(Utils.generateSerialNumber(), channelCode, unitName,
+                context.getAuthToken().getDomain());
+        history.queryContactId = context.getRelationId();
         history.queryContent = record.query;
         history.queryTime = record.timestamp;
         history.queryFileLabels = record.queryFileLabels;
+        history.answerContactId = context.getAuthToken().getContactId();
         history.answerContent = record.answer;
         history.answerTime = System.currentTimeMillis();
         history.answerFileLabels = record.answerFileLabels;

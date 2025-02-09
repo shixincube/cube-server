@@ -10,11 +10,14 @@ import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.aigc.attachment.Attachment;
-import cube.aigc.psychology.*;
-import cube.aigc.psychology.algorithm.Attention;
-import cube.aigc.psychology.algorithm.BigFivePersonality;
-import cube.aigc.psychology.algorithm.PersonalityAccelerator;
-import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.Theme;
+import cube.aigc.psychology.composition.ConversationContext;
+import cube.aigc.psychology.composition.ConversationRelation;
+import cube.aigc.psychology.composition.ConversationSubtask;
+import cube.aigc.psychology.composition.ReportAttachment;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
@@ -49,7 +52,7 @@ public class ConversationWorker {
         this.service = service;
     }
 
-    public AIGCStateCode work(String token, String channelCode, List<ReportRelation> reportRelationList,
+    public AIGCStateCode work(String token, String channelCode, List<ConversationRelation> conversationRelationList,
                               String query, GenerateTextListener listener) {
         // 获取频道
         AIGCChannel channel = this.service.getChannel(channelCode);
@@ -68,7 +71,7 @@ public class ConversationWorker {
             }
         }
 
-        String prompt = PsychologyScene.getInstance().buildPrompt(reportRelationList, query);
+        String prompt = PsychologyScene.getInstance().buildPrompt(conversationRelationList, query);
 
         if (null == prompt) {
             Logger.e(this.getClass(), "#work - Builds prompt failed");
@@ -107,7 +110,8 @@ public class ConversationWorker {
         return AIGCStateCode.Ok;
     }
 
-    public AIGCStateCode work(String token, AIGCChannel channel, GeneratingRecord context, GenerateTextListener listener) {
+    public AIGCStateCode work(AIGCChannel channel, GeneratingRecord context, ConversationRelation relation,
+                              GenerateTextListener listener) {
         if (channel.isProcessing()) {
             // 频道正在工作
             return AIGCStateCode.Busy;
@@ -119,7 +123,7 @@ public class ConversationWorker {
         // 获取对话上下文
         ConversationContext convCtx = SceneManager.getInstance().getConversationContext(channel.getCode());
         if (null == convCtx) {
-            convCtx = new ConversationContext();
+            convCtx = new ConversationContext(relation, channel.getAuthToken());
             SceneManager.getInstance().putConversationContext(channel.getCode(), convCtx);
         }
         // 获取子任务
@@ -134,7 +138,8 @@ public class ConversationWorker {
         final ConversationContext constConvCtx = convCtx;
 
         if (ConversationSubtask.PredictPainting == subtask) {
-            Logger.d(this.getClass(), "#work - Subtask - PredictPainting: " + token + "/" + channel.getCode());
+            Logger.d(this.getClass(), "#work - Subtask - PredictPainting: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
 
             // 执行预测
             if (null == convCtx.getCurrentFile()) {
@@ -148,7 +153,8 @@ public class ConversationWorker {
                 }
 
                 if (null == convCtx.getCurrentFile()) {
-                    Logger.d(this.getClass(), "#work - No file: " + token + "/" + channel.getCode());
+                    Logger.d(this.getClass(), "#work - No file: " +
+                            channel.getAuthToken().getCode() + "/" + channel.getCode());
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = ANSWER_NO_FILE;
                     this.service.getExecutor().execute(new Runnable() {
@@ -179,7 +185,8 @@ public class ConversationWorker {
                 Attribute attribute = this.extractAttribute(query);
                 if (attribute.age == 0 && attribute.gender.length() == 0) {
                     // 没有提供年龄和性别
-                    Logger.d(this.getClass(), "#work - No attribute: " + token + "/" + channel.getCode());
+                    Logger.d(this.getClass(), "#work - No attribute: " +
+                            channel.getAuthToken().getCode() + "/" + channel.getCode());
 
                     GeneratingRecord record = new GeneratingRecord(query, fileLabel);
                     record.answer = ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE;
@@ -198,7 +205,8 @@ public class ConversationWorker {
                 }
                 else if (attribute.age == 0) {
                     // 没有提供年龄
-                    Logger.d(this.getClass(), "#work - No attribute age: " + token + "/" + channel.getCode());
+                    Logger.d(this.getClass(), "#work - No attribute age: " +
+                            channel.getAuthToken().getCode() + "/" + channel.getCode());
 
                     GeneratingRecord record = new GeneratingRecord(query, fileLabel);
                     record.answer = ANSWER_NEED_TO_PROVIDE_AGE;
@@ -217,7 +225,8 @@ public class ConversationWorker {
                 }
                 else if (attribute.gender.length() == 0) {
                     // 没有提供性别
-                    Logger.d(this.getClass(), "#work - No attribute gender: " + token + "/" + channel.getCode());
+                    Logger.d(this.getClass(), "#work - No attribute gender: " +
+                            channel.getAuthToken().getCode() + "/" + channel.getCode());
 
                     GeneratingRecord record = new GeneratingRecord(query, fileLabel);
                     record.answer = ANSWER_NEED_TO_PROVIDE_GENDER;
@@ -281,7 +290,7 @@ public class ConversationWorker {
                             channel.setProcessing(false);
 
                             SceneManager.getInstance().writeRecord(channel.getCode(), ModelConfig.AIXINLI,
-                                    record);
+                                    constConvCtx, record);
                         }
 
                         @Override
@@ -336,6 +345,12 @@ public class ConversationWorker {
                 channel.setProcessing(false);
                 return AIGCStateCode.Ok;
             }
+        }
+        else if (ConversationSubtask.QueryReport == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - QueryReport: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            
         }
         else if (ConversationSubtask.ExplainPainting == subtask) {
 

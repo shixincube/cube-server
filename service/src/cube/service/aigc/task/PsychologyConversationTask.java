@@ -10,7 +10,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.aigc.psychology.composition.ReportRelation;
+import cube.aigc.psychology.composition.ConversationRelation;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -54,18 +54,23 @@ public class PsychologyConversationTask extends ServiceTask {
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         String channelCode = null;
-        List<ReportRelation> reportRelationList = null;
-        GeneratingRecord conversationContext = null;
+        List<ConversationRelation> conversationRelationList = null;
+        ConversationRelation relation = null;
+        GeneratingRecord context = null;
         String query = null;
         try {
             channelCode = packet.data.getString("channelCode");
 
             if (packet.data.has("relations")) {
                 JSONArray array = packet.data.getJSONArray("relations");
-                reportRelationList = new ArrayList<>();
+                conversationRelationList = new ArrayList<>();
                 for (int i = 0; i < array.length(); ++i) {
-                    reportRelationList.add(new ReportRelation(array.getJSONObject(i)));
+                    conversationRelationList.add(new ConversationRelation(array.getJSONObject(i)));
                 }
+            }
+
+            if (packet.data.has("relation")) {
+                relation = new ConversationRelation(packet.data.getJSONObject("relation"));
             }
 
             if (packet.data.has("context")) {
@@ -76,11 +81,11 @@ public class PsychologyConversationTask extends ServiceTask {
                     if (null != fileLabel) {
                         List<FileLabel> files = new ArrayList<>();
                         files.add(fileLabel);
-                        conversationContext = new GeneratingRecord(files);
+                        context = new GeneratingRecord(files);
                     }
                 }
                 else {
-                    conversationContext = new GeneratingRecord(packet.data.getJSONObject("context"));
+                    context = new GeneratingRecord(packet.data.getJSONObject("context"));
                 }
             }
 
@@ -95,8 +100,8 @@ public class PsychologyConversationTask extends ServiceTask {
         ConversationWorker worker = new ConversationWorker(service);
         AIGCStateCode stateCode = AIGCStateCode.Failure;
 
-        if (null != reportRelationList) {
-            stateCode = worker.work(token, channelCode, reportRelationList, query, new GenerateTextListener() {
+        if (null != conversationRelationList) {
+            stateCode = worker.work(token, channelCode, conversationRelationList, query, new GenerateTextListener() {
                 @Override
                 public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                     if (null != record) {
@@ -120,11 +125,15 @@ public class PsychologyConversationTask extends ServiceTask {
             });
         }
         else {
-            if (null == conversationContext) {
-                conversationContext = new GeneratingRecord(query);
+            if (null == context) {
+                context = new GeneratingRecord(query);
             }
             else {
-                conversationContext.query = query;
+                context.query = query;
+            }
+
+            if (null == relation) {
+                relation = new ConversationRelation();
             }
 
             // 获取频道
@@ -133,7 +142,7 @@ public class PsychologyConversationTask extends ServiceTask {
                 channel = service.createChannel(token, channelCode, channelCode);
             }
 
-            stateCode = worker.work(token, channel, conversationContext, new GenerateTextListener() {
+            stateCode = worker.work(channel, context, relation, new GenerateTextListener() {
                 @Override
                 public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                     if (null != record) {

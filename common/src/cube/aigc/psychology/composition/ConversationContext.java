@@ -7,6 +7,7 @@
 package cube.aigc.psychology.composition;
 
 import cube.aigc.psychology.Attribute;
+import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.FileLabel;
@@ -21,9 +22,9 @@ import java.util.List;
  */
 public class ConversationContext implements JSONable {
 
-    private long sn;
+    private ConversationRelation relation;
 
-    private String name;
+    private AuthToken authToken;
 
     private Attribute currentAttribute;
 
@@ -33,14 +34,22 @@ public class ConversationContext implements JSONable {
 
     private List<GeneratingRecord> records;
 
-    public ConversationContext() {
+    public ConversationContext(ConversationRelation relation, AuthToken authToken) {
+        this.relation = relation;
+        this.authToken = authToken;
         this.records = new ArrayList<>();
     }
 
     public ConversationContext(JSONObject json) {
         this.records = new ArrayList<>();
-        this.sn = json.getLong("sn");
-        this.name = json.getString("name");
+    }
+
+    public long getRelationId() {
+        return this.relation.getId();
+    }
+
+    public AuthToken getAuthToken() {
+        return this.authToken;
     }
 
     public void setCurrentSubtask(ConversationSubtask subtask) {
@@ -98,8 +107,6 @@ public class ConversationContext implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("sn", this.sn);
-        json.put("name", this.name);
         return json;
     }
 

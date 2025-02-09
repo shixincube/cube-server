@@ -96,10 +96,10 @@ public class PaintingFeatureSet implements JSONable {
         return this.sn;
     }
 
-    public String makePrompt(boolean knowledgeStrategy) {
+    public String makeMarkdown(boolean knowledgeStrategy) {
         StringBuilder buf = new StringBuilder();
 
-        buf.append("绘画画面的心理特征如下：\n");
+        buf.append("绘画画面的特征如下：\n\n");
         Iterator<Map.Entry<String, List<Representation>>> iter = this.dataMap.entrySet().iterator();
         while (iter.hasNext()) {
             Map.Entry<String, List<Representation>> e = iter.next();

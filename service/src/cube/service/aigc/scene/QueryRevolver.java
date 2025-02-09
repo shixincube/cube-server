@@ -82,7 +82,7 @@ public class QueryRevolver {
         this.storage = storage;
     }
 
-    public String generatePrompt(ReportRelation relation, Report report, String query) {
+    public String generatePrompt(ConversationRelation relation, Report report, String query) {
         StringBuilder result = new StringBuilder();
 
         result.append("已知信息：\n\n当前受测人的名称是：").append(this.fixName(
@@ -176,14 +176,14 @@ public class QueryRevolver {
         return this.filterSubjectNoun(result.toString(), report.getAttribute());
     }
 
-    public String generatePrompt(List<ReportRelation> relations, List<Report> reports, String query) {
+    public String generatePrompt(List<ConversationRelation> relations, List<Report> reports, String query) {
         StringBuilder result = new StringBuilder();
 
         result.append("已知信息：\n\n");
         result.append("受测人有").append(relations.size()).append("份报告信息如下：\n\n");
 
         for (int i = 0; i < relations.size(); ++i) {
-            ReportRelation relation = relations.get(i);
+            ConversationRelation relation = relations.get(i);
             Report report = reports.get(i);
             result.append("# 报告").append(i + 1);
             result.append("受测人的名称是：").append(this.fixName(
@@ -283,7 +283,7 @@ public class QueryRevolver {
         return this.filterSubjectNoun(result.toString(), reports.get(0).getAttribute());
     }
 
-    public GeneratingRecord generateSupplement(ReportRelation relation, Report report, String currentQuery) {
+    public GeneratingRecord generateSupplement(ConversationRelation relation, Report report, String currentQuery) {
         StringBuilder query = new StringBuilder();
         StringBuilder answer = new StringBuilder();
 
@@ -600,7 +600,7 @@ public class QueryRevolver {
         if (hit) {
             PaintingFeatureSet featureSet = this.storage.readPaintingFeatureSet(paintingReport.sn);
             if (null != featureSet) {
-                buf.append(featureSet.makePrompt(false));
+                buf.append(featureSet.makeMarkdown(false));
             }
             else {
                 Logger.w(this.getClass(), "#tryGeneratePaintingFeature - Can NOT find painting feature set data: " +

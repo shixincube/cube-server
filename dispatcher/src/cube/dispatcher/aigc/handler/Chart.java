@@ -27,7 +27,7 @@ import java.nio.file.Paths;
 
 public class Chart extends ContextHandler {
 
-    private final static String PATH_PSYCHOLOGY_PAINTING_INFERENCE = "ppi";
+    private final static String PATH_PSYCHOLOGY_PAINTING_COT_DIAGRAM = "pcd";
 
     private final String fileRoot = "assets/chart/";
 
@@ -47,8 +47,8 @@ public class Chart extends ContextHandler {
                 throws IOException, ServletException {
             String pathInfo = request.getPathInfo();
             if (pathInfo.endsWith("js")) {
-                String file = pathInfo.replace("/" + PATH_PSYCHOLOGY_PAINTING_INFERENCE, "");
-                response.setHeader("Connection", "keep-alive");
+                String file = pathInfo.replace("/" + PATH_PSYCHOLOGY_PAINTING_COT_DIAGRAM, "");
+                response.setHeader("Connection", "Keep-Alive");
                 this.respondFile(response, file);
                 this.complete();
                 return;
@@ -62,7 +62,7 @@ public class Chart extends ContextHandler {
                 return;
             }
 
-            if (PATH_PSYCHOLOGY_PAINTING_INFERENCE.equals(path)) {
+            if (PATH_PSYCHOLOGY_PAINTING_COT_DIAGRAM.equals(path)) {
                 try {
                     long sn = Long.parseLong(request.getParameter("sn"));
                     JSONObject data = Manager.getInstance().getPsychologyPaintingChart(token, sn);

@@ -16,6 +16,8 @@ public enum ConversationSubtask {
 
     PredictPainting("predict_painting"),
 
+    QueryReport("query_report"),
+
     ExplainPainting("explain_painting"),
 
     Unknown("unknown"),

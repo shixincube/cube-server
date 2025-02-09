@@ -2054,11 +2054,12 @@ public class Manager implements Tickable, PerformerListener {
         return report;
     }
 
-    public JSONObject getPsychologyReportPart(String token, long sn, boolean content, boolean section) {
+    public JSONObject getPsychologyReportPart(String token, long sn, boolean content, boolean section, boolean thought) {
         JSONObject data = new JSONObject();
         data.put("sn", sn);
         data.put("content", content);
         data.put("section", section);
+        data.put("thought", thought);
         Packet packet = new Packet(AIGCAction.GetPsychologyReportPart.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
@@ -2233,10 +2234,10 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public JSONObject executePsychologyConversation(String token, String channelCode,
-                                                    JSONArray reportRelations, String query) {
+                                                    JSONArray relations, String query) {
         JSONObject data = new JSONObject();
         data.put("channelCode", channelCode);
-        data.put("relations", reportRelations);
+        data.put("relations", relations);
         data.put("query", query);
         Packet packet = new Packet(AIGCAction.PsychologyConversation.name, data);
         ActionDialect request = packet.toDialect();
@@ -2258,10 +2259,16 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public JSONObject executePsychologyConversation(String token, String channelCode,
-                                                    JSONObject context, String query) {
+                                                    JSONObject context, JSONObject relation, String query) {
+        if (null == context || null == relation) {
+            Logger.w(this.getClass(), "#executePsychologyConversation - Context or relation is null");
+            return null;
+        }
+
         JSONObject data = new JSONObject();
         data.put("channelCode", channelCode);
         data.put("context", context);
+        data.put("relation", relation);
         data.put("query", query);
         Packet packet = new Packet(AIGCAction.PsychologyConversation.name, data);
         ActionDialect request = packet.toDialect();

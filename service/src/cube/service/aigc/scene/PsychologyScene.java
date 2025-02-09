@@ -8,7 +8,6 @@ package cube.service.aigc.scene;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
-import com.sun.org.apache.xpath.internal.operations.Mod;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
@@ -735,11 +734,11 @@ public class PsychologyScene {
         return report;
     }
 
-    public String buildPrompt(List<ReportRelation> relations, String query) {
+    public String buildPrompt(List<ConversationRelation> relations, String query) {
         StringBuilder result = new StringBuilder();
 
         if (relations.size() == 1) {
-            ReportRelation relation = relations.get(0);
+            ConversationRelation relation = relations.get(0);
             PaintingReport paintingReport = this.getPaintingReport(relation.reportSn);
             if (null != paintingReport) {
                 QueryRevolver queryRevolver = new QueryRevolver(this.aigcService, this.storage);
@@ -758,10 +757,10 @@ public class PsychologyScene {
             }
         }
         else {
-            List<ReportRelation> relationList = new ArrayList<>();
+            List<ConversationRelation> relationList = new ArrayList<>();
             List<Report> reportList = new ArrayList<>();
 
-            for (ReportRelation relation : relations) {
+            for (ConversationRelation relation : relations) {
                 Report report = null;
                 PaintingReport paintingReport = this.getPaintingReport(relation.reportSn);
                 if (null == paintingReport) {
@@ -792,8 +791,8 @@ public class PsychologyScene {
         return result.toString();
     }
 
-    public GeneratingRecord buildHistory(List<ReportRelation> relations, String currentQuery) {
-        ReportRelation relation = relations.get(0);
+    public GeneratingRecord buildHistory(List<ConversationRelation> relations, String currentQuery) {
+        ConversationRelation relation = relations.get(0);
 
         Report report = this.getPaintingReport(relation.reportSn);
         if (null == report) {
@@ -870,6 +869,10 @@ public class PsychologyScene {
             return painting;
         }
         return this.storage.readPainting(reportSn);
+    }
+
+    public PaintingFeatureSet getPaintingFeatureSet(long reportSn) {
+        return this.storage.readPaintingFeatureSet(reportSn);
     }
 
     public FileLabel getPredictedPainting(AuthToken authToken, long reportSn, boolean bbox, boolean vparam,

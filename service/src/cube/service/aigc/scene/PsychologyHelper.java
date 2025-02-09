@@ -14,10 +14,7 @@ import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
-import cube.aigc.psychology.composition.EvaluationScore;
-import cube.aigc.psychology.composition.HexagonDimension;
-import cube.aigc.psychology.composition.HexagonDimensionScore;
-import cube.aigc.psychology.composition.ReportSection;
+import cube.aigc.psychology.composition.*;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
@@ -131,6 +128,15 @@ public class PsychologyHelper {
         buf.append("2. **报告结果没有“好”与“坏”之分。**报告结果与个人道德品质无关，只反映你目前的心理状态，但不同的特点对于不同的工作、生活状态会存在“合适”和“不合适”的区别，从而表现出具体条件的优势和劣势。\n\n");
         buf.append("3. **以整体的观点来看待测试结果。**很多测验都包含多个分测验，对于这类测验来说，不应该孤立地理解单个分测验的成绩。在评定一个人的特征时，一方面需要理解每一个分测验分数的意义，但更重要的是综合所有信息全面分析。\n\n");
 
+        return buf.toString();
+    }
+
+    public static String makeMarkdown(PaintingFeatureSet featureSet) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("我看到的");
+        buf.append(featureSet.makeMarkdown(false));
+        buf.append("\n");
+        buf.append("根据上述特征，我需要结合专业的知识结构，并根据对应症状的得分进行阐述并生成报告。");
         return buf.toString();
     }
 }

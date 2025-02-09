@@ -55,13 +55,16 @@ public class PsychologyConversation extends ContextHandler {
                         requestData.getJSONArray("relations") : null;
                 JSONObject context = requestData.has("context") ?
                         requestData.getJSONObject("context") : null;
+                JSONObject relation = requestData.has("relation") ?
+                        requestData.getJSONObject("relation") : null;
 
                 JSONObject result = null;
                 if (null != relations) {
                     result = Manager.getInstance().executePsychologyConversation(token, channelCode, relations, query);
                 }
                 else {
-                    result = Manager.getInstance().executePsychologyConversation(token, channelCode, context, query);
+                    result = Manager.getInstance().executePsychologyConversation(token, channelCode,
+                            context, relation, query);
                 }
 
                 if (null != result) {

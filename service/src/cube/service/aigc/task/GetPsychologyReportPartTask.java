@@ -11,6 +11,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.ReportSection;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -58,11 +59,13 @@ public class GetPsychologyReportPartTask extends ServiceTask {
         long sn = 0;
         boolean content = false;
         boolean section = false;
+        boolean thought = false;
 
         try {
             sn = packet.data.getLong("sn");
             content = packet.data.has("content") && packet.data.getBoolean("content");
             section = packet.data.has("section") && packet.data.getBoolean("section");
+            thought = packet.data.has("thought") && packet.data.getBoolean("thought");
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -95,6 +98,13 @@ public class GetPsychologyReportPartTask extends ServiceTask {
                     array.put(rs.toJSON());
                 }
                 responseData.put("sections", array);
+            }
+
+            if (thought) {
+                PaintingFeatureSet featureSet = PsychologyScene.getInstance().getPaintingFeatureSet(sn);
+                if (null != featureSet) {
+                    responseData.put("thought", PsychologyHelper.makeMarkdown(featureSet));
+                }
             }
         }
 
