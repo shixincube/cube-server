@@ -44,6 +44,10 @@ public class AttachmentResource extends ComplexResource {
         }
     }
 
+    public Attachment getAttachment() {
+        return this.attachments.get(0);
+    }
+
     public Attachment getAttachment(long attachmentId) {
         for (Attachment attachment : this.attachments) {
             if (attachment.getId() == attachmentId) {

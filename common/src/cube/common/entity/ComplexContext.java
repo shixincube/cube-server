@@ -148,6 +148,15 @@ public class ComplexContext extends Entity {
         return this.resources.get(0);
     }
 
+    public AttachmentResource getAttachmentResource() {
+        for (ComplexResource res : this.resources) {
+            if (res instanceof AttachmentResource) {
+                return (AttachmentResource) res;
+            }
+        }
+        return null;
+    }
+
     public List<ComplexResource> getResources() {
         return this.resources;
     }

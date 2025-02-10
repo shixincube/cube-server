@@ -7,17 +7,18 @@
 package cube.service.aigc.scene;
 
 import cell.util.Utils;
+import cube.aigc.attachment.Attachment;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.EvaluationScore;
-import cube.common.entity.AIGCChatHistory;
-import cube.common.entity.Chart;
-import cube.common.entity.GeneratingRecord;
+import cube.aigc.psychology.composition.ReportAttachment;
+import cube.common.entity.*;
 import cube.service.aigc.AIGCService;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -65,6 +66,27 @@ public class SceneManager {
         history.answerFileLabels = record.answerFileLabels;
         history.context = record.context;
         this.aigcService.getStorage().writeChatHistory(history);
+    }
+
+    public List<PaintingReport> queryReports(long relationId, String domainName) {
+        List<PaintingReport> result = new ArrayList<>();
+        List<AIGCChatHistory> historyList = this.aigcService.getStorage().readChatHistoryByContactId(relationId, domainName,
+                0, System.currentTimeMillis());
+        for (AIGCChatHistory history : historyList) {
+            if (null != history.context) {
+                AttachmentResource resource = history.context.getAttachmentResource();
+                if (null != resource) {
+                    Attachment attachment = resource.getAttachment();
+                    if (attachment.getType().equals(ReportAttachment.TYPE)) {
+                        PaintingReport report = PsychologyScene.getInstance().getPaintingReport(attachment.getId());
+                        if (null != report) {
+                            result.add(report);
+                        }
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     public Chart readReportChart(long reportSn) {

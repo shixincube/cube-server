@@ -44,6 +44,8 @@ public class ConversationWorker {
 
     private final static String FORMAT_ANSWER_GENERATING = "正在为被测人生成报告，该被测人为%s性，年龄是%s。报告生成需要数分钟，请稍候……";
 
+    private final static String ANSWER_CAN_NOT_FIND_REPORTS = "我没有找到您的报告信息。如果您想进行绘画测评，可以将您的绘画发给我。";
+
     private String unitName = ModelConfig.INFINITE_UNIT;
 
     private AIGCService service;
@@ -350,7 +352,19 @@ public class ConversationWorker {
             Logger.d(this.getClass(), "#work - Subtask - QueryReport: " +
                     channel.getAuthToken().getCode() + "/" + channel.getCode());
 
-            
+            List<PaintingReport> list = SceneManager.getInstance().queryReports(constConvCtx.getRelationId(),
+                    constConvCtx.getAuthToken().getDomain());
+            if (list.isEmpty()) {
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        GeneratingRecord record = new GeneratingRecord(query, constConvCtx.getCurrentFile());
+                        record.answer = ANSWER_CAN_NOT_FIND_REPORTS;
+                        listener.onGenerated(channel, record);
+                    }
+                });
+                return AIGCStateCode.Ok;
+            }
         }
         else if (ConversationSubtask.ExplainPainting == subtask) {
 

@@ -10,7 +10,9 @@ import cube.aigc.attachment.Attachment;
 
 public class ReportAttachment extends Attachment {
 
+    public final static String TYPE = "PsychologyReport";
+
     public ReportAttachment(long sn) {
-        super("PsychologyReport", sn);
+        super(TYPE, sn);
     }
 }
