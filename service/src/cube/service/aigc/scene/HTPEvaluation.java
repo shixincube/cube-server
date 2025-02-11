@@ -16,6 +16,7 @@ import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.*;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.other.OtherSet;
+import cube.aigc.psychology.material.person.Head;
 import cube.aigc.psychology.material.person.Leg;
 import cube.util.FloatUtils;
 import cube.vision.BoundingBox;
@@ -222,9 +223,9 @@ public class HTPEvaluation extends Evaluation {
         // 房、树、人之间的空间关系
         // 中线
         double banding = ((double) this.painting.getCanvasSize().height) * 0.167;
-        double bl = (this.painting.getCanvasSize().height - (int) banding) * 0.5;
+        double bl = this.painting.getCanvasSize().height * 0.5;
         double centerYOffset = this.painting.getCanvasSize().height * 0.033;   // 经验值
-        int evalRange = (int) Math.round(banding * 0.5);
+        int evalRange = (int) Math.round(banding * 0.6);
 
         House house = this.painting.getHouse();
         Tree tree = this.painting.getTree();
@@ -237,15 +238,15 @@ public class HTPEvaluation extends Evaluation {
             Point pc = person.box.getCenterPoint();
 
             // 判断上半将中线上移；判断下半将中心下移
-            boolean houseTHalf = hc.y < (bl - centerYOffset);
-            boolean houseBHalf = hc.y > (bl + centerYOffset);
-            boolean treeTHalf = tc.y < (bl - centerYOffset);
-            boolean treeBHalf = tc.y > (bl + centerYOffset);
-            boolean personTHalf = pc.y < (bl - centerYOffset);
-            boolean personBHalf = pc.y > (bl + centerYOffset);
+            boolean houseTHalf = (hc.y + house.box.y0) < (bl - centerYOffset);
+            boolean houseBHalf = (hc.y + house.box.y0) > (bl + centerYOffset);
+            boolean treeTHalf = (tc.y + tree.box.y0) < (bl - centerYOffset);
+            boolean treeBHalf = (tc.y + tree.box.y0) > (bl + centerYOffset);
+            boolean personTHalf = (pc.y + person.box.y0) < (bl - centerYOffset);
+            boolean personBHalf = (pc.y + person.box.y0) > (bl + centerYOffset);
 
             // 相对位置判断
-            if (Math.abs(hc.y - tc.y) < evalRange && Math.abs(hc.y - pc.y) < evalRange) {
+            if (Math.abs(house.box.y1 - tree.box.y1) < evalRange && Math.abs(house.box.y1 - person.box.y1) < evalRange) {
                 // 基本在一个水平线上
                 String desc = "画面无远近感，空间布局单一";
                 result.addFeature(desc, Term.Stereotype, Tendency.Positive, PerceptronThing.createThingPosition(
@@ -475,12 +476,12 @@ public class HTPEvaluation extends Evaluation {
             Point tc = tree.box.getCenterPoint();
 
             // 判断上半将中线上移；判断下半将中心下移
-            boolean houseTHalf = hc.y < (bl - centerYOffset);
-            boolean houseBHalf = hc.y > (bl + centerYOffset);
-            boolean treeTHalf = tc.y < (bl - centerYOffset);
-            boolean treeBHalf = tc.y > (bl + centerYOffset);
+            boolean houseTHalf = (hc.y + house.box.y0) < (bl - centerYOffset);
+            boolean houseBHalf = (hc.y + house.box.y0) > (bl + centerYOffset);
+            boolean treeTHalf = (tc.y + tree.box.y0) < (bl - centerYOffset);
+            boolean treeBHalf = (tc.y + tree.box.y0) > (bl + centerYOffset);
 
-            if (Math.abs(hc.y - tc.y) < evalRange) {
+            if (Math.abs(house.box.y1 - tree.box.y1) < evalRange) {
                 // 基本在一个水平线上
                 String desc = "画面中主要元素在构图结构上无远近感";
                 result.addFeature(desc, Term.Stereotype, Tendency.Positive, PerceptronThing.createThingPosition(
@@ -567,12 +568,12 @@ public class HTPEvaluation extends Evaluation {
             Point hc = house.box.getCenterPoint();
             Point pc = person.box.getCenterPoint();
 
-            boolean houseTHalf = hc.y < (bl - centerYOffset);
-            boolean houseBHalf = hc.y > (bl + centerYOffset);
-            boolean personTHalf = pc.y < (bl - centerYOffset);
-            boolean personBHalf = pc.y > (bl + centerYOffset);
+            boolean houseTHalf = (hc.y + house.box.y0) < (bl - centerYOffset);
+            boolean houseBHalf = (hc.y + house.box.y0) > (bl + centerYOffset);
+            boolean personTHalf = (pc.y + person.box.y0) < (bl - centerYOffset);
+            boolean personBHalf = (pc.y + person.box.y0) > (bl + centerYOffset);
 
-            if (Math.abs(hc.y - pc.y) < evalRange) {
+            if (Math.abs(house.box.y1 - person.box.y1) < evalRange) {
                 // 基本在一个水平线上
                 String desc = "画面中主要元素在构图结构上无远近感";
                 result.addFeature(desc, Term.Stereotype, Tendency.Positive, PerceptronThing.createThingPosition(
@@ -665,12 +666,12 @@ public class HTPEvaluation extends Evaluation {
             Point pc = person.box.getCenterPoint();
 
             // 判断上半将中线上移；判断下半将中心下移
-            boolean treeTHalf = tc.y < (bl - centerYOffset);
-            boolean treeBHalf = tc.y > (bl + centerYOffset);
-            boolean personTHalf = pc.y < (bl - centerYOffset);
-            boolean personBHalf = pc.y > (bl + centerYOffset);
+            boolean treeTHalf = (tc.y + tree.box.y0) < (bl - centerYOffset);
+            boolean treeBHalf = (tc.y + tree.box.y0) > (bl + centerYOffset);
+            boolean personTHalf = (pc.y + person.box.y0) < (bl - centerYOffset);
+            boolean personBHalf = (pc.y + person.box.y0) > (bl + centerYOffset);
 
-            if (Math.abs(tc.y - pc.y) < evalRange) {
+            if (Math.abs(tree.box.y1 - person.box.y1) < evalRange) {
                 // 基本在一个水平线上
                 String desc = "画面中主要元素在构图结构上无远近感";
                 result.addFeature(desc, Term.Stereotype, Tendency.Positive, PerceptronThing.createThingPosition(
@@ -1459,7 +1460,7 @@ public class HTPEvaluation extends Evaluation {
                     result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.6, 0.7));
 
                     double areaRatio = house.getMaxDoorAreaRatio();
-                    if (areaRatio < 0.05f) {
+                    if (areaRatio < 0.029f) {
                         String desc = "房屋的门很小";
                         result.addFeature(desc, Term.SocialPowerlessness, Tendency.Positive, new Thing[] {
                                 house.getDoors().get(0)
@@ -1477,11 +1478,17 @@ public class HTPEvaluation extends Evaluation {
                                 house.getDoors().get(0)
                         });
                     }
+                    else {
+                        String desc = "房屋有门";
+                        result.addFeature(desc, Term.PursueInterpersonalRelationships, Tendency.Positive, new Thing[] {
+                                house.getDoors().get(0)
+                        });
+                    }
 
                     // 开启的门
                     if (house.hasOpenDoor()) {
                         String desc = "房屋的门是打开的";
-                        result.addFeature(desc, Term.PursueInterpersonalRelationships, Tendency.Positive, new Thing[] {
+                        result.addFeature(desc, Term.Extroversion, Tendency.Positive, new Thing[] {
                                 house.getDoors().get(0)
                         });
 

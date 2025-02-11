@@ -566,6 +566,22 @@ public final class TextUtils {
         return buf.toString();
     }
 
+    /**
+     * 提取文本里的第一个年份数据，如果没有找到返回 <code>null</code> 值。
+     *
+     * @param text
+     * @return
+     */
+    public static String extractYear(String text) {
+        if (!TextUtils.isDateString(text)) {
+            return null;
+        }
+
+        int index = text.indexOf("年");
+
+        return null;
+    }
+
     public static void main(String[] args) {
 //        String[] data = {
 //                "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1",
@@ -615,19 +631,21 @@ public final class TextUtils {
 //            }
 //        }
 
-//        String[] dateValue = new String[] {
-//                "2023年",
-//                "6月",
-//                "25日",
-//                "30号",
-//                "8月份",
-//                "九月",
-//                "2023初",
-//                "年份2023",
-//        };
-//        for (String value : dateValue) {
-//            System.out.println(value + " : " + TextUtils.isDateString(value));
-//        }
+        String[] dateValue = new String[] {
+                "2023年",
+                "6月",
+                "25日",
+                "30号",
+                "8月份",
+                "九月",
+                "6月3日",
+                "过年",
+                "2023初",
+                "年份2023",
+        };
+        for (String value : dateValue) {
+            System.out.println(value + " : " + TextUtils.isDateString(value));
+        }
 
 //        String[] sentenceList = new String[] {
 //                "很抱歉，作为一个人工智能助手，我没有实时获取汤臣倍健昨天的负面舆情数据的能力。同时，作为一个中立的信息来源，我也无法对任何特定的舆情数据进行评估或证实。舆情数据的真实性和准确性可能会受到多种因素的影响，包括数据采集的及时性、样本的选择、数据来源的可靠性等等。如果对汤臣倍健昨天的舆情数据有任何疑问或关注，建议关注相关的新闻报道、社交媒体评论等公开信息渠道，以了解实际情况。",
@@ -650,9 +668,9 @@ public final class TextUtils {
 //            }
 //        }
 
-        String table = "| 序号 | 学号 | 姓名 | 出生日期 |\n|--------|--------|--------|--------|\n| 1 | 1781001 | 刘备 | 40485 |\n| 2 | 1781002 | 曹操 | 40402 |\n| 3 | 1781003 | 孙权 | 40473 |\n";
-        String data = "这是表格数据：\n\n" + table + "\n以上是表格信息";
-        String result = extractMarkdownTable(data);
-        System.out.println(result);
+//        String table = "| 序号 | 学号 | 姓名 | 出生日期 |\n|--------|--------|--------|--------|\n| 1 | 1781001 | 刘备 | 40485 |\n| 2 | 1781002 | 曹操 | 40402 |\n| 3 | 1781003 | 孙权 | 40473 |\n";
+//        String data = "这是表格数据：\n\n" + table + "\n以上是表格信息";
+//        String result = extractMarkdownTable(data);
+//        System.out.println(result);
     }
 }

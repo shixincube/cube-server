@@ -18,6 +18,8 @@ public enum ConversationSubtask {
 
     QueryReport("query_report"),
 
+    SelectReport("select_report"),
+
     ExplainPainting("explain_painting"),
 
     Unknown("unknown"),

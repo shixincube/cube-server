@@ -352,19 +352,40 @@ public class ConversationWorker {
             Logger.d(this.getClass(), "#work - Subtask - QueryReport: " +
                     channel.getAuthToken().getCode() + "/" + channel.getCode());
 
-            List<PaintingReport> list = SceneManager.getInstance().queryReports(constConvCtx.getRelationId(),
+            final List<PaintingReport> list = SceneManager.getInstance().queryReports(constConvCtx.getRelationId(),
                     constConvCtx.getAuthToken().getDomain());
             if (list.isEmpty()) {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        GeneratingRecord record = new GeneratingRecord(query, constConvCtx.getCurrentFile());
+                        GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = ANSWER_CAN_NOT_FIND_REPORTS;
+                        constConvCtx.record(record);
                         listener.onGenerated(channel, record);
+
+                        channel.setProcessing(false);
                     }
                 });
                 return AIGCStateCode.Ok;
             }
+            else {
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        String answer = PsychologyHelper.makeReportListMarkdown(list);
+                        GeneratingRecord record = new GeneratingRecord(query);
+                        record.answer = answer;
+                        constConvCtx.record(record);
+                        listener.onGenerated(channel, record);
+
+                        channel.setProcessing(false);
+                    }
+                });
+                return AIGCStateCode.Ok;
+            }
+        }
+        else if (ConversationSubtask.SelectReport == subtask) {
+
         }
         else if (ConversationSubtask.ExplainPainting == subtask) {
 

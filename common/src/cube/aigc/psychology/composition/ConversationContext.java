@@ -7,6 +7,7 @@
 package cube.aigc.psychology.composition;
 
 import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.PaintingReport;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.entity.ComplexContext;
@@ -29,6 +30,8 @@ public class ConversationContext implements JSONable {
     private Attribute currentAttribute;
 
     private FileLabel currentFile;
+
+    private PaintingReport currentReport;
 
     private ConversationSubtask currentSubtask;
 
@@ -76,10 +79,19 @@ public class ConversationContext implements JSONable {
         return this.currentFile;
     }
 
+    public void setCurrentReport(PaintingReport report) {
+        this.currentReport = report;
+    }
+
+    public PaintingReport getCurrentReport() {
+        return this.currentReport;
+    }
+
     public void clearCurrent() {
         this.currentSubtask = null;
         this.currentAttribute = null;
         this.currentFile = null;
+        this.currentReport = null;
     }
 
     public FileLabel getRecentFile() {

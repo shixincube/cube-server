@@ -18,9 +18,13 @@ import cube.aigc.psychology.composition.*;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 public class PsychologyHelper {
+
+    public static final SimpleDateFormat gsDateFormat = new SimpleDateFormat("yyyy年MM月dd日");
 
     private PsychologyHelper() {
     }
@@ -137,6 +141,40 @@ public class PsychologyHelper {
         buf.append(featureSet.makeMarkdown(false));
         buf.append("\n");
         buf.append("根据上述特征，我需要结合专业的知识结构，并根据对应症状的得分进行阐述并生成报告。");
+        return buf.toString();
+    }
+
+    public static String makeReportListMarkdown(List<PaintingReport> reports) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("我一共找到**").append(reports.size()).append("**份您操作过的报告。按照报告时间整理如下：\n\n");
+        for (PaintingReport report : reports) {
+            buf.append("* ");
+            Date date = new Date(report.timestamp);
+            buf.append(gsDateFormat.format(date));
+
+            switch (report.getTheme()) {
+                case Generic:
+                case HouseTreePerson:
+                    buf.append(" ").append("房树人绘画测验");
+                    break;
+                case PersonInTheRain:
+                    buf.append(" ").append("雨中人绘画测验");
+                    break;
+                case TreeTest:
+                    buf.append(" ").append("树木绘画测验");
+                    break;
+                case SelfPortrait:
+                    buf.append(" ").append("自画像绘画测验");
+                    break;
+                default:
+                    break;
+            }
+
+            buf.append(" ").append(report.getAttribute().getGenderText());
+            buf.append(" ").append(report.getAttribute().getAgeText());
+            buf.append("\n");
+        }
+
         return buf.toString();
     }
 }

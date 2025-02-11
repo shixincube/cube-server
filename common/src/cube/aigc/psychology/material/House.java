@@ -301,7 +301,7 @@ public class House extends Thing {
         double maxRatio = 0;
         for (Door door : this.doorList) {
             double ratio = ((double) door.area)
-                    / ((double) this.area);
+                    / ((double) this.area * 0.95);
             if (ratio > maxRatio) {
                 maxRatio = ratio;
             }
