@@ -12,7 +12,9 @@ import cube.common.entity.TextConstraint;
 import cube.vision.Size;
 import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,6 +73,15 @@ public final class TextUtils {
             return false;
         }
         return true;
+    }
+
+    /**
+     * 判断字符串是否全是数字。
+     * @param character
+     * @return
+     */
+    public static boolean isNumeric(char character) {
+        return isNumeric(String.valueOf(character));
     }
 
     /**
@@ -567,19 +578,182 @@ public final class TextUtils {
     }
 
     /**
-     * 提取文本里的第一个年份数据，如果没有找到返回 <code>null</code> 值。
+     * 提取文本里的第一个年份数据，如果没有找到返回 <code>0</code> 值。
      *
      * @param text
-     * @return
+     * @return 如果提取失败返回 <code>0</code> 值。
      */
-    public static String extractYear(String text) {
-        if (!TextUtils.isDateString(text)) {
-            return null;
+    public static int extractYear(String text) {
+        int index = text.indexOf("年");
+        if (index <= 0) {
+            return 0;
+        }
+        StringBuffer buf = new StringBuffer();
+        int count = 0;
+        for (int i = index - 1; i >= 0; --i) {
+            if (text.charAt(i) == ' ') {
+                continue;
+            }
+
+            if (TextUtils.isNumeric(text.charAt(i))) {
+                buf.append(text.charAt(i));
+            }
+            ++count;
+            if (buf.length() >= 4 || count >= 4) {
+                break;
+            }
+        }
+        if (buf.length() == 0) {
+            return 0;
+        }
+        if (buf.length() == 2) {
+            buf.append("02");
+        }
+        try {
+            return Integer.parseInt(buf.reverse().toString());
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
+     * 提取文本里的第一个月份数据，如果没有找到返回 <code>0</code> 值。
+     *
+     * @param text
+     * @return 如果提取失败返回 <code>0</code> 值。
+     */
+    public static int extractMonth(String text) {
+        int index = text.indexOf("月");
+        if (index <= 0) {
+            return 0;
+        }
+        StringBuffer buf = new StringBuffer();
+        int count = 0;
+        for (int i = index - 1; i >= 0; --i) {
+            if (text.charAt(i) == ' ') {
+                continue;
+            }
+
+            if (TextUtils.isNumeric(text.charAt(i))) {
+                buf.append(text.charAt(i));
+            }
+            ++count;
+            if (buf.length() >= 2 || count >= 2) {
+                break;
+            }
+        }
+        try {
+            if (buf.length() == 0) {
+                return 0;
+            }
+            return Integer.parseInt(buf.reverse().toString());
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
+     * 提取文本里的第一个日数据，如果没有找到返回 <code>0</code> 值。
+     *
+     * @param text
+     * @return 如果提取失败返回 <code>0</code> 值。
+     */
+    public static int extractDay(String text) {
+        int index = text.indexOf("日");
+        if (index <= 0) {
+            index = text.indexOf("号");
+        }
+        StringBuffer buf = new StringBuffer();
+        int count = 0;
+        for (int i = index - 1; i >= 0; --i) {
+            if (text.charAt(i) == ' ') {
+                continue;
+            }
+
+            if (TextUtils.isNumeric(text.charAt(i))) {
+                buf.append(text.charAt(i));
+            }
+            ++count;
+            if (buf.length() >= 2 || count >= 2) {
+                break;
+            }
         }
 
-        int index = text.indexOf("年");
+        // 翻转
+        buf = buf.reverse();
 
-        return null;
+        if (buf.length() == 0) {
+            index = text.indexOf("月");
+            count = 0;
+            for (int i = index + 1; i < text.length(); ++i) {
+                if (text.charAt(i) == ' ') {
+                    continue;
+                }
+
+                if (TextUtils.isNumeric(text.charAt(i))) {
+                    buf.append(text.charAt(i));
+                }
+                ++count;
+                if (buf.length() >= 2 || count >= 2) {
+                    break;
+                }
+            }
+        }
+
+        if (buf.length() == 0) {
+            return 0;
+        }
+
+        try {
+            return Integer.parseInt(buf.toString());
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
+     * 提取文本里描述的位置信息。如果没有找到返回 <code>0</code> 值。
+     * @param sentences
+     * @return
+     */
+    public static int extractLocation(List<String> sentences) {
+        String num = "0";
+        List<String> tmp = new ArrayList<>();
+        for (int i = 0; i < sentences.size(); ++i) {
+            String sentence = sentences.get(i);
+            if (sentence.equals("第")) {
+                if (i + 1 < sentences.size()) {
+                    num = sentences.get(i + 1);
+                    break;
+                }
+            }
+            tmp.add(TextUtils.convChineseToArabicNumerals(sentence));
+        }
+
+        if (num.equals("0")) {
+            int index = -1;
+            StringBuilder buf = new StringBuilder();
+            for (String text : tmp) {
+                index = text.indexOf("第");
+                if (index >= 0) {
+                    for (int i = index + 1; i < text.length(); ++i) {
+                        if (TextUtils.isNumeric(text.charAt(i))) {
+                            buf.append(text.charAt(i));
+                        }
+                    }
+                }
+                if (buf.length() > 0) {
+                    break;
+                }
+            }
+            num = buf.toString();
+        }
+
+        try {
+            return Integer.parseInt(num);
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public static void main(String[] args) {
@@ -631,21 +805,70 @@ public final class TextUtils {
 //            }
 //        }
 
-        String[] dateValue = new String[] {
-                "2023年",
-                "6月",
-                "25日",
-                "30号",
-                "8月份",
-                "九月",
-                "6月3日",
-                "过年",
-                "2023初",
-                "年份2023",
-        };
-        for (String value : dateValue) {
-            System.out.println(value + " : " + TextUtils.isDateString(value));
-        }
+//        String[] dateValue = new String[] {
+//                "2023年",
+//                "6月",
+//                "25日",
+//                "30号",
+//                "8月份",
+//                "九月",
+//                "6月3日",
+//                "过年",
+//                "2023初",
+//                "年份2023",
+//        };
+//        for (String value : dateValue) {
+//            System.out.println(value + " : " + TextUtils.isDateString(value));
+//        }
+
+//        String[] dateValue = new String[] {
+//                "23年",
+//                "2025年",
+//                "这是来自24年的祝福",
+//                "查看2025年4月的",
+//                "年份2023",
+//                "过年",
+//                "今夕是何年",
+//                "这是一句无关日期的文本"
+//        };
+//        for (String value : dateValue) {
+//            System.out.println(TextUtils.extractYear(value));
+//        }
+
+//        String[] monthDateValue = new String[] {
+//                "2月",
+//                "12月",
+//                "这是来自9月的祝福",
+//                "查看2025年4月的",
+//                "月份10",
+//                "月子",
+//                "今夕是何月",
+//                "这是一句无关日期的文本"
+//        };
+//        for (String value : monthDateValue) {
+//            System.out.println(TextUtils.extractMonth(value));
+//        }
+
+//        String[] dayDateValue = new String[] {
+//                "2日",
+//                "12号",
+//                "这是来自10月17日的祝福",
+//                "查看2025年4月3号的",
+//                "日期是8月10",
+//                "日子",
+//                "今夕是何日",
+//                "这是一句无关日期的文本"
+//        };
+//        for (String value : dayDateValue) {
+//            System.out.println(TextUtils.extractDay(value));
+//        }
+
+        String[] sentence1 = new String[] { "第", "12", "个", "报告" };
+        String[] sentence2 = new String[] { "这是第1个", "报告" };
+        String[] sentence3 = new String[] { "看第二个", "报告" };
+        System.out.println(TextUtils.extractLocation(Arrays.asList(sentence1)));
+        System.out.println(TextUtils.extractLocation(Arrays.asList(sentence2)));
+        System.out.println(TextUtils.extractLocation(Arrays.asList(sentence3)));
 
 //        String[] sentenceList = new String[] {
 //                "很抱歉，作为一个人工智能助手，我没有实时获取汤臣倍健昨天的负面舆情数据的能力。同时，作为一个中立的信息来源，我也无法对任何特定的舆情数据进行评估或证实。舆情数据的真实性和准确性可能会受到多种因素的影响，包括数据采集的及时性、样本的选择、数据来源的可靠性等等。如果对汤臣倍健昨天的舆情数据有任何疑问或关注，建议关注相关的新闻报道、社交媒体评论等公开信息渠道，以了解实际情况。",

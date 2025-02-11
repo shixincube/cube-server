@@ -38,9 +38,13 @@ public class Resource {
     private long termDescriptionLastModified = 0;
     private List<KnowledgeStrategy> knowledgeStrategies;
 
-    private File themeFile = new File("assets/psychology/theme.json");
-    private long themeLastModified = 0;
-    private Map<String, ThemeTemplate> themeTemplates;
+//    private File themeFile = new File("assets/psychology/theme.json");
+//    private long themeLastModified = 0;
+//    private Map<String, ThemeTemplate> themeTemplates;
+
+    private File corpusFile = new File("assets/psychology/corpus.json");
+    private long corpusLastModified = 0;
+    private JSONObject corpusJson = null;
 
     private File benchmarkScoreFile = new File("assets/psychology/benchmark.json");
     private long benchmarkScoreLastModified = 0;
@@ -71,7 +75,7 @@ public class Resource {
 
     private Resource() {
         this.knowledgeStrategies = new ArrayList<>();
-        this.themeTemplates = new ConcurrentHashMap<>();
+//        this.themeTemplates = new ConcurrentHashMap<>();
     }
 
     public static Resource getInstance() {
@@ -305,6 +309,29 @@ public class Resource {
         }
 
         return this.suggestionScriptFileContent;
+    }
+
+    public String getCorpus(String category, String content) {
+        return this.getCorpus(category, content, "cn");
+    }
+
+    public String getCorpus(String category, String content, String lang) {
+        if (this.corpusFile.exists()) {
+            if (this.corpusFile.lastModified() != this.corpusLastModified) {
+                try {
+                    byte[] data = Files.readAllBytes(Paths.get(this.corpusFile.getAbsolutePath()));
+                    this.corpusJson = new JSONObject(new String(data, StandardCharsets.UTF_8));
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#getCorpus", e);
+                }
+            }
+        }
+        if (null == this.corpusJson) {
+            return "";
+        }
+        JSONObject categoryJson = this.corpusJson.getJSONObject(category);
+        JSONObject contentJson = categoryJson.getJSONObject(content);
+        return contentJson.getString(lang.toLowerCase());
     }
 
     public List<String> getMandalaFlowerFiles() {

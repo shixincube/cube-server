@@ -117,6 +117,9 @@ public class PsychologyScene {
             Workflow workflow = new Workflow(aigcService, new Attribute("male", 18, false));
             String r = workflow.infer("白泽京智");
             Logger.i(this.getClass(), "#start - Active dataset: " + r);
+
+            String corpus = Resource.getInstance().getCorpus("baize", "MIND_ECHO");
+            Logger.i(this.getClass(), "#start - Active corpus: " + corpus);
         } catch (Exception e) {
             e.printStackTrace();
             Logger.w(this.getClass(), "#start", e);

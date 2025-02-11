@@ -795,25 +795,27 @@ public class EvaluationReport implements JSONable {
             }
         });
 
-        // "人际关系"移到最后
-        if (result.get(0).indicator == Indicator.InterpersonalRelation) {
-            EvaluationScore es = result.remove(0);
-            result.add(es);
-        }
-        // "理想主义"移动最后
-        for (EvaluationScore es : result) {
-            if (es.indicator == Indicator.Idealism) {
-                result.remove(es);
+        if (result.size() > 0) {
+            // "人际关系"移到最后
+            if (result.get(0).indicator == Indicator.InterpersonalRelation) {
+                EvaluationScore es = result.remove(0);
                 result.add(es);
-                break;
             }
-        }
-        // "自我意识"移动到最后
-        for (EvaluationScore es : result) {
-            if (es.indicator == Indicator.SelfConsciousness) {
-                result.remove(es);
-                result.add(es);
-                break;
+            // "理想主义"移动最后
+            for (EvaluationScore es : result) {
+                if (es.indicator == Indicator.Idealism) {
+                    result.remove(es);
+                    result.add(es);
+                    break;
+                }
+            }
+            // "自我意识"移动到最后
+            for (EvaluationScore es : result) {
+                if (es.indicator == Indicator.SelfConsciousness) {
+                    result.remove(es);
+                    result.add(es);
+                    break;
+                }
             }
         }
 

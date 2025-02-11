@@ -1,0 +1,52 @@
+{
+    "baize": {
+        "MIND_ECHO": {
+            "cn": "灵思 - Mind Echo - 与用户的思维、想法、心智活动或精神状态紧密相关，像回声一样，对用户的思维或想法产生反馈或共鸣。",
+            "en": ""
+        }
+    },
+    "report": {
+        "REPORT_NO_DATA_SUMMARY": {
+            "cn": "您提交的文件里没有发现可用的数据，我暂时无法为您提供可用的数据。",
+            "en": ""
+        }
+    },
+    "conversation": {
+        "FORMAT_ANSWER_GENERATING": {
+            "cn": "正在为被测人生成报告，该被测人为%s性，年龄是%s。报告生成需要数分钟，请稍候……",
+            "en": ""
+        },
+        "ANSWER_FAILED": {
+            "cn": "我遇到了一些问题，请稍候再试。",
+            "en": ""
+        },
+        "ANSWER_NO_FILE": {
+            "cn": "没有找到需要操作的文件，可以尝试重新上传一下文件。",
+            "en": ""
+        },
+        "ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE": {
+            "cn": "进行评测需要知道被测人的性别和年龄，请告诉我画这幅画的被测人的**性别**和**年龄**。",
+            "en": ""
+        },
+        "ANSWER_NEED_TO_PROVIDE_GENDER": {
+            "cn": "我已经知道了这幅画的被测人的年龄，还需要您告知这位被测人的**性别**。",
+            "en": ""
+        },
+        "ANSWER_NEED_TO_PROVIDE_AGE": {
+            "cn": "我已经知道了这幅画的被测人的性别，还需要您告知这位被测人的**年龄**。",
+            "en": ""
+        },
+        "ANSWER_CAN_NOT_FIND_REPORTS": {
+            "cn": "我没有找到您的报告信息。如果您想进行绘画测评，可以将您的绘画发给我。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_SELECT_REPORT_LOCATION_OVERFLOW": {
+            "cn": "您找的是第%d份报告，但是现在只有%d份报告。",
+            "en": ""
+        },
+        "ANSWER_NO_SELECT_REPORT": {
+            "cn": "没有找到您所描述的报告。",
+            "en": ""
+        }
+    }
+}

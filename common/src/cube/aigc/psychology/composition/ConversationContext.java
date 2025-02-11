@@ -37,6 +37,8 @@ public class ConversationContext implements JSONable {
 
     private List<GeneratingRecord> records;
 
+    private List<PaintingReport> reportList;
+
     public ConversationContext(ConversationRelation relation, AuthToken authToken) {
         this.relation = relation;
         this.authToken = authToken;
@@ -85,6 +87,14 @@ public class ConversationContext implements JSONable {
 
     public PaintingReport getCurrentReport() {
         return this.currentReport;
+    }
+
+    public void setReportList(List<PaintingReport> list) {
+        this.reportList = list;
+    }
+
+    public List<PaintingReport> getReportList() {
+        return this.reportList;
     }
 
     public void clearCurrent() {

@@ -147,8 +147,10 @@ public class PsychologyHelper {
     public static String makeReportListMarkdown(List<PaintingReport> reports) {
         StringBuilder buf = new StringBuilder();
         buf.append("我一共找到**").append(reports.size()).append("**份您操作过的报告。按照报告时间整理如下：\n\n");
+        int index = 0;
         for (PaintingReport report : reports) {
-            buf.append("* ");
+            ++index;
+            buf.append(index).append(". ");
             Date date = new Date(report.timestamp);
             buf.append(gsDateFormat.format(date));
 

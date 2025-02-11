@@ -417,6 +417,10 @@ public class Workflow {
     }
 
     private String inferSummary(List<ReportSection> list) {
+        if (list.isEmpty()) {
+            return Resource.getInstance().getCorpus("report", "REPORT_NO_DATA_SUMMARY");
+        }
+
         String unitName = null;
         if (this.service.hasUnit(ModelConfig.BAIZE_NEXT_UNIT)) {
             unitName = ModelConfig.BAIZE_NEXT_UNIT;
