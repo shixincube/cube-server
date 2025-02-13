@@ -25,28 +25,11 @@ import cube.util.TextUtils;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 public class ConversationWorker {
 
     private final static String CORPUS = "conversation";
-
-    private final static String FORMAT_ANSWER_GENERATING = "FORMAT_ANSWER_GENERATING";
-
-    private final static String ANSWER_FAILED = "ANSWER_FAILED";
-
-    private final static String ANSWER_NO_FILE = "ANSWER_NO_FILE";
-
-    private final static String ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE = "ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE";
-
-    private final static String ANSWER_NEED_TO_PROVIDE_GENDER = "ANSWER_NEED_TO_PROVIDE_GENDER";
-
-    private final static String ANSWER_NEED_TO_PROVIDE_AGE = "ANSWER_NEED_TO_PROVIDE_AGE";
-
-    private final static String ANSWER_CAN_NOT_FIND_REPORTS = "ANSWER_CAN_NOT_FIND_REPORTS";
-
-    private final static String ANSWER_NO_SELECT_REPORT = "ANSWER_NO_SELECT_REPORT";
 
     private String unitName = ModelConfig.INFINITE_UNIT;
 
@@ -160,7 +143,7 @@ public class ConversationWorker {
                     Logger.d(this.getClass(), "#work - No file: " +
                             channel.getAuthToken().getCode() + "/" + channel.getCode());
                     GeneratingRecord record = new GeneratingRecord(query);
-                    record.answer = Resource.getInstance().getCorpus(CORPUS, ANSWER_NO_FILE);
+                    record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_FILE");
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
@@ -193,7 +176,7 @@ public class ConversationWorker {
                             channel.getAuthToken().getCode() + "/" + channel.getCode());
 
                     GeneratingRecord record = new GeneratingRecord(query, fileLabel);
-                    record.answer = Resource.getInstance().getCorpus(CORPUS, ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE);
+                    record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE");
 
                     // 进入子任务
                     convCtx.setCurrentSubtask(subtask);
@@ -213,7 +196,7 @@ public class ConversationWorker {
                             channel.getAuthToken().getCode() + "/" + channel.getCode());
 
                     GeneratingRecord record = new GeneratingRecord(query, fileLabel);
-                    record.answer = Resource.getInstance().getCorpus(CORPUS, ANSWER_NEED_TO_PROVIDE_AGE);
+                    record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NEED_TO_PROVIDE_AGE");
 
                     // 进入子任务
                     convCtx.setCurrentSubtask(subtask);
@@ -233,7 +216,7 @@ public class ConversationWorker {
                             channel.getAuthToken().getCode() + "/" + channel.getCode());
 
                     GeneratingRecord record = new GeneratingRecord(query, fileLabel);
-                    record.answer = Resource.getInstance().getCorpus(CORPUS, ANSWER_NEED_TO_PROVIDE_GENDER);
+                    record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NEED_TO_PROVIDE_GENDER");
 
                     // 进入子任务
                     convCtx.setCurrentSubtask(subtask);
@@ -272,7 +255,7 @@ public class ConversationWorker {
                             if (null != record.context) {
                                 record.context.setInferring(false);
                             }
-                            record.answer = Resource.getInstance().getCorpus(CORPUS, ANSWER_FAILED);
+                            record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
                             constConvCtx.clearCurrent();
                             channel.setProcessing(false);
                         }
@@ -289,7 +272,7 @@ public class ConversationWorker {
                             if (null != record.context) {
                                 record.context.setInferring(false);
                             }
-                            record.answer = PsychologyHelper.makeMarkdown(report);
+                            record.answer = PsychologyHelper.makeContentMarkdown(report);
                             constConvCtx.clearCurrent();
                             channel.setProcessing(false);
 
@@ -304,7 +287,7 @@ public class ConversationWorker {
                             if (null != record.context) {
                                 record.context.setInferring(false);
                             }
-                            record.answer = Resource.getInstance().getCorpus(CORPUS, ANSWER_FAILED);
+                            record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
                             constConvCtx.clearCurrent();
                             channel.setProcessing(false);
                         }
@@ -328,7 +311,7 @@ public class ConversationWorker {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        record.answer = String.format(Resource.getInstance().getCorpus(CORPUS, FORMAT_ANSWER_GENERATING),
+                        record.answer = String.format(Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_GENERATING"),
                                 constConvCtx.getCurrentAttribute().getGenderText(),
                                 constConvCtx.getCurrentAttribute().getAgeText());
                         listener.onGenerated(channel, record);
@@ -342,7 +325,7 @@ public class ConversationWorker {
                     @Override
                     public void run() {
                         GeneratingRecord record = new GeneratingRecord(query, constConvCtx.getCurrentFile());
-                        record.answer = Resource.getInstance().getCorpus(CORPUS, ANSWER_FAILED);
+                        record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
                         listener.onGenerated(channel, record);
                     }
                 });
@@ -362,10 +345,9 @@ public class ConversationWorker {
                     @Override
                     public void run() {
                         GeneratingRecord record = new GeneratingRecord(query);
-                        record.answer = Resource.getInstance().getCorpus(CORPUS, ANSWER_CAN_NOT_FIND_REPORTS);
+                        record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_REPORTS_DATA");
                         constConvCtx.record(record);
                         listener.onGenerated(channel, record);
-
                         channel.setProcessing(false);
                     }
                 });
@@ -375,12 +357,13 @@ public class ConversationWorker {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        String answer = PsychologyHelper.makeReportListMarkdown(list);
+                        String answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                "FORMAT_ANSWER_QUERY_REPORT_RESULT"),
+                                list.size(), PsychologyHelper.makeReportListMarkdown(list));
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = answer;
                         constConvCtx.record(record);
                         listener.onGenerated(channel, record);
-
                         channel.setProcessing(false);
 
                         SceneManager.getInstance().writeRecord(channel.getCode(), ModelConfig.AIXINLI,
@@ -397,9 +380,23 @@ public class ConversationWorker {
                 constConvCtx.setReportList(list);
             }
 
-            int year = TextUtils.extractYear(query);
-            int month = TextUtils.extractMonth(query);
-            int day = TextUtils.extractDay(query);
+            if (constConvCtx.getReportList().isEmpty()) {
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        GeneratingRecord record = new GeneratingRecord(query);
+                        record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_REPORTS_DATA");
+                        constConvCtx.record(record);
+                        listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+                    }
+                });
+                return AIGCStateCode.Ok;
+            }
+
+            final int year = TextUtils.extractYear(query);
+            final int month = TextUtils.extractMonth(query);
+            final int day = TextUtils.extractDay(query);
             if (year == 0 && month == 0 && day == 0) {
                 // 没有找到日期信息
                 List<String> sentences = this.service.segmentation(query);
@@ -410,7 +407,10 @@ public class ConversationWorker {
                         @Override
                         public void run() {
                             GeneratingRecord record = new GeneratingRecord(query);
-                            record.answer = Resource.getInstance().getCorpus(CORPUS, ANSWER_NO_SELECT_REPORT);
+                            record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                    "FORMAT_ANSWER_PLEASE_INPUT_REPORT_DESC"),
+                                    constConvCtx.getReportList().size());
+                            constConvCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
                         }
@@ -420,7 +420,23 @@ public class ConversationWorker {
                     // 找到位置
                     List<PaintingReport> list = constConvCtx.getReportList();
                     if (location <= list.size()) {
-
+                        int index = location - 1;
+                        final PaintingReport report = list.get(index);
+                        // 设置当前选中报告
+                        constConvCtx.setCurrentReport(report);
+                        this.service.getExecutor().execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.answer = String.format(
+                                        Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
+                                        PsychologyHelper.makeReportTitleMarkdown(report),
+                                        PsychologyHelper.makeContentMarkdown(report));
+                                constConvCtx.record(record);
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+                            }
+                        });
                     }
                     else {
                         // 位置越界
@@ -428,10 +444,10 @@ public class ConversationWorker {
                             @Override
                             public void run() {
                                 GeneratingRecord record = new GeneratingRecord(query);
-                                record.answer = String.format(
-                                        Resource.getInstance().getCorpus(CORPUS,
+                                record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                                 "FORMAT_ANSWER_SELECT_REPORT_LOCATION_OVERFLOW"),
                                         location, list.size());
+                                constConvCtx.record(record);
                                 listener.onGenerated(channel, record);
                                 channel.setProcessing(false);
                             }
@@ -444,9 +460,106 @@ public class ConversationWorker {
                 List<PaintingReport> reports = this.matchReports(constConvCtx.getReportList(), year, month, day);
                 if (reports.isEmpty()) {
                     // 对应日期没有报告
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (0 != year && 0 != month && 0 != day) {
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                        "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_YMD"),
+                                        constConvCtx.getReportList().size(), year, month, day);
+                                constConvCtx.record(record);
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+                            }
+                            else if (0 != year && 0 != month) {
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                        "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_YM"),
+                                        constConvCtx.getReportList().size(), year, month);
+                                constConvCtx.record(record);
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+                            }
+                            else if (0 != month && 0 != day) {
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                        "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_MD"),
+                                        constConvCtx.getReportList().size(), month, day);
+                                constConvCtx.record(record);
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+                            }
+                            else if (0 != day) {
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                        "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_DAY"),
+                                        constConvCtx.getReportList().size(), day);
+                                constConvCtx.record(record);
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+                            }
+                            else if (0 != month) {
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                        "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_MONTH"),
+                                        constConvCtx.getReportList().size(), month);
+                                constConvCtx.record(record);
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+                            }
+                            else if (0 != year) {
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                        "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_YEAR"),
+                                        constConvCtx.getReportList().size(), year);
+                                constConvCtx.record(record);
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+                            }
+                            else {
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+                            }
+                        }
+                    });
                 }
                 else {
-
+                    if (reports.size() == 1) {
+                        // 设置当前选中报告
+                        constConvCtx.setCurrentReport(reports.get(0));
+                        this.service.getExecutor().execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.answer = String.format(
+                                        Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
+                                        PsychologyHelper.makeReportTitleMarkdown(reports.get(0)),
+                                        PsychologyHelper.makeContentMarkdown(reports.get(0)));
+                                constConvCtx.record(record);
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+                            }
+                        });
+                    }
+                    else {
+                        this.service.getExecutor().execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                String answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                        "FORMAT_ANSWER_FOUND_MULTIPLE_REPORTS"),
+                                        constConvCtx.getReportList().size(), reports.size(),
+                                        PsychologyHelper.makeReportListMarkdown(reports));
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.answer = answer;
+                                constConvCtx.record(record);
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+                            }
+                        });
+                    }
                 }
             }
             return AIGCStateCode.Ok;
@@ -619,11 +732,11 @@ public class ConversationWorker {
             for (int i = start; i < words.size(); ++i) {
                 String word = words.get(i);
                 word = word.trim();
-                if (word.equals("男") || word.equalsIgnoreCase("male")) {
+                if (word.equals("男") || word.equals("男性") || word.equalsIgnoreCase("male")) {
                     gender = "male";
                     break;
                 }
-                else if (word.equals("女") || word.equalsIgnoreCase("female")) {
+                else if (word.equals("女") || word.equals("女性") || word.equalsIgnoreCase("female")) {
                     gender = "female";
                     break;
                 }
@@ -631,11 +744,11 @@ public class ConversationWorker {
         }
         else {
             for (String word : words) {
-                if (word.equals("男") || word.equalsIgnoreCase("male")) {
+                if (word.equals("男") || word.equals("男性") || word.equalsIgnoreCase("male")) {
                     gender = "male";
                     break;
                 }
-                else if (word.equals("女") || word.equalsIgnoreCase("female")) {
+                else if (word.equals("女") || word.equals("女性") || word.equalsIgnoreCase("female")) {
                     gender = "female";
                     break;
                 }

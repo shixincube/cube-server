@@ -801,8 +801,11 @@ public class AIGCStorage implements Storagable {
                 }
 
                 if (!data.get("context").isNullValue()) {
-                    ComplexContext context = new ComplexContext(new JSONObject(data.get("context").getString()));
-                    history.context = context;
+                    String jsonString = data.get("context").getString();
+                    if (jsonString.length() > 3) {
+                        ComplexContext context = new ComplexContext(new JSONObject(jsonString));
+                        history.context = context;
+                    }
                 }
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#readChatHistoryByContactId", e);
@@ -868,8 +871,11 @@ public class AIGCStorage implements Storagable {
                 }
 
                 if (!data.get("context").isNullValue()) {
-                    ComplexContext context = new ComplexContext(new JSONObject(data.get("context").getString()));
-                    history.context = context;
+                    String jsonString = data.get("context").getString();
+                    if (jsonString.length() > 3) {
+                        ComplexContext context = new ComplexContext(new JSONObject(jsonString));
+                        history.context = context;
+                    }
                 }
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#readChatHistoryByFeedback", e);
@@ -930,8 +936,11 @@ public class AIGCStorage implements Storagable {
                 }
 
                 if (!data.get("context").isNullValue()) {
-                    ComplexContext context = new ComplexContext(new JSONObject(data.get("context").getString()));
-                    history.context = context;
+                    String jsonString = data.get("context").getString();
+                    if (jsonString.length() > 3) {
+                        ComplexContext context = new ComplexContext(new JSONObject(jsonString));
+                        history.context = context;
+                    }
                 }
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#readChatHistoryByChannel", e);
@@ -975,7 +984,7 @@ public class AIGCStorage implements Storagable {
                 new StorageField("answer_content", EmojiFilter.filterEmoji(history.answerContent)),
                 (null != answerFiles) ? new StorageField("answer_files", answerFiles.toString()) :
                         new StorageField("answer_files", LiteralBase.STRING),
-                (null != history.context) ? new StorageField("context", history.context.toString()) :
+                (null != history.context) ? new StorageField("context", history.context.toJSON().toString()) :
                         new StorageField("context", LiteralBase.STRING),
                 new StorageField("feedback", history.feedback),
                 new StorageField("context_id", history.contextId)

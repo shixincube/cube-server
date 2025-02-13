@@ -59,26 +59,27 @@ public class PsychologyHelper {
         }
     }
 
-    public static String makeMarkdown(PaintingReport report) {
+    public static String makeContentMarkdown(PaintingReport report) {
         StringBuilder buf = new StringBuilder();
         if (report.isNull()) {
-            buf.append("根据您提供的绘画文件，我没有发现有效的心理投射内容，建议您检查一下图片文件内容。");
+            buf.append("根据提供的绘画文件，绘画里没有发现有效的心理投射内容，建议检查一下图片文件内容。");
             return buf.toString();
         }
 
         EvaluationReport evalReport = report.getEvaluationReport();
-        buf.append("根据您提供的绘画图片，");
+        buf.append("根据报告的绘画图片，");
         if (evalReport.isHesitating()) {
-            buf.append("我发现画面内容并不容易被识别。");
+            buf.append("绘画画面内容并不容易被识别。");
         }
         else {
-            buf.append("我已经按照心理学绘画投射理论进行了解读。");
+            buf.append("按照心理学绘画投射理论进行解读。");
         }
-        buf.append("这位**").append(report.getAttribute().getAgeText()).append("**的**")
-                .append(report.getAttribute().getGenderText()).append("性**")
-                .append("被测人，");
+        buf.append("被测人为**").append(report.getAttribute().getAgeText()).append("**的**")
+                .append(report.getAttribute().getGenderText()).append("性**。")
+                .append("评测日期是**")
+                .append(gsDateFormat.format(new Date(report.timestamp))).append("**。");
         buf.append("在这幅绘画中投射出了").append(evalReport.numRepresentations()).append("个心理表征，");
-        buf.append("相关的评测报告内容如下：\n\n");
+        buf.append("相关的评测内容如下：\n\n");
 
         buf.append("# 概述\n\n");
         buf.append(report.getSummary()).append("\n\n");
@@ -106,15 +107,20 @@ public class PsychologyHelper {
             buf.append("**【人格画像】** ：**").append(bigFivePersonality.getDisplayName()).append("**。\n\n");
             buf.append("**【人格描述】** ：\n\n").append(bigFivePersonality.getDescription()).append("\n\n");
             buf.append("**【维度描述】** ：\n\n");
-            buf.append("* **宜人性**（").append(bigFivePersonality.getObligingness()).append("）\n");
+            buf.append("* **宜人性**（")
+                    .append(String.format("%.1f", bigFivePersonality.getObligingness())).append("）\n");
             buf.append(bigFivePersonality.getObligingnessContent()).append("\n\n");
-            buf.append("* **尽责性**（").append(bigFivePersonality.getConscientiousness()).append("）\n");
+            buf.append("* **尽责性**（")
+                    .append(String.format("%.1f", bigFivePersonality.getConscientiousness())).append("）\n");
             buf.append(bigFivePersonality.getConscientiousnessContent()).append("\n\n");
-            buf.append("* **外向性**（").append(bigFivePersonality.getExtraversion()).append("）\n");
+            buf.append("* **外向性**（")
+                    .append(String.format("%.1f", bigFivePersonality.getExtraversion())).append("）\n");
             buf.append(bigFivePersonality.getExtraversionContent()).append("\n\n");
-            buf.append("* **进取性**（").append(bigFivePersonality.getAchievement()).append("）\n");
+            buf.append("* **进取性**（")
+                    .append(String.format("%.1f", bigFivePersonality.getAchievement())).append("）\n");
             buf.append(bigFivePersonality.getAchievementContent()).append("\n\n");
-            buf.append("* **情绪性**（").append(bigFivePersonality.getNeuroticism()).append("）\n");
+            buf.append("* **情绪性**（")
+                    .append(String.format("%.1f", bigFivePersonality.getNeuroticism())).append("）\n");
             buf.append(bigFivePersonality.getNeuroticismContent()).append("\n\n");
         }
 
@@ -140,13 +146,12 @@ public class PsychologyHelper {
         buf.append("我看到的");
         buf.append(featureSet.makeMarkdown(false));
         buf.append("\n");
-        buf.append("根据上述特征，我需要结合专业的知识结构，并根据对应症状的得分进行阐述并生成报告。");
+        buf.append("根据上述特征，需要结合专业的知识结构，并根据对应症状的得分进行阐述并生成报告。");
         return buf.toString();
     }
 
     public static String makeReportListMarkdown(List<PaintingReport> reports) {
         StringBuilder buf = new StringBuilder();
-        buf.append("我一共找到**").append(reports.size()).append("**份您操作过的报告。按照报告时间整理如下：\n\n");
         int index = 0;
         for (PaintingReport report : reports) {
             ++index;
@@ -177,6 +182,33 @@ public class PsychologyHelper {
             buf.append("\n");
         }
 
+        return buf.toString();
+    }
+
+    public static String makeReportTitleMarkdown(PaintingReport report) {
+        StringBuffer buf = new StringBuffer();
+        buf.append(gsDateFormat.format(new Date(report.timestamp)));
+
+        switch (report.getTheme()) {
+            case Generic:
+            case HouseTreePerson:
+                buf.append(" ").append("房树人绘画测验");
+                break;
+            case PersonInTheRain:
+                buf.append(" ").append("雨中人绘画测验");
+                break;
+            case TreeTest:
+                buf.append(" ").append("树木绘画测验");
+                break;
+            case SelfPortrait:
+                buf.append(" ").append("自画像绘画测验");
+                break;
+            default:
+                break;
+        }
+
+        buf.append(" ").append(report.getAttribute().getGenderText());
+        buf.append(" ").append(report.getAttribute().getAgeText());
         return buf.toString();
     }
 }

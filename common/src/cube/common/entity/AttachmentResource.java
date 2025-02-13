@@ -8,6 +8,7 @@ package cube.common.entity;
 
 import cube.aigc.attachment.Attachment;
 import cube.aigc.attachment.ThingAttachment;
+import cube.aigc.psychology.composition.ReportAttachment;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -37,7 +38,11 @@ public class AttachmentResource extends ComplexResource {
         for (int i = 0; i < attachmentArray.length(); ++i) {
             JSONObject data = attachmentArray.getJSONObject(i);
             String type = data.getString("type");
-            if (type.equals(ThingAttachment.TYPE)) {
+            if (type.equals(ReportAttachment.TYPE)) {
+                ReportAttachment report = new ReportAttachment(data);
+                this.attachments.add(report);
+            }
+            else if (type.equals(ThingAttachment.TYPE)) {
                 ThingAttachment thing = new ThingAttachment(data);
                 this.attachments.add(thing);
             }
@@ -45,6 +50,9 @@ public class AttachmentResource extends ComplexResource {
     }
 
     public Attachment getAttachment() {
+        if (this.attachments.isEmpty()) {
+            return null;
+        }
         return this.attachments.get(0);
     }
 

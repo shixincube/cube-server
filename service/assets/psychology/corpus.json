@@ -13,7 +13,7 @@
     },
     "conversation": {
         "FORMAT_ANSWER_GENERATING": {
-            "cn": "正在为被测人生成报告，该被测人为%s性，年龄是%s。报告生成需要数分钟，请稍候……",
+            "cn": "正在为被测人生成报告，该被测人为%s性，年龄是%s。报告生成需要些时间，请稍候……",
             "en": ""
         },
         "ANSWER_FAILED": {
@@ -36,15 +36,55 @@
             "cn": "我已经知道了这幅画的被测人的性别，还需要您告知这位被测人的**年龄**。",
             "en": ""
         },
-        "ANSWER_CAN_NOT_FIND_REPORTS": {
+        "ANSWER_NO_REPORTS_DATA": {
             "cn": "我没有找到您的报告信息。如果您想进行绘画测评，可以将您的绘画发给我。",
             "en": ""
         },
-        "FORMAT_ANSWER_SELECT_REPORT_LOCATION_OVERFLOW": {
-            "cn": "您找的是第%d份报告，但是现在只有%d份报告。",
+        "FORMAT_ANSWER_QUERY_REPORT_RESULT": {
+            "cn": "通过对历史数据的查询，共找到**%d**份您操作过的报告。按照报告时间整理如下：\n\n%s",
             "en": ""
         },
-        "ANSWER_NO_SELECT_REPORT": {
+        "FORMAT_ANSWER_SELECT_REPORT_LOCATION_OVERFLOW": {
+            "cn": "您找的是第%d份报告，但是我只找到**%d**份报告。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_PLEASE_INPUT_REPORT_DESC": {
+            "cn": "请告诉我您需要查看哪份报告，现在您一共有%d份报告。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_YMD": {
+            "cn": "您共有%d份报告，但是我没有找到**%d年%d月%d日**的报告。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_YM": {
+            "cn": "您共有%d份报告，但是我没有找到**%d年%d月**的报告。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_MD": {
+            "cn": "您共有%d份报告，但是我没有找到**%d月%d日**的报告。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_DAY": {
+            "cn": "您共有%d份报告，但是我没有找到**%d日**的报告。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_MONTH": {
+            "cn": "您共有%d份报告，但是我没有找到**%d月**的报告。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_YEAR": {
+            "cn": "您共有%d份报告，但是我没有找到**%d年**的报告。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_FOUND_MULTIPLE_REPORTS": {
+            "cn": "在%d份报告里，找到**%d**份符合条件的报告：\n\n%s",
+            "en": ""
+        },
+        "FORMAT_ANSWER_SHOW_REPORT_CONTENT": {
+            "cn": "打开报告【%s】，报告内容如下：\n\n%s",
+            "en": ""
+        },
+        "ANSWER_CAN_NOT_FIND_REPORT": {
             "cn": "没有找到您所描述的报告。",
             "en": ""
         }

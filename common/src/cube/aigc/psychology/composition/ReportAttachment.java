@@ -7,6 +7,7 @@
 package cube.aigc.psychology.composition;
 
 import cube.aigc.attachment.Attachment;
+import org.json.JSONObject;
 
 public class ReportAttachment extends Attachment {
 
@@ -14,5 +15,9 @@ public class ReportAttachment extends Attachment {
 
     public ReportAttachment(long sn) {
         super(TYPE, sn);
+    }
+
+    public ReportAttachment(JSONObject json) {
+        super(json);
     }
 }

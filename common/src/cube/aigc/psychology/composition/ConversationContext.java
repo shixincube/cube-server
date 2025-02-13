@@ -101,7 +101,6 @@ public class ConversationContext implements JSONable {
         this.currentSubtask = null;
         this.currentAttribute = null;
         this.currentFile = null;
-        this.currentReport = null;
     }
 
     public FileLabel getRecentFile() {

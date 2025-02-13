@@ -2260,14 +2260,16 @@ public class Manager implements Tickable, PerformerListener {
 
     public JSONObject executePsychologyConversation(String token, String channelCode,
                                                     JSONObject context, JSONObject relation, String query) {
-        if (null == context || null == relation) {
-            Logger.w(this.getClass(), "#executePsychologyConversation - Context or relation is null");
+        if (null == relation) {
+            Logger.w(this.getClass(), "#executePsychologyConversation - The relation is null");
             return null;
         }
 
         JSONObject data = new JSONObject();
         data.put("channelCode", channelCode);
-        data.put("context", context);
+        if (null != context) {
+            data.put("context", context);
+        }
         data.put("relation", relation);
         data.put("query", query);
         Packet packet = new Packet(AIGCAction.PsychologyConversation.name, data);
