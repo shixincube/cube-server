@@ -20,7 +20,9 @@ public enum ConversationSubtask {
 
     SelectReport("select_report"),
 
-    ExplainPainting("explain_painting"),
+    UnselectReport("unselect_report"),
+
+    ShowCoT("show_cot"),
 
     Unknown("unknown"),
 

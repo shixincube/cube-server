@@ -97,7 +97,7 @@ public class ConversationContext implements JSONable {
         return this.reportList;
     }
 
-    public void clearCurrent() {
+    public void clearCurrentPredict() {
         this.currentSubtask = null;
         this.currentAttribute = null;
         this.currentFile = null;

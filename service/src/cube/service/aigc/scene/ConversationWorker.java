@@ -256,7 +256,7 @@ public class ConversationWorker {
                                 record.context.setInferring(false);
                             }
                             record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
-                            constConvCtx.clearCurrent();
+                            constConvCtx.clearCurrentPredict();
                             channel.setProcessing(false);
                         }
 
@@ -273,7 +273,7 @@ public class ConversationWorker {
                                 record.context.setInferring(false);
                             }
                             record.answer = PsychologyHelper.makeContentMarkdown(report);
-                            constConvCtx.clearCurrent();
+                            constConvCtx.clearCurrentPredict();
                             channel.setProcessing(false);
 
                             SceneManager.getInstance().writeRecord(channel.getCode(), ModelConfig.AIXINLI,
@@ -288,7 +288,7 @@ public class ConversationWorker {
                                 record.context.setInferring(false);
                             }
                             record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
-                            constConvCtx.clearCurrent();
+                            constConvCtx.clearCurrentPredict();
                             channel.setProcessing(false);
                         }
                     });
@@ -564,12 +564,39 @@ public class ConversationWorker {
             }
             return AIGCStateCode.Ok;
         }
-        else if (ConversationSubtask.ExplainPainting == subtask) {
+        else if (ConversationSubtask.UnselectReport == subtask) {
+            this.service.getExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    if (null != constConvCtx.getCurrentReport()) {
+                        PaintingReport report = constConvCtx.getCurrentReport();
+                        constConvCtx.setCurrentReport(null);
+                        String answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                "FORMAT_ANSWER_UNSELECT_REPORT_OK"),
+                                PsychologyHelper.makeReportTitleMarkdown(report));
+                        GeneratingRecord record = new GeneratingRecord(query);
+                        record.answer = answer;
+                        constConvCtx.record(record);
+                        listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+                    }
+                    else {
+                        GeneratingRecord record = new GeneratingRecord(query);
+                        record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_UNSELECT_REPORT_WARNING");
+                        constConvCtx.record(record);
+                        listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+                    }
+                }
+            });
+            return AIGCStateCode.Ok;
+        }
+        else if (ConversationSubtask.ShowCoT == subtask) {
 
         }
         else {
             Logger.d(this.getClass(), "#work - General conversation");
-            convCtx.clearCurrent();
+            convCtx.clearCurrentPredict();
         }
 
         // 获取单元
@@ -577,8 +604,9 @@ public class ConversationWorker {
         if (null == unit) {
             Logger.w(this.getClass(), "#work - Can NOT find unit \"" + this.unitName + "\"");
 
-            unit = this.service.selectUnitByName(PsychologyScene.getInstance().getUnitName());
+            unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
             if (null == unit) {
+                Logger.w(this.getClass(), "#work - Can NOT find unit \"" + ModelConfig.BAIZE_NEXT_UNIT + "\"");
                 channel.setProcessing(false);
                 return AIGCStateCode.UnitError;
             }

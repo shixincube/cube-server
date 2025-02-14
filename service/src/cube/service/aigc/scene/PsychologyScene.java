@@ -42,7 +42,7 @@ public class PsychologyScene {
 
     private final static PsychologyScene instance = new PsychologyScene();
 
-    private AIGCService aigcService;
+    private AIGCService service;
 
     private PsychologyStorage storage;
 
@@ -86,8 +86,8 @@ public class PsychologyScene {
         return PsychologyScene.instance;
     }
 
-    public void start(AIGCService aigcService) {
-        this.aigcService = aigcService;
+    public void start(AIGCService service) {
+        this.service = service;
 
         try {
             JSONObject config = ConfigUtils.readJsonFile("psychology.json");
@@ -101,7 +101,7 @@ public class PsychologyScene {
                 this.storage = new PsychologyStorage(StorageType.MySQL, storage);
             }
 
-            this.storage.open(this.aigcService.getTokenizer());
+            this.storage.open(this.service.getTokenizer());
             this.storage.execSelfChecking(null);
 
             this.lastConfigModified = System.currentTimeMillis();
@@ -111,10 +111,10 @@ public class PsychologyScene {
             this.unitContextLength = unitConfig.getInt("contextLength");
 
             // 数据管理器设置
-            SceneManager.getInstance().setService(aigcService);
+            SceneManager.getInstance().setService(service);
 
             // 激活数据集
-            Workflow workflow = new Workflow(aigcService, new Attribute("male", 18, false));
+            Workflow workflow = new Workflow(service, new Attribute("male", 18, false));
             String r = workflow.infer("白泽京智");
             Logger.i(this.getClass(), "#start - Active dataset: " + r);
 
@@ -160,13 +160,13 @@ public class PsychologyScene {
     }
 
     public boolean checkPsychologyPainting(AuthToken authToken, String fileCode) {
-        FileLabel fileLabel = this.aigcService.getFile(authToken.getDomain(), fileCode);
+        FileLabel fileLabel = this.service.getFile(authToken.getDomain(), fileCode);
         if (null == fileLabel) {
             Logger.w(this.getClass(), "#checkPsychologyPainting - File error: " + fileCode);
             return false;
         }
 
-        AIGCUnit unit = this.aigcService.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
+        AIGCUnit unit = this.service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
         if (null == unit) {
             Logger.w(this.getClass(), "#checkPsychologyPainting - No psychology unit: " + fileCode);
             return false;
@@ -175,7 +175,7 @@ public class PsychologyScene {
         JSONObject data = new JSONObject();
         data.put("fileLabel", fileLabel.toJSON());
         Packet request = new Packet(AIGCAction.CheckPsychologyPainting.name, data);
-        ActionDialect dialect = this.aigcService.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+        ActionDialect dialect = this.service.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(), "#checkPsychologyPainting - Predict image unit error");
             return false;
@@ -209,7 +209,7 @@ public class PsychologyScene {
             return null;
         }
 
-        FileLabel fileLabel = this.aigcService.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
+        FileLabel fileLabel = this.service.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
         if (null == fileLabel) {
             return null;
         }
@@ -235,7 +235,7 @@ public class PsychologyScene {
         Iterator<PaintingReport> iter = list.iterator();
         while (iter.hasNext()) {
             PaintingReport report = iter.next();
-            FileLabel fileLabel = this.aigcService.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
+            FileLabel fileLabel = this.service.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
             if (null != fileLabel) {
                 report.setFileLabel(fileLabel);
             }
@@ -251,7 +251,7 @@ public class PsychologyScene {
         Iterator<PaintingReport> iter = list.iterator();
         while (iter.hasNext()) {
             PaintingReport report = iter.next();
-            FileLabel fileLabel = this.aigcService.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
+            FileLabel fileLabel = this.service.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
             if (null != fileLabel) {
                 report.setFileLabel(fileLabel);
             }
@@ -289,8 +289,8 @@ public class PsychologyScene {
         }
 
         // 并发数量
-        int concurrency = this.aigcService.numUnitsByName(ModelConfig.BAIZE_NEXT_UNIT) +
-                this.aigcService.numUnitsByName(ModelConfig.BAIZE_UNIT);
+        int concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_NEXT_UNIT) +
+                this.service.numUnitsByName(ModelConfig.BAIZE_UNIT);
         if (0 == concurrency) {
             Logger.e(this.getClass(), "#generatePredictingReport - No baize unit");
             return null;
@@ -330,7 +330,7 @@ public class PsychologyScene {
                     reportTask.channel.setProcessing(true);
 
                     // 获取单元
-                    AIGCUnit unit = aigcService.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
+                    AIGCUnit unit = service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
                     if (null == unit) {
                         // 没有可用单元
                         runningTaskQueue.remove(reportTask);
@@ -524,8 +524,6 @@ public class PsychologyScene {
         return -1;
     }
 
-    
-
     /**
      * 重置报告的关注等级数据。
      *
@@ -654,7 +652,7 @@ public class PsychologyScene {
         }
 
         // 并发数量
-        int numUnit = this.aigcService.numUnitsByName(ModelConfig.BAIZE_UNIT);
+        int numUnit = this.service.numUnitsByName(ModelConfig.BAIZE_UNIT);
         if (0 == numUnit) {
             Logger.e(this.getClass(), "#generateScaleReport - No baize unit");
             return null;
@@ -744,13 +742,13 @@ public class PsychologyScene {
             ConversationRelation relation = relations.get(0);
             PaintingReport paintingReport = this.getPaintingReport(relation.reportSn);
             if (null != paintingReport) {
-                QueryRevolver queryRevolver = new QueryRevolver(this.aigcService, this.storage);
+                QueryRevolver queryRevolver = new QueryRevolver(this.service, this.storage);
                 result.append(queryRevolver.generatePrompt(relation, paintingReport, query));
             }
             else {
                 ScaleReport scaleReport = this.getScaleReport(relation.reportSn);
                 if (null != scaleReport) {
-                    QueryRevolver queryRevolver = new QueryRevolver(this.aigcService, this.storage);
+                    QueryRevolver queryRevolver = new QueryRevolver(this.service, this.storage);
                     result.append(queryRevolver.generatePrompt(relation, scaleReport, query));
                 }
                 else {
@@ -787,7 +785,7 @@ public class PsychologyScene {
                 return null;
             }
 
-            QueryRevolver queryRevolver = new QueryRevolver(this.aigcService, this.storage);
+            QueryRevolver queryRevolver = new QueryRevolver(this.service, this.storage);
             result.append(queryRevolver.generatePrompt(relationList, reportList, query));
         }
 
@@ -807,63 +805,20 @@ public class PsychologyScene {
             }
         }
 
-        QueryRevolver revolver = new QueryRevolver(this.aigcService, this.storage);
+        QueryRevolver revolver = new QueryRevolver(this.service, this.storage);
         return revolver.generateSupplement(relation, report, currentQuery);
     }
 
+    /**
+     * 构建基于上下文数据的提示词。
+     *
+     * @param context
+     * @param query
+     * @return
+     */
     public String buildPrompt(ConversationContext context, String query) {
-        final StringBuilder result = new StringBuilder();
-
-        boolean success = this.aigcService.semanticSearch(query, new SemanticSearchListener() {
-            @Override
-            public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
-                List<QuestionAnswer> list = new ArrayList<>();
-                for (QuestionAnswer qa : questionAnswers) {
-                    if (qa.getScore() > 0.8) {
-                        list.add(qa);
-                    }
-                }
-
-                if (!list.isEmpty()) {
-                    result.append("已知信息：\n\n");
-                    for (QuestionAnswer qa : list) {
-                        for (String answer : qa.getAnswers()) {
-                            result.append(answer).append("\n");
-                        }
-                    }
-                    result.append("\n根据以上信息，专业地回答问题，如果无法从中得到答案，请说“暂时没有足够的相关信息。”，不允许在答案中添加编造成分。问题是：");
-                    result.append(query);
-                }
-
-                synchronized (result) {
-                    result.notify();
-                }
-            }
-
-            @Override
-            public void onFailed(String query, AIGCStateCode stateCode) {
-                synchronized (result) {
-                    result.notify();
-                }
-            }
-        });
-
-        if (success) {
-            synchronized (result) {
-                try {
-                    result.wait(10 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        if (result.length() == 0) {
-            result.append("专业地回答问题，在答案最后增加一句：“建议您可以问一些心理知识相关的问题。”，问题是：");
-            result.append(query);
-        }
-
-        return result.toString();
+        QueryRevolver revolver = new QueryRevolver(this.service, this.storage);
+        return revolver.generatePrompt(context, query);
     }
 
     public Painting getPainting(long reportSn) {
@@ -896,14 +851,14 @@ public class PsychologyScene {
             painting.fileLabel = report.getFileLabel();
         }
 
-        File file = this.aigcService.loadFile(authToken.getDomain(), painting.fileLabel.getFileCode());
+        File file = this.service.loadFile(authToken.getDomain(), painting.fileLabel.getFileCode());
         if (null == file) {
             Logger.e(this.getClass(), "#getPredictedPainting - Can NOT find painting file: " +
                     painting.fileLabel.getFileCode());
             return null;
         }
 
-        File outputFile = new File(this.aigcService.getWorkingPath(),
+        File outputFile = new File(this.service.getWorkingPath(),
                 FileUtils.extractFileName(file.getName()) + "_tmp.jpg");
 
         List<Material> materials = new ArrayList<>();
@@ -923,7 +878,7 @@ public class PsychologyScene {
 
         String filename = reportSn + "_predict.jpg";
         String tmpFileCode = FileUtils.makeFileCode(reportSn, authToken.getDomain(), filename);
-        FileLabel result = this.aigcService.saveAndDeleteFile(authToken, tmpFileCode, outputFile, filename);
+        FileLabel result = this.service.saveAndDeleteFile(authToken, tmpFileCode, outputFile, filename);
         return result;
     }
 
@@ -1073,7 +1028,7 @@ public class PsychologyScene {
         JSONObject data = new JSONObject();
         data.put("fileLabel", fileLabel.toJSON());
         Packet request = new Packet(AIGCAction.PredictPsychologyPainting.name, data);
-        ActionDialect dialect = this.aigcService.getCellet().transmit(unit.getContext(), request.toDialect(), 90 * 1000);
+        ActionDialect dialect = this.service.getCellet().transmit(unit.getContext(), request.toDialect(), 90 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(), "#processPainting - Predict image unit error");
             return null;
@@ -1103,7 +1058,7 @@ public class PsychologyScene {
         // 生成评估报告
         EvaluationReport report = evaluation.makeEvaluationReport();
 
-        Workflow workflow = new Workflow(report, channel, this.aigcService);
+        Workflow workflow = new Workflow(report, channel, this.service);
         if (report.isEmpty()) {
             Logger.w(this.getClass(), "#processReport - No things in painting: " + channel.getAuthToken().getContactId());
             return workflow;
@@ -1124,7 +1079,7 @@ public class PsychologyScene {
         data.put("attribute", report.getAttribute().calcFactorToArray());
         data.put("indicators", indicators);
         Packet request = new Packet(AIGCAction.PredictPsychologyFactors.name, data);
-        ActionDialect dialect = this.aigcService.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+        ActionDialect dialect = this.service.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
         if (null != dialect) {
             Packet response = new Packet(dialect);
             if (Packet.extractCode(response) == AIGCStateCode.Ok.code) {
@@ -1146,7 +1101,7 @@ public class PsychologyScene {
     }
 
     private AIGCStateCode processScaleReport(ScaleReportTask task) {
-        Workflow workflow = new Workflow(this.aigcService, task.scaleReport.getAttribute());
+        Workflow workflow = new Workflow(this.service, task.scaleReport.getAttribute());
 
         for (ScaleFactor factor : task.scaleReport.getFactors()) {
             ScalePrompt.Factor prompt = task.scale.getResult().prompt.getFactor(factor.name);
@@ -1162,7 +1117,7 @@ public class PsychologyScene {
                 description = workflow.infer(prompt.description);
             }
             if (null == description) {
-                description = this.aigcService.syncGenerateText(this.unitName, prompt.description, new GeneratingOption(),
+                description = this.service.syncGenerateText(this.unitName, prompt.description, new GeneratingOption(),
                         null, null);
             }
 
@@ -1182,7 +1137,7 @@ public class PsychologyScene {
                     suggestion = workflow.infer(prompt.suggestion);
                 }
                 if (null == suggestion) {
-                    suggestion = this.aigcService.syncGenerateText(this.unitName, prompt.suggestion, new GeneratingOption(),
+                    suggestion = this.service.syncGenerateText(this.unitName, prompt.suggestion, new GeneratingOption(),
                             null, null);
                 }
 

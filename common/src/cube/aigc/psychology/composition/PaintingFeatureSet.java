@@ -99,6 +99,7 @@ public class PaintingFeatureSet implements JSONable {
     public String makeMarkdown(boolean knowledgeStrategy) {
         StringBuilder buf = new StringBuilder();
 
+        ArrayList<String> descriptions = new ArrayList<>();
         buf.append("绘画画面的特征如下：\n\n");
         Iterator<Map.Entry<String, List<Representation>>> iter = this.dataMap.entrySet().iterator();
         while (iter.hasNext()) {
@@ -107,8 +108,13 @@ public class PaintingFeatureSet implements JSONable {
             buf.append("该特征说明受测人有以下心理特征：");
             List<Representation> list = e.getValue();
             for (Representation representation : list) {
+                if (descriptions.contains(representation.description)) {
+                    continue;
+                }
+                descriptions.add(representation.description);
                 buf.append(representation.description).append("，");
             }
+            descriptions.clear();
             buf.delete(buf.length() - 1, buf.length());
             buf.append("。\n");
         }

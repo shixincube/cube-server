@@ -87,6 +87,14 @@
         "ANSWER_CAN_NOT_FIND_REPORT": {
             "cn": "没有找到您所描述的报告。",
             "en": ""
+        },
+        "FORMAT_ANSWER_UNSELECT_REPORT_OK": {
+            "cn": "好的，让我们结束关于报告【%s】的话题。",
+            "en": ""
+        },
+        "ANSWER_UNSELECT_REPORT_WARNING": {
+            "cn": "我们可以继续其他相关的话题。",
+            "en": ""
         }
     }
 }

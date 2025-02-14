@@ -11,35 +11,38 @@ import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.GeneratingRecord;
+import cube.common.entity.QuestionAnswer;
 import cube.common.entity.RetrieveReRankResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.RetrieveReRankListener;
+import cube.service.aigc.listener.SemanticSearchListener;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 public class QueryRevolver {
 
-//    private String[] keywordThinkingStyle = new String[] {
-//            "思维方式",
-//            "思考方式",
-//            "思维方法",
-//            "思考方法",
-//            "思维",
-//            "思考"
-//    };
+    private String[] keywordThinkingStyle = new String[] {
+            "思维方式",
+            "思考方式",
+            "思维方法",
+            "思考方法",
+            "思维",
+            "思考"
+    };
 
-//    private String[] keywordCommunicationStyle = new String[] {
-//            "沟通风格",
-//            "沟通方式",
-//            "沟通方法",
-//            "沟通能力",
-//            "沟通",
-//            "交流"
-//    };
+    private String[] keywordCommunicationStyle = new String[] {
+            "沟通风格",
+            "沟通方式",
+            "沟通方法",
+            "沟通能力",
+            "沟通",
+            "交流"
+    };
 
     private String[] keywordWorkEnvironment = new String[] {
             "工作环境偏好",
@@ -82,6 +85,78 @@ public class QueryRevolver {
         this.storage = storage;
     }
 
+    public String generatePrompt(ConversationContext context, String query) {
+        final StringBuilder result = new StringBuilder();
+
+        int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 70;
+
+        boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
+            @Override
+            public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
+                List<QuestionAnswer> list = new ArrayList<>();
+                for (QuestionAnswer qa : questionAnswers) {
+                    if (qa.getScore() > 0.8) {
+                        list.add(qa);
+                    }
+                }
+
+                result.append("已知信息：\n\n");
+
+                if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
+                    result.append("当前讨论的被测人的心理特征描述是：");
+                    result.append(context.getCurrentReport().getSummary());
+                    result.append("\n\n");
+                }
+
+                if (!list.isEmpty()) {
+                    for (QuestionAnswer qa : list) {
+                        for (String answer : qa.getAnswers()) {
+                            result.append(answer).append("\n");
+                            if (result.length() >= wordLimit) {
+                                break;
+                            }
+                        }
+
+                        if (result.length() >= wordLimit) {
+                            break;
+                        }
+                    }
+                }
+
+                result.append("\n根据以上信息，专业地回答问题，如果无法从中得到答案，请说“暂时没有足够的相关信息。”，不允许在答案中添加编造成分。问题是：");
+                result.append(query);
+
+                synchronized (result) {
+                    result.notify();
+                }
+            }
+
+            @Override
+            public void onFailed(String query, AIGCStateCode stateCode) {
+                synchronized (result) {
+                    result.notify();
+                }
+            }
+        });
+
+        if (success) {
+            synchronized (result) {
+                try {
+                    result.wait(10 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        if (result.length() == 0) {
+            result.append("专业地回答问题，在答案最后增加一句：“建议您可以问一些心理知识相关的问题。”，问题是：");
+            result.append(query);
+        }
+
+        return result.toString();
+    }
+
     public String generatePrompt(ConversationRelation relation, Report report, String query) {
         StringBuilder result = new StringBuilder();
 
@@ -96,17 +171,6 @@ public class QueryRevolver {
             result.append("受测人有以下心理状态：\n");
 
             PaintingReport paintingReport = (PaintingReport) report;
-
-//            ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
-//
-//            List<String> symptomContent = this.extractSymptomContent(template,
-//                    paintingReport.getEvaluationReport().getEvaluationScores(), report.getAttribute());
-//            for (String content : symptomContent) {
-//                result.append(content);
-//                if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
-//                    break;
-//                }
-//            }
 
             List<String> symptomContent = this.extractSymptomContent(paintingReport.getEvaluationReport().getEvaluationScores(),
                     report.getAttribute());
@@ -197,18 +261,6 @@ public class QueryRevolver {
                 result.append("受测人有以下心理状态：\n");
 
                 PaintingReport paintingReport = (PaintingReport) report;
-
-//                ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
-//                List<String> symptomContent = this.extractSymptomContent(template,
-//                        paintingReport.getEvaluationReport().getEvaluationScores(), paintingReport.getAttribute());
-//                for (String content : symptomContent) {
-//                    result.append(content);
-//                    if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
-//                        break;
-//                    }
-//                }
-//                result.append("\n");
-
                 List<String> symptomContent = this.extractSymptomContent(paintingReport.getEvaluationReport().getEvaluationScores(),
                         report.getAttribute());
                 for (String content : symptomContent) {
@@ -300,16 +352,6 @@ public class QueryRevolver {
 
             PaintingReport paintingReport = (PaintingReport) report;
 
-//            ThemeTemplate template = Resource.getInstance().getThemeTemplate(paintingReport.getTheme());
-//            List<String> symptomContent = this.extractSymptomContent(template,
-//                    paintingReport.getEvaluationReport().getEvaluationScores(), paintingReport.getAttribute());
-//            for (String content : symptomContent) {
-//                answer.append(content);
-//                if (answer.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
-//                    break;
-//                }
-//            }
-
             List<String> symptomContent = this.extractSymptomContent(paintingReport.getEvaluationReport().getEvaluationScores(),
                     report.getAttribute());
             for (String content : symptomContent) {
@@ -360,20 +402,20 @@ public class QueryRevolver {
         return result;
     }
 
-    public String generatePrompt(GeneratingRecord record, String query) {
-        String knowledge = this.generateKnowledge(query);
-        if (null == knowledge || knowledge.length() < 2) {
-            return query;
-        }
-
-        StringBuilder result = new StringBuilder();
-        result.append("已知信息：\n");
-        result.append(knowledge).append("\n\n");
-        result.append("根据以上信息，专业地回答问题。问题是：");
-        result.append(query);
-
-        return result.toString();
-    }
+//    public String generatePrompt(GeneratingRecord record, String query) {
+//        String knowledge = this.generateKnowledge(query);
+//        if (null == knowledge || knowledge.length() < 2) {
+//            return query;
+//        }
+//
+//        StringBuilder result = new StringBuilder();
+//        result.append("已知信息：\n");
+//        result.append(knowledge).append("\n\n");
+//        result.append("根据以上信息，专业地回答问题。问题是：");
+//        result.append(query);
+//
+//        return result.toString();
+//    }
 
     private String fixName(String name, String gender, int age) {
         return name;
@@ -384,32 +426,6 @@ public class QueryRevolver {
 //            return name.charAt(0) + (gender.contains("男") ? "先生" : "女士");
 //        }
     }
-
-    /*
-     * @deprecated
-     * @param theme
-     * @param list
-     * @param attribute
-     * @return
-    private List<String> extractSymptomContent(ThemeTemplate theme, List<EvaluationScore> list, Attribute attribute) {
-        List<String> result = new ArrayList<>();
-
-        for (EvaluationScore es : list) {
-            String word = es.generateWord(attribute);
-            if (null == word) {
-                continue;
-            }
-
-            ThemeTemplate.SymptomContent symptomContent = theme.findSymptomContent(word);
-            if (null == symptomContent) {
-                continue;
-            }
-
-            result.add(symptomContent.content + "\n");
-        }
-
-        return result;
-    }*/
 
     private List<String> extractSymptomContent(List<EvaluationScore> list, Attribute attribute) {
         final List<String> result = new ArrayList<>();
