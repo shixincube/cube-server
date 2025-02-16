@@ -11,10 +11,7 @@ import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.aigc.attachment.Attachment;
 import cube.aigc.psychology.*;
-import cube.aigc.psychology.composition.ConversationContext;
-import cube.aigc.psychology.composition.ConversationRelation;
-import cube.aigc.psychology.composition.ConversationSubtask;
-import cube.aigc.psychology.composition.ReportAttachment;
+import cube.aigc.psychology.composition.*;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
@@ -592,7 +589,81 @@ public class ConversationWorker {
             return AIGCStateCode.Ok;
         }
         else if (ConversationSubtask.ShowCoT == subtask) {
-
+            if (null != constConvCtx.getCurrentReport()) {
+                if (constConvCtx.getCurrentReport().isNull()) {
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            String answer = String.format(
+                                    Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_REPORT_IS_NULL"),
+                                    PsychologyHelper.makeReportTitleMarkdown(constConvCtx.getCurrentReport())
+                            );
+                            GeneratingRecord record = new GeneratingRecord(query);
+                            record.answer = answer;
+                            constConvCtx.record(record);
+                            listener.onGenerated(channel, record);
+                            channel.setProcessing(false);
+                        }
+                    });
+                }
+                else {
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            PaintingFeatureSet featureSet = PsychologyScene.getInstance().getPaintingFeatureSet(
+                                    constConvCtx.getCurrentReport().sn);
+                            String answer = null;
+                            if (null == featureSet) {
+                                answer = String.format(
+                                        Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_REPORT_IS_NULL"),
+                                        PsychologyHelper.makeReportTitleMarkdown(constConvCtx.getCurrentReport())
+                                );
+                            }
+                            else {
+                                answer = String.format(
+                                        Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_COT"),
+                                        PsychologyHelper.makeReportTitleMarkdown(constConvCtx.getCurrentReport()),
+                                        PsychologyHelper.makeMarkdown(featureSet),
+                                        channel.getAuthToken().getCode(),
+                                        Long.toString(constConvCtx.getCurrentReport().sn)
+                                );
+                            }
+                            GeneratingRecord record = new GeneratingRecord(query);
+                            record.answer = answer;
+                            constConvCtx.record(record);
+                            listener.onGenerated(channel, record);
+                            channel.setProcessing(false);
+                        }
+                    });
+                }
+            }
+            else {
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (null == constConvCtx.getReportList()) {
+                            List<PaintingReport> list = SceneManager.getInstance().queryReports(constConvCtx.getRelationId(),
+                                    constConvCtx.getAuthToken().getDomain());
+                            constConvCtx.setReportList(list);
+                        }
+                        String answer = null;
+                        if (constConvCtx.getReportList().isEmpty()) {
+                            answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_REPORTS_DATA");
+                        }
+                        else {
+                            answer = String.format(
+                                    Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_PLEASE_INPUT_REPORT_DESC"),
+                                    constConvCtx.getReportList().size());
+                        }
+                        GeneratingRecord record = new GeneratingRecord(query);
+                        record.answer = answer;
+                        constConvCtx.record(record);
+                        listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+                    }
+                });
+            }
+            return AIGCStateCode.Ok;
         }
         else {
             Logger.d(this.getClass(), "#work - General conversation");

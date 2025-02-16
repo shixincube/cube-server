@@ -321,6 +321,7 @@ public class Resource {
                 try {
                     byte[] data = Files.readAllBytes(Paths.get(this.corpusFile.getAbsolutePath()));
                     this.corpusJson = new JSONObject(new String(data, StandardCharsets.UTF_8));
+                    this.corpusLastModified = this.corpusFile.lastModified();
                 } catch (Exception e) {
                     Logger.e(this.getClass(), "#getCorpus", e);
                 }

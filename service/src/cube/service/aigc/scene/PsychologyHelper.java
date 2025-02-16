@@ -143,7 +143,7 @@ public class PsychologyHelper {
 
     public static String makeMarkdown(PaintingFeatureSet featureSet) {
         StringBuilder buf = new StringBuilder();
-        buf.append("我看到的");
+        buf.append("绘画");
         buf.append(featureSet.makeMarkdown(false));
         buf.append("\n");
         buf.append("根据上述特征，需要结合专业的知识结构，并根据对应症状的得分进行阐述并生成报告。");

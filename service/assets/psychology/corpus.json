@@ -95,6 +95,14 @@
         "ANSWER_UNSELECT_REPORT_WARNING": {
             "cn": "我们可以继续其他相关的话题。",
             "en": ""
+        },
+        "FORMAT_ANSWER_REPORT_IS_NULL": {
+            "cn": "报告【%s】的数据无法正确读取。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_SHOW_COT": {
+            "cn": "绘画报告心理学特征【%s】的思维描述如下：\n\n%s\n报告思维桑基图链接：[Painting CoT Diagram](http://211.157.179.37:7010/aigc/chart/pcd/%s?sn=%s)",
+            "en": ""
         }
     }
 }

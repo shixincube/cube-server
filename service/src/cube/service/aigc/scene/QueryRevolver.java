@@ -108,16 +108,18 @@ public class QueryRevolver {
                     result.append("\n\n");
                 }
 
+                boolean limited = false;
                 if (!list.isEmpty()) {
                     for (QuestionAnswer qa : list) {
                         for (String answer : qa.getAnswers()) {
-                            result.append(answer).append("\n");
-                            if (result.length() >= wordLimit) {
+                            if (result.length() + answer.length() >= wordLimit) {
+                                limited = true;
                                 break;
                             }
+                            result.append(answer).append("\n");
                         }
 
-                        if (result.length() >= wordLimit) {
+                        if (limited) {
                             break;
                         }
                     }

@@ -6,6 +6,7 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cell.util.log.Logger;
 import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.util.FileLabels;
 import org.eclipse.jetty.http.HttpStatus;
@@ -35,14 +36,19 @@ public class PsychologyConversation extends ContextHandler {
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             String token = this.getLastRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
-                this.complete();
-                return;
+            if (null == token || token.contains("converse")) {
+                try {
+                    token = request.getHeader("x-baize-api-token").trim();
+                } catch (Exception e) {
+                    Logger.w(this.getClass(), "#doPost", e);
+                    this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
+                    this.complete();
+                    return;
+                }
             }
 
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -88,13 +94,44 @@ public class PsychologyConversation extends ContextHandler {
                     this.respondOk(response, result);
                 }
                 else {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 }
                 this.complete();
             } catch (Exception e) {
-                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
             }
+        }
+
+        private JSONObject makeError(int stateCode) {
+            JSONObject json = new JSONObject();
+            JSONObject error = new JSONObject();
+            switch (stateCode) {
+                case HttpStatus.UNAUTHORIZED_401:
+                    error.put("message", "Invalid API token");
+                    error.put("reason", "INVALID_API_TOKEN");
+                    error.put("state", HttpStatus.UNAUTHORIZED_401);
+                    break;
+                case HttpStatus.NOT_ACCEPTABLE_406:
+                    error.put("message", "URI format error");
+                    error.put("reason", "URI_FORMAT_ERROR");
+                    error.put("state", HttpStatus.NOT_ACCEPTABLE_406);
+                    break;
+                case HttpStatus.BAD_REQUEST_400:
+                    error.put("message", "Server failure");
+                    error.put("reason", "SERVER_FAILURE");
+                    error.put("state", HttpStatus.BAD_REQUEST_400);
+                    break;
+                case HttpStatus.FORBIDDEN_403:
+                    error.put("message", "Parameter error");
+                    error.put("reason", "PARAMETER_ERROR");
+                    error.put("state", HttpStatus.FORBIDDEN_403);
+                    break;
+                default:
+                    break;
+            }
+            json.put("error", error);
+            return json;
         }
     }
 }

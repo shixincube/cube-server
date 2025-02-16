@@ -100,7 +100,7 @@ public class PaintingFeatureSet implements JSONable {
         StringBuilder buf = new StringBuilder();
 
         ArrayList<String> descriptions = new ArrayList<>();
-        buf.append("绘画画面的特征如下：\n\n");
+        buf.append("画面特征如下：\n\n");
         Iterator<Map.Entry<String, List<Representation>>> iter = this.dataMap.entrySet().iterator();
         while (iter.hasNext()) {
             Map.Entry<String, List<Representation>> e = iter.next();
