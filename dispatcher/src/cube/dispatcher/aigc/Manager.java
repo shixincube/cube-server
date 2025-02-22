@@ -1193,13 +1193,12 @@ public class Manager implements Tickable, PerformerListener {
      * @param networking
      * @param categories
      * @param searchTopK
-     * @param searchFetchK
      * @return
      */
     public ChatFuture chat(String token, String channelCode, String pattern, String content, String unit,
                            GeneratingOption option, int histories, JSONArray records,
                            boolean recordable, boolean searchable, boolean networking,
-                           JSONArray categories, int searchTopK, int searchFetchK) {
+                           JSONArray categories, int searchTopK) {
         JSONObject data = new JSONObject();
         data.put("token", token);
         data.put("code", channelCode);
@@ -1220,34 +1219,42 @@ public class Manager implements Tickable, PerformerListener {
         data.put("searchable", searchable);
         data.put("networking", networking);
         data.put("searchTopK", searchTopK);
-        data.put("searchFetchK", searchFetchK);
 
         Packet responsePacket = null;
 
-        if (ModelConfig.BAIZE_NEXT_UNIT.equalsIgnoreCase(unit)) {
-            Packet packet = new Packet(AIGCAction.Conversation.name, data);
-            ActionDialect request = packet.toDialect();
-            request.addParam("token", token);
-            ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
-            if (null == response) {
-                Logger.w(Manager.class, "#chat - Response (conversation) is null - " + channelCode);
-                return null;
-            }
+//        if (ModelConfig.BAIZE_NEXT_UNIT.equalsIgnoreCase(unit)) {
+//            Packet packet = new Packet(AIGCAction.Conversation.name, data);
+//            ActionDialect request = packet.toDialect();
+//            request.addParam("token", token);
+//            ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+//            if (null == response) {
+//                Logger.w(Manager.class, "#chat - Response (conversation) is null - " + channelCode);
+//                return null;
+//            }
+//            responsePacket = new Packet(response);
+//        }
+//        else {
+//            Packet packet = new Packet(AIGCAction.Chat.name, data);
+//            ActionDialect request = packet.toDialect();
+//            request.addParam("token", token);
+//            ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 4 * 60 * 1000);
+//            if (null == response) {
+//                Logger.w(Manager.class, "#chat - Response is null - " + channelCode);
+//                return null;
+//            }
+//            responsePacket = new Packet(response);
+//        }
 
-            responsePacket = new Packet(response);
+        Packet packet = new Packet(AIGCAction.Chat.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 4 * 60 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#chat - Response is null - " + channelCode);
+            return null;
         }
-        else {
-            Packet packet = new Packet(AIGCAction.Chat.name, data);
-            ActionDialect request = packet.toDialect();
-            request.addParam("token", token);
-            ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 4 * 60 * 1000);
-            if (null == response) {
-                Logger.w(Manager.class, "#chat - Response is null - " + channelCode);
-                return null;
-            }
 
-            responsePacket = new Packet(response);
-        }
+        responsePacket = new Packet(response);
 
         if (Packet.extractCode(responsePacket) == AIGCStateCode.Processing.code) {
             AIGCChannel channel = new AIGCChannel(Packet.extractDataPayload(responsePacket));

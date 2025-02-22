@@ -6,13 +6,13 @@
 
 package cube.util;
 
+import cell.util.Utils;
 import cube.aigc.ModelConfig;
 import cube.common.entity.AIGCUnit;
 import cube.common.entity.TextConstraint;
 import cube.vision.Size;
 import org.json.JSONObject;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -754,6 +754,22 @@ public final class TextUtils {
         } catch (Exception e) {
             return 0;
         }
+    }
+
+    public static List<String> randomSplitString(String text) {
+        List<String> textList = new ArrayList<>();
+        int length = text.length();
+        int seed = 26 - Utils.randomInt(3, 10);
+        int index = 0;
+        while (length > 0) {
+            int floor = Math.max(5, seed - 5);
+            int len = Utils.randomInt(floor, floor + 5);
+            len = Math.min(len, length);
+            textList.add(text.substring(index, index + len));
+            index += len;
+            length -= len;
+        }
+        return textList;
     }
 
     public static void main(String[] args) {

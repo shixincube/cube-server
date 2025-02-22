@@ -1388,14 +1388,12 @@ public class KnowledgeBase {
      * @param unitName
      * @param query
      * @param searchTopK
-     * @param searchFetchK
      * @param knowledgeCategories
      * @param recordList
      * @param listener
      * @return
      */
-    public boolean performKnowledgeQA(String channelCode, String unitName, String query,
-                                      int searchTopK, int searchFetchK,
+    public boolean performKnowledgeQA(String channelCode, String unitName, String query, int searchTopK,
                                       List<String> knowledgeCategories, List<GeneratingRecord> recordList,
                                       KnowledgeQAListener listener) {
         query = query.replaceAll("\n", "");
@@ -1462,13 +1460,13 @@ public class KnowledgeBase {
             // 使用文档推理结果生成提示词
             promptMetadata = promptMetadata.generatePrompt(query);
             if (null == promptMetadata) {
-                promptMetadata = this.generatePrompt(query, searchTopK, searchFetchK, false);
+                promptMetadata = this.generatePrompt(query, searchTopK);
             }
         }
         else {
             // 获取提示词
-            boolean brisk = !unitName.equalsIgnoreCase(ModelConfig.CHAT_UNIT);
-            promptMetadata = this.generatePrompt(query, searchTopK, searchFetchK, brisk);
+//            boolean brisk = !unitName.equalsIgnoreCase(ModelConfig.CHAT_UNIT);
+            promptMetadata = this.generatePrompt(query, searchTopK);
         }
 
         if (null == promptMetadata) {
@@ -2241,7 +2239,7 @@ public class KnowledgeBase {
         return list;
     }
 
-    private PromptMetadata generatePrompt(String query, int topK, int fetchK, boolean brisk) {
+    private PromptMetadata generatePrompt(String query, int topK) {
         if (!this.resource.checkUnit()) {
             Logger.w(this.getClass(),"#generatePrompt - No unit for knowledge base");
             return null;

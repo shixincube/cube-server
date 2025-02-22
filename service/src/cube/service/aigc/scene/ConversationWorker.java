@@ -28,8 +28,6 @@ public class ConversationWorker {
 
     private final static String CORPUS = "conversation";
 
-    private String unitName = ModelConfig.INFINITE_UNIT;
-
     private AIGCService service;
 
     public ConversationWorker(AIGCService service) {
@@ -45,11 +43,11 @@ public class ConversationWorker {
         }
 
         // 获取单元
-        AIGCUnit unit = this.service.selectUnitByName(this.unitName);
+        AIGCUnit unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
         if (null == unit) {
-            Logger.w(this.getClass(), "#work - Can NOT find unit \"" + this.unitName + "\"");
+            Logger.w(this.getClass(), "#work - Can NOT find unit \"" + ModelConfig.BAIZE_NEXT_UNIT + "\"");
 
-            unit = this.service.selectUnitByName(PsychologyScene.getInstance().getUnitName());
+            unit = this.service.selectUnitByName(ModelConfig.BAIZE_X_UNIT);
             if (null == unit) {
                 return AIGCStateCode.UnitError;
             }
@@ -671,13 +669,13 @@ public class ConversationWorker {
         }
 
         // 获取单元
-        AIGCUnit unit = this.service.selectUnitByName(this.unitName);
+        AIGCUnit unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
         if (null == unit) {
-            Logger.w(this.getClass(), "#work - Can NOT find unit \"" + this.unitName + "\"");
+            Logger.w(this.getClass(), "#work - Can NOT find unit \"" + ModelConfig.BAIZE_NEXT_UNIT + "\"");
 
-            unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+            unit = this.service.selectUnitByName(ModelConfig.BAIZE_X_UNIT);
             if (null == unit) {
-                Logger.w(this.getClass(), "#work - Can NOT find unit \"" + ModelConfig.BAIZE_NEXT_UNIT + "\"");
+                Logger.w(this.getClass(), "#work - Can NOT find unit \"" + ModelConfig.BAIZE_X_UNIT + "\"");
                 channel.setProcessing(false);
                 return AIGCStateCode.UnitError;
             }

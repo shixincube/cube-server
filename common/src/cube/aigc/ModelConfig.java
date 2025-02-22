@@ -18,6 +18,8 @@ public class ModelConfig implements JSONable {
 
     public static int BAIZE_CONTEXT_LIMIT = 256 * 1024;
 
+    public static int BAIZE_X_CONTEXT_LIMIT = 800 * 1024;
+
     public static int BAIZE_NEXT_CONTEXT_LIMIT = 32 * 1024;
 
     public final static String[] TEXT_TO_IMAGE_UNIT = new String[] { "DallE" };
@@ -26,11 +28,11 @@ public class ModelConfig implements JSONable {
 
     public final static String BAIZE_UNIT = "Baize";
 
+    public final static String BAIZE_X_UNIT = "BaizeX";
+
     public final static String BAIZE_NEXT_UNIT = "BaizeNext";
 
-    public final static String INFINITE_UNIT = "GLM";
-
-    public final static String[] EXTRA_LONG_PROMPT_UNIT = new String[] { INFINITE_UNIT };
+    public final static String[] EXTRA_LONG_PROMPT_UNIT = new String[] { BAIZE_X_UNIT };
 
     public final static String PSYCHOLOGY_UNIT = "Psychology";
 
@@ -43,8 +45,8 @@ public class ModelConfig implements JSONable {
             new String[] { "Gemini", "Gemini" },
             new String[] { "YiYan", "YiYan" },
             new String[] { "Baize", "Baize" },
+            new String[] { "BaizeX", "BaizeX" },
             new String[] { "BaizeNext", "BaizeNext" },
-            new String[] { "GLM", "BaizeX" },
     };
 
     private final String model;
@@ -179,16 +181,21 @@ public class ModelConfig implements JSONable {
      * @return
      */
     public static int getPromptLengthLimit(String unitName) {
+        if (unitName.equalsIgnoreCase(BAIZE_UNIT)) {
+            return BAIZE_CONTEXT_LIMIT;
+        }
+        else if (unitName.equalsIgnoreCase(BAIZE_NEXT_UNIT)) {
+            return BAIZE_NEXT_CONTEXT_LIMIT;
+        }
+        else if (unitName.equalsIgnoreCase(BAIZE_X_UNIT)) {
+            return BAIZE_X_CONTEXT_LIMIT;
+        }
+
         if (isExtraLongPromptUnit(unitName)) {
             return EXTRA_LONG_CONTEXT_LIMIT;
         }
         else {
-            if (unitName.equalsIgnoreCase(BAIZE_NEXT_UNIT)) {
-                return BAIZE_NEXT_CONTEXT_LIMIT;
-            }
-            else {
-                return BAIZE_CONTEXT_LIMIT;
-            }
+            return Math.min(Math.min(BAIZE_CONTEXT_LIMIT, BAIZE_NEXT_CONTEXT_LIMIT), BAIZE_X_CONTEXT_LIMIT);
         }
     }
 }

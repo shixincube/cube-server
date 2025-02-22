@@ -160,7 +160,7 @@ public class ConversationTask extends ServiceTask {
             }
 
             if (null != knowledgeBase) {
-                success = knowledgeBase.performKnowledgeQA(code, ModelConfig.BAIZE_NEXT_UNIT, content, searchTopK, searchFetchK,
+                success = knowledgeBase.performKnowledgeQA(code, ModelConfig.BAIZE_NEXT_UNIT, content, searchTopK,
                         categories, recordList, new KnowledgeQAListener() {
                             @Override
                             public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {

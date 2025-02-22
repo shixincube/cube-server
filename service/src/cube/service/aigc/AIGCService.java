@@ -384,15 +384,22 @@ public class AIGCService extends AbstractModule {
                     properties.getProperty("enabled.search", "false"));
 
             // 上下文长度限制
-            ModelConfig.EXTRA_LONG_CONTEXT_LIMIT = Integer.parseInt(
-                    properties.getProperty("context.length",
-                            Integer.toString(ModelConfig.EXTRA_LONG_CONTEXT_LIMIT)));
-            ModelConfig.BAIZE_CONTEXT_LIMIT = Integer.parseInt(
-                    properties.getProperty("context.length.baize",
-                            Integer.toString(ModelConfig.BAIZE_CONTEXT_LIMIT)));
-            ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT = Integer.parseInt(
-                    properties.getProperty("context.length.baize_next",
-                            Integer.toString(ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT)));
+            ModelConfig.EXTRA_LONG_CONTEXT_LIMIT = Math.max(Integer.parseInt(
+                        properties.getProperty("context.length",
+                                Integer.toString(ModelConfig.EXTRA_LONG_CONTEXT_LIMIT))),
+                    ModelConfig.EXTRA_LONG_CONTEXT_LIMIT);
+            ModelConfig.BAIZE_CONTEXT_LIMIT = Math.max(Integer.parseInt(
+                        properties.getProperty("context.length.baize",
+                                Integer.toString(ModelConfig.BAIZE_CONTEXT_LIMIT))),
+                    ModelConfig.BAIZE_CONTEXT_LIMIT);
+            ModelConfig.BAIZE_X_CONTEXT_LIMIT = Math.max(Integer.parseInt(
+                        properties.getProperty("context.length.baize_x",
+                                Integer.toString(ModelConfig.BAIZE_X_CONTEXT_LIMIT))),
+                    ModelConfig.BAIZE_X_CONTEXT_LIMIT);
+            ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT = Math.max(Integer.parseInt(
+                        properties.getProperty("context.length.baize_next",
+                                Integer.toString(ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT))),
+                    ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT);
 
             // 页面阅读器 URL
             if (properties.containsKey("page.reader.url") || properties.containsKey("page.searcher")) {
@@ -421,6 +428,7 @@ public class AIGCService extends AbstractModule {
         Logger.i(this.getClass(), "AI Service - Search Enabled: " + this.enabledSearch);
         Logger.i(this.getClass(), "AI Service - Context length: " + ModelConfig.EXTRA_LONG_CONTEXT_LIMIT);
         Logger.i(this.getClass(), "AI Service - Baize context limit: " + ModelConfig.BAIZE_CONTEXT_LIMIT);
+        Logger.i(this.getClass(), "AI Service - BaizeX context limit: " + ModelConfig.BAIZE_X_CONTEXT_LIMIT);
         Logger.i(this.getClass(), "AI Service - BaizeNext context limit: " + ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT);
         if (this.useAgent) {
             Logger.i(this.getClass(), "AI Service - Agent URL: " + Agent.getInstance().getUrl());
@@ -1121,7 +1129,7 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        if (content.length() > ModelConfig.getPromptLengthLimit(unitName)) {
+        if (content.getBytes(StandardCharsets.UTF_8).length > ModelConfig.getPromptLengthLimit(unitName)) {
             Logger.w(AIGCService.class, "#generateText - Content length greater than "
                     + ModelConfig.getPromptLengthLimit(unitName));
             return false;
@@ -1150,10 +1158,8 @@ public class AIGCService extends AbstractModule {
             unit = Agent.getInstance().getUnit();
         }
         else {
-            if (null != unitName) {
-                unit = this.selectUnitByName(unitName);
-            }
-            else {
+            unit = this.selectUnitByName(unitName);
+            if (null == unit) {
                 unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
                 if (null == unit) {
                     this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational);
@@ -2960,15 +2966,11 @@ public class AIGCService extends AbstractModule {
             if (complexContext.isSimplex()) {
                 // 一般文本
 
-                int recommendHistories = 10;
-                if (ModelConfig.isExtraLongPromptUnit(this.unit.getCapability().getName())) {
-                    // 考虑到用量，限制在20轮
-                    recommendHistories = 20;
-                }
+                int recommendHistories = 5;
 
                 // 提示词长度限制
                 int lengthLimit = ModelConfig.getPromptLengthLimit(this.unit.getCapability().getName());
-                lengthLimit -= this.content.length();
+                lengthLimit -= this.content.getBytes(StandardCharsets.UTF_8).length;
 
                 JSONObject data = new JSONObject();
                 data.put("unit", this.unit.getCapability().getName());
@@ -3074,10 +3076,10 @@ public class AIGCService extends AbstractModule {
                     } catch (Exception e) {
                         Logger.w(this.getClass(), "#process", e);
                     }
-                }
+                } // End useQueryAttachment
 
                 // 处理多轮历史记录
-                int lengthCount = data.getString("content").length();
+                int lengthCount = data.getString("content").getBytes(StandardCharsets.UTF_8).length;
                 List<GeneratingRecord> candidateRecords = new ArrayList<>();
                 if (null == this.histories) {
                     int validNumHistories = this.maxHistories;
@@ -3087,7 +3089,7 @@ public class AIGCService extends AbstractModule {
                         Collections.reverse(records);
                         for (GeneratingRecord record : records) {
                             // 判断长度
-                            lengthCount += record.totalWords();
+                            lengthCount += record.totalLength();
                             if (lengthCount > lengthLimit) {
                                 // 长度越界
                                 break;
@@ -3107,7 +3109,7 @@ public class AIGCService extends AbstractModule {
                             continue;
                         }
 
-                        lengthCount += record.totalWords();
+                        lengthCount += record.totalLength();
                         // 判断长度
                         if (lengthCount > lengthLimit) {
                             // 长度越界
@@ -3734,8 +3736,6 @@ public class AIGCService extends AbstractModule {
 
         private TextToFileListener listener;
 
-        private int promptLimit = 800 * 1024;
-
         public TextToFileUnitMeta(AIGCUnit unit, AIGCChannel channel, String text, List<FileLabel> sources, TextToFileListener listener) {
             super(unit);
             this.sn = Utils.generateSerialNumber();
@@ -3753,6 +3753,8 @@ public class AIGCService extends AbstractModule {
                     listener.onProcessing(channel);
                 }
             });
+
+            int promptLimit = ModelConfig.getPromptLengthLimit(this.unit.getCapability().getName());
 
             List<FileLabel> queryFiles = new ArrayList<>();
             StringBuilder answerBuf = new StringBuilder("已处理文件");
@@ -3817,9 +3819,9 @@ public class AIGCService extends AbstractModule {
                     String name = sheetJson.getString("name");
                     String content = sheetJson.getString("content");
 
-                    if (content.length() > this.promptLimit) {
+                    if (content.length() > promptLimit) {
                         Logger.w(this.getClass(), "#process - Content length exceeded the limit: " +
-                                content.length() + "/" + this.promptLimit);
+                                content.length() + "/" + promptLimit);
                         continue;
                     }
 
@@ -3830,7 +3832,7 @@ public class AIGCService extends AbstractModule {
                     prompt.append("\n\n");
                     prompt.append(String.format(Consts.PROMPT_SUFFIX_FORMAT, this.text));
 
-                    String answer = syncGenerateText(ModelConfig.INFINITE_UNIT, prompt.toString(),
+                    String answer = syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt.toString(),
                             null, null, null);
                     if (null == answer) {
                         Logger.w(this.getClass(), "#process - Generating failed: " + fileCode);

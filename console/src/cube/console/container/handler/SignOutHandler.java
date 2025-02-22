@@ -8,7 +8,6 @@ package cube.console.container.handler;
 
 import cube.console.container.Handlers;
 import cube.console.mgmt.UserManager;
-import cube.console.mgmt.UserToken;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;

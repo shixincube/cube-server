@@ -54,8 +54,6 @@ public class Workflow {
 
     private MandalaFlower mandalaFlower = new MandalaFlower("AS_001");
 
-    private String unitName = ModelConfig.BAIZE_UNIT;
-
     private PaintingFeatureSet paintingFeatureSet;
 
     public Workflow(AIGCService service, Attribute attribute) {
@@ -69,10 +67,6 @@ public class Workflow {
         this.channel = channel;
         this.service = service;
         this.reportTextList = new ArrayList<>();
-    }
-
-    public void setUnitName(String unitName) {
-        this.unitName = unitName;
     }
 
     public void setPaintingFeatureSet(PaintingFeatureSet featureSet) {
@@ -236,21 +230,21 @@ public class Workflow {
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
 
-            answer = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
+            answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                     null, null);
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - report is null: " + prompt);
             return false;
         }
+
         // 对数据集数据进行推理
         prompt = String.format(PERSONALITY_FORMAT, answer.replaceAll("你", "他"));
-        String fixAnswer = this.service.syncGenerateText(ModelConfig.INFINITE_UNIT, prompt, new GeneratingOption(),
+        String fixAnswer = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt, new GeneratingOption(),
                 null, null);
         if (null != fixAnswer) {
             answer = fixAnswer;
         }
-
         // 设置描述
         feature.setDescription(answer);
 
@@ -263,7 +257,7 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
+            answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                     null, null);
         }
         if (null == answer) {
@@ -284,7 +278,7 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
+            answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                     null, null);
         }
         if (null == answer) {
@@ -305,7 +299,7 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
+            answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                     null, null);
         }
         if (null == answer) {
@@ -326,7 +320,7 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
+            answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                     null, null);
         }
         if (null == answer) {
@@ -347,7 +341,7 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
+            answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                     null, null);
         }
         if (null == answer) {
@@ -380,8 +374,7 @@ public class Workflow {
             }
             if (null == report) {
                 Logger.w(this.getClass(), "#inferScore - No report for \"" + prompt + "\"");
-
-                report = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
+                report = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                         null, null);
             }
 
@@ -398,8 +391,7 @@ public class Workflow {
             }
             if (null == suggestion) {
                 Logger.w(this.getClass(), "#inferScore - No suggestion for \"" + prompt + "\"");
-
-                suggestion = this.service.syncGenerateText(this.unitName, prompt, new GeneratingOption(),
+                suggestion = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                         null, null);
             }
 
@@ -425,11 +417,11 @@ public class Workflow {
         if (this.service.hasUnit(ModelConfig.BAIZE_NEXT_UNIT)) {
             unitName = ModelConfig.BAIZE_NEXT_UNIT;
         }
-        else if (this.service.hasUnit(ModelConfig.INFINITE_UNIT)) {
-            unitName = ModelConfig.INFINITE_UNIT;
+        else if (this.service.hasUnit(ModelConfig.BAIZE_X_UNIT)) {
+            unitName = ModelConfig.BAIZE_X_UNIT;
         }
         else {
-            unitName = this.unitName;
+            unitName = ModelConfig.BAIZE_UNIT;
         }
 
         StringBuilder summary = new StringBuilder();
@@ -440,7 +432,7 @@ public class Workflow {
         for (ReportSection rs : list) {
 //            prompt.append("* **").append(rs.title).append("** ：");
             prompt.append(rs.report).append("\n\n");
-            if (prompt.length() >= ModelConfig.BAIZE_CONTEXT_LIMIT) {
+            if (prompt.length() >= ModelConfig.getPromptLengthLimit(unitName)) {
                 break;
             }
         }
@@ -456,7 +448,7 @@ public class Workflow {
                 e.printStackTrace();
             }
 
-            result = this.service.syncGenerateText(this.unitName, prompt.toString(), new GeneratingOption(),
+            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.toString(), new GeneratingOption(),
                     null, null);
         }
         if (null != result) {

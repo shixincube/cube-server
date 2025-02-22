@@ -6,16 +6,24 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.util.FileLabels;
+import cube.util.TextUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 心理学领域对话。
@@ -35,16 +43,11 @@ public class PsychologyConversation extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
-            if (null == token || token.contains("converse")) {
-                try {
-                    token = request.getHeader("x-baize-api-token").trim();
-                } catch (Exception e) {
-                    Logger.w(this.getClass(), "#doPost", e);
-                    this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
-                    this.complete();
-                    return;
-                }
+            String token = this.getApiToken(request);
+            if (null == token) {
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
+                this.complete();
+                return;
             }
 
             if (!Manager.getInstance().checkToken(token)) {
@@ -72,7 +75,6 @@ public class PsychologyConversation extends ContextHandler {
                     result = Manager.getInstance().executePsychologyConversation(token, channelCode,
                             context, relation, query);
                 }
-
                 if (null != result) {
                     if (result.has("queryFileLabels")) {
                         JSONArray array = result.getJSONArray("queryFileLabels");
@@ -90,48 +92,201 @@ public class PsychologyConversation extends ContextHandler {
                                     Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
                         }
                     }
+                }
 
-                    this.respondOk(response, result);
+                String stream = request.getParameter("stream");
+                if (null == stream) {
+                    // 一般模式
+                    if (null != result) {
+                        this.respondOk(response, result);
+                    }
+                    else {
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                    }
+                    this.complete();
                 }
                 else {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                    // 流模式
+                    if (null != result && result.has("answer")) {
+                        String answer = result.getString("answer");
+
+                        AnswerInputStream content = new AnswerInputStream(result, answer);
+                        response.setContentLength(content.getContentLength());
+                        // Async output
+                        AsyncContext async = request.startAsync();
+                        ServletOutputStream output = async.getResponse().getOutputStream();
+                        StandardDataStream dataStream = new StandardDataStream(content, async, output);
+                        async.addListener(new AsyncListener() {
+                            @Override
+                            public void onStartAsync(AsyncEvent asyncEvent) throws IOException {
+                                Logger.d(this.getClass(), "onStartAsync");
+                            }
+
+                            @Override
+                            public void onComplete(AsyncEvent asyncEvent) throws IOException {
+                                Logger.d(this.getClass(), "onComplete: " + content.getContentLength() + "/"
+                                        + dataStream.contentLength + " - "
+                                        + (dataStream.contentLength == content.getContentLength()));
+                            }
+
+                            @Override
+                            public void onTimeout(AsyncEvent asyncEvent) throws IOException {
+                                Logger.d(this.getClass(), "onTimeout");
+                            }
+
+                            @Override
+                            public void onError(AsyncEvent asyncEvent) throws IOException {
+                                Logger.d(this.getClass(), "onError");
+                            }
+                        });
+
+                        // 设置数据写入监听器
+                        output.setWriteListener(dataStream);
+                        response.setStatus(HttpStatus.OK_200);
+                        this.complete();
+                    }
+                    else {
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                        this.complete();
+                    }
                 }
-                this.complete();
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
             }
         }
+    }
 
-        private JSONObject makeError(int stateCode) {
-            JSONObject json = new JSONObject();
-            JSONObject error = new JSONObject();
-            switch (stateCode) {
-                case HttpStatus.UNAUTHORIZED_401:
-                    error.put("message", "Invalid API token");
-                    error.put("reason", "INVALID_API_TOKEN");
-                    error.put("state", HttpStatus.UNAUTHORIZED_401);
-                    break;
-                case HttpStatus.NOT_ACCEPTABLE_406:
-                    error.put("message", "URI format error");
-                    error.put("reason", "URI_FORMAT_ERROR");
-                    error.put("state", HttpStatus.NOT_ACCEPTABLE_406);
-                    break;
-                case HttpStatus.BAD_REQUEST_400:
-                    error.put("message", "Server failure");
-                    error.put("reason", "SERVER_FAILURE");
-                    error.put("state", HttpStatus.BAD_REQUEST_400);
-                    break;
-                case HttpStatus.FORBIDDEN_403:
-                    error.put("message", "Parameter error");
-                    error.put("reason", "PARAMETER_ERROR");
-                    error.put("state", HttpStatus.FORBIDDEN_403);
-                    break;
-                default:
-                    break;
+    private final class AnswerInputStream extends InputStream {
+
+        private List<byte[]> content;
+
+        private int index;
+        private int position;
+
+        protected volatile boolean jump = false;
+
+        public AnswerInputStream(JSONObject responseJson, String text) {
+            this.index = 0;
+            this.position = 0;
+            this.content = new ArrayList<>();
+            // 将文本随机拆分为列表
+            List<String> list = TextUtils.randomSplitString(text);
+            for (String line : list) {
+                responseJson.put("answer", line);
+                StringBuffer buf = new StringBuffer();
+                buf.append(responseJson.toString()).append("\n");
+                this.content.add(buf.toString().getBytes(StandardCharsets.UTF_8));
+                buf = null;
             }
-            json.put("error", error);
-            return json;
+        }
+
+        public int getContentLength() {
+            int length = 0;
+            for (byte[] bytes : this.content) {
+                length += bytes.length;
+            }
+            return length;
+        }
+
+        public boolean peekJump() {
+            byte[] bytes = this.content.get(this.index);
+            if (this.position >= bytes.length) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (this.index >= this.content.size()) {
+                return -1;
+            }
+
+            byte[] bytes = this.content.get(this.index);
+            if (this.position >= bytes.length) {
+                this.jump = true;
+
+                this.position = 0;
+                ++this.index;
+                if (this.index >= this.content.size()) {
+                    return -1;
+                }
+                bytes = this.content.get(this.index);
+            }
+            else {
+                this.jump = false;
+            }
+
+            byte b = bytes[this.position];
+            ++this.position;
+            return b & 0xFF;
+        }
+    }
+
+    /**
+     * 标准数据流输出。
+     */
+    private final class StandardDataStream implements WriteListener {
+
+        private final AnswerInputStream content;
+        private final AsyncContext async;
+        private final ServletOutputStream output;
+
+        protected long contentLength = 0;
+
+        private StandardDataStream(AnswerInputStream content, AsyncContext async, ServletOutputStream output) {
+            this.content = content;
+            this.async = async;
+            this.output = output;
+        }
+
+        @Override
+        public void onWritePossible() throws IOException {
+            FlexibleByteBuffer buffer = new FlexibleByteBuffer();
+
+            // 输出流是否就绪
+            while (this.output.isReady()) {
+                int b = this.content.read();
+                if (b == -1) {
+                    buffer.flip();
+                    if (buffer.limit() > 0) {
+                        this.contentLength += buffer.limit();
+                        this.output.write(buffer.array(), 0, buffer.limit());
+                    }
+                    break;
+                }
+
+                buffer.put((byte)b);
+
+                if (this.content.peekJump()) {
+                    buffer.flip();
+                    this.contentLength += buffer.limit();
+                    this.output.write(buffer.array(), 0, buffer.limit());
+                    buffer.clear();
+                }
+            }
+
+            this.async.complete();
+            try {
+                this.content.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            Logger.w(this.getClass(), "Async Error", throwable);
+            this.async.complete();
+
+            try {
+                this.content.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

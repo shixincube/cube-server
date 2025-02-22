@@ -90,7 +90,7 @@ public class ImprovementChat extends ContextHandler {
             // Chat
             GeneratingRecord record = Manager.getInstance().chat(token, channelCode, pattern,
                     content, desc, new GeneratingOption(), histories, records, false, false, false,
-                    null, 10, 50).record;
+                    null, 10).record;
             if (null == record) {
                 // 发生错误
                 this.respond(response, HttpStatus.BAD_REQUEST_400);

@@ -22,7 +22,6 @@ import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.SemanticSearchListener;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import cube.util.FileUtils;
@@ -47,8 +46,6 @@ public class PsychologyScene {
     private PsychologyStorage storage;
 
     private long lastConfigModified;
-
-    private String unitName;
 
     private int unitContextLength;
 
@@ -106,10 +103,6 @@ public class PsychologyScene {
 
             this.lastConfigModified = System.currentTimeMillis();
 
-            JSONObject unitConfig = config.getJSONObject("unit");
-            this.unitName = unitConfig.getString("name");
-            this.unitContextLength = unitConfig.getInt("contextLength");
-
             // 数据管理器设置
             SceneManager.getInstance().setService(service);
 
@@ -139,19 +132,13 @@ public class PsychologyScene {
                 return;
             }
 
-            this.lastConfigModified = file.lastModified();
-
             JSONObject config = ConfigUtils.readJsonFile("psychology.json");
-            JSONObject unitConfig = config.getJSONObject("unit");
-            this.unitName = unitConfig.getString("name");
-            this.unitContextLength = unitConfig.getInt("contextLength");
+            if (null != config) {
+                this.lastConfigModified = file.lastModified();
+            }
         } catch (Exception e) {
             Logger.w(this.getClass(), "#loadConfig", e);
         }
-    }
-
-    public String getUnitName() {
-        return this.unitName;
     }
 
     public boolean recordUsage(Usage usage) {
@@ -1064,9 +1051,6 @@ public class PsychologyScene {
             return workflow;
         }
 
-        // 设置使用的单元
-        workflow.setUnitName(this.unitName);
-
         // 设置绘画特征集
         workflow.setPaintingFeatureSet(evaluation.getPaintingFeatureSet());
 
@@ -1117,7 +1101,7 @@ public class PsychologyScene {
                 description = workflow.infer(prompt.description);
             }
             if (null == description) {
-                description = this.service.syncGenerateText(this.unitName, prompt.description, new GeneratingOption(),
+                description = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.description, new GeneratingOption(),
                         null, null);
             }
 
@@ -1137,7 +1121,7 @@ public class PsychologyScene {
                     suggestion = workflow.infer(prompt.suggestion);
                 }
                 if (null == suggestion) {
-                    suggestion = this.service.syncGenerateText(this.unitName, prompt.suggestion, new GeneratingOption(),
+                    suggestion = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.suggestion, new GeneratingOption(),
                             null, null);
                 }
 

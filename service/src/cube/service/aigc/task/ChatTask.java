@@ -193,8 +193,6 @@ public class ChatTask extends ServiceTask {
             // 执行知识库问答
             int searchTopK = packet.data.has("searchTopK")
                     ? packet.data.getInt("searchTopK") : 10;
-            int searchFetchK = packet.data.has("searchFetchK")
-                    ? packet.data.getInt("searchFetchK") : 50;
 
             KnowledgeBase knowledgeBase = null;
 
@@ -219,7 +217,7 @@ public class ChatTask extends ServiceTask {
             }
 
             if (null != knowledgeBase) {
-                success = knowledgeBase.performKnowledgeQA(code, unit, content, searchTopK, searchFetchK,
+                success = knowledgeBase.performKnowledgeQA(code, unit, content, searchTopK,
                         categories, recordList, new KnowledgeQAListener() {
                     @Override
                     public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {

@@ -125,8 +125,9 @@ public class QueryRevolver {
                     }
                 }
 
-                result.append("\n根据以上信息，专业地回答问题，如果无法从中得到答案，请说“暂时没有足够的相关信息。”，不允许在答案中添加编造成分。问题是：");
+                result.append("\n根据以上信息，专业地回答问题，如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，不允许在答案中添加编造成分。问题是：");
                 result.append(query);
+                result.append("\n");
 
                 synchronized (result) {
                     result.notify();
@@ -144,7 +145,7 @@ public class QueryRevolver {
         if (success) {
             synchronized (result) {
                 try {
-                    result.wait(10 * 1000);
+                    result.wait(30 * 1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
