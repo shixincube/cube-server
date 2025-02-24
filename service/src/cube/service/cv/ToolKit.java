@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -63,13 +64,13 @@ public class ToolKit {
         }
     }
 
-    public FileLabel makeBarCodeA4Paper(AuthToken authToken, List<BarCode> list) {
+    public FileLabel makeBarCodeA4Paper(AuthToken authToken, List<BarCode> list, String layout) {
         StringBuilder buf = new StringBuilder();
         for (BarCode barCode : list) {
             buf.append(barCode.data);
         }
 
-        String prefix = Long.toString(Math.abs(Utils.hashStringMurmur(buf.toString())));
+        final String prefix = Long.toString(Math.abs(Utils.hashStringMurmur(buf.toString())));
         String fileCode = FileUtils.makeFileCode(prefix, authToken.getDomain(),
                 String.format("%d", list.size()));
 
@@ -83,13 +84,19 @@ public class ToolKit {
             }
         }
 
-        List<File> fileList = new ArrayList<>();
-        for (int i = 0; i < list.size(); ++i) {
-            String filename = prefix + "_" + (i + 1);
-            BarCode barCode = list.get(i);
-            barCode.setLayer(BarCode.Small);
-            File file = this.makeBarCodePaperFile(filename, barCode, PrintUtils.PaperA4Small, false);
-            fileList.add(file);
+        List<File> fileList = null;
+        if (null != layout && layout.equalsIgnoreCase("tile")) {
+            fileList = this.makeBarCodePaperFiles(prefix + "_", list, PrintUtils.PaperA4Small);
+        }
+        else {
+            fileList = new ArrayList<>();
+            for (int i = 0; i < list.size(); ++i) {
+                String filename = prefix + "_" + (i + 1);
+                BarCode barCode = list.get(i);
+                barCode.setContainer(BarCode.Small);
+                File file = this.makeBarCodePaperFile(filename, barCode, PrintUtils.PaperA4Small, false);
+                fileList.add(file);
+            }
         }
 
         File outputFile = new File(this.workingPath + prefix + ".pdf");
@@ -142,11 +149,72 @@ public class ToolKit {
         return this.saveTo(authToken, fileCode, file);
     }
 
+    private List<File> makeBarCodePaperFiles(String filenamePrefix, List<BarCode> barCodeList, Size paperSize) {
+        List<File> results = new ArrayList<>();
+
+        BarCode first = barCodeList.get(0);
+        int codeWidth = first.width;
+        int codeHeight = first.height;
+        int col = (int) Math.floor((double) paperSize.width / (double) codeWidth);
+        int row = (int) Math.floor((double) paperSize.height / (double) codeHeight);
+        final int numEachPaper = col * row;
+        final int xOffset = (int) Math.floor((paperSize.width - codeWidth * col) * 0.5);
+        final int yOffset = (int) Math.floor((paperSize.height - codeHeight * row) * 0.5);
+        BufferedImage paper = PrintUtils.createPaper(paperSize);
+        Graphics2D g2d = paper.createGraphics();
+        int countEachPaper = 0;
+
+        LinkedList<BarCode> barCodes = new LinkedList<>(barCodeList);
+        while (!barCodes.isEmpty()) {
+            for (int i = 0; i < col; ++i) {
+                for (int j = 0; j < row; ++j) {
+                    BarCode barCode = barCodes.removeFirst();
+                    BufferedImage barCodeImage = CodeUtils.generateBarCode(barCode.data, barCode.width, barCode.height,
+                            barCode.header, barCode.footer, barCode.fontSize);
+                    int x = i * codeWidth;
+                    int y = j * codeHeight;
+                    g2d.drawImage(barCodeImage, x + xOffset, y + yOffset, barCodeImage.getWidth(), barCodeImage.getHeight(), null);
+                    // 计数
+                    ++countEachPaper;
+                    if (countEachPaper >= numEachPaper || barCodes.isEmpty()) {
+                        break;
+                    }
+                }
+                if (countEachPaper >= numEachPaper || barCodes.isEmpty()) {
+                    break;
+                }
+            }
+            if (countEachPaper > 0) {
+                countEachPaper = 0;
+                g2d.dispose();
+
+                String ext = "png";
+                File file = new File(this.workingPath, filenamePrefix + (results.size() + 1) + "." + ext);
+                try {
+                    ImageIO.write(paper, ext, file);
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#makeBarCodePaperFiles - Writer image data failed", e);
+                }
+                if (file.exists()) {
+                    results.add(file);
+                }
+
+                if (!barCodes.isEmpty()) {
+                    // 新页
+                    paper = PrintUtils.createPaper(paperSize);
+                    g2d = paper.createGraphics();
+                }
+            }
+        }
+
+        return results;
+    }
+
     private File makeBarCodePaperFile(String filename, BarCode barCode, Size paperSize, boolean landscape) {
         BufferedImage barCodeImage = CodeUtils.generateBarCode(barCode.data, barCode.width, barCode.height,
                 barCode.header, barCode.footer, barCode.fontSize);
         if (null == barCodeImage) {
-            Logger.e(this.getClass(), "#makeBarCodeA4PaperFile - Generate bar code image failed");
+            Logger.e(this.getClass(), "#makeBarCodePaperFile - Generate bar code image failed");
             return null;
         }
 

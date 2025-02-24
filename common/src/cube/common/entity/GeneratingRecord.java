@@ -175,18 +175,6 @@ public class GeneratingRecord implements JSONable {
         return this.query.length() + ((null != this.answer) ? this.answer.length() : 0);
     }
 
-    public int totalLength() {
-        if (null == this.query) {
-            return 0;
-        }
-
-        int length = this.query.getBytes(StandardCharsets.UTF_8).length;
-        if (null != this.answer) {
-            length += this.answer.getBytes(StandardCharsets.UTF_8).length;
-        }
-        return length;
-    }
-
     public void addAnswerFileLabel(FileLabel fileLabel) {
         if (null == this.answerFileLabels) {
             this.answerFileLabels = new ArrayList<>();

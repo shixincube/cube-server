@@ -1129,7 +1129,7 @@ public class AIGCService extends AbstractModule {
             return false;
         }
 
-        if (content.getBytes(StandardCharsets.UTF_8).length > ModelConfig.getPromptLengthLimit(unitName)) {
+        if (content.length() > ModelConfig.getPromptLengthLimit(unitName)) {
             Logger.w(AIGCService.class, "#generateText - Content length greater than "
                     + ModelConfig.getPromptLengthLimit(unitName));
             return false;
@@ -2970,7 +2970,7 @@ public class AIGCService extends AbstractModule {
 
                 // 提示词长度限制
                 int lengthLimit = ModelConfig.getPromptLengthLimit(this.unit.getCapability().getName());
-                lengthLimit -= this.content.getBytes(StandardCharsets.UTF_8).length;
+                lengthLimit -= this.content.length();
 
                 JSONObject data = new JSONObject();
                 data.put("unit", this.unit.getCapability().getName());
@@ -3079,7 +3079,7 @@ public class AIGCService extends AbstractModule {
                 } // End useQueryAttachment
 
                 // 处理多轮历史记录
-                int lengthCount = data.getString("content").getBytes(StandardCharsets.UTF_8).length;
+                int lengthCount = data.getString("content").length();
                 List<GeneratingRecord> candidateRecords = new ArrayList<>();
                 if (null == this.histories) {
                     int validNumHistories = this.maxHistories;
@@ -3089,7 +3089,7 @@ public class AIGCService extends AbstractModule {
                         Collections.reverse(records);
                         for (GeneratingRecord record : records) {
                             // 判断长度
-                            lengthCount += record.totalLength();
+                            lengthCount += record.totalWords();
                             if (lengthCount > lengthLimit) {
                                 // 长度越界
                                 break;
@@ -3109,7 +3109,7 @@ public class AIGCService extends AbstractModule {
                             continue;
                         }
 
-                        lengthCount += record.totalLength();
+                        lengthCount += record.totalWords();
                         // 判断长度
                         if (lengthCount > lengthLimit) {
                             // 长度越界

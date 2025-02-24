@@ -70,6 +70,8 @@ public class MakeBarCodeTask extends ServiceTask {
         int amount = 0;
 
         boolean merge = packet.data.has("merge") && packet.data.getBoolean("merge");
+        String layout = packet.data.has("layout") ? packet.data.getString("layout") : "tile";
+        String size = packet.data.has("size") ? packet.data.getString("size") : "small";
         String paper = packet.data.has("paper") ? packet.data.getString("paper") : null;
 
         try {
@@ -78,9 +80,10 @@ public class MakeBarCodeTask extends ServiceTask {
                 JSONArray array = packet.data.getJSONArray("list");
                 for (int i = 0; i < array.length(); ++i) {
                     BarCode barCode = new BarCode(array.getJSONObject(i));
+                    barCode.setContainer(BarCode.parseContainer(size));
                     list.add(barCode);
                 }
-                FileLabel fileLabel = ToolKit.getInstance().makeBarCodeA4Paper(token, list);
+                FileLabel fileLabel = ToolKit.getInstance().makeBarCodeA4Paper(token, list, layout);
                 if (null != fileLabel) {
                     ++amount;
                     result.put(fileLabel.toJSON());
@@ -91,7 +94,6 @@ public class MakeBarCodeTask extends ServiceTask {
                 for (int i = 0; i < array.length(); ++i) {
                     JSONObject info = array.getJSONObject(i);
                     BarCode barCode = new BarCode(info);
-
                     if (null != paper) {
                         FileLabel fileLabel = ToolKit.getInstance().makeBarCodePaper(token, barCode, PrintUtils.PaperA4Ultra);
                         if (null != fileLabel) {

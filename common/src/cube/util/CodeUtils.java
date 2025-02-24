@@ -180,7 +180,7 @@ public class CodeUtils {
             MultiFormatWriter writer = new MultiFormatWriter();
             BitMatrix bitMatrix = writer.encode(data, BarcodeFormat.CODE_128, width, height, hints);
 
-            int hOffset = fontSize * 2;
+            int hOffset = fontSize * 2 + 10;
             int bHeight = height - hOffset;
 
             int barX = 0;
@@ -218,14 +218,14 @@ public class CodeUtils {
                 g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 g2d.setFont(font);
                 g2d.setColor(java.awt.Color.BLACK);
-                g2d.drawString(header, barX, fontSize + (int)(fontSize * 0.4));
+                g2d.drawString(header, barX, fontSize + (int)(fontSize * 0.4) + 5);
             }
             if (null != footer) {
                 // 字体抗锯齿
                 g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 g2d.setFont(font);
                 g2d.setColor(java.awt.Color.BLACK);
-                g2d.drawString(footer, barX, height - (int)(fontSize * 0.5));
+                g2d.drawString(footer, barX, height - (int)(fontSize * 0.5) - 5);
             }
         } catch (Exception e) {
             e.printStackTrace();

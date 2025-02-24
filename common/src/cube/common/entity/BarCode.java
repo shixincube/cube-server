@@ -14,11 +14,11 @@ import org.json.JSONObject;
  */
 public class BarCode extends Entity {
 
-    public static LayerParameter Ultra = new LayerParameter(500, 200, 32);
+    public static Container Ultra = new Container(500, 250, 32);
 
-    public static LayerParameter Normal = new LayerParameter(250, 100, 16);
+    public static Container Normal = new Container(252, 126, 16);
 
-    public static LayerParameter Small = new LayerParameter(200, 80, 13);
+    public static Container Small = new Container(200, 100, 13);
 
     public String data;
 
@@ -47,16 +47,16 @@ public class BarCode extends Entity {
         }
 
         this.width = json.has("width") ? json.getInt("width") : 500;
-        this.height = json.has("height") ? json.getInt("height") : 200;
+        this.height = json.has("height") ? json.getInt("height") : 250;
         this.header = json.has("header") ? json.getString("header") : null;
         this.footer = json.has("footer") ? json.getString("footer") : null;
         this.fontSize = json.has("fontSize") ? json.getInt("fontSize") : 32;
     }
 
-    public void setLayer(LayerParameter parameter) {
-        this.width = parameter.width;
-        this.height = parameter.height;
-        this.fontSize = parameter.fontSize;
+    public void setContainer(Container container) {
+        this.width = container.width;
+        this.height = container.height;
+        this.fontSize = container.fontSize;
     }
 
     @Override
@@ -94,8 +94,19 @@ public class BarCode extends Entity {
         return json;
     }
 
+    public static Container parseContainer(String text) {
+        if (text.equalsIgnoreCase("Ultra")) {
+            return BarCode.Ultra;
+        }
+        else if (text.equalsIgnoreCase("Normal")) {
+            return BarCode.Normal;
+        }
+        else {
+            return BarCode.Small;
+        }
+    }
 
-    public static class LayerParameter {
+    public static class Container {
 
         public int width;
 
@@ -103,7 +114,7 @@ public class BarCode extends Entity {
 
         public int fontSize;
 
-        public LayerParameter(int width, int height, int fontSize) {
+        public Container(int width, int height, int fontSize) {
             this.width = width;
             this.height = height;
             this.fontSize = fontSize;
