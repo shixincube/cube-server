@@ -45,7 +45,7 @@ public class FileOperationHandler extends CrossDomainHandler {
         try {
             data = this.readBodyAsJSONObject(request);
         } catch (IOException e) {
-            response.setStatus(HttpStatus.UNAUTHORIZED_401);
+            this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
             this.complete();
             return;
         }
@@ -61,7 +61,7 @@ public class FileOperationHandler extends CrossDomainHandler {
             this.deleteFile(data, request, response);
         }
         else {
-            response.setStatus(HttpStatus.NOT_ACCEPTABLE_406);
+            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
             this.complete();
         }
     }
@@ -69,14 +69,23 @@ public class FileOperationHandler extends CrossDomainHandler {
     private void listFiles(JSONObject data, HttpServletRequest request, HttpServletResponse response) {
         String token = data.has("token") ? data.getString("token") : null;
         if (null == token) {
-            response.setStatus(HttpStatus.FORBIDDEN_403);
-            this.complete();
-            return;
+            token = request.getHeader(HEADER_X_BAIZE_API_TOKEN);
+            if (null == token) {
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                this.complete();
+                return;
+            }
+        }
+
+        String version = request.getHeader(HEADER_X_BAIZE_API_VERSION);
+        if (null == version) {
+            version = "v0";
         }
 
         boolean hierarchy = data.has("hierarchy") && data.getBoolean("hierarchy");
 
-        Packet responseData = null;
+        Packet resultPacket = null;
+        JSONObject resultJson = null;
 
         if (hierarchy) {
             // 获取根目录信息
@@ -87,7 +96,7 @@ public class FileOperationHandler extends CrossDomainHandler {
 
             ActionDialect responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
             if (null == responseDialect) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
                 return;
             }
@@ -96,7 +105,7 @@ public class FileOperationHandler extends CrossDomainHandler {
             int stateCode = Packet.extractCode(responsePacket);
             if (stateCode != FileStorageStateCode.Ok.code) {
                 Logger.w(this.getClass(), "#listFiles - Service state code : " + stateCode);
-                this.respond(response, HttpStatus.NOT_FOUND_404, responsePacket.toJSON());
+                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
                 return;
             }
@@ -104,10 +113,10 @@ public class FileOperationHandler extends CrossDomainHandler {
             // 根目录
             Folder folder = new Folder(Packet.extractDataPayload(responsePacket));
             if (folder.numFiles == 0) {
-                JSONObject packetPayload = new JSONObject();
-                packetPayload.put("total", folder.numFiles);
-                packetPayload.put("list", new JSONArray());
-                responseData = new Packet(FileStorageAction.ListFiles.name, packetPayload);
+                resultJson = new JSONObject();
+                resultJson.put("total", folder.numFiles);
+                resultJson.put("list", new JSONArray());
+                resultPacket = new Packet(FileStorageAction.ListFiles.name, resultJson);
             }
             else {
                 // 获取目录里的文件列表
@@ -117,10 +126,11 @@ public class FileOperationHandler extends CrossDomainHandler {
                 payload.put("begin", 0);
                 payload.put("end", folder.numFiles - 1);
                 packet = new Packet(FileStorageAction.ListFiles.name, payload);
-
+                packetDialect = packet.toDialect();
+                packetDialect.addParam("token", token);
                 responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
                 if (null == responseDialect) {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                     return;
                 }
@@ -129,21 +139,21 @@ public class FileOperationHandler extends CrossDomainHandler {
                 stateCode = Packet.extractCode(responsePacket);
                 if (stateCode != FileStorageStateCode.Ok.code) {
                     Logger.w(this.getClass(), "#listFiles - Service state code : " + stateCode);
-                    this.respond(response, HttpStatus.NOT_FOUND_404, responsePacket.toJSON());
+                    this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                     this.complete();
                     return;
                 }
 
-                JSONObject packetPayload = new JSONObject();
+                resultJson = new JSONObject();
                 JSONArray list = Packet.extractDataPayload(responsePacket).getJSONArray("list");
                 for (int i = 0; i < list.length(); ++i) {
                     JSONObject json = list.getJSONObject(i);
                     FileLabels.reviseFileLabel(json, token, this.performer.getExternalHttpEndpoint(),
                             this.performer.getExternalHttpsEndpoint());
                 }
-                packetPayload.put("total", folder.numFiles);
-                packetPayload.put("list", list);
-                responseData = new Packet(FileStorageAction.ListFiles.name, packetPayload);
+                resultJson.put("total", folder.numFiles);
+                resultJson.put("list", list);
+                resultPacket = new Packet(FileStorageAction.ListFiles.name, resultJson);
             }
         }
         else {
@@ -155,7 +165,7 @@ public class FileOperationHandler extends CrossDomainHandler {
 
             ActionDialect responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
             if (null == responseDialect) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
                 return;
             }
@@ -164,22 +174,27 @@ public class FileOperationHandler extends CrossDomainHandler {
             int stateCode = Packet.extractCode(responsePacket);
             if (stateCode != FileStorageStateCode.Ok.code) {
                 Logger.w(this.getClass(), "#listFiles - Service state code : " + stateCode);
-                this.respond(response, HttpStatus.NOT_FOUND_404, responsePacket.toJSON());
+                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
                 return;
             }
 
-            JSONObject packetPayload = Packet.extractDataPayload(responsePacket);
-            JSONArray array = packetPayload.getJSONArray("list");
+            resultJson = Packet.extractDataPayload(responsePacket);
+            JSONArray array = resultJson.getJSONArray("list");
             for (int i = 0; i < array.length(); ++i) {
                 JSONObject json = array.getJSONObject(i);
                 FileLabels.reviseFileLabel(json, token, this.performer.getExternalHttpEndpoint(),
                         this.performer.getExternalHttpsEndpoint());
             }
-            responseData = new Packet(FileStorageAction.ListFileLabels.name, packetPayload);
+            resultPacket = new Packet(FileStorageAction.ListFileLabels.name, resultJson);
         }
 
-        this.respondOk(response, responseData.toJSON());
+        if (version.equalsIgnoreCase("v1")) {
+            this.respondOk(response, resultJson);
+        }
+        else {
+            this.respondOk(response, resultPacket.toJSON());
+        }
         this.complete();
     }
 
@@ -189,14 +204,22 @@ public class FileOperationHandler extends CrossDomainHandler {
         String fileName = data.has("fileName") ? data.getString("fileName") : null;
         String fileCode = data.has("fileCode") ? data.getString("fileCode") : null;
 
+        String version = request.getHeader(HEADER_X_BAIZE_API_VERSION);
+        if (null == version) {
+            version = "v0";
+        }
+
         if (null == token) {
-            response.setStatus(HttpStatus.FORBIDDEN_403);
-            this.complete();
-            return;
+            token = request.getHeader(HEADER_X_BAIZE_API_TOKEN);
+            if (null == token) {
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                this.complete();
+                return;
+            }
         }
 
         if (null == md5 && null == fileName && null == fileCode) {
-            response.setStatus(HttpStatus.FORBIDDEN_403);
+            this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
             this.complete();
             return;
         }
@@ -228,7 +251,7 @@ public class FileOperationHandler extends CrossDomainHandler {
         int stateCode = Packet.extractCode(responsePacket);
         if (stateCode != FileStorageStateCode.Ok.code) {
             Logger.w(this.getClass(), "#findFile - Service state code : " + stateCode);
-            this.respond(response, HttpStatus.NOT_FOUND_404, responsePacket.toJSON());
+            this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
             this.complete();
             return;
         }
@@ -241,8 +264,15 @@ public class FileOperationHandler extends CrossDomainHandler {
             FileLabels.reviseFileLabel(fileLabelJson, token,
                     this.performer.getExternalHttpEndpoint(), this.performer.getExternalHttpsEndpoint());
         }
-        responsePacket = new Packet(FileStorageAction.FindFile.name, responseData);
-        this.respondOk(response, responsePacket.toJSON());
+
+        // 根据版本返回数据
+        if (version.equalsIgnoreCase("v1")) {
+            this.respondOk(response, responseData);
+        }
+        else {
+            responsePacket = new Packet(FileStorageAction.FindFile.name, responseData);
+            this.respondOk(response, responsePacket.toJSON());
+        }
         this.complete();
     }
 
@@ -251,16 +281,24 @@ public class FileOperationHandler extends CrossDomainHandler {
         JSONArray fileCodeList = data.has("fileCodeList") ? data.getJSONArray("fileCodeList") : null;
         JSONArray md5List = data.has("md5List") ? data.getJSONArray("md5List") : null;
 
+        String version = request.getHeader(HEADER_X_BAIZE_API_VERSION);
+        if (null == version) {
+            version = "v0";
+        }
+
         if (null == token) {
-            response.setStatus(HttpStatus.FORBIDDEN_403);
-            this.complete();
-            return;
+            token = request.getHeader(HEADER_X_BAIZE_API_TOKEN);
+            if (null == token) {
+                response.setStatus(HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
         }
 
         JSONObject payload = new JSONObject();
         if (null != fileCodeList) {
             if (fileCodeList.isEmpty()) {
-                response.setStatus(HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
@@ -269,7 +307,7 @@ public class FileOperationHandler extends CrossDomainHandler {
         }
         else if (null != md5List) {
             if (md5List.isEmpty()) {
-                response.setStatus(HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
@@ -283,17 +321,16 @@ public class FileOperationHandler extends CrossDomainHandler {
 
         ActionDialect responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
         if (null == responseDialect) {
-            this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+            this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
             this.complete();
             return;
         }
 
         Packet responsePacket = new Packet(responseDialect);
-
         int stateCode = Packet.extractCode(responsePacket);
         if (stateCode != FileStorageStateCode.Ok.code) {
             Logger.w(this.getClass(), "#deleteFile - Service state code : " + stateCode);
-            this.respond(response, HttpStatus.NOT_FOUND_404, responsePacket.toJSON());
+            this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
             this.complete();
             return;
         }
@@ -305,8 +342,14 @@ public class FileOperationHandler extends CrossDomainHandler {
             FileLabels.reviseFileLabel(json, token, this.performer.getExternalHttpEndpoint(),
                     this.performer.getExternalHttpsEndpoint());
         }
-        responsePacket = new Packet(FileStorageAction.DeleteFile.name, responseData);
-        this.respondOk(response, responsePacket.toJSON());
+
+        if (version.equalsIgnoreCase("v1")) {
+            this.respondOk(response, responseData);
+        }
+        else {
+            responsePacket = new Packet(FileStorageAction.DeleteFile.name, responseData);
+            this.respondOk(response, responsePacket.toJSON());
+        }
         this.complete();
     }
 }
