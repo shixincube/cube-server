@@ -168,7 +168,7 @@ public class AIGCChannel extends Entity {
         return null;
     }
 
-    public GeneratingRecord appendRecord(long sn, String unit, String query, String answer, ComplexContext context) {
+    public GeneratingRecord appendRecord(long sn, String unit, String query, String answer, String thought, ComplexContext context) {
         this.activeTimestamp = System.currentTimeMillis();
 
         this.totalQueryWords += query.length();
@@ -176,7 +176,7 @@ public class AIGCChannel extends Entity {
 
         this.rounds.incrementAndGet();
 
-        GeneratingRecord record = new GeneratingRecord(sn, unit, query, answer, this.activeTimestamp, context);
+        GeneratingRecord record = new GeneratingRecord(sn, unit, query, answer, thought, this.activeTimestamp, context);
         synchronized (this.history) {
             this.history.addFirst(record);
         }

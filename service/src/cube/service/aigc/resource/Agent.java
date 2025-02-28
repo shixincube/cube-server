@@ -72,11 +72,11 @@ public final class Agent {
         return this.unit;
     }
 
-    public String generateText(String channelCode, String content, List<GeneratingRecord> records) {
+    public GeneratingRecord generateText(String channelCode, String content, List<GeneratingRecord> records) {
         return this.generateText(channelCode, this.unit.getCapability().getName(), content, new GeneratingOption(), records);
     }
 
-    public String generateText(String channelCode, String unitName, String content, GeneratingOption option,
+    public GeneratingRecord generateText(String channelCode, String unitName, String content, GeneratingOption option,
                                List<GeneratingRecord> records) {
         String code = channelCode;
         if (null == code) {
@@ -114,7 +114,9 @@ public final class Agent {
             if (response.getStatus() == HttpStatus.OK_200) {
                 JSONObject responseData = new JSONObject(response.getContentAsString());
                 if (responseData.has("content")) {
-                    return responseData.getString("content");
+                    String thought = responseData.has("thought") ? responseData.getString("thought") : "";
+                    return new GeneratingRecord(Utils.generateSerialNumber(), unitName,
+                            content, responseData.getString("content"), thought);
                 }
                 else {
                     Logger.e(this.getClass(), "#generateText - Response data has no content");

@@ -15,6 +15,7 @@ import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GeneratingOption;
+import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -32,7 +33,7 @@ public class Workflow {
 //    public final static String NormalTrick = "具有";
 //    public final static String LowTrick = "缺乏";//"不足";
 
-    private final static String PERSONALITY_FORMAT = "已知信息：\n%s\n\n根据上述信息，回答问题：总结他的性格特点。";
+    private final static String PERSONALITY_FORMAT = "已知人格特点如下：\n\n%s\n\n根据上述信息回答问题，不能编造成分，问题是：总结他的性格特点。";
 
     private boolean speed = true;
 
@@ -230,8 +231,9 @@ public class Workflow {
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
 
-            answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
+            GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                     null, null);
+            answer = (null != generating) ? generating.answer : null;
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - report is null: " + prompt);
@@ -240,8 +242,9 @@ public class Workflow {
 
         // 对数据集数据进行推理
         prompt = String.format(PERSONALITY_FORMAT, answer.replaceAll("你", "他"));
-        String fixAnswer = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt, new GeneratingOption(),
+        GeneratingRecord generatingResult = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt, new GeneratingOption(),
                 null, null);
+        String fixAnswer = (null != generatingResult) ? generatingResult.answer : null;
         if (null != fixAnswer) {
             answer = fixAnswer;
         }
@@ -257,8 +260,9 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
+            GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                     null, null);
+            answer = (null != generating) ? generating.answer : null;
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - Obligingness content error: " + prompt);
@@ -278,8 +282,9 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
+            GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                     null, null);
+            answer = (null != generating) ? generating.answer : null;
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - Conscientiousness content error: " + prompt);
@@ -299,8 +304,9 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
+            GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                     null, null);
+            answer = (null != generating) ? generating.answer : null;
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - Extraversion content error: " + prompt);
@@ -320,8 +326,9 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
+            GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                     null, null);
+            answer = (null != generating) ? generating.answer : null;
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - Achievement content error: " + prompt);
@@ -341,8 +348,9 @@ public class Workflow {
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
-            answer = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
+            GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                     null, null);
+            answer = (null != generating) ? generating.answer : null;
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - Neuroticism content error: " + prompt);
@@ -374,8 +382,9 @@ public class Workflow {
             }
             if (null == report) {
                 Logger.w(this.getClass(), "#inferScore - No report for \"" + prompt + "\"");
-                report = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
+                GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                         null, null);
+                report = (null != generating) ? generating.answer : null;
             }
 
             prompt = es.generateSuggestionPrompt(this.attribute);
@@ -391,8 +400,9 @@ public class Workflow {
             }
             if (null == suggestion) {
                 Logger.w(this.getClass(), "#inferScore - No suggestion for \"" + prompt + "\"");
-                suggestion = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
+                GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
                         null, null);
+                suggestion = (null != generating) ? generating.answer : null;
             }
 
             if (null != report && null != suggestion) {
@@ -438,8 +448,9 @@ public class Workflow {
         }
         prompt.append("\n");
         prompt.append("根据上述已知信息，简洁和专业地来回答用户的问题。问题是：概述此人的心理评测结果，各内容之间分段展示。");
-        String result = this.service.syncGenerateText(unitName, prompt.toString(), new GeneratingOption(),
+        GeneratingRecord generating = this.service.syncGenerateText(unitName, prompt.toString(), new GeneratingOption(),
                 null, null);
+        String result = (null != generating) ? generating.answer : null;
 
         if (null == result || result.contains("我遇到一些问题") || result.contains("我遇到一些技术问题")) {
             try {
@@ -448,8 +459,9 @@ public class Workflow {
                 e.printStackTrace();
             }
 
-            result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.toString(), new GeneratingOption(),
+            generating = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.toString(), new GeneratingOption(),
                     null, null);
+            result = (null != generating) ? generating.answer : null;
         }
         if (null != result) {
             summary.append(result);

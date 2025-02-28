@@ -11,7 +11,6 @@ import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,6 +25,8 @@ public class GeneratingRecord implements JSONable {
     public String query;
 
     public String answer;
+
+    public String thought = "";
 
     public List<FileLabel> queryFileLabels;
 
@@ -71,11 +72,13 @@ public class GeneratingRecord implements JSONable {
         this.timestamp = System.currentTimeMillis();
     }
 
-    public GeneratingRecord(long sn, String unit, String query, String answer, long timestamp, ComplexContext context) {
+    public GeneratingRecord(long sn, String unit, String query, String answer, String thought,
+                            long timestamp, ComplexContext context) {
         this.sn = sn;
         this.unit = unit;
         this.query = query;
         this.answer = answer;
+        this.thought = thought;
         this.timestamp = timestamp;
         this.context = context;
     }
@@ -103,6 +106,15 @@ public class GeneratingRecord implements JSONable {
         this.timestamp = System.currentTimeMillis();
     }
 
+    public GeneratingRecord(long sn, String unit, String query, String answer, String thought) {
+        this.sn = sn;
+        this.unit = unit;
+        this.query = query;
+        this.answer = answer;
+        this.thought = thought;
+        this.timestamp = System.currentTimeMillis();
+    }
+
     public GeneratingRecord(JSONObject json) {
         if (json.has("sn")) {
             this.sn = json.getLong("sn");
@@ -121,6 +133,10 @@ public class GeneratingRecord implements JSONable {
 
         if (json.has("query")) {
             this.query = json.getString("query");
+        }
+
+        if (json.has("thought")) {
+            this.thought = json.getString("thought");
         }
 
         if (json.has("answerFileLabels")) {
@@ -234,6 +250,10 @@ public class GeneratingRecord implements JSONable {
 
         if (null != this.answer) {
             json.put("answer", this.answer);
+        }
+
+        if (null != this.thought) {
+            json.put("thought", this.thought);
         }
 
         if (null != this.answerFileLabels) {

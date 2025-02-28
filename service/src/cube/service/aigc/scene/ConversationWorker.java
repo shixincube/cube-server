@@ -138,7 +138,7 @@ public class ConversationWorker {
                     Logger.d(this.getClass(), "#work - No file: " +
                             channel.getAuthToken().getCode() + "/" + channel.getCode());
                     GeneratingRecord record = new GeneratingRecord(query);
-                    record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_FILE");
+                    record.answer = this.polish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_FILE"));
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
@@ -171,7 +171,8 @@ public class ConversationWorker {
                             channel.getAuthToken().getCode() + "/" + channel.getCode());
 
                     GeneratingRecord record = new GeneratingRecord(query, fileLabel);
-                    record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE");
+                    record.answer = this.polish(Resource.getInstance().getCorpus(CORPUS,
+                            "ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE"));
 
                     // 进入子任务
                     convCtx.setCurrentSubtask(subtask);
@@ -191,7 +192,8 @@ public class ConversationWorker {
                             channel.getAuthToken().getCode() + "/" + channel.getCode());
 
                     GeneratingRecord record = new GeneratingRecord(query, fileLabel);
-                    record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NEED_TO_PROVIDE_AGE");
+                    record.answer = this.polish(Resource.getInstance().getCorpus(CORPUS,
+                            "ANSWER_NEED_TO_PROVIDE_AGE"));
 
                     // 进入子任务
                     convCtx.setCurrentSubtask(subtask);
@@ -211,7 +213,8 @@ public class ConversationWorker {
                             channel.getAuthToken().getCode() + "/" + channel.getCode());
 
                     GeneratingRecord record = new GeneratingRecord(query, fileLabel);
-                    record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NEED_TO_PROVIDE_GENDER");
+                    record.answer = this.polish(Resource.getInstance().getCorpus(CORPUS,
+                            "ANSWER_NEED_TO_PROVIDE_GENDER"));
 
                     // 进入子任务
                     convCtx.setCurrentSubtask(subtask);
@@ -306,9 +309,9 @@ public class ConversationWorker {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        record.answer = String.format(Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_GENERATING"),
+                        record.answer = polish(String.format(Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_GENERATING"),
                                 constConvCtx.getCurrentAttribute().getGenderText(),
-                                constConvCtx.getCurrentAttribute().getAgeText());
+                                constConvCtx.getCurrentAttribute().getAgeText()));
                         listener.onGenerated(channel, record);
                     }
                 });
@@ -340,7 +343,8 @@ public class ConversationWorker {
                     @Override
                     public void run() {
                         GeneratingRecord record = new GeneratingRecord(query);
-                        record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_REPORTS_DATA");
+                        record.answer = polish(Resource.getInstance().getCorpus(CORPUS,
+                                "ANSWER_NO_REPORTS_DATA"));
                         constConvCtx.record(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
@@ -352,9 +356,9 @@ public class ConversationWorker {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        String answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                        String answer = polish(String.format(Resource.getInstance().getCorpus(CORPUS,
                                 "FORMAT_ANSWER_QUERY_REPORT_RESULT"),
-                                list.size(), PsychologyHelper.makeReportListMarkdown(list));
+                                list.size(), PsychologyHelper.makeReportListMarkdown(list)));
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = answer;
                         constConvCtx.record(record);
@@ -380,7 +384,8 @@ public class ConversationWorker {
                     @Override
                     public void run() {
                         GeneratingRecord record = new GeneratingRecord(query);
-                        record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_REPORTS_DATA");
+                        record.answer = polish(Resource.getInstance().getCorpus(CORPUS,
+                                "ANSWER_NO_REPORTS_DATA"));
                         constConvCtx.record(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
@@ -402,9 +407,9 @@ public class ConversationWorker {
                         @Override
                         public void run() {
                             GeneratingRecord record = new GeneratingRecord(query);
-                            record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                            record.answer = polish(String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_PLEASE_INPUT_REPORT_DESC"),
-                                    constConvCtx.getReportList().size());
+                                    constConvCtx.getReportList().size()));
                             constConvCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
@@ -423,10 +428,10 @@ public class ConversationWorker {
                             @Override
                             public void run() {
                                 GeneratingRecord record = new GeneratingRecord(query);
-                                record.answer = String.format(
+                                record.answer = polish(String.format(
                                         Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
                                         PsychologyHelper.makeReportTitleMarkdown(report),
-                                        PsychologyHelper.makeContentMarkdown(report));
+                                        PsychologyHelper.makeContentMarkdown(report)));
                                 constConvCtx.record(record);
                                 listener.onGenerated(channel, record);
                                 channel.setProcessing(false);
@@ -439,9 +444,9 @@ public class ConversationWorker {
                             @Override
                             public void run() {
                                 GeneratingRecord record = new GeneratingRecord(query);
-                                record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                record.answer = polish(String.format(Resource.getInstance().getCorpus(CORPUS,
                                                 "FORMAT_ANSWER_SELECT_REPORT_LOCATION_OVERFLOW"),
-                                        location, list.size());
+                                        location, list.size()));
                                 constConvCtx.record(record);
                                 listener.onGenerated(channel, record);
                                 channel.setProcessing(false);
@@ -592,10 +597,9 @@ public class ConversationWorker {
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
-                            String answer = String.format(
+                            String answer = polish(String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_REPORT_IS_NULL"),
-                                    PsychologyHelper.makeReportTitleMarkdown(constConvCtx.getCurrentReport())
-                            );
+                                    PsychologyHelper.makeReportTitleMarkdown(constConvCtx.getCurrentReport())));
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = answer;
                             constConvCtx.record(record);
@@ -612,10 +616,9 @@ public class ConversationWorker {
                                     constConvCtx.getCurrentReport().sn);
                             String answer = null;
                             if (null == featureSet) {
-                                answer = String.format(
+                                answer = polish(String.format(
                                         Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_REPORT_IS_NULL"),
-                                        PsychologyHelper.makeReportTitleMarkdown(constConvCtx.getCurrentReport())
-                                );
+                                        PsychologyHelper.makeReportTitleMarkdown(constConvCtx.getCurrentReport())));
                             }
                             else {
                                 answer = String.format(
@@ -623,8 +626,7 @@ public class ConversationWorker {
                                         PsychologyHelper.makeReportTitleMarkdown(constConvCtx.getCurrentReport()),
                                         PsychologyHelper.makeMarkdown(featureSet),
                                         channel.getAuthToken().getCode(),
-                                        Long.toString(constConvCtx.getCurrentReport().sn)
-                                );
+                                        Long.toString(constConvCtx.getCurrentReport().sn));
                             }
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = answer;
@@ -646,7 +648,7 @@ public class ConversationWorker {
                         }
                         String answer = null;
                         if (constConvCtx.getReportList().isEmpty()) {
-                            answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_REPORTS_DATA");
+                            answer = polish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_REPORTS_DATA"));
                         }
                         else {
                             answer = String.format(
@@ -703,6 +705,27 @@ public class ConversationWorker {
                 });
 
         return AIGCStateCode.Ok;
+    }
+
+    private String polish(String text) {
+        AIGCUnit unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_X_UNIT);
+        if (null == unit) {
+            unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+            if (null == unit) {
+                unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_UNIT);
+                if (null == unit) {
+                    Logger.d(this.getClass(), "#polish - Can NOT find unit");
+                    return text;
+                }
+            }
+        }
+
+        String prompt = String.format(Consts.PROMPT_FORMAT_POLISH, text);
+        GeneratingRecord result = this.service.syncGenerateText(unit, prompt, null, null, null);
+        if (null == result) {
+            return text;
+        }
+        return result.answer;
     }
 
     private List<FileLabel> checkFileLabels(List<FileLabel> fileLabels) {

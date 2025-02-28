@@ -116,7 +116,7 @@ public class AIGCConversationResponse implements JSONable {
 
     public GeneratingRecord toRecord() {
         GeneratingRecord record = new GeneratingRecord(this.sn,
-                this.unit, this.query, this.answer, this.timestamp, this.context);
+                this.unit, this.query, this.answer, "", this.timestamp, this.context);
         return record;
     }
 

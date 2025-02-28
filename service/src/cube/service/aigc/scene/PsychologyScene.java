@@ -1101,8 +1101,11 @@ public class PsychologyScene {
                 description = workflow.infer(prompt.description);
             }
             if (null == description) {
-                description = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.description, new GeneratingOption(),
+                GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.description, new GeneratingOption(),
                         null, null);
+                if (null != result) {
+                    description = result.answer;
+                }
             }
 
             if (null == description || description.length() == 0) {
@@ -1121,8 +1124,11 @@ public class PsychologyScene {
                     suggestion = workflow.infer(prompt.suggestion);
                 }
                 if (null == suggestion) {
-                    suggestion = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.suggestion, new GeneratingOption(),
+                    GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.suggestion, new GeneratingOption(),
                             null, null);
+                    if (null != result) {
+                        suggestion = result.answer;
+                    }
                 }
 
                 factor.suggestion = (null != suggestion) ? suggestion : "";

@@ -1214,20 +1214,35 @@ public class AIGCService extends AbstractModule {
      * @param participantContact
      * @return
      */
-    public String syncGenerateText(String unitName, String prompt, GeneratingOption option,
+    public GeneratingRecord syncGenerateText(String unitName, String prompt, GeneratingOption option,
                                    List<GeneratingRecord> history, Contact participantContact) {
-        if (this.useAgent) {
-            Logger.d(this.getClass(), "#syncGenerateText - Agent - \"" + unitName + "\" - history:"
-                    + ((null != history) ? history.size() : 0));
-            return Agent.getInstance().generateText(null, unitName, prompt, option, history);
-        }
-
         AIGCUnit unit = this.selectIdleUnitByName(unitName);
         if (null == unit) {
             unit = this.selectUnitByName(unitName);
             if (null == unit) {
+                Logger.w(this.getClass(), "#syncGenerateText - Can NOT find unit: " + unitName);
                 return null;
             }
+        }
+        return this.syncGenerateText(unit, prompt, option, history, participantContact);
+    }
+
+    /**
+     * 同步方式生成文本。
+     *
+     * @param unit
+     * @param prompt
+     * @param option
+     * @param history
+     * @param participantContact
+     * @return
+     */
+    public GeneratingRecord syncGenerateText(AIGCUnit unit, String prompt, GeneratingOption option,
+                                   List<GeneratingRecord> history, Contact participantContact) {
+        if (this.useAgent) {
+            Logger.d(this.getClass(), "#syncGenerateText - Agent - \"" + unit.getCapability().getName() + "\" - history:"
+                    + ((null != history) ? history.size() : 0));
+            return Agent.getInstance().generateText(null, unit.getCapability().getName(), prompt, option, history);
         }
 
         // 更新运行状态
@@ -1252,9 +1267,9 @@ public class AIGCService extends AbstractModule {
         data.put("history", historyArray);
         data.put("option", (null == option) ? (new GeneratingOption()).toJSON() : option.toJSON());
 
-        Packet request = new Packet(AIGCAction.Chat.name, data);
+        Packet request = new Packet(AIGCAction.TextToText.name, data);
         ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(),
-                5 * 60 * 1000, sn);
+                3 * 60 * 1000, sn);
         if (null == dialect) {
             Logger.w(AIGCService.class, "#syncGenerateText - transmit failed, sn:" + sn);
             // 记录故障
@@ -1267,8 +1282,12 @@ public class AIGCService extends AbstractModule {
         JSONObject payload = Packet.extractDataPayload(response);
 
         String responseText = "";
+        String thoughtText = "";
         try {
             responseText = payload.getString("response");
+            responseText = responseText.trim();
+            thoughtText = payload.getString("thought");
+            thoughtText = thoughtText.trim();
         } catch (Exception e) {
             Logger.w(AIGCService.class, "#syncGenerateText - failed, sn:" + sn);
             unit.setRunning(false);
@@ -1280,7 +1299,7 @@ public class AIGCService extends AbstractModule {
 
         // 过滤中文字符
         responseText = TextUtils.filterChinese(unit, responseText);
-        return responseText;
+        return new GeneratingRecord(request.sn, unit.getCapability().getName(), prompt, responseText, thoughtText);
     }
 
     /**
@@ -1292,7 +1311,7 @@ public class AIGCService extends AbstractModule {
      * @param option
      * @return
      */
-    public String syncGenerateText(AuthToken authToken, String unitName, String prompt, GeneratingOption option) {
+    public GeneratingRecord syncGenerateText(AuthToken authToken, String unitName, String prompt, GeneratingOption option) {
         AIGCUnit unit = this.selectUnitByName(unitName);
         if (null == unit) {
             return null;
@@ -3164,16 +3183,16 @@ public class AIGCService extends AbstractModule {
                     String responseText = Consts.NO_CONTENT_SENTENCE + "。";
                     result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
                             (null != this.originalQuery) ? this.originalQuery : this.content,
-                            responseText, complexContext);
+                            responseText, "", complexContext);
                 }
                 else if (useAgent) {
-                    String responseText = Agent.getInstance().generateText(channel.getCode(), this.content, this.histories);
-                    if (null != responseText) {
+                    GeneratingRecord generatingRecord =
+                            Agent.getInstance().generateText(channel.getCode(), this.content, this.histories);
+                    if (null != generatingRecord) {
                         // 过滤中文字符
-                        responseText = this.filterChinese(this.unit, responseText);
                         result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
                                 (null != this.originalQuery) ? this.originalQuery : this.content,
-                                responseText, complexContext);
+                                generatingRecord.answer, generatingRecord.thought, complexContext);
                     }
                     else {
                         this.channel.setProcessing(false);
@@ -3183,7 +3202,7 @@ public class AIGCService extends AbstractModule {
                     }
                 }
                 else {
-                    Packet request = new Packet(AIGCAction.Chat.name, data);
+                    Packet request = new Packet(AIGCAction.TextToText.name, data);
                     ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(),
                             3 * 60 * 1000, this.sn);
                     if (null == dialect) {
@@ -3211,8 +3230,10 @@ public class AIGCService extends AbstractModule {
                     JSONObject payload = Packet.extractDataPayload(response);
 
                     String responseText = "";
+                    String thoughtText = "";
                     try {
                         responseText = payload.getString("response");
+                        thoughtText = payload.getString("thought");
                     } catch (Exception e) {
                         Logger.w(AIGCService.class, "Unit respond failed - channel: " + this.channel.getCode());
                         // 记录故障
@@ -3229,7 +3250,7 @@ public class AIGCService extends AbstractModule {
                     responseText = this.filterChinese(this.unit, responseText);
                     result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
                             (null != this.originalQuery) ? this.originalQuery : this.content,
-                            responseText, complexContext);
+                            responseText.trim(), thoughtText.trim(), complexContext);
                 }
             }
             else {
@@ -3239,7 +3260,8 @@ public class AIGCService extends AbstractModule {
                 String content = resourceAnswer.extractContent(AIGCService.this, this.channel.getAuthToken());
                 String answer = resourceAnswer.answer(content);
                 result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
-                        (null != this.originalQuery) ? this.originalQuery : this.content, answer, complexContext);
+                        (null != this.originalQuery) ? this.originalQuery : this.content, answer.trim(), "",
+                        complexContext);
             }
 
             if (complexContext.isSimplex()) {
@@ -3360,11 +3382,11 @@ public class AIGCService extends AbstractModule {
                     buf.delete(buf.length() - 1, buf.length());
                     // 提取页面与提问匹配的信息
                     String prompt = Consts.formatExtractContent(buf.toString(), query);
-                    String answer = syncGenerateText(this.channel.getAuthToken(), ModelConfig.CHAT_UNIT, prompt,
+                    GeneratingRecord answer = syncGenerateText(this.channel.getAuthToken(), ModelConfig.BAIZE_X_UNIT, prompt,
                             new GeneratingOption());
                     if (null != answer) {
                         // 记录内容
-                        pageContent.append(answer);
+                        pageContent.append(answer.answer);
                     }
                 }
             }
@@ -3392,7 +3414,7 @@ public class AIGCService extends AbstractModule {
 
             // 对提取出来的内容进行推理
             String prompt = Consts.formatQuestion(pageContent.toString(), query);
-            String result = syncGenerateText(this.channel.getAuthToken(), unitName, prompt, new GeneratingOption());
+            GeneratingRecord result = syncGenerateText(this.channel.getAuthToken(), unitName, prompt, new GeneratingOption());
             if (null == result) {
                 Logger.w(this.getClass(), "#performSearchPageQA - Infers page content failed, cid:"
                         + this.channel.getAuthToken().getContactId());
@@ -3402,11 +3424,11 @@ public class AIGCService extends AbstractModule {
             }
 
             if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#performSearchPageQA - Result length: " + result.length());
+                Logger.d(this.getClass(), "#performSearchPageQA - Result length: " + result.answer.length());
             }
 
             // 将页面推理结果填充到上下文
-            context.fixNetworkingResult(pages, result);
+            context.fixNetworkingResult(pages, result.answer);
         }
 
         protected void fillRecords(List<GeneratingRecord> recordList, List<String> categories, int lengthLimit,
@@ -3832,12 +3854,14 @@ public class AIGCService extends AbstractModule {
                     prompt.append("\n\n");
                     prompt.append(String.format(Consts.PROMPT_SUFFIX_FORMAT, this.text));
 
-                    String answer = syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt.toString(),
+                    GeneratingRecord generating = syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt.toString(),
                             null, null, null);
-                    if (null == answer) {
+                    if (null == generating) {
                         Logger.w(this.getClass(), "#process - Generating failed: " + fileCode);
                         continue;
                     }
+
+                    String answer = generating.answer;
 
                     String tmpNotice = this.extractNotice(answer);
                     String csv = TextUtils.extractMarkdownTable(answer);

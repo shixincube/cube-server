@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * 舆情数据管理。
+ * @deprecated
  */
 public class PublicOpinionData extends ContextHandler {
 

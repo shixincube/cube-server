@@ -1435,7 +1435,7 @@ public class KnowledgeBase {
 
                     KnowledgeQAResult result = new KnowledgeQAResult(queryForResult, "");
                     GeneratingRecord record = new GeneratingRecord(sn, unitName, queryForResult, EMPTY_BASE_ANSWER,
-                            System.currentTimeMillis(), new ComplexContext(ComplexContext.Type.Simplex));
+                            "", System.currentTimeMillis(), new ComplexContext(ComplexContext.Type.Simplex));
                     result.record = record;
                     listener.onCompleted(channel, result);
                 }
@@ -1629,7 +1629,7 @@ public class KnowledgeBase {
 
                 // 将所有内容推送给模型推理
                 String prompt = Consts.formatExtractContent(content.toString(), query);
-                String result = this.service.syncGenerateText(ModelConfig.CHAT_UNIT, prompt,
+                GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt,
                         new GeneratingOption(), null, null);
                 if (null == result) {
                     Logger.w(this.getClass(), "#extractDocumentContent - "
@@ -1637,7 +1637,7 @@ public class KnowledgeBase {
                     continue;
                 }
 
-                if (result.contains(Consts.NO_CONTENT_SENTENCE)) {
+                if (result.answer.contains(Consts.NO_CONTENT_SENTENCE)) {
                     Logger.d(this.getClass(), "#extractDocumentContent - "
                             + baseInfo.name + " - No content: " + result);
                     continue;
@@ -1645,7 +1645,7 @@ public class KnowledgeBase {
 
                 // 记录
                 if (null == metadata.answer) {
-                    metadata.answer = result;
+                    metadata.answer = result.answer;
                 }
                 else {
                     metadata.answer = metadata.answer + "\n" + result;
@@ -1819,8 +1819,9 @@ public class KnowledgeBase {
 
                 String contentPrompt = Consts.formatQuestion(contentBuf.toString(), query);
                 // 对内容进行推理
-                String result = this.service.syncGenerateText(authToken, ModelConfig.CHAT_UNIT, contentPrompt,
+                GeneratingRecord generating = this.service.syncGenerateText(authToken, ModelConfig.CHAT_UNIT, contentPrompt,
                         new GeneratingOption());
+                String result = (null != generating) ? generating.answer : null;
                 if (null != result) {
                     // 添加结果
                     lineList.addFirst(result);
@@ -1906,8 +1907,9 @@ public class KnowledgeBase {
 
                     String articlePrompt = Consts.formatQuestion(buf.toString(), Consts.KNOWLEDGE_SECTION_PROMPT);
                     // 对文章内容进行推理
-                    String articleResult = this.service.syncGenerateText(authToken, ModelConfig.CHAT_UNIT, articlePrompt,
+                    GeneratingRecord generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_X_UNIT, articlePrompt,
                             new GeneratingOption());
+                    String articleResult = (null != generating) ? generating.answer : null;
                     if (null == articleResult) {
                         articleResult = article.summarization;
                     }

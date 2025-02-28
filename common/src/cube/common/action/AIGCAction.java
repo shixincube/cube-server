@@ -107,6 +107,11 @@ public enum AIGCAction {
     QueryConversation("queryConversation"),
 
     /**
+     * 文本生成文本。
+     */
+    TextToText("textToText"),
+
+    /**
      * 生成摘要。
      */
     Summarization("summarization"),
