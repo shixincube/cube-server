@@ -2365,7 +2365,7 @@ public class AIGCService extends AbstractModule {
         }
     }
 
-    public FileLabel saveAndDeleteFile(AuthToken authToken, String fileCode, File file, String filename) {
+    public FileLabel saveFile(AuthToken authToken, String fileCode, File file, String filename, boolean delete) {
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#saveFile - File storage service is not ready");
@@ -2386,7 +2386,7 @@ public class AIGCService extends AbstractModule {
             return null;
         } finally {
             // 删除临时文件
-            if (file.exists()) {
+            if (delete && file.exists()) {
                 try {
                     file.delete();
                 } catch (Exception e) {
@@ -3883,8 +3883,8 @@ public class AIGCService extends AbstractModule {
                             Logger.e(this.getClass(), "#process - File write failed: " + path.toString(), e);
                         }
 
-                        FileLabel fileLabel = saveAndDeleteFile(this.channel.getAuthToken(),
-                                tmpFileCode, path.toFile(), name + ".csv");
+                        FileLabel fileLabel = saveFile(this.channel.getAuthToken(),
+                                tmpFileCode, path.toFile(), name + ".csv", true);
                         if (null != fileLabel) {
                             result.addAnswerFileLabel(fileLabel);
                         }

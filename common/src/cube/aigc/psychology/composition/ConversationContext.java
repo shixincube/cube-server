@@ -10,7 +10,6 @@ import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
-import cube.common.entity.ComplexContext;
 import cube.common.entity.FileLabel;
 import cube.common.entity.GeneratingRecord;
 import org.json.JSONObject;
@@ -27,9 +26,11 @@ public class ConversationContext implements JSONable {
 
     private AuthToken authToken;
 
-    private Attribute currentAttribute;
-
     private FileLabel currentFile;
+
+    private boolean currentPaintingValidity;
+
+    private Attribute currentAttribute;
 
     private PaintingReport currentReport;
 
@@ -81,6 +82,14 @@ public class ConversationContext implements JSONable {
         return this.currentFile;
     }
 
+    public void setCurrentPaintingValidity(boolean valid) {
+        this.currentPaintingValidity = valid;
+    }
+
+    public boolean getCurrentPaintingValidity() {
+        return this.currentPaintingValidity;
+    }
+
     public void setCurrentReport(PaintingReport report) {
         this.currentReport = report;
     }
@@ -97,10 +106,21 @@ public class ConversationContext implements JSONable {
         return this.reportList;
     }
 
+    public void clearAll() {
+        this.currentFile = null;
+        this.currentPaintingValidity = false;
+        this.currentAttribute = null;
+        this.currentReport = null;
+        this.currentSubtask = null;
+        this.records.clear();
+        this.reportList = null;
+    }
+
     public void clearCurrentPredict() {
         this.currentSubtask = null;
         this.currentAttribute = null;
         this.currentFile = null;
+        this.currentPaintingValidity = false;
     }
 
     public FileLabel getRecentFile() {

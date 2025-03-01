@@ -23,6 +23,7 @@ import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class QueryRevolver {
 
@@ -88,7 +89,7 @@ public class QueryRevolver {
     public String generatePrompt(ConversationContext context, String query) {
         final StringBuilder result = new StringBuilder();
 
-        int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 70;
+        final AtomicInteger wordLimit = new AtomicInteger(ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60);
 
         boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
             @Override
@@ -100,19 +101,23 @@ public class QueryRevolver {
                     }
                 }
 
-                result.append("已知信息：\n\n");
-
                 if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
+                    result.append("已知信息：\n\n");
                     result.append("当前讨论的被测人的心理特征描述是：");
                     result.append(context.getCurrentReport().getSummary());
                     result.append("\n\n");
+                    wordLimit.set(wordLimit.get() - result.length());
                 }
 
                 boolean limited = false;
                 if (!list.isEmpty()) {
+                    if (result.length() == 0) {
+                        result.append("已知信息：\n\n");
+                    }
+
                     for (QuestionAnswer qa : list) {
                         for (String answer : qa.getAnswers()) {
-                            if (result.length() + answer.length() >= wordLimit) {
+                            if (result.length() + answer.length() >= wordLimit.get()) {
                                 limited = true;
                                 break;
                             }
@@ -125,9 +130,11 @@ public class QueryRevolver {
                     }
                 }
 
-                result.append("\n根据以上信息，专业地回答问题，如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，不允许在答案中添加编造成分。问题是：");
-                result.append(query);
-                result.append("\n");
+                if (result.length() > 0) {
+                    result.append("\n根据以上信息，专业地回答问题，如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，不允许在答案中添加编造成分。问题是：");
+                    result.append(query);
+                    result.append("\n");
+                }
 
                 synchronized (result) {
                     result.notify();
@@ -153,8 +160,8 @@ public class QueryRevolver {
         }
 
         if (result.length() == 0) {
-            result.append("专业地回答问题，在答案最后增加一句：“建议您可以问一些心理知识相关的问题。”，问题是：");
-            result.append(query);
+            result.append("专业地回答问题，在答案最后加入一句：“我的更多功能您可以通过：**功能介绍**进行了解。”，问题是：");
+            result.append(query).append("\n");
         }
 
         return result.toString();

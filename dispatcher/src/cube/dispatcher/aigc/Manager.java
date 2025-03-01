@@ -147,7 +147,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new QueryUsages());
         httpServer.addContextHandler(new ChatHistory());
         httpServer.addContextHandler(new Chart());
-//        httpServer.addContextHandler(new PublicOpinionData());
+        httpServer.addContextHandler(new ChainOfThought());
         httpServer.addContextHandler(new PreInfer());
         httpServer.addContextHandler(new TextToFile());
 

@@ -47,6 +47,8 @@ public class ComplexContext extends Entity {
 
     private boolean searchable = true;
 
+    private String subtask;
+
     private List<ComplexResource> resources;
 
     private boolean inferable = false;
@@ -124,10 +126,18 @@ public class ComplexContext extends Entity {
         if (json.has("networkingResult")) {
             this.networkingResult = json.getString("networkingResult");
         }
+
+        if (json.has("subtask")) {
+            this.subtask = json.getString("subtask");
+        }
     }
 
     public boolean isSimplex() {
         return this.type == Type.Simplex;
+    }
+
+    public void setSubtask(String subtask) {
+        this.subtask = subtask;
     }
 
     public int numResources() {
@@ -252,6 +262,10 @@ public class ComplexContext extends Entity {
 
         if (null != this.networkingResult) {
             json.put("networkingResult", this.networkingResult);
+        }
+
+        if (null != this.subtask) {
+            json.put("subtask", this.subtask);
         }
 
         return json;

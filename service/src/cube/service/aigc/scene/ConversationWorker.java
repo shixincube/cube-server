@@ -94,6 +94,7 @@ public class ConversationWorker {
 
     public AIGCStateCode work(AIGCChannel channel, GeneratingRecord context, ConversationRelation relation,
                               GenerateTextListener listener) {
+        Logger.d(this.getClass(), "#work - channel code: " + channel.getCode());
         if (channel.isProcessing()) {
             // 频道正在工作
             return AIGCStateCode.Busy;
@@ -108,20 +109,47 @@ public class ConversationWorker {
             convCtx = new ConversationContext(relation, channel.getAuthToken());
             SceneManager.getInstance().putConversationContext(channel.getCode(), convCtx);
         }
-        // 获取子任务
-        ConversationSubtask subtask = convCtx.getCurrentSubtask();
+
+        final ConversationContext constConvCtx = convCtx;
+
         // Query
         final String query = context.query;
+        ConversationSubtask roundSubtask = ConversationSubtask.None;
+
+        // 获取子任务
+        ConversationSubtask subtask = convCtx.getCurrentSubtask();
         if (null == subtask) {
             // 匹配子任务
             subtask = this.matchSubtask(query);
         }
+        else {
+            // 本轮可能的任务，判断是否终止话题
+            roundSubtask = this.matchSubtask(query);
+            if (roundSubtask == ConversationSubtask.EndTopic) {
+                convCtx.clearAll();
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Simplex);
+                        complexContext.setSubtask(ConversationSubtask.EndTopic.name);
 
-        final ConversationContext constConvCtx = convCtx;
+                        GeneratingRecord record = new GeneratingRecord(query);
+                        record.context = complexContext;
+                        record.answer = polish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_NEW_TOPIC"));
+                        listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+                    }
+                });
+                return AIGCStateCode.Ok;
+            }
+        }
 
         if (ConversationSubtask.PredictPainting == subtask) {
             Logger.d(this.getClass(), "#work - Subtask - PredictPainting: " +
                     channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 文件是否变更
+            boolean fileChanged = false;
 
             // 执行预测
             if (null == convCtx.getCurrentFile()) {
@@ -137,15 +165,15 @@ public class ConversationWorker {
                 if (null == convCtx.getCurrentFile()) {
                     Logger.d(this.getClass(), "#work - No file: " +
                             channel.getAuthToken().getCode() + "/" + channel.getCode());
-                    GeneratingRecord record = new GeneratingRecord(query);
-                    record.answer = this.polish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_FILE"));
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
+                            GeneratingRecord record = new GeneratingRecord(query);
+                            record.answer = polish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_FILE"));
                             listener.onGenerated(channel, record);
+                            channel.setProcessing(false);
                         }
                     });
-                    channel.setProcessing(false);
                     return AIGCStateCode.Ok;
                 }
             }
@@ -155,7 +183,69 @@ public class ConversationWorker {
                     // 判断文件是否存在
                     List<FileLabel> fileList = this.checkFileLabels(context.queryFileLabels);
                     if (null != fileList) {
-                        convCtx.setCurrentFile(fileList.get(0));
+                        FileLabel curFile = convCtx.getCurrentFile();
+                        FileLabel newFile = fileList.get(0);
+                        if (!curFile.getFileCode().equals(newFile.getFileCode())) {
+                            // 文件发生变更
+                            fileChanged = true;
+                        }
+                        convCtx.setCurrentFile(newFile);
+                    }
+                }
+            }
+
+            // 校验图片是否合规
+            if (null != convCtx.getCurrentFile() && !convCtx.getCurrentPaintingValidity()) {
+                // 如果是回答 YES 任务，则忽略检测
+                boolean ignore = false;
+
+                if (!fileChanged) {
+                    // 文件没有变更，对用户回答的问题进行推理
+                    // 是否在回答
+                    if (roundSubtask == ConversationSubtask.Yes) {
+                        // 用户坚持使用该文件
+                        convCtx.setCurrentPaintingValidity(true);
+                        // 忽略检测
+                        ignore = true;
+                    }
+                    else if (roundSubtask == ConversationSubtask.No) {
+                        // 回答不是，则表示终止预测
+                        constConvCtx.clearAll();
+
+                        this.service.getExecutor().execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.answer = Resource.getInstance().getCorpus(CORPUS,
+                                        "ANSWER_RE_UPLOAD_PAINTING_FILE");
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+                            }
+                        });
+                        return AIGCStateCode.Ok;
+                    }
+                }
+
+                if (!ignore) {
+                    boolean valid = PsychologyScene.getInstance().checkPsychologyPainting(channel.getAuthToken(),
+                            convCtx.getCurrentFile().getFileCode());
+                    if (!valid) {
+                        // 进入子任务
+                        convCtx.setCurrentSubtask(subtask);
+
+                        this.service.getExecutor().execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.answer = polish(Resource.getInstance().getCorpus(CORPUS, "ASK_INVALID_FILE"));
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+                            }
+                        });
+                        return AIGCStateCode.Ok;
+                    }
+                    else {
+                        convCtx.setCurrentPaintingValidity(true);
                     }
                 }
             }
@@ -292,7 +382,7 @@ public class ConversationWorker {
                     });
 
             if (null != report) {
-                // 开始成功报告
+                // 开始生成报告
                 final GeneratingRecord record = new GeneratingRecord(query, convCtx.getCurrentFile());
 
                 Attachment attachment = new ReportAttachment(report.sn);
@@ -309,7 +399,8 @@ public class ConversationWorker {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        record.answer = polish(String.format(Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_GENERATING"),
+                        record.answer = polish(String.format(Resource.getInstance().getCorpus(CORPUS,
+                                "FORMAT_ANSWER_GENERATING"),
                                 constConvCtx.getCurrentAttribute().getGenderText(),
                                 constConvCtx.getCurrentAttribute().getAgeText()));
                         listener.onGenerated(channel, record);
@@ -671,9 +762,9 @@ public class ConversationWorker {
         }
 
         // 获取单元
-        AIGCUnit unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+        AIGCUnit unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
         if (null == unit) {
-            Logger.w(this.getClass(), "#work - Can NOT find unit \"" + ModelConfig.BAIZE_NEXT_UNIT + "\"");
+            Logger.w(this.getClass(), "#work - Can NOT find idle unit \"" + ModelConfig.BAIZE_NEXT_UNIT + "\"");
 
             unit = this.service.selectUnitByName(ModelConfig.BAIZE_X_UNIT);
             if (null == unit) {
@@ -788,13 +879,13 @@ public class ConversationWorker {
             List<String> answers = questionAnswer.getAnswers();
             for (String answer : answers) {
                 ConversationSubtask subtask = ConversationSubtask.extract(answer);
-                if (ConversationSubtask.Unknown != subtask) {
+                if (ConversationSubtask.None != subtask) {
                     return subtask;
                 }
             }
         }
 
-        return ConversationSubtask.Unknown;
+        return ConversationSubtask.None;
     }
 
     private Attribute extractAttribute(String query) {

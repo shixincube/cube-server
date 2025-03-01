@@ -12,16 +12,28 @@
         }
     },
     "conversation": {
-        "FORMAT_ANSWER_GENERATING": {
-            "cn": "正在为被测人生成报告，该被测人为%s性，年龄是%s。报告生成需要些时间，请稍候……",
-            "en": ""
-        },
         "ANSWER_FAILED": {
             "cn": "我遇到了一些问题，请稍候再试。",
             "en": ""
         },
+        "ANSWER_NEW_TOPIC": {
+            "cn": "我们开始新的话题。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_GENERATING": {
+            "cn": "正在为被测人生成报告，该被测人为%s性，年龄是%s。报告生成需要些时间，请稍候……",
+            "en": ""
+        },
+        "ASK_INVALID_FILE": {
+            "cn": "图像内容似乎不是一张绘画，您确认继续使用这副图像吗？",
+            "en": ""
+        },
+        "ANSWER_RE_UPLOAD_PAINTING_FILE": {
+            "cn": "期待您重新上传绘画文件。",
+            "en": ""
+        },
         "ANSWER_NO_FILE": {
-            "cn": "没有找到需要操作的文件，可以尝试重新上传一下文件。",
+            "cn": "没有找到需要操作的文件，可以尝试重新上传文件。",
             "en": ""
         },
         "ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE": {

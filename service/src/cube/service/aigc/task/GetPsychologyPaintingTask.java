@@ -60,6 +60,7 @@ public class GetPsychologyPaintingTask extends ServiceTask {
             boolean bbox = packet.data.has("bbox") ? packet.data.getBoolean("bbox") : true;
             boolean vparam = packet.data.has("vparam") ? packet.data.getBoolean("vparam") : false;
             double prob = packet.data.has("prob") ? packet.data.getDouble("prob") : 0.5d;
+            String fileCode = packet.data.has("fileCode") ? packet.data.getString("fileCode") : null;
 
             if (chart) {
                 JSONObject data = PsychologyScene.getInstance().getPaintingInferenceData(authToken, sn);
@@ -75,16 +76,31 @@ public class GetPsychologyPaintingTask extends ServiceTask {
                 }
             }
             else {
-                FileLabel fileLabel = PsychologyScene.getInstance().getPredictedPainting(authToken, sn, bbox, vparam, prob);
-                if (null != fileLabel) {
-                    this.cellet.speak(this.talkContext,
-                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, fileLabel.toCompactJSON()));
-                    markResponseTime();
+                if (null != fileCode) {
+                    Painting painting = PsychologyScene.getInstance().getPredictedPainting(authToken, fileCode);
+                    if (null != painting) {
+                        this.cellet.speak(this.talkContext,
+                                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, painting.toFullJson()));
+                        markResponseTime();
+                    }
+                    else {
+                        this.cellet.speak(this.talkContext,
+                                this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                        markResponseTime();
+                    }
                 }
                 else {
-                    this.cellet.speak(this.talkContext,
-                            this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
-                    markResponseTime();
+                    FileLabel fileLabel = PsychologyScene.getInstance()
+                            .getPredictedPainting(authToken, sn, bbox, vparam, prob);
+                    if (null != fileLabel) {
+                        this.cellet.speak(this.talkContext,
+                                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, fileLabel.toCompactJSON()));
+                        markResponseTime();
+                    } else {
+                        this.cellet.speak(this.talkContext,
+                                this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                        markResponseTime();
+                    }
                 }
             }
         } catch (Exception e) {

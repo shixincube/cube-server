@@ -819,6 +819,14 @@ public class Painting implements JSONable {
         return json;
     }
 
+    public JSONObject toFullJson() {
+        JSONObject json = this.toJSON();
+        if (null != this.fileLabel) {
+            json.put("fileLabel", this.fileLabel.toJSON());
+        }
+        return json;
+    }
+
 
     private class AreaComparator implements Comparator<Thing> {
 

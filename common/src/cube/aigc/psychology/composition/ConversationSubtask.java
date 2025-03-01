@@ -14,6 +14,12 @@ import java.util.regex.Pattern;
  */
 public enum ConversationSubtask {
 
+    Yes("yes"),
+
+    No("no"),
+
+    EndTopic("end_topic"),
+
     PredictPainting("predict_painting"),
 
     QueryReport("query_report"),
@@ -24,7 +30,7 @@ public enum ConversationSubtask {
 
     ShowCoT("show_cot"),
 
-    Unknown("unknown"),
+    None("none"),
 
     ;
 
@@ -39,7 +45,7 @@ public enum ConversationSubtask {
     public static ConversationSubtask extract(String text) {
         Matcher matcher = sPattern.matcher(text);
         if (!matcher.find()) {
-            return Unknown;
+            return None;
         }
         String task = matcher.group(0);
         task = task.replaceAll("\\{", "");
@@ -50,6 +56,6 @@ public enum ConversationSubtask {
                 return subtask;
             }
         }
-        return Unknown;
+        return None;
     }
 }
