@@ -131,7 +131,7 @@ public class ConversationWorker {
                     @Override
                     public void run() {
                         ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Simplex);
-                        complexContext.setSubtask(ConversationSubtask.EndTopic.name);
+                        complexContext.setSubtask(ConversationSubtask.EndTopic);
 
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.context = complexContext;
@@ -391,6 +391,7 @@ public class ConversationWorker {
                 ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Complex);
                 complexContext.setInferring(true);
                 complexContext.addResource(resource);
+                complexContext.setSubtask(ConversationSubtask.PredictPainting);
 
                 record.context = complexContext;
                 // 记录

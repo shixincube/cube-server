@@ -9,6 +9,7 @@ package cube.common.entity;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.Page;
+import cube.aigc.psychology.composition.ConversationSubtask;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -136,8 +137,8 @@ public class ComplexContext extends Entity {
         return this.type == Type.Simplex;
     }
 
-    public void setSubtask(String subtask) {
-        this.subtask = subtask;
+    public void setSubtask(ConversationSubtask subtask) {
+        this.subtask = subtask.name;
     }
 
     public int numResources() {

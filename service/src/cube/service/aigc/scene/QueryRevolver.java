@@ -20,10 +20,8 @@ import cube.service.aigc.listener.SemanticSearchListener;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class QueryRevolver {
 
@@ -89,53 +87,33 @@ public class QueryRevolver {
     public String generatePrompt(ConversationContext context, String query) {
         final StringBuilder result = new StringBuilder();
 
-        final AtomicInteger wordLimit = new AtomicInteger(ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60);
+        int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60;
 
+        if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
+            result.append("已知信息：\n\n");
+            result.append("当前讨论的被测人的心理特征描述是：");
+            result.append(context.getCurrentReport().getSummary());
+            result.append("\n\n");
+            wordLimit -= result.length();
+        }
+
+        final List<String> answerList = new ArrayList<>();
         boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
             @Override
             public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
-                List<QuestionAnswer> list = new ArrayList<>();
-                for (QuestionAnswer qa : questionAnswers) {
-                    if (qa.getScore() > 0.8) {
-                        list.add(qa);
-                    }
-                }
-
-                if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
-                    result.append("已知信息：\n\n");
-                    result.append("当前讨论的被测人的心理特征描述是：");
-                    result.append(context.getCurrentReport().getSummary());
-                    result.append("\n\n");
-                    wordLimit.set(wordLimit.get() - result.length());
-                }
-
-                boolean limited = false;
-                if (!list.isEmpty()) {
-                    if (result.length() == 0) {
-                        result.append("已知信息：\n\n");
-                    }
-
-                    for (QuestionAnswer qa : list) {
-                        for (String answer : qa.getAnswers()) {
-                            if (result.length() + answer.length() >= wordLimit.get()) {
-                                limited = true;
-                                break;
+                for (QuestionAnswer questionAnswer : questionAnswers) {
+                    if (questionAnswer.getScore() > 0.8) {
+                        // 排除得分较低答案
+                        List<String> answers = questionAnswer.getAnswers();
+                        for (String answer : answers) {
+                            ConversationSubtask subtask = ConversationSubtask.extract(answer);
+                            if (ConversationSubtask.None == subtask) {
+                                // 不是子任务
+                                answerList.add(answer);
                             }
-                            result.append(answer).append("\n");
-                        }
-
-                        if (limited) {
-                            break;
                         }
                     }
                 }
-
-                if (result.length() > 0) {
-                    result.append("\n根据以上信息，专业地回答问题，如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，不允许在答案中添加编造成分。问题是：");
-                    result.append(query);
-                    result.append("\n");
-                }
-
                 synchronized (result) {
                     result.notify();
                 }
@@ -159,7 +137,24 @@ public class QueryRevolver {
             }
         }
 
-        if (result.length() == 0) {
+        if (!answerList.isEmpty()) {
+            if (result.length() == 0) {
+                result.append("已知信息：\n\n");
+            }
+
+            for (String answer : answerList) {
+                if (result.length() + answer.length() >= wordLimit) {
+                    break;
+                }
+                result.append(answer).append("\n\n");
+            }
+        }
+
+        if (result.length() > 0) {
+            result.append("\n根据以上信息，专业地回答问题，如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，不允许在答案中添加编造成分。问题是：");
+            result.append(query).append("\n");
+        }
+        else {
             result.append("专业地回答问题，在答案最后加入一句：“我的更多功能您可以通过：**功能介绍**进行了解。”，问题是：");
             result.append(query).append("\n");
         }

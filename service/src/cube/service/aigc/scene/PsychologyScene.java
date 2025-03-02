@@ -922,6 +922,10 @@ public class PsychologyScene {
         }
         // 进行绘画元素预测
         Painting resultPainting = this.processPainting(unit, rawFileLabel, false);
+        if (null == resultPainting) {
+            Logger.e(this.getClass(), "#getPredictedPainting - Process painting failed");
+            return null;
+        }
         resultPainting.fileLabel = rawFileLabel;
 
         List<Material> materials = new ArrayList<>();

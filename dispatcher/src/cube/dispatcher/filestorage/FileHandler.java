@@ -598,47 +598,49 @@ public class FileHandler extends CrossDomainHandler {
                                    FileLabel fileLabel, FileType type)
             throws IOException, ServletException {
         final Object mutex = new Object();
-
         final FlexibleByteBuffer buf = new FlexibleByteBuffer((int)fileLabel.getFileSize());
 
         HttpClient httpClient = HttpClientFactory.getInstance().borrowHttpClient();
-        httpClient.newRequest(fileLabel.getDirectURL())
-                .send(new BufferingResponseListener(this.bufferSize) {
-                    @Override
-                    public void onComplete(Result result) {
-                        if (!result.isFailed()) {
-                            byte[] responseContent = getContent();
-                            buf.put(responseContent);
-                        }
+        try {
+            httpClient.newRequest(fileLabel.getDirectURL())
+                    .send(new BufferingResponseListener(this.bufferSize) {
+                        @Override
+                        public void onComplete(Result result) {
+                            if (!result.isFailed()) {
+                                byte[] responseContent = getContent();
+                                buf.put(responseContent);
+                            }
 
-                        synchronized (mutex) {
-                            mutex.notify();
+                            synchronized (mutex) {
+                                mutex.notify();
+                            }
                         }
-                    }
-                });
+                    });
 
-        synchronized (mutex) {
-            try {
-                mutex.wait(10 * 60 * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            synchronized (mutex) {
+                try {
+                    mutex.wait(10 * 60 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
+
+            buf.flip();
+
+            // 填写头信息
+            this.fillHeaders(response, fileLabel, buf.limit(), type);
+            response.setStatus(HttpStatus.OK_200);
+
+            ServletOutputStream outputStream = response.getOutputStream();
+            outputStream.write(buf.array(), 0, buf.limit());
+            outputStream.flush();
+
+            buf.clear();
+        } catch (Exception e) {
+            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
+        } finally {
+            HttpClientFactory.getInstance().returnHttpClient(httpClient);
         }
-
-        buf.flip();
-
-        // 填写头信息
-        this.fillHeaders(response, fileLabel, buf.limit(), type);
-
-        ServletOutputStream outputStream = response.getOutputStream();
-        outputStream.write(buf.array(), 0, buf.limit());
-
-        buf.clear();
-
-        response.setStatus(HttpStatus.OK_200);
-
-        HttpClientFactory.getInstance().returnHttpClient(httpClient);
-
         this.complete();
     }
 
@@ -665,6 +667,10 @@ public class FileHandler extends CrossDomainHandler {
 
         if (null != clientResponse && clientResponse.getStatus() == HttpStatus.OK_200) {
             InputStream content = listener.getInputStream();
+
+            // 填充 Header
+            fillHeaders(response, fileLabel, fileLabel.getFileSize(), type);
+            response.setStatus(HttpStatus.OK_200);
 
             // Async output
             AsyncContext async = request.startAsync();
@@ -700,10 +706,6 @@ public class FileHandler extends CrossDomainHandler {
 
             // 设置数据写入监听器
             output.setWriteListener(dataStream);
-
-            // 填充 Header
-            fillHeaders(response, fileLabel, fileLabel.getFileSize(), type);
-            response.setStatus(HttpStatus.OK_200);
         }
         else {
             this.respond(response, HttpStatus.BAD_REQUEST_400, fileLabel.toCompactJSON());

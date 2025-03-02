@@ -39,25 +39,35 @@ public class PsychologyPaintings extends ContextHandler {
             }
 
             try {
-                long sn = Long.parseLong(request.getParameter("sn"));
-                boolean bbox = (null != request.getParameter("bbox")) ?
-                        Boolean.parseBoolean(request.getParameter("bbox")) : true;
-                boolean vparam = (null != request.getParameter("vparam")) ?
-                        Boolean.parseBoolean(request.getParameter("vparam")) : false;
-                double prob = (null != request.getParameter("prob")) ?
-                        Double.parseDouble(request.getParameter("prob")) : 0.5d;
-                JSONObject result = Manager.getInstance().getPsychologyPainting(token, sn, bbox, vparam, prob);
-                if (null != result) {
-                    if (result.has("fileCode") && result.has("fileURL")) {
-                        FileLabels.reviseFileLabel(result, token,
-                                Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
-                                Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                String fileCode = request.getParameter("fc");
+                if (null != fileCode) {
+                    JSONObject result = Manager.getInstance().getPsychologyPainting(token, fileCode);
+                    if (null != result) {
+                        this.respondOk(response, result);
                     }
-
-                    this.respondOk(response, result);
+                    else {
+                        this.respond(response, HttpStatus.NOT_FOUND_404);
+                    }
                 }
                 else {
-                    this.respond(response, HttpStatus.NOT_FOUND_404);
+                    long sn = Long.parseLong(request.getParameter("sn"));
+                    boolean bbox = null == request.getParameter("bbox") || Boolean.parseBoolean(request.getParameter("bbox"));
+                    boolean vparam = null != request.getParameter("vparam") && Boolean.parseBoolean(request.getParameter("vparam"));
+                    double prob = (null != request.getParameter("prob")) ?
+                            Double.parseDouble(request.getParameter("prob")) : 0.5d;
+                    JSONObject result = Manager.getInstance().getPsychologyPainting(token, sn, bbox, vparam, prob);
+                    if (null != result) {
+                        if (result.has("fileCode") && result.has("fileURL")) {
+                            FileLabels.reviseFileLabel(result, token,
+                                    Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                                    Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                        }
+
+                        this.respondOk(response, result);
+                    }
+                    else {
+                        this.respond(response, HttpStatus.NOT_FOUND_404);
+                    }
                 }
                 this.complete();
             } catch (Exception e) {

@@ -24,7 +24,7 @@ import cube.service.aigc.scene.PsychologyScene;
 import org.json.JSONObject;
 
 /**
- * 获取心理学量表任务。
+ * 获取心理学绘画数据任务。
  */
 public class GetPsychologyPaintingTask extends ServiceTask {
 

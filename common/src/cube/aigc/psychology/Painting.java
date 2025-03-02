@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class Painting implements JSONable {
 
-    public final long timestamp;
+    public long timestamp;
 
     public FileLabel fileLabel;
 
@@ -106,6 +106,10 @@ public class Painting implements JSONable {
 
         if (json.has("attribute")) {
             this.attribute = new Attribute(json.getJSONObject("attribute"));
+        }
+
+        if (json.has("fileLabel")) {
+            this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
         }
     }
 

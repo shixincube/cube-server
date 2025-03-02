@@ -321,7 +321,7 @@ public final class FileUtils {
     public static FileType extractFileExtensionType(String fileName) {
         int index = fileName.lastIndexOf(".");
         if (index <= 0) {
-            return FileType.UNKNOWN;
+            return FileType.matchExtension(fileName);
         }
 
         String extension = fileName.substring(index + 1);

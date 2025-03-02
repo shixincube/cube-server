@@ -62,3 +62,4 @@ service/assets/psychology/daturaflower
 dispatcher/cube-fs-tmp
 service/assets/psychology/mandalaflower
 deploy/assets
+dispatcher/cache
