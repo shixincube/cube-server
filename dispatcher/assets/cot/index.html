@@ -14,7 +14,7 @@
         }
         .main-container {
             padding: 0;
-            margin: 0;
+            margin: 0 0 10px 0;
             width: 100%;
             height: 100%;
         }
@@ -22,11 +22,36 @@
             width: 100%;
             height: 100%;
             text-align: center;
+            background-color: #111;
         }
         img {
             padding: 0;
             margin: 0;
             width: 100%;
+        }
+        .scanning-line-left {
+            float: left;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0px;
+            opacity: 0.3;
+            border-right: 1px solid #3251EA;
+            background: linear-gradient(to right, #2CA0F4 20%, #3251EA);
+            visibility: hidden;
+            z-index: 100;
+        }
+        .scanning-line-right {
+            float: left;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0px;
+            opacity: 0.3;
+            border-left: 1px solid #3251EA;
+            background: linear-gradient(to left, #2CA0F4 20%, #3251EA);
+            visibility: hidden;
+            z-index: 100;
         }
         .text-frame {
             padding: 10px 10px 10px 10px;
@@ -71,16 +96,25 @@
             position: absolute;
             width: 100%;
             height: 100%;
+            z-index: 99;
         }
         .widget-pool div {
             border: 2px solid black;
             border-radius: 4px;
+        }
+        #loading {
+            height: 0px;
         }
     </style>
 </head>
 <body>
 <div class="main-container">
     <div><img id="main_painting" src="painting/${fileCode}.jpg?t=${timestamp}"/></div>
+    <div id="scanning_line_left" class="scanning-line-left"></div>
+    <div id="scanning_line_right" class="scanning-line-right"></div>
+</div>
+<div id="loading">
+    <h3></h3>
 </div>
 <div id="text_frame" class="text-frame"></div>
 <div id="screen_banner" class="screen-banner"></div>
@@ -136,7 +170,7 @@ function machineGun(container, text, completeCallback) {
         isSentenceEnd = _sentenceEndExp.test(word);
         textEl = document.createElement('h3');
         textEl.style.height = parseInt(window.innerHeight) + 'px';
-        textEl.style.paddingTop = ((parseInt(window.innerHeight) - 80) * 0.5) + 'px';
+        textEl.style.paddingTop = ((parseInt(window.innerHeight) - 300) * 0.5) + 'px';
         textEl.innerText = word;
         element = container.appendChild(textEl);
         duration = Math.max(0.5, word.length * 0.08); //longer words take longer to read, so adjust timing. Minimum of 0.5 seconds.
@@ -169,54 +203,28 @@ const gWidgetPool = document.getElementById('widget_pool');
 var gScaleRatio = 1.0;
 var gPainting = {};
 
-gPaintingImage.onload = function (event) {
-    console.log('onPaintingImageLoad: ' + event);
+function setup() {
+    gPaintingImage.onload = function (event) {
+        // console.log('onPaintingImageLoad: ' + event);
+        app.start();
+    };
 
-    ajax.get('painting/${fileCode}.json', {}, function(text) {
-        const banner = document.getElementById('screen_banner');
-        if (null != banner) {
-            if (null != gScreenTimeline) {
-                gScreenTimeline.kill();
-                gScreenTimeline = null;
-            }
-            gsap.to(banner, {
-                autoAlpha: 0.0,
-                duration: 1.2,
-                onComplete: function() {
-                    document.body.removeChild(banner);
-                }
-            });
-        }
+    gPaintingImage.onerror = function (event) {
+        console.log('onPaintingImageError: ' + event);
+    };
 
-        gPainting = JSON.parse(text);
-        var materials = gPainting['materials'];
-        materials.forEach(function(value, index) {
-            app.addBox(value, index);
-        });
-    }, function(state) {
+    if (gPaintingImage.complete) {
+        setTimeout(function() {
+            that.start();
+        }, 4000);
+    }
 
-    });
-};
+    var showScreenAnimation = true;
 
-gPaintingImage.onerror = function (event) {
-    console.log('onPaintingImageError: ' + event);
-};
-
-function App() {
-    this.animCount = 0;
-
-    this.init = function() {
-        gScaleRatio = parseInt(window.innerWidth) / 1280;
-        gWidgetPool.style.width = parseInt(document.body.scrollWidth) + 'px';
-        gWidgetPool.style.height = parseInt(document.body.scrollHeight) + 'px';
-
-        const containerHeight = parseInt(gPaintingImage.height);
-        const tf = document.getElementById('text_frame');
-        tf.style.height = parseInt(window.innerHeight - containerHeight - 20) + 'px';
-
-        const banner = document.getElementById('screen_banner');
-        banner.style.height = parseInt(window.innerHeight) + 'px';
-        gScreenTimeline = machineGun(banner, '我正在 推理 您的绘画!', function () {
+    const banner = document.getElementById('screen_banner');
+    banner.style.height = parseInt(window.innerHeight) + 'px';
+    if (showScreenAnimation) {
+        gScreenTimeline = machineGun(banner, '开始 推理 您的绘画!', function () {
             gsap.to(banner, {
                 autoAlpha: 0.0,
                 duration: 2,
@@ -226,6 +234,103 @@ function App() {
                     gScreenTimeline = null;
                 }
             });
+        });
+    }
+    else {
+        banner.style.display = 'none';
+        document.body.removeChild(banner);
+    }
+}
+
+// 配置
+setup();
+
+function App() {
+    this.started = false;
+    this.animCount = 0;
+    this.containerWidth = 100;
+    this.containerHeight = 100;
+
+    this.loadingTween = null;
+
+    this.init = function() {
+        gScaleRatio = parseInt(window.innerWidth) / 1280;
+        gWidgetPool.style.width = parseInt(document.body.scrollWidth) + 'px';
+        gWidgetPool.style.height = parseInt(document.body.scrollHeight) + 'px';
+
+        that.containerWidth = parseInt(gPaintingImage.width);
+        that.containerHeight = parseInt(gPaintingImage.height);
+
+        // 主容器高度
+        document.getElementsByClassName('main-container')[0].style.height = that.containerHeight + 'px';
+
+        const tf = document.getElementById('text_frame');
+        tf.style.height = parseInt(window.innerHeight - that.containerHeight - 30) + 'px';
+
+        that.initLoading();
+    };
+
+    this.start = function(delay) {
+        if (that.started) {
+            return;
+        }
+
+        that.started = true;
+        ajax.get('painting/${fileCode}.json', {}, function(text) {
+            const banner = document.getElementById('screen_banner');
+            if (null != banner) {
+                if (null != gScreenTimeline) {
+                    gScreenTimeline.kill();
+                    gScreenTimeline = null;
+                }
+                gsap.to(banner, {
+                    autoAlpha: 0.0,
+                    duration: 1.2,
+                    onComplete: function() {
+                        document.body.removeChild(banner);
+                    }
+                });
+            }
+
+            that.playScanning();
+
+            gPainting = JSON.parse(text);
+            var materials = gPainting['materials'];
+            materials.forEach(function(value, index) {
+                that.addBox(value, index);
+            });
+            // 依次激活
+            var index = 0;
+            var timer = setInterval(function() {
+                document.getElementById(materials[index]['sn']).style.visibility = 'visible';
+                ++index;
+                if (index >= materials.length) {
+                    clearInterval(timer);
+                }
+            }, 1000);
+        }, function(state) {
+
+        });
+    };
+
+    this.initLoading = function() {
+        var container = document.getElementById('loading');
+        gsap.set([container], {
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            xPercent: -50,
+            yPercent: -50
+        });
+        that.loadingTween = gsap.to(container.getElementsByTagName('h3'), {
+            duration: 2,
+            repeat: -1,
+            repeatDelay: 2.5,
+            text: {
+                value: '正在思考…',
+                padSpace: true,
+                type: "diff"
+            },
         });
     };
 
@@ -255,35 +360,53 @@ function App() {
         el.style.borderColor = material['color'];
         var rgb = hex2rgb(material['color']);
         el.style.backgroundColor = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.2)';
+        el.style.visibility = 'hidden';
         gWidgetPool.appendChild(el);
         this.applyAnimation(el, index, material);
     };
 
-    this.applyAnimation = function(element, index, material) {
+    this.removeAllBoxes = function() {
+        var materials = gPainting['materials'];
+        materials.forEach(function (value, index) {
+            var el = document.getElementById(value['sn']);
+            gsap.to(el, {
+                duration: 0.5,
+                opacity: 0,
+                delay: Math.max(0, index - 0.5),
+                repeat: 0,
+                onComplete: function(id) {
+                    gWidgetPool.removeChild(document.getElementById(id));
+                },
+                onCompleteParams: [ '' + value['sn'] ],
+            });
+        });
+    }
+
+    this.applyAnimation = function(element, index) {
         var timeline = gsap.timeline({
-            repeat: 0,
-            repeatDelay: 1,
+            repeat: 2,
+            repeatDelay: 0.5,
             delay: index,
-            onComplete: function(param) {
+            onComplete: function() {
                 ++that.animCount;
-                if (that.animCount === parseInt(gPainting['materials'].length * 0.2)) {
+                if (that.animCount === parseInt(gPainting['materials'].length * 0.1)) {
                     that.loadThoughtText(function(data) {
+                        document.getElementById('loading').style.display = 'none';
                         that.printThought(data);
                     }, function (state) {
                         console.log('Error: ' + state);
                     });
                 }
-            },
-            onCompleteParams: [ '' + material['sn'] ],
+            }
         });
         timeline.to(element, {
             opacity: 1,
-            duration: 3,
+            duration: 1.5,
             ease: 'Power2.easeOut'
         });
         timeline.to(element, {
             scale: 0.1,
-            duration: 2,
+            duration: 1.2,
             yoyo: true,
             repeat: 3,
             ease: 'Back.easeInOut'
@@ -291,14 +414,78 @@ function App() {
         timeline.play();
     };
 
+    this.playScanning = function() {
+        const scanningLineLeft = document.getElementById('scanning_line_left');
+        scanningLineLeft.style.width = '0px';
+        scanningLineLeft.style.height = that.containerHeight + 'px';
+        scanningLineLeft.style.visibility = 'visible';
+
+        const scanningLineRight = document.getElementById('scanning_line_right');
+        scanningLineRight.style.width = that.containerWidth + 'px';
+        scanningLineRight.style.height = that.containerHeight + 'px';
+        scanningLineRight.style.visibility = 'visible';
+        gsap.set(scanningLineRight, {
+            x: that.containerWidth
+        });
+
+        gsap.to(gPaintingImage, {
+            repeat: 7,
+            duration: 1.5,
+            opacity: 0.5,
+            yoyo: true,
+            ease: "circ.inOut",
+            onComplete: function() {
+                gPaintingImage.style.opacity = '1.0';
+            }
+        });
+        var tl = gsap.timeline({
+            repeat: 7,
+            onComplete: function() {
+                scanningLineLeft.style.visibility = 'hidden';
+                scanningLineRight.style.visibility = 'hidden';
+            }
+        });
+        tl.to(scanningLineLeft, {
+            duration: 3,
+            width: that.containerWidth,
+            ease: 'power4.inOut',
+            onStart: function() {
+                scanningLineLeft.style.visibility = 'visible';
+            },
+            onComplete: function() {
+                scanningLineLeft.style.visibility = 'hidden';
+            }
+        });
+        tl.to(scanningLineRight, {
+            duration: 3,
+            x: 0,
+            ease: 'power4.inOut',
+            onStart: function() {
+                scanningLineRight.style.visibility = 'visible';
+            },
+            onComplete: function() {
+                scanningLineRight.style.visibility = 'hidden';
+            }
+        });
+    };
+
     this.printThought = function(data) {
+        if (that.loadingTween != null) {
+            that.loadingTween.kill();
+            that.loadingTween = null;
+        }
+
         const frame = document.getElementById('text_frame');
 
         const thought = data['thought'];
         const segments = thought.split('\n');
+        var printCount = 0;
 
         var idPrefix = Date.now() + '_';
-        var tl = gsap.timeline({ delay:0.2, repeat:0 });
+        var tl = gsap.timeline({
+            delay:0.1,
+            repeat:0,
+            ease: "none"});
         var inul = false;
         var segment, seg, segId, ulEl;
         for (var i = 0; i < segments.length; ++i) {
@@ -326,16 +513,24 @@ function App() {
             }
 
             tl.to(seg, {
-                duration: 2,
+                duration: 3,
                 text: {
                     value: segment,
-                    speed: 3,
                     padSpace: true
                 },
                 onStart: function(param) {
                     document.getElementById(param).style.visibility = 'visible';
                 },
-                onStartParams: [ '' + segId ]
+                onStartParams: [ '' + segId ],
+                onComplete: function(param) {
+                    frame.scrollTop = frame.scrollHeight;
+                    ++printCount;
+                    if (printCount > segments.length * 0.5) {
+                        that.removeAllBoxes();
+                        printCount = 0 - segments.length;
+                    }
+                },
+                onCompleteParams: [ '' + segId ],
             });
         }
     }

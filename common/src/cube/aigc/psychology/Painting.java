@@ -6,6 +6,7 @@
 
 package cube.aigc.psychology;
 
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.algorithm.PaintingType;
 import cube.aigc.psychology.composition.Line;
@@ -147,7 +148,11 @@ public class Painting implements JSONable {
 
         List<Thing> thingList = new ArrayList<>();
         for (int i = 0; i < array.length(); ++i) {
-            Thing thing = classification.recognize(array.getJSONObject(i));
+            JSONObject json = array.getJSONObject(i);
+            if (!json.has("sn")) {
+                json.put("sn", Utils.generateSerialNumber());
+            }
+            Thing thing = classification.recognize(json);
             if (null == thing) {
                 continue;
             }
