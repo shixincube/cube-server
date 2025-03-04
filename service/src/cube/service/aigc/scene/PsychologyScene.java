@@ -853,8 +853,8 @@ public class PsychologyScene {
         }
 
         String filename = fileLabel.getFileCode() + "_predict.jpg";
-        String tmpFileCode = FileUtils.makeFileCode(fileCode, authToken.getDomain(), filename);
-        FileLabel resultFile = this.service.saveFile(authToken, tmpFileCode, outputFile, filename, true);
+        String newFileCode = FileUtils.makeFileCode(fileCode, authToken.getDomain(), filename);
+        FileLabel resultFile = this.service.saveFile(authToken, newFileCode, outputFile, filename, true);
 
         AIGCUnit unit = this.service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
         if (null == unit) {
@@ -962,6 +962,7 @@ public class PsychologyScene {
             JSONArray nodes = new JSONArray();
             JSONArray links = new JSONArray();
 
+            List<String> nodesNames = new ArrayList<>();
             List<String> houseCompNodeNames = new ArrayList<>();
             List<String> treeCompNodeNames = new ArrayList<>();
             List<String> personCompNodeNames = new ArrayList<>();
@@ -972,8 +973,11 @@ public class PsychologyScene {
             List<Representation> list = evaluationReport.getRepresentationList();
             for (Representation rep : list) {
                 JSONObject node = new JSONObject();
-                node.put("name", rep.knowledgeStrategy.getTerm().word);
-                nodes.put(node);
+                if (!nodesNames.contains(rep.knowledgeStrategy.getTerm().word)) {
+                    nodesNames.add(rep.knowledgeStrategy.getTerm().word);
+                    node.put("name", rep.knowledgeStrategy.getTerm().word);
+                    nodes.put(node);
+                }
 
                 for (PerceptronThing thing : rep.things) {
                     Label label = thing.getLabel();
@@ -1003,9 +1007,12 @@ public class PsychologyScene {
                         otherNodeNames.add(name);
                     }
 
-                    node = new JSONObject();
-                    node.put("name", name);
-                    nodes.put(node);
+                    if (!nodesNames.contains(name)) {
+                        nodesNames.add(name);
+                        node = new JSONObject();
+                        node.put("name", name);
+                        nodes.put(node);
+                    }
                 }
             }
 

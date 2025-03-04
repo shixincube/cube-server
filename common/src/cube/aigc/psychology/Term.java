@@ -97,11 +97,6 @@ public enum Term {
     Idealization("理想化"),
 
     /**
-     * 现实感。
-     */
-    Realization("现实感"),
-
-    /**
      * 本能。
      */
     Instinct("本能"),
@@ -172,19 +167,24 @@ public enum Term {
     PursueInterpersonalRelationships("追求人际关系"),
 
     /**
-     * 情感淡漠。
+     * 现实感。
      */
-    EmotionalIndifference("情感淡漠"),
+    SenseOfReality("现实感"),
 
     /**
-     * 情感稳定。
+     * 沟通意愿。
      */
-    EmotionalStability("情感稳定"),
+    WillingnessToCommunicate("沟通意愿"),
+
+    /**
+     * 情绪稳定。
+     */
+    EmotionalStability("情绪稳定"),
 
     /**
      * 情绪不安。
      */
-    MoodDisturbance("情绪不安"),
+    EmotionalDisturbance("情绪不安"),
 
     /**
      * 依赖性。

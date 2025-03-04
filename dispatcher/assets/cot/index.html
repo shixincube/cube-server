@@ -719,8 +719,12 @@ function App() {
                 },
                 onStartParams: [ '' + segId ],
                 onComplete: function(param) {
-                    frame.scrollTop = frame.scrollHeight;
                     ++printCount;
+
+                    if (printCount > 5) {
+                        frame.scrollTop = frame.scrollHeight;
+                    }
+
                     if (printCount === parseInt(segments.length * 0.2)) {
                         that.removeAllBoxes();
                     }
@@ -752,13 +756,14 @@ function App() {
 
     this.onChartLoad = function() {
         gsap.to(gChartFrame, {
-            duration: 5,
+            duration: 3,
             height: parseInt(window.innerHeight - that.containerHeight - 20),
             ease: 'none'
         });
         gsap.to(gTextFrame, {
-            duration: 5,
-            y: parseInt(window.innerHeight),
+            duration: 3,
+            // y: parseInt(window.innerHeight),
+            opacity: 0,
             ease: 'none',
             onComplete: function() {
                 that.removeAllBoxes();

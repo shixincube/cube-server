@@ -92,11 +92,11 @@ public class MBTIEvaluation {
                     break;
                 case PursueInterpersonalRelationships:
                     break;
-                case EmotionalIndifference:
+                case SenseOfReality:
                     break;
                 case EmotionalStability:
                     break;
-                case MoodDisturbance:
+                case EmotionalDisturbance:
                     break;
                 case Dependence:
                     break;

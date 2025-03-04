@@ -29,10 +29,6 @@ import java.util.List;
  */
 public class Workflow {
 
-//    public final static String HighTrick = "明显";
-//    public final static String NormalTrick = "具有";
-//    public final static String LowTrick = "缺乏";//"不足";
-
     private final static String PERSONALITY_FORMAT = "已知人格特点如下：\n\n%s\n\n根据上述信息回答问题，不能编造成分，问题是：总结他的性格特点。";
 
     private boolean speed = true;

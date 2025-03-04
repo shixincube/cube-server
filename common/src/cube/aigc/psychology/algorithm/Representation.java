@@ -20,8 +20,16 @@ import java.util.List;
 public class Representation implements JSONable {
 
     public final static String HighTrick = "明显";
+    public final static String LowTrick = "缺乏"; // "不足";
     public final static String NormalTrick = "具有";
-    public final static String LowTrick = "缺乏";//"不足";
+
+    public final static String HighTendency = "倾向高";
+    public final static String LowTendency = "倾向低";
+    public final static String NormalTendency = "倾向一般";
+
+    public final static String Strong = "强";
+    public final static String Weak = "弱";
+    public final static String Normal = "一般";
 
     public KnowledgeStrategy knowledgeStrategy;
 
@@ -66,19 +74,59 @@ public class Representation implements JSONable {
     public void makeDescription() {
         String marked = null;
         // 趋势
-        if (this.positiveCorrelation == this.negativeCorrelation) {
-            marked = NormalTrick + this.knowledgeStrategy.getTerm().word;
-        }
-        else if (this.negativeCorrelation > 0 &&
+//        if (this.positiveCorrelation == this.negativeCorrelation) {
+//            marked = NormalTrick + this.knowledgeStrategy.getTerm().word;
+//        }
+
+        if (this.negativeCorrelation > 0 &&
                 this.positiveCorrelation < this.negativeCorrelation) {
-            marked = LowTrick + this.knowledgeStrategy.getTerm().word;
+            switch (this.knowledgeStrategy.getTerm()) {
+                case Depression:
+                case Anxiety:
+                case Suspiciousness:
+                    marked = this.knowledgeStrategy.getTerm().word + LowTendency;
+                    break;
+                case SenseOfReality:
+                case SenseOfSecurity:
+                    marked = this.knowledgeStrategy.getTerm().word + Weak;
+                    break;
+                default:
+                    marked = LowTrick + this.knowledgeStrategy.getTerm().word;
+                    break;
+            }
         }
-        else if (this.positiveCorrelation >= 3 ||
+        else if (this.positiveCorrelation >= 2 ||
                 (this.positiveCorrelation - this.negativeCorrelation) >= 4) {
-            marked = HighTrick + this.knowledgeStrategy.getTerm().word;
+            switch (this.knowledgeStrategy.getTerm()) {
+                case Depression:
+                case Anxiety:
+                case Suspiciousness:
+                    marked = this.knowledgeStrategy.getTerm().word + HighTendency;
+                    break;
+                case SenseOfReality:
+                case SenseOfSecurity:
+                    marked = this.knowledgeStrategy.getTerm().word + Strong;
+                    break;
+                default:
+                    marked = HighTrick + this.knowledgeStrategy.getTerm().word;
+                    break;
+            }
         }
         else {
-            marked = NormalTrick + this.knowledgeStrategy.getTerm().word;
+            switch (this.knowledgeStrategy.getTerm()) {
+                case Depression:
+                case Anxiety:
+                case Suspiciousness:
+                    marked = this.knowledgeStrategy.getTerm().word + NormalTendency;
+                    break;
+                case SenseOfReality:
+                case SenseOfSecurity:
+                    marked = this.knowledgeStrategy.getTerm().word + Normal;
+                    break;
+                default:
+                    marked = NormalTrick + this.knowledgeStrategy.getTerm().word;
+                    break;
+            }
         }
         // 设置短描述
         this.description = marked;

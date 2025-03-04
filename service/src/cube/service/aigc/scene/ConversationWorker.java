@@ -385,7 +385,7 @@ public class ConversationWorker {
                 // 开始生成报告
                 final GeneratingRecord record = new GeneratingRecord(query, convCtx.getCurrentFile());
 
-                Attachment attachment = new ReportAttachment(report.sn);
+                Attachment attachment = new ReportAttachment(report.sn, convCtx.getCurrentFile().getFileCode());
                 AttachmentResource resource = new AttachmentResource(attachment);
 
                 ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Complex);

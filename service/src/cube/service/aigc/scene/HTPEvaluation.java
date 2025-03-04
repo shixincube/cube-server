@@ -383,11 +383,12 @@ public class HTPEvaluation extends Evaluation {
 
             if (count > 1) {
                 String desc = "画面中各主要元素有各自清晰的位置空间";
-                result.addFeature(desc, Term.EmotionalIndifference, Tendency.Positive, PerceptronThing.createThingSize(
+                result.addFeature(desc, Term.SenseOfReality, Tendency.Positive, PerceptronThing.createThingSize(
                         new Thing[] { house, tree, person }));
                 result.addFeature(desc, Term.Depression, Tendency.Negative, PerceptronThing.createThingSize(
                         new Thing[] { house, tree, person }));
 
+                result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Depression, -1, FloatUtils.random(0.2 * count, 0.25 * count));
                 // FIXME 1030
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(6.0, 7.0));
@@ -399,7 +400,7 @@ public class HTPEvaluation extends Evaluation {
             }
             else if (count > 0) {
                 String desc = "画面中各主要元素在空间上远近适度";
-                result.addFeature(desc, Term.Realization, Tendency.Positive, PerceptronThing.createThingSize(
+                result.addFeature(desc, Term.SenseOfReality, Tendency.Positive, PerceptronThing.createThingSize(
                         new Thing[] { house, tree, person }));
                 result.addFeature(desc, Term.Depression, Tendency.Negative, PerceptronThing.createThingSize(
                         new Thing[] { house, tree, person }));
@@ -439,7 +440,7 @@ public class HTPEvaluation extends Evaluation {
                 }
 
                 String desc = "画面中各主要元素之间距离适度，远近合适";
-                result.addFeature(desc, Term.Realization, Tendency.Positive, PerceptronThing.createThingSize(
+                result.addFeature(desc, Term.SenseOfReality, Tendency.Positive, PerceptronThing.createThingSize(
                         new Thing[] { house, tree, person }));
                 result.addFeature(desc, Term.Extroversion, Tendency.Positive, PerceptronThing.createThingSize(
                         new Thing[] { house, tree, person }));
@@ -509,7 +510,7 @@ public class HTPEvaluation extends Evaluation {
             else if (houseBHalf && treeBHalf) {
                 // 整体偏下
                 String desc = "画面中的主要元素的构图偏向下半画幅";
-                result.addFeature(desc, Term.Realization, Tendency.Positive, PerceptronThing.createThingPosition(
+                result.addFeature(desc, Term.SenseOfReality, Tendency.Positive, PerceptronThing.createThingPosition(
                         new Thing[] { house, tree }));
                 result.addFeature(desc, Term.Instinct, Tendency.Positive, PerceptronThing.createThingPosition(
                         new Thing[] { house, tree }));
@@ -601,7 +602,7 @@ public class HTPEvaluation extends Evaluation {
             else if (houseBHalf && personBHalf) {
                 // 整体偏下
                 String desc = "画面中的主要元素的构图偏向下半画幅";
-                result.addFeature(desc, Term.Realization, Tendency.Positive, PerceptronThing.createThingPosition(
+                result.addFeature(desc, Term.SenseOfReality, Tendency.Positive, PerceptronThing.createThingPosition(
                         new Thing[] { house, person }));
                 result.addFeature(desc, Term.Instinct, Tendency.Positive, PerceptronThing.createThingPosition(
                         new Thing[] { house, person }));
@@ -699,7 +700,7 @@ public class HTPEvaluation extends Evaluation {
             else if (treeBHalf && personBHalf) {
                 // 整体偏下
                 String desc = "画面中的主要元素的构图偏向下半画幅";
-                result.addFeature(desc, Term.Realization, Tendency.Positive, PerceptronThing.createThingPosition(
+                result.addFeature(desc, Term.SenseOfReality, Tendency.Positive, PerceptronThing.createThingPosition(
                         new Thing[] { tree, person }));
                 result.addFeature(desc, Term.Instinct, Tendency.Positive, PerceptronThing.createThingPosition(
                         new Thing[] { tree, person }));
@@ -1453,7 +1454,8 @@ public class HTPEvaluation extends Evaluation {
             // 门和窗
             if (!house.hasDoor() && !house.hasWindow()) {
                 String desc = "房屋没有门和窗";
-                result.addFeature(desc, Term.EmotionalIndifference, Tendency.Positive, new Thing[] { house });
+                result.addFeature(desc, Term.WillingnessToCommunicate, Tendency.Negative, new Thing[] { house });
+                result.addScore(Indicator.Family, -1, FloatUtils.random(0.4, 0.5));
             }
             else {
                 if (house.hasDoor()) {
@@ -1624,7 +1626,7 @@ public class HTPEvaluation extends Evaluation {
                 hasTrunk = true;
 
                 String desc = "树类型疑似枯树";
-                result.addFeature(desc, Term.MoodDisturbance, Tendency.Positive, new Thing[] { tree });
+                result.addFeature(desc, Term.EmotionalDisturbance, Tendency.Positive, new Thing[] { tree });
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
@@ -1805,7 +1807,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addFeature(desc, Term.Trauma, Tendency.Positive, new Thing[] {
                         tree.getHoles().get(0)
                 });
-                result.addFeature(desc, Term.MoodDisturbance, Tendency.Positive, new Thing[] {
+                result.addFeature(desc, Term.EmotionalDisturbance, Tendency.Positive, new Thing[] {
                         tree.getHoles().get(0)
                 });
 
@@ -2944,7 +2946,7 @@ public class HTPEvaluation extends Evaluation {
         if (other.has(Label.Bike)) {
             // 自行车
             String desc = "画面中有自行车";
-            result.addFeature(desc, Term.MoodDisturbance, Tendency.Positive, new Thing[] { other.get(Label.Bike) });
+            result.addFeature(desc, Term.EmotionalDisturbance, Tendency.Positive, new Thing[] { other.get(Label.Bike) });
             counter += 1;
         }
 
