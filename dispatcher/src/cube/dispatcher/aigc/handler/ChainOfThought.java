@@ -132,7 +132,7 @@ public class ChainOfThought extends ContextHandler {
             try {
                 long sn = Long.parseLong(request.getParameter("sn"));
                 String fileCode = request.getParameter("fc");
-                processIndexFile(response, "index.html", sn, fileCode);
+                processIndexFile(response, "index.html", token, sn, fileCode);
                 this.complete();
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#doGet", e);
@@ -207,7 +207,8 @@ public class ChainOfThought extends ContextHandler {
             }
         }
 
-        private void processIndexFile(HttpServletResponse response, String filename, long sn, String fileCode) {
+        private void processIndexFile(HttpServletResponse response, String filename,
+                                      String token, long sn, String fileCode) {
             FileType fileType = FileUtils.verifyFileType(filename);
             response.setContentType(fileType.getMimeType());
 
@@ -216,6 +217,7 @@ public class ChainOfThought extends ContextHandler {
             try {
                 byte[] fileData = Files.readAllBytes(Paths.get(file.getAbsolutePath()));
                 String fileContent = new String(fileData, StandardCharsets.UTF_8);
+                fileContent = fileContent.replaceAll("\\$\\{token\\}", token);
                 fileContent = fileContent.replaceAll("\\$\\{sn\\}", Long.toString(sn));
                 fileContent = fileContent.replaceAll("\\$\\{fileCode\\}", fileCode);
                 fileContent = fileContent.replaceAll("\\$\\{timestamp\\}",

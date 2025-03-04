@@ -9,7 +9,7 @@
         body {
             padding: 0;
             margin: 0;
-            background-color: #FFFFFF;
+            background-color: #EFEFEF;
             overflow: hidden;
         }
         .chart-container {
@@ -34,15 +34,17 @@ var data = ${data};
 
 var dom = document.getElementById('main_chart');
 
-var fireResize = function() {
+var resizePaper = function() {
     var width = document.documentElement.clientWidth || document.body.offsetWidth;
     var height = document.documentElement.clientHeight || document.body.offsetHeight;
-    dom.style.width = parseInt(width) + 'px';
-    dom.style.height = parseInt(height) + 'px';
-    //console.log('WxH: ' + width + ' x ' + height);
+    dom.style.width = parseInt(width === 0 ? 100 : width) + 'px';
+    dom.style.height = parseInt(height === 0 ? 100 : height) + 'px';
+    // console.log('WxH: ' + width + ' x ' + height);
 }
 
-fireResize();
+window.onload = function() {
+    resizePaper();
+}
 
 var option = {
     animation: true,
@@ -76,8 +78,28 @@ var option = {
 
 var chart = echarts.init(dom);
 chart.setOption(option);
+chart.on('finished', function() {
+    try {
+        if (window.parent) {
+            window.parent.notifyLoad();
+        }
+    } catch (e) {
+    }
+});
 
-window.addEventListener('resize', chart.resize);
-window.addEventListener('resize', fireResize);
+var _resizeTimer = 0;
+function _resize() {
+    if (0 !== _resizeTimer) {
+        return;
+    }
+
+    _resizeTimer = setTimeout(function() {
+        resizePaper();
+        chart.resize();
+        _resizeTimer = 0;
+    }, 500);
+}
+
+window.addEventListener('resize', _resize);
 </script>
 </body>
