@@ -10,6 +10,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.ReportSection;
@@ -104,6 +105,20 @@ public class GetPsychologyReportPartTask extends ServiceTask {
                 PaintingFeatureSet featureSet = PsychologyScene.getInstance().getPaintingFeatureSet(sn);
                 if (null != featureSet) {
                     responseData.put("thought", PsychologyHelper.makeMarkdown(featureSet));
+                }
+            }
+        }
+        else {
+            if (report.getState().code == AIGCStateCode.Processing.code ||
+                    report.getState().code == AIGCStateCode.Inferencing.code) {
+                if (thought) {
+                    PaintingFeatureSet featureSet = PsychologyScene.getInstance().getPaintingFeatureSet(sn);
+                    if (null != featureSet) {
+                        responseData.put("thought", PsychologyHelper.makeMarkdown(featureSet));
+                    }
+                    else {
+                        Logger.w(this.getClass(), "#run - Can NOT find feature set for report: " + sn);
+                    }
                 }
             }
         }

@@ -51,6 +51,8 @@ public class PaintingReport extends Report {
 
     public Painting painting;
 
+    public PaintingFeatureSet paintingFeatureSet;
+
     public PaintingReport(long contactId, Attribute attribute, FileLabel fileLabel, Theme theme) {
         super(contactId, attribute);
         this.fileLabel = fileLabel;

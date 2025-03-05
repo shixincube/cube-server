@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chain of Thought</title>
     <style>
+        html {
+            overflow: hidden;
+        }
         body {
             padding: 0;
             margin: 0;
@@ -22,17 +25,19 @@
             margin: 0 0 10px 0;
             width: 100%;
             height: 100%;
+            text-align: center;
+            background-color: #111;
         }
         .main-container div {
             width: 100%;
             height: 100%;
             text-align: center;
-            background-color: #111;
         }
         img {
             padding: 0;
-            margin: 0;
-            width: 100%;
+            margin: 0 auto;
+            width: 50%;
+            text-align: center;
         }
         .scanning-line-left {
             float: left;
@@ -141,7 +146,7 @@
 </head>
 <body>
 <div class="main-container">
-    <div><img id="main_painting" src="painting/${fileCode}.jpg?t=${timestamp}"/></div>
+    <div><img id="main_painting" src="image/logo.png" /></div>
     <div id="scanning_line_left" class="scanning-line-left"></div>
     <div id="scanning_line_right" class="scanning-line-right"></div>
 </div>
@@ -335,18 +340,17 @@ var gPainting = {};
 function setup() {
     gPaintingImage.onload = function (event) {
         // console.log('onPaintingImageLoad: ' + event);
-        app.start();
+        if (gPaintingImage.getAttribute('src').includes('painting')) {
+            app.start();
+        }
     };
 
     gPaintingImage.onerror = function (event) {
         console.log('onPaintingImageError: ' + event);
-    };
-
-    if (gPaintingImage.complete) {
         setTimeout(function() {
-            that.start();
-        }, 4000);
-    }
+            gPaintingImage.setAttribute('src', 'painting/${fileCode}.jpg?t=${timestamp}');
+        }, 3000);
+    };
 
     var showScreenAnimation = true;
 
@@ -371,6 +375,56 @@ function setup() {
     }
 }
 
+function onAppStart() {
+    // console.log('onAppStart');
+    if (window.flutter_inappwebview) {
+        try {
+            window.flutter_inappwebview.callHandler('onAppStart', Date.now());
+        } catch (e) {
+        }
+    }
+}
+
+function onAppPaintingLoad() {
+    // console.log('onAppPaintingLoad');
+    if (window.flutter_inappwebview) {
+        try {
+            window.flutter_inappwebview.callHandler('onAppPaintingLoad', Date.now());
+        } catch (e) {
+        }
+    }
+}
+
+function onAppThoughtLoad() {
+    // console.log('onAppThoughtLoad');
+    if (window.flutter_inappwebview) {
+        try {
+            window.flutter_inappwebview.callHandler('onAppThoughtLoad', Date.now());
+        } catch (e) {
+        }
+    }
+}
+
+function onAppChartLoad() {
+    // console.log('onAppChartLoad');
+    if (window.flutter_inappwebview) {
+        try {
+            window.flutter_inappwebview.callHandler('onAppChartLoad', Date.now());
+        } catch (e) {
+        }
+    }
+}
+
+function onAppStop() {
+    // console.log('onAppStop');
+    if (window.flutter_inappwebview) {
+        try {
+            window.flutter_inappwebview.callHandler('onAppStop', Date.now());
+        } catch (e) {
+        }
+    }
+}
+
 // 配置
 setup();
 
@@ -383,9 +437,28 @@ function App() {
     this.loadingTween = null;
 
     this.init = function() {
+        gPaintingImage.style.width = '100%';
+        gPaintingImage.setAttribute('src', 'painting/${fileCode}.jpg?t=${timestamp}');
+
+        if (gPaintingImage.complete && gPaintingImage.getAttribute('src').includes('painting')) {
+            setTimeout(function() {
+                app.start();
+            }, 4000);
+        }
+
         gScaleRatio = parseInt(window.innerWidth) / 1280;
         gWidgetPool.style.width = parseInt(document.body.scrollWidth) + 'px';
         gWidgetPool.style.height = parseInt(document.body.scrollHeight) + 'px';
+    };
+
+    this.start = function(delay) {
+        if (that.started) {
+            return;
+        }
+
+        that.started = true;
+
+        onAppStart();
 
         that.containerWidth = parseInt(gPaintingImage.width);
         that.containerHeight = parseInt(gPaintingImage.height);
@@ -397,16 +470,10 @@ function App() {
         gTextFrame.style.height = parseInt(window.innerHeight - that.containerHeight - 30) + 'px';
 
         that.showLoading('正在观察绘画…');
-    };
-
-    this.start = function(delay) {
-        if (that.started) {
-            return;
-        }
-
-        that.started = true;
 
         ajax.get('painting/${fileCode}.json', {}, function(text) {
+            onAppPaintingLoad();
+
             const banner = document.getElementById('screen_banner');
             if (null != banner) {
                 if (null != gScreenTimeline) {
@@ -439,7 +506,7 @@ function App() {
                 }
             }, 1000);
         }, function(state) {
-
+            console.log('error: ' + state);
         });
     };
 
@@ -504,14 +571,20 @@ function App() {
 
     this.loadThoughtText = function(complete, error) {
         ajax.get('thought/${sn}.json', {}, function(text) {
-            complete(JSON.parse(text));
+            const result = JSON.parse(text);
+            if (undefined !== result['thought']) {
+                onAppThoughtLoad();
+
+                complete(result);
+            }
+            else {
+                setTimeout(function() {
+                    that.loadThoughtText(complete, error);
+                }, 3000);
+            }
         }, function(state) {
             setTimeout(function() {
-                ajax.get('thought/${sn}.json', {}, function(text) {
-                    complete(JSON.parse(text));
-                }, function(state) {
-                    error(state);
-                });
+                that.loadThoughtText(complete, error);
             }, 3000);
         });
     };
@@ -721,20 +794,41 @@ function App() {
                 onComplete: function(param) {
                     ++printCount;
 
-                    if (printCount > 5) {
-                        frame.scrollTop = frame.scrollHeight;
+                    if (printCount === (segments.length <= 5 ? 1 : 5)) {
+                        that.startScrollText();
                     }
 
                     if (printCount === parseInt(segments.length * 0.2)) {
                         that.removeAllBoxes();
                     }
                     else if (printCount === segments.length) {
+                        // 结束打印效果
+                        that.stopScrollText();
                         that.showChart(3);
                     }
                 },
                 onCompleteParams: [ '' + segId ],
             });
         }
+    }
+
+    this.scrollAnimationFrame = 0;
+
+    this.startScrollText = function() {
+        const top = gTextFrame.scrollTop;
+        const height = gTextFrame.scrollHeight;
+        const clientHeight = gTextFrame.clientHeight;
+        const bottom = height - top - clientHeight;
+        if (bottom > 0) {
+            gTextFrame.scrollTop = gTextFrame.scrollTop + 1;
+        }
+
+        that.scrollAnimationFrame = window.requestAnimationFrame(that.startScrollText);
+    }
+
+    this.stopScrollText = function() {
+        window.cancelAnimationFrame(that.scrollAnimationFrame);
+        gTextFrame.scrollTop = gTextFrame.scrollHeight;
     }
 
     this.showChart = function(delayInSeconds) {
@@ -749,6 +843,8 @@ function App() {
             gChartFrame.onload = function() {
                 that.showLoading('正在生成推理图…');
                 that.stopScanning();
+
+                onAppChartLoad();
             };
             gChartFrame.setAttribute('src', '/aigc/chart/pcd/${token}?sn=${sn}&t=${timestamp}');
         }, delay);
@@ -768,7 +864,9 @@ function App() {
             onComplete: function() {
                 that.removeAllBoxes();
                 gTextFrame.style.display = 'none';
-                that.hideLoading(true);
+                that.hideLoading(true, function() {
+                    onAppStop();
+                });
             }
         });
     }

@@ -887,8 +887,8 @@ public class HTPEvaluation extends Evaluation {
                 String desc = "画面中部分画幅内容出现涂鸦";
                 result.addFeature(desc, Term.Anxiety, Tendency.Positive, PerceptronThing.createPictureSense());
 
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
 
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.0, 5.0));
                 result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.0, 8.0));
@@ -903,7 +903,6 @@ public class HTPEvaluation extends Evaluation {
                 String desc = "画面中小部分画幅内容出现涂鸦";
                 result.addFeature(desc, Term.Anxiety, Tendency.Positive, PerceptronThing.createPictureSense());
 
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.0, 0.01));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.3, 0.4));
 
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
@@ -919,7 +918,8 @@ public class HTPEvaluation extends Evaluation {
                 String desc = "画面整体绘画密度非常稀疏";
                 result.addFeature(desc, Term.Creativity, Tendency.Negative, PerceptronThing.createPictureSense());
 
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Creativity, -1, FloatUtils.random(0.1, 0.2));
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space sparseness: " + sparseness);
 
@@ -1256,7 +1256,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addFeature(desc, Term.SenseOfSecurity, Tendency.Negative,
                         PerceptronThing.createThingSize(new Thing[] { person }));
 
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
 
@@ -1380,7 +1380,7 @@ public class HTPEvaluation extends Evaluation {
                 String desc = "房元素是坟墓造型";
                 result.addFeature(desc, Term.WorldWeariness, Tendency.Positive, new Thing[] { house });
 
-                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.4, 0.5));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
             }
 
             // 房顶

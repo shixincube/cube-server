@@ -309,7 +309,7 @@ public class PsychologyScene {
                 Logger.i(PsychologyScene.class, "Generating thread start");
 
                 while (!taskQueue.isEmpty()) {
-                    ReportTask reportTask = taskQueue.poll();
+                    final ReportTask reportTask = taskQueue.poll();
                     if (null == reportTask) {
                         continue;
                     }
@@ -377,6 +377,9 @@ public class PsychologyScene {
 
                     // 根据图像推理报告
                     Workflow workflow = processReport(reportTask.channel, painting, unit);
+
+                    // 将特征集数据填写到报告，这里仅仅是方便客户端获取特征描述文本
+                    reportTask.report.paintingFeatureSet = workflow.getPaintingFeatureSet();
 
                     // 修改状态
                     reportTask.report.setState(AIGCStateCode.Inferencing);
@@ -820,7 +823,18 @@ public class PsychologyScene {
     }
 
     public PaintingFeatureSet getPaintingFeatureSet(long reportSn) {
-        return this.storage.readPaintingFeatureSet(reportSn);
+        PaintingFeatureSet featureSet = this.storage.readPaintingFeatureSet(reportSn);
+        if (null != featureSet) {
+            return featureSet;
+        }
+
+        Report report = this.reportMap.get(reportSn);
+        if (report instanceof PaintingReport) {
+            PaintingReport paintingReport = (PaintingReport) report;
+            return paintingReport.paintingFeatureSet;
+        }
+
+        return null;
     }
 
     public Painting getPredictedPainting(AuthToken authToken, String fileCode) {

@@ -50,8 +50,11 @@ var option = {
     animation: true,
     title: {
         text: 'Painting CoT Diagram',
-        left: 'center',
-        textAlign: 'center'
+        left: '20',
+        textAlign: 'auto',
+        textStyle: {
+            fontSize: 14
+        }
     },
     tooltip: {
         trigger: 'item',
@@ -76,14 +79,18 @@ var option = {
     ]
 };
 
+var finished = false;
 var chart = echarts.init(dom);
 chart.setOption(option);
 chart.on('finished', function() {
-    try {
-        if (window.parent) {
-            window.parent.notifyLoad();
+    if (!finished) {
+        finished = true;
+        try {
+            if (window.parent) {
+                window.parent.notifyLoad();
+            }
+        } catch (e) {
         }
-    } catch (e) {
     }
 });
 
