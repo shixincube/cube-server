@@ -11,7 +11,7 @@ import cube.aigc.attachment.Attachment;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.EvaluationScore;
-import cube.aigc.psychology.composition.ReportAttachment;
+import cube.aigc.attachment.ReportAttachment;
 import cube.common.entity.*;
 import cube.service.aigc.AIGCService;
 import org.json.JSONObject;

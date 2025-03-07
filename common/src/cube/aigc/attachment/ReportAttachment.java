@@ -4,31 +4,31 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.aigc.psychology.composition;
+package cube.aigc.attachment;
 
-import cube.aigc.attachment.Attachment;
+import cube.common.entity.FileLabel;
 import org.json.JSONObject;
 
 public class ReportAttachment extends Attachment {
 
     public final static String TYPE = "PsychologyReport";
 
-    private String fileCode;
+    private FileLabel fileLabel;
 
-    public ReportAttachment(long sn, String fileCode) {
+    public ReportAttachment(long sn, FileLabel fileLabel) {
         super(TYPE, sn);
-        this.fileCode = fileCode;
+        this.fileLabel = fileLabel;
     }
 
     public ReportAttachment(JSONObject json) {
         super(json);
-        this.fileCode = json.getString("fileCode");
+        this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("fileCode", this.fileCode);
+        json.put("fileLabel", this.fileLabel.toCompactJSON());
         return json;
     }
 

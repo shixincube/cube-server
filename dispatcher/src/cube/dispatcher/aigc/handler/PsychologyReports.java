@@ -35,9 +35,9 @@ public class PsychologyReports extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -64,7 +64,7 @@ public class PsychologyReports extends ContextHandler {
                         this.respondOk(response, responseData);
                     }
                     else {
-                        this.respond(response, HttpStatus.NOT_FOUND_404);
+                        this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     }
                 }
                 else if (data.has("scaleSn")) {
@@ -74,30 +74,31 @@ public class PsychologyReports extends ContextHandler {
                         this.respondOk(response, report.toJSON());
                     }
                     else {
-                        this.respond(response, HttpStatus.NOT_FOUND_404);
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     }
                 }
                 else {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 }
                 this.complete();
             } catch (Exception e) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
             }
         }
 
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
 
             try {
-                boolean markdown = (null != request.getParameter("markdown")) && Boolean.parseBoolean(request.getParameter("markdown"));
+                boolean markdown = (null != request.getParameter("markdown"))
+                        && Boolean.parseBoolean(request.getParameter("markdown"));
                 String snString = request.getParameter("sn");
                 if (null != snString) {
                     long sn = Long.parseLong(snString);
@@ -112,15 +113,15 @@ public class PsychologyReports extends ContextHandler {
                         this.respondOk(response, responseData);
                     }
                     else {
-                        this.respond(response, HttpStatus.NOT_FOUND_404);
+                        this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                     }
                     this.complete();
                 }
                 else {
                     int page = Integer.parseInt(request.getParameter("page"));
                     int size = Integer.parseInt(request.getParameter("size"));
-                    boolean descending = (null != request.getParameter("desc")) ?
-                            Boolean.parseBoolean(request.getParameter("desc")) : true;
+                    boolean descending = null == request.getParameter("desc")
+                            || Boolean.parseBoolean(request.getParameter("desc"));
                     JSONObject data = Manager.getInstance().getPsychologyReports(token, page, size, descending);
                     if (null != data) {
                         if (data.has("fileLabel")) {
@@ -131,13 +132,13 @@ public class PsychologyReports extends ContextHandler {
                         this.respondOk(response, data);
                     }
                     else {
-                        this.respond(response, HttpStatus.NOT_FOUND_404);
+                        this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                     }
                     this.complete();
                 }
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#doGet", e);
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
             }
         }

@@ -92,6 +92,24 @@ public class PsychologyConversation extends ContextHandler {
                                     Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
                         }
                     }
+                    if (result.has("context")) {
+                        if (result.getJSONObject("context").has("resources")) {
+                            JSONArray resources = result.getJSONObject("context").getJSONArray("resources");
+                            for (int i = 0; i < resources.length(); ++i) {
+                                JSONObject resJson = resources.getJSONObject(i);
+                                JSONObject payload = resJson.getJSONObject("payload");
+                                try {
+                                    FileLabels.reviseFileLabel(payload.getJSONArray("attachments")
+                                                    .getJSONObject(0).getJSONObject("fileLabel"),
+                                            token,
+                                            Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                                            Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                                } catch (Exception e) {
+                                    // Nothing
+                                }
+                            }
+                        }
+                    }
                 }
 
                 String stream = request.getParameter("stream");

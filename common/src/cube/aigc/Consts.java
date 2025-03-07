@@ -24,8 +24,6 @@ public final class Consts {
 
     public final static String ANSWER_SILENT = "";
 
-    public final static String PROMPT_FORMAT_POLISH = "润色以下内容，要求简洁，不使用“感谢”，“尊敬”这样的用语，确保信息完整传达，内容是：“%s”。";
-
     private final static String ANSWER_URL_FAILURE_FORMAT = "这是站点 %s 的访问链接：%s\n我没有访问到该链接数据，此链接可能已经失效了。";
 
     private final static String ANSWER_URL_PAGE_FORMAT = "这是来自站点 [%s](%s) 的页面链接。\n页面标题是：《 **%s** 》。\n页面正文约 %d 个字符。";

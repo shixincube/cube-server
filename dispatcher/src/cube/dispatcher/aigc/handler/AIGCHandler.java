@@ -21,7 +21,7 @@ public abstract class AIGCHandler extends CrossDomainHandler {
 
     protected String getApiToken(HttpServletRequest request) {
         String token = this.getLastRequestPath(request);
-        if (null == token || token.contains("converse")) {
+        if (null == token || token.length() < 32) {
             try {
                 token = request.getHeader("x-baize-api-token").trim();
             } catch (Exception e) {

@@ -10,6 +10,7 @@ import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.aigc.attachment.Attachment;
+import cube.aigc.attachment.ReportAttachment;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.*;
@@ -297,6 +298,27 @@ public class ConversationWorker {
                     channel.setProcessing(false);
                     return AIGCStateCode.Ok;
                 }
+                else if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
+                    // 受测人年龄超出限制
+                    Logger.d(this.getClass(), "#work - Age out of limit: " +
+                            channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+                    GeneratingRecord record = new GeneratingRecord(query, fileLabel);
+                    record.answer = this.polish(Resource.getInstance().getCorpus(CORPUS,
+                            "ANSWER_AGE_OUT_OF_LIMIT"));
+
+                    // 进入子任务
+                    convCtx.setCurrentSubtask(subtask);
+                    convCtx.record(record);
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onGenerated(channel, record);
+                        }
+                    });
+                    channel.setProcessing(false);
+                    return AIGCStateCode.Ok;
+                }
                 else if (attribute.gender.length() == 0) {
                     // 没有提供性别
                     Logger.d(this.getClass(), "#work - No attribute gender: " +
@@ -385,7 +407,7 @@ public class ConversationWorker {
                 // 开始生成报告
                 final GeneratingRecord record = new GeneratingRecord(query, convCtx.getCurrentFile());
 
-                Attachment attachment = new ReportAttachment(report.sn, convCtx.getCurrentFile().getFileCode());
+                Attachment attachment = new ReportAttachment(report.sn, convCtx.getCurrentFile());
                 AttachmentResource resource = new AttachmentResource(attachment);
 
                 ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Complex);
@@ -812,7 +834,7 @@ public class ConversationWorker {
             }
         }
 
-        String prompt = String.format(Consts.PROMPT_FORMAT_POLISH, text);
+        String prompt = String.format(Resource.getInstance().getCorpus("prompt", "FORMAT_POLISH"), text);
         GeneratingRecord result = this.service.syncGenerateText(unit, prompt, null, null, null);
         if (null == result) {
             return text;

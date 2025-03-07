@@ -8,7 +8,7 @@ package cube.common.entity;
 
 import cube.aigc.attachment.Attachment;
 import cube.aigc.attachment.ThingAttachment;
-import cube.aigc.psychology.composition.ReportAttachment;
+import cube.aigc.attachment.ReportAttachment;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

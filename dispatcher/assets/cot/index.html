@@ -438,7 +438,7 @@ function App() {
 
     this.init = function() {
         gPaintingImage.style.width = '100%';
-        gPaintingImage.setAttribute('src', 'painting/${fileCode}.jpg?t=${timestamp}');
+        gPaintingImage.setAttribute('src', 'painting/${fileCode}.jpg');
 
         if (gPaintingImage.complete && gPaintingImage.getAttribute('src').includes('painting')) {
             setTimeout(function() {

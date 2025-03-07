@@ -85,6 +85,7 @@ public class GetPsychologyReportPartTask extends ServiceTask {
         JSONObject responseData = new JSONObject();
         responseData.put("sn", sn);
         responseData.put("state", report.getState().code);
+        responseData.put("timestamp", report.timestamp);
 
         if (report.getState().code == AIGCStateCode.Ok.code) {
             if (content) {
