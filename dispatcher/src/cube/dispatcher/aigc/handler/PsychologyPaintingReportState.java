@@ -6,8 +6,6 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cell.util.log.Logger;
-import cube.aigc.psychology.*;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -34,9 +32,9 @@ public class PsychologyPaintingReportState extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -51,19 +49,19 @@ public class PsychologyPaintingReportState extends ContextHandler {
                     this.respondOk(response, data);
                 }
                 else {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 }
 
                 this.complete();
             } catch (Exception e) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
             }
         }
 
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
@@ -71,11 +69,18 @@ public class PsychologyPaintingReportState extends ContextHandler {
             }
 
             try {
-                this.respond(response, HttpStatus.NOT_FOUND_404);
+                long sn = Long.parseLong(request.getParameter("sn"));
+
+                JSONObject result = Manager.getInstance().getPsychologyReportPart(token, sn, false, false, false);
+                if (null != result) {
+                    this.respondOk(response, result);
+                }
+                else {
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                }
                 this.complete();
             } catch (Exception e) {
-                Logger.e(this.getClass(), "#doGet", e);
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
             }
         }

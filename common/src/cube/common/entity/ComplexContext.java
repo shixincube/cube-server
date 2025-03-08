@@ -9,7 +9,7 @@ package cube.common.entity;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.Page;
-import cube.aigc.psychology.composition.ConversationSubtask;
+import cube.aigc.psychology.composition.Subtask;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -78,13 +78,16 @@ public class ComplexContext extends Entity {
         for (int i = 0; i < array.length(); ++i) {
             JSONObject data = array.getJSONObject(i);
             String subject = data.getString("subject");
-            if (subject.equals(ComplexResource.Subject.Hyperlink.name())) {
+            if (subject.equalsIgnoreCase(ComplexResource.Subject.File.name())) {
+                this.resources.add(new FileResource(data));
+            }
+            else if (subject.equalsIgnoreCase(ComplexResource.Subject.Hyperlink.name())) {
                 this.resources.add(new HyperlinkResource(data));
             }
-            else if (subject.equals(ComplexResource.Subject.Chart.name())) {
+            else if (subject.equalsIgnoreCase(ComplexResource.Subject.Chart.name())) {
                 this.resources.add(new ChartResource(data));
             }
-            else if (subject.equals(ComplexResource.Subject.Attachment.name())) {
+            else if (subject.equalsIgnoreCase(ComplexResource.Subject.Attachment.name())) {
                 this.resources.add(new AttachmentResource(data));
             }
             else {
@@ -137,7 +140,7 @@ public class ComplexContext extends Entity {
         return this.type == Type.Simplex;
     }
 
-    public void setSubtask(ConversationSubtask subtask) {
+    public void setSubtask(Subtask subtask) {
         this.subtask = subtask.name;
     }
 
@@ -157,6 +160,15 @@ public class ComplexContext extends Entity {
 
     public ComplexResource getResource() {
         return this.resources.get(0);
+    }
+
+    public FileResource getFileResource() {
+        for (ComplexResource res : this.resources) {
+            if (res instanceof FileResource) {
+                return (FileResource) res;
+            }
+        }
+        return null;
     }
 
     public AttachmentResource getAttachmentResource() {
@@ -233,7 +245,7 @@ public class ComplexContext extends Entity {
 
         JSONArray array = new JSONArray();
         for (ComplexResource resource : this.resources) {
-            array.put(resource.toCompactJSON());
+            array.put(resource.toJSON());
         }
         json.put("resources", array);
 

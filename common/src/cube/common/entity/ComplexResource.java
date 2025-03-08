@@ -17,6 +17,8 @@ public abstract class ComplexResource implements JSONable {
 
     public enum Subject {
 
+        File,
+
         Hyperlink,
 
         Chart,
@@ -26,13 +28,16 @@ public abstract class ComplexResource implements JSONable {
         ;
 
         public static Subject parse(String name) {
-            if (name.equals(Subject.Hyperlink.name())) {
+            if (name.equalsIgnoreCase(Subject.File.name())) {
+                return File;
+            }
+            if (name.equalsIgnoreCase(Subject.Hyperlink.name())) {
                 return Hyperlink;
             }
-            else if (name.equals(Subject.Chart.name())) {
+            else if (name.equalsIgnoreCase(Subject.Chart.name())) {
                 return Chart;
             }
-            else if (name.equals(Subject.Attachment.name())) {
+            else if (name.equalsIgnoreCase(Subject.Attachment.name())) {
                 return Attachment;
             }
             else {
@@ -48,11 +53,6 @@ public abstract class ComplexResource implements JSONable {
     protected ComplexResource(Subject subject) {
         this.subject = subject;
         this.sn = Utils.generateSerialNumber();
-    }
-
-    protected ComplexResource(Subject subject, long sn) {
-        this.subject = subject;
-        this.sn = sn;
     }
 
     protected ComplexResource(Subject subject, JSONObject json) {

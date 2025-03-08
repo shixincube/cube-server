@@ -82,6 +82,9 @@ public class PsychologyStorage implements Storagable {
             new StorageField("theme", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
             new StorageField("finished_timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.DEFAULT_0
             }),
@@ -106,6 +109,7 @@ public class PsychologyStorage implements Storagable {
             new StorageField(reportTable, "strict", LiteralBase.INT),
             new StorageField(reportTable, "file_code", LiteralBase.STRING),
             new StorageField(reportTable, "theme", LiteralBase.STRING),
+            new StorageField(reportTable, "state", LiteralBase.INT),
             new StorageField(reportTable, "finished_timestamp", LiteralBase.LONG),
             new StorageField(reportTable, "summary", LiteralBase.STRING),
             new StorageField(reportTable, "evaluation_data", LiteralBase.STRING),
@@ -433,19 +437,6 @@ public class PsychologyStorage implements Storagable {
         }
     }
 
-    public PaintingReport readPsychologyReport(long sn) {
-        List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
-                new Conditional[] {
-                        Conditional.createEqualTo("sn", sn)
-                });
-        if (result.isEmpty()) {
-            return null;
-        }
-
-        PaintingReport report = this.makeReport(result.get(0));
-        return report;
-    }
-
     public int countPsychologyReports() {
         List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(*) FROM " + this.reportTable +
                 " WHERE finished_timestamp<>0");
@@ -469,6 +460,36 @@ public class PsychologyStorage implements Storagable {
                 " AND " +
                 this.reportTable + ".finished_timestamp<>0");
         return result.get(0)[0].getInt();
+    }
+
+    public PaintingReport readPsychologyReport(long sn) {
+        List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("sn", sn)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        PaintingReport report = this.makeReport(result.get(0));
+        return report;
+    }
+
+    public List<PaintingReport> readPsychologyReportsByContact(long contactId, int state) {
+        List<PaintingReport> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("state", state)
+                });
+
+        for (StorageField[] data : result) {
+            PaintingReport report = this.makeReport(data);
+            list.add(report);
+        }
+        return list;
     }
 
     public List<PaintingReport> readPsychologyReports(int pageIndex, int pageSize, boolean descending) {
@@ -562,6 +583,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("strict", report.getAttribute().strict ? 1 : 0),
                 new StorageField("file_code", report.getFileCode()),
                 new StorageField("theme", report.getTheme().code),
+                new StorageField("state", 0),
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("summary", report.getSummary()),
                 new StorageField("evaluation_data", dataString),
@@ -573,7 +595,7 @@ public class PsychologyStorage implements Storagable {
     public boolean updatePsychologyReport(PaintingReport report) {
         String dataString = report.getEvaluationReport().toJSON().toString();
         dataString = JSONUtils.escape(dataString);
-        
+
         return this.storage.executeUpdate(this.reportTable, new StorageField[] {
                 new StorageField("timestamp", report.timestamp),
                 new StorageField("name", report.getName()),
@@ -584,6 +606,21 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("evaluation_data", dataString),
         }, new Conditional[] {
                 Conditional.createEqualTo("sn", report.sn)
+        });
+    }
+
+    public boolean updatePsychologyReportState(long sn, int state) {
+        this.storage.executeUpdate(this.paintingReportManagementTable, new StorageField[] {
+                new StorageField("timestamp", System.currentTimeMillis()),
+                new StorageField("state", state)
+        }, new Conditional[] {
+                Conditional.createEqualTo("report_sn", sn)
+        });
+
+        return this.storage.executeUpdate(this.reportTable, new StorageField[] {
+                new StorageField("state", state)
+        }, new Conditional[] {
+                Conditional.createEqualTo("sn", sn)
         });
     }
 

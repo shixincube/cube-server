@@ -10,13 +10,12 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.AIGCChannel;
-import cube.common.entity.FileLabel;
-import cube.common.entity.GeneratingRecord;
+import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -56,7 +55,7 @@ public class PsychologyConversationTask extends ServiceTask {
         String channelCode = null;
         List<ConversationRelation> conversationRelationList = null;
         ConversationRelation relation = null;
-        GeneratingRecord context = null;
+        ComplexContext context = null;
         String query = null;
         try {
             channelCode = packet.data.getString("channelCode");
@@ -79,18 +78,18 @@ public class PsychologyConversationTask extends ServiceTask {
                     AuthToken authToken = service.getToken(token);
                     FileLabel fileLabel = service.getFile(authToken.getDomain(), ctxJson.getString("fileCode"));
                     if (null != fileLabel) {
-                        List<FileLabel> files = new ArrayList<>();
-                        files.add(fileLabel);
-                        context = new GeneratingRecord(files);
+                        context = new ComplexContext(ComplexContext.Type.Simplex);
+                        context.addResource(new FileResource(fileLabel));
                     }
                 }
                 else {
-                    context = new GeneratingRecord(packet.data.getJSONObject("context"));
+                    context = new ComplexContext(packet.data.getJSONObject("context"));
                 }
             }
 
             query = packet.data.getString("query");
         } catch (Exception e) {
+            Logger.w(this.getClass(), "#run - " + packet.data.toString(4), e);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
@@ -126,10 +125,7 @@ public class PsychologyConversationTask extends ServiceTask {
         }
         else {
             if (null == context) {
-                context = new GeneratingRecord(query);
-            }
-            else {
-                context.query = query;
+                context = new ComplexContext(ComplexContext.Type.Simplex);
             }
 
             if (null == relation) {
@@ -142,7 +138,7 @@ public class PsychologyConversationTask extends ServiceTask {
                 channel = service.createChannel(token, channelCode, channelCode);
             }
 
-            stateCode = worker.work(channel, context, relation, new GenerateTextListener() {
+            stateCode = worker.work(channel, query, context, relation, new GenerateTextListener() {
                 @Override
                 public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                     if (null != record) {

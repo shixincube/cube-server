@@ -34,7 +34,7 @@ public class ConversationContext implements JSONable {
 
     private PaintingReport currentReport;
 
-    private ConversationSubtask currentSubtask;
+    private Subtask currentSubtask;
 
     private List<GeneratingRecord> records;
 
@@ -58,11 +58,11 @@ public class ConversationContext implements JSONable {
         return this.authToken;
     }
 
-    public void setCurrentSubtask(ConversationSubtask subtask) {
+    public void setCurrentSubtask(Subtask subtask) {
         this.currentSubtask = subtask;
     }
 
-    public ConversationSubtask getCurrentSubtask() {
+    public Subtask getCurrentSubtask() {
         return this.currentSubtask;
     }
 

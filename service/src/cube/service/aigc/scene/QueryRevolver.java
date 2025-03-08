@@ -20,28 +20,15 @@ import cube.service.aigc.listener.SemanticSearchListener;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class QueryRevolver {
 
-    private String[] keywordThinkingStyle = new String[] {
-            "思维方式",
-            "思考方式",
-            "思维方法",
-            "思考方法",
-            "思维",
-            "思考"
-    };
-
-    private String[] keywordCommunicationStyle = new String[] {
-            "沟通风格",
-            "沟通方式",
-            "沟通方法",
-            "沟通能力",
-            "沟通",
-            "交流"
-    };
+    private final static SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy年MM月dd日HH时mm分ss秒");
 
     private String[] keywordWorkEnvironment = new String[] {
             "工作环境偏好",
@@ -64,10 +51,6 @@ public class QueryRevolver {
             "解决"
     };
 
-//    private String[] keywordQueryPersonality = new String[] {
-//            "性格", "人格", "胜任"
-//    };
-
     private String[] paintingDesc = new String[] {
             "画", "画面", "图画", "图像", "照片", "绘画", "看"
     };
@@ -84,16 +67,60 @@ public class QueryRevolver {
         this.storage = storage;
     }
 
+    private String formatReportDate(PaintingReport report) {
+        return sDateFormat.format(new Date(report.getFinishedTimestamp()));
+    }
+
     public String generatePrompt(ConversationContext context, String query) {
         final StringBuilder result = new StringBuilder();
 
         int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60;
 
         if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
+            PaintingReport report = context.getCurrentReport();
             result.append("已知信息：\n\n");
-            result.append("当前讨论的被测人的心理特征描述是：");
-            result.append(context.getCurrentReport().getSummary());
+            result.append("当前评测报告的受测人是匿名的，");
+            result.append("年龄是：").append(report.getAttribute().age).append("岁，");
+            result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
+            result.append("报告日期是：").append(formatReportDate(report)).append("。\n");
+            result.append("受测人的心理特征摘要如下：");
+            result.append(report.getSummary());
             result.append("\n\n");
+
+            result.append("受测人有以下心理状态：\n");
+            List<String> symptomContent = this.extractSymptomContent(report.getEvaluationReport().getEvaluationScores(),
+                    report.getAttribute());
+            for (String content : symptomContent) {
+                result.append("* ").append(content).append("\n");
+            }
+            result.append("\n");
+
+            // 画面特征
+            result.append(this.tryGeneratePaintingFeature(report, query));
+
+            // 更新长度限制
+            wordLimit -= result.length();
+
+            if (wordLimit > 0) {
+                result.append("\n受测人的大五人格画像是").append(report.getEvaluationReport()
+                        .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。\n");
+                // 性格特点
+                result.append(report.getEvaluationReport()
+                        .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
+                result.append(this.filterPersonalityDescription(report.getEvaluationReport()
+                                .getPersonalityAccelerator().getBigFivePersonality().getDescription(),
+                        report.getAttribute()));
+                // 更新长度限制
+                wordLimit -= result.length();
+            }
+
+            if (wordLimit > 300) {
+                // 尝试生成数据片段
+                result.append("\n");
+                result.append(this.generateFragment(report, query));
+            }
+
+            // 更新长度限制
             wordLimit -= result.length();
         }
 
@@ -106,8 +133,8 @@ public class QueryRevolver {
                         // 排除得分较低答案
                         List<String> answers = questionAnswer.getAnswers();
                         for (String answer : answers) {
-                            ConversationSubtask subtask = ConversationSubtask.extract(answer);
-                            if (ConversationSubtask.None == subtask) {
+                            Subtask subtask = Subtask.extract(answer);
+                            if (Subtask.None == subtask) {
                                 // 不是子任务
                                 answerList.add(answer);
                             }
@@ -141,6 +168,9 @@ public class QueryRevolver {
             if (result.length() == 0) {
                 result.append("已知信息：\n\n");
             }
+            else {
+                result.append("\n下面的内容是一些与问题相关的知识：\n");
+            }
 
             for (String answer : answerList) {
                 if (result.length() + answer.length() >= wordLimit) {
@@ -155,7 +185,7 @@ public class QueryRevolver {
             result.append(query).append("\n");
         }
         else {
-            result.append("专业地回答问题，在答案最后加入一句：“我的更多功能您可以通过：**功能介绍**进行了解。”，问题是：");
+            result.append("专业地回答问题，在答案最后加入一句：“我的更多功能您可以通过：**功能介绍** 进行了解。”，问题是：");
             result.append(query).append("\n");
         }
 
@@ -407,29 +437,13 @@ public class QueryRevolver {
         return result;
     }
 
-//    public String generatePrompt(GeneratingRecord record, String query) {
-//        String knowledge = this.generateKnowledge(query);
-//        if (null == knowledge || knowledge.length() < 2) {
-//            return query;
-//        }
-//
-//        StringBuilder result = new StringBuilder();
-//        result.append("已知信息：\n");
-//        result.append(knowledge).append("\n\n");
-//        result.append("根据以上信息，专业地回答问题。问题是：");
-//        result.append(query);
-//
-//        return result.toString();
-//    }
-
     private String fixName(String name, String gender, int age) {
-        return name;
-//        if (age <= 22) {
-//            return name.charAt(0) + "同学";
-//        }
-//        else {
-//            return name.charAt(0) + (gender.contains("男") ? "先生" : "女士");
-//        }
+        if (age <= 22) {
+            return name;
+        }
+        else {
+            return name + (gender.contains("男") ? "先生" : "女士");
+        }
     }
 
     private List<String> extractSymptomContent(List<EvaluationScore> list, Attribute attribute) {
@@ -494,8 +508,6 @@ public class QueryRevolver {
                 TFIDFAnalyzer analyzer = null;
                 List<String> keywords = null;
 
-//                for (String word : this.keywordThinkingStyle) {
-//                    if (query.contains(word))
                 question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
                         .getBigFivePersonality().getDisplayName() + "的思维方式";
                 analyzer = new TFIDFAnalyzer(this.tokenizer);
@@ -506,12 +518,7 @@ public class QueryRevolver {
                     result.append(question).append("：");
                     result.append(answer).append("\n\n");
                 }
-//                        break;
-//                    }
-//                }
 
-//                for (String word : this.keywordCommunicationStyle) {
-//                    if (query.contains(word)) {
                 question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
                         .getBigFivePersonality().getDisplayName() + "的沟通风格";
                 analyzer = new TFIDFAnalyzer(this.tokenizer);
@@ -522,17 +529,9 @@ public class QueryRevolver {
                     result.append(question).append("：");
                     result.append(answer).append("\n\n");
                 }
-//                        break;
-//                    }
-//                }
 
                 for (String word : this.keywordWorkEnvironment) {
                     if (query.contains(word)) {
-//                        result.append("“");
-//                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
-//                                .getBigFiveFeature().getDisplayName());
-//                        result.append("的工作环境偏好”，");
-
                         question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
                                 .getBigFivePersonality().getDisplayName() + "的工作环境偏好";
                         analyzer = new TFIDFAnalyzer(this.tokenizer);
@@ -550,11 +549,6 @@ public class QueryRevolver {
 
                 for (String word : this.keywordManagementRecommendation) {
                     if (query.contains(word)) {
-//                        result.append("“");
-//                        result.append(paintingReport.getEvaluationReport().getPersonalityAccelerator()
-//                                .getBigFiveFeature().getDisplayName());
-//                        result.append("的管理建议”，");
-
                         question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
                                 .getBigFivePersonality().getDisplayName() + "的管理建议";
                         analyzer = new TFIDFAnalyzer(this.tokenizer);
@@ -573,10 +567,10 @@ public class QueryRevolver {
                 if (result.length() <= 17) {
                     result.delete(0, result.length());
                 }
-//                else {
-//                    result.delete(result.length() - 1, result.length());
-//                    result.append("。");
-//                }
+                else {
+                    result.delete(result.length() - 1, result.length());
+                    result.append("。");
+                }
             }
         }
 

@@ -302,7 +302,7 @@ public class EvaluationScore implements JSONable {
                 if (rate == IndicatorRate.High) {
                     buf.append("社会适应性良好");
                 } else if (rate == IndicatorRate.Low) {
-                    buf.append("社会适应性较差");
+                    buf.append("社会适应性一般");
                 } else {
                     return null;
                 }

@@ -50,8 +50,6 @@ public class PsychologyScene {
 
     private long lastConfigModified;
 
-    private int unitContextLength;
-
     private Queue<ReportTask> taskQueue;
 
     private Queue<ReportTask> runningTaskQueue;
@@ -212,12 +210,12 @@ public class PsychologyScene {
         return this.storage.countPsychologyReports();
     }
 
-    public int numPsychologyReports(long contactId, long startTime, long endTime) {
-        return this.storage.countPsychologyReports(contactId, startTime, endTime);
-    }
-
     public int numPsychologyReports(int state) {
         return this.storage.countPsychologyReports(state);
+    }
+
+    public List<PaintingReport> getPsychologyReports(long contactId, int state) {
+        return this.storage.readPsychologyReportsByContact(contactId, state);
     }
 
     public List<PaintingReport> getPsychologyReports(int pageIndex, int pageSize, boolean descending) {

@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 /**
  * 谈话子任务。
  */
-public enum ConversationSubtask {
+public enum Subtask {
 
     Yes("yes"),
 
@@ -38,11 +38,11 @@ public enum ConversationSubtask {
 
     public final String name;
 
-    ConversationSubtask(String name) {
+    Subtask(String name) {
         this.name = name;
     }
 
-    public static ConversationSubtask extract(String text) {
+    public static Subtask extract(String text) {
         Matcher matcher = sPattern.matcher(text);
         if (!matcher.find()) {
             return None;
@@ -51,7 +51,7 @@ public enum ConversationSubtask {
         task = task.replaceAll("\\{", "");
         task = task.replaceAll("\\}", "");
         task = task.trim();
-        for (ConversationSubtask subtask : ConversationSubtask.values()) {
+        for (Subtask subtask : Subtask.values()) {
             if (subtask.name.equalsIgnoreCase(task)) {
                 return subtask;
             }

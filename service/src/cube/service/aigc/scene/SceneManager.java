@@ -69,15 +69,24 @@ public class SceneManager {
     }
 
     public List<PaintingReport> queryReports(long relationId, String domainName) {
+        return PsychologyScene.getInstance().getPsychologyReports(relationId, 0);
+
+        /* 以下方法是按照聊天记录方式查询
         List<PaintingReport> result = new ArrayList<>();
+
         List<AIGCChatHistory> historyList = this.aigcService.getStorage().readChatHistoryByContactId(relationId, domainName,
                 0, System.currentTimeMillis());
+        List<Long> snList = new ArrayList<>();
         for (AIGCChatHistory history : historyList) {
             if (null != history.context) {
                 AttachmentResource resource = history.context.getAttachmentResource();
                 if (null != resource) {
                     Attachment attachment = resource.getAttachment();
-                    if (attachment.getType().equals(ReportAttachment.TYPE)) {
+                    if (null != attachment && attachment.getType().equals(ReportAttachment.TYPE)) {
+                        if (snList.contains(attachment.getId())) {
+                            continue;
+                        }
+                        snList.add(attachment.getId());
                         PaintingReport report = PsychologyScene.getInstance().getPaintingReport(attachment.getId());
                         if (null != report) {
                             result.add(report);
@@ -87,6 +96,7 @@ public class SceneManager {
             }
         }
         return result;
+        */
     }
 
     public Chart readReportChart(long reportSn) {
