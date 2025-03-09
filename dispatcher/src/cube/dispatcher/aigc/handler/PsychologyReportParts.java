@@ -6,6 +6,7 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cell.util.log.Logger;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -57,6 +58,7 @@ public class PsychologyReportParts extends ContextHandler {
                 }
                 this.complete();
             } catch (Exception e) {
+                Logger.e(this.getClass(), "#doGet", e);
                 this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
             }

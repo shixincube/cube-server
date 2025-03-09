@@ -19,7 +19,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.PaintingReportListener;
-import cube.service.aigc.scene.PsychologyHelper;
+import cube.service.aigc.scene.ReportHelper;
 import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.SceneManager;
 
@@ -230,7 +230,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
         }
 
         PaintingReport report = PsychologyScene.getInstance().generatePredictingReport(channel, convCtx.getCurrentAttribute(),
-                convCtx.getCurrentFile(), Theme.Generic, 10, new PaintingReportListener() {
+                convCtx.getCurrentFile(), Theme.Generic, 5, new PaintingReportListener() {
                     @Override
                     public void onPaintingPredicting(PaintingReport report, FileLabel file) {
                         Logger.d(this.getClass(), "#onPaintingPredicting");
@@ -265,7 +265,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                         if (null != record.context) {
                             record.context.setInferring(false);
                         }
-                        record.answer = PsychologyHelper.makeContentMarkdown(report, 5);
+                        record.answer = ReportHelper.makeContentMarkdown(report, 5);
                         convCtx.clearCurrentPredict();
                         // 将生成的报告设置为当前报告
                         convCtx.setCurrentReport(report);

@@ -55,7 +55,7 @@ public class Chart extends ContextHandler {
             }
 
             String path = this.getRequestPath(request);
-            String token = this.getLastRequestPath(request);
+            String token = this.getApiToken(request);
             if (null == token) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
@@ -66,6 +66,17 @@ public class Chart extends ContextHandler {
                 try {
                     long sn = Long.parseLong(request.getParameter("sn"));
                     JSONObject data = Manager.getInstance().getPsychologyPaintingChart(token, sn);
+                    if (null == data) {
+                        Thread.sleep(5000);
+                    }
+                    // 二次请求
+                    data = Manager.getInstance().getPsychologyPaintingChart(token, sn);
+                    if (null == data) {
+                        this.respond(response, HttpStatus.NOT_FOUND_404);
+                        this.complete();
+                        return;
+                    }
+
                     processIndexFile(response, "index.html", data);
                     this.complete();
                 } catch (Exception e) {

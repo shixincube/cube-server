@@ -2033,7 +2033,7 @@ public class KnowledgeBase {
             return null;
         }
 
-        final AIGCUnit unit = (Agent.getInstance() != null) ? Agent.getInstance().getUnit()
+        final AIGCUnit unit = (Agent.getInstance() != null) ? Agent.getInstance().selectUnit(unitName)
                 : this.service.selectUnitByName(unitName);
         if (null == unit) {
             Logger.w(this.getClass(), "#performKnowledgeQA - Select unit error: " + unitName);

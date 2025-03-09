@@ -181,8 +181,9 @@ public class QueryRevolver {
         }
 
         if (result.length() > 0) {
-            result.append("\n根据以上信息，专业地回答问题，如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，不允许在答案中添加编造成分。问题是：");
-            result.append(query).append("\n");
+            result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
+            result.append("不允许在答案中添加编造成分，可以以“根据您的提问”开头。");
+            result.append("问题是：").append(query).append("\n");
         }
         else {
             result.append("专业地回答问题，在答案最后加入一句：“我的更多功能您可以通过：**功能介绍** 进行了解。”，问题是：");

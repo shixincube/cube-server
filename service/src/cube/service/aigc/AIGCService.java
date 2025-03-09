@@ -418,7 +418,7 @@ public class AIGCService extends AbstractModule {
                 Agent.createInstance(properties.getProperty("agent.url", "http://127.0.0.1:7010"),
                         properties.getProperty("agent.token", ""));
                 // 添加单元
-                this.unitMap.put(Agent.getInstance().getUnit().getQueryKey(), Agent.getInstance().getUnit());
+                Agent.getInstance().fillUnits(this.unitMap);
             }
         } catch (IOException e) {
             Logger.e(this.getClass(), "#loadConfig - Load config properties error", e);
@@ -1155,15 +1155,12 @@ public class AIGCService extends AbstractModule {
         // 优先按照单元名称进行检索，然后按照描述进行检索
         AIGCUnit unit = null;
         if (this.useAgent) {
-            unit = Agent.getInstance().getUnit();
+            unit = Agent.getInstance().selectUnit(unitName);
         }
         else {
             unit = this.selectUnitByName(unitName);
             if (null == unit) {
                 unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
-                if (null == unit) {
-                    this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.ImprovedConversational);
-                }
             }
         }
 
@@ -1242,7 +1239,8 @@ public class AIGCService extends AbstractModule {
         if (this.useAgent) {
             Logger.d(this.getClass(), "#syncGenerateText - Agent - \"" + unit.getCapability().getName() + "\" - history:"
                     + ((null != history) ? history.size() : 0));
-            return Agent.getInstance().generateText(null, unit.getCapability().getName(), prompt, option, history);
+            return Agent.getInstance().generateText(Utils.randomString(16),
+                    unit.getCapability().getName(), prompt, option, history);
         }
 
         // 更新运行状态
@@ -1347,12 +1345,17 @@ public class AIGCService extends AbstractModule {
                              List<String> categories, boolean searchable, boolean recordable,
                              GenerateTextListener listener) {
         if (this.useAgent) {
-            unit = Agent.getInstance().getUnit();
+            unit = Agent.getInstance().selectUnit(unit.getCapability().getName());
         }
 
         if (null == unit) {
             // 没有单元数据
-            listener.onFailed(channel, AIGCStateCode.NotFound);
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onFailed(channel, AIGCStateCode.NotFound);
+                }
+            });
             return;
         }
 
@@ -3187,7 +3190,8 @@ public class AIGCService extends AbstractModule {
                 }
                 else if (useAgent) {
                     GeneratingRecord generatingRecord =
-                            Agent.getInstance().generateText(channel.getCode(), this.content, this.histories);
+                            Agent.getInstance().generateText(channel.getCode(), this.unit.getCapability().getName(),
+                                    this.content, new GeneratingOption(), this.histories);
                     if (null != generatingRecord) {
                         // 过滤中文字符
                         result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),

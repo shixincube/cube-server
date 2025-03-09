@@ -257,6 +257,13 @@ public class ConversationWorker {
                 // 跳过得分低的问答
                 continue;
             }
+            else if (questionAnswer.getScore() >= 0.95) {
+                List<String> answers = questionAnswer.getAnswers();
+                for (String answer : answers) {
+                    return Subtask.extract(answer);
+                }
+            }
+
             List<String> answers = questionAnswer.getAnswers();
             for (String answer : answers) {
                 Subtask subtask = Subtask.extract(answer);

@@ -208,7 +208,7 @@ function machineGun(container, text, completeCallback) {
     const _sentenceEndExp = /(\.|\?|!|_)$/g;
 
     var words = text.split(" ");
-    var tl = gsap.timeline({ delay:0.6, repeat:4, repeatDelay:2, onComplete: completeCallback });
+    var tl = gsap.timeline({ delay:0.6, repeat:7, repeatDelay:2, onComplete: completeCallback });
     var wordCount = words.length;
     var time = 0;
     var word, element, duration, isSentenceEnd, i, textEl;
@@ -845,6 +845,12 @@ function App() {
                 that.stopScanning();
 
                 onAppChartLoad();
+            };
+            gChartFrame.onerror = function() {
+                console.log('Load CoT chart error: ${sn}');
+                setTimeout(function() {
+                    gChartFrame.setAttribute('src', '/aigc/chart/pcd/${token}?sn=${sn}&t=${timestamp}');
+                }, 10 * 1000);
             };
             gChartFrame.setAttribute('src', '/aigc/chart/pcd/${token}?sn=${sn}&t=${timestamp}');
         }, delay);

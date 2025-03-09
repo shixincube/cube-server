@@ -17,7 +17,7 @@ import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
-import cube.service.aigc.scene.PsychologyHelper;
+import cube.service.aigc.scene.ReportHelper;
 import cube.service.aigc.scene.SceneManager;
 import cube.util.TextUtils;
 
@@ -36,8 +36,8 @@ public class SelectReportSubtask extends ConversationSubtask {
     @Override
     public AIGCStateCode execute(Subtask roundSubtask) {
         if (null == convCtx.getReportList()) {
-            List<PaintingReport> list = SceneManager.getInstance().queryReports(convCtx.getRelationId(),
-                    convCtx.getAuthToken().getDomain());
+            List<PaintingReport> list = SceneManager.getInstance().queryReports(convCtx.getAuthToken().getContactId(),
+                    0);
             convCtx.setReportList(list);
         }
 
@@ -92,8 +92,8 @@ public class SelectReportSubtask extends ConversationSubtask {
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = polish(String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
-                                    PsychologyHelper.makeReportTitleMarkdown(report),
-                                    PsychologyHelper.makeContentMarkdown(report, 5)));
+                                    ReportHelper.makeReportTitleMarkdown(report),
+                                    ReportHelper.makeContentMarkdown(report, 5)));
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
@@ -198,8 +198,8 @@ public class SelectReportSubtask extends ConversationSubtask {
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
-                                    PsychologyHelper.makeReportTitleMarkdown(reports.get(0)),
-                                    PsychologyHelper.makeContentMarkdown(reports.get(0), 5));
+                                    ReportHelper.makeReportTitleMarkdown(reports.get(0)),
+                                    ReportHelper.makeContentMarkdown(reports.get(0), 5));
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
@@ -213,7 +213,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                             String answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_FOUND_MULTIPLE_REPORTS"),
                                     convCtx.getReportList().size(), reports.size(),
-                                    PsychologyHelper.makeReportListMarkdown(reports));
+                                    ReportHelper.makeReportListMarkdown(reports));
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = answer;
                             convCtx.record(record);

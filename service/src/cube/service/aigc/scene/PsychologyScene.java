@@ -969,6 +969,10 @@ public class PsychologyScene {
 
     public JSONObject getPaintingInferenceData(AuthToken authToken, long reportSn) {
         PaintingReport report = this.getPaintingReport(reportSn);
+        if (null == report) {
+            return null;
+        }
+
         if (report.getState() == AIGCStateCode.Ok || report.getState() == AIGCStateCode.Inferencing) {
             JSONObject result = new JSONObject();
             JSONArray nodes = new JSONArray();
@@ -982,6 +986,10 @@ public class PsychologyScene {
             List<String> otherNodeNames = new ArrayList<>();
 
             EvaluationReport evaluationReport = report.getEvaluationReport();
+            if (null == evaluationReport) {
+                Logger.w(this.getClass(), "#getPaintingInferenceData - Evaluation data is null: " + reportSn);
+                return null;
+            }
             List<Representation> list = evaluationReport.getRepresentationList();
             for (Representation rep : list) {
                 JSONObject node = new JSONObject();
@@ -1151,7 +1159,7 @@ public class PsychologyScene {
         // 生成评估报告
         EvaluationReport report = evaluation.makeEvaluationReport();
 
-        Workflow workflow = new Workflow(report, channel, this.service);
+        Workflow workflow = new Workflow(report, this.service);
         if (report.isEmpty()) {
             Logger.w(this.getClass(), "#processReport - No things in painting: " + channel.getAuthToken().getContactId());
             return workflow;

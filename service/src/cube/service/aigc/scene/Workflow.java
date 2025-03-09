@@ -13,7 +13,6 @@ import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.composition.*;
-import cube.common.entity.AIGCChannel;
 import cube.common.entity.GeneratingOption;
 import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
@@ -34,8 +33,6 @@ public class Workflow {
     private boolean speed = true;
 
     private EvaluationReport evaluationReport;
-
-    private AIGCChannel channel;
 
     private AIGCService service;
 
@@ -58,10 +55,9 @@ public class Workflow {
         this.attribute = attribute;
     }
 
-    public Workflow(EvaluationReport evaluationReport, AIGCChannel channel, AIGCService service) {
+    public Workflow(EvaluationReport evaluationReport, AIGCService service) {
         this.attribute = evaluationReport.getAttribute();
         this.evaluationReport = evaluationReport;
-        this.channel = channel;
         this.service = service;
         this.reportTextList = new ArrayList<>();
     }
@@ -148,7 +144,7 @@ public class Workflow {
             this.normDimensionScore = new HexagonDimensionScore(80, 80, 80, 80, 80, 80);
 
             // 描述
-            PsychologyHelper.fillDimensionScoreDescription(this.service.getTokenizer(), this.dimensionScore);
+            ReportHelper.fillDimensionScoreDescription(this.service.getTokenizer(), this.dimensionScore);
         } catch (Exception e) {
             Logger.w(this.getClass(), "#make", e);
         }
@@ -242,7 +238,7 @@ public class Workflow {
                 null, null);
         String fixAnswer = (null != generatingResult) ? generatingResult.answer : null;
         if (null != fixAnswer) {
-            answer = fixAnswer;
+            answer = fixThirdPerson(fixAnswer);
         }
         // 设置描述
         feature.setDescription(answer);
@@ -434,7 +430,7 @@ public class Workflow {
 
         // 生成概述
         StringBuilder prompt = new StringBuilder("已知信息：\n\n");
-        prompt.append("您的心理评测结果如下：\n\n");
+        prompt.append("受测人心理评测结果如下：\n\n");
         for (ReportSection rs : list) {
 //            prompt.append("* **").append(rs.title).append("** ：");
             prompt.append(rs.report).append("\n\n");
@@ -460,27 +456,11 @@ public class Workflow {
             result = (null != generating) ? generating.answer : null;
         }
         if (null != result) {
+
             summary.append(result);
         }
 
-        /*prompt = new StringBuilder("已知信息：\n\n");
-        prompt.append("您的心理评测建议如下：\n");
-        for (ReportSection rs : list) {
-            prompt.append(rs.suggestion).append("\n\n");
-            if (prompt.length() >= ModelConfig.BAIZE_CONTEXT_LIMIT) {
-                break;
-            }
-        }
-        prompt.append("\n");
-        prompt.append("根据上述已知信息，简洁和专业地来回答用户的问题。问题是：总结性地给出此人的心理评测建议，各内容之间分段展示。");
-        result = this.service.syncGenerateText(unitName, prompt.toString(), new GeneratingOption(),
-                null, null);
-        if (null != result) {
-            summary.append("\n\n");
-            summary.append(result);
-        }*/
-
-        return summary.toString();
+        return fixThirdPerson(summary.toString());
     }
 
     public String infer(String query) {
@@ -522,5 +502,24 @@ public class Workflow {
         }
 
         return dataset.matchContent(keywords.toArray(new String[0]), 5);
+    }
+
+    private String fixThirdPerson(String text) {
+        String result = text.replaceAll("此人", "受测人");
+
+        StringBuffer buf = new StringBuffer();
+        List<String> words = this.service.segmentation(result);
+        for (String word : words) {
+            if (word.equals("他")) {
+                buf.append("受测人");
+            }
+            else if (word.equals("他的")) {
+                buf.append("受测人的");
+            }
+            else {
+                buf.append(word);
+            }
+        }
+        return buf.toString();
     }
 }

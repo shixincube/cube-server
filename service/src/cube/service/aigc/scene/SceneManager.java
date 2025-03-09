@@ -68,10 +68,11 @@ public class SceneManager {
         this.aigcService.getStorage().writeChatHistory(history);
     }
 
-    public List<PaintingReport> queryReports(long relationId, String domainName) {
-        return PsychologyScene.getInstance().getPsychologyReports(relationId, 0);
+    public List<PaintingReport> queryReports(long contactId, int state) {
+        return PsychologyScene.getInstance().getPsychologyReports(contactId, state);
 
         /* 以下方法是按照聊天记录方式查询
+        // 参数是 (long relationId, String domainName)
         List<PaintingReport> result = new ArrayList<>();
 
         List<AIGCChatHistory> historyList = this.aigcService.getStorage().readChatHistoryByContactId(relationId, domainName,

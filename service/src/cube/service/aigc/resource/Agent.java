@@ -23,6 +23,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -36,9 +37,9 @@ public final class Agent {
 
     private String token;
 
-    private AIGCUnit unit;
-
     private String channelCode;
+
+    private List<AIGCUnit> unitList;
 
     public final static Agent getInstance() {
         return Agent.instance;
@@ -54,26 +55,44 @@ public final class Agent {
         this.token = token;
         this.channelCode = Utils.randomString(16);
 
+        this.unitList = new ArrayList<>();
+        String[] models = new String[] {
+                ModelConfig.BAIZE_UNIT,
+                ModelConfig.BAIZE_X_UNIT,
+                ModelConfig.BAIZE_NEXT_UNIT,
+        };
         Contact contact = new Contact(100000, AuthConsts.DEFAULT_DOMAIN);
+        for (String model : models) {
+            List<String> subtasks = new ArrayList<>();
+            subtasks.add(AICapability.NaturalLanguageProcessing.Conversational);
+            AICapability capability = new AICapability(model,
+                    AICapability.NaturalLanguageProcessingTask, subtasks, "");
+            AIGCUnit unit = new AIGCUnit(contact, capability, null);
+            this.unitList.add(unit);
+        }
+    }
 
-        List<String> subtasks = new ArrayList<>();
-        subtasks.add(AICapability.NaturalLanguageProcessing.Conversational);
-        AICapability capability = new AICapability(ModelConfig.CHAT_UNIT,
-                AICapability.NaturalLanguageProcessingTask, subtasks, "");
+    public void fillUnits(Map<String, AIGCUnit> map) {
+        for (AIGCUnit unit : this.unitList) {
+            map.put(unit.getQueryKey(), unit);
+        }
+    }
 
-        this.unit = new AIGCUnit(contact, capability, null);
+    public AIGCUnit selectUnit(String unitName) {
+        for (AIGCUnit unit : this.unitList) {
+            if (unit.getCapability().getName().equalsIgnoreCase(unitName)) {
+                return unit;
+            }
+        }
+        return null;
     }
 
     public String getUrl() {
         return this.url;
     }
 
-    public AIGCUnit getUnit() {
-        return this.unit;
-    }
-
     public GeneratingRecord generateText(String channelCode, String content, List<GeneratingRecord> records) {
-        return this.generateText(channelCode, this.unit.getCapability().getName(), content, new GeneratingOption(), records);
+        return this.generateText(channelCode, ModelConfig.BAIZE_NEXT_UNIT, content, new GeneratingOption(), records);
     }
 
     public GeneratingRecord generateText(String channelCode, String unitName, String content, GeneratingOption option,
@@ -93,13 +112,15 @@ public final class Agent {
                 }
             }
 
-            String chatUrl = this.url + "aigc/chat/" + this.token;
+            String chatUrl = this.url + "aigc/chat/" + this.token + "/";
+
+            Logger.d(this.getClass(), "#generateText - query:\n" + content);
 
             JSONObject data = new JSONObject();
             data.put("code", code);
             data.put("content", content);
             data.put("unit", unitName);
-            data.put("option", (null == option) ? (new GeneratingOption()).toJSON() : option);
+            data.put("option", (null == option) ? (new GeneratingOption()).toJSON() : option.toJSON());
             data.put("histories", 0);
             data.put("pattern", Consts.PATTERN_CHAT);
             data.put("recordable", false);
@@ -109,11 +130,13 @@ public final class Agent {
             client.getProtocolHandlers().remove(WWWAuthenticationProtocolHandler.NAME);
 
             StringContentProvider provider = new StringContentProvider(data.toString());
-            ContentResponse response = client.POST(chatUrl).timeout(4, TimeUnit.MINUTES).content(provider).send();
+            ContentResponse response = client.POST(chatUrl).timeout(5, TimeUnit.MINUTES).content(provider).send();
 
             if (response.getStatus() == HttpStatus.OK_200) {
                 JSONObject responseData = new JSONObject(response.getContentAsString());
                 if (responseData.has("content")) {
+                    Logger.d(this.getClass(), "#generateText - result:\n" + responseData.getString("content"));
+
                     String thought = responseData.has("thought") ? responseData.getString("thought") : "";
                     return new GeneratingRecord(Utils.generateSerialNumber(), unitName,
                             content, responseData.getString("content"), thought);
@@ -121,6 +144,9 @@ public final class Agent {
                 else {
                     Logger.e(this.getClass(), "#generateText - Response data has no content");
                 }
+            }
+            else {
+                Logger.e(this.getClass(), "#generateText - Response state: " + response.getStatus());
             }
         } catch (Exception e) {
             e.printStackTrace();

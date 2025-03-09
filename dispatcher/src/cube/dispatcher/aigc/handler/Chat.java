@@ -41,7 +41,7 @@ public class Chat extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
@@ -51,7 +51,7 @@ public class Chat extends ContextHandler {
             String channelCode = null;
             String content = null;
             String pattern = Consts.PATTERN_CHAT;
-            String unit = ModelConfig.CHAT_UNIT;
+            String unit = ModelConfig.BAIZE_NEXT_UNIT;
             GeneratingOption option = new GeneratingOption();
             int histories = 0;
             JSONArray records = null;
@@ -133,10 +133,11 @@ public class Chat extends ContextHandler {
                     GeneratingRecord record = future.record;
                     JSONObject responseData = new JSONObject();
                     responseData.put("sn", record.sn);
-                    responseData.put("participant", AI_NAME);
+                    responseData.put("participant", unit);
                     responseData.put("timestamp", record.timestamp);
                     responseData.put("pattern", pattern);
                     responseData.put("content", null != record.answer ? record.answer : "");
+                    responseData.put("thought", null != record.thought ? record.thought : "");
                     if (null != record.context) {
                         responseData.put("context", record.context.toJSON());
                     }

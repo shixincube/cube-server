@@ -18,7 +18,7 @@ import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
-import cube.service.aigc.scene.PsychologyHelper;
+import cube.service.aigc.scene.ReportHelper;
 import cube.service.aigc.scene.SceneManager;
 
 import java.util.List;
@@ -33,16 +33,16 @@ public class QueryReportSubtask extends ConversationSubtask {
 
     @Override
     public AIGCStateCode execute(Subtask roundSubtask) {
-        final List<PaintingReport> list = SceneManager.getInstance().queryReports(convCtx.getRelationId(),
-                convCtx.getAuthToken().getDomain());
+        final List<PaintingReport> list = SceneManager.getInstance().queryReports(convCtx.getAuthToken().getContactId(),
+                0);
         convCtx.setReportList(list);
         if (list.isEmpty()) {
             this.service.getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
                     GeneratingRecord record = new GeneratingRecord(query);
-                    record.answer = polish(Resource.getInstance().getCorpus(CORPUS,
-                            "ANSWER_NO_REPORTS_DATA"));
+                    record.answer = Resource.getInstance().getCorpus(CORPUS,
+                            "ANSWER_NO_REPORTS_DATA");
                     convCtx.record(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
@@ -57,7 +57,7 @@ public class QueryReportSubtask extends ConversationSubtask {
                     String answer = polish(String.format(Resource.getInstance().getCorpus(CORPUS,
                             "FORMAT_ANSWER_QUERY_REPORT_RESULT_PREFIX"),
                             list.size()));
-                    answer = answer + "\n" + PsychologyHelper.makeReportListMarkdown(list);
+                    answer = answer + "\n" + ReportHelper.makeReportListMarkdown(list);
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = answer;
                     convCtx.record(record);

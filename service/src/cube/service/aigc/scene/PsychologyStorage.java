@@ -10,7 +10,6 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.*;
-import cube.auth.AuthToken;
 import cube.common.Storagable;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -1061,7 +1060,7 @@ public class PsychologyStorage implements Storagable {
             HexagonDimensionScore normDimensionScore = new HexagonDimensionScore(80, 80, 80, 80, 80, 80);
 
             // 描述
-            PsychologyHelper.fillDimensionScoreDescription(this.tokenizer, dimensionScore);
+            ReportHelper.fillDimensionScoreDescription(this.tokenizer, dimensionScore);
 
             report.setDimensionalScore(dimensionScore, normDimensionScore);
         } catch (Exception e) {
