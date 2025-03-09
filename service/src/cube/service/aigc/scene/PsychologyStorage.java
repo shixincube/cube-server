@@ -337,12 +337,12 @@ public class PsychologyStorage implements Storagable {
         if (!this.storage.exist(this.reportTable)) {
             // 不存在，建新表
             if (this.storage.executeCreate(this.reportTable, this.reportFields)) {
-                // evaluation_data 字段修改为 MEDIUMTEXT
+                // evaluation_data 字段修改为 LONGTEXT
                 /*
                 ALTER TABLE `psychology_report` CHANGE COLUMN `evaluation_data` `evaluation_data` MEDIUMTEXT NULL DEFAULT NULL ;
                 */
                 this.storage.execute("ALTER TABLE `" + this.reportTable +
-                        "` CHANGE COLUMN `evaluation_data` `evaluation_data` MEDIUMTEXT NULL DEFAULT NULL");
+                        "` CHANGE COLUMN `evaluation_data` `evaluation_data` LONGTEXT NULL DEFAULT NULL");
                 Logger.i(this.getClass(), "Created table '" + this.reportTable + "' successfully");
             }
         }
@@ -358,7 +358,7 @@ public class PsychologyStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.paintingFeatureSetTable, this.paintingFeatureSetFields)) {
                 this.storage.execute("ALTER TABLE `" + this.paintingFeatureSetTable +
-                        "` CHANGE COLUMN `data` `data` MEDIUMTEXT NULL DEFAULT NULL");
+                        "` CHANGE COLUMN `data` `data` LONGTEXT NULL DEFAULT NULL");
                 Logger.i(this.getClass(), "Created table '" + this.paintingFeatureSetTable + "' successfully");
             }
         }
@@ -474,18 +474,24 @@ public class PsychologyStorage implements Storagable {
         return report;
     }
 
-    public List<PaintingReport> readPsychologyReportsByContact(long contactId, int state) {
+    public List<PaintingReport> readPsychologyReportsByContact(long contactId, int state, int limit) {
         List<PaintingReport> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
                 new Conditional[] {
                         Conditional.createEqualTo("contact_id", contactId),
                         Conditional.createAnd(),
-                        Conditional.createEqualTo("state", state)
+                        Conditional.createEqualTo("state", state),
+                        Conditional.createOrderBy("timestamp", true),
+                        Conditional.createLimit(limit)
                 });
 
-        for (StorageField[] data : result) {
-            PaintingReport report = this.makeReport(data);
+        for (StorageField[] fields : result) {
+            PaintingReport report = this.makeReport(fields);
+            if (null == report) {
+                Logger.e(this.getClass(), "#readPsychologyReportsByContact - Read data error: " + fields[0].getLong());
+                continue;
+            }
             list.add(report);
         }
         return list;
@@ -503,6 +509,10 @@ public class PsychologyStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             PaintingReport report = this.makeReport(fields);
+            if (null == report) {
+                Logger.e(this.getClass(), "#readPsychologyReports - Read data error: " + fields[0].getLong());
+                continue;
+            }
             list.add(report);
         }
 
@@ -532,6 +542,10 @@ public class PsychologyStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             PaintingReport report = this.makeReport(fields);
+            if (null == report) {
+                Logger.e(this.getClass(), "#readPsychologyReports - Read report error");
+                continue;
+            }
             list.add(report);
         }
 
@@ -569,8 +583,8 @@ public class PsychologyStorage implements Storagable {
                 Conditional.createEqualTo("sn", report.sn)
         });
 
-        String dataString = report.getEvaluationReport().toJSON().toString();
-        dataString = JSONUtils.escape(dataString);
+        String dataString = report.getEvaluationReport().toStrictJSON().toString();
+        dataString = JSONUtils.serializeEscape(dataString);
 
         return this.storage.executeInsert(this.reportTable, new StorageField[] {
                 new StorageField("sn", report.sn),
@@ -592,8 +606,8 @@ public class PsychologyStorage implements Storagable {
     }
 
     public boolean updatePsychologyReport(PaintingReport report) {
-        String dataString = report.getEvaluationReport().toJSON().toString();
-        dataString = JSONUtils.escape(dataString);
+        String dataString = report.getEvaluationReport().toStrictJSON().toString();
+        dataString = JSONUtils.serializeEscape(dataString);
 
         return this.storage.executeUpdate(this.reportTable, new StorageField[] {
                 new StorageField("timestamp", report.timestamp),
@@ -680,7 +694,7 @@ public class PsychologyStorage implements Storagable {
 
         Map<String, StorageField> fields = StorageFields.get(result.get(0));
         try {
-            String jsonString = JSONUtils.filter(fields.get("data").getString());
+            String jsonString = JSONUtils.deserializeEscape(fields.get("data").getString());
             return new PaintingFeatureSet(new JSONObject(jsonString));
         } catch (Exception e) {
             Logger.e(this.getClass(), "#readPaintingFeatureSet", e);
@@ -741,7 +755,7 @@ public class PsychologyStorage implements Storagable {
             });
 
         String dataString = scale.toJSON().toString();
-        dataString = JSONUtils.escape(dataString);
+        dataString = JSONUtils.serializeEscape(dataString);
 
         if (result.isEmpty()) {
             return this.storage.executeInsert(this.scaleTable, new StorageField[] {
@@ -779,7 +793,7 @@ public class PsychologyStorage implements Storagable {
 
         Map<String, StorageField> fields = StorageFields.get(result.get(0));
         try {
-            String dataStr = JSONUtils.filter(fields.get("sheet").getString());
+            String dataStr = JSONUtils.deserializeEscape(fields.get("sheet").getString());
             return new AnswerSheet(new JSONObject(dataStr));
         } catch (Exception e) {
             Logger.e(this.getClass(), "#readAnswerSheet", e);
@@ -837,7 +851,7 @@ public class PsychologyStorage implements Storagable {
 
     public boolean writeScaleReport(ScaleReport scaleReport) {
         String dataString = scaleReport.getFactorsAsJSONArray().toString();
-        dataString = JSONUtils.escape(dataString);
+        dataString = JSONUtils.serializeEscape(dataString);
 
         List<StorageField[]> result = this.storage.executeQuery(this.scaleReportTable, this.scaleReportFields,
                 new Conditional[] {
@@ -989,7 +1003,7 @@ public class PsychologyStorage implements Storagable {
                 dataJson = new JSONObject(data.get("evaluation_data").getString().trim());
             } catch (Exception e) {
                 try {
-                    dataJson = new JSONObject(JSONUtils.filter(data.get("evaluation_data").getString().trim()));
+                    dataJson = new JSONObject(JSONUtils.deserializeEscape(data.get("evaluation_data").getString().trim()));
                 } catch (Exception se) {
                     Logger.e(this.getClass(), "#makeReport", se);
                 }
@@ -1000,8 +1014,13 @@ public class PsychologyStorage implements Storagable {
                 return null;
             }
 
-            evaluationReport = new EvaluationReport(dataJson);
-            report.setEvaluationReport(evaluationReport);
+            try {
+                evaluationReport = new EvaluationReport(dataJson);
+                report.setEvaluationReport(evaluationReport);
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "#makeReport - `evaluation_data` data error: " + report.sn, e);
+                return null;
+            }
         }
 
         List<StorageField[]> fields = null;

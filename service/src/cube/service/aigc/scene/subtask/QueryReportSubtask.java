@@ -18,6 +18,7 @@ import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
+import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.ReportHelper;
 import cube.service.aigc.scene.SceneManager;
 
@@ -33,8 +34,8 @@ public class QueryReportSubtask extends ConversationSubtask {
 
     @Override
     public AIGCStateCode execute(Subtask roundSubtask) {
-        final List<PaintingReport> list = SceneManager.getInstance().queryReports(convCtx.getAuthToken().getContactId(),
-                0);
+        final List<PaintingReport> list = PsychologyScene.getInstance().getPsychologyReports(convCtx.getAuthToken().getContactId(),
+                0, 10);
         convCtx.setReportList(list);
         if (list.isEmpty()) {
             this.service.getExecutor().execute(new Runnable() {

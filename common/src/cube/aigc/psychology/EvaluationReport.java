@@ -939,4 +939,43 @@ public class EvaluationReport implements JSONable {
 
         return json;
     }
+
+    public JSONObject toStrictJSON() {
+        JSONObject json = new JSONObject();
+        json.put("version", this.version);
+        json.put("attribute", this.attribute.toJSON());
+        json.put("reference", this.reference.name);
+
+        JSONArray array = new JSONArray();
+        for (Representation representation : this.representationList) {
+            array.put(representation.toStrictJSON());
+        }
+        json.put("representationList", array);
+
+        json.put("accelerator", this.scoreAccelerator.toJSON());
+
+        if (null != this.personalityAccelerator) {
+            json.put("personality", this.personalityAccelerator.toJSON());
+        }
+
+        json.put("attention", this.attention.level);
+
+        array = new JSONArray();
+        for (Scale scale : this.additionScales) {
+            array.put(scale.toCompactJSON());
+        }
+        json.put("additionScales", array);
+
+        if (null != this.factorSet) {
+            json.put("factorSet", this.factorSet.toJSON());
+        }
+
+        json.put("hesitating", this.hesitating);
+
+        if (null != this.suggestion) {
+            json.put("suggestion", this.suggestion.toJSON());
+        }
+
+        return json;
+    }
 }

@@ -52,6 +52,10 @@ public class KnowledgeStrategy implements JSONable {
         return this.term;
     }
 
+    public boolean isEmpty() {
+        return (null == this.interpretation);
+    }
+
     public String getInterpretation() {
         return this.interpretation;
     }

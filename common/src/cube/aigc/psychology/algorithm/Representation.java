@@ -6,6 +6,7 @@
 
 package cube.aigc.psychology.algorithm;
 
+import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.material.Thing;
 import cube.common.JSONable;
 import org.json.JSONArray;
@@ -30,6 +31,7 @@ public class Representation implements JSONable {
     public final static String Strong = "强";
     public final static String Weak = "弱";
     public final static String Normal = "一般";
+    public final static String High = "高";
 
     public KnowledgeStrategy knowledgeStrategy;
 
@@ -48,6 +50,13 @@ public class Representation implements JSONable {
 
     public Representation(JSONObject json) {
         this.knowledgeStrategy = new KnowledgeStrategy(json.getJSONObject("knowledgeStrategy"));
+        if (this.knowledgeStrategy.isEmpty()) {
+            // 重新从资源中加载数据
+            KnowledgeStrategy ks = Resource.getInstance().getTermInterpretation(this.knowledgeStrategy.getTerm());
+            if (null != ks) {
+                this.knowledgeStrategy = ks;
+            }
+        }
         this.positiveCorrelation = json.getInt("positiveCorrelation");
         this.negativeCorrelation = json.getInt("negativeCorrelation");
         this.description = json.getString("description");
@@ -90,6 +99,9 @@ public class Representation implements JSONable {
                 case SenseOfSecurity:
                     marked = this.knowledgeStrategy.getTerm().word + Weak;
                     break;
+                case SelfEsteem:
+                    marked = this.knowledgeStrategy.getTerm().word + Normal;
+                    break;
                 default:
                     marked = LowTrick + this.knowledgeStrategy.getTerm().word;
                     break;
@@ -107,6 +119,9 @@ public class Representation implements JSONable {
                 case SenseOfSecurity:
                     marked = this.knowledgeStrategy.getTerm().word + Strong;
                     break;
+                case SelfEsteem:
+                    marked = this.knowledgeStrategy.getTerm().word + High;
+                    break;
                 default:
                     marked = HighTrick + this.knowledgeStrategy.getTerm().word;
                     break;
@@ -121,6 +136,9 @@ public class Representation implements JSONable {
                     break;
                 case SenseOfReality:
                 case SenseOfSecurity:
+                    marked = this.knowledgeStrategy.getTerm().word + Normal;
+                    break;
+                case SelfEsteem:
                     marked = this.knowledgeStrategy.getTerm().word + Normal;
                     break;
                 default:
@@ -173,6 +191,20 @@ public class Representation implements JSONable {
         JSONArray array = new JSONArray();
         for (PerceptronThing thing : this.things) {
             array.put(thing.toCompactJSON());
+        }
+        json.put("things", array);
+        return json;
+    }
+
+    public JSONObject toStrictJSON() {
+        JSONObject json = new JSONObject();
+        json.put("knowledgeStrategy", this.knowledgeStrategy.toCompactJSON());
+        json.put("positiveCorrelation", this.positiveCorrelation);
+        json.put("negativeCorrelation", this.negativeCorrelation);
+        json.put("description", this.description);
+        JSONArray array = new JSONArray();
+        for (PerceptronThing thing : this.things) {
+            array.put(thing.toJSON());
         }
         json.put("things", array);
         return json;

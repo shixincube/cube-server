@@ -196,19 +196,35 @@ public final class JSONUtils {
         return result;
     }
 
-    public static String filter(String text) {
-        return text.replaceAll("\\n", "\\\\n");
-    }
-
-    public static String escape(String text) {
+    public static String serializeEscape(String text) {
         return text.replaceAll("\\\\", "\\\\\\\\");
     }
 
-//    public static void main(String[] args) {
-//        JSONObject json = new JSONObject();
-//        json.put("reference", "Abnormal");
-//        json.put("name", "X\"JW\"\n下一行");
-//        System.out.println(json.toString());
-//        System.out.println(escape(json.toString()));
+    public static String deserializeEscape(String text) {
+        return text.replaceAll("\\n", "\\\\n");
+    }
+
+//    public static String deserializeEscape(String text) {
+//        String result = text.replaceAll("\\\\\"", "\\\"");
+//        return result.replaceAll("\\n", "\\\\n");
 //    }
+
+    public static void main(String[] args) {
+        JSONObject json = new JSONObject();
+
+        String content = "X\"JW\"，结束。\n下一行\\前面是斜线";
+
+        json.put("reference", "Abnormal");
+        json.put("content", content);
+        System.out.println(json.toString());
+
+        String dbString = serializeEscape(json.toString());
+        System.out.println(dbString);
+
+        String rawString = deserializeEscape(dbString);
+        System.out.println(rawString);
+
+        json = new JSONObject(rawString);
+        System.out.println(json.getString("content"));
+    }
 }

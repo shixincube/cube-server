@@ -63,7 +63,7 @@
             "en": ""
         },
         "FORMAT_ANSWER_QUERY_REPORT_RESULT_PREFIX": {
-            "cn": "通过对历史数据的查询，共找到**%d**份您操作过的报告。按照报告时间整理如下：\n\n",
+            "cn": "通过对历史数据的查询，共找到**%d**份您操作过的报告。按照报告时间倒序整理如下：\n\n",
             "en": ""
         },
         "FORMAT_ANSWER_SELECT_REPORT_LOCATION_OVERFLOW": {

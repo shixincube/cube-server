@@ -89,6 +89,27 @@ public abstract class ConversationSubtask {
         return result.answer;
     }
 
+    public String fastPolish(String text) {
+        AIGCUnit unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_UNIT);
+        if (null == unit) {
+            unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_X_UNIT);
+            if (null == unit) {
+                unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+                if (null == unit) {
+                    Logger.d(this.getClass(), "#fastPolish - Can NOT find unit");
+                    return text;
+                }
+            }
+        }
+
+        String prompt = String.format(Resource.getInstance().getCorpus("prompt", "FORMAT_POLISH"), text);
+        GeneratingRecord result = this.service.syncGenerateText(unit, prompt, null, null, null);
+        if (null == result) {
+            return text;
+        }
+        return result.answer;
+    }
+
     protected Attribute extractAttribute(String query) {
         int age = 0;
         String gender = "";

@@ -113,21 +113,36 @@ public class ReportHelper {
             buf.append("# 人格特质（大五人格）\n\n");
             buf.append("**【人格画像】** ：**").append(bigFivePersonality.getDisplayName()).append("**。\n\n");
             buf.append("**【人格描述】** ：\n\n").append(bigFivePersonality.getDescription()).append("\n\n");
-            buf.append("**【维度描述】** ：\n\n");
-            buf.append("**宜人性** （")
+//            buf.append("**【维度描述】** ：\n\n");
+
+            buf.append("### **宜人性** （")
                     .append(String.format("%.1f", bigFivePersonality.getObligingness())).append("）\n\n");
+            buf.append("* **评级** ：")
+                    .append(evalPersonalityScore(bigFivePersonality.getObligingness())).append("\n\n");
             buf.append(bigFivePersonality.getObligingnessContent()).append("\n\n");
-            buf.append("**尽责性** （")
+
+            buf.append("### **尽责性** （")
                     .append(String.format("%.1f", bigFivePersonality.getConscientiousness())).append("）\n\n");
+            buf.append("* **评级** ：")
+                    .append(evalPersonalityScore(bigFivePersonality.getConscientiousness())).append("\n\n");
             buf.append(bigFivePersonality.getConscientiousnessContent()).append("\n\n");
-            buf.append("**外向性** （")
+
+            buf.append("### **外向性** （")
                     .append(String.format("%.1f", bigFivePersonality.getExtraversion())).append("）\n\n");
+            buf.append("* **评级** ：")
+                    .append(evalPersonalityScore(bigFivePersonality.getExtraversion())).append("\n\n");
             buf.append(bigFivePersonality.getExtraversionContent()).append("\n\n");
-            buf.append("**进取性** （")
+
+            buf.append("### **进取性** （")
                     .append(String.format("%.1f", bigFivePersonality.getAchievement())).append("）\n\n");
+            buf.append("* **评级** ：")
+                    .append(evalPersonalityScore(bigFivePersonality.getAchievement())).append("\n\n");
             buf.append(bigFivePersonality.getAchievementContent()).append("\n\n");
-            buf.append("**情绪性** （")
+
+            buf.append("### **情绪性** （")
                     .append(String.format("%.1f", bigFivePersonality.getNeuroticism())).append("）\n\n");
+            buf.append("* **评级** ：")
+                    .append(evalPersonalityScore(bigFivePersonality.getNeuroticism())).append("\n\n");
             buf.append(bigFivePersonality.getNeuroticismContent()).append("\n\n");
         }
 
@@ -146,6 +161,18 @@ public class ReportHelper {
         buf.append("3. **以整体的观点来看待测试结果。** 很多测验都包含多个分测验，对于这类测验来说，不应该孤立地理解单个分测验的成绩。在评定一个人的特征时，一方面需要理解每一个分测验分数的意义，但更重要的是综合所有信息全面分析。\n\n");
 
         return buf.toString();
+    }
+
+    private static String evalPersonalityScore(double score) {
+        if (score <= 3.5) {
+            return "低";
+        }
+        else if (score >= 7.5) {
+            return "高";
+        }
+        else {
+            return "中";
+        }
     }
 
     public static String makeMarkdown(PaintingFeatureSet featureSet) {
