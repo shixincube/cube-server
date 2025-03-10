@@ -151,11 +151,11 @@ public class EvaluationScore implements JSONable {
         switch (this.indicator) {
             case Depression:
                 if (rate == IndicatorRate.Low) {
-                    buf.append("轻度抑郁");
+                    buf.append("抑郁倾向低");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度抑郁");
+                    buf.append("抑郁倾向中等");
                 } else if (rate == IndicatorRate.High) {
-                    buf.append("严重抑郁");
+                    buf.append("抑郁倾向高");
                 } else {
                     return null;
                 }

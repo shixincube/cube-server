@@ -26,7 +26,7 @@ public class Representation implements JSONable {
 
     public final static String HighTendency = "倾向高";
     public final static String LowTendency = "倾向低";
-    public final static String NormalTendency = "倾向一般";
+    public final static String NormalTendency = "倾向中等";
 
     public final static String Strong = "强";
     public final static String Weak = "弱";

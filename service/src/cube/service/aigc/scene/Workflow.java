@@ -62,6 +62,10 @@ public class Workflow {
         this.reportTextList = new ArrayList<>();
     }
 
+    public EvaluationReport getEvaluationReport() {
+        return this.evaluationReport;
+    }
+
     public void setPaintingFeatureSet(PaintingFeatureSet featureSet) {
         this.paintingFeatureSet = featureSet;
     }

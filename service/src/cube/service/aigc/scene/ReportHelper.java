@@ -59,6 +59,30 @@ public class ReportHelper {
         }
     }
 
+    public static String makeContentSummaryMarkdown(PaintingReport report) {
+        StringBuilder buf = new StringBuilder();
+        if (report.isNull()) {
+            buf.append("根据提供的绘画文件，绘画里没有发现有效的心理投射内容，建议检查一下绘画文件内容。");
+            return buf.toString();
+        }
+
+        EvaluationReport evalReport = report.getEvaluationReport();
+        buf.append("根据报告的绘画图片，");
+        if (evalReport.isHesitating()) {
+            buf.append("绘画画面内容并不容易被识别。");
+        }
+        else {
+            buf.append("按照心理学绘画投射理论进行解读。\n\n");
+        }
+        buf.append("受测人为**").append(report.getAttribute().getAgeText()).append("**的**")
+                .append(report.getAttribute().getGenderText()).append("性**。")
+                .append("评测日期是**")
+                .append(gsDateFormat.format(new Date(report.timestamp))).append("**。\n\n");
+        buf.append("在这幅绘画中投射出了").append(evalReport.numRepresentations()).append("个心理表征。");
+        
+        return buf.toString();
+    }
+
     public static String makeContentMarkdown(PaintingReport report, int maxIndicators) {
         StringBuilder buf = new StringBuilder();
         if (report.isNull()) {

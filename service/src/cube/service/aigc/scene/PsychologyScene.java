@@ -214,8 +214,24 @@ public class PsychologyScene {
         return this.storage.countPsychologyReports(state);
     }
 
+    public int numPsychologyReports(long contactId, int state) {
+        return this.storage.countPsychologyReports(contactId, state);
+    }
+
     public List<PaintingReport> getPsychologyReports(long contactId, int state, int limit) {
-        return this.storage.readPsychologyReportsByContact(contactId, state, limit);
+        List<PaintingReport> list = this.storage.readPsychologyReportsByContact(contactId, state, limit);
+        Iterator<PaintingReport> iter = list.iterator();
+        while (iter.hasNext()) {
+            PaintingReport report = iter.next();
+            FileLabel fileLabel = this.service.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
+            if (null != fileLabel) {
+                report.setFileLabel(fileLabel);
+            }
+            else {
+                iter.remove();
+            }
+        }
+        return list;
     }
 
     public List<PaintingReport> getPsychologyReports(int pageIndex, int pageSize, boolean descending) {
@@ -378,6 +394,8 @@ public class PsychologyScene {
 
                     // 将特征集数据填写到报告，这里仅仅是方便客户端获取特征描述文本
                     reportTask.report.paintingFeatureSet = workflow.getPaintingFeatureSet();
+                    // 设置评估数据
+                    reportTask.report.setEvaluationReport(workflow.getEvaluationReport());
 
                     // 修改状态
                     reportTask.report.setState(AIGCStateCode.Inferencing);
@@ -970,6 +988,7 @@ public class PsychologyScene {
     public JSONObject getPaintingInferenceData(AuthToken authToken, long reportSn) {
         PaintingReport report = this.getPaintingReport(reportSn);
         if (null == report) {
+            Logger.d(this.getClass(), "#getPaintingInferenceData - Can NOT find report: " + reportSn);
             return null;
         }
 

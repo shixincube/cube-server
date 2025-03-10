@@ -6,12 +6,14 @@
 
 package cube.service.aigc.scene.subtask;
 
+import cube.aigc.attachment.ReportAttachment;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Subtask;
 import cube.common.entity.AIGCChannel;
+import cube.common.entity.AttachmentResource;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
@@ -89,11 +91,17 @@ public class SelectReportSubtask extends ConversationSubtask {
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
+                            ComplexContext context = new ComplexContext(ComplexContext.Type.Simplex);
+                            ReportAttachment attachment = new ReportAttachment(report.sn, report.getFileLabel());
+                            context.addResource(new AttachmentResource(attachment));
+
                             GeneratingRecord record = new GeneratingRecord(query);
-                            record.answer = polish(String.format(
-                                    Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
-                                    ReportHelper.makeReportTitleMarkdown(report),
-                                    ReportHelper.makeContentMarkdown(report, 5)));
+                            record.context = context;
+//                            record.answer = polish(String.format(
+//                                    Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
+//                                    ReportHelper.makeReportTitleMarkdown(report),
+//                                    ReportHelper.makeContentMarkdown(report, 5)));
+                            record.answer = "你选择了报告: " + ReportHelper.makeReportTitleMarkdown(report);
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
@@ -106,9 +114,9 @@ public class SelectReportSubtask extends ConversationSubtask {
                         @Override
                         public void run() {
                             GeneratingRecord record = new GeneratingRecord(query);
-                            record.answer = polish(String.format(Resource.getInstance().getCorpus(CORPUS,
+                            record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_SELECT_REPORT_LOCATION_OVERFLOW"),
-                                    location, list.size()));
+                                    location, list.size());
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
@@ -195,7 +203,13 @@ public class SelectReportSubtask extends ConversationSubtask {
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
+                            ComplexContext context = new ComplexContext(ComplexContext.Type.Simplex);
+                            ReportAttachment attachment = new ReportAttachment(reports.get(0).sn,
+                                    reports.get(0).getFileLabel());
+                            context.addResource(new AttachmentResource(attachment));
+
                             GeneratingRecord record = new GeneratingRecord(query);
+                            record.context = context;
                             record.answer = String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
                                     ReportHelper.makeReportTitleMarkdown(reports.get(0)),

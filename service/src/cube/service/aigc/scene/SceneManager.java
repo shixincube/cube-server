@@ -70,9 +70,16 @@ public class SceneManager {
 
     public List<PaintingReport> queryReports(long contactId, int state) {
         return PsychologyScene.getInstance().getPsychologyReports(contactId, state, 10);
+    }
 
-        /* 以下方法是按照聊天记录方式查询
-        // 参数是 (long relationId, String domainName)
+    /**
+     * 按照聊天记录方式查询。
+     *
+     * @param relationId
+     * @param domainName
+     * @return
+     */
+    public List<PaintingReport> queryReportsWithChat(long relationId, String domainName) {
         List<PaintingReport> result = new ArrayList<>();
 
         List<AIGCChatHistory> historyList = this.aigcService.getStorage().readChatHistoryByContactId(relationId, domainName,
@@ -97,7 +104,6 @@ public class SceneManager {
             }
         }
         return result;
-        */
     }
 
     public Chart readReportChart(long reportSn) {

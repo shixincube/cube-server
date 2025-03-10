@@ -449,6 +449,16 @@ public class PsychologyStorage implements Storagable {
         return result.get(0)[0].getInt();
     }
 
+    public int countPsychologyReports(long contactId, int state) {
+        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(sn) FROM " + this.reportTable +
+                " WHERE contact_id=" + contactId +
+                " AND " +
+                "`state`=" + state +
+                " AND " +
+                "finished_timestamp<>0");
+        return result.get(0)[0].getInt();
+    }
+
     public int countPsychologyReports(int state) {
         List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(sn) FROM " +
                 this.reportTable + "," + this.paintingReportManagementTable +

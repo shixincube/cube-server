@@ -67,12 +67,7 @@ public class Chart extends ContextHandler {
                     long sn = Long.parseLong(request.getParameter("sn"));
                     JSONObject data = Manager.getInstance().getPsychologyPaintingChart(token, sn);
                     if (null == data) {
-                        Thread.sleep(5000);
-                    }
-                    // 二次请求
-                    data = Manager.getInstance().getPsychologyPaintingChart(token, sn);
-                    if (null == data) {
-                        this.respond(response, HttpStatus.NOT_FOUND_404);
+                        this.responseRefreshPage(response);
                         this.complete();
                         return;
                     }

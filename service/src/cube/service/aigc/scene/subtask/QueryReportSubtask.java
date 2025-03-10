@@ -27,15 +27,17 @@ import java.util.List;
 public class QueryReportSubtask extends ConversationSubtask {
 
     public QueryReportSubtask(AIGCService service, AIGCChannel channel, String query, ComplexContext context,
-                                  ConversationRelation relation, ConversationContext convCtx,
-                                  GenerateTextListener listener) {
+                              ConversationRelation relation, ConversationContext convCtx,
+                              GenerateTextListener listener) {
         super(Subtask.QueryReport, service, channel, query, context, relation, convCtx, listener);
     }
 
     @Override
     public AIGCStateCode execute(Subtask roundSubtask) {
-        final List<PaintingReport> list = PsychologyScene.getInstance().getPsychologyReports(convCtx.getAuthToken().getContactId(),
-                0, 10);
+        final List<PaintingReport> list = PsychologyScene.getInstance().getPsychologyReports(
+                convCtx.getAuthToken().getContactId(), 0, 10);
+        final int total = PsychologyScene.getInstance().numPsychologyReports(convCtx.getAuthToken().getContactId(), 0);
+
         convCtx.setReportList(list);
         if (list.isEmpty()) {
             this.service.getExecutor().execute(new Runnable() {
@@ -57,7 +59,7 @@ public class QueryReportSubtask extends ConversationSubtask {
                 public void run() {
                     String answer = polish(String.format(Resource.getInstance().getCorpus(CORPUS,
                             "FORMAT_ANSWER_QUERY_REPORT_RESULT_PREFIX"),
-                            list.size()));
+                            total, list.size()));
                     answer = answer + "\n" + ReportHelper.makeReportListMarkdown(list);
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = answer;

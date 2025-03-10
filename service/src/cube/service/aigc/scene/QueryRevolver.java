@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class QueryRevolver {
 
@@ -53,6 +54,10 @@ public class QueryRevolver {
 
     private String[] paintingDesc = new String[] {
             "画", "画面", "图画", "图像", "照片", "绘画", "看"
+    };
+
+    private final static String[] sLazyQuery = new String[] {
+            "如何进行绘画评测"
     };
 
     private AIGCService service;
@@ -124,6 +129,7 @@ public class QueryRevolver {
             wordLimit -= result.length();
         }
 
+        AtomicBoolean hitLazy = new AtomicBoolean(false);
         final List<String> answerList = new ArrayList<>();
         boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
             @Override
@@ -131,6 +137,21 @@ public class QueryRevolver {
                 for (QuestionAnswer questionAnswer : questionAnswers) {
                     if (questionAnswer.getScore() > 0.8) {
                         // 排除得分较低答案
+                        if (!hitLazy.get()) {
+                            // 判断 Lazy 句子，如果是 Lazy 句子，则仅润色
+                            for (String q : questionAnswer.getQuestions()) {
+                                for (String lazy : sLazyQuery) {
+                                    if (fastSentenceSimilarity(q, lazy) >= 0.75) {
+                                        hitLazy.set(true);
+                                        break;
+                                    }
+                                }
+                                if (hitLazy.get()) {
+                                    break;
+                                }
+                            }
+                        }
+
                         List<String> answers = questionAnswer.getAnswers();
                         for (String answer : answers) {
                             Subtask subtask = Subtask.extract(answer);
@@ -164,30 +185,49 @@ public class QueryRevolver {
             }
         }
 
-        if (!answerList.isEmpty()) {
-            if (result.length() == 0) {
-                result.append("已知信息：\n\n");
+        if (hitLazy.get()) {
+            Logger.d(this.getClass(), "#generatePrompt - Hit lazy: " + query);
+
+            if (!answerList.isEmpty()) {
+                result.delete(0, result.length());
+                for (String answer : answerList) {
+                    result.append(answer).append("\n");
+                }
+                String text = String.format(Resource.getInstance().getCorpus("prompt", "FORMAT_POLISH"),
+                        result.toString());
+                result.delete(0, result.length());
+                result.append(text).append("\n");
             }
             else {
-                result.append("\n下面的内容是一些与问题相关的知识：\n");
+                result.append(query).append("\n");
             }
-
-            for (String answer : answerList) {
-                if (result.length() + answer.length() >= wordLimit) {
-                    break;
-                }
-                result.append(answer).append("\n\n");
-            }
-        }
-
-        if (result.length() > 0) {
-            result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
-            result.append("不允许在答案中添加编造成分，可以以“根据您的提问”开头。");
-            result.append("问题是：").append(query).append("\n");
         }
         else {
-            result.append("专业地回答问题，在答案最后加入一句：“我的更多功能您可以通过：**功能介绍** 进行了解。”，问题是：");
-            result.append(query).append("\n");
+            if (!answerList.isEmpty()) {
+                if (result.length() == 0) {
+                    result.append("已知信息：\n\n");
+                }
+                else {
+                    result.append("\n下面的内容是一些与问题相关的知识：\n");
+                }
+
+                for (String answer : answerList) {
+                    if (result.length() + answer.length() >= wordLimit) {
+                        break;
+                    }
+                    result.append(answer).append("\n\n");
+                }
+            }
+
+            if (result.length() > 0) {
+                result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
+                result.append("不允许在答案中添加编造成分，可以以“根据您的提问”开头。");
+                result.append("问题是：").append(query).append("\n");
+            }
+            else {
+                result.append("专业地回答问题，在答案最后加入一句：“我的更多功能您可以通过：**功能介绍** 进行了解。”，问题是：");
+                result.append(query).append("\n");
+            }
         }
 
         return result.toString();
@@ -625,6 +665,29 @@ public class QueryRevolver {
         }
 
         return buf.toString();
+    }
+
+    private double fastSentenceSimilarity(String sentenceA, String sentenceB) {
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
+        List<String> wordsA = analyzer.analyzeOnlyWords(sentenceA, 10);
+        List<String> wordsB = analyzer.analyzeOnlyWords(sentenceB, 10);
+        List<String> pole = null;
+        List<String> monkey = null;
+        if (wordsA.size() > wordsB.size()) {
+            pole = wordsA;
+            monkey = wordsB;
+        }
+        else {
+            pole = wordsB;
+            monkey = wordsA;
+        }
+        double count = 0;
+        for (String word : pole) {
+            if (monkey.contains(word)) {
+                count += 1.0;
+            }
+        }
+        return count / pole.size();
     }
 
     private String filterPersonalityDescription(String desc, Attribute attribute) {

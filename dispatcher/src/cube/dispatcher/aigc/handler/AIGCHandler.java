@@ -7,8 +7,11 @@
 package cube.dispatcher.aigc.handler;
 
 import cube.util.CrossDomainHandler;
+import org.eclipse.jetty.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.nio.charset.StandardCharsets;
 
 /**
  * AIGC RESTful 接口基类。
@@ -55,5 +58,25 @@ public abstract class AIGCHandler extends CrossDomainHandler {
         String[] paths = path.split("/");
         path = paths[paths.length - 1];
         return path;
+    }
+
+    protected void responseRefreshPage(HttpServletResponse response) {
+        String html = "<!DOCTYPE html>\n" +
+                "<html>" +
+                "<head><meta http-equiv=\"refresh\" content=\"5\"/><title></title></head>" +
+                "<body><script type=\"text/javascript\">" +
+                "setTimeout(function() {" +
+                " window.location.reload(); " +
+                "}, 5000);" +
+                "</script></body>" +
+                "</html>\n";
+        response.setContentType("text/html");
+        response.setStatus(HttpStatus.OK_200);
+        try {
+            response.getOutputStream().write(html.getBytes(StandardCharsets.UTF_8));
+            response.getOutputStream().flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -208,7 +208,7 @@ function machineGun(container, text, completeCallback) {
     const _sentenceEndExp = /(\.|\?|!|_)$/g;
 
     var words = text.split(" ");
-    var tl = gsap.timeline({ delay:0.6, repeat:7, repeatDelay:2, onComplete: completeCallback });
+    var tl = gsap.timeline({ delay:0.6, repeat:-1, repeatDelay:2, onComplete: completeCallback });
     var wordCount = words.length;
     var time = 0;
     var word, element, duration, isSentenceEnd, i, textEl;

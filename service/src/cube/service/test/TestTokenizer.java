@@ -43,8 +43,8 @@ public class TestTokenizer {
         Tokenizer tokenizer = new Tokenizer();
 
         String[] sentences = new String[] {
-                "北京最近一周的天气气温图表",
-                "北京2023年6月的天气气温图表",
+//                "北京最近一周的天气气温图表",
+//                "北京2023年6月的天气气温图表",
 //                "这是一个伸手不见五指的黑夜。我叫孙悟空，我爱北京，我爱Python和C++。",
 //                "我不喜欢日本和服。",
 //                "雷猴回归人间。",
@@ -69,6 +69,9 @@ public class TestTokenizer {
 //                "他的人格特点是什么？",
 //                "他能否胜任部门主管的岗位？",
 
+                "抑郁倾向低",
+                "抑郁倾向中等",
+                "抑郁倾向高",
 //                "轻度焦虑",
 //                "不太重视家庭关系",
 //                "中度的成就动机的报告描述",
@@ -130,10 +133,12 @@ public class TestTokenizer {
 //                "六维分析中心理健康维度得分高的表现",
 //                "六维分析中心理健康维度得分中等的表现",
 //                "六维分析中心理健康维度得分低的表现"
-                "爱心理是个什么产品",
-                "爱心理平台是什么产品",
-                "打开第1份报告",
-                "第九个"
+//                "爱心理是个什么产品",
+//                "爱心理平台是什么产品",
+//                "打开第1份报告",
+//                "第九个"
+//                "进行绘画测验说明", "绘画指导", "绘画注意事项", "如何进行绘画评测",
+//                "我应该如何进行绘画评测",
         };
 
         // 分词
@@ -145,17 +150,17 @@ public class TestTokenizer {
 
         System.out.println("----------------------------------------");
 
-//        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
-//        for (String sentence : sentences) {
-//            List<Keyword> keywordList = analyzer.analyze(sentence, 10);
-//            for (Keyword keyword : keywordList) {
-//                System.out.print(keyword.getWord() + ":" + keyword.getTfidfValue() + ", ");
-//            }
-//            System.out.println("");
-//        }
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
+        for (String sentence : sentences) {
+            List<Keyword> keywordList = analyzer.analyze(sentence, 10);
+            for (Keyword keyword : keywordList) {
+                System.out.print(keyword.getWord() + ":" + keyword.getTfidfValue() + ", ");
+            }
+            System.out.println("");
+        }
 
-        TestTokenizer test = new TestTokenizer();
-        double source = test.sentenceSimilarity(sentences[0], sentences[3], tokenizer);
-        System.out.println(source);
+//        TestTokenizer test = new TestTokenizer();
+//        double source = test.sentenceSimilarity(sentences[3], sentences[4], tokenizer);
+//        System.out.println(source);
     }
 }
