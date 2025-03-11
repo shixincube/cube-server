@@ -15,8 +15,10 @@ import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.composition.*;
+import cube.common.entity.AIGCChannel;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+import cube.util.FileLabels;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -59,7 +61,7 @@ public class ReportHelper {
         }
     }
 
-    public static String makeContentSummaryMarkdown(PaintingReport report) {
+    public static String makeContentSummaryMarkdown(AIGCChannel channel, PaintingReport report) {
         StringBuilder buf = new StringBuilder();
         if (report.isNull()) {
             buf.append("根据提供的绘画文件，绘画里没有发现有效的心理投射内容，建议检查一下绘画文件内容。");
@@ -78,8 +80,17 @@ public class ReportHelper {
                 .append(report.getAttribute().getGenderText()).append("性**。")
                 .append("评测日期是**")
                 .append(gsDateFormat.format(new Date(report.timestamp))).append("**。\n\n");
-        buf.append("在这幅绘画中投射出了").append(evalReport.numRepresentations()).append("个心理表征。");
-        
+        buf.append("在这幅绘画中投射出了").append(evalReport.numRepresentations()).append("个心理表征。\n\n");
+
+        // 图片
+        buf.append("**绘画图片**\n\n");
+        buf.append("![绘画](");
+        buf.append(FileLabels.makeFileHttpsURL(report.getFileLabel(),
+                channel.getAuthToken().getCode(), channel.getHttpsEndpoint()));
+        buf.append(")\n\n");
+
+        buf.append("## 概述\n\n");
+        buf.append(report.getSummary());
         return buf.toString();
     }
 

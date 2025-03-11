@@ -6,6 +6,7 @@
 
 package cube.common.entity;
 
+import cell.core.net.Endpoint;
 import cell.util.Utils;
 import cube.auth.AuthToken;
 import cube.common.Domain;
@@ -45,6 +46,9 @@ public class AIGCChannel extends Entity {
     private int totalQueryWords = 0;
 
     private int totalAnswerWords = 0;
+
+    private Endpoint httpEndpoint;
+    private Endpoint httpsEndpoint;
 
     /**
      * 对话轮次记录。
@@ -120,6 +124,19 @@ public class AIGCChannel extends Entity {
 
     public void setActiveTimestamp(long time) {
         this.activeTimestamp = time;
+    }
+
+    public void setEndpoint(Endpoint http, Endpoint https) {
+        this.httpEndpoint = http;
+        this.httpsEndpoint = https;
+    }
+
+    public Endpoint getHttpEndpoint() {
+        return this.httpEndpoint;
+    }
+
+    public Endpoint getHttpsEndpoint() {
+        return this.httpsEndpoint;
     }
 
     public void setProcessing(boolean value) {

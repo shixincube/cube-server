@@ -20,7 +20,6 @@ import cube.service.aigc.listener.SemanticSearchListener;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -79,56 +78,6 @@ public class QueryRevolver {
     public String generatePrompt(ConversationContext context, String query) {
         final StringBuilder result = new StringBuilder();
 
-        int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60;
-
-        if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
-            PaintingReport report = context.getCurrentReport();
-            result.append("已知信息：\n\n");
-            result.append("当前评测报告的受测人是匿名的，");
-            result.append("年龄是：").append(report.getAttribute().age).append("岁，");
-            result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
-            result.append("报告日期是：").append(formatReportDate(report)).append("。\n");
-            result.append("受测人的心理特征摘要如下：");
-            result.append(report.getSummary());
-            result.append("\n\n");
-
-            result.append("受测人有以下心理状态：\n");
-            List<String> symptomContent = this.extractSymptomContent(report.getEvaluationReport().getEvaluationScores(),
-                    report.getAttribute());
-            for (String content : symptomContent) {
-                result.append("* ").append(content).append("\n");
-            }
-            result.append("\n");
-
-            // 画面特征
-            result.append(this.tryGeneratePaintingFeature(report, query));
-
-            // 更新长度限制
-            wordLimit -= result.length();
-
-            if (wordLimit > 0) {
-                result.append("\n受测人的大五人格画像是").append(report.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。\n");
-                // 性格特点
-                result.append(report.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
-                result.append(this.filterPersonalityDescription(report.getEvaluationReport()
-                                .getPersonalityAccelerator().getBigFivePersonality().getDescription(),
-                        report.getAttribute()));
-                // 更新长度限制
-                wordLimit -= result.length();
-            }
-
-            if (wordLimit > 300) {
-                // 尝试生成数据片段
-                result.append("\n");
-                result.append(this.generateFragment(report, query));
-            }
-
-            // 更新长度限制
-            wordLimit -= result.length();
-        }
-
         AtomicBoolean hitLazy = new AtomicBoolean(false);
         final List<String> answerList = new ArrayList<>();
         boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
@@ -185,6 +134,8 @@ public class QueryRevolver {
             }
         }
 
+        int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60;
+
         if (hitLazy.get()) {
             Logger.d(this.getClass(), "#generatePrompt - Hit lazy: " + query);
 
@@ -203,6 +154,54 @@ public class QueryRevolver {
             }
         }
         else {
+            if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
+                PaintingReport report = context.getCurrentReport();
+                result.append("已知信息：\n\n");
+                result.append("当前评测报告的受测人是匿名的，");
+                result.append("年龄是：").append(report.getAttribute().age).append("岁，");
+                result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
+                result.append("报告日期是：").append(formatReportDate(report)).append("。\n");
+                result.append("受测人的心理特征摘要如下：");
+                result.append(report.getSummary());
+                result.append("\n\n");
+
+                result.append("受测人有以下心理状态：\n");
+                List<String> symptomContent = this.extractSymptomContent(report.getEvaluationReport().getEvaluationScores(),
+                        report.getAttribute());
+                for (String content : symptomContent) {
+                    result.append("* ").append(content).append("\n");
+                }
+                result.append("\n");
+
+                // 画面特征
+                result.append(this.tryGeneratePaintingFeature(report, query));
+
+                // 更新长度限制
+                wordLimit -= result.length();
+
+                if (wordLimit > 0) {
+                    result.append("\n受测人的大五人格画像是").append(report.getEvaluationReport()
+                            .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。\n");
+                    // 性格特点
+                    result.append(report.getEvaluationReport()
+                            .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
+                    result.append(this.filterPersonalityDescription(report.getEvaluationReport()
+                                    .getPersonalityAccelerator().getBigFivePersonality().getDescription(),
+                            report.getAttribute()));
+                    // 更新长度限制
+                    wordLimit -= result.length();
+                }
+
+                if (wordLimit > 300) {
+                    // 尝试生成数据片段
+                    result.append("\n");
+                    result.append(this.generateFragment(report, query));
+                }
+
+                // 更新长度限制
+                wordLimit -= result.length();
+            }
+
             if (!answerList.isEmpty()) {
                 if (result.length() == 0) {
                     result.append("已知信息：\n\n");

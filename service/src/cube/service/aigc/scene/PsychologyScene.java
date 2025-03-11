@@ -7,6 +7,7 @@
 package cube.service.aigc.scene;
 
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
@@ -320,111 +321,150 @@ public class PsychologyScene {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                Logger.i(PsychologyScene.class, "Generating thread start");
+                Logger.i(PsychologyScene.class, "Generating thread START (" + numRunningTasks.get() + ") - "
+                        + Thread.currentThread().getName()
+                        + " - " + Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
 
-                while (!taskQueue.isEmpty()) {
-                    final ReportTask reportTask = taskQueue.poll();
-                    if (null == reportTask) {
-                        continue;
-                    }
+                try {
+                    while (!taskQueue.isEmpty()) {
+                        final ReportTask reportTask = taskQueue.poll();
+                        if (null == reportTask) {
+                            continue;
+                        }
 
-                    runningTaskQueue.offer(reportTask);
+                        Logger.i(getClass(), "Starts generating report: " + reportTask.report.sn);
 
-                    // 设置为正在操作
-                    reportTask.channel.setProcessing(true);
+                        runningTaskQueue.offer(reportTask);
 
-                    // 获取单元
-                    AIGCUnit unit = service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
-                    if (null == unit) {
-                        // 没有可用单元
-                        runningTaskQueue.remove(reportTask);
-                        reportTask.channel.setProcessing(false);
-                        reportTask.report.setState(AIGCStateCode.UnitError);
-                        reportTask.report.setFinished(true);
-                        reportTask.listener.onPaintingPredictFailed(reportTask.report);
-                        continue;
-                    }
+                        // 设置为正在操作
+                        reportTask.channel.setProcessing(true);
 
-                    // 更新单元状态
-                    unit.setRunning(true);
+                        // 获取单元
+                        AIGCUnit unit = service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
+                        if (null == unit) {
+                            // 没有可用单元
+                            runningTaskQueue.remove(reportTask);
+                            reportTask.channel.setProcessing(false);
+                            reportTask.report.setState(AIGCStateCode.UnitError);
+                            reportTask.report.setFinished(true);
+                            reportTask.listener.onPaintingPredictFailed(reportTask.report);
+                            continue;
+                        }
 
-                    // 加载配置
-                    loadConfig();
+                        // 更新单元状态
+                        unit.setRunning(true);
 
-                    // 预测
-                    reportTask.listener.onPaintingPredicting(reportTask.report, reportTask.fileLabel);
+                        // 加载配置
+                        loadConfig();
 
-                    Painting painting = processPainting(unit, reportTask.fileLabel, true);
-                    if (null == painting) {
-                        // 预测绘图失败
-                        Logger.w(PsychologyScene.class, "#generatePredictingReport - onPaintingPredictFailed: " +
-                                reportTask.fileLabel.getFileCode());
-                        // 记录故障
-                        unit.markFailure(AIGCStateCode.FileError.code, System.currentTimeMillis(),
-                                reportTask.channel.getAuthToken().getContactId());
+                        // 预测
+                        reportTask.listener.onPaintingPredicting(reportTask.report, reportTask.fileLabel);
+
+                        Painting painting = processPainting(unit, reportTask.fileLabel, true);
+                        if (null == painting) {
+                            // 预测绘图失败
+                            Logger.w(PsychologyScene.class, "#generatePredictingReport - onPaintingPredictFailed: " +
+                                    reportTask.fileLabel.getFileCode());
+                            // 记录故障
+                            unit.markFailure(AIGCStateCode.FileError.code, System.currentTimeMillis(),
+                                    reportTask.channel.getAuthToken().getContactId());
+                            // 更新单元状态
+                            unit.setRunning(false);
+                            runningTaskQueue.remove(reportTask);
+                            reportTask.channel.setProcessing(false);
+                            reportTask.report.setState(AIGCStateCode.FileError);
+                            reportTask.report.setFinished(true);
+                            reportTask.listener.onPaintingPredictFailed(reportTask.report);
+                            continue;
+                        }
+
                         // 更新单元状态
                         unit.setRunning(false);
-                        runningTaskQueue.remove(reportTask);
-                        reportTask.channel.setProcessing(false);
-                        reportTask.report.setState(AIGCStateCode.FileError);
+
+                        // 设置绘画属性
+                        painting.setAttribute(reportTask.attribute);
+                        painting.fileLabel = reportTask.fileLabel;
+                        paintingMap.put(reportTask.report.sn, painting);
+
+                        // 关联绘画
+                        reportTask.report.painting = painting;
+
+                        // 绘图预测完成
+                        reportTask.listener.onPaintingPredictCompleted(reportTask.report, reportTask.fileLabel, painting);
+
+                        // 开始进行评估
+                        reportTask.listener.onReportEvaluating(reportTask.report);
+
+                        // 根据图像推理报告
+                        Workflow workflow = processReport(reportTask.channel, painting, unit);
+
+                        // 将特征集数据填写到报告，这里仅仅是方便客户端获取特征描述文本
+                        reportTask.report.paintingFeatureSet = workflow.getPaintingFeatureSet();
+                        // 设置评估数据
+                        reportTask.report.setEvaluationReport(workflow.getEvaluationReport());
+
+                        // 修改状态
+                        reportTask.report.setState(AIGCStateCode.Inferencing);
+
+                        // 执行工作流，制作报告数据
+                        workflow = workflow.make(reportTask.theme, reportTask.maxIndicatorTexts);
+                        if (null == workflow) {
+                            // 推理生成报告失败
+                            Logger.w(PsychologyScene.class, "#generatePredictingReport - onReportEvaluateFailed (IllegalOperation): " +
+                                    reportTask.fileLabel.getFileCode());
+                            runningTaskQueue.remove(reportTask);
+                            reportTask.channel.setProcessing(false);
+                            reportTask.report.setState(AIGCStateCode.IllegalOperation);
+                            reportTask.report.setFinished(true);
+                            reportTask.listener.onReportEvaluateFailed(reportTask.report);
+                            continue;
+                        }
+
+                        // 填写数据
+                        workflow.fillReport(reportTask.report);
+
+                        if (workflow.isUnknown()) {
+                            // 未能处理的图片
+                            Logger.w(PsychologyScene.class, "#generatePredictingReport - onReportEvaluateCompleted (InvalidData): " +
+                                    reportTask.fileLabel.getFileCode());
+                            runningTaskQueue.remove(reportTask);
+                            reportTask.channel.setProcessing(false);
+                            reportTask.report.setState(AIGCStateCode.InvalidData);
+                            reportTask.report.setFinished(true);
+
+                            // 存储
+                            storage.writePsychologyReport(reportTask.report);
+                            storage.writePainting(reportTask.report.sn, reportTask.fileLabel.getFileCode(), painting);
+                            if (null != workflow.getPaintingFeatureSet()) {
+                                PaintingFeatureSet paintingFeatureSet = workflow.getPaintingFeatureSet();
+                                storage.writePaintingFeatureSet(paintingFeatureSet);
+                            }
+
+                            // 按照正常状态返回
+                            reportTask.listener.onReportEvaluateCompleted(reportTask.report);
+                            //                        reportTask.listener.onReportEvaluateFailed(reportTask.report);
+                            continue;
+                        }
+
+                        // 生成 Markdown 调试信息
+                        reportTask.report.makeMarkdown();
+
+                        // 设置状态
+                        if (reportTask.report.isNull()) {
+                            reportTask.report.setState(AIGCStateCode.Failure);
+                        } else {
+                            reportTask.report.setState(AIGCStateCode.Ok);
+                        }
+
+                        // 修改结束状态
                         reportTask.report.setFinished(true);
-                        reportTask.listener.onPaintingPredictFailed(reportTask.report);
-                        continue;
-                    }
-
-                    // 更新单元状态
-                    unit.setRunning(false);
-
-                    // 设置绘画属性
-                    painting.setAttribute(reportTask.attribute);
-                    painting.fileLabel = reportTask.fileLabel;
-                    paintingMap.put(reportTask.report.sn, painting);
-
-                    // 关联绘画
-                    reportTask.report.painting = painting;
-
-                    // 绘图预测完成
-                    reportTask.listener.onPaintingPredictCompleted(reportTask.report, reportTask.fileLabel, painting);
-
-                    // 开始进行评估
-                    reportTask.listener.onReportEvaluating(reportTask.report);
-
-                    // 根据图像推理报告
-                    Workflow workflow = processReport(reportTask.channel, painting, unit);
-
-                    // 将特征集数据填写到报告，这里仅仅是方便客户端获取特征描述文本
-                    reportTask.report.paintingFeatureSet = workflow.getPaintingFeatureSet();
-                    // 设置评估数据
-                    reportTask.report.setEvaluationReport(workflow.getEvaluationReport());
-
-                    // 修改状态
-                    reportTask.report.setState(AIGCStateCode.Inferencing);
-
-                    // 执行工作流，制作报告数据
-                    workflow = workflow.make(reportTask.theme, reportTask.maxIndicatorTexts);
-                    if (null == workflow) {
-                        // 推理生成报告失败
-                        Logger.w(PsychologyScene.class, "#generatePredictingReport - onReportEvaluateFailed (IllegalOperation): " +
-                                reportTask.fileLabel.getFileCode());
-                        runningTaskQueue.remove(reportTask);
+                        reportTask.listener.onReportEvaluateCompleted(reportTask.report);
                         reportTask.channel.setProcessing(false);
-                        reportTask.report.setState(AIGCStateCode.IllegalOperation);
-                        reportTask.report.setFinished(true);
-                        reportTask.listener.onReportEvaluateFailed(reportTask.report);
-                        continue;
-                    }
 
-                    // 填写数据
-                    workflow.fillReport(reportTask.report);
-
-                    if (workflow.isUnknown()) {
-                        // 未能处理的图片
-                        Logger.w(PsychologyScene.class, "#generatePredictingReport - onReportEvaluateCompleted (InvalidData): " +
-                                reportTask.fileLabel.getFileCode());
-                        runningTaskQueue.remove(reportTask);
-                        reportTask.channel.setProcessing(false);
-                        reportTask.report.setState(AIGCStateCode.InvalidData);
-                        reportTask.report.setFinished(true);
+                        // 填写数据
+                        workflow.fillReport(reportTask.report);
+                        // 生成 Markdown 调试信息
+                        reportTask.report.makeMarkdown();
 
                         // 存储
                         storage.writePsychologyReport(reportTask.report);
@@ -434,54 +474,25 @@ public class PsychologyScene {
                             storage.writePaintingFeatureSet(paintingFeatureSet);
                         }
 
-                        // 按照正常状态返回
-                        reportTask.listener.onReportEvaluateCompleted(reportTask.report);
-//                        reportTask.listener.onReportEvaluateFailed(reportTask.report);
-                        continue;
+                        // 使用数据管理器生成关联数据
+                        SceneManager.getInstance().writeReportChart(reportTask.report);
+
+                        // 从正在执行队列移除
+                        runningTaskQueue.remove(reportTask);
                     }
-
-                    // 生成 Markdown 调试信息
-                    reportTask.report.makeMarkdown();
-
-                    // 设置状态
-                    if (reportTask.report.isNull()) {
-                        reportTask.report.setState(AIGCStateCode.Failure);
-                    }
-                    else {
-                        reportTask.report.setState(AIGCStateCode.Ok);
-                    }
-
-                    // 修改结束状态
-                    reportTask.report.setFinished(true);
-                    reportTask.listener.onReportEvaluateCompleted(reportTask.report);
-                    reportTask.channel.setProcessing(false);
-
-                    // 填写数据
-                    workflow.fillReport(reportTask.report);
-                    // 生成 Markdown 调试信息
-                    reportTask.report.makeMarkdown();
-
-                    // 存储
-                    storage.writePsychologyReport(reportTask.report);
-                    storage.writePainting(reportTask.report.sn, reportTask.fileLabel.getFileCode(), painting);
-                    if (null != workflow.getPaintingFeatureSet()) {
-                        PaintingFeatureSet paintingFeatureSet = workflow.getPaintingFeatureSet();
-                        storage.writePaintingFeatureSet(paintingFeatureSet);
-                    }
-
-                    // 使用数据管理器生成关联数据
-                    SceneManager.getInstance().writeReportChart(reportTask.report);
-
-                    // 从正在执行队列移除
-                    runningTaskQueue.remove(reportTask);
-                } // while
+                } catch (Exception e) {
+                    Logger.e(getClass(), "#run", e);
+                }
 
                 // 更新运行计数
                 numRunningTasks.decrementAndGet();
 
-                Logger.i(PsychologyScene.class, "Generating thread end");
+                Logger.i(PsychologyScene.class, "Generating thread END (" + numRunningTasks.get() + ") - "
+                        + Thread.currentThread().getName()
+                        + " - " + Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
             }
         });
+        thread.setName("GeneratePredictingReport-" + System.currentTimeMillis());
         thread.start();
 
         return report;

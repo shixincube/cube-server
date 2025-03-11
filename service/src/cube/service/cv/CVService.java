@@ -215,13 +215,15 @@ public class CVService extends AbstractModule {
                     for (int i = 0; i < result.length(); ++i) {
                         BarCode barCode = new BarCode(result.getJSONObject(i));
                         codeList.add(barCode);
+
+                        Logger.d(this.getClass(), "#detectBarCode - result: " + barCode.data +
+                                " from " + fileLabel.getFileCode());
                     }
 
                     BarCodeInfo info = new BarCodeInfo(fileLabel, codeList);
                     infoList.add(info);
                 }
 
-                Logger.d(this.getClass(), "#detectBarCode - result: " + infoList.size());
                 listener.onCompleted(infoList);
             }
         });

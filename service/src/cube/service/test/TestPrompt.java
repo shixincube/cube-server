@@ -11,7 +11,7 @@ public class TestPrompt {
     public static void testKnowledgeStrategy() {
         System.out.println("testKnowledgeStrategy");
 
-        List<KnowledgeStrategy> list = Resource.getInstance().getTermInterpretations();
+        List<KnowledgeStrategy> list = Resource.getInstance().loadTermInterpretations();
         System.out.println("Size: " + list.size());
     }
 

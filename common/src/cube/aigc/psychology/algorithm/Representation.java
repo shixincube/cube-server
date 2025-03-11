@@ -32,6 +32,7 @@ public class Representation implements JSONable {
     public final static String Weak = "弱";
     public final static String Normal = "一般";
     public final static String High = "高";
+    public final static String Low = "低";
 
     public KnowledgeStrategy knowledgeStrategy;
 

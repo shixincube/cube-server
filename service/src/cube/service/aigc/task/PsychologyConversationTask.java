@@ -7,6 +7,7 @@
 package cube.service.aigc.task;
 
 import cell.core.cellet.Cellet;
+import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
@@ -53,12 +54,19 @@ public class PsychologyConversationTask extends ServiceTask {
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         String channelCode = null;
+        Endpoint httpEndpoint = null;
+        Endpoint httpsEndpoint = null;
         List<ConversationRelation> conversationRelationList = null;
         ConversationRelation relation = null;
         ComplexContext context = null;
         String query = null;
         try {
             channelCode = packet.data.getString("channelCode");
+
+            if (packet.data.has("endpoint")) {
+                httpEndpoint = new Endpoint(packet.data.getJSONObject("endpoint").getJSONObject("http"));
+                httpsEndpoint = new Endpoint(packet.data.getJSONObject("endpoint").getJSONObject("https"));
+            }
 
             if (packet.data.has("relations")) {
                 JSONArray array = packet.data.getJSONArray("relations");
@@ -137,6 +145,7 @@ public class PsychologyConversationTask extends ServiceTask {
             if (null == channel) {
                 channel = service.createChannel(token, channelCode, channelCode);
             }
+            channel.setEndpoint(httpEndpoint, httpsEndpoint);
 
             stateCode = worker.work(channel, query, context, relation, new GenerateTextListener() {
                 @Override

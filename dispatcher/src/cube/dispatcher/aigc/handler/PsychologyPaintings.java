@@ -7,7 +7,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cube.dispatcher.aigc.Manager;
-import cube.dispatcher.util.FileLabels;
+import cube.util.FileLabels;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;

@@ -32,8 +32,8 @@ import cube.dispatcher.aigc.handler.Chart;
 import cube.dispatcher.aigc.handler.Conversation;
 import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.aigc.handler.app.App;
-import cube.dispatcher.util.FileLabels;
 import cube.dispatcher.util.Tickable;
+import cube.util.FileLabels;
 import cube.util.HttpServer;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -1300,7 +1300,6 @@ public class Manager implements Tickable, PerformerListener {
         data.put("searchable", false);
         data.put("networking", false);
         data.put("searchTopK", 20);
-        data.put("searchFetchK", 50);
 
         Packet packet = new Packet(AIGCAction.Conversation.name, data);
         ActionDialect request = packet.toDialect();
@@ -2218,8 +2217,13 @@ public class Manager implements Tickable, PerformerListener {
 
     public JSONObject executePsychologyConversation(String token, String channelCode,
                                                     JSONArray relations, String query) {
+        JSONObject endpoint = new JSONObject();
+        endpoint.put("http", this.performer.getExternalHttpEndpoint().toJSON());
+        endpoint.put("https", this.performer.getExternalHttpsEndpoint().toJSON());
+
         JSONObject data = new JSONObject();
         data.put("channelCode", channelCode);
+        data.put("endpoint", endpoint);
         data.put("relations", relations);
         data.put("query", query);
         Packet packet = new Packet(AIGCAction.PsychologyConversation.name, data);
@@ -2248,8 +2252,13 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
+        JSONObject endpoint = new JSONObject();
+        endpoint.put("http", this.performer.getExternalHttpEndpoint().toJSON());
+        endpoint.put("https", this.performer.getExternalHttpsEndpoint().toJSON());
+
         JSONObject data = new JSONObject();
         data.put("channelCode", channelCode);
+        data.put("endpoint", endpoint);
         if (null != context) {
             data.put("context", context);
         }

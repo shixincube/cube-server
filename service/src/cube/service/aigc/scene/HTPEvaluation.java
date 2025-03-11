@@ -85,6 +85,9 @@ public class HTPEvaluation extends Evaluation {
                 this.houseAreaRatioThreshold = 0.055;
             }
 
+            // 绘画是否为空
+            this.reference = this.painting.isEmpty() ? Reference.Abnormal : Reference.Normal;
+
             List<EvaluationFeature> results = new ArrayList<>();
             results.add(this.evalSpaceStructure());
             results.add(this.evalFrameStructure());

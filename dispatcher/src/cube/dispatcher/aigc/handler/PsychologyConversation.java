@@ -9,7 +9,7 @@ package cube.dispatcher.aigc.handler;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 import cube.dispatcher.aigc.Manager;
-import cube.dispatcher.util.FileLabels;
+import cube.util.FileLabels;
 import cube.util.TextUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;

@@ -135,6 +135,11 @@ public class BoundingBox implements JSONable {
     }
 
     @Override
+    public String toString() {
+        return "(" + x + "," + y + "," + width + "," + height + ")";
+    }
+
+    @Override
     public JSONObject toJSON() {
         return this.toCompactJSON();
     }

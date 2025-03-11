@@ -12,7 +12,7 @@ import cube.common.Packet;
 import cube.common.action.CVAction;
 import cube.common.state.CVStateCode;
 import cube.dispatcher.cv.CVCellet;
-import cube.dispatcher.util.FileLabels;
+import cube.util.FileLabels;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONArray;

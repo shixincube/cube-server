@@ -82,7 +82,7 @@ public class Resource {
         return Resource.instance;
     }
 
-    public List<KnowledgeStrategy> getTermInterpretations() {
+    public synchronized List<KnowledgeStrategy> loadTermInterpretations() {
         if (this.termDescriptionFile.exists()) {
             if (this.termDescriptionFile.lastModified() != this.termDescriptionLastModified) {
                 this.termDescriptionLastModified = this.termDescriptionFile.lastModified();
@@ -107,9 +107,7 @@ public class Resource {
     }
 
     public KnowledgeStrategy getTermInterpretation(Term term) {
-        if (this.knowledgeStrategies.isEmpty()) {
-            this.getTermInterpretations();
-        }
+        this.loadTermInterpretations();
 
         for (KnowledgeStrategy interpretation : this.knowledgeStrategies) {
             if (interpretation.getTerm() == term) {

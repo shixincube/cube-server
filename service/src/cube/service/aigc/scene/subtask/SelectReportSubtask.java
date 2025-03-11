@@ -101,7 +101,10 @@ public class SelectReportSubtask extends ConversationSubtask {
 //                                    Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
 //                                    ReportHelper.makeReportTitleMarkdown(report),
 //                                    ReportHelper.makeContentMarkdown(report, 5)));
-                            record.answer = "你选择了报告: " + ReportHelper.makeReportTitleMarkdown(report);
+                            record.answer = String.format(
+                                    Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
+                                    ReportHelper.makeReportTitleMarkdown(report),
+                                    ReportHelper.makeContentSummaryMarkdown(channel, report));
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);

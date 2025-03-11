@@ -6,9 +6,11 @@
 
 package cube.aigc.psychology.composition;
 
+import cell.util.log.Logger;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.material.Thing;
 import cube.vision.BoundingBox;
+import cube.vision.Box;
 
 /**
  * 空间布局。
@@ -53,7 +55,49 @@ public class SpaceLayout {
             }
         }
 
+        if (x == painting.getCanvasSize().width) {
+            x = 1;
+        }
+        if (y == painting.getCanvasSize().height) {
+            y = 1;
+        }
+        if (x2 <= 1) {
+            x2 = painting.getCanvasSize().width - 1;
+        }
+        if (y2 <= 1) {
+            y2 = painting.getCanvasSize().height - 1;
+        }
+
         this.paintingBox = new BoundingBox(x, y, (x2 - x), (y2 - y));
+
+        if (painting.isEmpty()) {
+            x = painting.getCanvasSize().width;
+            y = painting.getCanvasSize().height;
+            x2 = 0;
+            y2 = 0;
+            for (Box box : painting.getShapes()) {
+                if (box.x0 < x) {
+                    x = box.x0;
+                }
+                if (box.y0 < y) {
+                    y = box.y0;
+                }
+                if (box.x1 > x2) {
+                    x2 = box.x1;
+                }
+                if (box.y1 > y2) {
+                    y2 = box.y1;
+                }
+            }
+            if (x < 0) {
+                x = 0;
+            }
+            if (y < 0) {
+                y = 0;
+            }
+            this.paintingBox = new BoundingBox(x, y, (x2 - x), (y2 - y));
+            Logger.d(this.getClass(), "calc shape boxes: " + this.paintingBox.toString());
+        }
 
         double pW = x2 - x;
         double pH = y2 - y;

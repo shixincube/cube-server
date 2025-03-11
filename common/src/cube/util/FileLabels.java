@@ -4,9 +4,10 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.dispatcher.util;
+package cube.util;
 
 import cell.core.net.Endpoint;
+import cube.common.entity.FileLabel;
 import org.json.JSONObject;
 
 public class FileLabels {
@@ -33,5 +34,11 @@ public class FileLabels {
         }
 
         return json;
+    }
+
+    public static String makeFileHttpsURL(FileLabel fileLabel, String token, Endpoint endpoint) {
+        return "https://" + endpoint.toString() + "/filestorage/file/?fc=" +
+                fileLabel.getFileCode() + "&token=" + token + "&type=" +
+                fileLabel.getFileType().getPreferredExtension().toLowerCase();
     }
 }

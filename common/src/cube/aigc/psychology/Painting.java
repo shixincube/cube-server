@@ -60,6 +60,8 @@ public class Painting implements JSONable {
 
     private JSONArray materials;
 
+    private JSONArray shapes;
+
     public Painting(Attribute attribute) {
         this.timestamp = System.currentTimeMillis();
         this.type = PaintingType.HouseTreePerson;
@@ -112,15 +114,32 @@ public class Painting implements JSONable {
         if (json.has("fileLabel")) {
             this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
         }
+
+        if (json.has("shapes")) {
+            this.shapes = json.getJSONArray("shapes");
+        }
     }
 
     public List<Material> getMaterials() {
         List<Material> materialList = new ArrayList<>();
-        for (int i = 0; i < this.materials.length(); ++i) {
-            Material material = new Material(this.materials.getJSONObject(i));
-            materialList.add(material);
+        if (null != this.materials) {
+            for (int i = 0; i < this.materials.length(); ++i) {
+                Material material = new Material(this.materials.getJSONObject(i));
+                materialList.add(material);
+            }
         }
         return materialList;
+    }
+
+    public List<Box> getShapes() {
+        List<Box> boxes = new ArrayList<>();
+        if (null != this.shapes) {
+            for (int i = 0; i < this.shapes.length(); ++i) {
+                Box box = new Box(this.shapes.getJSONObject(i));
+                boxes.add(box);
+            }
+        }
+        return boxes;
     }
 
     private void parseList(JSONArray array, List targetList) {
@@ -627,7 +646,11 @@ public class Painting implements JSONable {
      * @return
      */
     public boolean isValid() {
-        return !(null == this.houseList && null == this.treeList && null == this.personList);
+        return !(null == this.houseList && null == this.treeList && null == this.personList && null == this.whole);
+    }
+
+    public boolean isEmpty() {
+        return (null == this.houseList && null == this.treeList && null == this.personList);
     }
 
     /**
