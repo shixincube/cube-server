@@ -1052,37 +1052,6 @@ public class PsychologyStorage implements Storagable {
         }
         report.setReportTextList(textList);
 
-        // 六维
-        /*HexagonDimensionScore dimensionScore = Resource.getInstance()
-                .getHexDimProjection().calc(evaluationReport.getEvaluationScores());
-
-        List<EvaluationScore> scoreList = Resource.getInstance().getBenchmark().getEvaluationScores(report.getAttribute().age);
-        scoreList = this.filter(evaluationReport.getEvaluationScores(), scoreList);
-        HexagonDimensionScore normDimensionScore = Resource.getInstance().getHexDimProjection().calc(scoreList);
-
-        // 校准视觉效果
-        for (HexagonDimension dim : HexagonDimension.values()) {
-            int score = dimensionScore.getDimensionScore(dim);
-            if (score < 10) {
-                dimensionScore.record(dim, (int) Math.round(score * 2.5));
-            }
-            else if (score < 20) {
-                dimensionScore.record(dim, (int) Math.round(score * 2));
-            }
-
-            int norm = normDimensionScore.getDimensionScore(dim);
-            if (norm < 10) {
-                normDimensionScore.record(dim, norm * 3);
-                dimensionScore.record(dim, (int) Math.round(score * 1.8));
-            } else if (norm < 20) {
-                normDimensionScore.record(dim, norm * 2);
-                dimensionScore.record(dim, (int) Math.round(score * 1.4));
-            }
-        }
-        dimensionScore.normalization();
-        normDimensionScore.normalization();
-        */
-
         try {
             HexagonDimensionScore dimensionScore = new HexagonDimensionScore(evaluationReport.getFullEvaluationScores(),
                     evaluationReport.getPaintingConfidence(), evaluationReport.getFactorSet());

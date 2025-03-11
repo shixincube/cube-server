@@ -230,7 +230,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                             String answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_FOUND_MULTIPLE_REPORTS"),
                                     convCtx.getReportList().size(), reports.size(),
-                                    ReportHelper.makeReportListMarkdown(reports));
+                                    ReportHelper.makeReportListMarkdown(channel, reports));
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = answer;
                             convCtx.record(record);

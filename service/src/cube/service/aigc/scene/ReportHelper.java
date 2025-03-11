@@ -219,36 +219,48 @@ public class ReportHelper {
         return buf.toString();
     }
 
-    public static String makeReportListMarkdown(List<PaintingReport> reports) {
+    public static String makeReportListMarkdown(AIGCChannel channel, List<PaintingReport> reports) {
         StringBuilder buf = new StringBuilder("\n");
         int index = 0;
         for (PaintingReport report : reports) {
             ++index;
-            buf.append(index).append(". ");
+            buf.append("### ").append(index).append("、");
             Date date = new Date(report.timestamp);
             buf.append(gsDateFormat.format(date));
+            buf.append("/").append(report.getAttribute().getGenderText());
+            buf.append("/").append(report.getAttribute().getAgeText());
+            buf.append("\n\n");
 
+            String tool = null;
             switch (report.getTheme()) {
                 case Generic:
                 case HouseTreePerson:
-                    buf.append(" ").append("房树人绘画测验");
+                    tool = "房树人绘画测验";
                     break;
                 case PersonInTheRain:
-                    buf.append(" ").append("雨中人绘画测验");
+                    tool = "雨中人绘画测验";
                     break;
                 case TreeTest:
-                    buf.append(" ").append("树木绘画测验");
+                    tool = "树木绘画测验";
                     break;
                 case SelfPortrait:
-                    buf.append(" ").append("自画像绘画测验");
+                    tool = "自画像绘画测验";
                     break;
                 default:
+                    tool = "量表";
                     break;
             }
-
-            buf.append(" ").append(report.getAttribute().getGenderText());
-            buf.append(" ").append(report.getAttribute().getAgeText());
-            buf.append("\n");
+            buf.append("* 测验工具：").append(tool).append("\n");
+            buf.append("* 报告时间（评测日期）：").append(gsDateFormat.format(new Date(report.timestamp))).append("\n");
+            buf.append("* 受测人：").append(report.getAttribute().getGenderText()).append("性，")
+                    .append(report.getAttribute().getAgeText()).append("\n");
+            boolean valid = (null != report.painting) ? report.painting.isValid() : true;
+            buf.append("* 绘画是否有效：").append(valid ? "有效" : "无效").append("\n");
+            buf.append("* 绘画图片：\n");
+            buf.append("![绘画](");
+            buf.append(FileLabels.makeFileHttpsURL(report.getFileLabel(),
+                    channel.getAuthToken().getCode(), channel.getHttpsEndpoint()));
+            buf.append(")\n\n");
         }
 
         return buf.toString();

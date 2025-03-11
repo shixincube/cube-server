@@ -57,10 +57,14 @@ public class QueryReportSubtask extends ConversationSubtask {
             this.service.getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
-                    String answer = polish(String.format(Resource.getInstance().getCorpus(CORPUS,
-                            "FORMAT_ANSWER_QUERY_REPORT_RESULT_PREFIX"),
-                            total, list.size()));
-                    answer = answer + "\n" + ReportHelper.makeReportListMarkdown(list);
+                    String answer = infer(String.format(Resource.getInstance().getCorpus(CORPUS,
+                            "FORMAT_PROMPT_QUERY_REPORT_RESULT"),
+                            total, list.size(), ReportHelper.makeReportListMarkdown(channel, list), query));
+                    if (null == answer) {
+                        answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                "FORMAT_ANSWER_QUERY_REPORT_RESULT"),
+                                total, list.size(), ReportHelper.makeReportListMarkdown(channel, list));
+                    }
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = answer;
                     convCtx.record(record);

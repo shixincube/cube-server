@@ -55,6 +55,9 @@ public class QueryRevolver {
             "画", "画面", "图画", "图像", "照片", "绘画", "看"
     };
 
+    /**
+     * Lazy 机制用于保护关键问题可以从数据集中被选取。
+     */
     private final static String[] sLazyQuery = new String[] {
             "如何进行绘画评测"
     };
@@ -84,31 +87,37 @@ public class QueryRevolver {
             @Override
             public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
                 for (QuestionAnswer questionAnswer : questionAnswers) {
-                    if (questionAnswer.getScore() > 0.8) {
+                    if (questionAnswer.getScore() < 0.8) {
                         // 排除得分较低答案
-                        if (!hitLazy.get()) {
-                            // 判断 Lazy 句子，如果是 Lazy 句子，则仅润色
-                            for (String q : questionAnswer.getQuestions()) {
-                                for (String lazy : sLazyQuery) {
-                                    if (fastSentenceSimilarity(q, lazy) >= 0.75) {
-                                        hitLazy.set(true);
-                                        break;
-                                    }
-                                }
-                                if (hitLazy.get()) {
+                        continue;
+                    }
+
+                    if (!hitLazy.get()) {
+                        // 判断 Lazy 句子，如果是 Lazy 句子，则仅润色
+                        for (String q : questionAnswer.getQuestions()) {
+                            for (String lazy : sLazyQuery) {
+                                if (fastSentenceSimilarity(q, lazy) >= 0.75) {
+                                    hitLazy.set(true);
                                     break;
                                 }
                             }
-                        }
-
-                        List<String> answers = questionAnswer.getAnswers();
-                        for (String answer : answers) {
-                            Subtask subtask = Subtask.extract(answer);
-                            if (Subtask.None == subtask) {
-                                // 不是子任务
-                                answerList.add(answer);
+                            if (hitLazy.get()) {
+                                break;
                             }
                         }
+                    }
+
+                    List<String> answers = questionAnswer.getAnswers();
+                    for (String answer : answers) {
+                        Subtask subtask = Subtask.extract(answer);
+                        if (Subtask.None == subtask) {
+                            // 不是子任务
+                            answerList.add(answer);
+                        }
+                    }
+
+                    if (hitLazy.get()) {
+                        break;
                     }
                 }
                 synchronized (result) {
@@ -142,7 +151,7 @@ public class QueryRevolver {
             if (!answerList.isEmpty()) {
                 result.delete(0, result.length());
                 for (String answer : answerList) {
-                    result.append(answer).append("\n");
+                    result.append(answer).append("\n\n");
                 }
                 String text = String.format(Resource.getInstance().getCorpus("prompt", "FORMAT_POLISH"),
                         result.toString());

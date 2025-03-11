@@ -62,8 +62,12 @@
             "cn": "我没有找到您的报告信息。如果您想进行绘画测评，可以将您的绘画发给我。",
             "en": ""
         },
-        "FORMAT_ANSWER_QUERY_REPORT_RESULT_PREFIX": {
-            "cn": "通过对历史数据的查询，共找到**%d**份您操作过的报告。按照报告时间倒序整理最近**%d**份报告如下：\n\n",
+        "FORMAT_PROMPT_QUERY_REPORT_RESULT": {
+            "cn": "通过对历史数据的查询，共找到**%d**份您操作过的报告。按照报告时间倒序整理最近**%d**份报告如下：\n\n%s\n\n依据以上数据，根据问题“%s”将上述数据整理呈现，不要编造内容。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_QUERY_REPORT_RESULT": {
+            "cn": "通过对历史数据的查询，共找到**%d**份您操作过的报告。按照报告时间倒序整理最近**%d**份报告如下：\n\n%s",
             "en": ""
         },
         "FORMAT_ANSWER_SELECT_REPORT_LOCATION_OVERFLOW": {

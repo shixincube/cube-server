@@ -227,6 +227,7 @@ public class PsychologyScene {
             FileLabel fileLabel = this.service.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
             if (null != fileLabel) {
                 report.setFileLabel(fileLabel);
+                report.painting = this.storage.readPainting(report.sn);
             }
             else {
                 iter.remove();
@@ -243,6 +244,7 @@ public class PsychologyScene {
             FileLabel fileLabel = this.service.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
             if (null != fileLabel) {
                 report.setFileLabel(fileLabel);
+                report.painting = this.storage.readPainting(report.sn);
             }
             else {
                 iter.remove();
@@ -259,6 +261,7 @@ public class PsychologyScene {
             FileLabel fileLabel = this.service.getFile(AuthConsts.DEFAULT_DOMAIN, report.getFileCode());
             if (null != fileLabel) {
                 report.setFileLabel(fileLabel);
+                report.painting = this.storage.readPainting(report.sn);
             }
             else {
                 iter.remove();

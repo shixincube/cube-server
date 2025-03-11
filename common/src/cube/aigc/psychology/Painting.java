@@ -131,6 +131,10 @@ public class Painting implements JSONable {
         return materialList;
     }
 
+    public boolean hasShapes() {
+        return (null != this.shapes && this.shapes.length() > 0);
+    }
+
     public List<Box> getShapes() {
         List<Box> boxes = new ArrayList<>();
         if (null != this.shapes) {
@@ -646,6 +650,41 @@ public class Painting implements JSONable {
      * @return
      */
     public boolean isValid() {
+        if (null != this.whole) {
+            /*
+             * "avg":"0.03301299778761062",
+             * "squareDeviation":"0.01634787034387175",
+             * "density":"0.02857142857142857",
+             * "max":"0.5282079646017699",
+             * "hierarchy":"0.006042817679558011",
+             * "standardDeviation":"0.12785879063979821"
+             *
+             * "avg":"0.0927302267699115",
+             * "squareDeviation":"0.12898342435198815",
+             * "density":"0.02857142857142857",
+             * "max":"1.483683628318584",
+             * "hierarchy":"0.010704419889502761",
+             * "standardDeviation":"0.3591426239699044"
+             */
+            if (this.whole.max == 0 && this.whole.avg == 0 && this.whole.squareDeviation == 0) {
+                // 空白图片
+                return false;
+            }
+        }
+
+        if (null != this.quadrants && !this.quadrants.isEmpty()) {
+            int count = 0;
+            for (Texture texture : this.quadrants) {
+                if (!texture.isValid()) {
+                    count++;
+                }
+            }
+            if (count >= 3) {
+                // 接近空白图片
+                return false;
+            }
+        }
+
         return !(null == this.houseList && null == this.treeList && null == this.personList && null == this.whole);
     }
 
@@ -837,6 +876,10 @@ public class Painting implements JSONable {
             }
 
             json.put("others", this.otherSet.toJSONArray());
+        }
+
+        if (null != this.shapes) {
+            json.put("shapes", this.shapes);
         }
 
         return json;

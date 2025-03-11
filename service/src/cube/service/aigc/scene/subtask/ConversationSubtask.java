@@ -110,6 +110,27 @@ public abstract class ConversationSubtask {
         return result.answer;
     }
 
+    public String infer(String prompt) {
+        AIGCUnit unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+        if (null == unit) {
+            unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_X_UNIT);
+            if (null == unit) {
+                unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+                if (null == unit) {
+                    Logger.w(this.getClass(), "#infer - Can NOT find unit");
+                    return null;
+                }
+            }
+        }
+
+        GeneratingRecord result = this.service.syncGenerateText(unit, prompt, null, null, null);
+        if (null == result) {
+            Logger.w(this.getClass(), "#infer - syncGenerateText failed");
+            return null;
+        }
+        return result.answer;
+    }
+
     protected Attribute extractAttribute(String query) {
         int age = 0;
         String gender = "";

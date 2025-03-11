@@ -70,7 +70,7 @@ public class SpaceLayout {
 
         this.paintingBox = new BoundingBox(x, y, (x2 - x), (y2 - y));
 
-        if (painting.isEmpty()) {
+        if (painting.isEmpty() && painting.hasShapes()) {
             x = painting.getCanvasSize().width;
             y = painting.getCanvasSize().height;
             x2 = 0;
