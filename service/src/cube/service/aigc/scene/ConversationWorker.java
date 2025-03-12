@@ -149,6 +149,15 @@ public class ConversationWorker {
                     relation, convCtx, listener);
             return task.execute(roundSubtask);
         }
+        else if (Subtask.ShowPainting == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - ShowPainting: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 执行子任务
+            ShowPaintingSubtask task = new ShowPaintingSubtask(this.service, channel, query, context,
+                    relation, convCtx, listener);
+            return task.execute(roundSubtask);
+        }
         else if (Subtask.ShowCoT == subtask) {
             Logger.d(this.getClass(), "#work - Subtask - ShowCoT: " +
                     channel.getAuthToken().getCode() + "/" + channel.getCode());

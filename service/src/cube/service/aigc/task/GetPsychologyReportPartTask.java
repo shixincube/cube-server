@@ -84,7 +84,7 @@ public class GetPsychologyReportPartTask extends ServiceTask {
 
             if (report.getState().code == AIGCStateCode.Ok.code) {
                 if (content) {
-                    String contentMarkdown = ReportHelper.makeContentMarkdown(report, 5);
+                    String contentMarkdown = ReportHelper.makeContentMarkdown(report, 5, true);
                     responseData.put("content", contentMarkdown);
                 }
 

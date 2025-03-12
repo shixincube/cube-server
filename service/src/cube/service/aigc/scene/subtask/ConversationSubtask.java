@@ -111,15 +111,14 @@ public abstract class ConversationSubtask {
     }
 
     public String infer(String prompt) {
-        AIGCUnit unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+        // 由于算力有限，根据提示词长度选择单元
+        AIGCUnit unit = prompt.length() > 2000 ? this.service.selectIdleUnitByName(ModelConfig.BAIZE_X_UNIT) :
+                this.service.selectIdleUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
         if (null == unit) {
-            unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_X_UNIT);
+            unit = this.service.selectUnitByName(ModelConfig.BAIZE_X_UNIT);
             if (null == unit) {
-                unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
-                if (null == unit) {
-                    Logger.w(this.getClass(), "#infer - Can NOT find unit");
-                    return null;
-                }
+                Logger.w(this.getClass(), "#infer - Can NOT find unit");
+                return null;
             }
         }
 

@@ -1267,7 +1267,7 @@ public class AIGCService extends AbstractModule {
 
         Packet request = new Packet(AIGCAction.TextToText.name, data);
         ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(),
-                3 * 60 * 1000, sn);
+                5 * 60 * 1000, sn);
         if (null == dialect) {
             Logger.w(AIGCService.class, "#syncGenerateText - transmit failed, sn:" + sn);
             // 记录故障

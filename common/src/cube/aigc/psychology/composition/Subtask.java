@@ -28,6 +28,8 @@ public enum Subtask {
 
     UnselectReport("unselect_report"),
 
+    ShowPainting("show_painting"),
+
     ShowCoT("show_cot"),
 
     None("none"),
