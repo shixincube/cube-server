@@ -103,6 +103,13 @@ public class Workflow {
 
         PersonalityAccelerator expectedPersonality = new PersonalityAccelerator(factorSet);
 
+        Logger.d(this.getClass(), "#mergeFactorSet - " +
+                expectedPersonality.getBigFivePersonality().getObligingness() + "/" +
+                expectedPersonality.getBigFivePersonality().getConscientiousness() + "/" +
+                expectedPersonality.getBigFivePersonality().getExtraversion() + "/" +
+                expectedPersonality.getBigFivePersonality().getAchievement() + "/" +
+                expectedPersonality.getBigFivePersonality().getNeuroticism() + "/");
+
         PersonalityAccelerator actualPersonality = this.evaluationReport.getPersonalityAccelerator();
 
         double obligingness = actualPersonality.getBigFivePersonality().getObligingness();
@@ -511,6 +518,7 @@ public class Workflow {
     private String fixThirdPerson(String text) {
         String result = text.replaceAll("此人", "受测人");
         result = result.replaceAll("人物", "受测人");
+        result = result.replaceAll("该个体", "受测人");
 
         StringBuffer buf = new StringBuffer();
         List<String> words = this.service.segmentation(result);

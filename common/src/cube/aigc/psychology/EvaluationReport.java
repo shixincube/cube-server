@@ -340,6 +340,7 @@ public class EvaluationReport implements JSONable {
 //            this.attentionSuggestion = Attention.NoAttention;
 //            return;
 //        }
+        Logger.w(this.getClass(), "#recheckAttention");
 
         int score = 0;
         boolean depression = false;

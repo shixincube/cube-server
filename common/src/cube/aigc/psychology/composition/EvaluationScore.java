@@ -162,11 +162,11 @@ public class EvaluationScore implements JSONable {
                 break;
             case Anxiety:
                 if (rate == IndicatorRate.Low) {
-                    buf.append("轻度焦虑");
+                    buf.append("轻度焦虑情绪");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度焦虑");
+                    buf.append("中度焦虑情绪");
                 } else if (rate == IndicatorRate.High) {
-                    buf.append("严重焦虑");
+                    buf.append("重度焦虑情绪");
                 } else {
                     return null;
                 }

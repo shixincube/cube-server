@@ -16,7 +16,6 @@ import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.*;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.other.OtherSet;
-import cube.aigc.psychology.material.person.Head;
 import cube.aigc.psychology.material.person.Leg;
 import cube.util.FloatUtils;
 import cube.vision.BoundingBox;
@@ -820,8 +819,9 @@ public class HTPEvaluation extends Evaluation {
 
         // 画面涂鸦
         if (null != this.painting.getWhole()) {
-            // 稀疏计数，如果稀疏大于等于3，说明画面过于简单
+            // 稀疏计数，大于等于3，说明画面过于简单
             int sparseness = 0;
+            // 涂鸦计数，大于4，说明画面大面积涂鸦
             int doodles = 0;
             for (Texture texture : this.painting.getQuadrants()) {
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space texture:\n"
@@ -829,7 +829,19 @@ public class HTPEvaluation extends Evaluation {
 
                 if (texture.isValid()) {
                     // 判断画面涂鸦效果
-                    if (texture.avg >= 2.0 && texture.density > 0.8 && texture.hierarchy > 0.02) {
+                    /*
+                     * 大面积涂鸦
+                     * "avg": "6.334347345132742",
+                     * "squareDeviation": "21.74551120817507",
+                     * "density": "0.6666666666666666",
+                     * "max": "15.851769911504423",
+                     * "hierarchy": "0.7829784292035399",
+                     * "standardDeviation": "4.663208252713476"
+                     */
+                    if (texture.avg >= 4.0 && texture.max >= 10) {
+                        doodles += 2;
+                    }
+                    else if (texture.avg >= 2.0 && texture.density > 0.6 && texture.hierarchy > 0.02) {
                         doodles += 1;
                     }
                     else if (texture.density >= 0.5 && texture.max >= 5.0) {
@@ -858,6 +870,7 @@ public class HTPEvaluation extends Evaluation {
 
             Logger.d(this.getClass(), "#evalSpaceStructure - Space whole texture:\n"
                     + this.painting.getWhole().toJSON().toString(4));
+            // 整体观感
             if (this.painting.getWhole().max < 2.0 && this.painting.getWhole().max != 0) {
                 if (this.painting.getWhole().density > 0.1 && this.painting.getWhole().density < 0.3) {
                     sparseness += 1;
@@ -867,10 +880,30 @@ public class HTPEvaluation extends Evaluation {
                 }
             }
             else if (this.painting.getWhole().max >= 2.0) {
-                sparseness -= 1;
+                if (this.painting.getWhole().avg >= 4.0) {
+                    doodles += 1;
+                }
+                else {
+                    sparseness -= 1;
+                }
             }
 
-            if (doodles >= 3) {
+            if (doodles >= 5) {
+                // 画面超过2/3画幅涂鸦
+                String desc = "画面中出现大面积涂鸦，线条凌乱";
+                result.addFeature(desc, Term.Anxiety, Tendency.Positive, PerceptronThing.createPictureSense());
+
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.8, 0.9));
+                result.addScore(Indicator.Depression, 1, FloatUtils.random(0.8, 0.9));
+                result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.4, 0.5));
+
+                result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(2.0, 3.0));
+                result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(8.0, 9.0));
+                if (printBigFive) {
+                    System.out.println("CP-100");
+                }
+            }
+            else if (doodles >= 3) {
                 // 画面超过1/2画幅涂鸦
                 String desc = "画面中大部分画幅内容出现涂鸦";
                 result.addFeature(desc, Term.Anxiety, Tendency.Positive, PerceptronThing.createPictureSense());
@@ -2985,8 +3018,7 @@ public class HTPEvaluation extends Evaluation {
         // 如果有乐观和社会适应性，则社会适应性负分降分
         double optimism = 0;
 
-        // 如果抑郁都是负分，则删除所有抑郁指标
-        int depressionValue = 0;
+//        int depressionValue = 0;
         int depressionCount = 0;
         double depression = 0;
 
@@ -3003,10 +3035,12 @@ public class HTPEvaluation extends Evaluation {
                         break;
                     }
 
-                    if (score.value > 0) {
+                    if (score.value > 2) {
                         w = w - score.weight;
-                        ef.removeScore(score);
+//                        ef.removeScore(score);
+                        Logger.w(this.getClass(), "#correct - Depression -> Indicator.Stress: " + score.weight);
                         ef.addScore(Indicator.Stress, 1, score.weight);
+                        break;
                     }
                 }
 
@@ -3027,7 +3061,7 @@ public class HTPEvaluation extends Evaluation {
             List<Score> scores = ef.getScores(Indicator.Depression);
             for (Score s : scores) {
                 depressionCount += 1;
-                depressionValue += s.value;
+//                depressionValue += s.value;
                 if (s.value > 0) {
                     depression += s.weight;
                 } else {
@@ -3056,18 +3090,18 @@ public class HTPEvaluation extends Evaluation {
             }
         }
 
-        if (depressionValue < 0 && depressionCount == Math.abs(depressionValue)) {
-            for (EvaluationFeature ef : list) {
-                ef.removeScores(Indicator.Depression);
-            }
-        }
-        else if ((depressionValue < 0 && depression > 0.5) ||
-                (depressionValue < 0 && depression > 0.3 && depressionCount >= 5)) {
-            // 增加一个权重负值
-            Logger.w(this.getClass(), "#correct - depression: " + depressionValue + " - " + depression);
-            list.get(list.size() - 1).addScore(Indicator.Depression, -1, FloatUtils.random(0.79, 0.88));
-        }
-        else if (depressionCount > 0) {
+//        if (depressionValue < -2.0 && depressionCount == Math.abs(depressionValue)) {
+//            for (EvaluationFeature ef : list) {
+//                ef.update
+//            }
+//        }
+//        else if ((depressionValue < 0 && depression > 0.5) ||
+//                (depressionValue < 0 && depression > 0.3 && depressionCount >= 5)) {
+//            // 增加一个权重负值
+//            Logger.w(this.getClass(), "#correct - depression: " + depressionValue + " - " + depression);
+//            list.get(list.size() - 1).addScore(Indicator.Depression, -1, FloatUtils.random(0.79, 0.88));
+//        }
+        if (depressionCount > 0) {
             if (this.painting.getAttribute().age >= 35) {
                 list.get(list.size() - 1).addScore(Indicator.Depression, -1,
                         this.painting.getAttribute().age * FloatUtils.random(0.009, 0.011));
