@@ -30,29 +30,45 @@ public class QueryRevolver {
 
     private final static SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy年MM月dd日HH时mm分ss秒");
 
-    private String[] keywordWorkEnvironment = new String[] {
+    private final static String[] sKeywordWorkEnvironment = new String[] {
             "工作环境偏好",
             "工作环境喜好",
             "工作环境倾向",
             "工作环境"
     };
 
-    private String[] keywordManagementRecommendation = new String[] {
+    private final static String[] sKeywordManagementRecommendation = new String[] {
             "管理建议",
             "管理方式",
             "管理方法",
             "管理"
     };
 
-    private String[] keywordSuggestion = new String[] {
+    private final static String[] sKeywordSuggestion = new String[] {
             "建议",
             "改善",
             "缓解",
             "解决"
     };
 
-    private String[] paintingDesc = new String[] {
+    private final static String[] sPaintingDesc = new String[] {
             "画", "画面", "图画", "图像", "照片", "绘画", "看"
+    };
+
+    /**
+     * 症状得分关键词表。
+     */
+    private final static String[] sSymptomScoreWords = new String[] {
+            "躯体化", "somatization",
+            "强迫", "obsession",
+            "人际关系", "interpersonal",
+            "抑郁", "depression",
+            "焦虑", "anxiety",
+            "敌对", "hostile",
+            "恐怖", "horror",
+            "偏执", "paranoid",
+            "精神病性", "psychosis",
+            "睡眠障碍和饮食不良", "sleep diet"
     };
 
     /**
@@ -72,10 +88,6 @@ public class QueryRevolver {
         this.service = service;
         this.tokenizer = service.getTokenizer();
         this.storage = storage;
-    }
-
-    private String formatReportDate(PaintingReport report) {
-        return sDateFormat.format(new Date(report.getFinishedTimestamp()));
     }
 
     public String generatePrompt(ConversationContext context, String query) {
@@ -184,9 +196,11 @@ public class QueryRevolver {
 
                 // 画面特征
                 result.append(this.tryGeneratePaintingFeature(report, query));
-
                 // 更新长度限制
                 wordLimit -= result.length();
+
+                // 指标数据
+                report.getEvaluationReport().getFactorSet();
 
                 if (wordLimit > 0) {
                     result.append("\n受测人的大五人格画像是").append(report.getEvaluationReport()
@@ -311,7 +325,7 @@ public class QueryRevolver {
 
         result.append("\n根据上述已知信息，专业地来回答用户的问题。");
 
-        for (String word : this.keywordSuggestion) {
+        for (String word : sKeywordSuggestion) {
             if (query.contains(word)) {
                 result.append("答案里不要出现药品信息。");
                 break;
@@ -406,7 +420,7 @@ public class QueryRevolver {
 
         result.append("\n根据上述已知信息，专业地来回答用户的问题。");
 
-        for (String word : this.keywordSuggestion) {
+        for (String word : sKeywordSuggestion) {
             if (query.contains(word)) {
                 result.append("答案里不要出现药品信息。");
                 break;
@@ -486,8 +500,12 @@ public class QueryRevolver {
         return result;
     }
 
+    private String formatReportDate(PaintingReport report) {
+        return sDateFormat.format(new Date(report.getFinishedTimestamp()));
+    }
+
     private String fixName(String name, String gender, int age) {
-        if (age <= 22) {
+        if (age <= 24) {
             return name;
         }
         else {
@@ -579,7 +597,7 @@ public class QueryRevolver {
                     result.append(answer).append("\n\n");
                 }
 
-                for (String word : this.keywordWorkEnvironment) {
+                for (String word : sKeywordWorkEnvironment) {
                     if (query.contains(word)) {
                         question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
                                 .getBigFivePersonality().getDisplayName() + "的工作环境偏好";
@@ -596,7 +614,7 @@ public class QueryRevolver {
                     }
                 }
 
-                for (String word : this.keywordManagementRecommendation) {
+                for (String word : sKeywordManagementRecommendation) {
                     if (query.contains(word)) {
                         question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
                                 .getBigFivePersonality().getDisplayName() + "的管理建议";
@@ -650,7 +668,7 @@ public class QueryRevolver {
         TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
         List<String> keywords = analyzer.analyzeOnlyWords(query, 10);
         for (String keyword : keywords) {
-            for (String word : this.paintingDesc) {
+            for (String word : sPaintingDesc) {
                 if (keyword.contains(word)) {
                     hit = true;
                     break;

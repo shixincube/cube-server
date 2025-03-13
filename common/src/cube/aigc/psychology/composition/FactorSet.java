@@ -1,12 +1,28 @@
 package cube.aigc.psychology.composition;
 
+import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
  * 预测出的因子集合。
  */
-public class FactorSet {
+public class FactorSet implements JSONable {
+
+    public class NormRange {
+        public final double low;
+        public final double high;
+
+        public final double value;
+        public final boolean norm;
+
+        public NormRange(double low, double high, double value) {
+            this.low = low;
+            this.high = high;
+            this.value = value;
+            this.norm = value >= low && value <= high;
+        }
+    }
 
     public SymptomFactor symptomFactor;
 
@@ -37,12 +53,54 @@ public class FactorSet {
                 this.symptomFactor.sleepDiet * 7);
     }
 
+    public NormRange normSomatization() {
+        return new NormRange(0.89, 1.85, this.symptomFactor.somatization);
+    }
+
+    public NormRange normObsession() {
+        return new NormRange(1.04, 2.20, this.symptomFactor.obsession);
+    }
+
+    public NormRange normInterpersonal() {
+        return new NormRange(1.04, 2.26, this.symptomFactor.interpersonal);
+    }
+
+    public NormRange normDepression() {
+        return new NormRange(0.91, 2.09, this.symptomFactor.depression);
+    }
+
+    public NormRange normAnxiety() {
+        return new NormRange(0.96, 1.82, this.symptomFactor.anxiety);
+    }
+
+    public NormRange normHostile() {
+        return new NormRange(0.91, 2.01, this.symptomFactor.hostile);
+    }
+
+    public NormRange normHorror() {
+        return new NormRange(0.82, 1.64, this.symptomFactor.horror);
+    }
+
+    public NormRange normParanoid() {
+        return new NormRange(0.86, 2.00, this.symptomFactor.paranoid);
+    }
+
+    public NormRange normPsychosis() {
+        return new NormRange(0.87, 1.71, this.symptomFactor.psychosis);
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("symptoms", this.symptomFactor.toArray());
         json.put("personalities", this.personalityFactor.toArray());
         json.put("affects", this.affectFactor.toArray());
         return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 
 

@@ -260,12 +260,13 @@ public class PredictPaintingSubtask extends ConversationSubtask {
 
                     @Override
                     public void onReportEvaluateCompleted(PaintingReport report) {
-                        Logger.d(this.getClass(), "#onReportEvaluateCompleted - Clear current subtask");
+                        Logger.d(this.getClass(), "#onReportEvaluateCompleted: " + channel.getCode());
                         GeneratingRecord record = convCtx.getRecent();
                         if (null != record.context) {
                             record.context.setInferring(false);
                         }
                         record.answer = ReportHelper.makeContentMarkdown(report, true, 0, false);
+                        // clear subtask
                         convCtx.clearCurrentPredict();
                         // 将生成的报告设置为当前报告
                         convCtx.setCurrentReport(report);
