@@ -265,7 +265,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                         if (null != record.context) {
                             record.context.setInferring(false);
                         }
-                        record.answer = ReportHelper.makeContentMarkdown(report, 0, false);
+                        record.answer = ReportHelper.makeContentMarkdown(report, true, 0, false);
                         convCtx.clearCurrentPredict();
                         // 将生成的报告设置为当前报告
                         convCtx.setCurrentReport(report);

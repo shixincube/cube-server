@@ -27,7 +27,7 @@
             "en": ""
         },
         "FORMAT_ANSWER_GENERATING": {
-            "cn": "正在为受测人生成报告，该受测人为%s性，年龄是%s。报告生成需要些时间，请稍候……",
+            "cn": "正在为受测人生成评测数据，该受测人为%s性，年龄是%s。评测数据生成需要些时间，请稍候……",
             "en": ""
         },
         "ASK_INVALID_FILE": {
@@ -59,63 +59,63 @@
             "en": ""
         },
         "ANSWER_NO_REPORTS_DATA": {
-            "cn": "我没有找到您的报告信息。如果您想进行绘画测评，可以按照以下提示进行绘画评测：\n\n* 请你在纸上至少画出“房、树、人”三个元素（其他元素任意选择），共同构成一副有意义的画面。务必横向绘画，绘画时间10到15分钟。\n\n* 完成绘画之后将绘画拍照上传给我，务必告知我受测人的性别和年龄。目前我能对11岁至65岁的人群进行测验。",
+            "cn": "我没有找到您的评测信息。如果您想进行绘画测评，可以按照以下提示进行绘画评测：\n\n* 请你在纸上至少画出“房、树、人”三个元素（其他元素任意选择），共同构成一副有意义的画面。务必横向绘画，绘画时间10到15分钟。\n\n* 完成绘画之后将绘画拍照上传给我，务必告知我受测人的性别和年龄。目前我能对11岁至65岁的人群进行测验。",
             "en": ""
         },
         "FORMAT_PROMPT_QUERY_REPORT_RESULT": {
-            "cn": "通过对历史数据的查询，共找到**%d**份您操作过的报告。按照报告时间倒序整理最近**%d**份报告如下：\n\n%s\n依据以上数据，根据问题“%s”将上述数据整理呈现，不要编造内容。",
+            "cn": "通过对历史数据的查询，共找到**%d**份您操作过的评测。按照评测时间倒序整理最近**%d**份评测如下：\n\n%s\n依据以上数据，根据问题“%s”将上述数据整理呈现，不要编造内容。",
             "en": ""
         },
         "FORMAT_ANSWER_QUERY_REPORT_RESULT": {
-            "cn": "通过对历史数据的查询，共找到**%d**份您操作过的报告。按照报告时间倒序整理最近**%d**份报告如下：\n\n%s",
+            "cn": "通过对历史数据的查询，共找到**%d**份您操作过的评测。按照评测时间倒序整理最近**%d**份评测如下：\n\n%s",
             "en": ""
         },
         "FORMAT_ANSWER_SELECT_REPORT_LOCATION_OVERFLOW": {
-            "cn": "您找的是第%d份报告，但是我只找到**%d**份报告。",
+            "cn": "您找的是第%d份评测，但是我只找到**%d**份评测。",
             "en": ""
         },
         "FORMAT_ANSWER_PLEASE_INPUT_REPORT_DESC": {
-            "cn": "请告诉我您需要查看哪份报告，现在您一共有%d份报告。",
+            "cn": "请告诉我您需要查看哪份评测，现在您一共有%d份评测。",
             "en": ""
         },
         "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_YMD": {
-            "cn": "您共有%d份报告，但是我没有找到**%d年%d月%d日**的报告。",
+            "cn": "您共有%d份评测，但是我没有找到**%d年%d月%d日**的评测。",
             "en": ""
         },
         "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_YM": {
-            "cn": "您共有%d份报告，但是我没有找到**%d年%d月**的报告。",
+            "cn": "您共有%d份评测，但是我没有找到**%d年%d月**的评测。",
             "en": ""
         },
         "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_MD": {
-            "cn": "您共有%d份报告，但是我没有找到**%d月%d日**的报告。",
+            "cn": "您共有%d份评测，但是我没有找到**%d月%d日**的评测。",
             "en": ""
         },
         "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_DAY": {
-            "cn": "您共有%d份报告，但是我没有找到**%d日**的报告。",
+            "cn": "您共有%d份评测，但是我没有找到**%d日**的评测。",
             "en": ""
         },
         "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_MONTH": {
-            "cn": "您共有%d份报告，但是我没有找到**%d月**的报告。",
+            "cn": "您共有%d份评测，但是我没有找到**%d月**的评测。",
             "en": ""
         },
         "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_YEAR": {
-            "cn": "您共有%d份报告，但是我没有找到**%d年**的报告。",
+            "cn": "您共有%d份评测，但是我没有找到**%d年**的评测。",
             "en": ""
         },
         "FORMAT_ANSWER_FOUND_MULTIPLE_REPORTS": {
-            "cn": "在%d份报告里，找到**%d**份符合条件的报告：\n\n%s",
+            "cn": "在%d份评测里，找到**%d**份符合条件的评测：\n\n%s",
             "en": ""
         },
         "FORMAT_ANSWER_SHOW_REPORT_CONTENT": {
-            "cn": "为您打开报告【%s】，报告内容如下：\n\n%s",
+            "cn": "为您打开评测【%s】，评测内容如下：\n\n%s",
             "en": ""
         },
         "ANSWER_CAN_NOT_FIND_REPORT": {
-            "cn": "没有找到您所描述的报告。",
+            "cn": "没有找到您所描述的评测。",
             "en": ""
         },
         "FORMAT_ANSWER_UNSELECT_REPORT_OK": {
-            "cn": "好的，让我们结束关于报告【%s】的话题。",
+            "cn": "好的，让我们结束关于评测【%s】的话题。",
             "en": ""
         },
         "ANSWER_UNSELECT_REPORT_WARNING": {
@@ -123,19 +123,27 @@
             "en": ""
         },
         "FORMAT_ANSWER_REPORT_IS_NULL": {
-            "cn": "报告【%s】的数据无法正确读取。",
+            "cn": "评测【%s】的数据无法正确读取。",
             "en": ""
         },
         "FORMAT_ANSWER_SHOW_PAINTING": {
-            "cn": "为您展示报告【%s】的绘画图片。\n\n%s",
+            "cn": "为您展示评测【%s】的绘画图片。\n\n%s",
             "en": ""
         },
         "FORMAT_ANSWER_SHOW_PAINTING_RECENT_ONE": {
-            "cn": "为您展示最近一次报告【%s】的绘画图片。\n\n%s",
+            "cn": "为您展示最近一次评测【%s】的绘画图片。\n\n%s",
+            "en": ""
+        },
+        "FORMAT_ANSWER_SHOW_INDICATOR": {
+            "cn": "为您展示%s评测【%s】的指标数据。\n\n%s",
+            "en": ""
+        },
+        "FORMAT_ANSWER_SHOW_PERSONALITY": {
+            "cn": "为您展示%s评测【%s】的人格特质数据。\n\n%s",
             "en": ""
         },
         "FORMAT_ANSWER_SHOW_COT": {
-            "cn": "绘画报告心理学特征【%s】的思维描述如下：\n\n%s\n报告思维桑基图链接：[Painting CoT Diagram](http://211.157.179.37:7010/aigc/chart/pcd/%s?sn=%s)",
+            "cn": "绘画评测心理学特征【%s】的思维描述如下：\n\n%s\n评测思维桑基图链接：[Painting CoT Diagram](http://211.157.179.37:7010/aigc/chart/pcd/%s?sn=%s)",
             "en": ""
         }
     }

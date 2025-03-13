@@ -34,6 +34,8 @@ public class Representation implements JSONable {
     public final static String High = "高";
     public final static String Low = "低";
 
+    public final static String Suffix = "的";
+
     public KnowledgeStrategy knowledgeStrategy;
 
     public int positiveCorrelation = 0;
@@ -103,6 +105,9 @@ public class Representation implements JSONable {
                 case SelfEsteem:
                     marked = this.knowledgeStrategy.getTerm().word + Normal;
                     break;
+                case Instinct:
+                    marked = this.knowledgeStrategy.getTerm().word + Suffix;
+                    break;
                 default:
                     marked = LowTrick + this.knowledgeStrategy.getTerm().word;
                     break;
@@ -123,6 +128,9 @@ public class Representation implements JSONable {
                 case SelfEsteem:
                     marked = this.knowledgeStrategy.getTerm().word + High;
                     break;
+                case Instinct:
+                    marked = this.knowledgeStrategy.getTerm().word + Suffix;
+                    break;
                 default:
                     marked = HighTrick + this.knowledgeStrategy.getTerm().word;
                     break;
@@ -141,6 +149,9 @@ public class Representation implements JSONable {
                     break;
                 case SelfEsteem:
                     marked = this.knowledgeStrategy.getTerm().word + Normal;
+                    break;
+                case Instinct:
+                    marked = this.knowledgeStrategy.getTerm().word + Suffix;
                     break;
                 default:
                     marked = NormalTrick + this.knowledgeStrategy.getTerm().word;

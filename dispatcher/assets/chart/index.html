@@ -50,8 +50,8 @@ var option = {
     animation: true,
     title: {
         text: 'Painting CoT Diagram',
-        left: '20',
-        textAlign: 'auto',
+        left: 'center',
+        textAlign: 'center',
         textStyle: {
             fontSize: 14
         }
@@ -92,6 +92,10 @@ chart.on('finished', function() {
         } catch (e) {
         }
     }
+
+    setTimeout(function() {
+        _resize();
+    }, 1000);
 });
 
 var _resizeTimer = 0;

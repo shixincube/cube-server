@@ -652,6 +652,15 @@ public class Painting implements JSONable {
     public boolean isValid() {
         if (null != this.whole) {
             /*
+             * 空白
+             * "avg":"0.0",
+             * "squareDeviation":"0.0",
+             * "density":"0.02857142857142857",
+             * "max":"0.0",
+             * "hierarchy":"0.0013812154696132596",
+             * "standardDeviation":"0.0"
+             *
+             * 有条码
              * "avg":"0.03301299778761062",
              * "squareDeviation":"0.01634787034387175",
              * "density":"0.02857142857142857",
@@ -659,6 +668,7 @@ public class Painting implements JSONable {
              * "hierarchy":"0.006042817679558011",
              * "standardDeviation":"0.12785879063979821"
              *
+             * 有较大面积条码
              * "avg":"0.0927302267699115",
              * "squareDeviation":"0.12898342435198815",
              * "density":"0.02857142857142857",
@@ -666,22 +676,13 @@ public class Painting implements JSONable {
              * "hierarchy":"0.010704419889502761",
              * "standardDeviation":"0.3591426239699044"
              */
-            if (this.whole.max == 0 && this.whole.avg == 0 && this.whole.squareDeviation == 0) {
+            if (this.whole.max == 0 && this.whole.avg == 0 && this.whole.density < 0.03d &&
+                    this.whole.hierarchy >= 0.0013d && this.whole.hierarchy <= 0.0014d) {
                 // 空白图片
-                return false;
-            }
-        }
-
-        if (null != this.quadrants && !this.quadrants.isEmpty()) {
-            int count = 0;
-            for (Texture texture : this.quadrants) {
-                if (!texture.isValid()) {
-                    count++;
+                if (null == this.materials || this.materials.length() == 0) {
+                    Logger.w(this.getClass(), "#isValid - Blank image");
+                    return false;
                 }
-            }
-            if (count >= 3) {
-                // 接近空白图片
-                return false;
             }
         }
 

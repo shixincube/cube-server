@@ -20,8 +20,8 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.scene.ReportHelper;
 import cube.service.aigc.scene.PsychologyScene;
+import cube.service.aigc.scene.ReportHelper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -84,7 +84,7 @@ public class GetPsychologyReportPartTask extends ServiceTask {
 
             if (report.getState().code == AIGCStateCode.Ok.code) {
                 if (content) {
-                    String contentMarkdown = ReportHelper.makeContentMarkdown(report, 5, true);
+                    String contentMarkdown = ReportHelper.makeContentMarkdown(report, true, 5, true);
                     responseData.put("content", contentMarkdown);
                 }
 

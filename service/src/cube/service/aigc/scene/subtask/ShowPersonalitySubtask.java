@@ -24,11 +24,13 @@ import cube.service.aigc.scene.SceneManager;
 
 import java.util.List;
 
-public class ShowPaintingSubtask extends ConversationSubtask {
+public class ShowPersonalitySubtask extends ConversationSubtask {
 
-    public ShowPaintingSubtask(AIGCService service, AIGCChannel channel, String query, ComplexContext context,
-                               ConversationRelation relation, ConversationContext convCtx,
-                               GenerateTextListener listener) {
+    public final static String RECENT_ONE = "最近一份";
+
+    public ShowPersonalitySubtask(AIGCService service, AIGCChannel channel, String query, ComplexContext context,
+                                  ConversationRelation relation, ConversationContext convCtx,
+                                  GenerateTextListener listener) {
         super(Subtask.ShowPainting, service, channel, query, context, relation, convCtx, listener);
     }
 
@@ -59,9 +61,10 @@ public class ShowPaintingSubtask extends ConversationSubtask {
                         PaintingReport report = list.get(0);
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
-                                "FORMAT_ANSWER_SHOW_PAINTING_RECENT_ONE"),
+                                "FORMAT_ANSWER_SHOW_PERSONALITY"),
+                                RECENT_ONE,
                                 ReportHelper.makeReportTitleMarkdown(report),
-                                ReportHelper.makeReportPaintingLink(channel, report));
+                                ReportHelper.makeContentMarkdown(report, false, 0, true));
                         convCtx.record(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
@@ -79,9 +82,10 @@ public class ShowPaintingSubtask extends ConversationSubtask {
                 public void run() {
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
-                            "FORMAT_ANSWER_SHOW_PAINTING"),
+                            "FORMAT_ANSWER_SHOW_PERSONALITY"),
+                            "",
                             ReportHelper.makeReportTitleMarkdown(report),
-                            ReportHelper.makeReportPaintingLink(channel, report));
+                            ReportHelper.makeContentMarkdown(report, false, 0, true));
                     convCtx.record(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);

@@ -42,7 +42,7 @@ public class Texture implements JSONable {
     }
 
     public boolean isValid() {
-        return this.max > 0 && this.squareDeviation > 0 && this.standardDeviation > 0 && this.hierarchy > 0;
+        return this.max > 0 && this.avg > 0 && this.density > 0.0014d;
     }
 
     @Override

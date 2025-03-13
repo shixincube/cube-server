@@ -827,7 +827,7 @@ public class HTPEvaluation extends Evaluation {
                 Logger.d(this.getClass(), "#evalSpaceStructure - Space texture:\n"
                         + texture.toJSON().toString(4));
 
-                if (texture.isValid()) {
+                if (texture.max > 0 && texture.hierarchy > 0) {
                     // 判断画面涂鸦效果
                     /*
                      * 大面积涂鸦
@@ -2404,7 +2404,7 @@ public class HTPEvaluation extends Evaluation {
             }
 
             // 判断人是否涂鸦
-            if (person.texture.isValid()) {
+            if (person.texture.max > 0 && person.texture.hierarchy > 0) {
                 if (person.texture.max >= 1.0 && person.texture.max < 2.0) {
                     // 判断标准差和层密度
                     if (person.texture.standardDeviation >= 0.42 && person.texture.hierarchy <= 0.05) {

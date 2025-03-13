@@ -135,7 +135,7 @@ public class House extends Thing {
     @Override
     public boolean isDoodle() {
         // 涂鸦特征：轮廓密度高，层密度低
-        if (this.texture.isValid()) {
+        if (this.texture.max > 0 && this.texture.hierarchy > 0) {
             // 判断最大值
             if (this.texture.max >= 1.0 && this.texture.density > 0.2) {
                 // 判断标准差和层密度

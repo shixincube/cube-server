@@ -355,7 +355,7 @@ public class PaintingReport extends Report {
             for (ReportSection rs : this.reportSectionList) {
                 buf.append("\n");
                 buf.append("**").append(rs.title).append("** \n\n");
-                buf.append("**报告**：\n\n").append(rs.report).append("\n\n");
+                buf.append("**内容**：\n\n").append(rs.report).append("\n\n");
                 buf.append("**建议**：\n\n").append(rs.suggestion).append("\n\n");
                 buf.append("\n***\n");
             }

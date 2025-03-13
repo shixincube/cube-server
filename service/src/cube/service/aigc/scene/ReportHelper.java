@@ -69,7 +69,7 @@ public class ReportHelper {
         }
 
         EvaluationReport evalReport = report.getEvaluationReport();
-        buf.append("根据报告的绘画图片，");
+        buf.append("根据评测的绘画图片，");
         if (evalReport.isHesitating()) {
             buf.append("绘画画面内容并不容易被识别。");
         }
@@ -94,7 +94,7 @@ public class ReportHelper {
         return buf.toString();
     }
 
-    public static String makeContentMarkdown(PaintingReport report, int maxIndicators, boolean personality) {
+    public static String makeContentMarkdown(PaintingReport report, boolean summary, int maxIndicators, boolean personality) {
         StringBuilder buf = new StringBuilder();
         if (report.isNull()) {
             buf.append("根据提供的绘画文件，绘画里没有发现有效的心理投射内容，建议检查一下绘画文件内容。");
@@ -102,7 +102,7 @@ public class ReportHelper {
         }
 
         EvaluationReport evalReport = report.getEvaluationReport();
-        buf.append("根据报告的绘画图片，");
+        buf.append("根据评测的绘画图片，");
         if (evalReport.isHesitating()) {
             buf.append("绘画画面内容并不容易被识别。");
         }
@@ -113,11 +113,12 @@ public class ReportHelper {
                 .append(report.getAttribute().getGenderText()).append("性**。")
                 .append("评测日期是**")
                 .append(gsDateFormat.format(new Date(report.timestamp))).append("**。\n\n");
-        buf.append("在这幅绘画中投射出了").append(evalReport.numRepresentations()).append("个心理表征，");
-        buf.append("相关的评测内容如下：\n\n");
+        buf.append("在这幅绘画中投射出了").append(evalReport.numRepresentations()).append("个心理表征。\n\n");
 
-        buf.append("# 概述\n\n");
-        buf.append(report.getSummary()).append("\n\n");
+        if (summary) {
+            buf.append("# 概述\n\n");
+            buf.append(report.getSummary()).append("\n\n");
+        }
 
         int numIndicators = 0;
         if (evalReport.numEvaluationScores() > 0 && maxIndicators > 0) {
@@ -145,11 +146,10 @@ public class ReportHelper {
             PersonalityAccelerator personalityAccelerator = evalReport.getPersonalityAccelerator();
             if (null != personalityAccelerator) {
                 BigFivePersonality bigFivePersonality = personalityAccelerator.getBigFivePersonality();
-                buf.append("--------\n\n");
                 buf.append("# 人格特质（大五人格）\n\n");
                 buf.append("**【人格画像】** ：**").append(bigFivePersonality.getDisplayName()).append("**。\n\n");
                 buf.append("**【人格描述】** ：\n\n").append(bigFivePersonality.getDescription()).append("\n\n");
-//            buf.append("**【维度描述】** ：\n\n");
+                buf.append("大五人格理论，通过宜人性、尽责性、外向性、进取性和情绪性五个维度的评测，直观地展示受测人在五个维度上的得分情况，有助于更清晰地认识受测人的性格轮廓。以下是五个维度数据：\n\n");
 
                 buf.append("### **宜人性** （")
                         .append(String.format("%.1f", bigFivePersonality.getObligingness())).append("）\n\n");
@@ -192,12 +192,12 @@ public class ReportHelper {
                 buf.append("本次评测中，**受测人应当关注自己近期的心理状态变化，如果有需要应当积极需求帮助。**");
             }
             buf.append("\n\n");
-        }
 
-        buf.append("对于本次评测，您还需要知道的是：\n\n");
-        buf.append("1. **不要将测试结果当作永久的“标签”。** 测试的结果仅仅是根据最近一周或者近期的感觉，其结果也只是表明短期内的心理健康状态，是可以调整变化的，不必产生心理负担。\n\n");
-        buf.append("2. **报告结果没有“好”与“坏”之分。** 报告结果与个人道德品质无关，只反映你目前的心理状态，但不同的特点对于不同的工作、生活状态会存在“合适”和“不合适”的区别，从而表现出具体条件的优势和劣势。\n\n");
-        buf.append("3. **以整体的观点来看待测试结果。** 很多测验都包含多个分测验，对于这类测验来说，不应该孤立地理解单个分测验的成绩。在评定一个人的特征时，一方面需要理解每一个分测验分数的意义，但更重要的是综合所有信息全面分析。\n\n");
+            buf.append("对于本次评测，您还需要知道的是：\n\n");
+            buf.append("1. **不要将测试结果当作永久的“标签”。** 测试的结果仅仅是根据最近一周或者近期的感觉，其结果也只是表明短期内的心理健康状态，是可以调整变化的，不必产生心理负担。\n\n");
+            buf.append("2. **评测结果没有“好”与“坏”之分。** 评测结果与个人道德品质无关，只反映你目前的心理状态，但不同的特点对于不同的工作、生活状态会存在“合适”和“不合适”的区别，从而表现出具体条件的优势和劣势。\n\n");
+            buf.append("3. **以整体的观点来看待测试结果。** 很多测验都包含多个分测验，对于这类测验来说，不应该孤立地理解单个分测验的成绩。在评定一个人的特征时，一方面需要理解每一个分测验分数的意义，但更重要的是综合所有信息全面分析。\n\n");
+        }
 
         return buf.toString();
     }
@@ -219,7 +219,7 @@ public class ReportHelper {
         buf.append("绘画");
         buf.append(featureSet.makeMarkdown(false));
         buf.append("\n");
-        buf.append("根据上述特征，需要结合专业的知识结构，并根据对应症状的得分进行阐述并生成报告。");
+        buf.append("根据上述特征，需要结合专业的知识结构，并根据对应症状的得分进行阐述并生成评测数据。");
         return buf.toString();
     }
 
@@ -255,7 +255,7 @@ public class ReportHelper {
                     break;
             }
             buf.append("* 测验工具：").append(tool).append("\n");
-            buf.append("* 报告时间（评测日期）：").append(gsDateFormat.format(new Date(report.timestamp))).append("\n");
+            buf.append("* 评测日期：").append(gsDateFormat.format(new Date(report.timestamp))).append("\n");
             buf.append("* 受测人：").append(report.getAttribute().getGenderText()).append("性，")
                     .append(report.getAttribute().getAgeText()).append("\n");
             boolean valid = (null != report.painting) ? report.painting.isValid() : true;

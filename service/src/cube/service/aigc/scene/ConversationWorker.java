@@ -158,6 +158,24 @@ public class ConversationWorker {
                     relation, convCtx, listener);
             return task.execute(roundSubtask);
         }
+        else if (Subtask.ShowIndicator == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - ShowIndicator: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 执行子任务
+            ShowIndicatorSubtask task = new ShowIndicatorSubtask(this.service, channel, query, context,
+                    relation, convCtx, listener);
+            return task.execute(roundSubtask);
+        }
+        else if (Subtask.ShowPersonality == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - ShowPersonality: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 执行子任务
+            ShowPersonalitySubtask task = new ShowPersonalitySubtask(this.service, channel, query, context,
+                    relation, convCtx, listener);
+            return task.execute(roundSubtask);
+        }
         else if (Subtask.ShowCoT == subtask) {
             Logger.d(this.getClass(), "#work - Subtask - ShowCoT: " +
                     channel.getAuthToken().getCode() + "/" + channel.getCode());

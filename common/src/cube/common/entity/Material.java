@@ -78,7 +78,7 @@ public class Material implements JSONable {
 
     public boolean isDoodle() {
         // 涂鸦特征：轮廓密度高，层密度低
-        if (this.texture.isValid()) {
+        if (this.texture.max > 0 && this.texture.hierarchy > 0) {
             // 判断最大值
             if (this.texture.avg > 2.0) {
                 // 判断标准差和层密度
@@ -90,12 +90,11 @@ public class Material implements JSONable {
                 if (this.texture.hierarchy <= 0.03 && this.texture.density >= 0.3 && this.texture.density < 0.99) {
                     return true;
                 }
-//                else if (this.texture.density >= 0.5) {
-//                    return true;
-//                }
+//            else if (this.texture.density >= 0.5) {
+//                return true;
+//            }
             }
         }
-
         return false;
     }
 

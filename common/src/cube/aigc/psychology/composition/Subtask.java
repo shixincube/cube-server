@@ -30,6 +30,10 @@ public enum Subtask {
 
     ShowPainting("show_painting"),
 
+    ShowIndicator("show_indicator"),
+
+    ShowPersonality("show_personality"),
+
     ShowCoT("show_cot"),
 
     None("none"),
