@@ -177,20 +177,19 @@ public class QueryRevolver {
         else {
             if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
                 PaintingReport report = context.getCurrentReport();
-                result.append("已知信息：\n\n");
-                result.append("当前评测报告的受测人是匿名的，");
+                result.append("已知评测数据：\n\n");
+                result.append("当前评测数据的受测人是匿名的，");
                 result.append("年龄是：").append(report.getAttribute().age).append("岁，");
                 result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
-                result.append("报告日期是：").append(formatReportDate(report)).append("。\n");
+                result.append("评测日期是：").append(formatReportDate(report)).append("。\n");
                 result.append("受测人的心理特征摘要如下：");
                 result.append(report.getSummary());
                 result.append("\n\n");
 
-                result.append("受测人有以下心理状态：\n");
-                List<String> symptomContent = this.extractSymptomContent(report.getEvaluationReport().getEvaluationScores(),
-                        report.getAttribute());
+                result.append("受测人主要心理描述如下：\n");
+                List<String> symptomContent = this.extractSymptomContent(report);
                 for (String content : symptomContent) {
-                    result.append("* ").append(content).append("\n");
+                    result.append(content).append("\n\n");
                 }
                 result.append("\n");
 
@@ -266,14 +265,13 @@ public class QueryRevolver {
         result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
 
         if (report instanceof PaintingReport) {
-            result.append("受测人有以下心理状态：\n");
+            result.append("受测人主要心理状态描述如下：\n");
 
             PaintingReport paintingReport = (PaintingReport) report;
 
-            List<String> symptomContent = this.extractSymptomContent(paintingReport.getEvaluationReport().getEvaluationScores(),
-                    report.getAttribute());
+            List<String> symptomContent = this.extractSymptomContent(paintingReport);
             for (String content : symptomContent) {
-                result.append("* ").append(content).append("\n");
+                result.append(content).append("\n");
             }
             result.append("\n");
 
@@ -342,12 +340,12 @@ public class QueryRevolver {
         StringBuilder result = new StringBuilder();
 
         result.append("已知信息：\n\n");
-        result.append("受测人有").append(relations.size()).append("份报告信息如下：\n\n");
+        result.append("受测人有").append(relations.size()).append("份数据信息如下：\n\n");
 
         for (int i = 0; i < relations.size(); ++i) {
             ConversationRelation relation = relations.get(i);
             Report report = reports.get(i);
-            result.append("# 报告").append(i + 1);
+            result.append("# 评测数据").append(i + 1);
             result.append("受测人的名称是：").append(this.fixName(
                     relation.name,
                     report.getAttribute().getGenderText(),
@@ -356,13 +354,12 @@ public class QueryRevolver {
             result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
 
             if (report instanceof PaintingReport) {
-                result.append("受测人有以下心理状态：\n");
+                result.append("受测人心理状态如下：\n");
 
                 PaintingReport paintingReport = (PaintingReport) report;
-                List<String> symptomContent = this.extractSymptomContent(paintingReport.getEvaluationReport().getEvaluationScores(),
-                        report.getAttribute());
+                List<String> symptomContent = this.extractSymptomContent(paintingReport);
                 for (String content : symptomContent) {
-                    result.append("* ").append(content).append("\n");
+                    result.append(content).append("\n");
                 }
                 result.append("\n");
 
@@ -446,14 +443,13 @@ public class QueryRevolver {
         answer.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
 
         if (report instanceof PaintingReport) {
-            answer.append("受测人的心理状态如下：");
+            answer.append("受测人心理状态描述如下：");
 
             PaintingReport paintingReport = (PaintingReport) report;
 
-            List<String> symptomContent = this.extractSymptomContent(paintingReport.getEvaluationReport().getEvaluationScores(),
-                    report.getAttribute());
+            List<String> symptomContent = this.extractSymptomContent(paintingReport);
             for (String content : symptomContent) {
-                answer.append("* ").append(content).append("\n");
+                answer.append(content).append("\n");
             }
             answer.append("\n");
 
@@ -505,7 +501,7 @@ public class QueryRevolver {
     }
 
     private String fixName(String name, String gender, int age) {
-        if (age <= 24) {
+        if (age <= 24 || name.length() == 0 || name.equals("匿名")) {
             return name;
         }
         else {
@@ -513,12 +509,18 @@ public class QueryRevolver {
         }
     }
 
-    private List<String> extractSymptomContent(List<EvaluationScore> list, Attribute attribute) {
+    private String generateSymptomFactor(PaintingReport report, String query) {
+        StringBuilder buf = new StringBuilder();
+        return buf.toString();
+    }
+
+    private List<String> extractSymptomContent(PaintingReport report) {
         final List<String> result = new ArrayList<>();
 
+        List<EvaluationScore> evaluationScoreList = report.getEvaluationReport().getEvaluationScores();
         List<String> queries = new ArrayList<>();
-        for (EvaluationScore es : list) {
-            String word = es.generateWord(attribute);
+        for (EvaluationScore es : evaluationScoreList) {
+            String word = es.generateWord(report.getAttribute());
             if (null == word) {
                 continue;
             }
@@ -532,7 +534,7 @@ public class QueryRevolver {
                 for (RetrieveReRankResult retrieveReRankResult : retrieveReRankResults) {
                     if (retrieveReRankResult.hasAnswer()) {
                         RetrieveReRankResult.Answer answer = retrieveReRankResult.getAnswerList().get(0);
-                        result.add("**" + retrieveReRankResult.getAnswerList() + "**。" + retrieveReRankResult);
+                        result.add("**" + retrieveReRankResult.getQuery() + "** ：" + answer.content);
                     }
                 }
 
@@ -552,7 +554,7 @@ public class QueryRevolver {
         if (success) {
             synchronized (result) {
                 try {
-                    result.wait(30 * 1000);
+                    result.wait(60 * 1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

@@ -30,8 +30,8 @@ import java.util.List;
 public class SelectReportSubtask extends ConversationSubtask {
 
     public SelectReportSubtask(AIGCService service, AIGCChannel channel, String query, ComplexContext context,
-                              ConversationRelation relation, ConversationContext convCtx,
-                              GenerateTextListener listener) {
+                               ConversationRelation relation, ConversationContext convCtx,
+                               GenerateTextListener listener) {
         super(Subtask.SelectReport, service, channel, query, context, relation, convCtx, listener);
     }
 

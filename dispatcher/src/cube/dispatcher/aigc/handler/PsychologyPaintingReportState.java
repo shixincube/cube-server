@@ -63,7 +63,7 @@ public class PsychologyPaintingReportState extends ContextHandler {
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
             String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -71,7 +71,8 @@ public class PsychologyPaintingReportState extends ContextHandler {
             try {
                 long sn = Long.parseLong(request.getParameter("sn"));
 
-                JSONObject result = Manager.getInstance().getPsychologyReportPart(token, sn, false, false, false);
+                JSONObject result = Manager.getInstance().getPsychologyReportPart(token, sn,
+                        false, false, false, false, false);
                 if (null != result) {
                     this.respondOk(response, result);
                 }

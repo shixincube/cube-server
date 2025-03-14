@@ -7,6 +7,7 @@
 package cube.service.aigc.task;
 
 import cell.core.cellet.Cellet;
+import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
@@ -62,11 +63,24 @@ public class GetPsychologyReportPartTask extends ServiceTask {
         boolean section = false;
         boolean thought = false;
 
+        boolean summary = false;
+        boolean link = false;
+        Endpoint endpoint = null;
+
         try {
             sn = packet.data.getLong("sn");
             content = packet.data.has("content") && packet.data.getBoolean("content");
             section = packet.data.has("section") && packet.data.getBoolean("section");
             thought = packet.data.has("thought") && packet.data.getBoolean("thought");
+
+            if (!content) {
+                summary = packet.data.has("summary") && packet.data.getBoolean("summary");
+            }
+
+            link = packet.data.has("link") && packet.data.getBoolean("link");
+            if (link) {
+                endpoint = new Endpoint(packet.data.getJSONObject("endpoint"));
+            }
 
             PaintingReport report = PsychologyScene.getInstance().getPaintingReport(sn);
             if (null == report) {
@@ -102,6 +116,15 @@ public class GetPsychologyReportPartTask extends ServiceTask {
                     if (null != featureSet) {
                         responseData.put("thought", ReportHelper.makeMarkdown(featureSet));
                     }
+                }
+
+                if (summary) {
+                    String markdown = ReportHelper.makeContentMarkdown(report, true, 0, false);
+                    responseData.put("summary", markdown);
+                }
+                if (link) {
+                    String markdown = ReportHelper.makeContentLink(endpoint, token, report, true, true);
+                    responseData.put("link", markdown);
                 }
             }
             else {

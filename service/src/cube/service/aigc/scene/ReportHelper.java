@@ -6,6 +6,7 @@
 
 package cube.service.aigc.scene;
 
+import cell.core.net.Endpoint;
 import cell.util.log.Logger;
 import cube.aigc.psychology.Dataset;
 import cube.aigc.psychology.EvaluationReport;
@@ -94,17 +95,49 @@ public class ReportHelper {
         return buf.toString();
     }
 
-    public static String makeContentMarkdown(PaintingReport report, boolean summary, int maxIndicators, boolean personality) {
+    public static String makeContentLink(Endpoint endpoint, String token, PaintingReport report,
+                                         boolean indicatorLink, boolean personalityLink) {
+        StringBuilder buf = new StringBuilder();
+        if (indicatorLink) {
+            buf.append("[查看数据指标](");
+            buf.append("https://");
+            buf.append(endpoint.toString());
+            buf.append("/aigc/psychology/report/page/");
+            buf.append(token);
+            buf.append("/?page=indicator&sn=");
+            buf.append(report.sn);
+            buf.append(")\n");
+        }
+
+        if (personalityLink) {
+            if (indicatorLink) {
+                buf.append("\n");
+            }
+
+            buf.append("[查看人格特质](");
+            buf.append("https://");
+            buf.append(endpoint.toString());
+            buf.append("/aigc/psychology/report/page/");
+            buf.append(token);
+            buf.append("/?page=bigfive&sn=");
+            buf.append(report.sn);
+            buf.append(")\n");
+        }
+        return buf.toString();
+    }
+
+    public static String makeContentMarkdown(PaintingReport report, boolean summary, int maxIndicators,
+                                             boolean personality) {
         StringBuilder buf = new StringBuilder();
         if (report.isNull()) {
-            buf.append("根据提供的绘画文件，绘画里没有发现有效的心理投射内容，建议检查一下绘画文件内容。");
+            buf.append("根据提供的绘画文件，绘画里没有发现有效的心理投射内容，建议检查一下绘画文件内容。\n");
             return buf.toString();
         }
 
         EvaluationReport evalReport = report.getEvaluationReport();
         buf.append("根据评测的绘画图片，");
         if (evalReport.isHesitating()) {
-            buf.append("绘画画面内容并不容易被识别。");
+            buf.append("绘画画面内容要素较特别。\n\n");
         }
         else {
             buf.append("按照心理学绘画投射理论进行解读。\n\n");

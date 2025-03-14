@@ -163,6 +163,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new ResetReportAttention());
         httpServer.addContextHandler(new PaintingLabels());
         httpServer.addContextHandler(new PsychologyPaintingReportState());
+        httpServer.addContextHandler(new PsychologyReportPage());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -2036,12 +2037,18 @@ public class Manager implements Tickable, PerformerListener {
         return report;
     }
 
-    public JSONObject getPsychologyReportPart(String token, long sn, boolean content, boolean section, boolean thought) {
+    public JSONObject getPsychologyReportPart(String token, long sn, boolean content, boolean section, boolean thought,
+                                              boolean summary, boolean link) {
         JSONObject data = new JSONObject();
         data.put("sn", sn);
         data.put("content", content);
         data.put("section", section);
         data.put("thought", thought);
+        data.put("summary", summary);
+        data.put("link", link);
+        if (link) {
+            data.put("endpoint", this.performer.getExternalHttpsEndpoint());
+        }
         Packet packet = new Packet(AIGCAction.GetPsychologyReportPart.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);

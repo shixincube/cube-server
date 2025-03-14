@@ -112,7 +112,7 @@ public class ChainOfThought extends ContextHandler {
             else if (PATH_THOUGHT.equals(path)) {
                 String snString = FileUtils.extractFileName(resource);
                 JSONObject json = Manager.getInstance().getPsychologyReportPart(token,
-                        Long.parseLong(snString), false, false, true);
+                        Long.parseLong(snString), false, false, true, false, false);
                 if (null != json) {
                     this.respondOk(response, json);
                 }

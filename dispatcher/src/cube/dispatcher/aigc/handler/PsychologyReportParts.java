@@ -48,8 +48,13 @@ public class PsychologyReportParts extends ContextHandler {
                         Boolean.parseBoolean(request.getParameter("section"));
                 boolean thought = null != request.getParameter("thought") &&
                         Boolean.parseBoolean(request.getParameter("thought"));
+                boolean summary = null != request.getParameter("summary") &&
+                        Boolean.parseBoolean(request.getParameter("summary"));
+                boolean link = null != request.getParameter("link") &&
+                        Boolean.parseBoolean(request.getParameter("link"));
 
-                JSONObject data = Manager.getInstance().getPsychologyReportPart(token, sn, content, section, thought);
+                JSONObject data = Manager.getInstance().getPsychologyReportPart(token, sn, content, section, thought,
+                        summary, link);
                 if (null != data) {
                     this.respondOk(response, data);
                 }

@@ -88,12 +88,14 @@ public class Chart extends ContextHandler {
         private void respondFile(HttpServletResponse response, String filename) {
             FileType fileType = FileUtils.verifyFileType(filename);
             response.setContentType(fileType.getMimeType());
+            response.setStatus(HttpStatus.OK_200);
 
             OutputStream os = null;
             long contentLength = 0;
 
             File file = new File(fileRoot, filename);
             contentLength = file.length();
+            response.setContentLengthLong(contentLength);
 
             FileInputStream fis = null;
             try {
@@ -114,14 +116,12 @@ public class Chart extends ContextHandler {
                     }
                 }
             }
-
-            response.setContentLengthLong(contentLength);
-            response.setStatus(HttpStatus.OK_200);
         }
 
         private void processIndexFile(HttpServletResponse response, String filename, JSONObject data) {
             FileType fileType = FileUtils.verifyFileType(filename);
             response.setContentType(fileType.getMimeType());
+            response.setStatus(HttpStatus.OK_200);
 
             long contentLength = 0;
             OutputStream os = null;
@@ -134,6 +134,8 @@ public class Chart extends ContextHandler {
 
                 byte[] responseData = fileContent.getBytes(StandardCharsets.UTF_8);
                 contentLength = responseData.length;
+                response.setContentLengthLong(contentLength);
+
                 os = response.getOutputStream();
                 os.write(responseData);
             } catch (Exception e) {
@@ -146,9 +148,6 @@ public class Chart extends ContextHandler {
                     }
                 }
             }
-
-            response.setContentLengthLong(contentLength);
-            response.setStatus(HttpStatus.OK_200);
         }
     }
 }
