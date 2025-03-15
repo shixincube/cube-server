@@ -19,7 +19,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.PsychologyScene;
-import cube.service.aigc.scene.ReportHelper;
+import cube.service.aigc.scene.ContentTools;
 import cube.service.aigc.scene.SceneManager;
 
 import java.util.List;
@@ -63,8 +63,8 @@ public class ShowPersonalitySubtask extends ConversationSubtask {
                         record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                 "FORMAT_ANSWER_SHOW_PERSONALITY"),
                                 RECENT_ONE,
-                                ReportHelper.makeReportTitleMarkdown(report),
-                                ReportHelper.makeContentMarkdown(report, false, 0, true));
+                                ContentTools.makeReportTitleMarkdown(report),
+                                ContentTools.makeContentMarkdown(report, false, 0, true));
                         convCtx.record(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
@@ -84,8 +84,8 @@ public class ShowPersonalitySubtask extends ConversationSubtask {
                     record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                             "FORMAT_ANSWER_SHOW_PERSONALITY"),
                             "",
-                            ReportHelper.makeReportTitleMarkdown(report),
-                            ReportHelper.makeContentMarkdown(report, false, 0, true));
+                            ContentTools.makeReportTitleMarkdown(report),
+                            ContentTools.makeContentMarkdown(report, false, 0, true));
                     convCtx.record(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);

@@ -9,14 +9,27 @@ import org.json.JSONObject;
  */
 public class FactorSet implements JSONable {
 
+    public final static String Somatization = "somatization";
+    public final static String Obsession = "obsession";
+    public final static String Interpersonal = "interpersonal";
+    public final static String Depression = "depression";
+    public final static String Anxiety = "anxiety";
+    public final static String Hostile = "hostile";
+    public final static String Horror = "horror";
+    public final static String Paranoid = "paranoid";
+    public final static String Psychosis = "psychosis";
+
     public class NormRange {
+        public final String symptom;
+
         public final double low;
         public final double high;
 
         public final double value;
         public final boolean norm;
 
-        public NormRange(double low, double high, double value) {
+        public NormRange(String symptom, double low, double high, double value) {
+            this.symptom = symptom;
             this.low = low;
             this.high = high;
             this.value = value;
@@ -54,39 +67,72 @@ public class FactorSet implements JSONable {
     }
 
     public NormRange normSomatization() {
-        return new NormRange(0.89, 1.85, this.symptomFactor.somatization);
+        return new NormRange("somatization", 0.89, 1.85, this.symptomFactor.somatization);
     }
 
     public NormRange normObsession() {
-        return new NormRange(1.04, 2.20, this.symptomFactor.obsession);
+        return new NormRange("obsession", 1.04, 2.20, this.symptomFactor.obsession);
     }
 
     public NormRange normInterpersonal() {
-        return new NormRange(1.04, 2.26, this.symptomFactor.interpersonal);
+        return new NormRange("interpersonal", 1.04, 2.26, this.symptomFactor.interpersonal);
     }
 
     public NormRange normDepression() {
-        return new NormRange(0.91, 2.09, this.symptomFactor.depression);
+        return new NormRange("depression", 0.91, 2.09, this.symptomFactor.depression);
     }
 
     public NormRange normAnxiety() {
-        return new NormRange(0.96, 1.82, this.symptomFactor.anxiety);
+        return new NormRange("anxiety", 0.96, 1.82, this.symptomFactor.anxiety);
     }
 
     public NormRange normHostile() {
-        return new NormRange(0.91, 2.01, this.symptomFactor.hostile);
+        return new NormRange("hostile", 0.91, 2.01, this.symptomFactor.hostile);
     }
 
     public NormRange normHorror() {
-        return new NormRange(0.82, 1.64, this.symptomFactor.horror);
+        return new NormRange("horror", 0.82, 1.64, this.symptomFactor.horror);
     }
 
     public NormRange normParanoid() {
-        return new NormRange(0.86, 2.00, this.symptomFactor.paranoid);
+        return new NormRange("paranoid", 0.86, 2.00, this.symptomFactor.paranoid);
     }
 
     public NormRange normPsychosis() {
-        return new NormRange(0.87, 1.71, this.symptomFactor.psychosis);
+        return new NormRange("psychosis", 0.87, 1.71, this.symptomFactor.psychosis);
+    }
+
+    public NormRange normSymptom(String symptom) {
+        if (symptom.equalsIgnoreCase("somatization") || symptom.equals("躯体化")) {
+            return normSomatization();
+        }
+        else if (symptom.equalsIgnoreCase("obsession") || symptom.equals("强迫")) {
+            return normObsession();
+        }
+        else if (symptom.equalsIgnoreCase("interpersonal") || symptom.equals("人际关系")) {
+            return normInterpersonal();
+        }
+        else if (symptom.equalsIgnoreCase("depression") || symptom.equals("抑郁")) {
+            return normDepression();
+        }
+        else if (symptom.equalsIgnoreCase("anxiety") || symptom.equals("焦虑")) {
+            return normAnxiety();
+        }
+        else if (symptom.equalsIgnoreCase("hostile") || symptom.equals("敌对")) {
+            return normHostile();
+        }
+        else if (symptom.equalsIgnoreCase("horror") || symptom.equals("恐怖")) {
+            return normHorror();
+        }
+        else if (symptom.equalsIgnoreCase("paranoid") || symptom.equals("偏执")) {
+            return normParanoid();
+        }
+        else if (symptom.equalsIgnoreCase("psychosis") || symptom.equals("精神病性")) {
+            return normPsychosis();
+        }
+        else {
+            return null;
+        }
     }
 
     @Override

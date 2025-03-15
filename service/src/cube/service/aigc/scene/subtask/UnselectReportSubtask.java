@@ -17,7 +17,7 @@ import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
-import cube.service.aigc.scene.ReportHelper;
+import cube.service.aigc.scene.ContentTools;
 
 public class UnselectReportSubtask extends ConversationSubtask {
 
@@ -40,7 +40,7 @@ public class UnselectReportSubtask extends ConversationSubtask {
                     convCtx.setCurrentReport(null);
                     String answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                             "FORMAT_ANSWER_UNSELECT_REPORT_OK"),
-                            ReportHelper.makeReportTitleMarkdown(report));
+                            ContentTools.makeReportTitleMarkdown(report));
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = answer;
                     record.context = context;

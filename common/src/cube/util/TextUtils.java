@@ -727,6 +727,9 @@ public final class TextUtils {
                     break;
                 }
             }
+            else if (sentence.contains("最近")) {
+                return 1;
+            }
             tmp.add(TextUtils.convChineseToArabicNumerals(sentence));
         }
 

@@ -20,7 +20,7 @@ import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.PaintingReportListener;
 import cube.service.aigc.scene.PsychologyScene;
-import cube.service.aigc.scene.ReportHelper;
+import cube.service.aigc.scene.ContentTools;
 import cube.service.aigc.scene.SceneManager;
 
 public class PredictPaintingSubtask extends ConversationSubtask {
@@ -265,9 +265,9 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                         if (null != record.context) {
                             record.context.setInferring(false);
                         }
-                        record.answer = ReportHelper.makeContentMarkdown(report,
+                        record.answer = ContentTools.makeContentMarkdown(report,
                                 true, 0, false);
-                        record.answer += ReportHelper.makeContentLink(channel.getHttpsEndpoint(),
+                        record.answer += ContentTools.makeContentLink(channel.getHttpsEndpoint(),
                                 channel.getAuthToken().getCode(), report, true, true);
                         // clear subtask
                         convCtx.clearCurrentPredict();

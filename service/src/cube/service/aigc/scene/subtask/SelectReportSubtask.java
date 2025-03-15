@@ -19,7 +19,7 @@ import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
-import cube.service.aigc.scene.ReportHelper;
+import cube.service.aigc.scene.ContentTools;
 import cube.service.aigc.scene.SceneManager;
 import cube.util.TextUtils;
 
@@ -97,14 +97,12 @@ public class SelectReportSubtask extends ConversationSubtask {
 
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.context = context;
-//                            record.answer = polish(String.format(
-//                                    Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
-//                                    ReportHelper.makeReportTitleMarkdown(report),
-//                                    ReportHelper.makeContentMarkdown(report, 5)));
                             record.answer = String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
-                                    ReportHelper.makeReportTitleMarkdown(report),
-                                    ReportHelper.makeContentSummaryMarkdown(channel, report));
+                                    ContentTools.makeReportTitleMarkdown(report),
+                                    ContentTools.makeContentSummaryMarkdown(channel, report),
+                                    ContentTools.makeContentLink(channel.getHttpsEndpoint(), channel.getAuthToken().getCode(),
+                                            report, true, true));
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
@@ -215,8 +213,10 @@ public class SelectReportSubtask extends ConversationSubtask {
                             record.context = context;
                             record.answer = String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
-                                    ReportHelper.makeReportTitleMarkdown(reports.get(0)),
-                                    ReportHelper.makeContentMarkdown(reports.get(0), true, 0, false));
+                                    ContentTools.makeReportTitleMarkdown(reports.get(0)),
+                                    ContentTools.makeContentMarkdown(reports.get(0), true, 0, false),
+                                    ContentTools.makeContentLink(channel.getHttpsEndpoint(), channel.getAuthToken().getCode(),
+                                            reports.get(0), true, true));
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
@@ -230,7 +230,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                             String answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_FOUND_MULTIPLE_REPORTS"),
                                     convCtx.getReportList().size(), reports.size(),
-                                    ReportHelper.makeReportListMarkdown(channel, reports));
+                                    ContentTools.makeReportListMarkdown(channel, reports));
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = answer;
                             convCtx.record(record);

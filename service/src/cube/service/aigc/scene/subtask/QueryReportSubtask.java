@@ -19,7 +19,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.PsychologyScene;
-import cube.service.aigc.scene.ReportHelper;
+import cube.service.aigc.scene.ContentTools;
 import cube.service.aigc.scene.SceneManager;
 
 import java.util.List;
@@ -59,11 +59,11 @@ public class QueryReportSubtask extends ConversationSubtask {
                 public void run() {
                     String answer = infer(String.format(Resource.getInstance().getCorpus(CORPUS,
                             "FORMAT_PROMPT_QUERY_REPORT_RESULT"),
-                            total, list.size(), ReportHelper.makeReportListMarkdown(channel, list), query));
+                            total, list.size(), ContentTools.makeReportListMarkdown(channel, list), query));
                     if (null == answer) {
                         answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                 "FORMAT_ANSWER_QUERY_REPORT_RESULT"),
-                                total, list.size(), ReportHelper.makeReportListMarkdown(channel, list));
+                                total, list.size(), ContentTools.makeReportListMarkdown(channel, list));
                     }
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = answer;

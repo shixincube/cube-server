@@ -22,7 +22,7 @@ import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.scene.PsychologyScene;
-import cube.service.aigc.scene.ReportHelper;
+import cube.service.aigc.scene.ContentTools;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -98,7 +98,7 @@ public class GetPsychologyReportPartTask extends ServiceTask {
 
             if (report.getState().code == AIGCStateCode.Ok.code) {
                 if (content) {
-                    String contentMarkdown = ReportHelper.makeContentMarkdown(report, true, 5, true);
+                    String contentMarkdown = ContentTools.makeContentMarkdown(report, true, 5, true);
                     responseData.put("content", contentMarkdown);
                 }
 
@@ -114,16 +114,16 @@ public class GetPsychologyReportPartTask extends ServiceTask {
                 if (thought) {
                     PaintingFeatureSet featureSet = PsychologyScene.getInstance().getPaintingFeatureSet(sn);
                     if (null != featureSet) {
-                        responseData.put("thought", ReportHelper.makeMarkdown(featureSet));
+                        responseData.put("thought", ContentTools.makeMarkdown(featureSet));
                     }
                 }
 
                 if (summary) {
-                    String markdown = ReportHelper.makeContentMarkdown(report, true, 0, false);
+                    String markdown = ContentTools.makeContentMarkdown(report, true, 0, false);
                     responseData.put("summary", markdown);
                 }
                 if (link) {
-                    String markdown = ReportHelper.makeContentLink(endpoint, token, report, true, true);
+                    String markdown = ContentTools.makeContentLink(endpoint, token, report, true, true);
                     responseData.put("link", markdown);
                 }
             }
@@ -133,7 +133,7 @@ public class GetPsychologyReportPartTask extends ServiceTask {
                     if (thought) {
                         PaintingFeatureSet featureSet = PsychologyScene.getInstance().getPaintingFeatureSet(sn);
                         if (null != featureSet) {
-                            responseData.put("thought", ReportHelper.makeMarkdown(featureSet));
+                            responseData.put("thought", ContentTools.makeMarkdown(featureSet));
                         }
                         else {
                             Logger.w(this.getClass(), "#run - Can NOT find feature set for report: " + sn);

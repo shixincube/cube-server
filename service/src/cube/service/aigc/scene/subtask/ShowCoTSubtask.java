@@ -18,7 +18,7 @@ import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
-import cube.service.aigc.scene.ReportHelper;
+import cube.service.aigc.scene.ContentTools;
 import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.SceneManager;
 
@@ -41,7 +41,7 @@ public class ShowCoTSubtask extends ConversationSubtask {
                     public void run() {
                         String answer = polish(String.format(
                                 Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_REPORT_IS_NULL"),
-                                ReportHelper.makeReportTitleMarkdown(convCtx.getCurrentReport())));
+                                ContentTools.makeReportTitleMarkdown(convCtx.getCurrentReport())));
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = answer;
                         convCtx.record(record);
@@ -60,13 +60,13 @@ public class ShowCoTSubtask extends ConversationSubtask {
                         if (null == featureSet) {
                             answer = polish(String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_REPORT_IS_NULL"),
-                                    ReportHelper.makeReportTitleMarkdown(convCtx.getCurrentReport())));
+                                    ContentTools.makeReportTitleMarkdown(convCtx.getCurrentReport())));
                         }
                         else {
                             answer = String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_COT"),
-                                    ReportHelper.makeReportTitleMarkdown(convCtx.getCurrentReport()),
-                                    ReportHelper.makeMarkdown(featureSet),
+                                    ContentTools.makeReportTitleMarkdown(convCtx.getCurrentReport()),
+                                    ContentTools.makeMarkdown(featureSet),
                                     channel.getAuthToken().getCode(),
                                     Long.toString(convCtx.getCurrentReport().sn));
                         }

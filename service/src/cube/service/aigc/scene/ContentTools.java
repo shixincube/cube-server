@@ -25,11 +25,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-public class ReportHelper {
+public class ContentTools {
 
     public static final SimpleDateFormat gsDateFormat = new SimpleDateFormat("yyyy年MM月dd日HH时");
 
-    private ReportHelper() {
+    private ContentTools() {
     }
 
     public static void fillDimensionScoreDescription(Tokenizer tokenizer, HexagonDimensionScore sds) {
@@ -57,7 +57,7 @@ public class ReportHelper {
                 sds.record(dim, rate, answer);
             }
             else {
-                Logger.e(ReportHelper.class, "#fillDimensionScoreDescription - Answer is null: " + query);
+                Logger.e(ContentTools.class, "#fillDimensionScoreDescription - Answer is null: " + query);
             }
         }
     }

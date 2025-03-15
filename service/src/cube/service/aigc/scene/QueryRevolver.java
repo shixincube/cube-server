@@ -9,6 +9,7 @@ package cube.service.aigc.scene;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.GeneratingRecord;
 import cube.common.entity.QuestionAnswer;
@@ -29,6 +30,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class QueryRevolver {
 
     private final static SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy年MM月dd日HH时mm分ss秒");
+
+    private final static String[] sKeywordWayOfThinking = new String[] {
+            "思维",
+            "思维方式",
+            "思维模式",
+            "思考方式",
+            "思考模式",
+            "思维特点",
+            "思维风格",
+    };
+
+    private final static String[] sKeywordCommunicationStyle = new String[] {
+            "沟通",
+            "沟通风格",
+            "沟通模式",
+            "沟通方式",
+            "沟通特点"
+    };
 
     private final static String[] sKeywordWorkEnvironment = new String[] {
             "工作环境偏好",
@@ -60,11 +79,11 @@ public class QueryRevolver {
      */
     private final static String[] sSymptomScoreWords = new String[] {
             "躯体化", "somatization",
-            "强迫", "obsession",
-            "人际关系", "interpersonal",
-            "抑郁", "depression",
-            "焦虑", "anxiety",
-            "敌对", "hostile",
+            "强迫", "强迫症", "obsession",
+            "人际关系", "人际敏感", "interpersonal",
+            "抑郁", "抑郁症", "抑郁倾向", "depression",
+            "焦虑", "焦虑情绪", "anxiety",
+            "敌对", "敌意", "hostile",
             "恐怖", "horror",
             "偏执", "paranoid",
             "精神病性", "psychosis",
@@ -94,7 +113,7 @@ public class QueryRevolver {
         final StringBuilder result = new StringBuilder();
 
         AtomicBoolean hitLazy = new AtomicBoolean(false);
-        final List<String> answerList = new ArrayList<>();
+        final List<QuestionAnswer> questionAnswerList = new ArrayList<>();
         boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
             @Override
             public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
@@ -124,7 +143,10 @@ public class QueryRevolver {
                         Subtask subtask = Subtask.extract(answer);
                         if (Subtask.None == subtask) {
                             // 不是子任务
-                            answerList.add(answer);
+                            if (!questionAnswerList.contains(questionAnswer)) {
+                                questionAnswerList.add(questionAnswer);
+                                break;
+                            }
                         }
                     }
 
@@ -155,15 +177,19 @@ public class QueryRevolver {
             }
         }
 
-        int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60;
+        final int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60;
 
         if (hitLazy.get()) {
             Logger.d(this.getClass(), "#generatePrompt - Hit lazy: " + query);
 
-            if (!answerList.isEmpty()) {
+            if (!questionAnswerList.isEmpty()) {
+                // 清空
                 result.delete(0, result.length());
-                for (String answer : answerList) {
-                    result.append(answer).append("\n\n");
+
+                for (QuestionAnswer qa : questionAnswerList) {
+                    for (String answer : qa.getAnswers()) {
+                        result.append(answer).append("\n\n");
+                    }
                 }
                 String text = String.format(Resource.getInstance().getCorpus("prompt", "FORMAT_POLISH"),
                         result.toString());
@@ -175,13 +201,15 @@ public class QueryRevolver {
             }
         }
         else {
+            boolean hasReportData = false;
             if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
+                hasReportData = true;
                 PaintingReport report = context.getCurrentReport();
                 result.append("已知评测数据：\n\n");
                 result.append("当前评测数据的受测人是匿名的，");
                 result.append("年龄是：").append(report.getAttribute().age).append("岁，");
-                result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
-                result.append("评测日期是：").append(formatReportDate(report)).append("。\n");
+                result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n\n");
+                result.append("评测日期是：").append(formatReportDate(report)).append("。\n\n");
                 result.append("受测人的心理特征摘要如下：");
                 result.append(report.getSummary());
                 result.append("\n\n");
@@ -195,13 +223,11 @@ public class QueryRevolver {
 
                 // 画面特征
                 result.append(this.tryGeneratePaintingFeature(report, query));
-                // 更新长度限制
-                wordLimit -= result.length();
 
                 // 指标数据
-                report.getEvaluationReport().getFactorSet();
+                result.append(this.tryGenerateFactorSet(report, query));
 
-                if (wordLimit > 0) {
+                if (result.length() < wordLimit) {
                     result.append("\n受测人的大五人格画像是").append(report.getEvaluationReport()
                             .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。\n");
                     // 性格特点
@@ -210,21 +236,16 @@ public class QueryRevolver {
                     result.append(this.filterPersonalityDescription(report.getEvaluationReport()
                                     .getPersonalityAccelerator().getBigFivePersonality().getDescription(),
                             report.getAttribute()));
-                    // 更新长度限制
-                    wordLimit -= result.length();
                 }
 
-                if (wordLimit > 300) {
-                    // 尝试生成数据片段
+                if (result.length() < wordLimit) {
+                    // 尝试生成知识片段
                     result.append("\n");
-                    result.append(this.generateFragment(report, query));
+                    result.append(this.generateKnowledgeFragment(report, query));
                 }
-
-                // 更新长度限制
-                wordLimit -= result.length();
             }
 
-            if (!answerList.isEmpty()) {
+            if (!hasReportData && !questionAnswerList.isEmpty()) {
                 if (result.length() == 0) {
                     result.append("已知信息：\n\n");
                 }
@@ -232,11 +253,19 @@ public class QueryRevolver {
                     result.append("\n下面的内容是一些与问题相关的知识：\n");
                 }
 
-                for (String answer : answerList) {
-                    if (result.length() + answer.length() >= wordLimit) {
+                for (QuestionAnswer qa : questionAnswerList) {
+                    String question = qa.getQuestions().get(0);
+                    result.append("**").append(question).append("** ：\n\n");
+
+                    for (String answer : qa.getAnswers()) {
+                        result.append(answer).append("\n\n");
+                        if (result.length() >= wordLimit) {
+                            break;
+                        }
+                    }
+                    if (result.length() >= wordLimit) {
                         break;
                     }
-                    result.append(answer).append("\n\n");
                 }
             }
 
@@ -291,7 +320,7 @@ public class QueryRevolver {
 
             if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                 result.append("\n");
-                result.append(this.generateFragment(report, query));
+                result.append(this.generateKnowledgeFragment(report, query));
             }
         }
         else if (report instanceof ScaleReport) {
@@ -377,7 +406,7 @@ public class QueryRevolver {
 
                 if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                     result.append("\n");
-                    result.append(this.generateFragment(report, query));
+                    result.append(this.generateKnowledgeFragment(report, query));
                 }
             }
             else if (report instanceof ScaleReport) {
@@ -463,7 +492,7 @@ public class QueryRevolver {
 
             if (answer.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
                 answer.append("\n");
-                answer.append(this.generateFragment(report, currentQuery));
+                answer.append(this.generateKnowledgeFragment(report, currentQuery));
             }
         }
         else if (report instanceof ScaleReport) {
@@ -564,7 +593,7 @@ public class QueryRevolver {
         return result;
     }
 
-    private String generateFragment(Report report, String query) {
+    private String generateKnowledgeFragment(Report report, String query) {
         StringBuilder result = new StringBuilder();
 
         if (report instanceof PaintingReport) {
@@ -577,26 +606,36 @@ public class QueryRevolver {
                 TFIDFAnalyzer analyzer = null;
                 List<String> keywords = null;
 
-                question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
-                        .getBigFivePersonality().getDisplayName() + "的思维方式";
-                analyzer = new TFIDFAnalyzer(this.tokenizer);
-                keywords = analyzer.analyzeOnlyWords(question, 10);
+                for (String word : sKeywordWayOfThinking) {
+                    if (query.contains(word)) {
+                        question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                                .getBigFivePersonality().getDisplayName() + "的思维方式";
+                        analyzer = new TFIDFAnalyzer(this.tokenizer);
+                        keywords = analyzer.analyzeOnlyWords(question, 10);
 
-                answer = Resource.getInstance().loadDataset().matchContent(keywords.toArray(new String[0]), 5);
-                if (null != answer) {
-                    result.append(question).append("：");
-                    result.append(answer).append("\n\n");
+                        answer = Resource.getInstance().loadDataset().matchContent(keywords.toArray(new String[0]), 5);
+                        if (null != answer) {
+                            result.append(question).append("：");
+                            result.append(answer).append("\n\n");
+                        }
+
+                        break;
+                    }
                 }
 
-                question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
-                        .getBigFivePersonality().getDisplayName() + "的沟通风格";
-                analyzer = new TFIDFAnalyzer(this.tokenizer);
-                keywords = analyzer.analyzeOnlyWords(question, 10);
+                for (String word : sKeywordCommunicationStyle) {
+                    if (query.contains(word)) {
+                        question = paintingReport.getEvaluationReport().getPersonalityAccelerator()
+                                .getBigFivePersonality().getDisplayName() + "的沟通风格";
+                        analyzer = new TFIDFAnalyzer(this.tokenizer);
+                        keywords = analyzer.analyzeOnlyWords(question, 10);
 
-                answer = Resource.getInstance().loadDataset().matchContent(keywords.toArray(new String[0]), 5);
-                if (null != answer) {
-                    result.append(question).append("：");
-                    result.append(answer).append("\n\n");
+                        answer = Resource.getInstance().loadDataset().matchContent(keywords.toArray(new String[0]), 5);
+                        if (null != answer) {
+                            result.append(question).append("：");
+                            result.append(answer).append("\n\n");
+                        }
+                    }
                 }
 
                 for (String word : sKeywordWorkEnvironment) {
@@ -643,6 +682,27 @@ public class QueryRevolver {
             }
         }
 
+        // 术语
+        List<String> words = this.service.segmentation(query);
+        for (String word : words) {
+            Term term = Term.parse(word);
+            if (term == Term.Unknown) {
+                continue;
+            }
+
+            KnowledgeStrategy knowledgeStrategy = Resource.getInstance().getTermInterpretation(term);
+            if (null == knowledgeStrategy) {
+                Logger.w(this.getClass(), "#generateKnowledgeFragment - No matching term: " + word);
+                continue;
+            }
+
+            result.append(word).append("的专业解释如下：\n\n").append(knowledgeStrategy.getInterpretation()).append("\n\n");
+            if (null != knowledgeStrategy.getExplain()) {
+                result.append("从心理学角度正确理解").append(word).append("对个体的影响：\n\n")
+                        .append(knowledgeStrategy.getExplain()).append("\n\n");
+            }
+        }
+
         return result.toString();
     }
 
@@ -661,6 +721,99 @@ public class QueryRevolver {
         }
 
         return buf.toString();
+    }
+
+    private String tryGenerateFactorSet(PaintingReport report, String query) {
+        StringBuilder result = new StringBuilder();
+
+        FactorSet factorSet = report.getEvaluationReport().getFactorSet();
+        if (null != factorSet) {
+            List<String> symptomList = new ArrayList<>();
+
+            List<String> words = this.service.segmentation(query);
+            for (String word : words) {
+                for (String symptomWord : sSymptomScoreWords) {
+                    if (symptomWord.equalsIgnoreCase(word)) {
+                        if (!symptomList.contains(symptomWord)) {
+                            symptomList.add(symptomWord);
+                        }
+                    }
+                }
+            }
+
+            if (!symptomList.isEmpty()) {
+                result.append("以下是相关症状是否符合常模的描述，症状得分符合常模范围说明该症状在正常范围内：\n\n");
+            }
+
+            final String corpusTerm = "term";
+
+            for (String symptomWord : symptomList) {
+                // 选中症状
+                String symptom = null;
+                String desc = null;
+                FactorSet.NormRange normRange = null;
+                if (symptomWord.equals("躯体化") || symptomWord.equalsIgnoreCase(FactorSet.Somatization)) {
+                    symptom = "躯体化";
+                    desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Somatization);
+                    normRange = factorSet.normSymptom(FactorSet.Somatization);
+                }
+                else if (symptomWord.equals("强迫") || symptomWord.equalsIgnoreCase(FactorSet.Obsession)) {
+                    symptom = "强迫";
+                    desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Obsession);
+                    normRange = factorSet.normSymptom(FactorSet.Obsession);
+                }
+                else if (symptomWord.equals("人际关系") || symptomWord.equalsIgnoreCase(FactorSet.Interpersonal)) {
+                    symptom = "人际关系敏感";
+                    desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Interpersonal);
+                    normRange = factorSet.normSymptom(FactorSet.Interpersonal);
+                }
+                else if (symptomWord.equals("抑郁") || symptomWord.equalsIgnoreCase(FactorSet.Depression)) {
+                    symptom = "抑郁倾向";
+                    desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Depression);
+                    normRange = factorSet.normSymptom(FactorSet.Depression);
+                }
+                else if (symptomWord.equals("焦虑") || symptomWord.equalsIgnoreCase(FactorSet.Anxiety)) {
+                    symptom = "焦虑";
+                    desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Anxiety);
+                    normRange = factorSet.normSymptom(FactorSet.Anxiety);
+                }
+                else if (symptomWord.equals("敌对") || symptomWord.equalsIgnoreCase(FactorSet.Hostile)) {
+                    symptom = "敌对";
+                    desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Hostile);
+                    normRange = factorSet.normSymptom(FactorSet.Hostile);
+                }
+                else if (symptomWord.equals("恐怖") || symptomWord.equalsIgnoreCase(FactorSet.Horror)) {
+                    symptom = "恐怖";
+                    desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Horror);
+                    normRange = factorSet.normSymptom(FactorSet.Horror);
+                }
+                else if (symptomWord.equals("偏执") || symptomWord.equalsIgnoreCase(FactorSet.Paranoid)) {
+                    symptom = "偏执";
+                    desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Paranoid);
+                    normRange = factorSet.normSymptom(FactorSet.Paranoid);
+                }
+                else if (symptomWord.equals("精神病性") || symptomWord.equalsIgnoreCase(FactorSet.Psychosis)) {
+                    symptom = "精神病性";
+                    desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Psychosis);
+                    normRange = factorSet.normSymptom(FactorSet.Psychosis);
+                }
+
+                if (null == symptom || null == desc || null == normRange) {
+                    continue;
+                }
+
+                if (normRange.norm) {
+                    String content = symptom + "数据得分在常模范围内，" + symptom + "症状正常。" + desc;
+                    result.append(content).append("\n\n");
+                }
+                else {
+                    String content = symptom + "数据得分超过常模范围，" + symptom + "症状可能异常。" + desc;
+                    result.append(content).append("\n\n");
+                }
+            }
+        }
+
+        return result.toString();
     }
 
     private String tryGeneratePaintingFeature(PaintingReport paintingReport, String query) {

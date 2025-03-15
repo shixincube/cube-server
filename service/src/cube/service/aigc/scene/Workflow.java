@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class Workflow {
 
-    private final static String PERSONALITY_FORMAT = "已知人格特点如下：\n\n%s\n\n根据上述信息回答问题，不能编造成分，问题是：总结他的性格特点。";
+    private final static String PERSONALITY_FORMAT = "已知受测人的人格特点如下：\n\n%s\n\n根据上述信息回答问题，不能编造成分，问题是：总结受测人的人格特点。";
 
     private boolean speed = true;
 
@@ -155,7 +155,7 @@ public class Workflow {
             this.normDimensionScore = new HexagonDimensionScore(80, 80, 80, 80, 80, 80);
 
             // 描述
-            ReportHelper.fillDimensionScoreDescription(this.service.getTokenizer(), this.dimensionScore);
+            ContentTools.fillDimensionScoreDescription(this.service.getTokenizer(), this.dimensionScore);
         } catch (Exception e) {
             Logger.w(this.getClass(), "#make", e);
         }
@@ -244,7 +244,7 @@ public class Workflow {
         }
 
         // 对数据集数据进行推理
-        prompt = String.format(PERSONALITY_FORMAT, answer.replaceAll("你", "他"));
+        prompt = String.format(PERSONALITY_FORMAT, fixSecondPerson(answer));
         GeneratingRecord generatingResult = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt, new GeneratingOption(),
                 null, null);
         String fixAnswer = (null != generatingResult) ? generatingResult.answer : null;
@@ -444,7 +444,7 @@ public class Workflow {
         prompt.append("受测人心理评测结果如下：\n\n");
         for (ReportSection rs : list) {
 //            prompt.append("* **").append(rs.title).append("** ：");
-            prompt.append(rs.report).append("\n\n");
+            prompt.append(fixSecondPerson(rs.report)).append("\n\n");
             if (prompt.length() >= ModelConfig.getPromptLengthLimit(unitName)) {
                 break;
             }
@@ -513,6 +513,11 @@ public class Workflow {
         }
 
         return dataset.matchContent(keywords.toArray(new String[0]), 5);
+    }
+
+    private String fixSecondPerson(String text) {
+        String result = text.replaceAll("你", "受测人");
+        return result.replaceAll("您", "受测人");
     }
 
     private String fixThirdPerson(String text) {

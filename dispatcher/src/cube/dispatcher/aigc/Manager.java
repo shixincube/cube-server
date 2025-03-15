@@ -2046,9 +2046,7 @@ public class Manager implements Tickable, PerformerListener {
         data.put("thought", thought);
         data.put("summary", summary);
         data.put("link", link);
-        if (link) {
-            data.put("endpoint", this.performer.getExternalHttpsEndpoint());
-        }
+        data.put("endpoint", this.performer.getExternalHttpsEndpoint().toJSON());
         Packet packet = new Packet(AIGCAction.GetPsychologyReportPart.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
