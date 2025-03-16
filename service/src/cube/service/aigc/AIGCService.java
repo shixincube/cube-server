@@ -462,7 +462,7 @@ public class AIGCService extends AbstractModule {
             String key = AIGCUnit.makeQueryKey(contact, capability);
             AIGCUnit unit = this.unitMap.get(key);
             if (null != unit) {
-                unit.setTalkContext(context);
+                unit.setContext(context);
             }
             else {
                 unit = new AIGCUnit(contact, capability, context);

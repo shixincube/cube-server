@@ -245,13 +245,13 @@ public class Workflow {
 
         // 对数据集数据进行推理
         prompt = String.format(PERSONALITY_FORMAT, fixSecondPerson(answer));
-        GeneratingRecord generatingResult = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt, new GeneratingOption(),
+        GeneratingRecord generatingResult = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
                 null, null);
         String fixAnswer = (null != generatingResult) ? generatingResult.answer : null;
         if (null != fixAnswer) {
             answer = fixThirdPerson(fixAnswer);
         }
-        // 设置描述
+        // 设置人格画像描述
         feature.setDescription(answer);
 
         // 宜人性

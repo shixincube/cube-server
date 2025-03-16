@@ -6,6 +6,7 @@
 
 package cube.service.aigc.resource;
 
+import cell.core.talk.TalkContext;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.Consts;
@@ -67,7 +68,8 @@ public final class Agent {
             subtasks.add(AICapability.NaturalLanguageProcessing.Conversational);
             AICapability capability = new AICapability(model,
                     AICapability.NaturalLanguageProcessingTask, subtasks, "");
-            AIGCUnit unit = new AIGCUnit(contact, capability, null);
+            TalkContext context = new TalkContext(null, null);
+            AIGCUnit unit = new AIGCUnit(contact, capability, context);
             this.unitList.add(unit);
         }
     }

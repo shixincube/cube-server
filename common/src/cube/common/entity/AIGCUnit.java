@@ -26,6 +26,8 @@ public class AIGCUnit extends Entity {
 
     private TalkContext context;
 
+    private double weight;
+
     private AtomicInteger runningCounter;
 
     private ConcurrentLinkedQueue<Failure> failures;
@@ -36,6 +38,7 @@ public class AIGCUnit extends Entity {
         this.contact = contact;
         this.capability = capability;
         this.context = context;
+        this.weight = 1.0;
         this.runningCounter = new AtomicInteger(0);
         this.failures = new ConcurrentLinkedQueue<>();
     }
@@ -43,6 +46,7 @@ public class AIGCUnit extends Entity {
     public AIGCUnit(JSONObject json) {
         super(json);
         this.capability = new AICapability(json.getJSONObject("capability"));
+        this.weight = json.has("weight") ? json.getDouble("weight") : 1.0;
         this.runningCounter = new AtomicInteger(json.getInt("runningCounter"));
         this.failures = new ConcurrentLinkedQueue<>();
         if (json.has("failures")) {
@@ -70,8 +74,16 @@ public class AIGCUnit extends Entity {
         return this.context;
     }
 
-    public void setTalkContext(TalkContext context) {
+    public void setContext(TalkContext context) {
         this.context = context;
+    }
+
+    public double getWeight() {
+        return this.weight;
+    }
+
+    public void setWeight(double value) {
+        this.weight = value;
     }
 
     public synchronized void setRunning(boolean value) {
@@ -99,6 +111,7 @@ public class AIGCUnit extends Entity {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("capability", this.capability.toJSON());
+        json.put("weight", this.weight);
         json.put("running", this.runningCounter.get() > 0);
         json.put("runningCounter", this.runningCounter.get());
 

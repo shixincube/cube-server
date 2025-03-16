@@ -26,6 +26,8 @@ public class ConversationWorker {
 
     private final static String CORPUS = "conversation";
 
+    private final static String JUMP_POLISH = "润色";
+
     private AIGCService service;
 
     public ConversationWorker(AIGCService service) {
@@ -190,24 +192,25 @@ public class ConversationWorker {
             convCtx.clearCurrentPredict();
         }
 
-        // 获取单元
-        AIGCUnit unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
-        if (null == unit) {
-            Logger.w(this.getClass(), "#work - Can NOT find idle unit \"" + ModelConfig.BAIZE_NEXT_UNIT + "\"");
+        String prompt = PsychologyScene.getInstance().buildPrompt(convCtx, query);
+        if (null == prompt) {
+            Logger.e(this.getClass(), "#work - Builds prompt failed");
+            channel.setProcessing(false);
+            return AIGCStateCode.NoData;
+        }
 
+        // 获取单元
+        String unitName = prompt.length() > 1000 || prompt.contains(JUMP_POLISH) ?
+                ModelConfig.BAIZE_X_UNIT : ModelConfig.BAIZE_NEXT_UNIT;
+        AIGCUnit unit = this.service.selectUnitByName(unitName);
+        if (null == unit) {
+            Logger.w(this.getClass(), "#work - Can NOT find idle unit \"" + unitName + "\"");
             unit = this.service.selectUnitByName(ModelConfig.BAIZE_X_UNIT);
             if (null == unit) {
                 Logger.w(this.getClass(), "#work - Can NOT find unit \"" + ModelConfig.BAIZE_X_UNIT + "\"");
                 channel.setProcessing(false);
                 return AIGCStateCode.UnitError;
             }
-        }
-
-        String prompt = PsychologyScene.getInstance().buildPrompt(convCtx, query);
-        if (null == prompt) {
-            Logger.e(this.getClass(), "#work - Builds prompt failed");
-            channel.setProcessing(false);
-            return AIGCStateCode.NoData;
         }
 
         this.service.generateText(channel, unit, query, prompt, new GeneratingOption(), null, 0,

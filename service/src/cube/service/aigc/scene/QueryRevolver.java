@@ -234,8 +234,7 @@ public class QueryRevolver {
                     result.append(report.getEvaluationReport()
                             .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
                     result.append(this.filterPersonalityDescription(report.getEvaluationReport()
-                                    .getPersonalityAccelerator().getBigFivePersonality().getDescription(),
-                            report.getAttribute()));
+                                    .getPersonalityAccelerator().getBigFivePersonality().getDescription()));
                 }
 
                 if (result.length() < wordLimit) {
@@ -245,36 +244,72 @@ public class QueryRevolver {
                 }
             }
 
-            if (!hasReportData && !questionAnswerList.isEmpty()) {
-                if (result.length() == 0) {
-                    result.append("已知信息：\n\n");
+            if (!hasReportData) {
+                // 不带报告数据
+                // 问题是否和心理学相关
+                String prompt = String.format(
+                        Resource.getInstance().getCorpus("prompt", "FORMAT_QUESTION_PSYCHOLOGY_POSSIBILITY"),
+                        query);
+                GeneratingRecord queryResponse = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
+                        null, null, null);
+                if (queryResponse.answer.equals("不相关")) {
+                    Logger.d(this.getClass(), "#generatePrompt - No psychology question: " + query);
+                    result.delete(0, result.length());
+
+                    if (!questionAnswerList.isEmpty()) {
+                        result.append("已知知识点：\n\n");
+                        for (QuestionAnswer qa : questionAnswerList) {
+                            for (String answer : qa.getAnswers()) {
+                                result.append(answer).append("\n\n");
+                            }
+                        }
+                        result.append("根据以上知识点，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
+                        result.append("不允许在答案中添加编造成分。");
+                        result.append("问题是：").append(query).append("\n");
+                    }
                 }
                 else {
-                    result.append("\n下面的内容是一些与问题相关的知识：\n");
-                }
+                    if (!questionAnswerList.isEmpty()) {
+                        if (result.length() == 0) {
+                            result.append("已知知识点：\n\n");
+                        }
+                        else {
+                            result.append("\n下面的内容是一些与问题相关的知识：\n");
+                        }
 
-                for (QuestionAnswer qa : questionAnswerList) {
-                    String question = qa.getQuestions().get(0);
-                    result.append("**").append(question).append("** ：\n\n");
+                        for (QuestionAnswer qa : questionAnswerList) {
+                            String question = qa.getQuestions().get(0);
+                            result.append("**").append(question).append("** ：\n\n");
 
-                    for (String answer : qa.getAnswers()) {
-                        result.append(answer).append("\n\n");
-                        if (result.length() >= wordLimit) {
-                            break;
+                            for (String answer : qa.getAnswers()) {
+                                result.append(this.filterPersonalityDescription(answer)).append("\n\n");
+                                if (result.length() >= wordLimit) {
+                                    break;
+                                }
+                            }
+                            if (result.length() >= wordLimit) {
+                                break;
+                            }
                         }
                     }
-                    if (result.length() >= wordLimit) {
-                        break;
+
+                    if (result.length() > 0) {
+                        result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
+                        result.append("不允许在答案中添加编造成分。");
+                        result.append("问题是：").append(query).append("\n");
                     }
                 }
             }
-
-            if (result.length() > 0) {
-                result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
-                result.append("不允许在答案中添加编造成分，可以以“根据您的提问”开头。");
-                result.append("问题是：").append(query).append("\n");
-            }
             else {
+                // 带报告数据
+                if (result.length() > 0) {
+                    result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
+                    result.append("不允许在答案中添加编造成分，可以以“根据您的提问”开头。");
+                    result.append("问题是：").append(query).append("\n");
+                }
+            }
+
+            if (result.length() == 0) {
                 result.append("专业地回答问题，在答案最后加入一句：“我的更多功能您可以通过：**功能介绍** 进行了解。”，问题是：");
                 result.append(query).append("\n");
             }
@@ -314,8 +349,7 @@ public class QueryRevolver {
                 result.append(paintingReport.getEvaluationReport()
                             .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
                 result.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFivePersonality().getDescription(),
-                        paintingReport.getAttribute()));
+                            .getPersonalityAccelerator().getBigFivePersonality().getDescription()));
             }
 
             if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -400,8 +434,7 @@ public class QueryRevolver {
                     result.append(paintingReport.getEvaluationReport()
                                 .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
                     result.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
-                                .getPersonalityAccelerator().getBigFivePersonality().getDescription(),
-                            paintingReport.getAttribute()));
+                                .getPersonalityAccelerator().getBigFivePersonality().getDescription()));
                 }
 
                 if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -486,8 +519,7 @@ public class QueryRevolver {
                 answer.append("\n受测人的大五人格画像是").append(paintingReport.getEvaluationReport()
                             .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。");
                 answer.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFivePersonality().getDescription(),
-                        paintingReport.getAttribute()));
+                            .getPersonalityAccelerator().getBigFivePersonality().getDescription()));
             }
 
             if (answer.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -871,11 +903,12 @@ public class QueryRevolver {
         return count / pole.size();
     }
 
-    private String filterPersonalityDescription(String desc, Attribute attribute) {
-        return desc.replaceAll("你", attribute.isMale() ? "他" : "她");
+    private String filterPersonalityDescription(String desc) {
+        String result = desc.replaceAll("你", "个体");
+        return result.replaceAll("您", "个体");
     }
 
     private String filterSubjectNoun(String content, Attribute attribute) {
-        return content.replaceAll("受测人", "他");
+        return content.replaceAll("受测人", attribute.isMale() ? "他" : "她");
     }
 }
