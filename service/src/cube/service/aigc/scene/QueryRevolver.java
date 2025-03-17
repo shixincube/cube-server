@@ -11,6 +11,7 @@ import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import cube.aigc.psychology.composition.*;
+import cube.common.entity.GeneratingOption;
 import cube.common.entity.GeneratingRecord;
 import cube.common.entity.QuestionAnswer;
 import cube.common.entity.RetrieveReRankResult;
@@ -23,6 +24,7 @@ import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,6 +32,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class QueryRevolver {
 
     private final static SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy年MM月dd日HH时mm分ss秒");
+
+    private final static String[] sKeywordPersonality = new String[] {
+            "人格", "性格", "个性", "人性", "做人", "作人", "为人", "人格特质", "人格特性"
+    };
 
     private final static String[] sKeywordWayOfThinking = new String[] {
             "思维",
@@ -206,7 +212,8 @@ public class QueryRevolver {
                 hasReportData = true;
                 PaintingReport report = context.getCurrentReport();
                 result.append("已知评测数据：\n\n");
-                result.append("当前评测数据的受测人是匿名的，");
+                result.append("此评测数据是由AiXinLi模型生成的，采用的评测方法是“房树人”绘画投射测试。");
+                result.append("评测数据的受测人是匿名的，");
                 result.append("年龄是：").append(report.getAttribute().age).append("岁，");
                 result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n\n");
                 result.append("评测日期是：").append(formatReportDate(report)).append("。\n\n");
@@ -214,27 +221,21 @@ public class QueryRevolver {
                 result.append(report.getSummary());
                 result.append("\n\n");
 
-                result.append("受测人主要心理描述如下：\n");
-                List<String> symptomContent = this.extractSymptomContent(report);
+                result.append("受测人主要心理特征描述如下：\n");
+                List<String> symptomContent = this.extractEvaluationContent(report);
                 for (String content : symptomContent) {
                     result.append(content).append("\n\n");
                 }
-                result.append("\n");
 
                 // 画面特征
                 result.append(this.tryGeneratePaintingFeature(report, query));
 
                 // 指标数据
-                result.append(this.tryGenerateFactorSet(report, query));
+                result.append(this.tryGenerateFactorDesc(report, query));
 
                 if (result.length() < wordLimit) {
-                    result.append("\n受测人的大五人格画像是").append(report.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。\n");
-                    // 性格特点
-                    result.append(report.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
-                    result.append(this.filterPersonalityDescription(report.getEvaluationReport()
-                                    .getPersonalityAccelerator().getBigFivePersonality().getDescription()));
+                    // 尝试生成人格数据
+                    result.append(this.tryGeneratePersonality(report, query));
                 }
 
                 if (result.length() < wordLimit) {
@@ -333,7 +334,7 @@ public class QueryRevolver {
 
             PaintingReport paintingReport = (PaintingReport) report;
 
-            List<String> symptomContent = this.extractSymptomContent(paintingReport);
+            List<String> symptomContent = this.extractEvaluationContent(paintingReport);
             for (String content : symptomContent) {
                 result.append(content).append("\n");
             }
@@ -343,13 +344,7 @@ public class QueryRevolver {
             result.append(this.tryGeneratePaintingFeature(paintingReport, query));
 
             if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
-                result.append("\n受测人的大五人格画像是").append(paintingReport.getEvaluationReport()
-                        .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。\n");
-                // 性格特点
-                result.append(paintingReport.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
-                result.append(this.filterPersonalityDescription(paintingReport.getEvaluationReport()
-                            .getPersonalityAccelerator().getBigFivePersonality().getDescription()));
+                result.append(this.tryGeneratePersonality(paintingReport, query));
             }
 
             if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
@@ -420,7 +415,7 @@ public class QueryRevolver {
                 result.append("受测人心理状态如下：\n");
 
                 PaintingReport paintingReport = (PaintingReport) report;
-                List<String> symptomContent = this.extractSymptomContent(paintingReport);
+                List<String> symptomContent = this.extractEvaluationContent(paintingReport);
                 for (String content : symptomContent) {
                     result.append(content).append("\n");
                 }
@@ -509,7 +504,7 @@ public class QueryRevolver {
 
             PaintingReport paintingReport = (PaintingReport) report;
 
-            List<String> symptomContent = this.extractSymptomContent(paintingReport);
+            List<String> symptomContent = this.extractEvaluationContent(paintingReport);
             for (String content : symptomContent) {
                 answer.append(content).append("\n");
             }
@@ -570,12 +565,36 @@ public class QueryRevolver {
         }
     }
 
-    private String generateSymptomFactor(PaintingReport report, String query) {
-        StringBuilder buf = new StringBuilder();
-        return buf.toString();
-    }
+    private List<String> extractEvaluationContent(PaintingReport report) {
+        final int maxCount = 10;
+        List<String> result = new ArrayList<>();
 
-    private List<String> extractSymptomContent(PaintingReport report) {
+        for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
+            Logger.d(this.getClass(), "#extractEvaluationContent - indicator: " + es.indicator.name);
+
+            String prompt = es.generateReportPrompt(report.getAttribute());
+            if (null == prompt) {
+                // 不需要进行报告推理，下一个
+                continue;
+            }
+
+            String content = ContentTools.fastInfer(prompt, this.service.getTokenizer());
+            if (null == content) {
+                Logger.d(this.getClass(), "#extractEvaluationContent - Can NOT find content: " + prompt);
+                continue;
+            }
+
+            content = this.filterPersonalityDescription(content);
+            result.add(content);
+
+            if (result.size() >= maxCount) {
+                break;
+            }
+        }
+
+        return result;
+
+        /* FIXME 2025-03-17 从资源中直接提取
         final List<String> result = new ArrayList<>();
 
         List<EvaluationScore> evaluationScoreList = report.getEvaluationReport().getEvaluationScores();
@@ -622,7 +641,7 @@ public class QueryRevolver {
             }
         }
 
-        return result;
+        return result;*/
     }
 
     private String generateKnowledgeFragment(Report report, String query) {
@@ -755,7 +774,7 @@ public class QueryRevolver {
         return buf.toString();
     }
 
-    private String tryGenerateFactorSet(PaintingReport report, String query) {
+    private String tryGenerateFactorDesc(PaintingReport report, String query) {
         StringBuilder result = new StringBuilder();
 
         FactorSet factorSet = report.getEvaluationReport().getFactorSet();
@@ -880,8 +899,69 @@ public class QueryRevolver {
         return buf.toString();
     }
 
+    private String tryGeneratePersonality(PaintingReport report, String query) {
+        StringBuilder result = new StringBuilder();
+
+        List<String> words = this.service.segmentation(query);
+        boolean hit = false;
+        for (String kw : sKeywordPersonality) {
+            for (String word : words) {
+                if (kw.equalsIgnoreCase(word)) {
+                    hit = true;
+                    break;
+                }
+            }
+            if (hit) {
+                break;
+            }
+        }
+
+        if (!hit) {
+            String[] keywordArray = Arrays.copyOf(sKeywordWayOfThinking,
+                    sKeywordWayOfThinking.length +
+                            sKeywordCommunicationStyle.length +
+                            sKeywordWorkEnvironment.length +
+                            sKeywordManagementRecommendation.length);
+            System.arraycopy(sKeywordCommunicationStyle, 0,
+                    keywordArray,
+                    sKeywordWayOfThinking.length,
+                    sKeywordCommunicationStyle.length);
+            System.arraycopy(sKeywordWorkEnvironment, 0,
+                    keywordArray,
+                    sKeywordWayOfThinking.length + sKeywordCommunicationStyle.length,
+                    sKeywordWorkEnvironment.length);
+            System.arraycopy(sKeywordManagementRecommendation, 0,
+                    keywordArray,
+                    sKeywordWayOfThinking.length + sKeywordCommunicationStyle.length + sKeywordWorkEnvironment.length,
+                    sKeywordManagementRecommendation.length);
+            for (String kw : keywordArray) {
+                for (String word : words) {
+                    if (kw.equalsIgnoreCase(word)) {
+                        hit = true;
+                        break;
+                    }
+                }
+                if (hit) {
+                    break;
+                }
+            }
+        }
+
+        if (hit) {
+            result.append("受测人的大五人格画像是").append(report.getEvaluationReport()
+                    .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("。\n");
+            // 性格特点
+            result.append(report.getEvaluationReport()
+                    .getPersonalityAccelerator().getBigFivePersonality().getDisplayName()).append("的性格特点：");
+            result.append(this.filterPersonalityDescription(report.getEvaluationReport()
+                    .getPersonalityAccelerator().getBigFivePersonality().getDescription()));
+            result.append("\n\n");
+        }
+        return result.toString();
+    }
+
     private double fastSentenceSimilarity(String sentenceA, String sentenceB) {
-        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
         List<String> wordsA = analyzer.analyzeOnlyWords(sentenceA, 10);
         List<String> wordsB = analyzer.analyzeOnlyWords(sentenceB, 10);
         List<String> pole = null;

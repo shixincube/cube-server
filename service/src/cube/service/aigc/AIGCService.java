@@ -88,6 +88,12 @@ public class AIGCService extends AbstractModule {
     private final Map<String, AIGCUnit> unitMap;
 
     /**
+     * 单元权重。
+     * Key 是 Contact Id
+     */
+    private final Map<Long, Double> unitWeightMap;
+
+    /**
      * Key 是 AIGC 的 Query Key
      */
     private final Map<String, Queue<GenerateTextUnitMeta>> generateQueueMap;
@@ -184,6 +190,7 @@ public class AIGCService extends AbstractModule {
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
         this.unitMap = new ConcurrentHashMap<>();
+        this.unitWeightMap = new ConcurrentHashMap<>();
         this.channelMap = new ConcurrentHashMap<>();
         this.generateQueueMap = new ConcurrentHashMap<>();
         this.conversationQueueMap = new ConcurrentHashMap<>();
@@ -401,6 +408,25 @@ public class AIGCService extends AbstractModule {
                                 Integer.toString(ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT))),
                     ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT);
 
+            // Unit 权重
+            Iterator<Object> keyIter = properties.keySet().iterator();
+            while (keyIter.hasNext()) {
+                String key = keyIter.next().toString();
+                if (key.startsWith("unit.weight.")) {
+                    String[] seg = key.split("\\.");
+                    if (seg.length == 3) {
+                        try {
+                            long cid = Long.parseLong(seg[2]);
+                            double weight = Double.parseDouble(properties.getProperty(key, "1.0"));
+                            unitWeightMap.put(cid, weight);
+                            Logger.i(this.getClass(), "AI Service - Unit weight: " + cid + " - " + weight);
+                        } catch (Exception e) {
+                            // Nothing
+                        }
+                    }
+                }
+            }
+
             // 页面阅读器 URL
             if (properties.containsKey("page.reader.url") || properties.containsKey("page.searcher")) {
                 Explorer.getInstance().config(properties.getProperty("page.reader.url"),
@@ -468,6 +494,14 @@ public class AIGCService extends AbstractModule {
                 unit = new AIGCUnit(contact, capability, context);
                 this.unitMap.put(key, unit);
             }
+
+            Double weight = this.unitWeightMap.get(contact.getId());
+            if (null != weight) {
+                unit.setWeight(weight.doubleValue());
+                Logger.d(this.getClass(), "#setupUnit - Modify unit \"" +
+                        unit.getCapability().getName() + "\" weight : " + weight);
+            }
+
             result.add(unit);
         }
 
@@ -560,17 +594,31 @@ public class AIGCService extends AbstractModule {
      * @return
      */
     public AIGCUnit selectIdleUnitByName(String unitName) {
+        ArrayList<AIGCUnit> candidates = new ArrayList<>();
+
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
         while (iter.hasNext()) {
             AIGCUnit unit = iter.next();
             if (unit.getCapability().getName().equals(unitName)
                     && unit.getContext().isValid()
                     && !unit.isRunning()) {
-                return unit;
+                candidates.add(unit);
             }
         }
 
-        return null;
+        if (candidates.isEmpty()) {
+            return null;
+        }
+
+        // 按照权重从高到低排序
+        Collections.sort(candidates, new Comparator<AIGCUnit>() {
+            @Override
+            public int compare(AIGCUnit u1, AIGCUnit u2) {
+                return (int)(u2.getWeight() - u1.getWeight());
+            }
+        });
+
+        return candidates.get(0);
     }
 
     public AIGCUnit selectUnitByName(String unitName) {
@@ -579,21 +627,32 @@ public class AIGCService extends AbstractModule {
             return idleUnit;
         }
 
-        boolean random = true;  // 是否随机
         ArrayList<AIGCUnit> candidates = new ArrayList<>();
 
+        // 1. 选择所有无故障节点
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
         while (iter.hasNext()) {
             AIGCUnit unit = iter.next();
             if (unit.getCapability().getName().equals(unitName) &&
-                unit.getContext().isValid()) {
+                    unit.getContext().isValid() &&
+                    unit.numFailure() == 0) {
                 candidates.add(unit);
-                if (unit.numFailure() > 0) {
-                    random = false;
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            // 2. 没有无故障节点，选择所有节点
+            iter = this.unitMap.values().iterator();
+            while (iter.hasNext()) {
+                AIGCUnit unit = iter.next();
+                if (unit.getCapability().getName().equals(unitName) &&
+                        unit.getContext().isValid()) {
+                    candidates.add(unit);
                 }
             }
         }
 
+        // 无候选节点
         if (candidates.isEmpty()) {
             return null;
         }
@@ -603,7 +662,7 @@ public class AIGCService extends AbstractModule {
             return candidates.get(0);
         }
 
-        // 按照发生错误的数量，从低到高排序
+        // 按照发生错误的数量从低到高排序
         Collections.sort(candidates, new Comparator<AIGCUnit>() {
             @Override
             public int compare(AIGCUnit u1, AIGCUnit u2) {
@@ -611,8 +670,16 @@ public class AIGCService extends AbstractModule {
             }
         });
 
+        // 按照权重从高到低排序
+        Collections.sort(candidates, new Comparator<AIGCUnit>() {
+            @Override
+            public int compare(AIGCUnit u1, AIGCUnit u2) {
+                return (int)(u2.getWeight() - u1.getWeight());
+            }
+        });
+
         // 先进行一次选择
-        AIGCUnit unit = random ? candidates.get(Utils.randomInt(0, num - 1)) : candidates.get(0);
+        AIGCUnit unit = candidates.get(0);
 
         iter = candidates.iterator();
         while (iter.hasNext()) {
@@ -628,7 +695,8 @@ public class AIGCService extends AbstractModule {
             return unit;
         }
 
-        unit = random ? candidates.get(Utils.randomInt(0, candidates.size() - 1)) : candidates.get(0);
+        // 权重最高，且没有正在运行的节点
+        unit = candidates.get(0);
         return unit;
     }
 

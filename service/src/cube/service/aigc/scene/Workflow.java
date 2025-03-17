@@ -178,9 +178,6 @@ public class Workflow {
         // 生成人格描述
         this.inferPersonality(this.evaluationReport.getPersonalityAccelerator());
 
-        // 特征描述
-//        this.makeDescription();
-
         // 曼陀罗花
         this.mandalaFlower = this.inferMandalaFlower(this.evaluationReport.getPersonalityAccelerator());
 
@@ -474,7 +471,7 @@ public class Workflow {
         return fixThirdPerson(summary.toString());
     }
 
-    public String infer(String query) {
+    private String infer(String query) {
         Dataset dataset = Resource.getInstance().loadDataset();
         if (null == dataset) {
             Logger.w(this.getClass(), "#infer - Read dataset failed");

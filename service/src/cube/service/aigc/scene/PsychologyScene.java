@@ -109,8 +109,7 @@ public class PsychologyScene {
             SceneManager.getInstance().setService(service);
 
             // 激活数据集
-            Workflow workflow = new Workflow(service, new Attribute("male", 18, false));
-            String r = workflow.infer("白泽京智");
+            String r = ContentTools.fastInfer("白泽京智", this.service.getTokenizer());
             Logger.i(this.getClass(), "#start - Active dataset: " + r);
 
             String corpus = Resource.getInstance().getCorpus("baize", "MIND_ECHO");
@@ -1245,7 +1244,7 @@ public class PsychologyScene {
             if (workflow.isSpeed()) {
                 Logger.d(this.getClass(), "processScaleReport - factor prompt: " +
                         prompt.name + " - " + prompt.description);
-                description = workflow.infer(prompt.description);
+                description = ContentTools.fastInfer(prompt.description, this.service.getTokenizer());
             }
             if (null == description) {
                 GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.description, new GeneratingOption(),
@@ -1268,7 +1267,7 @@ public class PsychologyScene {
                 if (workflow.isSpeed()) {
                     Logger.d(this.getClass(), "processScaleReport - factor prompt: " +
                             prompt.name + " - " + prompt.suggestion);
-                    suggestion = workflow.infer(prompt.suggestion);
+                    suggestion =  ContentTools.fastInfer(prompt.suggestion, this.service.getTokenizer());
                 }
                 if (null == suggestion) {
                     GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.suggestion, new GeneratingOption(),

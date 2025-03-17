@@ -18,10 +18,12 @@ import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.AIGCChannel;
 import cube.service.tokenizer.Tokenizer;
+import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.util.FileLabels;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -338,5 +340,46 @@ public class ContentTools {
                 channel.getAuthToken().getCode(), channel.getHttpsEndpoint()));
         buf.append(")\n");
         return buf.toString();
+    }
+
+    public static String fastInfer(String query, Tokenizer tokenizer) {
+        Dataset dataset = Resource.getInstance().loadDataset();
+        if (null == dataset) {
+            Logger.w(ContentTools.class, "#fastInfer - Read dataset failed");
+            return null;
+        }
+
+        synchronized (dataset) {
+            if (!dataset.hasAnalyzed()) {
+                for (String question : dataset.getQuestions()) {
+                    TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
+                    List<Keyword> keywordList = analyzer.analyze(question, 7);
+                    if (keywordList.isEmpty()) {
+                        continue;
+                    }
+
+                    List<String> keywords = new ArrayList<>();
+                    for (Keyword keyword : keywordList) {
+                        keywords.add(keyword.getWord());
+                    }
+                    // 填充问题关键词
+                    dataset.fillQuestionKeywords(question, keywords.toArray(new String[0]));
+                }
+            }
+        }
+
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
+        List<Keyword> keywordList = analyzer.analyze(query, 5);
+        if (keywordList.isEmpty()) {
+            Logger.w(ContentTools.class, "#fastInfer - Query keyword is none");
+            return null;
+        }
+
+        List<String> keywords = new ArrayList<>();
+        for (Keyword keyword : keywordList) {
+            keywords.add(keyword.getWord());
+        }
+
+        return dataset.matchContent(keywords.toArray(new String[0]), 5);
     }
 }
