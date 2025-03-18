@@ -13,10 +13,7 @@ import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.CVAction;
-import cube.common.entity.BarCode;
-import cube.common.entity.BarCodeInfo;
-import cube.common.entity.Contact;
-import cube.common.entity.FileLabel;
+import cube.common.entity.*;
 import cube.common.notice.GetFile;
 import cube.common.state.CVStateCode;
 import cube.core.AbstractModule;
@@ -25,6 +22,7 @@ import cube.core.Module;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
 import cube.service.cv.listener.DetectBarCodeListener;
+import cube.service.cv.listener.DetectObjectListener;
 import cube.util.FileType;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -231,6 +229,128 @@ public class CVService extends AbstractModule {
         return true;
     }
 
+    /**
+     * 检测图片的物体。
+     *
+     * @param token
+     * @param fileCodes
+     * @param listener
+     * @return
+     */
+    public boolean detectObject(AuthToken token, List<String> fileCodes, DetectObjectListener listener) {
+        final CVEndpoint endpoint = this.selectEndpoint();
+        if (null == endpoint) {
+            Logger.e(this.getClass(), "#detectObject - No endpoints");
+            return false;
+        }
+
+        final int limit = 10;
+        final List<FileLabel> fileLabels = new ArrayList<>();
+        for (String fileCode : fileCodes) {
+            FileLabel fileLabel = this.getFile(token.getDomain(), fileCode);
+            if (null != fileLabel) {
+                if (fileLabel.getFileType() == FileType.JPEG ||
+                        fileLabel.getFileType() == FileType.PNG ||
+                        fileLabel.getFileType() == FileType.BMP) {
+                    fileLabels.add(fileLabel);
+                    if (fileLabels.size() >= limit) {
+                        // 超限
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (fileLabels.isEmpty()) {
+            Logger.e(this.getClass(), "#detectObject - Can NOT find files");
+            return false;
+        }
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                JSONArray list = new JSONArray();
+                for (FileLabel fileLabel : fileLabels) {
+                    list.put(fileLabel.toJSON());
+                }
+
+                JSONObject payload = new JSONObject();
+                payload.put("list", list);
+                Packet request = new Packet(CVAction.ObjectDetection.name, payload);
+                ActionDialect dialect = cellet.transmit(endpoint.talkContext, request.toDialect(), 3 * 60 * 1000);
+                if (null == dialect) {
+                    Logger.w(this.getClass(), "#detectObject - Endpoint is error");
+                    listener.onFailed(fileCodes, CVStateCode.EndpointException);
+                    return;
+                }
+
+                Packet response = new Packet(dialect);
+                if (Packet.extractCode(response) != CVStateCode.Ok.code) {
+                    Logger.d(this.getClass(), "#detectObject - Process failed");
+                    listener.onFailed(fileCodes, CVStateCode.Failure);
+                    return;
+                }
+
+                List<ObjectInfo> objectList = new ArrayList<>();
+
+                JSONObject data = Packet.extractDataPayload(response);
+                JSONArray result = data.getJSONArray("result");
+                for (int i = 0; i < result.length(); ++i) {
+                    ObjectInfo info = new ObjectInfo(result.getJSONObject(i));
+                    info.setFileLabel(findFileLabel(fileLabels, info.getFileCode()));
+                    objectList.add(info);
+                }
+
+                long elapsed = data.getLong("elapsed");
+                listener.onCompleted(objectList, elapsed);
+            }
+        });
+
+        return true;
+    }
+
+    public ObjectInfo detectObject(AuthToken token, String fileCode) {
+        List<String> list = new ArrayList<>();
+        list.add(fileCode);
+
+        final List<ObjectInfo> result = new ArrayList<>();
+        boolean success = this.detectObject(token, list, new DetectObjectListener() {
+            @Override
+            public void onCompleted(List<ObjectInfo> objects, long elapsed) {
+                result.addAll(objects);
+
+                synchronized (result) {
+                    result.notify();
+                }
+            }
+
+            @Override
+            public void onFailed(List<String> fileCodes, CVStateCode stateCode) {
+                synchronized (result) {
+                    result.notify();
+                }
+            }
+        });
+
+        if (success) {
+            synchronized (result) {
+                try {
+                    result.wait(60 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        else {
+            return null;
+        }
+
+        if (result.isEmpty()) {
+            return null;
+        }
+        return result.get(0);
+    }
+
     private CVEndpoint selectEndpoint() {
         synchronized (this.endpointList) {
             if (this.endpointList.isEmpty()) {
@@ -253,5 +373,14 @@ public class CVService extends AbstractModule {
 
             return endpoint;
         }
+    }
+
+    private FileLabel findFileLabel(List<FileLabel> fileLabels, String fileCode) {
+        for (FileLabel fileLabel : fileLabels) {
+            if (fileLabel.getFileCode().equals(fileCode)) {
+                return fileLabel;
+            }
+        }
+        return null;
     }
 }

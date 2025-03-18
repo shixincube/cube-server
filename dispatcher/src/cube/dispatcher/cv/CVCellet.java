@@ -12,6 +12,7 @@ import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
 import cube.dispatcher.cv.handler.DetectBarCode;
 import cube.dispatcher.cv.handler.MakeBarCode;
+import cube.dispatcher.cv.handler.ObjectDetection;
 import cube.util.HttpServer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -52,6 +53,7 @@ public class CVCellet extends AbstractCellet {
         HttpServer httpServer = this.performer.getHttpServer();
         httpServer.addContextHandler(new MakeBarCode());
         httpServer.addContextHandler(new DetectBarCode());
+        httpServer.addContextHandler(new ObjectDetection());
 
         return true;
     }

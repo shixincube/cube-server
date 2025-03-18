@@ -23,6 +23,7 @@ import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
+import cube.service.cv.CVService;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import cube.util.FileUtils;
@@ -154,6 +155,13 @@ public class PsychologyScene {
             return false;
         }
 
+        boolean more = false;
+        CVService cvService = (CVService) this.service.getKernel().getModule(CVService.NAME);
+        ObjectInfo info = cvService.detectObject(authToken, fileCode);
+        if (null != info) {
+            more = this.hasMoreObjects(info);
+        }
+
         AIGCUnit unit = this.service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
         if (null == unit) {
             Logger.w(this.getClass(), "#checkPsychologyPainting - No psychology unit: " + fileCode);
@@ -179,11 +187,26 @@ public class PsychologyScene {
         try {
             JSONObject responseData = Packet.extractDataPayload(response);
             // 结果
-            return responseData.getBoolean("result");
+            boolean result = responseData.getBoolean("result");
+            // 1. 通过像素校验是绘画
+            // 2. 物体检测没有其他元素
+            // 依此上述两条判断是否是绘画
+            return (result && !more);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#checkPsychologyPainting", e);
             return false;
         }
+    }
+
+    private boolean hasMoreObjects(ObjectInfo info) {
+        int count = 0;
+        for (Material object : info.getObjects()) {
+            if (object.label.startsWith("人")) {
+                continue;
+            }
+            ++count;
+        }
+        return (count > 0);
     }
 
     public PaintingReport getPaintingReport(long sn) {

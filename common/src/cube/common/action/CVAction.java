@@ -25,9 +25,12 @@ public enum CVAction {
      */
     DetectBarCode("detectBarCode"),
 
-    FindContours("findContours"),
+    /**
+     * 图像物体检测。
+     */
+    ObjectDetection("objectDetection"),
 
-    Predict("predict"),
+    FindContours("findContours"),
 
     ;
 

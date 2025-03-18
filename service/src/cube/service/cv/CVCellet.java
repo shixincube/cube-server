@@ -14,10 +14,7 @@ import cell.util.log.Logger;
 import cube.common.action.CVAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
-import cube.service.cv.task.DetectBarCodeTask;
-import cube.service.cv.task.MakeBarCodeTask;
-import cube.service.cv.task.SetupTask;
-import cube.service.cv.task.TeardownTask;
+import cube.service.cv.task.*;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -130,6 +127,11 @@ public class CVCellet extends AbstractCellet {
         else if (CVAction.DetectBarCode.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new DetectBarCodeTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (CVAction.ObjectDetection.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new ObjectDetectionTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (CVAction.Setup.name.equals(action)) {

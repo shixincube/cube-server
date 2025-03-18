@@ -43,7 +43,7 @@ public class Chat extends ContextHandler {
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -106,14 +106,14 @@ public class Chat extends ContextHandler {
                 }
             } catch (Exception e) {
                 Logger.e(Chat.class, "#doPost - Read body failed", e);
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
 
             if (null == channelCode || null == content) {
                 // 参数错误
-                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
                 return;
             }
@@ -123,7 +123,7 @@ public class Chat extends ContextHandler {
                     histories, records, recordable, searchable, networking, categories, searchTopK);
             if (null == future) {
                 // 发生错误
-                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
                 this.complete();
             }
             else if (future.end) {
@@ -163,7 +163,7 @@ public class Chat extends ContextHandler {
                 }
                 else {
                     // 发生错误
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                 }
             }

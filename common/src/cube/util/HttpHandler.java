@@ -236,6 +236,11 @@ public abstract class HttpHandler extends AbstractHandler {
                 error.put("reason", "CAN_NOT_FIND_DATA");
                 error.put("state", HttpStatus.NOT_FOUND_404);
                 break;
+            case HttpStatus.REQUEST_TIMEOUT_408:
+                error.put("message", "Request timeout");
+                error.put("reason", "REQUEST_TIMEOUT");
+                error.put("state", HttpStatus.REQUEST_TIMEOUT_408);
+                break;
             default:
                 break;
         }

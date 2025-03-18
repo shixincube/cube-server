@@ -67,13 +67,28 @@ public class Material implements JSONable {
         } else {
             this.sn = Utils.generateSerialNumber();
         }
+
         this.label = json.getString("label");
         this.prob = json.getDouble("prob");
         this.boundingBox = new BoundingBox(json.getJSONObject("bbox"));
-        this.box = new Box(json.getJSONObject("box"));
+
+        if (json.has("box")) {
+            this.box = new Box(json.getJSONObject("box"));
+        }
+        else {
+            this.box = new Box(this.boundingBox.x, this.boundingBox.y,
+                    this.boundingBox.getX2(), this.boundingBox.getY2());
+        }
+
         this.area = json.getInt("area");
         this.color = json.getString("color");
-        this.texture = new Texture(json.getJSONObject("texture"));
+
+        if (json.has("texture")) {
+            this.texture = new Texture(json.getJSONObject("texture"));
+        }
+        else {
+            this.texture = new Texture();
+        }
     }
 
     public boolean isDoodle() {
