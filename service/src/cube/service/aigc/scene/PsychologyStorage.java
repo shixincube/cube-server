@@ -9,6 +9,7 @@ package cube.service.aigc.scene;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.composition.*;
 import cube.common.Storagable;
 import cube.core.Conditional;
@@ -166,6 +167,9 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("suggestion", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("rate", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
             })
     };
 
@@ -584,7 +588,8 @@ public class PsychologyStorage implements Storagable {
                         new StorageField("indicator", rs.indicator.name),
                         new StorageField("title", rs.title),
                         new StorageField("report", EmojiFilter.filterEmoji(rs.report)),
-                        new StorageField("suggestion", EmojiFilter.filterEmoji(rs.suggestion))
+                        new StorageField("suggestion", EmojiFilter.filterEmoji(rs.suggestion)),
+                        new StorageField("rate", rs.rate.value)
                 });
             }
         }
@@ -1046,16 +1051,19 @@ public class PsychologyStorage implements Storagable {
                     Indicator.parse(tf.get("indicator").getString()),
                     tf.get("title").getString(),
                     tf.get("report").getString(),
-                    tf.get("suggestion").getString()
+                    tf.get("suggestion").getString(),
+                    IndicatorRate.parse(tf.get("rate").getInt())
             );
             textList.add(rs);
         }
         report.setReportTextList(textList);
 
         try {
-            HexagonDimensionScore dimensionScore = new HexagonDimensionScore(evaluationReport.getFullEvaluationScores(),
+            HexagonDimensionScore dimensionScore = new HexagonDimensionScore(evaluationReport.getAttention(),
+                    evaluationReport.getFullEvaluationScores(),
                     evaluationReport.getPaintingConfidence(), evaluationReport.getFactorSet());
-            HexagonDimensionScore normDimensionScore = new HexagonDimensionScore(80, 80, 80, 80, 80, 80);
+            HexagonDimensionScore normDimensionScore = new HexagonDimensionScore(
+                    80, 80, 80, 80, 80, 80);
 
             // 描述
             ContentTools.fillDimensionScoreDescription(this.tokenizer, dimensionScore);

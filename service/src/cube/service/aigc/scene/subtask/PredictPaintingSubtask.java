@@ -230,7 +230,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
         }
 
         PaintingReport report = PsychologyScene.getInstance().generatePredictingReport(channel, convCtx.getCurrentAttribute(),
-                convCtx.getCurrentFile(), Theme.Generic, 5, new PaintingReportListener() {
+                convCtx.getCurrentFile(), Theme.Generic, 10, new PaintingReportListener() {
                     @Override
                     public void onPaintingPredicting(PaintingReport report, FileLabel file) {
                         Logger.d(this.getClass(), "#onPaintingPredicting");

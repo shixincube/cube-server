@@ -9,15 +9,13 @@ package cube.service.aigc.scene;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import cube.aigc.psychology.composition.*;
-import cube.common.entity.GeneratingOption;
 import cube.common.entity.GeneratingRecord;
 import cube.common.entity.QuestionAnswer;
-import cube.common.entity.RetrieveReRankResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.RetrieveReRankListener;
 import cube.service.aigc.listener.SemanticSearchListener;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -320,84 +318,178 @@ public class QueryRevolver {
     }
 
     public String generatePrompt(ConversationRelation relation, Report report, String query) {
-        StringBuilder result = new StringBuilder();
+        final StringBuilder result = new StringBuilder();
 
-        result.append("已知信息：\n\n当前受测人的名称是：").append(this.fixName(
-                relation.name,
-                report.getAttribute().getGenderText(),
-                report.getAttribute().age)).append("，");
-        result.append("年龄是：").append(report.getAttribute().age).append("岁，");
-        result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
+        AtomicBoolean hitLazy = new AtomicBoolean(false);
+        final List<QuestionAnswer> questionAnswerList = new ArrayList<>();
+        boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
+            @Override
+            public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
+                for (QuestionAnswer questionAnswer : questionAnswers) {
+                    if (questionAnswer.getScore() < 0.8) {
+                        // 排除得分较低答案
+                        continue;
+                    }
 
-        if (report instanceof PaintingReport) {
-            result.append("受测人主要心理状态描述如下：\n");
+                    if (!hitLazy.get()) {
+                        // 判断 Lazy 句子，如果是 Lazy 句子，则仅润色
+                        for (String q : questionAnswer.getQuestions()) {
+                            for (String lazy : sLazyQuery) {
+                                if (fastSentenceSimilarity(q, lazy) >= 0.75) {
+                                    hitLazy.set(true);
+                                    break;
+                                }
+                            }
+                            if (hitLazy.get()) {
+                                break;
+                            }
+                        }
+                    }
 
-            PaintingReport paintingReport = (PaintingReport) report;
+                    List<String> answers = questionAnswer.getAnswers();
+                    for (String answer : answers) {
+                        Subtask subtask = Subtask.extract(answer);
+                        if (Subtask.None == subtask) {
+                            // 不是子任务
+                            if (!questionAnswerList.contains(questionAnswer)) {
+                                questionAnswerList.add(questionAnswer);
+                                break;
+                            }
+                        }
+                    }
 
-            List<String> symptomContent = this.extractEvaluationContent(paintingReport);
-            for (String content : symptomContent) {
-                result.append(content).append("\n");
+                    if (hitLazy.get()) {
+                        break;
+                    }
+                }
+                synchronized (result) {
+                    result.notify();
+                }
             }
-            result.append("\n");
 
-            // 画面特征
-            result.append(this.tryGeneratePaintingFeature(paintingReport, query));
-
-            if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
-                result.append(this.tryGeneratePersonality(paintingReport, query));
+            @Override
+            public void onFailed(String query, AIGCStateCode stateCode) {
+                synchronized (result) {
+                    result.notify();
+                }
             }
+        });
 
-            if (result.length() < ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
-                result.append("\n");
-                result.append(this.generateKnowledgeFragment(report, query));
+        if (success) {
+            synchronized (result) {
+                try {
+                    result.wait(30 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
-        else if (report instanceof ScaleReport) {
-            ScaleReport scaleReport = (ScaleReport) report;
-            if (null != scaleReport.getScale()) {
-                result.append(scaleReport.getScale().displayName);
-                result.append("量表的测验结果是：\n");
+
+        final int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60;
+
+        if (hitLazy.get()) {
+            Logger.d(this.getClass(), "#generatePrompt - Hit lazy: " + query);
+
+            if (!questionAnswerList.isEmpty()) {
+                // 清空
+                result.delete(0, result.length());
+
+                for (QuestionAnswer qa : questionAnswerList) {
+                    for (String answer : qa.getAnswers()) {
+                        result.append(answer).append("\n\n");
+                    }
+                }
+                String text = String.format(Resource.getInstance().getCorpus("prompt", "FORMAT_POLISH"),
+                        result.toString());
+                result.delete(0, result.length());
+                result.append(text).append("\n");
             }
             else {
-                result.append("受测人的心理表现有：\n");
-            }
-
-            for (ScaleFactor factor : scaleReport.getFactors()) {
-                result.append("\n* ").append(factor.description);
-                if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
-                    break;
-                }
-            }
-
-            result.append("\n对于上述心理表现给出以下建议：\n");
-            for (ScaleFactor factor : scaleReport.getFactors()) {
-                result.append("\n* ").append(factor.suggestion);
-                if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
-                    break;
-                }
-            }
-            result.append("\n");
-        }
-
-        result.append("\n根据上述已知信息，专业地来回答用户的问题。");
-
-        for (String word : sKeywordSuggestion) {
-            if (query.contains(word)) {
-                result.append("答案里不要出现药品信息。");
-                break;
+                result.append(query).append("\n");
             }
         }
+        else {
+            if (report instanceof PaintingReport) {
+                PaintingReport paintingReport = (PaintingReport) report;
 
-        result.append("问题是：");
-        result.append(query);
+                result.append("已知评测数据：\n\n");
+                result.append("此评测数据是由AiXinLi模型生成的，采用的评测方法是“房树人”绘画投射测试。");
+                result.append("评测数据的受测人是").append(this.fixName(relation.name, report.getAttribute())).append("，");
+                result.append("年龄是：").append(report.getAttribute().age).append("岁，");
+                result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n\n");
+                result.append("评测日期是：").append(formatReportDate(paintingReport)).append("。\n\n");
+                result.append("受测人的心理特征摘要如下：");
+                result.append(report.getSummary());
+                result.append("\n\n");
 
-        return this.filterSubjectNoun(result.toString(), report.getAttribute());
+                result.append("受测人主要心理特征描述如下：\n");
+                List<String> symptomContent = this.extractEvaluationContent(paintingReport);
+                for (String content : symptomContent) {
+                    result.append(content).append("\n\n");
+                }
+
+                // 画面特征
+                result.append(this.tryGeneratePaintingFeature(paintingReport, query));
+
+                // 指标数据
+                result.append(this.tryGenerateFactorDesc(paintingReport, query));
+
+                if (result.length() < wordLimit) {
+                    // 尝试生成人格数据
+                    result.append(this.tryGeneratePersonality(paintingReport, query));
+                }
+
+                if (result.length() < wordLimit) {
+                    // 尝试生成知识片段
+                    result.append("\n");
+                    result.append(this.generateKnowledgeFragment(report, query));
+                }
+            }
+            else if (report instanceof ScaleReport) {
+                ScaleReport scaleReport = (ScaleReport) report;
+                if (null != scaleReport.getScale()) {
+                    result.append(scaleReport.getScale().displayName);
+                    result.append("量表的测验结果是：\n");
+                }
+                else {
+                    result.append("受测人的心理表现有：\n");
+                }
+
+                for (ScaleFactor factor : scaleReport.getFactors()) {
+                    result.append("\n* ").append(factor.description);
+                    if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
+                        break;
+                    }
+                }
+
+                result.append("\n对于上述心理表现给出以下建议：\n");
+                for (ScaleFactor factor : scaleReport.getFactors()) {
+                    result.append("\n* ").append(factor.suggestion);
+                    if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
+                        break;
+                    }
+                }
+                result.append("\n");
+            }
+        }
+
+        if (result.length() > 0) {
+            result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
+            result.append("不允许在答案中添加编造成分，可以以“根据您的提问”开头。");
+            result.append("问题是：").append(query).append("\n");
+        }
+        else {
+            result.append("专业地回答问题。”，问题是：");
+            result.append(query).append("\n");
+        }
+
+        return result.toString();
     }
 
     public String generatePrompt(List<ConversationRelation> relations, List<Report> reports, String query) {
         StringBuilder result = new StringBuilder();
 
-        result.append("已知信息：\n\n");
+        result.append("已知评测信息：\n\n");
         result.append("受测人有").append(relations.size()).append("份数据信息如下：\n\n");
 
         for (int i = 0; i < relations.size(); ++i) {
@@ -406,8 +498,7 @@ public class QueryRevolver {
             result.append("# 评测数据").append(i + 1);
             result.append("受测人的名称是：").append(this.fixName(
                     relation.name,
-                    report.getAttribute().getGenderText(),
-                    report.getAttribute().age)).append("，");
+                    report.getAttribute())).append("，");
             result.append("年龄是：").append(report.getAttribute().age).append("岁，");
             result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
 
@@ -494,8 +585,7 @@ public class QueryRevolver {
         query.append("当前讨论的受测人有哪些信息？");
 
         answer.append("当前讨论的受测人的名称是：").append(this.fixName(relation.name,
-                        report.getAttribute().getGenderText(),
-                        report.getAttribute().age)).append("，");
+                        report.getAttribute())).append("，");
         answer.append("年龄是：").append(report.getAttribute().age).append("岁，");
         answer.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
 
@@ -556,8 +646,14 @@ public class QueryRevolver {
         return sDateFormat.format(new Date(report.getFinishedTimestamp()));
     }
 
-    private String fixName(String name, String gender, int age) {
-        if (age <= 24 || name.length() == 0 || name.equals("匿名")) {
+    private String fixName(String name, Attribute attribute) {
+        if (name.length() == 0) {
+            return "匿名";
+        }
+
+        String gender = attribute.getGenderText();
+        int age = attribute.age;
+        if (age <= 24 || name.equals("匿名")) {
             return name;
         }
         else {
@@ -803,6 +899,9 @@ public class QueryRevolver {
                 String symptom = null;
                 String desc = null;
                 FactorSet.NormRange normRange = null;
+                // 症状内容可以是 null 值
+                ReportSection reportSection = null;
+
                 if (symptomWord.equals("躯体化") || symptomWord.equalsIgnoreCase(FactorSet.Somatization)) {
                     symptom = "躯体化";
                     desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Somatization);
@@ -812,26 +911,31 @@ public class QueryRevolver {
                     symptom = "强迫";
                     desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Obsession);
                     normRange = factorSet.normSymptom(FactorSet.Obsession);
+                    reportSection = report.getReportSection(Indicator.Obsession);
                 }
                 else if (symptomWord.equals("人际关系") || symptomWord.equalsIgnoreCase(FactorSet.Interpersonal)) {
                     symptom = "人际关系敏感";
                     desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Interpersonal);
                     normRange = factorSet.normSymptom(FactorSet.Interpersonal);
+                    reportSection = report.getReportSection(Indicator.InterpersonalRelation);
                 }
                 else if (symptomWord.equals("抑郁") || symptomWord.equalsIgnoreCase(FactorSet.Depression)) {
                     symptom = "抑郁倾向";
                     desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Depression);
                     normRange = factorSet.normSymptom(FactorSet.Depression);
+                    reportSection = report.getReportSection(Indicator.Depression);
                 }
                 else if (symptomWord.equals("焦虑") || symptomWord.equalsIgnoreCase(FactorSet.Anxiety)) {
                     symptom = "焦虑";
                     desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Anxiety);
                     normRange = factorSet.normSymptom(FactorSet.Anxiety);
+                    reportSection = report.getReportSection(Indicator.Anxiety);
                 }
                 else if (symptomWord.equals("敌对") || symptomWord.equalsIgnoreCase(FactorSet.Hostile)) {
                     symptom = "敌对";
                     desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Hostile);
                     normRange = factorSet.normSymptom(FactorSet.Hostile);
+                    reportSection = report.getReportSection(Indicator.Hostile);
                 }
                 else if (symptomWord.equals("恐怖") || symptomWord.equalsIgnoreCase(FactorSet.Horror)) {
                     symptom = "恐怖";
@@ -842,6 +946,7 @@ public class QueryRevolver {
                     symptom = "偏执";
                     desc = Resource.getInstance().getCorpus(corpusTerm, FactorSet.Paranoid);
                     normRange = factorSet.normSymptom(FactorSet.Paranoid);
+                    reportSection = report.getReportSection(Indicator.Paranoid);
                 }
                 else if (symptomWord.equals("精神病性") || symptomWord.equalsIgnoreCase(FactorSet.Psychosis)) {
                     symptom = "精神病性";
@@ -853,9 +958,40 @@ public class QueryRevolver {
                     continue;
                 }
 
+                if (null != reportSection) {
+                    result.append("受测人的" + symptom + "指标的描述是：\n");
+                    result.append(reportSection.title).append("。");
+                    result.append(this.filterPersonalityDescription(reportSection.report)).append("\n\n");
+                }
+
                 if (normRange.norm) {
-                    String content = symptom + "数据得分在常模范围内，" + symptom + "症状正常。" + desc;
-                    result.append(content).append("\n\n");
+                    if (null != reportSection && reportSection.rate != IndicatorRate.None) {
+                        String content = "";
+                        switch (reportSection.rate) {
+                            case Highest:
+                                content = symptom + "数据得分较高，受测人有症状，程度为中度到重度。";
+                                break;
+                            case High:
+                                content = symptom + "数据得分高，受测人有症状，程度为中度。";
+                                break;
+                            case Medium:
+                                content = symptom + "数据得分中等，受测人症状感受一般，程度为轻度到中度。";
+                                break;
+                            case Low:
+                                content = symptom + "数据得分低，受测人略有症状，程度为轻度。";
+                                break;
+                            case Lowest:
+                                content = symptom + "数据得分较低，受测人没有症状。";
+                                break;
+                            default:
+                                break;
+                        }
+                        result.append(content).append("\n\n");
+                    }
+                    else {
+                        String content = symptom + "数据得分在常模范围内，" + symptom + "症状正常。" + desc;
+                        result.append(content).append("\n\n");
+                    }
                 }
                 else {
                     String content = symptom + "数据得分超过常模范围，" + symptom + "症状可能异常。" + desc;
@@ -984,8 +1120,8 @@ public class QueryRevolver {
     }
 
     private String filterPersonalityDescription(String desc) {
-        String result = desc.replaceAll("你", "个体");
-        return result.replaceAll("您", "个体");
+        String result = desc.replaceAll("你", "受测人");
+        return result.replaceAll("您", "受测人");
     }
 
     private String filterSubjectNoun(String content, Attribute attribute) {

@@ -86,63 +86,8 @@ public class HexagonDimensionProjection {
             ++index;
         }
 
-        /*HexagonDimension[] hexagonDimensions = new HexagonDimension[6];
-        double[] values = new double[6];
-        int index = 0;
-        double totalFive = 0;
-
-        for (Map.Entry<HexagonDimension, Projection> e : this.projections.entrySet()) {
-            HexagonDimension dim = e.getKey();
-
-            Projection projection = e.getValue();
-            double sum = 0;
-            for (Map.Entry<Indicator, Double> weight : projection.weights.entrySet()) {
-                EvaluationScore score = getScore(weight.getKey(), scoreList);
-                if (null == score) {
-                    continue;
-                }
-
-                double delta = score.calcScore();
-//                if (delta > 0) {
-//                    sum += delta * 10d * weight.getValue();
-//                }
-                sum += delta * weight.getValue() * 10d;
-            }
-
-            hexagonDimensions[index] = dim;
-            values[index++] = sum;
-            if (dim != HexagonDimension.MentalHealth) {
-                totalFive += sum;
-            }
-        }
-
-        for (int i = 0; i < values.length; ++i) {
-            if (hexagonDimensions[i] == HexagonDimension.MentalHealth && values[i] < 10) {
-                values[i] = totalFive / 5.0;
-            }
-
-            // 当分数较低时调整到低分下限
-            int value = Math.min(Math.max(1, (int) Math.round(values[i])), 99);
-            while (value <= 20) {
-                value += value;
-            }
-
-            result.record(hexagonDimensions[i], value);
-        }*/
-
         return result;
     }
-
-//    private EvaluationScore getScore(Indicator indicator, List<EvaluationScore> scoreList) {
-//        for (EvaluationScore score : scoreList) {
-//            if (score.indicator == indicator) {
-//                return score;
-//            }
-//        }
-//
-//        return null;
-//    }
-
 
     public class Projection {
 

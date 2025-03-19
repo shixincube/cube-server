@@ -835,6 +835,11 @@ public class EvaluationReport implements JSONable {
         return result;
     }
 
+    /**
+     * 获取所有指标值，如果催化剂里没有该指标，则自动填充指标值，且 hit 和 value 都是 0 值。
+     *
+     * @return
+     */
     public List<EvaluationScore> getFullEvaluationScores() {
         List<EvaluationScore> list = new ArrayList<>();
         for (Indicator indicator : Indicator.sortByPriority()) {

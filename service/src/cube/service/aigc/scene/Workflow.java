@@ -148,18 +148,6 @@ public class Workflow {
 //        int age = this.evaluationReport.getAttribute().age;
 //        String gender = this.evaluationReport.getAttribute().gender;
 
-        // 六维得分计算
-        try {
-            this.dimensionScore = new HexagonDimensionScore(this.evaluationReport.getFullEvaluationScores(),
-                    this.evaluationReport.getPaintingConfidence(), this.evaluationReport.getFactorSet());
-            this.normDimensionScore = new HexagonDimensionScore(80, 80, 80, 80, 80, 80);
-
-            // 描述
-            ContentTools.fillDimensionScoreDescription(this.service.getTokenizer(), this.dimensionScore);
-        } catch (Exception e) {
-            Logger.w(this.getClass(), "#make", e);
-        }
-
         // 评估分推理
         List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation(Indicator.values().length);
         this.reportTextList = this.inferScore(scoreList, maxIndicatorTexts);
@@ -177,6 +165,19 @@ public class Workflow {
 
         // 生成人格描述
         this.inferPersonality(this.evaluationReport.getPersonalityAccelerator());
+
+        // 六维得分计算
+        try {
+            this.dimensionScore = new HexagonDimensionScore(this.evaluationReport.getAttention(),
+                    this.evaluationReport.getFullEvaluationScores(),
+                    this.evaluationReport.getPaintingConfidence(), this.evaluationReport.getFactorSet());
+            this.normDimensionScore = new HexagonDimensionScore(
+                    80, 80, 80, 80, 80, 80);
+            // 描述
+            ContentTools.fillDimensionScoreDescription(this.service.getTokenizer(), this.dimensionScore);
+        } catch (Exception e) {
+            Logger.w(this.getClass(), "#make", e);
+        }
 
         // 曼陀罗花
         this.mandalaFlower = this.inferMandalaFlower(this.evaluationReport.getPersonalityAccelerator());
@@ -407,8 +408,7 @@ public class Workflow {
 
             if (null != report && null != suggestion) {
                 result.add(new ReportSection(es.indicator, es.generateWord(this.attribute),
-                        report, suggestion));
-
+                        report, suggestion, es.getIndicatorRate(this.attribute)));
                 if (result.size() >= maxIndicatorTexts) {
                     break;
                 }

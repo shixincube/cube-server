@@ -8,7 +8,9 @@ package cube.aigc.psychology.composition;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.psychology.Indicator;
 import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.PaintingConfidence;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -39,7 +41,7 @@ public class HexagonDimensionScore {
         this.record(HexagonDimension.MentalHealth, mentalHealth);
     }
 
-    public HexagonDimensionScore(List<EvaluationScore> scoreList, PaintingConfidence confidence,
+    public HexagonDimensionScore(Attention attention, List<EvaluationScore> scoreList, PaintingConfidence confidence,
                                  FactorSet factorSet) {
         HexagonDimensionScore candidate = Resource.getInstance().getHexDimProjection().calc(scoreList);
         for (HexagonDimension hd : HexagonDimension.values()) {
@@ -53,20 +55,23 @@ public class HexagonDimensionScore {
                     this.record(HexagonDimension.Cognition, Utils.randomInt(80, 89));
                     break;
                 case PaintingConfidence.LEVEL_HIGH:
-                    this.record(HexagonDimension.Cognition, Utils.randomInt(75, 80));
+                    this.record(HexagonDimension.Cognition, Utils.randomInt(75, 79));
                     break;
                 case PaintingConfidence.LEVEL_NORMAL:
-                    this.record(HexagonDimension.Cognition, Utils.randomInt(70, 75));
+                    this.record(HexagonDimension.Cognition, Utils.randomInt(70, 74));
                     break;
                 case PaintingConfidence.LEVEL_LOW:
-                    this.record(HexagonDimension.Cognition, Utils.randomInt(60, 70));
+                    this.record(HexagonDimension.Cognition, Utils.randomInt(60, 69));
                     break;
                 case PaintingConfidence.LEVEL_LOWER:
-                    this.record(HexagonDimension.Cognition, Utils.randomInt(55, 60));
+                    this.record(HexagonDimension.Cognition, Utils.randomInt(50, 59));
                     break;
                 default:
                     break;
             }
+        }
+        else {
+            Logger.w(this.getClass(), "PaintingConfidence is null");
         }
 
         if (null != factorSet) {
@@ -76,38 +81,123 @@ public class HexagonDimensionScore {
                     this.record(HexagonDimension.Mood, Utils.randomInt(80, 89));
                 }
                 else {
-                    this.record(HexagonDimension.Mood, Utils.randomInt(70, 80));
+                    this.record(HexagonDimension.Mood, Utils.randomInt(70, 79));
                 }
             }
             else {
                 if (factorSet.affectFactor.negative - factorSet.affectFactor.positive > 10) {
-                    this.record(HexagonDimension.Mood, Utils.randomInt(55, 60));
+                    this.record(HexagonDimension.Mood, Utils.randomInt(50, 59));
                 }
                 else {
-                    this.record(HexagonDimension.Mood, Utils.randomInt(60, 70));
+                    this.record(HexagonDimension.Mood, Utils.randomInt(60, 69));
                 }
             }
 
             // 心理健康
-            if (factorSet.calcSymptomTotal() > 160) {
-                this.record(HexagonDimension.MentalHealth, Utils.randomInt(55, 59));
+            if (attention == Attention.SpecialAttention) {
+                this.record(HexagonDimension.MentalHealth, Utils.randomInt(40, 49));
+            }
+            else if (attention == Attention.FocusedAttention) {
+                if (factorSet.calcSymptomTotal() > 160) {
+                    this.record(HexagonDimension.MentalHealth, Utils.randomInt(50, 54));
+                }
+                else {
+                    if (factorSet.normDepression().norm && factorSet.normSomatization().norm && factorSet.normAnxiety().norm) {
+                        this.record(HexagonDimension.MentalHealth, Utils.randomInt(60, 69));
+                    }
+                    else {
+                        this.record(HexagonDimension.MentalHealth, Utils.randomInt(55, 59));
+                    }
+                }
+            }
+            else if (attention == Attention.GeneralAttention) {
+                if (factorSet.calcSymptomTotal() > 160) {
+                    this.record(HexagonDimension.MentalHealth, Utils.randomInt(70, 74));
+                }
+                else {
+                    if (factorSet.normDepression().norm && factorSet.normSomatization().norm && factorSet.normAnxiety().norm) {
+                        this.record(HexagonDimension.MentalHealth, Utils.randomInt(78, 79));
+                    }
+                    else {
+                        this.record(HexagonDimension.MentalHealth, Utils.randomInt(75, 77));
+                    }
+                }
             }
             else {
-                if (this.getDimensionScore(HexagonDimension.MentalHealth) < 70) {
-                    this.record(HexagonDimension.MentalHealth, Utils.randomInt(70, 80));
+                if (factorSet.calcSymptomTotal() > 160) {
+                    this.record(HexagonDimension.MentalHealth, Utils.randomInt(80, 84));
+                }
+                else {
+                    if (factorSet.normDepression().norm && factorSet.normSomatization().norm && factorSet.normAnxiety().norm) {
+                        this.record(HexagonDimension.MentalHealth, Utils.randomInt(88, 89));
+                    }
+                    else {
+                        this.record(HexagonDimension.MentalHealth, Utils.randomInt(85, 87));
+                    }
                 }
             }
 
             // 人际敏感
-            if (factorSet.symptomFactor.interpersonal > 2.0) {
-                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(55, 59));
-            }
-            else if (factorSet.symptomFactor.interpersonal > 1.66) {
-                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(60, 70));
-            }
-            else {
+            if (factorSet.symptomFactor.interpersonal > 3.0) {
                 this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(80, 89));
             }
+            else if (factorSet.symptomFactor.interpersonal > 2.5) {
+                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(70, 79));
+            }
+            else if (factorSet.symptomFactor.interpersonal > 1.66) {
+                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(60, 69));
+            }
+            else {
+                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(55, 59));
+            }
+
+            // 行为
+            if (factorSet.normHostile().norm && factorSet.normHorror().norm && factorSet.normParanoid().norm) {
+                this.record(HexagonDimension.Behavior, Utils.randomInt(80, 89));
+            }
+            else if (factorSet.normHostile().norm && factorSet.normParanoid().norm) {
+                this.record(HexagonDimension.Behavior, Utils.randomInt(70, 79));
+            }
+            else if (factorSet.symptomFactor.hostile <= 2.5 && factorSet.symptomFactor.paranoid <= 2.5) {
+                this.record(HexagonDimension.Behavior, Utils.randomInt(60, 69));
+            }
+            else {
+                this.record(HexagonDimension.Behavior, Utils.randomInt(50, 59));
+            }
+
+            // 自我评价
+            EvaluationScore selfConsciousness = null;
+            EvaluationScore socialAdaptability = null;
+            EvaluationScore idealism = null;
+            EvaluationScore realism = null;
+            for (EvaluationScore es : scoreList) {
+                if (es.indicator == Indicator.SelfConsciousness) {
+                    selfConsciousness = es;
+                }
+                else if (es.indicator == Indicator.SocialAdaptability) {
+                    socialAdaptability = es;
+                }
+                else if (es.indicator == Indicator.Idealism) {
+                    idealism = es;
+                }
+                else if (es.indicator == Indicator.Realism) {
+                    realism = es;
+                }
+            }
+            if (attention == Attention.FocusedAttention || attention == Attention.SpecialAttention) {
+                this.record(HexagonDimension.SelfAssessment, Utils.randomInt(60, 69));
+            }
+            else {
+                if (selfConsciousness.calcScore() > 0 && socialAdaptability.calcScore() > 0 && realism.calcScore() > idealism.calcScore()) {
+                    this.record(HexagonDimension.SelfAssessment, Utils.randomInt(80, 89));
+                }
+                else {
+                    this.record(HexagonDimension.SelfAssessment, Utils.randomInt(70, 79));
+                }
+            }
+        }
+        else {
+            Logger.w(this.getClass(), "FactorSet is null");
         }
     }
 
