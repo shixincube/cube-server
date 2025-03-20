@@ -202,6 +202,9 @@ public class FileOperationHandler extends CrossDomainHandler {
         String token = data.has("token") ? data.getString("token") : null;
         String md5 = data.has("md5") ? data.getString("md5") : null;
         String fileName = data.has("fileName") ? data.getString("fileName") : null;
+        if (null == fileName) {
+            fileName = data.has("filename") ? data.getString("filename") : null;
+        }
         String fileCode = data.has("fileCode") ? data.getString("fileCode") : null;
 
         String version = request.getHeader(HEADER_X_BAIZE_API_VERSION);

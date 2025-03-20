@@ -350,7 +350,7 @@ public class FileProcessorService extends AbstractModule {
         File thumbFile = new File(outputFile + ".jpg");
         if (thumbFile.exists()) {
             // 写入到文件存储
-            fileStorage.writeFile(thumbFileCode, thumbFile);
+            fileStorage.writeFile(thumbFileName, thumbFileCode, thumbFile);
 
             // 放置文件标签
             FileLabel fileLabel = new FileLabel(domainName, thumbFileCode, srcFileLabel.getOwnerId(),
@@ -1069,10 +1069,11 @@ public class FileProcessorService extends AbstractModule {
 
         FileStorageService storageService = (FileStorageService) this.getKernel().getModule(FileStorageService.NAME);
         // 将文件写入存储服务
-        storageService.writeFile(fileCode, file);
+        storageService.writeFile(file.getName(), fileCode, file);
 
         // 生成文件标签
         FileLabel fileLabel = FileUtils.makeFileLabel(domainName, fileCode, contactId, file);
+        fileLabel.setFileName(file.getName());
 
         // 登记文件标签
         FileLabel validFileLabel = storageService.putFile(fileLabel);

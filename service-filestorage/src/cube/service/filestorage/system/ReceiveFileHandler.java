@@ -89,7 +89,7 @@ public class ReceiveFileHandler extends ContextHandler {
 
                 String fileCode = FileUtils.makeFileCode(contact.getId(), contact.getDomain().getName(), filename);
                 // 写入文件数据
-                File file = service.writeFile(fileCode, request.getInputStream());
+                File file = service.writeFile(filename, fileCode, request.getInputStream());
                 if (null == file) {
                     Logger.e(ReceiveFileHandler.class, "#doPost - Write file failed: " + filename);
                     this.respond(response, HttpStatus.BAD_REQUEST_400);
@@ -98,6 +98,7 @@ public class ReceiveFileHandler extends ContextHandler {
                 }
 
                 FileLabel fileLabel = FileUtils.makeFileLabel(contact.getDomain().getName(), fileCode, contact.getId(), file);
+                fileLabel.setFileName(filename);
                 // 修正文件类型
                 fileLabel.setFileType(FileType.matchExtension(FileUtils.extractFileExtension(filename)));
                 // 推文件到存储服务

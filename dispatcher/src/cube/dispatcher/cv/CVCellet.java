@@ -10,6 +10,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.cv.handler.ClipPaper;
 import cube.dispatcher.cv.handler.DetectBarCode;
 import cube.dispatcher.cv.handler.MakeBarCode;
 import cube.dispatcher.cv.handler.ObjectDetection;
@@ -54,6 +55,7 @@ public class CVCellet extends AbstractCellet {
         httpServer.addContextHandler(new MakeBarCode());
         httpServer.addContextHandler(new DetectBarCode());
         httpServer.addContextHandler(new ObjectDetection());
+        httpServer.addContextHandler(new ClipPaper());
 
         return true;
     }

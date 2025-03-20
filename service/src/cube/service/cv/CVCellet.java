@@ -119,6 +119,11 @@ public class CVCellet extends AbstractCellet {
                 }
             }
         }
+        else if (CVAction.ClipPaper.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new ClipPaperTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (CVAction.MakeBarCode.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new MakeBarCodeTask(this, talkContext, primitive,

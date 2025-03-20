@@ -28,12 +28,12 @@ public class FastDFSSystem implements FileSystem {
     }
 
     @Override
-    public FileDescriptor writeFile(String fileCode, File file) {
+    public FileDescriptor writeFile(String fileName, String fileCode, File file) {
         return null;
     }
 
     @Override
-    public FileDescriptor writeFile(String fileCode, InputStream inputStream) {
+    public FileDescriptor writeFile(String fileName, String fileCode, InputStream inputStream) {
         return null;
     }
 

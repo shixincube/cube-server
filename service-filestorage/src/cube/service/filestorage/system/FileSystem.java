@@ -27,20 +27,22 @@ public interface FileSystem {
     /**
      * 写入文件。
      *
+     * @param fileName 指定文件名。
      * @param fileCode 指定文件码。
      * @param file
      * @return
      */
-    public FileDescriptor writeFile(String fileCode, File file);
+    public FileDescriptor writeFile(String fileName, String fileCode, File file);
 
     /**
      * 写入文件。
      *
+     * @param fileName 指定文件名。
      * @param fileCode 指定文件码。
      * @param inputStream
      * @return
      */
-    public FileDescriptor writeFile(String fileCode, InputStream inputStream);
+    public FileDescriptor writeFile(String fileName, String fileCode, InputStream inputStream);
 
     /**
      * 指定文件码的文件是否正在写入。

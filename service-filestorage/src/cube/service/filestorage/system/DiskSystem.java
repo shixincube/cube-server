@@ -144,7 +144,7 @@ public class DiskSystem implements FileSystem {
     }
 
     @Override
-    public FileDescriptor writeFile(String fileCode, File file) {
+    public FileDescriptor writeFile(String fileName, String fileCode, File file) {
         synchronized (this.writingFiles) {
             if (!this.writingFiles.contains(fileCode)) {
                 this.writingFiles.add(fileCode);
@@ -152,7 +152,7 @@ public class DiskSystem implements FileSystem {
         }
 
         long size = 0;
-        FileDescriptor descriptor = new FileDescriptor("disk", fileCode, this.url + fileCode);
+        FileDescriptor descriptor = new FileDescriptor("disk", fileName, this.url + fileCode);
 
         if (null != this.diskCluster && this.diskCluster.useMaster()) {
             FileInputStream fis = null;
@@ -208,7 +208,7 @@ public class DiskSystem implements FileSystem {
     }
 
     @Override
-    public FileDescriptor writeFile(String fileCode, InputStream inputStream) {
+    public FileDescriptor writeFile(String fileName, String fileCode, InputStream inputStream) {
         synchronized (this.writingFiles) {
             if (!this.writingFiles.contains(fileCode)) {
                 this.writingFiles.add(fileCode);
@@ -216,7 +216,7 @@ public class DiskSystem implements FileSystem {
         }
 
         long size = 0;
-        FileDescriptor descriptor = new FileDescriptor("disk", fileCode, this.url + fileCode);
+        FileDescriptor descriptor = new FileDescriptor("disk", fileName, this.url + fileCode);
 
         if (null != this.diskCluster && this.diskCluster.useMaster()) {
             // 文件存储到集群

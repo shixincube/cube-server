@@ -38,7 +38,7 @@ public class AIGCUnit extends Entity {
         this.contact = contact;
         this.capability = capability;
         this.context = context;
-        this.weight = 1.0;
+        this.weight = 5.0;
         this.runningCounter = new AtomicInteger(0);
         this.failures = new ConcurrentLinkedQueue<>();
     }
@@ -46,7 +46,7 @@ public class AIGCUnit extends Entity {
     public AIGCUnit(JSONObject json) {
         super(json);
         this.capability = new AICapability(json.getJSONObject("capability"));
-        this.weight = json.has("weight") ? json.getDouble("weight") : 1.0;
+        this.weight = json.has("weight") ? json.getDouble("weight") : 5.0;
         this.runningCounter = new AtomicInteger(json.getInt("runningCounter"));
         this.failures = new ConcurrentLinkedQueue<>();
         if (json.has("failures")) {

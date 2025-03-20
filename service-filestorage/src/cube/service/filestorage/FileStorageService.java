@@ -384,12 +384,12 @@ public class FileStorageService extends AbstractModule {
      * @param fileCode
      * @param inputStream
      */
-    public File writeFile(String fileCode, InputStream inputStream) {
+    public File writeFile(String fileName, String fileCode, InputStream inputStream) {
         // 删除旧文件
         this.fileSystem.deleteFile(fileCode);
 
         // 写入文件系统
-        FileDescriptor descriptor = this.fileSystem.writeFile(fileCode, inputStream);
+        FileDescriptor descriptor = this.fileSystem.writeFile(fileName, fileCode, inputStream);
         if (null != descriptor) {
             // 缓存文件标识
             this.fileDescriptors.put(fileCode, descriptor);
@@ -406,12 +406,12 @@ public class FileStorageService extends AbstractModule {
      * @param file
      * @return 返回文件描述。
      */
-    public FileDescriptor writeFile(String fileCode, File file) {
+    public FileDescriptor writeFile(String fileName, String fileCode, File file) {
         // 删除旧文件
         this.fileSystem.deleteFile(fileCode);
 
         // 写入文件系统
-        FileDescriptor descriptor = this.fileSystem.writeFile(fileCode, file);
+        FileDescriptor descriptor = this.fileSystem.writeFile(fileName, fileCode, file);
         if (null != descriptor) {
             // 缓存文件标识
             this.fileDescriptors.put(fileCode, descriptor);
@@ -530,7 +530,7 @@ public class FileStorageService extends AbstractModule {
      * @return
      */
     public FileLabel saveFile(FileLabel fileLabel, File file) {
-        FileDescriptor descriptor = this.writeFile(fileLabel.getFileCode(), file);
+        FileDescriptor descriptor = this.writeFile(fileLabel.getFileName(), fileLabel.getFileCode(), file);
         if (null == descriptor) {
             Logger.w(this.getClass(), "#saveFile - write file failed");
             return null;
@@ -958,7 +958,7 @@ public class FileStorageService extends AbstractModule {
         if (event instanceof PrimitiveInputStream) {
             PrimitiveInputStream inputStream = (PrimitiveInputStream) event;
             // 写入文件数据
-            this.writeFile(inputStream.getName(), inputStream);
+            this.writeFile(inputStream.getName(), inputStream.getName(), inputStream);
 
             try {
                 inputStream.close();
@@ -973,7 +973,7 @@ public class FileStorageService extends AbstractModule {
         }
         else if (event instanceof File) {
             String filename = ((File) event).getName();
-            return this.writeFile(filename, (File) event);
+            return this.writeFile(filename, filename, (File) event);
         }
 
         return null;

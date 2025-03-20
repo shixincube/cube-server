@@ -39,7 +39,7 @@ public class WriteFileTask implements Runnable {
     @Override
     public void run() {
         this.service = (FileStorageService) this.kernel.getModule(FileStorageService.NAME);
-        this.service.writeFile(this.inputStream.getName(), this.inputStream);
+        this.service.writeFile(this.inputStream.getName(), this.inputStream.getName(), this.inputStream);
 
         try {
             this.inputStream.close();
