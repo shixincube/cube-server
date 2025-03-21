@@ -137,11 +137,6 @@ public enum AIGCAction {
     AutomaticSpeechRecognition("automaticSpeechRecognition"),
 
     /**
-     * 图像对象检测。
-     */
-    ObjectDetection("objectDetection"),
-
-    /**
      * 分词。
      */
     Segmentation("segmentation"),
@@ -445,6 +440,11 @@ public enum AIGCAction {
      * 设置绘画报告状态。
      */
     SetPaintingReportState("setPaintingReportState"),
+
+    /**
+     * 语音情绪识别。
+     */
+    SpeechEmotionRecognition("speechEmotionRecognition"),
 
     ;
 

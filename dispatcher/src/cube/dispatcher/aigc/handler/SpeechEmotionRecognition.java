@@ -1,0 +1,69 @@
+/*
+ * This source file is part of Cube.
+ *
+ * Copyright (c) 2023-2025 Ambrose Xu.
+ */
+
+package cube.dispatcher.aigc.handler;
+
+import cube.dispatcher.aigc.Manager;
+import cube.util.FileLabels;
+import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONObject;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * 图像物体识别。
+ */
+public class SpeechEmotionRecognition extends ContextHandler {
+
+    public SpeechEmotionRecognition() {
+        super("/aigc/speech/emotion");
+        setHandler(new Handler());
+    }
+
+    private class Handler extends AIGCHandler {
+
+        public Handler() {
+            super();
+        }
+
+        @Override
+        public void doPost(HttpServletRequest request, HttpServletResponse response) {
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token)) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
+                this.complete();
+                return;
+            }
+
+            try {
+                JSONObject json = this.readBodyAsJSONObject(request);
+                String fileCode = json.getString("fileCode");
+                JSONObject result = Manager.getInstance().speechEmotionRecognition(token, fileCode);
+                if (null == result) {
+                    // 故障
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                    this.complete();
+                    return;
+                }
+
+                if (result.has("file")) {
+                    JSONObject fileJson = result.getJSONObject("file");
+                    FileLabels.reviseFileLabel(fileJson, token,
+                            Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                            Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                }
+
+                this.respondOk(response, result);
+                this.complete();
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                this.complete();
+            }
+        }
+    }
+}

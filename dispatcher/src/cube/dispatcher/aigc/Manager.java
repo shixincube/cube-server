@@ -62,15 +62,9 @@ public class Manager implements Tickable, PerformerListener {
     private Map<Long, TextToFileFuture> textToFileFutureMap;
 
     /**
-     * Key：操作序号。
-     */
-    private Map<Long, ObjectDetectionFuture> objectDetectionFutureMap;
-
-    /**
      * Key：文件码
      */
-    private Map<String, ASRFuture> asrFutureMap;
-
+    private Map<String, SpeechRecognitionFuture> speechRecognitionFutureMap;
 
     public static Manager getInstance() {
         return Manager.instance;
@@ -80,8 +74,7 @@ public class Manager implements Tickable, PerformerListener {
         this.performer = performer;
         this.validTokenMap = new ConcurrentHashMap<>();
         this.textToFileFutureMap = new ConcurrentHashMap<>();
-        this.objectDetectionFutureMap = new ConcurrentHashMap<>();
-        this.asrFutureMap = new ConcurrentHashMap<>();
+        this.speechRecognitionFutureMap = new ConcurrentHashMap<>();
 
         this.setupHandler();
 
@@ -117,7 +110,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new Chat());
         httpServer.addContextHandler(new Summarization());
         httpServer.addContextHandler(new SemanticSearch());
-        httpServer.addContextHandler(new ObjectDetection());
+        httpServer.addContextHandler(new SpeechEmotionRecognition());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
         httpServer.addContextHandler(new Conversation());
         httpServer.addContextHandler(new KnowledgeQA());
@@ -1527,50 +1520,54 @@ public class Manager implements Tickable, PerformerListener {
         return this.textToFileFutureMap.get(sn);
     }
 
-    public ObjectDetectionFuture objectDetection(String token, String channelCode, JSONArray fileCodeList) {
-        long sn = Utils.generateSerialNumber();
+    public SpeechRecognitionFuture automaticSpeechRecognition(String token, String fileCode, boolean reset) {
+        if (reset) {
+            this.speechRecognitionFutureMap.remove(fileCode);
+        }
+        else {
+            if (this.speechRecognitionFutureMap.containsKey(fileCode)) {
+                // 正在处理
+                return this.speechRecognitionFutureMap.get(fileCode);
+            }
+        }
 
         JSONObject data = new JSONObject();
-        data.put("sn", sn);
-        data.put("code", channelCode);
-        data.put("fileCodeList", fileCodeList);
-        Packet packet = new Packet(AIGCAction.ObjectDetection.name, data);
+        data.put("fileCode", fileCode);
+        Packet packet = new Packet(AIGCAction.AutomaticSpeechRecognition.name, data);
+        ActionDialect dialect = packet.toDialect();
+        dialect.addParam("token", token);
+
+        SpeechRecognitionFuture future = new SpeechRecognitionFuture(token, fileCode);
+        this.speechRecognitionFutureMap.put(fileCode, future);
+
+        this.performer.transmit(AIGCCellet.NAME, dialect);
+        return future;
+    }
+
+    public SpeechRecognitionFuture getSpeechRecognitionFuture(String fileCode) {
+        return this.speechRecognitionFutureMap.get(fileCode);
+    }
+
+    public JSONObject speechEmotionRecognition(String token, String fileCode) {
+        JSONObject payload = new JSONObject();
+        payload.put("fileCode", fileCode);
+        Packet packet = new Packet(AIGCAction.SpeechEmotionRecognition.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ObjectDetectionFuture future = new ObjectDetectionFuture(sn, channelCode, fileCodeList);
-        this.objectDetectionFutureMap.put(sn, future);
-
-        this.performer.transmit(AIGCCellet.NAME, request);
-
-        return future;
-    }
-
-    public ObjectDetectionFuture getObjectDetectionFuture(long sn) {
-        return this.objectDetectionFutureMap.get(sn);
-    }
-
-    public ASRFuture automaticSpeechRecognition(String domain, String fileCode) {
-        if (this.asrFutureMap.containsKey(fileCode)) {
-            // 正在处理
-            return this.asrFutureMap.get(fileCode);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#speechEmotionRecognition - No response: " + fileCode);
+            return null;
         }
-        
-        JSONObject data = new JSONObject();
-        data.put("domain", domain);
-        data.put("fileCode", fileCode);
-        Packet packet = new Packet(AIGCAction.AutomaticSpeechRecognition.name, data);
 
-        ASRFuture future = new ASRFuture(domain, fileCode);
-        this.asrFutureMap.put(fileCode, future);
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#speechEmotionRecognition - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
 
-        this.performer.transmit(AIGCCellet.NAME, packet.toDialect());
-
-        return future;
-    }
-
-    public ASRFuture getASRFuture(String fileCode) {
-        return this.asrFutureMap.get(fileCode);
+        return Packet.extractDataPayload(responsePacket);
     }
 
     public JSONObject segmentation(String token, String text) {
@@ -2436,25 +2433,17 @@ public class Manager implements Tickable, PerformerListener {
             Iterator<Map.Entry<Long, TextToFileFuture>> ttfIter = this.textToFileFutureMap.entrySet().iterator();
             while (ttfIter.hasNext()) {
                 Map.Entry<Long, TextToFileFuture> e = ttfIter.next();
-                if (now - e.getValue().timestamp > 30 * 60 * 1000) {
+                if (now - e.getValue().timestamp > 60 * 60 * 1000) {
                     ttfIter.remove();
                 }
             }
 
-            Iterator<Map.Entry<Long, ObjectDetectionFuture>> odIter = this.objectDetectionFutureMap.entrySet().iterator();
-            while (odIter.hasNext()) {
-                Map.Entry<Long, ObjectDetectionFuture> e = odIter.next();
-                if (now - e.getValue().timestamp > 30 * 60 * 1000) {
-                    odIter.remove();
-                }
-            }
-
-            Iterator<Map.Entry<String, ASRFuture>> asrIter = this.asrFutureMap.entrySet().iterator();
-            while (asrIter.hasNext()) {
-                Map.Entry<String, ASRFuture> e = asrIter.next();
-                ASRFuture future = e.getValue();
-                if (now - future.timestamp > 30 * 60 * 1000) {
-                    asrIter.remove();
+            Iterator<Map.Entry<String, SpeechRecognitionFuture>> srfIter = this.speechRecognitionFutureMap.entrySet().iterator();
+            while (srfIter.hasNext()) {
+                Map.Entry<String, SpeechRecognitionFuture> e = srfIter.next();
+                SpeechRecognitionFuture future = e.getValue();
+                if (now - future.timestamp > 60 * 60 * 1000) {
+                    srfIter.remove();
                 }
             }
         }
@@ -2516,37 +2505,6 @@ public class Manager implements Tickable, PerformerListener {
                 }
             }
         }
-        else if (AIGCAction.ObjectDetection.name.equals(action)) {
-            Packet responsePacket = new Packet(actionDialect);
-            // 状态码
-            int stateCode = Packet.extractCode(responsePacket);
-            if (stateCode == AIGCStateCode.Ok.code) {
-                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                JSONArray resultArray = resultJson.getJSONArray("list");
-                List<ObjectDetectionResult> resultList = new ArrayList<>();
-                for (int i = 0; i < resultArray.length(); ++i) {
-                    resultList.add(new ObjectDetectionResult(resultArray.getJSONObject(i)));
-                }
-                ObjectDetectionFuture future = this.objectDetectionFutureMap.get(resultJson.getLong("sn"));
-                if (null != future) {
-                    future.resultList = resultList;
-                    future.stateCode = stateCode;
-                }
-                else {
-                    Logger.e(this.getClass(), "#onReceived - ObjectDetection result error: " + resultJson.toString());
-                }
-            }
-            else {
-                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                ObjectDetectionFuture future = this.objectDetectionFutureMap.get(resultJson.getLong("sn"));
-                if (null != future) {
-                    future.stateCode = stateCode;
-                }
-                else {
-                    Logger.e(this.getClass(), "#onReceived - ObjectDetection result error: " + resultJson.toString());
-                }
-            }
-        }
         else if (AIGCAction.AutomaticSpeechRecognition.name.equals(action)) {
             Packet responsePacket = new Packet(actionDialect);
             // 状态码
@@ -2554,22 +2512,22 @@ public class Manager implements Tickable, PerformerListener {
             if (stateCode == AIGCStateCode.Ok.code) {
                 // 获取结果数据
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                ASRResult result = new ASRResult(resultJson);
-                ASRFuture future = this.asrFutureMap.get(result.getFileCode());
+                SpeechRecognitionInfo result = new SpeechRecognitionInfo(resultJson);
+                SpeechRecognitionFuture future = this.speechRecognitionFutureMap.get(result.getFileCode());
                 if (null != future) {
                     future.result = result;
-                    future.stateCode = stateCode;
+                    future.stateCode = AIGCStateCode.Ok;
                 }
                 else {
-                    Logger.w(this.getClass(), "#onReceived - ASR result error: " + result.getFileCode());
+                    Logger.w(this.getClass(), "#onReceived - Speech recognition result error: " + result.getFileCode());
                 }
             }
             else {
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
                 String fileCode = resultJson.getString("fileCode");
-                ASRFuture future = this.asrFutureMap.get(fileCode);
+                SpeechRecognitionFuture future = this.speechRecognitionFutureMap.get(fileCode);
                 if (null != future) {
-                    future.stateCode = stateCode;
+                    future.stateCode = AIGCStateCode.parse(stateCode);
                 }
             }
         }
@@ -2662,7 +2620,7 @@ public class Manager implements Tickable, PerformerListener {
 
         protected JSONArray fileCodeList;
 
-        protected List<ObjectDetectionResult> resultList;
+        protected List<SpeechEmotion> resultList;
 
         protected int stateCode = AIGCStateCode.Processing.code;
 
@@ -2683,7 +2641,7 @@ public class Manager implements Tickable, PerformerListener {
 
             if (null != this.resultList) {
                 JSONArray array = new JSONArray();
-                for (ObjectDetectionResult result : this.resultList) {
+                for (SpeechEmotion result : this.resultList) {
                     array.put(result.toJSON());
                 }
                 json.put("resultList", array);
@@ -2697,31 +2655,30 @@ public class Manager implements Tickable, PerformerListener {
         }
     }
 
-    public class ASRFuture implements JSONable {
+    public class SpeechRecognitionFuture implements JSONable {
 
         protected final long timestamp;
 
-        protected String domain;
+        protected String token;
 
         protected String fileCode;
 
-        protected ASRResult result;
+        protected SpeechRecognitionInfo result;
 
-        protected int stateCode = -1;
+        protected AIGCStateCode stateCode = AIGCStateCode.Processing;
 
-        protected ASRFuture(String domain, String fileCode) {
+        protected SpeechRecognitionFuture(String token, String fileCode) {
             this.timestamp = System.currentTimeMillis();
-            this.domain = domain;
+            this.token = token;
             this.fileCode = fileCode;
         }
 
         @Override
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
-            json.put("domain", this.domain);
             json.put("fileCode", this.fileCode);
             json.put("timestamp", this.timestamp);
-            json.put("stateCode", this.stateCode);
+            json.put("stateCode", this.stateCode.code);
             if (null != this.result) {
                 json.put("result", this.result.toJSON());
             }

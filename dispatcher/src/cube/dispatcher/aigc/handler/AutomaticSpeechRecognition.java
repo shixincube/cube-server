@@ -6,9 +6,8 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.auth.AuthConsts;
-import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
+import cube.util.FileLabels;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
@@ -22,31 +21,21 @@ import javax.servlet.http.HttpServletResponse;
 public class AutomaticSpeechRecognition extends ContextHandler {
 
     public AutomaticSpeechRecognition() {
-        super("/aigc/audio/asr");
+        super("/aigc/speech/recognition");
         setHandler(new Handler());
     }
 
     private class Handler extends AIGCHandler {
 
-        private AccessController controller;
-
         public Handler() {
             super();
-            this.controller = new AccessController();
-            this.controller.setEachIPInterval(200);
         }
 
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            if (!this.controller.filter(request)) {
-                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
-                this.complete();
-                return;
-            }
-
-            String token = this.getRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -57,69 +46,60 @@ public class AutomaticSpeechRecognition extends ContextHandler {
             }
 
             if (null == fileCode) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
 
-            Manager.ASRFuture future = Manager.getInstance().getASRFuture(fileCode);
+            Manager.SpeechRecognitionFuture future = Manager.getInstance().getSpeechRecognitionFuture(fileCode);
             if (null == future) {
-                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
                 return;
             }
 
-            this.respondOk(response, future.toJSON());
+            JSONObject responseData = future.toJSON();
+            if (responseData.has("result")) {
+                JSONObject fileJson = responseData.getJSONObject("result").getJSONObject("file");
+                FileLabels.reviseFileLabel(fileJson, token,
+                        Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                        Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+            }
+
+            this.respondOk(response, responseData);
             this.complete();
         }
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            if (!this.controller.filter(request)) {
-                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
-                this.complete();
-                return;
-            }
-
-            String token = this.getRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
 
-            String domain = AuthConsts.DEFAULT_DOMAIN;
-            String fileCode = null;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
-                fileCode = json.getString("fileCode");
-                if (json.has("domain")) {
-                    domain = json.getString("domain");
+                String fileCode = json.getString("fileCode");
+
+                boolean reset = json.has("reset") && json.getBoolean("reset");
+
+                Manager.SpeechRecognitionFuture future = Manager.getInstance()
+                        .automaticSpeechRecognition(token, fileCode, reset);
+                if (null == future) {
+                    // 故障
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                    this.complete();
+                    return;
                 }
+
+                this.respondOk(response, future.toJSON());
+                this.complete();
             } catch (Exception e) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
-                return;
             }
-
-            if (null == fileCode) {
-                // 参数错误
-                this.respond(response, HttpStatus.NOT_FOUND_404);
-                this.complete();
-                return;
-            }
-
-            // ASR
-            Manager.ASRFuture future = Manager.getInstance().automaticSpeechRecognition(domain, fileCode);
-            if (null == future) {
-                // 故障
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
-                this.complete();
-                return;
-            }
-
-            this.respondOk(response, future.toJSON());
-            this.complete();
         }
     }
 }

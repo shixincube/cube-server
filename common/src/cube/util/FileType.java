@@ -57,6 +57,7 @@ public enum FileType {
     // 以下代码为机器自动生成
 
     EZ(new String[]{ "ez" }, "application/andrew-inset"),
+    AMR(new String[]{ "amr" }, "audio/amr"),
     AW(new String[]{ "aw" }, "application/applixware"),
     ATOM(new String[]{ "atom" }, "application/atom+xml"),
     ATOMCAT(new String[]{ "atomcat" }, "application/atomcat+xml"),

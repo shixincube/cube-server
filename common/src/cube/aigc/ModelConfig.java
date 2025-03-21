@@ -36,6 +36,8 @@ public class ModelConfig implements JSONable {
 
     public final static String PSYCHOLOGY_UNIT = "Psychology";
 
+    public final static String SPEECH_UNIT = "Speech";
+
     public final static String AIXINLI = "AiXinLi";
 
     private final static String[][] UNIT_MAP_MODEL = new String[][] {

@@ -136,7 +136,7 @@ public class AIGCService extends AbstractModule {
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private final Map<String, Queue<UnitMeta>> asrQueueMap;
+    private final Map<String, Queue<UnitMeta>> speechQueueMap;
 
     /**
      * 最大频道数量。
@@ -200,7 +200,7 @@ public class AIGCService extends AbstractModule {
         this.extractKeywordsQueueMap = new ConcurrentHashMap<>();
         this.semanticSearchQueueMap = new ConcurrentHashMap<>();
         this.retrieveReRankQueueMap = new ConcurrentHashMap<>();
-        this.asrQueueMap = new ConcurrentHashMap<>();
+        this.speechQueueMap = new ConcurrentHashMap<>();
         this.tokenizer = new Tokenizer();
     }
 
@@ -2119,179 +2119,33 @@ public class AIGCService extends AbstractModule {
         }
     }
 
-    public boolean automaticSpeechRecognition(String domain, String fileCode, AutomaticSpeechRecognitionListener listener) {
+    public boolean automaticSpeechRecognition(AuthToken authToken, String fileCode, AutomaticSpeechRecognitionListener listener) {
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#automaticSpeechRecognition - File storage service is not ready");
             return false;
         }
 
-        GetFile getFile = new GetFile(domain, fileCode);
-        JSONObject fileLabelJson = fileStorage.notify(getFile);
-        if (null == fileLabelJson) {
+        FileLabel fileLabel = this.getFile(authToken.getDomain(), fileCode);
+        if (null == fileLabel) {
             Logger.e(this.getClass(), "#automaticSpeechRecognition - Get file failed: " + fileCode);
             return false;
         }
 
-        FileLabel sourceFile = new FileLabel(fileLabelJson);
-
-        FileLabel fileLabel = new FileLabel(fileLabelJson);
-        boolean deleteFileLabel = false;
-
-        AbstractModule fileProcessor = this.getKernel().getModule("FileProcessor");
-        if (null == fileProcessor) {
-            Logger.e(this.getClass(), "#automaticSpeechRecognition - File processor service is not ready");
-            return false;
-        }
-
-        if (FileUtils.isVideoType(fileLabel.getFileType())) {
-            // 从视频文件中提取音频文件
-            ExtractAudioOperation audioOperation = new ExtractAudioOperation(FileType.WAV);
-            JSONObject processor = new JSONObject();
-            processor.put("action", FileProcessorAction.Video.name);
-            processor.put("domain", fileLabel.getDomain().getName());
-            processor.put("fileCode", fileLabel.getFileCode());
-            processor.put("parameter", audioOperation.toJSON());
-
-            JSONObject resultJson = fileProcessor.notify(processor);
-            if (null == resultJson) {
-                Logger.e(this.getClass(), "#automaticSpeechRecognition - Extract audio operation result is NULL: "
-                    + fileLabel.getFileCode());
-                return false;
-            }
-
-            FileProcessResult result = new FileProcessResult(resultJson);
-            if (!result.success) {
-                Logger.e(this.getClass(), "#automaticSpeechRecognition - Extract audio operation result error: "
-                        + fileLabel.getFileCode());
-                return false;
-            }
-
-            // 音频文件
-            File audioFile = result.getResultList().get(0).file;
-            String audioFileCode = FileUtils.makeFileCode(fileLabel.getOwnerId(), fileLabel.getDomain().getName(), audioFile.getName());
-            FileLabel audioFileLabel = FileUtils.makeFileLabel(fileLabel.getDomain().getName(),
-                    audioFileCode, fileLabel.getOwnerId(), audioFile);
-            // 将处理后文件存入存储器
-            JSONObject saveFile = new JSONObject();
-            saveFile.put("action", FileStorageAction.SaveFile.name);
-            saveFile.put("path", audioFile.getAbsolutePath());
-            saveFile.put("fileLabel", audioFileLabel.toJSON());
-            JSONObject audioFileLabelJson = fileStorage.notify(saveFile);
-            if (null == audioFileLabelJson) {
-                Logger.e(this.getClass(), "#automaticSpeechRecognition - Save audio file to storage failed");
-                return false;
-            }
-
-            // 更新文件标签
-            fileLabel = new FileLabel(audioFileLabelJson);
-            // 在处理后删除该音频数据
-            deleteFileLabel = true;
-        }
-        else if (!FileUtils.isAudioType(fileLabel.getFileType())) {
-            Logger.e(this.getClass(), "#automaticSpeechRecognition - File type is NOT audio type: "
-                    + fileLabel.getFileCode());
-            return false;
-        }
-
-        // 音频重采用
-        /*AudioSamplingOperation samplingOperation = new AudioSamplingOperation(1, 16000, FileType.WAV);
-
-        JSONObject processor = new JSONObject();
-        processor.put("action", FileProcessorAction.Audio.name);
-        processor.put("domain", fileLabel.getDomain().getName());
-        processor.put("fileCode", fileLabel.getFileCode());
-        processor.put("parameter", samplingOperation.toJSON());
-
-        JSONObject resultJson = fileProcessor.notify(processor);
-        if (null == resultJson) {
-            Logger.e(this.getClass(), "#automaticSpeechRecognition - File processor result is NULL");
-            return false;
-        }*/
-
-        // 音频文件分割
-        AudioCropOperation cropOperation = new AudioCropOperation(0, 30, FileType.WAV);
-        JSONObject processor = new JSONObject();
-        processor.put("action", FileProcessorAction.Audio.name);
-        processor.put("domain", fileLabel.getDomain().getName());
-        processor.put("fileCode", fileLabel.getFileCode());
-        processor.put("parameter", cropOperation.toJSON());
-
-        JSONObject resultJson = fileProcessor.notify(processor);
-        if (null == resultJson) {
-            Logger.e(this.getClass(), "#automaticSpeechRecognition - Audio crop result is NULL: "
-                    + fileLabel.getFileCode());
-            if (deleteFileLabel) {
-                JSONObject deleteFile = new JSONObject();
-                deleteFile.put("action", FileStorageAction.DeleteFile.name);
-                deleteFile.put("domain", fileLabel.getDomain().getName());
-                deleteFile.put("fileCode", fileLabel.getFileCode());
-                fileStorage.notify(deleteFile);
-            }
-            return false;
-        }
-
-        FileProcessResult result = new FileProcessResult(resultJson);
-        if (null == result.getAudioResult()) {
-            Logger.e(this.getClass(), "#automaticSpeechRecognition - Audio crop result error: "
-                    + fileLabel.getFileCode());
-            if (deleteFileLabel) {
-                JSONObject deleteFile = new JSONObject();
-                deleteFile.put("action", FileStorageAction.DeleteFile.name);
-                deleteFile.put("domain", fileLabel.getDomain().getName());
-                deleteFile.put("fileCode", fileLabel.getFileCode());
-                fileStorage.notify(deleteFile);
-            }
-            return false;
-        }
-
-        File resultFile = result.getResultList().get(0).file;
-        String localFileCode = FileUtils.makeFileCode(fileLabel.getOwnerId(), fileLabel.getDomain().getName(), resultFile.getName());
-        FileLabel localFileLabel = FileUtils.makeFileLabel(fileLabel.getDomain().getName(),
-                localFileCode, fileLabel.getOwnerId(), resultFile);
-        // 将处理后文件存入存储器
-        JSONObject saveFile = new JSONObject();
-        saveFile.put("action", FileStorageAction.SaveFile.name);
-        saveFile.put("path", resultFile.getAbsolutePath());
-        saveFile.put("fileLabel", localFileLabel.toJSON());
-        JSONObject localFileLabelJson = fileStorage.notify(saveFile);
-        if (null == localFileLabelJson) {
-            Logger.e(this.getClass(), "#automaticSpeechRecognition - Save file to storage failed");
-            if (deleteFileLabel) {
-                JSONObject deleteFile = new JSONObject();
-                deleteFile.put("action", FileStorageAction.DeleteFile.name);
-                deleteFile.put("domain", fileLabel.getDomain().getName());
-                deleteFile.put("fileCode", fileLabel.getFileCode());
-                fileStorage.notify(deleteFile);
-            }
-            return false;
-        }
-
-        // 文件标签
-        localFileLabel = new FileLabel(localFileLabelJson);
-
-        // 请求 AIGC 单元
         // 查找有该能力的单元
         AIGCUnit unit = this.selectUnitBySubtask(AICapability.AudioProcessing.AutomaticSpeechRecognition);
         if (null == unit) {
-            Logger.w(AIGCService.class, "No ASR task unit setup in server");
-            if (deleteFileLabel) {
-                JSONObject deleteFile = new JSONObject();
-                deleteFile.put("action", FileStorageAction.DeleteFile.name);
-                deleteFile.put("domain", fileLabel.getDomain().getName());
-                deleteFile.put("fileCode", fileLabel.getFileCode());
-                fileStorage.notify(deleteFile);
-            }
+            Logger.w(this.getClass(), "#automaticSpeechRecognition - No task unit setup in server");
             return false;
         }
 
-        UnitMeta meta = new ASRUnitMeta(unit, sourceFile, localFileLabel, listener);
+        UnitMeta meta = new SpeechRecognitionUnitMeta(unit, fileLabel, listener);
 
-        synchronized (this.asrQueueMap) {
-            Queue<UnitMeta> queue = this.asrQueueMap.get(unit.getQueryKey());
+        synchronized (this.speechQueueMap) {
+            Queue<UnitMeta> queue = this.speechQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
-                this.asrQueueMap.put(unit.getQueryKey(), queue);
+                this.speechQueueMap.put(unit.getQueryKey(), queue);
             }
 
             queue.offer(meta);
@@ -2303,101 +2157,76 @@ public class AIGCService extends AbstractModule {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processQueue(meta.unit.getQueryKey(), asrQueueMap);
+                    processQueue(meta.unit.getQueryKey(), speechQueueMap);
                 }
             });
-        }
-
-        if (deleteFileLabel) {
-            JSONObject deleteFile = new JSONObject();
-            deleteFile.put("action", FileStorageAction.DeleteFile.name);
-            deleteFile.put("domain", fileLabel.getDomain().getName());
-            deleteFile.put("fileCode", fileLabel.getFileCode());
-            fileStorage.notify(deleteFile);
         }
 
         return true;
     }
 
     /**
-     * 图像内物体检测。
+     * 语音情绪识别。
      *
-     * @param channelCode
-     * @param fileCodeList
+     * @param token
+     * @param fileCode
      * @param listener
      * @return
      */
-    public boolean objectDetection(String channelCode, List<String> fileCodeList, ObjectDetectionListener listener) {
-        AIGCChannel channel = this.channelMap.get(channelCode);
-        if (null == channel) {
-            Logger.w(this.getClass(), "#objectDetection - No channel: " + channelCode);
+    public boolean speechEmotionRecognition(AuthToken token, String fileCode, SpeechEmotionRecognitionListener listener) {
+        final FileLabel fileLabel = this.getFile(token.getDomain(), fileCode);
+        if (null == fileLabel) {
+            Logger.w(this.getClass(), "#speechEmotionRecognition - Can NOT find file: " + fileCode);
             return false;
         }
 
-        final List<FileLabel> fileList = new ArrayList<>();
-        for (String fileCode : fileCodeList) {
-            FileLabel fileLabel = this.getFile(channel.getAuthToken().getDomain(), fileCode);
-            if (null == fileLabel) {
-                Logger.d(this.getClass(), "#objectDetection - Can NOT find file: " + fileCode);
-                continue;
-            }
-
-            fileList.add(fileLabel);
-            if (fileList.size() >= 10) {
-                break;
-            }
-        }
-
-        if (fileList.isEmpty()) {
-            Logger.w(this.getClass(), "#objectDetection - No files: " + channel.getAuthToken().getContactId());
-            return false;
-        }
-
-        (new Thread(new Runnable() {
+        this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                AIGCUnit unit = selectUnitBySubtask(AICapability.ComputerVision.ObjectDetection);
+                AIGCUnit unit = selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
                 if (null == unit) {
-                    Logger.w(AIGCService.class, "#objectDetection - No unit");
-                    listener.onFailed(fileList, AIGCStateCode.UnitNoReady);
+                    Logger.w(AIGCService.class, "#speechEmotionRecognition - No unit");
+                    listener.onFailed(fileLabel, AIGCStateCode.UnitNoReady);
                     return;
                 }
 
-                JSONArray list = new JSONArray();
-                for (FileLabel fileLabel : fileList) {
-                    list.put(fileLabel.toJSON());
+                // 判断文件类型
+                if (fileLabel.getFileType() != FileType.WAV &&
+                        fileLabel.getFileType() != FileType.MP3 &&
+                        fileLabel.getFileType() != FileType.OGG &&
+                        fileLabel.getFileType() != FileType.M4A &&
+                        fileLabel.getFileType() != FileType.AMR &&
+                        fileLabel.getFileType() != FileType.AAC) {
+                    Logger.w(AIGCService.class, "#speechEmotionRecognition - No support file: " + fileLabel.getFileType().getPreferredExtension());
+                    listener.onFailed(fileLabel, AIGCStateCode.FileError);
+                    return;
                 }
+
                 JSONObject payload = new JSONObject();
-                payload.put("code", channelCode);
-                payload.put("list", list);
-                Packet request = new Packet(AIGCAction.ObjectDetection.name, payload);
+                payload.put("fileLabel", fileLabel.toJSON());
+                Packet request = new Packet(AIGCAction.SpeechEmotionRecognition.name, payload);
                 ActionDialect dialect = cellet.transmit(unit.getContext(), request.toDialect(), 3 * 60 * 1000);
                 if (null == dialect) {
-                    Logger.w(AIGCService.class, "#objectDetection - Unit error");
+                    Logger.w(AIGCService.class, "#speechEmotionRecognition - Unit error");
                     // 回调错误
-                    listener.onFailed(fileList, AIGCStateCode.UnitError);
+                    listener.onFailed(fileLabel, AIGCStateCode.UnitError);
                     return;
                 }
 
                 Packet response = new Packet(dialect);
                 JSONObject data = Packet.extractDataPayload(response);
                 if (!data.has("result")) {
-                    Logger.w(AIGCService.class, "#objectDetection - Unit process failed");
+                    Logger.w(AIGCService.class, "#speechEmotionRecognition - Unit process failed");
                     // 回调错误
-                    listener.onFailed(fileList, AIGCStateCode.Failure);
+                    listener.onFailed(fileLabel, AIGCStateCode.Failure);
                     return;
                 }
 
-                List<ObjectDetectionResult> resultList = new ArrayList<>();
-                JSONArray result = data.getJSONArray("result");
-                for (int i = 0; i < result.length(); ++i) {
-                    ObjectDetectionResult odr = new ObjectDetectionResult(result.getJSONObject(i));
-                    resultList.add(odr);
-                }
+                SpeechEmotion result = new SpeechEmotion(data.getJSONObject("result"));
                 // 回调结束
-                listener.onCompleted(fileList, resultList);
+                listener.onCompleted(fileLabel, result);
             }
-        })).start();
+        });
 
         return true;
     }
@@ -4093,58 +3922,40 @@ public class AIGCService extends AbstractModule {
     }
 
 
-    private class ASRUnitMeta extends UnitMeta {
+    private class SpeechRecognitionUnitMeta extends UnitMeta {
 
-        protected FileLabel source;
-
-        protected FileLabel input;
+        protected FileLabel file;
 
         protected AutomaticSpeechRecognitionListener listener;
 
-        public ASRUnitMeta(AIGCUnit unit, FileLabel source, FileLabel input,
-                           AutomaticSpeechRecognitionListener listener) {
+        public SpeechRecognitionUnitMeta(AIGCUnit unit, FileLabel file, AutomaticSpeechRecognitionListener listener) {
             super(unit);
-            this.source = source;
-            this.input = input;
+            this.file = file;
             this.listener = listener;
         }
 
         @Override
         public void process() {
             JSONObject data = new JSONObject();
-            data.put("input", this.input.toJSON());
-
+            data.put("fileLabel", this.file.toJSON());
             Packet request = new Packet(AIGCAction.AutomaticSpeechRecognition.name, data);
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
+            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 5 * 60 * 1000);
             if (null == dialect) {
-                Logger.w(AIGCService.class, "ASR unit error");
+                Logger.w(AIGCService.class, "#process - Speech unit error: " + this.file.getFileCode());
                 // 回调错误
-                this.listener.onFailed(this.source);
+                this.listener.onFailed(this.file, AIGCStateCode.UnitError);
                 return;
             }
 
             Packet response = new Packet(dialect);
-            JSONObject payload = Packet.extractDataPayload(response);
-            if (!payload.has("list")) {
-                Logger.w(AIGCService.class, "ASR unit process failed");
-                // 回调错误
-                this.listener.onFailed(this.source);
+            if (AIGCStateCode.Ok.code != Packet.extractCode(response)) {
+                Logger.w(AIGCService.class, "#process - Speech unit failed: " + this.file.getFileCode());
+                this.listener.onFailed(this.file, AIGCStateCode.Failure);
                 return;
             }
 
-            this.listener.onCompleted(this.input, new ASRResult(source, payload));
-
-            if (!this.input.getFileCode().equals(this.source.getFileCode())) {
-                // 输入文件和源文件不一致，删除输入文件
-                AbstractModule fileStorage = getKernel().getModule("FileStorage");
-                if (null != fileStorage) {
-                    JSONObject deleteFile = new JSONObject();
-                    deleteFile.put("action", FileStorageAction.DeleteFile.name);
-                    deleteFile.put("domain", this.input.getDomain().getName());
-                    deleteFile.put("fileCode", this.input.getFileCode());
-                    fileStorage.notify(deleteFile);
-                }
-            }
+            JSONObject payload = Packet.extractDataPayload(response);
+            this.listener.onCompleted(this.file, new SpeechRecognitionInfo(payload.getJSONObject("result")));
         }
     }
 }
