@@ -6,6 +6,7 @@
 
 package cube.service.aigc.scene.subtask;
 
+import cube.aigc.ModelConfig;
 import cube.aigc.attachment.ReportAttachment;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
@@ -53,6 +54,9 @@ public class SelectReportSubtask extends ConversationSubtask {
                     convCtx.record(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
+
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            convCtx, record);
                 }
             });
             return AIGCStateCode.Ok;
@@ -77,6 +81,9 @@ public class SelectReportSubtask extends ConversationSubtask {
                         convCtx.record(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
+
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, record);
                     }
                 });
             }
@@ -106,6 +113,9 @@ public class SelectReportSubtask extends ConversationSubtask {
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
+
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
                         }
                     });
                 }
@@ -121,6 +131,9 @@ public class SelectReportSubtask extends ConversationSubtask {
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
+
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
                         }
                     });
                 }
@@ -142,6 +155,8 @@ public class SelectReportSubtask extends ConversationSubtask {
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
                         }
                         else if (0 != year && 0 != month) {
                             GeneratingRecord record = new GeneratingRecord(query);
@@ -151,6 +166,8 @@ public class SelectReportSubtask extends ConversationSubtask {
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
                         }
                         else if (0 != month && 0 != day) {
                             GeneratingRecord record = new GeneratingRecord(query);
@@ -160,6 +177,8 @@ public class SelectReportSubtask extends ConversationSubtask {
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
                         }
                         else if (0 != day) {
                             GeneratingRecord record = new GeneratingRecord(query);
@@ -169,6 +188,8 @@ public class SelectReportSubtask extends ConversationSubtask {
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
                         }
                         else if (0 != month) {
                             GeneratingRecord record = new GeneratingRecord(query);
@@ -178,6 +199,8 @@ public class SelectReportSubtask extends ConversationSubtask {
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
                         }
                         else if (0 != year) {
                             GeneratingRecord record = new GeneratingRecord(query);
@@ -187,12 +210,16 @@ public class SelectReportSubtask extends ConversationSubtask {
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
                         }
                         else {
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
                         }
                     }
                 });
@@ -220,6 +247,9 @@ public class SelectReportSubtask extends ConversationSubtask {
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
+
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
                         }
                     });
                 }
@@ -236,6 +266,9 @@ public class SelectReportSubtask extends ConversationSubtask {
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
+
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
                         }
                     });
                 }

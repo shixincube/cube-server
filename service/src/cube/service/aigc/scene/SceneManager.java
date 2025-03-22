@@ -53,7 +53,7 @@ public class SceneManager {
         this.conversationContexts.put(channelCode, context);
     }
 
-    public void writeRecord(String channelCode, String unitName, ConversationContext context, GeneratingRecord record) {
+    public void saveHistoryRecord(String channelCode, String unitName, ConversationContext context, GeneratingRecord record) {
         AIGCChatHistory history = new AIGCChatHistory(Utils.generateSerialNumber(), channelCode, unitName,
                 context.getAuthToken().getDomain());
         history.queryContactId = context.getRelationId();
@@ -64,8 +64,9 @@ public class SceneManager {
         history.answerContent = record.answer;
         history.answerTime = System.currentTimeMillis();
         history.answerFileLabels = record.answerFileLabels;
+        history.thought = record.thought;
         history.context = record.context;
-        this.aigcService.getStorage().writeChatHistory(history);
+        this.aigcService.getStorage().writeHistory(history);
     }
 
     public List<PaintingReport> queryReports(long contactId, int state) {
@@ -82,7 +83,7 @@ public class SceneManager {
     public List<PaintingReport> queryReportsWithChat(long relationId, String domainName) {
         List<PaintingReport> result = new ArrayList<>();
 
-        List<AIGCChatHistory> historyList = this.aigcService.getStorage().readChatHistoryByContactId(relationId, domainName,
+        List<AIGCChatHistory> historyList = this.aigcService.getStorage().readHistoriesByContactId(relationId, domainName,
                 0, System.currentTimeMillis());
         List<Long> snList = new ArrayList<>();
         for (AIGCChatHistory history : historyList) {

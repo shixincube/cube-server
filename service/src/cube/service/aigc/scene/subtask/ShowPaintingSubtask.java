@@ -48,6 +48,9 @@ public class ShowPaintingSubtask extends ConversationSubtask {
                         convCtx.record(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
+
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, record);
                     }
                 });
                 return AIGCStateCode.Ok;
@@ -66,7 +69,7 @@ public class ShowPaintingSubtask extends ConversationSubtask {
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 
-                        SceneManager.getInstance().writeRecord(channel.getCode(), ModelConfig.AIXINLI,
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
                                 convCtx, record);
                     }
                 });
@@ -86,7 +89,7 @@ public class ShowPaintingSubtask extends ConversationSubtask {
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
-                    SceneManager.getInstance().writeRecord(channel.getCode(), ModelConfig.AIXINLI,
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
                             convCtx, record);
                 }
             });

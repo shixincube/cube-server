@@ -37,6 +37,8 @@ public class AIGCChatHistory extends Entity {
 
     public List<FileLabel> answerFileLabels;
 
+    public String thought;
+
     public ComplexContext context;
 
     public int feedback = 0;
@@ -67,6 +69,7 @@ public class AIGCChatHistory extends Entity {
         this.answerContactId = json.getLong("answerContactId");
         this.answerTime = json.getLong("answerTime");
         this.answerContent = json.getString("answerContent");
+        this.thought = json.has("thought") ? json.getString("thought") : "";
         this.feedback = json.getInt("feedback");
         this.contextId = json.getLong("contextId");
     }
@@ -83,11 +86,9 @@ public class AIGCChatHistory extends Entity {
         json.put("answerContactId", this.answerContactId);
         json.put("answerTime", this.answerTime);
         json.put("answerContent", this.answerContent);
+        json.put("thought", (null != this.thought) ? this.thought : "");
         json.put("feedback", this.feedback);
         json.put("contextId", this.contextId);
-
-
-
         return json;
     }
 

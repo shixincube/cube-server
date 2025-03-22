@@ -6,6 +6,7 @@
 
 package cube.service.aigc.scene.subtask;
 
+import cube.aigc.ModelConfig;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.ConversationContext;
@@ -47,6 +48,9 @@ public class ShowCoTSubtask extends ConversationSubtask {
                         convCtx.record(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
+
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, record);
                     }
                 });
             }
@@ -75,6 +79,9 @@ public class ShowCoTSubtask extends ConversationSubtask {
                         convCtx.record(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
+
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, record);
                     }
                 });
             }
@@ -102,6 +109,9 @@ public class ShowCoTSubtask extends ConversationSubtask {
                     convCtx.record(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
+
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            convCtx, record);
                 }
             });
         }

@@ -91,13 +91,13 @@ public class QueryChatHistoryTask extends ServiceTask {
         List<AIGCChatHistory> historyList = null;
 
         if (null != channel) {
-            historyList = service.getStorage().readChatHistoryByChannel(channel, start, end);
+            historyList = service.getStorage().readHistoriesByChannel(channel, start, end);
         }
         else if (contactId != 0) {
-            historyList = service.getStorage().readChatHistoryByContactId(contactId, token.getDomain(), start, end);
+            historyList = service.getStorage().readHistoriesByContactId(contactId, token.getDomain(), start, end);
         }
         else if (feedback != -1) {
-            historyList = service.getStorage().readChatHistoryByFeedback(feedback, token.getDomain(), start, end);
+            historyList = service.getStorage().readHistoriesByFeedback(feedback, token.getDomain(), start, end);
         }
 
         if (null == historyList) {

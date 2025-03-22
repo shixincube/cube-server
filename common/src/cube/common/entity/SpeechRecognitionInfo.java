@@ -33,6 +33,14 @@ public class SpeechRecognitionInfo implements JSONable {
         return this.file.getFileCode();
     }
 
+    public String getText() {
+        return this.text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

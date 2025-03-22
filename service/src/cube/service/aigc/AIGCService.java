@@ -23,7 +23,6 @@ import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.action.FileProcessorAction;
-import cube.common.action.FileStorageAction;
 import cube.common.entity.*;
 import cube.common.notice.GetFile;
 import cube.common.notice.LoadFile;
@@ -32,10 +31,7 @@ import cube.common.state.AIGCStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
-import cube.file.FileProcessResult;
 import cube.file.hook.FileStorageHook;
-import cube.file.operation.AudioCropOperation;
-import cube.file.operation.ExtractAudioOperation;
 import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.knowledge.KnowledgeBase;
@@ -896,7 +892,7 @@ public class AIGCService extends AbstractModule {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                storage.updateChatHistoryFeedback(historySN, feedback);
+                storage.updateHistoryFeedback(historySN, feedback);
             }
         });
     }
@@ -3179,6 +3175,7 @@ public class AIGCService extends AbstractModule {
             this.history.answerContactId = unit.getContact().getId();
             this.history.answerTime = System.currentTimeMillis();
             this.history.answerContent = result.answer;
+            this.history.thought = result.thought;
 
             // 设置上下文
             this.history.context = complexContext;
@@ -3201,7 +3198,7 @@ public class AIGCService extends AbstractModule {
 
                     // 保存历史记录
                     if (recordHistoryEnabled) {
-                        storage.writeChatHistory(history);
+                        storage.writeHistory(history);
                     }
                 }
             });
@@ -3634,7 +3631,7 @@ public class AIGCService extends AbstractModule {
                                 completionTokens, promptTokens);
 
                         // 保存历史记录
-                        storage.writeChatHistory(history);
+                        storage.writeHistory(history);
                     }
                 });
             }
@@ -3924,6 +3921,8 @@ public class AIGCService extends AbstractModule {
 
     private class SpeechRecognitionUnitMeta extends UnitMeta {
 
+        protected final static String PROMPT = "合理使用标点符号给以下文本断句并修正错别字：%s";
+
         protected FileLabel file;
 
         protected AutomaticSpeechRecognitionListener listener;
@@ -3955,7 +3954,18 @@ public class AIGCService extends AbstractModule {
             }
 
             JSONObject payload = Packet.extractDataPayload(response);
-            this.listener.onCompleted(this.file, new SpeechRecognitionInfo(payload.getJSONObject("result")));
+            SpeechRecognitionInfo info = new SpeechRecognitionInfo(payload.getJSONObject("result"));
+
+            // 进行标点断句
+            String prompt = String.format(PROMPT, info.getText());
+            AIGCUnit unit = selectUnitByName(ModelConfig.BAIZE_UNIT);
+            if (null != unit) {
+                GeneratingRecord result = syncGenerateText(unit, prompt, null, null, null);
+                if (null != result) {
+                    info.setText(result.answer);
+                }
+            }
+            this.listener.onCompleted(this.file, info);
         }
     }
 }

@@ -189,6 +189,9 @@ public class AIGCStorage implements Storagable {
             new StorageField("answer_files", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
+            new StorageField("thought", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
             new StorageField("context", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
@@ -747,7 +750,7 @@ public class AIGCStorage implements Storagable {
         });
     }
 
-    public List<AIGCChatHistory> readChatHistoryByContactId(long contactId, String domain, long startTime, long endTime) {
+    public List<AIGCChatHistory> readHistoriesByContactId(long contactId, String domain, long startTime, long endTime) {
         List<AIGCChatHistory> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.queryAnswerTable,
@@ -800,6 +803,10 @@ public class AIGCStorage implements Storagable {
                     history.answerFileLabels = files;
                 }
 
+                if (!data.get("thought").isNullValue()) {
+                    history.thought = data.get("thought").getString();
+                }
+
                 if (!data.get("context").isNullValue()) {
                     String jsonString = data.get("context").getString();
                     if (jsonString.length() > 3) {
@@ -808,7 +815,7 @@ public class AIGCStorage implements Storagable {
                     }
                 }
             } catch (Exception e) {
-                Logger.e(this.getClass(), "#readChatHistoryByContactId", e);
+                Logger.e(this.getClass(), "#readHistoriesByContactId", e);
             }
 
             list.add(history);
@@ -817,7 +824,7 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public List<AIGCChatHistory> readChatHistoryByFeedback(int feedback, String domain, long startTime, long endTime) {
+    public List<AIGCChatHistory> readHistoriesByFeedback(int feedback, String domain, long startTime, long endTime) {
         List<AIGCChatHistory> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.queryAnswerTable,
@@ -870,6 +877,10 @@ public class AIGCStorage implements Storagable {
                     history.answerFileLabels = files;
                 }
 
+                if (!data.get("thought").isNullValue()) {
+                    history.thought = data.get("thought").getString();
+                }
+
                 if (!data.get("context").isNullValue()) {
                     String jsonString = data.get("context").getString();
                     if (jsonString.length() > 3) {
@@ -878,7 +889,7 @@ public class AIGCStorage implements Storagable {
                     }
                 }
             } catch (Exception e) {
-                Logger.e(this.getClass(), "#readChatHistoryByFeedback", e);
+                Logger.e(this.getClass(), "#readHistoriesByFeedback", e);
             }
 
             list.add(history);
@@ -887,7 +898,7 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public List<AIGCChatHistory> readChatHistoryByChannel(String channelCode, long startTime, long endTime) {
+    public List<AIGCChatHistory> readHistoriesByChannel(String channelCode, long startTime, long endTime) {
         List<AIGCChatHistory> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.queryAnswerTable,
@@ -935,6 +946,10 @@ public class AIGCStorage implements Storagable {
                     history.answerFileLabels = files;
                 }
 
+                if (!data.get("thought").isNullValue()) {
+                    history.thought = data.get("thought").getString();
+                }
+
                 if (!data.get("context").isNullValue()) {
                     String jsonString = data.get("context").getString();
                     if (jsonString.length() > 3) {
@@ -943,7 +958,7 @@ public class AIGCStorage implements Storagable {
                     }
                 }
             } catch (Exception e) {
-                Logger.e(this.getClass(), "#readChatHistoryByChannel", e);
+                Logger.e(this.getClass(), "#readHistoriesByChannel", e);
             }
 
             list.add(history);
@@ -952,7 +967,7 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public void writeChatHistory(AIGCChatHistory history) {
+    public void writeHistory(AIGCChatHistory history) {
         JSONArray queryFiles = null;
         if (null != history.queryFileLabels) {
             queryFiles = new JSONArray();
@@ -984,6 +999,8 @@ public class AIGCStorage implements Storagable {
                 new StorageField("answer_content", EmojiFilter.filterEmoji(history.answerContent)),
                 (null != answerFiles) ? new StorageField("answer_files", answerFiles.toString()) :
                         new StorageField("answer_files", LiteralBase.STRING),
+                (null != history.thought) ? new StorageField("thought", history.thought) :
+                        new StorageField("thought", LiteralBase.STRING),
                 (null != history.context) ? new StorageField("context", history.context.toJSON().toString()) :
                         new StorageField("context", LiteralBase.STRING),
                 new StorageField("feedback", history.feedback),
@@ -991,7 +1008,7 @@ public class AIGCStorage implements Storagable {
         });
     }
 
-    public boolean updateChatHistoryFeedback(long sn, int feedback) {
+    public boolean updateHistoryFeedback(long sn, int feedback) {
         return this.storage.executeUpdate(this.queryAnswerTable, new StorageField[] {
                 new StorageField("feedback", feedback)
         }, new Conditional[] {

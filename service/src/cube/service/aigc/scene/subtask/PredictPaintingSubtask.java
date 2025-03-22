@@ -18,9 +18,9 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
+import cube.service.aigc.scene.ContentTools;
 import cube.service.aigc.scene.PaintingReportListener;
 import cube.service.aigc.scene.PsychologyScene;
-import cube.service.aigc.scene.ContentTools;
 import cube.service.aigc.scene.SceneManager;
 
 public class PredictPaintingSubtask extends ConversationSubtask {
@@ -57,6 +57,9 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                         record.answer = polish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_FILE"));
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
+
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, record);
                     }
                 });
                 return AIGCStateCode.Ok;
@@ -104,6 +107,9 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                                     "ANSWER_RE_UPLOAD_PAINTING_FILE");
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
+
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
                         }
                     });
                     return AIGCStateCode.Ok;
@@ -124,6 +130,9 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                             record.answer = polish(Resource.getInstance().getCorpus(CORPUS, "ASK_INVALID_FILE"));
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
+
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
                         }
                     });
                     return AIGCStateCode.Ok;
@@ -155,9 +164,12 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                     @Override
                     public void run() {
                         listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, record);
                     }
                 });
-                channel.setProcessing(false);
                 return AIGCStateCode.Ok;
             }
             else if (attribute.age == 0) {
@@ -176,9 +188,12 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                     @Override
                     public void run() {
                         listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, record);
                     }
                 });
-                channel.setProcessing(false);
                 return AIGCStateCode.Ok;
             }
             else if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
@@ -197,9 +212,12 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                     @Override
                     public void run() {
                         listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, record);
                     }
                 });
-                channel.setProcessing(false);
                 return AIGCStateCode.Ok;
             }
             else if (attribute.gender.length() == 0) {
@@ -218,9 +236,12 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                     @Override
                     public void run() {
                         listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, record);
                     }
                 });
-                channel.setProcessing(false);
                 return AIGCStateCode.Ok;
             }
             else {
@@ -251,6 +272,9 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                         record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
                         convCtx.clearCurrentPredict();
                         channel.setProcessing(false);
+
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, record);
                     }
 
                     @Override
@@ -275,7 +299,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                         convCtx.setCurrentReport(report);
                         channel.setProcessing(false);
 
-                        SceneManager.getInstance().writeRecord(channel.getCode(), ModelConfig.AIXINLI,
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
                                 convCtx, record);
                     }
 
@@ -289,6 +313,9 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                         record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
                         convCtx.clearCurrentPredict();
                         channel.setProcessing(false);
+
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, record);
                     }
                 });
 
@@ -308,6 +335,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
             // 记录
             convCtx.record(record);
 
+            // 启动生成流程，不记录历史，不更新频道状态
             this.service.getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
@@ -326,11 +354,14 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                 @Override
                 public void run() {
                     GeneratingRecord record = new GeneratingRecord(query, convCtx.getCurrentFile());
-                    record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
+                    record.answer = polish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED"));
                     listener.onGenerated(channel, record);
+                    channel.setProcessing(false);
+
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            convCtx, record);
                 }
             });
-            channel.setProcessing(false);
             return AIGCStateCode.Ok;
         }
     }
