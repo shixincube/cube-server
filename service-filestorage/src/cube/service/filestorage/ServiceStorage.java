@@ -22,6 +22,7 @@ import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.FileType;
+import cube.util.JSONUtils;
 import cube.util.SQLUtils;
 import org.json.JSONObject;
 
@@ -487,7 +488,10 @@ public class ServiceStorage implements Storagable {
                         new StorageField("sha1", LiteralBase.STRING, fileLabel.getSHA1Code()),
                         new StorageField("file_url", LiteralBase.STRING, fileLabel.getFileURL()),
                         new StorageField("file_secure_url", LiteralBase.STRING, fileLabel.getFileSecureURL()),
-                        new StorageField("direct_url", LiteralBase.STRING, fileLabel.getDirectURL())
+                        new StorageField("direct_url", LiteralBase.STRING, fileLabel.getDirectURL()),
+                        (null != fileLabel.getContext()) ?
+                                new StorageField("context", LiteralBase.STRING, fileLabel.getContext().toString()) :
+                                new StorageField("context", LiteralBase.STRING)
                 };
 
                 StorageField[] descriptorFields = new StorageField[]{
@@ -571,6 +575,10 @@ public class ServiceStorage implements Storagable {
                     (map.get("file_secure_url").isNullValue()) ? null : map.get("file_secure_url").getString());
 
             label.setDirectURL(map.get("direct_url").getString());
+
+            if (!map.get("context").isNullValue()) {
+                label.setContext(new JSONObject(map.get("context").getString()));
+            }
 
             return label;
         }
@@ -764,6 +772,10 @@ public class ServiceStorage implements Storagable {
 
             label.setDirectURL(map.get("direct_url").getString());
 
+            if (!map.get("context").isNullValue()) {
+                label.setContext(new JSONObject(map.get("context").getString()));
+            }
+
             list.add(label);
         }
 
@@ -813,6 +825,10 @@ public class ServiceStorage implements Storagable {
                     (map.get("file_secure_url").isNullValue()) ? null : map.get("file_secure_url").getString());
 
             label.setDirectURL(map.get("direct_url").getString());
+
+            if (!map.get("context").isNullValue()) {
+                label.setContext(new JSONObject(map.get("context").getString()));
+            }
 
             list.add(label);
         }
@@ -2219,7 +2235,7 @@ public class ServiceStorage implements Storagable {
                     new StorageField("direct_url", LiteralBase.STRING, new Constraint[] {
                             Constraint.NOT_NULL
                     }),
-                    new StorageField("reserved", LiteralBase.STRING, new Constraint[] {
+                    new StorageField("context", LiteralBase.STRING, new Constraint[] {
                             Constraint.DEFAULT_NULL
                     })
             };

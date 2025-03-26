@@ -15,6 +15,7 @@ import cube.common.Packet;
 import cube.common.action.CVAction;
 import cube.common.entity.*;
 import cube.common.notice.GetFile;
+import cube.common.notice.LoadFile;
 import cube.common.state.CVStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -25,9 +26,13 @@ import cube.service.cv.listener.ClipPaperListener;
 import cube.service.cv.listener.DetectBarCodeListener;
 import cube.service.cv.listener.DetectObjectListener;
 import cube.util.FileType;
+import cube.vision.Size;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -147,6 +152,23 @@ public class CVService extends AbstractModule {
         }
 
         return new FileLabel(fileLabelJson);
+    }
+
+    public File loadFile(String domain, String fileCode) {
+        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        if (null == fileStorage) {
+            Logger.e(this.getClass(), "#loadFile - File storage service is not ready");
+            return null;
+        }
+
+        LoadFile loadFile = new LoadFile(domain, fileCode);
+        try {
+            String path = fileStorage.notify(loadFile);
+            return new File(path);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#loadFile - File storage service load failed", e);
+            return null;
+        }
     }
 
     /**
@@ -412,6 +434,10 @@ public class CVService extends AbstractModule {
                 JSONArray result = data.getJSONArray("result");
                 for (int i = 0; i < result.length(); ++i) {
                     ProcessedFile info = new ProcessedFile(result.getJSONObject(i));
+                    Size size = getImageSize(token.getDomain(), info.getProcessed().getFileCode());
+                    if (null != size) {
+                        info.getProcessed().setContext(size.toJSON());
+                    }
                     info.setFileLabel(findFileLabel(fileLabels, info.getFileCode()));
                     processedFileList.add(info);
                 }
@@ -498,5 +524,19 @@ public class CVService extends AbstractModule {
             }
         }
         return null;
+    }
+
+    private Size getImageSize(String domain, String fileCode) {
+        File file = this.loadFile(domain, fileCode);
+        if (null == file) {
+            return null;
+        }
+
+        try {
+            BufferedImage image = ImageIO.read(file);
+            return new Size(image.getWidth(), image.getHeight());
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
