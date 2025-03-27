@@ -98,7 +98,7 @@ public class ConversationWorker {
             // 本轮可能的任务，判断是否终止话题
             roundSubtask = this.matchSubtask(query);
             if (roundSubtask == Subtask.EndTopic) {
-                convCtx.clearAll();
+                convCtx.cancelAll();
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
@@ -187,9 +187,36 @@ public class ConversationWorker {
                     relation, convCtx, listener);
             return task.execute(roundSubtask);
         }
+        else if (Subtask.Questionnaire == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - Questionnaire: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 执行子任务
+            QuestionnaireSubtask task = new QuestionnaireSubtask(this.service, channel, query, context,
+                    relation, convCtx, listener);
+            return task.execute(roundSubtask);
+        }
+        else if (Subtask.StartQuestionnaire == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - StartQuestionnaire: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 执行子任务
+            StartQuestionnaireSubtask task = new StartQuestionnaireSubtask(this.service, channel, query, context,
+                    relation, convCtx, listener);
+            return task.execute(roundSubtask);
+        }
+        else if (Subtask.StopQuestionnaire == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - StopQuestionnaire: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 执行子任务
+            StopQuestionnaireSubtask task = new StopQuestionnaireSubtask(this.service, channel, query, context,
+                    relation, convCtx, listener);
+            return task.execute(roundSubtask);
+        }
         else {
             Logger.d(this.getClass(), "#work - General conversation");
-            convCtx.clearCurrentPredict();
+            convCtx.cancelCurrentPredict();
         }
 
         String prompt = PsychologyScene.getInstance().buildPrompt(convCtx, query);

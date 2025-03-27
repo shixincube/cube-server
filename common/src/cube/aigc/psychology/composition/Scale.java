@@ -37,6 +37,8 @@ public class Scale extends Questionnaire implements JSONable {
 
     private long timestamp;
 
+    private long endTimestamp;
+
     private ScaleResult result;
 
     public Scale(File structureFile) {
@@ -73,6 +75,14 @@ public class Scale extends Questionnaire implements JSONable {
 
     public long getTimestamp() {
         return this.timestamp;
+    }
+
+    public long getEndTimestamp() {
+        return this.endTimestamp;
+    }
+
+    public void setEndTimestamp(long value) {
+        this.endTimestamp = value;
     }
 
     public void setAttribute(Attribute attribute) {

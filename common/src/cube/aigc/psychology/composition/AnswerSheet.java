@@ -43,6 +43,10 @@ public class AnswerSheet {
         });
     }
 
+    public int numAnswers() {
+        return this.answers.size();
+    }
+
     public void submit(int sn, String choice) {
         this.answers.add(new Answer(sn, choice));
 

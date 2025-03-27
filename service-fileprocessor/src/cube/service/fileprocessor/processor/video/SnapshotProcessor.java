@@ -10,7 +10,6 @@ import cell.util.log.Logger;
 import cube.common.entity.FileResult;
 import cube.file.operation.SnapshotOperation;
 import cube.service.fileprocessor.processor.ProcessorContext;
-import cube.util.FileUtils;
 import cube.util.TimeUtils;
 import cube.util.ZipUtils;
 
@@ -130,7 +129,7 @@ public class SnapshotProcessor extends VideoProcessor {
 
         ArrayList<String> params = new ArrayList<>();
         params.add("-ss");
-        params.add(snapshotContext.timeOffset.formatHMSMs());
+        params.add(snapshotContext.offset.formatHMSMs());
         params.add("-i");
         params.add(this.inputFile.getName());
         params.add("-f");

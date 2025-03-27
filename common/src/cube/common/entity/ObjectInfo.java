@@ -6,7 +6,7 @@
 
 package cube.common.entity;
 
-import cube.util.TimeOffset;
+import cube.util.TimeDuration;
 import cube.util.TimeUtils;
 import cube.vision.Size;
 import org.json.JSONArray;
@@ -98,8 +98,8 @@ public class ObjectInfo extends Entity {
             buf.append(" *(").append(prob).append("%)*\n");
         }
         buf.append("\n");
-        TimeOffset timeOffset = TimeUtils.calcTimeDuration(this.elapsed);
-        buf.append("识别耗时**").append(timeOffset.toHumanString()).append("**，共检测出**")
+        TimeDuration timeDuration = TimeUtils.calcTimeDuration(this.elapsed);
+        buf.append("识别耗时**").append(timeDuration.toHumanString()).append("**，共检测出**")
                 .append(materials.size()).append("**件物品。");
         return buf.toString();
     }

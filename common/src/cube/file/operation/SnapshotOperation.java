@@ -8,12 +8,8 @@ package cube.file.operation;
 
 import cube.file.VideoOperation;
 import cube.util.FileType;
-import cube.util.TimeOffset;
-import org.json.JSONArray;
+import cube.util.TimeDuration;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 视频快照操作。
@@ -22,9 +18,9 @@ public class SnapshotOperation extends VideoOperation {
 
     public final static String Operation = "Snapshot";
 
-    public TimeOffset timeOffset;
+    public TimeDuration offset;
 
-    public TimeOffset duration;
+    public TimeDuration duration;
 
     public double rate;
 
@@ -36,16 +32,16 @@ public class SnapshotOperation extends VideoOperation {
 
     public SnapshotOperation() {
         super();
-        this.timeOffset = new TimeOffset(0, 0, 0);
-        this.duration = new TimeOffset(0, 0, 0,0);
+        this.offset = new TimeDuration(0, 0, 0);
+        this.duration = new TimeDuration(0, 0, 0,0);
         this.rate = 1;
         this.outputType = FileType.JPEG;
     }
 
     public SnapshotOperation(JSONObject json) {
         super();
-        this.timeOffset = new TimeOffset(json.getJSONObject("timeOffset"));
-        this.duration = new TimeOffset(json.getJSONObject("duration"));
+        this.offset = new TimeDuration(json.getJSONObject("offset"));
+        this.duration = new TimeDuration(json.getJSONObject("duration"));
         this.rate = json.getDouble("rate");
         this.outputType = FileType.matchExtension(json.getString("outputType"));
         this.packToZip = json.getBoolean("packToZip");
@@ -67,7 +63,7 @@ public class SnapshotOperation extends VideoOperation {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("timeOffset", this.timeOffset.toJSON());
+        json.put("offset", this.offset.toJSON());
         json.put("duration", this.duration.toJSON());
         json.put("rate", this.rate);
         json.put("outputType", this.outputType.getPreferredExtension());

@@ -36,6 +36,12 @@ public enum Subtask {
 
     ShowCoT("show_cot"),
 
+    Questionnaire("questionnaire"),
+
+    StartQuestionnaire("start_questionnaire"),
+
+    StopQuestionnaire("stop_questionnaire"),
+
     None("none"),
 
     ;

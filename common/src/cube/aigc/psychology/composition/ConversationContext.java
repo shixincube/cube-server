@@ -106,7 +106,7 @@ public class ConversationContext implements JSONable {
         return this.reportList;
     }
 
-    public void clearAll() {
+    public void cancelAll() {
         this.currentFile = null;
         this.currentPaintingValidity = false;
         this.currentAttribute = null;
@@ -116,11 +116,15 @@ public class ConversationContext implements JSONable {
         this.reportList = null;
     }
 
-    public void clearCurrentPredict() {
+    public void cancelCurrentPredict() {
         this.currentSubtask = null;
         this.currentAttribute = null;
         this.currentFile = null;
         this.currentPaintingValidity = false;
+    }
+
+    public void cancelCurrentSubtask() {
+        this.currentSubtask = null;
     }
 
     public FileLabel getRecentFile() {

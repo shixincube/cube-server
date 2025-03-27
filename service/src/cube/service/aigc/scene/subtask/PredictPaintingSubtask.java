@@ -97,7 +97,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                 }
                 else if (roundSubtask == Subtask.No) {
                     // 回答不是，则表示终止预测
-                    convCtx.clearAll();
+                    convCtx.cancelAll();
 
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
@@ -270,7 +270,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                             record.context.setInferring(false);
                         }
                         record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
-                        convCtx.clearCurrentPredict();
+                        convCtx.cancelCurrentPredict();
                         channel.setProcessing(false);
 
                         SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
@@ -294,7 +294,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                         record.answer += ContentTools.makeContentLink(channel.getHttpsEndpoint(),
                                 channel.getAuthToken().getCode(), report, true, true);
                         // clear subtask
-                        convCtx.clearCurrentPredict();
+                        convCtx.cancelCurrentPredict();
                         // 将生成的报告设置为当前报告
                         convCtx.setCurrentReport(report);
                         channel.setProcessing(false);
@@ -311,7 +311,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                             record.context.setInferring(false);
                         }
                         record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
-                        convCtx.clearCurrentPredict();
+                        convCtx.cancelCurrentPredict();
                         channel.setProcessing(false);
 
                         SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,

@@ -8,7 +8,7 @@ package cube.service.fileprocessor.processor.video;
 
 import cube.file.operation.SnapshotOperation;
 import cube.util.FileType;
-import cube.util.TimeOffset;
+import cube.util.TimeDuration;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -22,9 +22,9 @@ import java.util.List;
  */
 public class SnapshotContext extends VideoProcessorContext {
 
-    public TimeOffset timeOffset;
+    public TimeDuration offset;
 
-    public TimeOffset duration;
+    public TimeDuration duration;
 
     public double rate;
 
@@ -42,18 +42,18 @@ public class SnapshotContext extends VideoProcessorContext {
 
     private List<File> outputFileList;
 
-    private List<TimeOffset> fileTimingPoints;
+    private List<TimeDuration> fileTimingPoints;
 
     public SnapshotContext() {
-        this.timeOffset = new TimeOffset(0, 0, 0);
-        this.duration = new TimeOffset(0, 0, 0,0);
+        this.offset = new TimeDuration(0, 0, 0);
+        this.duration = new TimeDuration(0, 0, 0,0);
         this.rate = 1;
         this.outputType = FileType.JPEG;
     }
 
     public void setVideoOperation(SnapshotOperation value) {
         super.setVideoOperation(value);
-        this.timeOffset = value.timeOffset;
+        this.offset = value.offset;
         this.duration = value.duration;
         this.rate = value.rate;
         this.outputType = value.outputType;
@@ -71,7 +71,7 @@ public class SnapshotContext extends VideoProcessorContext {
 
         int millis = 0;
         for (int i = 0; i < outputFileList.size(); ++i) {
-            this.fileTimingPoints.add(this.timeOffset.increment(millis, Calendar.MILLISECOND));
+            this.fileTimingPoints.add(this.offset.increment(millis, Calendar.MILLISECOND));
             millis += millisStep;
         }
     }
@@ -83,13 +83,13 @@ public class SnapshotContext extends VideoProcessorContext {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("timeOffset", this.timeOffset.toJSON());
+        json.put("offset", this.offset.toJSON());
         json.put("duration", this.duration.toJSON());
         json.put("rate", this.rate);
         json.put("outputType", this.outputType.getPreferredExtension());
 
         JSONArray fileTimingPointArray = new JSONArray();
-        for (TimeOffset timing : this.fileTimingPoints) {
+        for (TimeDuration timing : this.fileTimingPoints) {
             fileTimingPointArray.put(timing.toJSON());
         }
         json.put("timingPoints", fileTimingPointArray);

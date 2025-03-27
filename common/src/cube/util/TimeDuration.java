@@ -9,13 +9,11 @@ package cube.util;
 import org.json.JSONObject;
 
 import java.util.Calendar;
-import java.util.Date;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 时间长度计量。
  */
-public class TimeOffset {
+public class TimeDuration {
 
     public final int days;
 
@@ -27,15 +25,15 @@ public class TimeOffset {
 
     public final int milliseconds;
 
-    public TimeOffset(int hours, int minutes, int seconds) {
+    public TimeDuration(int hours, int minutes, int seconds) {
         this(0, hours, minutes, seconds, 0);
     }
 
-    public TimeOffset(int hours, int minutes, int seconds, int milliseconds) {
+    public TimeDuration(int hours, int minutes, int seconds, int milliseconds) {
         this(0, hours, minutes, seconds, milliseconds);
     }
 
-    public TimeOffset(int days, int hours, int minutes, int seconds, int milliseconds) {
+    public TimeDuration(int days, int hours, int minutes, int seconds, int milliseconds) {
         this.days = days;
         this.hours = hours;
         this.minutes = minutes;
@@ -43,7 +41,7 @@ public class TimeOffset {
         this.milliseconds = milliseconds;
     }
 
-    public TimeOffset(JSONObject json) {
+    public TimeDuration(JSONObject json) {
         this.days = json.getInt("days");
         this.hours = json.getInt("hours");
         this.minutes = json.getInt("minutes");
@@ -58,7 +56,7 @@ public class TimeOffset {
      * @return
      * @see java.util.Calendar
      */
-    public TimeOffset increment(int value, int unit) {
+    public TimeDuration increment(int value, int unit) {
         int days = this.days;
         int hours = this.hours;
         int minutes = this.minutes;
@@ -105,7 +103,7 @@ public class TimeOffset {
             hours = hours % 24;
         }
 
-        return new TimeOffset(days, hours, minutes, seconds, milliseconds);
+        return new TimeDuration(days, hours, minutes, seconds, milliseconds);
     }
 
     /**

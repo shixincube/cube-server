@@ -8,18 +8,19 @@ package cube.service.aigc.scene;
 
 import cell.util.Utils;
 import cube.aigc.attachment.Attachment;
+import cube.aigc.attachment.ReportAttachment;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.EvaluationScore;
-import cube.aigc.attachment.ReportAttachment;
-import cube.common.entity.*;
+import cube.aigc.psychology.composition.Scale;
+import cube.common.entity.AIGCChatHistory;
+import cube.common.entity.AttachmentResource;
+import cube.common.entity.Chart;
+import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -33,8 +34,11 @@ public class SceneManager {
 
     private Map<String, ConversationContext> conversationContexts;
 
+    private Map<String, ScaleTrack> channelScaleMap;
+
     private SceneManager() {
         this.conversationContexts = new ConcurrentHashMap<>();
+        this.channelScaleMap = new ConcurrentHashMap<>();
     }
 
     public static SceneManager getInstance() {
@@ -51,6 +55,14 @@ public class SceneManager {
 
     public void putConversationContext(String channelCode, ConversationContext context) {
         this.conversationContexts.put(channelCode, context);
+    }
+
+    public void setScale(String channelCode, Scale scale) {
+        this.channelScaleMap.put(channelCode, new ScaleTrack(channelCode, scale));
+    }
+
+    public ScaleTrack getScaleTrack(String channelCode) {
+        return this.channelScaleMap.get(channelCode);
     }
 
     public void saveHistoryRecord(String channelCode, String unitName, ConversationContext context, GeneratingRecord record) {
@@ -154,5 +166,25 @@ public class SceneManager {
 
         // 插入数据库
         return this.aigcService.getStorage().insertChart(chart);
+    }
+
+    public class ScaleTrack {
+        public final String channelCode;
+
+        public final Scale scale;
+
+        public boolean started = false;
+
+        public LinkedList<String> offQuery = new LinkedList<>();
+
+        /**
+         * 当前问题序号游标。
+         */
+        public int questionCursor = 0;
+
+        public ScaleTrack(String channelCode, Scale scale) {
+            this.channelCode = channelCode;
+            this.scale = scale;
+        }
     }
 }
