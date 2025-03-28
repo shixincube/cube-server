@@ -40,6 +40,8 @@ public class ConversationContext implements JSONable {
 
     private List<PaintingReport> reportList;
 
+    private boolean superAdmin;
+
     public ConversationContext(ConversationRelation relation, AuthToken authToken) {
         this.relation = relation;
         this.authToken = authToken;
@@ -104,6 +106,14 @@ public class ConversationContext implements JSONable {
 
     public List<PaintingReport> getReportList() {
         return this.reportList;
+    }
+
+    public void setSuperAdmin(boolean value) {
+        this.superAdmin = value;
+    }
+
+    public boolean isSuperAdmin() {
+        return this.superAdmin;
     }
 
     public void cancelAll() {

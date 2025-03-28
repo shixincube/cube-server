@@ -1435,7 +1435,7 @@ public class KnowledgeBase {
 
                     KnowledgeQAResult result = new KnowledgeQAResult(queryForResult, "");
                     GeneratingRecord record = new GeneratingRecord(sn, unitName, queryForResult, EMPTY_BASE_ANSWER,
-                            "", System.currentTimeMillis(), new ComplexContext(ComplexContext.Type.Simplex));
+                            "", System.currentTimeMillis(), new ComplexContext(ComplexContext.Type.Lightweight));
                     result.record = record;
                     listener.onCompleted(channel, result);
                 }

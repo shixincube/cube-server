@@ -89,6 +89,14 @@ public class Questionnaire {
         return num == count;
     }
 
+    public Answer getAnswer(int sn) {
+        Question question = getQuestion(sn);
+        if (null == question) {
+            return null;
+        }
+        return question.getChosenAnswer();
+    }
+
     public List<Answer> getAllChosenAnswers() {
         List<Answer> answers = new ArrayList<>();
         for (QuestionSection section : this.questionSections) {

@@ -326,7 +326,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
             Attachment attachment = new ReportAttachment(report.sn, convCtx.getCurrentFile());
             AttachmentResource resource = new AttachmentResource(attachment);
 
-            ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Complex);
+            ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Heavyweight);
             complexContext.setInferring(true);
             complexContext.addResource(resource);
             complexContext.setSubtask(Subtask.PredictPainting);

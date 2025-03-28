@@ -42,6 +42,8 @@ public enum Subtask {
 
     StopQuestionnaire("stop_questionnaire"),
 
+    SuperAdmin("super_admin"),
+
     None("none"),
 
     ;

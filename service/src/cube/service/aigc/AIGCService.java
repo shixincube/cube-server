@@ -2077,6 +2077,22 @@ public class AIGCService extends AbstractModule {
     /**
      * 生成心理学量表测验报告。
      *
+     * @param channel
+     * @param scale
+     * @param listener
+     * @return
+     */
+    public ScaleReport generateScaleReport(AIGCChannel channel, Scale scale, ScaleReportListener listener) {
+        if (!this.isStarted()) {
+            return null;
+        }
+
+        return PsychologyScene.getInstance().generateScaleReport(channel, scale, listener);
+    }
+
+    /**
+     * 生成心理学量表测验报告。
+     *
      * @param token
      * @param scaleSn
      * @param listener
@@ -2107,7 +2123,6 @@ public class AIGCService extends AbstractModule {
             }
 
             ScaleReport report = PsychologyScene.getInstance().generateScaleReport(channel, scale, listener);
-
             return report;
         } catch (Exception e) {
             Logger.e(this.getClass(), "#generateScaleReport", e);
@@ -2368,7 +2383,7 @@ public class AIGCService extends AbstractModule {
      */
     private ComplexContext recognizeContext(String text, AuthToken authToken) {
         final String content = text.trim();
-        ComplexContext result = new ComplexContext(ComplexContext.Type.Simplex);
+        ComplexContext result = new ComplexContext(ComplexContext.Type.Lightweight);
 
         List<String> urlList = TextUtils.extractAllURLs(content);
         if (!urlList.isEmpty()) {
@@ -2396,7 +2411,7 @@ public class AIGCService extends AbstractModule {
             Packet response = new Packet(dialect);
             if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
                 Logger.d(this.getClass(), "#recognizeContent - Process url list failed");
-                result = new ComplexContext(ComplexContext.Type.Complex);
+                result = new ComplexContext(ComplexContext.Type.Heavyweight);
                 for (String url : urlList) {
                     HyperlinkResource resource = new HyperlinkResource(url, HyperlinkResource.TYPE_FAILURE);
                     resource.fixContent();
@@ -2406,7 +2421,7 @@ public class AIGCService extends AbstractModule {
             else {
                 JSONObject data = Packet.extractDataPayload(response);
                 JSONArray list = data.getJSONArray("list");
-                result = new ComplexContext(ComplexContext.Type.Complex);
+                result = new ComplexContext(ComplexContext.Type.Heavyweight);
                 for (int i = 0; i < list.length(); ++i) {
                     JSONObject resPayload = new JSONObject();
                     resPayload.put("payload", list.getJSONObject(i));
@@ -2437,7 +2452,7 @@ public class AIGCService extends AbstractModule {
             if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
                 HyperlinkResource resource = new HyperlinkResource(content, HyperlinkResource.TYPE_FAILURE);
                 resource.fixContent();
-                result = new ComplexContext(ComplexContext.Type.Complex);
+                result = new ComplexContext(ComplexContext.Type.Heavyweight);
                 result.addResource(resource);
             }
             else {
@@ -2445,13 +2460,13 @@ public class AIGCService extends AbstractModule {
                 JSONArray list = data.getJSONArray("list");
                 if (list.isEmpty()) {
                     // 列表没有数据，获取 URL 失败
-                    result = new ComplexContext(ComplexContext.Type.Complex);
+                    result = new ComplexContext(ComplexContext.Type.Heavyweight);
                     HyperlinkResource resource = new HyperlinkResource(content, HyperlinkResource.TYPE_FAILURE);
                     resource.fixContent();
                     result.addResource(resource);
                 }
                 else {
-                    result = new ComplexContext(ComplexContext.Type.Complex);
+                    result = new ComplexContext(ComplexContext.Type.Heavyweight);
                     JSONObject resPayload = new JSONObject();
                     resPayload.put("payload", list.getJSONObject(0));
                     HyperlinkResource resource = new HyperlinkResource(resPayload);
@@ -2464,7 +2479,7 @@ public class AIGCService extends AbstractModule {
             Stage stage = Explorer.getInstance().infer(content);
 
             if (stage.isComplex()) {
-                result = new ComplexContext(ComplexContext.Type.Complex);
+                result = new ComplexContext(ComplexContext.Type.Heavyweight);
 
                 if (!stage.chartResources.isEmpty()) {
                     for (ChartResource chartResource : stage.chartResources) {
@@ -2867,7 +2882,7 @@ public class AIGCService extends AbstractModule {
             // 识别内容
             ComplexContext complexContext = enabledRecognizeContext ?
                     recognizeContext(this.content, this.channel.getAuthToken()) :
-                    new ComplexContext(ComplexContext.Type.Simplex);
+                    new ComplexContext(ComplexContext.Type.Lightweight);
 
             // 设置是否启用了搜素
             complexContext.setSearchable(this.searchEnabled);
@@ -2878,7 +2893,7 @@ public class AIGCService extends AbstractModule {
 
             final StringBuilder realPrompt = new StringBuilder(this.content);
 
-            if (complexContext.isSimplex()) {
+            if (complexContext.isSimplified()) {
                 // 一般文本
 
                 int recommendHistories = 5;
@@ -3161,7 +3176,7 @@ public class AIGCService extends AbstractModule {
                         complexContext);
             }
 
-            if (complexContext.isSimplex()) {
+            if (complexContext.isSimplified()) {
                 if (this.searchEnabled || this.networkingEnabled) {
                     // 缓存上下文
                     Explorer.getInstance().cacheComplexContext(complexContext);

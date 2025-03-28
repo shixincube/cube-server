@@ -697,15 +697,15 @@ public class PsychologyScene {
         }
 
         // 并发数量
-        int numUnit = this.service.numUnitsByName(ModelConfig.BAIZE_UNIT);
+        int numUnit = this.service.numUnitsByName(ModelConfig.BAIZE_NEXT_UNIT);
         if (0 == numUnit) {
-            Logger.e(this.getClass(), "#generateScaleReport - No baize unit");
+            Logger.e(this.getClass(), "#generateScaleReport - No unit");
             return null;
         }
 
         ScaleReport report = new ScaleReport(channel.getAuthToken().getContactId(), scale);
 
-        ScaleReportTask task = new ScaleReportTask(channel, scale, report);
+        ScaleReportTask task = new ScaleReportTask(channel, scale, report, listener);
 
         // 缓存到内存
         this.reportMap.put(report.sn, report);
@@ -727,7 +727,7 @@ public class PsychologyScene {
                 ScaleReportTask scaleReportTask = scaleTaskQueue.poll();
                 while (null != scaleReportTask) {
                     // 回调
-                    listener.onReportEvaluating(scaleReportTask.scaleReport);
+                    scaleReportTask.listener.onReportEvaluating(scaleReportTask.scaleReport);
 
                     // 生成报告
                     AIGCStateCode state = processScaleReport(scaleReportTask);
@@ -740,7 +740,7 @@ public class PsychologyScene {
                         scaleReportTask.scaleReport.setState(AIGCStateCode.Ok);
 
                         // 回调
-                        listener.onReportEvaluateCompleted(scaleReportTask.scaleReport);
+                        scaleReportTask.listener.onReportEvaluateCompleted(scaleReportTask.scaleReport);
                     }
                     else {
                         // 变更状态
@@ -748,7 +748,7 @@ public class PsychologyScene {
                         scaleReportTask.scaleReport.setState(state);
 
                         // 回调
-                        listener.onReportEvaluateFailed(scaleReportTask.scaleReport);
+                        scaleReportTask.listener.onReportEvaluateFailed(scaleReportTask.scaleReport);
                     }
 
                     scaleReportTask = scaleTaskQueue.poll();
@@ -1270,8 +1270,8 @@ public class PsychologyScene {
                 description = ContentTools.fastInfer(prompt.description, this.service.getTokenizer());
             }
             if (null == description) {
-                GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.description, new GeneratingOption(),
-                        null, null);
+                GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                        prompt.description, new GeneratingOption(), null, null);
                 if (null != result) {
                     description = result.answer;
                 }
@@ -1293,8 +1293,8 @@ public class PsychologyScene {
                     suggestion =  ContentTools.fastInfer(prompt.suggestion, this.service.getTokenizer());
                 }
                 if (null == suggestion) {
-                    GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.suggestion, new GeneratingOption(),
-                            null, null);
+                    GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                            prompt.suggestion, new GeneratingOption(), null, null);
                     if (null != result) {
                         suggestion = result.answer;
                     }
@@ -1362,10 +1362,13 @@ public class PsychologyScene {
 
         protected ScaleReport scaleReport;
 
-        public ScaleReportTask(AIGCChannel channel, Scale scale, ScaleReport scaleReport) {
+        protected ScaleReportListener listener;
+
+        public ScaleReportTask(AIGCChannel channel, Scale scale, ScaleReport scaleReport, ScaleReportListener listener) {
             this.channel = channel;
             this.scale = scale;
             this.scaleReport = scaleReport;
+            this.listener = listener;
         }
     }
 }

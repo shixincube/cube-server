@@ -57,6 +57,9 @@ public class StopQuestionnaireSubtask extends ConversationSubtask {
         this.service.getExecutor().execute(new Runnable() {
             @Override
             public void run() {
+                ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                complexContext.setSubtask(Subtask.StopQuestionnaire);
+
                 TimeDuration duration = TimeUtils.calcTimeDuration(
                         scaleTrack.scale.getEndTimestamp() - scaleTrack.scale.getTimestamp());
 
@@ -67,6 +70,7 @@ public class StopQuestionnaireSubtask extends ConversationSubtask {
                         duration.toHumanString(),
                         ""
                 ));
+                record.context = complexContext;
                 listener.onGenerated(channel, record);
                 channel.setProcessing(false);
 

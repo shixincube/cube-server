@@ -98,7 +98,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
-                            ComplexContext context = new ComplexContext(ComplexContext.Type.Simplex);
+                            ComplexContext context = new ComplexContext(ComplexContext.Type.Lightweight);
                             ReportAttachment attachment = new ReportAttachment(report.sn, report.getFileLabel());
                             context.addResource(new AttachmentResource(attachment));
 
@@ -231,7 +231,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
-                            ComplexContext context = new ComplexContext(ComplexContext.Type.Simplex);
+                            ComplexContext context = new ComplexContext(ComplexContext.Type.Lightweight);
                             ReportAttachment attachment = new ReportAttachment(reports.get(0).sn,
                                     reports.get(0).getFileLabel());
                             context.addResource(new AttachmentResource(attachment));

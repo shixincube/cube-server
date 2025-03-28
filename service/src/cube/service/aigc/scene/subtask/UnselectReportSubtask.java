@@ -34,7 +34,7 @@ public class UnselectReportSubtask extends ConversationSubtask {
         this.service.getExecutor().execute(new Runnable() {
             @Override
             public void run() {
-                ComplexContext context = new ComplexContext(ComplexContext.Type.Simplex);
+                ComplexContext context = new ComplexContext(ComplexContext.Type.Lightweight);
                 context.setSubtask(Subtask.UnselectReport);
 
                 if (null != convCtx.getCurrentReport()) {

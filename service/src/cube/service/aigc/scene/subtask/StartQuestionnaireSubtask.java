@@ -56,10 +56,14 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
         this.service.getExecutor().execute(new Runnable() {
             @Override
             public void run() {
+                ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                complexContext.setSubtask(Subtask.StartQuestionnaire);
+
                 GeneratingRecord record = new GeneratingRecord(query);
                 record.answer = polish(String.format(
                         Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_START_QUESTIONNAIRE"),
                         scale.instruction));
+                record.context = complexContext;
                 listener.onGenerated(channel, record);
                 channel.setProcessing(false);
 

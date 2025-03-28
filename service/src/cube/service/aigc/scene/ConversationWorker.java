@@ -85,24 +85,65 @@ public class ConversationWorker {
         }
         final ConversationContext convCtx = cc;
 
-        // Query
-        Subtask roundSubtask = Subtask.None;
+        // try analysis subtask in query
+        final Subtask roundSubtask = this.matchSubtask(query);
+
+        if (convCtx.isSuperAdmin()) {
+            if (roundSubtask == Subtask.SuperAdmin) {
+                // 退出超管模式
+                Logger.d(this.getClass(), "#work - Exit super admin model: " +
+                        channel.getAuthToken().getCode() + "/" + channel.getCode());
+                convCtx.setSuperAdmin(false);
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        GeneratingRecord record = new GeneratingRecord(query);
+                        record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_EXIT_SUPER_ADMIN");
+                        listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+                    }
+                });
+                return AIGCStateCode.Ok;
+            }
+            else {
+                SuperAdminSubtask task = new SuperAdminSubtask(this.service, channel, query, context,
+                        relation, convCtx, listener);
+                return task.execute(roundSubtask);
+            }
+        }
+        else {
+            if (roundSubtask == Subtask.SuperAdmin) {
+                // 进入超管模式
+                Logger.d(this.getClass(), "#work - Enter super admin model: " +
+                        channel.getAuthToken().getCode() + "/" + channel.getCode());
+                convCtx.setSuperAdmin(true);
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        GeneratingRecord record = new GeneratingRecord(query);
+                        record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_ENTER_SUPER_ADMIN");
+                        listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+                    }
+                });
+                return AIGCStateCode.Ok;
+            }
+        }
 
         // 获取子任务
         Subtask subtask = convCtx.getCurrentSubtask();
         if (null == subtask) {
             // 匹配子任务
-            subtask = this.matchSubtask(query);
+            subtask = roundSubtask;
         }
         else {
             // 本轮可能的任务，判断是否终止话题
-            roundSubtask = this.matchSubtask(query);
             if (roundSubtask == Subtask.EndTopic) {
                 convCtx.cancelAll();
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Simplex);
+                        ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
                         complexContext.setSubtask(Subtask.EndTopic);
 
                         GeneratingRecord record = new GeneratingRecord(query);

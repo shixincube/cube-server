@@ -24,9 +24,9 @@ public class ComplexContext extends Entity {
 
     public enum Type {
 
-        Simplex("simplex"),
+        Lightweight("lightweight"),
 
-        Complex("complex");
+        Heavyweight("heavyweight");
 
         public final String value;
 
@@ -35,11 +35,12 @@ public class ComplexContext extends Entity {
         }
 
         public static Type parse(String value) {
-            if (value.equalsIgnoreCase(Simplex.value)) {
-                return Simplex;
+            // simplex 兼容旧版
+            if (value.equalsIgnoreCase(Lightweight.value) || value.equalsIgnoreCase("simplex")) {
+                return Lightweight;
             }
             else {
-                return Complex;
+                return Heavyweight;
             }
         }
     }
@@ -136,8 +137,8 @@ public class ComplexContext extends Entity {
         }
     }
 
-    public boolean isSimplex() {
-        return this.type == Type.Simplex;
+    public boolean isSimplified() {
+        return this.type == Type.Lightweight;
     }
 
     public void setSubtask(Subtask subtask) {
