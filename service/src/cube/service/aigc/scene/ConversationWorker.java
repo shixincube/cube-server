@@ -121,7 +121,8 @@ public class ConversationWorker {
                     @Override
                     public void run() {
                         GeneratingRecord record = new GeneratingRecord(query);
-                        record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_ENTER_SUPER_ADMIN");
+                        record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_ENTER_SUPER_ADMIN") +
+                                SuperAdminSubtask.makeCommandText();
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
                     }
@@ -139,6 +140,7 @@ public class ConversationWorker {
         else {
             // 本轮可能的任务，判断是否终止话题
             if (roundSubtask == Subtask.EndTopic) {
+                // 取消所有上下文数据
                 convCtx.cancelAll();
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
@@ -255,6 +257,15 @@ public class ConversationWorker {
                     relation, convCtx, listener);
             return task.execute(roundSubtask);
         }
+        else if (Subtask.Yes == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - Yes/Continue: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 执行子任务
+            ContinueSubtask task = new ContinueSubtask(this.service, channel, query, context,
+                    relation, convCtx, listener);
+            return task.execute(roundSubtask);
+        }
         else {
             Logger.d(this.getClass(), "#work - General conversation");
             convCtx.cancelCurrentPredict();
@@ -351,6 +362,9 @@ public class ConversationWorker {
         }
 
         for (QuestionAnswer questionAnswer : list) {
+            Logger.d(this.getClass(), "#matchSubtask - " + questionAnswer.getQuestions().get(0) + " : " +
+                    questionAnswer.getAnswers().get(0) + " - " + questionAnswer.getScore());
+
             if (questionAnswer.getScore() < 0.8) {
                 // 跳过得分低的问答
                 continue;

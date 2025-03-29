@@ -655,6 +655,19 @@ public class PsychologyScene {
         }
     }
 
+    private ScaleResult submitScale(Scale scale) {
+        try {
+            ScaleResult scaleResult = scale.scoring(Resource.getInstance().getQuestionnairesPath());
+            if (null != scaleResult) {
+                this.storage.writeScale(scale);
+            }
+            return scaleResult;
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#submitScale", e);
+            return null;
+        }
+    }
+
     /**
      * 根据报告内容推荐量表。
      *
@@ -689,6 +702,11 @@ public class PsychologyScene {
         if (this.reportMap.containsKey(scale.getSN())) {
             Logger.e(this.getClass(), "#generateScaleReport - Submits data repeatedly: " + scale.getSN());
             return null;
+        }
+
+        if (null == scale.getResult()) {
+            Logger.d(this.getClass(), "#generateScaleReport - Cale scale score: " + scale.getSN());
+            this.submitScale(scale);
         }
 
         if (null == scale.getResult() || null == scale.getResult().prompt || scale.getResult().prompt.isEmpty()) {
@@ -757,6 +775,7 @@ public class PsychologyScene {
                 numRunningScaleTasks.decrementAndGet();
             }
         });
+        thread.setName("PsychologyScene#generateScaleReport");
         thread.start();
 
         return report;

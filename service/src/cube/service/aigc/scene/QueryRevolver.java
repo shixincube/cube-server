@@ -309,7 +309,7 @@ public class QueryRevolver {
             }
 
             if (result.length() == 0) {
-                result.append("专业地回答问题，在答案最后加入一句：“\n\n我的更多功能您可以通过：**功能介绍** 进行了解。”，问题是：");
+                result.append("专业地回答问题，在答案最后加入一句：“\n\n我的更多功能您可以通过：**[功能介绍](aixinli://prompt.direct/请你介绍一下你自己。)** 进行了解。”，问题是：");
                 result.append(query).append("\n");
             }
         }

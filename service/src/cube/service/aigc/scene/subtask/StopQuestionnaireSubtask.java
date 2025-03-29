@@ -23,7 +23,6 @@ import cube.util.TimeUtils;
 
 public class StopQuestionnaireSubtask extends ConversationSubtask {
 
-
     public StopQuestionnaireSubtask(AIGCService service, AIGCChannel channel, String query,
                                     ComplexContext context, ConversationRelation relation, ConversationContext convCtx,
                                     GenerateTextListener listener) {
@@ -67,7 +66,7 @@ public class StopQuestionnaireSubtask extends ConversationSubtask {
                 record.answer = polish(String.format(
                         Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_GOOD_STOP_QUESTIONNAIRE"),
                         scaleTrack.scale.getAllChosenAnswers().size(),
-                        duration.toHumanString(),
+                        duration.toHumanStringDHMS(),
                         ""
                 ));
                 record.context = complexContext;

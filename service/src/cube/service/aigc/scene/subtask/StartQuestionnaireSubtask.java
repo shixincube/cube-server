@@ -6,6 +6,7 @@
 
 package cube.service.aigc.scene.subtask;
 
+import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.ConversationContext;
@@ -33,6 +34,8 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
         // 装载量表
         Scale scale = Resource.getInstance().loadScaleByName("SCL-90");
         if (null == scale) {
+            Logger.w(this.getClass(), "#execute - Load scale failed: " + channel.getAuthToken().getCode());
+
             this.service.getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {

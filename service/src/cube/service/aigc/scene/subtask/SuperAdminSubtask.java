@@ -6,12 +6,15 @@
 
 package cube.service.aigc.scene.subtask;
 
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
+import cube.aigc.psychology.composition.Question;
 import cube.aigc.psychology.composition.Subtask;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.ComplexContext;
+import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
@@ -22,6 +25,8 @@ import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import java.util.List;
 
 public class SuperAdminSubtask extends ConversationSubtask {
+
+    private final static String[] sPromptRandomFillScaleWords = new String[]{ "随机", "填写", "量表" };
 
     private class QueryKeyword {
 
@@ -46,15 +51,40 @@ public class SuperAdminSubtask extends ConversationSubtask {
         protected boolean hasHit() {
             return this.hitCounts == this.words.length;
         }
+
+        @Override
+        public String toString() {
+            StringBuilder buf = new StringBuilder();
+            for (String word : words) {
+                buf.append(word);
+            }
+            return buf.toString();
+        }
     }
 
-    private QueryKeyword qkRandomFillScale = new QueryKeyword(new String[]{ "随机", "填写", "量表" });
+    private QueryKeyword qkRandomFillScale = new QueryKeyword(sPromptRandomFillScaleWords);
 
     public SuperAdminSubtask(AIGCService service, AIGCChannel channel, String query, ComplexContext context,
                              ConversationRelation relation,
                              ConversationContext convCtx,
                              GenerateTextListener listener) {
         super(Subtask.SuperAdmin, service, channel, query, context, relation, convCtx, listener);
+    }
+
+    public static String makeCommandText() {
+        StringBuilder buf = new StringBuilder();
+
+        buf.append("* [");
+        for (String word : sPromptRandomFillScaleWords) {
+            buf.append(word);
+        }
+        buf.append("](aixinli://prompt.direct/");
+        for (String word : sPromptRandomFillScaleWords) {
+            buf.append(word);
+        }
+        buf.append(")\n\n");
+
+        return buf.toString();
     }
 
     @Override
@@ -68,12 +98,44 @@ public class SuperAdminSubtask extends ConversationSubtask {
                 qkRandomFillScale.hit(keywordList);
 
                 if (qkRandomFillScale.hasHit()) {
-                    Logger.d(getClass(), "#execute - " + qkRandomFillScale.getClass().getName());
+                    Logger.d(getClass(), "#execute - " + qkRandomFillScale.toString());
 
                     SceneManager.ScaleTrack scaleTrack = SceneManager.getInstance().getScaleTrack(channel.getCode());
+                    if (null == scaleTrack) {
+                        GeneratingRecord record = new GeneratingRecord(query);
+                        record.answer = "没有找到可用的量表";
+                        listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+                        return;
+                    }
+
+                    for (Question question : scaleTrack.scale.getQuestions()) {
+                        int choiceIndex = Utils.randomInt(0, question.answers.size() - 1);
+                        String choice = question.answers.get(choiceIndex).code;
+                        question.chooseAnswer(choice);
+                    }
+                    // 更新游标
+                    scaleTrack.questionCursor = scaleTrack.scale.getQuestions().size();
+
+                    GeneratingRecord record = new GeneratingRecord(query);
+                    record.answer = "完成对量表\"" + scaleTrack.scale.displayName + "\"的随机回答。\n\n";
+                    record.answer += "共回答**" + scaleTrack.scale.getQuestions().size() + "**道题，";
+                    if (scaleTrack.scale.isComplete()) {
+                        record.answer += "量表已完成答题。";
+                    }
+                    else {
+                        record.answer += "量表未完成答题。";
+                    }
+                    listener.onGenerated(channel, record);
+                    channel.setProcessing(false);
                 }
                 else {
                     Logger.d(getClass(), "#execute - No query words");
+
+                    GeneratingRecord record = new GeneratingRecord(query);
+                    record.answer = "没有匹配的指令：" + query;
+                    listener.onGenerated(channel, record);
+                    channel.setProcessing(false);
                 }
             }
         });

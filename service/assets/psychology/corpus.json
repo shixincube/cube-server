@@ -7,7 +7,7 @@
     },
     "prompt": {
         "FORMAT_POLISH": {
-            "cn": "润色以下内容，不使用“感谢”，“尊敬”这样的用语，确保信息完整传达，不要编造内容，内容是：“%s”。",
+            "cn": "润色以下内容，不使用“感谢”，“润色”这样的用语，确保信息完整传达，不要编造内容，内容是：“%s”。",
             "en": ""
         },
         "FORMAT_QUESTION_PSYCHOLOGY_POSSIBILITY": {
@@ -35,11 +35,15 @@
             "en": ""
         },
         "ANSWER_ENTER_SUPER_ADMIN": {
-            "cn": "进入超级管理员模式。",
+            "cn": "进入超级管理员模式。\n\n当前支持的管理员提示词有：\n\n",
             "en": ""
         },
         "ANSWER_EXIT_SUPER_ADMIN": {
-            "cn": "退出超级管理员模式。",
+            "cn": "退出超级管理员模式。\n\n通过输入 **继续** 以复原现场，或者进行其他对话。",
+            "en": ""
+        },
+        "ANSWER_CONTINUE": {
+            "cn": "好的，让我们继续吧！接下来您想让我帮您做些什么呢？",
             "en": ""
         },
         "ANSWER_NEW_TOPIC": {
@@ -180,6 +184,10 @@
         },
         "ANSWER_NO_QUESTIONNAIRE": {
             "cn": "我没有找到我们之前关于量表问答的信息。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_SCALE_RESULT_PREFIX": {
+            "cn": "您一共完成了%d个问题，在这%s里我通过这些问题对您目前的身心状态有了了解。本次量表的评测数据概况如下：",
             "en": ""
         },
         "FORMAT_ANSWER_SCALE_QUESTION": {

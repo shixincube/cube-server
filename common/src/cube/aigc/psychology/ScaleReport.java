@@ -72,6 +72,10 @@ public class ScaleReport extends Report {
         }
     }
 
+    public ScaleResult getResult() {
+        return this.scale.getResult();
+    }
+
     public List<ScaleFactor> getFactors() {
         return this.factors;
     }

@@ -164,6 +164,21 @@ public class TimeDuration {
         return buf.toString();
     }
 
+    public String toHumanStringDHMS() {
+        StringBuilder buf = new StringBuilder();
+        if (this.days > 0) {
+            buf.append(this.days).append("天");
+        }
+        if (this.hours > 0) {
+            buf.append(this.hours).append("时");
+        }
+        if (this.minutes > 0) {
+            buf.append(this.minutes).append("分");
+        }
+        buf.append(this.seconds).append("秒");
+        return buf.toString();
+    }
+
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();

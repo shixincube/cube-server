@@ -177,7 +177,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     record.answer = polish(String.format(
                             Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_GOOD_STOP_QUESTIONNAIRE"),
                             scaleTrack.scale.getAllChosenAnswers().size(),
-                            duration.toHumanString(),
+                            duration.toHumanStringDHMS(),
                             ""
                     ));
                     record.context = complexContext;
@@ -189,6 +189,49 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 }
             });
             return AIGCStateCode.Ok;
+        }
+        else if (roundSubtask == Subtask.Yes) {
+            // 执行继续
+            if (scaleTrack.questionCursor >= scaleTrack.scale.numQuestions() || scaleTrack.scale.isComplete()) {
+                // 结束
+                return this.processFinish(scaleTrack);
+            }
+            else {
+                // 当前问题
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                        complexContext.setSubtask(Subtask.Questionnaire);
+
+                        StringBuilder answer = new StringBuilder();
+                        if (scaleTrack.questionCursor - 1 > 0) {
+                            answer.append(String.format(
+                                    Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_LAST_ANSWER"),
+                                    scaleTrack.questionCursor - 1,
+                                    scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).code,
+                                    scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).content
+                            ));
+                            answer.append("\n\n");
+                        }
+                        String questionMD = makeQuestion(scaleTrack.scale, scaleTrack.questionCursor);
+                        answer.append(String.format(
+                                Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_QUESTION"),
+                                scaleTrack.questionCursor,
+                                questionMD));
+
+                        GeneratingRecord record = new GeneratingRecord(query);
+                        record.answer = answer.toString();
+                        record.context = complexContext;
+                        listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, record);
+                    }
+                });
+                return AIGCStateCode.Ok;
+            }
         }
 
         scaleTrack.offQuery.add(query);
@@ -207,39 +250,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
 
         if (scaleTrack.questionCursor > scaleTrack.scale.numQuestions()) {
             // 结束
-            this.service.getExecutor().execute(new Runnable() {
-                @Override
-                public void run() {
-                    ScaleReport report = service.generateScaleReport(channel, scaleTrack.scale, new ScaleReportListener() {
-                        @Override
-                        public void onReportEvaluating(ScaleReport report) {
-
-                        }
-
-                        @Override
-                        public void onReportEvaluateCompleted(ScaleReport report) {
-
-                        }
-
-                        @Override
-                        public void onReportEvaluateFailed(ScaleReport report) {
-
-                        }
-                    });
-
-                    if (null == report) {
-
-                    }
-
-                    GeneratingRecord record = new GeneratingRecord(query);
-                    record.answer = "结束";
-                    listener.onGenerated(channel, record);
-                    channel.setProcessing(false);
-
-                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
-                            convCtx, record);
-                }
-            });
+            return this.processFinish(scaleTrack);
         }
         else {
             // 下一个问题
@@ -273,7 +284,84 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             convCtx, record);
                 }
             });
+            return AIGCStateCode.Ok;
         }
+    }
+
+    private AIGCStateCode processFinish(SceneManager.ScaleTrack scaleTrack) {
+        this.service.getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                // 记录时间
+                scaleTrack.scale.setEndTimestamp(System.currentTimeMillis());
+
+                final Object mutex = new Object();
+                final ScaleReport scaleReport = service.generateScaleReport(channel, scaleTrack.scale, new ScaleReportListener() {
+                    @Override
+                    public void onReportEvaluating(ScaleReport report) {
+                        synchronized (mutex) {
+                            mutex.notify();
+                        }
+                    }
+
+                    @Override
+                    public void onReportEvaluateCompleted(ScaleReport report) {
+                        synchronized (mutex) {
+                            mutex.notify();
+                        }
+                    }
+
+                    @Override
+                    public void onReportEvaluateFailed(ScaleReport report) {
+                        synchronized (mutex) {
+                            mutex.notify();
+                        }
+                    }
+                });
+
+                if (null == scaleReport) {
+                    GeneratingRecord record = new GeneratingRecord(query);
+                    record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
+                    listener.onGenerated(channel, record);
+                    channel.setProcessing(false);
+
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            convCtx, record);
+                    return;
+                }
+
+                synchronized (mutex) {
+                    try {
+                        mutex.wait(60 * 1000);
+                    } catch (InterruptedException e) {
+                        Logger.e(this.getClass(), "", e);
+                    }
+                }
+
+                TimeDuration duration = TimeUtils.calcTimeDuration(
+                        scaleTrack.scale.getEndTimestamp() - scaleTrack.scale.getTimestamp());
+
+                ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                complexContext.setSubtask(Subtask.StopQuestionnaire);
+
+                String prefix = polish(String.format(
+                        Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_RESULT_PREFIX"),
+                        scaleTrack.scale.numQuestions(),
+                        duration.toHumanStringDHMS()));
+
+                GeneratingRecord record = new GeneratingRecord(query);
+                record.answer = prefix + "\n\n" + scaleReport.getResult().content;
+                record.context = complexContext;
+                listener.onGenerated(channel, record);
+                channel.setProcessing(false);
+
+                SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                        convCtx, record);
+
+                // 清空子任务
+                convCtx.cancelCurrentSubtask();
+            }
+        });
 
         return AIGCStateCode.Ok;
     }

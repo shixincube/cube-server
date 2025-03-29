@@ -207,18 +207,28 @@ function scoring(answers) {
     score.addItem('Psychosis', '精神病性症状', T_Psychosis, explain(T_Psychosis));
     score.addItem('SleepAndDiet', '睡眠及饮食问题', T_SleepAndDiet, explain(T_SleepAndDiet));
 
-    // 计算常模
-    var desc = [
-        '* ' + explain(T_Somatization).prefix + '躯体化症状\n\n',
-        '* ' + explain(T_Obsession).prefix + '强迫症状\n\n',
-        '* ' + explain(T_InterpersonalRelation).prefix + '人际关系敏感\n\n',
-        '* ' + explain(T_Depression).prefix + '抑郁症状\n\n',
-        '* ' + explain(T_Anxiety).prefix + '焦虑症状\n\n',
-        '* ' + explain(T_Hostile).prefix + '敌对性症状\n\n',
-        '* ' + explain(T_Horror).prefix + '恐怖症状\n\n',
-        '* ' + explain(T_Paranoid).prefix + '偏执症状\n\n',
-        '* ' + explain(T_Psychosis).prefix + '精神病性症状\n\n',
-        '* ' + explain(T_SleepAndDiet).prefix + '睡眠及饮食问题\n\n'
+    // 生成文本描述
+    var content = [
+        '* 躯体化症状：', explain(T_Somatization).prefix, '，得分：', T_Somatization.toFixed(2), '\n',
+        '> 主要反映身体不适感，包括心血管、胃肠道、呼吸和其他系统的主诉不适，和头痛、背痛、肌肉酸痛，以及焦虑的其他躯体表现。\n\n',
+        '* 强迫症状：', explain(T_Obsession).prefix, '，得分：', T_Obsession.toFixed(2), '\n',
+        '> 主要指那些明知没有必要，但又无法摆脱的无意义的思想、冲动和行为，还有一些比较一般的认知障碍的行为征象也在这一因子中反映。\n\n',
+        '* 人际关系敏感：', explain(T_InterpersonalRelation).prefix, '，得分：', T_InterpersonalRelation.toFixed(2), '\n',
+        '> 主要指某些个人不自在与自卑感，特别是与其他人相比较时更加突出。在人际交往中的自卑感，心神不安，明显不自在，以及人际交流中的自我意识，消极的期待亦是这方面症状的典型原因。\n\n',
+        '* 抑郁症状：', explain(T_Depression).prefix, '，得分：', T_Depression.toFixed(2), '\n',
+        '> 苦闷的情感与心境为代表性症状，还以生活兴趣的减退，动力缺乏，活力丧失等为特征。还反映失望，悲观以及与抑郁相联系的认知和躯体方面的感受，另外，还包括有关死亡的思想和自杀观念。\n\n',
+        '* 焦虑症状：', explain(T_Anxiety).prefix, '，得分：', T_Anxiety.toFixed(2), '\n',
+        '> 一般指那些烦躁，坐立不安，神经过敏，紧张以及由此产生的躯体征象，如震颤等。测定游离不定的焦虑及惊恐发作是本因子的主要内容，还包括一项解体感受的项目。\n\n',
+        '* 敌对性症状：', explain(T_Hostile).prefix, '，得分：', T_Hostile.toFixed(2), '\n',
+        '> 主要从三方面来反映敌对的表现：思想、感情及行为。其项目包括厌烦的感觉，摔物，争论直到不可控制的脾气暴发等各方面。\n\n',
+        '* 恐怖症状：', explain(T_Horror).prefix, '，得分：', T_Horror.toFixed(2), '\n',
+        '> 恐惧的对象包括出门旅行，空旷场地，人群或公共场所和交通工具。此外，还有社交恐怖。\n\n',
+        '* 偏执症状：', explain(T_Paranoid).prefix, '，得分：', T_Paranoid.toFixed(2), '\n',
+        '> 主要指投射性思维，敌对，猜疑，妄想，被动体验和夸大等。\n\n',
+        '* 精神病性症状：', explain(T_Psychosis).prefix, '，得分：', T_Psychosis.toFixed(2), '\n',
+        '> 反映各式各样的急性症状和行为，即限定不严的精神病性过程的症状表现。\n\n',
+        '* 睡眠及饮食问题：', explain(T_SleepAndDiet).prefix, '，得分：', T_SleepAndDiet.toFixed(2), '\n',
+        '> 反映睡眠障碍和饮食不良。\n\n'
     ];
 
     var prompt = makePrompt([{
@@ -264,7 +274,7 @@ function scoring(answers) {
     }]);
 
     return {
-        content: desc.join(''),
+        content: content.join(''),
         score: score,
         prompt: prompt
     }
