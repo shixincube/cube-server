@@ -14,9 +14,26 @@ import java.util.List;
 
 public class Question {
 
+    /**
+     * 单选。
+     */
+    public final static String CHOICE_SINGLE = "single";
+
+    /**
+     * 多选。
+     */
+    public final static String CHOICE_MULTIPLE = "multiple";
+
+    /**
+     * 叙述。
+     */
+    public final static String CHOICE_DESCRIPTIVE = "descriptive";
+
     public final int sn;
 
     public final String content;
+
+    public final String prompt;
 
     public final List<Answer> answers = new ArrayList<>();
 
@@ -25,6 +42,7 @@ public class Question {
     public Question(JSONObject structure) {
         this.sn = structure.getInt("sn");
         this.content = structure.getString("content");
+        this.prompt = structure.has("prompt") ? structure.getString("prompt") : "";
         this.choice = structure.getString("choice");
         JSONArray array = structure.getJSONArray("answers");
         for (int i = 0; i < array.length(); ++i) {
@@ -34,7 +52,15 @@ public class Question {
     }
 
     public boolean isSingleChoice() {
-        return this.choice.equalsIgnoreCase("single");
+        return this.choice.equalsIgnoreCase(CHOICE_SINGLE);
+    }
+
+    public boolean isMultipleChoice() {
+        return this.choice.equalsIgnoreCase(CHOICE_MULTIPLE);
+    }
+
+    public boolean isDescriptiveChoice() {
+        return this.choice.equalsIgnoreCase(CHOICE_DESCRIPTIVE);
     }
 
     public void chooseAnswer(String code) {
@@ -80,6 +106,7 @@ public class Question {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
         json.put("content", this.content);
+        json.put("prompt", this.prompt);
         json.put("choice", this.choice);
 
         JSONArray array = new JSONArray();

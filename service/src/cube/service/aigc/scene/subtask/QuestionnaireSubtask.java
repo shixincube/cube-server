@@ -327,12 +327,15 @@ public class QuestionnaireSubtask extends ConversationSubtask {
 
                     SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
                             convCtx, record);
+
+                    // 清空子任务
+                    convCtx.cancelCurrentSubtask();
                     return;
                 }
 
                 synchronized (mutex) {
                     try {
-                        mutex.wait(60 * 1000);
+                        mutex.wait(120 * 1000);
                     } catch (InterruptedException e) {
                         Logger.e(this.getClass(), "", e);
                     }
@@ -538,17 +541,23 @@ public class QuestionnaireSubtask extends ConversationSubtask {
         StringBuilder buf = new StringBuilder();
         try {
             Question question = scale.getQuestion(sn);
-            buf.append("问题").append(sn).append("：").append(question.content).append("\n\n");
-            for (Answer answer : question.answers) {
-                buf.append("* [");
-                buf.append(answer.code).append(". ").append(answer.content);
-                buf.append("](");
-                buf.append("aixinli://scale.answer/")
-                        .append(sn).append("/")
-                        .append(answer.code).append("/")
-                        .append(answer.content);
-                buf.append(")");
-                buf.append("\n\n");
+
+            if (question.isDescriptiveChoice()) {
+
+            }
+            else {
+                buf.append("问题").append(sn).append("：").append(question.content).append("\n\n");
+                for (Answer answer : question.answers) {
+                    buf.append("* [");
+                    buf.append(answer.code).append(". ").append(answer.content);
+                    buf.append("](");
+                    buf.append("aixinli://scale.answer/")
+                            .append(sn).append("/")
+                            .append(answer.code).append("/")
+                            .append(answer.content);
+                    buf.append(")");
+                    buf.append("\n\n");
+                }
             }
         } catch (Exception e) {
             Logger.e(this.getClass(), "#makeQuestion", e);

@@ -659,7 +659,9 @@ public class PsychologyScene {
         try {
             ScaleResult scaleResult = scale.scoring(Resource.getInstance().getQuestionnairesPath());
             if (null != scaleResult) {
-                this.storage.writeScale(scale);
+                if (!this.storage.writeScale(scale)) {
+                    Logger.e(this.getClass(), "#submitScale - Write scale to DB failed: " + scale.getSN());
+                }
             }
             return scaleResult;
         } catch (Exception e) {
@@ -751,7 +753,10 @@ public class PsychologyScene {
                     AIGCStateCode state = processScaleReport(scaleReportTask);
                     if (state == AIGCStateCode.Ok) {
                         // 写入数据库
-                        storage.writeScaleReport(scaleReportTask.scaleReport);
+                        if (!storage.writeScaleReport(scaleReportTask.scaleReport)) {
+                            Logger.e(this.getClass(), "#generateScaleReport - #writeScaleReport error: "
+                                    + scaleReportTask.scaleReport.sn);
+                        }
 
                         // 变更状态
                         scaleReportTask.scaleReport.setFinished(true);
@@ -761,6 +766,8 @@ public class PsychologyScene {
                         scaleReportTask.listener.onReportEvaluateCompleted(scaleReportTask.scaleReport);
                     }
                     else {
+                        Logger.e(this.getClass(), "#generateScaleReport - #processScaleReport state: " + state.code);
+
                         // 变更状态
                         scaleReportTask.scaleReport.setFinished(true);
                         scaleReportTask.scaleReport.setState(state);

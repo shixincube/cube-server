@@ -8,6 +8,7 @@ package cube.service.aigc.scene.subtask;
 
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
+import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
@@ -19,6 +20,7 @@ import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
+import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.SceneManager;
 
 public class StartQuestionnaireSubtask extends ConversationSubtask {
@@ -31,8 +33,9 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
 
     @Override
     public AIGCStateCode execute(Subtask roundSubtask) {
-        // 装载量表
-        Scale scale = Resource.getInstance().loadScaleByName("SCL-90");
+        // 生成
+        Scale scale = PsychologyScene.getInstance().generateScale("SCL-90",
+                new Attribute("male", 30, false));
         if (null == scale) {
             Logger.w(this.getClass(), "#execute - Load scale failed: " + channel.getAuthToken().getCode());
 

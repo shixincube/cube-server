@@ -71,16 +71,16 @@ function makePrompt(list) {
                 data["description"] = '有' + name + '的描述和表现';
                 data["suggestion"] = '有' + name + '的建议';
             } else {
-                data["description"] = '有' + name + '倾向的描述和表现';
-                data["suggestion"] = '有' + name + '倾向的建议';
+                data["description"] = '有' + name + '症状的描述和表现';
+                data["suggestion"] = '有' + name + '症状的建议';
             }
         } else {
             if (factor === 'InterpersonalRelation' || factor === 'SleepAndDiet') {
                 data["description"] = '有明显' + name + '的描述和表现';
                 data["suggestion"] = '有明显' + name + '的建议';
             } else {
-                data["description"] = '有明显' + name + '倾向的描述和表现';
-                data["suggestion"] = '有明显' + name + '倾向的建议';
+                data["description"] = '有明显' + name + '症状的描述和表现';
+                data["suggestion"] = '有明显' + name + '症状的建议';
             }
         }
 
