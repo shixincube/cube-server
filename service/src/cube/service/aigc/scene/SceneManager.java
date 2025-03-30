@@ -12,6 +12,7 @@ import cube.aigc.attachment.ReportAttachment;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.EvaluationScore;
+import cube.aigc.psychology.composition.Question;
 import cube.aigc.psychology.composition.Scale;
 import cube.common.entity.AIGCChatHistory;
 import cube.common.entity.AttachmentResource;
@@ -175,7 +176,7 @@ public class SceneManager {
 
         public boolean started = false;
 
-        public LinkedList<String> offQuery = new LinkedList<>();
+        public LinkedList<String> offQueries = new LinkedList<>();
 
         /**
          * 当前问题序号游标。
@@ -185,6 +186,10 @@ public class SceneManager {
         public ScaleTrack(String channelCode, Scale scale) {
             this.channelCode = channelCode;
             this.scale = scale;
+        }
+
+        public Question getQuestion() {
+            return this.scale.getQuestion(this.questionCursor);
         }
     }
 }

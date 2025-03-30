@@ -17,6 +17,7 @@ import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
+import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.ScaleReportListener;
 import cube.service.aigc.scene.SceneManager;
 import cube.util.TimeDuration;
@@ -25,6 +26,12 @@ import cube.util.TimeUtils;
 import java.util.List;
 
 public class QuestionnaireSubtask extends ConversationSubtask {
+
+    /**
+     * 放弃当前问卷的无关话题阈值。
+     * 当无关话题数据达到该值时，放弃当前问卷。
+     */
+    private final int abortQuestionnaireThreshold = 3;
 
     public QuestionnaireSubtask(AIGCService service, AIGCChannel channel, String query,
                                 ComplexContext context, ConversationRelation relation, ConversationContext convCtx,
@@ -68,10 +75,23 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         complexContext.setSubtask(Subtask.Questionnaire);
 
                         GeneratingRecord record = new GeneratingRecord(query);
-                        record.answer = String.format(
-                                Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_QUESTION"),
-                                scaleTrack.questionCursor,
-                                questionMD);
+
+                        if (scaleTrack.getQuestion().isDescriptive()) {
+                            GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, questionMD,
+                                    null, null, null);
+                            if (null == result) {
+                                result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, questionMD,
+                                        null, null, null);
+                            }
+                            record.answer = (null != result) ? result.answer : scaleTrack.getQuestion().content;
+                        }
+                        else {
+                            record.answer = String.format(
+                                    Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_QUESTION"),
+                                    scaleTrack.questionCursor,
+                                    questionMD);
+                        }
+
                         record.context = complexContext;
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
@@ -107,9 +127,9 @@ public class QuestionnaireSubtask extends ConversationSubtask {
             }
             else {
                 // 无关提问
-                scaleTrack.offQuery.add(query);
+                scaleTrack.offQueries.add(query);
 
-                if (scaleTrack.offQuery.size() > 2) {
+                if (scaleTrack.offQueries.size() >= abortQuestionnaireThreshold) {
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
@@ -120,7 +140,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             record.answer = polish(String.format(
                                     Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_MANY_OFF_TOPICS_END"),
-                                    scaleTrack.offQuery.size()));
+                                    scaleTrack.offQueries.size()));
                             record.context = complexContext;
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
@@ -205,16 +225,131 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         complexContext.setSubtask(Subtask.Questionnaire);
 
                         StringBuilder answer = new StringBuilder();
+
+                        Question question = scaleTrack.getQuestion();
+                        Question prevQuestion = null;
                         if (scaleTrack.questionCursor - 1 > 0) {
-                            answer.append(String.format(
-                                    Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_LAST_ANSWER"),
-                                    scaleTrack.questionCursor - 1,
-                                    scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).code,
-                                    scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).content
-                            ));
-                            answer.append("\n\n");
+                            prevQuestion = scaleTrack.scale.getQuestion(scaleTrack.questionCursor - 1);
                         }
-                        String questionMD = makeQuestion(scaleTrack.scale, scaleTrack.questionCursor);
+
+                        if (question.isDescriptive()) {
+                            String questionMD = makeQuestion(scaleTrack.scale, scaleTrack.questionCursor);
+                            GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, questionMD,
+                                    null, null, null);
+                            if (null == result) {
+                                result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, questionMD,
+                                        null, null, null);
+                            }
+                            answer.append((null != result) ? result.answer : question.content);
+                        }
+                        else {
+                            if (null != prevQuestion) {
+                                answer.append(String.format(
+                                        Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_LAST_ANSWER"),
+                                        scaleTrack.questionCursor - 1,
+                                        scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).code,
+                                        scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).content
+                                ));
+                                answer.append("\n\n");
+                            }
+                            String questionMD = makeQuestion(scaleTrack.scale, scaleTrack.questionCursor);
+                            answer.append(String.format(
+                                    Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_QUESTION"),
+                                    scaleTrack.questionCursor,
+                                    questionMD));
+                        }
+
+                        GeneratingRecord record = new GeneratingRecord(query);
+                        record.answer = answer.toString();
+                        record.context = complexContext;
+                        listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
+
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, record);
+                    }
+                });
+                return AIGCStateCode.Ok;
+            }
+        }
+
+        // 先添加为无关问题
+        scaleTrack.offQueries.add(query);
+
+        Question question = scaleTrack.getQuestion();
+        if (question.isDescriptive()) {
+            // 判断 Query 内容的匹配信息
+            String prompt = String.format(
+                    Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_ANALYSIS_QUESTION_POSSIBILITY"),
+                    query,
+                    question.content);
+            GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt,
+                    null, null, null);
+            if (null == result) {
+                result = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt,
+                        null, null, null);
+            }
+
+            if (null == result) {
+                // 错误
+                ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                complexContext.setSubtask(Subtask.Questionnaire);
+
+                GeneratingRecord record = new GeneratingRecord(query);
+                record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
+                record.context = complexContext;
+                listener.onGenerated(channel, record);
+                channel.setProcessing(false);
+
+                SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                        convCtx, record);
+                return AIGCStateCode.Ok;
+            }
+
+            if (result.answer.contains(Resource.getInstance().getCorpus(CORPUS_PROMPT, "NO"))) {
+                // 不是
+                return this.processOffQuery(scaleTrack);
+            }
+            else {
+                // 是
+                return this.processOnQuery(scaleTrack);
+            }
+        }
+        else {
+            // 判断 Query 里的选项
+            String answerCode = this.matchSingleChoiceAnswer(scaleTrack.scale.getQuestion(scaleTrack.questionCursor).answers);
+            if (null == answerCode) {
+                // 无关话题
+                return this.processOffQueryForChoice(scaleTrack, true);
+            }
+
+            scaleTrack.offQueries.clear();
+            // 记录答案
+            scaleTrack.scale.chooseAnswer(scaleTrack.questionCursor, answerCode);
+            // 移动游标
+            scaleTrack.questionCursor += 1;
+
+            if (scaleTrack.questionCursor > scaleTrack.scale.numQuestions()) {
+                // 结束
+                return this.processFinish(scaleTrack);
+            }
+            else {
+                // 下一个问题
+                String questionMD = makeQuestion(scaleTrack.scale, scaleTrack.questionCursor);
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                        complexContext.setSubtask(Subtask.Questionnaire);
+
+                        StringBuilder answer = new StringBuilder();
+                        answer.append(String.format(
+                                Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_LAST_ANSWER"),
+                                scaleTrack.questionCursor - 1,
+                                answerCode,
+                                scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).content
+                        ));
+                        answer.append("\n\n");
                         answer.append(String.format(
                                 Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_QUESTION"),
                                 scaleTrack.questionCursor,
@@ -232,59 +367,6 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 });
                 return AIGCStateCode.Ok;
             }
-        }
-
-        scaleTrack.offQuery.add(query);
-        // 判断 Query
-        String answerCode = matchAnswer(query, scaleTrack.scale.getQuestion(scaleTrack.questionCursor).answers);
-        if (null == answerCode) {
-            // 无关话题
-            return this.processOffQuery(scaleTrack, true);
-        }
-
-        scaleTrack.offQuery.clear();
-        // 记录答案
-        scaleTrack.scale.chooseAnswer(scaleTrack.questionCursor, answerCode);
-        // 移动游标
-        scaleTrack.questionCursor += 1;
-
-        if (scaleTrack.questionCursor > scaleTrack.scale.numQuestions()) {
-            // 结束
-            return this.processFinish(scaleTrack);
-        }
-        else {
-            // 下一个问题
-            String questionMD = makeQuestion(scaleTrack.scale, scaleTrack.questionCursor);
-            this.service.getExecutor().execute(new Runnable() {
-                @Override
-                public void run() {
-                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
-                    complexContext.setSubtask(Subtask.Questionnaire);
-
-                    StringBuilder answer = new StringBuilder();
-                    answer.append(String.format(
-                            Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_LAST_ANSWER"),
-                            scaleTrack.questionCursor - 1,
-                            answerCode,
-                            scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).content
-                            ));
-                    answer.append("\n\n");
-                    answer.append(String.format(
-                            Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_QUESTION"),
-                            scaleTrack.questionCursor,
-                            questionMD));
-
-                    GeneratingRecord record = new GeneratingRecord(query);
-                    record.answer = answer.toString();
-                    record.context = complexContext;
-                    listener.onGenerated(channel, record);
-                    channel.setProcessing(false);
-
-                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
-                            convCtx, record);
-                }
-            });
-            return AIGCStateCode.Ok;
         }
     }
 
@@ -369,11 +451,104 @@ public class QuestionnaireSubtask extends ConversationSubtask {
         return AIGCStateCode.Ok;
     }
 
-    private AIGCStateCode processOffQuery(SceneManager.ScaleTrack scaleTrack, boolean analysis) {
+    private AIGCStateCode processOffQuery(SceneManager.ScaleTrack scaleTrack) {
+        if (scaleTrack.offQueries.size() >= abortQuestionnaireThreshold) {
+            ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+            complexContext.setSubtask(Subtask.StopQuestionnaire);
+
+            // 停止答题
+            GeneratingRecord record = new GeneratingRecord(query);
+            record.answer = polish(Resource.getInstance().getCorpus(CORPUS,
+                    "ANSWER_BAD_STOP_QUESTIONNAIRE"));
+            record.context = complexContext;
+            listener.onGenerated(channel, record);
+            channel.setProcessing(false);
+
+            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                    convCtx, record);
+
+            // 取消子任务
+            convCtx.cancelCurrentSubtask();
+        }
+        else {
+            ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+            complexContext.setSubtask(Subtask.Questionnaire);
+
+            String answer = String.format(
+                    Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_OFF_TOPICS"),
+                    scaleTrack.scale.getQuestion(scaleTrack.questionCursor),
+                    "");
+            GeneratingRecord record = new GeneratingRecord(query);
+            record.answer = polish(answer);
+            record.context = complexContext;
+            listener.onGenerated(channel, record);
+            channel.setProcessing(false);
+
+            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                    convCtx, record);
+        }
+        return AIGCStateCode.Ok;
+    }
+
+    private AIGCStateCode processOnQuery(SceneManager.ScaleTrack scaleTrack) {
+        // 清空之前的无关问题
+        scaleTrack.offQueries.clear();
+
+        Question question = scaleTrack.getQuestion();
+        // 记录当前答案
+        question.submitAnswerContent(query);
+
+        // 在新线程里进行推理
+        final Scale scale = scaleTrack.scale;
+        final int sn = scaleTrack.questionCursor;
         this.service.getExecutor().execute(new Runnable() {
             @Override
             public void run() {
-                if (scaleTrack.offQuery.size() > 2) {
+                PsychologyScene.getInstance().inferScaleAnswer(scale, sn);
+            }
+        });
+
+        if (!scaleTrack.scale.isComplete()) {
+            // 下一个问题
+            scaleTrack.questionCursor += 1;
+
+            String prompt = makeQuestion(scaleTrack.scale, scaleTrack.questionCursor);
+            this.service.getExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                    complexContext.setSubtask(Subtask.Questionnaire);
+
+                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                            prompt, null, null, null);
+                    if (null == result) {
+                        result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
+                                prompt, null, null, null);
+                    }
+
+                    GeneratingRecord record = new GeneratingRecord(query);
+                    record.answer = Resource.getInstance().getCorpus(CORPUS, "PREFIX_NEXT_QUESTION")
+                            + "\n\n" + ((null != result) ? result.answer : scaleTrack.getQuestion().content);
+                    record.context = complexContext;
+                    listener.onGenerated(channel, record);
+                    channel.setProcessing(false);
+
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            convCtx, record);
+                }
+            });
+        }
+        else {
+            this.processFinish(scaleTrack);
+        }
+        return AIGCStateCode.Ok;
+    }
+
+    private AIGCStateCode processOffQueryForChoice(SceneManager.ScaleTrack scaleTrack, boolean analysis) {
+        this.service.getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                if (scaleTrack.offQueries.size() >= abortQuestionnaireThreshold) {
                     ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
                     complexContext.setSubtask(Subtask.StopQuestionnaire);
 
@@ -391,7 +566,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     // 取消子任务
                     convCtx.cancelCurrentSubtask();
                 }
-                else if (scaleTrack.offQuery.size() > 1) {
+                else if (scaleTrack.offQueries.size() > 1) {
                     // 提示并进行指导
                     ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
                     complexContext.setSubtask(Subtask.Questionnaire);
@@ -399,7 +574,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     if (analysis) {
                         // 先分析提问，看提问是否与当前问题匹配
                         String prompt = String.format(
-                                Resource.getInstance().getCorpus("prompt", "FORMAT_ANSWER_ANALYSIS_FOR_SCALE_QUESTION"),
+                                Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_ANSWER_ANALYSIS_FOR_SCALE_QUESTION"),
                                 scaleTrack.scale.getQuestion(scaleTrack.questionCursor).content,
                                 query);
                         GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
@@ -422,7 +597,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             }
                             else {
                                 // 相关，减少 off query 计数
-                                scaleTrack.offQuery.removeLast();
+                                scaleTrack.offQueries.removeLast();
                             }
                         }
                         else {
@@ -430,6 +605,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_OFF_TOPICS"),
+                                    scaleTrack.scale.getQuestion(scaleTrack.questionCursor).content,
                                     questionMD);
                             record.context = complexContext;
                             listener.onGenerated(channel, record);
@@ -441,7 +617,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     }
                     else {
                         String prompt = String.format(
-                                Resource.getInstance().getCorpus("prompt", "FORMAT_ANSWER_OFF_TOPICS"),
+                                Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_TOPICS_POSSIBILITY_ANSWER"),
                                 query);
                         GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
                                 prompt, null, null, null);
@@ -461,6 +637,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_OFF_TOPICS"),
+                                    scaleTrack.scale.getQuestion(scaleTrack.questionCursor).content,
                                     questionMD);
                             record.context = complexContext;
                             listener.onGenerated(channel, record);
@@ -478,7 +655,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     if (analysis) {
                         // 先分析提问，看提问是否与当前问题匹配
                         String prompt = String.format(
-                                Resource.getInstance().getCorpus("prompt", "FORMAT_ANSWER_ANALYSIS_FOR_SCALE_QUESTION"),
+                                Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_ANSWER_ANALYSIS_FOR_SCALE_QUESTION"),
                                 scaleTrack.scale.getQuestion(scaleTrack.questionCursor).content,
                                 query);
                         GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
@@ -498,10 +675,11 @@ public class QuestionnaireSubtask extends ConversationSubtask {
 
                             if (result.answer.contains("不相关") || result.answer.contains("无关")) {
                                 // 不相关，维持 off query 计数
+                                // Nothing
                             }
                             else {
                                 // 相关，减少 off query 计数
-                                scaleTrack.offQuery.removeLast();
+                                scaleTrack.offQueries.removeLast();
                             }
                         }
                         else {
@@ -509,6 +687,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_OFF_TOPICS"),
+                                    scaleTrack.scale.getQuestion(scaleTrack.questionCursor).content,
                                     questionMD);
                             record.context = complexContext;
                             listener.onGenerated(channel, record);
@@ -523,6 +702,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = String.format(
                                 Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_OFF_TOPICS"),
+                                scaleTrack.scale.getQuestion(scaleTrack.questionCursor).content,
                                 questionMD);
                         record.context = complexContext;
                         listener.onGenerated(channel, record);
@@ -541,9 +721,13 @@ public class QuestionnaireSubtask extends ConversationSubtask {
         StringBuilder buf = new StringBuilder();
         try {
             Question question = scale.getQuestion(sn);
-
-            if (question.isDescriptiveChoice()) {
-
+            if (question.isDescriptive()) {
+                if (question.prompt.length() > 0) {
+                    buf.append(question.prompt);
+                }
+                else {
+                    buf.append(question.content);
+                }
             }
             else {
                 buf.append("问题").append(sn).append("：").append(question.content).append("\n\n");
@@ -565,7 +749,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
         return buf.toString();
     }
 
-    private String matchAnswer(String query, List<Answer> answers) {
+    private String matchSingleChoiceAnswer(List<Answer> answers) {
         String queryText = query.toUpperCase();
         if (queryText.contains("A") || queryText.contains("1") ||
                 queryText.contains("一") || queryText.contains("壹") || queryText.contains("①")) {

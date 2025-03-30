@@ -22,6 +22,9 @@ import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.SceneManager;
+import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+
+import java.util.List;
 
 public class StartQuestionnaireSubtask extends ConversationSubtask {
 
@@ -33,8 +36,11 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
 
     @Override
     public AIGCStateCode execute(Subtask roundSubtask) {
+        // 尝试匹配量表
+        String scaleName = this.extractScaleName();
+
         // 生成
-        Scale scale = PsychologyScene.getInstance().generateScale("SCL-90",
+        Scale scale = PsychologyScene.getInstance().generateScale(scaleName,
                 new Attribute("male", 30, false));
         if (null == scale) {
             Logger.w(this.getClass(), "#execute - Load scale failed: " + channel.getAuthToken().getCode());
@@ -78,5 +84,21 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
             }
         });
         return AIGCStateCode.Ok;
+    }
+
+    private String extractScaleName() {
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
+        List<String> queryWords = analyzer.analyzeOnlyWords(this.query, 10);
+        List<Scale> scaleList = Resource.getInstance().listScales();
+
+        for (Scale scale : scaleList) {
+            for (String word : queryWords) {
+                if (word.equalsIgnoreCase(scale.name) || word.equalsIgnoreCase(scale.displayName)) {
+                    return scale.name;
+                }
+            }
+        }
+
+        return "HAMA";
     }
 }

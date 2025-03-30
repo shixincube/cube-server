@@ -24,6 +24,8 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.cv.CVService;
+import cube.service.tokenizer.keyword.Keyword;
+import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import cube.util.FileUtils;
@@ -644,6 +646,9 @@ public class PsychologyScene {
         }
 
         try {
+            // 尝试推理答案评级
+            this.inferScaleAnswer(scale);
+
             ScaleResult scaleResult = scale.scoring(Resource.getInstance().getQuestionnairesPath());
             if (null != scaleResult) {
                 this.storage.writeScale(scale);
@@ -657,6 +662,9 @@ public class PsychologyScene {
 
     private ScaleResult submitScale(Scale scale) {
         try {
+            // 尝试推理答案评级
+            this.inferScaleAnswer(scale);
+
             ScaleResult scaleResult = scale.scoring(Resource.getInstance().getQuestionnairesPath());
             if (null != scaleResult) {
                 if (!this.storage.writeScale(scale)) {
@@ -667,6 +675,64 @@ public class PsychologyScene {
         } catch (Exception e) {
             Logger.e(this.getClass(), "#submitScale", e);
             return null;
+        }
+    }
+
+    private void inferScaleAnswer(Scale scale) {
+        for (Question question : scale.getQuestions()) {
+            this.inferScaleAnswer(scale, question.sn);
+        }
+    }
+
+    public void inferScaleAnswer(Scale scale, int questionSn) {
+        Question question = scale.getQuestion(questionSn);
+        if (question.isDescriptive()) {
+            // 检查是否已经有答案
+            if (question.hasChosen()) {
+                return;
+            }
+
+            Logger.i(this.getClass(), "#inferScaleAnswer - scale: " + scale.getSN() + " - " + questionSn);
+
+            GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                    question.makeInferencePrompt(), null, null, null);
+            if (null == result) {
+                result = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
+                        question.makeInferencePrompt(), null, null, null);
+            }
+            if (null == result) {
+                Logger.e(this.getClass(), "#inferScaleAnswer - Inference answer error: " + scale.getSN());
+                // 发生错误，选择第一个
+                question.chooseAnswer(question.answers.get(0).code);
+                return;
+            }
+
+            TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
+            // 所有答案的关键字
+            List<List<String>> answerKeywordList = new ArrayList<>();
+            for (Answer answer : question.answers) {
+                List<String> keywords = analyzer.analyzeOnlyWords(answer.content, 3);
+                answerKeywordList.add(keywords);
+            }
+
+            Answer hit = null;
+            int index = 0;
+            for (List<String> answerKeyword : answerKeywordList) {
+                for (String word : answerKeyword) {
+                    if (result.answer.contains(word)) {
+                        hit = question.answers.get(index);
+                        break;
+                    }
+                }
+                ++index;
+                if (null != hit) {
+                    break;
+                }
+            }
+
+            Logger.i(this.getClass(), "#inferScaleAnswer - scale: " +  scale.getSN() +
+                    " - hit: " + hit.code + " - " + hit.content);
+            question.chooseAnswer(hit.code);
         }
     }
 

@@ -29,6 +29,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class QueryRevolver {
 
+    private final static String CORPUS_PROMPT = "prompt";
+
     private final static SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy年MM月dd日HH时mm分ss秒");
 
     private final static String[] sKeywordPersonality = new String[] {
@@ -195,7 +197,7 @@ public class QueryRevolver {
                         result.append(answer).append("\n\n");
                     }
                 }
-                String text = String.format(Resource.getInstance().getCorpus("prompt", "FORMAT_POLISH"),
+                String text = String.format(Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_POLISH"),
                         result.toString());
                 result.delete(0, result.length());
                 result.append(text).append("\n");
@@ -247,7 +249,7 @@ public class QueryRevolver {
                 // 不带报告数据
                 // 问题是否和心理学相关
                 String prompt = String.format(
-                        Resource.getInstance().getCorpus("prompt", "FORMAT_QUESTION_PSYCHOLOGY_POSSIBILITY"),
+                        Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_QUESTION_PSYCHOLOGY_POSSIBILITY"),
                         query);
                 GeneratingRecord queryResponse = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
                         null, null, null);
@@ -399,7 +401,7 @@ public class QueryRevolver {
                         result.append(answer).append("\n\n");
                     }
                 }
-                String text = String.format(Resource.getInstance().getCorpus("prompt", "FORMAT_POLISH"),
+                String text = String.format(Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_POLISH"),
                         result.toString());
                 result.delete(0, result.length());
                 result.append(text).append("\n");

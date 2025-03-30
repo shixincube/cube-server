@@ -28,6 +28,8 @@ public abstract class ConversationSubtask {
 
     protected final static String CORPUS = "conversation";
 
+    protected final static String CORPUS_PROMPT = "prompt";
+
     public final Subtask name;
 
     protected AIGCService service;
@@ -81,7 +83,7 @@ public abstract class ConversationSubtask {
             }
         }
 
-        String prompt = String.format(Resource.getInstance().getCorpus("prompt", "FORMAT_POLISH"), text);
+        String prompt = String.format(Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_POLISH"), text);
         GeneratingRecord result = this.service.syncGenerateText(unit, prompt, null, null, null);
         if (null == result) {
             return text;
@@ -102,7 +104,7 @@ public abstract class ConversationSubtask {
             }
         }
 
-        String prompt = String.format(Resource.getInstance().getCorpus("prompt", "FORMAT_POLISH"), text);
+        String prompt = String.format(Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_POLISH"), text);
         GeneratingRecord result = this.service.syncGenerateText(unit, prompt, null, null, null);
         if (null == result) {
             return text;

@@ -35,15 +35,21 @@ public class Question {
 
     public final String prompt;
 
+    public final String inference;
+
     public final List<Answer> answers = new ArrayList<>();
 
     public final String choice;
+
+    public String answerContent;
 
     public Question(JSONObject structure) {
         this.sn = structure.getInt("sn");
         this.content = structure.getString("content");
         this.prompt = structure.has("prompt") ? structure.getString("prompt") : "";
+        this.inference = structure.has("inference") ? structure.getString("inference") : "";
         this.choice = structure.getString("choice");
+        this.answerContent = structure.has("answerContent") ? structure.getString("answerContent") : "";
         JSONArray array = structure.getJSONArray("answers");
         for (int i = 0; i < array.length(); ++i) {
             Answer answer = new Answer(this.sn, array.getJSONObject(i));
@@ -59,14 +65,26 @@ public class Question {
         return this.choice.equalsIgnoreCase(CHOICE_MULTIPLE);
     }
 
-    public boolean isDescriptiveChoice() {
+    public boolean isDescriptive() {
         return this.choice.equalsIgnoreCase(CHOICE_DESCRIPTIVE);
+    }
+
+    public void submitAnswerContent(String content) {
+        this.answerContent = content;
+    }
+
+    public String getAnswerContent() {
+        return this.answerContent;
+    }
+
+    public String makeInferencePrompt() {
+        return this.inference.replace("${content}", this.answerContent);
     }
 
     public void chooseAnswer(String code) {
         if (this.isSingleChoice()) {
             for (Answer answer : this.answers) {
-                if (answer.code.equals(code)) {
+                if (answer.code.equalsIgnoreCase(code)) {
                     answer.chosen = true;
                 }
                 else {
@@ -76,7 +94,7 @@ public class Question {
         }
         else {
             for (Answer answer : this.answers) {
-                if (answer.code.equals(code)) {
+                if (answer.code.equalsIgnoreCase(code)) {
                     answer.chosen = !answer.chosen;
                     break;
                 }
@@ -93,7 +111,31 @@ public class Question {
         return null;
     }
 
+    /**
+     * 是否已答题。
+     *
+     * @return
+     */
     public boolean hasAnswered() {
+        for (Answer answer : this.answers) {
+            if (answer.chosen) {
+                return true;
+            }
+        }
+
+        if (this.answerContent.length() > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 是否已完成答案选择。
+     *
+     * @return
+     */
+    public boolean hasChosen() {
         for (Answer answer : this.answers) {
             if (answer.chosen) {
                 return true;
@@ -107,7 +149,9 @@ public class Question {
         json.put("sn", this.sn);
         json.put("content", this.content);
         json.put("prompt", this.prompt);
+        json.put("inference", this.inference);
         json.put("choice", this.choice);
+        json.put("answerContent", this.answerContent);
 
         JSONArray array = new JSONArray();
         for (Answer answer : this.answers) {

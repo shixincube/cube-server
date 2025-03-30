@@ -26,6 +26,8 @@ public class ConversationWorker {
 
     private final static String CORPUS = "conversation";
 
+    private final static String CORPUS_PROMPT = "prompt";
+
     private final static String JUMP_POLISH = "润色";
 
     private AIGCService service;
@@ -322,7 +324,7 @@ public class ConversationWorker {
             }
         }
 
-        String prompt = String.format(Resource.getInstance().getCorpus("prompt", "FORMAT_POLISH"), text);
+        String prompt = String.format(Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_POLISH"), text);
         GeneratingRecord result = this.service.syncGenerateText(unit, prompt, null, null, null);
         if (null == result) {
             return text;
