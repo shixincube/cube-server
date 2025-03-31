@@ -11,6 +11,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.psychology.composition.Scale;
+import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
@@ -46,14 +47,15 @@ public class ListPsychologyScalesTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        if (null == service.getToken(token)) {
+        AuthToken authToken = service.getToken(token);
+        if (null == authToken) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        List<Scale> list = PsychologyScene.getInstance().listScales();
+        List<Scale> list = PsychologyScene.getInstance().listScales(authToken.getContactId());
         JSONArray array = new JSONArray();
         for (Scale scale : list) {
             array.put(scale.toCompactJSON());

@@ -31,6 +31,8 @@ public class Question {
 
     public final int sn;
 
+    public final boolean hidden;
+
     public final String content;
 
     public final String prompt;
@@ -43,11 +45,15 @@ public class Question {
 
     public String answerContent;
 
+    public String inferenceResult;
+
     public Question(JSONObject structure) {
         this.sn = structure.getInt("sn");
+        this.hidden = structure.has("hidden") && structure.getBoolean("hidden");
         this.content = structure.getString("content");
         this.prompt = structure.has("prompt") ? structure.getString("prompt") : "";
         this.inference = structure.has("inference") ? structure.getString("inference") : "";
+        this.inferenceResult = structure.has("inferenceResult") ? structure.getString("inferenceResult") : "";
         this.choice = structure.getString("choice");
         this.answerContent = structure.has("answerContent") ? structure.getString("answerContent") : "";
         JSONArray array = structure.getJSONArray("answers");
@@ -79,6 +85,10 @@ public class Question {
 
     public String makeInferencePrompt() {
         return this.inference.replace("${content}", this.answerContent);
+    }
+
+    public void setInferenceResult(String result) {
+        this.inferenceResult = result;
     }
 
     public void chooseAnswer(String code) {
@@ -147,11 +157,13 @@ public class Question {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
+        json.put("hidden", this.hidden);
         json.put("content", this.content);
         json.put("prompt", this.prompt);
         json.put("inference", this.inference);
         json.put("choice", this.choice);
         json.put("answerContent", this.answerContent);
+        json.put("inferenceResult", this.inferenceResult);
 
         JSONArray array = new JSONArray();
         for (Answer answer : this.answers) {

@@ -303,7 +303,7 @@ public class LensDataToolkit {
                     System.out.println("Download painting data: " + sn);
                     Painting painting = this.requestPaintingData(this.host, this.token, sn);
                     if (null != painting) {
-                        HTPEvaluation evaluation = new HTPEvaluation(painting);
+                        HTPEvaluation evaluation = new HTPEvaluation(0, painting);
                         EvaluationReport evaluationReport = evaluation.makeEvaluationReport();
                         BigFivePersonality feature = evaluationReport.getPersonalityAccelerator().getBigFivePersonality();
                         outputO = feature.getObligingness();

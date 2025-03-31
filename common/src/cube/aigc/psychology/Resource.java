@@ -205,12 +205,12 @@ public class Resource {
         return result;
     }
 
-    public List<Scale> listScales() {
+    public List<Scale> listScales(long contactId) {
         List<Scale> result = new ArrayList<>();
         List<File> files = this.listScaleFiles();
         for (File file : files) {
             try {
-                Scale scale = new Scale(file);
+                Scale scale = new Scale(file, contactId);
                 result.add(scale);
                 // 量表名对应文件
                 this.scaleNameFileMap.put(scale.name, file);
@@ -221,10 +221,10 @@ public class Resource {
         return result;
     }
 
-    public Scale loadScaleByName(String name) {
+    public Scale loadScaleByName(String name, long contactId) {
         File file = this.scaleNameFileMap.get(name);
         if (null == file) {
-            List<Scale> list = this.listScales();
+            List<Scale> list = this.listScales(contactId);
             for (Scale scale : list) {
                 if (scale.name.equalsIgnoreCase(name)) {
                     return scale;
@@ -233,7 +233,7 @@ public class Resource {
         }
         else {
             try {
-                return new Scale(file);
+                return new Scale(file, contactId);
             } catch (Exception e) {
                 Logger.w(this.getClass(), "#loadScaleByName - File error: " + file.getAbsolutePath(), e);
             }
@@ -242,14 +242,14 @@ public class Resource {
         return null;
     }
 
-    public Scale loadScaleByFilename(String filename) {
+    public Scale loadScaleByFilename(String filename, long contactId) {
         File file = new File(this.questionnairesPath, filename.endsWith(".json") ? filename : filename + ".json");
         if (!file.exists()) {
             Logger.w(this.getClass(), "#loadScaleByFilename - Can NOT find file: " + file.getAbsolutePath());
             return null;
         }
         try {
-            Scale scale = new Scale(file);
+            Scale scale = new Scale(file, contactId);
             this.scaleNameFileMap.put(scale.name, file);
             return scale;
         } catch (Exception e) {

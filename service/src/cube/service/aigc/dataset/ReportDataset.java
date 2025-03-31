@@ -187,7 +187,7 @@ public class ReportDataset {
                     Logger.w(this.getClass(), "#makeEvaluationDatasetFromScaleData - Painting is NOT valid: " + json.getLong("sn"));
                     continue;
                 }
-                HTPEvaluation evaluation = new HTPEvaluation(painting);
+                HTPEvaluation evaluation = new HTPEvaluation(0, painting);
                 report = evaluation.makeEvaluationReport();
             }
             else {

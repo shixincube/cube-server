@@ -18,7 +18,7 @@ public class QuestionSection {
 
     public final String content;
 
-    public final List<Question> questions;
+    private final List<Question> questions;
 
     public QuestionSection(JSONObject structure) {
         this.title = structure.getString("title");
@@ -28,6 +28,38 @@ public class QuestionSection {
         for (int i = 0; i < array.length(); ++i) {
             this.questions.add(new Question(array.getJSONObject(i)));
         }
+    }
+
+    public List<Question> getQuestions() {
+        List<Question> list = new ArrayList<>();
+        for (Question question : this.questions) {
+            if (question.hidden) {
+                continue;
+            }
+            list.add(question);
+        }
+        return list;
+    }
+
+    public int numQuestions() {
+        int num = 0;
+        for (Question question : this.questions) {
+            if (question.hidden) {
+                continue;
+            }
+            ++num;
+        }
+        return num;
+    }
+
+    public List<Question> getHiddenQuestions() {
+        List<Question> list = new ArrayList<>();
+        for (Question question : this.questions) {
+            if (question.hidden) {
+                list.add(question);
+            }
+        }
+        return list;
     }
 
     public JSONObject toJSON() {

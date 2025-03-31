@@ -317,7 +317,8 @@ public class QuestionnaireSubtask extends ConversationSubtask {
         }
         else {
             // 判断 Query 里的选项
-            String answerCode = this.matchSingleChoiceAnswer(scaleTrack.scale.getQuestion(scaleTrack.questionCursor).answers);
+            String answerCode = this.matchSingleChoiceAnswer(
+                    scaleTrack.scale.getQuestion(scaleTrack.questionCursor).answers);
             if (null == answerCode) {
                 // 无关话题
                 return this.processOffQueryForChoice(scaleTrack, true);
@@ -376,6 +377,45 @@ public class QuestionnaireSubtask extends ConversationSubtask {
             public void run() {
                 // 记录时间
                 scaleTrack.scale.setEndTimestamp(System.currentTimeMillis());
+
+                // 处理隐藏问题
+                List<Question> hiddenQuestions = scaleTrack.scale.getHiddenQuestions();
+                if (!hiddenQuestions.isEmpty()) {
+                    for (Question question : hiddenQuestions) {
+                        // 如果填写了推理则进行推理
+                        if (question.inference.length() > 1) {
+                            PsychologyScene.getInstance().inferScaleAnswer(scaleTrack.scale, question.sn);
+                        }
+                        else {
+                            question.chooseAnswer(question.answers.get(0).code);
+                        }
+                    }
+                }
+
+                // 检查选项
+                int countdown = 60;
+                List<Question> questions = scaleTrack.scale.getQuestions();
+                while (countdown > 0) {
+                    --countdown;
+                    int num = 0;
+                    for (Question question : questions) {
+                        if (question.hasChosen()) {
+                            ++num;
+                        }
+                    }
+                    if (num >= questions.size()) {
+                        break;
+                    }
+
+                    Logger.d(this.getClass(), "#processFinish - Waiting for finish: " + num + "/" + questions.size());
+
+                    // 等待
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
 
                 final Object mutex = new Object();
                 final ScaleReport scaleReport = service.generateScaleReport(channel, scaleTrack.scale, new ScaleReportListener() {

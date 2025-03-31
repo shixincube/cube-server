@@ -36,6 +36,6 @@ public class ScaleEvaluation {
             return null;
         }
 
-        return Resource.getInstance().loadScaleByFilename(con.name);
+        return Resource.getInstance().loadScaleByFilename(con.name, evaluationReport.getContactId());
     }
 }

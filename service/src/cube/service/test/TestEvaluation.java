@@ -121,7 +121,7 @@ public class TestEvaluation {
     public static void testMBTIScale() {
         System.out.println("testMBTIScale");
 
-        Scale scale = Resource.getInstance().loadScaleByFilename("MBTI-16Personalities");
+        Scale scale = Resource.getInstance().loadScaleByFilename("MBTI-16Personalities", 0);
 //        System.out.println(scale.toMarkdown());
 
         System.out.println("Complete: " + scale.isComplete());
@@ -143,7 +143,7 @@ public class TestEvaluation {
     public static void testSCL90Scale() {
         System.out.println("testSCL90Scale");
 
-        Scale scale = Resource.getInstance().loadScaleByFilename("SCL-90");
+        Scale scale = Resource.getInstance().loadScaleByFilename("SCL-90", 0);
         for (Question question : scale.getQuestions()) {
             switch (Utils.randomInt(1, 5)) {
                 case 1:
@@ -176,7 +176,7 @@ public class TestEvaluation {
     public static void testBigFiveScale() {
         System.out.println("testBigFiveScale");
 
-        Scale scale = Resource.getInstance().loadScaleByName("BigFive");
+        Scale scale = Resource.getInstance().loadScaleByName("BigFive", 0);
         for (Question question : scale.getQuestions()) {
             switch (Utils.randomInt(1, 5)) {
                 case 1:
@@ -209,7 +209,7 @@ public class TestEvaluation {
     public static void testPANASScale() {
         System.out.println("testPANASScale");
 
-        Scale scale = Resource.getInstance().loadScaleByName("PANAS");
+        Scale scale = Resource.getInstance().loadScaleByName("PANAS", 0);
 
         AnswerSheet answerSheet = new AnswerSheet(scale.getSN());
         for (Question question : scale.getQuestions()) {
@@ -268,7 +268,7 @@ public class TestEvaluation {
     public static void testPADScale() {
         System.out.println("testPADScale");
 
-        Scale scale = Resource.getInstance().loadScaleByName("PAD");
+        Scale scale = Resource.getInstance().loadScaleByName("PAD", 0);
         for (Question question : scale.getQuestions()) {
             switch (Utils.randomInt(1, 9)) {
                 case 1:

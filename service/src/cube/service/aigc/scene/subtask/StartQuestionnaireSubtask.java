@@ -40,7 +40,7 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
         String scaleName = this.extractScaleName();
 
         // 生成
-        Scale scale = PsychologyScene.getInstance().generateScale(scaleName,
+        Scale scale = PsychologyScene.getInstance().generateScale(channel.getAuthToken().getContactId(), scaleName,
                 new Attribute("male", 30, false));
         if (null == scale) {
             Logger.w(this.getClass(), "#execute - Load scale failed: " + channel.getAuthToken().getCode());
@@ -89,12 +89,16 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
     private String extractScaleName() {
         TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
         List<String> queryWords = analyzer.analyzeOnlyWords(this.query, 10);
-        List<Scale> scaleList = Resource.getInstance().listScales();
+        List<Scale> scaleList = Resource.getInstance().listScales(channel.getAuthToken().getContactId());
 
         for (Scale scale : scaleList) {
+            List<String> nameWords = analyzer.analyzeOnlyWords(scale.displayName, 5);
+
             for (String word : queryWords) {
-                if (word.equalsIgnoreCase(scale.name) || word.equalsIgnoreCase(scale.displayName)) {
-                    return scale.name;
+                for (String nameWord : nameWords) {
+                    if (word.equalsIgnoreCase(nameWord)) {
+                        return scale.name;
+                    }
                 }
             }
         }

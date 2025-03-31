@@ -33,6 +33,8 @@ public class EvaluationReport implements JSONable {
 
     public final static String UNIT = ModelConfig.BAIZE_UNIT;
 
+    private final long contactId;
+
     private Attribute attribute;
 
     private Reference reference;
@@ -64,13 +66,14 @@ public class EvaluationReport implements JSONable {
 
     private String version = AlgorithmVersion.toVersionString();
 
-    public EvaluationReport(Attribute attribute, Reference reference, PaintingConfidence paintingConfidence,
+    public EvaluationReport(long contactId, Attribute attribute, Reference reference, PaintingConfidence paintingConfidence,
                             EvaluationFeature evaluationFeature) {
-        this(attribute, reference, paintingConfidence, Collections.singletonList((evaluationFeature)));
+        this(contactId, attribute, reference, paintingConfidence, Collections.singletonList((evaluationFeature)));
     }
 
-    public EvaluationReport(Attribute attribute, Reference reference, PaintingConfidence paintingConfidence,
+    public EvaluationReport(long contactId, Attribute attribute, Reference reference, PaintingConfidence paintingConfidence,
                             List<EvaluationFeature> evaluationFeatureList) {
+        this.contactId = contactId;
         this.attribute = attribute;
         this.reference = reference;
         this.paintingConfidence = paintingConfidence;
@@ -86,6 +89,7 @@ public class EvaluationReport implements JSONable {
         if (json.has("version")) {
             this.version = json.getString("version");
         }
+        this.contactId = json.has("contactId") ? json.getLong("contactId") : 0;
         this.attribute = new Attribute(json.getJSONObject("attribute"));
         this.reference = json.has("reference") ?
                 Reference.parse(json.getString("reference")) : Reference.Normal;
@@ -129,6 +133,10 @@ public class EvaluationReport implements JSONable {
 
     public String getVersion() {
         return this.version;
+    }
+
+    public long getContactId() {
+        return this.contactId;
     }
 
     public boolean isUnknown() {
@@ -188,7 +196,7 @@ public class EvaluationReport implements JSONable {
             if (null != result.getScore(Indicator.Unknown)) {
                 this.unknown = true;
                 this.attention = Attention.FocusedAttention;
-                this.additionScales.add(Resource.getInstance().loadScaleByName("SCL-90"));
+                this.additionScales.add(Resource.getInstance().loadScaleByName("SCL-90", this.contactId));
                 return;
             }
 
@@ -325,7 +333,7 @@ public class EvaluationReport implements JSONable {
         if (returnVal.containsKey("additionScale")) {
             String scaleName = (String) returnVal.get("additionScale");
             if (scaleName.length() > 2) {
-                Scale scale = Resource.getInstance().loadScaleByName(scaleName);
+                Scale scale = Resource.getInstance().loadScaleByName(scaleName, contactId);
                 if (!this.additionScales.contains(scale)) {
                     this.additionScales.add(scale);
                 }
@@ -556,7 +564,7 @@ public class EvaluationReport implements JSONable {
         }
 
         if (score >= 4 || this.reference == Reference.Abnormal) {
-            Scale scale = Resource.getInstance().loadScaleByName("SCL-90");
+            Scale scale = Resource.getInstance().loadScaleByName("SCL-90", this.contactId);
             if (!this.additionScales.contains(scale)) {
                 this.additionScales.add(scale);
             }
@@ -866,6 +874,7 @@ public class EvaluationReport implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("version", this.version);
+        json.put("contactId", this.contactId);
         json.put("attribute", this.attribute.toJSON());
         json.put("reference", this.reference.name);
 
@@ -906,6 +915,7 @@ public class EvaluationReport implements JSONable {
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
         json.put("version", this.version);
+        json.put("contactId", this.contactId);
         json.put("attribute", this.attribute.toJSON());
         json.put("reference", this.reference.name);
 
@@ -949,6 +959,7 @@ public class EvaluationReport implements JSONable {
     public JSONObject toStrictJSON() {
         JSONObject json = new JSONObject();
         json.put("version", this.version);
+        json.put("contactId", this.contactId);
         json.put("attribute", this.attribute.toJSON());
         json.put("reference", this.reference.name);
 

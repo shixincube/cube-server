@@ -13,6 +13,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.Scale;
+import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
@@ -45,7 +46,8 @@ public class GetPsychologyScaleTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        if (null == service.getToken(token)) {
+        AuthToken authToken = service.getToken(token);
+        if (null == authToken) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, new JSONObject()));
             markResponseTime();
@@ -61,7 +63,7 @@ public class GetPsychologyScaleTask extends ServiceTask {
                 scale = PsychologyScene.getInstance().getScale(sn);
             }
             else if (null != name) {
-                scale = Resource.getInstance().loadScaleByName(name);
+                scale = Resource.getInstance().loadScaleByName(name, authToken.getContactId());
             }
 
             if (null != scale) {

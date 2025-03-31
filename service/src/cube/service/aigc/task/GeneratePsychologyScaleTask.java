@@ -12,6 +12,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.composition.Scale;
+import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
@@ -44,7 +45,8 @@ public class GeneratePsychologyScaleTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        if (null == service.getToken(token)) {
+        AuthToken authToken = service.getToken(token);
+        if (null == authToken) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, new JSONObject()));
             markResponseTime();
@@ -57,7 +59,7 @@ public class GeneratePsychologyScaleTask extends ServiceTask {
                     packet.data.getInt("age"),
                     packet.data.has("strict") && packet.data.getBoolean("strict"));
 
-            Scale scale = PsychologyScene.getInstance().generateScale(scaleName, attribute);
+            Scale scale = PsychologyScene.getInstance().generateScale(authToken.getContactId(), scaleName, attribute);
             if (null != scale) {
                 JSONObject scaleJson = scale.toJSON();
                 scaleJson.remove("scoringScript");

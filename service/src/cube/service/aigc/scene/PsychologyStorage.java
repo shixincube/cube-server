@@ -183,6 +183,9 @@ public class PsychologyStorage implements Storagable {
             new StorageField("name", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL,
+            }),
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -776,6 +779,7 @@ public class PsychologyStorage implements Storagable {
             return this.storage.executeInsert(this.scaleTable, new StorageField[] {
                     new StorageField("sn", scale.getSN()),
                     new StorageField("name", scale.name),
+                    new StorageField("contact_id", scale.getContactId()),
                     new StorageField("timestamp", scale.getTimestamp()),
                     new StorageField("gender", scale.getAttribute().gender),
                     new StorageField("age", scale.getAttribute().age),
@@ -786,6 +790,7 @@ public class PsychologyStorage implements Storagable {
         else {
             return this.storage.executeUpdate(this.scaleTable, new StorageField[] {
                     new StorageField("name", scale.name),
+                    new StorageField("contact_id", scale.getContactId()),
                     new StorageField("timestamp", scale.getTimestamp()),
                     new StorageField("gender", scale.getAttribute().gender),
                     new StorageField("age", scale.getAttribute().age),

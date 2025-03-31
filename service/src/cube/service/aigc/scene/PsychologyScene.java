@@ -30,6 +30,7 @@ import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import cube.util.FileUtils;
 import cube.util.ImageUtils;
+import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -605,16 +606,16 @@ public class PsychologyScene {
         return report;
     }
 
-    public List<Scale> listScales() {
-        return Resource.getInstance().listScales();
+    public List<Scale> listScales(long contactId) {
+        return Resource.getInstance().listScales(contactId);
     }
 
     public Scale getScale(long sn) {
         return this.storage.readScale(sn);
     }
 
-    public Scale generateScale(String scaleName, Attribute attribute) {
-        Scale scale = Resource.getInstance().loadScaleByName(scaleName);
+    public Scale generateScale(long contactId, String scaleName, Attribute attribute) {
+        Scale scale = Resource.getInstance().loadScaleByName(scaleName, contactId);
         if (null == scale) {
             Logger.w(this.getClass(), "#generateScale - Can NOT find scale: " + scaleName);
             return null;
@@ -704,6 +705,7 @@ public class PsychologyScene {
                 Logger.e(this.getClass(), "#inferScaleAnswer - Inference answer error: " + scale.getSN());
                 // 发生错误，选择第一个
                 question.chooseAnswer(question.answers.get(0).code);
+                question.setInferenceResult(question.answers.get(0).content);
                 return;
             }
 
@@ -719,6 +721,11 @@ public class PsychologyScene {
             int index = 0;
             for (List<String> answerKeyword : answerKeywordList) {
                 for (String word : answerKeyword) {
+                    if (TextUtils.isNumeric(word)) {
+                        // 跳过数字
+                        continue;
+                    }
+
                     if (result.answer.contains(word)) {
                         hit = question.answers.get(index);
                         break;
@@ -730,9 +737,15 @@ public class PsychologyScene {
                 }
             }
 
+            if (null == hit) {
+                Logger.e(this.getClass(), "#inferScaleAnswer - Can NOT find answer keyword: " + scale.getSN());
+                hit = question.answers.get(0);
+            }
+
             Logger.i(this.getClass(), "#inferScaleAnswer - scale: " +  scale.getSN() +
                     " - hit: " + hit.code + " - " + hit.content);
             question.chooseAnswer(hit.code);
+            question.setInferenceResult(result.answer);
         }
     }
 
@@ -1301,7 +1314,9 @@ public class PsychologyScene {
 
     private Workflow processReport(AIGCChannel channel, Painting painting, AIGCUnit unit) {
         HTPEvaluation evaluation = (null == painting) ?
-                new HTPEvaluation(new Attribute("male", 28, false)) : new HTPEvaluation(painting);
+                new HTPEvaluation(channel.getAuthToken().getContactId(),
+                        new Attribute("male", 28, false)) :
+                new HTPEvaluation(channel.getAuthToken().getContactId(), painting);
 
         // 生成评估报告
         EvaluationReport report = evaluation.makeEvaluationReport();

@@ -79,7 +79,7 @@ public class Questionnaire {
         int num = 0;
         int count = 0;
         for (QuestionSection section : this.questionSections) {
-            for (Question question : section.questions) {
+            for (Question question : section.getQuestions()) {
                 num += 1;
                 if (question.hasAnswered()) {
                     count += 1;
@@ -100,7 +100,7 @@ public class Questionnaire {
     public List<Answer> getAllChosenAnswers() {
         List<Answer> answers = new ArrayList<>();
         for (QuestionSection section : this.questionSections) {
-            for (Question question : section.questions) {
+            for (Question question : section.getQuestions()) {
                 Answer answer = question.getChosenAnswer();
                 if (null == answer) {
                     continue;
@@ -113,7 +113,7 @@ public class Questionnaire {
 
     public Question getQuestion(int sn) {
         for (QuestionSection section : this.questionSections) {
-            for (Question question : section.questions) {
+            for (Question question : section.getQuestions()) {
                 if (question.sn == sn) {
                     return question;
                 }
@@ -125,9 +125,7 @@ public class Questionnaire {
     public List<Question> getQuestions() {
         List<Question> result = new ArrayList<>();
         for (QuestionSection section : this.questionSections) {
-            for (Question question : section.questions) {
-                result.add(question);
-            }
+            result.addAll(section.getQuestions());
         }
         return result;
     }
@@ -135,9 +133,17 @@ public class Questionnaire {
     public int numQuestions() {
         int num = 0;
         for (QuestionSection section : this.questionSections) {
-            num += section.questions.size();
+            num += section.numQuestions();
         }
         return num;
+    }
+
+    public List<Question> getHiddenQuestions() {
+        List<Question> result = new ArrayList<>();
+        for (QuestionSection section : this.questionSections) {
+            result.addAll(section.getHiddenQuestions());
+        }
+        return result;
     }
 
     public String toMarkdown() {
@@ -149,7 +155,7 @@ public class Questionnaire {
             buf.append("## ").append(section.title).append("\n\n");
             buf.append(section.content).append("\n\n");
 
-            for (Question question : section.questions) {
+            for (Question question : section.getQuestions()) {
                 if (question.content.length() > 0) {
                     buf.append("* ").append(question.sn).append("、").append(question.content).append("  \n");
                     for (Answer answer : question.answers) {

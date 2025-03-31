@@ -38,6 +38,8 @@ public class HTPEvaluation extends Evaluation {
 
     private final double personAreaRatioThreshold = 0.015;
 
+    private long contactId;
+
     private Size canvasSize;
 
     private SpaceLayout spaceLayout;
@@ -48,12 +50,13 @@ public class HTPEvaluation extends Evaluation {
 
     private boolean printBigFive = false;
 
-    public HTPEvaluation(Attribute attribute) {
-        super(new Painting(attribute));
+    public HTPEvaluation(long contactId, Attribute attribute) {
+        this(contactId, new Painting(attribute));
     }
 
-    public HTPEvaluation(Painting painting) {
+    public HTPEvaluation(long contactId, Painting painting) {
         super(painting);
+        this.contactId = contactId;
         this.canvasSize = painting.getCanvasSize();
         this.spaceLayout = new SpaceLayout(painting);
         this.reference = Reference.Normal;
@@ -74,7 +77,7 @@ public class HTPEvaluation extends Evaluation {
 
                 this.reference = Reference.Abnormal;
                 Logger.d(this.getClass(), "#makeEvaluationReport - reference: " + this.reference.name);
-                report = new EvaluationReport(this.painting.getAttribute(), this.reference,
+                report = new EvaluationReport(this.contactId, this.painting.getAttribute(), this.reference,
                         new PaintingConfidence(this.painting), list);
                 return report;
             }
@@ -96,7 +99,7 @@ public class HTPEvaluation extends Evaluation {
             results.add(this.evalOthers());
             // 矫正
             results = this.correct(results);
-            report = new EvaluationReport(this.painting.getAttribute(), this.reference,
+            report = new EvaluationReport(this.contactId, this.painting.getAttribute(), this.reference,
                     new PaintingConfidence(this.painting), results);
 
             this.paintingFeatureSet = new PaintingFeatureSet(results, report.getRepresentationList());
@@ -110,7 +113,7 @@ public class HTPEvaluation extends Evaluation {
                 int index = Utils.randomInt(0, Term.values().length - 1);
                 result.addFeature("", Term.values()[index], Tendency.Positive);
             }
-            report = new EvaluationReport(this.painting.getAttribute(), this.reference,
+            report = new EvaluationReport(this.contactId, this.painting.getAttribute(), this.reference,
                     new PaintingConfidence(this.painting), result);
         }
 

@@ -31,6 +31,8 @@ public class Scale extends Questionnaire implements JSONable {
 
     private long sn;
 
+    private long contactId;
+
     private Attribute attribute;
 
     private File structureFile;
@@ -41,8 +43,9 @@ public class Scale extends Questionnaire implements JSONable {
 
     private ScaleResult result;
 
-    public Scale(File structureFile) {
+    public Scale(File structureFile, long contactId) {
         this.sn = Utils.generateSerialNumber();
+        this.contactId = contactId;
         this.structureFile = structureFile;
         this.timestamp = System.currentTimeMillis();
         this.build(this.readJsonFile(structureFile));
@@ -53,6 +56,9 @@ public class Scale extends Questionnaire implements JSONable {
 
         if (json.has("sn")) {
             this.sn = json.getLong("sn");
+        }
+        if (json.has("contactId")) {
+            this.contactId = json.getLong("contactId");
         }
         if (json.has("attribute")) {
             this.attribute = new Attribute(json.getJSONObject("attribute"));
@@ -71,6 +77,10 @@ public class Scale extends Questionnaire implements JSONable {
 
     public long getSN() {
         return this.sn;
+    }
+
+    public long getContactId() {
+        return this.contactId;
     }
 
     public long getTimestamp() {
@@ -213,6 +223,7 @@ public class Scale extends Questionnaire implements JSONable {
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
+        json.put("contactId", this.contactId);
         json.put("name", this.name);
         json.put("displayName", this.displayName);
         json.put("instruction", this.instruction);
