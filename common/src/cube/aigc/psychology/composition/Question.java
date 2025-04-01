@@ -43,6 +43,8 @@ public class Question {
 
     public final String choice;
 
+    public String questionContent;
+
     public String answerContent;
 
     public String inferenceResult;
@@ -55,6 +57,7 @@ public class Question {
         this.inference = structure.has("inference") ? structure.getString("inference") : "";
         this.inferenceResult = structure.has("inferenceResult") ? structure.getString("inferenceResult") : "";
         this.choice = structure.getString("choice");
+        this.questionContent = structure.has("questionContent") ? structure.getString("questionContent") : this.content;
         this.answerContent = structure.has("answerContent") ? structure.getString("answerContent") : "";
         JSONArray array = structure.getJSONArray("answers");
         for (int i = 0; i < array.length(); ++i) {
@@ -162,6 +165,7 @@ public class Question {
         json.put("prompt", this.prompt);
         json.put("inference", this.inference);
         json.put("choice", this.choice);
+        json.put("questionContent", this.questionContent);
         json.put("answerContent", this.answerContent);
         json.put("inferenceResult", this.inferenceResult);
 

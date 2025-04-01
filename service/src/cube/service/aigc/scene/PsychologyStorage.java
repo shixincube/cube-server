@@ -773,6 +773,8 @@ public class PsychologyStorage implements Storagable {
             });
 
         String dataString = scale.toJSON().toString();
+        // 过滤表情
+        dataString = EmojiFilter.filterEmoji(dataString);
         dataString = JSONUtils.serializeEscape(dataString);
 
         if (result.isEmpty()) {
@@ -871,6 +873,7 @@ public class PsychologyStorage implements Storagable {
 
     public boolean writeScaleReport(ScaleReport scaleReport) {
         String dataString = scaleReport.getFactorsAsJSONArray().toString();
+        dataString = EmojiFilter.filterEmoji(dataString);
         dataString = JSONUtils.serializeEscape(dataString);
 
         List<StorageField[]> result = this.storage.executeQuery(this.scaleReportTable, this.scaleReportFields,

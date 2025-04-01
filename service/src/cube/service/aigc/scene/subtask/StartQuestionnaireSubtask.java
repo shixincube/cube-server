@@ -24,7 +24,9 @@ import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.SceneManager;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class StartQuestionnaireSubtask extends ConversationSubtask {
 
@@ -87,20 +89,39 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
     }
 
     private String extractScaleName() {
+        List<Scale> scaleList = Resource.getInstance().listScales(channel.getAuthToken().getContactId());
+        List<AtomicInteger> hitCountList = new ArrayList<>();
+        for (int i = 0; i < scaleList.size(); ++i) {
+            hitCountList.add(new AtomicInteger());
+        }
+
         TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
         List<String> queryWords = analyzer.analyzeOnlyWords(this.query, 10);
-        List<Scale> scaleList = Resource.getInstance().listScales(channel.getAuthToken().getContactId());
 
-        for (Scale scale : scaleList) {
+        for (int i = 0; i < scaleList.size(); ++i) {
+            Scale scale = scaleList.get(i);
             List<String> nameWords = analyzer.analyzeOnlyWords(scale.displayName, 5);
 
             for (String word : queryWords) {
                 for (String nameWord : nameWords) {
                     if (word.equalsIgnoreCase(nameWord)) {
-                        return scale.name;
+                        hitCountList.get(i).incrementAndGet();
                     }
                 }
             }
+        }
+
+        int hitIndex = -1;
+        int maxValue = 0;
+        for (int i = 0; i < hitCountList.size(); ++i) {
+            if (hitCountList.get(i).get() > maxValue) {
+                maxValue = hitCountList.get(i).get();
+                hitIndex = i;
+            }
+        }
+
+        if (hitIndex >= 0 && hitCountList.get(hitIndex).get() >= 1) {
+            return scaleList.get(hitIndex).name;
         }
 
         return "HAMA";

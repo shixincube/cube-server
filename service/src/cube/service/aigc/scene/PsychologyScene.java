@@ -790,8 +790,8 @@ public class PsychologyScene {
             this.submitScale(scale);
         }
 
-        if (null == scale.getResult() || null == scale.getResult().prompt || scale.getResult().prompt.isEmpty()) {
-            Logger.w(this.getClass(), "#generateScaleReport - Scale prompt data is empty: " + scale.getSN());
+        if (null == scale.getResult() || null == scale.getResult().prompt) {
+            Logger.w(this.getClass(), "#generateScaleReport - Scale prompt data is null: " + scale.getSN());
             return null;
         }
 
@@ -1361,6 +1361,11 @@ public class PsychologyScene {
     }
 
     private AIGCStateCode processScaleReport(ScaleReportTask task) {
+        if (task.scaleReport.getResult().prompt.isEmpty()) {
+            // 没有可用的提示词
+            return AIGCStateCode.Ok;
+        }
+
         Workflow workflow = new Workflow(this.service, task.scaleReport.getAttribute());
 
         for (ScaleFactor factor : task.scaleReport.getFactors()) {

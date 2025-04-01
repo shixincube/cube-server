@@ -103,7 +103,8 @@ public class ServiceStorage implements Storagable {
             new StorageField("sha1", LiteralBase.STRING),
             new StorageField("file_url", LiteralBase.STRING),
             new StorageField("file_secure_url", LiteralBase.STRING),
-            new StorageField("direct_url", LiteralBase.STRING)
+            new StorageField("direct_url", LiteralBase.STRING),
+            new StorageField("context", LiteralBase.STRING)
     };
 
     /**

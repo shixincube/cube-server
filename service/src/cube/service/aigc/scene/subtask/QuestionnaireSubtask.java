@@ -20,6 +20,7 @@ import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.ScaleReportListener;
 import cube.service.aigc.scene.SceneManager;
+import cube.util.TextUtils;
 import cube.util.TimeDuration;
 import cube.util.TimeUtils;
 
@@ -77,13 +78,15 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         GeneratingRecord record = new GeneratingRecord(query);
 
                         if (scaleTrack.getQuestion().isDescriptive()) {
-                            GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, questionMD,
+                            GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, questionMD,
                                     null, null, null);
                             if (null == result) {
-                                result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, questionMD,
+                                result = service.syncGenerateText(ModelConfig.BAIZE_UNIT, questionMD,
                                         null, null, null);
                             }
                             record.answer = (null != result) ? result.answer : scaleTrack.getQuestion().content;
+                            record.answer = filterList(record.answer, 5);
+                            scaleTrack.getQuestion().questionContent = record.answer;
                         }
                         else {
                             record.answer = String.format(
@@ -212,6 +215,8 @@ public class QuestionnaireSubtask extends ConversationSubtask {
         }
         else if (roundSubtask == Subtask.Yes) {
             // 执行继续
+            Logger.d(this.getClass(), "#execute - The roundSubtask is YES: " + channel.getCode());
+
             if (scaleTrack.questionCursor >= scaleTrack.scale.numQuestions() || scaleTrack.scale.isComplete()) {
                 // 结束
                 return this.processFinish(scaleTrack);
@@ -234,13 +239,15 @@ public class QuestionnaireSubtask extends ConversationSubtask {
 
                         if (question.isDescriptive()) {
                             String questionMD = makeQuestion(scaleTrack.scale, scaleTrack.questionCursor);
-                            GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, questionMD,
+                            GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, questionMD,
                                     null, null, null);
                             if (null == result) {
-                                result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, questionMD,
+                                result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, questionMD,
                                         null, null, null);
                             }
-                            answer.append((null != result) ? result.answer : question.content);
+                            String resultAnswer = filterList((null != result) ? result.answer : question.content, 5);
+                            answer.append(resultAnswer);
+                            question.questionContent = resultAnswer;
                         }
                         else {
                             if (null != prevQuestion) {
@@ -281,12 +288,12 @@ public class QuestionnaireSubtask extends ConversationSubtask {
             // 判断 Query 内容的匹配信息
             String prompt = String.format(
                     Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_ANALYSIS_QUESTION_POSSIBILITY"),
-                    query,
-                    question.content);
-            GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt,
+                    query.replaceAll("\n", ""),
+                    question.questionContent.replaceAll("\n", ""));
+            GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt,
                     null, null, null);
             if (null == result) {
-                result = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt,
+                result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
                         null, null, null);
             }
 
@@ -306,12 +313,17 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 return AIGCStateCode.Ok;
             }
 
-            if (result.answer.contains(Resource.getInstance().getCorpus(CORPUS_PROMPT, "NO"))) {
+            if (result.answer.contains(Resource.getInstance().getCorpus(CORPUS_PROMPT, "NO")) &&
+                    roundSubtask != Subtask.No) {
                 // 不是
+                Logger.d(this.getClass(), "#execute - The answer is NO - " + channel.getCode()
+                        + " - " + scaleTrack.scale.getSN());
                 return this.processOffQuery(scaleTrack);
             }
             else {
                 // 是
+                Logger.d(this.getClass(), "#execute - The answer is YES - " + channel.getCode()
+                        + " - " + scaleTrack.scale.getSN());
                 return this.processOnQuery(scaleTrack);
             }
         }
@@ -393,7 +405,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 }
 
                 // 检查选项
-                int countdown = 60;
+                int countdown = 90;
                 List<Question> questions = scaleTrack.scale.getQuestions();
                 while (countdown > 0) {
                     --countdown;
@@ -442,8 +454,12 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 });
 
                 if (null == scaleReport) {
+                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                    complexContext.setSubtask(Subtask.StopQuestionnaire);
+
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_FAILED");
+                    record.context = complexContext;
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
@@ -476,6 +492,10 @@ public class QuestionnaireSubtask extends ConversationSubtask {
 
                 GeneratingRecord record = new GeneratingRecord(query);
                 record.answer = prefix + "\n\n" + scaleReport.getResult().content;
+
+                // 增加阅读说明
+                record.answer = "\n\n" + Resource.getInstance().getCorpus("report", "READING_INSTRUCTION");
+
                 record.context = complexContext;
                 listener.onGenerated(channel, record);
                 channel.setProcessing(false);
@@ -516,10 +536,10 @@ public class QuestionnaireSubtask extends ConversationSubtask {
 
             String answer = String.format(
                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_OFF_TOPICS"),
-                    scaleTrack.scale.getQuestion(scaleTrack.questionCursor),
+                    scaleTrack.scale.getQuestion(scaleTrack.questionCursor).content,
                     "");
             GeneratingRecord record = new GeneratingRecord(query);
-            record.answer = polish(answer);
+            record.answer = filterSecondPerson(fastPolish(answer));
             record.context = complexContext;
             listener.onGenerated(channel, record);
             channel.setProcessing(false);
@@ -559,17 +579,24 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
                     complexContext.setSubtask(Subtask.Questionnaire);
 
-                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
                             prompt, null, null, null);
                     if (null == result) {
-                        result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
+                        result = service.syncGenerateText(ModelConfig.BAIZE_UNIT,
                                 prompt, null, null, null);
                     }
 
                     GeneratingRecord record = new GeneratingRecord(query);
-                    record.answer = Resource.getInstance().getCorpus(CORPUS, "PREFIX_NEXT_QUESTION")
-                            + "\n\n" + ((null != result) ? result.answer : scaleTrack.getQuestion().content);
+
+                    String resultAnswer = filterList(
+                            (null != result) ? result.answer : scaleTrack.getQuestion().content, 5);
+
+                    record.answer = fastPolish(Resource.getInstance().getCorpus(CORPUS, "PREFIX_NEXT_QUESTION"))
+                            + "\n\n" + resultAnswer;
                     record.context = complexContext;
+
+                    scaleTrack.getQuestion().questionContent = resultAnswer;
+
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
@@ -577,11 +604,11 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             convCtx, record);
                 }
             });
+            return AIGCStateCode.Ok;
         }
         else {
-            this.processFinish(scaleTrack);
+            return this.processFinish(scaleTrack);
         }
-        return AIGCStateCode.Ok;
     }
 
     private AIGCStateCode processOffQueryForChoice(SceneManager.ScaleTrack scaleTrack, boolean analysis) {
@@ -820,5 +847,37 @@ public class QuestionnaireSubtask extends ConversationSubtask {
         }
 
         return null;
+    }
+
+    /**
+     * 将有序列表转分段。
+     *
+     * @param text
+     * @param maxLines
+     * @return
+     */
+    private String filterList(String text, int maxLines) {
+        int count = 0;
+        StringBuilder buf = new StringBuilder();
+        String[] lines = text.split("\n");
+        for (String line : lines) {
+            if (line.length() == 0) {
+                continue;
+            }
+
+            if (TextUtils.isNumeric(line.charAt(0))) {
+                buf.append(line.substring(3));
+            }
+            else {
+                buf.append(line);
+            }
+            buf.append("\n\n");
+            ++count;
+            if (count >= maxLines) {
+                break;
+            }
+        }
+        buf.delete(buf.length() - 2, buf.length());
+        return buf.toString();
     }
 }

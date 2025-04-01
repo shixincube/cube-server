@@ -96,7 +96,7 @@ public abstract class ConversationSubtask {
         if (null == unit) {
             unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_X_UNIT);
             if (null == unit) {
-                unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+                unit = this.service.selectUnitByName(ModelConfig.BAIZE_UNIT);
                 if (null == unit) {
                     Logger.d(this.getClass(), "#fastPolish - Can NOT find unit");
                     return text;
@@ -232,6 +232,11 @@ public abstract class ConversationSubtask {
         }
 
         return (result.isEmpty()) ? null : result;
+    }
+
+    protected String filterSecondPerson(String text) {
+        String result = text.replaceAll("各位", "您");
+        return result.replaceAll("受测人", "您");
     }
 
     public abstract AIGCStateCode execute(Subtask roundSubtask);

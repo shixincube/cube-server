@@ -367,7 +367,7 @@ public class ConversationWorker {
             Logger.d(this.getClass(), "#matchSubtask - " + questionAnswer.getQuestions().get(0) + " : " +
                     questionAnswer.getAnswers().get(0) + " - " + questionAnswer.getScore());
 
-            if (questionAnswer.getScore() < 0.8) {
+            if (questionAnswer.getScore() < 0.86) {
                 // 跳过得分低的问答
                 continue;
             }
