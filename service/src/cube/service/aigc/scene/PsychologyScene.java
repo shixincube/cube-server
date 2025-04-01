@@ -24,7 +24,6 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.cv.CVService;
-import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
@@ -424,19 +423,19 @@ public class PsychologyScene {
                         reportTask.listener.onReportEvaluating(reportTask.report);
 
                         // 根据图像推理报告
-                        Workflow workflow = processReport(reportTask.channel, painting, unit);
+                        EvaluationWorker evaluationWorker = processReport(reportTask.channel, painting, unit);
 
                         // 将特征集数据填写到报告，这里仅仅是方便客户端获取特征描述文本
-                        reportTask.report.paintingFeatureSet = workflow.getPaintingFeatureSet();
+                        reportTask.report.paintingFeatureSet = evaluationWorker.getPaintingFeatureSet();
                         // 设置评估数据
-                        reportTask.report.setEvaluationReport(workflow.getEvaluationReport());
+                        reportTask.report.setEvaluationReport(evaluationWorker.getEvaluationReport());
 
                         // 修改状态
                         reportTask.report.setState(AIGCStateCode.Inferencing);
 
                         // 执行工作流，制作报告数据
-                        workflow = workflow.make(reportTask.theme, reportTask.maxIndicatorTexts);
-                        if (null == workflow) {
+                        evaluationWorker = evaluationWorker.make(reportTask.theme, reportTask.maxIndicatorTexts);
+                        if (null == evaluationWorker) {
                             // 推理生成报告失败
                             Logger.w(PsychologyScene.class, "#generatePredictingReport - onReportEvaluateFailed (IllegalOperation): " +
                                     reportTask.fileLabel.getFileCode());
@@ -449,9 +448,9 @@ public class PsychologyScene {
                         }
 
                         // 填写数据
-                        workflow.fillReport(reportTask.report);
+                        evaluationWorker.fillReport(reportTask.report);
 
-                        if (workflow.isUnknown()) {
+                        if (evaluationWorker.isUnknown()) {
                             // 未能处理的图片
                             Logger.w(PsychologyScene.class, "#generatePredictingReport - onReportEvaluateCompleted (InvalidData): " +
                                     reportTask.fileLabel.getFileCode());
@@ -463,8 +462,8 @@ public class PsychologyScene {
                             // 存储
                             storage.writePsychologyReport(reportTask.report);
                             storage.writePainting(reportTask.report.sn, reportTask.fileLabel.getFileCode(), painting);
-                            if (null != workflow.getPaintingFeatureSet()) {
-                                PaintingFeatureSet paintingFeatureSet = workflow.getPaintingFeatureSet();
+                            if (null != evaluationWorker.getPaintingFeatureSet()) {
+                                PaintingFeatureSet paintingFeatureSet = evaluationWorker.getPaintingFeatureSet();
                                 storage.writePaintingFeatureSet(paintingFeatureSet);
                             }
 
@@ -490,15 +489,15 @@ public class PsychologyScene {
                         reportTask.channel.setProcessing(false);
 
                         // 填写数据
-                        workflow.fillReport(reportTask.report);
+                        evaluationWorker.fillReport(reportTask.report);
                         // 生成 Markdown 调试信息
                         reportTask.report.makeMarkdown();
 
                         // 存储
                         storage.writePsychologyReport(reportTask.report);
                         storage.writePainting(reportTask.report.sn, reportTask.fileLabel.getFileCode(), painting);
-                        if (null != workflow.getPaintingFeatureSet()) {
-                            PaintingFeatureSet paintingFeatureSet = workflow.getPaintingFeatureSet();
+                        if (null != evaluationWorker.getPaintingFeatureSet()) {
+                            PaintingFeatureSet paintingFeatureSet = evaluationWorker.getPaintingFeatureSet();
                             storage.writePaintingFeatureSet(paintingFeatureSet);
                         }
 
@@ -1312,7 +1311,7 @@ public class PsychologyScene {
         }
     }
 
-    private Workflow processReport(AIGCChannel channel, Painting painting, AIGCUnit unit) {
+    private EvaluationWorker processReport(AIGCChannel channel, Painting painting, AIGCUnit unit) {
         HTPEvaluation evaluation = (null == painting) ?
                 new HTPEvaluation(channel.getAuthToken().getContactId(),
                         new Attribute("male", 28, false)) :
@@ -1321,14 +1320,14 @@ public class PsychologyScene {
         // 生成评估报告
         EvaluationReport report = evaluation.makeEvaluationReport();
 
-        Workflow workflow = new Workflow(report, this.service);
+        EvaluationWorker evaluationWorker = new EvaluationWorker(report, this.service);
         if (report.isEmpty()) {
             Logger.w(this.getClass(), "#processReport - No things in painting: " + channel.getAuthToken().getContactId());
-            return workflow;
+            return evaluationWorker;
         }
 
         // 设置绘画特征集
-        workflow.setPaintingFeatureSet(evaluation.getPaintingFeatureSet());
+        evaluationWorker.setPaintingFeatureSet(evaluation.getPaintingFeatureSet());
 
         // 进行指标因子推理
         JSONObject data = new JSONObject();
@@ -1346,7 +1345,7 @@ public class PsychologyScene {
                 JSONObject responseData = Packet.extractDataPayload(response);
                 FactorSet factorSet = new FactorSet(responseData.getJSONObject("result"));
                 // 合并因子集合
-                workflow.mergeFactorSet(factorSet);
+                evaluationWorker.mergeFactorSet(factorSet);
             }
             else {
                 Logger.w(this.getClass(), "#processReport - Predict factor response state: " +
@@ -1357,7 +1356,7 @@ public class PsychologyScene {
             Logger.w(this.getClass(), "#processReport - Predict factor unit error");
         }
 
-        return workflow;
+        return evaluationWorker;
     }
 
     private AIGCStateCode processScaleReport(ScaleReportTask task) {
@@ -1366,7 +1365,7 @@ public class PsychologyScene {
             return AIGCStateCode.Ok;
         }
 
-        Workflow workflow = new Workflow(this.service, task.scaleReport.getAttribute());
+        EvaluationWorker evaluationWorker = new EvaluationWorker(this.service, task.scaleReport.getAttribute());
 
         for (ScaleFactor factor : task.scaleReport.getFactors()) {
             ScalePrompt.Factor prompt = task.scale.getResult().prompt.getFactor(factor.name);
@@ -1376,7 +1375,7 @@ public class PsychologyScene {
             }
 
             String description = null;
-            if (workflow.isSpeed()) {
+            if (evaluationWorker.isSpeed()) {
                 Logger.d(this.getClass(), "processScaleReport - factor prompt: " +
                         prompt.name + " - " + prompt.description);
                 description = ContentTools.fastInfer(prompt.description, this.service.getTokenizer());
@@ -1399,7 +1398,7 @@ public class PsychologyScene {
 
             if (null != prompt.suggestion && prompt.suggestion.length() > 3) {
                 String suggestion = null;
-                if (workflow.isSpeed()) {
+                if (evaluationWorker.isSpeed()) {
                     Logger.d(this.getClass(), "processScaleReport - factor prompt: " +
                             prompt.name + " - " + prompt.suggestion);
                     suggestion =  ContentTools.fastInfer(prompt.suggestion, this.service.getTokenizer());

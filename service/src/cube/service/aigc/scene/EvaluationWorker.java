@@ -24,9 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 工作流。
+ * 评估工作器。
  */
-public class Workflow {
+public class EvaluationWorker {
 
     private final static String PERSONALITY_FORMAT = "已知受测人的人格特点如下：\n\n%s\n\n根据上述信息回答问题，不能编造成分，问题是：总结受测人的人格特点。";
 
@@ -50,12 +50,12 @@ public class Workflow {
 
     private PaintingFeatureSet paintingFeatureSet;
 
-    public Workflow(AIGCService service, Attribute attribute) {
+    public EvaluationWorker(AIGCService service, Attribute attribute) {
         this.service = service;
         this.attribute = attribute;
     }
 
-    public Workflow(EvaluationReport evaluationReport, AIGCService service) {
+    public EvaluationWorker(EvaluationReport evaluationReport, AIGCService service) {
         this.attribute = evaluationReport.getAttribute();
         this.evaluationReport = evaluationReport;
         this.service = service;
@@ -144,7 +144,7 @@ public class Workflow {
         return this.evaluationReport.isUnknown();
     }
 
-    public Workflow make(Theme theme, int maxIndicatorTexts) {
+    public EvaluationWorker make(Theme theme, int maxIndicatorTexts) {
 //        int age = this.evaluationReport.getAttribute().age;
 //        String gender = this.evaluationReport.getAttribute().gender;
 

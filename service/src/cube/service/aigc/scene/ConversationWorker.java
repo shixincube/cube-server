@@ -282,7 +282,7 @@ public class ConversationWorker {
 
         // 获取单元
         String unitName = prompt.length() > 1000 || prompt.contains(JUMP_POLISH) ?
-                ModelConfig.BAIZE_X_UNIT : ModelConfig.BAIZE_NEXT_UNIT;
+                ModelConfig.BAIZE_X_UNIT : ModelConfig.BAIZE_UNIT;
         AIGCUnit unit = this.service.selectUnitByName(unitName);
         if (null == unit) {
             Logger.w(this.getClass(), "#work - Can NOT find idle unit \"" + unitName + "\"");
