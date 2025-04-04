@@ -4,7 +4,9 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.aigc.scene.workflow;
+package cube.service.aigc.guidance;
 
-public class Workflow {
+public interface GuideListener {
+
+    
 }

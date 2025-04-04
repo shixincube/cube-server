@@ -1,0 +1,118 @@
+{
+    "name": "MINI",
+    "displayName": "Mini International Neuropsychiatric Interview",
+    "instruction": "",
+    "sections": [
+        {
+            "evaluation": "",
+            "questions": [
+                {
+                    "sn": "A1a",
+                    "question": "您是否曾经在两个星期几乎每天的大部分时间里都觉得抑郁或情绪低落?",
+                    "original": true,
+                    "answers": [
+                        {
+                            "code": "false",
+                            "content": "否"
+                        },
+                        {
+                            "code": "true",
+                            "content": "是"
+                        }
+                    ],
+                    "router": {
+                        "rule": "if-else",
+                        "route": {
+                            "true": {
+                                "answer": "是",
+                                "jump": "A1b"
+                            },
+                            "false": {
+                                "answer": "否",
+                                "jump": "A2a"
+                            }
+                        }
+                    }
+                },
+                {
+                    "sn": "A1b",
+                    "question": "在过去的两周里，您是否几乎每天的大部分时间都觉得抑郁或情绪低落?",
+                    "original": true,
+                    "answers": [
+                        {
+                            "code": "false",
+                            "content": "否"
+                        },
+                        {
+                            "code": "true",
+                            "content": "是"
+                        }
+                    ]
+                },
+                {
+                    "sn": "A2a",
+                    "question": "您是否曾经在两个星期的大部分时间里对大多数的事物表现出更少的兴趣或对曾经喜欢的事物表现出更少的喜爱?",
+                    "original": true,
+                    "answers": [
+                        {
+                            "code": "false",
+                            "content": "否"
+                        },
+                        {
+                            "code": "true",
+                            "content": "是"
+                        }
+                    ],
+                    "router": {
+                        "rule": "if-else",
+                        "route": {
+                            "true": {
+                                "answer": "是",
+                                "jump": "A2b"
+                            }
+                        }
+                    }
+                },
+                {
+                    "sn": "A2b",
+                    "question": "在过去的两周里，您是否在大部分的时间里对大多数的事物表现出更少的兴趣或对曾经喜欢的事物表现出更少的喜爱?",
+                    "original": true,
+                    "answers": [
+                        {
+                            "code": "false",
+                            "content": "否"
+                        },
+                        {
+                            "code": "true",
+                            "content": "是"
+                        }
+                    ],
+                    "post": "evaluation"
+                },
+                {
+                    "sn": "A3a",
+                    "constraint": "如果 A1b 或 A2b 的答案是“true”追问当前的状况以及既往发作的最常见的症状，否则如果 A1b 和 A2b 的答案是“false”只追问既往发作的最常见的症状",
+                    "prefix": "在过去的两周期间，当您觉得抑郁或不感兴趣时：",
+                    "question": "您的食欲几乎每天是减少还是增加呢? 您的体重是否会在不刻意努力的情况下减少或增加?",
+                    "original": false,
+                    "answers": [
+                        {
+                            "group": "A",
+                            "content": "过去的2周",
+                            "answers": [
+                                {
+                                    "code": "false",
+                                    "content": "否"
+                                },
+                                {
+                                    "code": "true",
+                                    "content": "是"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

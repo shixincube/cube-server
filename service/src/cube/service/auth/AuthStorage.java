@@ -351,7 +351,7 @@ public class AuthStorage implements Storagable {
         List<StorageField[]> result = this.storage.executeQuery(this.tokenTable, this.tokenFields, new Conditional[] {
                 Conditional.createEqualTo("code", LiteralBase.STRING, code)
         });
-        if (result.isEmpty()) {
+        if (null == result || result.isEmpty()) {
             return null;
         }
 
@@ -373,7 +373,7 @@ public class AuthStorage implements Storagable {
                 Conditional.createAnd(),
                 Conditional.createEqualTo("cid", contactId)
         });
-        if (result.isEmpty()) {
+        if (null == result || result.isEmpty()) {
             return null;
         }
 
