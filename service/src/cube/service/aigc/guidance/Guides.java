@@ -6,6 +6,8 @@
 
 package cube.service.aigc.guidance;
 
+import cell.util.log.Logger;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,19 +21,35 @@ public class Guides {
     private static Map<String, GuideFlow> sGuideFlowMap = new ConcurrentHashMap<>();
 
     public static List<GuideFlow> listGuideFlows() {
+        refresh();
+        return new ArrayList<>(sGuideFlowMap.values());
+    }
+
+    public static GuideFlow getGuideFlow(String name) {
+        refresh();
+        for (GuideFlow guideFlow : sGuideFlowMap.values()) {
+            if (guideFlow.getName().equalsIgnoreCase(name)) {
+                return new GuideFlow(guideFlow.toJSON());
+            }
+        }
+        return null;
+    }
+
+    private static void refresh() {
         File[] files = sRootPath.listFiles();
         if (null != files) {
             for (File file : files) {
                 if (file.isFile() && file.getName().endsWith(".json")) {
-                    GuideFlow guideFlow = sGuideFlowMap.get(file.getName());
-                    if (null == guideFlow || guideFlow.getLoadTimestamp() != file.lastModified()) {
-                        sGuideFlowMap.put(file.getName(), new GuideFlow(file));
+                    GuideFlow track = sGuideFlowMap.get(file.getName());
+                    if (null == track || track.getLoadTimestamp() != file.lastModified()) {
+                        try {
+                            sGuideFlowMap.put(file.getName(), new GuideFlow(file));
+                        } catch (Exception e) {
+                            Logger.e(Guides.class, "#refresh", e);
+                        }
                     }
                 }
             }
         }
-        List<GuideFlow> result = new ArrayList<>();
-        result.addAll(sGuideFlowMap.values());
-        return result;
     }
 }

@@ -4,16 +4,17 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.aigc.guidance;
+package cube.aigc.guidance;
 
 import org.json.JSONObject;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class Router {
 
-    public final static String RULE_IF_ELSE = "if-else";
+    public final static String RULE_TRUE_FALSE = "true-or-false";
 
     private String rule;
 
@@ -31,9 +32,33 @@ public class Router {
         this.route = new Route(exportMap);
     }
 
+    public String getRule() {
+        return this.rule;
+    }
+
+    public Route getRoute() {
+        return this.route;
+    }
+
+    public RouteExport getRouteExport(String code) {
+        return this.route.exportMap.get(code);
+    }
+
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("rule", this.rule);
+
+        Iterator<Map.Entry<String, RouteExport>> iter = this.route.exportMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, RouteExport> e = iter.next();
+            json.put(e.getKey(), e.getValue().toJSON());
+        }
+        return json;
+    }
+
     public class Route {
 
-        final Map<String, RouteExport> exportMap;
+        public final Map<String, RouteExport> exportMap;
 
         public Route(Map<String, RouteExport> exportMap) {
             this.exportMap = exportMap;
@@ -49,6 +74,13 @@ public class Router {
         public RouteExport(String answer, String jump) {
             this.answer = answer;
             this.jump = jump;
+        }
+
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("answer", this.answer);
+            json.put("jump", this.jump);
+            return json;
         }
     }
 }

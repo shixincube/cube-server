@@ -96,11 +96,8 @@ public abstract class ConversationSubtask {
         if (null == unit) {
             unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_X_UNIT);
             if (null == unit) {
-                unit = this.service.selectUnitByName(ModelConfig.BAIZE_UNIT);
-                if (null == unit) {
-                    Logger.d(this.getClass(), "#fastPolish - Can NOT find unit");
-                    return text;
-                }
+                Logger.d(this.getClass(), "#fastPolish - Can NOT find unit");
+                return text;
             }
         }
 

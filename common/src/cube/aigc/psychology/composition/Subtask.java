@@ -42,6 +42,12 @@ public enum Subtask {
 
     StopQuestionnaire("stop_questionnaire"),
 
+    StartGuideFlow("start_guide_flow"),
+
+    StopGuideFlow("stop_guide_flow"),
+
+    GuideFlow("guide_flow"),
+
     SuperAdmin("super_admin"),
 
     None("none"),

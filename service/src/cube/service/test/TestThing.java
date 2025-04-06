@@ -7,7 +7,7 @@ import java.io.File;
 public class TestThing {
 
     public static void testPromptBuilder() {
-        File file = new File("assets/prompt/psychology_01.json");
+        File file = new File("assets/prompt/guide.json");
         PromptBuilder builder = new PromptBuilder();
         String prompt = builder.serializeFromFile(file);
         System.out.println(prompt);

@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.aigc.guidance;
+package cube.aigc.guidance;
 
 public class FlowNode {
 

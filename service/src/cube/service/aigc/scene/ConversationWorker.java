@@ -259,6 +259,33 @@ public class ConversationWorker {
                     relation, convCtx, listener);
             return task.execute(roundSubtask);
         }
+        else if (Subtask.GuideFlow == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - GuideFlow: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 执行子任务
+            GuideFlowSubtask task = new GuideFlowSubtask(this.service, channel, query, context,
+                    relation, convCtx, listener);
+            return task.execute(roundSubtask);
+        }
+        else if (Subtask.StartGuideFlow == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - StartGuideFlow: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 执行子任务
+            StartGuideFlowSubtask task = new StartGuideFlowSubtask(this.service, channel, query, context,
+                    relation, convCtx, listener);
+            return task.execute(roundSubtask);
+        }
+        else if (Subtask.StopGuideFlow == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - StopGuideFlow: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 执行子任务
+            StopGuideFlowSubtask task = new StopGuideFlowSubtask(this.service, channel, query, context,
+                    relation, convCtx, listener);
+            return task.execute(roundSubtask);
+        }
         else if (Subtask.Yes == subtask) {
             Logger.d(this.getClass(), "#work - Subtask - Yes/Continue: " +
                     channel.getAuthToken().getCode() + "/" + channel.getCode());

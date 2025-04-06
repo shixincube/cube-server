@@ -54,7 +54,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                     @Override
                     public void run() {
                         GeneratingRecord record = new GeneratingRecord(query);
-                        record.answer = polish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_FILE"));
+                        record.answer = fastPolish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_FILE_FOR_PREDICT"));
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 

@@ -6,6 +6,7 @@
 
 package cube.aigc.psychology.composition;
 
+import cube.aigc.guidance.GuideFlowable;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
 import cube.auth.AuthToken;
@@ -39,6 +40,8 @@ public class ConversationContext implements JSONable {
     private List<GeneratingRecord> records;
 
     private List<PaintingReport> reportList;
+
+    private GuideFlowable guideFlow;
 
     private boolean superAdmin;
 
@@ -108,6 +111,14 @@ public class ConversationContext implements JSONable {
         return this.reportList;
     }
 
+    public void setGuideFlow(GuideFlowable guideFlow) {
+        this.guideFlow = guideFlow;
+    }
+
+    public GuideFlowable getGuideFlow() {
+        return this.guideFlow;
+    }
+
     public void setSuperAdmin(boolean value) {
         this.superAdmin = value;
     }
@@ -124,6 +135,7 @@ public class ConversationContext implements JSONable {
         this.currentSubtask = null;
         this.records.clear();
         this.reportList = null;
+        this.guideFlow = null;
     }
 
     public void cancelCurrentPredict() {

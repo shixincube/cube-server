@@ -1,7 +1,7 @@
 {
     "name": "MINI",
     "displayName": "Mini International Neuropsychiatric Interview",
-    "instruction": "",
+    "instruction": "为了使访谈尽可能简短，我将进行一个定式的访谈。在访谈中，关于心理问题的非常准确的问句请使用“是”或“否”作答。",
     "sections": [
         {
             "evaluation": "",
@@ -21,7 +21,7 @@
                         }
                     ],
                     "router": {
-                        "rule": "if-else",
+                        "rule": "true-or-false",
                         "route": {
                             "true": {
                                 "answer": "是",
@@ -64,7 +64,7 @@
                         }
                     ],
                     "router": {
-                        "rule": "if-else",
+                        "rule": "true-or-false",
                         "route": {
                             "true": {
                                 "answer": "是",
