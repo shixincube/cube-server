@@ -120,15 +120,15 @@
                     "sn": "A3a",
                     "precondition": {
                         "items": [ "A1b", "A2b" ],
-                        "condition": "如果 A1b 或 A2b 的答案是“true”追问当前的状况以及既往发作的最常见的症状，否则如果 A1b 和 A2b 的答案是“false”只追问既往发作的最常见的症状。"
+                        "condition": "MINI_A3a.js"
                     },
-                    "prefix": "在过去的两周期间，当您觉得抑郁或不感兴趣时：",
+                    "prefix": "%s，当您觉得抑郁或不感兴趣时：",
                     "question": "您的食欲几乎每天是减少还是增加呢? 或是您的体重是否会在不刻意努力的情况下减少或增加?",
                     "original": false,
                     "answers": [
                         {
                             "group": "A",
-                            "content": "过去的2周",
+                            "content": "过去的两周期间",
                             "answers": [
                                 {
                                     "code": "false",
@@ -142,7 +142,7 @@
                         },
                         {
                             "group": "B",
-                            "content": "既往发作情况",
+                            "content": "既往时间里",
                             "answers": [
                                 {
                                     "code": "false",

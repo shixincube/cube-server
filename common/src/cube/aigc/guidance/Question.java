@@ -75,6 +75,26 @@ public class Question {
         return this.answer;
     }
 
+    public List<Answer> getGroupAnswers(String group) {
+        for (Answer answer : this.answers) {
+            if (answer.isGroup()) {
+                if (answer.group.equalsIgnoreCase(group)) {
+                    return answer.groupAnswers;
+                }
+            }
+        }
+        return null;
+    }
+
+    public String getGroupContent(String group) {
+        for (Answer answer : this.answers) {
+            if (answer.isGroup() && answer.group.equalsIgnoreCase(group)) {
+                return answer.content;
+            }
+        }
+        return null;
+    }
+
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);

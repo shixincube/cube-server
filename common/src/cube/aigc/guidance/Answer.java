@@ -38,6 +38,10 @@ public class Answer {
         }
     }
 
+    public boolean isGroup() {
+        return (null != this.group);
+    }
+
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         if (null != this.code) {

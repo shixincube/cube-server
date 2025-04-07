@@ -14,15 +14,26 @@ import cube.common.entity.ComplexContext;
 import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
 import cube.util.ConfigUtils;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class GuideFlow extends GuideFlowable {
+
+    private String path;
 
     private long loadTimestamp;
 
@@ -36,11 +47,13 @@ public class GuideFlow extends GuideFlowable {
 
     public GuideFlow(File file) {
         super();
+        this.path = file.getParent();
         this.load(file);
     }
 
     public GuideFlow(JSONObject json) {
         super(json);
+        this.path = json.getString("path");
         this.startTimestamp = json.getLong("startTimestamp");
         this.endTimestamp = json.getLong("endTimestamp");
     }
@@ -112,6 +125,25 @@ public class GuideFlow extends GuideFlowable {
         }
     }
 
+    public String makeQuestionGroup(List<String> groups) {
+        StringBuilder buf = new StringBuilder();
+        for (String group : groups) {
+            List<Answer> answers = this.current.getGroupAnswers(group);
+            String content = this.current.getGroupContent(group);
+            buf.append(content);
+            buf.append("\n\n");
+            for (Answer answer : answers) {
+                buf.append("- [").append(answer.content).append("](");
+                buf.append("aixinli://guide.answer/")
+                        .append(current.sn).append("/")
+                        .append(answer.code).append("/")
+                        .append(answer.content);
+                buf.append(")\n\n");
+            }
+        }
+        return buf.toString();
+    }
+
     @Override
     public void input(String currentQuestionAnswer, Answer candidate) {
         this.current.setAnswerContent(currentQuestionAnswer);
@@ -176,15 +208,19 @@ public class GuideFlow extends GuideFlowable {
                 questionList.add(getQuestion(item));
             }
 
-            StringBuilder prompt = new StringBuilder();
-            prompt.append(String.format(
-                    Prompts.getPrompt("FORMAT_NEXT_QUESTION_WITH_PRECONDITION"),
-                    current.prefix, current.question));
-            prompt.append("已知 ");
-            for (Question q : questionList) {
-                prompt.append(q.sn).append(" 的答案是：“").append(q.getAnswer().code).append("”。 ");
+            StringBuilder buf = new StringBuilder();
+            List<String> groups = execPrecondition(precondition.condition, questionList);
+            for (String group : groups) {
+                String c = this.current.getGroupContent(group);
+                buf.append(c).append("和");
             }
-            prompt.append(precondition.condition);
+            buf.delete(buf.length() - 1, buf.length());
+
+            String prompt = String.format(
+                    Prompts.getPrompt("FORMAT_NEXT_QUESTION_WITH_PRECONDITION"),
+                    String.format(current.prefix, buf.toString()),
+                    current.question,
+                    buf.toString() + "的情况");
 
             this.service.getExecutor().execute(new Runnable() {
                 @Override
@@ -192,14 +228,14 @@ public class GuideFlow extends GuideFlowable {
                     ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
                     complexContext.setSubtask(Subtask.GuideFlow);
 
-                    String answer = current.prefix + current.question;
-                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt.toString(),
+                    String answer = current.question;
+                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.toString(),
                             null, null, null);
                     if (null != result) {
                         answer = result.answer;
                     }
 
-                    answer += "\n\n" + makeQuestion(false);
+                    answer += "\n\n" + makeQuestionGroup(groups).trim();
 
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = answer;
@@ -262,6 +298,7 @@ public class GuideFlow extends GuideFlowable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        json.put("path", this.path);
         json.put("startTimestamp", this.startTimestamp);
         json.put("endTimestamp", this.endTimestamp);
         return json;
@@ -281,6 +318,55 @@ public class GuideFlow extends GuideFlowable {
         JSONArray array = jsonData.getJSONArray("sections");
         for (int i = 0; i < array.length(); ++i) {
             this.sectionList.add(new GuidanceSection(array.getJSONObject(i)));
+        }
+    }
+
+    private List<String> execPrecondition(String scriptFile, List<Question> questionList) {
+        Path mainScriptFile = Paths.get(this.path, scriptFile);
+        if (!Files.exists(mainScriptFile)) {
+            Logger.w(this.getClass(), "#calc - Script file error: "
+                    + mainScriptFile.toFile().getAbsolutePath());
+            return null;
+        }
+
+        StringBuilder script = new StringBuilder();
+        try {
+            script.append(new String(Files.readAllBytes(mainScriptFile), StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#calc", e);
+            return null;
+        }
+
+        Object[] args = new Object[questionList.size()];
+        int index = 0;
+        for (Question question : questionList) {
+            if (question.getAnswer().code.equals("true") || question.getAnswer().code.equals("false")) {
+                args[index++] = Boolean.parseBoolean(question.getAnswer().code);
+            }
+            else {
+                args[index++] = question.getAnswer().code;
+            }
+        }
+
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("js");
+        try {
+            engine.eval(script.toString());
+            Invocable invocable = (Invocable) engine;
+            ScriptObjectMirror returnVal = (ScriptObjectMirror) invocable.invokeFunction("main", args);
+            if (returnVal.isArray()) {
+                List<String> resultList = new ArrayList<>();
+                for (Map.Entry<String, Object> entry : returnVal.entrySet()) {
+                    resultList.add(entry.getValue().toString());
+                }
+                return resultList;
+            }
+            else {
+                return null;
+            }
+        } catch (ScriptException | NoSuchMethodException e) {
+            Logger.e(this.getClass(), "#calc", e);
+            return null;
         }
     }
 }
