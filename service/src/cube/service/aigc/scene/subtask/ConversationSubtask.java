@@ -236,5 +236,9 @@ public abstract class ConversationSubtask {
         return result.replaceAll("受测人", "您");
     }
 
+    protected String filterFirstPerson(String text) {
+        return text.replaceAll("我们", "我");
+    }
+
     public abstract AIGCStateCode execute(Subtask roundSubtask);
 }

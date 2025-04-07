@@ -34,6 +34,8 @@ import cube.core.Module;
 import cube.file.hook.FileStorageHook;
 import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
+import cube.service.aigc.guidance.GuideFlow;
+import cube.service.aigc.guidance.Guides;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.*;
@@ -293,6 +295,12 @@ public class AIGCService extends AbstractModule {
 
                 // 资源管理器
                 Explorer.getInstance().setup(AIGCService.this, tokenizer);
+
+                // 引导系统列表
+                List<GuideFlow> guideFlows = Guides.listGuideFlows();
+                for (GuideFlow flow : guideFlows) {
+                    Logger.i(AIGCService.class, "Guide flow: " + flow.getName());
+                }
 
                 started.set(true);
                 Logger.i(AIGCService.class, "AIGC service is ready");

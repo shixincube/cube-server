@@ -154,8 +154,8 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                         channel.getAuthToken().getCode() + "/" + channel.getCode());
 
                 GeneratingRecord record = new GeneratingRecord(query, fileLabel);
-                record.answer = this.polish(Resource.getInstance().getCorpus(CORPUS,
-                        "ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE"));
+                record.answer = this.filterFirstPerson(this.polish(
+                        Resource.getInstance().getCorpus(CORPUS, "ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE")));
 
                 // 进入子任务
                 convCtx.setCurrentSubtask(Subtask.PredictPainting);

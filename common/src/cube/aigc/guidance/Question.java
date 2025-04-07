@@ -16,7 +16,7 @@ public class Question {
 
     public final String sn;
 
-    public final String constraint;
+    public final Precondition precondition;
 
     public final String prefix;
 
@@ -30,9 +30,11 @@ public class Question {
 
     private String answerContent;
 
+    private Answer answer;
+
     public Question(JSONObject json) {
         this.sn = json.getString("sn");
-        this.constraint = json.has("constraint") ? json.getString("constraint") : "";
+        this.precondition = json.has("precondition") ? new Precondition(json.getJSONObject("precondition")): null;
         this.prefix = json.has("prefix") ? json.getString("prefix") : "";
         this.question = json.getString("question");
         this.original = json.has("original") && json.getBoolean("original");
@@ -48,18 +50,37 @@ public class Question {
         }
     }
 
+    public Answer getAnswer(String code) {
+        for (Answer answer : this.answers) {
+            if (answer.code.equalsIgnoreCase(code)) {
+                return answer;
+            }
+        }
+        return null;
+    }
+
     public void setAnswerContent(String content) {
         this.answerContent = content;
+    }
+
+    public void setAnswer(Answer answer) {
+        this.answer = answer;
     }
 
     public String getAnswerContent() {
         return this.answerContent;
     }
 
+    public Answer getAnswer() {
+        return this.answer;
+    }
+
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
-        json.put("constraint", this.constraint);
+        if (null != this.precondition) {
+            json.put("precondition", this.precondition.toJSON());
+        }
         json.put("prefix", this.prefix);
         json.put("question", this.question);
         json.put("original", this.original);
@@ -75,5 +96,32 @@ public class Question {
         }
 
         return json;
+    }
+
+    public class Precondition {
+
+        public final List<String> items;
+
+        public final String condition;
+
+        public Precondition(JSONObject json) {
+            this.items = new ArrayList<>();
+            JSONArray array = json.getJSONArray("items");
+            for (int i = 0; i < array.length(); ++i) {
+                this.items.add(array.getString(i));
+            }
+            this.condition = json.getString("condition");
+        }
+
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            JSONArray array = new JSONArray();
+            for (String item : this.items) {
+                array.put(item);
+            }
+            json.put("items", array);
+            json.put("condition", this.condition);
+            return json;
+        }
     }
 }

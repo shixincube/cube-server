@@ -18,6 +18,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class GuideFlow extends GuideFlowable {
 
@@ -116,37 +119,116 @@ public class GuideFlow extends GuideFlowable {
         Router router = this.current.router;
         if (null != router) {
             if (Router.RULE_TRUE_FALSE.equalsIgnoreCase(router.getRule())) {
-                if (null == candidate) {
-                    // 答案判断
-                    String prompt = String.format(
-                            Prompts.getPrompt("FORMAT_TRUE_OR_FALSE"),
-                            currentQuestionAnswer);
-                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT,
-                            prompt, null, null, null);
-                    if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("YES"))) {
-                        Router.RouteExport export = router.getRouteExport("true");
-                        jumpQuestion(export.jump);
+                // 答案判断
+                String prompt = String.format(
+                        Prompts.getPrompt("FORMAT_TRUE_OR_FALSE"),
+                        currentQuestionAnswer);
+                GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT,
+                        prompt, null, null, null);
+
+                if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("YES"))) {
+                    // 设置答案
+                    this.current.setAnswer(this.current.getAnswer("true"));
+                    Router.RouteExport export = router.getRouteExport("true");
+
+                    if (!export.answerMap.isEmpty()) {
+                        for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
+                            setQuestionAnswer(entry.getKey(), entry.getValue());
+                        }
                     }
-                    else if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("NO"))) {
-                        Router.RouteExport export = router.getRouteExport("false");
-                        jumpQuestion(export.jump);
+
+                    jumpQuestion(export.jump, currentQuestionAnswer);
+                }
+                else if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("NO"))) {
+                    // 设置答案
+                    this.current.setAnswer(this.current.getAnswer("false"));
+                    Router.RouteExport export = router.getRouteExport("false");
+
+                    if (!export.answerMap.isEmpty()) {
+                        for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
+                            setQuestionAnswer(entry.getKey(), entry.getValue());
+                        }
                     }
-                    else {
-                        // 解释提问
-                        answerQuestion(currentQuestionAnswer);
-                    }
+
+                    jumpQuestion(export.jump, currentQuestionAnswer);
+                }
+                else {
+                    // 解释提问
+                    answerQuestion(currentQuestionAnswer);
                 }
             }
         }
         else {
             // 下一个
-
+            nextQuestion();
         }
     }
 
-    private void jumpQuestion(String sn) {
+    private void jumpQuestion(String sn, String query) {
+        // 切换当前问题
         Question question = getQuestion(sn);
         this.current = question;
+
+        Question.Precondition precondition = this.current.precondition;
+        if (null != precondition) {
+            List<Question> questionList = new ArrayList<>();
+            for (String item : precondition.items) {
+                questionList.add(getQuestion(item));
+            }
+
+            StringBuilder prompt = new StringBuilder();
+            prompt.append(String.format(
+                    Prompts.getPrompt("FORMAT_NEXT_QUESTION_WITH_PRECONDITION"),
+                    current.prefix, current.question));
+            prompt.append("已知 ");
+            for (Question q : questionList) {
+                prompt.append(q.sn).append(" 的答案是：“").append(q.getAnswer().code).append("”。 ");
+            }
+            prompt.append(precondition.condition);
+
+            this.service.getExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                    complexContext.setSubtask(Subtask.GuideFlow);
+
+                    String answer = current.prefix + current.question;
+                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt.toString(),
+                            null, null, null);
+                    if (null != result) {
+                        answer = result.answer;
+                    }
+
+                    answer += "\n\n" + makeQuestion(false);
+
+                    GeneratingRecord record = new GeneratingRecord(query);
+                    record.answer = answer;
+                    record.context = complexContext;
+
+                    // 回调
+                    listener.onResponse(current, record);
+                }
+            });
+        }
+        else {
+            this.service.getExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                    complexContext.setSubtask(Subtask.GuideFlow);
+
+                    String answer = String.format(Prompts.getPrompt("FORMAT_NEXT_QUESTION"),
+                            makeQuestion(true));
+
+                    GeneratingRecord record = new GeneratingRecord(query);
+                    record.answer = answer;
+                    record.context = complexContext;
+
+                    // 回调
+                    listener.onResponse(current, record);
+                }
+            });
+        }
     }
 
     private void nextQuestion() {

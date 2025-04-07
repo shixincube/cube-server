@@ -24,12 +24,13 @@
                         "rule": "true-or-false",
                         "route": {
                             "true": {
-                                "answer": "是",
                                 "jump": "A1b"
                             },
                             "false": {
-                                "answer": "否",
-                                "jump": "A2a"
+                                "jump": "A2a",
+                                "answer": {
+                                    "A1b": "false"
+                                }
                             }
                         }
                     }
@@ -47,7 +48,18 @@
                             "code": "true",
                             "content": "是"
                         }
-                    ]
+                    ],
+                    "router": {
+                        "rule": "true-or-false",
+                        "route": {
+                            "true": {
+                                "jump": "A2a"
+                            },
+                            "false": {
+                                "jump": "A2a"
+                            }
+                        }
+                    }
                 },
                 {
                     "sn": "A2a",
@@ -67,8 +79,13 @@
                         "rule": "true-or-false",
                         "route": {
                             "true": {
-                                "answer": "是",
                                 "jump": "A2b"
+                            },
+                            "false": {
+                                "jump": "A3a",
+                                "answer": {
+                                    "A2b": "false"
+                                }
                             }
                         }
                     }
@@ -87,18 +104,45 @@
                             "content": "是"
                         }
                     ],
-                    "post": "evaluation"
+                    "router": {
+                        "rule": "true-or-false",
+                        "route": {
+                            "true": {
+                                "jump": "A3a"
+                            },
+                            "false": {
+                                "jump": "A3a"
+                            }
+                        }
+                    }
                 },
                 {
                     "sn": "A3a",
-                    "constraint": "如果 A1b 或 A2b 的答案是“true”追问当前的状况以及既往发作的最常见的症状，否则如果 A1b 和 A2b 的答案是“false”只追问既往发作的最常见的症状",
+                    "precondition": {
+                        "items": [ "A1b", "A2b" ],
+                        "condition": "如果 A1b 或 A2b 的答案是“true”追问当前的状况以及既往发作的最常见的症状，否则如果 A1b 和 A2b 的答案是“false”只追问既往发作的最常见的症状。"
+                    },
                     "prefix": "在过去的两周期间，当您觉得抑郁或不感兴趣时：",
-                    "question": "您的食欲几乎每天是减少还是增加呢? 您的体重是否会在不刻意努力的情况下减少或增加?",
+                    "question": "您的食欲几乎每天是减少还是增加呢? 或是您的体重是否会在不刻意努力的情况下减少或增加?",
                     "original": false,
                     "answers": [
                         {
                             "group": "A",
                             "content": "过去的2周",
+                            "answers": [
+                                {
+                                    "code": "false",
+                                    "content": "否"
+                                },
+                                {
+                                    "code": "true",
+                                    "content": "是"
+                                }
+                            ]
+                        },
+                        {
+                            "group": "B",
+                            "content": "既往发作情况",
                             "answers": [
                                 {
                                     "code": "false",

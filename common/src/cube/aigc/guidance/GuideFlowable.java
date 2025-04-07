@@ -6,6 +6,7 @@
 
 package cube.aigc.guidance;
 
+import cell.util.log.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -29,6 +30,9 @@ public abstract class GuideFlowable {
     }
 
     public GuideFlowable(JSONObject json) {
+        this.name = json.getString("name");
+        this.displayName = json.getString("displayName");
+        this.instruction = json.getString("instruction");
         this.sectionList = new ArrayList<>();
         JSONArray array = json.getJSONArray("sections");
         for (int i = 0; i < array.length(); ++i) {
@@ -60,6 +64,27 @@ public abstract class GuideFlowable {
             }
         }
         return null;
+    }
+
+    /**
+     * 设置答案。
+     *
+     * @param sn
+     * @param answerCode
+     */
+    public void setQuestionAnswer(String sn, String answerCode) {
+        Question question = getQuestion(sn);
+        if (null == question) {
+            Logger.w(this.getClass(), "#setQuestionAnswer - Can NOT find question: " + sn);
+            return;
+        }
+
+        for (Answer answer : question.answers) {
+            if (answer.code.equalsIgnoreCase(answerCode)) {
+                question.setAnswer(answer);
+                break;
+            }
+        }
     }
 
     public abstract Question getCurrentQuestion();

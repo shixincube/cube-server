@@ -145,9 +145,6 @@ public class EvaluationWorker {
     }
 
     public EvaluationWorker make(Theme theme, int maxIndicatorTexts) {
-//        int age = this.evaluationReport.getAttribute().age;
-//        String gender = this.evaluationReport.getAttribute().gender;
-
         // 评估分推理
         List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation(Indicator.values().length);
         this.reportTextList = this.inferScore(scoreList, maxIndicatorTexts);
