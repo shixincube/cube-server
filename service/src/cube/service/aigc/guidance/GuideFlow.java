@@ -12,6 +12,7 @@ import cube.aigc.guidance.*;
 import cube.aigc.psychology.composition.Subtask;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.GeneratingRecord;
+import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.util.ConfigUtils;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
@@ -125,28 +126,26 @@ public class GuideFlow extends GuideFlowable {
         }
     }
 
-    public String makeQuestionGroup(List<String> groups) {
+    private String makeQuestionAnswer(AnswerGroup answerGroup) {
         StringBuilder buf = new StringBuilder();
-        for (String group : groups) {
-            List<Answer> answers = this.current.getGroupAnswers(group);
-            String content = this.current.getGroupContent(group);
-            buf.append(content);
-            buf.append("\n\n");
-            for (Answer answer : answers) {
-                buf.append("- [").append(answer.content).append("](");
-                buf.append("aixinli://guide.answer/")
-                        .append(current.sn).append("/")
-                        .append(answer.code).append("/")
-                        .append(answer.content);
-                buf.append(")\n\n");
-            }
+
+        for (Answer answer : answerGroup.answers) {
+            buf.append("- [");
+            buf.append(answerGroup.content).append("：").append(answer.content);
+            buf.append("](");
+            buf.append("aixinli://guide.answer/")
+                    .append(current.sn).append("/")
+                    .append(answer.code).append("/")
+                    .append(answerGroup.content).append("：").append(answer.content);
+            buf.append(")\n\n");
         }
         return buf.toString();
     }
 
     @Override
-    public void input(String currentQuestionAnswer, Answer candidate) {
-        this.current.setAnswerContent(currentQuestionAnswer);
+    public AIGCStateCode input(String currentQuestionAnswer, Answer candidate) {
+        // 添加回答内容
+        this.current.appendAnswerContent(currentQuestionAnswer);
 
         Router router = this.current.router;
         if (null != router) {
@@ -159,44 +158,72 @@ public class GuideFlow extends GuideFlowable {
                         prompt, null, null, null);
 
                 if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("YES"))) {
-                    // 设置答案
-                    this.current.setAnswer(this.current.getAnswer("true"));
-                    Router.RouteExport export = router.getRouteExport("true");
+                    if (null != candidate && candidate.code.equalsIgnoreCase("true")) {
+                        // 处理答案组
+                        if (this.current.isAnswerGroup()) {
+                            // 设置答案
+                            AnswerGroup answerGroup = this.current.getAnswerGroupByState(AnswerGroup.STATE_ANSWERING);
+                            this.current.setGroupAnswer(answerGroup.group, answerGroup.getAnswer("true"));
 
-                    if (!export.answerMap.isEmpty()) {
-                        for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
-                            setQuestionAnswer(entry.getKey(), entry.getValue());
+                            if (!this.current.hasAnswerGroupCompleted()) {
+                                return nextAnswerGroup();
+                            }
+                            else {
+                                Router.RouteExport export = router.getRouteExport("true");
+                                return jumpQuestion(export.jump, currentQuestionAnswer);
+                            }
+                        }
+                        else {
+                            // 设置答案
+                            this.current.setAnswer(this.current.getAnswer("true"));
+                            Router.RouteExport export = router.getRouteExport("true");
+
+                            if (!export.answerMap.isEmpty()) {
+                                for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
+                                    setQuestionAnswer(entry.getKey(), entry.getValue());
+                                }
+                            }
+
+                            return jumpQuestion(export.jump, currentQuestionAnswer);
                         }
                     }
-
-                    jumpQuestion(export.jump, currentQuestionAnswer);
                 }
                 else if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("NO"))) {
-                    // 设置答案
-                    this.current.setAnswer(this.current.getAnswer("false"));
-                    Router.RouteExport export = router.getRouteExport("false");
+                    if (null != candidate && candidate.code.equalsIgnoreCase("false")) {
+                        // 处理答案组
+                        if (this.current.isAnswerGroup()) {
 
-                    if (!export.answerMap.isEmpty()) {
-                        for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
-                            setQuestionAnswer(entry.getKey(), entry.getValue());
+                        }
+                        else {
+                            // 设置答案
+                            this.current.setAnswer(this.current.getAnswer("false"));
+                            Router.RouteExport export = router.getRouteExport("false");
+
+                            if (!export.answerMap.isEmpty()) {
+                                for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
+                                    setQuestionAnswer(entry.getKey(), entry.getValue());
+                                }
+                            }
+
+                            return jumpQuestion(export.jump, currentQuestionAnswer);
                         }
                     }
+                }
 
-                    jumpQuestion(export.jump, currentQuestionAnswer);
-                }
-                else {
-                    // 解释提问
-                    answerQuestion(currentQuestionAnswer);
-                }
+                // 解释提问
+                return answerQuestion(currentQuestionAnswer);
             }
+
+            // 下一个
+            return nextQuestion();
         }
         else {
             // 下一个
-            nextQuestion();
+            return nextQuestion();
         }
     }
 
-    private void jumpQuestion(String sn, String query) {
+    private AIGCStateCode jumpQuestion(String sn, String query) {
         // 切换当前问题
         Question question = getQuestion(sn);
         this.current = question;
@@ -208,19 +235,18 @@ public class GuideFlow extends GuideFlowable {
                 questionList.add(getQuestion(item));
             }
 
-            StringBuilder buf = new StringBuilder();
             List<String> groups = execPrecondition(precondition.condition, questionList);
-            for (String group : groups) {
-                String c = this.current.getGroupContent(group);
-                buf.append(c).append("和");
-            }
-            buf.delete(buf.length() - 1, buf.length());
+            // 启用组
+            List<AnswerGroup> answerGroups = this.current.enabledGroups(groups);
+            AnswerGroup answerGroup = answerGroups.get(0);
+            // 设置状态
+            answerGroup.state = AnswerGroup.STATE_ANSWERING;
 
             String prompt = String.format(
                     Prompts.getPrompt("FORMAT_NEXT_QUESTION_WITH_PRECONDITION"),
-                    String.format(current.prefix, buf.toString()),
+                    current.prefix,
                     current.question,
-                    buf.toString() + "的情况");
+                    answerGroup.content + "的情况");
 
             this.service.getExecutor().execute(new Runnable() {
                 @Override
@@ -235,7 +261,7 @@ public class GuideFlow extends GuideFlowable {
                         answer = result.answer;
                     }
 
-                    answer += "\n\n" + makeQuestionGroup(groups).trim();
+                    answer += "\n\n" + makeQuestionAnswer(answerGroup).trim();
 
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = answer;
@@ -265,13 +291,11 @@ public class GuideFlow extends GuideFlowable {
                 }
             });
         }
+
+        return AIGCStateCode.Ok;
     }
 
-    private void nextQuestion() {
-
-    }
-
-    private void answerQuestion(String query) {
+    private AIGCStateCode answerQuestion(String query) {
         ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
         complexContext.setSubtask(Subtask.GuideFlow);
 
@@ -293,6 +317,26 @@ public class GuideFlow extends GuideFlowable {
                 listener.onResponse(current, record);
             }
         });
+
+        return AIGCStateCode.Ok;
+    }
+
+    private AIGCStateCode nextAnswerGroup() {
+        AnswerGroup answerGroup = null;
+        for (AnswerGroup ag : this.current.answerGroups) {
+            if (ag.state != AnswerGroup.STATE_ANSWERED) {
+                answerGroup = ag;
+                break;
+            }
+        }
+
+
+
+        return AIGCStateCode.Ok;
+    }
+
+    private AIGCStateCode nextQuestion() {
+        return AIGCStateCode.Ok;
     }
 
     @Override

@@ -7,6 +7,7 @@
 package cube.aigc.guidance;
 
 import cell.util.log.Logger;
+import cube.common.state.AIGCStateCode;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -89,7 +90,7 @@ public abstract class GuideFlowable {
 
     public abstract Question getCurrentQuestion();
 
-    public abstract void input(String currentQuestionAnswer, Answer candidate);
+    public abstract AIGCStateCode input(String currentQuestionAnswer, Answer candidate);
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
