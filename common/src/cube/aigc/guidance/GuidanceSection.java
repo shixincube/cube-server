@@ -28,6 +28,10 @@ public class GuidanceSection {
         }
     }
 
+    public List<Question> getAllQuestions() {
+        return this.questionList;
+    }
+
     public Question getQuestion(int index) {
         return this.questionList.get(index);
     }

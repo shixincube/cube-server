@@ -120,9 +120,9 @@
                     "sn": "A3a",
                     "precondition": {
                         "items": [ "A1b", "A2b" ],
-                        "condition": "MINI_A3a.js"
+                        "condition": "MINI_A3.js"
                     },
-                    "prefix": "在过去的两周期间，当您觉得抑郁或不感兴趣时：",
+                    "prefix": "当您觉得抑郁或不感兴趣时：",
                     "question": "您的食欲几乎每天是减少还是增加呢? 或是您的体重是否会在不刻意努力的情况下减少或增加?",
                     "original": false,
                     "answers": [
@@ -163,6 +163,29 @@
                             },
                             "false": {
                                 "jump": "A3b"
+                            }
+                        }
+                    }
+                },
+                {
+                    "sn": "A3b",
+                    "question": "您是否几乎每晚都有睡眠问题（难以入睡、半夜醒来、早上醒得过早或睡眠过多）?",
+                    "original": false,
+                    "answers": [
+                        {
+                            "code": "true",
+                            "content": "是"
+                        },
+                        {
+                            "code": "false",
+                            "content": "否"
+                        }
+                    ],
+                    "router": {
+                        "rule": "true-or-false",
+                        "route": {
+                            "evaluation": {
+                                "script": "MINI_evaluation.js"
                             }
                         }
                     }

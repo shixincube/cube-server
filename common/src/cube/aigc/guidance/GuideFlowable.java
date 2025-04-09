@@ -88,6 +88,8 @@ public abstract class GuideFlowable {
         }
     }
 
+    public abstract GuidanceSection getCurrentSection();
+
     public abstract Question getCurrentQuestion();
 
     public abstract AIGCStateCode input(String currentQuestionAnswer, Answer candidate);

@@ -221,7 +221,7 @@ function machineGun(container, text, completeCallback) {
         textEl.style.paddingTop = ((parseInt(window.innerHeight) - 300) * 0.5) + 'px';
         textEl.innerText = word;
         element = container.appendChild(textEl);
-        duration = Math.max(0.5, word.length * 0.08); //longer words take longer to read, so adjust timing. Minimum of 0.5 seconds.
+        duration = Math.max(2.5, word.length * 0.51); //longer words take longer to read, so adjust timing.
         if (isSentenceEnd) {
             duration += 0.6; //if it's the last word in a sentence, drag out the timing a bit for a dramatic pause.
         }
@@ -352,12 +352,12 @@ function setup() {
         }, 3000);
     };
 
-    var showScreenAnimation = true;
+    const showScreenAnimation = true;
 
     const banner = document.getElementById('screen_banner');
     banner.style.height = parseInt(window.innerHeight) + 'px';
     if (showScreenAnimation) {
-        gScreenTimeline = machineGun(banner, '开始 推理 您的绘画!', function () {
+        gScreenTimeline = machineGun(banner, '正在推理 请您稍候 ^_^!', function () {
             gsap.to(banner, {
                 autoAlpha: 0.0,
                 duration: 2,
@@ -493,18 +493,23 @@ function App() {
 
             gPainting = JSON.parse(text);
             var materials = gPainting['materials'];
-            materials.forEach(function(value, index) {
-                that.addBox(value, index);
-            });
-            // 依次激活
-            var index = 0;
-            var timer = setInterval(function() {
-                document.getElementById(materials[index]['sn']).style.visibility = 'visible';
-                ++index;
-                if (index >= materials.length) {
-                    clearInterval(timer);
-                }
-            }, 1000);
+            if (materials.length > 0) {
+                materials.forEach(function(value, index) {
+                    that.addBox(value, index);
+                });
+                // 依次激活
+                var index = 0;
+                var timer = setInterval(function() {
+                    document.getElementById(materials[index]['sn']).style.visibility = 'visible';
+                    ++index;
+                    if (index >= materials.length) {
+                        clearInterval(timer);
+                    }
+                }, 1000);
+            }
+            else {
+                console.log('info: no materials');
+            }
         }, function(state) {
             console.log('error: ' + state);
         });

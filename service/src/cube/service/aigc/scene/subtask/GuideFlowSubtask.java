@@ -6,11 +6,9 @@
 
 package cube.service.aigc.scene.subtask;
 
+import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.guidance.Answer;
-import cube.aigc.guidance.GuideFlowable;
-import cube.aigc.guidance.GuideListener;
-import cube.aigc.guidance.Question;
+import cube.aigc.guidance.*;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
@@ -20,8 +18,6 @@ import cube.common.entity.ComplexContext;
 import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.guidance.GuideFlow;
-import cube.service.aigc.guidance.Guides;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.SceneManager;
 
@@ -65,16 +61,33 @@ public class GuideFlowSubtask extends ConversationSubtask {
             }
         });
 
+        Logger.d(this.getClass(), "#execute - The round subtask is " + roundSubtask.name());
+
         Answer candidate = null;
         Question question = guideFlow.getCurrentQuestion();
-        for (Answer answer : question.answers) {
-            if (roundSubtask == Subtask.No && answer.code.equalsIgnoreCase("false")) {
-                candidate = answer;
-                break;
+        if (null != question.answers) {
+            for (Answer answer : question.answers) {
+                if (roundSubtask == Subtask.No && answer.code.equalsIgnoreCase("false")) {
+                    candidate = answer;
+                    break;
+                }
+                else if (roundSubtask == Subtask.Yes && answer.code.equalsIgnoreCase("true")) {
+                    candidate = answer;
+                    break;
+                }
             }
-            else if (roundSubtask == Subtask.Yes && answer.code.equalsIgnoreCase("true")) {
-                candidate = answer;
-                break;
+        }
+        else if (null != question.answerGroups) {
+            AnswerGroup answerGroup = question.getAnswerGroupByState(AnswerGroup.STATE_ANSWERING);
+            for (Answer answer : answerGroup.answers) {
+                if (roundSubtask == Subtask.No && answer.code.equalsIgnoreCase("false")) {
+                    candidate = answer;
+                    break;
+                }
+                else if (roundSubtask == Subtask.Yes && answer.code.equalsIgnoreCase("true")) {
+                    candidate = answer;
+                    break;
+                }
             }
         }
 

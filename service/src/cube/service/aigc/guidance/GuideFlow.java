@@ -44,7 +44,9 @@ public class GuideFlow extends GuideFlowable {
 
     private AIGCService service;
 
-    private Question current;
+    private GuidanceSection currentSection;
+
+    private Question currentQuestion;
 
     public GuideFlow(File file) {
         super();
@@ -74,7 +76,8 @@ public class GuideFlow extends GuideFlowable {
     public void start(AIGCService service) {
         this.service = service;
         this.startTimestamp = System.currentTimeMillis();
-        this.current = this.sectionList.get(0).getQuestion(0);
+        this.currentSection = this.sectionList.get(0);
+        this.currentQuestion = this.currentSection.getQuestion(0);
     }
 
     public void stop() {
@@ -82,13 +85,18 @@ public class GuideFlow extends GuideFlowable {
     }
 
     @Override
+    public GuidanceSection getCurrentSection() {
+        return this.currentSection;
+    }
+
+    @Override
     public Question getCurrentQuestion() {
-        return this.current;
+        return this.currentQuestion;
     }
 
     public String makeQuestion(boolean containsQuestion) {
         try {
-            Question question = this.current;
+            Question question = this.currentQuestion;
             String content = "";
 
             if (containsQuestion) {
@@ -103,7 +111,7 @@ public class GuideFlow extends GuideFlowable {
                 }
             }
 
-            if (!question.answers.isEmpty()) {
+            if (null != question.answers && !question.answers.isEmpty()) {
                 StringBuilder buf = new StringBuilder();
                 buf.append("\n\n请使用“是”或“否”作答：");
                 for (Answer answer : question.answers) {
@@ -134,7 +142,7 @@ public class GuideFlow extends GuideFlowable {
             buf.append(answerGroup.content).append("：").append(answer.content);
             buf.append("](");
             buf.append("aixinli://guide.answer/")
-                    .append(current.sn).append("/")
+                    .append(currentQuestion.sn).append("/")
                     .append(answer.code).append("/")
                     .append(answerGroup.content).append("：").append(answer.content);
             buf.append(")\n\n");
@@ -145,68 +153,108 @@ public class GuideFlow extends GuideFlowable {
     @Override
     public AIGCStateCode input(String currentQuestionAnswer, Answer candidate) {
         // 添加回答内容
-        this.current.appendAnswerContent(currentQuestionAnswer);
+        this.currentQuestion.appendAnswerContent(currentQuestionAnswer);
 
-        Router router = this.current.router;
+        Router router = this.currentQuestion.router;
         if (null != router) {
             if (Router.RULE_TRUE_FALSE.equalsIgnoreCase(router.getRule())) {
                 // 答案判断
                 String prompt = String.format(
                         Prompts.getPrompt("FORMAT_TRUE_OR_FALSE"),
+                        this.currentQuestion.question,
                         currentQuestionAnswer);
                 GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT,
                         prompt, null, null, null);
 
+                // -1 无，0 否，1 是
+                int yesOrNo = -1;
+
                 if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("YES"))) {
                     if (null != candidate && candidate.code.equalsIgnoreCase("true")) {
-                        // 处理答案组
-                        if (this.current.isAnswerGroup()) {
-                            // 设置答案
-                            AnswerGroup answerGroup = this.current.getAnswerGroupByState(AnswerGroup.STATE_ANSWERING);
-                            this.current.setGroupAnswer(answerGroup.group, answerGroup.getAnswer("true"));
-
-                            if (!this.current.hasAnswerGroupCompleted()) {
-                                return nextAnswerGroup();
-                            }
-                            else {
-                                Router.RouteExport export = router.getRouteExport("true");
-                                return jumpQuestion(export.jump, currentQuestionAnswer);
-                            }
-                        }
-                        else {
-                            // 设置答案
-                            this.current.setAnswer(this.current.getAnswer("true"));
-                            Router.RouteExport export = router.getRouteExport("true");
-
-                            if (!export.answerMap.isEmpty()) {
-                                for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
-                                    setQuestionAnswer(entry.getKey(), entry.getValue());
-                                }
-                            }
-
-                            return jumpQuestion(export.jump, currentQuestionAnswer);
-                        }
+                        yesOrNo = 1;
                     }
                 }
                 else if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("NO"))) {
                     if (null != candidate && candidate.code.equalsIgnoreCase("false")) {
-                        // 处理答案组
-                        if (this.current.isAnswerGroup()) {
+                        yesOrNo = 0;
+                    }
+                }
+                else {
+                    // 如果其他回复，则检测候选
+                    if (null != candidate && candidate.code.equalsIgnoreCase("true")) {
+                        yesOrNo = 1;
+                    }
+                    else if (null != candidate && candidate.code.equalsIgnoreCase("false")) {
+                        yesOrNo = 0;
+                    }
+                }
 
+                if (1 == yesOrNo) {
+                    // 处理答案组
+                    if (this.currentQuestion.isAnswerGroup()) {
+                        // 设置答案
+                        AnswerGroup answerGroup = this.currentQuestion.getAnswerGroupByState(AnswerGroup.STATE_ANSWERING);
+                        this.currentQuestion.setGroupAnswer(answerGroup.group, answerGroup.getAnswer("true"));
+
+                        if (!this.currentQuestion.hasAnswerGroupCompleted()) {
+                            return nextAnswerGroup(currentQuestionAnswer);
                         }
                         else {
-                            // 设置答案
-                            this.current.setAnswer(this.current.getAnswer("false"));
-                            Router.RouteExport export = router.getRouteExport("false");
-
-                            if (!export.answerMap.isEmpty()) {
-                                for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
-                                    setQuestionAnswer(entry.getKey(), entry.getValue());
-                                }
+                            Router.RouteExport export = router.getRouteExport(Router.EXPORT_TRUE);
+                            if (null != export) {
+                                return jumpQuestion(export.jump, currentQuestionAnswer);
                             }
-
-                            return jumpQuestion(export.jump, currentQuestionAnswer);
+                            else {
+                                export = router.getRouteExport(Router.EXPORT_EVALUATION);
+                                return evaluationSection(export.script, currentQuestionAnswer);
+                            }
                         }
+                    }
+                    else {
+                        // 设置答案
+                        this.currentQuestion.setAnswer(this.currentQuestion.getAnswer("true"));
+                        Router.RouteExport export = router.getRouteExport(Router.EXPORT_TRUE);
+                        if (export.hasAnswer()) {
+                            for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
+                                setQuestionAnswer(entry.getKey(), entry.getValue());
+                            }
+                        }
+
+                        return jumpQuestion(export.jump, currentQuestionAnswer);
+                    }
+                }
+                else if (0 == yesOrNo) {
+                    // 处理答案组
+                    if (this.currentQuestion.isAnswerGroup()) {
+                        // 设置答案
+                        AnswerGroup answerGroup = this.currentQuestion.getAnswerGroupByState(AnswerGroup.STATE_ANSWERING);
+                        this.currentQuestion.setGroupAnswer(answerGroup.group, answerGroup.getAnswer("false"));
+
+                        if (!this.currentQuestion.hasAnswerGroupCompleted()) {
+                            return nextAnswerGroup(currentQuestionAnswer);
+                        }
+                        else {
+                            Router.RouteExport export = router.getRouteExport(Router.EXPORT_FALSE);
+                            if (null != export) {
+                                return jumpQuestion(export.jump, currentQuestionAnswer);
+                            }
+                            else {
+                                export = router.getRouteExport(Router.EXPORT_EVALUATION);
+                                return evaluationSection(export.script, currentQuestionAnswer);
+                            }
+                        }
+                    }
+                    else {
+                        // 设置答案
+                        this.currentQuestion.setAnswer(this.currentQuestion.getAnswer("false"));
+                        Router.RouteExport export = router.getRouteExport(Router.EXPORT_FALSE);
+                        if (export.hasAnswer()) {
+                            for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
+                                setQuestionAnswer(entry.getKey(), entry.getValue());
+                            }
+                        }
+
+                        return jumpQuestion(export.jump, currentQuestionAnswer);
                     }
                 }
 
@@ -226,9 +274,9 @@ public class GuideFlow extends GuideFlowable {
     private AIGCStateCode jumpQuestion(String sn, String query) {
         // 切换当前问题
         Question question = getQuestion(sn);
-        this.current = question;
+        this.currentQuestion = question;
 
-        Question.Precondition precondition = this.current.precondition;
+        Question.Precondition precondition = this.currentQuestion.precondition;
         if (null != precondition) {
             List<Question> questionList = new ArrayList<>();
             for (String item : precondition.items) {
@@ -237,16 +285,17 @@ public class GuideFlow extends GuideFlowable {
 
             List<String> groups = execPrecondition(precondition.condition, questionList);
             // 启用组
-            List<AnswerGroup> answerGroups = this.current.enabledGroups(groups);
+            List<AnswerGroup> answerGroups = this.currentQuestion.enabledGroups(groups);
             AnswerGroup answerGroup = answerGroups.get(0);
             // 设置状态
             answerGroup.state = AnswerGroup.STATE_ANSWERING;
 
             String prompt = String.format(
                     Prompts.getPrompt("FORMAT_NEXT_QUESTION_WITH_PRECONDITION"),
-                    current.prefix,
-                    current.question,
-                    answerGroup.content + "的情况");
+                    answerGroup.content,
+                    currentQuestion.prefix,
+                    currentQuestion.question,
+                    answerGroup.content);
 
             this.service.getExecutor().execute(new Runnable() {
                 @Override
@@ -254,7 +303,7 @@ public class GuideFlow extends GuideFlowable {
                     ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
                     complexContext.setSubtask(Subtask.GuideFlow);
 
-                    String answer = current.question;
+                    String answer = currentQuestion.question;
                     GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.toString(),
                             null, null, null);
                     if (null != result) {
@@ -268,7 +317,7 @@ public class GuideFlow extends GuideFlowable {
                     record.context = complexContext;
 
                     // 回调
-                    listener.onResponse(current, record);
+                    listener.onResponse(currentQuestion, record);
                 }
             });
         }
@@ -287,7 +336,7 @@ public class GuideFlow extends GuideFlowable {
                     record.context = complexContext;
 
                     // 回调
-                    listener.onResponse(current, record);
+                    listener.onResponse(currentQuestion, record);
                 }
             });
         }
@@ -304,8 +353,9 @@ public class GuideFlow extends GuideFlowable {
             public void run() {
                 String prompt = String.format(
                         Prompts.getPrompt("FORMAT_EXPLAIN_QUESTION"),
-                        current.question,
-                        query);
+                        currentQuestion.question,
+                        query,
+                        currentQuestion.question);
                 GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
                         prompt, null, null, null);
 
@@ -314,28 +364,69 @@ public class GuideFlow extends GuideFlowable {
                 record.context = complexContext;
 
                 // 回调
-                listener.onResponse(current, record);
+                listener.onResponse(currentQuestion, record);
             }
         });
 
         return AIGCStateCode.Ok;
     }
 
-    private AIGCStateCode nextAnswerGroup() {
+    private AIGCStateCode nextAnswerGroup(String query) {
         AnswerGroup answerGroup = null;
-        for (AnswerGroup ag : this.current.answerGroups) {
+        for (AnswerGroup ag : this.currentQuestion.answerGroups) {
             if (ag.state != AnswerGroup.STATE_ANSWERED) {
                 answerGroup = ag;
                 break;
             }
         }
 
+        if (null == answerGroup) {
+            Logger.e(this.getClass(), "#nextAnswerGroup");
+            return AIGCStateCode.Failure;
+        }
 
+        String prompt = String.format(
+                Prompts.getPrompt("FORMAT_NEXT_QUESTION_WITH_PRECONDITION"),
+                answerGroup.content,
+                currentQuestion.prefix,
+                currentQuestion.question,
+                answerGroup.content);
+
+        final AnswerGroup constAnswerGroup = answerGroup;
+        this.service.getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                complexContext.setSubtask(Subtask.GuideFlow);
+
+                String answer = currentQuestion.question;
+                GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
+                        null, null, null);
+                if (null != result) {
+                    answer = result.answer;
+                }
+
+                answer += "\n\n" + makeQuestionAnswer(constAnswerGroup).trim();
+
+                GeneratingRecord record = new GeneratingRecord(query);
+                record.answer = answer;
+                record.context = complexContext;
+
+                // 回调
+                listener.onResponse(currentQuestion, record);
+            }
+        });
 
         return AIGCStateCode.Ok;
     }
 
     private AIGCStateCode nextQuestion() {
+        return AIGCStateCode.Ok;
+    }
+
+    private AIGCStateCode evaluationSection(String evaluation, String query) {
+        EvaluationResult result = execEvaluation(evaluation, this.currentSection.getAllQuestions());
+
         return AIGCStateCode.Ok;
     }
 
@@ -368,7 +459,7 @@ public class GuideFlow extends GuideFlowable {
     private List<String> execPrecondition(String scriptFile, List<Question> questionList) {
         Path mainScriptFile = Paths.get(this.path, scriptFile);
         if (!Files.exists(mainScriptFile)) {
-            Logger.w(this.getClass(), "#calc - Script file error: "
+            Logger.w(this.getClass(), "#execPrecondition - Script file error: "
                     + mainScriptFile.toFile().getAbsolutePath());
             return null;
         }
@@ -377,7 +468,7 @@ public class GuideFlow extends GuideFlowable {
         try {
             script.append(new String(Files.readAllBytes(mainScriptFile), StandardCharsets.UTF_8));
         } catch (Exception e) {
-            Logger.e(this.getClass(), "#calc", e);
+            Logger.e(this.getClass(), "#execPrecondition", e);
             return null;
         }
 
@@ -409,7 +500,39 @@ public class GuideFlow extends GuideFlowable {
                 return null;
             }
         } catch (ScriptException | NoSuchMethodException e) {
-            Logger.e(this.getClass(), "#calc", e);
+            Logger.e(this.getClass(), "#execPrecondition", e);
+            return null;
+        }
+    }
+
+    private EvaluationResult execEvaluation(String scriptFile, List<Question> questionList) {
+        Path mainScriptFile = Paths.get(this.path, scriptFile);
+        if (!Files.exists(mainScriptFile)) {
+            Logger.w(this.getClass(), "#execEvaluation - Script file error: "
+                    + mainScriptFile.toFile().getAbsolutePath());
+            return null;
+        }
+
+        StringBuilder script = new StringBuilder();
+        try {
+            script.append("var Logger = Java.type('cell.util.log.Logger');\n");
+            script.append("var Question = Java.type('cube.aigc.guidance.Question');\n");
+            script.append("var Answer = Java.type('cube.aigc.guidance.Answer');\n");
+            script.append("var EvaluationResult = Java.type('cube.aigc.guidance.EvaluationResult');\n");
+            script.append(new String(Files.readAllBytes(mainScriptFile), StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#execEvaluation", e);
+            return null;
+        }
+
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("js");
+        try {
+            engine.eval(script.toString());
+            Invocable invocable = (Invocable) engine;
+            return (EvaluationResult) invocable.invokeFunction("main", questionList);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#execEvaluation", e);
             return null;
         }
     }
