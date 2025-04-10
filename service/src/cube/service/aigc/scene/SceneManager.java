@@ -9,6 +9,7 @@ package cube.service.aigc.scene;
 import cell.util.Utils;
 import cube.aigc.attachment.Attachment;
 import cube.aigc.attachment.ReportAttachment;
+import cube.aigc.guidance.EvaluationResult;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.EvaluationScore;
@@ -37,9 +38,12 @@ public class SceneManager {
 
     private Map<String, ScaleTrack> channelScaleMap;
 
+    private Map<String, EvaluationResult> channelEvaluationResultMap;
+
     private SceneManager() {
         this.conversationContexts = new ConcurrentHashMap<>();
         this.channelScaleMap = new ConcurrentHashMap<>();
+        this.channelEvaluationResultMap = new ConcurrentHashMap<>();
     }
 
     public static SceneManager getInstance() {

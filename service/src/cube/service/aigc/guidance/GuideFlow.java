@@ -15,6 +15,8 @@ import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.util.ConfigUtils;
+import cube.util.TimeDuration;
+import cube.util.TimeUtils;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -77,6 +79,7 @@ public class GuideFlow extends GuideFlowable {
         this.service = service;
         this.startTimestamp = System.currentTimeMillis();
         this.currentSection = this.sectionList.get(0);
+        this.currentSection.startTimestamp = System.currentTimeMillis();
         this.currentQuestion = this.currentSection.getQuestion(0);
     }
 
@@ -214,13 +217,18 @@ public class GuideFlow extends GuideFlowable {
                         // 设置答案
                         this.currentQuestion.setAnswer(this.currentQuestion.getAnswer("true"));
                         Router.RouteExport export = router.getRouteExport(Router.EXPORT_TRUE);
-                        if (export.hasAnswer()) {
-                            for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
-                                setQuestionAnswer(entry.getKey(), entry.getValue());
+                        if (null != export) {
+                            if (export.hasAnswer()) {
+                                for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
+                                    setQuestionAnswer(entry.getKey(), entry.getValue());
+                                }
                             }
+                            return jumpQuestion(export.jump, currentQuestionAnswer);
                         }
-
-                        return jumpQuestion(export.jump, currentQuestionAnswer);
+                        else {
+                            export = router.getRouteExport(Router.EXPORT_EVALUATION);
+                            return evaluationSection(export.script, currentQuestionAnswer);
+                        }
                     }
                 }
                 else if (0 == yesOrNo) {
@@ -248,13 +256,18 @@ public class GuideFlow extends GuideFlowable {
                         // 设置答案
                         this.currentQuestion.setAnswer(this.currentQuestion.getAnswer("false"));
                         Router.RouteExport export = router.getRouteExport(Router.EXPORT_FALSE);
-                        if (export.hasAnswer()) {
-                            for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
-                                setQuestionAnswer(entry.getKey(), entry.getValue());
+                        if (null != export) {
+                            if (export.hasAnswer()) {
+                                for (Map.Entry<String, String> entry : export.answerMap.entrySet()) {
+                                    setQuestionAnswer(entry.getKey(), entry.getValue());
+                                }
                             }
+                            return jumpQuestion(export.jump, currentQuestionAnswer);
                         }
-
-                        return jumpQuestion(export.jump, currentQuestionAnswer);
+                        else {
+                            export = router.getRouteExport(Router.EXPORT_EVALUATION);
+                            return evaluationSection(export.script, currentQuestionAnswer);
+                        }
                     }
                 }
 
@@ -317,7 +330,7 @@ public class GuideFlow extends GuideFlowable {
                     record.context = complexContext;
 
                     // 回调
-                    listener.onResponse(currentQuestion, record);
+                    listener.onResponse(GuideFlow.this, record);
                 }
             });
         }
@@ -336,7 +349,7 @@ public class GuideFlow extends GuideFlowable {
                     record.context = complexContext;
 
                     // 回调
-                    listener.onResponse(currentQuestion, record);
+                    listener.onResponse(GuideFlow.this, record);
                 }
             });
         }
@@ -364,7 +377,7 @@ public class GuideFlow extends GuideFlowable {
                 record.context = complexContext;
 
                 // 回调
-                listener.onResponse(currentQuestion, record);
+                listener.onResponse(GuideFlow.this, record);
             }
         });
 
@@ -413,7 +426,7 @@ public class GuideFlow extends GuideFlowable {
                 record.context = complexContext;
 
                 // 回调
-                listener.onResponse(currentQuestion, record);
+                listener.onResponse(GuideFlow.this, record);
             }
         });
 
@@ -425,8 +438,48 @@ public class GuideFlow extends GuideFlowable {
     }
 
     private AIGCStateCode evaluationSection(String evaluation, String query) {
-        EvaluationResult result = execEvaluation(evaluation, this.currentSection.getAllQuestions());
+        this.currentSection.endTimestamp = System.currentTimeMillis();
 
+        EvaluationResult result = execEvaluation(evaluation, this.currentSection.getAllQuestions());
+        if (null == result) {
+            this.service.getExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                    complexContext.setSubtask(Subtask.GuideFlow);
+
+                    GeneratingRecord record = new GeneratingRecord(query);
+                    record.answer = Prompts.getPrompt("FAILED");
+                    record.context = complexContext;
+
+                    // 回调
+                    listener.onResponse(GuideFlow.this, record);
+                }
+            });
+        }
+        else {
+            this.service.getExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                    complexContext.setSubtask(Subtask.GuideFlow);
+
+                    TimeDuration duration = TimeUtils.calcTimeDuration(
+                            currentSection.endTimestamp - currentSection.startTimestamp);
+
+                    GeneratingRecord record = new GeneratingRecord(query);
+                    record.answer = String.format(
+                            Prompts.getPrompt("FORMAT_EVALUATION_RESULT"),
+                            currentSection.name,
+                            result.toMarkdown(),
+                            duration.toHumanStringDHMS());
+                    record.context = complexContext;
+
+                    // 回调
+                    listener.onResponse(GuideFlow.this, record);
+                }
+            });
+        }
         return AIGCStateCode.Ok;
     }
 

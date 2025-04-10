@@ -55,7 +55,7 @@ public class GuideFlowSubtask extends ConversationSubtask {
 
         guideFlow.setListener(new GuideListener() {
             @Override
-            public void onResponse(Question question, GeneratingRecord response) {
+            public void onResponse(GuideFlowable guideFlow, GeneratingRecord response) {
                 listener.onGenerated(channel, response);
                 channel.setProcessing(false);
             }

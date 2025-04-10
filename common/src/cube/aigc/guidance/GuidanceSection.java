@@ -14,18 +14,24 @@ import java.util.List;
 
 public class GuidanceSection {
 
+    public final String name;
+
+    private final List<Question> questionList;
+
     public final String evaluation;
 
-    private List<Question> questionList;
+    public long startTimestamp;
+
+    public long endTimestamp;
 
     public GuidanceSection(JSONObject json) {
-        this.evaluation = json.getString("evaluation");
-
+        this.name = json.getString("name");
         this.questionList = new ArrayList<>();
         JSONArray array = json.getJSONArray("questions");
         for (int i = 0; i < array.length(); ++i) {
             this.questionList.add(new Question(array.getJSONObject(i)));
         }
+        this.evaluation = json.getString("evaluation");
     }
 
     public List<Question> getAllQuestions() {
@@ -45,15 +51,31 @@ public class GuidanceSection {
         return null;
     }
 
+    public boolean hasCompleted() {
+        int count = 0;
+        for (Question question : this.questionList) {
+            if (question.isAnswerGroup() && question.hasAnswerGroupCompleted()) {
+                ++count;
+            }
+            else if (question.hasAnswer()) {
+                ++count;
+            }
+        }
+        return (count == this.questionList.size());
+    }
+
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("evaluation", this.evaluation);
+        json.put("name", this.name);
 
         JSONArray array = new JSONArray();
         for (Question question : this.questionList) {
             array.put(question.toJSON());
         }
         json.put("questions", array);
+
+        json.put("evaluation", this.evaluation);
+
         return json;
     }
 }

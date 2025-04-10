@@ -4,7 +4,7 @@
     "instruction": "为了使访谈尽可能简短，我将进行一个定式的访谈。在访谈中，关于心理问题的非常准确的问句请使用“是”或“否”作答。",
     "sections": [
         {
-            "evaluation": "",
+            "name": "抑郁发作",
             "questions": [
                 {
                     "sn": "A1a",
@@ -185,12 +185,13 @@
                         "rule": "true-or-false",
                         "route": {
                             "evaluation": {
-                                "script": "MINI_evaluation.js"
+                                "script": "MINI_A_Evaluation.js"
                             }
                         }
                     }
                 }
-            ]
+            ],
+            "evaluation": ""
         }
     ]
 }

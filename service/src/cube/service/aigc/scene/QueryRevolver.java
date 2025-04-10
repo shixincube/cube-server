@@ -109,14 +109,30 @@ public class QueryRevolver {
 
     private PsychologyStorage storage;
 
+
+    public final class Prompt {
+
+        public final String content;
+
+        public String prefix;
+
+        public String postfix;
+
+        public Prompt(String content) {
+            this.content = content;
+        }
+    }
+
     public QueryRevolver(AIGCService service, PsychologyStorage storage) {
         this.service = service;
         this.tokenizer = service.getTokenizer();
         this.storage = storage;
     }
 
-    public String generatePrompt(ConversationContext context, String query) {
+    public Prompt generatePrompt(ConversationContext context, String query) {
         final StringBuilder result = new StringBuilder();
+        String prefix = null;
+        String postfix = null;
 
         AtomicBoolean hitLazy = new AtomicBoolean(false);
         final List<QuestionAnswer> questionAnswerList = new ArrayList<>();
@@ -296,7 +312,7 @@ public class QueryRevolver {
 
                     if (result.length() > 0) {
                         result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
-                        result.append("不允许在答案中添加编造成分。");
+                        result.append("不允许在答案中添加编造成分，保持应有的文档结构。");
                         result.append("问题是：").append(query).append("\n");
                     }
                 }
@@ -304,19 +320,25 @@ public class QueryRevolver {
             else {
                 // 带报告数据
                 if (result.length() > 0) {
+                    prefix = "根据您的提问，";
                     result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
-                    result.append("不允许在答案中添加编造成分，可以以“根据您的提问”开头。");
+                    result.append("不允许在答案中添加编造成分，保持应有的文档结构。");
                     result.append("问题是：").append(query).append("\n");
                 }
             }
 
             if (result.length() == 0) {
-                result.append("专业地回答问题，在答案最后加入一句：“\n\n我的更多功能您可以通过：**[功能介绍](aixinli://prompt.direct/请你介绍一下你自己。)** 进行了解。”，问题是：");
+                result.append("专业地回答问题，问题是：");
                 result.append(query).append("\n");
+
+                postfix = "\n\n我的更多功能您可以点击：**[功能介绍](aixinli://prompt.direct/请你介绍一下你自己。)** 了解。";
             }
         }
 
-        return result.toString();
+        Prompt prompt = new Prompt(result.toString());
+        prompt.prefix = prefix;
+        prompt.postfix = postfix;
+        return prompt;
     }
 
     public String generatePrompt(ConversationRelation relation, Report report, String query) {

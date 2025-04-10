@@ -142,6 +142,20 @@ public class ConversationWorker {
         else {
             // 本轮可能的任务，判断是否终止话题
             if (roundSubtask == Subtask.EndTopic) {
+                StringBuilder subtaskName = new StringBuilder();
+                if (subtask == Subtask.PredictPainting) {
+                    subtaskName.append("绘画投射测验");
+                }
+                else if (subtask == Subtask.StartQuestionnaire || subtask == Subtask.Questionnaire) {
+                    subtaskName.append("量表测评");
+                }
+                else if (subtask == Subtask.GuideFlow) {
+                    subtaskName.append("访谈");
+                }
+                else {
+                    subtaskName.append("当前话题");
+                }
+
                 // 取消所有上下文数据
                 convCtx.cancelAll();
                 this.service.getExecutor().execute(new Runnable() {
@@ -152,7 +166,9 @@ public class ConversationWorker {
 
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.context = complexContext;
-                        record.answer = polish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_NEW_TOPIC"));
+                        record.answer = polish(String.format(
+                                Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_NEW_TOPIC"),
+                                subtaskName.toString()));
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
                     }
@@ -300,7 +316,7 @@ public class ConversationWorker {
             convCtx.cancelCurrentPredict();
         }
 
-        String prompt = PsychologyScene.getInstance().buildPrompt(convCtx, query);
+        QueryRevolver.Prompt prompt = PsychologyScene.getInstance().buildPrompt(convCtx, query);
         if (null == prompt) {
             Logger.e(this.getClass(), "#work - Builds prompt failed");
             channel.setProcessing(false);
@@ -308,9 +324,9 @@ public class ConversationWorker {
         }
 
         // 获取单元
-        String unitName = prompt.length() > 1000 || prompt.contains(JUMP_POLISH) ?
-                ModelConfig.BAIZE_X_UNIT : ModelConfig.BAIZE_UNIT;
-        AIGCUnit unit = this.service.selectUnitByName(unitName);
+        String unitName = prompt.content.length() > 1000 || prompt.content.contains(JUMP_POLISH) ?
+                ModelConfig.BAIZE_X_UNIT : ModelConfig.BAIZE_NEXT_UNIT;
+        AIGCUnit unit = this.service.selectIdleUnitByName(unitName);
         if (null == unit) {
             Logger.w(this.getClass(), "#work - Can NOT find idle unit \"" + unitName + "\"");
             unit = this.service.selectUnitByName(ModelConfig.BAIZE_X_UNIT);
@@ -321,10 +337,17 @@ public class ConversationWorker {
             }
         }
 
-        this.service.generateText(channel, unit, query, prompt, new GeneratingOption(), null, 0,
+        this.service.generateText(channel, unit, query, prompt.content, new GeneratingOption(), null, 0,
                 null, null, false, true, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
+                        if (null != prompt.prefix) {
+                            record.answer = prompt.prefix + record.answer;
+                        }
+                        if (null != prompt.postfix) {
+                            record.answer += prompt.postfix;
+                        }
+
                         convCtx.record(record);
                         listener.onGenerated(channel, record);
                     }

@@ -94,9 +94,15 @@ public class Question {
         return this.answer;
     }
 
+    public boolean hasAnswer() {
+        return (null != this.answer);
+    }
+
     public List<AnswerGroup> enabledGroups(List<String> groups) {
         this.enabledGroups = new ArrayList<>();
-        this.groupAnswerMap = new HashMap<>();
+        if (null == this.groupAnswerMap) {
+            this.groupAnswerMap = new HashMap<>();
+        }
 
         for (AnswerGroup answerGroup : this.answerGroups) {
             if (groups.contains(answerGroup.group)) {
@@ -113,8 +119,15 @@ public class Question {
     }
 
     public void setGroupAnswer(String group, Answer answer) {
+        if (null == this.groupAnswerMap) {
+            this.groupAnswerMap = new HashMap<>();
+        }
         this.getAnswerGroup(group).state = AnswerGroup.STATE_ANSWERED;
         this.groupAnswerMap.put(group, answer);
+    }
+
+    public Answer getGroupAnswer(String group) {
+        return this.groupAnswerMap.get(group);
     }
 
     public AnswerGroup getAnswerGroupByState(int state) {
@@ -144,7 +157,7 @@ public class Question {
 
     public boolean hasAnswerGroupCompleted() {
         if (null == this.answerGroups) {
-            return true;
+            return false;
         }
 
         int count = 0;

@@ -62,8 +62,8 @@
             "cn": "好的，让我们继续吧！接下来您想让我帮您做些什么呢？",
             "en": ""
         },
-        "ANSWER_NEW_TOPIC": {
-            "cn": "我们开始新的话题。",
+        "FORMAT_ANSWER_NEW_TOPIC": {
+            "cn": "好的，我们结束%s。您随时可以开始新的话题。",
             "en": ""
         },
         "FORMAT_ANSWER_GENERATING": {

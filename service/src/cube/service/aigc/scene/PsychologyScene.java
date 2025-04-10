@@ -10,6 +10,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
+import cube.aigc.Prompt;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.PerceptronThing;
@@ -965,7 +966,7 @@ public class PsychologyScene {
      * @param query
      * @return
      */
-    public String buildPrompt(ConversationContext context, String query) {
+    public QueryRevolver.Prompt buildPrompt(ConversationContext context, String query) {
         QueryRevolver revolver = new QueryRevolver(this.service, this.storage);
         return revolver.generatePrompt(context, query);
     }
