@@ -8,6 +8,7 @@ package cube.service.aigc;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Cryptology;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
@@ -64,6 +65,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -541,34 +544,6 @@ public class AIGCService extends AbstractModule {
         return list;
     }
 
-    public List<ModelConfig> getModelConfigs() {
-        if (!this.isStarted()) {
-            return null;
-        }
-
-        return this.storage.getModelConfigs();
-    }
-
-    public List<ModelConfig> getModelConfigs(JSONArray modelNames) {
-        if (!this.isStarted()) {
-            return null;
-        }
-
-        return this.storage.getModelConfigs(JSONUtils.toStringList(modelNames));
-    }
-
-    public List<Notification> getNotifications() {
-        if (!this.isStarted()) {
-            return null;
-        }
-
-        return this.storage.readEnabledNotifications();
-    }
-
-    public ContactPreference getPreference(long contactId) {
-        return this.storage.readContactPreference(contactId);
-    }
-
     public int numUnitsByName(String unitName) {
         int num = 0;
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
@@ -745,6 +720,36 @@ public class AIGCService extends AbstractModule {
         return unit;
     }
 
+    //-------- App Interface - Start --------
+
+    public List<ModelConfig> getModelConfigs() {
+        if (!this.isStarted()) {
+            return null;
+        }
+
+        return this.storage.getModelConfigs();
+    }
+
+    public List<ModelConfig> getModelConfigs(JSONArray modelNames) {
+        if (!this.isStarted()) {
+            return null;
+        }
+
+        return this.storage.getModelConfigs(JSONUtils.toStringList(modelNames));
+    }
+
+    public List<Notification> getNotifications() {
+        if (!this.isStarted()) {
+            return null;
+        }
+
+        return this.storage.readEnabledNotifications();
+    }
+
+    public ContactPreference getPreference(long contactId) {
+        return this.storage.readContactPreference(contactId);
+    }
+
     /**
      * 通过邀请码查询令牌。
      *
@@ -770,6 +775,57 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
+     * 获取或创建新用户。
+     *
+     * @param appAgent
+     * @param device
+     * @return
+     */
+    public User getOrCreateUser(String appAgent, Device device) {
+        User user = null;
+
+        long id = Cryptology.getInstance().fastHash(appAgent);
+        id = Math.abs(id);
+
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            byte[] digest = md5.digest(appAgent.getBytes(StandardCharsets.UTF_8));
+            long hash = Cryptology.getInstance().fastHash(digest);
+            id += hash;
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#getOrCreateUser", e);
+        }
+
+        final String domain = AuthConsts.DEFAULT_DOMAIN;
+        final String appKey = AuthConsts.DEFAULT_APP_KEY;
+
+        ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactId(domain, id);
+        if (searchResult.getContactList().isEmpty()) {
+            // 创建令牌
+            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+            // 5年有效时长
+            AuthToken authToken = authService.applyToken(domain, appKey, id, 5L * 365 * 24 * 60 * 60 * 1000);
+
+            String name = "ME" + Utils.randomNumberString(8);
+            user = new User(id, name, appAgent);
+            user.setDisplayName("未登录");
+            user.setAuthToken(authToken);
+
+            // 新用户
+            ContactManager.getInstance().newContact(id, domain, name, user.toJSON(), device);
+        }
+        else {
+            // 已存在
+            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+            AuthToken authToken = authService.queryAuthTokenByContactId(id);
+            user = new User(searchResult.getContactList().get(0).getContext());
+            user.setAuthToken(authToken);
+        }
+
+        return user;
+    }
+
+    /**
      * 检测或注入验证码。
      *
      * @param phoneNumber
@@ -790,11 +846,11 @@ public class AIGCService extends AbstractModule {
 
         AuthToken authToken = null;
 
-        ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactId(domain, Long.toString(phone));
+        ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactId(domain, phone);
         if (searchResult.getContactList().isEmpty()) {
             // 没有该联系人
             Contact contact = ContactManager.getInstance().newContact(phone,
-                    domain, (null != userName) ? userName : phoneNumber, null);
+                    domain, (null != userName) ? userName : phoneNumber, null, null);
             // 创建令牌
             AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
             // 5年有效时长
@@ -808,6 +864,8 @@ public class AIGCService extends AbstractModule {
 
         return authToken;
     }
+
+    //-------- App Interface - End --------
 
     /**
      * 获取令牌。

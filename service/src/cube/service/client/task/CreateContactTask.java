@@ -32,7 +32,7 @@ public class CreateContactTask extends ClientTask {
                 ? actionDialect.getParamAsJson("context") : null;
 
         // 新建联系人
-        Contact contact = ContactManager.getInstance().newContact(contactId, domain, name, context);
+        Contact contact = ContactManager.getInstance().newContact(contactId, domain, name, context, null);
 
         ActionDialect result = new ActionDialect(ClientAction.CreateContact.name);
         copyNotifier(result);

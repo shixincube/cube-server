@@ -91,7 +91,7 @@ public class NewContactTask extends ServiceTask {
 
         // 新建联系人
         Contact newContact = ContactManager.getInstance().newContact(newId, authToken.getDomain(),
-                newName, newContext);
+                newName, newContext, null);
         if (null == newContact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(action, packet, ContactStateCode.Failure.code, data));

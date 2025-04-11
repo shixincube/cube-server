@@ -79,7 +79,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 允许管理的最大在线联系人数量。
      */
-    private int maxContactNum = 10000;
+    private final int maxContactNum = 10000;
 
     /**
      * 在线的联系人表。
@@ -371,16 +371,21 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param domain 指定域名称。
      * @param contactName 指定联系人名称。
      * @param context 指定联系人上下文数据，可以设置 {@code null} 值。
+     * @param device 指定创建联系人的设备。
      * @return 返回联系人实例。
      */
-    public Contact newContact(Long contactId, String domain, String contactName, JSONObject context) {
+    public Contact newContact(Long contactId, String domain, String contactName, JSONObject context, Device device) {
         Contact contact = new Contact(contactId, domain, contactName);
         contact.setContext(context);
 
-        Device device = new Device("Server", "Cube Server");
+        Device defaultDevice = device;
+        if (null == defaultDevice) {
+            defaultDevice = new Device("Server", "Cube Server");
+        }
 
         // 更新存储
-        this.storage.writeContact(contact, device);
+        this.storage.writeContact(contact, defaultDevice);
+        contact.addDevice(defaultDevice);
 
         ContactHook hook = this.pluginSystem.getNewContact();
         hook.apply(new ContactPluginContext(ContactHook.NewContact, contact, null));
@@ -777,7 +782,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         // 创建新联系人
         Contact newContact = this.newContact(srcContact.getId(), destDomain, srcContact.getName(),
-                srcContact.getContext());
+                srcContact.getContext(), null);
         this.updateAppendix(srcAppendix);
 
         return newContact;
@@ -1878,11 +1883,11 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contactId
      * @return
      */
-    public ContactSearchResult searchWithContactId(String domain, String contactId) {
-        ContactSearchResult result = new ContactSearchResult(contactId);
+    public ContactSearchResult searchWithContactId(String domain, long contactId) {
+        ContactSearchResult result = new ContactSearchResult(Long.toString(contactId));
 
         try {
-            Contact contact = this.storage.readContact(domain, Long.parseLong(contactId));
+            Contact contact = this.storage.readContact(domain, contactId);
             if (null != contact) {
                 result.addContact(contact);
             }

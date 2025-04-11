@@ -78,7 +78,8 @@ public class SearchTask extends ServiceTask {
             result = ContactManager.getInstance().searchWithFuzzyRule(contact.getDomain().getName(), keyword);
         }
         else {
-            result = ContactManager.getInstance().searchWithContactId(contact.getDomain().getName(), contactId);
+            result = ContactManager.getInstance().searchWithContactId(contact.getDomain().getName(),
+                    Long.parseLong(contactId));
         }
 
         this.cellet.speak(this.talkContext,

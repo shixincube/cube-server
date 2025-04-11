@@ -23,7 +23,6 @@ public final class AuthConsts {
      */
     public static String DEFAULT_APP_KEY = "default-opensource-appkey";
 
-
     public static String formatString() {
         StringBuilder buf = new StringBuilder();
         buf.append("Default domain : ").append(AuthConsts.DEFAULT_DOMAIN).append("\n");

@@ -217,6 +217,8 @@ public class Manager implements Tickable, PerformerListener {
         return this.validTokenMap.get(token);
     }
 
+    
+
     public ContactToken checkOrInjectContactToken(String phoneNumber, String userName) {
         JSONObject data = new JSONObject();
         data.put("phone", phoneNumber);
