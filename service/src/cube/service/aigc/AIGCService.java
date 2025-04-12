@@ -66,7 +66,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -81,7 +80,7 @@ public class AIGCService extends AbstractModule {
 
     public final static String NAME = "AIGC";
 
-    private AIGCCellet cellet;
+    private final AIGCCellet cellet;
 
     /**
      * Key 是 AIGC 的 Query Key
@@ -142,7 +141,7 @@ public class AIGCService extends AbstractModule {
     /**
      * 最大频道数量。
      */
-    private int maxChannel = 2000;
+    private final int maxChannel = 2000;
 
     private ConcurrentHashMap<String, AIGCChannel> channelMap;
 
@@ -151,7 +150,7 @@ public class AIGCService extends AbstractModule {
      */
     private KnowledgeFramework knowledgeFramework;
 
-    private long channelTimeout = 30 * 60 * 1000;
+    private final long channelTimeout = 30 * 60 * 1000;
 
     private ExecutorService executor;
 
@@ -174,7 +173,7 @@ public class AIGCService extends AbstractModule {
     /**
      * 工作路径。
      */
-    private File workingPath = new File("storage/tmp/");
+    private final File workingPath = new File("storage/tmp/");
 
     /**
      * 是否访问，仅用于本地测试
@@ -218,7 +217,10 @@ public class AIGCService extends AbstractModule {
             @Override
             public void run() {
                 if (!workingPath.exists()) {
-                    workingPath.mkdirs();
+                    if (!workingPath.mkdirs()) {
+                        Logger.w(AIGCService.class, "AI Service - Make working path error: "
+                                + workingPath.getAbsolutePath());
+                    }
                 }
                 Logger.i(AIGCService.class, "AI Service - Working path: " + workingPath.getAbsolutePath());
 
@@ -539,7 +541,7 @@ public class AIGCService extends AbstractModule {
     }
 
     public List<AIGCChannel> getAllChannels() {
-        List<AIGCChannel> list = new ArrayList(this.channelMap.size());
+        List<AIGCChannel> list = new ArrayList<>(this.channelMap.values());
         list.addAll(this.channelMap.values());
         return list;
     }
@@ -722,6 +724,79 @@ public class AIGCService extends AbstractModule {
 
     //-------- App Interface - Start --------
 
+    /**
+     * 获取或创建新用户。
+     *
+     * @param appAgent
+     * @param device
+     * @return
+     */
+    public User getOrCreateUser(String appAgent, Device device) {
+        User user = null;
+
+        long id = Cryptology.getInstance().fastHash(appAgent);
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            byte[] digest = md5.digest(appAgent.getBytes(StandardCharsets.UTF_8));
+            long hash = Cryptology.getInstance().fastHash(digest);
+            id += hash;
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#getOrCreateUser", e);
+        }
+
+        // 处理 ID
+        id = Math.abs(id);
+
+        final String domain = AuthConsts.DEFAULT_DOMAIN;
+        final String appKey = AuthConsts.DEFAULT_APP_KEY;
+
+        ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactId(domain, id);
+        if (searchResult.getContactList().isEmpty()) {
+            // 创建令牌
+            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+            // 5年有效时长
+            AuthToken authToken = authService.applyToken(domain, appKey, id, 5L * 365 * 24 * 60 * 60 * 1000);
+
+            String name = "ME" + Utils.randomNumberString(8);
+            user = new User(id, name, appAgent);
+            user.setDisplayName("未登录");
+            user.setAuthToken(authToken);
+
+            // 新用户
+            ContactManager.getInstance().newContact(id, domain, name, user.toJSON(), device);
+        }
+        else {
+            // 已存在
+            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+            AuthToken authToken = authService.queryAuthTokenByContactId(id);
+            user = new User(searchResult.getContactList().get(0).getContext());
+            user.setAuthToken(authToken);
+        }
+
+        return user;
+    }
+
+    public WordCloud createWordCloud(AuthToken authToken) {
+        WordCloud wordCloud = new WordCloud();
+
+        long end = System.currentTimeMillis();
+        long start = end - (365L * 24 * 60 * 60 * 1000);
+        List<AIGCChatHistory> chatHistories = this.storage.readHistoriesByContactId(
+                authToken.getContactId(), authToken.getDomain(), start, end);
+        for (AIGCChatHistory history : chatHistories) {
+            List<String> words = this.segmentation(history.queryContent);
+            for (String word : words) {
+                wordCloud.addWord(word);
+            }
+            words = this.segmentation(history.answerContent);
+            for (String word : words) {
+                wordCloud.addWord(word);
+            }
+        }
+
+        return wordCloud;
+    }
+
     public List<ModelConfig> getModelConfigs() {
         if (!this.isStarted()) {
             return null;
@@ -772,57 +847,6 @@ public class AIGCService extends AbstractModule {
             Logger.e(this.getClass(), "#newInvitationForToken - write invitation failed: " + token);
         }
         return invitation;
-    }
-
-    /**
-     * 获取或创建新用户。
-     *
-     * @param appAgent
-     * @param device
-     * @return
-     */
-    public User getOrCreateUser(String appAgent, Device device) {
-        User user = null;
-
-        long id = Cryptology.getInstance().fastHash(appAgent);
-        id = Math.abs(id);
-
-        try {
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            byte[] digest = md5.digest(appAgent.getBytes(StandardCharsets.UTF_8));
-            long hash = Cryptology.getInstance().fastHash(digest);
-            id += hash;
-        } catch (Exception e) {
-            Logger.e(this.getClass(), "#getOrCreateUser", e);
-        }
-
-        final String domain = AuthConsts.DEFAULT_DOMAIN;
-        final String appKey = AuthConsts.DEFAULT_APP_KEY;
-
-        ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactId(domain, id);
-        if (searchResult.getContactList().isEmpty()) {
-            // 创建令牌
-            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
-            // 5年有效时长
-            AuthToken authToken = authService.applyToken(domain, appKey, id, 5L * 365 * 24 * 60 * 60 * 1000);
-
-            String name = "ME" + Utils.randomNumberString(8);
-            user = new User(id, name, appAgent);
-            user.setDisplayName("未登录");
-            user.setAuthToken(authToken);
-
-            // 新用户
-            ContactManager.getInstance().newContact(id, domain, name, user.toJSON(), device);
-        }
-        else {
-            // 已存在
-            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
-            AuthToken authToken = authService.queryAuthTokenByContactId(id);
-            user = new User(searchResult.getContactList().get(0).getContext());
-            user.setAuthToken(authToken);
-        }
-
-        return user;
     }
 
     /**

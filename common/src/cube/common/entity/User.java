@@ -65,8 +65,13 @@ public class User extends Entity {
         json.put("phoneNumber", this.phoneNumber);
         json.put("avatar", this.avatar);
         if (null != this.authToken) {
-            json.put("authToken", this.authToken.toJSON());
+            json.put("authToken", this.authToken.toCompactJSON());
         }
         return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
     }
 }

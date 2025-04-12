@@ -24,9 +24,9 @@ import org.json.JSONObject;
 /**
  * 注入或获取指定联系人的令牌任务。
  */
-public class InjectOrGetTokenTask extends ServiceTask {
+public class AppInjectOrGetTokenTask extends ServiceTask {
 
-    public InjectOrGetTokenTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public AppInjectOrGetTokenTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 

@@ -19,18 +19,15 @@ public class ConversationRelation implements JSONable {
 
     public long reportSn = 0;
 
-    public String number;
-
-    private long id = 0;
+    private long uid = 0;
 
     public ConversationRelation() {
         this.name = "Anonymous";
     }
 
-    public ConversationRelation(String name, long reportSn, String number) {
+    public ConversationRelation(String name, long reportSn) {
         this.name = name;
         this.reportSn = reportSn;
-        this.number = number;
     }
 
     public ConversationRelation(JSONObject json) {
@@ -38,22 +35,17 @@ public class ConversationRelation implements JSONable {
         if (json.has("reportSn")) {
             this.reportSn = json.getLong("reportSn");
         }
-        if (json.has("number")) {
-            this.number = json.getString("number");
+        if (json.has("uid")) {
+            this.uid = json.getLong("uid");
         }
     }
 
     public synchronized long getId() {
-        if (0 == this.id) {
-            StringBuilder buf = new StringBuilder();
-            buf.append(this.name);
-            if (null != this.number) {
-                buf.append(this.number);
-            }
-            long hash = Cryptology.getInstance().fastHash(buf.toString());
-            this.id = Math.abs(hash);
+        if (0 == this.uid) {
+            long hash = Cryptology.getInstance().fastHash(this.name);
+            this.uid = Math.abs(hash);
         }
-        return this.id;
+        return this.uid;
     }
 
     @Override
@@ -63,8 +55,8 @@ public class ConversationRelation implements JSONable {
         if (this.reportSn > 0) {
             json.put("reportSn", this.reportSn);
         }
-        if (null != this.number) {
-            json.put("number", this.number);
+        if (this.uid > 0) {
+            json.put("uid", this.uid);
         }
         return json;
     }

@@ -42,9 +42,19 @@ public enum AIGCAction {
     CheckToken("checkToken"),
 
     /**
+     * 应用层获取或创建用户。
+     */
+    AppGetOrCreateUser("appGetOrCreateUser"),
+
+    /**
+     * 获取词云数据。
+     */
+    GetWordCloud("getWordCloud"),
+
+    /**
      * 注入或者获取令牌。
      */
-    InjectOrGetToken("injectOrGetToken"),
+    AppInjectOrGetToken("injectOrGetToken"),
 
     /**
      * 评价回答内容的质量。

@@ -158,6 +158,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new PsychologyPaintingReportState());
         httpServer.addContextHandler(new PsychologyReportPage());
 
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Activate());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Config());
@@ -217,7 +218,43 @@ public class Manager implements Tickable, PerformerListener {
         return this.validTokenMap.get(token);
     }
 
-    
+    public JSONObject getOrCreateUser(JSONObject data) {
+        Packet packet = new Packet(AIGCAction.AppGetOrCreateUser.name, data);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+        if (null == response) {
+            Logger.w(Manager.class, "#getOrCreateUser - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#getOrCreateUser - Response state is NOT ok : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject getWordCloud(String token) {
+        Packet packet = new Packet(AIGCAction.GetWordCloud.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#getWordCloud - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#getWordCloud - Response state is NOT ok : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
 
     public ContactToken checkOrInjectContactToken(String phoneNumber, String userName) {
         JSONObject data = new JSONObject();
@@ -226,7 +263,7 @@ public class Manager implements Tickable, PerformerListener {
             data.put("name", userName);
         }
 
-        Packet packet = new Packet(AIGCAction.InjectOrGetToken.name, data);
+        Packet packet = new Packet(AIGCAction.AppInjectOrGetToken.name, data);
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
         if (null == response) {
             Logger.w(Manager.class, "#checkOrInjectContactToken - Response is null : " + phoneNumber);

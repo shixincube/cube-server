@@ -236,7 +236,18 @@ public class AuthToken implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        try {
+            json.put("code", this.code);
+            json.put("domain", this.domain);
+            json.put("appKey", this.appKey);
+            json.put("cid", this.cid.longValue());
+            json.put("issues", this.issues);
+            json.put("expiry", this.expiry);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
     }
 
     /**

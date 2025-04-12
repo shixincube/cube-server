@@ -10,8 +10,10 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.WordCloud;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -19,12 +21,11 @@ import cube.service.aigc.AIGCService;
 import org.json.JSONObject;
 
 /**
- * 通过功能模组进行推理。
- * @deprecated
+ * 创建词云。
  */
-public class InferByModuleTask extends ServiceTask {
+public class GetWordCloudTask extends ServiceTask {
 
-    public InferByModuleTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public GetWordCloudTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -33,37 +34,27 @@ public class InferByModuleTask extends ServiceTask {
         ActionDialect dialect = new ActionDialect(this.primitive);
         Packet packet = new Packet(dialect);
 
-        String token = getTokenCode(dialect);
+        String token = this.getTokenCode(dialect);
         if (null == token) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.NoToken.code, new JSONObject()));
-            markResponseTime();
-            return;
-        }
-
-        if (!packet.data.has("module") || !packet.data.has("param")) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        String moduleName = packet.data.getString("module");
-        JSONObject param = packet.data.getJSONObject("param");
-
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        String result = "";//service.inferByModule(token, moduleName, param);
-        if (null == result) {
+        AuthToken authToken = service.getToken(token);
+        if (null == authToken) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.NoToken.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        JSONObject responseData = new JSONObject();
-        responseData.put("result", result);
+        WordCloud wordCloud = service.createWordCloud(authToken);
+
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, wordCloud.toJSON()));
         markResponseTime();
     }
 }
