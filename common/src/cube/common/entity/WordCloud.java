@@ -16,9 +16,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class WordCloud implements JSONable {
 
+    private long timestamp;
+
     private Map<String, AtomicInteger> words;
 
     public WordCloud() {
+        this.timestamp = System.currentTimeMillis();
         this.words = new HashMap<>();
     }
 
@@ -35,6 +38,7 @@ public class WordCloud implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("timestamp", this.timestamp);
         JSONArray array = new JSONArray();
         for (Map.Entry<String, AtomicInteger> entry : this.words.entrySet()) {
             JSONObject data = new JSONObject();

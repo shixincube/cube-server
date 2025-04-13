@@ -19,10 +19,10 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * 激活设备。
  */
-public class Activate extends ContextHandler {
+public class WordCloud extends ContextHandler {
 
-    public Activate() {
-        super("/app/activate/");
+    public WordCloud() {
+        super("/app/wordcloud/");
         setHandler(new Handler());
     }
 
@@ -33,15 +33,20 @@ public class Activate extends ContextHandler {
         }
 
         @Override
-        public void doPost(HttpServletRequest request, HttpServletResponse response) {
+        public void doGet(HttpServletRequest request, HttpServletResponse response) {
             try {
-                JSONObject json = this.readBodyAsJSONObject(request);
+                String token = getApiToken(request);
+                if (!Manager.getInstance().checkToken(token)) {
+                    this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
+                    this.complete();
+                    return;
+                }
 
-                JSONObject responseJson = Manager.getInstance().getOrCreateUser(json);
+                JSONObject responseJson = Manager.getInstance().getWordCloud(token);
                 this.respondOk(response, responseJson);
                 this.complete();
             } catch (Exception e) {
-                Logger.w(this.getClass(), "#doPost", e);
+                Logger.w(this.getClass(), "#doGet", e);
                 this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
             }

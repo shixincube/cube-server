@@ -33,8 +33,6 @@ import java.util.concurrent.ExecutorService;
  */
 public class ContactStorage implements Storagable {
 
-    private final String version = "1.0";
-
     private final String contactTablePrefix = "contact_";
 
     private final String contactZoneTablePrefix = "contact_zone_";
@@ -50,6 +48,8 @@ public class ContactStorage implements Storagable {
     private final String topListTablePrefix = "contact_top_";
 
     private final String blockListTablePrefix = "contact_block_list_";
+
+    private final String pointTablePrefix = "point_";
 
     /**
      * 联系人字段描述。
@@ -203,6 +203,30 @@ public class ContactStorage implements Storagable {
             })
     };
 
+    /**
+     * 积分表字段。
+     */
+    private final StorageField[] pointFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("point", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("source", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("comment", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            })
+    };
+
     private ExecutorService executor;
 
     private Storage storage;
@@ -213,6 +237,7 @@ public class ContactStorage implements Storagable {
     private Map<String, String> groupTableNameMap;
     private Map<String, String> groupMemberTableNameMap;
     private Map<String, String> appendixTableNameMap;
+    private Map<String, String> pointTableNameMap;
 
     public ContactStorage(ExecutorService executor, Storage storage) {
         this.executor = executor;
@@ -223,6 +248,7 @@ public class ContactStorage implements Storagable {
         this.groupTableNameMap = new HashMap<>();
         this.groupMemberTableNameMap = new HashMap<>();
         this.appendixTableNameMap = new HashMap<>();
+        this.pointTableNameMap = new HashMap<>();
     }
 
     public ContactStorage(ExecutorService executor, StorageType type, JSONObject config) {
@@ -234,6 +260,7 @@ public class ContactStorage implements Storagable {
         this.groupTableNameMap = new HashMap<>();
         this.groupMemberTableNameMap = new HashMap<>();
         this.appendixTableNameMap = new HashMap<>();
+        this.pointTableNameMap = new HashMap<>();
     }
 
     @Override
@@ -257,6 +284,7 @@ public class ContactStorage implements Storagable {
             this.checkAppendixTable(domain);
             this.checkTopListTable(domain);
             this.checkBlockListTable(domain);
+            this.checkPointTable(domain);
         }
     }
 
@@ -1773,6 +1801,53 @@ public class ContactStorage implements Storagable {
         return result;
     }
 
+    public int totalPoints(long contactId, String domain) {
+        String table = this.pointTableNameMap.get(domain);
+        if (null == table) {
+            return 0;
+        }
+
+        String sql = "SELECT SUM(point) FROM `" + table + "` WHERE `contact_id`=" + contactId;
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        return result.get(0)[0].getInt();
+    }
+
+    public boolean writePoint(Point point) {
+        String table = this.pointTableNameMap.get(point.getDomain().getName());
+        if (null == table) {
+            return false;
+        }
+
+        return this.storage.executeInsert(table, new StorageField[] {
+                new StorageField("contact_id", point.getContactId()),
+                new StorageField("point", point.getPoint()),
+                new StorageField("timestamp", point.getTimestamp()),
+                new StorageField("source", point.getSource()),
+                new StorageField("comment", point.getComment())
+        });
+    }
+
+    public List<Point> readPoints(long contactId, String domain) {
+        List<Point> list = new ArrayList<>();
+
+        String table = this.pointTableNameMap.get(domain);
+        if (null == table) {
+            return list;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, this.pointFields, new Conditional[] {
+                Conditional.createEqualTo("contact_id", contactId)
+        });
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            Point point = new Point(data.get("id").getLong(), domain, data.get("timestamp").getLong(),
+                    data.get("contact_id").getLong(), data.get("point").getInt(),
+                    data.get("source").getString(), data.get("comment").getString());
+            list.add(point);
+        }
+        return list;
+    }
+
     private void checkContactTable(String domain) {
         String table = this.contactTablePrefix + domain;
 
@@ -1981,6 +2056,20 @@ public class ContactStorage implements Storagable {
         if (!this.storage.exist(table)) {
             // 表不存在，建表
             if (this.storage.executeCreate(table, this.blockListFields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkPointTable(String domain) {
+        String table = this.pointTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.pointTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.pointFields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
         }

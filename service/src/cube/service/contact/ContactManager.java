@@ -141,6 +141,11 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     private StatisticsSystem statisticsSystem;
 
+    /**
+     * 积分系统。
+     */
+    private PointSystem pointSystem;
+
     private List<ContactManagerListener> listeners;
 
     private ContactManager() {
@@ -228,6 +233,8 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
                 // 启动统计系统
                 statisticsSystem.start(storage.getStorageType(), storage.getConfig(), authService.getDomainList());
+
+                pointSystem = new PointSystem(storage);
 
                 for (ContactManagerListener listener : listeners) {
                     listener.onStarted(ContactManager.this);
@@ -1896,6 +1903,15 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         return result;
+    }
+
+    /**
+     * 获取积分系统。
+     *
+     * @return
+     */
+    public PointSystem getPointSystem() {
+        return this.pointSystem;
     }
 
     /**
