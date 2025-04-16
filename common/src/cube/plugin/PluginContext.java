@@ -13,6 +13,8 @@ public abstract class PluginContext {
 
     private String key;
 
+    protected Object parameter;
+
     public PluginContext() {
     }
 
@@ -27,6 +29,18 @@ public abstract class PluginContext {
      */
     public String getKey() {
         return this.key;
+    }
+
+    public boolean hasParameter() {
+        return (null != this.parameter);
+    }
+
+    public void setParameter(Object parameter) {
+        this.parameter = parameter;
+    }
+
+    public Object getParameter() {
+        return this.parameter;
     }
 
     public abstract Object get(String name);

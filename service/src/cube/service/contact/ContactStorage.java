@@ -332,7 +332,7 @@ public class ContactStorage implements Storagable {
      * @param contact
      */
     public void writeContact(final Contact contact) {
-        this.writeContact(contact, null, null);
+        this.writeContact(contact, null);
     }
 
     /**
@@ -342,75 +342,55 @@ public class ContactStorage implements Storagable {
      * @param device
      */
     public void writeContact(final Contact contact, final Device device) {
-        this.writeContact(contact, device, null);
-    }
+        String domain = contact.getDomain().getName();
 
-    /**
-     * 写入联系人数据。
-     *
-     * @param contact
-     * @param device
-     * @param completed
-     */
-    public void writeContact(final Contact contact, final Device device, final Runnable completed) {
-        this.executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                String domain = contact.getDomain().getName();
+        String table = contactTableNameMap.get(domain);
 
-                String table = contactTableNameMap.get(domain);
+        List<StorageField[]> list = storage.executeQuery(table,
+                new StorageField[] { new StorageField("sn", LiteralBase.LONG) },
+                new Conditional[] {
+                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
+                });
 
-                List<StorageField[]> list = storage.executeQuery(table,
-                        new StorageField[] { new StorageField("sn", LiteralBase.LONG) },
-                        new Conditional[] {
-                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
-                        });
-
-                if (list.isEmpty()) {
-                    // 没有数据，插入新数据
-                    storage.executeInsert(table, new StorageField[] {
-                            new StorageField("id", LiteralBase.LONG, contact.getId()),
-                            new StorageField("name", LiteralBase.STRING, contact.getName()),
-                            new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
-                            new StorageField("context", LiteralBase.STRING,
-                                    (null != contact.getContext()) ? contact.getContext().toString() : null),
-                            new StorageField("recent_device_name", LiteralBase.STRING,
-                                    (null != device) ? device.getName() : null),
-                            new StorageField("recent_device_platform", LiteralBase.STRING,
-                                    (null != device) ? device.getPlatform() : null)
-                    });
-                }
-                else {
-                    // 更新数据
-                    if (null != device) {
-                        storage.executeUpdate(table, new StorageField[] {
-                                new StorageField("name", LiteralBase.STRING, contact.getName()),
-                                new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
-                                new StorageField("context", LiteralBase.STRING,
-                                        (null != contact.getContext()) ? contact.getContext().toString() : null),
-                                new StorageField("recent_device_name", LiteralBase.STRING, device.getName()),
-                                new StorageField("recent_device_platform", LiteralBase.STRING, device.getPlatform())
-                        }, new Conditional[] {
-                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
-                        });
-                    }
-                    else {
-                        storage.executeUpdate(table, new StorageField[] {
-                                new StorageField("name", LiteralBase.STRING, contact.getName()),
-                                new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
-                                new StorageField("context", LiteralBase.STRING,
-                                        (null != contact.getContext()) ? contact.getContext().toString() : null)
-                        }, new Conditional[] {
-                                Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
-                        });
-                    }
-                }
-
-                if (null != completed) {
-                    completed.run();
-                }
+        if (list.isEmpty()) {
+            // 没有数据，插入新数据
+            storage.executeInsert(table, new StorageField[] {
+                    new StorageField("id", LiteralBase.LONG, contact.getId()),
+                    new StorageField("name", LiteralBase.STRING, contact.getName()),
+                    new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
+                    new StorageField("context", LiteralBase.STRING,
+                            (null != contact.getContext()) ? contact.getContext().toString() : null),
+                    new StorageField("recent_device_name", LiteralBase.STRING,
+                            (null != device) ? device.getName() : null),
+                    new StorageField("recent_device_platform", LiteralBase.STRING,
+                            (null != device) ? device.getPlatform() : null)
+            });
+        }
+        else {
+            // 更新数据
+            if (null != device) {
+                storage.executeUpdate(table, new StorageField[] {
+                        new StorageField("name", LiteralBase.STRING, contact.getName()),
+                        new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
+                        new StorageField("context", LiteralBase.STRING,
+                                (null != contact.getContext()) ? contact.getContext().toString() : null),
+                        new StorageField("recent_device_name", LiteralBase.STRING, device.getName()),
+                        new StorageField("recent_device_platform", LiteralBase.STRING, device.getPlatform())
+                }, new Conditional[] {
+                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
+                });
             }
-        });
+            else {
+                storage.executeUpdate(table, new StorageField[] {
+                        new StorageField("name", LiteralBase.STRING, contact.getName()),
+                        new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
+                        new StorageField("context", LiteralBase.STRING,
+                                (null != contact.getContext()) ? contact.getContext().toString() : null)
+                }, new Conditional[] {
+                        Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
+                });
+            }
+        }
     }
 
     /**
@@ -1809,7 +1789,7 @@ public class ContactStorage implements Storagable {
 
         String sql = "SELECT SUM(point) FROM `" + table + "` WHERE `contact_id`=" + contactId;
         List<StorageField[]> result = this.storage.executeQuery(sql);
-        return result.get(0)[0].getInt();
+        return result.get(0)[0].isNullValue() ? 0 : result.get(0)[0].getInt();
     }
 
     public boolean writePoint(Point point) {

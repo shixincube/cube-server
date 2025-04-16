@@ -18,6 +18,7 @@ import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.Theme;
+import cube.aigc.psychology.app.AppHelper;
 import cube.aigc.psychology.composition.Scale;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
@@ -275,6 +276,7 @@ public class AIGCService extends AbstractModule {
                 ContactManager.getInstance().getPluginSystem().register(ContactHook.SignIn, contactPlugin);
                 ContactManager.getInstance().getPluginSystem().register(ContactHook.SignOut, contactPlugin);
                 ContactManager.getInstance().getPluginSystem().register(ContactHook.DeviceTimeout, contactPlugin);
+                ContactManager.getInstance().getPluginSystem().register(ContactHook.VerifyVerificationCode, contactPlugin);
 
                 // 监听文件服务事件
                 AbstractModule fileStorage = getKernel().getModule("FileStorage");
@@ -763,7 +765,10 @@ public class AIGCService extends AbstractModule {
             user.setAuthToken(authToken);
 
             // 新用户
-            ContactManager.getInstance().newContact(id, domain, name, user.toJSON(), device);
+            Contact contact = ContactManager.getInstance().newContact(id, domain, name, user.toJSON(), device);
+
+            // 初始积分
+            ContactManager.getInstance().getPointSystem().insert(AppHelper.createNewUserPoint(contact, 200));
         }
         else {
             // 已存在
@@ -773,6 +778,16 @@ public class AIGCService extends AbstractModule {
             user.setAuthToken(authToken);
         }
 
+        return user;
+    }
+
+    public User updateUser(Contact contact, VerificationCode verificationCode) {
+        User user = new User(contact.getContext());
+        user.setDisplayName(verificationCode.phoneNumber);
+        user.setPhoneNumber("+" + verificationCode.dialCode + "-" + verificationCode.phoneNumber);
+
+        ContactManager.getInstance().updateContact(contact.getDomain().getName(),
+                contact.getId(), verificationCode.phoneNumber, user.toJSON());
         return user;
     }
 

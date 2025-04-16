@@ -386,7 +386,7 @@ public class ConversationWorker {
         final List<QuestionAnswer> list = new ArrayList<>();
 
         // 尝试匹配子任务
-        boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
+        boolean success = this.service.semanticSearch(query.replaceAll("\\*\\*", ""), new SemanticSearchListener() {
             @Override
             public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
                 list.addAll(questionAnswers);

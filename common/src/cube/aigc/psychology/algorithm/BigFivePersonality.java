@@ -276,41 +276,43 @@ public class BigFivePersonality implements JSONable {
         this.name = json.getString("name");
         this.displayName = json.getString("displayName");
         this.description = json.getString("description");
-        JSONArray scores = json.getJSONArray("scores");
-        for (int i = 0; i < scores.length(); ++i) {
-            JSONObject factor = scores.getJSONObject(i);
-            String code = factor.getString("code");
-            double score = factor.getDouble("score");
-            String paraphrase = factor.has("paraphrase") ? factor.getString("paraphrase") : "";
-            String content = factor.has("content") ? factor.getString("content") : "";
-            switch (BigFiveFactor.parse(code)) {
-                case Obligingness:
-                    this.obligingness = score;
-                    this.obligingnessParaphrase = paraphrase;
-                    this.obligingnessContent = content;
-                    break;
-                case Conscientiousness:
-                    this.conscientiousness = score;
-                    this.conscientiousnessParaphrase = paraphrase;
-                    this.conscientiousnessContent = content;
-                    break;
-                case Extraversion:
-                    this.extraversion = score;
-                    this.extraversionParaphrase = paraphrase;
-                    this.extraversionContent = content;
-                    break;
-                case Achievement:
-                    this.achievement = score;
-                    this.achievementParaphrase = paraphrase;
-                    this.achievementContent = content;
-                    break;
-                case Neuroticism:
-                    this.neuroticism = score;
-                    this.neuroticismParaphrase = paraphrase;
-                    this.neuroticismContent = content;
-                    break;
-                default:
-                    break;
+        if (json.has("scores")) {
+            JSONArray scores = json.getJSONArray("scores");
+            for (int i = 0; i < scores.length(); ++i) {
+                JSONObject factor = scores.getJSONObject(i);
+                String code = factor.getString("code");
+                double score = factor.getDouble("score");
+                String paraphrase = factor.has("paraphrase") ? factor.getString("paraphrase") : "";
+                String content = factor.has("content") ? factor.getString("content") : "";
+                switch (BigFiveFactor.parse(code)) {
+                    case Obligingness:
+                        this.obligingness = score;
+                        this.obligingnessParaphrase = paraphrase;
+                        this.obligingnessContent = content;
+                        break;
+                    case Conscientiousness:
+                        this.conscientiousness = score;
+                        this.conscientiousnessParaphrase = paraphrase;
+                        this.conscientiousnessContent = content;
+                        break;
+                    case Extraversion:
+                        this.extraversion = score;
+                        this.extraversionParaphrase = paraphrase;
+                        this.extraversionContent = content;
+                        break;
+                    case Achievement:
+                        this.achievement = score;
+                        this.achievementParaphrase = paraphrase;
+                        this.achievementContent = content;
+                        break;
+                    case Neuroticism:
+                        this.neuroticism = score;
+                        this.neuroticismParaphrase = paraphrase;
+                        this.neuroticismContent = content;
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }
@@ -915,7 +917,11 @@ public class BigFivePersonality implements JSONable {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = new JSONObject();
+        json.put("name", this.name);
+        json.put("displayName", this.displayName);
+        json.put("description", this.description);
+        return json;
     }
 
     public TemplateValue getTemplateValue() {

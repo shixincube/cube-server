@@ -10,8 +10,6 @@ import org.json.JSONObject;
 
 public class Point extends Entity {
 
-    private long id;
-
     private long contactId;
 
     private int point;
@@ -34,6 +32,14 @@ public class Point extends Entity {
         this.point = point;
         this.source = source;
         this.comment = comment;
+    }
+
+    public Point(JSONObject json) {
+        super(json);
+        this.contactId = json.getLong("contactId");
+        this.point = json.getInt("point");
+        this.source = json.getString("source");
+        this.comment = json.getString("comment");
     }
 
     public long getContactId() {

@@ -49,6 +49,10 @@ public class ContactPluginSystem extends PluginSystem<ContactHook> {
         return this.getHook(ContactHook.ModifyContactContext);
     }
 
+    public ContactHook getVerifyVerificationCodeHook() {
+        return this.getHook(ContactHook.VerifyVerificationCode);
+    }
+
     private void build() {
         ContactHook hook = new ContactHook(ContactHook.SignIn);
         this.addHook(hook);
@@ -72,6 +76,9 @@ public class ContactPluginSystem extends PluginSystem<ContactHook> {
         this.addHook(hook);
 
         hook = new ContactHook(ContactHook.ModifyContactContext);
+        this.addHook(hook);
+
+        hook = new ContactHook(ContactHook.VerifyVerificationCode);
         this.addHook(hook);
     }
 }

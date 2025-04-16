@@ -23,6 +23,18 @@ public abstract class ContactHandler extends CrossDomainHandler {
         this.performer = performer;
     }
 
+    protected String getApiToken(HttpServletRequest request) {
+        String token = this.getLastRequestPath(request);
+        if (null == token || token.length() < 32) {
+            try {
+                token = request.getHeader("x-baize-api-token").trim();
+            } catch (Exception e) {
+                // Nothing
+            }
+        }
+        return token;
+    }
+
     protected String getRequestPath(HttpServletRequest request) {
         String path = request.getPathInfo();
         if (path.length() < 2) {

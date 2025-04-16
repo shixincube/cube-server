@@ -171,6 +171,16 @@ public enum ContactAction {
      */
     Search("search"),
 
+    /**人
+     * 申请验证码。
+     */
+    RequestVerificationCode("requestVerificationCode"),
+
+    /**
+     * 核验验证码。
+     */
+    VerifyVerificationCode("verifyVerificationCode"),
+
     /**
      * 未知动作。
      */

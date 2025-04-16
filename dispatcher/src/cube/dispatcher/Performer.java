@@ -121,7 +121,7 @@ public class Performer implements TalkListener, Tickable {
     /**
      * 阻塞超时时长。
      */
-    private long blockTimeout = 10000;
+    private long blockTimeout = 15000;
 
     /**
      * 定时回调清单。

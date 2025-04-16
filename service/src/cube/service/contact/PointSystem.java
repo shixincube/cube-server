@@ -10,6 +10,8 @@ import cell.util.log.Logger;
 import cube.common.entity.Contact;
 import cube.common.entity.Point;
 
+import java.util.List;
+
 public class PointSystem {
 
     private ContactStorage storage;
@@ -20,6 +22,18 @@ public class PointSystem {
 
     public int total(Contact contact) {
         return this.storage.totalPoints(contact.getId(), contact.getDomain().getName());
+    }
+
+    public List<Point> listPoints(Contact contact) {
+        return this.storage.readPoints(contact.getId(), contact.getDomain().getName());
+    }
+
+    public int insert(Point point) {
+        if (!this.storage.writePoint(point)) {
+            Logger.e(this.getClass(), "#increment - write data to database error: " + point.getContactId());
+        }
+
+        return this.storage.totalPoints(point.getContactId(), point.getDomain().getName());
     }
 
     public int increment(Contact contact, int value, String source, String comment) {

@@ -43,10 +43,7 @@ import cube.util.ConfigUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
@@ -148,9 +145,15 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
     private List<ContactManagerListener> listeners;
 
+    /**
+     * 验证码。
+     */
+    protected Map<String, VerificationCode> verificationCodes;
+
     private ContactManager() {
         super();
         this.listeners = new Vector<>();
+        this.verificationCodes = new ConcurrentHashMap<>();
     }
 
     /**
@@ -957,11 +960,13 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     public AuthToken getAuthToken(String domain, Long contactId) {
         ContactTable table = this.onlineTables.get(domain);
-        if (null == table) {
-            return null;
+        if (null != table) {
+            AuthToken authToken = table.getAuthToken(contactId);
+            if (null != authToken) {
+                return authToken;
+            }
         }
-
-        return table.getAuthToken(contactId);
+        return this.getAuthService().getToken(domain, contactId);
     }
 
     /**
@@ -1908,10 +1913,97 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     /**
      * 获取积分系统。
      *
-     * @return
+     * @return 返回积分系统实例。
      */
     public PointSystem getPointSystem() {
         return this.pointSystem;
+    }
+
+    /**
+     * 请求发送验证码短信。
+     *
+     * @param authToken
+     * @param dialCode
+     * @param isoCode
+     * @param phoneNumber
+     * @return
+     */
+    public VerificationCode requestVerificationCode(AuthToken authToken,
+                                                    String dialCode, String isoCode, String phoneNumber) {
+        VerificationCode current = this.verificationCodes.get(authToken.getCode());
+        if (null != current) {
+            if (System.currentTimeMillis() - current.timestamp < 60 * 1000) {
+                Logger.w(this.getClass(), "#requestVerificationCode - The sending interval must be greater than 60 seconds: " +
+                        authToken.getCode());
+                return null;
+            }
+
+            if (current.timestamp + current.duration < System.currentTimeMillis()) {
+                Logger.d(this.getClass(), "#requestVerificationCode - token: " + authToken.getCode() +
+                        " - code: " + current.getCode());
+
+                try {
+                    // 模拟请求发送短信耗时
+                    Thread.sleep(Utils.randomInt(3000, 5000));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                // 返回有效的验证码
+                return current;
+            }
+        }
+
+        VerificationCode verificationCode = new VerificationCode(authToken.getCode(), dialCode, isoCode,
+                phoneNumber, System.currentTimeMillis(), 15 * 60 * 1000);
+        // 随机码
+        verificationCode.setCode(Utils.randomNumberString(4));
+
+        Logger.d(this.getClass(), "#requestVerificationCode - token: " + authToken.getCode() +
+                " - code: " + verificationCode.getCode());
+
+        try {
+            // 模拟请求发送短信耗时
+            Thread.sleep(Utils.randomInt(3000, 5000));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        this.verificationCodes.put(verificationCode.token, verificationCode);
+        return verificationCode;
+    }
+
+    /**
+     * 核验验证码。
+     *
+     * @param authToken
+     * @param phoneNumber
+     * @param codeMD5
+     * @return
+     */
+    public VerificationCode verifyVerificationCode(AuthToken authToken, String phoneNumber, String codeMD5) {
+        VerificationCode current = this.verificationCodes.get(authToken.getCode());
+        if (null == current) {
+            Logger.w(this.getClass(), "#verifyVerificationCode - No verification code: " + authToken.getCode());
+            return null;
+        }
+
+        if (current.phoneNumber.equals(phoneNumber) && current.getCodeMD5().equalsIgnoreCase(codeMD5)) {
+            Contact contact = this.getContact(authToken.getDomain(), authToken.getContactId());
+
+            // Hook
+            ContactHook hook = this.pluginSystem.getVerifyVerificationCodeHook();
+            ContactPluginContext cpc = new ContactPluginContext(ContactHook.VerifyVerificationCode, contact, null);
+            cpc.setAuthToken(authToken);
+            cpc.setParameter(current);
+            hook.apply(cpc);
+
+            return current;
+        }
+        else {
+            Logger.w(this.getClass(), "#verifyVerificationCode - Verification code is incorrect: "
+                    + authToken.getCode());
+            return null;
+        }
     }
 
     /**

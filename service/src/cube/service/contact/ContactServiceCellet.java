@@ -169,6 +169,14 @@ public class ContactServiceCellet extends AbstractCellet {
         else if (ContactAction.Disconnect.name.equals(action)) {
             this.execute(new DisconnectTask(this, talkContext, primitive));
         }
+        else if (ContactAction.RequestVerificationCode.name.equals(action)) {
+            this.execute(new RequestVerificationCodeTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (ContactAction.VerifyVerificationCode.name.equals(action)) {
+            this.execute(new VerifyVerificationCodeTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else {
             Logger.w(this.getClass(), "Unsupported action: " + action);
         }

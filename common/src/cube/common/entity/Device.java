@@ -242,7 +242,7 @@ public class Device implements JSONable {
 
     @Override
     public boolean equals(Object obj) {
-        if (null != obj && obj instanceof Device) {
+        if (obj instanceof Device) {
             Device other = (Device) obj;
             if (this.name.equals(other.name) && this.platform.equals(other.platform)) {
                 return true;

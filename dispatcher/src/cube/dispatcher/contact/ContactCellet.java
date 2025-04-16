@@ -17,6 +17,7 @@ import cube.dispatcher.Performer;
 import cube.dispatcher.contact.handler.DeleteContact;
 import cube.dispatcher.contact.handler.GetContact;
 import cube.dispatcher.contact.handler.NewContact;
+import cube.dispatcher.contact.handler.VerificationCode;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -113,6 +114,7 @@ public class ContactCellet extends AbstractCellet {
         this.performer.getHttpServer().addContextHandler(new GetContact(this.performer));
         this.performer.getHttpServer().addContextHandler(new NewContact(this.performer));
         this.performer.getHttpServer().addContextHandler(new DeleteContact(this.performer));
+        this.performer.getHttpServer().addContextHandler(new VerificationCode(this.performer));
     }
 
     protected SignInTask borrowSignInTask(TalkContext talkContext, Primitive primitive) {

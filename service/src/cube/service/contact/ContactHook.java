@@ -32,6 +32,8 @@ public class ContactHook extends Hook {
 
     public final static String ModifyContactContext = "ModifyContactContext";
 
+    public final static String VerifyVerificationCode = "VerifyVerificationCode";
+
     public ContactHook(String key) {
         super(key);
     }

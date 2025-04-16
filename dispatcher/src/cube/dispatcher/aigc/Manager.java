@@ -17,6 +17,7 @@ import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Report;
 import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.algorithm.Attention;
+import cube.aigc.psychology.app.AppUserProfile;
 import cube.aigc.psychology.composition.AnswerSheet;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScaleResult;
@@ -159,6 +160,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new PsychologyReportPage());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Activate());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.UserProfile());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.WordCloud());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -235,6 +237,26 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return Packet.extractDataPayload(responsePacket);
+    }
+
+    public AppUserProfile getUserProfile(String token) {
+        Packet packet = new Packet(AIGCAction.AppGetUserProfile.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#getUserProfile - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#getUserProfile - Response state is NOT ok : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new AppUserProfile(Packet.extractDataPayload(responsePacket));
     }
 
     public JSONObject getWordCloud(String token) {

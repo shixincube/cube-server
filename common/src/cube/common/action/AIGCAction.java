@@ -47,6 +47,11 @@ public enum AIGCAction {
     AppGetOrCreateUser("appGetOrCreateUser"),
 
     /**
+     * 应用层获取用户描述数据。
+     */
+    AppGetUserProfile("appGetUserProfile"),
+
+    /**
      * 获取词云数据。
      */
     GetWordCloud("getWordCloud"),

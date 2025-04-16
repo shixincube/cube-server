@@ -62,6 +62,8 @@ public class DaemonTask implements Runnable {
         }
 
         this.processSearchResult();
+
+        this.processVerificationCode();
     }
 
     private void processContacts() {
@@ -130,7 +132,18 @@ public class DaemonTask implements Runnable {
         Iterator<ContactSearchResult> iter = this.manager.searchMap.values().iterator();
         while (iter.hasNext()) {
             ContactSearchResult result = iter.next();
-            if (now - result.getTimestamp() > 5L * 60L * 1000L) {
+            if (now - result.getTimestamp() > 5 * 60 * 1000) {
+                iter.remove();
+            }
+        }
+    }
+
+    private void processVerificationCode() {
+        long now = System.currentTimeMillis();
+        Iterator<Map.Entry<String, VerificationCode>> iter = this.manager.verificationCodes.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, VerificationCode> entry = iter.next();
+            if (now - entry.getValue().timestamp > 60 * 60 * 1000) {
                 iter.remove();
             }
         }

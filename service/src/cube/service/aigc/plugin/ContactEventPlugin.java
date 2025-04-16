@@ -8,6 +8,7 @@ package cube.service.aigc.plugin;
 
 import cube.common.entity.Contact;
 import cube.common.entity.KnowledgeBaseInfo;
+import cube.common.entity.VerificationCode;
 import cube.plugin.HookResult;
 import cube.plugin.Plugin;
 import cube.plugin.PluginContext;
@@ -53,6 +54,12 @@ public class ContactEventPlugin implements Plugin {
             Contact contact = ctx.getContact();
             this.service.getKnowledgeFramework().freeBase(contact.getDomain().getName(),
                     contact.getId());
+        }
+        else if (ContactHook.VerifyVerificationCode.equals(hook)) {
+            if (ctx.hasParameter()) {
+                VerificationCode verificationCode = (VerificationCode) ctx.getParameter();
+                this.service.updateUser(ctx.getContact(), verificationCode);
+            }
         }
 
         return null;

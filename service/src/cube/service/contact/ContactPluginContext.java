@@ -11,7 +11,6 @@ import cube.common.JSONable;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.plugin.PluginContext;
-import cube.util.DummyDevice;
 import org.json.JSONObject;
 
 /**
@@ -64,6 +63,10 @@ public class ContactPluginContext extends PluginContext implements JSONable {
         return this.device;
     }
 
+    public void setAuthToken(AuthToken authToken) {
+        this.authToken = authToken;
+    }
+
     public AuthToken getAuthToken() {
         return this.authToken;
     }
@@ -109,10 +112,10 @@ public class ContactPluginContext extends PluginContext implements JSONable {
     @Override
     public void set(String name, Object value) {
         if (name.equalsIgnoreCase("newName")) {
-            this.newName = (null != value && value instanceof String) ? (String) value : null;
+            this.newName = (value instanceof String) ? (String) value : null;
         }
         else if (name.equalsIgnoreCase("newContext")) {
-            this.newContext = (null != value && value instanceof JSONObject) ? (JSONObject) value : null;
+            this.newContext = (value instanceof JSONObject) ? (JSONObject) value : null;
         }
     }
 

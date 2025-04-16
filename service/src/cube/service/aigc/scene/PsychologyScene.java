@@ -15,6 +15,7 @@ import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.PerceptronThing;
 import cube.aigc.psychology.algorithm.Representation;
+import cube.aigc.psychology.app.AppUserProfile;
 import cube.aigc.psychology.composition.*;
 import cube.aigc.psychology.material.Label;
 import cube.auth.AuthConsts;
@@ -24,6 +25,7 @@ import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
+import cube.service.contact.ContactManager;
 import cube.service.cv.CVService;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
@@ -1282,6 +1284,27 @@ public class PsychologyScene {
 
     public boolean writePaintingReportState(long sn, int state) {
         return this.storage.writePaintingManagementState(sn, state);
+    }
+
+    public AppUserProfile getAppUserProfile(AuthToken authToken) {
+        AppUserProfile profile = new AppUserProfile();
+
+        Contact contact = ContactManager.getInstance().getContact(authToken.getDomain(), authToken.getContactId());
+        profile.totalPoints = ContactManager.getInstance().getPointSystem().total(contact);
+        profile.pointList = ContactManager.getInstance().getPointSystem().listPoints(contact);
+
+        profile.numReports = this.numPsychologyReports(authToken.getContactId(), AIGCStateCode.Ok.code);
+
+        List<PaintingReport> reports = this.getPsychologyReports(authToken.getContactId(), AIGCStateCode.Ok.code, 1);
+        if (!reports.isEmpty()) {
+            try {
+                profile.personality = reports.get(0).getEvaluationReport().getPersonalityAccelerator().getBigFivePersonality();
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "#getAppUserProfile", e);
+            }
+        }
+
+        return profile;
     }
 
     private Painting processPainting(AIGCUnit unit, FileLabel fileLabel, boolean adjust) {
