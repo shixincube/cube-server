@@ -397,11 +397,21 @@ public class AuthStorage implements Storagable {
         });
     }
 
-    public void updateToken(AuthToken token) {
-        this.storage.executeUpdate(this.tokenTable, new StorageField[] {
+    public boolean updateToken(AuthToken token) {
+        return this.storage.executeUpdate(this.tokenTable, new StorageField[] {
                 new StorageField("cid", token.getContactId())
         }, new Conditional[] {
                 Conditional.createEqualTo("code", token.getCode())
+        });
+    }
+
+    public boolean updateToken(long contactId, String code, long issues, long expiry) {
+        return this.storage.executeUpdate(this.tokenTable, new StorageField[] {
+                new StorageField("code", code),
+                new StorageField("issues", issues),
+                new StorageField("expiry", expiry)
+        }, new Conditional[] {
+                Conditional.createEqualTo("cid", contactId)
         });
     }
 

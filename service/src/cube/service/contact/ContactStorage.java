@@ -401,21 +401,16 @@ public class ContactStorage implements Storagable {
      * @return
      */
     public Contact readContact(String domain, Long id) {
-        List<StorageField[]> result = null;
-
         String table = this.contactTableNameMap.get(domain);
-        result = this.storage.executeQuery(table, this.contactFields,
+        List<StorageField[]> result = this.storage.executeQuery(table, this.contactFields,
                 new Conditional[] { Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, id)) });
-
         if (result.isEmpty()) {
             return null;
         }
 
-        StorageField[] data = result.get(0);
-
         Contact contact = null;
-
         try {
+            StorageField[] data = result.get(0);
             Map<String, StorageField> map = StorageFields.get(data);
             Long contactId = map.get("id").getLong();
             String name = map.get("name").getString();
@@ -436,6 +431,47 @@ public class ContactStorage implements Storagable {
             // Nothing;
         }
 
+        return contact;
+    }
+
+    /**
+     * 读取联系人数据。
+     *
+     * @param domain
+     * @param name
+     * @return
+     */
+    public Contact readContact(String domain, String name) {
+        String table = this.contactTableNameMap.get(domain);
+        List<StorageField[]> result = this.storage.executeQuery(table, this.contactFields, new Conditional[] {
+                Conditional.createEqualTo(new StorageField("name", name)),
+                Conditional.createOrderBy("timestamp", true)
+        });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Contact contact = null;
+        try {
+            StorageField[] data = result.get(0);
+            Map<String, StorageField> map = StorageFields.get(data);
+            Long contactId = map.get("id").getLong();
+            long timestamp = map.get("timestamp").getLong();
+            JSONObject context = map.get("context").isNullValue() ? null : new JSONObject(map.get("context").getString());
+            String deviceName = map.get("recent_device_name").isNullValue() ? null : map.get("recent_device_name").getString();
+            String devicePlatform = map.get("recent_device_platform").isNullValue() ? null : map.get("recent_device_platform").getString();
+
+            contact = new Contact(contactId, domain, name, timestamp);
+            if (null != context) {
+                contact.setContext(context);
+            }
+            if (null != deviceName && null != devicePlatform) {
+                Device device = new Device(deviceName, devicePlatform);
+                contact.addDevice(device);
+            }
+        } catch (Exception e) {
+            // Nothing;
+        }
         return contact;
     }
 

@@ -74,7 +74,7 @@ public class DeleteContactTask extends ServiceTask {
             return;
         }
 
-        ContactManager.getInstance().getAuthService().deleteContactTokens(authToken.getDomain(), deletedId);
+        ContactManager.getInstance().getAuthService().deleteToken(authToken.getDomain(), deletedId);
 
         this.cellet.speak(this.talkContext,
                 this.makeResponse(action, packet, ContactStateCode.Ok.code, contact.toJSON()));

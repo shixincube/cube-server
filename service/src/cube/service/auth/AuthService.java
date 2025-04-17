@@ -289,6 +289,8 @@ public class AuthService extends AbstractModule {
             return false;
         }
 
+        this.tokenCache.put(new CacheKey(token.getCode()), new CacheValue(token.toJSON()));
+        this.authTokenMap.remove(token.getCode());
         this.authStorage.updateToken(token);
         return true;
     }
@@ -300,7 +302,12 @@ public class AuthService extends AbstractModule {
      * @param contactId
      * @return
      */
-    public boolean deleteContactTokens(String domain, long contactId) {
+    public boolean deleteToken(String domain, long contactId) {
+        AuthToken authToken = this.getToken(domain, contactId);
+        if (null != authToken) {
+            this.tokenCache.remove(new CacheKey(authToken.getCode()));
+            this.authTokenMap.remove(authToken.getCode());
+        }
         return this.authStorage.deleteToken(domain, contactId);
     }
 
@@ -451,6 +458,30 @@ public class AuthService extends AbstractModule {
      */
     public AuthToken queryAuthTokenByContactId(Long contactId) {
         return this.authStorage.queryToken(contactId);
+    }
+
+    /**
+     * 更新令牌。
+     *
+     * @param domain
+     * @param contactId
+     * @param newTokenCode
+     * @param tokenDuration
+     * @return
+     */
+    public AuthToken updateAuthTokenCode(String domain, long contactId, String newTokenCode, long tokenDuration) {
+        AuthToken oldAuthToken = this.getToken(domain, contactId);
+        if (null != oldAuthToken) {
+            this.tokenCache.remove(new CacheKey(oldAuthToken.getCode()));
+            this.authTokenMap.remove(oldAuthToken.getCode());
+        }
+
+        if (this.authStorage.updateToken(contactId, newTokenCode, System.currentTimeMillis(),
+                System.currentTimeMillis() + tokenDuration)) {
+            return this.getToken(newTokenCode);
+        }
+
+        return null;
     }
 
     @Override

@@ -35,9 +35,9 @@ public class GetContact extends ContextHandler {
 
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            String tokenCode = getLastRequestPath(request);
+            String tokenCode = getApiToken(request);
             if (null == tokenCode) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
@@ -58,14 +58,14 @@ public class GetContact extends ContextHandler {
 
                 ActionDialect responseDialect = this.performer.syncTransmit(ContactCellet.NAME, dialect);
                 if (null == responseDialect) {
-                    this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                    this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
                     this.complete();
                     return;
                 }
 
                 Packet responsePacket = new Packet(responseDialect);
                 if (Packet.extractCode(responsePacket) != ContactStateCode.Ok.code) {
-                    this.respond(response, HttpStatus.NOT_FOUND_404);
+                    this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                     this.complete();
                     return;
                 }
@@ -74,7 +74,7 @@ public class GetContact extends ContextHandler {
                 this.complete();
             } catch (Exception e) {
                 Logger.w(GetContact.class, "#doGet", e);
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
             }
         }

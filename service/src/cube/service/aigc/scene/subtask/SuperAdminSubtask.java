@@ -76,11 +76,11 @@ public class SuperAdminSubtask extends ConversationSubtask {
 
         buf.append("* [");
         for (String word : sPromptRandomFillScaleWords) {
-            buf.append(word);
+            buf.append(word.trim());
         }
         buf.append("](aixinli://prompt.direct/");
         for (String word : sPromptRandomFillScaleWords) {
-            buf.append(word);
+            buf.append(word.trim());
         }
         buf.append(")\n\n");
 

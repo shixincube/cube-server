@@ -77,6 +77,9 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
                 record.answer = polish(String.format(
                         Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_START_QUESTIONNAIRE"),
                         scale.instruction));
+
+                record.answer += "\n\n您可以点击 [现在开始](aixinli://prompt.direct/开始。) 让我们立即开始。";
+
                 record.context = complexContext;
                 listener.onGenerated(channel, record);
                 channel.setProcessing(false);

@@ -726,6 +726,24 @@ public class AIGCService extends AbstractModule {
 
     //-------- App Interface - Start --------
 
+    public User getUser(String token) {
+        User user = null;
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthToken authToken = authService.getToken(token);
+        if (null == authToken) {
+            Logger.w(this.getClass(), "#getUser - Can NOT find token: " + token);
+            return null;
+        }
+        Contact contact = ContactManager.getInstance().getContact(token);
+        if (null == contact) {
+            Logger.w(this.getClass(), "#getUser - Can NOT find contact: " + token);
+            return null;
+        }
+        user = new User(contact.getContext());
+        user.setAuthToken(authToken);
+        return user;
+    }
+
     /**
      * 获取或创建新用户。
      *
@@ -751,13 +769,14 @@ public class AIGCService extends AbstractModule {
 
         final String domain = AuthConsts.DEFAULT_DOMAIN;
         final String appKey = AuthConsts.DEFAULT_APP_KEY;
+        final long tokenDuration = 5L * 365 * 24 * 60 * 60 * 1000;
 
         ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactId(domain, id);
         if (searchResult.getContactList().isEmpty()) {
             // 创建令牌
             AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
             // 5年有效时长
-            AuthToken authToken = authService.applyToken(domain, appKey, id, 5L * 365 * 24 * 60 * 60 * 1000);
+            AuthToken authToken = authService.applyToken(domain, appKey, id, tokenDuration);
 
             String name = "ME" + Utils.randomNumberString(8);
             user = new User(id, name, appAgent);
@@ -782,13 +801,39 @@ public class AIGCService extends AbstractModule {
     }
 
     public User updateUser(Contact contact, VerificationCode verificationCode) {
-        User user = new User(contact.getContext());
-        user.setDisplayName(verificationCode.phoneNumber);
-        user.setPhoneNumber("+" + verificationCode.dialCode + "-" + verificationCode.phoneNumber);
+        // 查找用户
+        ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactName(
+                contact.getDomain().getName(), verificationCode.phoneNumber);
+        if (searchResult.getContactList().isEmpty()) {
+            // 新注册用户
+            User user = new User(contact.getContext());
+            user.setDisplayName(verificationCode.phoneNumber);
+            user.setPhoneNumber(verificationCode.dialCode + "-" + verificationCode.phoneNumber);
 
-        ContactManager.getInstance().updateContact(contact.getDomain().getName(),
-                contact.getId(), verificationCode.phoneNumber, user.toJSON());
-        return user;
+            ContactManager.getInstance().updateContact(contact.getDomain().getName(),
+                    contact.getId(), verificationCode.phoneNumber, user.toJSON());
+            return user;
+        }
+        else {
+            // 老用户登录
+            // 老用户当前使用的令牌删除，但是不删除设备的临时联系人
+            Contact userContact = searchResult.getContactList().get(0);
+            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+            // 当前使用令牌码
+            String tokenCode = authService.getToken(contact.getDomain().getName(), contact.getId()).getCode();
+            // 删除当前临时联系人的令牌
+            authService.deleteToken(contact.getDomain().getName(), contact.getId());
+            // 更新老用户的令牌
+            final long tokenDuration = 5L * 365 * 24 * 60 * 60 * 1000;
+            AuthToken newToken = authService.updateAuthTokenCode(userContact.getDomain().getName(),
+                    userContact.getId(), tokenCode, tokenDuration);
+            User user = new User(userContact.getContext());
+            user.setAuthToken(newToken);
+
+            ContactManager.getInstance().updateContact(contact.getDomain().getName(),
+                    contact.getId(), verificationCode.phoneNumber, user.toJSON());
+            return user;
+        }
     }
 
     public WordCloud createWordCloud(AuthToken authToken) {

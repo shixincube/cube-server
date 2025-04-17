@@ -34,29 +34,44 @@ public class AppGetOrCreateUserTask extends ServiceTask {
         ActionDialect dialect = new ActionDialect(this.primitive);
         Packet packet = new Packet(dialect);
 
-        if (!packet.data.has("appAgent") || !packet.data.has("device")) {
+        if (packet.data.has("token")) {
+            try {
+                String token = packet.data.getString("token");
+                AIGCService service = ((AIGCCellet) this.cellet).getService();
+                User user = service.getUser(token);
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, user.toJSON()));
+                markResponseTime();
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#run", e);
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                markResponseTime();
+            }
+        }
+        else if (packet.data.has("appAgent") && packet.data.has("device")) {
+            try {
+                String appAgent = packet.data.getString("appAgent");
+                Device device = new Device(packet.data.getJSONObject("device"));
+
+                Logger.d(this.getClass(), "#run - appAgent: " + appAgent);
+
+                AIGCService service = ((AIGCCellet) this.cellet).getService();
+                User user = service.getOrCreateUser(appAgent, device);
+
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, user.toJSON()));
+                markResponseTime();
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#run", e);
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                markResponseTime();
+            }
+        }
+        else {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, packet.data));
-            markResponseTime();
-            return;
-        }
-
-        try {
-            String appAgent = packet.data.getString("appAgent");
-            Device device = new Device(packet.data.getJSONObject("device"));
-
-            Logger.d(this.getClass(), "#run - appAgent: " + appAgent);
-
-            AIGCService service = ((AIGCCellet) this.cellet).getService();
-            User user = service.getOrCreateUser(appAgent, device);
-
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, user.toJSON()));
-            markResponseTime();
-        } catch (Exception e) {
-            Logger.e(this.getClass(), "#run", e);
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
             markResponseTime();
         }
     }

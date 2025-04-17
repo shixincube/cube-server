@@ -1897,7 +1897,6 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     public ContactSearchResult searchWithContactId(String domain, long contactId) {
         ContactSearchResult result = new ContactSearchResult(Long.toString(contactId));
-
         try {
             Contact contact = this.storage.readContact(domain, contactId);
             if (null != contact) {
@@ -1906,7 +1905,26 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return result;
+    }
 
+    /**
+     * 使用联系人名检索。
+     *
+     * @param domain
+     * @param name
+     * @return
+     */
+    public ContactSearchResult searchWithContactName(String domain, String name) {
+        ContactSearchResult result = new ContactSearchResult(name);
+        try {
+            Contact contact = this.storage.readContact(domain, name);
+            if (null != contact) {
+                result.addContact(contact);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return result;
     }
 
