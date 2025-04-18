@@ -99,7 +99,7 @@ public class AuthStorage implements Storagable {
             new StorageField("expiry", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("issues", LiteralBase.LONG, new Constraint[] {
+            new StorageField("issue", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("cid", LiteralBase.LONG, new Constraint[] {
@@ -339,7 +339,7 @@ public class AuthStorage implements Storagable {
                 new StorageField("app_key", LiteralBase.STRING, token.getAppKey()),
                 new StorageField("code", LiteralBase.STRING, token.getCode()),
                 new StorageField("expiry", LiteralBase.LONG, token.getExpiry()),
-                new StorageField("issues", LiteralBase.LONG, token.getIssues()),
+                new StorageField("issue", LiteralBase.LONG, token.getIssue()),
                 new StorageField("cid", LiteralBase.LONG, token.getContactId()),
                 new StorageField("primary_content", LiteralBase.STRING,
                         token.getDescription().toJSON().toString()),
@@ -357,11 +357,11 @@ public class AuthStorage implements Storagable {
 
         Map<String, StorageField> map = StorageFields.get(result.get(0));
 
-        Date issues = new Date(map.get("issues").getLong());
+        Date issue = new Date(map.get("issue").getLong());
         Date expiry = new Date(map.get("expiry").getLong());
 
         AuthToken token = new AuthToken(map.get("code").getString(), map.get("domain").getString(),
-                map.get("app_key").getString(), map.get("cid").getLong(), issues, expiry,
+                map.get("app_key").getString(), map.get("cid").getLong(), issue, expiry,
                 new PrimaryDescription(new JSONObject(map.get("primary_content").getString())),
                 map.get("ferry").getInt() == 1);
         return token;
@@ -379,11 +379,11 @@ public class AuthStorage implements Storagable {
 
         Map<String, StorageField> map = StorageFields.get(result.get(0));
 
-        Date issues = new Date(map.get("issues").getLong());
+        Date issue = new Date(map.get("issue").getLong());
         Date expiry = new Date(map.get("expiry").getLong());
 
         AuthToken token = new AuthToken(map.get("code").getString(), map.get("domain").getString(),
-                map.get("app_key").getString(), map.get("cid").getLong(), issues, expiry,
+                map.get("app_key").getString(), map.get("cid").getLong(), issue, expiry,
                 new PrimaryDescription(new JSONObject(map.get("primary_content").getString())),
                 map.get("ferry").getInt() == 1);
         return token;
@@ -397,7 +397,7 @@ public class AuthStorage implements Storagable {
         });
     }
 
-    public boolean updateToken(AuthToken token) {
+    public boolean updateTokenByCode(AuthToken token) {
         return this.storage.executeUpdate(this.tokenTable, new StorageField[] {
                 new StorageField("cid", token.getContactId())
         }, new Conditional[] {
@@ -405,13 +405,22 @@ public class AuthStorage implements Storagable {
         });
     }
 
-    public boolean updateToken(long contactId, String code, long issues, long expiry) {
-        return this.storage.executeUpdate(this.tokenTable, new StorageField[] {
-                new StorageField("code", code),
-                new StorageField("issues", issues),
-                new StorageField("expiry", expiry)
+    public boolean updateTokenByCid(AuthToken token) {
+        List<StorageField[]> result = this.storage.executeQuery(this.tokenTable, new StorageField[] {
+                new StorageField("sn", LiteralBase.LONG)
         }, new Conditional[] {
-                Conditional.createEqualTo("cid", contactId)
+                Conditional.createEqualTo("cid", token.getContactId())
+        });
+        if (result.isEmpty()) {
+            return this.writeToken(token);
+        }
+
+        return this.storage.executeUpdate(this.tokenTable, new StorageField[] {
+                new StorageField("code", token.getCode()),
+                new StorageField("issue", token.getIssue()),
+                new StorageField("expiry", token.getExpiry())
+        }, new Conditional[] {
+                Conditional.createEqualTo("cid", token.getContactId())
         });
     }
 
@@ -441,11 +450,11 @@ public class AuthStorage implements Storagable {
 
         Map<String, StorageField> map = StorageFields.get(result.get(0));
 
-        Date issues = new Date(map.get("issues").getLong());
+        Date issue = new Date(map.get("issue").getLong());
         Date expiry = new Date(map.get("expiry").getLong());
 
         AuthToken token = new AuthToken(map.get("code").getString(), map.get("domain").getString(),
-                map.get("app_key").getString(), map.get("cid").getLong(), issues, expiry,
+                map.get("app_key").getString(), map.get("cid").getLong(), issue, expiry,
                 new PrimaryDescription(new JSONObject(map.get("primary_content").getString())),
                 map.get("ferry").getInt() == 1);
         return token;

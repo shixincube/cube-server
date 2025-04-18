@@ -29,6 +29,7 @@ import cube.service.multipointcomm.event.CommFieldUpdate;
 import cube.service.multipointcomm.event.MicrophoneVolume;
 import cube.service.multipointcomm.event.VideoMuted;
 import cube.service.multipointcomm.signaling.*;
+import cube.util.DummyDevice;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -591,7 +592,8 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
             CommField calleeField = this.getCommField(current.getCallee().getId());
 
             // 推送信令
-            OfferSignaling toCallee = new OfferSignaling(signaling.getSN(), calleeField, calleeField.getFounder(), Device.createDevice());
+            OfferSignaling toCallee = new OfferSignaling(signaling.getSN(), calleeField, calleeField.getFounder(),
+                    new DummyDevice(null));
             toCallee.copy(signaling);
             // 信令事件
             ModuleEvent event = new ModuleEvent(MultipointCommService.NAME,

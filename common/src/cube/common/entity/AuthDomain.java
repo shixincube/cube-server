@@ -106,10 +106,10 @@ public class AuthDomain implements JSONable {
                 JSONObject json = array.getJSONObject(i);
                 String code = json.getString("code");
                 long cid = json.getLong("cid");
-                long issues = json.getLong("issues");
+                long issue = json.getLong("issue");
                 long expiry = json.getLong("expiry");
 
-                AuthToken token = new AuthToken(code, domainName, appKey, cid, issues, expiry, ferry);
+                AuthToken token = new AuthToken(code, domainName, appKey, cid, issue, expiry, ferry);
                 this.tokens.put(code, token);
             }
         } catch (JSONException e) {

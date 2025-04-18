@@ -805,6 +805,8 @@ public class AIGCService extends AbstractModule {
         ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactName(
                 contact.getDomain().getName(), verificationCode.phoneNumber);
         if (searchResult.getContactList().isEmpty()) {
+            Logger.i(this.getClass(), "#updateUser - New user: " + contact.getId());
+
             // 新注册用户
             User user = new User(contact.getContext());
             user.setDisplayName(verificationCode.phoneNumber);
@@ -815,23 +817,35 @@ public class AIGCService extends AbstractModule {
             return user;
         }
         else {
+            Logger.i(this.getClass(), "#updateUser - User login: " + contact.getId());
+
             // 老用户登录
             // 老用户当前使用的令牌删除，但是不删除设备的临时联系人
             Contact userContact = searchResult.getContactList().get(0);
             AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
             // 当前使用令牌码
-            String tokenCode = authService.getToken(contact.getDomain().getName(), contact.getId()).getCode();
-            // 删除当前临时联系人的令牌
-            authService.deleteToken(contact.getDomain().getName(), contact.getId());
+            AuthToken currentToken = authService.getToken(contact.getDomain().getName(), contact.getId());
+            String tokenCode = null;
+            if (null != currentToken) {
+                tokenCode = currentToken.getCode();
+                // 删除当前临时联系人的令牌
+                authService.deleteToken(contact.getDomain().getName(), contact.getId());
+            }
+            else {
+                tokenCode = Utils.randomString(32);
+            }
+
             // 更新老用户的令牌
             final long tokenDuration = 5L * 365 * 24 * 60 * 60 * 1000;
-            AuthToken newToken = authService.updateAuthTokenCode(userContact.getDomain().getName(),
-                    userContact.getId(), tokenCode, tokenDuration);
+            AuthToken authToken = new AuthToken(tokenCode, userContact.getDomain().getName(),
+                    AuthConsts.DEFAULT_APP_KEY, userContact.getId(),
+                    System.currentTimeMillis(), System.currentTimeMillis() + tokenDuration, false);
+            AuthToken newToken = authService.updateAuthTokenCode(authToken);
             User user = new User(userContact.getContext());
             user.setAuthToken(newToken);
 
-            ContactManager.getInstance().updateContact(contact.getDomain().getName(),
-                    contact.getId(), verificationCode.phoneNumber, user.toJSON());
+            ContactManager.getInstance().updateContact(userContact.getDomain().getName(),
+                    userContact.getId(), verificationCode.phoneNumber, user.toJSON());
             return user;
         }
     }

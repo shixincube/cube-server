@@ -14,7 +14,6 @@ import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
-import cube.common.entity.Device;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -61,7 +60,7 @@ public class CheckTokenTask extends ServiceTask {
         }
 
         // 使用令牌码登录
-        Contact contact = ContactManager.getInstance().signIn(tokenCode, Device.createDevice());
+        Contact contact = ContactManager.getInstance().signIn(tokenCode, null);
         if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

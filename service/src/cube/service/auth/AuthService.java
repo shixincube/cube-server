@@ -291,7 +291,7 @@ public class AuthService extends AbstractModule {
 
         this.tokenCache.put(new CacheKey(token.getCode()), new CacheValue(token.toJSON()));
         this.authTokenMap.remove(token.getCode());
-        this.authStorage.updateToken(token);
+        this.authStorage.updateTokenByCode(token);
         return true;
     }
 
@@ -319,7 +319,7 @@ public class AuthService extends AbstractModule {
      */
     public void injectToken(AuthToken token) {
         if (this.authStorage.existsToken(token.getCode())) {
-            this.authStorage.updateToken(token);
+            this.authStorage.updateTokenByCode(token);
         }
         else {
             this.authStorage.writeToken(token);
@@ -463,22 +463,23 @@ public class AuthService extends AbstractModule {
     /**
      * 更新令牌。
      *
-     * @param domain
-     * @param contactId
-     * @param newTokenCode
-     * @param tokenDuration
+     * @param token
      * @return
      */
-    public AuthToken updateAuthTokenCode(String domain, long contactId, String newTokenCode, long tokenDuration) {
-        AuthToken oldAuthToken = this.getToken(domain, contactId);
+    public AuthToken updateAuthTokenCode(AuthToken token) {
+        AuthToken oldAuthToken = this.getToken(token.getDomain(), token.getContactId());
         if (null != oldAuthToken) {
             this.tokenCache.remove(new CacheKey(oldAuthToken.getCode()));
             this.authTokenMap.remove(oldAuthToken.getCode());
         }
 
-        if (this.authStorage.updateToken(contactId, newTokenCode, System.currentTimeMillis(),
-                System.currentTimeMillis() + tokenDuration)) {
-            return this.getToken(newTokenCode);
+        if (null == token.getDescription()) {
+            PrimaryDescription description = this.getPrimaryDescription(token.getDomain(), token.getAppKey());
+            token.setDescription(description);
+        }
+
+        if (this.authStorage.updateTokenByCid(token)) {
+            return this.getToken(token.getCode());
         }
 
         return null;

@@ -41,7 +41,7 @@ public class AuthToken implements JSONable {
     /**
      * 发布日期。
      */
-    private long issues;
+    private long issue;
 
     /**
      * 有效期截止日期。
@@ -65,18 +65,18 @@ public class AuthToken implements JSONable {
      * @param domain 令牌有效域。
      * @param appKey App 键。
      * @param cid 关联的联系人 ID 。
-     * @param issues 令牌发布日期。
+     * @param issue 令牌发布日期。
      * @param expiry 令牌有效期。
      * @param description 令牌携带的描述。
      * @param ferry 是否摆渡数据模式。
      */
-    public AuthToken(String code, String domain, String appKey, Long cid,Date issues,
+    public AuthToken(String code, String domain, String appKey, Long cid,Date issue,
                      Date expiry, PrimaryDescription description, boolean ferry) {
         this.code = code;
         this.domain = domain;
         this.appKey = appKey;
         this.cid = cid;
-        this.issues = issues.getTime();
+        this.issue = issue.getTime();
         this.expiry = expiry.getTime();
         this.description = description;
         this.ferry = ferry;
@@ -89,17 +89,17 @@ public class AuthToken implements JSONable {
      * @param domain 令牌有效域。
      * @param appKey App 键。
      * @param cid 关联的联系人 ID 。
-     * @param issues 令牌发布日期。
+     * @param issue 令牌发布日期。
      * @param expiry 令牌有效期。
      * @param ferry 是否摆渡数据模式。
      */
     public AuthToken(String code, String domain, String appKey, Long cid,
-                     long issues, long expiry, boolean ferry) {
+                     long issue, long expiry, boolean ferry) {
         this.code = code;
         this.domain = domain;
         this.appKey = appKey;
         this.cid = cid;
-        this.issues = issues;
+        this.issue = issue;
         this.expiry = expiry;
         this.ferry = ferry;
     }
@@ -115,7 +115,7 @@ public class AuthToken implements JSONable {
             this.domain = json.getString("domain");
             this.appKey = json.getString("appKey");
             this.cid = json.getLong("cid");
-            this.issues = json.getLong("issues");
+            this.issue = json.getLong("issue");
             this.expiry = json.getLong("expiry");
             if (json.has("description")) {
                 this.description = new PrimaryDescription(json.getJSONObject("description"));
@@ -167,8 +167,8 @@ public class AuthToken implements JSONable {
      *
      * @return 返回发布时间。
      */
-    public long getIssues() {
-        return this.issues;
+    public long getIssue() {
+        return this.issue;
     }
 
     /**
@@ -222,7 +222,7 @@ public class AuthToken implements JSONable {
             json.put("domain", this.domain);
             json.put("appKey", this.appKey);
             json.put("cid", this.cid.longValue());
-            json.put("issues", this.issues);
+            json.put("issue", this.issue);
             json.put("expiry", this.expiry);
             if (null != this.description) {
                 json.put("description", this.description.toJSON());
@@ -242,7 +242,7 @@ public class AuthToken implements JSONable {
             json.put("domain", this.domain);
             json.put("appKey", this.appKey);
             json.put("cid", this.cid.longValue());
-            json.put("issues", this.issues);
+            json.put("issue", this.issue);
             json.put("expiry", this.expiry);
         } catch (JSONException e) {
             e.printStackTrace();

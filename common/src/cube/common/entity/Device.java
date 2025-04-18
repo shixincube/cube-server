@@ -265,13 +265,4 @@ public class Device implements JSONable {
     public String toString() {
         return this.name + "/" + this.platform;
     }
-
-    /**
-     * 创建无设备描述的设备。
-     *
-     * @return
-     */
-    public static Device createDevice() {
-        return new Device("Unknown", "Unknown");
-    }
 }

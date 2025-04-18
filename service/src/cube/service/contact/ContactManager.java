@@ -493,6 +493,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * 仅使用令牌码签入。
      *
      * @param tokenCode 指定令牌码。
+     * @param activeDevice 活跃设备。
      * @return 返回签入的联系人。
      */
     public Contact signIn(String tokenCode, Device activeDevice) {
@@ -519,13 +520,15 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         }
 
         Contact contact = this.getContact(domain, cid);
-        contact.addDevice(activeDevice);
+        if (null != activeDevice) {
+            contact.addDevice(activeDevice);
+        }
 
         try {
             // Hook verify identity
             ContactHook hook = this.pluginSystem.getVerifyIdentity();
             HookResult hookResult = hook.apply(new ContactPluginContext(ContactHook.VerifyIdentity,
-                    authToken, contact, activeDevice));
+                    authToken, contact, contact.getDevice()));
             if (hookResult.getBoolean(HookResultKeys.NOT_ALLOWED)) {
                 Logger.i(this.getClass(), "#signIn - Sign-in not allowed: " + contact.getId());
                 return null;
@@ -538,7 +541,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         try {
             // Hook sign-in
             ContactHook hook = this.pluginSystem.getSignInHook();
-            hook.apply(new ContactPluginContext(ContactHook.SignIn, authToken, contact, activeDevice));
+            hook.apply(new ContactPluginContext(ContactHook.SignIn, authToken, contact, contact.getDevice()));
         } catch (Exception e) {
             Logger.e(this.getClass(), "#signIn", e);
         }
@@ -566,7 +569,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         this.storage.writeContact(contact, activeDevice);
 
         // 关注该用户数据
-        this.follow(contact, authToken, activeDevice);
+        this.follow(contact, authToken, (null == activeDevice) ? contact.getDevice() : activeDevice);
 
         return contact;
     }
