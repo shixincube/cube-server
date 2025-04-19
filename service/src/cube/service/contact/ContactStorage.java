@@ -60,8 +60,8 @@ public class ContactStorage implements Storagable {
             new StorageField("timestamp", LiteralBase.LONG),
             new StorageField("context", LiteralBase.STRING),
             new StorageField("recent_device_name", LiteralBase.STRING),
-            new StorageField("recent_device_platform", LiteralBase.STRING)
-            //new StorageField("reserved", LiteralBase.STRING)
+            new StorageField("recent_device_platform", LiteralBase.STRING),
+            new StorageField("mask", LiteralBase.STRING)
     };
 
     /**
@@ -473,6 +473,41 @@ public class ContactStorage implements Storagable {
             // Nothing;
         }
         return contact;
+    }
+
+    public boolean writeContactMask(String domain, long id, ContactMask mask) {
+        String table = this.contactTableNameMap.get(domain);
+        if (null == table) {
+            return false;
+        }
+
+        return this.storage.executeUpdate(table, new StorageField[] {
+                new StorageField("mask", mask.mask)
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", id)
+        });
+    }
+
+    public ContactMask readContactMask(String domain, long id) {
+        String table = this.contactTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+                new StorageField("mask", LiteralBase.STRING)
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", id)
+        });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        StorageField data = result.get(0)[0];
+        if (data.isNullValue()) {
+            return null;
+        }
+        return ContactMask.parse(data.getString());
     }
 
     /**
@@ -1894,7 +1929,7 @@ public class ContactStorage implements Storagable {
                     new StorageField("recent_device_platform", LiteralBase.STRING, new Constraint[] {
                             Constraint.DEFAULT_NULL
                     }),
-                    new StorageField("reserved", LiteralBase.STRING, new Constraint[] {
+                    new StorageField("mask", LiteralBase.STRING, new Constraint[] {
                             Constraint.DEFAULT_NULL
                     })
             };

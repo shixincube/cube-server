@@ -53,6 +53,7 @@ import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
+import cube.service.contact.ContactMask;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
@@ -835,6 +836,12 @@ public class AIGCService extends AbstractModule {
                 tokenCode = Utils.randomString(32);
             }
 
+            // 临时联系人标记为作废
+            if (contact.getId().longValue() != userContact.getId().longValue()) {
+                ContactManager.getInstance().setContactMask(contact.getDomain().getName(), contact.getId(),
+                        ContactMask.Deprecated);
+            }
+
             // 更新老用户的令牌
             final long tokenDuration = 5L * 365 * 24 * 60 * 60 * 1000;
             AuthToken authToken = new AuthToken(tokenCode, userContact.getDomain().getName(),
@@ -848,6 +855,29 @@ public class AIGCService extends AbstractModule {
                     userContact.getId(), verificationCode.phoneNumber, user.toJSON());
             return user;
         }
+    }
+
+    /**
+     * 注销用户。
+     *
+     * @param contact
+     * @return
+     */
+    public User signOutUser(Contact contact) {
+        Logger.i(this.getClass(), "#signOutUser - User: " + contact.getId());
+
+        ContactManager.getInstance().setContactMask(contact.getDomain().getName(), contact.getId(),
+                ContactMask.SignOut);
+
+        User user = new User(contact.getContext());
+        user.setAuthToken(null);
+        // 更新名称
+        ContactManager.getInstance().updateContact(contact.getDomain().getName(), contact.getId(),
+                contact.getName() + "-" + ContactMask.SignOut.mask, user.toJSON());
+        // 删除令牌
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        authService.deleteToken(contact.getDomain().getName(), contact.getId());
+        return user;
     }
 
     public WordCloud createWordCloud(AuthToken authToken) {

@@ -296,10 +296,11 @@ public class QueryRevolver {
 
                         for (QuestionAnswer qa : questionAnswerList) {
                             String question = qa.getQuestions().get(0);
-                            result.append("**").append(question).append("** ：\n\n");
+                            result.append("问题：**").append(question).append("** ：\n\n");
 
                             for (String answer : qa.getAnswers()) {
-                                result.append(this.filterPersonalityDescription(answer)).append("\n\n");
+                                result.append("回答：");
+                                result.append(answer).append("\n\n");
                                 if (result.length() >= wordLimit) {
                                     break;
                                 }

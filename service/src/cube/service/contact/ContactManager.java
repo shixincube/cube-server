@@ -565,8 +565,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             }
         });
 
-        // 更新存储
-        this.storage.writeContact(contact, activeDevice);
+        // FIXME 2025-4-19 不需要写入数据
+//        this.storage.writeContact(contact, (null != activeDevice) ?
+//                (activeDevice.getName().equals("Dummy") ? null : activeDevice) :
+//                null);
 
         // 关注该用户数据
         this.follow(contact, authToken, (null == activeDevice) ? contact.getDevice() : activeDevice);
@@ -1938,6 +1940,14 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     public PointSystem getPointSystem() {
         return this.pointSystem;
+    }
+
+    public boolean setContactMask(String domain, long contactId, ContactMask mask) {
+        return this.storage.writeContactMask(domain, contactId, mask);
+    }
+
+    public ContactMask getContactMask(String domain, long contactId) {
+        return this.storage.readContactMask(domain, contactId);
     }
 
     /**
