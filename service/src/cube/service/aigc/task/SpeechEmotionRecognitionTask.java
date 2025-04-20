@@ -46,7 +46,7 @@ public class SpeechEmotionRecognitionTask extends ServiceTask {
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         AuthToken authToken = service.getToken(token);
 
-        // 执行 Speech Emotion Recognition
+        // Speech Emotion Recognition
         boolean success = service.speechEmotionRecognition(authToken,
                 packet.data.getString("fileCode"), new SpeechEmotionRecognitionListener() {
             @Override

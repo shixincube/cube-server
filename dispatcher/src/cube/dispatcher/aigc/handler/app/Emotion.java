@@ -17,12 +17,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 词云数据。
+ * 情绪数据。
  */
-public class WordCloud extends ContextHandler {
+public class Emotion extends ContextHandler {
 
-    public WordCloud() {
-        super("/app/wordcloud/");
+    public Emotion() {
+        super("/app/emotion/");
         setHandler(new Handler());
     }
 
@@ -42,7 +42,7 @@ public class WordCloud extends ContextHandler {
                     return;
                 }
 
-                JSONObject responseJson = Manager.getInstance().getWordCloud(token);
+                JSONObject responseJson = Manager.getInstance().getUserEmotionData(token);
                 this.respondOk(response, responseJson);
                 this.complete();
             } catch (Exception e) {

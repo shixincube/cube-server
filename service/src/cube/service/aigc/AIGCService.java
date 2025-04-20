@@ -143,7 +143,7 @@ public class AIGCService extends AbstractModule {
     /**
      * 最大频道数量。
      */
-    private final int maxChannel = 2000;
+    private final int maxChannel = 10000;
 
     private ConcurrentHashMap<String, AIGCChannel> channelMap;
 
@@ -178,6 +178,11 @@ public class AIGCService extends AbstractModule {
     private final File workingPath = new File("storage/tmp/");
 
     /**
+     * 生成文本任务执行实时计数。
+     */
+    private ConcurrentHashMap<String, AtomicInteger> generateTextUnitCountMap;
+
+    /**
      * 是否访问，仅用于本地测试
      */
     private boolean useAgent = false;
@@ -203,6 +208,7 @@ public class AIGCService extends AbstractModule {
         this.semanticSearchQueueMap = new ConcurrentHashMap<>();
         this.retrieveReRankQueueMap = new ConcurrentHashMap<>();
         this.speechQueueMap = new ConcurrentHashMap<>();
+        this.generateTextUnitCountMap = new ConcurrentHashMap<>();
         this.tokenizer = new Tokenizer();
     }
 
@@ -887,14 +893,16 @@ public class AIGCService extends AbstractModule {
         long start = end - (365L * 24 * 60 * 60 * 1000);
         List<AIGCChatHistory> chatHistories = this.storage.readHistoriesByContactId(
                 authToken.getContactId(), authToken.getDomain(), start, end);
+
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
         for (AIGCChatHistory history : chatHistories) {
-            List<String> words = this.segmentation(history.queryContent);
+            List<String> words = analyzer.analyzeOnlyWords(history.queryContent, 10);
             for (String word : words) {
-                wordCloud.addWord(word);
+                wordCloud.addWord(word.trim());
             }
-            words = this.segmentation(history.answerContent);
+            words = analyzer.analyzeOnlyWords(history.answerContent, 10);
             for (String word : words) {
-                wordCloud.addWord(word);
+                wordCloud.addWord(word.trim());
             }
         }
 
@@ -1460,6 +1468,15 @@ public class AIGCService extends AbstractModule {
     }
 
     /**
+     * 返回生成文本单元实时运行计数。
+     *
+     * @return
+     */
+    public Map<String, AtomicInteger> getGenerateTextUnitRealtimeCount() {
+        return this.generateTextUnitCountMap;
+    }
+
+    /**
      * 同步方式生成文本。
      *
      * @param unitName
@@ -1494,6 +1511,15 @@ public class AIGCService extends AbstractModule {
      */
     public GeneratingRecord syncGenerateText(AIGCUnit unit, String prompt, GeneratingOption option,
                                    List<GeneratingRecord> history, Contact participantContact) {
+        AtomicInteger count = this.generateTextUnitCountMap.get(unit.getCapability().getName());
+        if (null == count) {
+            count = new AtomicInteger(1);
+            this.generateTextUnitCountMap.put(unit.getCapability().getName(), count);
+        }
+        else {
+            count.incrementAndGet();
+        }
+
         if (this.useAgent) {
             Logger.d(this.getClass(), "#syncGenerateText - Agent - \"" + unit.getCapability().getName() + "\" - history:"
                     + ((null != history) ? history.size() : 0));
@@ -1512,7 +1538,7 @@ public class AIGCService extends AbstractModule {
         }
 
         Contact participant = (null == participantContact) ?
-                new Contact(1000, AuthConsts.DEFAULT_DOMAIN) : participantContact;
+                unit.getContact() : participantContact;
 
         long sn = Utils.generateSerialNumber();
 
@@ -1531,6 +1557,7 @@ public class AIGCService extends AbstractModule {
             // 记录故障
             unit.markFailure(AIGCStateCode.UnitError.code, System.currentTimeMillis(), participant.getId());
             unit.setRunning(false);
+            count.decrementAndGet();
             return null;
         }
 
@@ -1547,11 +1574,13 @@ public class AIGCService extends AbstractModule {
         } catch (Exception e) {
             Logger.w(AIGCService.class, "#syncGenerateText - failed, sn:" + sn);
             unit.setRunning(false);
+            count.decrementAndGet();
             return null;
         }
 
         // 更新运行状态
         unit.setRunning(false);
+        count.decrementAndGet();
 
         // 过滤中文字符
         responseText = TextUtils.filterChinese(unit, responseText);
@@ -2430,10 +2459,22 @@ public class AIGCService extends AbstractModule {
                 SpeechEmotion result = new SpeechEmotion(data.getJSONObject("result"));
                 // 回调结束
                 listener.onCompleted(fileLabel, result);
+
+                // 写入数据库
+                EmotionRecord record = new EmotionRecord(token.getContactId(), result.emotion, EmotionRecord.SOURCE_SPEECH);
+                record.sourceData = fileLabel.toCompactJSON();
+                if (!storage.writeEmotionRecord(record)) {
+                    Logger.e(AIGCService.class, "#speechEmotionRecognition - Write emotion record error: " +
+                            fileCode);
+                }
             }
         });
 
         return true;
+    }
+
+    public List<EmotionRecord> getEmotionRecords(AuthToken authToken) {
+        return this.storage.readEmotionRecords(authToken.getContactId());
     }
 
     public FileLabel getFile(String domain, String fileCode) {

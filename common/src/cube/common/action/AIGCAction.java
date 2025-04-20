@@ -466,6 +466,11 @@ public enum AIGCAction {
      */
     SpeechEmotionRecognition("speechEmotionRecognition"),
 
+    /**
+     * 获取情绪记录。
+     */
+    GetEmotionRecords("getEmotionRecords"),
+
     ;
 
     public final String name;

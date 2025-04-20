@@ -19,6 +19,7 @@ import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.app.AppUserProfile;
 import cube.aigc.psychology.composition.AnswerSheet;
+import cube.aigc.psychology.composition.Emotion;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScaleResult;
 import cube.auth.AuthToken;
@@ -163,6 +164,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.User());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.UserProfile());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.WordCloud());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Emotion());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.UserSignOut());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
@@ -1652,6 +1654,53 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject getUserEmotionData(String token) {
+        JSONObject result = new JSONObject();
+        JSONArray data = new JSONArray();
+
+        Packet packet = new Packet(AIGCAction.GetEmotionRecords.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#getUserEmotionData - No response: " + token);
+            return null;
+        }
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getUserEmotionData - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+        JSONObject emotionRecords = Packet.extractDataPayload(responsePacket);
+        JSONArray array = emotionRecords.getJSONArray("list");
+        List<EmotionRecord> emotionRecordList = new ArrayList<>();
+        for (int i = 0; i < array.length(); ++i) {
+            emotionRecordList.add(new EmotionRecord(array.getJSONObject(i)));
+        }
+
+        for (Emotion emotion : Emotion.values()) {
+            if (emotion == Emotion.Unknown || emotion == Emotion.None) {
+                continue;
+            }
+            String name = emotion.name();
+            int value = 0;
+            for (EmotionRecord er : emotionRecordList) {
+                if (er.emotion == emotion) {
+                    value += 1;
+                }
+            }
+            JSONObject emotionJson = new JSONObject();
+            emotionJson.put("name", name);
+            emotionJson.put("value", value);
+            data.put(emotionJson);
+        }
+
+        result.put("data", data);
+        result.put("timestamp", System.currentTimeMillis());
+        result.put("num", emotionRecordList.size());
+        return result;
     }
 
     public JSONObject segmentation(String token, String text) {

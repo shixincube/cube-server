@@ -11,6 +11,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
 import cube.aigc.atom.Atom;
+import cube.aigc.psychology.composition.Emotion;
 import cube.common.Storagable;
 import cube.common.entity.*;
 import cube.core.Conditional;
@@ -21,7 +22,6 @@ import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.EmojiFilter;
-import cube.util.JSONUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -73,6 +73,8 @@ public class AIGCStorage implements Storagable {
      * 联系人偏好。
      */
     private final String contactPreferenceTable = "aigc_contact_preference";
+
+    private final String emotionTable = "aigc_speech_emotion";
 
     private final StorageField[] appConfigFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
@@ -474,6 +476,28 @@ public class AIGCStorage implements Storagable {
             })
     };
 
+    private final StorageField[] emotionFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTO_INCREMENT
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("emotion", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 情绪数据来源：语音、文本等
+            new StorageField("source", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("source_data", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+    };
+
     private Storage storage;
 
     public AIGCStorage(StorageType type, JSONObject config) {
@@ -617,6 +641,13 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.contactPreferenceTable, this.contactPreferenceFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.contactPreferenceTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.emotionTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.emotionTable, this.emotionFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.emotionTable + "' successfully");
             }
         }
     }
@@ -2231,6 +2262,37 @@ public class AIGCStorage implements Storagable {
 
         JSONArray models = new JSONArray(data.get("models").getString());
         return new ContactPreference(contactId, models);
+    }
+
+    public boolean writeEmotionRecord(EmotionRecord emotionRecord) {
+        return this.storage.executeInsert(this.emotionTable, new StorageField[] {
+                new StorageField("contact_id", emotionRecord.contactId),
+                new StorageField("emotion", emotionRecord.emotion.name()),
+                new StorageField("timestamp", emotionRecord.getTimestamp()),
+                new StorageField("source", emotionRecord.source),
+                new StorageField("source_data", LiteralBase.STRING,
+                        (null != emotionRecord.sourceData) ? emotionRecord.sourceData.toString() : null),
+        });
+    }
+
+    public List<EmotionRecord> readEmotionRecords(long contactId) {
+        List<EmotionRecord> list = new ArrayList<>();
+        List<StorageField[]> result = this.storage.executeQuery(this.emotionTable, this.emotionFields, new Conditional[] {
+                Conditional.createEqualTo("contact_id", contactId)
+        });
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            EmotionRecord record = new EmotionRecord(data.get("id").getLong(),
+                    data.get("contact_id").getLong(),
+                    Emotion.parse(data.get("emotion").getString()),
+                    data.get("timestamp").getLong(),
+                    data.get("source").getString());
+            if (!data.get("source_data").isNullValue()) {
+                record.sourceData = new JSONObject(data.get("source_data").getString());
+            }
+            list.add(record);
+        }
+        return list;
     }
 
     private void resetDefaultConfig() {
