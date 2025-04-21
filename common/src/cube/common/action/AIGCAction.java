@@ -127,6 +127,11 @@ public enum AIGCAction {
     QueryConversation("queryConversation"),
 
     /**
+     * 获取队列计数。
+     */
+    GetQueueCount("getQueueCount"),
+
+    /**
      * 文本生成文本。
      */
     TextToText("textToText"),

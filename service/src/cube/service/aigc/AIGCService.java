@@ -1479,6 +1479,30 @@ public class AIGCService extends AbstractModule {
     /**
      * 同步方式生成文本。
      *
+     * @param authToken
+     * @param unitName
+     * @param prompt
+     * @param option
+     * @return
+     */
+    public GeneratingRecord syncGenerateText(AuthToken authToken, String unitName, String prompt, GeneratingOption option) {
+        AIGCUnit unit = this.selectUnitByName(unitName);
+        if (null == unit) {
+            return null;
+        }
+
+        Contact participant = ContactManager.getInstance().getContact(authToken.getDomain(), authToken.getContactId());
+        if (null == participant) {
+            Logger.w(this.getClass(), "#syncGenerateText(AuthToken) - Can NOT find participant: " + authToken.getCode());
+            return null;
+        }
+
+        return this.syncGenerateText(unitName, prompt, option, null, participant);
+    }
+
+    /**
+     * 同步方式生成文本。
+     *
      * @param unitName
      * @param prompt
      * @param option
@@ -1487,7 +1511,7 @@ public class AIGCService extends AbstractModule {
      * @return
      */
     public GeneratingRecord syncGenerateText(String unitName, String prompt, GeneratingOption option,
-                                   List<GeneratingRecord> history, Contact participantContact) {
+                                             List<GeneratingRecord> history, Contact participantContact) {
         AIGCUnit unit = this.selectIdleUnitByName(unitName);
         if (null == unit) {
             unit = this.selectUnitByName(unitName);
@@ -1523,12 +1547,10 @@ public class AIGCService extends AbstractModule {
         if (this.useAgent) {
             Logger.d(this.getClass(), "#syncGenerateText - Agent - \"" + unit.getCapability().getName() + "\" - history:"
                     + ((null != history) ? history.size() : 0));
+            count.decrementAndGet();
             return Agent.getInstance().generateText(Utils.randomString(16),
                     unit.getCapability().getName(), prompt, option, history);
         }
-
-        // 更新运行状态
-        unit.setRunning(true);
 
         JSONArray historyArray = new JSONArray();
         if (null != history) {
@@ -1556,7 +1578,6 @@ public class AIGCService extends AbstractModule {
             Logger.w(AIGCService.class, "#syncGenerateText - transmit failed, sn:" + sn);
             // 记录故障
             unit.markFailure(AIGCStateCode.UnitError.code, System.currentTimeMillis(), participant.getId());
-            unit.setRunning(false);
             count.decrementAndGet();
             return null;
         }
@@ -1573,42 +1594,16 @@ public class AIGCService extends AbstractModule {
             thoughtText = thoughtText.trim();
         } catch (Exception e) {
             Logger.w(AIGCService.class, "#syncGenerateText - failed, sn:" + sn);
-            unit.setRunning(false);
             count.decrementAndGet();
             return null;
         }
 
-        // 更新运行状态
-        unit.setRunning(false);
+        // 计数
         count.decrementAndGet();
 
         // 过滤中文字符
         responseText = TextUtils.filterChinese(unit, responseText);
         return new GeneratingRecord(request.sn, unit.getCapability().getName(), prompt, responseText, thoughtText);
-    }
-
-    /**
-     * 同步方式生成文本。
-     *
-     * @param authToken
-     * @param unitName
-     * @param prompt
-     * @param option
-     * @return
-     */
-    public GeneratingRecord syncGenerateText(AuthToken authToken, String unitName, String prompt, GeneratingOption option) {
-        AIGCUnit unit = this.selectUnitByName(unitName);
-        if (null == unit) {
-            return null;
-        }
-
-        Contact participant = ContactManager.getInstance().getContact(authToken.getDomain(), authToken.getContactId());
-        if (null == participant) {
-            Logger.w(this.getClass(), "#syncGenerateText(AuthToken) - Can NOT find participant: " + authToken.getCode());
-            return null;
-        }
-
-        return this.syncGenerateText(unitName, prompt, option, null, participant);
     }
 
     /**
@@ -2795,12 +2790,23 @@ public class AIGCService extends AbstractModule {
                 unit = meta.unit;
             }
 
+            AtomicInteger count = this.generateTextUnitCountMap.get(meta.unit.getCapability().getName());
+            if (null == count) {
+                count = new AtomicInteger(1);
+                this.generateTextUnitCountMap.put(meta.unit.getCapability().getName(), count);
+            }
+            else {
+                count.incrementAndGet();
+            }
+
             // 执行处理
             try {
                 meta.process();
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#processGenerateTextQueue - meta process", e);
             }
+
+            count.decrementAndGet();
 
             meta = queue.poll();
         }

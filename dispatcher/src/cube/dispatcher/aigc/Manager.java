@@ -145,6 +145,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new ChainOfThought());
         httpServer.addContextHandler(new PreInfer());
         httpServer.addContextHandler(new TextToFile());
+        httpServer.addContextHandler(new GetQueueCount());
 
         httpServer.addContextHandler(new PsychologyReports());
         httpServer.addContextHandler(new CheckPsychology());
@@ -1255,6 +1256,23 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return true;
+    }
+
+    public JSONObject queryQueueCount(String token) {
+        Packet packet = new Packet(AIGCAction.GetQueueCount.name, new JSONObject());
+        ActionDialect dialect = packet.toDialect();
+        dialect.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, dialect);
+        if (null == response) {
+            Logger.w(Manager.class, "#queryQueueCount - Response is null : " + token);
+            return null;
+        }
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(Manager.class, "#queryQueueCount - Response state code is NOT Ok : " + Packet.extractCode(responsePacket));
+            return null;
+        }
+        return Packet.extractDataPayload(responsePacket);
     }
 
     /**

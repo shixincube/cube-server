@@ -264,6 +264,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new GetEmotionRecordsTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.GetQueueCount.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new GetQueueCountTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.TextToFile.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new TextToFileTask(this, talkContext, primitive,
