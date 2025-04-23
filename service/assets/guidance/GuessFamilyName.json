@@ -1,17 +1,18 @@
 {
-    "name": "MINI",
-    "displayName": "Mini International Neuropsychiatric Interview",
-    "keywords": [ "诊断", "心理", "访谈", "问卷", "心理健康" ],
-    "instruction": "我会使用专业的访谈问卷进行接下来的谈话，如果对任何不完全清楚的问题您可以提出澄清的要求。为了使访谈尽可能简短，我将进行一个定式的访谈。在访谈中，关于心理问题的非常准确的问句请使用“是”或“否”作答。",
-    "explainPrefix": "在心理诊断访谈问答的场景下，你作为心理专家正在提出问题。",
+    "name": "GuessFamilyName",
+    "displayName": "猜姓氏小游戏",
+    "keywords": [ "推算", "猜", "姓氏", "猜猜", "姓" ],
+    "instruction": "您不需要告诉我具体的您的信息，我可以猜出您的姓氏。\n\n我会向您出示数张姓氏卡片，如果您的姓氏在对应的卡片里，请回答“是”；如果您的姓氏不在卡片里，请回答“否”。",
+    "explainPrefix": "我们正在进行猜姓氏的游戏，你作为提问者正在提出问题，提出的问题需要我用“是”或“否”进行回答。",
     "sections": [
         {
-            "name": "抑郁发作",
+            "name": "推算姓氏",
             "questions": [
                 {
-                    "sn": "A1a",
-                    "question": "您是否曾经在两个星期几乎每天的大部分时间里都觉得抑郁或情绪低落?",
+                    "sn": "A1",
+                    "question": "file://GuessFamilyName/A1.md",
                     "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
                     "answers": [
                         {
                             "code": "true",
@@ -26,21 +27,19 @@
                         "rule": "true-or-false",
                         "route": {
                             "true": {
-                                "jump": "A1b"
+                                "jump": "A2"
                             },
                             "false": {
-                                "jump": "A2a",
-                                "answer": {
-                                    "A1b": "false"
-                                }
+                                "jump": "A2"
                             }
                         }
                     }
                 },
                 {
-                    "sn": "A1b",
-                    "question": "在过去的两周里，您是否几乎每天的大部分时间都觉得抑郁或情绪低落?",
+                    "sn": "A2",
+                    "question": "file://GuessFamilyName/A2.md",
                     "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
                     "answers": [
                         {
                             "code": "true",
@@ -55,18 +54,19 @@
                         "rule": "true-or-false",
                         "route": {
                             "true": {
-                                "jump": "A2a"
+                                "jump": "A3"
                             },
                             "false": {
-                                "jump": "A2a"
+                                "jump": "A3"
                             }
                         }
                     }
                 },
                 {
-                    "sn": "A2a",
-                    "question": "您是否曾经在两个星期的大部分时间里对大多数的事物表现出更少的兴趣或对曾经喜欢的事物表现出更少的喜爱?",
+                    "sn": "A3",
+                    "question": "file://GuessFamilyName/A3.md",
                     "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
                     "answers": [
                         {
                             "code": "true",
@@ -81,21 +81,19 @@
                         "rule": "true-or-false",
                         "route": {
                             "true": {
-                                "jump": "A2b"
+                                "jump": "A4"
                             },
                             "false": {
-                                "jump": "A3a",
-                                "answer": {
-                                    "A2b": "false"
-                                }
+                                "jump": "A4"
                             }
                         }
                     }
                 },
                 {
-                    "sn": "A2b",
-                    "question": "在过去的两周里，您是否在大部分的时间里对大多数的事物表现出更少的兴趣或对曾经喜欢的事物表现出更少的喜爱?",
+                    "sn": "A4",
+                    "question": "file://GuessFamilyName/A4.md",
                     "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
                     "answers": [
                         {
                             "code": "true",
@@ -110,69 +108,73 @@
                         "rule": "true-or-false",
                         "route": {
                             "true": {
-                                "jump": "A3a"
+                                "jump": "A5"
                             },
                             "false": {
-                                "jump": "A3a"
+                                "jump": "A5"
                             }
                         }
                     }
                 },
                 {
-                    "sn": "A3a",
-                    "precondition": {
-                        "items": [ "A1b", "A2b" ],
-                        "condition": "MINI_A3.js"
-                    },
-                    "prefix": "当您觉得抑郁或不感兴趣时：",
-                    "question": "您的食欲几乎每天是减少还是增加呢? 或是您的体重是否会在不刻意努力的情况下减少或增加?",
-                    "original": false,
+                    "sn": "A5",
+                    "question": "file://GuessFamilyName/A5.md",
+                    "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
                     "answers": [
                         {
-                            "group": "A",
-                            "content": "过去的两周期间",
-                            "answers": [
-                                {
-                                    "code": "true",
-                                    "content": "是"
-                                },
-                                {
-                                    "code": "false",
-                                    "content": "否"
-                                }
-                            ]
+                            "code": "true",
+                            "content": "是"
                         },
                         {
-                            "group": "B",
-                            "content": "既往时间里",
-                            "answers": [
-                                {
-                                    "code": "true",
-                                    "content": "是"
-                                },
-                                {
-                                    "code": "false",
-                                    "content": "否"
-                                }
-                            ]
+                            "code": "false",
+                            "content": "否"
                         }
                     ],
                     "router": {
                         "rule": "true-or-false",
                         "route": {
                             "true": {
-                                "jump": "A3b"
+                                "jump": "A6"
                             },
                             "false": {
-                                "jump": "A3b"
+                                "jump": "A6"
                             }
                         }
                     }
                 },
                 {
-                    "sn": "A3b",
-                    "question": "您是否几乎每晚都有睡眠问题（难以入睡、半夜醒来、早上醒得过早或睡眠过多）?",
-                    "original": false,
+                    "sn": "A6",
+                    "question": "file://GuessFamilyName/A6.md",
+                    "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
+                    "answers": [
+                        {
+                            "code": "true",
+                            "content": "是"
+                        },
+                        {
+                            "code": "false",
+                            "content": "否"
+                        }
+                    ],
+                    "router": {
+                        "rule": "true-or-false",
+                        "route": {
+                            "true": {
+                                "jump": "A7"
+                            },
+                            "false": {
+                                "jump": "A7"
+                            }
+                        }
+                    }
+                },
+                {
+                    "sn": "A7",
+                    "question": "file://GuessFamilyName/A7.md",
+                    "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
                     "answers": [
                         {
                             "code": "true",
@@ -187,12 +189,13 @@
                         "rule": "true-or-false",
                         "route": {
                             "evaluation": {
-                                "script": "MINI_A_Evaluation.js"
+                                "script": "GuessFamilyName/Evaluation.js"
                             }
                         }
                     }
                 }
             ],
+            "interruption": "",
             "evaluation": ""
         }
     ]

@@ -1,3 +1,4 @@
+// Author: Ambrose Xu
 
 function main(args) {
     var evaluationResult = new EvaluationResult('抑郁发作');

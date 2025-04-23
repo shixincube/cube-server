@@ -24,12 +24,12 @@ public class GuidanceSection {
 
     public long endTimestamp;
 
-    public GuidanceSection(JSONObject json) {
+    public GuidanceSection(String path, JSONObject json) {
         this.name = json.getString("name");
         this.questionList = new ArrayList<>();
         JSONArray array = json.getJSONArray("questions");
         for (int i = 0; i < array.length(); ++i) {
-            this.questionList.add(new Question(array.getJSONObject(i)));
+            this.questionList.add(new Question(path, array.getJSONObject(i)));
         }
         this.evaluation = json.getString("evaluation");
     }

@@ -233,10 +233,6 @@
         "ANSWER_NO_GUIDE_FLOW_DATA" : {
             "cn": "无可用的访谈问卷数据。",
             "en": ""
-        },
-        "FORMAT_ANSWER_STARTS_GUIDE_FLOW": {
-            "cn": "我会使用专业的访谈问卷进行接下来的谈话，如果对任何不完全清楚的问题您可以提出澄清的要求。\n\n%s\n\n现在让我们开始吧，第一个问题：\n\n%s",
-            "en": ""
         }
     },
     "term": {

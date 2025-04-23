@@ -6,15 +6,22 @@
 
 package cube.aigc.guidance;
 
+import cell.util.log.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Question {
+
+    private final String path;
 
     public final String sn;
 
@@ -25,6 +32,8 @@ public class Question {
     public final String question;
 
     public final boolean original;
+
+    public final String constraint;
 
     public final List<Answer> answers;
 
@@ -40,12 +49,15 @@ public class Question {
 
     private Map<String, Answer> groupAnswerMap;
 
-    public Question(JSONObject json) {
+    public Question(String path, JSONObject json) {
+        this.path = path;
         this.sn = json.getString("sn");
         this.precondition = json.has("precondition") ? new Precondition(json.getJSONObject("precondition")): null;
         this.prefix = json.has("prefix") ? json.getString("prefix") : "";
-        this.question = json.getString("question");
+        this.question = json.getString("question").trim().startsWith("file://") ?
+                readQuestionFromFile(json.getString("question").trim()) : json.getString("question").trim();
         this.original = json.has("original") && json.getBoolean("original");
+        this.constraint = json.has("constraint") ? json.getString("constraint") : null;
         JSONArray array = json.getJSONArray("answers");
         if (array.getJSONObject(0).has("group")) {
             this.answerGroups = new ArrayList<>();
@@ -178,6 +190,9 @@ public class Question {
         json.put("prefix", this.prefix);
         json.put("question", this.question);
         json.put("original", this.original);
+        if (null != this.constraint) {
+            json.put("constraint", this.constraint);
+        }
 
         JSONArray array = new JSONArray();
         if (null != this.answers) {
@@ -197,6 +212,18 @@ public class Question {
         }
 
         return json;
+    }
+
+    private String readQuestionFromFile(String fileLink) {
+        String link = fileLink.replace("file://", "");
+        Path filepath = Paths.get(this.path, link);
+        try {
+            byte[] data = Files.readAllBytes(filepath);
+            return new String(data, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#readQuestionFromFile", e);
+            return null;
+        }
     }
 
     public class Precondition {

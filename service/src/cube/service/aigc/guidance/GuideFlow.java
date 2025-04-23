@@ -14,11 +14,9 @@ import cube.common.entity.ComplexContext;
 import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.util.ConfigUtils;
 import cube.util.TimeDuration;
 import cube.util.TimeUtils;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.script.Invocable;
@@ -36,8 +34,6 @@ import java.util.Map;
 
 public class GuideFlow extends GuideFlowable {
 
-    private String path;
-
     private long loadTimestamp;
 
     private long startTimestamp;
@@ -51,14 +47,12 @@ public class GuideFlow extends GuideFlowable {
     private Question currentQuestion;
 
     public GuideFlow(File file) {
-        super();
-        this.path = file.getParent();
-        this.load(file);
+        super(file);
+        this.loadTimestamp = file.lastModified();
     }
 
     public GuideFlow(JSONObject json) {
-        super(json);
-        this.path = json.getString("path");
+        super(json.getString("path"), json);
         this.startTimestamp = json.getLong("startTimestamp");
         this.endTimestamp = json.getLong("endTimestamp");
     }
@@ -103,7 +97,12 @@ public class GuideFlow extends GuideFlowable {
             String content = "";
 
             if (containsQuestion) {
-                content = "**" + question.question + "**";
+                if (question.question.startsWith("|")) {
+                    content = question.question;
+                }
+                else {
+                    content = "**" + question.question + "**";
+                }
                 if (!question.original) {
                     String prompt = String.format(
                             Prompts.getPrompt("FORMAT_POLISH"),
@@ -366,9 +365,10 @@ public class GuideFlow extends GuideFlowable {
             public void run() {
                 String prompt = String.format(
                         Prompts.getPrompt("FORMAT_EXPLAIN_QUESTION"),
-                        currentQuestion.question,
+                        getExplainPrefix(),
+                        (null == currentQuestion.constraint) ? currentQuestion.question : currentQuestion.constraint,
                         query,
-                        currentQuestion.question);
+                        (null == currentQuestion.constraint) ? currentQuestion.question : currentQuestion.constraint);
                 GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
                         prompt, null, null, null);
 
@@ -471,7 +471,9 @@ public class GuideFlow extends GuideFlowable {
                     record.answer = String.format(
                             Prompts.getPrompt("FORMAT_EVALUATION_RESULT"),
                             currentSection.name,
+                            getMainKeyword(),
                             result.toMarkdown(),
+                            getMainKeyword(),
                             duration.toHumanStringDHMS());
                     record.context = complexContext;
 
@@ -486,27 +488,9 @@ public class GuideFlow extends GuideFlowable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("path", this.path);
         json.put("startTimestamp", this.startTimestamp);
         json.put("endTimestamp", this.endTimestamp);
         return json;
-    }
-
-    private void load(File file) {
-        JSONObject jsonData = ConfigUtils.readJsonFile(file.getAbsolutePath());
-        if (null == jsonData) {
-            Logger.e(this.getClass(), "#load - Read file failed: " + file.getAbsolutePath());
-            return;
-        }
-
-        this.loadTimestamp = file.lastModified();
-        this.name = jsonData.getString("name");
-        this.displayName = jsonData.getString("displayName");
-        this.instruction = jsonData.getString("instruction");
-        JSONArray array = jsonData.getJSONArray("sections");
-        for (int i = 0; i < array.length(); ++i) {
-            this.sectionList.add(new GuidanceSection(array.getJSONObject(i)));
-        }
     }
 
     private List<String> execPrecondition(String scriptFile, List<Question> questionList) {

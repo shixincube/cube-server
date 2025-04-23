@@ -18,8 +18,11 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.guidance.GuideFlow;
 import cube.service.aigc.guidance.Guides;
+import cube.service.aigc.guidance.Prompts;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.SceneManager;
+
+import java.util.List;
 
 public class StartGuideFlowSubtask extends ConversationSubtask {
 
@@ -31,7 +34,8 @@ public class StartGuideFlowSubtask extends ConversationSubtask {
 
     @Override
     public AIGCStateCode execute(Subtask roundSubtask) {
-        GuideFlow guideFlow = Guides.getGuideFlow("MINI");
+        List<String> words = this.service.segmentation(this.query);
+        GuideFlow guideFlow = Guides.matchGuideFlow(words);
         if (null == guideFlow) {
             this.service.getExecutor().execute(new Runnable() {
                 @Override
@@ -59,8 +63,7 @@ public class StartGuideFlowSubtask extends ConversationSubtask {
                 // 启动
                 guideFlow.start(service);
 
-                String answer = String.format(
-                        Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_STARTS_GUIDE_FLOW"),
+                String answer = String.format(Prompts.getPrompt("FORMAT_ANSWER_STARTS_GUIDE_FLOW"),
                         polish(guideFlow.getInstruction()).trim(),
                         guideFlow.makeQuestion(true));
 

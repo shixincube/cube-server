@@ -10,6 +10,7 @@ import cell.util.log.Logger;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,6 +34,20 @@ public class Guides {
             }
         }
         return null;
+    }
+
+    public static GuideFlow matchGuideFlow(List<String> words) {
+        List<GuideFlow> list = listGuideFlows();
+        int max = 0;
+        GuideFlow guideFlow = null;
+        for (GuideFlow gf : list) {
+            int hit = gf.hitKeywords(words);
+            if (hit > max) {
+                max = hit;
+                guideFlow = gf;
+            }
+        }
+        return guideFlow;
     }
 
     private static void refresh() {
