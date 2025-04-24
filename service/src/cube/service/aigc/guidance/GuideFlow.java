@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class GuideFlow extends GuideFlowable {
+public class GuideFlow extends AbstractGuideFlow {
 
     private long loadTimestamp;
 
@@ -77,6 +77,7 @@ public class GuideFlow extends GuideFlowable {
         this.currentQuestion = this.currentSection.getQuestion(0);
     }
 
+    @Override
     public void stop() {
         this.endTimestamp = System.currentTimeMillis();
     }
@@ -89,6 +90,15 @@ public class GuideFlow extends GuideFlowable {
     @Override
     public Question getCurrentQuestion() {
         return this.currentQuestion;
+    }
+
+    public boolean hasNextSection() {
+        if (null == this.currentSection) {
+            return true;
+        }
+
+        int index = this.sectionList.indexOf(this.currentSection);
+        return (index >= 0 && (index + 1) < this.sectionList.size());
     }
 
     public String makeQuestion(boolean containsQuestion) {
@@ -161,32 +171,32 @@ public class GuideFlow extends GuideFlowable {
         if (null != router) {
             if (Router.RULE_TRUE_FALSE.equalsIgnoreCase(router.getRule())) {
                 // 答案判断
-                String prompt = String.format(
-                        Prompts.getPrompt("FORMAT_TRUE_OR_FALSE"),
-                        this.currentQuestion.question,
-                        currentQuestionAnswer);
-                GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT,
-                        prompt, null, null, null);
-
                 // -1 无，0 否，1 是
                 int yesOrNo = -1;
 
-                if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("YES"))) {
-                    if (null != candidate && candidate.code.equalsIgnoreCase("true")) {
+                if (null != candidate) {
+                    Logger.d(this.getClass(), "#input - candidate: " + candidate.code);
+
+                    // 检测候选
+                    if (candidate.code.equalsIgnoreCase("true")) {
                         yesOrNo = 1;
                     }
-                }
-                else if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("NO"))) {
-                    if (null != candidate && candidate.code.equalsIgnoreCase("false")) {
+                    else if (candidate.code.equalsIgnoreCase("false")) {
                         yesOrNo = 0;
                     }
                 }
                 else {
-                    // 如果其他回复，则检测候选
-                    if (null != candidate && candidate.code.equalsIgnoreCase("true")) {
+                    String prompt = String.format(
+                            Prompts.getPrompt("FORMAT_TRUE_OR_FALSE"),
+                            this.currentQuestion.question,
+                            currentQuestionAnswer);
+                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                            prompt, null, null, null);
+
+                    if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("YES"))) {
                         yesOrNo = 1;
                     }
-                    else if (null != candidate && candidate.code.equalsIgnoreCase("false")) {
+                    else if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("NO"))) {
                         yesOrNo = 0;
                     }
                 }
@@ -269,17 +279,21 @@ public class GuideFlow extends GuideFlowable {
                         }
                     }
                 }
+                else {
+                    Logger.w(this.getClass(), "#input - currentQuestionAnswer: " + currentQuestionAnswer);
+                }
 
                 // 解释提问
                 return answerQuestion(currentQuestionAnswer);
             }
-
-            // 下一个
-            return nextQuestion();
+            else {
+                // TODO 其他路由策略
+                return AIGCStateCode.IllegalOperation;
+            }
         }
         else {
-            // 下一个
-            return nextQuestion();
+            // TODO 没有路由时的策略
+            return AIGCStateCode.InvalidParameter;
         }
     }
 
@@ -367,7 +381,7 @@ public class GuideFlow extends GuideFlowable {
                         Prompts.getPrompt("FORMAT_EXPLAIN_QUESTION"),
                         getExplainPrefix(),
                         (null == currentQuestion.constraint) ? currentQuestion.question : currentQuestion.constraint,
-                        query,
+                        query.replaceAll("\\*\\*", ""),
                         (null == currentQuestion.constraint) ? currentQuestion.question : currentQuestion.constraint);
                 GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
                         prompt, null, null, null);
@@ -433,8 +447,17 @@ public class GuideFlow extends GuideFlowable {
         return AIGCStateCode.Ok;
     }
 
-    private AIGCStateCode nextQuestion() {
-        return AIGCStateCode.Ok;
+    private AIGCStateCode nextQuestion(String query) {
+        int index = this.sectionList.indexOf(this.currentSection);
+        if (index + 1 >= this.sectionList.size()) {
+            Logger.w(this.getClass(), "#nextQuestion - No next question in " + this.getName());
+            return AIGCStateCode.Failure;
+        }
+
+        this.currentSection = this.sectionList.get(index + 1);
+        this.currentQuestion = this.currentSection.getQuestion(0);
+
+        return jumpQuestion(this.currentQuestion.sn, query);
     }
 
     private AIGCStateCode evaluationSection(String evaluation, String query) {
@@ -456,33 +479,46 @@ public class GuideFlow extends GuideFlowable {
                     listener.onResponse(GuideFlow.this, record);
                 }
             });
+            return AIGCStateCode.Ok;
         }
         else {
-            this.service.getExecutor().execute(new Runnable() {
-                @Override
-                public void run() {
-                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
-                    complexContext.setSubtask(Subtask.GuideFlow);
+            if (result.hasResult()) {
+                // 有结果，输出结果
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                        if (hasNextSection()) {
+                            complexContext.setSubtask(Subtask.GuideFlow);
+                        }
+                        else {
+                            complexContext.setSubtask(Subtask.StopGuideFlow);
+                        }
 
-                    TimeDuration duration = TimeUtils.calcTimeDuration(
-                            currentSection.endTimestamp - currentSection.startTimestamp);
+                        TimeDuration duration = TimeUtils.calcTimeDuration(
+                                currentSection.endTimestamp - currentSection.startTimestamp);
 
-                    GeneratingRecord record = new GeneratingRecord(query);
-                    record.answer = String.format(
-                            Prompts.getPrompt("FORMAT_EVALUATION_RESULT"),
-                            currentSection.name,
-                            getMainKeyword(),
-                            result.toMarkdown(),
-                            getMainKeyword(),
-                            duration.toHumanStringDHMS());
-                    record.context = complexContext;
+                        GeneratingRecord record = new GeneratingRecord(query);
+                        record.answer = String.format(
+                                Prompts.getPrompt("FORMAT_EVALUATION_RESULT"),
+                                currentSection.name,
+                                getMainKeyword(),
+                                result.toMarkdown(),
+                                getMainKeyword(),
+                                duration.toHumanStringDHMS());
+                        record.context = complexContext;
 
-                    // 回调
-                    listener.onResponse(GuideFlow.this, record);
-                }
-            });
+                        // 回调
+                        listener.onResponse(GuideFlow.this, record);
+                    }
+                });
+                return AIGCStateCode.Ok;
+            }
+            else {
+                // 没有输出结果数据，跳转到下一段
+                return this.nextQuestion(query);
+            }
         }
-        return AIGCStateCode.Ok;
     }
 
     @Override

@@ -72,7 +72,10 @@ function main(args) {
 
     if (((trueCount + truePastTwoWeeksCount) >= 5 || (trueCount + trueInThePastCount) >= 5)
         && (A4TwoWeeks || A4Past)) {
-        evaluationResult.result = true;
+        evaluationResult.setResult(true);
+    }
+    else {
+        evaluationResult.setResult(false);
     }
 
     if ((trueCount + truePastTwoWeeksCount) >= 5) {

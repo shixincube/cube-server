@@ -10,5 +10,5 @@ import cube.common.entity.GeneratingRecord;
 
 public interface GuideListener {
 
-    void onResponse(GuideFlowable guideFlow, GeneratingRecord response);
+    void onResponse(AbstractGuideFlow guideFlow, GeneratingRecord response);
 }

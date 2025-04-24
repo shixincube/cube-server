@@ -15,6 +15,14 @@
 		"cn": "我遇到了一些问题，未能正确处理相关数据，请稍后再尝试。",
 		"en": ""
 	},
+	"ANSWER_NO_GUIDE_FLOW_DATA" : {
+		"cn": "无可用的访谈向导数据流。",
+		"en": ""
+	},
+	"ANSWER_INTERRUPT_GUIDE_FLOW" : {
+		"cn": "您已结束了本次主题对话。",
+		"en": ""
+	},
 	"FORMAT_POLISH": {
 		"cn": "润色以下内容，不使用“感谢”，“润色”这样的用语，确保信息完整传达，不要编造内容，直接回复润色后的内容，内容是：“%s”。",
 		"en": ""
@@ -32,7 +40,7 @@
 		"en": ""
 	},
 	"FORMAT_NEXT_QUESTION": {
-		"cn": "下一个问题：\n\n%s",
+		"cn": "我们继续，下一个：\n\n%s",
 		"en": ""
 	},
 	"FORMAT_NEXT_QUESTION_WITH_PRECONDITION": {

@@ -2,8 +2,9 @@
     "name": "GuessFamilyName",
     "displayName": "猜姓氏小游戏",
     "keywords": [ "推算", "猜", "姓氏", "猜猜", "姓" ],
-    "instruction": "您不需要告诉我具体的您的信息，我可以猜出您的姓氏。\n\n我会向您出示数张姓氏卡片，如果您的姓氏在对应的卡片里，请回答“是”；如果您的姓氏不在卡片里，请回答“否”。",
+    "instruction": "您不需要告诉我具体的您的信息，我可以猜出您的姓氏。\n\n我会向您出示数张姓氏表格，如果您的姓氏在对应的表格里，请回答“是”；如果您的姓氏不在表格里，请回答“否”。",
     "explainPrefix": "我们正在进行猜姓氏的游戏，你作为提问者正在提出问题，提出的问题需要我用“是”或“否”进行回答。",
+    "noResults": "在所有的表格里都没有您的姓氏吗？那太遗憾了，我没能猜到您的姓氏。",
     "sections": [
         {
             "name": "推算姓氏",
@@ -189,14 +190,17 @@
                         "rule": "true-or-false",
                         "route": {
                             "evaluation": {
-                                "script": "GuessFamilyName/Evaluation.js"
+                                "script": "GuessFamilyName/EvaluationA.js"
                             }
                         }
                     }
                 }
             ],
-            "interruption": "",
+            "interruption": "您没有观察完所有表格内容，所以我现在猜不到您的姓氏。期待下次我们继续。",
             "evaluation": ""
+        },
+        {
+
         }
     ]
 }

@@ -6,7 +6,7 @@
 
 package cube.aigc.psychology.composition;
 
-import cube.aigc.guidance.GuideFlowable;
+import cube.aigc.guidance.AbstractGuideFlow;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
 import cube.auth.AuthToken;
@@ -41,7 +41,7 @@ public class ConversationContext implements JSONable {
 
     private List<PaintingReport> reportList;
 
-    private GuideFlowable guideFlow;
+    private AbstractGuideFlow guideFlow;
 
     private boolean superAdmin;
 
@@ -111,11 +111,11 @@ public class ConversationContext implements JSONable {
         return this.reportList;
     }
 
-    public void setGuideFlow(GuideFlowable guideFlow) {
+    public void setGuideFlow(AbstractGuideFlow guideFlow) {
         this.guideFlow = guideFlow;
     }
 
-    public GuideFlowable getGuideFlow() {
+    public AbstractGuideFlow getGuideFlow() {
         return this.guideFlow;
     }
 

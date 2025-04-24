@@ -150,7 +150,7 @@ public class ConversationWorker {
                     subtaskName.append("量表测评");
                 }
                 else if (subtask == Subtask.GuideFlow) {
-                    subtaskName.append("访谈");
+                    subtaskName.append("当前主题");
                 }
                 else {
                     subtaskName.append("当前话题");

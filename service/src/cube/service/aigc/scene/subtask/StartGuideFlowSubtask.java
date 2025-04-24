@@ -41,7 +41,7 @@ public class StartGuideFlowSubtask extends ConversationSubtask {
                 @Override
                 public void run() {
                     GeneratingRecord record = new GeneratingRecord(query);
-                    record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_GUIDE_FLOW_DATA");
+                    record.answer = Prompts.getPrompt("ANSWER_NO_GUIDE_FLOW_DATA");
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 

@@ -1,16 +1,24 @@
 // Author: Ambrose Xu
 
-const cardScoreMap = {
+var cardScoreMap = {
     "A1": 1,
     "A2": 2,
     "A3": 4,
     "A4": 8,
     "A5": 16,
     "A6": 32,
-    "A7": 64
+    "A7": 64,
+    "B1": 1,
+    "B2": 2,
+    "B3": 4,
+    "B4": 8,
+    "B5": 16,
+    "B6": 32,
+    "B7": 64
 };
 
-const nameAScoreMap = {
+var nameAScoreMap = {
+    "0": "",
     "1": "赵",
     "2": "司马",
     "3": "钱",
@@ -140,7 +148,34 @@ const nameAScoreMap = {
 };
 
 function main(args) {
-    var evaluationResult = new EvaluationResult('推算姓氏');
+    var evaluationResult = new EvaluationResult('我猜您的姓氏是：');
 
+    var hitSnList = [];
+
+    for (var i = 0; i < args.length; ++i) {
+        var question = args[i];
+        var answer = question.getAnswer();
+        if (null != answer) {
+            if (answer.code === 'true') {
+                hitSnList.push(question.sn);
+            }
+        }
+    }
+
+    var total = 0;
+    for (var i = 0; i < hitSnList.length; ++i) {
+        var score = cardScoreMap[hitSnList[i]];
+        total += score;
+    }
+
+    if (0 === total) {
+        // 没有得分
+        return evaluationResult;
+    }
+
+    var name = nameAScoreMap[total.toString()];
+    if (name.length > 0) {
+        evaluationResult.setResult(name);
+    }
     return evaluationResult;
 }

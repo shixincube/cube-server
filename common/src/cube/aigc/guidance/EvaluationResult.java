@@ -6,6 +6,7 @@
 
 package cube.aigc.guidance;
 
+import cell.util.log.Logger;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -17,9 +18,9 @@ public class EvaluationResult implements JSONable {
 
     public String name;
 
-    public boolean result;
+    private JSONObject result;
 
-    public Map<String, Boolean> evaluationItems;
+    private Map<String, Boolean> evaluationItems;
 
     private Map<String, String> qaPairs;
 
@@ -31,7 +32,7 @@ public class EvaluationResult implements JSONable {
 
     public EvaluationResult(JSONObject json) {
         this.name = json.getString("name");
-        this.result = json.getBoolean("result");
+        this.result = json.getJSONObject("result");
         this.evaluationItems = new LinkedHashMap<>();
         JSONArray array = json.getJSONArray("items");
         for (int i = 0; i < array.length(); ++i) {
@@ -39,6 +40,15 @@ public class EvaluationResult implements JSONable {
             this.evaluationItems.put(data.getString("item"), data.getBoolean("value"));
         }
         this.qaPairs = new LinkedHashMap<>();
+    }
+
+    public void setResult(Object value) {
+        this.result = new JSONObject();
+        this.result.put("value", value.toString());
+    }
+
+    public boolean hasResult() {
+        return (null != this.result);
     }
 
     public void addItem(String name, boolean value) {
@@ -52,7 +62,24 @@ public class EvaluationResult implements JSONable {
     public String toMarkdown() {
         StringBuilder buf = new StringBuilder();
         buf.append("**").append(this.name).append("**\n\n");
-        buf.append("- ***").append(this.result ? "是" : "否").append("***").append("\n\n");
+
+        buf.append("- ***");
+        if (this.result.has("value")) {
+            String value = this.result.getString("value");
+            try {
+                if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
+                    boolean boolValue = Boolean.parseBoolean(value.toLowerCase());
+                    buf.append(boolValue ? "是" : "否");
+                }
+                else {
+                    buf.append(value);
+                }
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#toMarkdown", e);
+            }
+        }
+        buf.append("***").append("\n\n");
+
         for (Map.Entry<String, Boolean> entry : this.evaluationItems.entrySet()) {
             buf.append("> ").append(entry.getKey());
             buf.append("    ").append(entry.getValue() ? "是" : "否");

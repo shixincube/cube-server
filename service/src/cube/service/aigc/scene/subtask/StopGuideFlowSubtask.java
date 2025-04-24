@@ -7,7 +7,7 @@
 package cube.service.aigc.scene.subtask;
 
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.Resource;
+import cube.aigc.guidance.AbstractGuideFlow;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Subtask;
@@ -17,6 +17,7 @@ import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.guidance.GuideFlow;
+import cube.service.aigc.guidance.Prompts;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.SceneManager;
 import cube.util.TimeDuration;
@@ -32,13 +33,13 @@ public class StopGuideFlowSubtask extends ConversationSubtask {
 
     @Override
     public AIGCStateCode execute(Subtask roundSubtask) {
-        final GuideFlow guideFlow = (GuideFlow) convCtx.getGuideFlow();
+        final AbstractGuideFlow guideFlow = convCtx.getGuideFlow();
         if (null == guideFlow) {
             this.service.getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
                     GeneratingRecord record = new GeneratingRecord(query);
-                    record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_GUIDE_FLOW_DATA");
+                    record.answer = Prompts.getPrompt("ANSWER_NO_GUIDE_FLOW_DATA");
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
@@ -58,11 +59,13 @@ public class StopGuideFlowSubtask extends ConversationSubtask {
                 // 结束
                 guideFlow.stop();
 
+                GuideFlow impl = (GuideFlow) guideFlow;
+
                 ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
                 complexContext.setSubtask(Subtask.StopGuideFlow);
 
                 TimeDuration duration = TimeUtils.calcTimeDuration(
-                        guideFlow.getEndTimestamp() - guideFlow.getStartTimestamp());
+                        impl.getEndTimestamp() - impl.getStartTimestamp());
 
                 GeneratingRecord record = new GeneratingRecord(query);
 //                record.answer = polish(String.format(
