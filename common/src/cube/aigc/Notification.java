@@ -8,6 +8,7 @@ package cube.aigc;
 
 import cell.util.Utils;
 import cube.common.JSONable;
+import cube.util.TimeUtils;
 import org.json.JSONObject;
 
 import java.util.Date;
@@ -34,6 +35,8 @@ public class Notification implements JSONable {
 
     public String date;
 
+    public long timestamp;
+
     public Notification(String title, String content) {
         this.id = Utils.generateSerialNumber();
         this.type = TYPE_NORMAL;
@@ -41,6 +44,7 @@ public class Notification implements JSONable {
         this.title = title;
         this.content = content;
         this.date = Utils.gsDateFormat.format(new Date(System.currentTimeMillis()));
+        this.timestamp = System.currentTimeMillis();
     }
 
     public Notification(long id, String type, int state, String title, String content, String date) {
@@ -50,6 +54,7 @@ public class Notification implements JSONable {
         this.title = title;
         this.content = content;
         this.date = date;
+        this.timestamp = TimeUtils.unformatDate(date);
     }
 
     public Notification(JSONObject json) {
@@ -59,6 +64,7 @@ public class Notification implements JSONable {
         this.title = json.getString("title");
         this.content = json.getString("content");
         this.date = json.getString("date");
+        this.timestamp = json.getLong("timestamp");
     }
 
     @Override
@@ -70,6 +76,7 @@ public class Notification implements JSONable {
         json.put("title", this.title);
         json.put("content", this.content);
         json.put("date", this.date);
+        json.put("timestamp", this.timestamp);
         return json;
     }
 

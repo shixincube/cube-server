@@ -61,7 +61,8 @@ public class Session extends ContextHandler {
                         Logger.w(Session.class, "Write app event failed: " + token);
                     }
 
-                    this.respondOk(response, eventData);
+                    ConfigInfo configInfo = Manager.getInstance().getConfigInfo(token);
+                    this.respondOk(response, configInfo.toJSON());
                     this.complete();
                 } catch (Exception e) {
                     Logger.w(Session.class, "#doPost", e);

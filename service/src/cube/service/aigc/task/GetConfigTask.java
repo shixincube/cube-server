@@ -41,16 +41,6 @@ public class GetConfigTask extends ServiceTask {
 
         String tokenCode = this.getTokenCode(dialect);
         if (null == tokenCode) {
-            if (!packet.data.has("token")) {
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
-                markResponseTime();
-                return;
-            }
-            tokenCode = packet.data.getString("token");
-        }
-
-        if (null == tokenCode) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();

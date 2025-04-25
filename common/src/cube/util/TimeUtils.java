@@ -7,6 +7,7 @@
 package cube.util;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -69,5 +70,39 @@ public final class TimeUtils {
      */
     public static String formatDateForPathSymbol(long timestamp) {
         return gsDateFormatPathSymbol.format(new Date(timestamp));
+    }
+
+    /**
+     * 格式化时间转时间戳。
+     *
+     * @param dateString
+     * @return
+     */
+    public static long unformatDate(String dateString) {
+        String[] array = dateString.split(" ");
+        if (array.length != 2) {
+            array = dateString.split("_");
+            if (array.length != 2) {
+                return -1;
+            }
+        }
+
+        String[] ymdArray = array[0].split("-");
+        if (ymdArray.length != 3) {
+            return -1;
+        }
+
+        String[] hmsArray = array[1].split(":");
+        if (hmsArray.length != 3) {
+            hmsArray = array[1].split("-");
+            if (hmsArray.length != 3) {
+                return -1;
+            }
+        }
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Integer.parseInt(ymdArray[0]), Integer.parseInt(ymdArray[1]) - 1, Integer.parseInt(ymdArray[2]),
+                Integer.parseInt(hmsArray[0]), Integer.parseInt(hmsArray[1]), Integer.parseInt(hmsArray[2]));
+        return calendar.getTimeInMillis();
     }
 }
