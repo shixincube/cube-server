@@ -39,14 +39,23 @@ public class GetConfigTask extends ServiceTask {
         ActionDialect dialect = new ActionDialect(this.primitive);
         Packet packet = new Packet(dialect);
 
-        if (!packet.data.has("token")) {
+        String tokenCode = this.getTokenCode(dialect);
+        if (null == tokenCode) {
+            if (!packet.data.has("token")) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+                markResponseTime();
+                return;
+            }
+            tokenCode = packet.data.getString("token");
+        }
+
+        if (null == tokenCode) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
             return;
         }
-
-        String tokenCode = packet.data.getString("token");
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         AuthToken token = service.getToken(tokenCode);

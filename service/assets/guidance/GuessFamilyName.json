@@ -5,6 +5,7 @@
     "instruction": "您不需要告诉我具体的您的信息，我可以猜出您的姓氏。\n\n我会向您出示数张姓氏表格，如果您的姓氏在对应的表格里，请回答“是”；如果您的姓氏不在表格里，请回答“否”。",
     "explainPrefix": "我们正在进行猜姓氏的游戏，你作为提问者正在提出问题，提出的问题需要我用“是”或“否”进行回答。",
     "noResults": "在所有的表格里都没有您的姓氏吗？那太遗憾了，我没能猜到您的姓氏。",
+    "questionableResults": "我相信每个姓氏都是独一无二的，但是您的回答包含了无法梳理线索的信息，先让我们休息一下，下次再继续。",
     "sections": [
         {
             "name": "推算姓氏",
@@ -200,7 +201,197 @@
             "evaluation": ""
         },
         {
-
+            "name": "推算姓氏",
+            "questions": [
+                {
+                    "sn": "B1",
+                    "question": "file://GuessFamilyName/B1.md",
+                    "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
+                    "answers": [
+                        {
+                            "code": "true",
+                            "content": "是"
+                        },
+                        {
+                            "code": "false",
+                            "content": "否"
+                        }
+                    ],
+                    "router": {
+                        "rule": "true-or-false",
+                        "route": {
+                            "true": {
+                                "jump": "B2"
+                            },
+                            "false": {
+                                "jump": "B2"
+                            }
+                        }
+                    }
+                },
+                {
+                    "sn": "B2",
+                    "question": "file://GuessFamilyName/B2.md",
+                    "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
+                    "answers": [
+                        {
+                            "code": "true",
+                            "content": "是"
+                        },
+                        {
+                            "code": "false",
+                            "content": "否"
+                        }
+                    ],
+                    "router": {
+                        "rule": "true-or-false",
+                        "route": {
+                            "true": {
+                                "jump": "B3"
+                            },
+                            "false": {
+                                "jump": "B3"
+                            }
+                        }
+                    }
+                },
+                {
+                    "sn": "B3",
+                    "question": "file://GuessFamilyName/B3.md",
+                    "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
+                    "answers": [
+                        {
+                            "code": "true",
+                            "content": "是"
+                        },
+                        {
+                            "code": "false",
+                            "content": "否"
+                        }
+                    ],
+                    "router": {
+                        "rule": "true-or-false",
+                        "route": {
+                            "true": {
+                                "jump": "B4"
+                            },
+                            "false": {
+                                "jump": "B4"
+                            }
+                        }
+                    }
+                },
+                {
+                    "sn": "B4",
+                    "question": "file://GuessFamilyName/B4.md",
+                    "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
+                    "answers": [
+                        {
+                            "code": "true",
+                            "content": "是"
+                        },
+                        {
+                            "code": "false",
+                            "content": "否"
+                        }
+                    ],
+                    "router": {
+                        "rule": "true-or-false",
+                        "route": {
+                            "true": {
+                                "jump": "B5"
+                            },
+                            "false": {
+                                "jump": "B5"
+                            }
+                        }
+                    }
+                },
+                {
+                    "sn": "B5",
+                    "question": "file://GuessFamilyName/B5.md",
+                    "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
+                    "answers": [
+                        {
+                            "code": "true",
+                            "content": "是"
+                        },
+                        {
+                            "code": "false",
+                            "content": "否"
+                        }
+                    ],
+                    "router": {
+                        "rule": "true-or-false",
+                        "route": {
+                            "true": {
+                                "jump": "B6"
+                            },
+                            "false": {
+                                "jump": "B6"
+                            }
+                        }
+                    }
+                },
+                {
+                    "sn": "B6",
+                    "question": "file://GuessFamilyName/B6.md",
+                    "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
+                    "answers": [
+                        {
+                            "code": "true",
+                            "content": "是"
+                        },
+                        {
+                            "code": "false",
+                            "content": "否"
+                        }
+                    ],
+                    "router": {
+                        "rule": "true-or-false",
+                        "route": {
+                            "true": {
+                                "jump": "B7"
+                            },
+                            "false": {
+                                "jump": "B7"
+                            }
+                        }
+                    }
+                },
+                {
+                    "sn": "B7",
+                    "question": "file://GuessFamilyName/B7.md",
+                    "original": true,
+                    "constraint": "观察表格里是否有您的姓氏，有回答“是”，没有回答“否”",
+                    "answers": [
+                        {
+                            "code": "true",
+                            "content": "是"
+                        },
+                        {
+                            "code": "false",
+                            "content": "否"
+                        }
+                    ],
+                    "router": {
+                        "rule": "true-or-false",
+                        "route": {
+                            "evaluation": {
+                                "script": "GuessFamilyName/EvaluationB.js"
+                            }
+                        }
+                    }
+                }
+            ],
+            "interruption": "您没有观察完所有表格内容，所以我现在猜不到您的姓氏。期待下次我们继续。",
+            "evaluation": ""
         }
     ]
 }

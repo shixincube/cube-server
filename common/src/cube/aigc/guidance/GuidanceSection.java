@@ -20,9 +20,16 @@ public class GuidanceSection {
 
     public final String evaluation;
 
+    /**
+     * 中断提示。
+     */
+    public final String interruption;
+
     public long startTimestamp;
 
     public long endTimestamp;
+
+    public EvaluationResult evaluationResult;
 
     public GuidanceSection(String path, JSONObject json) {
         this.name = json.getString("name");
@@ -32,6 +39,12 @@ public class GuidanceSection {
             this.questionList.add(new Question(path, array.getJSONObject(i)));
         }
         this.evaluation = json.getString("evaluation");
+        if (json.has("interruption")) {
+            this.interruption = json.getString("interruption");
+        }
+        else {
+            this.interruption = "";
+        }
     }
 
     public List<Question> getAllQuestions() {
@@ -51,6 +64,10 @@ public class GuidanceSection {
         return null;
     }
 
+    public String getInterruption() {
+        return this.interruption;
+    }
+
     public boolean hasCompleted() {
         int count = 0;
         for (Question question : this.questionList) {
@@ -64,6 +81,15 @@ public class GuidanceSection {
         return (count == this.questionList.size());
     }
 
+    /**
+     * 是否终止整个向导流。
+     *
+     * @return
+     */
+    public boolean hasTerminated() {
+        return (null != this.evaluationResult && this.evaluationResult.hasTerminated());
+    }
+
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
@@ -75,6 +101,9 @@ public class GuidanceSection {
         json.put("questions", array);
 
         json.put("evaluation", this.evaluation);
+        if (null != this.interruption) {
+            json.put("interruption", this.interruption);
+        }
 
         return json;
     }

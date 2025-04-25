@@ -60,8 +60,8 @@ public class GuideFlowSubtask extends ConversationSubtask {
                     ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
                     complexContext.setSubtask(Subtask.StopGuideFlow);
 
-                    String answer = fastPolish((null != guideFlow.getInterruption()) ?
-                            guideFlow.getInterruption() :
+                    String answer = fastPolish((null != guideFlow.getCurrentSection().getInterruption()) ?
+                            guideFlow.getCurrentSection().getInterruption() :
                             Prompts.getPrompt("ANSWER_INTERRUPT_GUIDE_FLOW"));
 
                     GeneratingRecord record = new GeneratingRecord(query);
@@ -115,7 +115,7 @@ public class GuideFlowSubtask extends ConversationSubtask {
         }
 
         // 进行输入处理
-        AIGCStateCode stateCode = guideFlow.input(query, candidate);
+        AIGCStateCode stateCode = guideFlow.input(this.query, candidate);
 
         if (AIGCStateCode.Ok == stateCode && guideFlow.hasCompleted()) {
             this.service.getExecutor().execute(new Runnable() {

@@ -447,14 +447,43 @@ public class GuideFlow extends AbstractGuideFlow {
         return AIGCStateCode.Ok;
     }
 
-    private AIGCStateCode nextQuestion(String query) {
+    private AIGCStateCode nextSection(String query) {
         int index = this.sectionList.indexOf(this.currentSection);
         if (index + 1 >= this.sectionList.size()) {
-            Logger.w(this.getClass(), "#nextQuestion - No next question in " + this.getName());
-            return AIGCStateCode.Failure;
+            // 判断是否正常结束
+            if (hasCompleted()) {
+                Logger.d(this.getClass(), "#nextSection - Guide flow has completed (NO result): " + this.getName());
+
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                        complexContext.setSubtask(Subtask.StopGuideFlow);
+
+                        GeneratingRecord answer = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
+                                String.format(Prompts.getPrompt("FORMAT_POLISH"), noResults),
+                                null, null, null);
+
+                        GeneratingRecord record = new GeneratingRecord(query);
+                        record.answer = answer.answer.replaceAll("\"", "");
+                        record.context = complexContext;
+
+                        // 回调
+                        listener.onResponse(GuideFlow.this, record);
+                    }
+                });
+
+                return AIGCStateCode.Ok;
+            }
+            else {
+                Logger.w(this.getClass(), "#nextSection - No next question in " + this.getName());
+                return AIGCStateCode.Failure;
+            }
         }
 
+        Logger.d(this.getClass(), "#nextSection - Next section: " + this.getName());
         this.currentSection = this.sectionList.get(index + 1);
+        this.currentSection.startTimestamp = System.currentTimeMillis();
         this.currentQuestion = this.currentSection.getQuestion(0);
 
         return jumpQuestion(this.currentQuestion.sn, query);
@@ -482,21 +511,25 @@ public class GuideFlow extends AbstractGuideFlow {
             return AIGCStateCode.Ok;
         }
         else {
+            // 记录结果
+            this.currentSection.evaluationResult = result;
+            this.endTimestamp = System.currentTimeMillis();
+
             if (result.hasResult()) {
                 // 有结果，输出结果
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
                         ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
-                        if (hasNextSection()) {
-                            complexContext.setSubtask(Subtask.GuideFlow);
+                        if (hasCompleted()) {
+                            complexContext.setSubtask(Subtask.StopGuideFlow);
                         }
                         else {
-                            complexContext.setSubtask(Subtask.StopGuideFlow);
+                            complexContext.setSubtask(Subtask.GuideFlow);
                         }
 
                         TimeDuration duration = TimeUtils.calcTimeDuration(
-                                currentSection.endTimestamp - currentSection.startTimestamp);
+                                endTimestamp - startTimestamp);
 
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = String.format(
@@ -515,8 +548,33 @@ public class GuideFlow extends AbstractGuideFlow {
                 return AIGCStateCode.Ok;
             }
             else {
-                // 没有输出结果数据，跳转到下一段
-                return this.nextQuestion(query);
+                if (result.hasTerminated()) {
+                    // 没有结果且被终止
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                            complexContext.setSubtask(Subtask.StopGuideFlow);
+
+                            GeneratingRecord answer = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
+                                    String.format(Prompts.getPrompt("FORMAT_POLISH"), questionableResults),
+                                    null, null, null);
+
+                            GeneratingRecord record = new GeneratingRecord(query);
+                            record.answer = answer.answer;
+                            record.context = complexContext;
+
+                            // 回调
+                            listener.onResponse(GuideFlow.this, record);
+                        }
+                    });
+
+                    return AIGCStateCode.Ok;
+                }
+                else {
+                    // 没有输出结果数据，跳转到下一段
+                    return this.nextSection(query);
+                }
             }
         }
     }

@@ -414,7 +414,7 @@ public class ConversationWorker {
         }
 
         for (QuestionAnswer questionAnswer : list) {
-            Logger.d(this.getClass(), "#matchSubtask - " + questionAnswer.getQuestions().get(0) + " : " +
+            Logger.d(this.getClass(), "#matchSubtask - " + query + " : " +
                     questionAnswer.getAnswers().get(0) + " - " + questionAnswer.getScore());
 
             if (questionAnswer.getScore() < 0.86) {

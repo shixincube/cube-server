@@ -24,6 +24,8 @@ public class EvaluationResult implements JSONable {
 
     private Map<String, String> qaPairs;
 
+    private boolean terminated = false;
+
     public EvaluationResult(String name) {
         this.name = name;
         this.evaluationItems = new LinkedHashMap<>();
@@ -40,6 +42,14 @@ public class EvaluationResult implements JSONable {
             this.evaluationItems.put(data.getString("item"), data.getBoolean("value"));
         }
         this.qaPairs = new LinkedHashMap<>();
+    }
+
+    public void setTerminated(boolean value) {
+        this.terminated = value;
+    }
+
+    public boolean hasTerminated() {
+        return this.terminated;
     }
 
     public void setResult(Object value) {

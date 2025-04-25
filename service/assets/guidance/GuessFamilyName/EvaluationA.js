@@ -172,9 +172,15 @@ function main(args) {
         // 没有得分
         return evaluationResult;
     }
+    else if (127 === total) {
+        // 得分越界
+        evaluationResult.setTerminated(true);
+        return evaluationResult;
+    }
 
     var name = nameAScoreMap[total.toString()];
     if (name.length > 0) {
+        evaluationResult.setTerminated(true);
         evaluationResult.setResult(name);
     }
     return evaluationResult;

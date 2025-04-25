@@ -333,9 +333,10 @@ public class Manager implements Tickable, PerformerListener {
 
     public ConfigInfo getConfigInfo(String token) {
         JSONObject data = new JSONObject();
-        data.put("token", token);
         Packet packet = new Packet(AIGCAction.GetConfig.name, data);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#getConfigData - Response is null : " + token);
             return null;

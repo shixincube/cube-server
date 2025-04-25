@@ -9,7 +9,6 @@ package cube.aigc.guidance;
 import cell.util.log.Logger;
 import cube.common.state.AIGCStateCode;
 import cube.util.ConfigUtils;
-import cube.util.JSONUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -42,12 +41,12 @@ public abstract class AbstractGuideFlow implements GuideFlowable {
      */
     protected String noResults;
 
-    protected List<GuidanceSection> sectionList;
-
     /**
-     * 中断提示。
+     * 用户回答无法进行推理时的话术。
      */
-    protected String interruption;
+    protected String questionableResults;
+
+    protected List<GuidanceSection> sectionList;
 
     protected GuideListener listener;
 
@@ -77,13 +76,11 @@ public abstract class AbstractGuideFlow implements GuideFlowable {
         this.instruction = json.getString("instruction");
         this.explainPrefix = json.getString("explainPrefix");
         this.noResults = json.getString("noResults");
+        this.questionableResults = json.getString("questionableResults");
         this.sectionList = new ArrayList<>();
         array = json.getJSONArray("sections");
         for (int i = 0; i < array.length(); ++i) {
             this.sectionList.add(new GuidanceSection(path, array.getJSONObject(i)));
-        }
-        if (json.has("interruption")) {
-            this.interruption = json.getString("interruption");
         }
     }
 
@@ -109,10 +106,6 @@ public abstract class AbstractGuideFlow implements GuideFlowable {
 
     public String getExplainPrefix() {
         return this.explainPrefix;
-    }
-
-    public String getInterruption() {
-        return this.interruption;
     }
 
     public void setListener(GuideListener listener) {
@@ -161,12 +154,18 @@ public abstract class AbstractGuideFlow implements GuideFlowable {
     }
 
     public boolean hasCompleted() {
+        int completed = 0;
         for (GuidanceSection section : this.sectionList) {
-            if (!section.hasCompleted()) {
-                return false;
+            if (section.hasTerminated()) {
+                // 已终止
+                return true;
+            }
+
+            if (section.hasCompleted()) {
+                ++completed;
             }
         }
-        return true;
+        return (completed == this.sectionList.size());
     }
 
     public abstract void stop();
@@ -184,14 +183,14 @@ public abstract class AbstractGuideFlow implements GuideFlowable {
         }
         json.put("keywords", array);
         json.put("instruction", this.instruction);
+        json.put("explainPrefix", this.explainPrefix);
+        json.put("noResults", this.noResults);
+        json.put("questionableResults", this.questionableResults);
         array = new JSONArray();
         for (GuidanceSection section : this.sectionList) {
             array.put(section.toJSON());
         }
         json.put("sections", array);
-        if (null != this.interruption) {
-            json.put("interruption", this.interruption);
-        }
         return json;
     }
 }

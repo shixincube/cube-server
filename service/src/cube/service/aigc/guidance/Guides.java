@@ -47,7 +47,11 @@ public class Guides {
                 guideFlow = gf;
             }
         }
-        return guideFlow;
+        if (null == guideFlow) {
+            return null;
+        }
+        // 创建副本
+        return new GuideFlow(guideFlow.toJSON());
     }
 
     private static void refresh() {
