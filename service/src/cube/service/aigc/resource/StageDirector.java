@@ -7,20 +7,18 @@
 package cube.service.aigc.resource;
 
 import cube.aigc.attachment.ui.DatePicker;
-import cube.service.aigc.module.Stage;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
 import java.util.Calendar;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * 互动舞台调度和管理。
+ * @deprecated
  */
 public class StageDirector {
 
@@ -28,11 +26,8 @@ public class StageDirector {
 
     private final Tokenizer tokenizer;
 
-    private Map<Long, Stage> stageMap;
-
     public StageDirector(Tokenizer tokenizer) {
         this.tokenizer = tokenizer;
-        this.stageMap = new ConcurrentHashMap<>();
     }
 
     public String settingUp(String query, String answer) {

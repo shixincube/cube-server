@@ -4,48 +4,42 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.aigc.module;
+package cube.aigc;
 
 import cell.util.Utils;
-import cube.common.entity.AIGCChannel;
+import cube.auth.AuthToken;
 import cube.common.entity.AttachmentResource;
 import cube.common.entity.ChartResource;
 import cube.common.entity.Entity;
-import cube.service.aigc.AIGCService;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 互动舞台。
  */
 public class Stage extends Entity {
 
-    private List<String> words;
+    public AuthToken authToken;
 
-    /**
-     * 是否需要进行模块推理。
-     */
-    public boolean inference = false;
+    public Module module;
+
+    public Flowable flowable;
 
     public List<ChartResource> chartResources;
 
     public List<AttachmentResource> attachmentResources;
 
-    public Stage(List<String> words) {
+    public Stage(AuthToken authToken) {
         super(Utils.generateSerialNumber());
-        this.words = words;
-        this.chartResources = new ArrayList<>();
-        this.attachmentResources = new ArrayList<>();
+        this.authToken = authToken;
     }
 
-    public boolean isComplex() {
-        return !this.chartResources.isEmpty() || !this.attachmentResources.isEmpty();
+    public boolean isFlowable() {
+        return (null != this.module && null != flowable);
     }
 
-    public void perform(AIGCService service, AIGCChannel channel, StageListener listener) {
+    /*public void perform(AIGCService service, AIGCChannel channel, StageListener listener) {
         Module mod = ModuleManager.getInstance().matchModule(this.words);
         if (null == mod) {
             return;
@@ -55,7 +49,7 @@ public class Stage extends Entity {
             PublicOpinion publicOpinion = (PublicOpinion) mod;
 
             if (!this.chartResources.isEmpty()) {
-                /*ChartResource chartResource = this.chartResources.get(0);
+                ChartResource chartResource = this.chartResources.get(0);
                 // 获取时间线
                 Chart.Timeline timeline = chartResource.chart.timeline;
                 Chart.TimePoint starting = timeline.first();
@@ -130,34 +124,34 @@ public class Stage extends Entity {
 
                 if (total.get() == 0) {
                     callback(0, callCount, publicOpinion, result, listener);
-                }*/
+                }
             }
         }
+    }*/
+
+    /*private PublicOpinion.ArticleQuery findArticleQuery(List<PublicOpinion.ArticleQuery> queryList, String query) {
+        for (PublicOpinion.ArticleQuery articleQuery : queryList) {
+            if (articleQuery.query.equals(query)) {
+                return articleQuery;
+            }
+        }
+        return null;
     }
 
-//    private PublicOpinion.ArticleQuery findArticleQuery(List<PublicOpinion.ArticleQuery> queryList, String query) {
-//        for (PublicOpinion.ArticleQuery articleQuery : queryList) {
-//            if (articleQuery.query.equals(query)) {
-//                return articleQuery;
-//            }
-//        }
-//        return null;
-//    }
+    private void callback(int targetTotal, AtomicInteger callCount, Module module,
+                          List<PublicOpinion.ArticleQuery> articleQueryList, StageListener listener) {
+        // 更新计数
+        int count = callCount.incrementAndGet();
+        if (targetTotal <= count) {
+            // 结束
+            ArrayList<String> list = new ArrayList<>();
+            for (PublicOpinion.ArticleQuery articleQuery : articleQueryList) {
+                list.add(articleQuery.output());
+            }
 
-//    private void callback(int targetTotal, AtomicInteger callCount, Module module,
-//                          List<PublicOpinion.ArticleQuery> articleQueryList, StageListener listener) {
-//        // 更新计数
-//        int count = callCount.incrementAndGet();
-//        if (targetTotal <= count) {
-//            // 结束
-//            ArrayList<String> list = new ArrayList<>();
-//            for (PublicOpinion.ArticleQuery articleQuery : articleQueryList) {
-//                list.add(articleQuery.output());
-//            }
-//
-//            listener.onPerform(this, module, list);
-//        }
-//    }
+            listener.onPerform(this, module, list);
+        }
+    }*/
 
     @Override
     public JSONObject toJSON() {

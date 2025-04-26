@@ -215,24 +215,21 @@ public class AIGCChannel extends Entity {
         return record;
     }
 
-//    public GenerativeRecord appendRecord(long sn, AIGCConversationResponse conversationResponse) {
-//        this.activeTimestamp = System.currentTimeMillis();
-//
-//        this.totalQueryWords += conversationResponse.query.length();
-//        this.totalAnswerWords += conversationResponse.answer.length();
-//
-//        this.rounds.incrementAndGet();
-//
-//        GenerativeRecord record = new GenerativeRecord(sn, conversationResponse.unit,
-//                conversationResponse.query, conversationResponse.answer, this.activeTimestamp,
-//                conversationResponse.context);
-//        synchronized (this.history) {
-//            this.history.addFirst(record);
-//        }
-//
-//        this.conversationResponses.addFirst(conversationResponse);
-//        return record;
-//    }
+    public GeneratingRecord appendRecord(long sn, GeneratingRecord source) {
+        this.activeTimestamp = System.currentTimeMillis();
+
+        this.totalQueryWords += source.query.length();
+        this.totalAnswerWords += source.answer.length();
+
+        this.rounds.incrementAndGet();
+
+        GeneratingRecord record = new GeneratingRecord(sn, source.unit, source.query, source.answer, source.thought,
+                this.activeTimestamp, source.context);
+        synchronized (this.history) {
+            this.history.addFirst(record);
+        }
+        return record;
+    }
 
     public List<GeneratingRecord> getHistories() {
         return this.history;

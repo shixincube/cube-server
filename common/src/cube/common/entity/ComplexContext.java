@@ -9,6 +9,7 @@ package cube.common.entity;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.Page;
+import cube.aigc.Stage;
 import cube.aigc.psychology.composition.Subtask;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -63,6 +64,8 @@ public class ComplexContext extends Entity {
     private boolean networkingInferEnd = false;
     private List<Page> networkingPages;
     private String networkingResult;
+
+    public Stage stage;
 
     public ComplexContext(Type type) {
         super(Utils.generateSerialNumber());

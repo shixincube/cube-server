@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.aigc.module;
+package cube.aigc;
 
 import java.util.List;
 
@@ -20,4 +20,6 @@ public interface Module {
     void start();
 
     void stop();
+
+    Flowable match(String content);
 }

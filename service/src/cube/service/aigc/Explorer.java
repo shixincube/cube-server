@@ -7,7 +7,10 @@
 package cube.service.aigc;
 
 import cell.util.log.Logger;
+import cube.aigc.Flowable;
+import cube.aigc.Module;
 import cube.aigc.Page;
+import cube.aigc.Stage;
 import cube.aigc.attachment.Attachment;
 import cube.aigc.attachment.ThingAttachment;
 import cube.aigc.attachment.ui.Button;
@@ -20,10 +23,11 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.listener.ExtractKeywordsListener;
 import cube.service.aigc.listener.ReadPageListener;
+import cube.service.aigc.module.AppManager;
 import cube.service.aigc.module.ModuleManager;
-import cube.service.aigc.module.PublicOpinion;
-import cube.service.aigc.module.Stage;
-import cube.service.aigc.resource.*;
+import cube.service.aigc.resource.BaiduSearcher;
+import cube.service.aigc.resource.BingSearcher;
+import cube.service.aigc.resource.ResourceSearcher;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
 import cube.service.tokenizer.Tokenizer;
@@ -115,7 +119,7 @@ public class Explorer {
         this.service = service;
         this.tokenizer = tokenizer;
 
-        ModuleManager.getInstance().addModule(new PublicOpinion());
+        ModuleManager.getInstance().addModule(new AppManager());
         ModuleManager.getInstance().start();
 
         (new Thread() {
@@ -350,8 +354,21 @@ public class Explorer {
      * @param content
      * @return
      */
-    public Stage infer(String content) {
-        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+    public Stage perform(AuthToken authToken, String content) {
+        Stage stage = new Stage(authToken);
+
+        for (Module mod : ModuleManager.getInstance().getModuleList()) {
+            Flowable flowable = mod.match(content);
+            if (null != flowable) {
+                stage.module = mod;
+                stage.flowable = flowable;
+                break;
+            }
+        }
+
+        return stage;
+
+        /*TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
         List<Keyword> keywordList = analyzer.analyze(content, 10);
         List<String> words = new ArrayList<>();
         for (Keyword keyword : keywordList) {
@@ -388,10 +405,10 @@ public class Explorer {
             Logger.e(this.getClass(), "#infer", e);
         }
 
-        return stage;
+        return stage;*/
     }
 
-    private ChartInference inferChart(List<String> words) {
+    /*private ChartInference inferChart(List<String> words) {
         boolean hit = false;
         for (String word : words) {
             for (String chartName : this.chartKeywords) {
@@ -420,22 +437,6 @@ public class Explorer {
         ChartInference chartInference = new ChartInference();
 
         if (!collider.chartList.isEmpty()) {
-            /*
-            // 判断上下文是否需要进行推算
-            boolean inference = false;
-            if (!this.hitChartsKeywords(words.get(0))
-                    && !this.hitChartsKeywords(words.get(1))) {
-                 前2个关键词都没有图表相关词，进行推理
-                inference = true;
-            }
-            if (inference) {
-                this.records = null;
-                this.histories = 0;
-                ResourceAnswer answer = new ResourceAnswer(complexContext);
-                String question = answer.ask(this.content);
-                data.put("content", question);
-            }
-            */
 
             for (Chart chart : collider.chartList) {
                 // 创建资源
@@ -480,18 +481,18 @@ public class Explorer {
         }
 
         return chartInference;
-    }
+    }*/
 
-    private boolean hitChartsKeywords(String word) {
+    /*private boolean hitChartsKeywords(String word) {
         for (String chartName : this.chartKeywords) {
             if (chartName.equals(word)) {
                 return true;
             }
         }
         return false;
-    }
+    }*/
 
-    private Chart matchChartSeries(List<String> labels, int year, int month, int date) {
+    /*private Chart matchChartSeries(List<String> labels, int year, int month, int date) {
         AtomCollider collider = new AtomCollider(this.service.getStorage());
         collider.collapse(labels, year, month, date);
         if (collider.chartList.isEmpty()) {
@@ -499,7 +500,7 @@ public class Explorer {
         }
 
         return collider.chartList.get(0);
-    }
+    }*/
 
     public EventResult fireEvent(Event event) {
         AttachmentResource resource = this.attachmentResourceMap.get(event.resourceSn);
@@ -555,86 +556,6 @@ public class Explorer {
 
         return null;
     }
-
-    /*
-    private ChartSeries matchChartSeries(List<String> words) {
-        boolean hit = false;
-        for (String word : words) {
-            for (String chartName : this.chartKeywords) {
-                if (chartName.equals(word)) {
-                    hit = true;
-                    break;
-                }
-            }
-            if (hit) {
-                break;
-            }
-        }
-
-        if (!hit) {
-            // 没有命中关键词
-            if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#matchChartSeries - No key words hit：" + words.get(0));
-            }
-            return null;
-        }
-
-        // 先尝试从 Atom 库里提取数据
-        AtomCollider atomCollider = new AtomCollider(this.service.getStorage());
-        ChartSeries chartSeries = atomCollider.collapse(words);
-        if (null != chartSeries) {
-            return chartSeries;
-        }
-
-        if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#matchChartSeries - Can NOT find data series in atom system: "
-                    + words.get(0));
-        }
-
-        // 词必须和 Chart Reaction 的 primary 匹配，然后匹配余下词
-        List<ChartReaction> reactions = new ArrayList<>();
-        for (String word : words) {
-            List<ChartReaction> list = this.service.getStorage().readChartReactions(word,
-                    null, null, null);
-            for (ChartReaction cr : list) {
-                if (!reactions.contains(cr)) {
-                    reactions.add(cr);
-                }
-            }
-        }
-
-        // primary 没有匹配的就不再匹配
-        if (reactions.isEmpty()) {
-            return null;
-        }
-
-        List<ChartReactionWrap> wrapList = new ArrayList<>();
-        ChartReactionWrap mostMatching = null;
-        for (ChartReaction cr : reactions) {
-            // 当前的 Reaction 匹配的关键字数量
-            int num = cr.matchWordNum(words);
-            ChartReactionWrap wrap = new ChartReactionWrap(cr, num);
-
-            if (null == mostMatching) {
-                mostMatching = wrap;
-            }
-            else {
-                if (wrap.matchingNum > mostMatching.matchingNum) {
-                    mostMatching = wrap;
-                }
-            }
-
-            wrapList.add(wrap);
-        }
-
-        // 如果匹配关键词数量少于2，则不匹配
-        if (mostMatching.matchingNum < 2) {
-            return null;
-        }
-
-        chartSeries = this.service.getStorage().readLastChartSeries(mostMatching.reaction.seriesName);
-        return chartSeries;
-    }*/
 
     public void onTick(long now) {
         this.complexContextMap.entrySet().removeIf(e -> now - e.getValue().getTimestamp() > this.cacheTimeout);

@@ -7,7 +7,7 @@
 package cube.dispatcher.aigc.handler.app;
 
 import cell.util.log.Logger;
-import cube.aigc.ConfigInfo;
+import cube.aigc.app.ConfigInfo;
 import cube.aigc.ModelConfig;
 import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.aigc.handler.AIGCHandler;

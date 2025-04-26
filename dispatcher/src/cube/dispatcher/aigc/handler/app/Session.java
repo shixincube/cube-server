@@ -8,7 +8,7 @@ package cube.dispatcher.aigc.handler.app;
 
 import cell.util.log.Logger;
 import cube.aigc.AppEvent;
-import cube.aigc.ConfigInfo;
+import cube.aigc.app.ConfigInfo;
 import cube.aigc.ModelConfig;
 import cube.common.entity.KnowledgeProfile;
 import cube.dispatcher.aigc.Manager;

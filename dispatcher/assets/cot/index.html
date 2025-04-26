@@ -107,6 +107,16 @@
             text-align: center;
             visibility: hidden;
         }
+        .screen-banner h6 {
+            width: 100%;
+            position: absolute;
+            font-size: 40px;
+            font-weight: 700;
+            padding: 0;
+            margin: 0;
+            text-align: center;
+            visibility: hidden;
+        }
         .widget-pool {
             padding: 0;
             margin: 0;
@@ -216,12 +226,12 @@ function machineGun(container, text, completeCallback) {
     for (i = 0; i < wordCount; ++i) {
         word = words[i];
         isSentenceEnd = _sentenceEndExp.test(word);
-        textEl = document.createElement('h3');
+        textEl = document.createElement('h6');
         textEl.style.height = parseInt(window.innerHeight) + 'px';
         textEl.style.paddingTop = ((parseInt(window.innerHeight) - 300) * 0.5) + 'px';
-        textEl.innerText = word;
+        textEl.innerHTML = word;
         element = container.appendChild(textEl);
-        duration = Math.max(2.5, word.length * 0.51); //longer words take longer to read, so adjust timing.
+        duration = Math.max(2.5, word.length * 0.10); //longer words take longer to read, so adjust timing.
         if (isSentenceEnd) {
             duration += 0.6; //if it's the last word in a sentence, drag out the timing a bit for a dramatic pause.
         }
@@ -252,7 +262,7 @@ function playScrambleText(width, height) {
         cw = width ? width : window.innerWidth,
         ch = height ? height : window.innerHeight,
         // charArr = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'],
-        charArr = ['我','叫','灵','思','，','是','专','门','设','计','进','行','心','理','学','绘','画','测','验','的','人','工','智','能','，'
+        charArr = ['我','叫','白','泽','灵','思','，','是','专','门','设','计','进','行','心','理','学','绘','画','测','验','的','人','工','智','能','，'
             ,'当','然','对','于','一','般','心','理','学','知','识','也','能','解','答','。',''],
         maxCharCount = 100,
         fallingCharArr = [],
@@ -357,7 +367,17 @@ function setup() {
     const banner = document.getElementById('screen_banner');
     banner.style.height = parseInt(window.innerHeight) + 'px';
     if (showScreenAnimation) {
-        gScreenTimeline = machineGun(banner, '正在推理 请您稍候 ^_^!', function () {
+        var text = [
+            '白泽灵思<br/>正在进行推理<br/>这可能需要1分钟时间',
+            '白泽灵思<br/>使用AiXinLi模型<br/>基于绘画投射理论<br/>解析并推理绘画内容',
+            '我可以解析受测者<br/><b>心理状态</b><br/><b>人格特质</b><br/><b>行为范式</b><br/>等相关内容和指标',
+            '具有<br/>非侵入性<br/>阻抗低<br/>广泛适用性<br/>深度挖掘潜意识<br/>等特点',
+            '此刻白泽灵思正在<br/>对绘画进行推理',
+            '请您稍候',
+            '科技助力心灵<br/>AI守护健康',
+            '!^_^!'
+        ];
+        gScreenTimeline = machineGun(banner, text.join(' '), function () {
             gsap.to(banner, {
                 autoAlpha: 0.0,
                 duration: 2,

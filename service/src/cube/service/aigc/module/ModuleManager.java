@@ -6,6 +6,8 @@
 
 package cube.service.aigc.module;
 
+import cube.aigc.Module;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +38,10 @@ public class ModuleManager {
         for (Module module : this.moduleList) {
             module.stop();
         }
+    }
+
+    public List<Module> getModuleList() {
+        return this.moduleList;
     }
 
     public void addModule(Module module) {

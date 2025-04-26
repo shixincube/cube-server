@@ -10,6 +10,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.aigc.Module;
 import cube.aigc.Sentiment;
 import cube.aigc.opinion.Article;
 import cube.auth.AuthToken;
@@ -17,7 +18,6 @@ import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
-import cube.service.aigc.module.Module;
 import cube.service.aigc.module.ModuleManager;
 import cube.service.aigc.module.PublicOpinion;
 import org.json.JSONArray;
@@ -27,6 +27,7 @@ import java.util.List;
 
 /**
  * 舆情模块数据任务。
+ * @deprecated
  */
 public class PublicOpinionDataTask extends ServiceTask {
 

@@ -10,7 +10,6 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.Prompt;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.PerceptronThing;

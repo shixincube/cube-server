@@ -9,28 +9,21 @@ package cube.service.aigc.module;
 import cube.aigc.Flowable;
 import cube.aigc.Module;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class Psychology implements Module {
+public class AppManager implements Module {
 
-    private final String name = "Psychology";
-
-    private List<String> matchingWords;
-
-    public Psychology() {
-        this.matchingWords = new ArrayList<>();
-        this.matchingWords.add("心理学");
+    public AppManager() {
     }
 
     @Override
     public String getName() {
-        return this.name;
+        return null;
     }
 
     @Override
     public List<String> getMatchingWords() {
-        return this.matchingWords;
+        return null;
     }
 
     @Override

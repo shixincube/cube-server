@@ -367,11 +367,6 @@ public enum AIGCAction {
     SubmitEvent("submitEvent"),
 
     /**
-     * 操作舆情数据。
-     */
-    PublicOpinionData("publicOpinionData"),
-
-    /**
      * 预推理。
      */
     PreInfer("preInfer"),

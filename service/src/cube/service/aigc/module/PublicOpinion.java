@@ -8,7 +8,9 @@ package cube.service.aigc.module;
 
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
+import cube.aigc.Flowable;
 import cube.aigc.ModelConfig;
+import cube.aigc.Module;
 import cube.aigc.Sentiment;
 import cube.aigc.opinion.Article;
 import cube.common.Storagable;
@@ -29,6 +31,7 @@ import java.util.Map;
 
 /**
  * 舆情模组。
+ * @deprecated
  */
 public class PublicOpinion implements Module {
 
@@ -77,6 +80,11 @@ public class PublicOpinion implements Module {
         if (null != this.storage) {
             this.storage.close();
         }
+    }
+
+    @Override
+    public Flowable match(String content) {
+        return null;
     }
 
     @Override

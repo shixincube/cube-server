@@ -11,6 +11,8 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
+import cube.aigc.app.ConfigInfo;
+import cube.aigc.ModelConfig;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
@@ -1890,27 +1892,6 @@ public class Manager implements Tickable, PerformerListener {
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.w(this.getClass(), "#submitEvent - Response state is " + Packet.extractCode(responsePacket));
-            return null;
-        }
-
-        return Packet.extractDataPayload(responsePacket);
-    }
-
-    public JSONObject handlePublicOpinionData(String token, JSONObject data) {
-        Packet packet = new Packet(AIGCAction.PublicOpinionData.name, data);
-        ActionDialect request = packet.toDialect();
-        request.addParam("token", token);
-
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
-        if (null == response) {
-            Logger.w(this.getClass(), "#handlePublicOpinionData - No response");
-            return null;
-        }
-
-        Packet responsePacket = new Packet(response);
-        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#handlePublicOpinionData - Response state is "
-                    + Packet.extractCode(responsePacket));
             return null;
         }
 

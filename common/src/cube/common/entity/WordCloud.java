@@ -16,6 +16,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class WordCloud implements JSONable {
 
+    private final static String[] sFilterWords = new String[] {
+            ",", ".", "!", "?", "'", "\"", "**", "*", "-", "\n", "\r",
+            "@", "#", "$", "%", "^", "&", "(", ")", "[", "]", "{", "}",
+            "|", "\\", ":", ";", "<", ">", "=", "+", "`", "~", "/",
+            "，", "。", "！", "？", "《", "》", "“", "”", "…", "：", "；"
+    };
+
     private long timestamp;
 
     private Map<String, AtomicInteger> words;
@@ -26,6 +33,10 @@ public class WordCloud implements JSONable {
     }
 
     public void addWord(String word) {
+        if (this.isFilterWord(word)) {
+            return;
+        }
+
         AtomicInteger value = this.words.get(word);
         if (null == value) {
             this.words.put(word, new AtomicInteger(1));
@@ -33,6 +44,15 @@ public class WordCloud implements JSONable {
         else {
             value.incrementAndGet();
         }
+    }
+
+    private boolean isFilterWord(String word) {
+        for (String w : sFilterWords) {
+            if (w.equals(word)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

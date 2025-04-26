@@ -4,8 +4,11 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.aigc;
+package cube.aigc.app;
 
+import cube.aigc.ContactPreference;
+import cube.aigc.Usage;
+import cube.aigc.ModelConfig;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;

@@ -7,7 +7,6 @@
 package cube.service.aigc.scene.subtask;
 
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Subtask;

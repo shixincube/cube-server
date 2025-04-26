@@ -12,6 +12,8 @@ import cell.util.Cryptology;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
+import cube.aigc.ModelConfig;
+import cube.aigc.app.Notification;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.attachment.ui.EventResult;
 import cube.aigc.psychology.Attribute;
@@ -41,8 +43,6 @@ import cube.service.aigc.guidance.Guides;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.*;
-import cube.service.aigc.module.Stage;
-import cube.service.aigc.module.StageListener;
 import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.ResourceAnswer;
@@ -2706,8 +2706,13 @@ public class AIGCService extends AbstractModule {
             }
         }
         else {
-            Stage stage = Explorer.getInstance().infer(content);
+            Stage stage = Explorer.getInstance().perform(authToken, content);
+            if (stage.isFlowable()) {
+                result = new ComplexContext(ComplexContext.Type.Heavyweight);
+                result.stage = stage;
+            }
 
+            /*Stage stage = Explorer.getInstance().infer(content);
             if (stage.isComplex()) {
                 result = new ComplexContext(ComplexContext.Type.Heavyweight);
 
@@ -2746,7 +2751,7 @@ public class AIGCService extends AbstractModule {
                         }
                     });
                 }
-            }
+            }*/
         }
 
         return result;
@@ -3408,13 +3413,19 @@ public class AIGCService extends AbstractModule {
             }
             else {
                 // 复合型数据
-                ResourceAnswer resourceAnswer = new ResourceAnswer(complexContext);
-                // 提取内容
-                String content = resourceAnswer.extractContent(AIGCService.this, this.channel.getAuthToken());
-                String answer = resourceAnswer.answer(content);
-                result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
-                        (null != this.originalQuery) ? this.originalQuery : this.content, answer.trim(), "",
-                        complexContext);
+                if (complexContext.stage.isFlowable()) {
+                    GeneratingRecord record = complexContext.stage.flowable.generate();
+                    result = this.channel.appendRecord(this.sn, record);
+                }
+                else {
+                    ResourceAnswer resourceAnswer = new ResourceAnswer(complexContext);
+                    // 提取内容
+                    String content = resourceAnswer.extractContent(AIGCService.this, this.channel.getAuthToken());
+                    String answer = resourceAnswer.answer(content);
+                    result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
+                            (null != this.originalQuery) ? this.originalQuery : this.content, answer.trim(), "",
+                            complexContext);
+                }
             }
 
             if (complexContext.isSimplified()) {

@@ -6,7 +6,7 @@
 
 package cube.dispatcher.aigc.handler.app;
 
-import cube.aigc.ConfigInfo;
+import cube.aigc.app.ConfigInfo;
 import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.aigc.handler.AIGCHandler;
 import org.eclipse.jetty.http.HttpStatus;
