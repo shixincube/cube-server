@@ -21,5 +21,5 @@ public interface Module {
 
     void stop();
 
-    Flowable match(String content);
+    Flowable match(String query);
 }

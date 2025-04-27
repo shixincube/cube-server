@@ -119,7 +119,7 @@ public class Explorer {
         this.service = service;
         this.tokenizer = tokenizer;
 
-        ModuleManager.getInstance().addModule(new AppManager());
+        ModuleManager.getInstance().addModule(new AppManager(service));
         ModuleManager.getInstance().start();
 
         (new Thread() {

@@ -10,5 +10,5 @@ import cube.common.entity.GeneratingRecord;
 
 public interface Flowable {
 
-    GeneratingRecord generate();
+    GeneratingRecord generate(Generatable generator);
 }

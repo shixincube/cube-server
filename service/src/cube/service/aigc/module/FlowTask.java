@@ -7,16 +7,16 @@
 package cube.service.aigc.module;
 
 import cube.aigc.Flowable;
-import cube.common.entity.GeneratingRecord;
+import cube.service.aigc.AIGCService;
 
-public class FlowTask implements Flowable {
+public abstract class FlowTask implements Flowable {
 
-    public FlowTask() {
+    protected AIGCService service;
 
-    }
+    protected String query;
 
-    @Override
-    public GeneratingRecord generate() {
-        return null;
+    public FlowTask(AIGCService service, String query) {
+        this.service = service;
+        this.query = query;
     }
 }

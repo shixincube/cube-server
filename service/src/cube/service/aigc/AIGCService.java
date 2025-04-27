@@ -78,7 +78,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * AIGC 服务。
  */
-public class AIGCService extends AbstractModule {
+public class AIGCService extends AbstractModule implements Generatable {
 
     public final static String NAME = "AIGC";
 
@@ -1604,6 +1604,12 @@ public class AIGCService extends AbstractModule {
         // 过滤中文字符
         responseText = TextUtils.filterChinese(unit, responseText);
         return new GeneratingRecord(request.sn, unit.getCapability().getName(), prompt, responseText, thoughtText);
+    }
+
+    @Override
+    public GeneratingRecord generateText(String unitName, String prompt, GeneratingOption option,
+                                         List<GeneratingRecord> history) {
+        return this.syncGenerateText(unitName, prompt, option, history, null);
     }
 
     /**
@@ -3414,7 +3420,7 @@ public class AIGCService extends AbstractModule {
             else {
                 // 复合型数据
                 if (complexContext.stage.isFlowable()) {
-                    GeneratingRecord record = complexContext.stage.flowable.generate();
+                    GeneratingRecord record = complexContext.stage.flowable.generate(AIGCService.this);
                     result = this.channel.appendRecord(this.sn, record);
                 }
                 else {

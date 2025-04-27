@@ -475,6 +475,11 @@ public class ContactStorage implements Storagable {
         return contact;
     }
 
+    public List<Contact> getContactsByPlatform(String domain, String platform) {
+        List<Contact> list = new ArrayList<>();
+        return list;
+    }
+
     public boolean writeContactMask(String domain, long id, ContactMask mask) {
         String table = this.contactTableNameMap.get(domain);
         if (null == table) {
