@@ -759,24 +759,29 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @return
      */
     public User getOrCreateUser(String appAgent, Device device) {
-        User user = null;
-
-        long id = Cryptology.getInstance().fastHash(appAgent);
-        try {
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            byte[] digest = md5.digest(appAgent.getBytes(StandardCharsets.UTF_8));
-            long hash = Cryptology.getInstance().fastHash(digest);
-            id += hash;
-        } catch (Exception e) {
-            Logger.e(this.getClass(), "#getOrCreateUser", e);
-        }
-
-        // 处理 ID
-        id = Math.abs(id);
-
         final String domain = AuthConsts.DEFAULT_DOMAIN;
         final String appKey = AuthConsts.DEFAULT_APP_KEY;
         final long tokenDuration = 5L * 365 * 24 * 60 * 60 * 1000;
+
+        User user = null;
+
+//        long id = Cryptology.getInstance().fastHash(appAgent);
+//        try {
+//            MessageDigest md5 = MessageDigest.getInstance("MD5");
+//            byte[] digest = md5.digest(appAgent.getBytes(StandardCharsets.UTF_8));
+//            long hash = Cryptology.getInstance().fastHash(digest);
+//            id += hash;
+//        } catch (Exception e) {
+//            Logger.e(this.getClass(), "#getOrCreateUser", e);
+//        }
+//        // 处理 ID
+//        id = Math.abs(id);
+
+        long id = Long.parseLong(Utils.randomNumberString(10));
+        while (ContactManager.getInstance().containsContact(domain, id)) {
+            Logger.e(this.getClass(), "#getOrCreateUser - Retry contact id: " + id);
+            id = Long.parseLong(Utils.randomNumberString(10));
+        }
 
         ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactId(domain, id);
         if (searchResult.getContactList().isEmpty()) {
@@ -795,8 +800,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
             // 初始积分
             ContactManager.getInstance().getPointSystem().insert(AppHelper.createNewUserPoint(contact, 200));
-        }
-        else {
+        } else {
             // 已存在
             AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
             AuthToken authToken = authService.queryAuthTokenByContactId(id);

@@ -6,6 +6,8 @@
 
 package cube.aigc;
 
+import cube.auth.AuthToken;
+
 import java.util.List;
 
 /**
@@ -21,5 +23,5 @@ public interface Module {
 
     void stop();
 
-    Flowable match(String query);
+    Flowable match(AuthToken token, String query);
 }

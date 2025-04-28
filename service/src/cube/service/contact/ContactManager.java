@@ -893,6 +893,28 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 包含联系人。
+     *
+     * @param domainName
+     * @param contactId
+     * @return
+     */
+    public boolean containsContact(String domainName, long contactId) {
+        return this.storage.containsContact(domainName, contactId);
+    }
+
+    /**
+     * 按照平台信息列出联系人。
+     *
+     * @param domainName
+     * @param platforms
+     * @return
+     */
+    public List<Contact> listContacts(String domainName, List<String> platforms) {
+        return this.storage.queryContactsByPlatform(domainName, platforms);
+    }
+
+    /**
      * 获取指定的在线联系人。
      *
      * @param domainName 指定域名称。

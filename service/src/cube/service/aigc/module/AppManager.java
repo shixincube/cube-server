@@ -9,6 +9,7 @@ package cube.service.aigc.module;
 import cell.util.log.Logger;
 import cube.aigc.Flowable;
 import cube.aigc.Module;
+import cube.auth.AuthToken;
 import cube.common.entity.QuestionAnswer;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
@@ -47,7 +48,7 @@ public class AppManager implements Module {
     }
 
     @Override
-    public Flowable match(String query) {
+    public Flowable match(AuthToken token, String query) {
         final List<QuestionAnswer> questionAnswerList = new ArrayList<>();
         boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
             @Override
@@ -85,7 +86,7 @@ public class AppManager implements Module {
             }
 
             if (qa.getAnswers().get(0).equalsIgnoreCase(QueryUser.TASK_NAME)) {
-                return new QueryUser(this.service, query);
+                return new QueryUser(this.service, token, query);
             }
         }
 
