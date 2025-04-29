@@ -8,7 +8,6 @@ package cube.service.aigc;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.Cryptology;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
@@ -67,7 +66,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -161,11 +159,6 @@ public class AIGCService extends AbstractModule implements Generatable {
     private Tokenizer tokenizer;
 
     private AIGCPluginSystem pluginSystem;
-
-    /**
-     * 是否对 Prompt 进行上下文识别。
-     */
-    private boolean enabledRecognizeContext = false;
 
     /**
      * 是否启用搜索关键词。
@@ -403,8 +396,6 @@ public class AIGCService extends AbstractModule implements Generatable {
             this.configFileLastModified = file.lastModified();
 
             Properties properties = ConfigUtils.readProperties(file.getAbsolutePath());
-            this.enabledRecognizeContext = Boolean.parseBoolean(
-                    properties.getProperty("enabled.recognize_context", "false"));
             this.enabledSearch = Boolean.parseBoolean(
                     properties.getProperty("enabled.search", "false"));
 
@@ -468,7 +459,6 @@ public class AIGCService extends AbstractModule implements Generatable {
             Logger.e(this.getClass(), "#loadConfig - Load config properties error", e);
         }
 
-        Logger.i(this.getClass(), "AI Service - Recognize Context Enabled: " + this.enabledRecognizeContext);
         Logger.i(this.getClass(), "AI Service - Search Enabled: " + this.enabledSearch);
         Logger.i(this.getClass(), "AI Service - Context length: " + ModelConfig.EXTRA_LONG_CONTEXT_LIMIT);
         Logger.i(this.getClass(), "AI Service - Baize context limit: " + ModelConfig.BAIZE_CONTEXT_LIMIT);
@@ -777,10 +767,10 @@ public class AIGCService extends AbstractModule implements Generatable {
 //        // 处理 ID
 //        id = Math.abs(id);
 
-        long id = Long.parseLong(Utils.randomNumberString(10));
+        long id = Long.parseLong(Utils.randomInt(10000, 99999) + Utils.randomNumberString(5));
         while (ContactManager.getInstance().containsContact(domain, id)) {
             Logger.e(this.getClass(), "#getOrCreateUser - Retry contact id: " + id);
-            id = Long.parseLong(Utils.randomNumberString(10));
+            id = Long.parseLong(Utils.randomInt(10000, 99999) + Utils.randomNumberString(5));
         }
 
         ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactId(domain, id);
@@ -2615,7 +2605,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 对聊天内容进行分类识别。
+     * 识别上下文数据。
      *
      * @param text
      * @param authToken
@@ -3136,7 +3126,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             this.channel.setLastUnitMetaSn(this.sn);
 
             // 识别内容
-            ComplexContext complexContext = enabledRecognizeContext ?
+            ComplexContext complexContext = option.recognizeContext ?
                     recognizeContext(this.content, this.channel.getAuthToken()) :
                     new ComplexContext(ComplexContext.Type.Lightweight);
 

@@ -323,7 +323,33 @@ public class ContactStorage implements Storagable {
             return 0;
         }
 
-        return result.get(0)[0].getInt();
+        return result.get(0)[0].isNullValue() ? 0 : result.get(0)[0].getInt();
+    }
+
+    /**
+     * 获取指定域的联系人总数。
+     *
+     * @param domain 指定域。
+     * @param platforms
+     * @return
+     */
+    public int countContacts(String domain, List<String> platforms) {
+        String table = this.contactTableNameMap.get(domain);
+        StringBuilder sql = new StringBuilder("SELECT COUNT(id) FROM ");
+        sql.append(table);
+        sql.append(" WHERE ");
+        sql.append(" `mask`=NULL AND (");
+        for (String platform : platforms) {
+            sql.append("`recent_device_platform`='").append(platform).append("'");
+            sql.append(" OR ");
+        }
+        sql.delete(sql.length() - 4, sql.length());
+        sql.append(")");
+        List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+        if (result.isEmpty()) {
+            return 0;
+        }
+        return result.get(0)[0].isNullValue() ? 0 : result.get(0)[0].getInt();
     }
 
     /**
@@ -428,21 +454,6 @@ public class ContactStorage implements Storagable {
         try {
             StorageField[] data = result.get(0);
             contact = makeContact(domain, data);
-//            Map<String, StorageField> map = StorageFields.get(data);
-//            Long contactId = map.get("id").getLong();
-//            String name = map.get("name").getString();
-//            long timestamp = map.get("timestamp").getLong();
-//            JSONObject context = map.get("context").isNullValue() ? null : new JSONObject(map.get("context").getString());
-//            String deviceName = map.get("recent_device_name").isNullValue() ? null : map.get("recent_device_name").getString();
-//            String devicePlatform = map.get("recent_device_platform").isNullValue() ? null : map.get("recent_device_platform").getString();
-//            contact = new Contact(contactId, domain, name, timestamp);
-//            if (null != context) {
-//                contact.setContext(context);
-//            }
-//            if (null != deviceName && null != devicePlatform) {
-//                Device device = new Device(deviceName, devicePlatform);
-//                contact.addDevice(device);
-//            }
         } catch (Exception e) {
             // Nothing;
         }
@@ -471,20 +482,6 @@ public class ContactStorage implements Storagable {
         try {
             StorageField[] data = result.get(0);
             contact = makeContact(domain, data);
-//            Map<String, StorageField> map = StorageFields.get(data);
-//            Long contactId = map.get("id").getLong();
-//            long timestamp = map.get("timestamp").getLong();
-//            JSONObject context = map.get("context").isNullValue() ? null : new JSONObject(map.get("context").getString());
-//            String deviceName = map.get("recent_device_name").isNullValue() ? null : map.get("recent_device_name").getString();
-//            String devicePlatform = map.get("recent_device_platform").isNullValue() ? null : map.get("recent_device_platform").getString();
-//            contact = new Contact(contactId, domain, name, timestamp);
-//            if (null != context) {
-//                contact.setContext(context);
-//            }
-//            if (null != deviceName && null != devicePlatform) {
-//                Device device = new Device(deviceName, devicePlatform);
-//                contact.addDevice(device);
-//            }
         } catch (Exception e) {
             // Nothing;
         }

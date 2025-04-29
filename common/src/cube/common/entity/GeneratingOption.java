@@ -24,7 +24,13 @@ public class GeneratingOption implements JSONable {
 
     public int maxNewTokens = 2048;
 
+    public boolean recognizeContext = false;
+
     public GeneratingOption() {
+    }
+
+    public GeneratingOption(boolean recognizeFlow) {
+        this.recognizeContext = recognizeFlow;
     }
 
     public GeneratingOption(double temperature, double topP, double repetitionPenalty, int maxNewTokens, int topK) {
@@ -55,6 +61,10 @@ public class GeneratingOption implements JSONable {
         if (json.has("maxNewTokens")) {
             this.maxNewTokens = json.getInt("maxNewTokens");
         }
+
+        if (json.has("recognizeContext")) {
+            this.recognizeContext = json.getBoolean("recognizeContext");
+        }
     }
 
     @Override
@@ -65,6 +75,7 @@ public class GeneratingOption implements JSONable {
         json.put("repetitionPenalty", this.repetitionPenalty);
         json.put("topK", this.topK);
         json.put("maxNewTokens", this.maxNewTokens);
+        json.put("recognizeContext", this.recognizeContext);
         return json;
     }
 

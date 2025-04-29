@@ -8,6 +8,7 @@ package cube.service.aigc.module;
 
 import cube.aigc.Flowable;
 import cube.aigc.Module;
+import cube.auth.AuthToken;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,7 @@ public class Psychology implements Module {
     }
 
     @Override
-    public Flowable match(String content) {
+    public Flowable match(AuthToken token, String query) {
         return null;
     }
 }

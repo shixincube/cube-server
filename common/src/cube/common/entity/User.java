@@ -48,8 +48,16 @@ public class User extends Entity {
         this.phoneNumber = phoneNumber;
     }
 
+    public String getPhoneNumber() {
+        return this.phoneNumber;
+    }
+
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return this.displayName;
     }
 
     public void setAuthToken(AuthToken authToken) {

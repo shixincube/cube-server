@@ -358,7 +358,7 @@ public class Explorer {
         Stage stage = new Stage(authToken);
 
         for (Module mod : ModuleManager.getInstance().getModuleList()) {
-            Flowable flowable = mod.match(content);
+            Flowable flowable = mod.match(authToken, content);
             if (null != flowable) {
                 stage.module = mod;
                 stage.flowable = flowable;

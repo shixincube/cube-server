@@ -13,6 +13,7 @@ import cube.aigc.ModelConfig;
 import cube.aigc.Module;
 import cube.aigc.Sentiment;
 import cube.aigc.opinion.Article;
+import cube.auth.AuthToken;
 import cube.common.Storagable;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -83,7 +84,7 @@ public class PublicOpinion implements Module {
     }
 
     @Override
-    public Flowable match(String content) {
+    public Flowable match(AuthToken token, String content) {
         return null;
     }
 

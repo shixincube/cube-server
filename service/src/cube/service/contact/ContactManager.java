@@ -899,7 +899,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contactId
      * @return
      */
-    public boolean containsContact(String domainName, long contactId) {
+    public synchronized boolean containsContact(String domainName, long contactId) {
         return this.storage.containsContact(domainName, contactId);
     }
 
@@ -976,6 +976,17 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     protected int countContacts(String domain) {
         return this.storage.countContacts(domain);
+    }
+
+    /**
+     * 获取指定域的所有联系人总数。
+     *
+     * @param domain
+     * @param platforms
+     * @return
+     */
+    public int countContacts(String domain, List<String> platforms) {
+        return this.storage.countContacts(domain, platforms);
     }
 
     /**

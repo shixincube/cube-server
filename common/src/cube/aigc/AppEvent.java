@@ -117,6 +117,14 @@ public class AppEvent implements JSONable {
         return (null != this.data) ? this.data : new JSONObject();
     }
 
+    public String getSafeString(String key) {
+        return (null != this.data) ? (this.data.has(key) ? this.data.getString(key) : "") : "";
+    }
+    
+    public int getSafeInt(String key) {
+        return (null != this.data) ? (this.data.has(key) ? this.data.getInt(key) : 0) : 0;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

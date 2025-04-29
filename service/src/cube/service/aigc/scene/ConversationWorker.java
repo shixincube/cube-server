@@ -337,7 +337,7 @@ public class ConversationWorker {
             }
         }
 
-        this.service.generateText(channel, unit, query, prompt.content, new GeneratingOption(), null, 0,
+        this.service.generateText(channel, unit, query, prompt.content, new GeneratingOption(false), null, 0,
                 null, null, false, true, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GeneratingRecord record) {

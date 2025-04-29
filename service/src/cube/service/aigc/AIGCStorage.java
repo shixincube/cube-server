@@ -773,6 +773,26 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
+    public List<AppEvent> readAppEvents(long contactId, String eventName, int limit) {
+        List<AppEvent> list = new ArrayList<>();
+        List<StorageField[]> result = this.storage.executeQuery(this.appEventTable, this.appEventFields,
+            new Conditional[] {
+                    Conditional.createEqualTo("contact_id", contactId),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("event", eventName),
+                    Conditional.createOrderBy("timestamp", true),
+                    Conditional.createLimit(limit)
+            });
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            AppEvent event = new AppEvent(data.get("event").getString(), data.get("timestamp").getLong(),
+                    data.get("time").getString(), data.get("contact_id").getLong(),
+                    new JSONObject(data.get("data").getString()));
+            list.add(event);
+        }
+        return list;
+    }
+
     public boolean writeAppEvent(AppEvent appEvent) {
         return this.storage.executeInsert(this.appEventTable, new StorageField[] {
                 new StorageField("event", appEvent.event),
