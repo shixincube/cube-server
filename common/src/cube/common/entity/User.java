@@ -23,10 +23,13 @@ public class User extends Entity {
 
     private AuthToken authToken;
 
-    public User(long id, String name, String appAgent) {
+    private String channel;
+
+    public User(long id, String name, String appAgent, String channel) {
         super(id);
         this.name = name;
         this.appAgent = appAgent;
+        this.channel = channel;
         this.displayName = "";
         this.phoneNumber = "";
         this.avatar = "";
@@ -36,12 +39,17 @@ public class User extends Entity {
         super(json);
         this.name = json.getString("name");
         this.appAgent = json.getString("appAgent");
+        this.channel = json.has("channel") ? json.getString("channel") : "Unknown";
         this.displayName = json.getString("displayName");
         this.phoneNumber = json.getString("phoneNumber");
         this.avatar = json.getString("avatar");
         if (json.has("authToken")) {
             this.authToken = new AuthToken(json.getJSONObject("authToken"));
         }
+    }
+
+    public String getChannel() {
+        return this.channel;
     }
 
     public void setPhoneNumber(String phoneNumber) {
@@ -69,6 +77,7 @@ public class User extends Entity {
         JSONObject json = super.toJSON();
         json.put("name", this.name);
         json.put("appAgent", this.appAgent);
+        json.put("channel", this.channel);
         json.put("displayName", this.displayName);
         json.put("phoneNumber", this.phoneNumber);
         json.put("avatar", this.avatar);

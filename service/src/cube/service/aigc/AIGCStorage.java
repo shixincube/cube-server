@@ -425,12 +425,15 @@ public class AIGCStorage implements Storagable {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
             }),
+            new StorageField("title", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("content", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("act", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
-            new StorageField("prompt", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            })
     };
 
     private final StorageField[] promptWordScopeFields = new StorageField[] {
@@ -2027,6 +2030,10 @@ public class AIGCStorage implements Storagable {
         return !result.isEmpty();
     }
 
+    public List<PromptRecord> readPrompts() {
+        return this.readPrompts(0);
+    }
+
     /**
      * 读取联系人的提示词。
      * 同时读取 contact_id 为 0 的公共提示词。
@@ -2041,8 +2048,9 @@ public class AIGCStorage implements Storagable {
             this.promptWordTable, this.promptWordScopeTable
         }, new StorageField[] {
                 new StorageField(this.promptWordTable, "id", LiteralBase.LONG),
+                new StorageField(this.promptWordTable, "title", LiteralBase.STRING),
+                new StorageField(this.promptWordTable, "content", LiteralBase.STRING),
                 new StorageField(this.promptWordTable, "act", LiteralBase.STRING),
-                new StorageField(this.promptWordTable, "prompt", LiteralBase.STRING),
                 new StorageField(this.promptWordScopeTable, "contact_id", LiteralBase.LONG)
         }, new Conditional[] {
                 Conditional.createEqualTo(new StorageField(this.promptWordTable, "id", LiteralBase.LONG),
@@ -2059,18 +2067,19 @@ public class AIGCStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            PromptRecord promptRecord = new PromptRecord(data.get("id").getLong(), data.get("act").getString(),
-                    data.get("prompt").getString(), data.get("contact_id").getLong() == 0);
+            PromptRecord promptRecord = new PromptRecord(data.get("id").getLong(), data.get("title").getString(),
+                    data.get("content").getString(), data.get("act").getString(),
+                    data.get("contact_id").getLong() == 0);
             promptRecords.add(promptRecord);
         }
 
         return promptRecords;
     }
 
-    public PromptRecord readPrompt(String act) {
+    public PromptRecord readPrompt(String title) {
         List<StorageField[]> result = this.storage.executeQuery(this.promptWordTable, this.promptWordFields,
                 new Conditional[] {
-                        Conditional.createEqualTo("act", act)
+                        Conditional.createEqualTo("title", title)
                 });
 
         if (result.isEmpty()) {
@@ -2078,7 +2087,10 @@ public class AIGCStorage implements Storagable {
         }
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
-        return new PromptRecord(data.get("id").getLong(), data.get("act").getString(), data.get("prompt").getString(),
+        return new PromptRecord(data.get("id").getLong(),
+                data.get("title").getString(),
+                data.get("content").getString(),
+                data.get("act").getString(),
                 false);
     }
 
@@ -2091,15 +2103,17 @@ public class AIGCStorage implements Storagable {
             // 插入
             this.storage.executeInsert(this.promptWordTable, new StorageField[] {
                     new StorageField("id", promptRecord.id),
-                    new StorageField("act", promptRecord.act),
-                    new StorageField("prompt", promptRecord.prompt)
+                    new StorageField("title", promptRecord.title),
+                    new StorageField("content", promptRecord.content),
+                    new StorageField("act", promptRecord.act)
             });
         }
         else {
             // 更新
             this.storage.executeUpdate(this.promptWordTable, new StorageField[] {
-                    new StorageField("act", promptRecord.act),
-                    new StorageField("prompt", promptRecord.prompt)
+                    new StorageField("title", promptRecord.title),
+                    new StorageField("content", promptRecord.content),
+                    new StorageField("act", promptRecord.act)
             }, new Conditional[] {
                     Conditional.createEqualTo("id", promptRecord.id)
             });
@@ -2125,21 +2139,23 @@ public class AIGCStorage implements Storagable {
     public void writePrompts(List<PromptRecord> promptRecords, List<Long> contactIds) {
         List<Long> idList = new ArrayList<>();
         for (PromptRecord promptRecord : promptRecords) {
-            PromptRecord record = this.readPrompt(promptRecord.act);
+            PromptRecord record = this.readPrompt(promptRecord.title);
             if (null == record) {
                 // 插入
                 long id = Utils.generateSerialNumber();
                 this.storage.executeInsert(this.promptWordTable, new StorageField[]{
                         new StorageField("id", id),
-                        new StorageField("act", promptRecord.act),
-                        new StorageField("prompt", promptRecord.prompt)
+                        new StorageField("title", promptRecord.title),
+                        new StorageField("content", promptRecord.content),
+                        new StorageField("act", promptRecord.act)
                 });
                 idList.add(id);
             }
             else {
                 // 更新
                 this.storage.executeUpdate(this.promptWordTable, new StorageField[] {
-                        new StorageField("prompt", promptRecord.prompt)
+                        new StorageField("content", promptRecord.content),
+                        new StorageField("act", promptRecord.act)
                 }, new Conditional[] {
                             Conditional.createEqualTo("id", record.id)
                 });
@@ -2180,7 +2196,7 @@ public class AIGCStorage implements Storagable {
         }
     }
 
-    public int deletePrompt(long contactId, String act) {
+    public int deletePrompt(long contactId, String title) {
         int count = 0;
 
         List<StorageField[]> result = this.storage.executeQuery(new String[] {
@@ -2197,7 +2213,7 @@ public class AIGCStorage implements Storagable {
                                 "contact_id", LiteralBase.LONG, contactId)),
                         Conditional.createAnd(),
                         Conditional.createEqualTo(new StorageField(this.promptWordTable,
-                                "act", LiteralBase.STRING, act))
+                                "title", LiteralBase.STRING, title))
                 })
         });
 

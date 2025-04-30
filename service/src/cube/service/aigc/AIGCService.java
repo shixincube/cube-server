@@ -742,13 +742,14 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 获取或创建新用户。
+     * 创建新用户。
      *
      * @param appAgent
      * @param device
+     * @param channel
      * @return
      */
-    public User getOrCreateUser(String appAgent, Device device) {
+    public User createUser(String appAgent, Device device, String channel) {
         final String domain = AuthConsts.DEFAULT_DOMAIN;
         final String appKey = AuthConsts.DEFAULT_APP_KEY;
         final long tokenDuration = 5L * 365 * 24 * 60 * 60 * 1000;
@@ -773,33 +774,26 @@ public class AIGCService extends AbstractModule implements Generatable {
             id = Long.parseLong(Utils.randomInt(10000, 99999) + Utils.randomNumberString(5));
         }
 
-        ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactId(domain, id);
-        if (searchResult.getContactList().isEmpty()) {
-            // 创建令牌
-            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
-            // 5年有效时长
-            AuthToken authToken = authService.applyToken(domain, appKey, id, tokenDuration);
+        // 创建令牌
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        // 5年有效时长
+        AuthToken authToken = authService.applyToken(domain, appKey, id, tokenDuration);
 
-            String name = "ME" + Utils.randomNumberString(8);
-            user = new User(id, name, appAgent);
-            user.setDisplayName("未登录");
-            user.setAuthToken(authToken);
+        String name = "ME" + Utils.randomNumberString(8);
+        user = new User(id, name, appAgent, channel);
+        user.setDisplayName("未登录");
+        user.setAuthToken(authToken);
 
-            // 新用户
-            Contact contact = ContactManager.getInstance().newContact(id, domain, name, user.toJSON(), device);
+        // 新用户
+        Contact contact = ContactManager.getInstance().newContact(id, domain, name, user.toJSON(), device);
 
-            // 初始积分
-            ContactManager.getInstance().getPointSystem().insert(AppHelper.createNewUserPoint(contact, 200));
-        } else {
-            // 已存在
-            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
-            AuthToken authToken = authService.queryAuthTokenByContactId(id);
-            user = new User(searchResult.getContactList().get(0).getContext());
-            user.setAuthToken(authToken);
-        }
+        // 初始积分
+        ContactManager.getInstance().getPointSystem().insert(AppHelper.createNewUserPoint(contact, 1000));
 
         return user;
     }
+
+
 
     public User updateUser(Contact contact, VerificationCode verificationCode) {
         // 查找用户

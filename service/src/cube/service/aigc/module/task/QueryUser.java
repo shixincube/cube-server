@@ -61,13 +61,14 @@ public class QueryUser extends FlowTask {
         buf.append(" 账号名 |");
         buf.append(" 注册日期 |");
         buf.append(" 电话号码 |");
-        buf.append(" 显示名称 |");
+        buf.append(" 用户名称 |");
         buf.append(" 设备类型 |");
+        buf.append(" 用户渠道 |");
         buf.append(" 最近登录日期 |");
         buf.append(" 最近登录IP |");
         buf.append(" 最近登录设备名 |");
         buf.append(" 最近登录设备类型 |\n");
-        buf.append("|----|----|----|----|----|----|----|----|----|----|\n");
+        buf.append("|----|----|----|----|----|----|----|----|----|----|----|\n");
 
         int num = 0;
         for (Contact contact : contacts) {
@@ -82,6 +83,7 @@ public class QueryUser extends FlowTask {
                 String phoneNumber = user.getPhoneNumber();
                 String displayName = user.getDisplayName();
                 String devicePlatform = contact.getDevice().getPlatform();
+                String userChannel = user.getChannel();
                 String recentTime = (null != sessionEvent) ? sessionEvent.time : "";
                 String recentIP = (null != sessionEvent) ? sessionEvent.getSafeString("ip") : "";
                 String recentDevice = (null != sessionEvent) ? sessionEvent.getSafeString("device") : "";
@@ -92,6 +94,7 @@ public class QueryUser extends FlowTask {
                 buf.append("|").append(phoneNumber);
                 buf.append("|").append(displayName);
                 buf.append("|").append(devicePlatform);
+                buf.append("|").append(userChannel);
                 buf.append("|").append(recentTime);
                 buf.append("|").append(recentIP);
                 buf.append("|").append(recentDevice);

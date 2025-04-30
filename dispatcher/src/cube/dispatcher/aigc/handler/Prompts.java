@@ -33,16 +33,16 @@ public class Prompts extends ContextHandler {
 
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
 
             JSONObject result = Manager.getInstance().getPrompts(token);
             if (null == result) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
                 return;
             }
@@ -53,9 +53,9 @@ public class Prompts extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -104,11 +104,11 @@ public class Prompts extends ContextHandler {
                         this.complete();
                     }
                     else {
-                        this.respond(response, HttpStatus.BAD_REQUEST_400);
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                         this.complete();
                     }
                 } catch (Exception e) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                 }
             }
@@ -129,11 +129,11 @@ public class Prompts extends ContextHandler {
                         this.complete();
                     }
                     else {
-                        this.respond(response, HttpStatus.BAD_REQUEST_400);
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                         this.complete();
                     }
                 } catch (Exception e) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                 }
             }
@@ -148,16 +148,16 @@ public class Prompts extends ContextHandler {
                         this.complete();
                     }
                     else {
-                        this.respond(response, HttpStatus.BAD_REQUEST_400);
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                         this.complete();
                     }
                 } catch (Exception e) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                 }
             }
             else {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
             }
         }

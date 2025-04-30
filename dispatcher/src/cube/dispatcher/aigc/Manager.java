@@ -10,9 +10,11 @@ import cell.core.talk.Primitive;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.aigc.*;
-import cube.aigc.app.ConfigInfo;
+import cube.aigc.AppEvent;
+import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
+import cube.aigc.PromptRecord;
+import cube.aigc.app.ConfigInfo;
 import cube.aigc.attachment.ui.Event;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
@@ -1856,8 +1858,9 @@ public class Manager implements Tickable, PerformerListener {
         JSONObject data = new JSONObject();
         data.put("action", "update");
         data.put("id", promptRecord.id);
+        data.put("title", promptRecord.title);
+        data.put("content", promptRecord.content);
         data.put("act", promptRecord.act);
-        data.put("prompt", promptRecord.prompt);
 
         Packet packet = new Packet(AIGCAction.SetPrompts.name, data);
         ActionDialect request = packet.toDialect();

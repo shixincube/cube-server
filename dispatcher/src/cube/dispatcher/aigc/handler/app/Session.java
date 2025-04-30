@@ -56,6 +56,7 @@ public class Session extends ContextHandler {
                     eventData.put("ip", data.has("ip") ? data.getString("ip") : request.getRemoteAddr());
                     eventData.put("device", data.has("device") ? data.getString("device") : "");
                     eventData.put("platform", data.has("platform") ? data.getString("platform") : "");
+                    eventData.put("channel", data.has("channel") ? data.getString("channel") : "");
                     AppEvent appEvent = new AppEvent(AppEvent.Session, System.currentTimeMillis(), eventData);
                     if (!Manager.getInstance().addAppEvent(token, appEvent)) {
                         Logger.w(Session.class, "Write app event failed: " + token);

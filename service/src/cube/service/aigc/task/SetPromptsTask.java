@@ -86,11 +86,11 @@ public class SetPromptsTask extends ServiceTask {
             responsePayload.put("total", promptRecordList.size() * contactIdList.size());
         }
         else if (action.equalsIgnoreCase("remove")) {
-            if (packet.data.has("contactId") && packet.data.has("act")) {
+            if (packet.data.has("contactId") && packet.data.has("title")) {
                 long contactId = packet.data.getLong("contactId");
-                String act = packet.data.getString("act");
+                String title = packet.data.getString("title");
 
-                int total = service.getStorage().deletePrompt(contactId, act);
+                int total = service.getStorage().deletePrompt(contactId, title);
                 responsePayload.put("total", total);
             }
             else if (packet.data.has("idList")) {
@@ -114,9 +114,14 @@ public class SetPromptsTask extends ServiceTask {
             long contactId = packet.data.has("contactId") ?
                     packet.data.getLong("contactId") : authToken.getContactId();
 
-            if (packet.data.has("id") && packet.data.has("act") && packet.data.has("prompt")) {
+            if (packet.data.has("id") &&
+                    packet.data.has("title") &&
+                    packet.data.has("content") &&
+                    packet.data.has("act")) {
                 PromptRecord promptRecord = new PromptRecord(packet.data.getLong("id"),
-                        packet.data.getString("act"), packet.data.getString("prompt"), false);
+                        packet.data.getString("title"),
+                        packet.data.getString("content"),
+                        packet.data.getString("act"), false);
 
                 service.getStorage().writePrompt(promptRecord, contactId);
                 responsePayload.put("total", 1);

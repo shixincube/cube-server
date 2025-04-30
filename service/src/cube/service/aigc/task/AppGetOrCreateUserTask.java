@@ -49,15 +49,16 @@ public class AppGetOrCreateUserTask extends ServiceTask {
                 markResponseTime();
             }
         }
-        else if (packet.data.has("appAgent") && packet.data.has("device")) {
+        else if (packet.data.has("appAgent") && packet.data.has("device") && packet.data.has("channel")) {
             try {
                 String appAgent = packet.data.getString("appAgent");
                 Device device = new Device(packet.data.getJSONObject("device"));
+                String channel = packet.data.getString("channel");
 
                 Logger.d(this.getClass(), "#run - appAgent: " + appAgent);
 
                 AIGCService service = ((AIGCCellet) this.cellet).getService();
-                User user = service.getOrCreateUser(appAgent, device);
+                User user = service.createUser(appAgent, device, channel);
 
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, user.toJSON()));
