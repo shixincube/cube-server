@@ -57,6 +57,11 @@ public enum AIGCAction {
     AppGetUserProfile("appGetUserProfile"),
 
     /**
+     * 应用层 App 版本信息。
+     */
+    AppVersion("appVersion"),
+
+    /**
      * 获取词云数据。
      */
     GetWordCloud("getWordCloud"),

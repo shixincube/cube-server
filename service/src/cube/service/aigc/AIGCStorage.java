@@ -728,6 +728,19 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
+    public JSONObject getAppVersion() {
+        List<StorageField[]> result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
+                Conditional.createEqualTo("item", "AppVersion")
+        });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        StorageField[] fields = result.get(0);
+        Map<String, StorageField> data = StorageFields.get(fields);
+        return new JSONObject(data.get("value").getString());
+    }
+
     public String readTokenByInvitation(String invitation) {
         List<StorageField[]> result = this.storage.executeQuery(this.appInvitationTable, new StorageField[] {
                     new StorageField("token", LiteralBase.STRING)

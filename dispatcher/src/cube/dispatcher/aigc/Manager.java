@@ -168,6 +168,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Activate());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.User());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.UserProfile());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.AppVersion());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.WordCloud());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Emotion());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.UserSignOut());
@@ -286,6 +287,26 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         return new AppUserProfile(Packet.extractDataPayload(responsePacket));
+    }
+
+    public JSONObject getAppVersion(String token) {
+        Packet packet = new Packet(AIGCAction.AppVersion.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#getAppVersion - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#getAppVersion - Response state is NOT ok : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
     }
 
     public JSONObject getWordCloud(String token) {
