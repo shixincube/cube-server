@@ -915,10 +915,14 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     public List<Notification> getNotifications() {
         if (!this.isStarted()) {
-            return null;
+            return new ArrayList<>();
         }
 
-        return this.storage.readEnabledNotifications();
+        try {
+            return this.storage.readEnabledNotifications();
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
     }
 
     public ContactPreference getPreference(long contactId) {
