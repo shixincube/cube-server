@@ -26,7 +26,13 @@ public abstract class AIGCHandler extends CrossDomainHandler {
         String token = this.getLastRequestPath(request);
         if (null == token || token.length() < 32) {
             try {
-                token = request.getHeader("x-baize-api-token").trim();
+                token = request.getHeader("x-baize-api-token");
+                if (null == token || token.length() < 16) {
+                    token = request.getParameter("token");
+                }
+                if (null != token) {
+                    token = token.trim();
+                }
             } catch (Exception e) {
                 // Nothing
             }

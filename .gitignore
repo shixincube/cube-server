@@ -63,3 +63,4 @@ dispatcher/cube-fs-tmp
 service/assets/psychology/mandalaflower
 deploy/assets
 dispatcher/cache
+dispatcher/assets/app

@@ -52,6 +52,7 @@ public class AppVersion extends ContextHandler {
                     File file = new File("assets/app/MindEcho-" + version + ".apk");
                     response.setContentType("application/vnd.android.package-archive");
                     response.setContentLengthLong(file.length());
+                    response.setHeader("Content-Disposition", "attachment; filename=\"MindEcho-" + version + ".apk\"");
                     FileInputStream fis = null;
                     try {
                         fis = new FileInputStream(file);

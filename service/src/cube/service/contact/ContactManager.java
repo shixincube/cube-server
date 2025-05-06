@@ -40,12 +40,18 @@ import cube.service.contact.plugin.CreateDomainAppPlugin;
 import cube.service.contact.plugin.FilterContactNamePlugin;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
+import cube.util.HttpClientFactory;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.util.StringContentProvider;
+import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 联系人管理器。
@@ -1994,31 +2000,28 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     public VerificationCode requestVerificationCode(AuthToken authToken,
                                                     String dialCode, String isoCode, String phoneNumber) {
-        VerificationCode current = this.verificationCodes.get(authToken.getCode());
-        if (null != current) {
-            if (System.currentTimeMillis() - current.timestamp < 60 * 1000) {
+        VerificationCode verificationCode = this.verificationCodes.get(authToken.getCode());
+        if (null != verificationCode) {
+            if (System.currentTimeMillis() - verificationCode.timestamp < 60 * 1000) {
                 Logger.w(this.getClass(), "#requestVerificationCode - The sending interval must be greater than 60 seconds: " +
-                        authToken.getCode());
+                        authToken.getCode() + " - code: " + verificationCode.getCode());
                 return null;
             }
 
-            if (current.timestamp + current.duration < System.currentTimeMillis()) {
-                Logger.d(this.getClass(), "#requestVerificationCode - token: " + authToken.getCode() +
-                        " - code: " + current.getCode());
-
-                try {
-                    // 模拟请求发送短信耗时
-                    Thread.sleep(Utils.randomInt(3000, 5000));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                // 返回有效的验证码
-                return current;
+            if (verificationCode.timestamp + verificationCode.duration > System.currentTimeMillis()) {
+                // 还在有效期内，不修改验证码
+                Logger.d(this.getClass(), "#requestVerificationCode - The verification code is within the validity period: " +
+                        authToken.getCode() + " - code: " + verificationCode.getCode());
+            }
+            else {
+                // 不在有效期内，重新生成
+                verificationCode = null;
+                Logger.d(this.getClass(), "#requestVerificationCode - Reset verification code: " +
+                        authToken.getCode());
             }
         }
 
-        VerificationCode verificationCode = new VerificationCode(authToken.getCode(), dialCode, isoCode,
+        verificationCode = (null != verificationCode) ? verificationCode : new VerificationCode(authToken.getCode(), dialCode, isoCode,
                 phoneNumber, System.currentTimeMillis(), 15 * 60 * 1000);
         // 随机码
         verificationCode.setCode(Utils.randomNumberString(4));
@@ -2026,11 +2029,42 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         Logger.d(this.getClass(), "#requestVerificationCode - token: " + authToken.getCode() +
                 " - code: " + verificationCode.getCode());
 
+        final String token = "UiTOoigtfSSPBMWmoeQmGXEwNDDlbBtk";
+        final String url = "http://211.157.179.38:8080/api/sms/vcode";
+        HttpClient httpClient = null;
         try {
-            // 模拟请求发送短信耗时
-            Thread.sleep(Utils.randomInt(3000, 5000));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            JSONObject json = verificationCode.toJSON();
+            json.put("token", token);
+            StringContentProvider provider = new StringContentProvider(json.toString());
+
+            httpClient = HttpClientFactory.getInstance().borrowHttpClient();
+            ContentResponse response = httpClient.POST(url)
+                    .header("Content-Type", "application/json")
+                    .timeout(10, TimeUnit.SECONDS)
+                    .content(provider)
+                    .send();
+            if (response.getStatus() == HttpStatus.OK_200) {
+                JSONObject result = new JSONObject(response.getContentAsString());
+                int state = result.getInt("state");
+                if (state != HttpStatus.OK_200) {
+                    String message = result.has("error") ? result.getString("error") : result.getString("message");
+                    Logger.w(this.getClass(), "#requestVerificationCode - Error: " + message);
+                    // 返回 null 值
+                    return null;
+                }
+            }
+            else {
+                Logger.w(this.getClass(), "#requestVerificationCode - Failed:\n" + json.toString(4) +
+                        "\n -> \n" + response.getContentAsString());
+                // 返回 null 值
+                return null;
+            }
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#requestVerificationCode", e);
+        } finally {
+            if (null != httpClient) {
+                HttpClientFactory.getInstance().returnHttpClient(httpClient);
+            }
         }
         this.verificationCodes.put(verificationCode.token, verificationCode);
         return verificationCode;
