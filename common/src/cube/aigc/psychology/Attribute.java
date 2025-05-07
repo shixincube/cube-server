@@ -7,7 +7,6 @@
 package cube.aigc.psychology;
 
 import cube.common.JSONable;
-import cube.util.FloatUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -30,6 +29,12 @@ public class Attribute implements JSONable {
         this.gender = gender;
         this.age = age;
         this.strict = strict;
+    }
+
+    public Attribute(String gender, int age) {
+        this.gender = gender;
+        this.age = age;
+        this.strict = false;
     }
 
     public Attribute(JSONObject json) {
@@ -66,6 +71,10 @@ public class Attribute implements JSONable {
                 ((double) this.age) * 0.01
         };
         return data;
+    }
+
+    public boolean isValid() {
+        return this.age > 0 && this.gender.length() > 0;
     }
 
     public JSONArray calcFactorToArray() {

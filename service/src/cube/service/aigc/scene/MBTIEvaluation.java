@@ -15,6 +15,9 @@ import cube.aigc.psychology.composition.EvaluationScore;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated
+ */
 public class MBTIEvaluation {
 
     private MBTIFeature result;

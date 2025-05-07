@@ -143,110 +143,123 @@ public class PredictPaintingSubtask extends ConversationSubtask {
             }
         }
 
-        if (null == convCtx.getCurrentAttribute()) {
+        if (null == convCtx.getCurrentAttribute() || !convCtx.getCurrentAttribute().isValid()) {
             // 当前文件
             FileLabel fileLabel = convCtx.getCurrentFile();
             // 提取属性
-            Attribute attribute = this.extractAttribute(query);
-            if (attribute.age == 0 && attribute.gender.length() == 0) {
-                // 没有提供年龄和性别
-                Logger.d(this.getClass(), "#work - No attribute: " +
-                        channel.getAuthToken().getCode() + "/" + channel.getCode());
-
-                GeneratingRecord record = new GeneratingRecord(query, fileLabel);
-                record.answer = this.filterFirstPerson(this.polish(
-                        Resource.getInstance().getCorpus(CORPUS, "ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE")));
-
-                // 进入子任务
-                convCtx.setCurrentSubtask(Subtask.PredictPainting);
-                convCtx.record(record);
-                this.service.getExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        listener.onGenerated(channel, record);
-                        channel.setProcessing(false);
-
-                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
-                                convCtx, record);
-                    }
-                });
-                return AIGCStateCode.Ok;
+            Attribute extractedAttribute = this.extractAttribute(query);
+            // 当前属性
+            Attribute currentAttribute = convCtx.getCurrentAttribute();
+            int age = (null != currentAttribute) ? currentAttribute.age : 0;
+            String gender = (null != currentAttribute) ? currentAttribute.gender : "";
+            if (extractedAttribute.age > 0) {
+                age = extractedAttribute.age;
             }
-            else if (attribute.age == 0) {
-                // 没有提供年龄
-                Logger.d(this.getClass(), "#work - No attribute age: " +
-                        channel.getAuthToken().getCode() + "/" + channel.getCode());
-
-                GeneratingRecord record = new GeneratingRecord(query, fileLabel);
-                record.answer = this.polish(Resource.getInstance().getCorpus(CORPUS,
-                        "ANSWER_NEED_TO_PROVIDE_AGE"));
-
-                // 进入子任务
-                convCtx.setCurrentSubtask(Subtask.PredictPainting);
-                convCtx.record(record);
-                this.service.getExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        listener.onGenerated(channel, record);
-                        channel.setProcessing(false);
-
-                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
-                                convCtx, record);
-                    }
-                });
-                return AIGCStateCode.Ok;
+            if (extractedAttribute.gender.length() > 0) {
+                gender = extractedAttribute.gender;
             }
-            else if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
-                // 受测人年龄超出限制
-                Logger.d(this.getClass(), "#work - Age out of limit: " +
-                        channel.getAuthToken().getCode() + "/" + channel.getCode());
+            currentAttribute = new Attribute(gender, age);
+            convCtx.setCurrentAttribute(currentAttribute);
 
-                GeneratingRecord record = new GeneratingRecord(query, fileLabel);
-                record.answer = this.polish(Resource.getInstance().getCorpus(CORPUS,
-                        "ANSWER_AGE_OUT_OF_LIMIT"));
+            if (!currentAttribute.isValid()) {
+                // 对有效数据部分进行判断
+                Attribute attribute = currentAttribute;
+                if (attribute.age == 0 && attribute.gender.length() == 0) {
+                    // 没有提供年龄和性别
+                    Logger.d(this.getClass(), "#work - No attribute: " +
+                            channel.getAuthToken().getCode() + "/" + channel.getCode());
 
-                // 进入子任务
-                convCtx.setCurrentSubtask(Subtask.PredictPainting);
-                convCtx.record(record);
-                this.service.getExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        listener.onGenerated(channel, record);
-                        channel.setProcessing(false);
+                    GeneratingRecord record = new GeneratingRecord(query, fileLabel);
+                    record.answer = this.filterFirstPerson(this.polish(
+                            Resource.getInstance().getCorpus(CORPUS, "ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE")));
 
-                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
-                                convCtx, record);
-                    }
-                });
-                return AIGCStateCode.Ok;
-            }
-            else if (attribute.gender.length() == 0) {
-                // 没有提供性别
-                Logger.d(this.getClass(), "#work - No attribute gender: " +
-                        channel.getAuthToken().getCode() + "/" + channel.getCode());
+                    // 进入子任务
+                    convCtx.setCurrentSubtask(Subtask.PredictPainting);
+                    convCtx.record(record);
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onGenerated(channel, record);
+                            channel.setProcessing(false);
 
-                GeneratingRecord record = new GeneratingRecord(query, fileLabel);
-                record.answer = this.polish(Resource.getInstance().getCorpus(CORPUS,
-                        "ANSWER_NEED_TO_PROVIDE_GENDER"));
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
+                        }
+                    });
+                    return AIGCStateCode.Ok;
+                }
+                else if (attribute.age == 0) {
+                    // 没有提供年龄
+                    Logger.d(this.getClass(), "#work - No attribute age: " +
+                            channel.getAuthToken().getCode() + "/" + channel.getCode());
 
-                // 进入子任务
-                convCtx.setCurrentSubtask(Subtask.PredictPainting);
-                convCtx.record(record);
-                this.service.getExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        listener.onGenerated(channel, record);
-                        channel.setProcessing(false);
+                    GeneratingRecord record = new GeneratingRecord(query, fileLabel);
+                    record.answer = this.polish(Resource.getInstance().getCorpus(CORPUS,
+                            "ANSWER_NEED_TO_PROVIDE_AGE"));
 
-                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
-                                convCtx, record);
-                    }
-                });
-                return AIGCStateCode.Ok;
-            }
-            else {
-                // 有属性
-                convCtx.setCurrentAttribute(attribute);
+                    // 进入子任务
+                    convCtx.setCurrentSubtask(Subtask.PredictPainting);
+                    convCtx.record(record);
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onGenerated(channel, record);
+                            channel.setProcessing(false);
+
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
+                        }
+                    });
+                    return AIGCStateCode.Ok;
+                }
+                else if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
+                    // 受测人年龄超出限制
+                    Logger.d(this.getClass(), "#work - Age out of limit: " +
+                            channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+                    GeneratingRecord record = new GeneratingRecord(query, fileLabel);
+                    record.answer = this.polish(Resource.getInstance().getCorpus(CORPUS,
+                            "ANSWER_AGE_OUT_OF_LIMIT"));
+
+                    // 进入子任务
+                    convCtx.setCurrentSubtask(Subtask.PredictPainting);
+                    convCtx.record(record);
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onGenerated(channel, record);
+                            channel.setProcessing(false);
+
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
+                        }
+                    });
+                    return AIGCStateCode.Ok;
+                }
+                else if (attribute.gender.length() == 0) {
+                    // 没有提供性别
+                    Logger.d(this.getClass(), "#work - No attribute gender: " +
+                            channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+                    GeneratingRecord record = new GeneratingRecord(query, fileLabel);
+                    record.answer = this.polish(Resource.getInstance().getCorpus(CORPUS,
+                            "ANSWER_NEED_TO_PROVIDE_GENDER"));
+
+                    // 进入子任务
+                    convCtx.setCurrentSubtask(Subtask.PredictPainting);
+                    convCtx.record(record);
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.onGenerated(channel, record);
+                            channel.setProcessing(false);
+
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
+                        }
+                    });
+                    return AIGCStateCode.Ok;
+                }
             }
         }
 
