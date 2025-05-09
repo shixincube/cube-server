@@ -68,6 +68,8 @@ public class ShowIndicatorSubtask extends ConversationSubtask {
                                 RECENT_ONE,
                                 ContentTools.makeReportTitleMarkdown(report),
                                 ContentTools.makeContentMarkdown(report, false, 10, false));
+                        record.answer += "\n\n" + ContentTools.makeContentLink(channel.getHttpsEndpoint(),
+                                channel.getAuthToken().getCode(), report, true, false);
                         convCtx.record(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
@@ -89,6 +91,8 @@ public class ShowIndicatorSubtask extends ConversationSubtask {
                             "",
                             ContentTools.makeReportTitleMarkdown(report),
                             ContentTools.makeContentMarkdown(report, false, 10, false));
+                    record.answer += "\n\n" + ContentTools.makeContentLink(channel.getHttpsEndpoint(),
+                            channel.getAuthToken().getCode(), report, true, false);
                     convCtx.record(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);

@@ -68,6 +68,8 @@ public class ShowPersonalitySubtask extends ConversationSubtask {
                                 RECENT_ONE,
                                 ContentTools.makeReportTitleMarkdown(report),
                                 ContentTools.makeContentMarkdown(report, false, 0, true));
+                        record.answer += "\n\n" + ContentTools.makeContentLink(channel.getHttpsEndpoint(),
+                                channel.getAuthToken().getCode(), report, false, true);
                         convCtx.record(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
@@ -89,6 +91,8 @@ public class ShowPersonalitySubtask extends ConversationSubtask {
                             "",
                             ContentTools.makeReportTitleMarkdown(report),
                             ContentTools.makeContentMarkdown(report, false, 0, true));
+                    record.answer += "\n\n" + ContentTools.makeContentLink(channel.getHttpsEndpoint(),
+                            channel.getAuthToken().getCode(), report, false, true);
                     convCtx.record(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
