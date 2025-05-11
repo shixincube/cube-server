@@ -48,8 +48,6 @@ public class ComplexContext extends Entity {
 
     public final Type type;
 
-    private boolean searchable = true;
-
     private String subtask;
 
     private List<ComplexResource> resources;
@@ -112,10 +110,6 @@ public class ComplexContext extends Entity {
             for (int i = 0; i < list.length(); ++i) {
                 this.inferenceResult.add(list.getString(i));
             }
-        }
-
-        if (json.has("searchable")) {
-            this.searchable = json.getBoolean("searchable");
         }
 
         if (json.has("networking")) {
@@ -192,10 +186,6 @@ public class ComplexContext extends Entity {
         this.resources.add(resource);
     }
 
-    public void setSearchable(boolean value) {
-        this.searchable = value;
-    }
-
     public void setInferable(boolean value) {
         this.inferable = value;
     }
@@ -263,8 +253,6 @@ public class ComplexContext extends Entity {
             }
             json.put("inferenceResult", list);
         }
-
-        json.put("searchable", this.searchable);
 
         json.put("networking", this.networking);
         json.put("networkingInferEnd", this.networkingInferEnd);

@@ -31,13 +31,11 @@ public class AIGCConversationParameter {
 
     public boolean recordable = false;
 
-    public boolean searchable = false;
-
     public boolean networking = false;
 
     public AIGCConversationParameter(double temperature, double topP, double repetitionPenalty, int maxNewTokens,
                                      List<GeneratingRecord> records, List<String> categories, int histories,
-                                     boolean recordable, boolean searchable, boolean networking) {
+                                     boolean recordable, boolean networking) {
         this.temperature = temperature;
         this.topP = topP;
         this.repetitionPenalty = repetitionPenalty;
@@ -46,7 +44,6 @@ public class AIGCConversationParameter {
         this.categories = categories;
         this.histories = histories;
         this.recordable = recordable;
-        this.searchable = searchable;
         this.networking = networking;
     }
 

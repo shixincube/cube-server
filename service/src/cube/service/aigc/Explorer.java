@@ -70,8 +70,6 @@ public class Explorer {
 
     private Tokenizer tokenizer;
 
-    private String pageReaderUrl;
-
     private String searcherName = "baidu";
 
     private Map<Long, ComplexContext> complexContextMap;
@@ -134,8 +132,7 @@ public class Explorer {
         ModuleManager.getInstance().stop();
     }
 
-    public void config(String pageReaderUrl, String searcherName) {
-        this.pageReaderUrl = pageReaderUrl;
+    public void config(String searcherName) {
         this.searcherName = searcherName;
     }
 
@@ -165,10 +162,6 @@ public class Explorer {
                         contact.getId(), 10L * 365 * 24 * 60 * 60 * 1000);
             }
         }
-    }
-
-    public String getPageReaderUrl() {
-        return this.pageReaderUrl;
     }
 
     public String getSearcherName() {
@@ -321,11 +314,6 @@ public class Explorer {
      * @param listener
      */
     public void readPageContent(String url, ReadPageListener listener) {
-        if (null == this.pageReaderUrl) {
-            listener.onCompleted(url, null);
-            return;
-        }
-
         this.pageReaderTaskQueue.offer(new PageReaderTask(url, listener));
 
         if (this.pageReaderTaskCount.get() < this.maxPageReaders) {
@@ -604,7 +592,10 @@ public class Explorer {
         }
 
         private int execute(boolean retry) {
-            HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
+
+            return HttpStatus.INTERNAL_SERVER_ERROR_500;
+
+            /*HttpClient client = HttpClientFactory.getInstance().borrowHttpClient();
             try {
                 JSONObject requestParam = new JSONObject();
                 requestParam.put("url", this.url);
@@ -644,7 +635,7 @@ public class Explorer {
                 return HttpStatus.INTERNAL_SERVER_ERROR_500;
             } finally {
                 HttpClientFactory.getInstance().returnHttpClient(client);
-            }
+            }*/
         }
     }
 }

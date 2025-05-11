@@ -84,7 +84,6 @@ public class Conversation extends ContextHandler {
             int histories = 0;
             JSONArray records = null;
             boolean recordable = false;
-            boolean searchable = false;
             boolean networking = false;
             int searchTopK = 5;
             int searchFetchK = 50;
@@ -120,10 +119,6 @@ public class Conversation extends ContextHandler {
 
                 if (json.has("categories")) {
                     categories = json.getJSONArray("categories");
-                }
-
-                if (json.has("searchable")) {
-                    searchable = json.getBoolean("searchable");
                 }
 
                 if (json.has("networking")) {

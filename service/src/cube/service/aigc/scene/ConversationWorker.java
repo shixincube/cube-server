@@ -63,7 +63,7 @@ public class ConversationWorker {
 
         // 使用指定模型生成结果
         this.service.generateText(channel, unit, query, prompt, new GeneratingOption(), null, 0,
-                null, null, false, true, listener);
+                null, null, true, listener);
 
         return AIGCStateCode.Ok;
     }
@@ -338,7 +338,7 @@ public class ConversationWorker {
         }
 
         this.service.generateText(channel, unit, query, prompt.content, new GeneratingOption(false), null, 0,
-                null, null, false, true, new GenerateTextListener() {
+                null, null, true, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                         if (null != prompt.prefix) {

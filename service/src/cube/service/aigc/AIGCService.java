@@ -161,11 +161,6 @@ public class AIGCService extends AbstractModule implements Generatable {
     private AIGCPluginSystem pluginSystem;
 
     /**
-     * 是否启用搜索关键词。
-     */
-    private boolean enabledSearch = false;
-
-    /**
      * 工作路径。
      */
     private final File workingPath = new File("storage/tmp/");
@@ -396,9 +391,6 @@ public class AIGCService extends AbstractModule implements Generatable {
             this.configFileLastModified = file.lastModified();
 
             Properties properties = ConfigUtils.readProperties(file.getAbsolutePath());
-            this.enabledSearch = Boolean.parseBoolean(
-                    properties.getProperty("enabled.search", "false"));
-
             // 上下文长度限制
             ModelConfig.EXTRA_LONG_CONTEXT_LIMIT = Math.max(Integer.parseInt(
                         properties.getProperty("context.length",
@@ -436,14 +428,11 @@ public class AIGCService extends AbstractModule implements Generatable {
                 }
             }
 
-            // 页面阅读器 URL
+            // 网络搜索配置
             if (properties.containsKey("page.reader.url") || properties.containsKey("page.searcher")) {
-                Explorer.getInstance().config(properties.getProperty("page.reader.url"),
-                        properties.getProperty("page.searcher", "baidu"));
+                Explorer.getInstance().config(properties.getProperty("page.searcher", "baidu"));
                 Logger.i(this.getClass(), "AI Service - Page searcher: "
                         + Explorer.getInstance().getSearcherName());
-                Logger.i(this.getClass(), "AI Service - Page reader url: "
-                        + Explorer.getInstance().getPageReaderUrl());
             }
 
             // 是否启用代理
@@ -459,7 +448,6 @@ public class AIGCService extends AbstractModule implements Generatable {
             Logger.e(this.getClass(), "#loadConfig - Load config properties error", e);
         }
 
-        Logger.i(this.getClass(), "AI Service - Search Enabled: " + this.enabledSearch);
         Logger.i(this.getClass(), "AI Service - Context length: " + ModelConfig.EXTRA_LONG_CONTEXT_LIMIT);
         Logger.i(this.getClass(), "AI Service - Baize context limit: " + ModelConfig.BAIZE_CONTEXT_LIMIT);
         Logger.i(this.getClass(), "AI Service - BaizeX context limit: " + ModelConfig.BAIZE_X_CONTEXT_LIMIT);
@@ -1373,14 +1361,13 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param attachments 附件信息。
      * @param categories 分类信息。
      * @param recordable 是否记录到库。
-     * @param searchable 是否进行搜索。
      * @param networking 是否进行联网操作。
      * @param listener 监听器。
      * @return
      */
     public boolean generateText(String channelCode, String content, String unitName, GeneratingOption option,
                                 List<GeneratingRecord> histories, int maxHistories, List<GeneratingRecord> attachments,
-                                List<String> categories, boolean recordable, boolean searchable, boolean networking,
+                                List<String> categories, boolean recordable, boolean networking,
                                 GenerateTextListener listener) {
         if (!this.isStarted()) {
             Logger.w(AIGCService.class, "#generateText - Service is NOT ready");
@@ -1431,7 +1418,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, content, option, categories,
                 histories, attachments, listener);
         meta.maxHistories = maxHistories;
-        meta.searchEnabled = searchable && this.enabledSearch;
         meta.recordHistoryEnabled = recordable;
         meta.networkingEnabled = networking;
 
@@ -1616,14 +1602,12 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param maxHistories
      * @param attachments
      * @param categories
-     * @param searchable
      * @param recordable
      * @param listener
      */
     public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt, GeneratingOption option,
                              List<GeneratingRecord> histories, int maxHistories, List<GeneratingRecord> attachments,
-                             List<String> categories, boolean searchable, boolean recordable,
-                             GenerateTextListener listener) {
+                             List<String> categories, boolean recordable, GenerateTextListener listener) {
         if (this.useAgent) {
             unit = Agent.getInstance().selectUnit(unit.getCapability().getName());
         }
@@ -1643,7 +1627,6 @@ public class AIGCService extends AbstractModule implements Generatable {
                 histories, attachments, listener);
         meta.setMaxHistories(maxHistories);
         meta.setOriginalQuery(query);
-        meta.setSearchEnabled(searchable);
         meta.setRecordHistoryEnabled(recordable);
         meta.setNetworkingEnabled(false);
 
@@ -3063,8 +3046,6 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         protected AIGCChatHistory history;
 
-        protected boolean searchEnabled = false;
-
         protected boolean recordHistoryEnabled = true;
 
         protected boolean networkingEnabled = false;
@@ -3092,10 +3073,6 @@ public class AIGCService extends AbstractModule implements Generatable {
             this.history.queryContactId = channel.getAuthToken().getContactId();
             this.history.queryTime = System.currentTimeMillis();
             this.history.queryContent = content;
-        }
-
-        public void setSearchEnabled(boolean value) {
-            this.searchEnabled = value;
         }
 
         public void setNetworkingEnabled(boolean value) {
@@ -3128,8 +3105,6 @@ public class AIGCService extends AbstractModule implements Generatable {
                     recognizeContext(this.content, this.channel.getAuthToken()) :
                     new ComplexContext(ComplexContext.Type.Lightweight);
 
-            // 设置是否启用了搜素
-            complexContext.setSearchable(this.searchEnabled);
             // 设置是否进行联网分析
             complexContext.setNetworking(this.networkingEnabled);
 
@@ -3312,15 +3287,22 @@ public class AIGCService extends AbstractModule implements Generatable {
                 }
                 data.put("history", history);
 
-                // 启用搜索或者启用联网信息检索都执行搜索
-                if (this.searchEnabled || this.networkingEnabled) {
+                if (this.content.contains(Consts.NO_CONTENT_SENTENCE) || Consts.NO_CONTENT_SENTENCE.contains(this.content)) {
+                    // 知识库会使用 NO_CONTENT_SENTENCE 作为答案
+                    String responseText = Consts.NO_CONTENT_SENTENCE;
+                    result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
+                            (null != this.originalQuery) ? this.originalQuery : this.content,
+                            responseText, "", complexContext);
+                }
+                else if (this.networkingEnabled) {
+                    // 启用搜索或者启用联网信息检索都执行搜索
                     executor.execute(new Runnable() {
                         @Override
                         public void run() {
                             // 进行资源搜索
                             SearchResult searchResult = Explorer.getInstance().search(
                                     (null != originalQuery) ? originalQuery : content, channel.getAuthToken());
-                            if (searchResult.hasResult() && networkingEnabled) {
+                            if (searchResult.hasResult()) {
                                 // 执行搜索问答
                                 performSearchPageQA(content, unit.getCapability().getName(),
                                         searchResult, complexContext, 3);
@@ -3331,11 +3313,8 @@ public class AIGCService extends AbstractModule implements Generatable {
                             }
                         }
                     });
-                }
 
-                if (Consts.NO_CONTENT_SENTENCE.equals(this.content)) {
-                    // 知识库会使用 NO_CONTENT_SENTENCE 作为答案
-                    String responseText = Consts.NO_CONTENT_SENTENCE + "。";
+                    String responseText = Consts.SEARCHING_INTERNET_FOR_INFORMATION;
                     result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
                             (null != this.originalQuery) ? this.originalQuery : this.content,
                             responseText, "", complexContext);
@@ -3427,7 +3406,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
 
             if (complexContext.isSimplified()) {
-                if (this.searchEnabled || this.networkingEnabled) {
+                if (this.networkingEnabled) {
                     // 缓存上下文
                     Explorer.getInstance().cacheComplexContext(complexContext);
                 }
@@ -3643,7 +3622,6 @@ public class AIGCService extends AbstractModule implements Generatable {
                     parameter.records, null, null);
             this.listener = this.generateListener;
             this.maxHistories = parameter.histories;
-            this.searchEnabled = parameter.searchable;
             this.recordHistoryEnabled = parameter.recordable;
             this.networkingEnabled = parameter.networking;
             this.parameter = parameter;

@@ -62,7 +62,6 @@ public class ConversationTask extends ServiceTask {
         int histories = packet.data.has("histories") ? packet.data.getInt("histories") : 10;
         JSONArray records = packet.data.has("records") ? packet.data.getJSONArray("records") : null;
         boolean recordable = packet.data.has("recordable") && packet.data.getBoolean("recordable");
-        boolean searchable = packet.data.has("searchable") && packet.data.getBoolean("searchable");
         boolean networking = packet.data.has("networking") && packet.data.getBoolean("networking");
 
         JSONArray categoryArray = packet.data.has("categories")
@@ -87,7 +86,7 @@ public class ConversationTask extends ServiceTask {
 
         AIGCConversationParameter parameter = new AIGCConversationParameter(option.temperature,
                 option.topP, option.repetitionPenalty, option.maxNewTokens, recordList, categories, histories,
-                recordable, searchable, networking);
+                recordable, networking);
         parameter.topK = option.topK;
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();

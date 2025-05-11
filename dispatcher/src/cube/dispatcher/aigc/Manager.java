@@ -1313,7 +1313,6 @@ public class Manager implements Tickable, PerformerListener {
      * @param histories
      * @param records
      * @param recordable
-     * @param searchable
      * @param networking
      * @param categories
      * @param searchTopK
@@ -1321,8 +1320,7 @@ public class Manager implements Tickable, PerformerListener {
      */
     public ChatFuture chat(String token, String channelCode, String pattern, String content, String unit,
                            GeneratingOption option, int histories, JSONArray records,
-                           boolean recordable, boolean searchable, boolean networking,
-                           JSONArray categories, int searchTopK) {
+                           boolean recordable, boolean networking, JSONArray categories, int searchTopK) {
         JSONObject data = new JSONObject();
         data.put("token", token);
         data.put("code", channelCode);
@@ -1340,7 +1338,6 @@ public class Manager implements Tickable, PerformerListener {
             data.put("categories", categories);
         }
         data.put("recordable", recordable);
-        data.put("searchable", searchable);
         data.put("networking", networking);
         data.put("searchTopK", searchTopK);
 
@@ -1406,6 +1403,7 @@ public class Manager implements Tickable, PerformerListener {
      * @param records
      * @param option
      * @return
+     * @deprecated
      */
     public long executeConversation(String token, String channelCode, String pattern,
                              String content, int histories, JSONArray records,
@@ -1421,7 +1419,6 @@ public class Manager implements Tickable, PerformerListener {
             data.put("records", records);
         }
         data.put("recordable", false);
-        data.put("searchable", false);
         data.put("networking", false);
         data.put("searchTopK", 20);
 

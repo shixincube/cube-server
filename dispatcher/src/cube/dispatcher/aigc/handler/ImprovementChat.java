@@ -89,7 +89,7 @@ public class ImprovementChat extends ContextHandler {
 
             // Chat
             GeneratingRecord record = Manager.getInstance().chat(token, channelCode, pattern,
-                    content, desc, new GeneratingOption(), histories, records, false, false, false,
+                    content, desc, new GeneratingOption(), histories, records, false, false,
                     null, 10).record;
             if (null == record) {
                 // 发生错误

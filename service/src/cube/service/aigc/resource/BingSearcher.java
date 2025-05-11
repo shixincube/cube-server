@@ -40,6 +40,8 @@ public class BingSearcher extends ResourceSearcher {
 
     @Override
     public boolean search(List<String> words) {
+        Logger.d(this.getClass(), "#search - Words: " + words.toArray(new String[0]).toString());
+
         this.startTime = System.currentTimeMillis();
 
         AIGCUnit unit = this.service.selectUnitBySubtask(AICapability.DataProcessing.ExtractURLContent);
@@ -58,7 +60,7 @@ public class BingSearcher extends ResourceSearcher {
         payload.put("url", url);
         payload.put("parser", "bing");
         Packet request = new Packet(AIGCAction.ExtractURLContent.name, payload);
-        ActionDialect dialect = this.service.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+        ActionDialect dialect = this.service.getCellet().transmit(unit.getContext(), request.toDialect(), 90 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(), "#search - Unit is error");
             return false;
@@ -74,7 +76,7 @@ public class BingSearcher extends ResourceSearcher {
         try {
             JSONArray list = Packet.extractDataPayload(response).getJSONArray("list");
             data = list.getJSONObject(0);
-            if (!data.has("organic_results")) {
+            if (!data.has("organicResults")) {
                 Logger.w(this.getClass(), "#search - Bing search result format error: " + url);
                 return false;
             }
@@ -134,14 +136,17 @@ public class BingSearcher extends ResourceSearcher {
 
         public String url;
 
+        public String recommend;
+
         public List<OrganicResult> organicResults;
 
         public BingSearchResult(JSONObject json) {
             this.url = json.getString("url");
+            this.recommend = json.getString("recommend");
             this.organicResults = new ArrayList<>();
 
-            if (json.has("organic_results")) {
-                JSONArray organicResultArray = json.getJSONArray("organic_results");
+            if (json.has("organicResults")) {
+                JSONArray organicResultArray = json.getJSONArray("organicResults");
                 for (int i = 0; i < organicResultArray.length(); ++i) {
                     OrganicResult or = new OrganicResult(organicResultArray.getJSONObject(i));
                     this.organicResults.add(or);

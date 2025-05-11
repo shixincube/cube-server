@@ -1510,7 +1510,7 @@ public class KnowledgeBase {
                     "\n----------------------------------------");
             final List<KnowledgeSource> sources = promptMetadata.mergeSources();
             this.service.generateText(channel, unit, query, prompt, new GeneratingOption(), null, 0,
-                    paraphrases, null, false, true, new GenerateTextListener() {
+                    paraphrases, null, true, new GenerateTextListener() {
                 @Override
                 public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                     // 结果记录
@@ -2116,7 +2116,7 @@ public class KnowledgeBase {
                     String prompt = Consts.formatQuestion(buf.toString(), matchingSchema.getComprehensiveQuery());
 
                     service.generateText(channel, unit, matchingSchema.getComprehensiveQuery(), prompt, new GeneratingOption(),
-                            null, 0, null, null, false, false,
+                            null, 0, null, null, false,
                             new GenerateTextListener() {
                         @Override
                         public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
@@ -2170,7 +2170,7 @@ public class KnowledgeBase {
 
             this.service.generateText(channel, unit, matchingSchema.getSectionQuery(),
                 prompt, new GeneratingOption(), null, 0, null, null,
-                    false, false, new GenerateTextListener() {
+                    false, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                         synchronized (pipelineRecordList) {

@@ -74,7 +74,7 @@ public class BaiduSearcher extends ResourceSearcher {
         try {
             JSONArray list = Packet.extractDataPayload(response).getJSONArray("list");
             data = list.getJSONObject(0);
-            if (!data.has("organic_results")) {
+            if (!data.has("organicResults")) {
                 Logger.w(this.getClass(), "#search - Baidu search result format error: " + url);
                 return false;
             }
@@ -143,8 +143,8 @@ public class BaiduSearcher extends ResourceSearcher {
             this.url = json.getString("url");
             this.organicResults = new ArrayList<>();
 
-            if (json.has("organic_results")) {
-                JSONArray organicResultArray = json.getJSONArray("organic_results");
+            if (json.has("organicResults")) {
+                JSONArray organicResultArray = json.getJSONArray("organicResults");
                 for (int i = 0; i < organicResultArray.length(); ++i) {
                     OrganicResult or = new OrganicResult(organicResultArray.getJSONObject(i));
                     this.organicResults.add(or);

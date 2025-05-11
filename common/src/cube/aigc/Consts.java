@@ -63,7 +63,9 @@ public final class Consts {
     private final static String EXTRACT_CONTENT_RELATIONSHIPS_FORMAT = "已知内容：\n%s\n\n" +
             "请分析上述已知内容，把上述内容里与“%s”相关的内容提取出来。如果没有相关内容，请说“没有提供足够的相关信息”";
 
-    public final static String NO_CONTENT_SENTENCE = "没有提供足够的相关信息";
+    public final static String NO_CONTENT_SENTENCE = "没有提供足够的相关信息。";
+
+    public final static String SEARCHING_INTERNET_FOR_INFORMATION = "正在联网搜索可用信息。";
 
     public final static String KNOWLEDGE_SECTION_PROMPT = "整理信息的主要观点，不超过5条观点。";
 
