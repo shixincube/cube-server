@@ -190,6 +190,10 @@
             "cn": "好的，我会问您一些问题，根据这些问题获知受测人的身心状态信息，测验项目信息如下：\n\n%s\n\n如果您准备好了就告诉我！",
             "en": ""
         },
+        "ANSWER_START_QUESTIONNAIRE_TIPS": {
+            "cn": "您可以点击 [现在开始](aixinli://prompt.direct/开始。) 让我们立即开始。您也可以随时告知我“**结束**”来结束这次评测。",
+            "en": ""
+        },
         "FORMAT_ANSWER_GOOD_STOP_QUESTIONNAIRE": {
             "cn": "您一共完成了%d个问题，在这%s里我通过这些问题对您目前的身心状态有了初步的了解。\n\n但是，没有完成所有的问题，我暂时无法给出具体的评测结果。%s",
             "en": ""
@@ -200,6 +204,10 @@
         },
         "ANSWER_NO_QUESTIONNAIRE": {
             "cn": "我没有找到我们之前关于量表问答的信息。",
+            "en": ""
+        },
+        "FORMAT_ANSWER_SCALE_LIST": {
+            "cn": "我目前支持的量表有：\n\n%s\n\n另外，我最擅长是心理绘画投射测验，我还能进行基于DSM手册的辅助诊断。",
             "en": ""
         },
         "FORMAT_ANSWER_SCALE_RESULT_PREFIX": {

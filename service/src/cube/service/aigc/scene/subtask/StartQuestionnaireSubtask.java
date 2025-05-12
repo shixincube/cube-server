@@ -41,6 +41,34 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
         // 尝试匹配量表
         String scaleName = this.extractScaleName();
 
+        if (null == scaleName) {
+            // 列出支持的量表
+            Logger.d(this.getClass(), "#execute - List all scales");
+            this.service.getExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    List<Scale> scales = Resource.getInstance().listScales(channel.getAuthToken().getContactId());
+                    StringBuilder buf = new StringBuilder();
+                    for (Scale scale : scales) {
+                        buf.append("- ");
+                        buf.append(scale.displayName);
+                        buf.append("\n");
+                    }
+
+                    GeneratingRecord record = new GeneratingRecord(query);
+                    record.answer = String.format(
+                            Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_LIST"),
+                            buf.toString());
+                    listener.onGenerated(channel, record);
+                    channel.setProcessing(false);
+
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            convCtx, record);
+                }
+            });
+            return AIGCStateCode.Ok;
+        }
+
         // 生成
         Scale scale = PsychologyScene.getInstance().generateScale(channel.getAuthToken().getContactId(), scaleName,
                 new Attribute("male", 30, false));
@@ -77,8 +105,7 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
                 record.answer = polish(String.format(
                         Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_START_QUESTIONNAIRE"),
                         scale.instruction));
-
-                record.answer += "\n\n您可以点击 [现在开始](aixinli://prompt.direct/开始。) 让我们立即开始。";
+                record.answer += "\n\n" + Resource.getInstance().getCorpus(CORPUS, "ANSWER_START_QUESTIONNAIRE_TIPS");
 
                 record.context = complexContext;
                 listener.onGenerated(channel, record);
@@ -127,6 +154,6 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
             return scaleList.get(hitIndex).name;
         }
 
-        return "HAMA";
+        return null;
     }
 }

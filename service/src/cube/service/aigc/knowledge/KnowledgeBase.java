@@ -204,7 +204,6 @@ public class KnowledgeBase {
             if (null == fileLabelJson) {
                 this.storage.deleteKnowledgeDoc(this.baseInfo.name, fileCode);
                 Logger.e(this.getClass(), "#importKnowledgeDoc - " + this.getName() + " - Not find file: " + fileCode);
-                this.lock.set(false);
                 return null;
             }
 

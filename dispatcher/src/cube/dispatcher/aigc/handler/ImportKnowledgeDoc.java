@@ -46,7 +46,7 @@ public class ImportKnowledgeDoc extends ContextHandler {
                 return;
             }
 
-            String token = this.getLastRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
@@ -68,7 +68,7 @@ public class ImportKnowledgeDoc extends ContextHandler {
                     return;
                 }
 
-                String splitter = KnowledgeDoc.SPLITTER_LINE;
+                String splitter = KnowledgeDoc.SPLITTER_AUTO;
                 if (data.has("splitter")) {
                     splitter = data.getString("splitter");
                 }
