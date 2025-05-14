@@ -26,7 +26,9 @@ public class KnowledgeQAResult implements JSONable {
 
     public GeneratingRecord record;
 
-    public AIGCConversationResponse conversationResponse;
+    public KnowledgeQAResult(String query) {
+        this.query = query;
+    }
 
     public KnowledgeQAResult(String query, String prompt) {
         this.query = query;
@@ -50,6 +52,10 @@ public class KnowledgeQAResult implements JSONable {
                 this.sources.add(source);
             }
         }
+    }
+
+    public void reset(KnowledgeQAResult other) {
+
     }
 
     public JSONArray sourcesToArray() {

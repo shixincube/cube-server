@@ -19,7 +19,7 @@ public class KnowledgeSource implements JSONable {
 
     private KnowledgeArticle article;
 
-    private String text;
+    private String segment;
 
     public KnowledgeSource(KnowledgeDoc document) {
         this.document = document;
@@ -29,8 +29,8 @@ public class KnowledgeSource implements JSONable {
         this.article = article;
     }
 
-    public KnowledgeSource(String text) {
-        this.text = text;
+    public KnowledgeSource(String segment) {
+        this.segment = segment;
     }
 
     public KnowledgeSource(JSONObject json) {
@@ -40,8 +40,8 @@ public class KnowledgeSource implements JSONable {
         if (json.has("article")) {
             this.article = new KnowledgeArticle(json.getJSONObject("article"));
         }
-        if (json.has("text")) {
-            this.text = json.getString("text");
+        if (json.has("segment")) {
+            this.segment = json.getString("segment");
         }
     }
 
@@ -53,8 +53,8 @@ public class KnowledgeSource implements JSONable {
         return this.article;
     }
 
-    public String getText() {
-        return this.text;
+    public String getSegment() {
+        return this.segment;
     }
 
     @Override
@@ -65,8 +65,8 @@ public class KnowledgeSource implements JSONable {
         else if (null != this.article) {
             return "文章《" + this.article.title + "》";
         }
-        else if (null != this.text) {
-            return "文本《" + this.text.substring(0, Math.min(20, this.text.length())).trim().replaceAll("\n", "") + "...》";
+        else if (null != this.segment) {
+            return "文本片段《" + this.segment.substring(0, Math.min(20, this.segment.length())).trim().replaceAll("\n", "") + "...》";
         }
         else {
             return "";
@@ -82,8 +82,8 @@ public class KnowledgeSource implements JSONable {
         if (null != this.article) {
             json.put("article", this.article.toCompactJSON());
         }
-        if (null != this.text) {
-            json.put("text", this.text);
+        if (null != this.segment) {
+            json.put("segment", this.segment);
         }
         return json;
     }

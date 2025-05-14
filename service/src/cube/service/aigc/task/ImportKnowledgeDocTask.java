@@ -75,7 +75,7 @@ public class ImportKnowledgeDocTask extends ServiceTask {
             baseName = packet.data.getString("base");
         }
 
-        String splitter = KnowledgeDoc.SPLITTER_LINE;
+        String splitter = KnowledgeDoc.SPLITTER_AUTO;
         if (packet.data.has("splitter")) {
             splitter = packet.data.getString("splitter");
         }

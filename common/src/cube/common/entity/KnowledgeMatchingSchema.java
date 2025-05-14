@@ -6,12 +6,12 @@
 
 package cube.common.entity;
 
-import cube.aigc.Consts;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
 /**
  * 知识匹配模式。
+ * @deprecated
  */
 public class KnowledgeMatchingSchema implements JSONable {
 
@@ -27,7 +27,7 @@ public class KnowledgeMatchingSchema implements JSONable {
 
     public KnowledgeMatchingSchema(String category, String comprehensiveQuery) {
         this.category = category;
-        this.sectionQuery = Consts.KNOWLEDGE_SECTION_PROMPT;
+//        this.sectionQuery = Consts.KNOWLEDGE_SECTION_PROMPT;
         this.comprehensiveQuery = comprehensiveQuery;
     }
 

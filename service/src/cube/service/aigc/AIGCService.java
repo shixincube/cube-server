@@ -1773,11 +1773,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
-    public boolean converseBy(AIGCChannel channel, AIGCUnit unit, String prompt, ConversationListener listener) {
-        // TODO
-        return false;
-    }
-
     /*
      * 执行自然语言任务。
      *

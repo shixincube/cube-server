@@ -33,6 +33,7 @@ import java.util.List;
 
 /**
  * 互动聊天会话。
+ * @deprecated
  */
 public class ConversationTask extends ServiceTask {
 
@@ -160,7 +161,7 @@ public class ConversationTask extends ServiceTask {
 
             if (null != knowledgeBase) {
                 success = knowledgeBase.performKnowledgeQA(code, ModelConfig.BAIZE_NEXT_UNIT, content, searchTopK,
-                        categories, recordList, new KnowledgeQAListener() {
+                        recordList, new KnowledgeQAListener() {
                             @Override
                             public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
                                 cellet.speak(talkContext,

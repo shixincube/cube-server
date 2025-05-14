@@ -10,13 +10,11 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.Consts;
-import cube.aigc.ModelConfig;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.notice.GetFile;
-import cube.common.notice.LoadFile;
 import cube.common.state.AIGCStateCode;
 import cube.core.AbstractModule;
 import cube.service.aigc.AIGCHook;
@@ -24,16 +22,10 @@ import cube.service.aigc.AIGCPluginContext;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.AIGCStorage;
 import cube.service.aigc.listener.*;
-import cube.service.aigc.resource.Agent;
 import cube.service.tokenizer.keyword.Keyword;
-import cube.service.tokenizer.keyword.TFIDFAnalyzer;
-import cube.util.FileType;
-import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -726,9 +718,13 @@ public class KnowledgeBase {
         // 更新文档
         KnowledgeDoc activatedDoc = new KnowledgeDoc(Packet.extractDataPayload(response));
         if (activatedDoc.numSegments <= 0) {
-            Logger.w(this.getClass(), "#activateKnowledgeDoc - " +
-                    this.baseInfo.name + " - Num of segments error: " + activatedDoc.numSegments);
+            Logger.w(this.getClass(), "#activateKnowledgeDoc - No segments: " +
+                    this.baseInfo.name + " - " + activatedDoc.getFileLabel().getFileCode());
             return null;
+        }
+        else {
+            Logger.d(this.getClass(), "#activateKnowledgeDoc - Num of segments: "
+                    + activatedDoc.getFileLabel().getFileCode() + " - " + activatedDoc.numSegments);
         }
 
         this.storage.updateKnowledgeDoc(activatedDoc);
@@ -1381,20 +1377,89 @@ public class KnowledgeBase {
     }
 
     /**
+     * 同步方式执行知识库 QA
+     *
+     * @param channel
+     * @param query
+     * @param topK
+     * @return
+     */
+    public KnowledgeQAResult performKnowledgeQA(AIGCChannel channel, String query, int topK) {
+        KnowledgeQAResult knowledgeQAResult = new KnowledgeQAResult(query);
+        Object mutex = new Object();
+        KnowledgeQAProgress progress = this.performKnowledgeQAAsync(channel, query, topK, new KnowledgeQAListener() {
+            @Override
+            public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
+                knowledgeQAResult.reset(result);
+                synchronized (mutex) {
+                    mutex.notify();
+                }
+            }
+
+            @Override
+            public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
+                synchronized (mutex) {
+                    mutex.notify();
+                }
+            }
+        });
+
+        if (null != progress) {
+            synchronized (mutex) {
+                try {
+                    mutex.wait(3 * 60 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        else {
+            Logger.w(this.getClass(), "#performKnowledgeQA - Knowledge QA progress is null: " + channel);
+            return null;
+        }
+
+        return knowledgeQAResult;
+    }
+
+    /**
+     * 执行知识库 QA
+     *
+     * @param channel
+     * @param query
+     * @param topK
+     * @param listener
+     * @return
+     */
+    public KnowledgeQAProgress performKnowledgeQAAsync(AIGCChannel channel, String query, int topK,
+                                                       KnowledgeQAListener listener) {
+        // 如果没有设置知识库文档，返回提示
+        boolean noDocument = null == this.resource.docList || this.resource.docList.isEmpty();
+        boolean noArticle = null == this.resource.articleList || this.resource.articleList.isEmpty();
+
+        if (noDocument && noArticle) {
+            Logger.d(this.getClass(), "#performKnowledgeQA - "
+                    + baseInfo.name + " - No knowledge document or article in base: " + channel.getCode());
+
+            return null;
+        }
+
+        query = query.replaceAll("\n", "");
+        return null;
+    }
+
+    /**
      * 执行知识库 QA
      *
      * @param channelCode
      * @param unitName
      * @param query
-     * @param searchTopK
-     * @param knowledgeCategories
+     * @param topK
      * @param recordList
      * @param listener
      * @return
      */
-    public boolean performKnowledgeQA(String channelCode, String unitName, String query, int searchTopK,
-                                      List<String> knowledgeCategories, List<GeneratingRecord> recordList,
-                                      KnowledgeQAListener listener) {
+    public boolean performKnowledgeQA(String channelCode, String unitName, String query, int topK,
+                                      List<GeneratingRecord> recordList, KnowledgeQAListener listener) {
         query = query.replaceAll("\n", "");
 
         Logger.d(this.getClass(), "#performKnowledgeQA - " + baseInfo.name + " - Channel: " + channelCode +
@@ -1449,6 +1514,7 @@ public class KnowledgeBase {
             return false;
         }
 
+        /*
         PromptMetadata promptMetadata = null;
         // 根据文件名匹配文档，读取文件内容进行问题推理
         promptMetadata = this.extractDocumentContent(query, 5);
@@ -1481,58 +1547,48 @@ public class KnowledgeBase {
         List<GeneratingRecord> paraphrases = this.makeParaphrases(knowledgeCategories,
                 ModelConfig.getPromptLengthLimit(unitName) - prompt.length(), unitName);
 
+        final KnowledgeQAResult result = new KnowledgeQAResult(query, prompt);*/
+
+        Knowledge knowledge = this.generateKnowledge(query, topK);
+        if (null == knowledge) {
+            // TODO
+            return false;
+        }
+
+        final String prompt = knowledge.generatePrompt();
         final KnowledgeQAResult result = new KnowledgeQAResult(query, prompt);
 
-        if (unit.getCapability().getName().equals(ModelConfig.BAIZE_NEXT_UNIT)) {
-            // 特定单元执行 conversation
-            this.service.converseBy(channel, unit, prompt, new ConversationListener() {
-                @Override
-                public void onConversation(AIGCChannel channel, AIGCConversationResponse response) {
-                    result.conversationResponse = response;
-                    listener.onCompleted(channel, result);
-                }
+        // 执行 Generate Text
+        Logger.d(KnowledgeBase.class, "#performKnowledgeQA - " + baseInfo.name +
+                "\n----------------------------------------\n" +
+                prompt +
+                "\n----------------------------------------");
+        final List<KnowledgeSource> sources = knowledge.mergeSources();
+        this.service.generateText(channel, unit, query, prompt, new GeneratingOption(), null, 0,
+                null, null, true, new GenerateTextListener() {
+                    @Override
+                    public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
+                        // 结果记录
+                        result.record = record;
 
-                @Override
-                public void onFailed(AIGCChannel channel, AIGCStateCode errorCode) {
-                    listener.onFailed(channel, errorCode);
-                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - "
-                            + baseInfo.name + " - Single conversation failed: "
-                            + errorCode.code);
-                }
-            });
-        }
-        else {
-            // 执行 Generate Text
-            Logger.d(KnowledgeBase.class, "#performKnowledgeQA - " + baseInfo.name +
-                    "\n----------------------------------------\n" +
-                    prompt +
-                    "\n----------------------------------------");
-            final List<KnowledgeSource> sources = promptMetadata.mergeSources();
-            this.service.generateText(channel, unit, query, prompt, new GeneratingOption(), null, 0,
-                    paraphrases, null, true, new GenerateTextListener() {
-                @Override
-                public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
-                    // 结果记录
-                    result.record = record;
+                        // 来源
+                        result.sources.addAll(sources);
 
-                    // 来源
-                    result.sources.addAll(sources);
+                        listener.onCompleted(channel, result);
+                    }
 
-                    listener.onCompleted(channel, result);
-                }
-
-                @Override
-                public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
-                    listener.onFailed(channel, stateCode);
-                    Logger.w(KnowledgeBase.class, "#performKnowledgeQA - " +
-                            baseInfo.name + " - Generates text failed: " + stateCode.code);
-                }
-            });
-        }
+                    @Override
+                    public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
+                        listener.onFailed(channel, stateCode);
+                        Logger.w(KnowledgeBase.class, "#performKnowledgeQA - " +
+                                baseInfo.name + " - Generates text failed: " + stateCode.code);
+                    }
+                });
 
         return true;
     }
 
+    /* 2025-5-14 作废
     private PromptMetadata extractDocumentContent(String query, int topN) {
         List<String> wordList = new ArrayList<>();
         TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
@@ -1667,9 +1723,7 @@ public class KnowledgeBase {
         protected String fileCode;
         protected String fileName;
 
-        /**
-         * 匹配关键词数量
-         */
+        // 匹配关键词数量
         protected int numMatching;
 
         public FileNameMatching(String[] data) {
@@ -1681,7 +1735,7 @@ public class KnowledgeBase {
         public int compareTo(FileNameMatching fm) {
             return fm.numMatching - this.numMatching;
         }
-    }
+    }*/
 
     private List<GeneratingRecord> makeParaphrases(List<String> knowledgeCategories, int lengthLimit,
                                                    String unitName) {
@@ -1778,6 +1832,7 @@ public class KnowledgeBase {
         return contents;
     }
 
+    /* 2025-5-14 不需要额外优化提示词，应当交由知识库处理
     private String optimizePrompt(String unitName, PromptMetadata promptMetadata, String query,
                                   List<String> knowledgeCategories, List<String> attachmentContents) {
         int totalWords = 0;
@@ -1973,7 +2028,7 @@ public class KnowledgeBase {
         }
         buf.delete(buf.length() - 1, buf.length());
         return buf.toString();
-    }
+    }*/
 
     private List<KnowledgeArticle> sortArticles(List<KnowledgeArticle> list, List<Keyword> keywords) {
         for (KnowledgeArticle article : list) {
@@ -2004,15 +2059,7 @@ public class KnowledgeBase {
         return this.activateProgress;
     }
 
-    /**
-     * 使用全量数据进行问答。
-     *
-     * @param channelCode
-     * @param unitName
-     * @param matchingSchema
-     * @param listener
-     * @return
-     */
+    /* 2025-5-14 作废该方法
     public KnowledgeQAProgress performKnowledgeQA(String channelCode, String unitName,
                                       KnowledgeMatchingSchema matchingSchema, KnowledgeQAListener listener) {
         if (this.qaLock.get()) {
@@ -2207,7 +2254,7 @@ public class KnowledgeBase {
         }
 
         return activateProgress;
-    }
+    }*/
 
     private List<String> trimArticleContent(String content, int maxWords) {
         List<String> list = new ArrayList<>();
@@ -2240,7 +2287,7 @@ public class KnowledgeBase {
         return list;
     }
 
-    private PromptMetadata generatePrompt(String query, int topK) {
+    private Knowledge generateKnowledge(String query, int topK) {
         if (!this.resource.checkUnit()) {
             Logger.w(this.getClass(),"#generatePrompt - No unit for knowledge base");
             return null;
@@ -2248,13 +2295,13 @@ public class KnowledgeBase {
 
         JSONObject payload = new JSONObject();
         // 检索库
-        payload.put("pathKey", (KnowledgeScope.Private == this.scope) ?
+        payload.put("store", (KnowledgeScope.Private == this.scope) ?
                 Long.toString(this.authToken.getContactId()) : this.authToken.getDomain());
         payload.put("contactId", this.authToken.getContactId());
-        payload.put("name", this.baseInfo.name);
+        payload.put("base", this.baseInfo.name);
         payload.put("query", query);
         payload.put("topK", topK);
-        Packet packet = new Packet(AIGCAction.GeneratePrompt.name, payload);
+        Packet packet = new Packet(AIGCAction.GenerateKnowledge.name, payload);
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect());
         if (null == dialect) {
@@ -2271,13 +2318,13 @@ public class KnowledgeBase {
         }
 
         JSONObject data = Packet.extractDataPayload(response);
-        PromptMetadata promptMetadata = null;
+        Knowledge knowledge = null;
         try {
-            promptMetadata = new PromptMetadata(data);
+            knowledge = new Knowledge(data);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(this.getClass(), "#generatePrompt", e);
         }
-        return promptMetadata;
+        return knowledge;
     }
 
     public JSONObject toJSON() {
@@ -2446,20 +2493,19 @@ public class KnowledgeBase {
         }
     }
 
-    public class PromptMetadata {
+    public class Knowledge {
 
-        public String prompt;
+        public String query;
 
         public List<Metadata> metadataList;
 
-        private String answer;
-
-        public PromptMetadata() {
+        public Knowledge(String query) {
+            this.query = query;
             this.metadataList = new ArrayList<>();
         }
 
-        public PromptMetadata(JSONObject json) {
-            this.prompt = json.getString("prompt");
+        public Knowledge(JSONObject json) {
+            this.query = json.getString("query");
             this.metadataList = new ArrayList<>();
             if (json.has("metadata")) {
                 JSONArray array = json.getJSONArray("metadata");
@@ -2474,35 +2520,17 @@ public class KnowledgeBase {
             return this.metadataList.isEmpty();
         }
 
-        public void addMetadata(KnowledgeArticle article) {
-            this.metadataList.add(new Metadata(Metadata.ARTICLE_PREFIX + article.getId(), 300));
-        }
-
-        public void addMetadata(String text) {
-            this.metadataList.add(new Metadata(Metadata.TEXT_PREFIX + text, 200));
-        }
-
-        public void addDocumentMetadata(String fileCode) {
-            this.metadataList.add(new Metadata(Metadata.DOCUMENT_PREFIX + fileCode, 300));
-        }
-
-        public boolean containsMetadata(KnowledgeArticle article) {
-            return this.metadataList.contains(article);
-        }
-
-        public PromptMetadata generatePrompt(String query) {
-            if (null == this.answer) {
-                return null;
+        public String generatePrompt() {
+            StringBuilder buf = new StringBuilder();
+            for (Metadata metadata : this.metadataList) {
+                buf.append(metadata.content);
+                buf.append("\n\n");
             }
-
-            String prompt = Consts.formatQuestion(this.answer, query);
-            PromptMetadata metadata = new PromptMetadata();
-            metadata.prompt = prompt;
-            metadata.metadataList.addAll(this.metadataList);
-            return metadata;
+            String prompt = Consts.formatQuestion(buf.toString(), this.query);
+            return prompt;
         }
 
-        public void mergeAnswer(PromptMetadata other) {
+        /*public void mergeAnswer(PromptMetadata other) {
             if (null == other.answer) {
                 return;
             }
@@ -2526,7 +2554,7 @@ public class KnowledgeBase {
 
             // 添加源
             this.metadataList.addAll(other.metadataList);
-        }
+        }*/
 
         /**
          * 将相同的源进行合并。
@@ -2556,37 +2584,32 @@ public class KnowledgeBase {
 
         public class Metadata {
 
-            public final static String DOCUMENT_PREFIX = "./tmp/";
+            public final static String DOCUMENT_PREFIX = "document:";
 
             public final static String ARTICLE_PREFIX = "article:";
 
-            public final static String TEXT_PREFIX = "text:";
+            public final static String SEGMENT_PREFIX = "segment:";
 
-            public String content;
+            private String content;
 
-            public String source;
+            private String source;
 
-            public float score;
+            private double score;
 
             public Metadata(JSONObject json) {
-                this.content = json.has("content") ? json.getString("content") : null;
+                this.content = json.getString("content");
                 this.source = json.getString("source");
                 String s = json.getString("score");
-                this.score = Float.parseFloat(s);
+                this.score = Double.parseDouble(s);
             }
-
-            public Metadata(String source, float score) {
-                this.source = source;
-                this.score = score;
+            
+            public String getContent() {
+                return this.content;
             }
 
             private String getSourceKey() {
                 if (this.source.startsWith(DOCUMENT_PREFIX)) {
-                    int end = this.source.lastIndexOf(".");
-                    if (end <= 0) {
-                        end = this.source.length();
-                    }
-                    return this.source.substring(DOCUMENT_PREFIX.length(), end);
+                    return this.source.substring(DOCUMENT_PREFIX.length());
                 }
                 else if (this.source.startsWith(ARTICLE_PREFIX)) {
                     return this.source.substring(ARTICLE_PREFIX.length());
@@ -2599,11 +2622,7 @@ public class KnowledgeBase {
             public KnowledgeSource getSource() {
                 // 判断是文档还是文章
                 if (this.source.startsWith(DOCUMENT_PREFIX)) {
-                    int end = this.source.lastIndexOf(".");
-                    if (end <= 0) {
-                        end = this.source.length();
-                    }
-                    String fileCode = this.source.substring(DOCUMENT_PREFIX.length(), end);
+                    String fileCode = this.source.substring(DOCUMENT_PREFIX.length());
                     KnowledgeDoc doc = getKnowledgeDocByFileCode(fileCode);
                     if (null == doc) {
                         return null;
@@ -2625,9 +2644,9 @@ public class KnowledgeBase {
                         // Nothing
                     }
                 }
-                else if (this.source.startsWith(TEXT_PREFIX)) {
-                    String text = this.source.substring(TEXT_PREFIX.length());
-                    return new KnowledgeSource(text);
+                else if (this.source.startsWith(SEGMENT_PREFIX)) {
+                    String segment = this.source.substring(SEGMENT_PREFIX.length());
+                    return new KnowledgeSource(segment);
                 }
 
                 return null;

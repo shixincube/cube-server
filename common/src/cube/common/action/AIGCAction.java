@@ -332,9 +332,9 @@ public enum AIGCAction {
     QueryAllArticleCategories("queryAllArticleCategories"),
 
     /**
-     * 生成提示词。
+     * 生成知识。
      */
-    GeneratePrompt("generatePrompt"),
+    GenerateKnowledge("generateKnowledge"),
 
     /**
      * 提取 URL 内容。

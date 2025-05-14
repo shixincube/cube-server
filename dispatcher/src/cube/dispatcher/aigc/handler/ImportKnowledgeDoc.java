@@ -6,6 +6,7 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cell.util.log.Logger;
 import cube.common.entity.KnowledgeDoc;
 import cube.common.entity.KnowledgeProgress;
 import cube.dispatcher.aigc.AccessController;
@@ -35,20 +36,20 @@ public class ImportKnowledgeDoc extends ContextHandler {
         public Handler() {
             super();
             this.controller = new AccessController();
-            this.controller.setEachIPInterval(2000);
+            this.controller.setEachIPInterval(1000);
         }
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             if (!this.controller.filter(request)) {
-                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
                 this.complete();
                 return;
             }
 
             String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -56,14 +57,14 @@ public class ImportKnowledgeDoc extends ContextHandler {
             try {
                 JSONObject data = readBodyAsJSONObject(request);
                 if (null == data) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                     return;
                 }
 
-                String baseName = data.getString("base");
+                String baseName = data.has("base") ? data.getString("base") : "document";
                 if (null == baseName) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                     return;
                 }
@@ -77,7 +78,7 @@ public class ImportKnowledgeDoc extends ContextHandler {
                     String fileCode = data.getString("fileCode");
                     KnowledgeDoc doc = Manager.getInstance().importKnowledgeDoc(token, baseName, fileCode, splitter);
                     if (null == doc) {
-                        this.respond(response, HttpStatus.BAD_REQUEST_400);
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                         this.complete();
                     }
                     else {
@@ -89,7 +90,7 @@ public class ImportKnowledgeDoc extends ContextHandler {
                     JSONArray fileCodeList = data.getJSONArray("fileCodeList");
                     KnowledgeProgress progress = Manager.getInstance().importKnowledgeDocs(token, baseName, fileCodeList, splitter);
                     if (null == progress) {
-                        this.respond(response, HttpStatus.BAD_REQUEST_400);
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                         this.complete();
                     }
                     else {
@@ -98,11 +99,12 @@ public class ImportKnowledgeDoc extends ContextHandler {
                     }
                 }
                 else {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                 }
             } catch (Exception e) {
-                this.respond(response, HttpStatus.NOT_FOUND_404);
+                Logger.w(this.getClass(), "#doPost", e);
+                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
             }
         }

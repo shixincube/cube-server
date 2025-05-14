@@ -216,8 +216,8 @@ public class ChatTask extends ServiceTask {
             }
 
             if (null != knowledgeBase) {
-                success = knowledgeBase.performKnowledgeQA(code, unit, content, searchTopK,
-                        categories, recordList, new KnowledgeQAListener() {
+                success = knowledgeBase.performKnowledgeQA(code, unit, content, searchTopK, recordList,
+                        new KnowledgeQAListener() {
                     @Override
                     public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
                         cellet.speak(talkContext,
