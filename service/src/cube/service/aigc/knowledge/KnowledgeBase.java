@@ -1438,12 +1438,23 @@ public class KnowledgeBase {
 
         if (noDocument && noArticle) {
             Logger.d(this.getClass(), "#performKnowledgeQA - "
-                    + baseInfo.name + " - No knowledge document or article in base: " + channel.getCode());
+                    + this.baseInfo.name + " - No knowledge document or article in base: " + channel.getCode());
 
             return null;
         }
 
         query = query.replaceAll("\n", "");
+
+        // 生成知识
+        Knowledge knowledge = this.generateKnowledge(query, topK);
+
+//        AIGCUnit unit = this.service.selectUnitByName(unitName);
+//        if (null == unit) {
+//            Logger.w(this.getClass(), "#performKnowledgeQA - "
+//                    + baseInfo.name + " - Select unit error: " + unitName);
+//            return false;
+//        }
+
         return null;
     }
 
@@ -2289,15 +2300,15 @@ public class KnowledgeBase {
 
     private Knowledge generateKnowledge(String query, int topK) {
         if (!this.resource.checkUnit()) {
-            Logger.w(this.getClass(),"#generatePrompt - No unit for knowledge base");
+            Logger.w(this.getClass(),"#generateKnowledge - No unit for knowledge base");
             return null;
         }
 
         JSONObject payload = new JSONObject();
         // 检索库
+        payload.put("contactId", this.authToken.getContactId());
         payload.put("store", (KnowledgeScope.Private == this.scope) ?
                 Long.toString(this.authToken.getContactId()) : this.authToken.getDomain());
-        payload.put("contactId", this.authToken.getContactId());
         payload.put("base", this.baseInfo.name);
         payload.put("query", query);
         payload.put("topK", topK);
@@ -2305,7 +2316,7 @@ public class KnowledgeBase {
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect());
         if (null == dialect) {
-            Logger.w(this.getClass(),"#generatePrompt - Request unit error: "
+            Logger.w(this.getClass(),"#generateKnowledge - Request unit error: "
                     + this.resource.unit.getCapability().getName());
             return null;
         }
@@ -2313,7 +2324,7 @@ public class KnowledgeBase {
         Packet response = new Packet(dialect);
         int state = Packet.extractCode(response);
         if (state != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#generatePrompt - Unit return error: " + state);
+            Logger.w(this.getClass(), "#generateKnowledge - Unit return error: " + state);
             return null;
         }
 
@@ -2322,7 +2333,7 @@ public class KnowledgeBase {
         try {
             knowledge = new Knowledge(data);
         } catch (Exception e) {
-            Logger.e(this.getClass(), "#generatePrompt", e);
+            Logger.e(this.getClass(), "#generateKnowledge", e);
         }
         return knowledge;
     }

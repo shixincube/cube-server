@@ -49,9 +49,10 @@ public class PerformKnowledgeQATask extends ServiceTask {
         try {
             String channelCode = packet.data.getString("channel");
             String query = packet.data.getString("query");
-            String category = packet.data.getString("category");
             int topK = packet.data.getInt("topK");
             boolean sync = packet.data.getBoolean("sync");
+            String baseName = packet.data.has("baseName")
+                    ? packet.data.getString("baseName") : KnowledgeFramework.DefaultName;
 
             AIGCService service = ((AIGCCellet) this.cellet).getService();
 
@@ -69,7 +70,6 @@ public class PerformKnowledgeQATask extends ServiceTask {
 
             // TODO 从 category 关键词匹配知识库
 
-            String baseName = KnowledgeFramework.DefaultName;
             KnowledgeBase base = service.getKnowledgeBase(tokenCode, baseName);
             if (null == base) {
                 this.cellet.speak(this.talkContext,

@@ -1511,14 +1511,16 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public KnowledgeQAProgress performKnowledgeQA(String token, String channelCode, String query, String category,
-                                                  boolean sync) {
+    public KnowledgeQAProgress performKnowledgeQA(String token, String channelCode, String query,
+                                                  String baseName, boolean sync) {
         JSONObject data = new JSONObject();
         data.put("channel", channelCode);
         data.put("query", query);
-        data.put("category", category);
         data.put("topK", 5);
         data.put("sync", sync);
+        if (null != baseName) {
+            data.put("baseName", baseName);
+        }
         Packet packet = new Packet(AIGCAction.PerformKnowledgeQA.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);

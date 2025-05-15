@@ -44,11 +44,11 @@ public class KnowledgeQA extends ContextHandler {
                 JSONObject data = this.readBodyAsJSONObject(request);
                 String channel = data.getString("channel");
                 String query = data.getString("query");
-                String category = data.has("category") ? data.getString("category") : "";
                 boolean sync = data.has("sync") ? data.getBoolean("sync") : true;
+                String base = data.has("base") ? data.getString("base") : null;
 
                 KnowledgeQAProgress progress = Manager.getInstance().performKnowledgeQA(token, channel,
-                        query, category, sync);
+                        base, query, sync);
                 if (null == progress) {
                     this.respond(response, HttpStatus.BAD_REQUEST_400);
                     this.complete();
