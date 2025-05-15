@@ -10,6 +10,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.Consts;
+import cube.aigc.ModelConfig;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -40,8 +41,6 @@ public class KnowledgeBase {
 
     public final static int DEFAULT_TOP_K = 10;
 
-    public final static int DEFAULT_FETCH_K = 30;
-
     private final KnowledgeBaseInfo baseInfo;
 
     private AIGCService service;
@@ -62,9 +61,7 @@ public class KnowledgeBase {
 
     private ResetKnowledgeProgress resetProgress;
 
-    private KnowledgeQAProgress activateProgress;
-
-    private AtomicBoolean qaLock;
+    private Map<String, KnowledgeQAProgress> performProgressMap;
 
     public KnowledgeBase(KnowledgeBaseInfo baseInfo, AIGCService service, AIGCStorage storage,
                          AuthToken authToken, AbstractModule fileStorage) {
@@ -76,7 +73,7 @@ public class KnowledgeBase {
         this.resource = new KnowledgeResource();
         this.scope = getProfile().scope;
         this.lock = new AtomicBoolean(false);
-        this.qaLock = new AtomicBoolean(false);
+        this.performProgressMap = new ConcurrentHashMap<>();
     }
 
     public String getName() {
@@ -1387,7 +1384,7 @@ public class KnowledgeBase {
     public KnowledgeQAResult performKnowledgeQA(AIGCChannel channel, String query, int topK) {
         KnowledgeQAResult knowledgeQAResult = new KnowledgeQAResult(query);
         Object mutex = new Object();
-        KnowledgeQAProgress progress = this.performKnowledgeQAAsync(channel, query, topK, new KnowledgeQAListener() {
+        KnowledgeQAProgress progress = this.asyncPerformKnowledgeQA(channel, query, topK, new KnowledgeQAListener() {
             @Override
             public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
                 knowledgeQAResult.reset(result);
@@ -1430,32 +1427,56 @@ public class KnowledgeBase {
      * @param listener
      * @return
      */
-    public KnowledgeQAProgress performKnowledgeQAAsync(AIGCChannel channel, String query, int topK,
+    public KnowledgeQAProgress asyncPerformKnowledgeQA(AIGCChannel channel, String query, int topK,
                                                        KnowledgeQAListener listener) {
         // 如果没有设置知识库文档，返回提示
         boolean noDocument = null == this.resource.docList || this.resource.docList.isEmpty();
         boolean noArticle = null == this.resource.articleList || this.resource.articleList.isEmpty();
 
         if (noDocument && noArticle) {
-            Logger.d(this.getClass(), "#performKnowledgeQA - "
+            Logger.d(this.getClass(), "#asyncPerformKnowledgeQA - "
                     + this.baseInfo.name + " - No knowledge document or article in base: " + channel.getCode());
-
             return null;
         }
 
-        query = query.replaceAll("\n", "");
+        final AIGCUnit unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+        if (null == unit) {
+            Logger.w(this.getClass(), "#asyncPerformKnowledgeQA - "
+                    + this.baseInfo.name + " - Select unit error");
+            // TODO
+            return null;
+        }
 
-        // 生成知识
-        Knowledge knowledge = this.generateKnowledge(query, topK);
+        final String fixQuery = query.replaceAll("\n", "");
 
-//        AIGCUnit unit = this.service.selectUnitByName(unitName);
-//        if (null == unit) {
-//            Logger.w(this.getClass(), "#performKnowledgeQA - "
-//                    + baseInfo.name + " - Select unit error: " + unitName);
-//            return false;
-//        }
+        final KnowledgeQAProgress progress = new KnowledgeQAProgress(channel);
+        progress.defineTotalProgress(100);
 
-        return null;
+        this.service.getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                // 生成知识
+                Knowledge knowledge = generateKnowledge(fixQuery, topK);
+                if (null == knowledge) {
+                    listener.onFailed(channel, AIGCStateCode.Failure);
+                    return;
+                }
+
+                String prompt = knowledge.generatePrompt();
+                System.out.println("XJW: \n" + prompt);
+
+                progress.updateProgress(50);
+
+                GeneratingRecord record = service.syncGenerateText(unit, prompt,
+                        new GeneratingOption(), null, null);
+                KnowledgeQAResult result = new KnowledgeQAResult(query, prompt, record);
+                result.sources = knowledge.mergeSources();
+                progress.updateProgress(100);
+                listener.onCompleted(channel, result);
+            }
+        });
+
+        return progress;
     }
 
     /**
@@ -1471,7 +1492,7 @@ public class KnowledgeBase {
      */
     public boolean performKnowledgeQA(String channelCode, String unitName, String query, int topK,
                                       List<GeneratingRecord> recordList, KnowledgeQAListener listener) {
-        query = query.replaceAll("\n", "");
+        final String fixQuery = query.replaceAll("\n", "");
 
         Logger.d(this.getClass(), "#performKnowledgeQA - " + baseInfo.name + " - Channel: " + channelCode +
                 "/" + unitName + "/" + query);
@@ -1508,10 +1529,9 @@ public class KnowledgeBase {
                     long sn = Utils.generateSerialNumber();
                     channel.setLastUnitMetaSn(sn);
 
-                    KnowledgeQAResult result = new KnowledgeQAResult(queryForResult, "");
                     GeneratingRecord record = new GeneratingRecord(sn, unitName, queryForResult, EMPTY_BASE_ANSWER,
                             "", System.currentTimeMillis(), new ComplexContext(ComplexContext.Type.Lightweight));
-                    result.record = record;
+                    KnowledgeQAResult result = new KnowledgeQAResult(queryForResult, "", record);
                     listener.onCompleted(channel, result);
                 }
             });
@@ -1567,7 +1587,6 @@ public class KnowledgeBase {
         }
 
         final String prompt = knowledge.generatePrompt();
-        final KnowledgeQAResult result = new KnowledgeQAResult(query, prompt);
 
         // 执行 Generate Text
         Logger.d(KnowledgeBase.class, "#performKnowledgeQA - " + baseInfo.name +
@@ -1580,7 +1599,7 @@ public class KnowledgeBase {
                     @Override
                     public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                         // 结果记录
-                        result.record = record;
+                        KnowledgeQAResult result = new KnowledgeQAResult(fixQuery, prompt, record);
 
                         // 来源
                         result.sources.addAll(sources);
@@ -2066,8 +2085,8 @@ public class KnowledgeBase {
         return list;
     }
 
-    public KnowledgeQAProgress getActivateProgress() {
-        return this.activateProgress;
+    public KnowledgeQAProgress getPerformProgress(String channelCode) {
+        return this.performProgressMap.get(channelCode);
     }
 
     /* 2025-5-14 作废该方法
@@ -2306,7 +2325,6 @@ public class KnowledgeBase {
 
         JSONObject payload = new JSONObject();
         // 检索库
-        payload.put("contactId", this.authToken.getContactId());
         payload.put("store", (KnowledgeScope.Private == this.scope) ?
                 Long.toString(this.authToken.getContactId()) : this.authToken.getDomain());
         payload.put("base", this.baseInfo.name);
@@ -2314,7 +2332,7 @@ public class KnowledgeBase {
         payload.put("topK", topK);
         Packet packet = new Packet(AIGCAction.GenerateKnowledge.name, payload);
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
-                packet.toDialect());
+                packet.toDialect(), 60 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(),"#generateKnowledge - Request unit error: "
                     + this.resource.unit.getCapability().getName());

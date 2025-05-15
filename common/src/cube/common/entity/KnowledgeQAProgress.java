@@ -19,8 +19,6 @@ public class KnowledgeQAProgress implements JSONable {
 
     private AIGCChannel channel;
 
-    private String unitName;
-
     private long start;
 
     private long end;
@@ -35,17 +33,15 @@ public class KnowledgeQAProgress implements JSONable {
 
     private KnowledgeQAResult result;
 
-    public KnowledgeQAProgress(AIGCChannel channel, String unitName) {
+    public KnowledgeQAProgress(AIGCChannel channel) {
         this.sn = Utils.generateSerialNumber();
         this.channel = channel;
-        this.unitName = unitName;
         this.start = System.currentTimeMillis();
     }
 
     public KnowledgeQAProgress(JSONObject json) {
         this.sn = json.getLong("sn");
         this.channel = new AIGCChannel(json.getJSONObject("channel"));
-        this.unitName = json.getString("unit");
         this.start = json.getLong("start");
         this.end = json.getLong("end");
         this.percent = json.getInt("percent");
@@ -96,7 +92,6 @@ public class KnowledgeQAProgress implements JSONable {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
         json.put("channel", this.channel.toCompactJSON());
-        json.put("unit", this.unitName);
         json.put("start", this.start);
         json.put("end", this.end);
         json.put("percent", this.percent);

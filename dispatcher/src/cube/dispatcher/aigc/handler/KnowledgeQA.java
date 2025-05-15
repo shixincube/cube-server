@@ -35,7 +35,7 @@ public class KnowledgeQA extends ContextHandler {
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -48,9 +48,9 @@ public class KnowledgeQA extends ContextHandler {
                 String base = data.has("base") ? data.getString("base") : null;
 
                 KnowledgeQAProgress progress = Manager.getInstance().performKnowledgeQA(token, channel,
-                        base, query, sync);
+                        query, base, sync);
                 if (null == progress) {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                     return;
                 }
@@ -58,9 +58,8 @@ public class KnowledgeQA extends ContextHandler {
                 this.respondOk(response, progress.toJSON());
                 this.complete();
             } catch (Exception e) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
-                return;
             }
         }
 

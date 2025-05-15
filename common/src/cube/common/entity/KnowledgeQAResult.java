@@ -22,17 +22,18 @@ public class KnowledgeQAResult implements JSONable {
 
     public String prompt;
 
-    public List<KnowledgeSource> sources;
-
     public GeneratingRecord record;
+
+    public List<KnowledgeSource> sources;
 
     public KnowledgeQAResult(String query) {
         this.query = query;
     }
 
-    public KnowledgeQAResult(String query, String prompt) {
+    public KnowledgeQAResult(String query, String prompt, GeneratingRecord record) {
         this.query = query;
         this.prompt = prompt;
+        this.record = record;
         this.sources = new ArrayList<>();
     }
 
@@ -55,7 +56,10 @@ public class KnowledgeQAResult implements JSONable {
     }
 
     public void reset(KnowledgeQAResult other) {
-
+        this.prompt = other.prompt;
+        this.sources = other.sources;
+        this.record = other.record;
+        this.record.query = this.query;
     }
 
     public JSONArray sourcesToArray() {
@@ -74,7 +78,7 @@ public class KnowledgeQAResult implements JSONable {
             json.put("prompt", this.prompt);
         }
         if (null != this.record) {
-            json.put("record", this.record.toJSON());
+            json.put("record", this.record.toCompactJSON());
         }
         if (!this.sources.isEmpty()) {
             json.put("sources", this.sourcesToArray());

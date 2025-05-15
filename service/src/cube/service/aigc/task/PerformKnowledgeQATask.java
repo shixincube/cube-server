@@ -10,6 +10,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
@@ -83,7 +84,7 @@ public class PerformKnowledgeQATask extends ServiceTask {
                 KnowledgeQAResult result = base.performKnowledgeQA(channel, query, topK);
                 if (null != result) {
                     this.cellet.speak(this.talkContext,
-                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.toJSON()));
+                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.toCompactJSON()));
                     markResponseTime();
                 }
                 else {
@@ -93,7 +94,7 @@ public class PerformKnowledgeQATask extends ServiceTask {
                 }
             }
             else {
-                KnowledgeQAProgress progress = base.performKnowledgeQAAsync(channel, query, topK,
+                KnowledgeQAProgress progress = base.asyncPerformKnowledgeQA(channel, query, topK,
                         new KnowledgeQAListener() {
                             @Override
                             public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
@@ -118,6 +119,7 @@ public class PerformKnowledgeQATask extends ServiceTask {
                 }
             }
         } catch (Exception e) {
+            Logger.e(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();

@@ -43,6 +43,11 @@ public class GetKnowledgeQAProgressTask extends ServiceTask {
             return;
         }
 
+        String channel = null;
+        if (packet.data.has("channel")) {
+            channel = packet.data.getString("channel");
+        }
+
         String baseName = KnowledgeFramework.DefaultName;
         if (packet.data.has("base")) {
             baseName = packet.data.getString("base");
@@ -58,7 +63,7 @@ public class GetKnowledgeQAProgressTask extends ServiceTask {
             return;
         }
 
-        KnowledgeQAProgress progress = base.getActivateProgress();
+        KnowledgeQAProgress progress = base.getPerformProgress(channel);
         if (null == progress) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
