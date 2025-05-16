@@ -43,9 +43,11 @@ public class GetKnowledgeQAProgressTask extends ServiceTask {
             return;
         }
 
-        String channel = null;
-        if (packet.data.has("channel")) {
-            channel = packet.data.getString("channel");
+        if (!packet.data.has("channel")) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, packet.data));
+            markResponseTime();
+            return;
         }
 
         String baseName = KnowledgeFramework.DefaultName;
@@ -53,12 +55,14 @@ public class GetKnowledgeQAProgressTask extends ServiceTask {
             baseName = packet.data.getString("base");
         }
 
+        String channel = packet.data.getString("channel");
+
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         KnowledgeBase base = service.getKnowledgeBase(tokenCode, baseName);
         if (null == base) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, packet.data));
             markResponseTime();
             return;
         }
@@ -66,7 +70,7 @@ public class GetKnowledgeQAProgressTask extends ServiceTask {
         KnowledgeQAProgress progress = base.getPerformProgress(channel);
         if (null == progress) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
             markResponseTime();
             return;
         }

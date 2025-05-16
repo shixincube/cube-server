@@ -80,21 +80,12 @@ public class PerformKnowledgeQATask extends ServiceTask {
             }
 
             // 执行知识库问答
+            KnowledgeQAProgress progress = null;
             if (sync) {
-                KnowledgeQAResult result = base.performKnowledgeQA(channel, query, topK);
-                if (null != result) {
-                    this.cellet.speak(this.talkContext,
-                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.toCompactJSON()));
-                    markResponseTime();
-                }
-                else {
-                    this.cellet.speak(this.talkContext,
-                            this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
-                    markResponseTime();
-                }
+                progress = base.performKnowledgeQA(channel, query, topK);
             }
             else {
-                KnowledgeQAProgress progress = base.asyncPerformKnowledgeQA(channel, query, topK,
+                progress = base.asyncPerformKnowledgeQA(channel, query, topK,
                         new KnowledgeQAListener() {
                             @Override
                             public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
@@ -106,17 +97,17 @@ public class PerformKnowledgeQATask extends ServiceTask {
                                 // Nothing
                             }
                         });
+            }
 
-                if (null != progress) {
-                    this.cellet.speak(this.talkContext,
-                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, progress.toJSON()));
-                    markResponseTime();
-                }
-                else {
-                    this.cellet.speak(this.talkContext,
-                            this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
-                    markResponseTime();
-                }
+            if (null != progress) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, progress.toJSON()));
+                markResponseTime();
+            }
+            else {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                markResponseTime();
             }
         } catch (Exception e) {
             Logger.e(this.getClass(), "#run", e);

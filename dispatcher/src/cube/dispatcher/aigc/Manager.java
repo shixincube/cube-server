@@ -1525,7 +1525,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 4 * 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#performKnowledgeQA - Response is null: " + token);
             return null;
@@ -1538,11 +1538,17 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
-        return new KnowledgeQAProgress(Packet.extractDataPayload(responsePacket));
+        JSONObject responseData = Packet.extractDataPayload(responsePacket);
+        return new KnowledgeQAProgress(responseData);
     }
 
-    public KnowledgeQAProgress getKnowledgeQAProgress(String token) {
-        Packet packet = new Packet(AIGCAction.GetKnowledgeQAProgress.name, new JSONObject());
+    public KnowledgeQAProgress getKnowledgeQAProgress(String token, String channel, String baseName) {
+        JSONObject data = new JSONObject();
+        data.put("channel", channel);
+        if (null != baseName) {
+            data.put("base", baseName);
+        }
+        Packet packet = new Packet(AIGCAction.GetKnowledgeQAProgress.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 

@@ -1381,13 +1381,11 @@ public class KnowledgeBase {
      * @param topK
      * @return
      */
-    public KnowledgeQAResult performKnowledgeQA(AIGCChannel channel, String query, int topK) {
-        KnowledgeQAResult knowledgeQAResult = new KnowledgeQAResult(query);
+    public KnowledgeQAProgress performKnowledgeQA(AIGCChannel channel, String query, int topK) {
         Object mutex = new Object();
         KnowledgeQAProgress progress = this.asyncPerformKnowledgeQA(channel, query, topK, new KnowledgeQAListener() {
             @Override
             public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {
-                knowledgeQAResult.reset(result);
                 synchronized (mutex) {
                     mutex.notify();
                 }
@@ -1411,11 +1409,11 @@ public class KnowledgeBase {
             }
         }
         else {
-            Logger.w(this.getClass(), "#performKnowledgeQA - Knowledge QA progress is null: " + channel);
+            Logger.w(this.getClass(), "#performKnowledgeQA - Knowledge QA progress is null: " + channel.getCode());
             return null;
         }
 
-        return knowledgeQAResult;
+        return progress;
     }
 
     /**
@@ -1443,34 +1441,40 @@ public class KnowledgeBase {
         if (null == unit) {
             Logger.w(this.getClass(), "#asyncPerformKnowledgeQA - "
                     + this.baseInfo.name + " - Select unit error");
-            // TODO
             return null;
         }
 
         final String fixQuery = query.replaceAll("\n", "");
 
         final KnowledgeQAProgress progress = new KnowledgeQAProgress(channel);
+        progress.setCode(AIGCStateCode.Processing.code);
         progress.defineTotalProgress(100);
+
+        this.performProgressMap.put(channel.getCode(), progress);
 
         this.service.getExecutor().execute(new Runnable() {
             @Override
             public void run() {
                 // 生成知识
                 Knowledge knowledge = generateKnowledge(fixQuery, topK);
-                if (null == knowledge) {
+                if (null == knowledge || knowledge.isEmpty()) {
+                    Logger.w(this.getClass(), "#asyncPerformKnowledgeQA - Generating knowledge is empty: " +
+                            channel.getCode());
+                    progress.setCode(AIGCStateCode.Failure.code);
                     listener.onFailed(channel, AIGCStateCode.Failure);
                     return;
                 }
 
                 String prompt = knowledge.generatePrompt();
-                System.out.println("XJW: \n" + prompt);
-
                 progress.updateProgress(50);
 
+                progress.setCode(AIGCStateCode.Inferencing.code);
                 GeneratingRecord record = service.syncGenerateText(unit, prompt,
                         new GeneratingOption(), null, null);
                 KnowledgeQAResult result = new KnowledgeQAResult(query, prompt, record);
                 result.sources = knowledge.mergeSources();
+                progress.setCode(AIGCStateCode.Ok.code);
+                progress.setResult(result);
                 progress.updateProgress(100);
                 listener.onCompleted(channel, result);
             }

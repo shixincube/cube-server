@@ -14,6 +14,8 @@ import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 /**
  * 基于知识库的问答。
@@ -47,15 +49,15 @@ public class KnowledgeQA extends ContextHandler {
                 boolean sync = data.has("sync") ? data.getBoolean("sync") : true;
                 String base = data.has("base") ? data.getString("base") : null;
 
-                KnowledgeQAProgress progress = Manager.getInstance().performKnowledgeQA(token, channel,
+                KnowledgeQAProgress result = Manager.getInstance().performKnowledgeQA(token, channel,
                         query, base, sync);
-                if (null == progress) {
+                if (null == result) {
                     this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                     return;
                 }
 
-                this.respondOk(response, progress.toJSON());
+                this.respondOk(response, result.toJSON());
                 this.complete();
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
@@ -65,16 +67,31 @@ public class KnowledgeQA extends ContextHandler {
 
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
 
-            KnowledgeQAProgress progress = Manager.getInstance().getKnowledgeQAProgress(token);
+            String channel = request.getParameter("channel");
+            if (null == channel) {
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                this.complete();
+                return;
+            }
+
+            String base = request.getParameter("base");
+            if (null != base) {
+                try {
+                    base = URLDecoder.decode(base, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+            }
+            KnowledgeQAProgress progress = Manager.getInstance().getKnowledgeQAProgress(token, channel, base);
             if (null == progress) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
                 return;
             }
