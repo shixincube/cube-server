@@ -44,6 +44,12 @@ public class FrameworkWrapper {
         }
     }
 
+    public List<KnowledgeBase> getAllKnowledgeBases() {
+        List<KnowledgeBase> list = new ArrayList<>();
+        list.addAll(this.knowledgeMap.values());
+        return list;
+    }
+
     public KnowledgeBase getKnowledgeBase(String name) {
         return this.knowledgeMap.get(name);
     }

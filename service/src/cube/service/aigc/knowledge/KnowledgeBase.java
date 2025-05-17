@@ -2370,6 +2370,15 @@ public class KnowledgeBase {
         return json;
     }
 
+    public void onTick(long now) {
+        Iterator<KnowledgeQAProgress> iter = this.performProgressMap.values().iterator();
+        while (iter.hasNext()) {
+            if (now - iter.next().getStart() > 10 * 60 * 1000) {
+                iter.remove();
+            }
+        }
+    }
+
 
     public class KnowledgeResource {
 

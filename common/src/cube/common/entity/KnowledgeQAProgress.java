@@ -51,6 +51,10 @@ public class KnowledgeQAProgress implements JSONable {
         }
     }
 
+    public long getStart() {
+        return this.start;
+    }
+
     public void defineTotalProgress(int value) {
         this.progress = 0;
         this.totalProgress = value;

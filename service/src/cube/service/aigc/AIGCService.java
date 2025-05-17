@@ -359,7 +359,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         Iterator<AIGCChannel> iter = this.channelMap.values().iterator();
         while (iter.hasNext()) {
             AIGCChannel channel = iter.next();
-            if (now - channel.getProcessingTimestamp() >= 3 * 60 * 1000) {
+            if (now - channel.getProcessingTimestamp() >= 5 * 60 * 1000) {
                 // 重置状态
                 channel.setProcessing(false);
             }
@@ -367,6 +367,10 @@ public class AIGCService extends AbstractModule implements Generatable {
             if (now - channel.getActiveTimestamp() >= this.channelTimeout) {
                 iter.remove();
             }
+        }
+
+        if (null != this.knowledgeFramework) {
+            this.knowledgeFramework.onTick(now);
         }
 
         Explorer.getInstance().onTick(now);

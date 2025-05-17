@@ -15,6 +15,7 @@ import cube.service.auth.AuthService;
 import cube.util.TextUtils;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +44,18 @@ public class KnowledgeFramework {
         this.authService = authService;
         this.fileStorage = fileStorage;
         this.frameworks = new HashMap<>();
+    }
+
+    public void onTick(long now) {
+        synchronized (this) {
+            Iterator<FrameworkWrapper> iter = this.frameworks.values().iterator();
+            while (iter.hasNext()) {
+                List<KnowledgeBase> baseList = iter.next().getAllKnowledgeBases();
+                for (KnowledgeBase base : baseList) {
+                    base.onTick(now);
+                }
+            }
+        }
     }
 
     public List<KnowledgeBaseInfo> getKnowledgeBaseInfos(long contactId) {
