@@ -195,7 +195,7 @@ public class PsychologyScene {
             // 1. 通过像素校验是绘画
             // 2. 物体检测没有其他元素
             // 依此上述两条判断是否是绘画
-            return (result && !more);
+            return (result || !more);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#checkPsychologyPainting", e);
             return false;
