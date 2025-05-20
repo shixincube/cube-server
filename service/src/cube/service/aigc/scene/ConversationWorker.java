@@ -88,7 +88,7 @@ public class ConversationWorker {
         final ConversationContext convCtx = cc;
 
         // try analysis subtask in query
-        final Subtask roundSubtask = this.matchSubtask(query);
+        final Subtask roundSubtask = this.matchSubtask(query, convCtx);
 
         if (convCtx.isSuperAdmin()) {
             if (roundSubtask == Subtask.SuperAdmin) {
@@ -382,11 +382,11 @@ public class ConversationWorker {
         return result.answer;
     }
 
-    private Subtask matchSubtask(String query) {
+    private Subtask matchSubtask(String query, ConversationContext convCtx) {
         final List<QuestionAnswer> list = new ArrayList<>();
 
         // 尝试匹配子任务
-        boolean success = this.service.semanticSearch(query.replaceAll("\\*\\*", ""), new SemanticSearchListener() {
+        boolean success = service.semanticSearch(query.replaceAll("\\*\\*", ""), new SemanticSearchListener() {
             @Override
             public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
                 list.addAll(questionAnswers);
@@ -431,6 +431,15 @@ public class ConversationWorker {
             List<String> answers = questionAnswer.getAnswers();
             for (String answer : answers) {
                 Subtask subtask = Subtask.extract(answer);
+
+                if (null != convCtx.getCurrentReport()) {
+                    // 如果当前有上下文关联的报告，排除量表等任务
+                    if (subtask == Subtask.StartQuestionnaire || subtask == Subtask.StartGuideFlow ||
+                            subtask == Subtask.StopQuestionnaire || subtask == Subtask.StopGuideFlow) {
+                        continue;
+                    }
+                }
+
                 if (Subtask.None != subtask) {
                     return subtask;
                 }

@@ -15,6 +15,7 @@ import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
+import cube.aigc.psychology.algorithm.Suggestion;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.AIGCChannel;
 import cube.service.tokenizer.Tokenizer;
@@ -94,6 +95,23 @@ public class ContentTools {
 
         buf.append("## 概述\n\n");
         buf.append(report.getSummary());
+        buf.append("\n\n");
+        return buf.toString();
+    }
+
+    public static String makeRatingInformation(PaintingReport report) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("# 关注等级与建议\n\n");
+        Attention attention = report.getEvaluationReport().getAttention();
+        buf.append("**关注等级**：");
+        buf.append(" ***" + attention.name + "***\n\n");
+        buf.append(attention.name).append(attention.description).append("\n\n");
+
+        Suggestion suggestion = report.getEvaluationReport().getSuggestion();
+        buf.append("**建议**：");
+        buf.append(" ***" + suggestion.title + "***\n\n");
+        buf.append(suggestion.description);
+        buf.append("\n\n");
         return buf.toString();
     }
 

@@ -2201,13 +2201,14 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public JSONObject getPsychologyReportPart(String token, long sn, boolean content, boolean section, boolean thought,
-                                              boolean summary, boolean link) {
+                                              boolean summary, boolean rating,  boolean link) {
         JSONObject data = new JSONObject();
         data.put("sn", sn);
         data.put("content", content);
         data.put("section", section);
         data.put("thought", thought);
         data.put("summary", summary);
+        data.put("rating", rating);
         data.put("link", link);
         data.put("endpoint", this.performer.getExternalHttpsEndpoint().toJSON());
         Packet packet = new Packet(AIGCAction.GetPsychologyReportPart.name, data);

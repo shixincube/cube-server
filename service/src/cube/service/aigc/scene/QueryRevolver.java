@@ -133,207 +133,200 @@ public class QueryRevolver {
         final StringBuilder result = new StringBuilder();
         String prefix = null;
         String postfix = null;
-
-        AtomicBoolean hitLazy = new AtomicBoolean(false);
-        final List<QuestionAnswer> questionAnswerList = new ArrayList<>();
-        boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
-            @Override
-            public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
-                for (QuestionAnswer questionAnswer : questionAnswers) {
-                    if (questionAnswer.getScore() < 0.8) {
-                        // 排除得分较低答案
-                        continue;
-                    }
-
-                    if (!hitLazy.get()) {
-                        // 判断 Lazy 句子，如果是 Lazy 句子，则仅润色
-                        for (String q : questionAnswer.getQuestions()) {
-                            for (String lazy : sLazyQuery) {
-                                if (fastSentenceSimilarity(q, lazy) >= 0.75) {
-                                    hitLazy.set(true);
-                                    break;
-                                }
-                            }
-                            if (hitLazy.get()) {
-                                break;
-                            }
-                        }
-                    }
-
-                    List<String> answers = questionAnswer.getAnswers();
-                    for (String answer : answers) {
-                        Subtask subtask = Subtask.extract(answer);
-                        if (Subtask.None == subtask) {
-                            // 不是子任务
-                            if (!questionAnswerList.contains(questionAnswer)) {
-                                questionAnswerList.add(questionAnswer);
-                                break;
-                            }
-                        }
-                    }
-
-                    if (hitLazy.get()) {
-                        break;
-                    }
-                }
-                synchronized (result) {
-                    result.notify();
-                }
-            }
-
-            @Override
-            public void onFailed(String query, AIGCStateCode stateCode) {
-                synchronized (result) {
-                    result.notify();
-                }
-            }
-        });
-
-        if (success) {
-            synchronized (result) {
-                try {
-                    result.wait(30 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
         final int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60;
 
-        if (hitLazy.get()) {
-            Logger.d(this.getClass(), "#generatePrompt - Hit lazy: " + query);
+        boolean needReportData = (null != context.getCurrentReport() && !context.getCurrentReport().isNull());
 
-            if (!questionAnswerList.isEmpty()) {
-                // 清空
-                result.delete(0, result.length());
+        if (needReportData) {
+            PaintingReport report = context.getCurrentReport();
+            result.append("已知评测数据：\n\n");
+            result.append("此评测数据是由AiXinLi模型生成的，采用的评测方法是“房树人”绘画投射测试。");
+            result.append("评测数据的受测人是匿名的，");
+            result.append("年龄是：").append(report.getAttribute().age).append("岁，");
+            result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n\n");
+            result.append("评测日期是：").append(formatReportDate(report)).append("。\n\n");
+            result.append("受测人的心理特征摘要如下：");
+            result.append(report.getSummary());
+            result.append("\n\n");
 
-                for (QuestionAnswer qa : questionAnswerList) {
-                    for (String answer : qa.getAnswers()) {
-                        result.append(answer).append("\n\n");
-                    }
-                }
-                String text = String.format(Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_POLISH"),
-                        result.toString());
-                result.delete(0, result.length());
-                result.append(text).append("\n");
+            result.append("受测人主要心理特征描述如下：\n");
+            List<String> symptomContent = this.extractEvaluationContent(report);
+            for (String content : symptomContent) {
+                result.append(content).append("\n\n");
             }
-            else {
-                result.append(query).append("\n");
+
+            // 画面特征
+            result.append(this.tryGeneratePaintingFeature(report, query));
+
+            // 指标数据
+            result.append(this.tryGenerateFactorDesc(report, query));
+
+            if (result.length() < wordLimit) {
+                // 尝试生成人格数据
+                result.append(this.tryGeneratePersonality(report, query));
             }
+
+            if (result.length() < wordLimit) {
+                // 尝试生成知识片段
+                result.append("\n");
+                result.append(this.generateKnowledgeFragment(report, query));
+            }
+
+            prefix = "根据您的提问，";
+            result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“您提的问题与当前讨论的报告无关。”，");
+            result.append("不允许在答案中添加编造成分，保持应有的文档结构。");
+            result.append("问题是：").append(query).append("\n");
         }
         else {
-            boolean hasReportData = false;
-            if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
-                hasReportData = true;
-                PaintingReport report = context.getCurrentReport();
-                result.append("已知评测数据：\n\n");
-                result.append("此评测数据是由AiXinLi模型生成的，采用的评测方法是“房树人”绘画投射测试。");
-                result.append("评测数据的受测人是匿名的，");
-                result.append("年龄是：").append(report.getAttribute().age).append("岁，");
-                result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n\n");
-                result.append("评测日期是：").append(formatReportDate(report)).append("。\n\n");
-                result.append("受测人的心理特征摘要如下：");
-                result.append(report.getSummary());
-                result.append("\n\n");
-
-                result.append("受测人主要心理特征描述如下：\n");
-                List<String> symptomContent = this.extractEvaluationContent(report);
-                for (String content : symptomContent) {
-                    result.append(content).append("\n\n");
-                }
-
-                // 画面特征
-                result.append(this.tryGeneratePaintingFeature(report, query));
-
-                // 指标数据
-                result.append(this.tryGenerateFactorDesc(report, query));
-
-                if (result.length() < wordLimit) {
-                    // 尝试生成人格数据
-                    result.append(this.tryGeneratePersonality(report, query));
-                }
-
-                if (result.length() < wordLimit) {
-                    // 尝试生成知识片段
-                    result.append("\n");
-                    result.append(this.generateKnowledgeFragment(report, query));
-                }
-            }
-
-            if (!hasReportData) {
-                // 不带报告数据
-                // 问题是否和心理学相关
-                String prompt = String.format(
-                        Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_QUESTION_PSYCHOLOGY_POSSIBILITY"),
-                        query);
-                GeneratingRecord queryResponse = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
-                        null, null, null);
-                if (queryResponse.answer.equals("不相关")) {
-                    Logger.d(this.getClass(), "#generatePrompt - No psychology question: " + query);
-                    result.delete(0, result.length());
-
-                    if (!questionAnswerList.isEmpty()) {
-                        result.append("已知知识点：\n\n");
-                        for (QuestionAnswer qa : questionAnswerList) {
-                            for (String answer : qa.getAnswers()) {
-                                result.append(answer).append("\n\n");
-                            }
-                        }
-                        result.append("根据以上知识点，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
-                        result.append("不允许在答案中添加编造成分。");
-                        result.append("问题是：").append(query).append("\n");
-                    }
-                }
-                else {
-                    if (!questionAnswerList.isEmpty()) {
-                        if (result.length() == 0) {
-                            result.append("已知知识点：\n\n");
-                        }
-                        else {
-                            result.append("\n下面的内容是一些与问题相关的知识：\n");
+            // 不带报告数据
+            AtomicBoolean hitLazy = new AtomicBoolean(false);
+            final List<QuestionAnswer> questionAnswerList = new ArrayList<>();
+            boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
+                @Override
+                public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
+                    for (QuestionAnswer questionAnswer : questionAnswers) {
+                        if (questionAnswer.getScore() < 0.8) {
+                            // 排除得分较低答案
+                            continue;
                         }
 
-                        for (QuestionAnswer qa : questionAnswerList) {
-                            String question = qa.getQuestions().get(0);
-                            result.append("问题：**").append(question).append("** ：\n\n");
-
-                            for (String answer : qa.getAnswers()) {
-                                result.append("回答：");
-                                result.append(answer).append("\n\n");
-                                if (result.length() >= wordLimit) {
+                        if (!hitLazy.get()) {
+                            // 判断 Lazy 句子，如果是 Lazy 句子，则仅润色
+                            for (String q : questionAnswer.getQuestions()) {
+                                for (String lazy : sLazyQuery) {
+                                    if (fastSentenceSimilarity(q, lazy) >= 0.75) {
+                                        hitLazy.set(true);
+                                        break;
+                                    }
+                                }
+                                if (hitLazy.get()) {
                                     break;
                                 }
                             }
+                        }
+
+                        List<String> answers = questionAnswer.getAnswers();
+                        for (String answer : answers) {
+                            Subtask subtask = Subtask.extract(answer);
+                            if (Subtask.None == subtask) {
+                                // 不是子任务
+                                if (!questionAnswerList.contains(questionAnswer)) {
+                                    questionAnswerList.add(questionAnswer);
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (hitLazy.get()) {
+                            break;
+                        }
+                    }
+                    synchronized (result) {
+                        result.notify();
+                    }
+                }
+
+                @Override
+                public void onFailed(String query, AIGCStateCode stateCode) {
+                    synchronized (result) {
+                        result.notify();
+                    }
+                }
+            });
+
+            if (success) {
+                synchronized (result) {
+                    try {
+                        result.wait(30 * 1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            if (hitLazy.get()) {
+                Logger.d(this.getClass(), "#generatePrompt - Hit lazy: " + query);
+
+                if (!questionAnswerList.isEmpty()) {
+                    // 清空
+                    result.delete(0, result.length());
+
+                    for (QuestionAnswer qa : questionAnswerList) {
+                        for (String answer : qa.getAnswers()) {
+                            result.append(answer).append("\n\n");
+                        }
+                    }
+                    String text = String.format(Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_POLISH"),
+                            result.toString());
+                    result.delete(0, result.length());
+                    result.append(text).append("\n");
+                }
+                else {
+                    result.append(query).append("\n");
+                }
+            }
+
+            // 问题是否和心理学相关
+            String prompt = String.format(
+                    Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_QUESTION_PSYCHOLOGY_POSSIBILITY"),
+                    query);
+            GeneratingRecord queryResponse = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
+                    null, null, null);
+            if (queryResponse.answer.contains("不相关")) {
+                Logger.d(this.getClass(), "#generatePrompt - No psychology question: " + query);
+                result.delete(0, result.length());
+
+                if (!questionAnswerList.isEmpty()) {
+                    result.append("已知知识点：\n\n");
+                    for (QuestionAnswer qa : questionAnswerList) {
+                        for (String answer : qa.getAnswers()) {
+                            result.append(answer).append("\n\n");
+                        }
+                    }
+                    result.append("根据以上知识点，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
+                    result.append("不允许在答案中添加编造成分。");
+                    result.append("问题是：").append(query).append("\n");
+                }
+            }
+            else {
+                if (!questionAnswerList.isEmpty()) {
+                    if (result.length() == 0) {
+                        result.append("已知知识点：\n\n");
+                    }
+                    else {
+                        result.append("\n下面的内容是一些与问题相关的知识：\n");
+                    }
+
+                    for (QuestionAnswer qa : questionAnswerList) {
+                        String question = qa.getQuestions().get(0);
+                        result.append("问题：**").append(question).append("** ：\n\n");
+
+                        for (String answer : qa.getAnswers()) {
+                            result.append("回答：");
+                            result.append(answer).append("\n\n");
                             if (result.length() >= wordLimit) {
                                 break;
                             }
                         }
-                    }
-
-                    if (result.length() > 0) {
-                        result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
-                        result.append("不允许在答案中添加编造成分，保持应有的文档结构。");
-                        result.append("问题是：").append(query).append("\n");
+                        if (result.length() >= wordLimit) {
+                            break;
+                        }
                     }
                 }
-            }
-            else {
-                // 带报告数据
+
                 if (result.length() > 0) {
-                    prefix = "根据您的提问，";
                     result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
                     result.append("不允许在答案中添加编造成分，保持应有的文档结构。");
                     result.append("问题是：").append(query).append("\n");
                 }
             }
+        }
 
-            if (result.length() == 0) {
-                result.append("专业地回答问题，问题是：");
-                result.append(query).append("\n");
+        if (result.length() == 0) {
+            result.append("专业地回答问题，问题是：");
+            result.append(query).append("\n");
 
-                postfix = "\n\n我的更多功能您可以点击：**[功能介绍](aixinli://prompt.direct/请你介绍一下你自己。)** 了解。";
-            }
+            postfix = "\n\n我的更多功能您可以点击：**[功能介绍](aixinli://prompt.direct/请你介绍一下你自己。)** 了解。";
         }
 
         Prompt prompt = new Prompt(result.toString());
@@ -345,6 +338,71 @@ public class QueryRevolver {
     public String generatePrompt(ConversationRelation relation, Report report, String query) {
         final StringBuilder result = new StringBuilder();
 
+        final int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60;
+
+        if (report instanceof PaintingReport) {
+            PaintingReport paintingReport = (PaintingReport) report;
+
+            result.append("已知评测数据：\n\n");
+            result.append("此评测数据是由AiXinLi模型生成的，采用的评测方法是“房树人”绘画投射测试。");
+            result.append("评测数据的受测人是").append(this.fixName(relation.name, report.getAttribute())).append("，");
+            result.append("年龄是：").append(report.getAttribute().age).append("岁，");
+            result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n\n");
+            result.append("评测日期是：").append(formatReportDate(paintingReport)).append("。\n\n");
+            result.append("受测人的心理特征摘要如下：");
+            result.append(report.getSummary());
+            result.append("\n\n");
+
+            result.append("受测人主要心理特征描述如下：\n");
+            List<String> symptomContent = this.extractEvaluationContent(paintingReport);
+            for (String content : symptomContent) {
+                result.append(content).append("\n\n");
+            }
+
+            // 画面特征
+            result.append(this.tryGeneratePaintingFeature(paintingReport, query));
+
+            // 指标数据
+            result.append(this.tryGenerateFactorDesc(paintingReport, query));
+
+            if (result.length() < wordLimit) {
+                // 尝试生成人格数据
+                result.append(this.tryGeneratePersonality(paintingReport, query));
+            }
+
+            if (result.length() < wordLimit) {
+                // 尝试生成知识片段
+                result.append("\n");
+                result.append(this.generateKnowledgeFragment(report, query));
+            }
+        }
+        else if (report instanceof ScaleReport) {
+            ScaleReport scaleReport = (ScaleReport) report;
+            if (null != scaleReport.getScale()) {
+                result.append(scaleReport.getScale().displayName);
+                result.append("量表的测验结果是：\n");
+            }
+            else {
+                result.append("受测人的心理表现有：\n");
+            }
+
+            for (ScaleFactor factor : scaleReport.getFactors()) {
+                result.append("\n* ").append(factor.description);
+                if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
+                    break;
+                }
+            }
+
+            result.append("\n对于上述心理表现给出以下建议：\n");
+            for (ScaleFactor factor : scaleReport.getFactors()) {
+                result.append("\n* ").append(factor.suggestion);
+                if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
+                    break;
+                }
+            }
+            result.append("\n");
+        }
+
         AtomicBoolean hitLazy = new AtomicBoolean(false);
         final List<QuestionAnswer> questionAnswerList = new ArrayList<>();
         boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
@@ -410,92 +468,30 @@ public class QueryRevolver {
             }
         }
 
-        final int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60;
-
         if (hitLazy.get()) {
             Logger.d(this.getClass(), "#generatePrompt - Hit lazy: " + query);
 
             if (!questionAnswerList.isEmpty()) {
-                // 清空
-                result.delete(0, result.length());
-
                 for (QuestionAnswer qa : questionAnswerList) {
+                    if (result.length() >= wordLimit) {
+                        break;
+                    }
+
                     for (String answer : qa.getAnswers()) {
+                        if (result.length() >= wordLimit) {
+                            break;
+                        }
                         result.append(answer).append("\n\n");
                     }
                 }
-                String text = String.format(Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_POLISH"),
-                        result.toString());
-                result.delete(0, result.length());
-                result.append(text).append("\n");
+//                String text = String.format(Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_POLISH"),
+//                        result.toString());
+//                result.delete(0, result.length());
+//                result.append(text).append("\n");
             }
-            else {
-                result.append(query).append("\n");
-            }
-        }
-        else {
-            if (report instanceof PaintingReport) {
-                PaintingReport paintingReport = (PaintingReport) report;
-
-                result.append("已知评测数据：\n\n");
-                result.append("此评测数据是由AiXinLi模型生成的，采用的评测方法是“房树人”绘画投射测试。");
-                result.append("评测数据的受测人是").append(this.fixName(relation.name, report.getAttribute())).append("，");
-                result.append("年龄是：").append(report.getAttribute().age).append("岁，");
-                result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n\n");
-                result.append("评测日期是：").append(formatReportDate(paintingReport)).append("。\n\n");
-                result.append("受测人的心理特征摘要如下：");
-                result.append(report.getSummary());
-                result.append("\n\n");
-
-                result.append("受测人主要心理特征描述如下：\n");
-                List<String> symptomContent = this.extractEvaluationContent(paintingReport);
-                for (String content : symptomContent) {
-                    result.append(content).append("\n\n");
-                }
-
-                // 画面特征
-                result.append(this.tryGeneratePaintingFeature(paintingReport, query));
-
-                // 指标数据
-                result.append(this.tryGenerateFactorDesc(paintingReport, query));
-
-                if (result.length() < wordLimit) {
-                    // 尝试生成人格数据
-                    result.append(this.tryGeneratePersonality(paintingReport, query));
-                }
-
-                if (result.length() < wordLimit) {
-                    // 尝试生成知识片段
-                    result.append("\n");
-                    result.append(this.generateKnowledgeFragment(report, query));
-                }
-            }
-            else if (report instanceof ScaleReport) {
-                ScaleReport scaleReport = (ScaleReport) report;
-                if (null != scaleReport.getScale()) {
-                    result.append(scaleReport.getScale().displayName);
-                    result.append("量表的测验结果是：\n");
-                }
-                else {
-                    result.append("受测人的心理表现有：\n");
-                }
-
-                for (ScaleFactor factor : scaleReport.getFactors()) {
-                    result.append("\n* ").append(factor.description);
-                    if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
-                        break;
-                    }
-                }
-
-                result.append("\n对于上述心理表现给出以下建议：\n");
-                for (ScaleFactor factor : scaleReport.getFactors()) {
-                    result.append("\n* ").append(factor.suggestion);
-                    if (result.length() > ModelConfig.EXTRA_LONG_CONTEXT_LIMIT) {
-                        break;
-                    }
-                }
-                result.append("\n");
-            }
+//            else {
+//                result.append(query).append("\n");
+//            }
         }
 
         if (result.length() > 0) {

@@ -72,7 +72,7 @@ public class PsychologyPaintingReportState extends ContextHandler {
                 long sn = Long.parseLong(request.getParameter("sn"));
 
                 JSONObject result = Manager.getInstance().getPsychologyReportPart(token, sn,
-                        false, false, false, false, false);
+                        false, false, false, false, false, false);
                 if (null != result) {
                     this.respondOk(response, result);
                 }

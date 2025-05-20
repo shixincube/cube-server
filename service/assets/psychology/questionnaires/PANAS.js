@@ -49,15 +49,15 @@ function scoring(answers) {
     }
 
     if (positive > mid) {
-        desc.push('* 个体精力旺盛，能全神贯注和快乐的情绪状况。\n');
+        desc.push('* 个体精力旺盛，能全神贯注，常处于积极的情绪状况。\n');
     } else {
-        desc.push('* 个体情绪状况淡漠。\n');
+        desc.push('* 个体情绪状况淡漠，对周围环境、事件或人际关系表现出缺乏情绪反应的状态。\n');
     }
 
     if (negative > mid) {
         desc.push('* 个体主观感觉困惑，痛苦的情绪状态。\n');
     } else {
-        desc.push('* 个体情绪状况镇定。\n');
+        desc.push('* 个体情绪状况镇定，能够保持冷静、稳定和自我控制的情绪状态。\n');
     }
 
     var score = new ScaleScore();

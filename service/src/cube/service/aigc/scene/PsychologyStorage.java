@@ -584,8 +584,8 @@ public class PsychologyStorage implements Storagable {
             });
         }
 
-        if (null != report.getReportTextList()) {
-            for (ReportSection rs : report.getReportTextList()) {
+        if (null != report.getReportSections()) {
+            for (ReportSection rs : report.getReportSections()) {
                 this.storage.executeInsert(this.reportTextTable, new StorageField[] {
                         new StorageField("report_sn", report.sn),
                         new StorageField("indicator", rs.indicator.name),

@@ -21,8 +21,8 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.ContentTools;
+import cube.service.aigc.scene.PsychologyScene;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -64,6 +64,7 @@ public class GetPsychologyReportPartTask extends ServiceTask {
         boolean thought = false;
 
         boolean summary = false;
+        boolean rating = false;
         boolean link = false;
         Endpoint endpoint = null;
 
@@ -76,6 +77,8 @@ public class GetPsychologyReportPartTask extends ServiceTask {
             if (!content) {
                 summary = packet.data.has("summary") && packet.data.getBoolean("summary");
             }
+
+            rating = packet.data.has("rating") && packet.data.getBoolean("rating");
 
             link = packet.data.has("link") && packet.data.getBoolean("link");
             if (link) {
@@ -103,12 +106,14 @@ public class GetPsychologyReportPartTask extends ServiceTask {
                 }
 
                 if (section) {
-                    List<ReportSection> list = report.getReportTextList();
-                    JSONArray array = new JSONArray();
-                    for (ReportSection rs : list) {
-                        array.put(rs.toJSON());
+                    List<ReportSection> list = report.getReportSections();
+                    if (null != list) {
+                        JSONArray array = new JSONArray();
+                        for (ReportSection rs : list) {
+                            array.put(rs.toJSON());
+                        }
+                        responseData.put("sections", array);
                     }
-                    responseData.put("sections", array);
                 }
 
                 if (thought) {
@@ -121,6 +126,10 @@ public class GetPsychologyReportPartTask extends ServiceTask {
                 if (summary) {
                     String markdown = ContentTools.makeContentMarkdown(report, true, 0, false);
                     responseData.put("summary", markdown);
+                }
+                if (rating) {
+                    String markdown = ContentTools.makeRatingInformation(report);
+                    responseData.put("rating", markdown);
                 }
                 if (link) {
                     String markdown = ContentTools.makeContentLink(endpoint, token, report, true, true);

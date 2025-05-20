@@ -308,6 +308,10 @@ public class FactorSet implements JSONable {
 
     public class AffectFactor {
 
+        public final static double Low = 20;
+        public final static double Median = 30;
+        public final static double High = 40;
+
         public double positive;
 
         public double negative;
@@ -330,6 +334,40 @@ public class FactorSet implements JSONable {
             array.put(positiveJson);
             array.put(negativeJson);
             return array;
+        }
+
+        public String makeContentMarkdown() {
+            StringBuffer buf = new StringBuffer();
+            buf.append("## 情绪表现\n\n");
+            if (this.positive >= this.negative) {
+                buf.append("受测人的积极情绪高于消极情绪。\n\n");
+            }
+            else {
+                buf.append("受测人的积极情绪低于消极情绪。\n\n");
+            }
+
+            if (this.positive >= High) {
+                buf.append("- 受测人精力旺盛，能保持全神贯注，常处于积极的情绪状况。");
+            }
+            else if (this.positive <= Low) {
+                buf.append("- 受测人情绪状况淡漠，对周围环境、事件或人际关系表现出缺乏情绪反应的状态。");
+            }
+            else {
+                buf.append("- 受测人在绝大多数时间里都保持积极的情绪状况。");
+            }
+
+            buf.append("\n\n");
+
+            if (this.negative >= High) {
+                buf.append("- 受测人主观感觉情绪困惑，有痛苦的情绪状态。");
+            }
+            else if (this.negative <= Low) {
+                buf.append("- 受测人情绪状况镇定，能够保持冷静、稳定和自我控制的情绪状态。");
+            }
+            else {
+                buf.append("- 受测人有一定的情绪管理能力，面对适度压力时可以避免被负面情绪左右。");
+            }
+            return buf.toString();
         }
     }
 }

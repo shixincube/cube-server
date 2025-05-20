@@ -143,7 +143,7 @@ public class PaintingReport extends Report {
         this.reportSectionList.addAll(sectionList);
     }
 
-    public List<ReportSection> getReportTextList() {
+    public List<ReportSection> getReportSections() {
         return this.reportSectionList;
     }
 
@@ -195,7 +195,7 @@ public class PaintingReport extends Report {
 
     public boolean isNull() {
         if (null == this.evaluationReport) {
-            Logger.d(this.getClass(), "Data is null");
+            Logger.d(this.getClass(), "#isNull - Data is null");
         }
 
         return (null == this.evaluationReport);
@@ -274,7 +274,7 @@ public class PaintingReport extends Report {
             buf.append("\n");
             buf.append("**是否需要关注**");
             buf.append("\n\n");
-            buf.append(this.evaluationReport.getAttention().description);
+            buf.append(this.evaluationReport.getAttention().name);
             buf.append("\n");
         }
 
@@ -459,7 +459,7 @@ public class PaintingReport extends Report {
         if (null != this.evaluationReport) {
             JSONObject attention = new JSONObject();
             attention.put("level", this.evaluationReport.getAttention().level);
-            attention.put("desc", this.evaluationReport.getAttention().description);
+            attention.put("desc", this.evaluationReport.getAttention().name);
             json.put("attention", attention);
 
             if (null != this.evaluationReport.getSuggestion()) {
