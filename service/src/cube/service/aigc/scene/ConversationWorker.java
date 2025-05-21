@@ -139,9 +139,14 @@ public class ConversationWorker {
             // 匹配子任务
             subtask = roundSubtask;
         }
-        else {
-            // 本轮可能的任务，判断是否终止话题
-            if (roundSubtask == Subtask.EndTopic) {
+
+        // 本轮可能的任务，判断是否终止话题
+        if (roundSubtask == Subtask.EndTopic) {
+            if (null != convCtx.getCurrentReport() && subtask != Subtask.PredictPainting) {
+                // 已选中报告，取消选中
+                subtask = Subtask.UnselectReport;
+            }
+            else {
                 StringBuilder subtaskName = new StringBuilder();
                 if (subtask == Subtask.PredictPainting) {
                     subtaskName.append("绘画投射测验");
