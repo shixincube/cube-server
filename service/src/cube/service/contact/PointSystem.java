@@ -30,7 +30,7 @@ public class PointSystem {
 
     public int insert(Point point) {
         if (!this.storage.writePoint(point)) {
-            Logger.e(this.getClass(), "#increment - write data to database error: " + point.getContactId());
+            Logger.e(this.getClass(), "#insert - write data to database error: " + point.getContactId());
         }
 
         return this.storage.totalPoints(point.getContactId(), point.getDomain().getName());

@@ -785,8 +785,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         return user;
     }
 
-
-
     public User updateUser(Contact contact, VerificationCode verificationCode) {
         // 查找用户
         ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactName(
