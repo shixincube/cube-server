@@ -12,12 +12,13 @@ import cube.common.entity.Point;
 public class PointTable {
 
     public final static String Evaluation = "Evaluation";
+    public final static int EvaluationPoints = -200;
 
     public PointTable() {
     }
 
     public static Point createEvaluationPoint(Contact contact) {
         return new Point(contact.getDomain().getName(), System.currentTimeMillis(),
-                contact.getId(), -200, Evaluation, "Psychology");
+                contact.getId(), EvaluationPoints, Evaluation, "Psychology");
     }
 }

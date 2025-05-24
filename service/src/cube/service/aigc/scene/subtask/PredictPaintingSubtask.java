@@ -22,6 +22,7 @@ import cube.service.aigc.scene.ContentTools;
 import cube.service.aigc.scene.PaintingReportListener;
 import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.SceneManager;
+import cube.service.contact.ContactManager;
 
 public class PredictPaintingSubtask extends ConversationSubtask {
 
@@ -262,6 +263,9 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                 }
             }
         }
+
+        // 判断积分
+        ContactManager.getInstance().getPointSystem();
 
         PaintingReport report = PsychologyScene.getInstance().generatePredictingReport(channel, convCtx.getCurrentAttribute(),
                 convCtx.getCurrentFile(), Theme.Generic, 10, new PaintingReportListener() {

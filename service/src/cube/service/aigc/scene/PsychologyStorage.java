@@ -36,6 +36,8 @@ public class PsychologyStorage implements Storagable {
 
     private final String reportTable = "psychology_report";
 
+    private final String reportPermissionTable = "psychology_report_permission";
+
     private final String paintingTable = "psychology_painting";
 
     private final String paintingFeatureSetTable = "psychology_painting_feature_set";
@@ -114,6 +116,60 @@ public class PsychologyStorage implements Storagable {
             new StorageField(reportTable, "summary", LiteralBase.STRING),
             new StorageField(reportTable, "evaluation_data", LiteralBase.STRING),
             new StorageField(reportTable, "mandala_flower", LiteralBase.STRING)
+    };
+
+    private final StorageField[] reportPermissionFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("report_sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("file", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("indicator_summary", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("indicator_details", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("personality_portrait", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("personality_details", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("dimension_score", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("attention", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("reference", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("recommend", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("suggestion", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("symptom_factor", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("affect_factor", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("personality_factor", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
     };
 
     private final StorageField[] paintingFields = new StorageField[] {
@@ -351,6 +407,13 @@ public class PsychologyStorage implements Storagable {
                 this.storage.execute("ALTER TABLE `" + this.reportTable +
                         "` CHANGE COLUMN `evaluation_data` `evaluation_data` LONGTEXT NULL DEFAULT NULL");
                 Logger.i(this.getClass(), "Created table '" + this.reportTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.reportPermissionTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.reportPermissionTable, this.reportPermissionFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.reportPermissionTable + "' successfully");
             }
         }
 
@@ -601,6 +664,9 @@ public class PsychologyStorage implements Storagable {
                 Conditional.createEqualTo("sn", report.sn)
         });
 
+        // 权限
+        this.writeReportPermission(report.getPermission());
+
         String dataString = report.getEvaluationReport().toStrictJSON().toString();
         dataString = JSONUtils.serializeEscape(dataString);
 
@@ -653,6 +719,89 @@ public class PsychologyStorage implements Storagable {
         }, new Conditional[] {
                 Conditional.createEqualTo("sn", sn)
         });
+    }
+
+    public synchronized ReportPermission readReportPermission(long contactId, long reportSn) {
+        List<StorageField[]> result = this.storage.executeQuery(this.reportPermissionTable, this.reportPermissionFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("report_sn", reportSn)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        ReportPermission permission = new ReportPermission(contactId, reportSn);
+        permission.file = data.get("file").getInt() == 1;
+        permission.indicatorSummary = data.get("indicator_summary").getInt() == 1;
+        permission.indicatorDetails = data.get("indicator_details").getInt() == 1;
+        permission.personalityPortrait = data.get("personality_portrait").getInt() == 1;
+        permission.personalityDetails = data.get("personality_details").getInt() == 1;
+        permission.dimensionScore = data.get("dimension_score").getInt() == 1;
+        permission.attention = data.get("attention").getInt() == 1;
+        permission.reference = data.get("reference").getInt() == 1;
+        permission.recommend = data.get("recommend").getInt() == 1;
+        permission.suggestion = data.get("suggestion").getInt() == 1;
+        permission.symptomFactor = data.get("symptom_factor").getInt() == 1;
+        permission.affectFactor = data.get("affect_factor").getInt() == 1;
+        permission.personalityFactor = data.get("personality_factor").getInt() == 1;
+        return permission;
+    }
+
+    public synchronized boolean writeReportPermission(ReportPermission permission) {
+        List<StorageField[]> result = this.storage.executeQuery(this.reportPermissionTable,
+                new StorageField[] {
+                        new StorageField("sn", LiteralBase.LONG)
+                },
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", permission.contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("report_sn", permission.reportSn)
+                });
+        if (result.isEmpty()) {
+            return this.storage.executeInsert(this.reportPermissionTable, new StorageField[] {
+                    new StorageField("contact_id", permission.contactId),
+                    new StorageField("report_sn", permission.reportSn),
+                    new StorageField("timestamp", System.currentTimeMillis()),
+                    new StorageField("file", permission.file ? 1 : 0),
+                    new StorageField("indicator_summary", permission.indicatorSummary ? 1 : 0),
+                    new StorageField("indicator_details", permission.indicatorDetails ? 1 : 0),
+                    new StorageField("personality_portrait", permission.personalityPortrait ? 1 : 0),
+                    new StorageField("personality_details", permission.personalityDetails ? 1 : 0),
+                    new StorageField("dimension_score", permission.dimensionScore ? 1 : 0),
+                    new StorageField("attention", permission.attention ? 1 : 0),
+                    new StorageField("reference", permission.reference ? 1 : 0),
+                    new StorageField("recommend", permission.recommend ? 1 : 0),
+                    new StorageField("suggestion", permission.suggestion ? 1 : 0),
+                    new StorageField("symptom_factor", permission.symptomFactor ? 1 : 0),
+                    new StorageField("affect_factor", permission.affectFactor ? 1 : 0),
+                    new StorageField("personality_factor", permission.personalityFactor ? 1 : 0)
+            });
+        }
+        else {
+            return this.storage.executeUpdate(this.reportPermissionTable, new StorageField[] {
+                    new StorageField("timestamp", System.currentTimeMillis()),
+                    new StorageField("file", permission.file ? 1 : 0),
+                    new StorageField("indicator_summary", permission.indicatorSummary ? 1 : 0),
+                    new StorageField("indicator_details", permission.indicatorDetails ? 1 : 0),
+                    new StorageField("personality_portrait", permission.personalityPortrait ? 1 : 0),
+                    new StorageField("personality_details", permission.personalityDetails ? 1 : 0),
+                    new StorageField("dimension_score", permission.dimensionScore ? 1 : 0),
+                    new StorageField("attention", permission.attention ? 1 : 0),
+                    new StorageField("reference", permission.reference ? 1 : 0),
+                    new StorageField("recommend", permission.recommend ? 1 : 0),
+                    new StorageField("suggestion", permission.suggestion ? 1 : 0),
+                    new StorageField("symptom_factor", permission.symptomFactor ? 1 : 0),
+                    new StorageField("affect_factor", permission.affectFactor ? 1 : 0),
+                    new StorageField("personality_factor", permission.personalityFactor ? 1 : 0)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("contact_id", permission.contactId),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("report_sn", permission.reportSn)
+            });
+        }
     }
 
     public Painting readPainting(long sn) {
@@ -1079,6 +1228,12 @@ public class PsychologyStorage implements Storagable {
             report.setDimensionalScore(dimensionScore, normDimensionScore);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#makeReport", e);
+        }
+
+        // 权限
+        ReportPermission permission = this.readReportPermission(report.contactId, report.sn);
+        if (null != permission) {
+            report.setPermission(permission);
         }
 
         // 生成 Markdown

@@ -337,16 +337,6 @@ public class PaintingReport extends Report {
             buf.append(bigFivePersonality.getNeuroticism() <= BigFivePersonality.LowScore ? "低" :
                     (bigFivePersonality.getNeuroticism() >= BigFivePersonality.HighScore ? "高" : "中")).append("|");
             buf.append("\n\n");
-
-//            MBTIFeature mbtiFeature = this.evaluationReport.getPersonalityAccelerator().getMBTIFeature();
-//            buf.append("\n\n");
-//            buf.append("**MBTI 性格**");
-//            buf.append("\n\n");
-//            buf.append("**性格类型** ：").append(mbtiFeature.getName())
-//                    .append(" （").append(mbtiFeature.getCode()).append("）");
-//            buf.append("\n\n");
-//            buf.append("**性格描述** ：\n\n").append(mbtiFeature.getDescription());
-//            buf.append("\n\n");
         }
 
         if (null != this.reportSectionList) {
@@ -362,12 +352,12 @@ public class PaintingReport extends Report {
             buf.append("\n\n");
         }
 
-        if (null != this.mandalaFlower) {
-            buf.append("\n\n");
-            buf.append("## 曼陀罗绘画\n\n");
-            buf.append("![曼陀罗绘画](").append(this.mandalaFlower.url).append(")");
-            buf.append("\n\n");
-        }
+//        if (null != this.mandalaFlower) {
+//            buf.append("\n\n");
+//            buf.append("## 曼陀罗绘画\n\n");
+//            buf.append("![曼陀罗绘画](").append(this.mandalaFlower.url).append(")");
+//            buf.append("\n\n");
+//        }
 
         this.markdown = buf.toString();
         return this.markdown;
