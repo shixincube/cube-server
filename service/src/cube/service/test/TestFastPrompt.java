@@ -10,6 +10,7 @@ public class TestFastPrompt {
         Tokenizer tokenizer = new Tokenizer();
 
         String[] sentences = new String[] {
+                "如何进行绘画评测",
                 "高分宜人性表现",
                 "低分宜人性表现",
                 "宜人性一般的表现",

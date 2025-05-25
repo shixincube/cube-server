@@ -16,6 +16,7 @@ import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.algorithm.Suggestion;
+import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.AIGCChannel;
 import cube.service.tokenizer.Tokenizer;
@@ -65,7 +66,7 @@ public class ContentTools {
         }
     }
 
-    public static String makeContentSummaryMarkdown(AIGCChannel channel, PaintingReport report) {
+    public static String makeSummary(AIGCChannel channel, PaintingReport report) {
         StringBuilder buf = new StringBuilder();
         if (report.isNull()) {
             buf.append("根据提供的绘画文件，绘画里没有发现有效的心理投射内容，建议检查一下绘画文件内容。");
@@ -73,7 +74,7 @@ public class ContentTools {
         }
 
         EvaluationReport evalReport = report.getEvaluationReport();
-        buf.append("根据评测的绘画图片，");
+        buf.append("根据评测的绘画内容，");
         if (evalReport.isHesitating()) {
             buf.append("绘画画面内容并不容易被识别。");
         }
@@ -84,7 +85,7 @@ public class ContentTools {
                 .append(report.getAttribute().getGenderText()).append("性**。")
                 .append("评测日期是**")
                 .append(gsDateFormat.format(new Date(report.timestamp))).append("**。\n\n");
-        buf.append("在这幅绘画中投射出了").append(evalReport.numRepresentations()).append("个心理表征。\n\n");
+        buf.append("在这幅绘画中投射出了**").append(evalReport.numRepresentations()).append("个心理表征**。\n\n");
 
         // 图片
         buf.append("**绘画图片**\n\n");
@@ -115,7 +116,7 @@ public class ContentTools {
         return buf.toString();
     }
 
-    public static String makeContentLink(Endpoint endpoint, String token, PaintingReport report,
+    public static String makePageLink(Endpoint endpoint, String token, PaintingReport report,
                                          boolean indicatorLink, boolean personalityLink) {
         StringBuilder buf = new StringBuilder();
         if (indicatorLink) {
@@ -146,7 +147,7 @@ public class ContentTools {
         return buf.toString();
     }
 
-    public static String makeContentMarkdown(PaintingReport report, boolean summary, int maxIndicators,
+    public static String makeContent(PaintingReport report, boolean summary, int maxIndicators,
                                              boolean personality) {
         StringBuilder buf = new StringBuilder();
         if (report.isNull()) {
@@ -267,7 +268,7 @@ public class ContentTools {
         }
     }
 
-    public static String makeMarkdown(PaintingFeatureSet featureSet) {
+    public static String makePaintingFeature(PaintingFeatureSet featureSet) {
         StringBuilder buf = new StringBuilder();
         buf.append("绘画");
         buf.append(featureSet.makeMarkdown(false));
@@ -276,7 +277,7 @@ public class ContentTools {
         return buf.toString();
     }
 
-    public static String makeReportListMarkdown(AIGCChannel channel, List<PaintingReport> reports) {
+    public static String makeReportList(AIGCChannel channel, List<PaintingReport> reports) {
         StringBuilder buf = new StringBuilder();
         int index = 0;
         for (PaintingReport report : reports) {
@@ -324,7 +325,7 @@ public class ContentTools {
         return buf.toString();
     }
 
-    public static String makeReportTitleMarkdown(PaintingReport report) {
+    public static String makeReportTitle(PaintingReport report) {
         StringBuffer buf = new StringBuffer();
         buf.append(gsDateFormat.format(new Date(report.timestamp)));
         buf.append("-").append(report.getAttribute().getGenderText());
@@ -399,5 +400,16 @@ public class ContentTools {
         }
 
         return dataset.matchContent(keywords.toArray(new String[0]), 5);
+    }
+
+    private static String clipContent(String content) {
+        int max = 50;
+        String value = content.substring(0, max);
+        StringBuilder buf = new StringBuilder(value);
+        buf.append("...");
+        buf.append(" (");
+        buf.append(Link.formatPromptDirectMarkdown("点击了解如何查看全部信息", "如何查看报告的全部内容？"));
+        buf.append(")\n\n");
+        return buf.toString();
     }
 }

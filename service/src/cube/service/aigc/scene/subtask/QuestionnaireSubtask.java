@@ -10,6 +10,7 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.ScaleReport;
+import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.ComplexContext;
@@ -802,7 +803,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     buf.append("* [");
                     buf.append(answer.code).append(". ").append(answer.content);
                     buf.append("](");
-                    buf.append("aixinli://scale.answer/")
+                    buf.append(Link.ScaleAnswer)
                             .append(sn).append("/")
                             .append(answer.code).append("/")
                             .append(answer.content);

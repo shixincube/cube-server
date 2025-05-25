@@ -42,7 +42,7 @@ public class ShowCoTSubtask extends ConversationSubtask {
                     public void run() {
                         String answer = polish(String.format(
                                 Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_REPORT_IS_NULL"),
-                                ContentTools.makeReportTitleMarkdown(convCtx.getCurrentReport())));
+                                ContentTools.makeReportTitle(convCtx.getCurrentReport())));
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = answer;
                         convCtx.record(record);
@@ -64,13 +64,13 @@ public class ShowCoTSubtask extends ConversationSubtask {
                         if (null == featureSet) {
                             answer = polish(String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_REPORT_IS_NULL"),
-                                    ContentTools.makeReportTitleMarkdown(convCtx.getCurrentReport())));
+                                    ContentTools.makeReportTitle(convCtx.getCurrentReport())));
                         }
                         else {
                             answer = String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_COT"),
-                                    ContentTools.makeReportTitleMarkdown(convCtx.getCurrentReport()),
-                                    ContentTools.makeMarkdown(featureSet),
+                                    ContentTools.makeReportTitle(convCtx.getCurrentReport()),
+                                    ContentTools.makePaintingFeature(featureSet),
                                     channel.getAuthToken().getCode(),
                                     Long.toString(convCtx.getCurrentReport().sn));
                         }

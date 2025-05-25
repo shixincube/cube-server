@@ -8,6 +8,7 @@ package cube.service.aigc.scene.subtask;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Question;
@@ -78,7 +79,7 @@ public class SuperAdminSubtask extends ConversationSubtask {
         for (String word : sPromptRandomFillScaleWords) {
             buf.append(word.trim());
         }
-        buf.append("](aixinli://prompt.direct/");
+        buf.append("](").append(Link.PromptDirect);
         for (String word : sPromptRandomFillScaleWords) {
             buf.append(word.trim());
         }

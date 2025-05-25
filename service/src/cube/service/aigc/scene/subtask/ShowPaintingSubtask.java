@@ -63,7 +63,7 @@ public class ShowPaintingSubtask extends ConversationSubtask {
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                 "FORMAT_ANSWER_SHOW_PAINTING_RECENT_ONE"),
-                                ContentTools.makeReportTitleMarkdown(report),
+                                ContentTools.makeReportTitle(report),
                                 ContentTools.makeReportPaintingLink(channel, report));
                         convCtx.record(record);
                         listener.onGenerated(channel, record);
@@ -83,7 +83,7 @@ public class ShowPaintingSubtask extends ConversationSubtask {
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                             "FORMAT_ANSWER_SHOW_PAINTING"),
-                            ContentTools.makeReportTitleMarkdown(report),
+                            ContentTools.makeReportTitle(report),
                             ContentTools.makeReportPaintingLink(channel, report));
                     convCtx.record(record);
                     listener.onGenerated(channel, record);

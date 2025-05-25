@@ -11,11 +11,14 @@ import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
+import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.GeneratingRecord;
 import cube.common.entity.QuestionAnswer;
+import cube.common.entity.RetrieveReRankResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.listener.RetrieveReRankListener;
 import cube.service.aigc.listener.SemanticSearchListener;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -109,7 +112,6 @@ public class QueryRevolver {
 
     private PsychologyStorage storage;
 
-
     public final class Prompt {
 
         public final String content;
@@ -135,9 +137,73 @@ public class QueryRevolver {
         String postfix = null;
         final int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60;
 
+        // Query 的关键词必须全部命中 Lazy 关键词
+        boolean hitLazy = false;
+        List<String> queryWords = this.tokenizer.sentenceProcess(query);
+        for (String lazyQuery : sLazyQuery) {
+            List<String> sentences = this.tokenizer.sentenceProcess(lazyQuery);
+            int count = 0;
+            for (String word : sentences) {
+                if (queryWords.contains(word)) {
+                    ++count;
+                }
+            }
+            if (count == sentences.size()) {
+                hitLazy = true;
+                break;
+            }
+        }
+
+        final List<QuestionAnswer> questionAnswerList = new ArrayList<>();
+        if (hitLazy) {
+            boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
+                @Override
+                public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
+                    for (QuestionAnswer questionAnswer : questionAnswers) {
+                        if (questionAnswer.getScore() < 0.86) {
+                            // 排除得分较低答案
+                            continue;
+                        }
+
+                        List<String> answers = questionAnswer.getAnswers();
+                        for (String answer : answers) {
+                            Subtask subtask = Subtask.extract(answer);
+                            if (Subtask.None == subtask) {
+                                // 不是子任务
+                                if (!questionAnswerList.contains(questionAnswer)) {
+                                    questionAnswerList.add(questionAnswer);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    synchronized (result) {
+                        result.notify();
+                    }
+                }
+
+                @Override
+                public void onFailed(String query, AIGCStateCode stateCode) {
+                    synchronized (result) {
+                        result.notify();
+                    }
+                }
+            });
+
+            if (success) {
+                synchronized (result) {
+                    try {
+                        result.wait(30 * 1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
         boolean needReportData = (null != context.getCurrentReport() && !context.getCurrentReport().isNull());
 
-        if (needReportData) {
+        if (needReportData && !hitLazy) {
             PaintingReport report = context.getCurrentReport();
             result.append("已知评测数据：\n\n");
             result.append("此评测数据是由AiXinLi模型生成的，采用的评测方法是“房树人”绘画投射测试。");
@@ -173,96 +239,61 @@ public class QueryRevolver {
             }
 
             prefix = "根据您的提问，";
-            result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“您提的问题与当前讨论的报告无关。”，");
+            postfix = "\n\n当前我正处于关联评测报告的工作模式，您可以要求我 " +
+                    Link.formatPromptDirectMarkdown("取消关联", "取消已关联评测报告") +
+                    " ，从而退出关联模式。";
+            result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“您提的问题与当前讨论的评测报告无关。”，");
             result.append("不允许在答案中添加编造成分，保持应有的文档结构。");
             result.append("问题是：").append(query).append("\n");
         }
         else {
-            // 不带报告数据
-            AtomicBoolean hitLazy = new AtomicBoolean(false);
-            final List<QuestionAnswer> questionAnswerList = new ArrayList<>();
-            boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
-                @Override
-                public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
-                    for (QuestionAnswer questionAnswer : questionAnswers) {
-                        if (questionAnswer.getScore() < 0.8) {
-                            // 排除得分较低答案
-                            continue;
-                        }
-
-                        if (!hitLazy.get()) {
-                            // 判断 Lazy 句子，如果是 Lazy 句子，则仅润色
-                            for (String q : questionAnswer.getQuestions()) {
-                                for (String lazy : sLazyQuery) {
-                                    if (fastSentenceSimilarity(q, lazy) >= 0.75) {
-                                        hitLazy.set(true);
-                                        break;
-                                    }
+            // 无关联报告数据
+            if (questionAnswerList.isEmpty()) {
+                List<String> queries = new ArrayList<>();
+                queries.add(query);
+                boolean success = this.service.retrieveReRank(queries, new RetrieveReRankListener() {
+                    @Override
+                    public void onCompleted(List<RetrieveReRankResult> retrieveReRankResults) {
+                        for (RetrieveReRankResult retrieveReRankResult : retrieveReRankResults) {
+                            QuestionAnswer questionAnswer = new QuestionAnswer(query);
+                            for (RetrieveReRankResult.Answer answer : retrieveReRankResult.getAnswerList()) {
+                                // 排除子任务
+                                Subtask subtask = Subtask.extract(answer.content);
+                                if (Subtask.None != subtask) {
+                                    continue;
                                 }
-                                if (hitLazy.get()) {
-                                    break;
+
+                                // 收录高分答案
+                                if (answer.score >= 0.8) {
+                                    questionAnswer.addAnswers(answer.content, answer.score);
                                 }
                             }
-                        }
-
-                        List<String> answers = questionAnswer.getAnswers();
-                        for (String answer : answers) {
-                            Subtask subtask = Subtask.extract(answer);
-                            if (Subtask.None == subtask) {
-                                // 不是子任务
-                                if (!questionAnswerList.contains(questionAnswer)) {
-                                    questionAnswerList.add(questionAnswer);
-                                    break;
-                                }
+                            // 有答案就收录
+                            if (questionAnswer.hasAnswer()) {
+                                questionAnswerList.add(questionAnswer);
                             }
                         }
-
-                        if (hitLazy.get()) {
-                            break;
+                        synchronized (result) {
+                            result.notify();
                         }
                     }
-                    synchronized (result) {
-                        result.notify();
-                    }
-                }
 
-                @Override
-                public void onFailed(String query, AIGCStateCode stateCode) {
-                    synchronized (result) {
-                        result.notify();
-                    }
-                }
-            });
-
-            if (success) {
-                synchronized (result) {
-                    try {
-                        result.wait(30 * 1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            if (hitLazy.get()) {
-                Logger.d(this.getClass(), "#generatePrompt - Hit lazy: " + query);
-
-                if (!questionAnswerList.isEmpty()) {
-                    // 清空
-                    result.delete(0, result.length());
-
-                    for (QuestionAnswer qa : questionAnswerList) {
-                        for (String answer : qa.getAnswers()) {
-                            result.append(answer).append("\n\n");
+                    @Override
+                    public void onFailed(List<String> queries, AIGCStateCode stateCode) {
+                        synchronized (result) {
+                            result.notify();
                         }
                     }
-                    String text = String.format(Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_POLISH"),
-                            result.toString());
-                    result.delete(0, result.length());
-                    result.append(text).append("\n");
-                }
-                else {
-                    result.append(query).append("\n");
+                });
+
+                if (success) {
+                    synchronized (result) {
+                        try {
+                            result.wait(40 * 1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
 
@@ -294,15 +325,17 @@ public class QueryRevolver {
                         result.append("已知知识点：\n\n");
                     }
                     else {
-                        result.append("\n下面的内容是一些与问题相关的知识：\n");
+                        result.append("\n下面的内容是一些与问题相关的知识：\n\n");
                     }
 
+                    int qaSN = 0;
                     for (QuestionAnswer qa : questionAnswerList) {
-                        String question = qa.getQuestions().get(0);
-                        result.append("问题：**").append(question).append("** ：\n\n");
+                        ++qaSN;
 
+                        String question = qa.getQuestions().get(0);
+                        result.append("问题").append(qaSN).append("：").append(question).append("。\n\n");
                         for (String answer : qa.getAnswers()) {
-                            result.append("回答：");
+                            result.append("问题").append(qaSN).append("答案：");
                             result.append(answer).append("\n\n");
                             if (result.length() >= wordLimit) {
                                 break;
@@ -326,7 +359,8 @@ public class QueryRevolver {
             result.append("专业地回答问题，问题是：");
             result.append(query).append("\n");
 
-            postfix = "\n\n我的更多功能您可以点击：**[功能介绍](aixinli://prompt.direct/请你介绍一下你自己。)** 了解。";
+            // aixinli://prompt.direct/请你介绍一下你自己。
+            postfix = "\n\n我的更多功能您可以点击：**[功能介绍](" + Link.formatPromptDirect("请你介绍一下你自己。") + ")** 了解。";
         }
 
         Prompt prompt = new Prompt(result.toString());

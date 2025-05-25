@@ -6,7 +6,7 @@
 
 package cube.aigc.psychology.app;
 
-import cube.common.entity.Contact;
+import cube.auth.AuthToken;
 import cube.common.entity.Point;
 
 public class PointTable {
@@ -17,8 +17,8 @@ public class PointTable {
     public PointTable() {
     }
 
-    public static Point createEvaluationPoint(Contact contact) {
-        return new Point(contact.getDomain().getName(), System.currentTimeMillis(),
-                contact.getId(), EvaluationPoints, Evaluation, "Psychology");
+    public static Point createEvaluationPoint(AuthToken authToken) {
+        return new Point(authToken.getDomain(), System.currentTimeMillis(),
+                authToken.getContactId(), EvaluationPoints, Evaluation, "Psychology");
     }
 }

@@ -9,6 +9,7 @@ package cube.service.aigc.guidance;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.guidance.*;
+import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.Subtask;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.GeneratingRecord;
@@ -130,7 +131,7 @@ public class GuideFlow extends AbstractGuideFlow {
                     buf.append("\n\n* [");
                     buf.append(answer.content);
                     buf.append("](");
-                    buf.append("aixinli://guide.answer/")
+                    buf.append(Link.GuideAnswer)
                             .append(question.sn).append("/")
                             .append(answer.code).append("/")
                             .append(answer.content);
@@ -153,7 +154,7 @@ public class GuideFlow extends AbstractGuideFlow {
             buf.append("- [");
             buf.append(answerGroup.content).append("：").append(answer.content);
             buf.append("](");
-            buf.append("aixinli://guide.answer/")
+            buf.append(Link.GuideAnswer)
                     .append(currentQuestion.sn).append("/")
                     .append(answer.code).append("/")
                     .append(answerGroup.content).append("：").append(answer.content);

@@ -42,7 +42,7 @@ public class UnselectReportSubtask extends ConversationSubtask {
                     convCtx.setCurrentReport(null);
                     String answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                             "FORMAT_ANSWER_UNSELECT_REPORT_OK"),
-                            ContentTools.makeReportTitleMarkdown(report));
+                            ContentTools.makeReportTitle(report));
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = answer;
                     record.context = context;

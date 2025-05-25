@@ -106,9 +106,9 @@ public class SelectReportSubtask extends ConversationSubtask {
                             record.context = context;
                             record.answer = String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
-                                    ContentTools.makeReportTitleMarkdown(report),
-                                    ContentTools.makeContentSummaryMarkdown(channel, report),
-                                    ContentTools.makeContentLink(channel.getHttpsEndpoint(), channel.getAuthToken().getCode(),
+                                    ContentTools.makeReportTitle(report),
+                                    ContentTools.makeSummary(channel, report),
+                                    ContentTools.makePageLink(channel.getHttpsEndpoint(), channel.getAuthToken().getCode(),
                                             report, true, true));
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
@@ -240,9 +240,9 @@ public class SelectReportSubtask extends ConversationSubtask {
                             record.context = context;
                             record.answer = String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
-                                    ContentTools.makeReportTitleMarkdown(reports.get(0)),
-                                    ContentTools.makeContentMarkdown(reports.get(0), true, 0, false),
-                                    ContentTools.makeContentLink(channel.getHttpsEndpoint(), channel.getAuthToken().getCode(),
+                                    ContentTools.makeReportTitle(reports.get(0)),
+                                    ContentTools.makeContent(reports.get(0), true, 0, false),
+                                    ContentTools.makePageLink(channel.getHttpsEndpoint(), channel.getAuthToken().getCode(),
                                             reports.get(0), true, true));
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
@@ -260,7 +260,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                             String answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_FOUND_MULTIPLE_REPORTS"),
                                     convCtx.getReportList().size(), reports.size(),
-                                    ContentTools.makeReportListMarkdown(channel, reports));
+                                    ContentTools.makeReportList(channel, reports));
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = answer;
                             convCtx.record(record);

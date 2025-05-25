@@ -66,9 +66,9 @@ public class ShowPersonalitySubtask extends ConversationSubtask {
                         record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                 "FORMAT_ANSWER_SHOW_PERSONALITY"),
                                 RECENT_ONE,
-                                ContentTools.makeReportTitleMarkdown(report),
-                                ContentTools.makeContentMarkdown(report, false, 0, true));
-                        record.answer += "\n\n" + ContentTools.makeContentLink(channel.getHttpsEndpoint(),
+                                ContentTools.makeReportTitle(report),
+                                ContentTools.makeContent(report, false, 0, true));
+                        record.answer += "\n\n" + ContentTools.makePageLink(channel.getHttpsEndpoint(),
                                 channel.getAuthToken().getCode(), report, false, true);
                         convCtx.record(record);
                         listener.onGenerated(channel, record);
@@ -89,9 +89,9 @@ public class ShowPersonalitySubtask extends ConversationSubtask {
                     record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                             "FORMAT_ANSWER_SHOW_PERSONALITY"),
                             "",
-                            ContentTools.makeReportTitleMarkdown(report),
-                            ContentTools.makeContentMarkdown(report, false, 0, true));
-                    record.answer += "\n\n" + ContentTools.makeContentLink(channel.getHttpsEndpoint(),
+                            ContentTools.makeReportTitle(report),
+                            ContentTools.makeContent(report, false, 0, true));
+                    record.answer += "\n\n" + ContentTools.makePageLink(channel.getHttpsEndpoint(),
                             channel.getAuthToken().getCode(), report, false, true);
                     convCtx.record(record);
                     listener.onGenerated(channel, record);

@@ -50,9 +50,9 @@ public class Resource {
     private long benchmarkScoreLastModified = 0;
     private Benchmark benchmark;
 
-    private File hexDimProjectionFile = new File("assets/psychology/projection.json");
-    private long hexDimProjectionModified = 0;
-    private HexagonDimensionProjection hexDimProjection;
+//    private File hexDimProjectionFile = new File("assets/psychology/projection.json");
+//    private long hexDimProjectionModified = 0;
+//    private HexagonDimensionProjection hexDimProjection;
 
     private File questionnairesPath = new File("assets/psychology/questionnaires/");
     private Map<String, File> scaleNameFileMap = new ConcurrentHashMap<>();
@@ -163,25 +163,25 @@ public class Resource {
         return this.benchmark;
     }
 
-    public HexagonDimensionProjection getHexDimProjection() {
-        if (this.hexDimProjectionFile.exists()) {
-            if (this.hexDimProjectionFile.lastModified() != this.hexDimProjectionModified) {
-                this.hexDimProjectionModified = this.hexDimProjectionFile.lastModified();
-
-                Logger.i(this.getClass(), "Read projection file: " + this.hexDimProjectionFile.getAbsolutePath());
-
-                try {
-                    byte[] data = Files.readAllBytes(Paths.get(this.hexDimProjectionFile.getAbsolutePath()));
-                    JSONObject json = new JSONObject(new String(data, StandardCharsets.UTF_8));
-                    this.hexDimProjection = new HexagonDimensionProjection(json);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return this.hexDimProjection;
-    }
+//    public HexagonDimensionProjection getHexDimProjection() {
+//        if (this.hexDimProjectionFile.exists()) {
+//            if (this.hexDimProjectionFile.lastModified() != this.hexDimProjectionModified) {
+//                this.hexDimProjectionModified = this.hexDimProjectionFile.lastModified();
+//
+//                Logger.i(this.getClass(), "Read projection file: " + this.hexDimProjectionFile.getAbsolutePath());
+//
+//                try {
+//                    byte[] data = Files.readAllBytes(Paths.get(this.hexDimProjectionFile.getAbsolutePath()));
+//                    JSONObject json = new JSONObject(new String(data, StandardCharsets.UTF_8));
+//                    this.hexDimProjection = new HexagonDimensionProjection(json);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//
+//        return this.hexDimProjection;
+//    }
 
     public File getQuestionnairesPath() {
         return this.questionnairesPath;

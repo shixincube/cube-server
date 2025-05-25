@@ -7,6 +7,7 @@
 package cube.service.contact;
 
 import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.common.entity.Contact;
 import cube.common.entity.Point;
 
@@ -22,6 +23,10 @@ public class PointSystem {
 
     public int total(Contact contact) {
         return this.storage.totalPoints(contact.getId(), contact.getDomain().getName());
+    }
+
+    public int total(AuthToken authToken) {
+        return this.storage.totalPoints(authToken.getContactId(), authToken.getDomain());
     }
 
     public List<Point> listPoints(Contact contact) {

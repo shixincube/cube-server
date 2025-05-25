@@ -9,7 +9,6 @@ package cube.aigc.psychology.composition;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.Indicator;
-import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.PaintingConfidence;
 import org.json.JSONArray;
@@ -43,9 +42,8 @@ public class HexagonDimensionScore {
 
     public HexagonDimensionScore(Attention attention, List<EvaluationScore> scoreList, PaintingConfidence confidence,
                                  FactorSet factorSet) {
-        HexagonDimensionScore candidate = Resource.getInstance().getHexDimProjection().calc(scoreList);
         for (HexagonDimension hd : HexagonDimension.values()) {
-            this.record(hd, candidate.getDimensionScore(hd) > 90 ? 89 : candidate.getDimensionScore(hd));
+            this.record(hd, 80);
         }
 
         if (null != confidence) {

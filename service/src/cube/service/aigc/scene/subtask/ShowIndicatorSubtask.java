@@ -66,9 +66,9 @@ public class ShowIndicatorSubtask extends ConversationSubtask {
                         record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                 "FORMAT_ANSWER_SHOW_INDICATOR"),
                                 RECENT_ONE,
-                                ContentTools.makeReportTitleMarkdown(report),
-                                ContentTools.makeContentMarkdown(report, false, 10, false));
-                        record.answer += "\n\n" + ContentTools.makeContentLink(channel.getHttpsEndpoint(),
+                                ContentTools.makeReportTitle(report),
+                                ContentTools.makeContent(report, false, 10, false));
+                        record.answer += "\n\n" + ContentTools.makePageLink(channel.getHttpsEndpoint(),
                                 channel.getAuthToken().getCode(), report, true, false);
                         convCtx.record(record);
                         listener.onGenerated(channel, record);
@@ -89,9 +89,9 @@ public class ShowIndicatorSubtask extends ConversationSubtask {
                     record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                             "FORMAT_ANSWER_SHOW_INDICATOR"),
                             "",
-                            ContentTools.makeReportTitleMarkdown(report),
-                            ContentTools.makeContentMarkdown(report, false, 10, false));
-                    record.answer += "\n\n" + ContentTools.makeContentLink(channel.getHttpsEndpoint(),
+                            ContentTools.makeReportTitle(report),
+                            ContentTools.makeContent(report, false, 10, false));
+                    record.answer += "\n\n" + ContentTools.makePageLink(channel.getHttpsEndpoint(),
                             channel.getAuthToken().getCode(), report, true, false);
                     convCtx.record(record);
                     listener.onGenerated(channel, record);

@@ -11,6 +11,7 @@ import cube.aigc.ModelConfig;
 import cube.aigc.attachment.Attachment;
 import cube.aigc.attachment.ReportAttachment;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.app.PointTable;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Subtask;
@@ -264,9 +265,6 @@ public class PredictPaintingSubtask extends ConversationSubtask {
             }
         }
 
-        // 判断积分
-        ContactManager.getInstance().getPointSystem();
-
         PaintingReport report = PsychologyScene.getInstance().generatePredictingReport(channel, convCtx.getCurrentAttribute(),
                 convCtx.getCurrentFile(), Theme.Generic, 10, new PaintingReportListener() {
                     @Override
@@ -306,9 +304,9 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                         if (null != record.context) {
                             record.context.setInferring(false);
                         }
-                        record.answer = ContentTools.makeContentMarkdown(report,
+                        record.answer = ContentTools.makeContent(report,
                                 true, 0, false);
-                        record.answer += ContentTools.makeContentLink(channel.getHttpsEndpoint(),
+                        record.answer += ContentTools.makePageLink(channel.getHttpsEndpoint(),
                                 channel.getAuthToken().getCode(), report, true, true);
                         // clear subtask
                         convCtx.cancelCurrentPredict();
@@ -337,6 +335,23 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                 });
 
         if (null != report) {
+            // 判断积分
+            int points = ContactManager.getInstance().getPointSystem().total(channel.getAuthToken());
+            ReportPermission permission = null;
+            if (points >= Math.abs(PointTable.EvaluationPoints)) {
+                // 全部权限
+                permission = ReportPermission.createAllPermissions(report.contactId, report.sn);
+                // 扣除积分
+                ContactManager.getInstance().getPointSystem().insert(
+                        PointTable.createEvaluationPoint(channel.getAuthToken()));
+            }
+            else {
+                // 最小权限
+                permission = new ReportPermission(report.contactId, report.sn);
+            }
+            // 设置权限
+            report.setPermission(permission);
+
             // 开始生成报告
             final GeneratingRecord record = new GeneratingRecord(query, convCtx.getCurrentFile());
 

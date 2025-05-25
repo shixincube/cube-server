@@ -101,7 +101,7 @@ public class GetPsychologyReportPartTask extends ServiceTask {
 
             if (report.getState().code == AIGCStateCode.Ok.code) {
                 if (content) {
-                    String contentMarkdown = ContentTools.makeContentMarkdown(report, true, 5, true);
+                    String contentMarkdown = ContentTools.makeContent(report, true, 5, true);
                     responseData.put("content", contentMarkdown);
                 }
 
@@ -119,12 +119,12 @@ public class GetPsychologyReportPartTask extends ServiceTask {
                 if (thought) {
                     PaintingFeatureSet featureSet = PsychologyScene.getInstance().getPaintingFeatureSet(sn);
                     if (null != featureSet) {
-                        responseData.put("thought", ContentTools.makeMarkdown(featureSet));
+                        responseData.put("thought", ContentTools.makePaintingFeature(featureSet));
                     }
                 }
 
                 if (summary) {
-                    String markdown = ContentTools.makeContentMarkdown(report, true, 0, false);
+                    String markdown = ContentTools.makeContent(report, true, 0, false);
                     responseData.put("summary", markdown);
                 }
                 if (rating) {
@@ -132,7 +132,7 @@ public class GetPsychologyReportPartTask extends ServiceTask {
                     responseData.put("rating", markdown);
                 }
                 if (link) {
-                    String markdown = ContentTools.makeContentLink(endpoint, token, report, true, true);
+                    String markdown = ContentTools.makePageLink(endpoint, token, report, true, true);
                     responseData.put("link", markdown);
                 }
             }
@@ -142,7 +142,7 @@ public class GetPsychologyReportPartTask extends ServiceTask {
                     if (thought) {
                         PaintingFeatureSet featureSet = PsychologyScene.getInstance().getPaintingFeatureSet(sn);
                         if (null != featureSet) {
-                            responseData.put("thought", ContentTools.makeMarkdown(featureSet));
+                            responseData.put("thought", ContentTools.makePaintingFeature(featureSet));
                         }
                         else {
                             Logger.w(this.getClass(), "#run - Can NOT find feature set for report: " + sn);
