@@ -65,6 +65,7 @@ public class ContentTools {
 
     public static String makeSummary(AIGCChannel channel, PaintingReport report) {
         StringBuilder buf = new StringBuilder();
+
         if (report.isNull()) {
             buf.append("根据提供的绘画文件，绘画里没有发现有效的心理投射内容，建议检查一下绘画文件内容。");
             return buf.toString();
@@ -106,16 +107,18 @@ public class ContentTools {
         else {
             buf.append(clipContent(report.getSummary()));
         }
+
         return buf.toString();
     }
 
     public static String makeRatingInformation(PaintingReport report) {
         StringBuilder buf = new StringBuilder();
+
         buf.append("# 关注等级与建议\n\n");
         Attention attention = report.getEvaluationReport().getAttention();
         buf.append("**关注等级**：");
         if (report.getPermission().attention) {
-            buf.append(" ***" + attention.name + "***\n\n");
+            buf.append(" ***").append(attention.name).append("***\n\n");
             buf.append(attention.name).append(attention.description).append("\n\n");
         }
         else {
@@ -124,24 +127,36 @@ public class ContentTools {
 
         Suggestion suggestion = report.getEvaluationReport().getSuggestion();
         buf.append("**建议**：");
-        buf.append(" ***" + suggestion.title + "***\n\n");
-        buf.append(suggestion.description);
-        buf.append("\n\n");
+        if (report.getPermission().suggestion) {
+            buf.append(" ***").append(suggestion.title).append("***\n\n");
+            buf.append(suggestion.description).append("\n\n");
+        }
+        else {
+            buf.append(clipContent(""));
+        }
+
         return buf.toString();
     }
 
     public static String makePageLink(Endpoint endpoint, String token, PaintingReport report,
                                          boolean indicatorLink, boolean personalityLink) {
         StringBuilder buf = new StringBuilder();
+
         if (indicatorLink) {
-            buf.append("[查看数据指标](");
-            buf.append("https://");
-            buf.append(endpoint.toString());
-            buf.append("/aigc/psychology/report/page/");
-            buf.append(token);
-            buf.append("/?page=indicator&sn=");
-            buf.append(report.sn);
-            buf.append(")\n");
+            if (report.getPermission().indicatorDetails) {
+                buf.append("[查看数据指标](");
+                buf.append("https://");
+                buf.append(endpoint.toString());
+                buf.append("/aigc/psychology/report/page/");
+                buf.append(token);
+                buf.append("/?page=indicator&sn=");
+                buf.append(report.sn);
+                buf.append(")\n");
+            }
+            else {
+                buf.append(tipContent("了解如何查看数据指标"));
+                buf.append("\n");
+            }
         }
 
         if (personalityLink) {
@@ -149,20 +164,27 @@ public class ContentTools {
                 buf.append("\n");
             }
 
-            buf.append("[查看人格特质](");
-            buf.append("https://");
-            buf.append(endpoint.toString());
-            buf.append("/aigc/psychology/report/page/");
-            buf.append(token);
-            buf.append("/?page=bigfive&sn=");
-            buf.append(report.sn);
-            buf.append(")\n");
+            if (report.getPermission().personalityDetails) {
+                buf.append("[查看人格特质](");
+                buf.append("https://");
+                buf.append(endpoint.toString());
+                buf.append("/aigc/psychology/report/page/");
+                buf.append(token);
+                buf.append("/?page=bigfive&sn=");
+                buf.append(report.sn);
+                buf.append(")\n");
+            }
+            else {
+                buf.append(tipContent("了解如何查看人格特质"));
+                buf.append("\n");
+            }
         }
+
         return buf.toString();
     }
 
     public static String makeContent(PaintingReport report, boolean summary, int maxIndicators,
-                                             boolean personality) {
+                                     boolean personality) {
         StringBuilder buf = new StringBuilder();
         if (report.isNull()) {
             buf.append("根据提供的绘画文件，绘画里没有发现有效的心理投射内容，建议检查一下绘画文件内容。\n");
@@ -181,11 +203,16 @@ public class ContentTools {
                 .append(report.getAttribute().getGenderText()).append("性**。")
                 .append("评测日期是**")
                 .append(gsDateFormat.format(new Date(report.timestamp))).append("**。\n\n");
-        buf.append("在这幅绘画中投射出了").append(evalReport.numRepresentations()).append("个心理表征。\n\n");
+        buf.append("在这幅绘画中分析出了").append(evalReport.numRepresentations()).append("个心理表征。\n\n");
 
         if (summary) {
             buf.append("# 概述\n\n");
-            buf.append(report.getSummary()).append("\n\n");
+            if (report.getPermission().indicatorSummary) {
+                buf.append(report.getSummary()).append("\n\n");
+            }
+            else {
+                buf.append(clipContent(report.getSummary()));
+            }
         }
 
         int numIndicators = 0;
@@ -417,16 +444,29 @@ public class ContentTools {
     }
 
     private static String clipContent(String content) {
+        return clipContent(content, true);
+    }
+
+    private static String clipContent(String content, boolean tipLink) {
         String value = "";
         if (null != content && content.length() > 1) {
-            int max = Math.min(content.length(), 50);
+            int max = Math.min(Math.round((float)content.length() * 0.2f), 50);
             value = content.substring(0, max);
         }
         StringBuilder buf = new StringBuilder(value);
         buf.append("...");
-        buf.append(" (");
-        buf.append(Link.formatPromptDirectMarkdown("点击了解如何查看全部信息", "如何查看报告的全部内容？"));
-        buf.append(")\n\n");
+        if (tipLink) {
+            buf.append(" （");
+            buf.append(Link.formatPromptDirectMarkdown("点击了解如何查看全部内容", "如何查看报告的全部内容？"));
+            buf.append("）\n\n");
+        }
+        else {
+            buf.append("\n\n");
+        }
         return buf.toString();
+    }
+
+    private static String tipContent(String content) {
+        return Link.formatPromptDirectMarkdown(content, "如何查看报告的全部内容？");
     }
 }

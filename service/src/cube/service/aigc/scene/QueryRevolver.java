@@ -103,7 +103,8 @@ public class QueryRevolver {
      * Lazy 机制用于保护关键问题可以从数据集中被选取。
      */
     private final static String[] sLazyQuery = new String[] {
-            "如何进行绘画评测"
+            "如何进行绘画评测",
+            "报告全部内容",
     };
 
     private AIGCService service;
