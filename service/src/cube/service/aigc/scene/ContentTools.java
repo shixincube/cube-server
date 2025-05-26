@@ -8,10 +8,7 @@ package cube.service.aigc.scene;
 
 import cell.core.net.Endpoint;
 import cell.util.log.Logger;
-import cube.aigc.psychology.Dataset;
-import cube.aigc.psychology.EvaluationReport;
-import cube.aigc.psychology.PaintingReport;
-import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
@@ -87,16 +84,28 @@ public class ContentTools {
                 .append(gsDateFormat.format(new Date(report.timestamp))).append("**。\n\n");
         buf.append("在这幅绘画中投射出了**").append(evalReport.numRepresentations()).append("个心理表征**。\n\n");
 
+        ReportPermission permission = report.getPermission();
+
         // 图片
         buf.append("**绘画图片**\n\n");
-        buf.append("![绘画](");
-        buf.append(FileLabels.makeFileHttpsURL(report.getFileLabel(),
-                channel.getAuthToken().getCode(), channel.getHttpsEndpoint()));
-        buf.append(")\n\n");
+        if (permission.file) {
+            buf.append("![绘画](");
+            buf.append(FileLabels.makeFileHttpsURL(report.getFileLabel(),
+                    channel.getAuthToken().getCode(), channel.getHttpsEndpoint()));
+            buf.append(")\n\n");
+        }
+        else {
+            buf.append("***暂时无法查看***。\n\n");
+        }
 
         buf.append("## 概述\n\n");
-        buf.append(report.getSummary());
-        buf.append("\n\n");
+        if (permission.indicatorSummary) {
+            buf.append(report.getSummary());
+            buf.append("\n\n");
+        }
+        else {
+            buf.append(clipContent(report.getSummary()));
+        }
         return buf.toString();
     }
 
@@ -105,8 +114,13 @@ public class ContentTools {
         buf.append("# 关注等级与建议\n\n");
         Attention attention = report.getEvaluationReport().getAttention();
         buf.append("**关注等级**：");
-        buf.append(" ***" + attention.name + "***\n\n");
-        buf.append(attention.name).append(attention.description).append("\n\n");
+        if (report.getPermission().attention) {
+            buf.append(" ***" + attention.name + "***\n\n");
+            buf.append(attention.name).append(attention.description).append("\n\n");
+        }
+        else {
+            buf.append(clipContent(""));
+        }
 
         Suggestion suggestion = report.getEvaluationReport().getSuggestion();
         buf.append("**建议**：");
@@ -403,8 +417,11 @@ public class ContentTools {
     }
 
     private static String clipContent(String content) {
-        int max = 50;
-        String value = content.substring(0, max);
+        String value = "";
+        if (null != content && content.length() > 1) {
+            int max = Math.min(content.length(), 50);
+            value = content.substring(0, max);
+        }
         StringBuilder buf = new StringBuilder(value);
         buf.append("...");
         buf.append(" (");

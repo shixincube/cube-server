@@ -303,6 +303,12 @@ public class QueryRevolver {
                     query);
             GeneratingRecord queryResponse = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
                     null, null, null);
+            if (null == queryResponse) {
+                Logger.e(this.getClass(), "#generatePrompt - Generating text failed - CID: " +
+                        context.getAuthToken().getContactId());
+                return null;
+            }
+
             if (queryResponse.answer.contains("不相关")) {
                 Logger.d(this.getClass(), "#generatePrompt - No psychology question: " + query);
                 result.delete(0, result.length());
