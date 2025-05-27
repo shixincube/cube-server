@@ -155,7 +155,6 @@ public class ContentTools {
             }
             else {
                 buf.append(tipContent("了解如何查看数据指标"));
-                buf.append("\n");
             }
         }
 
@@ -176,7 +175,6 @@ public class ContentTools {
             }
             else {
                 buf.append(tipContent("了解如何查看人格特质"));
-                buf.append("\n");
             }
         }
 
@@ -224,17 +222,27 @@ public class ContentTools {
                     continue;
                 }
 
-                buf.append("## ").append(section.title).append("\n\n");
-                buf.append("* **评级** ：").append(score.rate.value).append("级 （").append(score.rate.displayName).append("）\n\n");
-                buf.append("**【描述】**\n\n").append(section.report).append("\n\n");
-                buf.append("**【建议】**\n\n").append(section.suggestion).append("\n\n");
+                if (report.getPermission().indicatorDetails) {
+                    buf.append("## ").append(section.title).append("\n\n");
+                    buf.append("* **评级** ：").append(score.rate.value).append("级 （").append(score.rate.displayName).append("）\n\n");
+                    buf.append("**【描述】**\n\n").append(section.report).append("\n\n");
+                    buf.append("**【建议】**\n\n").append(section.suggestion).append("\n\n");
+                }
+                else {
+                    buf.append("## ").append(clipContent(section.title, false));
+                    buf.append("* **评级** ：").append(clipContent("", false));
+                    buf.append("**【描述】**\n\n").append(clipContent(section.report, false));
+                    buf.append("**【建议】**\n\n").append(clipContent(section.suggestion, false));
+                }
 
                 ++numIndicators;
                 if (numIndicators >= maxIndicators) {
                     break;
                 }
             }
-            buf.append("\n");
+            if (!report.getPermission().indicatorDetails) {
+                buf.append(clipContent(""));
+            }
         }
 
         if (personality) {
@@ -242,56 +250,93 @@ public class ContentTools {
             if (null != personalityAccelerator) {
                 BigFivePersonality bigFivePersonality = personalityAccelerator.getBigFivePersonality();
                 buf.append("# 人格特质（大五人格）\n\n");
-                buf.append("**【人格画像】** ：**").append(bigFivePersonality.getDisplayName()).append("**。\n\n");
-                buf.append("**【人格描述】** ：\n\n").append(bigFivePersonality.getDescription()).append("\n\n");
+
+                if (report.getPermission().personalityPortrait) {
+                    buf.append("**【人格画像】** ：**").append(bigFivePersonality.getDisplayName()).append("**。\n\n");
+                    buf.append("**【人格描述】** ：\n\n").append(bigFivePersonality.getDescription()).append("\n\n");
+                }
+                else {
+                    buf.append("**【人格画像】** ：**").append(clipContent(bigFivePersonality.getDisplayName(), false));
+                    buf.append("**【人格描述】** ：\n\n").append(clipContent(bigFivePersonality.getDescription()));
+                }
+
                 buf.append("大五人格理论，通过宜人性、尽责性、外向性、进取性和情绪性五个维度的评测，直观地展示受测人在五个维度上的得分情况，有助于更清晰地认识受测人的性格轮廓。以下是五个维度数据：\n\n");
 
-                buf.append("### **宜人性** （")
-                        .append(String.format("%.1f", bigFivePersonality.getObligingness())).append("）\n\n");
-                buf.append("* **评级** ：")
-                        .append(evalPersonalityScore(bigFivePersonality.getObligingness())).append("\n\n");
-                buf.append(bigFivePersonality.getObligingnessContent()).append("\n\n");
+                if (report.getPermission().personalityDetails) {
+                    buf.append("### **宜人性** （")
+                            .append(String.format("%.1f", bigFivePersonality.getObligingness())).append("）\n\n");
+                    buf.append("* **评级** ：")
+                            .append(evalPersonalityScore(bigFivePersonality.getObligingness())).append("\n\n");
+                    buf.append(bigFivePersonality.getObligingnessContent()).append("\n\n");
 
-                buf.append("### **尽责性** （")
-                        .append(String.format("%.1f", bigFivePersonality.getConscientiousness())).append("）\n\n");
-                buf.append("* **评级** ：")
-                        .append(evalPersonalityScore(bigFivePersonality.getConscientiousness())).append("\n\n");
-                buf.append(bigFivePersonality.getConscientiousnessContent()).append("\n\n");
+                    buf.append("### **尽责性** （")
+                            .append(String.format("%.1f", bigFivePersonality.getConscientiousness())).append("）\n\n");
+                    buf.append("* **评级** ：")
+                            .append(evalPersonalityScore(bigFivePersonality.getConscientiousness())).append("\n\n");
+                    buf.append(bigFivePersonality.getConscientiousnessContent()).append("\n\n");
 
-                buf.append("### **外向性** （")
-                        .append(String.format("%.1f", bigFivePersonality.getExtraversion())).append("）\n\n");
-                buf.append("* **评级** ：")
-                        .append(evalPersonalityScore(bigFivePersonality.getExtraversion())).append("\n\n");
-                buf.append(bigFivePersonality.getExtraversionContent()).append("\n\n");
+                    buf.append("### **外向性** （")
+                            .append(String.format("%.1f", bigFivePersonality.getExtraversion())).append("）\n\n");
+                    buf.append("* **评级** ：")
+                            .append(evalPersonalityScore(bigFivePersonality.getExtraversion())).append("\n\n");
+                    buf.append(bigFivePersonality.getExtraversionContent()).append("\n\n");
 
-                buf.append("### **进取性** （")
-                        .append(String.format("%.1f", bigFivePersonality.getAchievement())).append("）\n\n");
-                buf.append("* **评级** ：")
-                        .append(evalPersonalityScore(bigFivePersonality.getAchievement())).append("\n\n");
-                buf.append(bigFivePersonality.getAchievementContent()).append("\n\n");
+                    buf.append("### **进取性** （")
+                            .append(String.format("%.1f", bigFivePersonality.getAchievement())).append("）\n\n");
+                    buf.append("* **评级** ：")
+                            .append(evalPersonalityScore(bigFivePersonality.getAchievement())).append("\n\n");
+                    buf.append(bigFivePersonality.getAchievementContent()).append("\n\n");
 
-                buf.append("### **情绪性** （")
-                        .append(String.format("%.1f", bigFivePersonality.getNeuroticism())).append("）\n\n");
-                buf.append("* **评级** ：")
-                        .append(evalPersonalityScore(bigFivePersonality.getNeuroticism())).append("\n\n");
-                buf.append(bigFivePersonality.getNeuroticismContent()).append("\n\n");
+                    buf.append("### **情绪性** （")
+                            .append(String.format("%.1f", bigFivePersonality.getNeuroticism())).append("）\n\n");
+                    buf.append("* **评级** ：")
+                            .append(evalPersonalityScore(bigFivePersonality.getNeuroticism())).append("\n\n");
+                    buf.append(bigFivePersonality.getNeuroticismContent()).append("\n\n");
+                }
+                else {
+                    buf.append("### **宜人性** （").append("...").append("）\n\n");
+                    buf.append("* **评级** ：").append(clipContent("", false));
+                    buf.append(clipContent(bigFivePersonality.getObligingnessContent()));
+
+                    buf.append("### **尽责性** （").append("...").append("）\n\n");
+                    buf.append("* **评级** ：").append(clipContent("", false));
+                    buf.append(clipContent(bigFivePersonality.getConscientiousnessContent()));
+
+                    buf.append("### **外向性** （").append("...").append("）\n\n");
+                    buf.append("* **评级** ：").append(clipContent("", false));
+                    buf.append(clipContent(bigFivePersonality.getExtraversionContent()));
+
+                    buf.append("### **进取性** （").append("...").append("）\n\n");
+                    buf.append("* **评级** ：").append(clipContent("", false));
+                    buf.append(clipContent(bigFivePersonality.getAchievementContent()));
+
+                    buf.append("### **情绪性** （").append("...").append("）\n\n");
+                    buf.append("* **评级** ：").append(clipContent("", false));
+                    buf.append(clipContent(bigFivePersonality.getNeuroticismContent()));
+                }
             }
         }
 
         if (maxIndicators > 0 || personality) {
-            buf.append("综上所述，通过各项评测描述可以帮助受测人对自身有一个清晰、客观、全面的认识，从而进行科学、有效的管理。通过对自身的心理状态、人格特质等方面的了解，认识到更多的可能性，从而对生活和工作方向提供参考。");
-            if (evalReport.getAttention().level <= Attention.GeneralAttention.level && !evalReport.isHesitating()) {
-                buf.append("本次评测中，**受测人目前的心理状态尚可，应当积极保持良好的作息和积极的生活、工作习惯。遇到困难可积极应对。**");
-            }
-            else {
-                buf.append("本次评测中，**受测人应当关注自己近期的心理状态变化，如果有需要应当积极需求帮助。**");
-            }
-            buf.append("\n\n");
+            buf.append("综上所述，通过各项评测描述可以帮助受测人对自身有一个清晰、客观、全面的认识，从而进行科学、有效的管理。通过对自身的心理状态、人格特质等方面的了解，认识到更多的可能性，从而对生活和工作方向提供参考。\n\n");
 
-            buf.append("对于本次评测，您还需要知道的是：\n\n");
-            buf.append("1. **不要将测试结果当作永久的“标签”。** 测试的结果仅仅是根据最近一周或者近期的感觉，其结果也只是表明短期内的心理健康状态，是可以调整变化的，不必产生心理负担。\n\n");
-            buf.append("2. **评测结果没有“好”与“坏”之分。** 评测结果与个人道德品质无关，只反映你目前的心理状态，但不同的特点对于不同的工作、生活状态会存在“合适”和“不合适”的区别，从而表现出具体条件的优势和劣势。\n\n");
-            buf.append("3. **以整体的观点来看待测试结果。** 很多测验都包含多个分测验，对于这类测验来说，不应该孤立地理解单个分测验的成绩。在评定一个人的特征时，一方面需要理解每一个分测验分数的意义，但更重要的是综合所有信息全面分析。\n\n");
+            if (report.getPermission().attention || report.getPermission().suggestion) {
+                // 关注等级或者建议有授权
+                if (evalReport.getAttention().level <= Attention.GeneralAttention.level && !evalReport.isHesitating()) {
+                    buf.append("本次评测中，**受测人目前的心理状态尚可，应当积极保持良好的作息和积极的生活、工作习惯。遇到困难可积极应对。**");
+                }
+                else {
+                    buf.append("本次评测中，**受测人应当关注自己近期的心理状态变化，如果有需要应当积极需求帮助。**");
+                }
+                buf.append("\n\n");
+            }
+
+            if (report.getPermission().indicatorDetails || report.getPermission().personalityDetails) {
+                buf.append("对于本次评测，您还需要知道的是：\n\n");
+                buf.append("1. **不要将测试结果当作永久的“标签”。** 测试的结果仅仅是根据最近一周或者近期的感觉，其结果也只是表明短期内的心理健康状态，是可以调整变化的，不必产生心理负担。\n\n");
+                buf.append("2. **评测结果没有“好”与“坏”之分。** 评测结果与个人道德品质无关，只反映你目前的心理状态，但不同的特点对于不同的工作、生活状态会存在“合适”和“不合适”的区别，从而表现出具体条件的优势和劣势。\n\n");
+                buf.append("3. **以整体的观点来看待测试结果。** 很多测验都包含多个分测验，对于这类测验来说，不应该孤立地理解单个分测验的成绩。在评定一个人的特征时，一方面需要理解每一个分测验分数的意义，但更重要的是综合所有信息全面分析。\n\n");
+            }
         }
 
         return buf.toString();
@@ -318,7 +363,7 @@ public class ContentTools {
         return buf.toString();
     }
 
-    public static String makeReportList(AIGCChannel channel, List<PaintingReport> reports) {
+    public static String makeReportList(List<PaintingReport> reports) {
         StringBuilder buf = new StringBuilder();
         int index = 0;
         for (PaintingReport report : reports) {
@@ -353,8 +398,9 @@ public class ContentTools {
             buf.append("* 评测日期：").append(gsDateFormat.format(new Date(report.timestamp))).append("\n");
             buf.append("* 受测人：").append(report.getAttribute().getGenderText()).append("性，")
                     .append(report.getAttribute().getAgeText()).append("\n");
-            boolean valid = (null != report.painting) ? report.painting.isValid() : true;
-            buf.append("* 绘画是否有效：").append(valid ? "有效" : "无效").append("\n");
+            if (null != report.painting) {
+                buf.append("* 绘画是否有效：").append(report.painting.isValid() ? "有效" : "无效").append("\n");
+            }
 //            buf.append("* 绘画图片：\n");
 //            buf.append("![绘画](");
 //            buf.append(FileLabels.makeFileHttpsURL(report.getFileLabel(),
@@ -450,7 +496,7 @@ public class ContentTools {
     private static String clipContent(String content, boolean tipLink) {
         String value = "";
         if (null != content && content.length() > 1) {
-            int max = Math.min(Math.round((float)content.length() * 0.2f), 50);
+            int max = Math.min((int)Math.ceil((double) content.length() * 0.2), 50);
             value = content.substring(0, max);
         }
         StringBuilder buf = new StringBuilder(value);
@@ -467,6 +513,6 @@ public class ContentTools {
     }
 
     private static String tipContent(String content) {
-        return Link.formatPromptDirectMarkdown(content, "如何查看报告的全部内容？");
+        return Link.formatPromptDirectMarkdown(content, "如何查看报告的全部内容？") + "\n\n";
     }
 }

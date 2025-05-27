@@ -62,11 +62,11 @@ public class QueryReportSubtask extends ConversationSubtask {
                 public void run() {
                     String answer = infer(String.format(Resource.getInstance().getCorpus(CORPUS,
                             "FORMAT_PROMPT_QUERY_REPORT_RESULT"),
-                            total, list.size(), ContentTools.makeReportList(channel, list), query));
+                            total, list.size(), ContentTools.makeReportList(list), query));
                     if (null == answer) {
                         answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                 "FORMAT_ANSWER_QUERY_REPORT_RESULT"),
-                                total, list.size(), ContentTools.makeReportList(channel, list));
+                                total, list.size(), ContentTools.makeReportList(list));
                     }
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = answer;
