@@ -378,7 +378,7 @@ public class PaintingReport extends Report {
         }
     }
 
-    public JSONObject toTextListJSON() {
+    public JSONObject makeReportSectionJSON() {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
 
@@ -393,7 +393,7 @@ public class PaintingReport extends Report {
         return json;
     }
 
-    public void extendTextList(JSONObject json) {
+    public void extendReportSections(JSONObject json) {
         if (json.has("reportTextList")) {
             this.reportSectionList = new ArrayList<>();
             JSONArray array = json.getJSONArray("reportTextList");

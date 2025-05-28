@@ -89,7 +89,7 @@ public class GetPsychologyReportTask extends ServiceTask {
                 }
                 else {
                     if (texts) {
-                        reportJson = report.toTextListJSON();
+                        reportJson = report.makeReportSectionJSON();
                     }
                     else {
                         reportJson = report.toCompactJSON();

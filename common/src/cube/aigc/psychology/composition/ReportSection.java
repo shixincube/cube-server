@@ -41,6 +41,16 @@ public class ReportSection implements JSONable {
         this.rate = rate;
     }
 
+    public JSONObject toPermissionJSON() {
+        JSONObject json = new JSONObject();
+        json.put("indicator", this.indicator.name);
+        json.put("title", this.title);
+        json.put("report", TextUtils.clip(this.report));
+        json.put("suggestion", TextUtils.clip(this.suggestion));
+        json.put("rate", this.rate.toJSON());
+        return json;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

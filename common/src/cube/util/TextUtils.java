@@ -775,6 +775,17 @@ public final class TextUtils {
         return textList;
     }
 
+    public static String clip(String content) {
+        String value = "";
+        if (null != content && content.length() > 1) {
+            int end = Math.min((int)Math.ceil((double) content.length() * 0.2), 20);
+            value = content.substring(0, end);
+        }
+        StringBuilder buf = new StringBuilder(value);
+        buf.append("...");
+        return buf.toString();
+    }
+
     public static void main(String[] args) {
 //        String[] data = {
 //                "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1",

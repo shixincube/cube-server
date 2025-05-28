@@ -2170,7 +2170,7 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
-        report.extendTextList(Packet.extractDataPayload(responsePacket));
+        report.extendReportSections(Packet.extractDataPayload(responsePacket));
 
         // 第三步，是否获取 Markdown 数据
         if (markdown) {

@@ -110,7 +110,7 @@ public class GetPsychologyReportPartTask extends ServiceTask {
                     if (null != list) {
                         JSONArray array = new JSONArray();
                         for (ReportSection rs : list) {
-                            array.put(rs.toJSON());
+                            array.put(rs.toPermissionJSON());
                         }
                         responseData.put("sections", array);
                     }

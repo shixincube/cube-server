@@ -496,8 +496,8 @@ public class ContentTools {
     private static String clipContent(String content, boolean tipLink) {
         String value = "";
         if (null != content && content.length() > 1) {
-            int max = Math.min((int)Math.ceil((double) content.length() * 0.2), 50);
-            value = content.substring(0, max);
+            int end = Math.min((int)Math.ceil((double) content.length() * 0.2), 50);
+            value = content.substring(0, end);
         }
         StringBuilder buf = new StringBuilder(value);
         buf.append("...");
