@@ -57,7 +57,7 @@ public class GuideFlowSubtask extends ConversationSubtask {
                 public void run() {
                     guideFlow.stop();
 
-                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                    ComplexContext complexContext = new ComplexContext();
                     complexContext.setSubtask(Subtask.StopGuideFlow);
 
                     String answer = fastPolish((null != guideFlow.getCurrentSection().getInterruption()) ?

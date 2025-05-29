@@ -61,7 +61,7 @@ public class StopGuideFlowSubtask extends ConversationSubtask {
 
                 GuideFlow impl = (GuideFlow) guideFlow;
 
-                ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                ComplexContext complexContext = new ComplexContext();
                 complexContext.setSubtask(Subtask.StopGuideFlow);
 
                 TimeDuration duration = TimeUtils.calcTimeDuration(

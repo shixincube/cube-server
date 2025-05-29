@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ComplexContext extends Entity {
 
+    /* 2025-5-29 作废
     public enum Type {
 
         Lightweight("lightweight"),
@@ -47,6 +48,9 @@ public class ComplexContext extends Entity {
     }
 
     public final Type type;
+    */
+
+    private final boolean simplex;
 
     private String subtask;
 
@@ -65,15 +69,22 @@ public class ComplexContext extends Entity {
 
     public Stage stage;
 
-    public ComplexContext(Type type) {
+    public ComplexContext() {
         super(Utils.generateSerialNumber());
-        this.type = type;
+        this.simplex = true;
+        this.resources = new ArrayList<>();
+    }
+
+    public ComplexContext(boolean simplex) {
+        super(Utils.generateSerialNumber());
+        this.simplex = simplex;
         this.resources = new ArrayList<>();
     }
 
     public ComplexContext(JSONObject json) {
         super(json);
-        this.type = Type.parse(json.getString("type"));
+        this.simplex = json.has("type") ?
+                parseSimplex(json.getString("type")) : json.getBoolean("simplex");
         this.resources = new ArrayList<>();
 
         JSONArray array = json.getJSONArray("resources");
@@ -135,7 +146,7 @@ public class ComplexContext extends Entity {
     }
 
     public boolean isSimplified() {
-        return this.type == Type.Lightweight;
+        return this.simplex;
     }
 
     public void setSubtask(Subtask subtask) {
@@ -232,10 +243,14 @@ public class ComplexContext extends Entity {
         }
     }
 
+    private boolean parseSimplex(String value) {
+        return (value.equalsIgnoreCase("lightweight") || value.equalsIgnoreCase("simplex"));
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-        json.put("type", this.type.value);
+        json.put("simplex", this.simplex);
 
         JSONArray array = new JSONArray();
         for (ComplexResource resource : this.resources) {

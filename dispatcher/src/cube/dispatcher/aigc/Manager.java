@@ -1993,17 +1993,17 @@ public class Manager implements Tickable, PerformerListener {
      * @param attribute
      * @param fileCode
      * @param theme
-     * @param indicatorTexts
+     * @param numIndicators
      * @return
      */
     public PaintingReport generatePsychologyReport(String remote, String token, Attribute attribute,
-                                                   String fileCode, String theme, int indicatorTexts) {
+                                                   String fileCode, String theme, int numIndicators) {
         JSONObject data = new JSONObject();
         data.put("remote", remote);
         data.put("attribute", attribute.toJSON());
         data.put("fileCode", fileCode);
         data.put("theme", theme);
-        data.put("indicators", indicatorTexts);
+        data.put("indicators", numIndicators);
 
         Packet packet = new Packet(AIGCAction.GeneratePsychologyReport.name, data);
         ActionDialect request = packet.toDialect();
@@ -2122,7 +2122,7 @@ public class Manager implements Tickable, PerformerListener {
         // 第一步，获取基础数据
         JSONObject data = new JSONObject();
         data.put("sn", sn);
-        data.put("texts", false);
+        data.put("sections", false);
         data.put("markdown", false);
         Packet packet = new Packet(AIGCAction.GetPsychologyReport.name, data);
         ActionDialect request = packet.toDialect();
@@ -2149,10 +2149,10 @@ public class Manager implements Tickable, PerformerListener {
 
         PaintingReport report = new PaintingReport(reportJson);
 
-        // 第二步，获取文本数据
+        // 第二步，获取报告数据各段落
         data = new JSONObject();
         data.put("sn", sn);
-        data.put("texts", true);
+        data.put("sections", true);
         data.put("markdown", false);
         packet = new Packet(AIGCAction.GetPsychologyReport.name, data);
         request = packet.toDialect();
@@ -2176,7 +2176,7 @@ public class Manager implements Tickable, PerformerListener {
         if (markdown) {
             data = new JSONObject();
             data.put("sn", sn);
-            data.put("texts", false);
+            data.put("sections", false);
             data.put("markdown", true);
             packet = new Packet(AIGCAction.GetPsychologyReport.name, data);
             request = packet.toDialect();

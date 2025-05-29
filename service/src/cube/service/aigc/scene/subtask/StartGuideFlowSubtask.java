@@ -66,7 +66,7 @@ public class StartGuideFlowSubtask extends ConversationSubtask {
                         polish(guideFlow.getInstruction()).trim(),
                         guideFlow.makeQuestion(true));
 
-                ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                ComplexContext complexContext = new ComplexContext();
                 complexContext.setSubtask(Subtask.GuideFlow);
 
                 GeneratingRecord record = new GeneratingRecord(query);

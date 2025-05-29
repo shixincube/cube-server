@@ -73,7 +73,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                        ComplexContext complexContext = new ComplexContext();
                         complexContext.setSubtask(Subtask.Questionnaire);
 
                         GeneratingRecord record = new GeneratingRecord(query);
@@ -110,7 +110,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                        ComplexContext complexContext = new ComplexContext();
                         complexContext.setSubtask(Subtask.StopQuestionnaire);
 
                         GeneratingRecord record = new GeneratingRecord(query);
@@ -137,7 +137,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
-                            ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                            ComplexContext complexContext = new ComplexContext();
                             complexContext.setSubtask(Subtask.Questionnaire);
 
                             GeneratingRecord record = new GeneratingRecord(query);
@@ -162,7 +162,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
-                            ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                            ComplexContext complexContext = new ComplexContext();
                             complexContext.setSubtask(Subtask.Questionnaire);
 
                             GeneratingRecord record = new GeneratingRecord(query);
@@ -191,7 +191,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
             this.service.getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
-                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                    ComplexContext complexContext = new ComplexContext();
                     complexContext.setSubtask(Subtask.StopQuestionnaire);
 
                     TimeDuration duration = TimeUtils.calcTimeDuration(
@@ -227,7 +227,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                        ComplexContext complexContext = new ComplexContext();
                         complexContext.setSubtask(Subtask.Questionnaire);
 
                         StringBuilder answer = new StringBuilder();
@@ -300,7 +300,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
 
             if (null == result) {
                 // 错误
-                ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                ComplexContext complexContext = new ComplexContext();
                 complexContext.setSubtask(Subtask.Questionnaire);
 
                 GeneratingRecord record = new GeneratingRecord(query);
@@ -353,7 +353,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                        ComplexContext complexContext = new ComplexContext();
                         complexContext.setSubtask(Subtask.Questionnaire);
 
                         StringBuilder answer = new StringBuilder();
@@ -455,7 +455,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 });
 
                 if (null == scaleReport) {
-                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                    ComplexContext complexContext = new ComplexContext();
                     complexContext.setSubtask(Subtask.StopQuestionnaire);
 
                     GeneratingRecord record = new GeneratingRecord(query);
@@ -483,7 +483,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 TimeDuration duration = TimeUtils.calcTimeDuration(
                         scaleTrack.scale.getEndTimestamp() - scaleTrack.scale.getTimestamp());
 
-                ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                ComplexContext complexContext = new ComplexContext();
                 complexContext.setSubtask(Subtask.StopQuestionnaire);
 
                 String prefix = polish(String.format(
@@ -514,7 +514,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
 
     private AIGCStateCode processOffQuery(SceneManager.ScaleTrack scaleTrack) {
         if (scaleTrack.offQueries.size() >= abortQuestionnaireThreshold) {
-            ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+            ComplexContext complexContext = new ComplexContext();
             complexContext.setSubtask(Subtask.StopQuestionnaire);
 
             // 停止答题
@@ -532,7 +532,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
             convCtx.cancelCurrentSubtask();
         }
         else {
-            ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+            ComplexContext complexContext = new ComplexContext();
             complexContext.setSubtask(Subtask.Questionnaire);
 
             String answer = String.format(
@@ -577,7 +577,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
             this.service.getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
-                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                    ComplexContext complexContext = new ComplexContext();
                     complexContext.setSubtask(Subtask.Questionnaire);
 
                     GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
@@ -617,7 +617,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
             @Override
             public void run() {
                 if (scaleTrack.offQueries.size() >= abortQuestionnaireThreshold) {
-                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                    ComplexContext complexContext = new ComplexContext();
                     complexContext.setSubtask(Subtask.StopQuestionnaire);
 
                     // 停止答题
@@ -636,7 +636,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 }
                 else if (scaleTrack.offQueries.size() > 1) {
                     // 提示并进行指导
-                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                    ComplexContext complexContext = new ComplexContext();
                     complexContext.setSubtask(Subtask.Questionnaire);
 
                     if (analysis) {
@@ -717,7 +717,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     }
                 }
                 else {
-                    ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                    ComplexContext complexContext = new ComplexContext();
                     complexContext.setSubtask(Subtask.Questionnaire);
 
                     if (analysis) {

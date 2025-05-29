@@ -2591,7 +2591,7 @@ public class AIGCService extends AbstractModule implements Generatable {
      */
     private ComplexContext recognizeContext(String text, AuthToken authToken) {
         final String content = text.trim();
-        ComplexContext result = new ComplexContext(ComplexContext.Type.Lightweight);
+        ComplexContext result = new ComplexContext();
 
         List<String> urlList = TextUtils.extractAllURLs(content);
         if (!urlList.isEmpty()) {
@@ -2619,7 +2619,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             Packet response = new Packet(dialect);
             if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
                 Logger.d(this.getClass(), "#recognizeContent - Process url list failed");
-                result = new ComplexContext(ComplexContext.Type.Heavyweight);
+                result = new ComplexContext(false);
                 for (String url : urlList) {
                     HyperlinkResource resource = new HyperlinkResource(url, HyperlinkResource.TYPE_FAILURE);
                     resource.fixContent();
@@ -2629,7 +2629,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             else {
                 JSONObject data = Packet.extractDataPayload(response);
                 JSONArray list = data.getJSONArray("list");
-                result = new ComplexContext(ComplexContext.Type.Heavyweight);
+                result = new ComplexContext(false);
                 for (int i = 0; i < list.length(); ++i) {
                     JSONObject resPayload = new JSONObject();
                     resPayload.put("payload", list.getJSONObject(i));
@@ -2660,7 +2660,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
                 HyperlinkResource resource = new HyperlinkResource(content, HyperlinkResource.TYPE_FAILURE);
                 resource.fixContent();
-                result = new ComplexContext(ComplexContext.Type.Heavyweight);
+                result = new ComplexContext(false);
                 result.addResource(resource);
             }
             else {
@@ -2668,13 +2668,13 @@ public class AIGCService extends AbstractModule implements Generatable {
                 JSONArray list = data.getJSONArray("list");
                 if (list.isEmpty()) {
                     // 列表没有数据，获取 URL 失败
-                    result = new ComplexContext(ComplexContext.Type.Heavyweight);
+                    result = new ComplexContext(false);
                     HyperlinkResource resource = new HyperlinkResource(content, HyperlinkResource.TYPE_FAILURE);
                     resource.fixContent();
                     result.addResource(resource);
                 }
                 else {
-                    result = new ComplexContext(ComplexContext.Type.Heavyweight);
+                    result = new ComplexContext(false);
                     JSONObject resPayload = new JSONObject();
                     resPayload.put("payload", list.getJSONObject(0));
                     HyperlinkResource resource = new HyperlinkResource(resPayload);
@@ -2686,7 +2686,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         else {
             Stage stage = Explorer.getInstance().perform(authToken, content);
             if (stage.isFlowable()) {
-                result = new ComplexContext(ComplexContext.Type.Heavyweight);
+                result = new ComplexContext(false);
                 result.stage = stage;
             }
 
@@ -3100,7 +3100,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             // 识别内容
             ComplexContext complexContext = option.recognizeContext ?
                     recognizeContext(this.content, this.channel.getAuthToken()) :
-                    new ComplexContext(ComplexContext.Type.Lightweight);
+                    new ComplexContext();
 
             // 设置是否进行联网分析
             complexContext.setNetworking(this.networkingEnabled);

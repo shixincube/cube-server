@@ -60,6 +60,8 @@ public class QueryReportSubtask extends ConversationSubtask {
             this.service.getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
+                    ComplexContext complexContext = new ComplexContext();
+
                     String answer = infer(String.format(Resource.getInstance().getCorpus(CORPUS,
                             "FORMAT_PROMPT_QUERY_REPORT_RESULT"),
                             total, list.size(), ContentTools.makeReportList(list), query));

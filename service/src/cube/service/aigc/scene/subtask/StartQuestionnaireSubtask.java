@@ -98,7 +98,7 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
         this.service.getExecutor().execute(new Runnable() {
             @Override
             public void run() {
-                ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                ComplexContext complexContext = new ComplexContext();
                 complexContext.setSubtask(Subtask.StartQuestionnaire);
 
                 GeneratingRecord record = new GeneratingRecord(query);

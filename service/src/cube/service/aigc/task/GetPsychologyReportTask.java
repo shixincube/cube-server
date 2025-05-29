@@ -56,7 +56,7 @@ public class GetPsychologyReportTask extends ServiceTask {
 
         long sn = 0;
         boolean markdown = false;
-        boolean texts = false;
+        boolean sections = false;
 
         int pageIndex = 0;
         int pageSize = 0;
@@ -65,7 +65,7 @@ public class GetPsychologyReportTask extends ServiceTask {
 
         try {
             sn = packet.data.has("sn") ? packet.data.getLong("sn") : 0;
-            texts = packet.data.has("texts") && packet.data.getBoolean("texts");
+            sections = packet.data.has("sections") && packet.data.getBoolean("sections");
             markdown = packet.data.has("markdown") && packet.data.getBoolean("markdown");
 
             pageIndex = packet.data.has("page") ? packet.data.getInt("page") : 0;
@@ -88,7 +88,7 @@ public class GetPsychologyReportTask extends ServiceTask {
                     reportJson = report.toMarkdown();
                 }
                 else {
-                    if (texts) {
+                    if (sections) {
                         reportJson = report.makeReportSectionJSON();
                     }
                     else {

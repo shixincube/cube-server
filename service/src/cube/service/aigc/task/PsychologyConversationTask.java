@@ -86,7 +86,7 @@ public class PsychologyConversationTask extends ServiceTask {
                     AuthToken authToken = service.getToken(token);
                     FileLabel fileLabel = service.getFile(authToken.getDomain(), ctxJson.getString("fileCode"));
                     if (null != fileLabel) {
-                        context = new ComplexContext(ComplexContext.Type.Lightweight);
+                        context = new ComplexContext();
                         context.addResource(new FileResource(fileLabel));
                     }
                 }
@@ -133,7 +133,7 @@ public class PsychologyConversationTask extends ServiceTask {
         }
         else {
             if (null == context) {
-                context = new ComplexContext(ComplexContext.Type.Lightweight);
+                context = new ComplexContext();
             }
 
             if (null == relation) {

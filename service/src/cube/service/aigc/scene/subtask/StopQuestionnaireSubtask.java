@@ -56,7 +56,7 @@ public class StopQuestionnaireSubtask extends ConversationSubtask {
         this.service.getExecutor().execute(new Runnable() {
             @Override
             public void run() {
-                ComplexContext complexContext = new ComplexContext(ComplexContext.Type.Lightweight);
+                ComplexContext complexContext = new ComplexContext();
                 complexContext.setSubtask(Subtask.StopQuestionnaire);
 
                 TimeDuration duration = TimeUtils.calcTimeDuration(

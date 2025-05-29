@@ -1534,7 +1534,7 @@ public class KnowledgeBase {
                     channel.setLastUnitMetaSn(sn);
 
                     GeneratingRecord record = new GeneratingRecord(sn, unitName, queryForResult, EMPTY_BASE_ANSWER,
-                            "", System.currentTimeMillis(), new ComplexContext(ComplexContext.Type.Lightweight));
+                            "", System.currentTimeMillis(), new ComplexContext());
                     KnowledgeQAResult result = new KnowledgeQAResult(queryForResult, "", record);
                     listener.onCompleted(channel, result);
                 }
