@@ -6,9 +6,9 @@
 
 package cube.service.aigc.resource;
 
-import cube.aigc.attachment.CardAttachment;
-import cube.aigc.attachment.ThingAttachment;
-import cube.aigc.attachment.ui.Button;
+import cube.aigc.complex.attachment.CardAttachment;
+import cube.aigc.complex.attachment.ThingAttachment;
+import cube.aigc.complex.widget.Button;
 
 /**
  * 附件构建器。

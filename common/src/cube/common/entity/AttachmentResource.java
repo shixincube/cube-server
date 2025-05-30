@@ -6,9 +6,9 @@
 
 package cube.common.entity;
 
-import cube.aigc.attachment.Attachment;
-import cube.aigc.attachment.ThingAttachment;
-import cube.aigc.attachment.ReportAttachment;
+import cube.aigc.complex.attachment.Attachment;
+import cube.aigc.complex.attachment.ThingAttachment;
+import cube.aigc.complex.attachment.ReportAttachment;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

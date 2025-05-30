@@ -6,7 +6,7 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.aigc.attachment.ui.Event;
+import cube.aigc.complex.widget.Event;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;

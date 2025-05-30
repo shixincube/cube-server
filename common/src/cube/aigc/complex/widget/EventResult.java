@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.aigc.attachment.ui;
+package cube.aigc.complex.widget;
 
 import cube.common.JSONable;
 import org.json.JSONObject;

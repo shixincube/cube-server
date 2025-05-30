@@ -4,14 +4,14 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.aigc.attachment.ui;
+package cube.aigc.complex.widget;
 
 import org.json.JSONObject;
 
 /**
  * 按钮组件。
  */
-public class Button extends Component {
+public class Button extends Widget {
 
     public final static String NAME = "Button";
 

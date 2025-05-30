@@ -7,8 +7,8 @@
 package cube.service.aigc.scene;
 
 import cell.util.Utils;
-import cube.aigc.attachment.Attachment;
-import cube.aigc.attachment.ReportAttachment;
+import cube.aigc.complex.attachment.Attachment;
+import cube.aigc.complex.attachment.ReportAttachment;
 import cube.aigc.guidance.EvaluationResult;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.ConversationContext;

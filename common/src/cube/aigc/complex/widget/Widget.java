@@ -4,15 +4,15 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.aigc.attachment.ui;
+package cube.aigc.complex.widget;
 
 import cell.util.Utils;
 import org.json.JSONObject;
 
 /**
- * 互动组件。
+ * UI组件。
  */
-public abstract class Component {
+public abstract class Widget {
 
     protected final long id;
 
@@ -24,14 +24,14 @@ public abstract class Component {
 
 //    protected Map<String, String> attributes;
 
-    public Component(String name) {
+    public Widget(String name) {
         this.id = Utils.generateSerialNumber();
         this.name = name;
         this.disposable = false;
 //        this.attributes = new HashMap<>();
     }
 
-    public Component(JSONObject json) {
+    public Widget(JSONObject json) {
         this.id = json.getLong("id");
         this.name = json.getString("name");
         this.disposable = json.getBoolean("disposable");

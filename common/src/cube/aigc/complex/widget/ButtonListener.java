@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.aigc.attachment.ui;
+package cube.aigc.complex.widget;
 
 public interface ButtonListener {
 

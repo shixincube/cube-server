@@ -15,7 +15,7 @@ import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.aigc.PromptRecord;
 import cube.aigc.app.ConfigInfo;
-import cube.aigc.attachment.ui.Event;
+import cube.aigc.complex.widget.Event;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Report;

@@ -4,9 +4,9 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.aigc.attachment.ui;
+package cube.aigc.complex.widget;
 
-import cube.aigc.attachment.Attachment;
+import cube.aigc.complex.attachment.Attachment;
 import cube.common.JSONable;
 import cube.common.entity.AttachmentResource;
 import cube.common.entity.ComplexResource;
@@ -31,7 +31,7 @@ public class Event implements JSONable {
 
     public Attachment attachment;
 
-    public Component target;
+    public Widget target;
 
     public ComplexResource resultResource;
 

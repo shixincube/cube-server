@@ -7,7 +7,7 @@
 package cube.service.aigc.scene.subtask;
 
 import cube.aigc.ModelConfig;
-import cube.aigc.attachment.ReportAttachment;
+import cube.aigc.complex.attachment.ReportAttachment;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.ConversationContext;

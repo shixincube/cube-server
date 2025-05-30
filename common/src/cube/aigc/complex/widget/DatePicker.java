@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.aigc.attachment.ui;
+package cube.aigc.complex.widget;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -12,7 +12,7 @@ import org.json.JSONObject;
 /**
  * 日期选择器组件。
  */
-public class DatePicker extends Component {
+public class DatePicker extends Widget {
 
     public final static String TYPE_DATE = "date";
 

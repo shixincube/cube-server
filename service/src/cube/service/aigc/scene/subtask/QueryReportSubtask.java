@@ -7,6 +7,8 @@
 package cube.service.aigc.scene.subtask;
 
 import cube.aigc.ModelConfig;
+import cube.aigc.complex.widget.ListTile;
+import cube.aigc.complex.widget.ListView;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.ConversationContext;
@@ -15,11 +17,12 @@ import cube.aigc.psychology.composition.Subtask;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.GeneratingRecord;
+import cube.common.entity.WidgetResource;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
-import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.ContentTools;
+import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.SceneManager;
 
 import java.util.List;
@@ -60,7 +63,15 @@ public class QueryReportSubtask extends ConversationSubtask {
             this.service.getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
+                    ListView listView = new ListView();
+                    for (PaintingReport paintingReport : list) {
+                        ListTile tile = new ListTile(ContentTools.makeReportThemeName(paintingReport));
+                        tile.subtitle = ContentTools.makeReportDate(paintingReport);
+                        listView.addItem(tile);
+                    }
+
                     ComplexContext complexContext = new ComplexContext();
+                    complexContext.addResource(new WidgetResource(listView));
 
                     String answer = infer(String.format(Resource.getInstance().getCorpus(CORPUS,
                             "FORMAT_PROMPT_QUERY_REPORT_RESULT"),
@@ -71,6 +82,7 @@ public class QueryReportSubtask extends ConversationSubtask {
                                 total, list.size(), ContentTools.makeReportList(list));
                     }
                     GeneratingRecord record = new GeneratingRecord(query);
+                    record.context = complexContext;
                     record.answer = answer;
                     convCtx.record(record);
                     listener.onGenerated(channel, record);

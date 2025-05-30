@@ -4,10 +4,10 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.aigc.attachment;
+package cube.aigc.complex.attachment;
 
-import cube.aigc.attachment.ui.Button;
-import cube.aigc.attachment.ui.Component;
+import cube.aigc.complex.widget.Button;
+import cube.aigc.complex.widget.Widget;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -85,8 +85,8 @@ public class ThingAttachment extends Attachment {
 
         if (null != this.actions) {
             JSONArray actionArray = new JSONArray();
-            for (Component component : this.actions) {
-                actionArray.put(component.toJSON());
+            for (Widget widget : this.actions) {
+                actionArray.put(widget.toJSON());
             }
             json.put("actions", actionArray);
         }

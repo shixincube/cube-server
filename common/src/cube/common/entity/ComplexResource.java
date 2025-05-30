@@ -17,12 +17,29 @@ public abstract class ComplexResource implements JSONable {
 
     public enum Subject {
 
+        /**
+         * 文件。
+         */
         File,
 
+        /**
+         * 超链接。
+         */
         Hyperlink,
 
+        /**
+         * 图表。
+         */
         Chart,
 
+        /**
+         * 界面组件。
+         */
+        Widget,
+
+        /**
+         * 附录。
+         */
         Attachment,
 
         ;
@@ -36,6 +53,9 @@ public abstract class ComplexResource implements JSONable {
             }
             else if (name.equalsIgnoreCase(Subject.Chart.name())) {
                 return Chart;
+            }
+            else if (name.equalsIgnoreCase(Subject.Widget.name())) {
+                return Widget;
             }
             else if (name.equalsIgnoreCase(Subject.Attachment.name())) {
                 return Attachment;
@@ -55,9 +75,9 @@ public abstract class ComplexResource implements JSONable {
         this.sn = Utils.generateSerialNumber();
     }
 
-    protected ComplexResource(Subject subject, JSONObject json) {
+    protected ComplexResource(Subject subject, JSONObject data) {
         this.subject = subject;
-        this.sn = json.has("sn") ? json.getLong("sn") : Utils.generateSerialNumber();
+        this.sn = data.has("sn") ? data.getLong("sn") : Utils.generateSerialNumber();
     }
 
     public Subject getSubject() {

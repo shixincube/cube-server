@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.aigc.attachment;
+package cube.aigc.complex.attachment;
 
 public class CardAttachment extends Attachment {
 

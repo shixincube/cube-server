@@ -414,27 +414,31 @@ public class ContentTools {
 
     public static String makeReportTitle(PaintingReport report) {
         StringBuffer buf = new StringBuffer();
-        buf.append(gsDateFormat.format(new Date(report.timestamp)));
+        buf.append(makeReportThemeName(report));
         buf.append("-").append(report.getAttribute().getGenderText());
         buf.append("-").append(report.getAttribute().getAgeText());
+        buf.append("-").append(makeReportDate(report));
+        return buf.toString();
+    }
+
+    public static String makeReportThemeName(PaintingReport report) {
         switch (report.getTheme()) {
             case Generic:
             case HouseTreePerson:
-                buf.append("-").append("房树人绘画测验");
-                break;
+                return "房树人绘画测验";
             case PersonInTheRain:
-                buf.append("-").append("雨中人绘画测验");
-                break;
+                return "雨中人绘画测验";
             case TreeTest:
-                buf.append("-").append("树木绘画测验");
-                break;
+                return "树木绘画测验";
             case SelfPortrait:
-                buf.append("-").append("自画像绘画测验");
-                break;
+                return "自画像绘画测验";
             default:
-                break;
+                return "心理测验";
         }
-        return buf.toString();
+    }
+
+    public static String makeReportDate(PaintingReport report) {
+        return gsDateFormat.format(new Date(report.timestamp));
     }
 
     public static String makeReportPaintingLink(AIGCChannel channel, PaintingReport report) {

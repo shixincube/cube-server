@@ -9,14 +9,13 @@ package cube.service.aigc;
 import cell.util.log.Logger;
 import cube.aigc.Flowable;
 import cube.aigc.Module;
-import cube.aigc.Page;
 import cube.aigc.Stage;
-import cube.aigc.attachment.Attachment;
-import cube.aigc.attachment.ThingAttachment;
-import cube.aigc.attachment.ui.Button;
-import cube.aigc.attachment.ui.ButtonListener;
-import cube.aigc.attachment.ui.Event;
-import cube.aigc.attachment.ui.EventResult;
+import cube.aigc.complex.attachment.Attachment;
+import cube.aigc.complex.attachment.ThingAttachment;
+import cube.aigc.complex.widget.Button;
+import cube.aigc.complex.widget.ButtonListener;
+import cube.aigc.complex.widget.Event;
+import cube.aigc.complex.widget.EventResult;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.entity.*;
@@ -33,17 +32,11 @@ import cube.service.contact.ContactManager;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
-import cube.util.HttpClientFactory;
-import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpStatus;
-import org.json.JSONObject;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**

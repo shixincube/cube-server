@@ -6,7 +6,7 @@
 
 package cube.service.aigc.resource;
 
-import cube.aigc.attachment.ui.DatePicker;
+import cube.aigc.complex.widget.DatePicker;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;

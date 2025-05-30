@@ -8,8 +8,8 @@ package cube.service.aigc.scene.subtask;
 
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.attachment.Attachment;
-import cube.aigc.attachment.ReportAttachment;
+import cube.aigc.complex.attachment.Attachment;
+import cube.aigc.complex.attachment.ReportAttachment;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.app.PointTable;
 import cube.aigc.psychology.composition.ConversationContext;
