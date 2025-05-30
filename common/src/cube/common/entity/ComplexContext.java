@@ -94,14 +94,17 @@ public class ComplexContext extends Entity {
             if (subject.equalsIgnoreCase(ComplexResource.Subject.File.name())) {
                 this.resources.add(new FileResource(data));
             }
+            else if (subject.equalsIgnoreCase(ComplexResource.Subject.Attachment.name())) {
+                this.resources.add(new AttachmentResource(data));
+            }
+            else if (subject.equalsIgnoreCase(ComplexResource.Subject.Widget.name())) {
+                this.resources.add(new WidgetResource(data));
+            }
             else if (subject.equalsIgnoreCase(ComplexResource.Subject.Hyperlink.name())) {
                 this.resources.add(new HyperlinkResource(data));
             }
             else if (subject.equalsIgnoreCase(ComplexResource.Subject.Chart.name())) {
                 this.resources.add(new ChartResource(data));
-            }
-            else if (subject.equalsIgnoreCase(ComplexResource.Subject.Attachment.name())) {
-                this.resources.add(new AttachmentResource(data));
             }
             else {
                 Logger.e(this.getClass(), "Unknown complex context resource subject: " + subject);

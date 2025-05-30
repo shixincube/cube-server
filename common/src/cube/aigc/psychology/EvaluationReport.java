@@ -898,6 +898,10 @@ public class EvaluationReport implements JSONable {
         }
         json.put("additionScales", array);
 
+        if (null != this.paintingConfidence) {
+            json.put("confidenceLevel", this.paintingConfidence.getConfidenceLevel());
+        }
+
         if (null != this.factorSet) {
             json.put("factorSet", this.factorSet.toJSON());
         }

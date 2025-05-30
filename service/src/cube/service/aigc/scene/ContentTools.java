@@ -30,6 +30,8 @@ public class ContentTools {
 
     public static final SimpleDateFormat gsDateFormat = new SimpleDateFormat("yyyy年MM月dd日HH时");
 
+    public static final SimpleDateFormat gsShortDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
     private ContentTools() {
     }
 
@@ -368,34 +370,34 @@ public class ContentTools {
         int index = 0;
         for (PaintingReport report : reports) {
             ++index;
-            buf.append("### ").append(index).append("、");
             Date date = new Date(report.timestamp);
-            buf.append(gsDateFormat.format(date));
-            buf.append("/").append(report.getAttribute().getGenderText());
-            buf.append("/").append(report.getAttribute().getAgeText());
-            buf.append("\n\n");
+            buf.append("### ").append(index).append(" ");
+            buf.append(makeReportThemeName(report));
+            buf.append("（");
+            buf.append(gsShortDateFormat.format(date));
+            buf.append("）\n\n");
 
             String tool = null;
             switch (report.getTheme()) {
                 case Generic:
                 case HouseTreePerson:
-                    tool = "房树人绘画测验";
+                    tool = "房树人绘画";
                     break;
                 case PersonInTheRain:
-                    tool = "雨中人绘画测验";
+                    tool = "雨中人绘画";
                     break;
                 case TreeTest:
-                    tool = "树木绘画测验";
+                    tool = "树木绘画";
                     break;
                 case SelfPortrait:
-                    tool = "自画像绘画测验";
+                    tool = "自画像";
                     break;
                 default:
                     tool = "量表";
                     break;
             }
             buf.append("* 测验工具：").append(tool).append("\n");
-            buf.append("* 评测日期：").append(gsDateFormat.format(new Date(report.timestamp))).append("\n");
+            buf.append("* 评测日期：").append(gsDateFormat.format(date)).append("\n");
             buf.append("* 受测人：").append(report.getAttribute().getGenderText()).append("性，")
                     .append(report.getAttribute().getAgeText()).append("\n");
             if (null != report.painting) {
