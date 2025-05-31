@@ -16,8 +16,9 @@ public class PromptAction extends Action {
 
     public boolean direct = true;
 
-    public PromptAction() {
+    public PromptAction(String prompt) {
         super(NAME);
+        this.prompt = prompt;
     }
 
     public PromptAction(JSONObject json) {

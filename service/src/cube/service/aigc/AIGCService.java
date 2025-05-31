@@ -3693,6 +3693,12 @@ public class AIGCService extends AbstractModule implements Generatable {
             List<RetrieveReRankResult> list = new ArrayList<>();
 
             Packet response = new Packet(dialect);
+            if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
+                Logger.w(AIGCService.class, "The retrieve re-rank unit failed: " + Packet.extractCode(response));
+                // 回调错误
+                this.listener.onFailed(this.queries, AIGCStateCode.Failure);
+                return;
+            }
             JSONObject payload = Packet.extractDataPayload(response);
             JSONArray resultList = payload.getJSONArray("result");
             for (int i = 0; i < resultList.length(); ++i) {

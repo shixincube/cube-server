@@ -9,6 +9,7 @@ package cube.service.aigc.scene.subtask;
 import cube.aigc.ModelConfig;
 import cube.aigc.complex.widget.ListTile;
 import cube.aigc.complex.widget.ListView;
+import cube.aigc.complex.widget.PromptAction;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.ConversationContext;
@@ -28,6 +29,8 @@ import cube.service.aigc.scene.SceneManager;
 import java.util.List;
 
 public class QueryReportSubtask extends ConversationSubtask {
+
+    private final boolean useWidget = true;
 
     public QueryReportSubtask(AIGCService service, AIGCChannel channel, String query, ComplexContext context,
                               ConversationRelation relation, ConversationContext convCtx,
@@ -63,24 +66,37 @@ public class QueryReportSubtask extends ConversationSubtask {
             this.service.getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
-                    ListView listView = new ListView();
-                    for (PaintingReport paintingReport : list) {
-                        ListTile tile = new ListTile(ContentTools.makeReportThemeName(paintingReport));
-                        tile.subtitle = ContentTools.makeReportDate(paintingReport);
-                        listView.addItem(tile);
+                    String answer = null;
+                    ComplexContext complexContext = null;
+                    if (useWidget) {
+                        ListView listView = new ListView();
+                        for (PaintingReport paintingReport : list) {
+                            ListTile tile = new ListTile(ContentTools.makeReportThemeName(paintingReport));
+                            tile.subtitle = ContentTools.makeReportDate(paintingReport);
+                            tile.onTap = new PromptAction(
+                                    String.format(
+                                            Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SELECT_REPORT_LOCATION"),
+                                            listView.numItems() + 1));
+                            listView.addItem(tile);
+                        }
+
+                        complexContext = new ComplexContext();
+                        complexContext.addResource(new WidgetResource(listView));
+                        answer = String.format(
+                                Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_QUERY_REPORT_RESULT_SUMMARY"),
+                                total, list.size());
+                    }
+                    else {
+                        answer = infer(String.format(Resource.getInstance().getCorpus(CORPUS,
+                                "FORMAT_PROMPT_QUERY_REPORT_RESULT"),
+                                total, list.size(), ContentTools.makeReportList(list), query));
+                        if (null == answer) {
+                            answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                    "FORMAT_ANSWER_QUERY_REPORT_RESULT"),
+                                    total, list.size(), ContentTools.makeReportList(list));
+                        }
                     }
 
-                    ComplexContext complexContext = new ComplexContext();
-                    complexContext.addResource(new WidgetResource(listView));
-
-                    String answer = infer(String.format(Resource.getInstance().getCorpus(CORPUS,
-                            "FORMAT_PROMPT_QUERY_REPORT_RESULT"),
-                            total, list.size(), ContentTools.makeReportList(list), query));
-                    if (null == answer) {
-                        answer = String.format(Resource.getInstance().getCorpus(CORPUS,
-                                "FORMAT_ANSWER_QUERY_REPORT_RESULT"),
-                                total, list.size(), ContentTools.makeReportList(list));
-                    }
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.context = complexContext;
                     record.answer = answer;

@@ -110,6 +110,14 @@
             "cn": "通过对历史数据的查询，共找到**%d**份您操作过的评测。按照评测时间倒序整理最近**%d**份评测如下：\n\n%s",
             "en": ""
         },
+        "FORMAT_ANSWER_QUERY_REPORT_RESULT_SUMMARY": {
+            "cn": "通过对历史数据的查询，共找到%d条评测记录。按照评测时间倒序整理最近%d条评测记录如下：",
+            "en": ""
+        },
+        "FORMAT_ANSWER_SELECT_REPORT_LOCATION": {
+            "cn": "选择第%d份评测。",
+            "en": ""
+        },
         "FORMAT_ANSWER_SELECT_REPORT_LOCATION_OVERFLOW": {
             "cn": "您找的是第%d份评测，但是我只找到**%d**份评测。",
             "en": ""

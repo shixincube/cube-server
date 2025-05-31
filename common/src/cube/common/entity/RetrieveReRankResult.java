@@ -64,7 +64,7 @@ public class RetrieveReRankResult extends Entity {
         public Answer(JSONObject json) {
             this.id = json.getLong("id");
             this.content = json.getString("content");
-            this.score = json.getDouble("score");
+            this.score = Double.parseDouble(json.get("score").toString());
         }
 
         public JSONObject toJSON() {

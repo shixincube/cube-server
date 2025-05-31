@@ -1568,12 +1568,13 @@ public class Manager implements Tickable, PerformerListener {
         return new KnowledgeQAProgress(Packet.extractDataPayload(responsePacket));
     }
 
-    public JSONObject semanticSearch(String query) {
+    public JSONObject semanticSearch(String token, String query) {
         JSONObject data = new JSONObject();
         data.put("query", query);
         Packet packet = new Packet(AIGCAction.SemanticSearch.name, data);
-
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 90 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#semanticSearch - Response is null");
             return null;

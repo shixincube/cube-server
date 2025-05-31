@@ -37,6 +37,10 @@ public class ListView extends Widget {
         this.items.add(widget);
     }
 
+    public int numItems() {
+        return this.items.size();
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();

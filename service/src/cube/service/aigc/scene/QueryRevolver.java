@@ -265,7 +265,7 @@ public class QueryRevolver {
                                 }
 
                                 // 收录高分答案
-                                if (answer.score >= 0.8) {
+                                if (answer.score >= 0.68) {
                                     questionAnswer.addAnswers(answer.content, answer.score);
                                 }
                             }
@@ -290,7 +290,7 @@ public class QueryRevolver {
                 if (success) {
                     synchronized (result) {
                         try {
-                            result.wait(40 * 1000);
+                            result.wait(3 * 60 * 1000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -310,7 +310,7 @@ public class QueryRevolver {
                 return null;
             }
 
-            if (queryResponse.answer.contains("不相关")) {
+            if (queryResponse.answer.contains("不相关") || queryResponse.answer.contains("无关")) {
                 Logger.d(this.getClass(), "#generatePrompt - No psychology question: " + query);
                 result.delete(0, result.length());
 

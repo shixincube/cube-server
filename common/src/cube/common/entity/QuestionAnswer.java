@@ -33,7 +33,7 @@ public class QuestionAnswer extends Entity {
         super(json);
         this.questions = JSONUtils.toStringList(json.getJSONArray("questions"));
         this.answers = JSONUtils.toStringList(json.getJSONArray("answers"));
-        this.score = json.getDouble("score");
+        this.score = Double.parseDouble(json.get("score").toString());
     }
 
     public List<String> getQuestions() {

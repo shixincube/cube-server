@@ -32,7 +32,7 @@ public class SemanticSearch extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
@@ -57,7 +57,7 @@ public class SemanticSearch extends ContextHandler {
             }
 
             // 语义搜索
-            JSONObject result = Manager.getInstance().semanticSearch(query);
+            JSONObject result = Manager.getInstance().semanticSearch(token, query);
             if (null == result) {
                 // 不允许该参与者申请或者服务故障
                 this.respond(response, HttpStatus.BAD_REQUEST_400);
