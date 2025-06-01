@@ -23,7 +23,7 @@ public final class ReportPermission implements JSONable {
     /**
      * 指标摘要权限。
      */
-    public boolean indicatorSummary = true;
+    public boolean indicatorSummary = false;
 
     /**
      * 指标详情权限。
@@ -101,6 +101,10 @@ public final class ReportPermission implements JSONable {
         this.symptomFactor = json.getBoolean("symptomFactor");
         this.affectFactor = json.getBoolean("affectFactor");
         this.personalityFactor = json.getBoolean("personalityFactor");
+    }
+
+    public boolean isPermissioned() {
+        return (this.indicatorSummary && this.indicatorDetails && this.personalityDetails);
     }
 
     @Override

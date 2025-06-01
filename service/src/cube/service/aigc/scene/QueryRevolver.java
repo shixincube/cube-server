@@ -212,40 +212,53 @@ public class QueryRevolver {
             result.append("年龄是：").append(report.getAttribute().age).append("岁，");
             result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n\n");
             result.append("评测日期是：").append(formatReportDate(report)).append("。\n\n");
-            result.append("受测人的心理特征摘要如下：");
-            result.append(report.getSummary());
-            result.append("\n\n");
 
-            result.append("受测人主要心理特征描述如下：\n");
-            List<String> symptomContent = this.extractEvaluationContent(report);
-            for (String content : symptomContent) {
-                result.append(content).append("\n\n");
+            ReportPermission permission = report.getPermission();
+            if (permission.isPermissioned()) {
+                result.append("受测人的心理特征摘要如下：");
+                result.append(report.getSummary());
+                result.append("\n\n");
+
+                result.append("受测人主要心理特征描述如下：\n");
+                List<String> symptomContent = this.extractEvaluationContent(report);
+                for (String content : symptomContent) {
+                    result.append(content).append("\n\n");
+                }
+
+                // 画面特征
+                result.append(this.tryGeneratePaintingFeature(report, query));
+
+                // 指标数据
+                result.append(this.tryGenerateFactorDesc(report, query));
+
+                if (result.length() < wordLimit) {
+                    // 尝试生成人格数据
+                    result.append(this.tryGeneratePersonality(report, query));
+                }
+
+                if (result.length() < wordLimit) {
+                    // 尝试生成知识片段
+                    result.append("\n");
+                    result.append(this.generateKnowledgeFragment(report, query));
+                }
+
+                prefix = "根据您的提问，";
+                result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“您提的问题与当前讨论的评测报告无关。”，");
+                result.append("不允许在答案中添加编造成分，保持应有的文档结构。");
+                result.append("问题是：").append(query).append("\n");
             }
-
-            // 画面特征
-            result.append(this.tryGeneratePaintingFeature(report, query));
-
-            // 指标数据
-            result.append(this.tryGenerateFactorDesc(report, query));
-
-            if (result.length() < wordLimit) {
-                // 尝试生成人格数据
-                result.append(this.tryGeneratePersonality(report, query));
-            }
-
-            if (result.length() < wordLimit) {
-                // 尝试生成知识片段
+            else {
+                result.append("具体的评测数据因为积分不足无法获得详细数据，仅限于上述信息回答问题“");
+                result.append(query);
+                result.append("”。\n");
+                result.append("要求如下：\n\n- 如果无法从中得到答案，请说“受限于未能获得评测报告全部数据无法为您提供更多信息。”");
+                result.append("\n- 不允许在答案中添加编造成分。");
                 result.append("\n");
-                result.append(this.generateKnowledgeFragment(report, query));
             }
 
-            prefix = "根据您的提问，";
             postfix = "\n\n当前我正处于关联评测报告的工作模式，您可以要求我 " +
                     Link.formatPromptDirectMarkdown("取消关联", "取消已关联评测报告") +
                     " ，从而退出关联模式。";
-            result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“您提的问题与当前讨论的评测报告无关。”，");
-            result.append("不允许在答案中添加编造成分，保持应有的文档结构。");
-            result.append("问题是：").append(query).append("\n");
         }
         else {
             // 无关联报告数据

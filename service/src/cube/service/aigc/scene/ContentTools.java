@@ -107,7 +107,8 @@ public class ContentTools {
             buf.append("\n\n");
         }
         else {
-            buf.append(clipContent(report.getSummary()));
+            buf.append(clipContentByLines(report.getSummary(), 20));
+            buf.append("");
         }
 
         return buf.toString();
@@ -211,7 +212,7 @@ public class ContentTools {
                 buf.append(report.getSummary()).append("\n\n");
             }
             else {
-                buf.append(clipContent(report.getSummary()));
+                buf.append(clipContentByLines(report.getSummary(), 20));
             }
         }
 
@@ -515,6 +516,30 @@ public class ContentTools {
         else {
             buf.append("\n\n");
         }
+        return buf.toString();
+    }
+
+    private static String clipContentByLines(String content, int limit) {
+        StringBuilder buf = new StringBuilder();
+        String[] lines = content.split("\n");
+        for (String line : lines) {
+            if (line.length() == 0) {
+                buf.append("\n");
+            }
+            else {
+                String newLine = line.substring(0, Math.min(limit, line.length()));
+                buf.append(newLine);
+                if (line.length() > limit) {
+                    buf.append("...");
+                }
+                buf.append("\n");
+            }
+        }
+        buf.append("\n\n");
+        buf.append("您暂时无法查看此评测报告的全部数据，");
+        buf.append(Link.formatPromptDirectMarkdown("点击了解如何查看全部内容", "如何查看报告的全部内容？"));
+        buf.append("。");
+        buf.append("\n\n");
         return buf.toString();
     }
 
