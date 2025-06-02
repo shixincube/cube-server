@@ -14,10 +14,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cube.common.action.ContactAction;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
-import cube.dispatcher.contact.handler.DeleteContact;
-import cube.dispatcher.contact.handler.GetContact;
-import cube.dispatcher.contact.handler.NewContact;
-import cube.dispatcher.contact.handler.VerificationCode;
+import cube.dispatcher.contact.handler.*;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -112,6 +109,7 @@ public class ContactCellet extends AbstractCellet {
 
     private void setupHandlers() {
         this.performer.getHttpServer().addContextHandler(new GetContact(this.performer));
+        this.performer.getHttpServer().addContextHandler(new ExistsContact(this.performer));
         this.performer.getHttpServer().addContextHandler(new NewContact(this.performer));
         this.performer.getHttpServer().addContextHandler(new DeleteContact(this.performer));
         this.performer.getHttpServer().addContextHandler(new VerificationCode(this.performer));

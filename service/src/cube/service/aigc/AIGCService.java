@@ -874,11 +874,11 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
         for (AIGCChatHistory history : chatHistories) {
-            List<String> words = analyzer.analyzeOnlyWords(history.queryContent, 5);
+            List<String> words = analyzer.analyzeOnlyWords(history.queryContent, 10);
             for (String word : words) {
                 wordCloud.addWord(word.trim());
             }
-            words = analyzer.analyzeOnlyWords(history.answerContent, 5);
+            words = analyzer.analyzeOnlyWords(history.answerContent, 10);
             for (String word : words) {
                 wordCloud.addWord(word.trim());
             }

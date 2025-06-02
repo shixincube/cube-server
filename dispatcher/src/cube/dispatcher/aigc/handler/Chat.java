@@ -57,11 +57,10 @@ public class Chat extends ContextHandler {
             JSONArray records = null;
             boolean recordable = true;
             boolean networking = false;
-            int searchTopK = 5;
             JSONArray categories = null;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
-                channelCode = json.getString("code");
+                channelCode = json.has("channel") ? json.getString("channel") : json.getString("code");
                 content = json.getString("content");
 
                 if (json.has("unit")) {
@@ -96,9 +95,9 @@ public class Chat extends ContextHandler {
                     networking = json.getBoolean("networking");
                 }
 
-                if (json.has("searchTopK")) {
-                    searchTopK = json.getInt("searchTopK");
-                }
+//                if (json.has("searchTopK")) {
+//                    searchTopK = json.getInt("searchTopK");
+//                }
             } catch (Exception e) {
                 Logger.e(Chat.class, "#doPost - Read body failed", e);
                 this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
@@ -115,7 +114,7 @@ public class Chat extends ContextHandler {
 
             // Chat
             Manager.ChatFuture future = Manager.getInstance().chat(token, channelCode, pattern, content, unit, option,
-                    histories, records, recordable, networking, categories, searchTopK);
+                    histories, records, recordable, networking, categories);
             if (null == future) {
                 // 发生错误
                 this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));

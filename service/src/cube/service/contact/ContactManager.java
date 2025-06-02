@@ -1967,7 +1967,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 result.addContact(contact);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(this.getClass(), "#searchWithContactName", e);
         }
         return result;
     }

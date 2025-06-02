@@ -51,14 +51,14 @@ public class ChatTask extends ServiceTask {
 
         String token = getTokenCode(dialect);
 
-        if (null == token || !packet.data.has("content") || !packet.data.has("code")) {
+        if (null == token || !packet.data.has("content") || !packet.data.has("channel")) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
-        String code = packet.data.getString("code");
+        String channelCode = packet.data.getString("channel");
         String content = packet.data.getString("content").trim();
         String pattern = packet.data.has("pattern") ? packet.data.getString("pattern") : Consts.PATTERN_CHAT;
         String unit = packet.data.has("unit") ? packet.data.getString("unit") : ModelConfig.CHAT_UNIT;
@@ -94,11 +94,11 @@ public class ChatTask extends ServiceTask {
         boolean success = false;
 
         // 检查频道
-        AIGCChannel channel = service.getChannel(code);
+        AIGCChannel channel = service.getChannel(channelCode);
         if (null == channel) {
             // 创建指定的频道
             Logger.i(this.getClass(), "#run - Create new channel for token: " + token);
-            service.createChannel(token, "User-" + code, code);
+            service.createChannel(token, "User-" + channelCode, channelCode);
         }
 
         // 根据工作模式进行调用
@@ -141,7 +141,7 @@ public class ChatTask extends ServiceTask {
             }
             else {
                 // 执行文本生成
-                success = service.generateText(code, content, unit, option, recordList, histories,
+                success = service.generateText(channelCode, content, unit, option, recordList, histories,
                         recordList, categories, recordable, networking, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
@@ -216,7 +216,7 @@ public class ChatTask extends ServiceTask {
             }
 
             if (null != knowledgeBase) {
-                success = knowledgeBase.performKnowledgeQA(code, unit, content, searchTopK, recordList,
+                success = knowledgeBase.performKnowledgeQA(channelCode, unit, content, searchTopK, recordList,
                         new KnowledgeQAListener() {
                     @Override
                     public void onCompleted(AIGCChannel channel, KnowledgeQAResult result) {

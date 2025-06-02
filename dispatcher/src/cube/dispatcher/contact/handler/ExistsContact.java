@@ -20,10 +20,10 @@ import org.json.JSONObject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class GetContact extends ContextHandler {
+public class ExistsContact extends ContextHandler {
 
-    public GetContact(Performer performer) {
-        super("/contact/get/");
+    public ExistsContact(Performer performer) {
+        super("/contact/exists/");
         setHandler(new Handler(performer));
     }
 
@@ -37,7 +37,7 @@ public class GetContact extends ContextHandler {
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
             String tokenCode = getApiToken(request);
             if (null == tokenCode) {
-                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -68,23 +68,24 @@ public class GetContact extends ContextHandler {
 
                 Packet responsePacket = new Packet(responseDialect);
                 int stateCode = Packet.extractCode(responsePacket);
-                if (stateCode != ContactStateCode.Ok.code) {
-                    if (stateCode == ContactStateCode.NotFindContact.code) {
-                        this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
-                        this.complete();
-                    }
-                    else {
-                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
-                        this.complete();
-                    }
-                    return;
-                }
 
-                this.respondOk(response, Packet.extractDataPayload(responsePacket));
-                this.complete();
+                if (stateCode == ContactStateCode.NotFindContact.code) {
+                    data.put("exists", false);
+                    this.respondOk(response, data);
+                    this.complete();
+                }
+                else if (stateCode == ContactStateCode.Ok.code) {
+                    data.put("exists", true);
+                    this.respondOk(response, data);
+                    this.complete();
+                }
+                else {
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                    this.complete();
+                }
             } catch (Exception e) {
-                Logger.w(GetContact.class, "#doGet", e);
-                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                Logger.w(ExistsContact.class, "#doGet", e);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
             }
         }

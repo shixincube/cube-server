@@ -1315,15 +1315,14 @@ public class Manager implements Tickable, PerformerListener {
      * @param recordable
      * @param networking
      * @param categories
-     * @param searchTopK
      * @return
      */
     public ChatFuture chat(String token, String channelCode, String pattern, String content, String unit,
                            GeneratingOption option, int histories, JSONArray records,
-                           boolean recordable, boolean networking, JSONArray categories, int searchTopK) {
+                           boolean recordable, boolean networking, JSONArray categories) {
         JSONObject data = new JSONObject();
         data.put("token", token);
-        data.put("code", channelCode);
+        data.put("channel", channelCode);
         data.put("pattern", pattern);
         data.put("content", content);
         data.put("option", option.toJSON());
@@ -1339,7 +1338,6 @@ public class Manager implements Tickable, PerformerListener {
         }
         data.put("recordable", recordable);
         data.put("networking", networking);
-        data.put("searchTopK", searchTopK);
 
         Packet responsePacket = null;
         Packet packet = new Packet(AIGCAction.Chat.name, data);
