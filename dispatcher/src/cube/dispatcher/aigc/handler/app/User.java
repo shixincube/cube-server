@@ -53,5 +53,32 @@ public class User extends ContextHandler {
                 this.complete();
             }
         }
+
+        @Override
+        public void doPost(HttpServletRequest request, HttpServletResponse response) {
+            try {
+                String token = this.getApiToken(request);
+                if (null == token) {
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                    this.complete();
+                    return;
+                }
+
+                JSONObject data = this.readBodyAsJSONObject(request);
+                JSONObject result = Manager.getInstance().checkInUser(token, data);
+                if (null == result) {
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                    this.complete();
+                    return;
+                }
+
+                this.respondOk(response, result);
+                this.complete();
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "#doPost", e);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                this.complete();
+            }
+        }
     }
 }

@@ -759,6 +759,16 @@ public final class TextUtils {
         }
     }
 
+    public static String extractEmailAccountName(String email) {
+        int index = email.indexOf("@");
+        if (index > 0) {
+            return email.substring(0, index);
+        }
+        else {
+            return email;
+        }
+    }
+
     public static List<String> randomSplitString(String text) {
         List<String> textList = new ArrayList<>();
         int length = text.length();
@@ -893,13 +903,6 @@ public final class TextUtils {
 //            System.out.println(TextUtils.extractDay(value));
 //        }
 
-        String[] sentence1 = new String[] { "第", "12", "个", "报告" };
-        String[] sentence2 = new String[] { "这是第1个", "报告" };
-        String[] sentence3 = new String[] { "看第二个", "报告" };
-        System.out.println(TextUtils.extractLocation(Arrays.asList(sentence1)));
-        System.out.println(TextUtils.extractLocation(Arrays.asList(sentence2)));
-        System.out.println(TextUtils.extractLocation(Arrays.asList(sentence3)));
-
 //        String[] sentenceList = new String[] {
 //                "很抱歉，作为一个人工智能助手，我没有实时获取汤臣倍健昨天的负面舆情数据的能力。同时，作为一个中立的信息来源，我也无法对任何特定的舆情数据进行评估或证实。舆情数据的真实性和准确性可能会受到多种因素的影响，包括数据采集的及时性、样本的选择、数据来源的可靠性等等。如果对汤臣倍健昨天的舆情数据有任何疑问或关注，建议关注相关的新闻报道、社交媒体评论等公开信息渠道，以了解实际情况。",
 //                "目前，A股半年报披露已经拉开帷幕，数据显示，截至7月4日20点，A股共有96家上市公司披露2023年半年度业绩预告，其中78家预喜，占比近八成。其中，国内VDS领军企业汤臣倍健率先于7月3日发布2023年半年度业绩预告，成为A股首批披露2023年半年度业绩预告的公司。  预告称，2023年上半年归属于上市公司股东的净利润约为13.63亿元~15.72亿元，同比增长预计将达到30%~50%，盈利水平有望超过2021年中报峰值的13.71亿元。由此可见，在受行业景气度影响的当下，汤臣倍健整体仍旧保持了较好的业绩增长。据悉，在今年618期间，汤臣倍健旗下全品牌全网销售额就创下新高，总销售额突破8亿元，同比增长超40%。在京东、天猫发布的好评榜、热卖榜等众多榜单中，汤臣倍健蛋白粉、专业益生菌品牌“Life-Space”、专业婴童品牌天然博士、新锐女性美态管理品牌汤臣倍健yep、骨关节营养品牌健力多等多个品牌实现了销量及口碑双丰收。其中汤臣倍健蛋白粉继续稳居天猫免疫力蛋白粉品类TOP1、京东“蛋白粉金榜”TOP1；专业益生菌品牌“Life-Space”实现了整体销售额近1.6亿元，同比增长超45%，稳占天猫进口益生菌好评榜TOP1、京东热卖榜TOP1。此外，“有颜值、更有技术含量”的Yep -GAGs胶原蛋白肽新品出道即大热，也夺得了天猫“胶原蛋白V榜”第一名。  聚焦“新原料、新功能、新技术”，近几年汤臣倍健深入营养健康的科学研究，也取得了不少研究成果。比如获得了双项国家发明专利的含真皮重要成分GAGs的胶原蛋白肽、更容易定植于肠道的专利益生菌等，这些科研成果落地产品后，也随即成为了深受消费者喜爱的口碑爆品。欧睿数据显示，2022年中国维生素与膳食补充剂行业零售总规模为2001亿人民币，增速约为4.9%。汤臣倍健份额为10.3%，稳居第一，整体数据非常可观。而汤臣倍健业绩的公示也进一步向消费者证明了其综合实力，让大家吃了一颗定心丸。未来，汤臣倍健将持续坚持科学营养，拉开强科技的领先优势，稳坐龙头地位，为国人输送更多优质的膳食营养补充剂产品。"
@@ -908,6 +911,8 @@ public final class TextUtils {
 //        for (String str : sentences) {
 //            System.out.println(str);
 //        }
+
+        System.out.println(TextUtils.extractEmailAccountName("xjw@163.com"));
 
 //        String[] list = new String[] {
 //                "1. 是数字符号",

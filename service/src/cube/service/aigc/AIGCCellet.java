@@ -134,6 +134,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new AppGetOrCreateUserTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.AppCheckInUser.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new AppCheckInUserTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.AppInjectOrGetToken.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new AppInjectOrGetTokenTask(this, talkContext, primitive,

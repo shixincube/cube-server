@@ -249,6 +249,34 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
+    public JSONObject checkInUser(String token, JSONObject data) {
+        Packet packet = new Packet(AIGCAction.AppCheckInUser.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#checkInUser - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        int state = Packet.extractCode(responsePacket);
+        if (AIGCStateCode.IllegalOperation.code == state) {
+            JSONObject json = new JSONObject();
+            json.put("valid", false);
+            return json;
+        }
+        else if (AIGCStateCode.Ok.code == state) {
+            JSONObject json = new JSONObject();
+            json.put("valid", true);
+            json.put("user", Packet.extractDataPayload(responsePacket));
+            return json;
+        }
+
+        Logger.w(Manager.class, "#checkInUser - Response state is " + state);
+        return null;
+    }
+
     public JSONObject signOutUser(String token) {
         Packet packet = new Packet(AIGCAction.AppSignOutUser.name, new JSONObject());
         ActionDialect request = packet.toDialect();

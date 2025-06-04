@@ -17,9 +17,13 @@ public class User extends Entity {
 
     private String displayName;
 
+    private String avatar;
+
     private String phoneNumber;
 
-    private String avatar;
+    private String email;
+
+    private String password;
 
     private AuthToken authToken;
 
@@ -31,8 +35,10 @@ public class User extends Entity {
         this.appAgent = appAgent;
         this.channel = channel;
         this.displayName = "";
-        this.phoneNumber = "";
         this.avatar = "";
+        this.phoneNumber = "";
+        this.email = "";
+        this.password = "";
     }
 
     public User(JSONObject json) {
@@ -41,8 +47,10 @@ public class User extends Entity {
         this.appAgent = json.getString("appAgent");
         this.channel = json.has("channel") ? json.getString("channel") : "Unknown";
         this.displayName = json.getString("displayName");
-        this.phoneNumber = json.getString("phoneNumber");
         this.avatar = json.getString("avatar");
+        this.phoneNumber = json.has("phoneNumber") ? json.getString("phoneNumber") : "";
+        this.email = json.has("email") ? json.getString("email") : "";
+        this.password = json.has("password") ? json.getString("password") : "";
         if (json.has("authToken")) {
             this.authToken = new AuthToken(json.getJSONObject("authToken"));
         }
@@ -52,12 +60,36 @@ public class User extends Entity {
         return this.channel;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
 
     public String getPhoneNumber() {
         return this.phoneNumber;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getEmail() {
+        return this.email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getPassword() {
+        return this.password;
     }
 
     public void setDisplayName(String displayName) {
@@ -79,8 +111,10 @@ public class User extends Entity {
         json.put("appAgent", this.appAgent);
         json.put("channel", this.channel);
         json.put("displayName", this.displayName);
-        json.put("phoneNumber", this.phoneNumber);
         json.put("avatar", this.avatar);
+        json.put("phoneNumber", this.phoneNumber);
+        json.put("email", this.email);
+        json.put("password", this.password);
         if (null != this.authToken) {
             json.put("authToken", this.authToken.toCompactJSON());
         }
@@ -89,6 +123,9 @@ public class User extends Entity {
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = this.toJSON();
+        json.remove("appAgent");
+        json.remove("password");
+        return json;
     }
 }

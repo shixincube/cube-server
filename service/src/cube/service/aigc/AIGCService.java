@@ -11,7 +11,6 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
-import cube.aigc.ModelConfig;
 import cube.aigc.app.Notification;
 import cube.aigc.complex.widget.Event;
 import cube.aigc.complex.widget.EventResult;
@@ -794,6 +793,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
             // 新注册用户
             User user = new User(contact.getContext());
+            user.setName(verificationCode.phoneNumber);
             user.setDisplayName(verificationCode.phoneNumber);
             user.setPhoneNumber(verificationCode.dialCode + "-" + verificationCode.phoneNumber);
 
@@ -832,12 +832,91 @@ public class AIGCService extends AbstractModule implements Generatable {
                     AuthConsts.DEFAULT_APP_KEY, userContact.getId(),
                     System.currentTimeMillis(), System.currentTimeMillis() + tokenDuration, false);
             AuthToken newToken = authService.updateAuthTokenCode(authToken);
+            // 新令牌
             User user = new User(userContact.getContext());
             user.setAuthToken(newToken);
 
             ContactManager.getInstance().updateContact(userContact.getDomain().getName(),
                     userContact.getId(), verificationCode.phoneNumber, user.toJSON());
             return user;
+        }
+    }
+
+    public User checkInUser(Contact contact, String userName, String password, boolean register) {
+        ContactSearchResult searchResult = ContactManager.getInstance()
+                .searchWithContactName(contact.getDomain().getName(), userName);
+        if (register) {
+            if (searchResult.getContactList().isEmpty()) {
+                // 注册新用户
+                Logger.i(this.getClass(), "#checkInUser - New user: " + contact.getId());
+
+                // 新用户
+                User user = new User(contact.getContext());
+                user.setName(userName);
+                user.setDisplayName(TextUtils.extractEmailAccountName(userName));
+                user.setEmail(userName);
+                user.setPassword(password);
+
+                ContactManager.getInstance().updateContact(contact.getDomain().getName(),
+                        contact.getId(), userName, user.toJSON());
+                return user;
+            }
+            else {
+                // 用户已存在
+                return null;
+            }
+        }
+        else {
+            if (searchResult.getContactList().isEmpty()) {
+                // 用户不存在
+                return null;
+            }
+            else {
+                // 校验用户名和密码
+                Logger.i(this.getClass(), "#checkInUser - User login: " + contact.getId());
+
+                Contact userContact = searchResult.getContactList().get(0);
+                User user = new User(userContact.getContext());
+                if (user.getName().equals(userName) && user.getPassword().equals(password)) {
+                    // 校验通过
+                    AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+                    // 当前使用令牌码，登录的账号继承当前临时账号的令牌码
+                    AuthToken currentToken = authService.getToken(contact.getDomain().getName(), contact.getId());
+                    String tokenCode = null;
+                    if (null != currentToken) {
+                        tokenCode = currentToken.getCode();
+                        // 删除当前临时联系人的令牌
+                        authService.deleteToken(contact.getDomain().getName(), contact.getId());
+                    }
+                    else {
+                        tokenCode = Utils.randomString(32);
+                    }
+
+                    // 临时联系人标记为作废
+                    if (contact.getId().longValue() != userContact.getId().longValue()) {
+                        ContactManager.getInstance().setContactMask(contact.getDomain().getName(), contact.getId(),
+                                ContactMask.Deprecated);
+                    }
+
+                    // 更新老用户的令牌
+                    final long tokenDuration = 5L * 365 * 24 * 60 * 60 * 1000;
+                    AuthToken authToken = new AuthToken(tokenCode, userContact.getDomain().getName(),
+                            AuthConsts.DEFAULT_APP_KEY, userContact.getId(),
+                            System.currentTimeMillis(), System.currentTimeMillis() + tokenDuration, false);
+                    AuthToken newToken = authService.updateAuthTokenCode(authToken);
+                    // 新令牌
+                    user.setAuthToken(newToken);
+
+                    ContactManager.getInstance().updateContact(userContact.getDomain().getName(),
+                            userContact.getId(), user.getName(), user.toJSON());
+                    return user;
+                }
+                else {
+                    Logger.d(this.getClass(), "#checkInUser - Incorrect password: " + contact.getId() + " - "
+                            + userName + " - " + password);
+                    return null;
+                }
+            }
         }
     }
 

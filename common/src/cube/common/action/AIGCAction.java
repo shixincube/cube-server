@@ -47,6 +47,11 @@ public enum AIGCAction {
     AppGetOrCreateUser("appGetOrCreateUser"),
 
     /**
+     * 应用层校验用户。
+     */
+    AppCheckInUser("appCheckInUser"),
+
+    /**
      * 注销用户。
      */
     AppSignOutUser("appSignOutUser"),
