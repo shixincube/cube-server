@@ -6,8 +6,6 @@
 
 package cube.app.server.account;
 
-import cube.auth.AuthConsts;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +19,7 @@ public final class BuildInData {
     public BuildInData() {
         // Password: shixincube
 
+        /* 2025-6-5 作废
         Account account = new Account(50001001, AuthConsts.DEFAULT_DOMAIN, "cube1", "13199887766",
                 "c7af98d321febe62e04d45e8806852e0",
                 "李国诚", "avatar01", 0);
@@ -60,5 +59,6 @@ public final class BuildInData {
         account.department = "设计部";
         account.registration = System.currentTimeMillis();
         this.accountList.add(account);
+        */
     }
 }

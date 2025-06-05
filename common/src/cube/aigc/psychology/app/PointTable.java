@@ -12,7 +12,7 @@ import cube.common.entity.Point;
 public class PointTable {
 
     public final static String Evaluation = "Evaluation";
-    public final static int EvaluationPoints = -200;
+    public final static int EvaluationPoints = 100;
 
     public PointTable() {
     }

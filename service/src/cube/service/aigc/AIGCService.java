@@ -18,7 +18,6 @@ import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.Theme;
-import cube.aigc.psychology.app.AppHelper;
 import cube.aigc.psychology.composition.Scale;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
@@ -777,10 +776,6 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         // 新用户
         Contact contact = ContactManager.getInstance().newContact(id, domain, name, user.toJSON(), device);
-
-        // 初始积分
-        ContactManager.getInstance().getPointSystem().insert(AppHelper.createNewUserPoint(contact, 1000));
-
         return user;
     }
 

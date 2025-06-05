@@ -335,15 +335,12 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                 });
 
         if (null != report) {
-            // 判断积分
-            int points = ContactManager.getInstance().getPointSystem().total(channel.getAuthToken());
+            // 判断是否是会员
             ReportPermission permission = null;
-            if (points >= Math.abs(PointTable.EvaluationPoints)) {
+            // TODO XJW
+            if (true) {
                 // 全部权限
                 permission = ReportPermission.createAllPermissions(report.contactId, report.sn);
-                // 扣除积分
-                ContactManager.getInstance().getPointSystem().insert(
-                        PointTable.createEvaluationPoint(channel.getAuthToken()));
             }
             else {
                 // 最小权限
