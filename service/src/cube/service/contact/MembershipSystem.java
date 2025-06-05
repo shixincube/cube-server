@@ -13,4 +13,6 @@ public class MembershipSystem {
     public MembershipSystem(ContactStorage storage) {
         this.storage = storage;
     }
+
+
 }

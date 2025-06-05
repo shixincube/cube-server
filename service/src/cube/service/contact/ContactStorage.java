@@ -51,6 +51,8 @@ public class ContactStorage implements Storagable {
 
     private final String pointTablePrefix = "point_";
 
+    private final String membershipTablePrefix = "membership_";
+
     /**
      * 联系人字段描述。
      */
@@ -227,6 +229,33 @@ public class ContactStorage implements Storagable {
             })
     };
 
+    /**
+     * 会员信息字段。
+     */
+    private final StorageField[] membershipFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            new StorageField("name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("type", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("duration", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("description", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("context", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            })
+    };
+
     private ExecutorService executor;
 
     private Storage storage;
@@ -238,6 +267,7 @@ public class ContactStorage implements Storagable {
     private Map<String, String> groupMemberTableNameMap;
     private Map<String, String> appendixTableNameMap;
     private Map<String, String> pointTableNameMap;
+    private Map<String, String> membershipTableNameMap;
 
     public ContactStorage(ExecutorService executor, Storage storage) {
         this.executor = executor;
@@ -249,6 +279,7 @@ public class ContactStorage implements Storagable {
         this.groupMemberTableNameMap = new HashMap<>();
         this.appendixTableNameMap = new HashMap<>();
         this.pointTableNameMap = new HashMap<>();
+        this.membershipTableNameMap = new HashMap<>();
     }
 
     public ContactStorage(ExecutorService executor, StorageType type, JSONObject config) {
@@ -261,6 +292,7 @@ public class ContactStorage implements Storagable {
         this.groupMemberTableNameMap = new HashMap<>();
         this.appendixTableNameMap = new HashMap<>();
         this.pointTableNameMap = new HashMap<>();
+        this.membershipTableNameMap = new HashMap<>();
     }
 
     @Override
@@ -285,6 +317,7 @@ public class ContactStorage implements Storagable {
             this.checkTopListTable(domain);
             this.checkBlockListTable(domain);
             this.checkPointTable(domain);
+            this.checkMembershipTable(domain);
         }
     }
 
@@ -1962,7 +1995,6 @@ public class ContactStorage implements Storagable {
 
     private void checkContactTable(String domain) {
         String table = this.contactTablePrefix + domain;
-
         table = SQLUtils.correctTableName(table);
         this.contactTableNameMap.put(domain, table);
 
@@ -1998,18 +2030,11 @@ public class ContactStorage implements Storagable {
             if (this.storage.executeCreate(table, fields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
-
-            // 插入内建数据
-            List<StorageField[]> data = this.buildinData();
-            for (StorageField[] dataFields : data) {
-                this.storage.executeInsert(table, dataFields);
-            }
         }
     }
 
     private void checkContactZoneTable(String domain) {
         String table = this.contactZoneTablePrefix + domain;
-
         table = SQLUtils.correctTableName(table);
         this.contactZoneTableNameMap.put(domain, table);
 
@@ -2022,7 +2047,6 @@ public class ContactStorage implements Storagable {
 
     private void checkContactZoneParticipantTable(String domain) {
         String table = this.contactZoneParticipantTablePrefix + domain;
-
         table = SQLUtils.correctTableName(table);
         this.contactZoneParticipantTableNameMap.put(domain, table);
 
@@ -2035,7 +2059,6 @@ public class ContactStorage implements Storagable {
 
     private void checkGroupTable(String domain) {
         String table = this.groupTablePrefix + domain;
-
         table = SQLUtils.correctTableName(table);
         this.groupTableNameMap.put(domain, table);
 
@@ -2082,7 +2105,6 @@ public class ContactStorage implements Storagable {
 
     private void checkGroupMemberTable(String domain) {
         String table = this.groupMemberTablePrefix + domain;
-
         table = SQLUtils.correctTableName(table);
         this.groupMemberTableNameMap.put(domain, table);
 
@@ -2123,7 +2145,6 @@ public class ContactStorage implements Storagable {
 
     private void checkAppendixTable(String domain) {
         String table = this.appendixTablePrefix + domain;
-
         table = SQLUtils.correctTableName(table);
         this.appendixTableNameMap.put(domain, table);
 
@@ -2149,7 +2170,6 @@ public class ContactStorage implements Storagable {
 
     private void checkTopListTable(String domain) {
         String table = this.topListTablePrefix + domain;
-
         table = SQLUtils.correctTableName(table);
 
         if (!this.storage.exist(table)) {
@@ -2162,7 +2182,6 @@ public class ContactStorage implements Storagable {
 
     private void checkBlockListTable(String domain) {
         String table = this.blockListTablePrefix + domain;
-
         table = SQLUtils.correctTableName(table);
 
         if (!this.storage.exist(table)) {
@@ -2175,13 +2194,25 @@ public class ContactStorage implements Storagable {
 
     private void checkPointTable(String domain) {
         String table = this.pointTablePrefix + domain;
-
         table = SQLUtils.correctTableName(table);
         this.pointTableNameMap.put(domain, table);
 
         if (!this.storage.exist(table)) {
             // 表不存在，建表
             if (this.storage.executeCreate(table, this.pointFields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkMembershipTable(String domain) {
+        String table = this.membershipTablePrefix + domain;
+        table = SQLUtils.correctTableName(table);
+        this.membershipTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.membershipFields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
         }
@@ -2194,96 +2225,5 @@ public class ContactStorage implements Storagable {
             result[i] = new StorageField(table, src.getName(), src.getLiteralBase());
         }
         return result;
-    }
-
-    private List<StorageField[]> buildinData() {
-        List<StorageField[]> list = new ArrayList<>();
-
-        JSONObject context = new JSONObject("{" +
-                "\"id\": 50001001," +
-                "\"account\": \"cube1\"," +
-                "\"name\": \"李国诚\"," +
-                "\"avatar\": \"avatar01\"," +
-                "\"state\": 0," +
-                "\"region\": \"北京\"," +
-                "\"department\": \"产品中心\"," +
-                "\"last\": 0" +
-                "}");
-        StorageField[] fields = new StorageField[] {
-                new StorageField("id", LiteralBase.LONG, context.getLong("id")),
-                new StorageField("name", LiteralBase.STRING, context.getString("name")),
-                new StorageField("context", LiteralBase.STRING, context.toString())
-        };
-        list.add(fields);
-
-        context = new JSONObject("{" +
-                "\"id\": 50001002," +
-                "\"account\": \"cube2\"," +
-                "\"name\": \"王沛珊\"," +
-                "\"avatar\": \"avatar13\"," +
-                "\"state\": 0," +
-                "\"region\": \"武汉\"," +
-                "\"department\": \"媒介部\"," +
-                "\"last\": 0" +
-                "}");
-        fields = new StorageField[] {
-                new StorageField("id", LiteralBase.LONG, context.getLong("id")),
-                new StorageField("name", LiteralBase.STRING, context.getString("name")),
-                new StorageField("context", LiteralBase.STRING, context.toString())
-        };
-        list.add(fields);
-
-        context = new JSONObject("{" +
-                "\"id\": 50001003," +
-                "\"account\": \"cube3\"," +
-                "\"name\": \"郝思雁\"," +
-                "\"avatar\": \"avatar15\"," +
-                "\"state\": 0," +
-                "\"region\": \"上海\"," +
-                "\"department\": \"公关部\"," +
-                "\"last\": 0" +
-                "}");
-        fields = new StorageField[] {
-                new StorageField("id", LiteralBase.LONG, context.getLong("id")),
-                new StorageField("name", LiteralBase.STRING, context.getString("name")),
-                new StorageField("context", LiteralBase.STRING, context.toString())
-        };
-        list.add(fields);
-
-        context = new JSONObject("{" +
-                "\"id\": 50001004," +
-                "\"account\": \"cube4\"," +
-                "\"name\": \"高海光\"," +
-                "\"avatar\": \"avatar09\"," +
-                "\"state\": 0," +
-                "\"region\": \"成都\"," +
-                "\"department\": \"技术部\"," +
-                "\"last\": 0" +
-                "}");
-        fields = new StorageField[] {
-                new StorageField("id", LiteralBase.LONG, context.getLong("id")),
-                new StorageField("name", LiteralBase.STRING, context.getString("name")),
-                new StorageField("context", LiteralBase.STRING, context.toString())
-        };
-        list.add(fields);
-
-        context = new JSONObject("{" +
-                "\"id\": 50001005," +
-                "\"account\": \"cube5\"," +
-                "\"name\": \"张明宇\"," +
-                "\"avatar\": \"avatar12\"," +
-                "\"state\": 0," +
-                "\"region\": \"广州\"," +
-                "\"department\": \"设计部\"," +
-                "\"last\": 0" +
-                "}");
-        fields = new StorageField[] {
-                new StorageField("id", LiteralBase.LONG, context.getLong("id")),
-                new StorageField("name", LiteralBase.STRING, context.getString("name")),
-                new StorageField("context", LiteralBase.STRING, context.toString())
-        };
-        list.add(fields);
-
-        return list;
     }
 }

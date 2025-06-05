@@ -51,7 +51,7 @@ public class Chat extends ContextHandler {
             String channelCode = null;
             String content = null;
             String pattern = Consts.PATTERN_CHAT;
-            String unit = ModelConfig.BAIZE_NEXT_UNIT;
+            String unit = ModelConfig.BAIZE_UNIT;
             GeneratingOption option = new GeneratingOption();
             int histories = 0;
             JSONArray records = null;
@@ -94,10 +94,6 @@ public class Chat extends ContextHandler {
                 if (json.has("networking")) {
                     networking = json.getBoolean("networking");
                 }
-
-//                if (json.has("searchTopK")) {
-//                    searchTopK = json.getInt("searchTopK");
-//                }
             } catch (Exception e) {
                 Logger.e(Chat.class, "#doPost - Read body failed", e);
                 this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
