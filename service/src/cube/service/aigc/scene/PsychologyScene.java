@@ -14,7 +14,7 @@ import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.PerceptronThing;
 import cube.aigc.psychology.algorithm.Representation;
-import cube.aigc.psychology.app.AppUserProfile;
+import cube.aigc.psychology.app.UserProfile;
 import cube.aigc.psychology.composition.*;
 import cube.aigc.psychology.material.Label;
 import cube.auth.AuthConsts;
@@ -1285,8 +1285,8 @@ public class PsychologyScene {
         return this.storage.writePaintingManagementState(sn, state);
     }
 
-    public AppUserProfile getAppUserProfile(AuthToken authToken) {
-        AppUserProfile profile = new AppUserProfile();
+    public UserProfile getAppUserProfile(AuthToken authToken) {
+        UserProfile profile = new UserProfile();
 
         Contact contact = ContactManager.getInstance().getContact(authToken.getDomain(), authToken.getContactId());
         profile.totalPoints = ContactManager.getInstance().getPointSystem().total(contact);

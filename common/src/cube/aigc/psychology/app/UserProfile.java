@@ -8,6 +8,7 @@ package cube.aigc.psychology.app;
 
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.common.JSONable;
+import cube.common.entity.Membership;
 import cube.common.entity.Point;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -15,9 +16,11 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AppUserProfile implements JSONable {
+public class UserProfile implements JSONable {
 
     public final long timestamp;
+
+    public Membership membership;
 
     public int totalPoints = 0;
 
@@ -27,12 +30,15 @@ public class AppUserProfile implements JSONable {
 
     public BigFivePersonality personality;
 
-    public AppUserProfile() {
+    public UserProfile() {
         this.timestamp = System.currentTimeMillis();
     }
 
-    public AppUserProfile(JSONObject json) {
+    public UserProfile(JSONObject json) {
         this.timestamp = json.getLong("timestamp");
+        if (json.has("membership")) {
+            this.membership = new Membership(json.getJSONObject("membership"));
+        }
         this.totalPoints = json.getInt("totalPoints");
         JSONArray array = json.getJSONArray("pointList");
         for (int i = 0; i < array.length(); ++i) {
@@ -48,6 +54,9 @@ public class AppUserProfile implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("timestamp", this.timestamp);
+        if (null != this.membership) {
+            json.put("membership", this.membership.toJSON());
+        }
         json.put("totalPoints", this.totalPoints);
         JSONArray array = new JSONArray();
         for (Point point : this.pointList) {

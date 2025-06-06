@@ -65,7 +65,7 @@ public class AppCheckInUserTask extends ServiceTask {
             }
 
             Contact contact = ContactManager.getInstance().getContact(token);
-            User user = service.checkInUser(contact, userName, pwdMD5, register);
+            User user = service.checkInUser(register, userName, pwdMD5, contact);
             if (null == user) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, packet.data));

@@ -17,6 +17,7 @@ import cube.core.StorageField;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
+import cube.util.JSONUtils;
 import cube.util.SQLUtils;
 import cube.util.TextUtils;
 import org.json.JSONException;
@@ -240,6 +241,9 @@ public class ContactStorage implements Storagable {
                     Constraint.NOT_NULL
             }),
             new StorageField("type", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
@@ -1991,6 +1995,69 @@ public class ContactStorage implements Storagable {
             list.add(point);
         }
         return list;
+    }
+
+    public synchronized boolean writeMembership(Membership membership) {
+        String table = this.membershipTableNameMap.get(membership.getDomain().getName());
+        if (null == table) {
+            return false;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, new StorageField[] {
+                new StorageField("id", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", membership.getId().longValue())
+        });
+        if (result.isEmpty()) {
+            // 插入数据
+            return this.storage.executeInsert(table, new StorageField[] {
+                    new StorageField("id", membership.getId().longValue()),
+                    new StorageField("name", membership.name),
+                    new StorageField("type", membership.type),
+                    new StorageField("state", membership.state),
+                    new StorageField("timestamp", membership.getTimestamp()),
+                    new StorageField("duration", membership.duration),
+                    new StorageField("description", membership.description),
+                    new StorageField("context", (null != membership.context)
+                            ? JSONUtils.serializeEscape(membership.context.toString()) : null)
+            });
+        }
+        else {
+            // 更新数据
+            return this.storage.executeUpdate(table, new StorageField[] {
+                    new StorageField("name", membership.name),
+                    new StorageField("type", membership.type),
+                    new StorageField("state", membership.state),
+                    new StorageField("timestamp", membership.getTimestamp()),
+                    new StorageField("duration", membership.duration),
+                    new StorageField("description", membership.description),
+                    new StorageField("context", (null != membership.context)
+                            ? JSONUtils.serializeEscape(membership.context.toString()) : null)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("id", membership.getId().longValue())
+            });
+        }
+    }
+
+    public Membership readMembership(String domain, long contactId) {
+        String table = this.membershipTableNameMap.get(domain);
+        if (null == table) {
+            return null;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(table, this.membershipFields, new Conditional[] {
+                Conditional.createEqualTo("id", contactId)
+        });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        return new Membership(contactId, domain, data.get("name").getString(), data.get("type").getString(),
+                data.get("state").getInt(), data.get("timestamp").getLong(), data.get("duration").getLong(),
+                data.get("description").getString(),
+                data.get("context").isNullValue() ? null :
+                        new JSONObject(JSONUtils.serializeLineFeed(data.get("context").getString())));
     }
 
     private void checkContactTable(String domain) {

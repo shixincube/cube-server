@@ -10,7 +10,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.aigc.psychology.app.AppUserProfile;
+import cube.aigc.psychology.app.UserProfile;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -52,7 +52,7 @@ public class AppGetUserProfileTask extends ServiceTask {
             return;
         }
 
-        AppUserProfile profile = PsychologyScene.getInstance().getAppUserProfile(token);
+        UserProfile profile = PsychologyScene.getInstance().getAppUserProfile(token);
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, profile.toJSON()));
         markResponseTime();

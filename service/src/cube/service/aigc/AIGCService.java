@@ -837,13 +837,13 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
-    public User checkInUser(Contact contact, String userName, String password, boolean register) {
+    public User checkInUser(boolean register, String userName, String password, Contact contact) {
         ContactSearchResult searchResult = ContactManager.getInstance()
                 .searchWithContactName(contact.getDomain().getName(), userName);
         if (register) {
             if (searchResult.getContactList().isEmpty()) {
                 // 注册新用户
-                Logger.i(this.getClass(), "#checkInUser - New user: " + contact.getId());
+                Logger.i(this.getClass(), "#checkInUser - register new user: " + userName);
 
                 // 新用户
                 User user = new User(contact.getContext());

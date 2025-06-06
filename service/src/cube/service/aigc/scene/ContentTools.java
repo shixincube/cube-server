@@ -41,7 +41,7 @@ public class ContentTools {
             int score = sds.getDimensionScore(dim);
             String query = null;
             int rate = 0;
-            if (score <= 60) {
+            if (score <= 70) {
                 query = "六维分析中" + dim.displayName + "维度得分低的表现";
                 rate = 1;
             } else if (score >= 90) {

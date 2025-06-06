@@ -861,7 +861,7 @@ public class PsychologyStorage implements Storagable {
 
         Map<String, StorageField> fields = StorageFields.get(result.get(0));
         try {
-            String jsonString = JSONUtils.deserializeEscape(fields.get("data").getString());
+            String jsonString = JSONUtils.serializeLineFeed(fields.get("data").getString());
             return new PaintingFeatureSet(new JSONObject(jsonString));
         } catch (Exception e) {
             Logger.e(this.getClass(), "#readPaintingFeatureSet", e);
@@ -964,7 +964,7 @@ public class PsychologyStorage implements Storagable {
 
         Map<String, StorageField> fields = StorageFields.get(result.get(0));
         try {
-            String dataStr = JSONUtils.deserializeEscape(fields.get("sheet").getString());
+            String dataStr = JSONUtils.serializeLineFeed(fields.get("sheet").getString());
             return new AnswerSheet(new JSONObject(dataStr));
         } catch (Exception e) {
             Logger.e(this.getClass(), "#readAnswerSheet", e);
@@ -1175,7 +1175,7 @@ public class PsychologyStorage implements Storagable {
                 dataJson = new JSONObject(data.get("evaluation_data").getString().trim());
             } catch (Exception e) {
                 try {
-                    dataJson = new JSONObject(JSONUtils.deserializeEscape(data.get("evaluation_data").getString().trim()));
+                    dataJson = new JSONObject(JSONUtils.serializeLineFeed(data.get("evaluation_data").getString().trim()));
                 } catch (Exception se) {
                     Logger.e(this.getClass(), "#makeReport", se);
                 }

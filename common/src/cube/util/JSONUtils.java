@@ -200,8 +200,15 @@ public final class JSONUtils {
         return text.replaceAll("\\\\", "\\\\\\\\");
     }
 
-    public static String deserializeEscape(String text) {
+    public static String serializeLineFeed(String text) {
         return text.replaceAll("\\n", "\\\\n");
+    }
+
+    public static String deserializeEscape(String text) {
+        String result = text.replaceAll("\\\\\"", "\\\"");
+        result = result.replaceAll("\\\\n", "\\n");
+        result = result.replaceAll("\\\\\\\\", "\\\\");
+        return result;
     }
 
 //    public static String deserializeEscape(String text) {
@@ -216,13 +223,13 @@ public final class JSONUtils {
 
         json.put("reference", "Abnormal");
         json.put("content", content);
-        System.out.println(json.toString());
+        System.out.println("Raw : " + json.toString());
 
         String dbString = serializeEscape(json.toString());
-        System.out.println(dbString);
+        System.out.println("Seri: " + dbString);
 
         String rawString = deserializeEscape(dbString);
-        System.out.println(rawString);
+        System.out.println("Desi: " + rawString);
 
         json = new JSONObject(rawString);
         System.out.println(json.getString("content"));

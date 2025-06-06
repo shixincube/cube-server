@@ -21,7 +21,7 @@ import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Report;
 import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.algorithm.Attention;
-import cube.aigc.psychology.app.AppUserProfile;
+import cube.aigc.psychology.app.UserProfile;
 import cube.aigc.psychology.composition.AnswerSheet;
 import cube.aigc.psychology.composition.Emotion;
 import cube.aigc.psychology.composition.Scale;
@@ -38,6 +38,7 @@ import cube.dispatcher.aigc.handler.Chart;
 import cube.dispatcher.aigc.handler.Conversation;
 import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.aigc.handler.app.App;
+import cube.dispatcher.aigc.handler.app.Profile;
 import cube.dispatcher.util.Tickable;
 import cube.util.FileLabels;
 import cube.util.HttpServer;
@@ -167,7 +168,7 @@ public class Manager implements Tickable, PerformerListener {
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Activate());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.User());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.UserProfile());
+        httpServer.addContextHandler(new Profile());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.AppVersion());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.WordCloud());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Emotion());
@@ -214,17 +215,18 @@ public class Manager implements Tickable, PerformerListener {
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.d(Manager.class, "#checkToken - Response state is NOT ok : " + Packet.extractCode(responsePacket));
+            Logger.d(Manager.class, "#checkToken - Response state is NOT ok : " +
+                    Packet.extractCode(responsePacket) + " - " + token);
             return null;
         }
 
         JSONObject payload = Packet.extractDataPayload(responsePacket);
         AuthToken authToken = new AuthToken(payload.getJSONObject("token"));
-        token = authToken.getCode();
+        String resultToken = authToken.getCode();
         Contact contact = new Contact(payload.getJSONObject("contact"));
-        this.validTokenMap.put(token, new ContactToken(authToken, contact));
+        this.validTokenMap.put(resultToken, new ContactToken(authToken, contact));
 
-        return token;
+        return resultToken;
     }
 
     public ContactToken getContactToken(String token) {
@@ -297,7 +299,7 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public AppUserProfile getUserProfile(String token) {
+    public UserProfile getUserProfile(String token) {
         Packet packet = new Packet(AIGCAction.AppGetUserProfile.name, new JSONObject());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
@@ -314,7 +316,7 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
-        return new AppUserProfile(Packet.extractDataPayload(responsePacket));
+        return new UserProfile(Packet.extractDataPayload(responsePacket));
     }
 
     public JSONObject getAppVersion(String token) {
@@ -2620,7 +2622,7 @@ public class Manager implements Tickable, PerformerListener {
 
     @Override
     public void onTick(long now) {
-        if (now - this.lastClearToken > 60 * 60 * 1000) {
+        if (now - this.lastClearToken > 60 * 1000) {
             this.validTokenMap.clear();
             this.lastClearToken = now;
 

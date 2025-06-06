@@ -39,7 +39,7 @@ public class Session extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String version = request.getHeader("x-baize-api-version");
+            String version = request.getHeader(HEADER_X_BAIZE_API_VERSION);
 
             if (null != version) {
                 try {

@@ -149,6 +149,11 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     private PointSystem pointSystem;
 
+    /**
+     * 会员系统。
+     */
+    private MembershipSystem membershipSystem;
+
     private List<ContactManagerListener> listeners;
 
     /**
@@ -243,7 +248,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
                 // 启动统计系统
                 statisticsSystem.start(storage.getStorageType(), storage.getConfig(), authService.getDomainList());
 
+                // 积分系统
                 pointSystem = new PointSystem(storage);
+                // 会员系统
+                membershipSystem = new MembershipSystem(storage);
 
                 for (ContactManagerListener listener : listeners) {
                     listener.onStarted(ContactManager.this);
@@ -1979,6 +1987,15 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     public PointSystem getPointSystem() {
         return this.pointSystem;
+    }
+
+    /**
+     * 获取会员系统。
+     *
+     * @return 返回会员系统实例。
+     */
+    public MembershipSystem getMembershipSystem() {
+        return this.membershipSystem;
     }
 
     public boolean setContactMask(String domain, long contactId, ContactMask mask) {

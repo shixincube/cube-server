@@ -37,32 +37,43 @@ public class Verify extends ContextHandler {
             try {
                 data = this.readBodyAsJSONObject(request);
                 if (null == data) {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                     return;
                 }
 
                 if (!data.has("token")) {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                     return;
                 }
 
                 token = data.getString("token");
+                token = Manager.getInstance().checkAndGetToken(token);
+                String version = request.getHeader(HEADER_X_BAIZE_API_VERSION);
+                if (null != version) {
+                    if (null != token) {
+                        data.put("verified", true);
+                    }
+                    else {
+                        data.put("verified", false);
+                    }
+                    this.respondOk(response, data);
+                    this.complete();
+                }
+                else {
+                    if (null != token) {
+                        data.put("token", token);
+                        Helper.respondOk(this, response, data);
+                    }
+                    else {
+                        Helper.respondFailure(this, response, HttpStatus.NOT_FOUND_404);
+                    }
+                }
             } catch (Exception e) {
                 Logger.w(Verify.class, "#doPost", e);
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
-                return;
-            }
-
-            token = Manager.getInstance().checkAndGetToken(token);
-            if (null != token) {
-                data.put("token", token);
-                Helper.respondOk(this, response, data);
-            }
-            else {
-                Helper.respondFailure(this, response, HttpStatus.NOT_FOUND_404);
             }
         }
     }
