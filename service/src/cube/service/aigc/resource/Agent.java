@@ -119,7 +119,7 @@ public final class Agent {
             Logger.d(this.getClass(), "#generateText - query:\n" + content);
 
             JSONObject data = new JSONObject();
-            data.put("code", code);
+            data.put("channel", code);
             data.put("content", content);
             data.put("unit", unitName);
             data.put("option", (null == option) ? (new GeneratingOption()).toJSON() : option.toJSON());

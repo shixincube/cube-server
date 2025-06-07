@@ -182,6 +182,16 @@ public enum ContactAction {
     VerifyVerificationCode("verifyVerificationCode"),
 
     /**
+     * 激活会员。
+     */
+    ActivateMembership("activateMembership"),
+
+    /**
+     * 撤销会员。
+     */
+    CancelMembership("cancelMembership"),
+
+    /**
      * 未知动作。
      */
     Unknown("")

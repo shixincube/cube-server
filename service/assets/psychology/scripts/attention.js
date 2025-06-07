@@ -122,6 +122,7 @@ function calc(attribute, scores, factorSet, reference) {
         }
     }
 
+    var rawScore = nScore;
     Logger.d('attention.js', "Raw Score: " + nScore);
 
     if (bDepression && bSenseOfSecurity) {
@@ -140,6 +141,11 @@ function calc(attribute, scores, factorSet, reference) {
     if (!bDepression && !bAnxiety) {
         nScore -= 1;
         Logger.d('attention.js', "(!depression && !anxiety)");
+    }
+
+    if (nScore > rawScore && rawScore == 4) {
+        Logger.d('attention.js', "Fix score " + nScore + " -> " + rawScore);
+        nScore = 4;
     }
 
     Logger.d('attention.js', "Calc score: " + nScore + " - " +

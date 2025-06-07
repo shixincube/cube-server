@@ -75,11 +75,21 @@ public class HexagonDimensionScore {
         if (null != factorSet) {
             // 情绪
             if (factorSet.affectFactor.positive > factorSet.affectFactor.negative) {
-                if (factorSet.affectFactor.positive - factorSet.affectFactor.negative > 10) {
-                    this.record(HexagonDimension.Mood, Utils.randomInt(80, 89));
+                if (attention == Attention.SpecialAttention || attention == Attention.FocusedAttention) {
+                    if (factorSet.affectFactor.positive - factorSet.affectFactor.negative > 10) {
+                        this.record(HexagonDimension.Mood, Utils.randomInt(70, 79));
+                    }
+                    else {
+                        this.record(HexagonDimension.Mood, Utils.randomInt(60, 69));
+                    }
                 }
                 else {
-                    this.record(HexagonDimension.Mood, Utils.randomInt(70, 79));
+                    if (factorSet.affectFactor.positive - factorSet.affectFactor.negative > 10) {
+                        this.record(HexagonDimension.Mood, Utils.randomInt(80, 89));
+                    }
+                    else {
+                        this.record(HexagonDimension.Mood, Utils.randomInt(70, 79));
+                    }
                 }
             }
             else {
