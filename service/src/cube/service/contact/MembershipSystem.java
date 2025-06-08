@@ -8,6 +8,7 @@ package cube.service.contact;
 
 import cube.common.entity.Contact;
 import cube.common.entity.Membership;
+import org.json.JSONObject;
 
 public class MembershipSystem {
 
@@ -25,9 +26,25 @@ public class MembershipSystem {
         return this.storage.readMembership(domain, contactId);
     }
 
-    public boolean setMembership(Membership membership) {
+    public boolean activateMembership(String domain, long contactId, String name, long duration, String description,
+                                      JSONObject context) {
+        Membership membership = new Membership(contactId, domain, name,
+                Membership.TYPE_ORDINARY, Membership.STATE_NORMAL, System.currentTimeMillis(),
+                duration, description, context);
         return this.storage.writeMembership(membership);
     }
 
+    public boolean cancelMembership(String domain, long contactId) {
+        Membership membership = this.storage.readMembership(domain, contactId);
+        if (null == membership) {
+            return false;
+        }
 
+        membership.state = Membership.STATE_INVALID;
+        return this.storage.writeMembership(membership);
+    }
+
+    public boolean updateMembership(Membership membership) {
+        return this.storage.writeMembership(membership);
+    }
 }

@@ -13,7 +13,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.KnowledgeDoc;
+import cube.common.entity.KnowledgeDocument;
 import cube.common.entity.ResetKnowledgeProgress;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
@@ -81,7 +81,7 @@ public class ResetKnowledgeStoreTask extends ServiceTask {
             }
 
             @Override
-            public void onCompleted(KnowledgeBase knowledgeBase, List<KnowledgeDoc> originList, List<KnowledgeDoc> completionList) {
+            public void onCompleted(KnowledgeBase knowledgeBase, List<KnowledgeDocument> originList, List<KnowledgeDocument> completionList) {
                 Logger.d(ResetKnowledgeStoreTask.class, "#onCompleted - " + knowledgeBase.getName() +
                         " - " + knowledgeBase.getAuthToken().getContactId());
             }

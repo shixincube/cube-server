@@ -15,13 +15,13 @@ import org.json.JSONObject;
  */
 public class KnowledgeSource implements JSONable {
 
-    private KnowledgeDoc document;
+    private KnowledgeDocument document;
 
     private KnowledgeArticle article;
 
     private String segment;
 
-    public KnowledgeSource(KnowledgeDoc document) {
+    public KnowledgeSource(KnowledgeDocument document) {
         this.document = document;
     }
 
@@ -35,7 +35,7 @@ public class KnowledgeSource implements JSONable {
 
     public KnowledgeSource(JSONObject json) {
         if (json.has("document")) {
-            this.document = new KnowledgeDoc(json.getJSONObject("document"));
+            this.document = new KnowledgeDocument(json.getJSONObject("document"));
         }
         if (json.has("article")) {
             this.article = new KnowledgeArticle(json.getJSONObject("article"));
@@ -45,7 +45,7 @@ public class KnowledgeSource implements JSONable {
         }
     }
 
-    public KnowledgeDoc getDocument() {
+    public KnowledgeDocument getDocument() {
         return this.document;
     }
 

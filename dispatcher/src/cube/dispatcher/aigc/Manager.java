@@ -648,7 +648,7 @@ public class Manager implements Tickable, PerformerListener {
         }
     }
 
-    public KnowledgeDoc importKnowledgeDoc(String token, String baseName, String fileCode, String splitter) {
+    public KnowledgeDocument importKnowledgeDoc(String token, String baseName, String fileCode, String splitter) {
         JSONObject payload = new JSONObject();
         payload.put("base", baseName);
         payload.put("fileCode", fileCode);
@@ -668,7 +668,7 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
-        return new KnowledgeDoc(Packet.extractDataPayload(responsePacket));
+        return new KnowledgeDocument(Packet.extractDataPayload(responsePacket));
     }
 
     public KnowledgeProgress importKnowledgeDocs(String token, String baseName, JSONArray fileCodeArray, String splitter) {
@@ -696,7 +696,7 @@ public class Manager implements Tickable, PerformerListener {
         return new KnowledgeProgress(Packet.extractDataPayload(responsePacket));
     }
 
-    public KnowledgeDoc removeKnowledgeDoc(String token, String baseName, String fileCode) {
+    public KnowledgeDocument removeKnowledgeDoc(String token, String baseName, String fileCode) {
         JSONObject payload = new JSONObject();
         payload.put("base", baseName);
         payload.put("fileCode", fileCode);
@@ -716,7 +716,7 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
-        return new KnowledgeDoc(Packet.extractDataPayload(responsePacket));
+        return new KnowledgeDocument(Packet.extractDataPayload(responsePacket));
     }
 
     public KnowledgeProgress removeKnowledgeDocs(String token, String baseName, JSONArray fileCodeArray) {

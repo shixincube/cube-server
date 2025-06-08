@@ -11,6 +11,8 @@ import org.json.JSONObject;
 
 public class User extends Entity {
 
+    public final static String PersonalKnowledgeBaseName = "mind_echo";
+
     private String name;
 
     private String appAgent;
@@ -24,6 +26,8 @@ public class User extends Entity {
     private String email;
 
     private String password;
+
+    private long registerTime;
 
     private AuthToken authToken;
 
@@ -51,6 +55,7 @@ public class User extends Entity {
         this.phoneNumber = json.has("phoneNumber") ? json.getString("phoneNumber") : "";
         this.email = json.has("email") ? json.getString("email") : "";
         this.password = json.has("password") ? json.getString("password") : "";
+        this.registerTime = json.has("registerTime") ? json.getLong("registerTime") : 0;
         if (json.has("authToken")) {
             this.authToken = new AuthToken(json.getJSONObject("authToken"));
         }
@@ -100,6 +105,14 @@ public class User extends Entity {
         return this.displayName;
     }
 
+    public void setRegisterTime(long time) {
+        this.registerTime = time;
+    }
+
+    public long getRegisterTime() {
+        return this.registerTime;
+    }
+
     public void setAuthToken(AuthToken authToken) {
         this.authToken = authToken;
     }
@@ -115,6 +128,7 @@ public class User extends Entity {
         json.put("phoneNumber", this.phoneNumber);
         json.put("email", this.email);
         json.put("password", this.password);
+        json.put("registerTime", this.registerTime);
         if (null != this.authToken) {
             json.put("authToken", this.authToken.toCompactJSON());
         }

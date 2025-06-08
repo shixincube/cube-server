@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * 知识库文档。
  */
-public class KnowledgeDoc extends Entity {
+public class KnowledgeDocument extends Entity {
 
     /**
      * 自动语义切割。
@@ -72,8 +72,8 @@ public class KnowledgeDoc extends Entity {
      */
     public List<String> knowledgeLabels = new ArrayList<>();
 
-    public KnowledgeDoc(long id, String domain, long contactId, String fileCode, String baseName,
-                        String fileName, boolean activated, int numSegments, KnowledgeScope scope) {
+    public KnowledgeDocument(long id, String domain, long contactId, String fileCode, String baseName,
+                             String fileName, boolean activated, int numSegments, KnowledgeScope scope) {
         super(id, domain);
         this.contactId = contactId;
         this.fileCode = fileCode;
@@ -90,7 +90,7 @@ public class KnowledgeDoc extends Entity {
         }
     }
 
-    public KnowledgeDoc(JSONObject json) {
+    public KnowledgeDocument(JSONObject json) {
         super(json);
         this.contactId = json.getLong("contactId");
         this.fileCode = json.getString("fileCode");
@@ -124,8 +124,8 @@ public class KnowledgeDoc extends Entity {
 
     @Override
     public boolean equals(Object object) {
-        if (object instanceof KnowledgeDoc) {
-            KnowledgeDoc other = (KnowledgeDoc) object;
+        if (object instanceof KnowledgeDocument) {
+            KnowledgeDocument other = (KnowledgeDocument) object;
             return other.fileCode.equals(this.fileCode);
         }
 

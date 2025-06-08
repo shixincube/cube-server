@@ -37,7 +37,7 @@ public class ResetKnowledgeProgress implements JSONable {
 
     private int processedDocs;
 
-    private KnowledgeDoc activatingDoc;
+    private KnowledgeDocument activatingDoc;
 
     private int stateCode;
 
@@ -57,7 +57,7 @@ public class ResetKnowledgeProgress implements JSONable {
         this.totalDocs = json.getInt("totalDocs");
         this.processedDocs = json.getInt("processedDocs");
         if (json.has("activatingDoc")) {
-            this.activatingDoc = new KnowledgeDoc(json.getJSONObject("activatingDoc"));
+            this.activatingDoc = new KnowledgeDocument(json.getJSONObject("activatingDoc"));
         }
         this.stateCode = json.getInt("stateCode");
     }
@@ -89,7 +89,7 @@ public class ResetKnowledgeProgress implements JSONable {
         this.processedDocs = value;
     }
 
-    public void setActivatingDoc(KnowledgeDoc doc) {
+    public void setActivatingDoc(KnowledgeDocument doc) {
         this.activatingDoc = doc;
     }
 

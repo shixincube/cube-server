@@ -12,7 +12,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.KnowledgeDoc;
+import cube.common.entity.KnowledgeDocument;
 import cube.common.entity.KnowledgeProgress;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
@@ -75,7 +75,7 @@ public class ImportKnowledgeDocTask extends ServiceTask {
             baseName = packet.data.getString("base");
         }
 
-        String splitter = KnowledgeDoc.SPLITTER_AUTO;
+        String splitter = KnowledgeDocument.SPLITTER_AUTO;
         if (packet.data.has("splitter")) {
             splitter = packet.data.getString("splitter");
         }
@@ -90,7 +90,7 @@ public class ImportKnowledgeDocTask extends ServiceTask {
         }
 
         if (null != fileCode) {
-            KnowledgeDoc doc = base.importKnowledgeDoc(fileCode, splitter);
+            KnowledgeDocument doc = base.importKnowledgeDoc(fileCode, splitter);
             if (null == doc) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

@@ -28,7 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * 资源。
  */
 public class Resource {
-
     /**
      * 绘画指导语。
      */

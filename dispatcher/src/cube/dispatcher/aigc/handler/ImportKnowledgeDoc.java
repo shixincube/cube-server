@@ -7,7 +7,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cell.util.log.Logger;
-import cube.common.entity.KnowledgeDoc;
+import cube.common.entity.KnowledgeDocument;
 import cube.common.entity.KnowledgeProgress;
 import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
@@ -69,14 +69,14 @@ public class ImportKnowledgeDoc extends ContextHandler {
                     return;
                 }
 
-                String splitter = KnowledgeDoc.SPLITTER_AUTO;
+                String splitter = KnowledgeDocument.SPLITTER_AUTO;
                 if (data.has("splitter")) {
                     splitter = data.getString("splitter");
                 }
 
                 if (data.has("fileCode")) {
                     String fileCode = data.getString("fileCode");
-                    KnowledgeDoc doc = Manager.getInstance().importKnowledgeDoc(token, baseName, fileCode, splitter);
+                    KnowledgeDocument doc = Manager.getInstance().importKnowledgeDoc(token, baseName, fileCode, splitter);
                     if (null == doc) {
                         this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                         this.complete();

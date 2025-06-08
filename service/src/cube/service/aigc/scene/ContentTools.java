@@ -455,6 +455,8 @@ public class ContentTools {
         return buf.toString();
     }
 
+
+
     public static String fastInfer(String query, Tokenizer tokenizer) {
         Dataset dataset = Resource.getInstance().loadDataset();
         if (null == dataset) {

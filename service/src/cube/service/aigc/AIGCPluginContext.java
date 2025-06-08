@@ -6,7 +6,7 @@
 
 package cube.service.aigc;
 
-import cube.common.entity.KnowledgeDoc;
+import cube.common.entity.KnowledgeDocument;
 import cube.plugin.PluginContext;
 import cube.service.aigc.knowledge.KnowledgeBase;
 
@@ -17,11 +17,11 @@ public class AIGCPluginContext extends PluginContext {
 
     private KnowledgeBase knowledgeBase;
 
-    private KnowledgeDoc knowledgeDoc;
+    private KnowledgeDocument knowledgeDocument;
 
-    public AIGCPluginContext(KnowledgeBase knowledgeBase, KnowledgeDoc knowledgeDoc) {
+    public AIGCPluginContext(KnowledgeBase knowledgeBase, KnowledgeDocument knowledgeDocument) {
         this.knowledgeBase = knowledgeBase;
-        this.knowledgeDoc = knowledgeDoc;
+        this.knowledgeDocument = knowledgeDocument;
     }
 
     public void setKnowledgeBase(KnowledgeBase knowledgeBase) {
@@ -32,8 +32,8 @@ public class AIGCPluginContext extends PluginContext {
         return this.knowledgeBase;
     }
 
-    public KnowledgeDoc getKnowledgeDoc() {
-        return this.knowledgeDoc;
+    public KnowledgeDocument getKnowledgeDoc() {
+        return this.knowledgeDocument;
     }
 
     @Override
@@ -42,7 +42,7 @@ public class AIGCPluginContext extends PluginContext {
             return this.knowledgeBase;
         }
         else if (name.equalsIgnoreCase("knowledgeDoc")) {
-            return this.knowledgeDoc;
+            return this.knowledgeDocument;
         }
 
         return null;

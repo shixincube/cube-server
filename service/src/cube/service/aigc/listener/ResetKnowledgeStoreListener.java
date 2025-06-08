@@ -6,7 +6,7 @@
 
 package cube.service.aigc.listener;
 
-import cube.common.entity.KnowledgeDoc;
+import cube.common.entity.KnowledgeDocument;
 import cube.common.entity.ResetKnowledgeProgress;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.knowledge.KnowledgeBase;
@@ -22,5 +22,5 @@ public interface ResetKnowledgeStoreListener {
 
     void onFailed(KnowledgeBase knowledgeBase, ResetKnowledgeProgress progress, AIGCStateCode stateCode);
 
-    void onCompleted(KnowledgeBase knowledgeBase, List<KnowledgeDoc> originList, List<KnowledgeDoc> completionList);
+    void onCompleted(KnowledgeBase knowledgeBase, List<KnowledgeDocument> originList, List<KnowledgeDocument> completionList);
 }

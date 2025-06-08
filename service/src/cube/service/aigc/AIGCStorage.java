@@ -1286,8 +1286,8 @@ public class AIGCStorage implements Storagable {
         }
     }
 
-    public List<KnowledgeDoc> readKnowledgeDocList(String domain, String baseName) {
-        List<KnowledgeDoc> list = new ArrayList<>();
+    public List<KnowledgeDocument> readKnowledgeDocList(String domain, String baseName) {
+        List<KnowledgeDocument> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocTable, this.knowledgeDocFields,
                 new Conditional[] {
@@ -1298,7 +1298,7 @@ public class AIGCStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
+            KnowledgeDocument doc = new KnowledgeDocument(data.get("id").getLong(), data.get("domain").getString(),
                     data.get("contact_id").getLong(), data.get("file_code").getString(), data.get("base").getString(),
                     data.get("file_name").isNullValue() ? null : data.get("file_name").getString(),
                     data.get("activated").getInt() == 1, data.get("num_segments").getInt(),
@@ -1309,8 +1309,8 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public List<KnowledgeDoc> readKnowledgeDocList(String domain, long contactId, String baseName) {
-        List<KnowledgeDoc> list = new ArrayList<>();
+    public List<KnowledgeDocument> readKnowledgeDocList(String domain, long contactId, String baseName) {
+        List<KnowledgeDocument> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocTable, this.knowledgeDocFields,
                 new Conditional[] {
@@ -1323,7 +1323,7 @@ public class AIGCStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
+            KnowledgeDocument doc = new KnowledgeDocument(data.get("id").getLong(), data.get("domain").getString(),
                     data.get("contact_id").getLong(), data.get("file_code").getString(), data.get("base").getString(),
                     data.get("file_name").isNullValue() ? null : data.get("file_name").getString(),
                     data.get("activated").getInt() == 1, data.get("num_segments").getInt(),
@@ -1334,7 +1334,7 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public KnowledgeDoc readKnowledgeDoc(String baseName, String fileCode) {
+    public KnowledgeDocument readKnowledgeDoc(String baseName, String fileCode) {
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocTable, this.knowledgeDocFields,
                 new Conditional[] {
                         Conditional.createEqualTo("base", baseName),
@@ -1346,7 +1346,7 @@ public class AIGCStorage implements Storagable {
         }
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
-        KnowledgeDoc doc = new KnowledgeDoc(data.get("id").getLong(), data.get("domain").getString(),
+        KnowledgeDocument doc = new KnowledgeDocument(data.get("id").getLong(), data.get("domain").getString(),
                 data.get("contact_id").getLong(), data.get("file_code").getString(), data.get("base").getString(),
                 data.get("file_name").isNullValue() ? null : data.get("file_name").getString(),
                 data.get("activated").getInt() == 1, data.get("num_segments").getInt(),
@@ -1354,7 +1354,7 @@ public class AIGCStorage implements Storagable {
         return doc;
     }
 
-    public void writeKnowledgeDoc(KnowledgeDoc doc) {
+    public void writeKnowledgeDoc(KnowledgeDocument doc) {
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeDocTable, new StorageField[] {
                 new StorageField("id", LiteralBase.LONG)
         }, new Conditional[] {
@@ -1384,7 +1384,7 @@ public class AIGCStorage implements Storagable {
         });
     }
 
-    public boolean updateKnowledgeDoc(KnowledgeDoc doc) {
+    public boolean updateKnowledgeDoc(KnowledgeDocument doc) {
         return this.storage.executeUpdate(this.knowledgeDocTable, new StorageField[] {
                 new StorageField("activated", doc.activated ? 1 : 0),
                 new StorageField("num_segments", doc.numSegments),

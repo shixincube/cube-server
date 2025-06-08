@@ -14,10 +14,7 @@ import cube.aigc.*;
 import cube.aigc.app.Notification;
 import cube.aigc.complex.widget.Event;
 import cube.aigc.complex.widget.EventResult;
-import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.PaintingReport;
-import cube.aigc.psychology.ScaleReport;
-import cube.aigc.psychology.Theme;
+import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.Scale;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
@@ -788,12 +785,18 @@ public class AIGCService extends AbstractModule implements Generatable {
 
             // 新注册用户
             User user = new User(contact.getContext());
+            user.setRegisterTime(System.currentTimeMillis());
             user.setName(verificationCode.phoneNumber);
             user.setDisplayName(verificationCode.phoneNumber);
             user.setPhoneNumber(verificationCode.dialCode + "-" + verificationCode.phoneNumber);
 
             ContactManager.getInstance().updateContact(contact.getDomain().getName(),
                     contact.getId(), verificationCode.phoneNumber, user.toJSON());
+
+            // 创建个人知识记忆
+            this.createPersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
+                    contact.getId()), user);
+
             return user;
         }
         else {
@@ -847,6 +850,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
                 // 新用户
                 User user = new User(contact.getContext());
+                user.setRegisterTime(System.currentTimeMillis());
                 user.setName(userName);
                 user.setDisplayName(TextUtils.extractEmailAccountName(userName));
                 user.setEmail(userName);
@@ -854,6 +858,11 @@ public class AIGCService extends AbstractModule implements Generatable {
 
                 ContactManager.getInstance().updateContact(contact.getDomain().getName(),
                         contact.getId(), userName, user.toJSON());
+
+                // 创建个人知识记忆
+                this.createPersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
+                        contact.getId()), user);
+
                 return user;
             }
             else {
@@ -904,6 +913,11 @@ public class AIGCService extends AbstractModule implements Generatable {
 
                     ContactManager.getInstance().updateContact(userContact.getDomain().getName(),
                             userContact.getId(), user.getName(), user.toJSON());
+
+                    // 创建个人知识记忆
+                    this.createPersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
+                            contact.getId()), user);
+
                     return user;
                 }
                 else {
@@ -912,6 +926,24 @@ public class AIGCService extends AbstractModule implements Generatable {
                     return null;
                 }
             }
+        }
+    }
+
+    private void createPersonalKnowledgeBase(AuthToken authToken, User user) {
+        KnowledgeBase base = this.getKnowledgeFramework().getKnowledgeBase(user.getId(), User.PersonalKnowledgeBaseName);
+        if (null == base) {
+            this.getKnowledgeFramework().newKnowledgeBase(authToken.getCode(), User.PersonalKnowledgeBaseName,
+                    User.PersonalKnowledgeBaseName, "Personal");
+
+            base = this.getKnowledgeFramework().getKnowledgeBase(user.getId(), User.PersonalKnowledgeBaseName);
+            if (null == base) {
+                Logger.e(this.getClass(), "#createPersonalKnowledgeBase - Failed: " + user.getId());
+                return;
+            }
+
+            KnowledgeProfile profile = base.updateProfile(KnowledgeProfile.STATE_NORMAL, 0, KnowledgeScope.Private);
+            Logger.d(this.getClass(), "#createPersonalKnowledgeBase - profile: " + user.getId() + " - " +
+                    profile.scope.name + "/" + profile.maxSize + "/" + profile.state);
         }
     }
 

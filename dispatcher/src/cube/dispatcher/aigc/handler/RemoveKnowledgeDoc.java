@@ -6,7 +6,7 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.common.entity.KnowledgeDoc;
+import cube.common.entity.KnowledgeDocument;
 import cube.common.entity.KnowledgeProgress;
 import cube.dispatcher.aigc.AccessController;
 import cube.dispatcher.aigc.Manager;
@@ -71,7 +71,7 @@ public class RemoveKnowledgeDoc extends ContextHandler {
 
                 if (data.has("fileCode")) {
                     String fileCode = data.getString("fileCode");
-                    KnowledgeDoc doc = Manager.getInstance().removeKnowledgeDoc(token, baseName, fileCode);
+                    KnowledgeDocument doc = Manager.getInstance().removeKnowledgeDoc(token, baseName, fileCode);
                     if (null == doc) {
                         this.respond(response, HttpStatus.BAD_REQUEST_400);
                         this.complete();

@@ -22,12 +22,12 @@ public class DaemonTask implements Runnable {
     /**
      * 允许联系人数据实体空闲的最大时间。
      */
-    private long contactIdle = 10L * 60L * 1000L;
+    private long contactIdle = 10 * 60 * 1000L;
 
     /**
      * 附录空闲时长。
      */
-    private long appendixIdle = 1L * 60L * 1000L;
+    private long appendixIdle = 1 * 60 * 1000L;
 
     /**
      * 间隔 10 分钟

@@ -12,7 +12,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.KnowledgeDoc;
+import cube.common.entity.KnowledgeDocument;
 import cube.common.entity.KnowledgeProgress;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
@@ -85,7 +85,7 @@ public class RemoveKnowledgeDocTask extends ServiceTask {
         }
 
         if (null != fileCode) {
-            KnowledgeDoc doc = base.removeKnowledgeDoc(fileCode);
+            KnowledgeDocument doc = base.removeKnowledgeDoc(fileCode);
             if (null == doc) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

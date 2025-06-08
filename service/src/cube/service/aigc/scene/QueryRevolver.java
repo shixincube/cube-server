@@ -16,8 +16,10 @@ import cube.aigc.psychology.composition.*;
 import cube.common.entity.GeneratingRecord;
 import cube.common.entity.QuestionAnswer;
 import cube.common.entity.RetrieveReRankResult;
+import cube.common.entity.User;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.RetrieveReRankListener;
 import cube.service.aigc.listener.SemanticSearchListener;
 import cube.service.tokenizer.Tokenizer;
@@ -337,6 +339,17 @@ public class QueryRevolver {
                     result.append("根据以上知识点，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
                     result.append("不允许在答案中添加编造成分。");
                     result.append("问题是：").append(query).append("\n");
+                }
+                else {
+                    // 从用户个人知识中获取
+                    String knowledge = generatePersonalKnowledge(context, query);
+                    if (null != knowledge) {
+                        result.append("已知信息：\n\n");
+                        result.append(knowledge);
+                        result.append("根据以上信息，回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
+                        result.append("不允许在答案中添加编造成分。");
+                        result.append("问题是：").append(query).append("\n");
+                    }
                 }
             }
             else {
@@ -717,6 +730,29 @@ public class QueryRevolver {
         return result;
     }
 
+    private String generatePersonalKnowledge(ConversationContext context, String query) {
+        KnowledgeBase base = this.service.getKnowledgeFramework().getKnowledgeBase(context.getAuthToken().getContactId(),
+                User.PersonalKnowledgeBaseName);
+        if (null == base) {
+            Logger.d(this.getClass(), "#generatePersonalKnowledge - No personal base: " +
+                    context.getAuthToken().getContactId());
+            return null;
+        }
+
+        KnowledgeBase.Knowledge knowledge = base.generateKnowledge(query, 3);
+        if (null == knowledge) {
+
+            return null;
+        }
+
+        StringBuilder buf = new StringBuilder();
+        for (KnowledgeBase.Knowledge.Metadata metadata : knowledge.metadataList) {
+            buf.append(metadata.getContent());
+            buf.append("\n\n");
+        }
+        return buf.toString();
+    }
+
     private String formatReportDate(PaintingReport report) {
         return sDateFormat.format(new Date(report.getFinishedTimestamp()));
     }
@@ -764,55 +800,6 @@ public class QueryRevolver {
         }
 
         return result;
-
-        /* FIXME 2025-03-17 从资源中直接提取
-        final List<String> result = new ArrayList<>();
-
-        List<EvaluationScore> evaluationScoreList = report.getEvaluationReport().getEvaluationScores();
-        List<String> queries = new ArrayList<>();
-        for (EvaluationScore es : evaluationScoreList) {
-            String word = es.generateWord(report.getAttribute());
-            if (null == word) {
-                continue;
-            }
-
-            queries.add(word);
-        }
-
-        boolean success = this.service.retrieveReRank(queries, new RetrieveReRankListener() {
-            @Override
-            public void onCompleted(List<RetrieveReRankResult> retrieveReRankResults) {
-                for (RetrieveReRankResult retrieveReRankResult : retrieveReRankResults) {
-                    if (retrieveReRankResult.hasAnswer()) {
-                        RetrieveReRankResult.Answer answer = retrieveReRankResult.getAnswerList().get(0);
-                        result.add("**" + retrieveReRankResult.getQuery() + "** ：" + answer.content);
-                    }
-                }
-
-                synchronized (result) {
-                    result.notify();
-                }
-            }
-
-            @Override
-            public void onFailed(List<String> queries, AIGCStateCode stateCode) {
-                synchronized (result) {
-                    result.notify();
-                }
-            }
-        });
-
-        if (success) {
-            synchronized (result) {
-                try {
-                    result.wait(60 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return result;*/
     }
 
     private String generateKnowledgeFragment(Report report, String query) {
@@ -928,22 +915,22 @@ public class QueryRevolver {
         return result.toString();
     }
 
-    private String generateKnowledge(String query) {
-        String fixQuery = query.replaceAll("你", "爱心理");
-
-        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
-        List<String> keywords = analyzer.analyzeOnlyWords(fixQuery, 7);
-
-        StringBuilder buf = new StringBuilder();
-
-        Dataset dataset = Resource.getInstance().loadDataset();
-        List<String> list = dataset.searchContent(keywords.toArray(new String[0]), 2);
-        for (String content : list) {
-            buf.append(content).append("\n\n");
-        }
-
-        return buf.toString();
-    }
+//    private String generateKnowledge(String query) {
+//        String fixQuery = query.replaceAll("你", "爱心理");
+//
+//        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+//        List<String> keywords = analyzer.analyzeOnlyWords(fixQuery, 7);
+//
+//        StringBuilder buf = new StringBuilder();
+//
+//        Dataset dataset = Resource.getInstance().loadDataset();
+//        List<String> list = dataset.searchContent(keywords.toArray(new String[0]), 2);
+//        for (String content : list) {
+//            buf.append(content).append("\n\n");
+//        }
+//
+//        return buf.toString();
+//    }
 
     private String tryGenerateFactorDesc(PaintingReport report, String query) {
         StringBuilder result = new StringBuilder();

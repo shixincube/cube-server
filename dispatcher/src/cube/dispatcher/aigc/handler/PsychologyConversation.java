@@ -58,7 +58,8 @@ public class PsychologyConversation extends ContextHandler {
 
             try {
                 JSONObject requestData = this.readBodyAsJSONObject(request);
-                String channelCode = requestData.getString("channelCode");
+                String channelCode = requestData.has("channel") ?
+                        requestData.getString("channel") : requestData.getString("channelCode");
                 String query = requestData.getString("query");
                 JSONArray relations = requestData.has("relations") ?
                         requestData.getJSONArray("relations") : null;

@@ -121,11 +121,11 @@ public class KnowledgeBase {
      *
      * @return
      */
-    public List<KnowledgeDoc> listKnowledgeDocs() {
+    public List<KnowledgeDocument> listKnowledgeDocs() {
         return this.listKnowledgeDocs(false);
     }
 
-    public List<KnowledgeDoc> listKnowledgeDocs(boolean force) {
+    public List<KnowledgeDocument> listKnowledgeDocs(boolean force) {
         synchronized (this) {
             if (force) {
                 this.resource.clearDocs();
@@ -139,14 +139,14 @@ public class KnowledgeBase {
                 return this.resource.docList;
             }
 
-            List<KnowledgeDoc> list = (KnowledgeScope.Private == this.scope) ?
+            List<KnowledgeDocument> list = (KnowledgeScope.Private == this.scope) ?
                     this.storage.readKnowledgeDocList(this.authToken.getDomain(), this.authToken.getContactId(),
                             this.baseInfo.name)
                     : this.storage.readKnowledgeDocList(this.authToken.getDomain(), this.baseInfo.name);
 
-            Iterator<KnowledgeDoc> iter = list.iterator();
+            Iterator<KnowledgeDocument> iter = list.iterator();
             while (iter.hasNext()) {
-                KnowledgeDoc doc = iter.next();
+                KnowledgeDocument doc = iter.next();
                 GetFile getFile = new GetFile(this.authToken.getDomain(), doc.fileCode);
                 JSONObject fileLabelJson = this.fileStorage.notify(getFile);
                 if (null == fileLabelJson) {
@@ -166,8 +166,8 @@ public class KnowledgeBase {
         }
     }
 
-    public KnowledgeDoc getKnowledgeDocByFileCode(String fileCode) {
-        KnowledgeDoc doc = this.storage.readKnowledgeDoc(this.baseInfo.name, fileCode);
+    public KnowledgeDocument getKnowledgeDocByFileCode(String fileCode) {
+        KnowledgeDocument doc = this.storage.readKnowledgeDoc(this.baseInfo.name, fileCode);
         if (null != doc) {
             GetFile getFile = new GetFile(this.authToken.getDomain(), doc.fileCode);
             JSONObject fileLabelJson = this.fileStorage.notify(getFile);
@@ -178,14 +178,14 @@ public class KnowledgeBase {
         return doc;
     }
 
-    public KnowledgeDoc importKnowledgeDoc(String fileCode, String splitter) {
+    public KnowledgeDocument importKnowledgeDoc(String fileCode, String splitter) {
         if (this.lock.get()) {
             Logger.w(this.getClass(), "#importKnowledgeDoc - " + this.getName() + " - Store locked: " + fileCode);
             return null;
         }
         this.lock.set(true);
 
-        KnowledgeDoc activatedDoc = null;
+        KnowledgeDocument activatedDoc = null;
 
         try {
             GetFile getFile = new GetFile(this.authToken.getDomain(), fileCode);
@@ -198,12 +198,12 @@ public class KnowledgeBase {
 
             FileLabel fileLabel = new FileLabel(fileLabelJson);
 
-            KnowledgeDoc doc = this.getKnowledgeDocByFileCode(fileCode);
+            KnowledgeDocument doc = this.getKnowledgeDocByFileCode(fileCode);
             boolean newDoc = false;
             if (null == doc) {
                 newDoc = true;
                 // 创建新文档
-                doc = new KnowledgeDoc(Utils.generateSerialNumber(), this.authToken.getDomain(),
+                doc = new KnowledgeDocument(Utils.generateSerialNumber(), this.authToken.getDomain(),
                         this.authToken.getContactId(), fileCode, this.baseInfo.name, fileLabel.getFileName(),
                         false, -1, this.scope);
             }
@@ -255,20 +255,20 @@ public class KnowledgeBase {
         return activatedDoc;
     }
 
-    public KnowledgeDoc removeKnowledgeDoc(String fileCode) {
+    public KnowledgeDocument removeKnowledgeDoc(String fileCode) {
         if (this.lock.get()) {
             Logger.w(this.getClass(), "#removeKnowledgeDoc - " + this.getName() + " - Store locked: " + fileCode);
             return null;
         }
         this.lock.set(true);
 
-        KnowledgeDoc doc = null;
+        KnowledgeDocument doc = null;
         try {
             doc = this.getKnowledgeDocByFileCode(fileCode);
             if (null != doc) {
                 if (doc.activated) {
                     if (this.resource.checkUnit()) {
-                        KnowledgeDoc deactivatedDoc = this.deactivateKnowledgeDoc(doc);
+                        KnowledgeDocument deactivatedDoc = this.deactivateKnowledgeDoc(doc);
                         doc = deactivatedDoc;
                     }
                     else {
@@ -347,13 +347,13 @@ public class KnowledgeBase {
             }
 
             // 获取所有文件信息
-            List<KnowledgeDoc> allList = new ArrayList<>();
+            List<KnowledgeDocument> allList = new ArrayList<>();
 
             for (String fileCode : fileCodeList) {
-                KnowledgeDoc doc = this.getKnowledgeDocByFileCode(fileCode);
+                KnowledgeDocument doc = this.getKnowledgeDocByFileCode(fileCode);
                 if (null == doc) {
                     // 创建新文档
-                    doc = new KnowledgeDoc(Utils.generateSerialNumber(), this.authToken.getDomain(),
+                    doc = new KnowledgeDocument(Utils.generateSerialNumber(), this.authToken.getDomain(),
                             this.authToken.getContactId(), fileCode, this.baseInfo.name, null,
                             false, -1, this.scope);
 
@@ -399,12 +399,12 @@ public class KnowledgeBase {
 
             // 分批
             int batchSize = 10;
-            final List<List<KnowledgeDoc>> batchList = new ArrayList<>();
+            final List<List<KnowledgeDocument>> batchList = new ArrayList<>();
             int index = 0;
             while (index < allList.size()) {
-                List<KnowledgeDoc> docList = new ArrayList<>();
+                List<KnowledgeDocument> docList = new ArrayList<>();
                 while (docList.size() < batchSize) {
-                    KnowledgeDoc doc = allList.get(index);
+                    KnowledgeDocument doc = allList.get(index);
                     docList.add(doc);
                     ++index;
                     if (index >= allList.size()) {
@@ -414,7 +414,7 @@ public class KnowledgeBase {
                 batchList.add(docList);
             }
 
-            final List<KnowledgeDoc> completionList = new ArrayList<>();
+            final List<KnowledgeDocument> completionList = new ArrayList<>();
 
             // 创建进度
             this.progress = new KnowledgeProgress(AIGCStateCode.Processing.code);
@@ -425,13 +425,13 @@ public class KnowledgeBase {
                 @Override
                 public void run() {
                     try {
-                        for (List<KnowledgeDoc> batch : batchList) {
+                        for (List<KnowledgeDocument> batch : batchList) {
                             // 更新进度
                             progress.setProcessingDoc(batch.get(0));
 
                             // 按照批次发送给单元
                             JSONArray array = new JSONArray();
-                            for (KnowledgeDoc doc : batch) {
+                            for (KnowledgeDocument doc : batch) {
                                 array.put(doc.toJSON());
                             }
                             JSONObject payload = new JSONObject();
@@ -469,7 +469,7 @@ public class KnowledgeBase {
                             // 更新完成列表
                             JSONArray resultArray = Packet.extractDataPayload(response).getJSONArray("list");
                             for (int i = 0; i < resultArray.length(); ++i) {
-                                KnowledgeDoc doc = new KnowledgeDoc(resultArray.getJSONObject(i));
+                                KnowledgeDocument doc = new KnowledgeDocument(resultArray.getJSONObject(i));
                                 completionList.add(doc);
                             }
 
@@ -484,8 +484,8 @@ public class KnowledgeBase {
                         progress.setProcessingDoc(null);
 
                         // 获取最新列表
-                        List<KnowledgeDoc> currentList = listKnowledgeDocs(true);
-                        for (KnowledgeDoc doc : completionList) {
+                        List<KnowledgeDocument> currentList = listKnowledgeDocs(true);
+                        for (KnowledgeDocument doc : completionList) {
                             if (currentList.contains(doc)) {
                                 // 已经存在
                                 storage.updateKnowledgeDoc(doc);
@@ -552,9 +552,9 @@ public class KnowledgeBase {
             }
 
             // 检查文档
-            List<KnowledgeDoc> allList = new ArrayList<>();
+            List<KnowledgeDocument> allList = new ArrayList<>();
             for (String fileCode : fileCodeList) {
-                KnowledgeDoc doc = this.resource.getKnowledgeDoc(fileCode);
+                KnowledgeDocument doc = this.resource.getKnowledgeDoc(fileCode);
                 if (null != doc) {
                     allList.add(doc);
                 }
@@ -574,12 +574,12 @@ public class KnowledgeBase {
 
             // 分批
             int batchSize = 10;
-            final List<List<KnowledgeDoc>> batchList = new ArrayList<>();
+            final List<List<KnowledgeDocument>> batchList = new ArrayList<>();
             int index = 0;
             while (index < allList.size()) {
-                List<KnowledgeDoc> docList = new ArrayList<>();
+                List<KnowledgeDocument> docList = new ArrayList<>();
                 while (docList.size() < batchSize) {
-                    KnowledgeDoc doc = allList.get(index);
+                    KnowledgeDocument doc = allList.get(index);
                     docList.add(doc);
                     ++index;
                     if (index >= allList.size()) {
@@ -589,7 +589,7 @@ public class KnowledgeBase {
                 batchList.add(docList);
             }
 
-            final List<KnowledgeDoc> completionList = new ArrayList<>();
+            final List<KnowledgeDocument> completionList = new ArrayList<>();
 
             // 创建进度
             this.progress = new KnowledgeProgress(AIGCStateCode.Processing.code);
@@ -600,13 +600,13 @@ public class KnowledgeBase {
                 @Override
                 public void run() {
                     try {
-                        for (List<KnowledgeDoc> batch : batchList) {
+                        for (List<KnowledgeDocument> batch : batchList) {
                             // 更新进度
                             progress.setProcessingDoc(batch.get(0));
 
                             // 按照批次发送给单元
                             JSONArray array = new JSONArray();
-                            for (KnowledgeDoc doc : batch) {
+                            for (KnowledgeDocument doc : batch) {
                                 array.put(doc.toJSON());
                             }
                             JSONObject payload = new JSONObject();
@@ -644,7 +644,7 @@ public class KnowledgeBase {
                             // 更新完成列表
                             JSONArray resultArray = Packet.extractDataPayload(response).getJSONArray("list");
                             for (int i = 0; i < resultArray.length(); ++i) {
-                                KnowledgeDoc doc = new KnowledgeDoc(resultArray.getJSONObject(i));
+                                KnowledgeDocument doc = new KnowledgeDocument(resultArray.getJSONObject(i));
                                 completionList.add(doc);
                             }
 
@@ -659,7 +659,7 @@ public class KnowledgeBase {
                         progress.setProcessingDoc(null);
 
                         // 删除文档
-                        for (KnowledgeDoc doc : completionList) {
+                        for (KnowledgeDocument doc : completionList) {
                             storage.deleteKnowledgeDoc(doc.baseName, doc.fileCode);
                             resource.removeDoc(doc);
                         }
@@ -695,7 +695,7 @@ public class KnowledgeBase {
      * @param doc
      * @return 返回已激活的文档。
      */
-    private KnowledgeDoc activateKnowledgeDoc(KnowledgeDoc doc) {
+    private KnowledgeDocument activateKnowledgeDoc(KnowledgeDocument doc) {
         Packet packet = new Packet(AIGCAction.ActivateKnowledgeDoc.name, doc.toJSON());
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect(), 3 * 60 * 1000);
@@ -713,7 +713,7 @@ public class KnowledgeBase {
         }
 
         // 更新文档
-        KnowledgeDoc activatedDoc = new KnowledgeDoc(Packet.extractDataPayload(response));
+        KnowledgeDocument activatedDoc = new KnowledgeDocument(Packet.extractDataPayload(response));
         if (activatedDoc.numSegments <= 0) {
             Logger.w(this.getClass(), "#activateKnowledgeDoc - No segments: " +
                     this.baseInfo.name + " - " + activatedDoc.getFileLabel().getFileCode());
@@ -734,7 +734,7 @@ public class KnowledgeBase {
      * @param doc
      * @return
      */
-    private KnowledgeDoc deactivateKnowledgeDoc(KnowledgeDoc doc) {
+    private KnowledgeDocument deactivateKnowledgeDoc(KnowledgeDocument doc) {
         Packet packet = new Packet(AIGCAction.DeactivateKnowledgeDoc.name, doc.toJSON());
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                 packet.toDialect());
@@ -751,7 +751,7 @@ public class KnowledgeBase {
             return null;
         }
 
-        KnowledgeDoc deactivatedDoc = new KnowledgeDoc(Packet.extractDataPayload(response));
+        KnowledgeDocument deactivatedDoc = new KnowledgeDocument(Packet.extractDataPayload(response));
         this.storage.updateKnowledgeDoc(deactivatedDoc);
         return deactivatedDoc;
     }
@@ -889,7 +889,7 @@ public class KnowledgeBase {
                     // 回调
                     listener.onProgress(KnowledgeBase.this, resetProgress);
 
-                    List<KnowledgeDoc> list = listKnowledgeDocs();
+                    List<KnowledgeDocument> list = listKnowledgeDocs();
                     if (null == list || list.isEmpty()) {
                         // 更新进度
                         resetProgress.setTotalDocs(0);
@@ -908,7 +908,7 @@ public class KnowledgeBase {
                     resetProgress.setProcessedDocs(0);
 
                     // 将文档设置为未激活
-                    for (KnowledgeDoc doc : list) {
+                    for (KnowledgeDocument doc : list) {
                         doc.activated = false;
                         doc.numSegments = 0;
                         storage.updateKnowledgeDoc(doc);
@@ -916,12 +916,12 @@ public class KnowledgeBase {
 
                     // 分批
                     int batchSize = 10;
-                    List<List<KnowledgeDoc>> batchList = new ArrayList<>();
+                    List<List<KnowledgeDocument>> batchList = new ArrayList<>();
                     int index = 0;
                     while (index < list.size()) {
-                        List<KnowledgeDoc> docList = new ArrayList<>();
+                        List<KnowledgeDocument> docList = new ArrayList<>();
                         while (docList.size() < batchSize) {
-                            KnowledgeDoc doc = list.get(index);
+                            KnowledgeDocument doc = list.get(index);
                             docList.add(doc);
                             ++index;
                             if (index >= list.size()) {
@@ -931,15 +931,15 @@ public class KnowledgeBase {
                         batchList.add(docList);
                     }
 
-                    List<KnowledgeDoc> completionList = new ArrayList<>();
+                    List<KnowledgeDocument> completionList = new ArrayList<>();
 
-                    for (List<KnowledgeDoc> batch : batchList) {
+                    for (List<KnowledgeDocument> batch : batchList) {
                         // 更新进度
                         resetProgress.setActivatingDoc(batch.get(0));
 
                         // 按照批次发送给单元
                         JSONArray array = new JSONArray();
-                        for (KnowledgeDoc doc : batch) {
+                        for (KnowledgeDocument doc : batch) {
                             array.put(doc.toJSON());
                         }
                         payload = new JSONObject();
@@ -979,9 +979,9 @@ public class KnowledgeBase {
                         resetProgress.setActivatingDoc(batch.get(batch.size() - 1));
 
                         JSONArray resultArray = Packet.extractDataPayload(response).getJSONArray("list");
-                        List<KnowledgeDoc> resultList = new ArrayList<>();
+                        List<KnowledgeDocument> resultList = new ArrayList<>();
                         for (int i = 0; i < resultArray.length(); ++i) {
-                            KnowledgeDoc doc = new KnowledgeDoc(resultArray.getJSONObject(i));
+                            KnowledgeDocument doc = new KnowledgeDocument(resultArray.getJSONObject(i));
                             resultList.add(doc);
                             storage.updateKnowledgeDoc(doc);
                         }
@@ -1034,9 +1034,9 @@ public class KnowledgeBase {
             return false;
         }
 
-        List<KnowledgeDoc> docList = this.listKnowledgeDocs(true);
+        List<KnowledgeDocument> docList = this.listKnowledgeDocs(true);
 
-        for (KnowledgeDoc doc : docList) {
+        for (KnowledgeDocument doc : docList) {
             // 删除文档记录
             this.storage.deleteKnowledgeDoc(this.baseInfo.name, doc.fileCode);
             // 删除文档分段记录
@@ -1831,7 +1831,7 @@ public class KnowledgeBase {
 
         // 判断是否有重复文件
         if (null != this.resource.docList && !this.resource.docList.isEmpty()) {
-            for (KnowledgeDoc doc : this.resource.docList) {
+            for (KnowledgeDocument doc : this.resource.docList) {
                 for (int i = 0; i < fileLabels.size(); ++i) {
                     FileLabel fileLabel = fileLabels.get(i);
                     if (fileLabel.getFileCode().equals(doc.fileCode)) {
@@ -1850,7 +1850,7 @@ public class KnowledgeBase {
 
         if (!fileLabels.isEmpty()) {
             for (FileLabel fileLabel : fileLabels) {
-                KnowledgeDoc doc = this.importKnowledgeDoc(fileLabel.getFileCode(), KnowledgeDoc.SPLITTER_LINE);
+                KnowledgeDocument doc = this.importKnowledgeDoc(fileLabel.getFileCode(), KnowledgeDocument.SPLITTER_LINE);
                 if (null == doc) {
                     Logger.w(this.getClass(), "#processQueryAttachments - Import knowledge doc failed - fileCode: "
                             + fileLabel.getFileCode());
@@ -2321,7 +2321,14 @@ public class KnowledgeBase {
         return list;
     }
 
-    private Knowledge generateKnowledge(String query, int topK) {
+    /**
+     * 生成对应提问的知识。
+     *
+     * @param query
+     * @param topK
+     * @return
+     */
+    public Knowledge generateKnowledge(String query, int topK) {
         if (!this.resource.checkUnit()) {
             Logger.w(this.getClass(),"#generateKnowledge - No unit for knowledge base");
             return null;
@@ -2382,7 +2389,7 @@ public class KnowledgeBase {
 
     public class KnowledgeResource {
 
-        private List<KnowledgeDoc> docList;
+        private List<KnowledgeDocument> docList;
 
         protected long listDocTime;
 
@@ -2415,12 +2422,12 @@ public class KnowledgeBase {
                     AICapability.NaturalLanguageProcessing.KnowledgeComprehension);
         }
 
-        public KnowledgeDoc getKnowledgeDoc(String fileCode) {
+        public KnowledgeDocument getKnowledgeDoc(String fileCode) {
             if (null == this.docList) {
                 return null;
             }
 
-            for (KnowledgeDoc doc : this.docList) {
+            for (KnowledgeDocument doc : this.docList) {
                 if (doc.fileCode.equals(fileCode)) {
                     return doc;
                 }
@@ -2438,12 +2445,12 @@ public class KnowledgeBase {
             }
         }
 
-        public void appendDocs(List<KnowledgeDoc> list) {
+        public void appendDocs(List<KnowledgeDocument> list) {
             if (null == this.docList) {
                 this.docList = new ArrayList<>();
             }
 
-            for (KnowledgeDoc doc : list) {
+            for (KnowledgeDocument doc : list) {
                 if (this.docList.contains(doc)) {
                     this.docList.remove(doc);
                 }
@@ -2452,7 +2459,7 @@ public class KnowledgeBase {
             }
         }
 
-        public void appendDoc(KnowledgeDoc doc) {
+        public void appendDoc(KnowledgeDocument doc) {
             if (null == this.docList) {
                 this.docList = new ArrayList<>();
             }
@@ -2464,7 +2471,7 @@ public class KnowledgeBase {
             this.docList.add(doc);
         }
 
-        public void removeDoc(KnowledgeDoc doc) {
+        public void removeDoc(KnowledgeDocument doc) {
             if (null == this.docList) {
                 return;
             }
@@ -2472,12 +2479,12 @@ public class KnowledgeBase {
             this.docList.remove(doc);
         }
 
-        public KnowledgeDoc removeDoc(String fileCode) {
+        public KnowledgeDocument removeDoc(String fileCode) {
             if (null == this.docList) {
                 return null;
             }
 
-            for (KnowledgeDoc doc : this.docList) {
+            for (KnowledgeDocument doc : this.docList) {
                 if (doc.fileCode.equals(fileCode)) {
                     this.docList.remove(doc);
                     return doc;
@@ -2665,7 +2672,7 @@ public class KnowledgeBase {
                 // 判断是文档还是文章
                 if (this.source.startsWith(DOCUMENT_PREFIX)) {
                     String fileCode = this.source.substring(DOCUMENT_PREFIX.length());
-                    KnowledgeDoc doc = getKnowledgeDocByFileCode(fileCode);
+                    KnowledgeDocument doc = getKnowledgeDocByFileCode(fileCode);
                     if (null == doc) {
                         return null;
                     }

@@ -12,7 +12,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.KnowledgeDoc;
+import cube.common.entity.KnowledgeDocument;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -60,7 +60,7 @@ public class ListKnowledgeDocsTask extends ServiceTask {
             return;
         }
 
-        List<KnowledgeDoc> docList = base.listKnowledgeDocs();
+        List<KnowledgeDocument> docList = base.listKnowledgeDocs();
         if (null == docList) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
@@ -87,7 +87,7 @@ public class ListKnowledgeDocsTask extends ServiceTask {
         }
         else {
             JSONArray array = new JSONArray();
-            for (KnowledgeDoc doc : docList) {
+            for (KnowledgeDocument doc : docList) {
                 array.put(doc.toJSON());
             }
 
