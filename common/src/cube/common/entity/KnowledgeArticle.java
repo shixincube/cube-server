@@ -8,8 +8,6 @@ package cube.common.entity;
 
 import org.json.JSONObject;
 
-import java.util.Calendar;
-
 /**
  * 知识库文章。
  */
@@ -38,6 +36,8 @@ public class KnowledgeArticle extends Entity {
 
     public int date;
 
+    public String baseName;
+
     public KnowledgeScope scope = KnowledgeScope.Private;
 
     public int numKeywords;
@@ -46,10 +46,12 @@ public class KnowledgeArticle extends Entity {
 
     public int numSegments;
 
-    public KnowledgeArticle(String domain, long contactId, String category, String title, String content, String author,
+    public KnowledgeArticle(String domain, long contactId, String baseName,
+                            String category, String title, String content, String author,
                             int year, int month, int date, long timestamp, KnowledgeScope scope) {
         super(0L, domain, timestamp);
         this.contactId = contactId;
+        this.baseName = baseName;
         this.category = category;
         this.title = title;
         this.content = content;
@@ -61,11 +63,13 @@ public class KnowledgeArticle extends Entity {
         this.numWords = content.length();
     }
 
-    public KnowledgeArticle(long id, String domain, long contactId, String category, String title, String content,
+    public KnowledgeArticle(long id, String domain, long contactId, String baseName,
+                            String category, String title, String content,
                             String summarization, String author, int year, int month, int date, long timestamp,
                             KnowledgeScope scope, boolean activated, int numSegments) {
         super(id, domain, timestamp);
         this.contactId = contactId;
+        this.baseName = baseName;
         this.category = category;
         this.title = title;
         this.content = content;
@@ -83,6 +87,7 @@ public class KnowledgeArticle extends Entity {
     public KnowledgeArticle(JSONObject json) {
         super(json);
         this.contactId = json.getLong("contactId");
+        this.baseName = json.getString("base");
         this.category = json.getString("category");
         this.title = json.getString("title");
         if (json.has("content")) {
@@ -95,10 +100,6 @@ public class KnowledgeArticle extends Entity {
         this.year = json.getInt("year");
         this.month = json.getInt("month");
         this.date = json.getInt("date");
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(year, month - 1, date);
-        this.timestamp = calendar.getTimeInMillis();
 
         this.scope = json.has("scope") ? KnowledgeScope.parse(json.getString("scope")) :
                 KnowledgeScope.Private;
@@ -128,6 +129,7 @@ public class KnowledgeArticle extends Entity {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("contactId", this.contactId);
+        json.put("base", this.baseName);
         json.put("category", this.category);
         json.put("title", this.title);
         if (null != this.content) {
@@ -157,6 +159,7 @@ public class KnowledgeArticle extends Entity {
     public JSONObject toCompactJSON() {
         JSONObject json = super.toCompactJSON();
         json.put("contactId", this.contactId);
+        json.put("base", this.baseName);
         json.put("category", this.category);
         json.put("title", this.title);
         json.put("author", this.author);

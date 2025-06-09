@@ -62,6 +62,7 @@ public class UpdateKnowledgeArticleTask extends ServiceTask {
 
         KnowledgeArticle article = null;
         try {
+            // TODO XJW
             int year = packet.data.getInt("year");
             int month = packet.data.getInt("month");
             int date = packet.data.getInt("date");
@@ -75,7 +76,7 @@ public class UpdateKnowledgeArticleTask extends ServiceTask {
                     KnowledgeScope.parse(packet.data.getString("scope")) : KnowledgeScope.Private;
 
             KnowledgeArticle input = new KnowledgeArticle(packet.data.getLong("id"),
-                    base.getAuthToken().getDomain(), base.getAuthToken().getContactId(),
+                    base.getAuthToken().getDomain(), base.getAuthToken().getContactId(), baseName,
                     packet.data.getString("category"), packet.data.getString("title"),
                     packet.data.getString("content"), packet.data.getString("summarization"),
                     packet.data.getString("author"), year, month, date, timestamp,

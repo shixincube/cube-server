@@ -930,18 +930,18 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     private void createPersonalKnowledgeBase(AuthToken authToken, User user) {
-        KnowledgeBase base = this.getKnowledgeFramework().getKnowledgeBase(user.getId(), User.PersonalKnowledgeBaseName);
+        KnowledgeBase base = this.getKnowledgeFramework().getKnowledgeBase(user.getId(), User.KnowledgeBaseName);
         if (null == base) {
-            this.getKnowledgeFramework().newKnowledgeBase(authToken.getCode(), User.PersonalKnowledgeBaseName,
-                    User.PersonalKnowledgeBaseName, "Personal");
+            this.getKnowledgeFramework().newKnowledgeBase(authToken.getCode(), User.KnowledgeBaseName,
+                    User.KnowledgeBaseDisplayName, "Personal", KnowledgeScope.Private);
 
-            base = this.getKnowledgeFramework().getKnowledgeBase(user.getId(), User.PersonalKnowledgeBaseName);
+            base = this.getKnowledgeFramework().getKnowledgeBase(user.getId(), User.KnowledgeBaseName);
             if (null == base) {
                 Logger.e(this.getClass(), "#createPersonalKnowledgeBase - Failed: " + user.getId());
                 return;
             }
 
-            KnowledgeProfile profile = base.updateProfile(KnowledgeProfile.STATE_NORMAL, 0, KnowledgeScope.Private);
+            KnowledgeProfile profile = base.getProfile();
             Logger.d(this.getClass(), "#createPersonalKnowledgeBase - profile: " + user.getId() + " - " +
                     profile.scope.name + "/" + profile.maxSize + "/" + profile.state);
         }

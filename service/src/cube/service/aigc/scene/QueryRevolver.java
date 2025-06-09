@@ -732,7 +732,7 @@ public class QueryRevolver {
 
     private String generatePersonalKnowledge(ConversationContext context, String query) {
         KnowledgeBase base = this.service.getKnowledgeFramework().getKnowledgeBase(context.getAuthToken().getContactId(),
-                User.PersonalKnowledgeBaseName);
+                User.KnowledgeBaseName);
         if (null == base) {
             Logger.d(this.getClass(), "#generatePersonalKnowledge - No personal base: " +
                     context.getAuthToken().getContactId());

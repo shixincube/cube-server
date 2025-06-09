@@ -9,6 +9,8 @@ package cube.service.aigc.knowledge;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.common.entity.KnowledgeBaseInfo;
+import cube.common.entity.KnowledgeProfile;
+import cube.common.entity.KnowledgeScope;
 import cube.core.AbstractModule;
 import cube.service.aigc.AIGCService;
 import cube.service.auth.AuthService;
@@ -101,7 +103,8 @@ public class KnowledgeFramework {
                 AuthToken authToken = this.authService.queryAuthTokenByContactId(contactId);
                 // 新库
                 KnowledgeBaseInfo info = this.newKnowledgeBase(authToken.getCode(), KnowledgeFramework.DefaultName,
-                        KnowledgeFramework.DefaultDisplayName, KnowledgeFramework.DefaultDisplayName);
+                        KnowledgeFramework.DefaultDisplayName, KnowledgeFramework.DefaultDisplayName,
+                        KnowledgeScope.Private);
                 if (null != info) {
                     base = new KnowledgeBase(info,
                             this.service, this.service.getStorage(), authToken, this.fileStorage);
@@ -142,7 +145,8 @@ public class KnowledgeFramework {
         }
     }
 
-    public KnowledgeBaseInfo newKnowledgeBase(String token, String name, String displayName, String category) {
+    public KnowledgeBaseInfo newKnowledgeBase(String token, String name, String displayName,
+                                              String category, KnowledgeScope scope) {
         if (TextUtils.isChineseWord(name)) {
             Logger.w(this.getClass(), "#newKnowledgeBase - Knowledge base name is chinese: " + name);
             return null;
@@ -166,8 +170,13 @@ public class KnowledgeFramework {
         // 写入信息
         if (this.service.getStorage().writeKnowledgeBaseInfo(info)) {
             // 获取实例
-            if (null != this.getKnowledgeBase(contactId, name)) {
+            KnowledgeBase base = this.getKnowledgeBase(contactId, name);
+            if (null != base) {
+                base.updateProfile(KnowledgeProfile.STATE_NORMAL, 0, scope);
                 return info;
+            }
+            else {
+                Logger.e(this.getClass(), "#newKnowledgeBase - New knowledge base failed: " + name);
             }
         }
 

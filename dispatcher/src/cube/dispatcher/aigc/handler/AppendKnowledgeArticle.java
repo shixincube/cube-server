@@ -40,14 +40,14 @@ public class AppendKnowledgeArticle extends ContextHandler {
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             if (!this.controller.filter(request)) {
-                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
                 this.complete();
                 return;
             }
 
-            String token = this.getLastRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -56,9 +56,13 @@ public class AppendKnowledgeArticle extends ContextHandler {
             try {
                 JSONObject data = readBodyAsJSONObject(request);
                 if (null == data) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                     return;
+                }
+
+                if (!data.has("base")) {
+                    data.put("base", "document");
                 }
 
                 if (!data.has("contactId")) {
@@ -69,14 +73,14 @@ public class AppendKnowledgeArticle extends ContextHandler {
                 article = new KnowledgeArticle(data);
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#doPost", e);
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
 
             KnowledgeArticle result = Manager.getInstance().appendKnowledgeArticle(token, article);
             if (null == result) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
                 return;
             }

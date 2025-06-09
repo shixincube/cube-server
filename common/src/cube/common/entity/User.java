@@ -11,7 +11,8 @@ import org.json.JSONObject;
 
 public class User extends Entity {
 
-    public final static String PersonalKnowledgeBaseName = "mind_echo";
+    public final static String KnowledgeBaseName = "mind_echo";
+    public final static String KnowledgeBaseDisplayName = "MindEcho";
 
     private String name;
 

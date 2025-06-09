@@ -13,6 +13,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.KnowledgeBaseInfo;
+import cube.common.entity.KnowledgeScope;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -45,6 +46,7 @@ public class NewKnowledgeBaseTask extends ServiceTask {
         String baseName = null;
         String displayName = null;
         String category = null;
+        KnowledgeScope scope = KnowledgeScope.Private;
         try {
             baseName = packet.data.getString("name");
             displayName = packet.data.getString("displayName");
@@ -54,6 +56,10 @@ public class NewKnowledgeBaseTask extends ServiceTask {
                 if (TextUtils.isBlank(category)) {
                     category = null;
                 }
+            }
+
+            if (packet.data.has("scope")) {
+                scope = KnowledgeScope.parse(packet.data.getString("scope"));
             }
 
             if (null == category) {
@@ -74,7 +80,8 @@ public class NewKnowledgeBaseTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        KnowledgeBaseInfo info = service.getKnowledgeFramework().newKnowledgeBase(tokenCode, baseName, displayName, category);
+        KnowledgeBaseInfo info = service.getKnowledgeFramework()
+                .newKnowledgeBase(tokenCode, baseName, displayName, category, scope);
         if (null == info) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

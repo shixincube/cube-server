@@ -496,7 +496,8 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public KnowledgeBaseInfo newKnowledgeBase(String token, String baseName, String displayName, String category) {
+    public KnowledgeBaseInfo newKnowledgeBase(String token, String baseName, String displayName,
+                                              String category, KnowledgeScope scope) {
         JSONObject payload = new JSONObject();
         payload.put("name", baseName);
         payload.put("displayName", displayName);
@@ -505,6 +506,9 @@ public class Manager implements Tickable, PerformerListener {
         }
         else {
             payload.put("category", displayName);
+        }
+        if (null != scope) {
+            payload.put("scope", scope.name);
         }
         Packet packet = new Packet(AIGCAction.NewKnowledgeBase.name, payload);
         ActionDialect request = packet.toDialect();

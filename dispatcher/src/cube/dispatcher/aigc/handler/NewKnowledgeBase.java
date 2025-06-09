@@ -7,6 +7,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cube.common.entity.KnowledgeBaseInfo;
+import cube.common.entity.KnowledgeScope;
 import cube.dispatcher.aigc.Manager;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -33,9 +34,9 @@ public class NewKnowledgeBase extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -43,6 +44,7 @@ public class NewKnowledgeBase extends ContextHandler {
             String baseName = null;
             String displayName = null;
             String category = null;
+            KnowledgeScope scope = KnowledgeScope.Private;
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
                 baseName = data.getString("name");
@@ -53,15 +55,18 @@ public class NewKnowledgeBase extends ContextHandler {
                 else {
                     category = displayName;
                 }
+                if (data.has("scope")) {
+                    scope = KnowledgeScope.parse(data.getString("scope"));
+                }
             } catch (Exception e) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
 
-            KnowledgeBaseInfo info = Manager.getInstance().newKnowledgeBase(token, baseName, displayName, category);
+            KnowledgeBaseInfo info = Manager.getInstance().newKnowledgeBase(token, baseName, displayName, category, scope);
             if (null == info) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
                 return;
             }

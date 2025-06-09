@@ -10,6 +10,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.KnowledgeArticle;
@@ -49,6 +50,7 @@ public class AppendKnowledgeArticleTask extends ServiceTask {
         String baseName = KnowledgeFramework.DefaultName;
         if (packet.data.has("base")) {
             baseName = packet.data.getString("base");
+            Logger.d(this.getClass(), "#run - Set base: " + baseName);
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
@@ -62,24 +64,21 @@ public class AppendKnowledgeArticleTask extends ServiceTask {
 
         KnowledgeArticle article = null;
         try {
-            int year = packet.data.getInt("year");
+            Calendar calendar = Calendar.getInstance();
+            int year = packet.data.has("year") ? packet.data.getInt("year") : calendar.get(Calendar.YEAR);
             int month = packet.data.getInt("month");
             int date = packet.data.getInt("date");
-            long timestamp = packet.data.has("timestamp") ? packet.data.getLong("timestamp") : 0;
-            if (0 == timestamp) {
-                Calendar calendar = Calendar.getInstance();
-                calendar.set(year, month - 1, date);
-                timestamp = calendar.getTimeInMillis();
-            }
+
             KnowledgeScope scope = packet.data.has("scope") ?
                     KnowledgeScope.parse(packet.data.getString("scope")) : KnowledgeScope.Private;
 
-            KnowledgeArticle input = new KnowledgeArticle(base.getAuthToken().getDomain(), base.getAuthToken().getContactId(),
+            KnowledgeArticle source = new KnowledgeArticle(base.getAuthToken().getDomain(),
+                    base.getAuthToken().getContactId(), baseName,
                     packet.data.getString("category"), packet.data.getString("title"),
                     packet.data.getString("content"), packet.data.getString("author"),
-                    year, month, date, timestamp, scope);
+                    year, month, date, System.currentTimeMillis(), scope);
             // 新增知识库文章
-            article = base.appendKnowledgeArticle(input);
+            article = base.appendKnowledgeArticle(source);
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

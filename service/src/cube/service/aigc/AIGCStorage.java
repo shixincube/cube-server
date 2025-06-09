@@ -314,6 +314,9 @@ public class AIGCStorage implements Storagable {
             new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("base", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("category", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -1475,6 +1478,7 @@ public class AIGCStorage implements Storagable {
                 new StorageField("id", article.getId().longValue()),
                 new StorageField("domain", article.getDomain().getName()),
                 new StorageField("contact_id", article.contactId),
+                new StorageField("base", article.baseName),
                 new StorageField("category", article.category),
                 new StorageField("title", article.title),
                 new StorageField("content", article.content),
@@ -1509,6 +1513,7 @@ public class AIGCStorage implements Storagable {
 
     public KnowledgeArticle updateKnowledgeArticle(KnowledgeArticle article) {
         if (this.storage.executeUpdate(this.knowledgeArticleTable, new StorageField[] {
+                new StorageField("base", article.baseName),
                 new StorageField("title", article.title),
                 new StorageField("author", article.author),
                 new StorageField("category", article.category),
@@ -1542,8 +1547,8 @@ public class AIGCStorage implements Storagable {
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
         KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(), data.get("domain").getString(),
-                data.get("contact_id").getLong(), data.get("category").getString(),
-                data.get("title").getString(), data.get("content").getString(),
+                data.get("contact_id").getLong(), data.get("base").getString(),
+                data.get("category").getString(), data.get("title").getString(), data.get("content").getString(),
                 data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
                 data.get("author").getString(),
                 data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
@@ -1565,8 +1570,8 @@ public class AIGCStorage implements Storagable {
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(), data.get("domain").getString(),
-                    data.get("contact_id").getLong(), data.get("category").getString(),
-                    data.get("title").getString(), data.get("content").getString(),
+                    data.get("contact_id").getLong(), data.get("base").getString(),
+                    data.get("category").getString(), data.get("title").getString(), data.get("content").getString(),
                     data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
                     data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
@@ -1589,8 +1594,8 @@ public class AIGCStorage implements Storagable {
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(), data.get("domain").getString(),
-                    data.get("contact_id").getLong(), data.get("category").getString(),
-                    data.get("title").getString(), data.get("content").getString(),
+                    data.get("contact_id").getLong(), data.get("base").getString(),
+                    data.get("category").getString(), data.get("title").getString(), data.get("content").getString(),
                     data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
                     data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
@@ -1620,8 +1625,8 @@ public class AIGCStorage implements Storagable {
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(), data.get("domain").getString(),
-                    data.get("contact_id").getLong(), data.get("category").getString(),
-                    data.get("title").getString(), data.get("content").getString(),
+                    data.get("contact_id").getLong(), data.get("base").getString(),
+                    data.get("category").getString(), data.get("title").getString(), data.get("content").getString(),
                     data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
                     data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
@@ -1648,8 +1653,8 @@ public class AIGCStorage implements Storagable {
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(), data.get("domain").getString(),
-                    data.get("contact_id").getLong(), data.get("category").getString(),
-                    data.get("title").getString(), data.get("content").getString(),
+                    data.get("contact_id").getLong(), data.get("base").getString(),
+                    data.get("category").getString(), data.get("title").getString(), data.get("content").getString(),
                     data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
                     data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
@@ -1676,8 +1681,8 @@ public class AIGCStorage implements Storagable {
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(), data.get("domain").getString(),
-                    data.get("contact_id").getLong(), data.get("category").getString(),
-                    data.get("title").getString(), data.get("content").getString(),
+                    data.get("contact_id").getLong(), data.get("base").getString(),
+                    data.get("category").getString(), data.get("title").getString(), data.get("content").getString(),
                     data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
                     data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),
@@ -1712,8 +1717,8 @@ public class AIGCStorage implements Storagable {
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
             KnowledgeArticle article = new KnowledgeArticle(data.get("id").getLong(), data.get("domain").getString(),
-                    data.get("contact_id").getLong(), data.get("category").getString(),
-                    data.get("title").getString(), data.get("content").getString(),
+                    data.get("contact_id").getLong(), data.get("base").getString(),
+                    data.get("category").getString(), data.get("title").getString(), data.get("content").getString(),
                     data.get("summarization").isNullValue() ? null : data.get("summarization").getString(),
                     data.get("author").getString(),
                     data.get("year").getInt(), data.get("month").getInt(), data.get("date").getInt(),

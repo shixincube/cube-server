@@ -94,7 +94,7 @@ public class KnowledgeBase {
         if (null == profile) {
             // 没有记录，返回不可用的侧写
             profile = new KnowledgeProfile(0, this.authToken.getContactId(), this.authToken.getDomain(),
-                    KnowledgeProfile.STATE_FORBIDDEN, 0, KnowledgeScope.Private);
+                    KnowledgeProfile.STATE_NORMAL, 0, KnowledgeScope.Private);
         }
         return profile;
     }
@@ -1155,18 +1155,22 @@ public class KnowledgeBase {
                     boolean success = this.service.generateSummarization(content, new SummarizationListener() {
                         @Override
                         public void onCompleted(String text, String summarization) {
-                            resultList.add(summarization);
+                            resultList.add(summarization.trim());
 
                             count.incrementAndGet();
                             if (count.get() == contentList.size()) {
                                 StringBuilder buf = new StringBuilder();
                                 for (String result : resultList) {
-                                    buf.append(result).append("。\n");
+                                    buf.append(result).append("\n\n");
                                 }
-                                buf.delete(buf.length() - 1, buf.length());
+                                buf.delete(buf.length() - 2, buf.length());
 
                                 article.summarization = buf.toString();
-                                storage.updateKnowledgeArticleSummarization(article.getId(), article.summarization);
+                                boolean updated = storage.updateKnowledgeArticleSummarization(article.getId(), article.summarization);
+                                if (updated) {
+                                    Logger.d(KnowledgeBase.class, "#appendKnowledgeArticle - Update article summarization: " +
+                                            article.getId() + " - " + article.summarization.length());
+                                }
                             }
                         }
 
@@ -1180,9 +1184,9 @@ public class KnowledgeBase {
                             if (count.get() == contentList.size() && !resultList.isEmpty()) {
                                 StringBuilder buf = new StringBuilder();
                                 for (String result : resultList) {
-                                    buf.append(result).append("。\n");
+                                    buf.append(result).append("\n\n");
                                 }
-                                buf.delete(buf.length() - 1, buf.length());
+                                buf.delete(buf.length() - 2, buf.length());
 
                                 article.summarization = buf.toString();
                                 storage.updateKnowledgeArticleSummarization(article.getId(), article.summarization);
@@ -1198,8 +1202,10 @@ public class KnowledgeBase {
 
             return article;
         }
-
-        return null;
+        else {
+            Logger.e(this.getClass(), "#appendKnowledgeArticle - Write article to DB failed: " + article.getId());
+            return null;
+        }
     }
 
     public List<Long> removeKnowledgeArticles(List<Long> idList) {
