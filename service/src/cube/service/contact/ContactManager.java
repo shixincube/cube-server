@@ -2018,17 +2018,17 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     public VerificationCode requestVerificationCode(AuthToken authToken,
                                                     String dialCode, String isoCode, String phoneNumber) {
         VerificationCode verificationCode = this.verificationCodes.get(authToken.getCode());
-        if (null != verificationCode) {
+        if (null != verificationCode && verificationCode.phoneNumber.equals(phoneNumber)) {
             if (System.currentTimeMillis() - verificationCode.timestamp < 60 * 1000) {
                 Logger.w(this.getClass(), "#requestVerificationCode - The sending interval must be greater than 60 seconds: " +
-                        authToken.getCode() + " - code: " + verificationCode.getCode());
+                        authToken.getCode() + " - " + phoneNumber + " - code: " + verificationCode.getCode());
                 return null;
             }
 
             if (verificationCode.timestamp + verificationCode.duration > System.currentTimeMillis()) {
                 // 还在有效期内，不修改验证码
                 Logger.d(this.getClass(), "#requestVerificationCode - The verification code is within the validity period: " +
-                        authToken.getCode() + " - code: " + verificationCode.getCode());
+                        authToken.getCode() + " - " + phoneNumber + " - code: " + verificationCode.getCode());
             }
             else {
                 // 不在有效期内，重新生成
@@ -2044,6 +2044,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
         verificationCode.setCode(Utils.randomNumberString(4));
 
         Logger.d(this.getClass(), "#requestVerificationCode - token: " + authToken.getCode() +
+                " - number: " + verificationCode.phoneNumber +
                 " - code: " + verificationCode.getCode());
 
         final String token = "UiTOoigtfSSPBMWmoeQmGXEwNDDlbBtk";

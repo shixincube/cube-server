@@ -1110,6 +1110,17 @@ public class KnowledgeBase {
         return Packet.extractDataPayload(response).getJSONArray("list");
     }
 
+    public List<KnowledgeArticle> getKnowledgeArticles(long startTime, long endTime) {
+        List<KnowledgeArticle> articles = this.listKnowledgeArticles();
+        List<KnowledgeArticle> list = new ArrayList<>();
+        for (KnowledgeArticle article : articles) {
+            if (article.getTimestamp() >= startTime && article.getTimestamp() <= endTime) {
+                list.add(article);
+            }
+        }
+        return list;
+    }
+
     public List<KnowledgeArticle> getKnowledgeArticles(long startTime, long endTime, boolean activated) {
         List<KnowledgeArticle> articles = this.listKnowledgeArticles();
         List<KnowledgeArticle> list = new ArrayList<>();
@@ -1235,8 +1246,8 @@ public class KnowledgeBase {
                 return this.resource.articleList;
             }
 
-            this.resource.articleList = this.storage.readKnowledgeArticles(this.authToken.getDomain(),
-                    this.authToken.getContactId());
+            this.resource.articleList = new LinkedList<>(this.storage.readKnowledgeArticles(this.authToken.getDomain(),
+                    this.authToken.getContactId(), this.baseInfo.name));
             this.resource.listArticleTime = System.currentTimeMillis();
             return this.resource.articleList;
         }
@@ -1302,10 +1313,7 @@ public class KnowledgeBase {
         List<KnowledgeArticle> articleList = this.storage.readKnowledgeArticles(articleIdList);
 
         for (KnowledgeArticle article : articleList) {
-            JSONObject payload = new JSONObject();
-            payload.put("article", article.toJSON());
-            payload.put("contactId", this.authToken.getContactId());
-            Packet packet = new Packet(AIGCAction.ActivateKnowledgeArticle.name, payload);
+            Packet packet = new Packet(AIGCAction.ActivateKnowledgeArticle.name, article.toJSON());
             ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                     packet.toDialect(), 2 * 60 * 1000);
             if (null == dialect) {
@@ -1322,10 +1330,16 @@ public class KnowledgeBase {
                 continue;
             }
 
-            KnowledgeArticle activated = new KnowledgeArticle(Packet.extractDataPayload(response));
-            activated.content = article.content;
-            activated.summarization = article.summarization;
-            result.add(activated);
+            KnowledgeArticle activatedArticle = new KnowledgeArticle(Packet.extractDataPayload(response));
+            activatedArticle.activated = true;
+            activatedArticle.content = article.content;
+            activatedArticle.summarization = article.summarization;
+            result.add(activatedArticle);
+
+            // 更新
+            this.resource.appendArticle(activatedArticle);
+            this.storage.updateKnowledgeArticleActivated(activatedArticle.getId(), activatedArticle.activated,
+                    activatedArticle.numSegments);
         }
 
         return result;
@@ -1341,10 +1355,7 @@ public class KnowledgeBase {
 
         List<KnowledgeArticle> articleList = this.storage.readKnowledgeArticles(articleIdList);
         for (KnowledgeArticle article : articleList) {
-            JSONObject payload = new JSONObject();
-            payload.put("article", article.toCompactJSON());
-            payload.put("contactId", this.authToken.getContactId());
-            Packet packet = new Packet(AIGCAction.DeactivateKnowledgeArticle.name, payload);
+            Packet packet = new Packet(AIGCAction.DeactivateKnowledgeArticle.name, article.toCompactJSON());
             ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                     packet.toDialect(), 60 * 1000);
             if (null == dialect) {
@@ -2395,11 +2406,11 @@ public class KnowledgeBase {
 
     public class KnowledgeResource {
 
-        private List<KnowledgeDocument> docList;
+        private LinkedList<KnowledgeDocument> docList;
 
         protected long listDocTime;
 
-        private List<KnowledgeArticle> articleList;
+        private LinkedList<KnowledgeArticle> articleList;
 
         protected long listArticleTime;
 
@@ -2444,7 +2455,7 @@ public class KnowledgeBase {
 
         public void clearDocs() {
             if (null == this.docList) {
-                this.docList = new ArrayList<>();
+                this.docList = new LinkedList<>();
             }
             else {
                 this.docList.clear();
@@ -2453,7 +2464,7 @@ public class KnowledgeBase {
 
         public void appendDocs(List<KnowledgeDocument> list) {
             if (null == this.docList) {
-                this.docList = new ArrayList<>();
+                this.docList = new LinkedList<>();
             }
 
             for (KnowledgeDocument doc : list) {
@@ -2467,7 +2478,7 @@ public class KnowledgeBase {
 
         public void appendDoc(KnowledgeDocument doc) {
             if (null == this.docList) {
-                this.docList = new ArrayList<>();
+                this.docList = new LinkedList<>();
             }
 
             if (this.docList.contains(doc)) {
@@ -2501,11 +2512,15 @@ public class KnowledgeBase {
 
         public void appendArticle(KnowledgeArticle article) {
             if (null == this.articleList) {
-                this.articleList = new ArrayList<>();
+                this.articleList = new LinkedList<>();
             }
 
             if (!this.articleList.contains(article)) {
                 this.articleList.add(article);
+            }
+            else {
+                int index = this.articleList.indexOf(article);
+                this.articleList.set(index, article);
             }
         }
 

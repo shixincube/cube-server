@@ -62,7 +62,8 @@ public class ListKnowledgeArticlesTask extends ServiceTask {
 
         long start = 0;
         long end = 0;
-        boolean activated = false;
+        // 0 - false, 1 - true, other - ignored
+        int activated = -1;
         long articleId = 0;
         try {
             if (packet.data.has("start")) {
@@ -72,7 +73,7 @@ public class ListKnowledgeArticlesTask extends ServiceTask {
                 end = packet.data.getLong("end");
             }
             if (packet.data.has("activated")) {
-                activated = packet.data.getBoolean("activated");
+                activated = packet.data.getInt("activated");
             }
             if (packet.data.has("articleId")) {
                 articleId = packet.data.getLong("articleId");
@@ -102,7 +103,9 @@ public class ListKnowledgeArticlesTask extends ServiceTask {
             responsePayload.put("list", array);
         }
         else {
-            List<KnowledgeArticle> articleList = base.getKnowledgeArticles(start, end, activated);
+            List<KnowledgeArticle> articleList = (activated >= 0) ?
+                    base.getKnowledgeArticles(start, end, activated == 1) :
+                    base.getKnowledgeArticles(start, end);
             if (null == articleList) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

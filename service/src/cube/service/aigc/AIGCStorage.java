@@ -1557,7 +1557,7 @@ public class AIGCStorage implements Storagable {
         return article;
     }
 
-    public List<KnowledgeArticle> readKnowledgeArticles(String domain, long contactId) {
+    public List<KnowledgeArticle> readKnowledgeArticles(String domain, long contactId, String baseName) {
         List<KnowledgeArticle> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
@@ -1565,6 +1565,8 @@ public class AIGCStorage implements Storagable {
                         Conditional.createEqualTo("domain", domain),
                         Conditional.createAnd(),
                         Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("base", baseName),
                         Conditional.createOrderBy("timestamp", true)
                 });
         for (StorageField[] fields : result) {
@@ -1583,11 +1585,13 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public List<KnowledgeArticle> readKnowledgeArticles(String category) {
+    public List<KnowledgeArticle> readKnowledgeArticles(String baseName, String category) {
         List<KnowledgeArticle> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
                 new Conditional[] {
+                        Conditional.createEqualTo("base", baseName),
+                        Conditional.createAnd(),
                         Conditional.createEqualTo("category", category),
                         Conditional.createOrderBy("timestamp", true)
         });
@@ -1638,11 +1642,13 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public List<KnowledgeArticle> readKnowledgeArticles(String category, long startTime, long endTime) {
+    public List<KnowledgeArticle> readKnowledgeArticles(String baseName, String category, long startTime, long endTime) {
         List<KnowledgeArticle> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
                 new Conditional[] {
+                        Conditional.createEqualTo("base", baseName),
+                        Conditional.createAnd(),
                         Conditional.createEqualTo("category", category),
                         Conditional.createAnd(),
                         Conditional.createGreaterThanEqual(new StorageField("timestamp", startTime)),
@@ -1666,12 +1672,14 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public List<KnowledgeArticle> readKnowledgeArticles(long contactId, long startTime, long endTime) {
+    public List<KnowledgeArticle> readKnowledgeArticles(long contactId, String baseName, long startTime, long endTime) {
         List<KnowledgeArticle> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
                 new Conditional[] {
                         Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("base", baseName),
                         Conditional.createAnd(),
                         Conditional.createGreaterThanEqual(new StorageField("timestamp", startTime)),
                         Conditional.createAnd(),
@@ -1697,13 +1705,18 @@ public class AIGCStorage implements Storagable {
     /**
      * 使用关键字匹配文章标题和摘要。
      *
+     * @param domain
+     * @param contactId
+     * @param baseName
      * @param keyword
      * @return
      */
-    public List<KnowledgeArticle> matchKnowledgeArticles(String domain, long contactId, String keyword) {
+    public List<KnowledgeArticle> matchKnowledgeArticles(String domain, long contactId, String baseName, String keyword) {
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
                 new Conditional[] {
                         Conditional.createEqualTo("domain", domain),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("base", baseName),
                         Conditional.createAnd(),
                         Conditional.createBracket(new Conditional[] {
                                 Conditional.createLike("title", keyword),

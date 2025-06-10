@@ -62,16 +62,12 @@ public class UpdateKnowledgeArticleTask extends ServiceTask {
 
         KnowledgeArticle article = null;
         try {
-            // TODO XJW
-            int year = packet.data.getInt("year");
-            int month = packet.data.getInt("month");
-            int date = packet.data.getInt("date");
-            long timestamp = packet.data.has("timestamp") ? packet.data.getLong("timestamp") : 0;
-            if (0 == timestamp) {
-                Calendar calendar = Calendar.getInstance();
-                calendar.set(year, month - 1, date);
-                timestamp = calendar.getTimeInMillis();
-            }
+            Calendar calendar = Calendar.getInstance();
+            int year = packet.data.has("year") ? packet.data.getInt("year") : calendar.get(Calendar.YEAR);
+            int month = packet.data.has("month") ? packet.data.getInt("month") : calendar.get(Calendar.MONTH) + 1;
+            int date = packet.data.has("date") ? packet.data.getInt("date") : calendar.get(Calendar.DATE);
+            long timestamp = packet.data.has("timestamp") ? packet.data.getLong("timestamp") : System.currentTimeMillis();
+
             KnowledgeScope scope = packet.data.has("scope") ?
                     KnowledgeScope.parse(packet.data.getString("scope")) : KnowledgeScope.Private;
 

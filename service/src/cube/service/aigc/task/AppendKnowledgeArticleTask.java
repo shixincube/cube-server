@@ -66,8 +66,8 @@ public class AppendKnowledgeArticleTask extends ServiceTask {
         try {
             Calendar calendar = Calendar.getInstance();
             int year = packet.data.has("year") ? packet.data.getInt("year") : calendar.get(Calendar.YEAR);
-            int month = packet.data.getInt("month");
-            int date = packet.data.getInt("date");
+            int month = packet.data.has("month") ? packet.data.getInt("month") : calendar.get(Calendar.MONTH) + 1;
+            int date = packet.data.has("date") ? packet.data.getInt("date") : calendar.get(Calendar.DATE);
 
             KnowledgeScope scope = packet.data.has("scope") ?
                     KnowledgeScope.parse(packet.data.getString("scope")) : KnowledgeScope.Private;

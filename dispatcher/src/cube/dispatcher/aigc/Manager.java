@@ -899,8 +899,9 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public JSONObject getKnowledgeArticles(String token, long startTime, long endTime, boolean activated) {
+    public JSONObject getKnowledgeArticles(String token, String base, long startTime, long endTime, int activated) {
         JSONObject param = new JSONObject();
+        param.put("base", base);
         param.put("start", startTime);
         param.put("end", endTime);
         param.put("activated", activated);
@@ -1029,10 +1030,11 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public List<KnowledgeArticle> activateKnowledgeArticle(String token, JSONArray idList) {
+    public List<KnowledgeArticle> activateKnowledgeArticle(String token, String baseName, JSONArray idList) {
         List<KnowledgeArticle> result = new ArrayList<>();
 
         JSONObject payload = new JSONObject();
+        payload.put("base", baseName);
         payload.put("ids", idList);
         Packet packet = new Packet(AIGCAction.ActivateKnowledgeArticle.name, payload);
         ActionDialect request = packet.toDialect();

@@ -265,7 +265,30 @@ public class QueryRevolver {
         else {
             // 无关联报告数据
             if (questionAnswerList.isEmpty()) {
-                List<String> queries = new ArrayList<>();
+                boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
+                    @Override
+                    public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
+                        for (QuestionAnswer questionAnswer : questionAnswers) {
+                            String answer = questionAnswer.getAnswers().get(0);
+                            if (Subtask.None != Subtask.extract(answer)) {
+                                continue;
+                            }
+                            questionAnswerList.add(questionAnswer);
+                        }
+                        synchronized (result) {
+                            result.notify();
+                        }
+                    }
+
+                    @Override
+                    public void onFailed(String query, AIGCStateCode stateCode) {
+                        synchronized (result) {
+                            result.notify();
+                        }
+                    }
+                });
+
+                /*List<String> queries = new ArrayList<>();
                 queries.add(query);
                 boolean success = this.service.retrieveReRank(queries, new RetrieveReRankListener() {
                     @Override
@@ -300,7 +323,7 @@ public class QueryRevolver {
                             result.notify();
                         }
                     }
-                });
+                });*/
 
                 if (success) {
                     synchronized (result) {
@@ -313,77 +336,98 @@ public class QueryRevolver {
                 }
             }
 
-            // 问题是否和心理学相关
-            String prompt = String.format(
-                    Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_QUESTION_PSYCHOLOGY_POSSIBILITY"),
-                    query);
-            GeneratingRecord queryResponse = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
-                    null, null, null);
-            if (null == queryResponse) {
-                Logger.e(this.getClass(), "#generatePrompt - Generating text failed - CID: " +
-                        context.getAuthToken().getContactId());
-                return null;
+            boolean selected = false;
+            for (QuestionAnswer questionAnswer : questionAnswerList) {
+                if (questionAnswer.getScore() >= 0.82) {
+                    selected = true;
+                    break;
+                }
             }
 
-            if (queryResponse.answer.contains("不相关") || queryResponse.answer.contains("无关")) {
-                Logger.d(this.getClass(), "#generatePrompt - No psychology question: " + query);
-                result.delete(0, result.length());
-
-                if (!questionAnswerList.isEmpty()) {
-                    result.append("已知知识点：\n\n");
-                    for (QuestionAnswer qa : questionAnswerList) {
-                        for (String answer : qa.getAnswers()) {
-                            result.append(answer).append("\n\n");
-                        }
+            if (selected) {
+                result.append("已知信息：\n\n");
+                for (QuestionAnswer questionAnswer : questionAnswerList) {
+                    if (questionAnswer.getScore() >= 0.82) {
+                        result.append(questionAnswer.getAnswers().get(0));
+                        result.append("\n\n");
                     }
-                    result.append("根据以上知识点，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
-                    result.append("不允许在答案中添加编造成分。");
-                    result.append("问题是：").append(query).append("\n");
                 }
-                else {
-                    // 从用户个人知识中获取
-                    String knowledge = generatePersonalKnowledge(context, query);
-                    if (null != knowledge) {
-                        result.append("已知信息：\n\n");
-                        result.append(knowledge);
-                        result.append("根据以上信息，回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
+                result.append("根据以上信息，回答问题，不允许在答案中添加编造成分。");
+                result.append("问题是：").append(query).append("\n");
+            }
+            else {
+                // 问题是否和心理学相关
+                String prompt = String.format(
+                        Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_QUESTION_PSYCHOLOGY_POSSIBILITY"),
+                        query);
+                GeneratingRecord queryResponse = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
+                        null, null, null);
+                if (null == queryResponse) {
+                    Logger.e(this.getClass(), "#generatePrompt - Generating text failed - CID: " +
+                            context.getAuthToken().getContactId());
+                    return null;
+                }
+
+                if (queryResponse.answer.contains("不相关") || queryResponse.answer.contains("无关")) {
+                    Logger.d(this.getClass(), "#generatePrompt - No psychology question: " + query);
+                    result.delete(0, result.length());
+
+                    if (!questionAnswerList.isEmpty()) {
+                        result.append("已知知识点：\n\n");
+                        for (QuestionAnswer qa : questionAnswerList) {
+                            for (String answer : qa.getAnswers()) {
+                                result.append(answer).append("\n\n");
+                            }
+                        }
+                        result.append("根据以上知识点，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
                         result.append("不允许在答案中添加编造成分。");
                         result.append("问题是：").append(query).append("\n");
                     }
-                }
-            }
-            else {
-                if (!questionAnswerList.isEmpty()) {
-                    if (result.length() == 0) {
-                        result.append("已知知识点：\n\n");
-                    }
                     else {
-                        result.append("\n下面的内容是一些与问题相关的知识：\n\n");
+                        // 从用户个人知识中获取
+                        String knowledge = generatePersonalKnowledge(context, query);
+                        if (null != knowledge) {
+                            result.append("已知信息：\n\n");
+                            result.append(knowledge);
+                            result.append("根据以上信息，回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
+                            result.append("不允许在答案中添加编造成分。");
+                            result.append("问题是：").append(query).append("\n");
+                        }
                     }
+                }
+                else {
+                    if (!questionAnswerList.isEmpty()) {
+                        if (result.length() == 0) {
+                            result.append("已知知识点：\n\n");
+                        }
+                        else {
+                            result.append("\n下面的内容是一些与问题相关的知识：\n\n");
+                        }
 
-                    int qaSN = 0;
-                    for (QuestionAnswer qa : questionAnswerList) {
-                        ++qaSN;
+                        int qaSN = 0;
+                        for (QuestionAnswer qa : questionAnswerList) {
+                            ++qaSN;
 
-                        String question = qa.getQuestions().get(0);
-                        result.append("问题").append(qaSN).append("：").append(question).append("。\n\n");
-                        for (String answer : qa.getAnswers()) {
-                            result.append("问题").append(qaSN).append("答案：");
-                            result.append(answer).append("\n\n");
+                            String question = qa.getQuestions().get(0);
+                            result.append("问题").append(qaSN).append("：").append(question).append("。\n\n");
+                            for (String answer : qa.getAnswers()) {
+                                result.append("问题").append(qaSN).append("答案：");
+                                result.append(answer).append("\n\n");
+                                if (result.length() >= wordLimit) {
+                                    break;
+                                }
+                            }
                             if (result.length() >= wordLimit) {
                                 break;
                             }
                         }
-                        if (result.length() >= wordLimit) {
-                            break;
-                        }
                     }
-                }
 
-                if (result.length() > 0) {
-                    result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
-                    result.append("不允许在答案中添加编造成分，保持应有的文档结构。");
-                    result.append("问题是：").append(query).append("\n");
+                    if (result.length() > 0) {
+                        result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
+                        result.append("不允许在答案中添加编造成分，保持应有的文档结构。");
+                        result.append("问题是：").append(query).append("\n");
+                    }
                 }
             }
         }
