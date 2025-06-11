@@ -16,6 +16,8 @@ import cube.aigc.psychology.algorithm.Suggestion;
 import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.AIGCChannel;
+import cube.common.entity.Membership;
+import cube.common.entity.User;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -23,6 +25,7 @@ import cube.util.FileLabels;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -108,7 +111,6 @@ public class ContentTools {
         }
         else {
             buf.append(clipContentByLines(report.getSummary(), 20));
-            buf.append("");
         }
 
         return buf.toString();
@@ -455,7 +457,40 @@ public class ContentTools {
         return buf.toString();
     }
 
+    public static String makeMembership(User user, Membership membership) {
+        StringBuffer buf = new StringBuffer();
+        if (null == membership) {
+            buf.append("用户“").append(user.getName()).append("”不是白泽灵思会员。\n\n");
+        }
+        else {
+            buf.append("用户“").append(user.getName()).append("”是白泽灵思");
+            if (membership.type.equals(Membership.TYPE_ORDINARY)) {
+                buf.append("普通版会员。\n\n");
+                buf.append("白泽灵思普通版会员权益有：\n\n");
+                buf.append("* 每月3次绘画测验。\n");
+            }
+            else {
+                buf.append("专业版会员。\n\n");
+                buf.append("白泽灵思专业版会员权益有：\n\n");
+                buf.append("* 每月不限次绘画测验。\n");
+            }
+            buf.append("\n");
 
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(membership.getTimestamp());
+            buf.append("会员有效期从");
+            buf.append(calendar.get(Calendar.YEAR)).append("年");
+            buf.append(calendar.get(Calendar.MONTH) + 1).append("月");
+            buf.append(calendar.get(Calendar.DATE)).append("日");
+            buf.append("至");
+            calendar.setTimeInMillis(membership.getTimestamp() + membership.duration);
+            buf.append(calendar.get(Calendar.YEAR)).append("年");
+            buf.append(calendar.get(Calendar.MONTH) + 1).append("月");
+            buf.append(calendar.get(Calendar.DATE)).append("日");
+            buf.append("\n\n");
+        }
+        return buf.toString();
+    }
 
     public static String fastInfer(String query, Tokenizer tokenizer) {
         Dataset dataset = Resource.getInstance().loadDataset();

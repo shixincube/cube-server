@@ -9,8 +9,8 @@ package cube.service.aigc.knowledge;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
+import cube.aigc.TextSplitter;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
@@ -178,7 +178,7 @@ public class KnowledgeBase {
         return doc;
     }
 
-    public KnowledgeDocument importKnowledgeDoc(String fileCode, String splitter) {
+    public KnowledgeDocument importKnowledgeDoc(String fileCode, TextSplitter splitter) {
         if (this.lock.get()) {
             Logger.w(this.getClass(), "#importKnowledgeDoc - " + this.getName() + " - Store locked: " + fileCode);
             return null;
@@ -329,7 +329,7 @@ public class KnowledgeBase {
      * @param listener
      * @return
      */
-    public KnowledgeProgress batchImportKnowledgeDocuments(List<String> fileCodeList, String splitter,
+    public KnowledgeProgress batchImportKnowledgeDocuments(List<String> fileCodeList, TextSplitter splitter,
                                                            KnowledgeProgressListener listener) {
         if (this.lock.get()) {
             Logger.w(this.getClass(), "#batchImportKnowledgeDocuments - Store locked: " + this.baseInfo.name);
@@ -1133,14 +1133,84 @@ public class KnowledgeBase {
         return list;
     }
 
+    public List<KnowledgeArticle> getKnowledgeArticlesByTitle(String title) {
+        return this.storage.readKnowledgeArticlesByTitle(this.authToken.getDomain(), this.authToken.getContactId(),
+                this.baseInfo.name, title);
+    }
+
     public KnowledgeArticle getKnowledgeArticle(long articleId) {
-        KnowledgeArticle article = this.storage.readKnowledgeArticle(articleId);
-        return article;
+        return this.storage.readKnowledgeArticle(articleId);
     }
 
     public KnowledgeArticle updateKnowledgeArticle(KnowledgeArticle article) {
-        KnowledgeArticle result = this.storage.updateKnowledgeArticle(article);
-        return result;
+        KnowledgeArticle current = this.storage.readKnowledgeArticle(article.getId());
+        if (null == current) {
+            Logger.w(this.getClass(), "#updateKnowledgeArticle - No article: " + article.getId());
+            return null;
+        }
+        if (current.content.equals(article.content)) {
+            return this.storage.updateKnowledgeArticle(article);
+        }
+
+        List<String> contentList = this.trimArticleContent(article.content, 300);
+
+        Logger.d(KnowledgeBase.class, "#updateKnowledgeArticle - "
+                + baseInfo.name + " - content list length: "
+                + contentList.size());
+
+        List<String> resultList = new ArrayList<>();
+        AtomicInteger count = new AtomicInteger(0);
+
+        for (String content : contentList) {
+            // 为文章生成摘要
+            boolean success = this.service.generateSummarization(content, new SummarizationListener() {
+                @Override
+                public void onCompleted(String text, String summarization) {
+                    resultList.add(summarization.trim());
+
+                    count.incrementAndGet();
+                    if (count.get() == contentList.size()) {
+                        StringBuilder buf = new StringBuilder();
+                        for (String result : resultList) {
+                            buf.append(result).append("\n\n");
+                        }
+                        buf.delete(buf.length() - 2, buf.length());
+
+                        article.summarization = buf.toString();
+                        boolean updated = storage.updateKnowledgeArticleSummarization(article.getId(), article.summarization);
+                        if (updated) {
+                            Logger.d(KnowledgeBase.class, "#updateKnowledgeArticle - Update article summarization: " +
+                                    article.getId() + " - " + article.summarization.length());
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailed(String text, AIGCStateCode stateCode) {
+                    Logger.w(KnowledgeBase.class, "#updateKnowledgeArticle - "
+                            + baseInfo.name + " - generate summarization failed - id: "
+                            + article.getId() + " - code: " + stateCode.code);
+
+                    count.incrementAndGet();
+                    if (count.get() == contentList.size() && !resultList.isEmpty()) {
+                        StringBuilder buf = new StringBuilder();
+                        for (String result : resultList) {
+                            buf.append(result).append("\n\n");
+                        }
+                        buf.delete(buf.length() - 2, buf.length());
+
+                        article.summarization = buf.toString();
+                        storage.updateKnowledgeArticleSummarization(article.getId(), article.summarization);
+                    }
+                }
+            });
+
+            if (!success) {
+                count.incrementAndGet();
+            }
+        }
+
+        return this.storage.updateKnowledgeArticle(article);
     }
 
     public KnowledgeArticle appendKnowledgeArticle(KnowledgeArticle article) {
@@ -1155,7 +1225,7 @@ public class KnowledgeBase {
                 List<String> contentList = this.trimArticleContent(article.content, 300);
 
                 Logger.d(KnowledgeBase.class, "#appendKnowledgeArticle - "
-                        + baseInfo.name + " - Content list length: "
+                        + baseInfo.name + " - content list length: "
                         + contentList.size());
 
                 List<String> resultList = new ArrayList<>();
@@ -1188,7 +1258,7 @@ public class KnowledgeBase {
                         @Override
                         public void onFailed(String text, AIGCStateCode stateCode) {
                             Logger.w(KnowledgeBase.class, "#appendKnowledgeArticle - "
-                                    + baseInfo.name + " - Generate summarization failed - id: "
+                                    + baseInfo.name + " - generate summarization failed - id: "
                                     + article.getId() + " - code: " + stateCode.code);
 
                             count.incrementAndGet();
@@ -1300,9 +1370,10 @@ public class KnowledgeBase {
      * 为指定的联系人激活知识库文章。
      *
      * @param articleIdList
+     * @param splitter
      * @return
      */
-    public List<KnowledgeArticle> activateKnowledgeArticles(List<Long> articleIdList) {
+    public List<KnowledgeArticle> activateKnowledgeArticles(List<Long> articleIdList, TextSplitter splitter) {
         if (!this.resource.checkUnit()) {
             Logger.w(this.getClass(),"#activateKnowledgeArticles - " + baseInfo.name + " - No knowledge unit");
             return null;
@@ -1313,12 +1384,13 @@ public class KnowledgeBase {
         List<KnowledgeArticle> articleList = this.storage.readKnowledgeArticles(articleIdList);
 
         for (KnowledgeArticle article : articleList) {
+            article.splitter = splitter;
             Packet packet = new Packet(AIGCAction.ActivateKnowledgeArticle.name, article.toJSON());
             ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
                     packet.toDialect(), 2 * 60 * 1000);
             if (null == dialect) {
                 Logger.w(this.getClass(),"#activateKnowledgeArticles - " + baseInfo.name + " - Request unit error: "
-                        + this.resource.unit.getCapability().getName());
+                        + article.getId());
                 continue;
             }
 
@@ -1351,7 +1423,7 @@ public class KnowledgeBase {
             return null;
         }
 
-        List<Long> idsList = new ArrayList<>();
+        List<KnowledgeArticle> result = new ArrayList<>();
 
         List<KnowledgeArticle> articleList = this.storage.readKnowledgeArticles(articleIdList);
         for (KnowledgeArticle article : articleList) {
@@ -1360,7 +1432,7 @@ public class KnowledgeBase {
                     packet.toDialect(), 60 * 1000);
             if (null == dialect) {
                 Logger.w(this.getClass(),"#deactivateKnowledgeArticles - " + baseInfo.name + " - Request unit error: "
-                        + this.resource.unit.getCapability().getName());
+                        + article.getId());
                 continue;
             }
 
@@ -1372,13 +1444,19 @@ public class KnowledgeBase {
                 continue;
             }
 
-            JSONArray idsArray = Packet.extractDataPayload(response).getJSONArray("ids");
-            for (int i = 0; i < idsArray.length(); ++i) {
-                idsList.add(idsArray.getLong(i));
-            }
+            KnowledgeArticle deactivatedArticle = new KnowledgeArticle(Packet.extractDataPayload(response));
+            deactivatedArticle.activated = false;
+            deactivatedArticle.content = article.content;
+            deactivatedArticle.summarization = article.summarization;
+            result.add(deactivatedArticle);
+
+            // 更新
+            this.resource.appendArticle(deactivatedArticle);
+            this.storage.updateKnowledgeArticleActivated(deactivatedArticle.getId(), deactivatedArticle.activated,
+                    deactivatedArticle.numSegments);
         }
 
-        return this.storage.readKnowledgeArticles(idsList);
+        return result;
     }
 
     /**
@@ -1867,7 +1945,7 @@ public class KnowledgeBase {
 
         if (!fileLabels.isEmpty()) {
             for (FileLabel fileLabel : fileLabels) {
-                KnowledgeDocument doc = this.importKnowledgeDoc(fileLabel.getFileCode(), KnowledgeDocument.SPLITTER_LINE);
+                KnowledgeDocument doc = this.importKnowledgeDoc(fileLabel.getFileCode(), TextSplitter.Auto);
                 if (null == doc) {
                     Logger.w(this.getClass(), "#processQueryAttachments - Import knowledge doc failed - fileCode: "
                             + fileLabel.getFileCode());
@@ -2357,6 +2435,7 @@ public class KnowledgeBase {
                 Long.toString(this.authToken.getContactId()) : this.authToken.getDomain());
         payload.put("base", this.baseInfo.name);
         payload.put("query", query);
+        payload.put("threshold", "0.8");
         payload.put("topK", topK);
         Packet packet = new Packet(AIGCAction.GenerateKnowledge.name, payload);
         ActionDialect dialect = this.service.getCellet().transmit(this.resource.unit.getContext(),
@@ -2378,6 +2457,7 @@ public class KnowledgeBase {
         Knowledge knowledge = null;
         try {
             knowledge = new Knowledge(data);
+            this.fillKnowledgeSourceData(knowledge);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#generateKnowledge", e);
         }
@@ -2399,6 +2479,21 @@ public class KnowledgeBase {
         while (iter.hasNext()) {
             if (now - iter.next().getStart() > 10 * 60 * 1000) {
                 iter.remove();
+            }
+        }
+    }
+
+    private void fillKnowledgeSourceData(Knowledge knowledge) {
+        for (Knowledge.Metadata metadata : knowledge.metadataList) {
+            if (metadata.isDocument()) {
+                metadata.setKnowledgeSource(new KnowledgeSource(getKnowledgeDocByFileCode(metadata.getSourceKey())));
+            }
+            else if (metadata.isArticle()) {
+                long articleId = Long.parseLong(metadata.getSourceKey());
+                metadata.setKnowledgeSource(new KnowledgeSource(storage.readKnowledgeArticle(articleId)));
+            }
+            else {
+                metadata.setKnowledgeSource(new KnowledgeSource(metadata.getSourceKey()));
             }
         }
     }
@@ -2563,7 +2658,7 @@ public class KnowledgeBase {
         }
     }
 
-    public class Knowledge {
+    /*public class Knowledge {
 
         public String query;
 
@@ -2600,37 +2695,6 @@ public class KnowledgeBase {
             return prompt;
         }
 
-        /*public void mergeAnswer(PromptMetadata other) {
-            if (null == other.answer) {
-                return;
-            }
-
-            StringBuilder buf = new StringBuilder();
-            String[] lines = this.prompt.split("\n");
-            // 首行
-            buf.append(lines[0]).append("\n");
-            // 合并答案
-            buf.append(other.answer);
-            // 逐条恢复
-            for (int i = 1; i < lines.length; ++i) {
-                buf.append(lines[i]).append("\n");
-            }
-            if (buf.length() > 2) {
-                buf.delete(buf.length() - 1, buf.length());
-            }
-
-            // 新提示词
-            this.prompt = buf.toString();
-
-            // 添加源
-            this.metadataList.addAll(other.metadataList);
-        }*/
-
-        /**
-         * 将相同的源进行合并。
-         *
-         * @return
-         */
         public List<KnowledgeSource> mergeSources() {
             List<KnowledgeSource> list = new ArrayList<>();
 
@@ -2744,5 +2808,5 @@ public class KnowledgeBase {
                 return this.source.hashCode();
             }
         }
-    }
+    }*/
 }

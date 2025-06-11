@@ -6,6 +6,7 @@
 
 package cube.common.entity;
 
+import cube.aigc.TextSplitter;
 import org.json.JSONObject;
 
 /**
@@ -45,6 +46,8 @@ public class KnowledgeArticle extends Entity {
     public boolean activated;
 
     public int numSegments;
+
+    public TextSplitter splitter = TextSplitter.Auto;
 
     public KnowledgeArticle(String domain, long contactId, String baseName,
                             String category, String title, String content, String author,
@@ -105,6 +108,7 @@ public class KnowledgeArticle extends Entity {
                 KnowledgeScope.Private;
         this.activated = json.has("activated") && json.getBoolean("activated");
         this.numSegments = json.has("numSegments") ? json.getInt("numSegments") : 0;
+        this.splitter = TextSplitter.parse(json.getString("splitter"));
         if (json.has("numWords")) {
             this.numWords = json.getInt("numWords");
         }
@@ -151,6 +155,7 @@ public class KnowledgeArticle extends Entity {
         json.put("scope", this.scope.name);
         json.put("activated", this.activated);
         json.put("numSegments", this.numSegments);
+        json.put("splitter", this.splitter.name);
         json.put("numWords", this.numWords);
         return json;
     }
@@ -169,6 +174,7 @@ public class KnowledgeArticle extends Entity {
         json.put("scope", this.scope.name);
         json.put("activated", this.activated);
         json.put("numSegments", this.numSegments);
+        json.put("splitter", this.splitter.name);
         json.put("numWords", this.numWords);
         return json;
     }

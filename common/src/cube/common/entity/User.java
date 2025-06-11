@@ -9,10 +9,13 @@ package cube.common.entity;
 import cube.auth.AuthToken;
 import org.json.JSONObject;
 
+import java.util.Calendar;
+
 public class User extends Entity {
 
     public final static String KnowledgeBaseName = "mind_echo";
     public final static String KnowledgeBaseDisplayName = "MindEcho";
+    public final static String KnowledgeTitle = "UserProfile";
 
     private String name;
 
@@ -56,7 +59,7 @@ public class User extends Entity {
         this.phoneNumber = json.has("phoneNumber") ? json.getString("phoneNumber") : "";
         this.email = json.has("email") ? json.getString("email") : "";
         this.password = json.has("password") ? json.getString("password") : "";
-        this.registerTime = json.has("registerTime") ? json.getLong("registerTime") : 0;
+        this.registerTime = json.has("registerTime") ? json.getLong("registerTime") : System.currentTimeMillis();
         if (json.has("authToken")) {
             this.authToken = new AuthToken(json.getJSONObject("authToken"));
         }
@@ -116,6 +119,27 @@ public class User extends Entity {
 
     public void setAuthToken(AuthToken authToken) {
         this.authToken = authToken;
+    }
+
+    public String markdown() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("# 用户“").append(this.name).append("”的信息\n\n");
+        buf.append("* 用户昵称：").append(this.displayName).append("\n");
+        if (this.phoneNumber.length() > 1) {
+            buf.append("* 用户手机号码：").append(this.phoneNumber).append("\n");
+        }
+        if (this.email.length() > 1) {
+            buf.append("* 用户邮箱：").append(this.email).append("\n");
+        }
+        // 注册日期
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(this.registerTime);
+        buf.append("* 用户注册日期：");
+        buf.append(calendar.get(Calendar.YEAR)).append("年");
+        buf.append(calendar.get(Calendar.MONTH) + 1).append("月");
+        buf.append(calendar.get(Calendar.DATE)).append("日\n");
+        buf.append("\n");
+        return buf.toString();
     }
 
     @Override

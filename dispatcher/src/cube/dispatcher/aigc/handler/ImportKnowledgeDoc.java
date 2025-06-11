@@ -7,6 +7,7 @@
 package cube.dispatcher.aigc.handler;
 
 import cell.util.log.Logger;
+import cube.aigc.TextSplitter;
 import cube.common.entity.KnowledgeDocument;
 import cube.common.entity.KnowledgeProgress;
 import cube.dispatcher.aigc.AccessController;
@@ -69,9 +70,9 @@ public class ImportKnowledgeDoc extends ContextHandler {
                     return;
                 }
 
-                String splitter = KnowledgeDocument.SPLITTER_AUTO;
+                TextSplitter splitter = TextSplitter.Auto;
                 if (data.has("splitter")) {
-                    splitter = data.getString("splitter");
+                    splitter = TextSplitter.parse(data.getString("splitter"));
                 }
 
                 if (data.has("fileCode")) {

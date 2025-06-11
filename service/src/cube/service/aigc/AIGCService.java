@@ -14,7 +14,10 @@ import cube.aigc.*;
 import cube.aigc.app.Notification;
 import cube.aigc.complex.widget.Event;
 import cube.aigc.complex.widget.EventResult;
-import cube.aigc.psychology.*;
+import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.ScaleReport;
+import cube.aigc.psychology.Theme;
 import cube.aigc.psychology.composition.Scale;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
@@ -40,6 +43,7 @@ import cube.service.aigc.listener.*;
 import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.ResourceAnswer;
+import cube.service.aigc.scene.ContentTools;
 import cube.service.aigc.scene.PaintingReportListener;
 import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.ScaleReportListener;
@@ -793,8 +797,8 @@ public class AIGCService extends AbstractModule implements Generatable {
             ContactManager.getInstance().updateContact(contact.getDomain().getName(),
                     contact.getId(), verificationCode.phoneNumber, user.toJSON());
 
-            // 创建个人知识记忆
-            this.createPersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
+            // 更新个人知识记忆
+            this.updatePersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
                     contact.getId()), user);
 
             return user;
@@ -859,8 +863,8 @@ public class AIGCService extends AbstractModule implements Generatable {
                 ContactManager.getInstance().updateContact(contact.getDomain().getName(),
                         contact.getId(), userName, user.toJSON());
 
-                // 创建个人知识记忆
-                this.createPersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
+                // 更新个人知识记忆
+                this.updatePersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
                         contact.getId()), user);
 
                 return user;
@@ -914,8 +918,8 @@ public class AIGCService extends AbstractModule implements Generatable {
                     ContactManager.getInstance().updateContact(userContact.getDomain().getName(),
                             userContact.getId(), user.getName(), user.toJSON());
 
-                    // 创建个人知识记忆
-                    this.createPersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
+                    // 更新个人知识记忆
+                    this.updatePersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
                             contact.getId()), user);
 
                     return user;
@@ -929,22 +933,72 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
-    private void createPersonalKnowledgeBase(AuthToken authToken, User user) {
+    private void updatePersonalKnowledgeBase(AuthToken authToken, User user) {
         KnowledgeBase base = this.getKnowledgeFramework().getKnowledgeBase(user.getId(), User.KnowledgeBaseName);
         if (null == base) {
             this.getKnowledgeFramework().newKnowledgeBase(authToken.getCode(), User.KnowledgeBaseName,
-                    User.KnowledgeBaseDisplayName, "Personal", KnowledgeScope.Private);
+                    User.KnowledgeBaseDisplayName, "Profile", KnowledgeScope.Private);
 
             base = this.getKnowledgeFramework().getKnowledgeBase(user.getId(), User.KnowledgeBaseName);
             if (null == base) {
-                Logger.e(this.getClass(), "#createPersonalKnowledgeBase - Failed: " + user.getId());
+                Logger.e(this.getClass(), "#updatePersonalKnowledgeBase - Failed: " + user.getId());
                 return;
             }
 
             KnowledgeProfile profile = base.getProfile();
-            Logger.d(this.getClass(), "#createPersonalKnowledgeBase - profile: " + user.getId() + " - " +
+            Logger.d(this.getClass(), "#updatePersonalKnowledgeBase - New personal base: " + user.getId() + " - " +
                     profile.scope.name + "/" + profile.maxSize + "/" + profile.state);
         }
+
+        final KnowledgeBase knowledgeBase = base;
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                StringBuilder markdown = new StringBuilder();
+                markdown.append(user.markdown());
+                Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(authToken.getDomain(),
+                        user.getId());
+                markdown.append(ContentTools.makeMembership(user, membership));
+
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis(System.currentTimeMillis());
+
+                List<KnowledgeArticle> articleList = knowledgeBase.getKnowledgeArticlesByTitle(User.KnowledgeTitle);
+                if (articleList.isEmpty()) {
+                    if (Logger.isDebugLevel()) {
+                        Logger.d(this.getClass(), "#updatePersonalKnowledgeBase - create profile data: "
+                                + authToken.getContactId());
+                    }
+
+                    KnowledgeArticle article = new KnowledgeArticle(authToken.getDomain(), authToken.getContactId(),
+                            User.KnowledgeBaseName,
+                            "Profile", User.KnowledgeTitle, markdown.toString(), user.getName(),
+                            calendar.get(Calendar.YEAR),
+                            calendar.get(Calendar.MONTH) + 1,
+                            calendar.get(Calendar.DATE),
+                            System.currentTimeMillis(), KnowledgeScope.Private);
+                    // 添加
+                    article = knowledgeBase.appendKnowledgeArticle(article);
+                    // 激活
+                    knowledgeBase.activateKnowledgeArticles(Collections.singletonList(article.getId()),
+                            TextSplitter.None);
+                }
+                else {
+                    if (Logger.isDebugLevel()) {
+                        Logger.d(this.getClass(), "#updatePersonalKnowledgeBase - update profile data: "
+                                + authToken.getContactId());
+                    }
+
+                    KnowledgeArticle article = articleList.get(0);
+                    article.content = markdown.toString();
+                    // 更新
+                    knowledgeBase.updateKnowledgeArticle(article);
+                    // 激活
+                    knowledgeBase.activateKnowledgeArticles(Collections.singletonList(article.getId()),
+                            TextSplitter.None);
+                }
+            }
+        });
     }
 
     /**

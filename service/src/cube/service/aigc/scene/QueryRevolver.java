@@ -13,10 +13,7 @@ import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.*;
-import cube.common.entity.GeneratingRecord;
-import cube.common.entity.QuestionAnswer;
-import cube.common.entity.RetrieveReRankResult;
-import cube.common.entity.User;
+import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
@@ -389,7 +386,7 @@ public class QueryRevolver {
                         if (null != knowledge) {
                             result.append("已知信息：\n\n");
                             result.append(knowledge);
-                            result.append("根据以上信息，回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
+                            result.append("\n\n根据以上信息，回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
                             result.append("不允许在答案中添加编造成分。");
                             result.append("问题是：").append(query).append("\n");
                         }
@@ -783,14 +780,18 @@ public class QueryRevolver {
             return null;
         }
 
-        KnowledgeBase.Knowledge knowledge = base.generateKnowledge(query, 3);
-        if (null == knowledge) {
+        User user = this.service.getUser(context.getAuthToken().getCode());
+        String fixedQuery = "我是用户“" + user.getName() + "”，" + query;
 
+        Knowledge knowledge = base.generateKnowledge(fixedQuery, 3);
+        if (null == knowledge) {
+            Logger.d(this.getClass(), "#generatePersonalKnowledge - Generates knowledge failed: " +
+                    context.getAuthToken().getContactId());
             return null;
         }
 
         StringBuilder buf = new StringBuilder();
-        for (KnowledgeBase.Knowledge.Metadata metadata : knowledge.metadataList) {
+        for (Knowledge.Metadata metadata : knowledge.metadataList) {
             buf.append(metadata.getContent());
             buf.append("\n\n");
         }

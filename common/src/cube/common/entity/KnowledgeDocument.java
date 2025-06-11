@@ -6,6 +6,7 @@
 
 package cube.common.entity;
 
+import cube.aigc.TextSplitter;
 import cube.util.JSONUtils;
 import org.json.JSONObject;
 
@@ -16,26 +17,6 @@ import java.util.List;
  * 知识库文档。
  */
 public class KnowledgeDocument extends Entity {
-
-    /**
-     * 自动语义切割。
-     */
-    public final static String SPLITTER_AUTO = "Auto";
-
-    /**
-     * 根据中文标点符号切割。
-     */
-    public final static String SPLITTER_PUNCTUATION = "Punctuation";
-
-    /**
-     * 根据文本符号行进行切割。
-     */
-    public final static String SPLITTER_SIMPLE = "Simple";
-
-    /**
-     * 根据文本行进行切割，即一行文本切割为一段。
-     */
-    public final static String SPLITTER_LINE = "Line";
 
     public final long contactId;
 
@@ -55,7 +36,7 @@ public class KnowledgeDocument extends Entity {
     /**
      * 文本分割器。
      */
-    public String splitter = SPLITTER_LINE;
+    public TextSplitter splitter = TextSplitter.Auto;
 
     /**
      * 分割的内容段落数量。
@@ -96,7 +77,7 @@ public class KnowledgeDocument extends Entity {
         this.fileCode = json.getString("fileCode");
         this.baseName = json.getString("baseName");
         this.activated = json.getBoolean("activated");
-        this.splitter = json.getString("splitter");
+        this.splitter = TextSplitter.parse(json.getString("splitter"));
         this.numSegments = json.getInt("numSegments");
         this.scope = KnowledgeScope.parse(json.getString("scope"));
 
@@ -144,7 +125,7 @@ public class KnowledgeDocument extends Entity {
         json.put("fileCode", this.fileCode);
         json.put("baseName", this.baseName);
         json.put("activated", this.activated);
-        json.put("splitter", this.splitter);
+        json.put("splitter", this.splitter.name);
         json.put("numSegments", this.numSegments);
         json.put("scope", this.scope.name);
 

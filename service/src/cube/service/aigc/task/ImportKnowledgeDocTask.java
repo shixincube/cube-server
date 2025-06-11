@@ -10,6 +10,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cube.aigc.TextSplitter;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.KnowledgeDocument;
@@ -75,9 +76,9 @@ public class ImportKnowledgeDocTask extends ServiceTask {
             baseName = packet.data.getString("base");
         }
 
-        String splitter = KnowledgeDocument.SPLITTER_AUTO;
+        TextSplitter splitter = TextSplitter.Auto;
         if (packet.data.has("splitter")) {
-            splitter = packet.data.getString("splitter");
+            splitter = TextSplitter.parse(packet.data.getString("splitter"));
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();

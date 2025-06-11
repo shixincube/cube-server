@@ -10,10 +10,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.aigc.AppEvent;
-import cube.aigc.Consts;
-import cube.aigc.ModelConfig;
-import cube.aigc.PromptRecord;
+import cube.aigc.*;
 import cube.aigc.app.ConfigInfo;
 import cube.aigc.complex.widget.Event;
 import cube.aigc.psychology.Attribute;
@@ -138,6 +135,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new ActivateKnowledgeArticle());
         httpServer.addContextHandler(new DeactivateKnowledgeArticle());
         httpServer.addContextHandler(new QueryAllArticleCategories());
+        httpServer.addContextHandler(new GenerateKnowledge());
         httpServer.addContextHandler(new SearchResults());
         httpServer.addContextHandler(new ContextInference());
         httpServer.addContextHandler(new ChartData());
@@ -652,11 +650,11 @@ public class Manager implements Tickable, PerformerListener {
         }
     }
 
-    public KnowledgeDocument importKnowledgeDoc(String token, String baseName, String fileCode, String splitter) {
+    public KnowledgeDocument importKnowledgeDoc(String token, String baseName, String fileCode, TextSplitter splitter) {
         JSONObject payload = new JSONObject();
         payload.put("base", baseName);
         payload.put("fileCode", fileCode);
-        payload.put("splitter", splitter);
+        payload.put("splitter", splitter.name);
         Packet packet = new Packet(AIGCAction.ImportKnowledgeDoc.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
@@ -675,13 +673,13 @@ public class Manager implements Tickable, PerformerListener {
         return new KnowledgeDocument(Packet.extractDataPayload(responsePacket));
     }
 
-    public KnowledgeProgress importKnowledgeDocs(String token, String baseName, JSONArray fileCodeArray, String splitter) {
+    public KnowledgeProgress importKnowledgeDocs(String token, String baseName, JSONArray fileCodeArray, TextSplitter splitter) {
         Logger.d(this.getClass(), "#importKnowledgeDocs - " + baseName + " - " + token);
 
         JSONObject payload = new JSONObject();
         payload.put("base", baseName);
         payload.put("fileCodeList", fileCodeArray);
-        payload.put("splitter", splitter);
+        payload.put("splitter", splitter.name);
         Packet packet = new Packet(AIGCAction.ImportKnowledgeDoc.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
@@ -1060,10 +1058,11 @@ public class Manager implements Tickable, PerformerListener {
         return result;
     }
 
-    public List<KnowledgeArticle> deactivateKnowledgeArticle(String token, JSONArray idList) {
+    public List<KnowledgeArticle> deactivateKnowledgeArticle(String token, String baseName, JSONArray idList) {
         List<KnowledgeArticle> result = new ArrayList<>();
 
         JSONObject payload = new JSONObject();
+        payload.put("base", baseName);
         payload.put("ids", idList);
         Packet packet = new Packet(AIGCAction.DeactivateKnowledgeArticle.name, payload);
         ActionDialect request = packet.toDialect();
@@ -1102,6 +1101,31 @@ public class Manager implements Tickable, PerformerListener {
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.d(Manager.class, "#queryAllArticleCategories - Response state is NOT Ok : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject generateKnowledge(String token, String query, String baseName, int topK) {
+        JSONObject param = new JSONObject();
+        param.put("query", query);
+        param.put("base", baseName);
+        param.put("topK", topK <= 0 ? 5 : topK);
+        Packet packet = new Packet(AIGCAction.GenerateKnowledge.name, param);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(Manager.class, "#generateKnowledge - Response is null : " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#generateKnowledge - Response state is NOT Ok : "
                     + Packet.extractCode(responsePacket));
             return null;
         }

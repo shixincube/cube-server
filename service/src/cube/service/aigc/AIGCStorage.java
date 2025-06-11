@@ -1585,14 +1585,18 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public List<KnowledgeArticle> readKnowledgeArticles(String baseName, String category) {
+    public List<KnowledgeArticle> readKnowledgeArticlesByTitle(String domain, long contactId, String baseName, String title) {
         List<KnowledgeArticle> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.knowledgeArticleTable, this.knowledgeArticleFields,
                 new Conditional[] {
+                        Conditional.createEqualTo("domain", domain),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
                         Conditional.createEqualTo("base", baseName),
                         Conditional.createAnd(),
-                        Conditional.createEqualTo("category", category),
+                        Conditional.createEqualTo("title", title),
                         Conditional.createOrderBy("timestamp", true)
         });
         for (StorageField[] fields : result) {
