@@ -30,7 +30,7 @@ public class ScaleReport extends Report {
 
     private long finishedTimestamp;
 
-    private AIGCStateCode state;
+    private AIGCStateCode state = AIGCStateCode.Ok;
 
     public ScaleReport(long contactId, Scale scale) {
         super(scale.getSN(), contactId, System.currentTimeMillis(), scale.getAttribute());
@@ -51,13 +51,16 @@ public class ScaleReport extends Report {
         this.state = AIGCStateCode.Processing;
     }
 
-    public ScaleReport(long sn, long contactId, long timestamp, Attribute attribute, JSONArray factorArray) {
+    public ScaleReport(long sn, long contactId, long timestamp, Attribute attribute, JSONArray factorArray,
+                       Scale scale, int state, String remark) {
         super(sn, contactId, timestamp, attribute);
         this.factors = new ArrayList<>();
+        this.scale = scale;
         this.setFactors(factorArray);
-        this.state = AIGCStateCode.Ok;
+        this.state = AIGCStateCode.parse(state);
+        this.remark = remark;
         this.finished = true;
-        this.finishedTimestamp = timestamp;
+        this.finishedTimestamp = this.scale.getEndTimestamp();
     }
 
     public ScaleReport(JSONObject json) {
@@ -69,6 +72,9 @@ public class ScaleReport extends Report {
         JSONArray array = json.getJSONArray("factors");
         for (int i = 0; i < array.length(); ++i) {
             this.factors.add(new ScaleFactor(array.getJSONObject(i)));
+        }
+        if (json.has("scale")) {
+            this.scale = new Scale(json.getJSONObject("scale"));
         }
     }
 
@@ -122,17 +128,26 @@ public class ScaleReport extends Report {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
-
         json.put("finished", this.finished);
         json.put("finishedTimestamp", this.finishedTimestamp);
         json.put("state", this.state.code);
-
         json.put("factors", this.getFactorsAsJSONArray());
+        if (null != this.scale) {
+            json.put("scale", this.scale.toJSON());
+        }
         return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return this.toJSON();
+        JSONObject json = super.toCompactJSON();
+        json.put("finished", this.finished);
+        json.put("finishedTimestamp", this.finishedTimestamp);
+        json.put("state", this.state.code);
+        json.put("factors", this.getFactorsAsJSONArray());
+        if (null != this.scale) {
+            json.put("scale", this.scale.toCompactJSON());
+        }
+        return json;
     }
 }

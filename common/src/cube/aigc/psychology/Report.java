@@ -34,6 +34,8 @@ public abstract class Report implements JSONable {
 
     protected String summary = "";
 
+    protected String remark = "";
+
     public Report(long contactId, Attribute attribute) {
         this.sn = Utils.generateSerialNumber();
         this.contactId = contactId;
@@ -75,6 +77,9 @@ public abstract class Report implements JSONable {
         if (json.has("summary")) {
             this.summary = json.getString("summary");
         }
+        if (json.has("remark")) {
+            this.remark = json.getString("remark");
+        }
     }
 
     public String getName() {
@@ -91,6 +96,14 @@ public abstract class Report implements JSONable {
 
     public String getSummary() {
         return this.summary;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+
+    public String getRemark() {
+        return this.remark;
     }
 
     public void setPermission(ReportPermission permission) {
@@ -113,6 +126,9 @@ public abstract class Report implements JSONable {
         if (null != this.summary) {
             json.put("summary", this.summary);
         }
+        if (null != this.remark) {
+            json.put("remark", this.remark);
+        }
         return json;
     }
 
@@ -123,9 +139,13 @@ public abstract class Report implements JSONable {
         json.put("contactId", this.contactId);
         json.put("timestamp", this.timestamp);
         json.put("name", this.name);
+        json.put("permission", this.permission.toJSON());
         json.put("attribute", this.attribute.toJSON());
         if (null != this.summary) {
             json.put("summary", this.summary);
+        }
+        if (null != this.remark) {
+            json.put("remark", this.remark);
         }
         return json;
     }

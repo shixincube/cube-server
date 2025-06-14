@@ -233,8 +233,8 @@ public class PsychologyScene {
         return report;
     }
 
-    public int numPsychologyReports() {
-        return this.storage.countPsychologyReports();
+    public int numPsychologyReports(long contactId) {
+        return this.storage.countPsychologyReports(contactId);
     }
 
     public int numPsychologyReports(int state) {
@@ -262,8 +262,8 @@ public class PsychologyScene {
         return list;
     }
 
-    public List<PaintingReport> getPsychologyReports(int pageIndex, int pageSize, boolean descending) {
-        List<PaintingReport> list = this.storage.readPsychologyReports(pageIndex, pageSize, descending);
+    public List<PaintingReport> getPsychologyReports(long contactId, int pageIndex, int pageSize, boolean descending) {
+        List<PaintingReport> list = this.storage.readPsychologyReports(contactId, pageIndex, pageSize, descending);
         Iterator<PaintingReport> iter = list.iterator();
         while (iter.hasNext()) {
             PaintingReport report = iter.next();
@@ -279,8 +279,9 @@ public class PsychologyScene {
         return list;
     }
 
-    public List<PaintingReport> getPsychologyReportsWithState(int pageIndex, int pageSize, boolean descending, int state) {
-        List<PaintingReport> list = this.storage.readPsychologyReports(pageIndex, pageSize, descending, state);
+    public List<PaintingReport> getPsychologyReportsWithState(long contactId, int pageIndex, int pageSize,
+                                                              boolean descending, int state) {
+        List<PaintingReport> list = this.storage.readPsychologyReports(contactId, pageIndex, pageSize, descending, state);
         Iterator<PaintingReport> iter = list.iterator();
         while (iter.hasNext()) {
             PaintingReport report = iter.next();
@@ -868,6 +869,14 @@ public class PsychologyScene {
         return report;
     }
 
+    public int numScaleReports(long contactId) {
+        return this.storage.countScaleReports(contactId);
+    }
+
+    public int numScaleReports(long contactId, int state) {
+        return this.storage.countScaleReports(contactId, state);
+    }
+
     public ScaleReport getScaleReport(long sn) {
         Report current = this.reportMap.get(sn);
         if (current instanceof ScaleReport) {
@@ -880,10 +889,15 @@ public class PsychologyScene {
             return null;
         }
 
-        Scale scale = this.getScale(sn);
-        report.setScale(scale);
-
         return report;
+    }
+
+    public List<ScaleReport> getScaleReports(long contactId, boolean descending) {
+        return this.storage.readScaleReports(contactId, descending);
+    }
+
+    public List<ScaleReport> getScaleReports(long contactId, int state, boolean descending) {
+        return this.storage.readScaleReports(contactId, state, descending);
     }
 
     public String buildPrompt(List<ConversationRelation> relations, String query) {

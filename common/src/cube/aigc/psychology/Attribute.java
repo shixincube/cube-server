@@ -26,7 +26,7 @@ public class Attribute implements JSONable {
     public final boolean strict;
 
     public Attribute(String gender, int age, boolean strict) {
-        this.gender = gender;
+        this.gender = gender.equals("男") ? "male" : (gender.equals("女") ? "female" : gender.toLowerCase());
         this.age = age;
         this.strict = strict;
     }

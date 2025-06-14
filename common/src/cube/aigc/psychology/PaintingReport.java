@@ -433,7 +433,7 @@ public class PaintingReport extends Report {
             json.put("fileCode", this.fileCode);
         }
 
-        json.put("theme", this.theme.name);
+        json.put("theme", this.theme.code);
 
         json.put("finished", this.finished);
         json.put("finishedTimestamp", this.finishedTimestamp);

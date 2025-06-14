@@ -122,6 +122,10 @@
             "cn": "您找的是第%d份评测，但是我只找到**%d**份评测。",
             "en": ""
         },
+        "FORMAT_ANSWER_SELECT_REPORT_NOT_FIND_SN": {
+            "cn": "没有找到编号**%d**的评测报告。",
+            "en": ""
+        },
         "FORMAT_ANSWER_PLEASE_INPUT_REPORT_DESC": {
             "cn": "请告诉我您需要查看哪份评测，现在您一共有%d份评测。",
             "en": ""
@@ -155,7 +159,7 @@
             "en": ""
         },
         "FORMAT_ANSWER_SHOW_REPORT_CONTENT": {
-            "cn": "为您查找到评测【%s】：\n\n%s\n\n%s\n\n您可以告知我“**结束话题**”或者 [点击这里](aixinli://prompt.direct/取消已关联评测报告) 退出关联评测报告模式。",
+            "cn": "为您关联到评测报告【%s】：\n\n%s\n\n%s\n\n您可以告知我“**结束话题**”或者 [点击这里](aixinli://prompt.direct/取消已关联评测报告) 退出关联评测报告模式。",
             "en": ""
         },
         "ANSWER_CAN_NOT_FIND_REPORT": {

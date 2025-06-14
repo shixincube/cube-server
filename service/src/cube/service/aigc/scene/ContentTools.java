@@ -68,7 +68,7 @@ public class ContentTools {
         }
     }
 
-    public static String makeSummary(AIGCChannel channel, PaintingReport report) {
+    public static String makeBrief(AIGCChannel channel, PaintingReport report) {
         StringBuilder buf = new StringBuilder();
 
         if (report.isNull()) {
@@ -104,6 +104,14 @@ public class ContentTools {
             buf.append("***暂时无法查看***。\n\n");
         }
 
+        return buf.toString();
+    }
+
+    public static String makeSummary(AIGCChannel channel, PaintingReport report) {
+        StringBuilder buf = new StringBuilder();
+        buf.append(makeBrief(channel, report));
+
+        ReportPermission permission = report.getPermission();
         buf.append("## 概述\n\n");
         if (permission.indicatorSummary) {
             buf.append(report.getSummary());

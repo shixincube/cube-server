@@ -96,6 +96,9 @@ public class PsychologyStorage implements Storagable {
             new StorageField("evaluation_data", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
+            new StorageField("remark", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
             new StorageField("mandala_flower", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             })
@@ -115,6 +118,7 @@ public class PsychologyStorage implements Storagable {
             new StorageField(reportTable, "finished_timestamp", LiteralBase.LONG),
             new StorageField(reportTable, "summary", LiteralBase.STRING),
             new StorageField(reportTable, "evaluation_data", LiteralBase.STRING),
+            new StorageField(reportTable, "remark", LiteralBase.STRING),
             new StorageField(reportTable, "mandala_flower", LiteralBase.STRING)
     };
 
@@ -298,6 +302,12 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("factor_data", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL, Constraint.DEFAULT_0
+            }),
+            new StorageField("remark", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 
@@ -506,9 +516,9 @@ public class PsychologyStorage implements Storagable {
         }
     }
 
-    public int countPsychologyReports() {
+    public int countPsychologyReports(long contactId) {
         List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(*) FROM " + this.reportTable +
-                " WHERE finished_timestamp<>0");
+                " WHERE finished_timestamp<>0 AND `contact_id`=" + contactId);
         return result.get(0)[0].getInt();
     }
 
@@ -521,7 +531,7 @@ public class PsychologyStorage implements Storagable {
 
     public int countPsychologyReports(long contactId, int state) {
         List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(sn) FROM " + this.reportTable +
-                " WHERE contact_id=" + contactId +
+                " WHERE `contact_id`=" + contactId +
                 " AND " +
                 "`state`=" + state +
                 " AND " +
@@ -577,11 +587,13 @@ public class PsychologyStorage implements Storagable {
         return list;
     }
 
-    public List<PaintingReport> readPsychologyReports(int pageIndex, int pageSize, boolean descending) {
+    public List<PaintingReport> readPsychologyReports(long contactId, int pageIndex, int pageSize, boolean descending) {
         List<PaintingReport> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
                 new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
                         Conditional.createUnequalTo("finished_timestamp", (long) 0),
                         Conditional.createOrderBy("timestamp", descending),
                         Conditional.createLimitOffset(pageSize, pageIndex * pageSize)
@@ -599,7 +611,7 @@ public class PsychologyStorage implements Storagable {
         return list;
     }
 
-    public List<PaintingReport> readPsychologyReports(int pageIndex, int pageSize, boolean descending, int state) {
+    public List<PaintingReport> readPsychologyReports(long contactId, int pageIndex, int pageSize, boolean descending, int state) {
         List<PaintingReport> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(new String[] {
@@ -607,6 +619,9 @@ public class PsychologyStorage implements Storagable {
                         this.paintingReportManagementTable
                 }, this.reportFieldsForQuery,
                 new Conditional[] {
+                        Conditional.createEqualTo(new StorageField(this.reportTable, "contact_id",
+                                LiteralBase.LONG, contactId)),
+                        Conditional.createAnd(),
                         Conditional.createEqualTo(
                                 new StorageField(this.paintingReportManagementTable, "report_sn", LiteralBase.LONG),
                                 new StorageField(this.reportTable, "sn", LiteralBase.LONG)),
@@ -684,6 +699,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("summary", report.getSummary()),
                 new StorageField("evaluation_data", dataString),
+                new StorageField("remark", report.getRemark()),
                 new StorageField("mandala_flower", (null != report.getMandalaFlower() ?
                         report.getMandalaFlower().toJSON().toString() : null))
         });
@@ -701,6 +717,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("summary", report.getSummary()),
                 new StorageField("evaluation_data", dataString),
+                new StorageField("remark", report.getRemark())
         }, new Conditional[] {
                 Conditional.createEqualTo("sn", report.sn)
         });
@@ -906,7 +923,7 @@ public class PsychologyStorage implements Storagable {
 
         Map<String, StorageField> fields = StorageFields.get(result.get(0));
         try {
-            String dataStr = fields.get("data").getString();
+            String dataStr = JSONUtils.serializeLineFeed(fields.get("data").getString());
             return new Scale(new JSONObject(dataStr));
         } catch (Exception e) {
             Logger.e(this.getClass(), "#readScale", e);
@@ -995,13 +1012,30 @@ public class PsychologyStorage implements Storagable {
         }
     }
 
+    public int countScaleReports(long contactId) {
+        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(sn) FROM " + this.scaleReportTable +
+                " WHERE `state`=0 AND `contact_id`=" + contactId);
+        return result.get(0)[0].getInt();
+    }
+
+    public int countScaleReports(long contactId, int state) {
+        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(sn) FROM " + this.scaleReportTable +
+                " WHERE `state`=" + state + " AND `contact_id`=" + contactId);
+        return result.get(0)[0].getInt();
+    }
+
     public ScaleReport readScaleReport(long sn) {
         List<StorageField[]> result = this.storage.executeQuery(this.scaleReportTable, this.scaleReportFields,
                 new Conditional[] {
                         Conditional.createEqualTo("sn", sn)
                 });
-
         if (result.isEmpty()) {
+            return null;
+        }
+
+        Scale scale = readScale(sn);
+        if (null == scale) {
+            Logger.w(this.getClass(), "#readScaleReport - Can NOT find scale: " + sn);
             return null;
         }
 
@@ -1013,11 +1047,69 @@ public class PsychologyStorage implements Storagable {
         ScaleReport report = null;
         try {
             report = new ScaleReport(sn, data.get("contact_id").getLong(), data.get("timestamp").getLong(),
-                    attribute, new JSONArray(data.get("factor_data").getString()));
+                    attribute, new JSONArray(data.get("factor_data").getString()),
+                    scale, data.get("state").getInt(),
+                    data.get("remark").isNullValue() ? "" : data.get("remark").getString());
         } catch (Exception e) {
             Logger.w(this.getClass(), "#readScaleReport", e);
         }
         return report;
+    }
+
+    public List<ScaleReport> readScaleReports(long contactId, boolean descending) {
+        List<ScaleReport> list = new ArrayList<>();
+        List<StorageField[]> result = this.storage.executeQuery(this.scaleReportTable, this.scaleReportFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createOrderBy("timestamp", descending)
+                });
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+
+            Scale scale = readScale(data.get("sn").getLong());
+            if (null == scale) {
+                Logger.w(this.getClass(), "#readScaleReports - Can NOT find scale: " + data.get("sn").getLong());
+                continue;
+            }
+
+            Attribute attribute = new Attribute(data.get("gender").getString(), data.get("age").getInt(),
+                    data.get("strict").getInt() != 0);
+            ScaleReport report = new ScaleReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
+                    data.get("timestamp").getLong(), attribute, new JSONArray(data.get("factor_data").getString()),
+                    scale, data.get("state").getInt(),
+                    data.get("remark").isNullValue() ? "" : data.get("remark").getString());
+            list.add(report);
+        }
+        return list;
+    }
+
+    public List<ScaleReport> readScaleReports(long contactId, int state, boolean descending) {
+        List<ScaleReport> list = new ArrayList<>();
+        List<StorageField[]> result = this.storage.executeQuery(this.scaleReportTable, this.scaleReportFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("contact_id", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("state", state),
+                        Conditional.createOrderBy("timestamp", descending)
+                });
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+
+            Scale scale = readScale(data.get("sn").getLong());
+            if (null == scale) {
+                Logger.w(this.getClass(), "#readScaleReports - Can NOT find scale: " + data.get("sn").getLong());
+                continue;
+            }
+
+            Attribute attribute = new Attribute(data.get("gender").getString(), data.get("age").getInt(),
+                    data.get("strict").getInt() != 0);
+            ScaleReport report = new ScaleReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
+                    data.get("timestamp").getLong(), attribute, new JSONArray(data.get("factor_data").getString()),
+                    scale, data.get("state").getInt(),
+                    data.get("remark").isNullValue() ? "" : data.get("remark").getString());
+            list.add(report);
+        }
+        return list;
     }
 
     public boolean writeScaleReport(ScaleReport scaleReport) {
@@ -1038,7 +1130,9 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("gender", scaleReport.getAttribute().gender),
                     new StorageField("age", scaleReport.getAttribute().age),
                     new StorageField("strict", scaleReport.getAttribute().strict ? 1 : 0),
-                    new StorageField("factor_data", dataString)
+                    new StorageField("factor_data", dataString),
+                    new StorageField("state", scaleReport.getState().code),
+                    new StorageField("remark", scaleReport.getRemark())
             });
         }
         else {
@@ -1049,7 +1143,9 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("gender", scaleReport.getAttribute().gender),
                     new StorageField("age", scaleReport.getAttribute().age),
                     new StorageField("strict", scaleReport.getAttribute().strict ? 1 : 0),
-                    new StorageField("factor_data", dataString)
+                    new StorageField("factor_data", dataString),
+                    new StorageField("state", scaleReport.getState().code),
+                    new StorageField("remark", scaleReport.getRemark())
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", scaleReport.sn)
             });
@@ -1158,6 +1254,10 @@ public class PsychologyStorage implements Storagable {
 
         if (!data.get("summary").isNullValue()) {
             report.setSummary(data.get("summary").getString());
+        }
+
+        if (!data.get("remark").isNullValue()) {
+            report.setRemark(data.get("remark").getString());
         }
 
         if (!data.get("mandala_flower").isNullValue()) {

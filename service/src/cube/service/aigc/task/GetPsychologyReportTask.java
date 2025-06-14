@@ -12,6 +12,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.ScaleReport;
+import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
@@ -47,7 +48,8 @@ public class GetPsychologyReportTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        if (null == service.getToken(token)) {
+        AuthToken authToken = service.getToken(token);
+        if (null == authToken) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, new JSONObject()));
             markResponseTime();
@@ -58,10 +60,12 @@ public class GetPsychologyReportTask extends ServiceTask {
         boolean markdown = false;
         boolean sections = false;
 
+        long contactId = authToken.getContactId();
         int pageIndex = 0;
-        int pageSize = 0;
+        int pageSize = 10;
         boolean descending = true;
         int state = -1;
+        String type = "painting";
 
         try {
             sn = packet.data.has("sn") ? packet.data.getLong("sn") : 0;
@@ -69,9 +73,10 @@ public class GetPsychologyReportTask extends ServiceTask {
             markdown = packet.data.has("markdown") && packet.data.getBoolean("markdown");
 
             pageIndex = packet.data.has("page") ? packet.data.getInt("page") : 0;
-            pageSize = packet.data.has("size") ? packet.data.getInt("size") : 0;
-            descending = packet.data.has("desc") ? packet.data.getBoolean("desc") : true;
+            pageSize = packet.data.has("size") ? packet.data.getInt("size") : 10;
+            descending = !packet.data.has("desc") || packet.data.getBoolean("desc");
             state = packet.data.has("state") ? packet.data.getInt("state") : -1;
+            type = packet.data.has("type") ? packet.data.getString("type") : "painting";
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
@@ -115,24 +120,48 @@ public class GetPsychologyReportTask extends ServiceTask {
             }
         }
         else if (0 != pageSize) {
-            int num = (state == -1) ? PsychologyScene.getInstance().numPsychologyReports() :
-                    PsychologyScene.getInstance().numPsychologyReports(state);
+            if (type.equalsIgnoreCase("painting")) {
+                int num = (state == -1) ? PsychologyScene.getInstance().numPsychologyReports(contactId) :
+                        PsychologyScene.getInstance().numPsychologyReports(contactId, state);
 
-            List<PaintingReport> list = (state == -1) ?
-                    PsychologyScene.getInstance().getPsychologyReports(pageIndex, pageSize, descending) :
-                    PsychologyScene.getInstance().getPsychologyReportsWithState(pageIndex, pageSize, descending, state);
-            JSONArray array = new JSONArray();
-            for (PaintingReport report : list) {
-                array.put(report.toCompactJSON());
+                List<PaintingReport> list = (state == -1) ?
+                        PsychologyScene.getInstance().getPsychologyReports(contactId, pageIndex, pageSize, descending) :
+                        PsychologyScene.getInstance().getPsychologyReportsWithState(contactId, pageIndex, pageSize, descending, state);
+                JSONArray array = new JSONArray();
+                for (PaintingReport report : list) {
+                    array.put(report.toCompactJSON());
+                }
+
+                JSONObject responseData = new JSONObject();
+                responseData.put("total", num);
+                responseData.put("page", pageIndex);
+                responseData.put("size", pageSize);
+                responseData.put("list", array);
+                responseData.put("type", type);
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
             }
+            else {
+                int num = (state == -1) ? PsychologyScene.getInstance().numScaleReports(contactId) :
+                        PsychologyScene.getInstance().numScaleReports(contactId, state);
 
-            JSONObject responseData = new JSONObject();
-            responseData.put("total", num);
-            responseData.put("page", pageIndex);
-            responseData.put("size", pageSize);
-            responseData.put("list", array);
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
+                List<ScaleReport> list = (state == -1) ?
+                        PsychologyScene.getInstance().getScaleReports(contactId, descending) :
+                        PsychologyScene.getInstance().getScaleReports(contactId, state, descending);
+                JSONArray array = new JSONArray();
+                for (ScaleReport report : list) {
+                    array.put(report.toCompactJSON());
+                }
+
+                JSONObject responseData = new JSONObject();
+                responseData.put("total", num);
+                responseData.put("page", pageIndex);
+                responseData.put("size", num);
+                responseData.put("list", array);
+                responseData.put("type", type);
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
+            }
         }
         else {
             this.cellet.speak(this.talkContext,

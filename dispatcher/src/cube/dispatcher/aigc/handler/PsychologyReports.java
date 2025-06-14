@@ -12,6 +12,7 @@ import cube.dispatcher.aigc.Manager;
 import cube.util.FileLabels;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
@@ -118,16 +119,24 @@ public class PsychologyReports extends ContextHandler {
                     this.complete();
                 }
                 else {
+                    String type = (null != request.getParameter("type")) ?
+                            request.getParameter("type") : "painting";
                     int page = Integer.parseInt(request.getParameter("page"));
                     int size = Integer.parseInt(request.getParameter("size"));
                     boolean descending = null == request.getParameter("desc")
                             || Boolean.parseBoolean(request.getParameter("desc"));
-                    JSONObject data = Manager.getInstance().getPsychologyReports(token, page, size, descending);
+                    JSONObject data = Manager.getInstance().getPsychologyReports(token, type, page, size, descending);
                     if (null != data) {
-                        if (data.has("fileLabel")) {
-                            FileLabels.reviseFileLabel(data.getJSONObject("fileLabel"), token,
-                                    Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
-                                    Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                        if (data.has("list")) {
+                            JSONArray array = data.getJSONArray("list");
+                            for (int i = 0; i < array.length(); ++i) {
+                                JSONObject item = array.getJSONObject(i);
+                                if (item.has("fileLabel")) {
+                                    FileLabels.reviseFileLabel(item.getJSONObject("fileLabel"), token,
+                                            Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                                            Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                                }
+                            }
                         }
                         this.respondOk(response, data);
                     }

@@ -214,6 +214,7 @@ public class Scale extends Questionnaire implements JSONable {
         json.put("sections", sections);
         json.put("scoringScript", this.scoringScript);
         if (null != this.result) {
+            json.remove("result");
             json.put("result", this.result.toJSON());
         }
         return json;
@@ -231,6 +232,9 @@ public class Scale extends Questionnaire implements JSONable {
             json.put("attribute", this.attribute.toJSON());
         }
         json.put("timestamp", this.timestamp);
+        if (null != this.result) {
+            json.put("result", this.result.toCompactJSON());
+        }
         return json;
     }
 }

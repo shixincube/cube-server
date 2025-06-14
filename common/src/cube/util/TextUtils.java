@@ -14,7 +14,6 @@ import cube.vision.Size;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -588,6 +587,7 @@ public final class TextUtils {
         if (index <= 0) {
             return 0;
         }
+        // 倒序输出年份字符串
         StringBuffer buf = new StringBuffer();
         int count = 0;
         for (int i = index - 1; i >= 0; --i) {
@@ -599,8 +599,9 @@ public final class TextUtils {
                 buf.append(text.charAt(i));
             }
             ++count;
-            if (buf.length() >= 4 || count >= 4) {
-                break;
+            if (buf.length() > 4 || count > 4) {
+                // 数字串超长
+                return 0;
             }
         }
         if (buf.length() == 0) {
@@ -627,6 +628,7 @@ public final class TextUtils {
         if (index <= 0) {
             return 0;
         }
+        // 倒序输出年份字符串
         StringBuffer buf = new StringBuffer();
         int count = 0;
         for (int i = index - 1; i >= 0; --i) {
@@ -638,15 +640,22 @@ public final class TextUtils {
                 buf.append(text.charAt(i));
             }
             ++count;
-            if (buf.length() >= 2 || count >= 2) {
-                break;
+            if (buf.length() > 2 || count > 2) {
+                // 数字串超长
+                return 0;
             }
         }
         try {
             if (buf.length() == 0) {
                 return 0;
             }
-            return Integer.parseInt(buf.reverse().toString());
+            int result = Integer.parseInt(buf.reverse().toString());
+            if (result <= 12) {
+                return result;
+            }
+            else {
+                return 0;
+            }
         } catch (Exception e) {
             return 0;
         }
@@ -674,8 +683,9 @@ public final class TextUtils {
                 buf.append(text.charAt(i));
             }
             ++count;
-            if (buf.length() >= 2 || count >= 2) {
-                break;
+            if (buf.length() > 2 || count > 2) {
+                // 数字串超长
+                return 0;
             }
         }
 
@@ -694,8 +704,9 @@ public final class TextUtils {
                     buf.append(text.charAt(i));
                 }
                 ++count;
-                if (buf.length() >= 2 || count >= 2) {
-                    break;
+                if (buf.length() > 2 || count > 2) {
+                    // 数字串超长
+                    return 0;
                 }
             }
         }
@@ -705,14 +716,36 @@ public final class TextUtils {
         }
 
         try {
-            return Integer.parseInt(buf.toString());
+            int result = Integer.parseInt(buf.toString());
+            if (result <= 31) {
+                return result;
+            }
+            else {
+                return 0;
+            }
         } catch (Exception e) {
             return 0;
         }
     }
 
     /**
+     * 提取文本内的可能的 SN 或 ID 数字。如果没有找到返回 <code>0</code> 值。
+     *
+     * @param sentences
+     * @return
+     */
+    public static long extractSnOrId(List<String> sentences) {
+        for (String word : sentences) {
+            if (isNumeric(word) && word.length() > 4) {
+                return Long.parseLong(word);
+            }
+        }
+        return 0;
+    }
+
+    /**
      * 提取文本里描述的位置信息。如果没有找到返回 <code>0</code> 值。
+     *
      * @param sentences
      * @return
      */

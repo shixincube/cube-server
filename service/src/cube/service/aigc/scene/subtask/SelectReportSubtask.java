@@ -21,6 +21,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.ContentTools;
+import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.SceneManager;
 import cube.util.TextUtils;
 
@@ -68,32 +69,102 @@ public class SelectReportSubtask extends ConversationSubtask {
         if (year == 0 && month == 0 && day == 0) {
             // 没有找到日期信息
             List<String> sentences = this.service.segmentation(query);
-            int location = TextUtils.extractLocation(sentences);
-            if (0 == location) {
-                // 没有找到位置
-                this.service.getExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        GeneratingRecord record = new GeneratingRecord(query);
-                        record.answer = polish(String.format(Resource.getInstance().getCorpus(CORPUS,
-                                "FORMAT_ANSWER_PLEASE_INPUT_REPORT_DESC"),
-                                convCtx.getReportList().size()));
-                        convCtx.record(record);
-                        listener.onGenerated(channel, record);
-                        channel.setProcessing(false);
 
-                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
-                                convCtx, record);
+            long sn = TextUtils.extractSnOrId(sentences);
+            if (0 == sn) {
+                // 没有找到编号，找位置
+                int location = TextUtils.extractLocation(sentences);
+                if (0 == location) {
+                    // 没有找到位置
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            GeneratingRecord record = new GeneratingRecord(query);
+                            record.answer = polish(String.format(Resource.getInstance().getCorpus(CORPUS,
+                                    "FORMAT_ANSWER_PLEASE_INPUT_REPORT_DESC"),
+                                    convCtx.getReportList().size()));
+                            convCtx.record(record);
+                            listener.onGenerated(channel, record);
+                            channel.setProcessing(false);
+
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
+                        }
+                    });
+                }
+                else {
+                    // 找到位置
+                    List<PaintingReport> list = convCtx.getReportList();
+                    if (location <= list.size()) {
+                        int index = location - 1;
+                        final PaintingReport report = list.get(index);
+                        // 设置当前选中报告
+                        convCtx.setCurrentReport(report);
+                        this.service.getExecutor().execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                ComplexContext context = new ComplexContext();
+                                ReportAttachment attachment = new ReportAttachment(report.sn, report.getFileLabel());
+                                context.addResource(new AttachmentResource(attachment));
+
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.context = context;
+                                record.answer = String.format(
+                                        Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
+                                        ContentTools.makeReportTitle(report),
+                                        ContentTools.makeSummary(channel, report),
+                                        ContentTools.makePageLink(channel.getHttpsEndpoint(), channel.getAuthToken().getCode(),
+                                                report, true, true));
+                                convCtx.record(record);
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+
+                                SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                        convCtx, record);
+                            }
+                        });
                     }
-                });
+                    else {
+                        // 位置越界
+                        this.service.getExecutor().execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                GeneratingRecord record = new GeneratingRecord(query);
+                                record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                        "FORMAT_ANSWER_SELECT_REPORT_LOCATION_OVERFLOW"),
+                                        location, list.size());
+                                convCtx.record(record);
+                                listener.onGenerated(channel, record);
+                                channel.setProcessing(false);
+
+                                SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                        convCtx, record);
+                            }
+                        });
+                    }
+                }
             }
             else {
-                // 找到位置
-                List<PaintingReport> list = convCtx.getReportList();
-                if (location <= list.size()) {
-                    int index = location - 1;
-                    final PaintingReport report = list.get(index);
-                    // 设置当前选中报告
+                PaintingReport report = PsychologyScene.getInstance().getPaintingReport(sn);
+                if (null == report) {
+                    // 没有找到报告
+                    this.service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            GeneratingRecord record = new GeneratingRecord(query);
+                            record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
+                                    "FORMAT_ANSWER_SELECT_REPORT_NOT_FIND_SN"), sn);
+                            convCtx.record(record);
+                            listener.onGenerated(channel, record);
+                            channel.setProcessing(false);
+
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                    convCtx, record);
+                        }
+                    });
+                }
+                else {
+                    // 选中报告
                     convCtx.setCurrentReport(report);
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
@@ -107,27 +178,9 @@ public class SelectReportSubtask extends ConversationSubtask {
                             record.answer = String.format(
                                     Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SHOW_REPORT_CONTENT"),
                                     ContentTools.makeReportTitle(report),
-                                    ContentTools.makeSummary(channel, report),
+                                    ContentTools.makeBrief(channel, report),
                                     ContentTools.makePageLink(channel.getHttpsEndpoint(), channel.getAuthToken().getCode(),
                                             report, true, true));
-                            convCtx.record(record);
-                            listener.onGenerated(channel, record);
-                            channel.setProcessing(false);
-
-                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
-                                    convCtx, record);
-                        }
-                    });
-                }
-                else {
-                    // 位置越界
-                    this.service.getExecutor().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            GeneratingRecord record = new GeneratingRecord(query);
-                            record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
-                                    "FORMAT_ANSWER_SELECT_REPORT_LOCATION_OVERFLOW"),
-                                    location, list.size());
                             convCtx.record(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);

@@ -2121,17 +2121,20 @@ public class Manager implements Tickable, PerformerListener {
      * 查询心理学报告。
      *
      * @param token
+     * @param type
      * @param pageIndex
      * @param pageSize
      * @param descending
      * @return
      */
-    public JSONObject getPsychologyReports(String token, int pageIndex, int pageSize, boolean descending) {
+    public JSONObject getPsychologyReports(String token, String type, int pageIndex, int pageSize, boolean descending) {
         if (pageSize <= 0) {
+            Logger.w(this.getClass(), "#getPsychologyReports - page size is zero: " + token);
             return null;
         }
 
         JSONObject data = new JSONObject();
+        data.put("type", type);
         data.put("page", pageIndex);
         data.put("size", pageSize);
         data.put("desc", descending);
@@ -2142,7 +2145,7 @@ public class Manager implements Tickable, PerformerListener {
 
         ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
-            Logger.w(this.getClass(), "#getPsychologyReports - No response");
+            Logger.w(this.getClass(), "#getPsychologyReports - No response: " + token);
             return null;
         }
 

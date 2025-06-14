@@ -120,6 +120,9 @@ public class EvaluationReport implements JSONable {
         if (json.has("confidenceLevel")) {
             this.paintingConfidence = new PaintingConfidence(json.getInt("confidenceLevel"));
         }
+        else {
+            this.paintingConfidence = new PaintingConfidence(PaintingConfidence.LEVEL_NORMAL);
+        }
 
         this.hesitating = json.has("hesitating") && json.getBoolean("hesitating");
 
@@ -989,6 +992,10 @@ public class EvaluationReport implements JSONable {
 
         if (null != this.factorSet) {
             json.put("factorSet", this.factorSet.toJSON());
+        }
+
+        if (null != this.paintingConfidence) {
+            json.put("confidenceLevel", this.paintingConfidence.getConfidenceLevel());
         }
 
         json.put("hesitating", this.hesitating);
