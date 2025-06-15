@@ -11,7 +11,6 @@ import cube.aigc.ModelConfig;
 import cube.aigc.complex.attachment.Attachment;
 import cube.aigc.complex.attachment.ReportAttachment;
 import cube.aigc.psychology.*;
-import cube.aigc.psychology.app.PointTable;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Subtask;
@@ -19,15 +18,10 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
-import cube.service.aigc.scene.ContentTools;
-import cube.service.aigc.scene.PaintingReportListener;
-import cube.service.aigc.scene.PsychologyScene;
-import cube.service.aigc.scene.SceneManager;
+import cube.service.aigc.scene.*;
 import cube.service.contact.ContactManager;
 
 public class PredictPaintingSubtask extends ConversationSubtask {
-
-    public final static int gsNonmemberNum = 1;
 
     public PredictPaintingSubtask(AIGCService service, AIGCChannel channel, String query, ComplexContext context,
                                   ConversationRelation relation, ConversationContext convCtx,
@@ -336,27 +330,11 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                     }
                 });
 
-        if (null != report) {
-            // 判断是否是会员
-            Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(
-                    channel.getAuthToken().getDomain(), report.contactId);
-            ReportPermission permission = null;
-            if (null != membership && membership.state == Membership.STATE_NORMAL) {
-                // 全部权限
-                permission = ReportPermission.createAllPermissions(report.contactId, report.sn);
-            }
-            else {
-                int num = PsychologyScene.getInstance().numPsychologyReports(
-                        channel.getAuthToken().getContactId(), AIGCStateCode.Ok.code);
-                if (num >= gsNonmemberNum) {
-                    // 最小权限，已超过试用次数
-                    permission = new ReportPermission(report.contactId, report.sn);
-                }
-                else {
-                    // 全部权限，未超过试用次数
-                    permission = ReportPermission.createAllPermissions(report.contactId, report.sn);
-                }
-            }
+        User user = service.getUser(channel.getAuthToken().getCode());
+        if (null != report && null != user) {
+            // 生成权限
+            ReportPermission permission = UserProfiles.allowPredictPainting(user,
+                    ContactManager.getInstance().getContact(channel.getAuthToken().getCode()), report.sn);
             // 设置权限
             report.setPermission(permission);
 

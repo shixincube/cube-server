@@ -919,8 +919,8 @@ public class AIGCService extends AbstractModule implements Generatable {
                             userContact.getId(), user.getName(), user.toJSON());
 
                     // 更新个人知识记忆
-                    this.updatePersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
-                            contact.getId()), user);
+                    this.updatePersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(userContact.getDomain().getName(),
+                            userContact.getId()), user);
 
                     return user;
                 }
@@ -954,6 +954,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "#updatePersonalKnowledgeBase - " + user.getId() +
+                            " - " + knowledgeBase.getName());
+                }
+
                 StringBuilder markdown = new StringBuilder();
                 markdown.append(user.markdown());
                 Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(authToken.getDomain(),

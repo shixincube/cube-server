@@ -237,10 +237,6 @@ public class PsychologyScene {
         return this.storage.countPsychologyReports(contactId);
     }
 
-    public int numPsychologyReports(int state) {
-        return this.storage.countPsychologyReports(state);
-    }
-
     public int numPsychologyReports(long contactId, int state) {
         return this.storage.countPsychologyReports(contactId, state);
     }
@@ -875,6 +871,10 @@ public class PsychologyScene {
 
     public int numScaleReports(long contactId, int state) {
         return this.storage.countScaleReports(contactId, state);
+    }
+
+    public int numScaleReports(long contactId, long startTime, long endTime) {
+        return this.storage.countPsychologyReports(contactId, startTime, endTime);
     }
 
     public ScaleReport getScaleReport(long sn) {

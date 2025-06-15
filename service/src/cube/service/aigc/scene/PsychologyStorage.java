@@ -539,17 +539,17 @@ public class PsychologyStorage implements Storagable {
         return result.get(0)[0].getInt();
     }
 
-    public int countPsychologyReports(int state) {
-        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(sn) FROM " +
-                this.reportTable + "," + this.paintingReportManagementTable +
-                " WHERE " +
-                this.reportTable + ".sn=" + this.paintingReportManagementTable + ".report_sn" +
-                " AND " +
-                this.paintingReportManagementTable + ".state=" + state +
-                " AND " +
-                this.reportTable + ".finished_timestamp<>0");
-        return result.get(0)[0].getInt();
-    }
+//    public int countPsychologyReports(int state) {
+//        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(sn) FROM " +
+//                this.reportTable + "," + this.paintingReportManagementTable +
+//                " WHERE " +
+//                this.reportTable + ".sn=" + this.paintingReportManagementTable + ".report_sn" +
+//                " AND " +
+//                this.paintingReportManagementTable + ".state=" + state +
+//                " AND " +
+//                this.reportTable + ".finished_timestamp<>0");
+//        return result.get(0)[0].getInt();
+//    }
 
     public PaintingReport readPsychologyReport(long sn) {
         List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,

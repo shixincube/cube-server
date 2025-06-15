@@ -121,6 +121,14 @@ public class User extends Entity {
         this.authToken = authToken;
     }
 
+    public boolean isRegistered() {
+        if (0 == this.registerTime) {
+            return false;
+        }
+
+        return this.phoneNumber.length() > 8 || this.email.length() > 6;
+    }
+
     public String markdown() {
         StringBuilder buf = new StringBuilder();
         buf.append("# 用户“").append(this.name).append("”的信息\n\n");
