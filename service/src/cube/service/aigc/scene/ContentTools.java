@@ -475,12 +475,12 @@ public class ContentTools {
             if (membership.type.equals(Membership.TYPE_ORDINARY)) {
                 buf.append("普通版会员。\n\n");
                 buf.append("白泽灵思普通版会员权益有：\n\n");
-                buf.append("* 每月3次绘画测验。\n");
+                buf.append("* 每月3次绘画投射测验。\n");
             }
             else {
                 buf.append("专业版会员。\n\n");
                 buf.append("白泽灵思专业版会员权益有：\n\n");
-                buf.append("* 每月不限次绘画测验。\n");
+                buf.append("* 每月不限次绘画投射测验。\n");
             }
             buf.append("\n");
 

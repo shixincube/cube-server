@@ -19,6 +19,7 @@ import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.RetrieveReRankListener;
 import cube.service.aigc.listener.SemanticSearchListener;
+import cube.service.contact.ContactManager;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
@@ -369,6 +370,11 @@ public class QueryRevolver {
                     Logger.d(this.getClass(), "#generatePrompt - No psychology question: " + query);
                     result.delete(0, result.length());
 
+                    // 从用户个人知识中获取
+                    String knowledge = generatePersonalKnowledge(context, query);
+
+                    Contact contact = ContactManager.getInstance().getContact(context.getAuthToken().getCode());
+
                     if (!questionAnswerList.isEmpty()) {
                         result.append("已知知识点：\n\n");
                         for (QuestionAnswer qa : questionAnswerList) {
@@ -376,19 +382,26 @@ public class QueryRevolver {
                                 result.append(answer).append("\n\n");
                             }
                         }
-                        result.append("根据以上知识点，专业地回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
-                        result.append("不允许在答案中添加编造成分。");
-                        result.append("问题是：").append(query).append("\n");
+                        if (null != knowledge) {
+                            result.append(knowledge);
+                        }
+                        result.append("根据以上知识点，按要求回答问题。要求是：\n* 如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”\n");
+                        result.append("* 不允许说“根据提供的信息”\n");
+                        result.append("* 不允许在答案中添加编造成分\n\n");
+                        result.append("问题是：“");
+                        result.append("我是").append(contact.getName()).append("，");
+                        result.append(query).append("”\n");
                     }
                     else {
-                        // 从用户个人知识中获取
-                        String knowledge = generatePersonalKnowledge(context, query);
                         if (null != knowledge) {
                             result.append("已知信息：\n\n");
                             result.append(knowledge);
-                            result.append("\n\n根据以上信息，回答问题。如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”，");
-                            result.append("不允许在答案中添加编造成分。");
-                            result.append("问题是：").append(query).append("\n");
+                            result.append("根据以上信息，按要求回答问题。要求是：\n* 如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”\n");
+                            result.append("* 不允许说“根据提供的信息”\n");
+                            result.append("* 不允许在答案中添加编造成分\n\n");
+                            result.append("问题是：“");
+                            result.append("我是").append(contact.getName()).append("，");
+                            result.append(query).append("”\n");
                         }
                     }
                 }

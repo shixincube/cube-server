@@ -50,6 +50,8 @@ public enum Subtask {
 
     SuperAdmin("super_admin"),
 
+    AppQueryUser("app_query_user"),
+
     None("none"),
 
     ;

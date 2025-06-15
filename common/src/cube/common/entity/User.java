@@ -132,20 +132,30 @@ public class User extends Entity {
     public String markdown() {
         StringBuilder buf = new StringBuilder();
         buf.append("# 用户“").append(this.name).append("”的信息\n\n");
+        buf.append("* 用户名：").append(this.name).append("\n");
         buf.append("* 用户昵称：").append(this.displayName).append("\n");
+
+        if (this.isRegistered()) {
+            buf.append("* 用户注册状态：").append("已注册").append("\n");
+            // 注册日期
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(this.registerTime);
+            buf.append("* 用户注册日期：");
+            buf.append(calendar.get(Calendar.YEAR)).append("年");
+            buf.append(calendar.get(Calendar.MONTH) + 1).append("月");
+            buf.append(calendar.get(Calendar.DATE)).append("日\n");
+        }
+        else {
+            buf.append("* 用户注册状态：").append("未注册").append("\n");
+        }
+
         if (this.phoneNumber.length() > 1) {
             buf.append("* 用户手机号码：").append(this.phoneNumber).append("\n");
         }
+
         if (this.email.length() > 1) {
             buf.append("* 用户邮箱：").append(this.email).append("\n");
         }
-        // 注册日期
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(this.registerTime);
-        buf.append("* 用户注册日期：");
-        buf.append(calendar.get(Calendar.YEAR)).append("年");
-        buf.append(calendar.get(Calendar.MONTH) + 1).append("月");
-        buf.append(calendar.get(Calendar.DATE)).append("日\n");
         buf.append("\n");
         return buf.toString();
     }

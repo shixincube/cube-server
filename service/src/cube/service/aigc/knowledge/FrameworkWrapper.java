@@ -12,6 +12,7 @@ import cube.service.aigc.AIGCService;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class FrameworkWrapper {
@@ -20,7 +21,7 @@ public class FrameworkWrapper {
 
     private final AIGCService service;
 
-    private final LinkedList<KnowledgeBaseInfo> baseInfoList;
+    private final Vector<KnowledgeBaseInfo> baseInfoList;
 
     /**
      * Key: 知识库名。
@@ -30,18 +31,16 @@ public class FrameworkWrapper {
     public FrameworkWrapper(long contactId, AIGCService service) {
         this.contactId = contactId;
         this.service = service;
-        this.baseInfoList = new LinkedList<>();
+        this.baseInfoList = new Vector<>();
         this.knowledgeMap = new ConcurrentHashMap<>();
         this.refreshKnowledgeBaseInfo();
     }
 
     public List<KnowledgeBaseInfo> getBaseInfos() {
-        synchronized (this.baseInfoList) {
-            this.baseInfoList.clear();
-            List<KnowledgeBaseInfo> list = this.service.getStorage().readKnowledgeBaseInfo(this.contactId);
-            this.baseInfoList.addAll(list);
-            return this.baseInfoList;
-        }
+        this.baseInfoList.clear();
+        List<KnowledgeBaseInfo> list = this.service.getStorage().readKnowledgeBaseInfo(this.contactId);
+        this.baseInfoList.addAll(list);
+        return this.baseInfoList;
     }
 
     public List<KnowledgeBase> getAllKnowledgeBases() {
