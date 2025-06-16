@@ -822,10 +822,12 @@ public class AIGCService extends AbstractModule implements Generatable {
                 tokenCode = Utils.randomString(32);
             }
 
-            // 临时联系人标记为作废
             if (contact.getId().longValue() != userContact.getId().longValue()) {
+                // 临时联系人标记为作废
                 ContactManager.getInstance().setContactMask(contact.getDomain().getName(), contact.getId(),
                         ContactMask.Deprecated);
+                // 删除对应的知识库
+                getKnowledgeFramework().deleteKnowledgeBase(contact.getId(), User.KnowledgeBaseName);
             }
 
             // 更新老用户的令牌
@@ -871,12 +873,14 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
             else {
                 // 用户已存在
+                Logger.w(this.getClass(), "#checkInUser - The user already exists: " + userName);
                 return null;
             }
         }
         else {
             if (searchResult.getContactList().isEmpty()) {
                 // 用户不存在
+                Logger.w(this.getClass(), "#checkInUser - The user is NOT exist.: " + userName);
                 return null;
             }
             else {
@@ -900,10 +904,12 @@ public class AIGCService extends AbstractModule implements Generatable {
                         tokenCode = Utils.randomString(32);
                     }
 
-                    // 临时联系人标记为作废
                     if (contact.getId().longValue() != userContact.getId().longValue()) {
+                        // 临时联系人标记为作废
                         ContactManager.getInstance().setContactMask(contact.getDomain().getName(), contact.getId(),
                                 ContactMask.Deprecated);
+                        // 删除对应的知识库
+                        getKnowledgeFramework().deleteKnowledgeBase(contact.getId(), User.KnowledgeBaseName);
                     }
 
                     // 更新老用户的令牌

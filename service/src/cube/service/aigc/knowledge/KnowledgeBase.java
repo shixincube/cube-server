@@ -9,6 +9,7 @@ package cube.service.aigc.knowledge;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.AppEvent;
 import cube.aigc.ModelConfig;
 import cube.aigc.TextSplitter;
 import cube.auth.AuthToken;
@@ -1035,7 +1036,6 @@ public class KnowledgeBase {
         }
 
         List<KnowledgeDocument> docList = this.listKnowledgeDocs(true);
-
         for (KnowledgeDocument doc : docList) {
             // 删除文档记录
             this.storage.deleteKnowledgeDoc(this.baseInfo.name, doc.fileCode);
@@ -1043,24 +1043,38 @@ public class KnowledgeBase {
             this.storage.deleteKnowledgeSegments(doc.getId());
         }
 
+        List<KnowledgeArticle> articleList = this.listKnowledgeArticles(true);
+        List<Long> ids = new ArrayList<>();
+        for (KnowledgeArticle article : articleList) {
+            ids.add(article.getId());
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#destroy - Delete article: " + article.getId() + " - " +
+                        article.title);
+            }
+        }
+        // 删除文章
+        this.storage.deleteKnowledgeArticles(ids);
+
         (new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     // 删除库
                     JSONObject payload = new JSONObject();
+                    String store = null;
                     if (KnowledgeScope.Private == scope) {
-                        payload.put("contactId", authToken.getContactId());
+                        store = Long.toString(authToken.getContactId());
                     } else {
-                        payload.put("domain", authToken.getDomain());
+                        store = authToken.getDomain();
                     }
+                    payload.put("store", store);
                     payload.put("name", baseInfo.name);
                     Packet packet = new Packet(AIGCAction.DeleteKnowledgeStore.name, payload);
                     ActionDialect dialect = service.getCellet().transmit(resource.unit.getContext(),
                             packet.toDialect(), 60 * 1000);
                     if (null == dialect) {
                         Logger.w(this.getClass(), "#destroy - " + baseInfo.name + " - Request unit error: "
-                                + resource.unit.getCapability().getName());
+                                + store);
                         return;
                     }
 
@@ -1069,8 +1083,17 @@ public class KnowledgeBase {
                     if (state != AIGCStateCode.Ok.code) {
                         Logger.w(this.getClass(), "#destroy - " + baseInfo.name + " - Unit return error: " + state);
                     }
+
+                    JSONObject responseData = Packet.extractDataPayload(response);
+                    Logger.d(this.getClass(), "#destroy - cid: " + authToken.getContactId() +
+                                    " - base: " + baseInfo.name + "\n" + responseData.toString(4));
+                    // 记录事件
+                    AppEvent appEvent = new AppEvent(AppEvent.DeleteKnowledgeBase, System.currentTimeMillis(),
+                            authToken.getContactId(),
+                            AppEvent.createDeleteKnowledgeBaseData(KnowledgeBase.this.baseInfo, responseData));
+                    service.getStorage().writeAppEvent(appEvent);
                 } catch (Exception e) {
-                    // Nothing
+                    Logger.w(this.getClass(), "#destroy", e);
                 }
             }
         })).start();
@@ -2467,6 +2490,7 @@ public class KnowledgeBase {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("name", this.baseInfo.name);
+        json.put("info", this.baseInfo.toJSON());
         json.put("profile", this.getProfile().toJSON());
         json.put("locked", this.lock.get());
         json.put("numDocuments", (null != this.resource.docList) ? this.resource.docList.size() : 0);

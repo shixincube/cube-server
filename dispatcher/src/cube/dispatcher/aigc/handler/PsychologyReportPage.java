@@ -9,6 +9,7 @@ package cube.dispatcher.aigc.handler;
 import cell.util.log.Logger;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Report;
+import cube.aigc.psychology.ReportPermission;
 import cube.dispatcher.aigc.Manager;
 import cube.util.FileType;
 import cube.util.FileUtils;
@@ -57,11 +58,23 @@ public class PsychologyReportPage extends ContextHandler {
                 String page = request.getParameter("page").toLowerCase();
                 Report report = Manager.getInstance().getPsychologyReport(token, sn, false);
                 if (report instanceof PaintingReport) {
+                    // 判断权限
+                    ReportPermission permission = report.getPermission();
                     if (page.contains("indicator") || page.contains("default")) {
-                        this.respondFile(response, "indicator.html", report.toJSON());
+                        if (permission.indicatorDetails) {
+                            this.respondFile(response, "indicator.html", report.toJSON());
+                        }
+                        else {
+                            this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
+                        }
                     }
                     else if (page.contains("bigfive") || page.contains("personality")) {
-                        this.respondFile(response, "bigfive.html", report.toJSON());
+                        if (permission.personalityDetails) {
+                            this.respondFile(response, "bigfive.html", report.toJSON());
+                        }
+                        else {
+                            this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
+                        }
                     }
                     else {
                         this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));

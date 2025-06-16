@@ -9,6 +9,7 @@ package cube.aigc;
 import cell.util.Utils;
 import cube.common.JSONable;
 import cube.common.entity.GeneratingRecord;
+import cube.common.entity.KnowledgeBaseInfo;
 import cube.common.entity.KnowledgeQAResult;
 import cube.common.state.AIGCStateCode;
 import cube.util.EmojiFilter;
@@ -55,6 +56,16 @@ public class AppEvent implements JSONable {
      * 移除知识库文档事件。
      */
     public final static String RemoveKnowledgeDoc = "RemoveKnowledgeDoc";
+
+    /**
+     * 新建知识库。
+     */
+    public final static String NewKnowledgeBase = "NewKnowledgeBase";
+
+    /**
+     * 删除知识库。
+     */
+    public final static String DeleteKnowledgeBase = "DeleteKnowledgeBase";
 
     public final String event;
 
@@ -176,5 +187,12 @@ public class AppEvent implements JSONable {
         json.put("code", stateCode.code);
         json.put("query", query);
         return json;
+    }
+
+    public static JSONObject createDeleteKnowledgeBaseData(KnowledgeBaseInfo info, JSONObject data) {
+        data.put("name", info.name);
+        data.put("category", info.category);
+        data.put("baseTimestamp", info.timestamp);
+        return data;
     }
 }

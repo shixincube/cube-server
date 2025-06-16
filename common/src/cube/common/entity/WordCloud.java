@@ -20,7 +20,9 @@ public class WordCloud implements JSONable {
             ",", ".", "!", "?", "'", "\"", "**", "*", "-", "\n", "\r",
             "@", "#", "$", "%", "^", "&", "(", ")", "[", "]", "{", "}",
             "|", "\\", ":", ";", "<", ">", "=", "+", "`", "~", "/",
-            "，", "。", "！", "？", "《", "》", "“", "”", "…", "：", "；"
+            "，", "。", "！", "？", "《", "》", "“", "”", "…", "：", "；",
+            "http", "https", "sn", "page", "bigfive", "indicator", "html",
+            "7017", "7010"
     };
 
     private long timestamp;
@@ -47,8 +49,12 @@ public class WordCloud implements JSONable {
     }
 
     private boolean isFilterWord(String word) {
+        if (word.length() > 6) {
+            return true;
+        }
+
         for (String w : sFilterWords) {
-            if (w.equals(word)) {
+            if (word.toLowerCase().contains(w)) {
                 return true;
             }
         }

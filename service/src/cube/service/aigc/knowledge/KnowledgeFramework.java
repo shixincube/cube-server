@@ -7,6 +7,7 @@
 package cube.service.aigc.knowledge;
 
 import cell.util.log.Logger;
+import cube.aigc.AppEvent;
 import cube.auth.AuthToken;
 import cube.common.entity.KnowledgeBaseInfo;
 import cube.common.entity.KnowledgeProfile;
@@ -173,6 +174,13 @@ public class KnowledgeFramework {
             KnowledgeBase base = this.getKnowledgeBase(contactId, name);
             if (null != base) {
                 base.updateProfile(KnowledgeProfile.STATE_NORMAL, 0, scope);
+
+                // 记录事件
+                AppEvent appEvent = new AppEvent(AppEvent.NewKnowledgeBase, System.currentTimeMillis(),
+                        authToken.getContactId(),
+                        base.toJSON());
+                service.getStorage().writeAppEvent(appEvent);
+
                 return info;
             }
             else {
@@ -184,18 +192,20 @@ public class KnowledgeFramework {
     }
 
     public KnowledgeBaseInfo deleteKnowledgeBase(String token, String name) {
-        if (DefaultName.equals(name)) {
-            Logger.w(this.getClass(), "#deleteKnowledgeBase - Default knowledge base can NOT delete: " + name);
-            return null;
-        }
-
         AuthToken authToken = this.service.getToken(token);
         if (null == authToken) {
             Logger.w(this.getClass(), "#deleteKnowledgeBase - " + name + " - Token error: " + token);
             return null;
         }
 
-        long contactId = authToken.getContactId();
+        return this.deleteKnowledgeBase(authToken.getContactId(), name);
+    }
+
+    public KnowledgeBaseInfo deleteKnowledgeBase(long contactId, String name) {
+        if (DefaultName.equals(name)) {
+            Logger.w(this.getClass(), "#deleteKnowledgeBase - Default knowledge base can NOT delete: " + name);
+            return null;
+        }
 
         KnowledgeBase base = this.getKnowledgeBase(contactId, name);
         if (null == base) {
