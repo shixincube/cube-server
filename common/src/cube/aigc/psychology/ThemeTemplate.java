@@ -15,6 +15,8 @@ import java.util.List;
 
 /**
  * 主题模板。
+ *
+ * @deprecated
  */
 public class ThemeTemplate {
 

@@ -468,19 +468,23 @@ public class ContentTools {
     public static String makeMembership(User user, Membership membership) {
         StringBuffer buf = new StringBuffer();
         if (null == membership) {
-            buf.append("用户“").append(user.getName()).append("”不是白泽灵思会员。\n\n");
+            buf.append("用户“").append(user.getName()).append("”不是白泽灵思会员。");
+            buf.append("非会员用户享受1次绘画投射测验服务。");
+            buf.append("\n\n");
         }
         else {
             buf.append("用户“").append(user.getName()).append("”是白泽灵思");
             if (membership.type.equals(Membership.TYPE_ORDINARY)) {
                 buf.append("普通版会员。\n\n");
-                buf.append("白泽灵思普通版会员权益有：\n\n");
-                buf.append("* 每月3次绘画投射测验。\n");
+                buf.append("白泽灵思普通版会员权益有：\n");
             }
             else {
                 buf.append("专业版会员。\n\n");
-                buf.append("白泽灵思专业版会员权益有：\n\n");
-                buf.append("* 每月不限次绘画投射测验。\n");
+                buf.append("白泽灵思专业版会员权益有：\n");
+            }
+            List<String> benefitsList = Resource.getInstance().getMemberBenefits(membership.type);
+            for (String line : benefitsList) {
+                buf.append("* ").append(line).append("\n");
             }
             buf.append("\n");
 

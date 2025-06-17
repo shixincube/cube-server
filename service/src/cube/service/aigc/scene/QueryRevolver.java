@@ -419,7 +419,7 @@ public class QueryRevolver {
                             ++qaSN;
 
                             String question = qa.getQuestions().get(0);
-                            result.append("问题").append(qaSN).append("：").append(question).append("。\n\n");
+                            result.append("问题").append(qaSN).append("：").append(question).append("。\n");
                             for (String answer : qa.getAnswers()) {
                                 result.append("问题").append(qaSN).append("答案：");
                                 result.append(answer).append("\n\n");

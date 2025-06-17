@@ -10,6 +10,8 @@ import cell.util.log.Logger;
 import cube.aigc.psychology.algorithm.Benchmark;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import cube.aigc.psychology.composition.Scale;
+import cube.common.entity.Membership;
+import cube.util.JSONUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -37,10 +39,6 @@ public class Resource {
     private long termDescriptionLastModified = 0;
     private List<KnowledgeStrategy> knowledgeStrategies;
 
-//    private File themeFile = new File("assets/psychology/theme.json");
-//    private long themeLastModified = 0;
-//    private Map<String, ThemeTemplate> themeTemplates;
-
     private File corpusFile = new File("assets/psychology/corpus.json");
     private long corpusLastModified = 0;
     private JSONObject corpusJson = null;
@@ -67,6 +65,10 @@ public class Resource {
     private File suggestionScriptFile = new File("assets/psychology/scripts/suggestion.js");
     private long suggestionScriptFileModified = 0;
     private String suggestionScriptFileContent = null;
+
+    private File memberFile = new File("assets/psychology/membership.json");
+    private long memberFileModified = 0;
+    private JSONObject membershipData;
 
     private File mandalaFlowerPath = new File("assets/psychology/mandalaflower/");
 
@@ -117,30 +119,35 @@ public class Resource {
         return null;
     }
 
-    /* FIXME 2025-01-01 作废
-    public ThemeTemplate getThemeTemplate(Theme theme) {
-        if (this.themeFile.exists()) {
-            if (this.themeFile.lastModified() != this.themeLastModified) {
-                this.themeLastModified = this.themeFile.lastModified();
-                this.themeTemplates.clear();
+    private JSONObject loadMembershipData() {
+        if (this.memberFile.exists()) {
+            if (this.memberFile.lastModified() != this.memberFileModified) {
+                this.memberFileModified = this.memberFile.lastModified();
 
-                Logger.i(this.getClass(), "Read theme template file: " + this.themeFile.getAbsolutePath());
+                Logger.i(this.getClass(), "Read member file: " + this.memberFile.getAbsolutePath());
 
                 try {
-                    byte[] data = Files.readAllBytes(Paths.get(this.themeFile.getAbsolutePath()));
-                    JSONObject json = new JSONObject(new String(data, StandardCharsets.UTF_8));
-                    for (String key : json.keySet()) {
-                        ThemeTemplate themeTemplate = new ThemeTemplate(key, json.getJSONObject(key));
-                        this.themeTemplates.put(key, themeTemplate);
-                    }
+                    byte[] data = Files.readAllBytes(Paths.get(this.memberFile.getAbsolutePath()));
+                    this.membershipData = new JSONObject(new String(data, StandardCharsets.UTF_8));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
 
-        return this.themeTemplates.get(theme.code);
-    }*/
+        return this.membershipData;
+    }
+
+    public List<String> getMemberBenefits(String memberType) {
+        JSONObject data = this.loadMembershipData();
+        if (null == data) {
+            return null;
+        }
+
+        data = data.getJSONObject("benefits");
+        JSONArray list = data.has(memberType) ? data.getJSONArray(memberType) : data.getJSONArray(Membership.TYPE_PREMIUM);
+        return JSONUtils.toStringList(list);
+    }
 
     public Benchmark getBenchmark() {
         if (this.benchmarkScoreFile.exists()) {
