@@ -26,7 +26,9 @@ public class UserProfile implements JSONable {
 
     public List<Point> pointList = new ArrayList<>();
 
-    public int numReports = 0;
+    public int permissibleReports = 0;
+
+    public int usagePerMonth = 0;
 
     public BigFivePersonality personality;
 
@@ -44,7 +46,9 @@ public class UserProfile implements JSONable {
         for (int i = 0; i < array.length(); ++i) {
             this.pointList.add(new Point(array.getJSONObject(i)));
         }
-        this.numReports = json.getInt("numReports");
+        this.permissibleReports = json.getInt("permissibleReports");
+        this.usagePerMonth = json.getInt("usagePerMonth");
+
         if (json.has("personality")) {
             this.personality = new BigFivePersonality(json.getJSONObject("personality"));
         }
@@ -63,10 +67,16 @@ public class UserProfile implements JSONable {
             array.put(point.toJSON());
         }
         json.put("pointList", array);
-        json.put("numReports", this.numReports);
+        json.put("permissibleReports", this.permissibleReports);
+        json.put("usagePerMonth", this.usagePerMonth);
+
         if (null != this.personality) {
             json.put("personality", this.personality.toCompactJSON());
         }
+
+        // 旧版本兼容 1.0.4 及之前的版本
+        json.put("numReports", this.permissibleReports);
+
         return json;
     }
 

@@ -241,6 +241,10 @@ public class PsychologyScene {
         return this.storage.countPsychologyReports(contactId, state);
     }
 
+    public int numPsychologyReports(long contactId, int state, boolean permissible) {
+        return this.storage.countPsychologyReports(contactId, state, permissible);
+    }
+
     public List<PaintingReport> getPsychologyReports(long contactId, int state, int limit) {
         List<PaintingReport> list = this.storage.readPsychologyReportsByContact(contactId, state, limit);
         Iterator<PaintingReport> iter = list.iterator();
@@ -252,6 +256,7 @@ public class PsychologyScene {
                 report.painting = this.storage.readPainting(report.sn);
             }
             else {
+                Logger.w(this.getClass(), "#getPsychologyReports - NOT find file: " + report.sn);
                 iter.remove();
             }
         }
@@ -1306,16 +1311,36 @@ public class PsychologyScene {
         profile.totalPoints = ContactManager.getInstance().getPointSystem().total(contact);
         profile.pointList = ContactManager.getInstance().getPointSystem().listPoints(contact);
 
-        profile.numReports = this.numPsychologyReports(authToken.getContactId(), AIGCStateCode.Ok.code);
-
-        List<PaintingReport> reports = this.getPsychologyReports(authToken.getContactId(), AIGCStateCode.Ok.code, 1);
-        if (!reports.isEmpty()) {
-            try {
-                profile.personality = reports.get(0).getEvaluationReport().getPersonalityAccelerator().getBigFivePersonality();
-            } catch (Exception e) {
-                Logger.w(this.getClass(), "#getAppUserProfile", e);
+        Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(contact);
+        if (null != membership) {
+            profile.membership = membership;
+            if (membership.type.equals(Membership.TYPE_ORDINARY)) {
+                profile.usagePerMonth = UserProfiles.gsOrdinaryMemberTimesPerMonth;
+            }
+            else {
+                profile.usagePerMonth = UserProfiles.gsPremiumMemberTimesPerMonth;
             }
         }
+        else {
+            User user = new User(contact.getContext());
+            if (user.isRegistered()) {
+                // 注册用户，非会员
+                profile.usagePerMonth = UserProfiles.gsNonmemberTimesPerMonth;
+            }
+        }
+
+        profile.permissibleReports = this.numPsychologyReports(authToken.getContactId(),
+                AIGCStateCode.Ok.code, true);
+
+        // FIXME 2025-6-18 不再查找人格数据
+//        List<PaintingReport> reports = this.getPsychologyReports(authToken.getContactId(), AIGCStateCode.Ok.code, 1);
+//        if (!reports.isEmpty()) {
+//            try {
+//                profile.personality = reports.get(0).getEvaluationReport().getPersonalityAccelerator().getBigFivePersonality();
+//            } catch (Exception e) {
+//                Logger.w(this.getClass(), "#getAppUserProfile", e);
+//            }
+//        }
 
         return profile;
     }

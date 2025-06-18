@@ -166,7 +166,8 @@ public class Manager implements Tickable, PerformerListener {
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Activate());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.User());
-        httpServer.addContextHandler(new Profile());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.UserModify());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Profile());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.AppVersion());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.WordCloud());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Emotion());
@@ -243,6 +244,26 @@ public class Manager implements Tickable, PerformerListener {
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.d(Manager.class, "#getOrCreateUser - Response state is NOT ok : "
                     + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject modifyUser(String token, JSONObject modification) {
+        Packet packet = new Packet(AIGCAction.AppModifyUser.name, modification);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#modifyUser - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        int state = Packet.extractCode(responsePacket);
+        if (AIGCStateCode.Ok.code != state) {
+            Logger.w(Manager.class, "#modifyUser - Response state is " + state);
             return null;
         }
 

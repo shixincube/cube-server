@@ -58,7 +58,7 @@ public class ContactEventPlugin implements Plugin {
         else if (ContactHook.VerifyVerificationCode.equals(hook)) {
             if (ctx.hasParameter()) {
                 VerificationCode verificationCode = (VerificationCode) ctx.getParameter();
-                this.service.updateUser(ctx.getContact(), verificationCode);
+                this.service.checkInUser(ctx.getContact(), verificationCode);
             }
         }
 

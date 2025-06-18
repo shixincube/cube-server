@@ -47,6 +47,11 @@ public enum AIGCAction {
     AppGetOrCreateUser("appGetOrCreateUser"),
 
     /**
+     * 应用层修改用户信息。
+     */
+    AppModifyUser("appModifyUser"),
+
+    /**
      * 应用层校验用户。
      */
     AppCheckInUser("appCheckInUser"),

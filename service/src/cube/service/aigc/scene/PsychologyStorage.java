@@ -539,17 +539,16 @@ public class PsychologyStorage implements Storagable {
         return result.get(0)[0].getInt();
     }
 
-//    public int countPsychologyReports(int state) {
-//        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(sn) FROM " +
-//                this.reportTable + "," + this.paintingReportManagementTable +
-//                " WHERE " +
-//                this.reportTable + ".sn=" + this.paintingReportManagementTable + ".report_sn" +
-//                " AND " +
-//                this.paintingReportManagementTable + ".state=" + state +
-//                " AND " +
-//                this.reportTable + ".finished_timestamp<>0");
-//        return result.get(0)[0].getInt();
-//    }
+    public int countPsychologyReports(long contactId, int state, boolean permissible) {
+        String sql = "SELECT COUNT(*) FROM " + this.reportTable + ", " + this.reportPermissionTable +
+                " WHERE " + this.reportTable + ".contact_id=" + contactId +
+                " AND " + this.reportTable + ".state=" + state +
+                " AND " + this.reportTable + ".sn=" + this.reportPermissionTable + ".report_sn" +
+                " AND " + this.reportPermissionTable + ".indicator_details=" + (permissible ? "1" : "0") +
+                " AND " + this.reportPermissionTable + ".personality_details=" + (permissible ? "1" : "0");
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        return result.get(0)[0].getInt();
+    }
 
     public PaintingReport readPsychologyReport(long sn) {
         List<StorageField[]> result = this.storage.executeQuery(this.reportTable, this.reportFields,
@@ -594,7 +593,7 @@ public class PsychologyStorage implements Storagable {
                 new Conditional[] {
                         Conditional.createEqualTo("contact_id", contactId),
                         Conditional.createAnd(),
-                        Conditional.createUnequalTo("finished_timestamp", (long) 0),
+                        Conditional.createEqualTo("state", 0),
                         Conditional.createOrderBy("timestamp", descending),
                         Conditional.createLimitOffset(pageSize, pageIndex * pageSize)
                 });
@@ -628,9 +627,6 @@ public class PsychologyStorage implements Storagable {
                         Conditional.createAnd(),
                         Conditional.createEqualTo(new StorageField(this.paintingReportManagementTable, "state",
                                 LiteralBase.INT, state)),
-                        Conditional.createAnd(),
-                        Conditional.createUnequalTo(new StorageField(this.reportTable, "finished_timestamp",
-                                LiteralBase.LONG, (long) 0)),
                         Conditional.createOrderBy(this.reportTable, "timestamp", descending),
                         Conditional.createLimitOffset(pageSize, pageIndex * pageSize)
                 });

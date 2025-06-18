@@ -776,11 +776,31 @@ public class AIGCService extends AbstractModule implements Generatable {
         user.setAuthToken(authToken);
 
         // 新用户
-        Contact contact = ContactManager.getInstance().newContact(id, domain, name, user.toJSON(), device);
+        ContactManager.getInstance().newContact(id, domain, name, user.toJSON(), device);
         return user;
     }
 
-    public User updateUser(Contact contact, VerificationCode verificationCode) {
+    public User modifyUser(String token, UserModification modification) {
+        AuthToken authToken = this.getToken(token);
+        if (null == authToken) {
+            return null;
+        }
+
+        Contact contact = ContactManager.getInstance().getContact(authToken.getDomain(), authToken.getContactId());
+        if (null == contact) {
+            return null;
+        }
+
+        User user = new User(contact.getContext());
+        if (null != modification.displayName) {
+            user.setDisplayName(modification.displayName);
+        }
+        ContactManager.getInstance().updateContact(contact.getDomain().getName(), contact.getId(), contact.getName(),
+                user.toJSON());
+        return user;
+    }
+
+    public User checkInUser(Contact contact, VerificationCode verificationCode) {
         // 查找用户
         ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactName(
                 contact.getDomain().getName(), verificationCode.phoneNumber);
