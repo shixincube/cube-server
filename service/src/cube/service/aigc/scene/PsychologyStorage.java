@@ -522,13 +522,6 @@ public class PsychologyStorage implements Storagable {
         return result.get(0)[0].getInt();
     }
 
-    public int countPsychologyReports(long contactId, long starTime, long endTime) {
-        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(*) FROM " + this.reportTable +
-                " WHERE contact_id=" + contactId + " AND `timestamp`>=" + starTime +
-                " AND `timestamp`<=" + endTime);
-        return result.get(0)[0].getInt();
-    }
-
     public int countPsychologyReports(long contactId, int state) {
         List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(sn) FROM " + this.reportTable +
                 " WHERE `contact_id`=" + contactId +
@@ -547,6 +540,19 @@ public class PsychologyStorage implements Storagable {
                 " AND " + this.reportPermissionTable + ".indicator_details=" + (permissible ? "1" : "0") +
                 " AND " + this.reportPermissionTable + ".personality_details=" + (permissible ? "1" : "0");
         List<StorageField[]> result = this.storage.executeQuery(sql);
+        return result.get(0)[0].getInt();
+    }
+
+    public int countPsychologyReports(long contactId, int state, boolean permissible, long starTime, long endTime) {
+        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(*) FROM " + this.reportTable +
+                ", " + this.reportPermissionTable +
+                " WHERE " + this.reportTable + ".contact_id=" + contactId +
+                " AND " + this.reportTable + ".timestamp>=" + starTime +
+                " AND " + this.reportTable + ".timestamp<=" + endTime +
+                " AND " + this.reportTable + ".state=" + state +
+                " AND " + this.reportTable + ".sn=" + this.reportPermissionTable + ".report_sn" +
+                " AND " + this.reportPermissionTable + ".indicator_details=" + (permissible ? "1" : "0") +
+                " AND " + this.reportPermissionTable + ".personality_details=" + (permissible ? "1" : "0"));
         return result.get(0)[0].getInt();
     }
 

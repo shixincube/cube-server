@@ -10,6 +10,7 @@ import cube.aigc.psychology.ReportPermission;
 import cube.common.entity.Contact;
 import cube.common.entity.Membership;
 import cube.common.entity.User;
+import cube.common.state.AIGCStateCode;
 import cube.service.contact.ContactManager;
 
 import java.util.Calendar;
@@ -55,7 +56,7 @@ public final class UserProfiles {
         calendar.set(Calendar.SECOND, 59);
         long end = calendar.getTimeInMillis();
 
-        int num = PsychologyScene.getInstance().numScaleReports(user.getId(), start, end);
+        int num = PsychologyScene.getInstance().numScaleReports(user.getId(), AIGCStateCode.Ok.code, true, start, end);
 
         Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(
                 contact.getDomain().getName(), user.getId());
@@ -100,5 +101,12 @@ public final class UserProfiles {
                 return ReportPermission.createAllPermissions(user.getId(), reportSn);
             }
         }
+    }
+
+    public static int getUsageOfThisMonth(Contact contact) {
+        long startTime = 0;
+        long endTime = 0;
+        return PsychologyScene.getInstance().numPsychologyReports(contact.getId(),
+                AIGCStateCode.Ok.code, true, startTime, endTime);
     }
 }

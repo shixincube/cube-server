@@ -28,7 +28,15 @@ public class UserProfile implements JSONable {
 
     public int permissibleReports = 0;
 
-    public int usagePerMonth = 0;
+    /**
+     * 本月用量。
+     */
+    public int usageOfThisMonth = 0;
+
+    /**
+     * 每月用量限制。
+     */
+    public int limitPerMonth = 0;
 
     public BigFivePersonality personality;
 
@@ -41,13 +49,16 @@ public class UserProfile implements JSONable {
         if (json.has("membership")) {
             this.membership = new Membership(json.getJSONObject("membership"));
         }
+
         this.totalPoints = json.getInt("totalPoints");
         JSONArray array = json.getJSONArray("pointList");
         for (int i = 0; i < array.length(); ++i) {
             this.pointList.add(new Point(array.getJSONObject(i)));
         }
+
         this.permissibleReports = json.getInt("permissibleReports");
-        this.usagePerMonth = json.getInt("usagePerMonth");
+        this.usageOfThisMonth = json.getInt("usageOfThisMonth");
+        this.limitPerMonth = json.getInt("limitPerMonth");
 
         if (json.has("personality")) {
             this.personality = new BigFivePersonality(json.getJSONObject("personality"));
@@ -61,14 +72,17 @@ public class UserProfile implements JSONable {
         if (null != this.membership) {
             json.put("membership", this.membership.toJSON());
         }
+
         json.put("totalPoints", this.totalPoints);
         JSONArray array = new JSONArray();
         for (Point point : this.pointList) {
             array.put(point.toJSON());
         }
         json.put("pointList", array);
+
         json.put("permissibleReports", this.permissibleReports);
-        json.put("usagePerMonth", this.usagePerMonth);
+        json.put("usageOfThisMonth", this.usageOfThisMonth);
+        json.put("limitPerMonth", this.limitPerMonth);
 
         if (null != this.personality) {
             json.put("personality", this.personality.toCompactJSON());

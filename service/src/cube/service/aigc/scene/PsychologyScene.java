@@ -245,6 +245,10 @@ public class PsychologyScene {
         return this.storage.countPsychologyReports(contactId, state, permissible);
     }
 
+    public int numPsychologyReports(long contactId, int state, boolean permissible, long starTime, long endTime) {
+        return 0;
+    }
+
     public List<PaintingReport> getPsychologyReports(long contactId, int state, int limit) {
         List<PaintingReport> list = this.storage.readPsychologyReportsByContact(contactId, state, limit);
         Iterator<PaintingReport> iter = list.iterator();
@@ -878,8 +882,8 @@ public class PsychologyScene {
         return this.storage.countScaleReports(contactId, state);
     }
 
-    public int numScaleReports(long contactId, long startTime, long endTime) {
-        return this.storage.countPsychologyReports(contactId, startTime, endTime);
+    public int numScaleReports(long contactId, int state, boolean permissible, long startTime, long endTime) {
+        return this.storage.countPsychologyReports(contactId, state, permissible, startTime, endTime);
     }
 
     public ScaleReport getScaleReport(long sn) {
@@ -1313,22 +1317,32 @@ public class PsychologyScene {
 
         Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(contact);
         if (null != membership) {
+            // 是会员
             profile.membership = membership;
             if (membership.type.equals(Membership.TYPE_ORDINARY)) {
-                profile.usagePerMonth = UserProfiles.gsOrdinaryMemberTimesPerMonth;
+                // 本月用量
+                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact);
+                // 每月限制
+                profile.limitPerMonth = UserProfiles.gsOrdinaryMemberTimesPerMonth;
             }
             else {
-                profile.usagePerMonth = UserProfiles.gsPremiumMemberTimesPerMonth;
+                // 本月用量
+                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact);
+                // 每月限制
+                profile.limitPerMonth = UserProfiles.gsPremiumMemberTimesPerMonth;
             }
         }
         else {
             User user = new User(contact.getContext());
             if (user.isRegistered()) {
                 // 注册用户，非会员
-                profile.usagePerMonth = UserProfiles.gsNonmemberTimesPerMonth;
+                // 本月用量
+                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact);
+                profile.limitPerMonth = UserProfiles.gsNonmemberTimesPerMonth;
             }
         }
 
+        // 总报告数
         profile.permissibleReports = this.numPsychologyReports(authToken.getContactId(),
                 AIGCStateCode.Ok.code, true);
 
