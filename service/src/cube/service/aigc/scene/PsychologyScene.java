@@ -310,21 +310,23 @@ public class PsychologyScene {
      * @param fileLabel
      * @param theme
      * @param maxIndicatorTexts
+     * @param retention
      * @param listener
      * @return
      */
-    public synchronized PaintingReport generatePredictingReport(AIGCChannel channel, Attribute attribute,
-                                                                FileLabel fileLabel, Theme theme, int maxIndicatorTexts,
+    public synchronized PaintingReport generatePsychologyReport(AIGCChannel channel, Attribute attribute,
+                                                                FileLabel fileLabel, Theme theme,
+                                                                int maxIndicatorTexts, int retention,
                                                                 PaintingReportListener listener) {
         // 判断属性限制
         if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
-            Logger.w(this.getClass(), "#generatePredictingReport - Age param overflow: " +
+            Logger.w(this.getClass(), "#generatePsychologyReport - Age param overflow: " +
                     attribute.age);
             return null;
         }
 
         if (null == channel) {
-            Logger.e(this.getClass(), "#generatePredictingReport - Channel is null");
+            Logger.e(this.getClass(), "#generatePsychologyReport - Channel is null");
             return null;
         }
 
@@ -332,7 +334,7 @@ public class PsychologyScene {
         int concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_NEXT_UNIT) +
                 this.service.numUnitsByName(ModelConfig.BAIZE_UNIT);
         if (0 == concurrency) {
-            Logger.e(this.getClass(), "#generatePredictingReport - No baize unit");
+            Logger.e(this.getClass(), "#generatePsychologyReport - No baize unit");
             return null;
         }
 
@@ -398,7 +400,7 @@ public class PsychologyScene {
                         Painting painting = processPainting(unit, reportTask.fileLabel, true);
                         if (null == painting) {
                             // 预测绘图失败
-                            Logger.w(PsychologyScene.class, "#generatePredictingReport - onPaintingPredictFailed: " +
+                            Logger.w(PsychologyScene.class, "#generatePsychologyReport - onPaintingPredictFailed: " +
                                     reportTask.fileLabel.getFileCode());
                             // 记录故障
                             unit.markFailure(AIGCStateCode.FileError.code, System.currentTimeMillis(),
@@ -445,7 +447,7 @@ public class PsychologyScene {
                         evaluationWorker = evaluationWorker.make(reportTask.theme, reportTask.maxIndicatorTexts);
                         if (null == evaluationWorker) {
                             // 推理生成报告失败
-                            Logger.w(PsychologyScene.class, "#generatePredictingReport - onReportEvaluateFailed (IllegalOperation): " +
+                            Logger.w(PsychologyScene.class, "#generatePsychologyReport - onReportEvaluateFailed (IllegalOperation): " +
                                     reportTask.fileLabel.getFileCode());
                             runningTaskQueue.remove(reportTask);
                             reportTask.channel.setProcessing(false);
@@ -460,7 +462,7 @@ public class PsychologyScene {
 
                         if (evaluationWorker.isUnknown()) {
                             // 未能处理的图片
-                            Logger.w(PsychologyScene.class, "#generatePredictingReport - onReportEvaluateCompleted (InvalidData): " +
+                            Logger.w(PsychologyScene.class, "#generatePsychologyReport - onReportEvaluateCompleted (InvalidData): " +
                                     reportTask.fileLabel.getFileCode());
                             runningTaskQueue.remove(reportTask);
                             reportTask.channel.setProcessing(false);
@@ -502,7 +504,7 @@ public class PsychologyScene {
                         reportTask.report.makeMarkdown();
 
                         // 存储
-                        storage.writePsychologyReport(reportTask.report);
+                        storage.writePsychologyReport(reportTask.report, retention);
                         storage.writePainting(reportTask.report.sn, reportTask.fileLabel.getFileCode(), painting);
                         if (null != evaluationWorker.getPaintingFeatureSet()) {
                             PaintingFeatureSet paintingFeatureSet = evaluationWorker.getPaintingFeatureSet();
@@ -510,7 +512,7 @@ public class PsychologyScene {
                         }
 
                         // 使用数据管理器生成关联数据
-                        SceneManager.getInstance().writeReportChart(reportTask.report);
+//                        SceneManager.getInstance().writeReportChart(reportTask.report);
 
                         // 从正在执行队列移除
                         runningTaskQueue.remove(reportTask);
@@ -1315,19 +1317,19 @@ public class PsychologyScene {
         profile.totalPoints = ContactManager.getInstance().getPointSystem().total(contact);
         profile.pointList = ContactManager.getInstance().getPointSystem().listPoints(contact);
 
-        Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(contact);
+        Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(contact, Membership.STATE_NORMAL);
         if (null != membership) {
             // 是会员
             profile.membership = membership;
             if (membership.type.equals(Membership.TYPE_ORDINARY)) {
                 // 本月用量
-                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact);
+                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact.getId());
                 // 每月限制
                 profile.limitPerMonth = UserProfiles.gsOrdinaryMemberTimesPerMonth;
             }
             else {
                 // 本月用量
-                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact);
+                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact.getId());
                 // 每月限制
                 profile.limitPerMonth = UserProfiles.gsPremiumMemberTimesPerMonth;
             }
@@ -1337,7 +1339,7 @@ public class PsychologyScene {
             if (user.isRegistered()) {
                 // 注册用户，非会员
                 // 本月用量
-                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact);
+                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact.getId());
                 profile.limitPerMonth = UserProfiles.gsNonmemberTimesPerMonth;
             }
         }
@@ -1494,6 +1496,8 @@ public class PsychologyScene {
         return AIGCStateCode.Ok;
     }
 
+    private long lastCheckReportRetention = 0;
+
     public void onTick(long now) {
         Iterator<Map.Entry<Long, Report>> iter = this.reportMap.entrySet().iterator();
         while (iter.hasNext()) {
@@ -1509,6 +1513,13 @@ public class PsychologyScene {
             if (now - painting.timestamp > 72 * 60 * 60 * 1000) {
                 piter.remove();
             }
+        }
+
+        // 处理超期留存报告
+        if (now - this.lastConfigModified > 60 * 60 * 1000) {
+            this.lastConfigModified = now;
+            int count = this.storage.refreshPsychologyReportRetention();
+            Logger.i(this.getClass(), "#onTick - Refresh report retention: " + count);
         }
     }
 

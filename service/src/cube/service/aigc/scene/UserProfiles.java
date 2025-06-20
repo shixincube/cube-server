@@ -25,6 +25,16 @@ public final class UserProfiles {
 
     public final static int gsPremiumMemberTimesPerMonth = -1;
 
+    /**
+     * 非会员报告保存天数。
+     */
+    public final static int gsNonmemberRetention = 7;
+
+    /**
+     * 会员报告保存天数。
+     */
+    public final static int gsMemberRetention = 0;
+
     public static ReportPermission allowPredictPainting(User user, Contact contact, long reportSn) {
         if (!user.isRegistered()) {
             // 非注册用户
@@ -59,7 +69,7 @@ public final class UserProfiles {
         int num = PsychologyScene.getInstance().numScaleReports(user.getId(), AIGCStateCode.Ok.code, true, start, end);
 
         Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(
-                contact.getDomain().getName(), user.getId());
+                contact.getDomain().getName(), user.getId(), Membership.STATE_NORMAL);
 
         if (null == membership) {
             // 非会员
@@ -103,10 +113,47 @@ public final class UserProfiles {
         }
     }
 
-    public static int getUsageOfThisMonth(Contact contact) {
-        long startTime = 0;
-        long endTime = 0;
-        return PsychologyScene.getInstance().numPsychologyReports(contact.getId(),
+    public static int getUsageOfThisMonth(long id) {
+        Calendar calendar = Calendar.getInstance();
+        // 本月第一天
+        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMinimum(Calendar.DAY_OF_MONTH));
+        calendar.set(Calendar.HOUR, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        long startTime = calendar.getTimeInMillis();
+
+        // 本月最后一天
+        calendar = Calendar.getInstance();
+        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+        calendar.set(Calendar.HOUR, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        long endTime = calendar.getTimeInMillis();
+
+        return PsychologyScene.getInstance().numPsychologyReports(id,
                 AIGCStateCode.Ok.code, true, startTime, endTime);
+    }
+
+    public static int remainingUsages(User user, Membership membership) {
+        if (!user.isRegistered()) {
+            // 未注册
+            int num = PsychologyScene.getInstance().numPsychologyReports(user.getId(),
+                    AIGCStateCode.Ok.code, true);
+            return gsNoUserTimers - num;
+        }
+
+        if (null == membership) {
+            // 非会员
+            return gsNonmemberTimesPerMonth - getUsageOfThisMonth(user.getId());
+        }
+        else {
+            // 会员
+            if (membership.type.equals(Membership.TYPE_ORDINARY)) {
+                return gsOrdinaryMemberTimesPerMonth - getUsageOfThisMonth(user.getId());
+            }
+            else {
+                return Integer.MAX_VALUE;
+            }
+        }
     }
 }

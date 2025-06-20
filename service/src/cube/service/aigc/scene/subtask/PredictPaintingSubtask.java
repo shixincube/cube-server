@@ -6,6 +6,7 @@
 
 package cube.service.aigc.scene.subtask;
 
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.complex.attachment.Attachment;
@@ -31,6 +32,37 @@ public class PredictPaintingSubtask extends ConversationSubtask {
 
     @Override
     public AIGCStateCode execute(Subtask roundSubtask) {
+        User user = service.getUser(channel.getAuthToken().getCode());
+        Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(
+                channel.getAuthToken().getDomain(), channel.getAuthToken().getContactId(), Membership.STATE_NORMAL);
+
+        // 判断是否剩余可用次数
+        int remaining = UserProfiles.remainingUsages(user, membership);
+        if (remaining <= 0) {
+            this.service.getExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    GeneratingRecord record = new GeneratingRecord(query);
+                    if (null == membership) {
+                        record.answer = Utils.randomUnsigned() % 2 == 0 ?
+                                fastPolish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_USAGE_JOIN_MEMBER")) :
+                                Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_USAGE_JOIN_MEMBER");
+                    }
+                    else {
+                        record.answer = Utils.randomUnsigned() % 2 == 0 ?
+                                fastPolish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_USAGE_UPGRADE_MEMBER")) :
+                                Resource.getInstance().getCorpus(CORPUS, "ANSWER_NO_USAGE_UPGRADE_MEMBER");
+                    }
+                    listener.onGenerated(channel, record);
+                    channel.setProcessing(false);
+
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            convCtx, record);
+                }
+            });
+            return AIGCStateCode.Ok;
+        }
+
         // 文件是否变更
         boolean fileChanged = false;
 
@@ -261,8 +293,15 @@ public class PredictPaintingSubtask extends ConversationSubtask {
             }
         }
 
-        PaintingReport report = PsychologyScene.getInstance().generatePredictingReport(channel, convCtx.getCurrentAttribute(),
-                convCtx.getCurrentFile(), Theme.Generic, 10, new PaintingReportListener() {
+        // 由会员属性确定留存天数
+        int retention = UserProfiles.gsNonmemberRetention;
+        if (null != membership) {
+            // 会员
+            retention = UserProfiles.gsMemberRetention;
+        }
+
+        PaintingReport report = PsychologyScene.getInstance().generatePsychologyReport(channel, convCtx.getCurrentAttribute(),
+                convCtx.getCurrentFile(), Theme.Generic, 10, retention, new PaintingReportListener() {
                     @Override
                     public void onPaintingPredicting(PaintingReport report, FileLabel file) {
                         Logger.d(this.getClass(), "#onPaintingPredicting");
@@ -330,7 +369,6 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                     }
                 });
 
-        User user = service.getUser(channel.getAuthToken().getCode());
         if (null != report && null != user) {
             // 生成权限
             ReportPermission permission = UserProfiles.allowPredictPainting(user,

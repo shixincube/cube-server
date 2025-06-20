@@ -18,12 +18,12 @@ public class MembershipSystem {
         this.storage = storage;
     }
 
-    public Membership getMembership(Contact contact) {
-        return this.storage.readMembership(contact.getDomain().getName(), contact.getId());
+    public Membership getMembership(Contact contact, int state) {
+        return this.storage.readMembership(contact.getDomain().getName(), contact.getId(), state);
     }
 
-    public Membership getMembership(String domain, long contactId) {
-        return this.storage.readMembership(domain, contactId);
+    public Membership getMembership(String domain, long contactId, int state) {
+        return this.storage.readMembership(domain, contactId, state);
     }
 
     public boolean activateMembership(String domain, long contactId, String name, long duration, String description,
@@ -35,7 +35,7 @@ public class MembershipSystem {
     }
 
     public boolean cancelMembership(String domain, long contactId) {
-        Membership membership = this.storage.readMembership(domain, contactId);
+        Membership membership = this.storage.readMembership(domain, contactId, Membership.STATE_NORMAL);
         if (null == membership) {
             return false;
         }

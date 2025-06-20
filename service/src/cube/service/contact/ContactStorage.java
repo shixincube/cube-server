@@ -2039,14 +2039,16 @@ public class ContactStorage implements Storagable {
         }
     }
 
-    public Membership readMembership(String domain, long contactId) {
+    public Membership readMembership(String domain, long contactId, int state) {
         String table = this.membershipTableNameMap.get(domain);
         if (null == table) {
             return null;
         }
 
         List<StorageField[]> result = this.storage.executeQuery(table, this.membershipFields, new Conditional[] {
-                Conditional.createEqualTo("id", contactId)
+                Conditional.createEqualTo("id", contactId),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("state", state)
         });
         if (result.isEmpty()) {
             return null;

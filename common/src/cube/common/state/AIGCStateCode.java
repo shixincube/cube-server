@@ -32,6 +32,11 @@ public enum AIGCStateCode {
     DataStructureError(4),
 
     /**
+     * 数据过期。
+     */
+    Expired(5),
+
+    /**
      * 正在处理数据。
      */
     Processing(7),

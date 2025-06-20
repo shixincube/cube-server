@@ -987,8 +987,8 @@ public class AIGCService extends AbstractModule implements Generatable {
 
                 StringBuilder markdown = new StringBuilder();
                 markdown.append(user.markdown());
-                Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(authToken.getDomain(),
-                        user.getId());
+                Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(
+                        authToken.getDomain(), user.getId(), Membership.STATE_NORMAL);
                 markdown.append(ContentTools.makeMembership(user, membership));
 
                 Calendar calendar = Calendar.getInstance();
@@ -2455,8 +2455,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         // 生成报告
-        PaintingReport report = PsychologyScene.getInstance().generatePredictingReport(channel,
-                attribute, fileLabel, theme, maxIndicatorTexts, listener);
+        PaintingReport report = PsychologyScene.getInstance().generatePsychologyReport(channel,
+                attribute, fileLabel, theme, maxIndicatorTexts, 0, listener);
 
         return report;
     }

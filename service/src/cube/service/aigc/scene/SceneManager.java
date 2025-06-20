@@ -12,7 +12,6 @@ import cube.aigc.complex.attachment.ReportAttachment;
 import cube.aigc.guidance.EvaluationResult;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.ConversationContext;
-import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.Question;
 import cube.aigc.psychology.composition.Scale;
 import cube.common.entity.AIGCChatHistory;
@@ -20,9 +19,11 @@ import cube.common.entity.AttachmentResource;
 import cube.common.entity.Chart;
 import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
-import org.json.JSONObject;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -132,7 +133,7 @@ public class SceneManager {
         return this.aigcService.getStorage().readLastChart(String.valueOf(reportSn));
     }
 
-    public boolean writeReportChart(PaintingReport report) {
+    /*public boolean writeReportChart(PaintingReport report) {
         if (null == this.aigcService) {
             return false;
         }
@@ -171,7 +172,7 @@ public class SceneManager {
 
         // 插入数据库
         return this.aigcService.getStorage().insertChart(chart);
-    }
+    }*/
 
     public class ScaleTrack {
         public final String channelCode;

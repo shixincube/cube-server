@@ -12,6 +12,7 @@ import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.composition.*;
 import cube.common.Storagable;
+import cube.common.state.AIGCStateCode;
 import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
@@ -344,6 +345,9 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("state", LiteralBase.INT, new Constraint[] {
                     Constraint.DEFAULT_0
+            }),
+            new StorageField("retention", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
             })
     };
 
@@ -649,16 +653,57 @@ public class PsychologyStorage implements Storagable {
         return list;
     }
 
+    public int refreshPsychologyReportRetention() {
+        String sql = "SELECT `sn`," + this.reportTable + ".timestamp FROM " + this.reportTable + "," + this.paintingReportManagementTable +
+                " WHERE " + this.reportTable + ".sn=" + this.paintingReportManagementTable + ".report_sn " +
+                " AND " + this.reportTable + ".state=" + AIGCStateCode.Ok.code +
+                " AND " + this.paintingReportManagementTable + ".retention=" + UserProfiles.gsNonmemberRetention;
+        List<StorageField[]> list = this.storage.executeQuery(sql);
+        if (list.isEmpty()) {
+            return 0;
+        }
+
+        int count = 0;
+        long now = System.currentTimeMillis();
+        long delta = UserProfiles.gsNonmemberRetention * 24 * 60 * 60 * 1000;
+        for (StorageField[] fields : list) {
+            long sn = fields[0].getLong();
+            long timestamp = fields[1].getLong();
+            if (now - timestamp > delta) {
+                // 过期
+                ++count;
+                this.storage.executeUpdate(this.reportTable, new StorageField[] {
+                        new StorageField("state", AIGCStateCode.Expired.code)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("sn", sn)
+                });
+                this.storage.executeUpdate(this.paintingReportManagementTable, new StorageField[] {
+                        new StorageField("state", AIGCStateCode.Expired.code)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("report_sn", sn)
+                });
+            }
+        }
+
+        return count;
+    }
+
     public boolean writePsychologyReport(PaintingReport report) {
+        return this.writePsychologyReport(report, 0);
+    }
+
+    public boolean writePsychologyReport(PaintingReport report, int retention) {
         // 插入状态
         if (!this.storage.executeInsert(this.paintingReportManagementTable, new StorageField[] {
                 new StorageField("report_sn", report.sn),
                 new StorageField("timestamp", System.currentTimeMillis()),
-                new StorageField("state", 0)
+                new StorageField("state", 0),
+                new StorageField("retention", retention)
         })) {
             this.storage.executeUpdate(this.paintingReportManagementTable, new StorageField[] {
                     new StorageField("timestamp", System.currentTimeMillis()),
-                    new StorageField("state", 0)
+                    new StorageField("state", 0),
+                    new StorageField("retention", retention)
             }, new Conditional[] {
                     Conditional.createEqualTo("report_sn", report.sn)
             });
