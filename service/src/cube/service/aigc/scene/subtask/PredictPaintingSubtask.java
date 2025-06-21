@@ -295,13 +295,15 @@ public class PredictPaintingSubtask extends ConversationSubtask {
 
         // 由会员属性确定留存天数
         int retention = UserProfiles.gsNonmemberRetention;
+        int numIndicators = user.isRegistered() ? 10 : 5;
         if (null != membership) {
             // 会员
             retention = UserProfiles.gsMemberRetention;
+            numIndicators = 36;
         }
 
         PaintingReport report = PsychologyScene.getInstance().generatePsychologyReport(channel, convCtx.getCurrentAttribute(),
-                convCtx.getCurrentFile(), Theme.Generic, 10, retention, new PaintingReportListener() {
+                convCtx.getCurrentFile(), Theme.Generic, numIndicators, retention, new PaintingReportListener() {
                     @Override
                     public void onPaintingPredicting(PaintingReport report, FileLabel file) {
                         Logger.d(this.getClass(), "#onPaintingPredicting");
@@ -369,10 +371,10 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                     }
                 });
 
-        if (null != report && null != user) {
+        if (null != report) {
             // 生成权限
-            ReportPermission permission = UserProfiles.allowPredictPainting(user,
-                    ContactManager.getInstance().getContact(channel.getAuthToken().getCode()), report.sn);
+            ReportPermission permission = UserProfiles.allowPredictPainting(channel.getAuthToken().getDomain(),
+                    user, report.sn);
             // 设置权限
             report.setPermission(permission);
 

@@ -7,7 +7,6 @@
 package cube.service.aigc.scene;
 
 import cube.aigc.psychology.ReportPermission;
-import cube.common.entity.Contact;
 import cube.common.entity.Membership;
 import cube.common.entity.User;
 import cube.common.state.AIGCStateCode;
@@ -17,9 +16,9 @@ import java.util.Calendar;
 
 public final class UserProfiles {
 
-    public final static int gsNoUserTimers = 1;
+    public final static int gsNoUserTimes = 1;
 
-    public final static int gsNonmemberTimesPerMonth = 1;
+    public final static int gsNoMemberTimes = 2;
 
     public final static int gsOrdinaryMemberTimesPerMonth = 3;
 
@@ -35,18 +34,39 @@ public final class UserProfiles {
      */
     public final static int gsMemberRetention = 0;
 
-    public static ReportPermission allowPredictPainting(User user, Contact contact, long reportSn) {
+    public static ReportPermission allowPredictPainting(String domain, User user, long reportSn) {
         if (!user.isRegistered()) {
             // 非注册用户
-            int num = PsychologyScene.getInstance().numPsychologyReports(user.getId());
-            // 只允许使用一次
-            if (num >= gsNoUserTimers) {
+            int num = PsychologyScene.getInstance().numPsychologyReports(user.getId(), AIGCStateCode.Ok.code);
+            // 只允许使用 gsNoUserTimes 次
+            if (num >= gsNoUserTimes) {
                 // 最小权限
                 return new ReportPermission(user.getId(), reportSn);
             }
             else {
-                // 全部权限
-                return ReportPermission.createAllPermissions(user.getId(), reportSn);
+                // 权限
+                ReportPermission permission = ReportPermission.createAllPermissions(user.getId(), reportSn);
+                permission.attention = false;
+                permission.dimensionScore = false;
+                return permission;
+            }
+        }
+
+        Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(
+                domain, user.getId(), Membership.STATE_NORMAL);
+        if (null == membership) {
+            // 注册用户，非会员
+            int num = PsychologyScene.getInstance().numPsychologyReports(user.getId(), AIGCStateCode.Ok.code);
+            if (num >= gsNoMemberTimes) {
+                // 最小权限
+                return new ReportPermission(user.getId(), reportSn);
+            }
+            else {
+                // 权限
+                ReportPermission permission = ReportPermission.createAllPermissions(user.getId(), reportSn);
+                permission.attention = false;
+                permission.dimensionScore = false;
+                return permission;
             }
         }
 
@@ -67,28 +87,6 @@ public final class UserProfiles {
         long end = calendar.getTimeInMillis();
 
         int num = PsychologyScene.getInstance().numScaleReports(user.getId(), AIGCStateCode.Ok.code, true, start, end);
-
-        Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(
-                contact.getDomain().getName(), user.getId(), Membership.STATE_NORMAL);
-
-        if (null == membership) {
-            // 非会员
-            if (num >= gsNonmemberTimesPerMonth) {
-                // 最小权限
-                return new ReportPermission(user.getId(), reportSn);
-            }
-            else {
-                // 全部权限
-                return ReportPermission.createAllPermissions(user.getId(), reportSn);
-            }
-        }
-
-        if (membership.state != Membership.STATE_NORMAL) {
-            // 会员状态异常
-            // 最小权限
-            return new ReportPermission(user.getId(), reportSn);
-        }
-
         if (membership.type.equalsIgnoreCase(Membership.TYPE_ORDINARY)) {
             // 普通会员
             if (num >= gsOrdinaryMemberTimesPerMonth) {
@@ -139,12 +137,14 @@ public final class UserProfiles {
             // 未注册
             int num = PsychologyScene.getInstance().numPsychologyReports(user.getId(),
                     AIGCStateCode.Ok.code, true);
-            return gsNoUserTimers - num;
+            return gsNoUserTimes - num;
         }
 
         if (null == membership) {
             // 非会员
-            return gsNonmemberTimesPerMonth - getUsageOfThisMonth(user.getId());
+            int num = PsychologyScene.getInstance().numPsychologyReports(user.getId(),
+                    AIGCStateCode.Ok.code, true);
+            return gsNoMemberTimes - num;
         }
         else {
             // 会员

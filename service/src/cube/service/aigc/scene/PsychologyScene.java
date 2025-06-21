@@ -1335,13 +1335,8 @@ public class PsychologyScene {
             }
         }
         else {
-            User user = new User(contact.getContext());
-            if (user.isRegistered()) {
-                // 注册用户，非会员
-                // 本月用量
-                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact.getId());
-                profile.limitPerMonth = UserProfiles.gsNonmemberTimesPerMonth;
-            }
+            // 本月用量
+            profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact.getId());
         }
 
         // 总报告数

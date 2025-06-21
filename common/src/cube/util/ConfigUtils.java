@@ -207,4 +207,22 @@ public final class ConfigUtils {
         }
         return json;
     }
+
+    /**
+     * 写入 JSON 格式数据到文件。
+     *
+     * @param filePath
+     * @param json
+     * @return
+     */
+    public static boolean writeJsonFile(String filePath, JSONObject json) {
+        try {
+            Path path = Paths.get(filePath);
+            Files.write(path, json.toString(4).getBytes(StandardCharsets.UTF_8));
+            return true;
+        } catch (Exception e) {
+            Logger.w(ConfigUtils.class, "#writeJsonFile - Write file error", e);
+            return false;
+        }
+    }
 }

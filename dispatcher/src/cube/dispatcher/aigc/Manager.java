@@ -168,6 +168,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.User());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.UserModify());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Profile());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Membership());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.AppVersion());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.WordCloud());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Emotion());
