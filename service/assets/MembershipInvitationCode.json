@@ -245,8 +245,8 @@
     ],
     "ordinary": [
         {
-            "date": "",
-            "uid": 0,
+            "date": "2025-06-22 14:28:28",
+            "uid": 1763711472,
             "code": "288501",
             "validity": "Monthly"
         },
@@ -363,6 +363,12 @@
             "uid": 0,
             "code": "734074",
             "validity": "Annual"
+        },
+        {
+            "date": "",
+            "uid": 0,
+            "code": "682141",
+            "validity": "Monthly"
         }
     ],
     "supreme": [

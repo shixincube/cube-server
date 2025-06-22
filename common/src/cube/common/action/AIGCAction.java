@@ -57,7 +57,7 @@ public enum AIGCAction {
     AppCheckInUser("appCheckInUser"),
 
     /**
-     * 注销用户。
+     * 应用层注销用户。
      */
     AppSignOutUser("appSignOutUser"),
 
@@ -65,6 +65,16 @@ public enum AIGCAction {
      * 应用层获取用户描述数据。
      */
     AppGetUserProfile("appGetUserProfile"),
+
+    /**
+     * 应用层激活会员。
+     */
+    AppActivateMembership("appActivateMembership"),
+
+    /**
+     * 应用层取消会员。
+     */
+    AppCancelMembership("appCancelMembership"),
 
     /**
      * 应用层 App 版本信息。

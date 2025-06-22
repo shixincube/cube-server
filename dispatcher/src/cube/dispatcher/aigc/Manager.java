@@ -339,6 +339,29 @@ public class Manager implements Tickable, PerformerListener {
         return new UserProfile(Packet.extractDataPayload(responsePacket));
     }
 
+    public Membership activateMembership(String token, String channel, String invitation) {
+        JSONObject data = new JSONObject();
+        data.put("channel", channel);
+        data.put("invitation", invitation);
+        Packet packet = new Packet(AIGCAction.AppActivateMembership.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#activateMembership - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#activateMembership - Response state is NOT ok : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new Membership(Packet.extractDataPayload(responsePacket));
+    }
+
     public JSONObject getAppVersion(String token) {
         Packet packet = new Packet(AIGCAction.AppVersion.name, new JSONObject());
         ActionDialect request = packet.toDialect();

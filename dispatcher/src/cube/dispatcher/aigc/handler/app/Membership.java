@@ -7,7 +7,6 @@
 package cube.dispatcher.aigc.handler.app;
 
 import cell.util.log.Logger;
-import cube.aigc.psychology.app.UserProfile;
 import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.aigc.handler.AIGCHandler;
 import org.eclipse.jetty.http.HttpStatus;
@@ -60,6 +59,25 @@ public class Membership extends ContextHandler {
                 this.complete();
             } catch (Exception e) {
                 Logger.w(this.getClass(), "#doGet", e);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                this.complete();
+            }
+        }
+
+        @Override
+        public void doPost(HttpServletRequest request, HttpServletResponse response) {
+            try {
+                String token = getApiToken(request);
+
+                JSONObject data = this.readBodyAsJSONObject(request);
+                String channel = data.getString("channel");
+                String invitation = data.getString("invitation");
+
+                cube.common.entity.Membership membership = Manager.getInstance().activateMembership(token, channel, invitation);
+                this.respondOk(response, membership.toCompactJSON());
+                this.complete();
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "#doPost", e);
                 this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
             }

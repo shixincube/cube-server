@@ -32,14 +32,20 @@ public class DaemonTask implements Runnable {
     /**
      * 间隔 10 分钟
      */
-    private int contactTick = 10;
+    private final int contactTick = 10;
     private int contactTickCount = 0;
 
     /**
      * 间隔 5 分钟
      */
-    private int groupTick = 5;
+    private final int groupTick = 5;
     private int groupTickCount = 0;
+
+    /**
+     * 间隔 8 小时
+     */
+    private final int membershipTick = 8 * 60;
+    private int membershipTickCount = 0;
 
     public DaemonTask(ContactManager manager) {
         this.manager = manager;
@@ -64,6 +70,12 @@ public class DaemonTask implements Runnable {
         this.processSearchResult();
 
         this.processVerificationCode();
+
+        ++this.membershipTickCount;
+        if (this.membershipTickCount >= this.membershipTick) {
+            this.membershipTickCount = 0;
+            this.processMembership();
+        }
     }
 
     private void processContacts() {
@@ -147,5 +159,9 @@ public class DaemonTask implements Runnable {
                 iter.remove();
             }
         }
+    }
+
+    private void processMembership() {
+        this.manager.getMembershipSystem().onTick(System.currentTimeMillis());
     }
 }

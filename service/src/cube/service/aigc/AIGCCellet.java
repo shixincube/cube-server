@@ -154,6 +154,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new AppGetUserProfileTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.AppActivateMembership.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new AppActivateMembershipTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.GetWordCloud.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new GetWordCloudTask(this, talkContext, primitive,

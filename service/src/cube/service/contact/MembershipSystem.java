@@ -15,12 +15,21 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class MembershipSystem {
 
-    public final static String Monthly = "Monthly";
-    public final static String Annual = "Annual";
+    /**
+     * 月卡。
+     */
+    public final static String VALIDITY_MONTHLY = "Monthly";
+
+    /**
+     * 年卡。
+     */
+    public final static String VALIDITY_ANNUAL = "Annual";
 
     private ContactStorage storage;
 
@@ -29,7 +38,9 @@ public class MembershipSystem {
     public MembershipSystem(ContactStorage storage) {
         this.storage = storage;
         this.invitationCodeStorage = new InvitationCodeStorage();
-        this.invitationCodeStorage.supply();
+        if (this.invitationCodeStorage.supply()) {
+            this.invitationCodeStorage.save();
+        }
     }
 
     public Membership getMembership(Contact contact, int state) {
@@ -40,22 +51,44 @@ public class MembershipSystem {
         return this.storage.readMembership(domain, contactId, state);
     }
 
-    public boolean activateMembership(String domain, long contactId, String name, long duration, String description,
+    public Membership activateMembership(String domain, long contactId, String name, InvitationCode invitationCode,
                                       JSONObject context) {
+        // 查找当前联系人有效的会员数据
+        this.storage.readMembership(domain, contactId, Membership.STATE_NORMAL);
+
+        long now = System.currentTimeMillis();
+        // 结算结束时间
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(now);
+        if (invitationCode.validity.equals(VALIDITY_MONTHLY)) {
+            calendar.add(Calendar.MONTH, 1);
+        }
+        else {
+            calendar.add(Calendar.YEAR, 1);
+        }
+
         Membership membership = new Membership(contactId, domain, name,
-                Membership.TYPE_ORDINARY, Membership.STATE_NORMAL, System.currentTimeMillis(),
-                duration, description, context);
-        return this.storage.writeMembership(membership);
+                invitationCode.type, Membership.STATE_NORMAL, now,
+                calendar.getTimeInMillis() - now, invitationCode.validity, context);
+        if (this.storage.writeMembership(membership)) {
+            return membership;
+        }
+        else {
+            Logger.w(this.getClass(), "#activateMembership - Update DB error: " + contactId);
+            return null;
+        }
     }
 
-    public boolean cancelMembership(String domain, long contactId) {
+    public Membership cancelMembership(String domain, long contactId) {
         Membership membership = this.storage.readMembership(domain, contactId, Membership.STATE_NORMAL);
         if (null == membership) {
-            return false;
+            Logger.w(this.getClass(), "#cancelMembership - No membership data in DB: " + contactId);
+            return null;
         }
 
         membership.state = Membership.STATE_INVALID;
-        return this.storage.writeMembership(membership);
+        this.storage.writeMembership(membership);
+        return membership;
     }
 
     public boolean updateMembership(Membership membership) {
@@ -63,7 +96,37 @@ public class MembershipSystem {
     }
 
     public InvitationCode verifyInvitationCode(long contactId, String code) {
-        return null;
+        InvitationCode result = this.invitationCodeStorage.search(code);
+        if (null == result) {
+            Logger.w(this.getClass(), "#verifyInvitationCode - Can NOT find the invitation code: " + code);
+            return null;
+        }
+
+        if (result.uid != 0) {
+            Logger.w(this.getClass(), "#verifyInvitationCode - The invitation code has been used: " + code +
+                    " - " + result.uid);
+            return null;
+        }
+
+        result.uid = contactId;
+        result.date = Utils.gsDateFormat.format(new Date());
+        (new Thread() {
+            @Override
+            public void run() {
+                boolean success = invitationCodeStorage.update(result);
+                if (success) {
+                    Logger.i(getClass(), "#verifyInvitationCode - Updates code: " + code + " - " + contactId);
+                }
+                else {
+                    Logger.i(getClass(), "#verifyInvitationCode - Updates code failed: " + code + " - " + contactId);
+                }
+            }
+        }).start();
+        return result;
+    }
+
+    public void onTick(long now) {
+
     }
 
 
@@ -84,69 +147,85 @@ public class MembershipSystem {
                     return invitationCode;
                 }
             }
-
-
+            for (InvitationCode invitationCode : this.seniorInvitationCodes) {
+                if (invitationCode.code.equals(code)) {
+                    return invitationCode;
+                }
+            }
+            for (InvitationCode invitationCode : this.premiumInvitationCodes) {
+                if (invitationCode.code.equals(code)) {
+                    return invitationCode;
+                }
+            }
+            for (InvitationCode invitationCode : this.supremeInvitationCodes) {
+                if (invitationCode.code.equals(code)) {
+                    return invitationCode;
+                }
+            }
             return null;
         }
 
-        public void update(InvitationCode value) {
-            InvitationCode hit = null;
-            for (InvitationCode invitationCode : this.ordinaryInvitationCodes) {
-                if (invitationCode.code.equals(value.code)) {
-                    hit = invitationCode;
-                    break;
-                }
-            }
-
-            if (null == hit) {
-
-            }
-
+        public boolean update(InvitationCode value) {
+            InvitationCode hit = search(value.code);
             if (null != hit) {
                 hit.uid = value.uid;
                 hit.date = value.date;
+                supply();
+                save();
+                return true;
             }
-
-            save();
+            else {
+                return false;
+            }
         }
 
-        private void supply() {
+        public boolean supply() {
+            boolean exec = false;
             // TYPE_ORDINARY
-            int remaining = this.remains(Membership.TYPE_ORDINARY, Monthly);
+            int remaining = this.remains(Membership.TYPE_ORDINARY, VALIDITY_MONTHLY);
             if (remaining < 10) {
-                this.append(Membership.TYPE_ORDINARY, Monthly, 10 - remaining);
+                exec = true;
+                this.append(Membership.TYPE_ORDINARY, VALIDITY_MONTHLY, 10 - remaining);
             }
-            remaining = this.remains(Membership.TYPE_ORDINARY, Annual);
+            remaining = this.remains(Membership.TYPE_ORDINARY, VALIDITY_ANNUAL);
             if (remaining < 10) {
-                this.append(Membership.TYPE_ORDINARY, Annual, 10 - remaining);
+                exec = true;
+                this.append(Membership.TYPE_ORDINARY, VALIDITY_ANNUAL, 10 - remaining);
             }
             // TYPE_SENIOR
-            remaining = this.remains(Membership.TYPE_SENIOR, Monthly);
+            remaining = this.remains(Membership.TYPE_SENIOR, VALIDITY_MONTHLY);
             if (remaining < 10) {
-                this.append(Membership.TYPE_SENIOR, Monthly, 10 - remaining);
+                exec = true;
+                this.append(Membership.TYPE_SENIOR, VALIDITY_MONTHLY, 10 - remaining);
             }
-            remaining = this.remains(Membership.TYPE_SENIOR, Annual);
+            remaining = this.remains(Membership.TYPE_SENIOR, VALIDITY_ANNUAL);
             if (remaining < 10) {
-                this.append(Membership.TYPE_SENIOR, Annual, 10 - remaining);
+                exec = true;
+                this.append(Membership.TYPE_SENIOR, VALIDITY_ANNUAL, 10 - remaining);
             }
             // TYPE_PREMIUM
-            remaining = this.remains(Membership.TYPE_PREMIUM, Monthly);
+            remaining = this.remains(Membership.TYPE_PREMIUM, VALIDITY_MONTHLY);
             if (remaining < 10) {
-                this.append(Membership.TYPE_PREMIUM, Monthly, 10 - remaining);
+                exec = true;
+                this.append(Membership.TYPE_PREMIUM, VALIDITY_MONTHLY, 10 - remaining);
             }
-            remaining = this.remains(Membership.TYPE_PREMIUM, Annual);
+            remaining = this.remains(Membership.TYPE_PREMIUM, VALIDITY_ANNUAL);
             if (remaining < 10) {
-                this.append(Membership.TYPE_PREMIUM, Annual, 10 - remaining);
+                exec = true;
+                this.append(Membership.TYPE_PREMIUM, VALIDITY_ANNUAL, 10 - remaining);
             }
             // TYPE_SUPREME
-            remaining = this.remains(Membership.TYPE_SUPREME, Monthly);
+            remaining = this.remains(Membership.TYPE_SUPREME, VALIDITY_MONTHLY);
             if (remaining < 10) {
-                this.append(Membership.TYPE_SUPREME, Monthly, 10 - remaining);
+                exec = true;
+                this.append(Membership.TYPE_SUPREME, VALIDITY_MONTHLY, 10 - remaining);
             }
-            remaining = this.remains(Membership.TYPE_SUPREME, Annual);
+            remaining = this.remains(Membership.TYPE_SUPREME, VALIDITY_ANNUAL);
             if (remaining < 10) {
-                this.append(Membership.TYPE_SUPREME, Annual, 10 - remaining);
+                exec = true;
+                this.append(Membership.TYPE_SUPREME, VALIDITY_ANNUAL, 10 - remaining);
             }
+            return exec;
         }
 
         public int remains(String type, String validity) {
@@ -164,11 +243,9 @@ public class MembershipSystem {
             synchronized (this) {
                 List<InvitationCode> list = this.matchingList(type);
                 for (int i = 0; i < amount; ++i) {
-                    list.add(new InvitationCode(validity));
+                    list.add(new InvitationCode(type, validity));
                 }
             }
-            save();
-            load();
         }
 
         private void load() {
@@ -182,31 +259,37 @@ public class MembershipSystem {
 
                     JSONArray ordinaryArray = data.getJSONArray(Membership.TYPE_ORDINARY);
                     for (int i = 0; i < ordinaryArray.length(); ++i) {
-                        InvitationCode invitationCode = new InvitationCode(ordinaryArray.getJSONObject(i));
+                        InvitationCode invitationCode = new InvitationCode(Membership.TYPE_ORDINARY,
+                                ordinaryArray.getJSONObject(i));
                         this.ordinaryInvitationCodes.add(invitationCode);
                     }
 
                     JSONArray seniorArray = data.getJSONArray(Membership.TYPE_SENIOR);
                     for (int i = 0; i < seniorArray.length(); ++i) {
-                        InvitationCode invitationCode = new InvitationCode(seniorArray.getJSONObject(i));
+                        InvitationCode invitationCode = new InvitationCode(Membership.TYPE_SENIOR,
+                                seniorArray.getJSONObject(i));
                         this.seniorInvitationCodes.add(invitationCode);
                     }
 
                     JSONArray premiumArray = data.getJSONArray(Membership.TYPE_PREMIUM);
                     for (int i = 0; i < premiumArray.length(); ++i) {
-                        InvitationCode invitationCode = new InvitationCode(premiumArray.getJSONObject(i));
+                        InvitationCode invitationCode = new InvitationCode(Membership.TYPE_PREMIUM,
+                                premiumArray.getJSONObject(i));
                         this.premiumInvitationCodes.add(invitationCode);
                     }
 
                     JSONArray supremeArray = data.getJSONArray(Membership.TYPE_SUPREME);
                     for (int i = 0; i < supremeArray.length(); ++i) {
-                        InvitationCode invitationCode = new InvitationCode(supremeArray.getJSONObject(i));
+                        InvitationCode invitationCode = new InvitationCode(Membership.TYPE_SUPREME,
+                                supremeArray.getJSONObject(i));
                         this.supremeInvitationCodes.add(invitationCode);
                     }
                 } catch (Exception e) {
                     Logger.e(this.getClass(), "#load", e);
                     // 加载失败，创建新文件
-                    supply();
+                    if (supply()) {
+                        save();
+                    }
                 }
             }
         }
@@ -262,19 +345,22 @@ public class MembershipSystem {
 
     public class InvitationCode {
 
+        public final String type;
         public String code;
         public String validity;
         public long uid;
         public String date;
 
-        public InvitationCode(String validity) {
+        public InvitationCode(String type, String validity) {
+            this.type = type;
             this.validity = validity;
             this.code = Utils.randomNumberString(6);
             this.uid = 0;
             this.date = "";
         }
 
-        public InvitationCode(JSONObject json) {
+        public InvitationCode(String type, JSONObject json) {
+            this.type = type;
             this.code = json.getString("code");
             this.validity = json.getString("validity");
             this.uid = json.getLong("uid");

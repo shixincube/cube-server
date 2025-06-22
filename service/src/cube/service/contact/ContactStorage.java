@@ -2062,6 +2062,10 @@ public class ContactStorage implements Storagable {
                         new JSONObject(JSONUtils.serializeLineFeed(data.get("context").getString())));
     }
 
+    public List<Membership> readExpiredMemberships() {
+        return null;
+    }
+
     private void checkContactTable(String domain) {
         String table = this.contactTablePrefix + domain;
         table = SQLUtils.correctTableName(table);

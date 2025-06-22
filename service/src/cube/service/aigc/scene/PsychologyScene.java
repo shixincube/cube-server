@@ -246,7 +246,7 @@ public class PsychologyScene {
     }
 
     public int numPsychologyReports(long contactId, int state, boolean permissible, long starTime, long endTime) {
-        return 0;
+        return this.storage.countPsychologyReports(contactId, state, permissible, starTime, endTime);
     }
 
     public List<PaintingReport> getPsychologyReports(long contactId, int state, int limit) {
@@ -1323,20 +1323,20 @@ public class PsychologyScene {
             profile.membership = membership;
             if (membership.type.equals(Membership.TYPE_ORDINARY)) {
                 // 本月用量
-                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact.getId());
+                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact.getId(), membership);
                 // 每月限制
                 profile.limitPerMonth = UserProfiles.gsOrdinaryMemberTimesPerMonth;
             }
             else {
                 // 本月用量
-                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact.getId());
+                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact.getId(), membership);
                 // 每月限制
                 profile.limitPerMonth = UserProfiles.gsPremiumMemberTimesPerMonth;
             }
         }
         else {
-            // 本月用量
-            profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact.getId());
+            // 本月用量，非会员标记为 -1
+            profile.usageOfThisMonth = -1;
         }
 
         // 总报告数

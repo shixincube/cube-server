@@ -70,23 +70,17 @@ public final class UserProfiles {
             }
         }
 
+        // 起始日期
+        long startTime = membership.getTimestamp();
+
+        // 截止日期
         Calendar calendar = Calendar.getInstance();
-        // 本月第一天
-        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMinimum(Calendar.DAY_OF_MONTH));
-        calendar.set(Calendar.HOUR, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        long start = calendar.getTimeInMillis();
+        calendar.setTimeInMillis(startTime);
+        calendar.add(Calendar.MONTH, 1);
+        long endTime = calendar.getTimeInMillis();
 
-        // 本月最后一天
-        calendar = Calendar.getInstance();
-        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
-        calendar.set(Calendar.HOUR, 23);
-        calendar.set(Calendar.MINUTE, 59);
-        calendar.set(Calendar.SECOND, 59);
-        long end = calendar.getTimeInMillis();
-
-        int num = PsychologyScene.getInstance().numScaleReports(user.getId(), AIGCStateCode.Ok.code, true, start, end);
+        int num = PsychologyScene.getInstance().numScaleReports(user.getId(), AIGCStateCode.Ok.code,
+                true, startTime, endTime);
         if (membership.type.equalsIgnoreCase(Membership.TYPE_ORDINARY)) {
             // 普通会员
             if (num >= gsOrdinaryMemberTimesPerMonth) {
@@ -111,21 +105,14 @@ public final class UserProfiles {
         }
     }
 
-    public static int getUsageOfThisMonth(long id) {
-        Calendar calendar = Calendar.getInstance();
-        // 本月第一天
-        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMinimum(Calendar.DAY_OF_MONTH));
-        calendar.set(Calendar.HOUR, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        long startTime = calendar.getTimeInMillis();
+    public static int getUsageOfThisMonth(long id, Membership membership) {
+        // 起始日期
+        long startTime = membership.getTimestamp();
 
-        // 本月最后一天
-        calendar = Calendar.getInstance();
-        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
-        calendar.set(Calendar.HOUR, 23);
-        calendar.set(Calendar.MINUTE, 59);
-        calendar.set(Calendar.SECOND, 59);
+        // 截止日期
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(startTime);
+        calendar.add(Calendar.MONTH, 1);
         long endTime = calendar.getTimeInMillis();
 
         return PsychologyScene.getInstance().numPsychologyReports(id,
@@ -149,7 +136,7 @@ public final class UserProfiles {
         else {
             // 会员
             if (membership.type.equals(Membership.TYPE_ORDINARY)) {
-                return gsOrdinaryMemberTimesPerMonth - getUsageOfThisMonth(user.getId());
+                return gsOrdinaryMemberTimesPerMonth - getUsageOfThisMonth(user.getId(), membership);
             }
             else {
                 return Integer.MAX_VALUE;

@@ -52,6 +52,7 @@ import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.contact.ContactMask;
+import cube.service.contact.MembershipSystem;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
@@ -1053,6 +1054,58 @@ public class AIGCService extends AbstractModule implements Generatable {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         authService.deleteToken(contact.getDomain().getName(), contact.getId());
         return user;
+    }
+
+    /**
+     * 使用邀请码激活会员。
+     *
+     * @param token 令牌。
+     * @param channel 渠道代码。
+     * @param invitationCode 邀请码。
+     * @return
+     */
+    public Membership activateMembership(AuthToken token, String channel, String invitationCode) {
+        Contact contact = ContactManager.getInstance().getContact(token.getDomain(), token.getContactId());
+        if (null == contact) {
+            return null;
+        }
+
+        // 处理特殊码
+        if (invitationCode.equals("941017")) {
+            // 强制取消会员身份
+            return this.cancelMembership(token);
+        }
+
+        // 校验邀请码
+        MembershipSystem.InvitationCode mic = ContactManager.getInstance().getMembershipSystem().verifyInvitationCode(
+                token.getContactId(), invitationCode);
+        if (null == mic) {
+            return null;
+        }
+
+        JSONObject context = contact.getContext();
+        if (null == context) {
+            context = new JSONObject();
+        }
+        context.put("channel", channel);
+        return ContactManager.getInstance().getMembershipSystem().activateMembership(token.getDomain(),
+                token.getContactId(), "MindEcho", mic, context);
+    }
+
+    /**
+     * 取消指定用户的会员。
+     *
+     * @param token 令牌。
+     * @return
+     */
+    public Membership cancelMembership(AuthToken token) {
+        Contact contact = ContactManager.getInstance().getContact(token.getDomain(), token.getContactId());
+        if (null == contact) {
+            return null;
+        }
+
+        return ContactManager.getInstance().getMembershipSystem().cancelMembership(
+                token.getDomain(), token.getContactId());
     }
 
     public WordCloud createWordCloud(AuthToken authToken) {
