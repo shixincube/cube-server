@@ -1078,7 +1078,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         // 校验邀请码
         MembershipSystem.InvitationCode mic = ContactManager.getInstance().getMembershipSystem().verifyInvitationCode(
-                token.getContactId(), invitationCode);
+                invitationCode);
         if (null == mic) {
             return null;
         }
@@ -1088,8 +1088,13 @@ public class AIGCService extends AbstractModule implements Generatable {
             context = new JSONObject();
         }
         context.put("channel", channel);
-        return ContactManager.getInstance().getMembershipSystem().activateMembership(token.getDomain(),
+        Membership membership = ContactManager.getInstance().getMembershipSystem().activateMembership(token.getDomain(),
                 token.getContactId(), "MindEcho", mic, context);
+        if (null != membership) {
+            // 绑定验证码
+            ContactManager.getInstance().getMembershipSystem().bindInvitationCode(mic, token.getContactId());
+        }
+        return membership;
     }
 
     /**

@@ -179,7 +179,7 @@
             "en": ""
         },
         "ANSWER_UNSELECT_REPORT_WARNING": {
-            "cn": "我们可以继续其他相关的话题。",
+            "cn": "您现在没有关联报告，您可以选择一个报告进行关联，或者我们可以继续其他话题。",
             "en": ""
         },
         "FORMAT_ANSWER_REPORT_IS_NULL": {

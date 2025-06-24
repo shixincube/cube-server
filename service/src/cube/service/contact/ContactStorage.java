@@ -2062,8 +2062,53 @@ public class ContactStorage implements Storagable {
                         new JSONObject(JSONUtils.serializeLineFeed(data.get("context").getString())));
     }
 
-    public List<Membership> readExpiredMemberships() {
-        return null;
+    public List<Membership> readExpiredMemberships(String domain) {
+        List<Membership> list = new ArrayList<>();
+
+        String table = this.membershipTableNameMap.get(domain);
+        if (null == table) {
+            return list;
+        }
+
+        long now = System.currentTimeMillis();
+        String sql = "SELECT * FROM `" +  table + "` WHERE timestamp+duration<" + now +
+                " AND state=0";
+        List<StorageField[]> result = this.storage.executeQuery(sql);
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            Membership membership = new Membership(data.get("id").getLong(), domain, data.get("name").getString(),
+                    data.get("type").getString(), data.get("state").getInt(),
+                    data.get("timestamp").getLong(), data.get("duration").getLong(),
+                    data.get("description").getString(),
+                    data.get("context").isNullValue() ? null :
+                            new JSONObject(JSONUtils.serializeLineFeed(data.get("context").getString())));
+            list.add(membership);
+        }
+
+        return list;
+    }
+
+    public boolean updateMembershipsState(String domain, List<Long> idList, int state) {
+        if (idList.isEmpty()) {
+            return true;
+        }
+
+        String table = this.membershipTableNameMap.get(domain);
+        if (null == table) {
+            return false;
+        }
+
+        List<Conditional> conditionals = new ArrayList<>();
+        for (int i = 0, len = idList.size(); i < len; ++i) {
+            long id = idList.get(i);
+            conditionals.add(Conditional.createEqualTo("id", id));
+            if (i + 1 < len) {
+                conditionals.add(Conditional.createOr());
+            }
+        }
+        return this.storage.executeUpdate(table, new StorageField[] {
+                new StorageField("state", state)
+        }, conditionals.toArray(new Conditional[0]));
     }
 
     private void checkContactTable(String domain) {

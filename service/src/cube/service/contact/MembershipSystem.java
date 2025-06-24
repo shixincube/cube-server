@@ -8,6 +8,7 @@ package cube.service.contact;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.auth.AuthConsts;
 import cube.common.entity.Contact;
 import cube.common.entity.Membership;
 import cube.util.ConfigUtils;
@@ -53,11 +54,61 @@ public class MembershipSystem {
 
     public Membership activateMembership(String domain, long contactId, String name, InvitationCode invitationCode,
                                       JSONObject context) {
-        // 查找当前联系人有效的会员数据
-        this.storage.readMembership(domain, contactId, Membership.STATE_NORMAL);
-
         long now = System.currentTimeMillis();
-        // 结算结束时间
+
+        // 查找当前联系人有效的会员数据
+        long remaining = 0;
+        Membership activeMembership = this.storage.readMembership(domain, contactId, Membership.STATE_NORMAL);
+        if (null != activeMembership) {
+            // 将会员有效期累加
+            // 月卡可升级到年卡，年卡可升级到年卡，但是年卡不能升级到月卡，即低级别年卡不能升级为高级别月卡
+            if (activeMembership.description.equals(VALIDITY_MONTHLY)) {
+                // 目前是月卡，均可升级
+                remaining = activeMembership.getTimestamp() + activeMembership.duration - now;
+            }
+            else if (activeMembership.description.equals(VALIDITY_ANNUAL)) {
+                // 目前是年卡，只能升级到年卡
+                if (invitationCode.validity.equals(VALIDITY_ANNUAL)) {
+                    remaining = activeMembership.getTimestamp() + activeMembership.duration - now;
+                }
+                else {
+                    Logger.e(this.getClass(), "#activateMembership - Validity rule conflicts: " + contactId);
+                    return null;
+                }
+            }
+            else {
+                Logger.e(this.getClass(), "#activateMembership - Rule conflicts: " + contactId);
+                return null;
+            }
+
+            // 会员可以同级升级，向上升级，但不能向下降级
+            if (activeMembership.type.equalsIgnoreCase(Membership.TYPE_SENIOR)) {
+                if (invitationCode.type.equalsIgnoreCase(Membership.TYPE_ORDINARY)) {
+                    Logger.e(this.getClass(), "#activateMembership - No downgrade: " + contactId +
+                            " " + activeMembership.type + " -> " + invitationCode.type);
+                    return null;
+                }
+            }
+            else if (activeMembership.type.equalsIgnoreCase(Membership.TYPE_PREMIUM)) {
+                if (invitationCode.type.equalsIgnoreCase(Membership.TYPE_ORDINARY) ||
+                        invitationCode.type.equalsIgnoreCase(Membership.TYPE_SENIOR)) {
+                    Logger.e(this.getClass(), "#activateMembership - No downgrade: " + contactId +
+                            " " + activeMembership.type + " -> " + invitationCode.type);
+                    return null;
+                }
+            }
+            else if (activeMembership.type.equalsIgnoreCase(Membership.TYPE_SUPREME)) {
+                if (invitationCode.type.equalsIgnoreCase(Membership.TYPE_ORDINARY) ||
+                        invitationCode.type.equalsIgnoreCase(Membership.TYPE_SENIOR) ||
+                        invitationCode.type.equalsIgnoreCase(Membership.TYPE_PREMIUM)) {
+                    Logger.e(this.getClass(), "#activateMembership - No downgrade: " + contactId +
+                            " " + activeMembership.type + " -> " + invitationCode.type);
+                    return null;
+                }
+            }
+        }
+
+        // 计算结束时间
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(now);
         if (invitationCode.validity.equals(VALIDITY_MONTHLY)) {
@@ -65,6 +116,14 @@ public class MembershipSystem {
         }
         else {
             calendar.add(Calendar.YEAR, 1);
+        }
+
+        // 累加剩余时长
+        if (remaining > 0) {
+            Logger.i(this.getClass(), "#activateMembership - Append membership duration: " + contactId
+                    + " - " + remaining);
+            long timeInMillis = calendar.getTimeInMillis();
+            calendar.setTimeInMillis(timeInMillis + remaining);
         }
 
         Membership membership = new Membership(contactId, domain, name,
@@ -95,7 +154,7 @@ public class MembershipSystem {
         return this.storage.writeMembership(membership);
     }
 
-    public InvitationCode verifyInvitationCode(long contactId, String code) {
+    public InvitationCode verifyInvitationCode(String code) {
         InvitationCode result = this.invitationCodeStorage.search(code);
         if (null == result) {
             Logger.w(this.getClass(), "#verifyInvitationCode - Can NOT find the invitation code: " + code);
@@ -107,26 +166,41 @@ public class MembershipSystem {
                     " - " + result.uid);
             return null;
         }
-
-        result.uid = contactId;
-        result.date = Utils.gsDateFormat.format(new Date());
-        (new Thread() {
-            @Override
-            public void run() {
-                boolean success = invitationCodeStorage.update(result);
-                if (success) {
-                    Logger.i(getClass(), "#verifyInvitationCode - Updates code: " + code + " - " + contactId);
-                }
-                else {
-                    Logger.i(getClass(), "#verifyInvitationCode - Updates code failed: " + code + " - " + contactId);
-                }
-            }
-        }).start();
         return result;
     }
 
-    public void onTick(long now) {
+    public InvitationCode bindInvitationCode(final InvitationCode invitationCode, long contactId) {
+        invitationCode.uid = contactId;
+        invitationCode.date = Utils.gsDateFormat.format(new Date());
+        (new Thread() {
+            @Override
+            public void run() {
+                boolean success = invitationCodeStorage.update(invitationCode);
+                if (success) {
+                    Logger.i(getClass(), "#verifyInvitationCode - Updates code: " + invitationCode.code + " - " + contactId);
+                }
+                else {
+                    Logger.i(getClass(), "#verifyInvitationCode - Updates code failed: " + invitationCode.code + " - " + contactId);
+                }
+            }
+        }).start();
+        return invitationCode;
+    }
 
+    public void onTick(long now) {
+        // 检测所有过期的会员，设置为无效状态
+        List<Membership> memberships = this.storage.readExpiredMemberships(AuthConsts.DEFAULT_DOMAIN);
+        List<Long> idList = new ArrayList<>();
+        for (Membership membership : memberships) {
+            Logger.i(this.getClass(), "#onTick - Update expired member: " + membership.getId());
+            idList.add(membership.getId());
+        }
+        if (this.storage.updateMembershipsState(AuthConsts.DEFAULT_DOMAIN, idList, Membership.STATE_INVALID)) {
+            Logger.i(this.getClass(), "#onTick - Update memberships state");
+        }
+        else {
+            Logger.w(this.getClass(), "#onTick - Update memberships state failed");
+        }
     }
 
 

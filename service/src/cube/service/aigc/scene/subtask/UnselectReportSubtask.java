@@ -6,6 +6,7 @@
 
 package cube.service.aigc.scene.subtask;
 
+import cell.util.Utils;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
@@ -55,7 +56,9 @@ public class UnselectReportSubtask extends ConversationSubtask {
                 }
                 else {
                     GeneratingRecord record = new GeneratingRecord(query);
-                    record.answer = Resource.getInstance().getCorpus(CORPUS, "ANSWER_UNSELECT_REPORT_WARNING");
+                    record.answer = Utils.randomUnsigned() % 2 == 0 ?
+                            Resource.getInstance().getCorpus(CORPUS, "ANSWER_UNSELECT_REPORT_WARNING") :
+                            fastPolish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_UNSELECT_REPORT_WARNING"));
                     record.context = context;
                     convCtx.record(record);
                     listener.onGenerated(channel, record);
