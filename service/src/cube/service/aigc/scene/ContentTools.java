@@ -8,6 +8,7 @@ package cube.service.aigc.scene;
 
 import cell.core.net.Endpoint;
 import cell.util.log.Logger;
+import cube.aigc.Consts;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
@@ -468,19 +469,31 @@ public class ContentTools {
     public static String makeMembership(User user, Membership membership) {
         StringBuffer buf = new StringBuffer();
         if (null == membership) {
-            buf.append("用户“").append(user.getName()).append("”不是白泽灵思会员。");
-            buf.append("非会员用户享受1次绘画投射测验服务。");
-            buf.append("\n\n");
+            buf.append("用户“").append(user.getName()).append("”不是白泽灵思会员，");
+            List<String> benefitsList = null;
+            if (user.isRegistered()) {
+                buf.append("其是注册用户，享受免费版权益。\n\n");
+                benefitsList = Resource.getInstance().getMemberBenefits(Consts.USER_TYPE_FREE);
+            }
+            else {
+                buf.append("其是访客，享受访客权益。\n\n");
+                benefitsList = Resource.getInstance().getMemberBenefits(Consts.USER_TYPE_VISITOR);
+            }
+            buf.append("其可享受的产品权益有：\n");
+            for (String line : benefitsList) {
+                buf.append("* ").append(line).append("\n");
+            }
+            buf.append("\n");
         }
         else {
             buf.append("用户“").append(user.getName()).append("”是白泽灵思");
             if (membership.type.equals(Membership.TYPE_ORDINARY)) {
-                buf.append("普通版会员。\n\n");
-                buf.append("白泽灵思普通版会员权益有：\n");
+                buf.append("专业版会员。\n\n");
+                buf.append("其可享受的专业版会员权益有：\n");
             }
             else {
-                buf.append("专业版会员。\n\n");
-                buf.append("白泽灵思专业版会员权益有：\n");
+                buf.append("旗舰版会员。\n\n");
+                buf.append("其可享受的旗舰版会员权益有：\n");
             }
             List<String> benefitsList = Resource.getInstance().getMemberBenefits(membership.type);
             for (String line : benefitsList) {

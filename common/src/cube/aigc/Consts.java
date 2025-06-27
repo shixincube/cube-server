@@ -14,6 +14,10 @@ import cube.util.TextUtils;
  */
 public final class Consts {
 
+    public final static String USER_TYPE_VISITOR = "visitor";
+
+    public final static String USER_TYPE_FREE = "free";
+
     public final static String PATTERN_CHAT = "chat";
 
     public final static String PATTERN_KNOWLEDGE = "knowledge";

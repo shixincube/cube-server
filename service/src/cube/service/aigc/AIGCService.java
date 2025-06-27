@@ -1093,6 +1093,9 @@ public class AIGCService extends AbstractModule implements Generatable {
         if (null != membership) {
             // 绑定验证码
             ContactManager.getInstance().getMembershipSystem().bindInvitationCode(mic, token.getContactId());
+
+            // 更新会员信息
+            this.updatePersonalKnowledgeBase(token, new User(context));
         }
         return membership;
     }
@@ -1109,8 +1112,13 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         }
 
-        return ContactManager.getInstance().getMembershipSystem().cancelMembership(
+        Membership membership = ContactManager.getInstance().getMembershipSystem().cancelMembership(
                 token.getDomain(), token.getContactId());
+        if (null != membership) {
+            // 更新会员信息
+            this.updatePersonalKnowledgeBase(token, new User(contact.getContext()));
+        }
+        return membership;
     }
 
     public WordCloud createWordCloud(AuthToken authToken) {

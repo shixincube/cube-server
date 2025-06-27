@@ -254,50 +254,51 @@ public class MembershipSystem {
         }
 
         public boolean supply() {
+            final int reserve = 50;
             boolean exec = false;
             // TYPE_ORDINARY
             int remaining = this.remains(Membership.TYPE_ORDINARY, VALIDITY_MONTHLY);
-            if (remaining < 10) {
+            if (remaining < reserve) {
                 exec = true;
-                this.append(Membership.TYPE_ORDINARY, VALIDITY_MONTHLY, 10 - remaining);
+                this.append(Membership.TYPE_ORDINARY, VALIDITY_MONTHLY, reserve - remaining);
             }
             remaining = this.remains(Membership.TYPE_ORDINARY, VALIDITY_ANNUAL);
-            if (remaining < 10) {
+            if (remaining < reserve) {
                 exec = true;
-                this.append(Membership.TYPE_ORDINARY, VALIDITY_ANNUAL, 10 - remaining);
+                this.append(Membership.TYPE_ORDINARY, VALIDITY_ANNUAL, reserve - remaining);
             }
             // TYPE_SENIOR
             remaining = this.remains(Membership.TYPE_SENIOR, VALIDITY_MONTHLY);
-            if (remaining < 10) {
+            if (remaining < reserve) {
                 exec = true;
-                this.append(Membership.TYPE_SENIOR, VALIDITY_MONTHLY, 10 - remaining);
+                this.append(Membership.TYPE_SENIOR, VALIDITY_MONTHLY, reserve - remaining);
             }
             remaining = this.remains(Membership.TYPE_SENIOR, VALIDITY_ANNUAL);
-            if (remaining < 10) {
+            if (remaining < reserve) {
                 exec = true;
-                this.append(Membership.TYPE_SENIOR, VALIDITY_ANNUAL, 10 - remaining);
+                this.append(Membership.TYPE_SENIOR, VALIDITY_ANNUAL, reserve - remaining);
             }
             // TYPE_PREMIUM
             remaining = this.remains(Membership.TYPE_PREMIUM, VALIDITY_MONTHLY);
-            if (remaining < 10) {
+            if (remaining < reserve) {
                 exec = true;
-                this.append(Membership.TYPE_PREMIUM, VALIDITY_MONTHLY, 10 - remaining);
+                this.append(Membership.TYPE_PREMIUM, VALIDITY_MONTHLY, reserve - remaining);
             }
             remaining = this.remains(Membership.TYPE_PREMIUM, VALIDITY_ANNUAL);
-            if (remaining < 10) {
+            if (remaining < reserve) {
                 exec = true;
-                this.append(Membership.TYPE_PREMIUM, VALIDITY_ANNUAL, 10 - remaining);
+                this.append(Membership.TYPE_PREMIUM, VALIDITY_ANNUAL, reserve - remaining);
             }
             // TYPE_SUPREME
             remaining = this.remains(Membership.TYPE_SUPREME, VALIDITY_MONTHLY);
-            if (remaining < 10) {
+            if (remaining < reserve) {
                 exec = true;
-                this.append(Membership.TYPE_SUPREME, VALIDITY_MONTHLY, 10 - remaining);
+                this.append(Membership.TYPE_SUPREME, VALIDITY_MONTHLY, reserve - remaining);
             }
             remaining = this.remains(Membership.TYPE_SUPREME, VALIDITY_ANNUAL);
-            if (remaining < 10) {
+            if (remaining < reserve) {
                 exec = true;
-                this.append(Membership.TYPE_SUPREME, VALIDITY_ANNUAL, 10 - remaining);
+                this.append(Membership.TYPE_SUPREME, VALIDITY_ANNUAL, reserve - remaining);
             }
             return exec;
         }
