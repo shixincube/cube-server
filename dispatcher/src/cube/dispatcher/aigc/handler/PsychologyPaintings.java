@@ -30,8 +30,7 @@ public class PsychologyPaintings extends ContextHandler {
 
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            // 量表列表
-            String token = this.getLastRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token)) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();

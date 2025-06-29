@@ -1729,9 +1729,9 @@ public class HTPEvaluation extends Evaluation {
                 }
             }
             else {
-                // 常青树
-                String desc = "树类型疑似常青树";
-                result.addFeature(desc, Term.SelfConfidence, Tendency.Positive, new Thing[] { tree });
+                // 一般树
+                String desc = "树类型疑似简洁树型";
+                result.addFeature(desc, Term.Straightforwardness, Tendency.Positive, new Thing[] { tree });
             }
 
             // 树干
@@ -2039,9 +2039,9 @@ public class HTPEvaluation extends Evaluation {
         if (!hasTrunk) {
             // 无树干
             String desc = "树疑似没有清晰树干";
-            result.addFeature(desc, Term.Introversion, Tendency.Positive);
+            result.addFeature(desc, Term.SelfExistence, Tendency.Negative);
 
-            result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
+            result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.3, 0.4));
 
             result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(5.0, 5.5));
             result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(4.0, 5.0));

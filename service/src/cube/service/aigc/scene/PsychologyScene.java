@@ -369,6 +369,7 @@ public class PsychologyScene {
                             continue;
                         }
 
+                        long start = System.currentTimeMillis();
                         Logger.i(getClass(), "Starts generating report: " + reportTask.report.sn);
 
                         runningTaskQueue.offer(reportTask);
@@ -516,6 +517,9 @@ public class PsychologyScene {
 
                         // 从正在执行队列移除
                         runningTaskQueue.remove(reportTask);
+
+                        Logger.i(getClass(), "End generating report: " + reportTask.report.sn + " - elapsed: " +
+                                Math.round((System.currentTimeMillis() - start) / 1000.0) + "s");
                     }
                 } catch (Exception e) {
                     Logger.e(getClass(), "#run", e);
@@ -1361,7 +1365,7 @@ public class PsychologyScene {
         data.put("fileLabel", fileLabel.toJSON());
         data.put("adjust", adjust);
         Packet request = new Packet(AIGCAction.PredictPsychologyPainting.name, data);
-        ActionDialect dialect = this.service.getCellet().transmit(unit.getContext(), request.toDialect(), 90 * 1000);
+        ActionDialect dialect = this.service.getCellet().transmit(unit.getContext(), request.toDialect(), 5 * 60 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(), "#processPainting - Predict image unit error");
             return null;
