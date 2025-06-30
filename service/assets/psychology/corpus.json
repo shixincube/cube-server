@@ -227,7 +227,7 @@
             "en": ""
         },
         "FORMAT_ANSWER_SCALE_LIST": {
-            "cn": "我目前支持的量表有：\n\n%s\n\n另外，我最擅长是心理绘画投射测验，我还能进行基于DSM手册的辅助诊断。",
+            "cn": "我目前支持的量表有：\n\n%s\n\n点击量表名即可使用该量表。另外，我最擅长是心理绘画投射测验。",
             "en": ""
         },
         "FORMAT_ANSWER_SCALE_RESULT_PREFIX": {
@@ -239,7 +239,7 @@
             "en": ""
         },
         "FORMAT_ANSWER_SCALE_LAST_ANSWER": {
-            "cn": "您第**%d**题的选择是**%s** %s。",
+            "cn": "您第**%d**题的选择是%s **%s**。",
             "en": ""
         },
         "ANSWER_PLEASE_START_QUESTIONNAIRE": {

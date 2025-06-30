@@ -10,6 +10,7 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Scale;
@@ -29,6 +30,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class StartQuestionnaireSubtask extends ConversationSubtask {
+
+    private final static String[] sIgnoreScales = new String[]{ "PAD" };
 
     public StartQuestionnaireSubtask(AIGCService service, AIGCChannel channel, String query,
                                      ComplexContext context, ConversationRelation relation, ConversationContext convCtx,
@@ -50,8 +53,21 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
                     List<Scale> scales = Resource.getInstance().listScales(channel.getAuthToken().getContactId());
                     StringBuilder buf = new StringBuilder();
                     for (Scale scale : scales) {
+                        // 过滤忽略的量表
+                        boolean ignore = false;
+                        for (String name : sIgnoreScales) {
+                            if (name.equalsIgnoreCase(scale.name)) {
+                                ignore = true;
+                                break;
+                            }
+                        }
+                        if (ignore) {
+                            continue;
+                        }
+
                         buf.append("- ");
-                        buf.append(scale.displayName);
+                        buf.append(Link.formatPromptDirectMarkdown(
+                                scale.displayName, "用" + scale.displayName + "进行评测。"));
                         buf.append("\n");
                     }
 

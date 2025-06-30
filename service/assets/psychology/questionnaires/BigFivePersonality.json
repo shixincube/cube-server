@@ -10,19 +10,19 @@
 			"choice": "single",
 			"content": "我不是一个容易忧虑的人。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -30,19 +30,19 @@
 			"choice": "single",
 			"content": "我喜欢周围有很多朋友。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -50,19 +50,19 @@
 			"choice": "single",
 			"content": "我很喜欢沉浸于幻想和白日梦中，去探索、发展其中所有可能实现的东西。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -70,19 +70,19 @@
 			"choice": "single",
 			"content": "我尽量对每一个遇到的人彬彬有礼，非常客气。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -90,19 +90,19 @@
 			"choice": "single",
 			"content": "我让自己的物品经常保持整洁干净。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -110,19 +110,19 @@
 			"choice": "single",
 			"content": "有时候我感到愤怒，充满怨恨。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -130,19 +130,19 @@
 			"choice": "single",
 			"content": "我很容易笑。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -150,19 +150,19 @@
 			"choice": "single",
 			"content": "我喜欢培养和发展新的爱好。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -170,19 +170,19 @@
 			"choice": "single",
 			"content": "有时候，我会采用威胁或奉承等不同手段，去说服别人按我的意愿去做事。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -190,19 +190,19 @@
 			"choice": "single",
 			"content": "我比较擅长为自己安排好做事进度，以便按时完成任务。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -210,19 +210,19 @@
 			"choice": "single",
 			"content": "当面对极大的压力时，有时我会感到好像就要垮了似的。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -230,19 +230,19 @@
 			"choice": "single",
 			"content": "我喜欢那些可以单独做事，不被别人打扰的工作。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -250,19 +250,19 @@
 			"choice": "single",
 			"content": "我对大自然和艺术中蕴涵的美十分着迷。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -270,19 +270,19 @@
 			"choice": "single",
 			"content": "有些人觉得我有些自我中心，不太考虑别人的感受。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -290,19 +290,19 @@
 			"choice": "single",
 			"content": "许多时候，事到临头了，我才发现自己还没做好准备。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -310,19 +310,19 @@
 			"choice": "single",
 			"content": "我很少感觉孤独和忧郁。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -330,19 +330,19 @@
 			"choice": "single",
 			"content": "我很喜欢与别人聊天。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -350,19 +350,19 @@
 			"choice": "single",
 			"content": "我认为让学生接触有争议的学说或言论只会混淆和误导他们的思想。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -370,19 +370,19 @@
 			"choice": "single",
 			"content": "如果有人挑起争端，我随时准备好反击。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -390,19 +390,19 @@
 			"choice": "single",
 			"content": "我会尽量认真地完成一切分派给我的任务。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -410,19 +410,19 @@
 			"choice": "single",
 			"content": "我经常感到紧张而心神不定。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -430,19 +430,19 @@
 			"choice": "single",
 			"content": "我喜欢置身于激烈的活动之中。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -450,19 +450,19 @@
 			"choice": "single",
 			"content": "我对诗词基本上没有什么感觉。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -470,19 +470,19 @@
 			"choice": "single",
 			"content": "我觉得自己比大多数的人都优秀。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -490,19 +490,19 @@
 			"choice": "single",
 			"content": "我有一些明确的目标，并能以有条不紊的方式朝它迈进。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -510,19 +510,19 @@
 			"choice": "single",
 			"content": "有时我感到自己完全一文不值。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -530,19 +530,19 @@
 			"choice": "single",
 			"content": "我通常回避人多的场合。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -550,19 +550,19 @@
 			"choice": "single",
 			"content": "对我来说，让头脑无拘无束地想象是一件困难的事情。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -570,19 +570,19 @@
 			"choice": "single",
 			"content": "受到别人粗暴无礼的对待后，我会尽量原谅他们，让自己忘记这件事。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -590,19 +590,19 @@
 			"choice": "single",
 			"content": "开始着手学习或工作之前，我会浪费很多时间。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -610,19 +610,19 @@
 			"choice": "single",
 			"content": "我很少感到恐惧或焦虑。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -630,19 +630,19 @@
 			"choice": "single",
 			"content": "我常常感到自己精力旺盛，好象充满能量。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -650,19 +650,19 @@
 			"choice": "single",
 			"content": "我很少留意自己在不同环境下的情绪或感觉变化。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -670,19 +670,19 @@
 			"choice": "single",
 			"content": "我相信人性是善良的。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -690,19 +690,19 @@
 			"choice": "single",
 			"content": "我努力做事以达到自己的目标。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -710,19 +710,19 @@
 			"choice": "single",
 			"content": "别人对待我的方式常使我感到愤怒。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -730,19 +730,19 @@
 			"choice": "single",
 			"content": "我是一个乐天开朗的人。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -750,19 +750,19 @@
 			"choice": "single",
 			"content": "我经常体验到许多不同的感受或情绪。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -770,19 +770,19 @@
 			"choice": "single",
 			"content": "很多人觉得我对人有些冷淡，经常和别人保持一定距离。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -790,19 +790,19 @@
 			"choice": "single",
 			"content": "一旦做出承诺，我通常会贯彻到底。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -810,19 +810,19 @@
 			"choice": "single",
 			"content": "很多时候，当事情不顺利时，我会感到泄气，想要放弃。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -830,19 +830,19 @@
 			"choice": "single",
 			"content": "我不太喜欢和人聊天，很少从中获得太多乐趣。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -850,19 +850,19 @@
 			"choice": "single",
 			"content": "阅读一首诗或欣赏一件艺术品时，我有时会感到非常兴奋或喜悦。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -870,19 +870,19 @@
 			"choice": "single",
 			"content": "我是一个固执倔强的人。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -890,19 +890,19 @@
 			"choice": "single",
 			"content": "有时候，我并不是那么可靠和值得信赖。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -910,19 +910,19 @@
 			"choice": "single",
 			"content": "我很少感觉忧伤或沮丧。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -930,19 +930,19 @@
 			"choice": "single",
 			"content": "我的生活节奏很快。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -950,19 +950,19 @@
 			"choice": "single",
 			"content": "我对思考宇宙规律或人类生存状况没有什么兴趣。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -970,19 +970,19 @@
 			"choice": "single",
 			"content": "我尽量对他人做到体贴周到。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -990,19 +990,19 @@
 			"choice": "single",
 			"content": "我做事情总是善始善终，是一个很有做事能力的人。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -1010,19 +1010,19 @@
 			"choice": "single",
 			"content": "我经常感觉无助，希望有人能帮助我解决问题。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -1030,19 +1030,19 @@
 			"choice": "single",
 			"content": "我是一个十分积极活跃的人。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -1050,19 +1050,19 @@
 			"choice": "single",
 			"content": "我对许多事物都很好奇，充满求知欲。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -1070,19 +1070,19 @@
 			"choice": "single",
 			"content": "如果我不喜欢某一个人，我会让他知道。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -1090,19 +1090,19 @@
 			"choice": "single",
 			"content": "我好像总不能把事情安排得井井有条。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -1110,19 +1110,19 @@
 			"choice": "single",
 			"content": "有时我会感到十分羞愧，以至于只想躲起来，不见任何人。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -1130,19 +1130,19 @@
 			"choice": "single",
 			"content": "我宁愿自己独自做事，而不是领导指挥别人。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -1150,19 +1150,19 @@
 			"choice": "single",
 			"content": "我喜欢研究理论和抽象的问题。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -1170,19 +1170,19 @@
 			"choice": "single",
 			"content": "如果必要的话，我会利用别人来达到自己的目的。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}, {
@@ -1190,19 +1190,19 @@
 			"choice": "single",
 			"content": "对于每件事，我都力求做到最好。",
 			"answers": [{
-				"code": "A",
+				"code": "1",
 				"content": "1. 非常不符合"
 			}, {
-				"code": "B",
+				"code": "2",
 				"content": "2. 不太符合"
 			}, {
-				"code": "C",
+				"code": "3",
 				"content": "3. 不确定"
 			}, {
-				"code": "D",
+				"code": "4",
 				"content": "4. 比较符合"
 			}, {
-				"code": "E",
+				"code": "5",
 				"content": "5. 非常符合"
 			}]
 		}]

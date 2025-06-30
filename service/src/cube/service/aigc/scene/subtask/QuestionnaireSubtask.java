@@ -216,7 +216,8 @@ public class QuestionnaireSubtask extends ConversationSubtask {
         }
         else if (roundSubtask == Subtask.Yes) {
             // 执行继续
-            Logger.d(this.getClass(), "#execute - The roundSubtask is YES: " + channel.getCode());
+            Logger.d(this.getClass(), "#execute - The roundSubtask is YES: " + scaleTrack.questionCursor + " - "
+                    + channel.getCode());
 
             if (scaleTrack.questionCursor >= scaleTrack.scale.numQuestions() || scaleTrack.scale.isComplete()) {
                 // 结束
@@ -251,11 +252,32 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             question.questionContent = resultAnswer;
                         }
                         else {
-                            if (null != prevQuestion) {
+                            // 尝试匹配答案
+                            String answerCode = matchSingleChoiceAnswer(scaleTrack.scale.getQuestion(scaleTrack.questionCursor).answers);
+                            if (null != answerCode) {
+                                // 获得当前答案
+                                // 记录答案
+                                scaleTrack.scale.chooseAnswer(scaleTrack.questionCursor, answerCode);
+                                // 移动游标
+                                scaleTrack.questionCursor += 1;
+
                                 answer.append(String.format(
                                         Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_LAST_ANSWER"),
                                         scaleTrack.questionCursor - 1,
-                                        scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).code,
+                                        (scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).content.startsWith(
+                                                scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).code)) ?
+                                                "" : scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).code,
+                                        scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).content
+                                ));
+                                answer.append("\n\n");
+                            }
+                            else if (null != prevQuestion) {
+                                answer.append(String.format(
+                                        Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_LAST_ANSWER"),
+                                        scaleTrack.questionCursor - 1,
+                                        (scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).content.startsWith(
+                                                scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).code)) ?
+                                                "" : scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).code,
                                         scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).content
                                 ));
                                 answer.append("\n\n");
@@ -360,7 +382,8 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         answer.append(String.format(
                                 Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_SCALE_LAST_ANSWER"),
                                 scaleTrack.questionCursor - 1,
-                                answerCode,
+                                (scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).content.startsWith(answerCode))
+                                        ? "" : answerCode,
                                 scaleTrack.scale.getAnswer(scaleTrack.questionCursor - 1).content
                         ));
                         answer.append("\n\n");
@@ -801,12 +824,17 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 buf.append("问题").append(sn).append("：").append(question.content).append("\n\n");
                 for (Answer answer : question.answers) {
                     buf.append("* [");
-                    buf.append(answer.code).append(". ").append(answer.content);
+                    if (answer.content.startsWith(answer.code)) {
+                        buf.append(answer.content);
+                    }
+                    else {
+                        buf.append(answer.code).append(". ").append(answer.content);
+                    }
                     buf.append("](");
                     buf.append(Link.ScaleAnswer)
                             .append(sn).append("/")
                             .append(answer.code).append("/")
-                            .append(answer.content);
+                            .append(answer.content.replaceAll(" ", ""));
                     buf.append(")");
                     buf.append("\n\n");
                 }
@@ -818,26 +846,27 @@ public class QuestionnaireSubtask extends ConversationSubtask {
     }
 
     private String matchSingleChoiceAnswer(List<Answer> answers) {
+        boolean numeric = answers.get(0).isNumericCode();
         String queryText = query.toUpperCase();
         if (queryText.contains("A") || queryText.contains("1") ||
                 queryText.contains("一") || queryText.contains("壹") || queryText.contains("①")) {
-            return "A";
+            return numeric ? "1" : "A";
         }
         else if (queryText.contains("B") || queryText.contains("2") ||
                 queryText.contains("二") || queryText.contains("贰") || queryText.contains("②")) {
-            return "B";
+            return numeric ? "2" : "B";
         }
         else if (queryText.contains("C") || queryText.contains("3") ||
                 queryText.contains("三") || queryText.contains("叁") || queryText.contains("③")) {
-            return "C";
+            return numeric ? "3" : "C";
         }
         else if (queryText.contains("D") || queryText.contains("4") ||
                 queryText.contains("四") || queryText.contains("肆") || queryText.contains("④")) {
-            return "D";
+            return numeric ? "4" : "D";
         }
         else if (queryText.contains("E") || queryText.contains("5") ||
                 queryText.contains("五") || queryText.contains("伍") || queryText.contains("⑤")) {
-            return "E";
+            return numeric ? "5" : "E";
         }
 
         for (Answer answer : answers) {

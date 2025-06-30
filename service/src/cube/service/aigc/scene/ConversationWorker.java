@@ -11,6 +11,7 @@ import cube.aigc.ModelConfig;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
+import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.Subtask;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
@@ -18,6 +19,9 @@ import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.listener.SemanticSearchListener;
 import cube.service.aigc.scene.subtask.*;
+import cube.service.tokenizer.keyword.Keyword;
+import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+import cube.util.TextUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +33,10 @@ public class ConversationWorker {
     private final static String CORPUS_PROMPT = "prompt";
 
     private final static String JUMP_POLISH = "润色";
+
+    private final static String[] TEST_WORDS = new String[] {
+            "评测", "测验", "测试", "评估"
+    };
 
     private AIGCService service;
 
@@ -388,10 +396,35 @@ public class ConversationWorker {
     }
 
     private Subtask matchSubtask(String query, ConversationContext convCtx) {
+        // 尝试匹配量表评测任务
+        if (TextUtils.containsString(query, TEST_WORDS)) {
+            TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
+            List<Keyword> keywordList = analyzer.analyze(query, 10);
+            boolean hit = false;
+            for (Keyword keyword : keywordList) {
+                if (keyword.getTfidfValue() > 0.1 && TextUtils.containsString(keyword.getWord(), TEST_WORDS)) {
+                    hit = true;
+                    break;
+                }
+            }
+            if (hit) {
+                // 匹配量表名
+                List<Scale> scaleList = Resource.getInstance().listScales(convCtx.getAuthToken().getContactId());
+                String lowerCaseQuery = query.toLowerCase();
+                for (Scale scale : scaleList) {
+                    if (lowerCaseQuery.contains(scale.name.toLowerCase()) ||
+                            lowerCaseQuery.contains(scale.displayName.toLowerCase())) {
+                        Logger.d(this.getClass(), "#matchSubtask - Matching \"StartQuestionnaire\" by analyzer: " + query);
+                        return Subtask.StartQuestionnaire;
+                    }
+                }
+            }
+        }
+
         final List<QuestionAnswer> list = new ArrayList<>();
 
         // 尝试匹配子任务
-        boolean success = service.semanticSearch(query.replaceAll("\\*\\*", ""), new SemanticSearchListener() {
+        boolean success = this.service.semanticSearch(query.replaceAll("\\*\\*", ""), new SemanticSearchListener() {
             @Override
             public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
                 list.addAll(questionAnswers);

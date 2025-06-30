@@ -6,6 +6,7 @@
 
 package cube.aigc.psychology.composition;
 
+import cube.util.TextUtils;
 import org.json.JSONObject;
 
 public class Answer {
@@ -34,6 +35,10 @@ public class Answer {
         if (json.has("chosen")) {
             this.chosen = json.getBoolean("chosen");
         }
+    }
+
+    public boolean isNumericCode() {
+        return TextUtils.isNumeric(this.code);
     }
 
     public JSONObject toJSON() {

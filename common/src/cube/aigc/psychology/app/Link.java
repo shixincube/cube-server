@@ -11,11 +11,12 @@ public class Link {
     public final static String PromptDirect = "aixinli://prompt.direct/";
 
     public final static String formatPromptDirect(String value) {
-        return String.format("%s%s", PromptDirect, value);
+        return String.format("%s%s", PromptDirect, value.replaceAll(" ", ""));
     }
 
     public final static String formatPromptDirectMarkdown(String title, String value) {
-        return String.format("[%s](%s%s)", title, PromptDirect, value);
+        return String.format("[%s](%s%s)", title.replaceAll(" ", ""),
+                PromptDirect, value.replaceAll(" ", ""));
     }
 
     public final static String ScaleAnswer = "aixinli://scale.answer/";

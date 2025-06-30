@@ -30,6 +30,8 @@ public abstract class ConversationSubtask {
 
     protected final static String CORPUS_PROMPT = "prompt";
 
+    private final static String JUMP_POLISH = "润色";
+
     public final Subtask name;
 
     protected AIGCService service;
@@ -88,6 +90,14 @@ public abstract class ConversationSubtask {
         if (null == result) {
             return text;
         }
+        int pos = result.answer.indexOf("\n");
+        String substring = result.answer.substring(0, pos);
+        if (substring.contains(JUMP_POLISH)) {
+            result.answer = result.answer.substring(pos + 1);
+        }
+        while (result.answer.startsWith("\n")) {
+            result.answer = result.answer.substring(1);
+        }
         return result.answer;
     }
 
@@ -105,6 +115,14 @@ public abstract class ConversationSubtask {
         GeneratingRecord result = this.service.syncGenerateText(unit, prompt, null, null, null);
         if (null == result) {
             return text;
+        }
+        int pos = result.answer.indexOf("\n");
+        String substring = result.answer.substring(0, pos);
+        if (substring.contains(JUMP_POLISH)) {
+            result.answer = result.answer.substring(pos + 1);
+        }
+        while (result.answer.startsWith("\n")) {
+            result.answer = result.answer.substring(1);
         }
         return result.answer;
     }
