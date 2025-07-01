@@ -174,6 +174,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new AppVersionTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.AppASCIIArt.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new AppASCIIArtTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
 //        else if (AIGCAction.Sentiment.name.equals(action)) {
 //            // 来自 Dispatcher 的请求
 //            this.execute(new SentimentTask(this, talkContext, primitive,

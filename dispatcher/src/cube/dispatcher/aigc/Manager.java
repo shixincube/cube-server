@@ -35,7 +35,6 @@ import cube.dispatcher.aigc.handler.Chart;
 import cube.dispatcher.aigc.handler.Conversation;
 import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.aigc.handler.app.App;
-import cube.dispatcher.aigc.handler.app.Profile;
 import cube.dispatcher.util.Tickable;
 import cube.util.FileLabels;
 import cube.util.HttpServer;
@@ -170,6 +169,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Profile());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Membership());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.AppVersion());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.ASCIIArt());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.WordCloud());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Emotion());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.UserSignOut());
@@ -375,6 +375,26 @@ public class Manager implements Tickable, PerformerListener {
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.d(Manager.class, "#getAppVersion - Response state is NOT ok : "
+                    + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
+    }
+
+    public JSONObject getASCIIArt(String token) {
+        Packet packet = new Packet(AIGCAction.AppASCIIArt.name, new JSONObject());
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#getASCIIArt - Response is null");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.d(Manager.class, "#getASCIIArt - Response state is NOT ok : "
                     + Packet.extractCode(responsePacket));
             return null;
         }

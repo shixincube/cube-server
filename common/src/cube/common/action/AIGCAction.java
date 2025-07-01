@@ -82,6 +82,11 @@ public enum AIGCAction {
     AppVersion("appVersion"),
 
     /**
+     * 应用层获取 ASCII Art 数据。
+     */
+    AppASCIIArt("appASCIIArt"),
+
+    /**
      * 获取词云数据。
      */
     GetWordCloud("getWordCloud"),
