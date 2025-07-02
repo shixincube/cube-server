@@ -7,6 +7,7 @@
 package cube.aigc.psychology.app;
 
 import cube.aigc.psychology.algorithm.BigFivePersonality;
+import cube.aigc.psychology.composition.HexagonDimensionScore;
 import cube.common.JSONable;
 import cube.common.entity.Membership;
 import cube.common.entity.Point;
@@ -38,6 +39,8 @@ public class UserProfile implements JSONable {
      */
     public int limitPerMonth = 0;
 
+    public HexagonDimensionScore hexagonScore;
+
     public BigFivePersonality personality;
 
     public UserProfile() {
@@ -59,6 +62,10 @@ public class UserProfile implements JSONable {
         this.permissibleReports = json.getInt("permissibleReports");
         this.usageOfThisMonth = json.getInt("usageOfThisMonth");
         this.limitPerMonth = json.getInt("limitPerMonth");
+
+        if (json.has("hexagonScore")) {
+            this.hexagonScore = new HexagonDimensionScore(json.getJSONObject("hexagonScore"));
+        }
 
         if (json.has("personality")) {
             this.personality = new BigFivePersonality(json.getJSONObject("personality"));
@@ -83,6 +90,10 @@ public class UserProfile implements JSONable {
         json.put("permissibleReports", this.permissibleReports);
         json.put("usageOfThisMonth", this.usageOfThisMonth);
         json.put("limitPerMonth", this.limitPerMonth);
+
+        if (null != this.hexagonScore) {
+            json.put("hexagonScore", this.hexagonScore.toJSON());
+        }
 
         if (null != this.personality) {
             json.put("personality", this.personality.toCompactJSON());

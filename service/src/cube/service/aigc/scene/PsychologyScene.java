@@ -1347,15 +1347,15 @@ public class PsychologyScene {
         profile.permissibleReports = this.numPsychologyReports(authToken.getContactId(),
                 AIGCStateCode.Ok.code, true);
 
-        // FIXME 2025-6-18 不再查找人格数据
-//        List<PaintingReport> reports = this.getPsychologyReports(authToken.getContactId(), AIGCStateCode.Ok.code, 1);
-//        if (!reports.isEmpty()) {
-//            try {
-//                profile.personality = reports.get(0).getEvaluationReport().getPersonalityAccelerator().getBigFivePersonality();
-//            } catch (Exception e) {
-//                Logger.w(this.getClass(), "#getAppUserProfile", e);
-//            }
-//        }
+        List<PaintingReport> reports = this.getPsychologyReports(authToken.getContactId(), AIGCStateCode.Ok.code, 1);
+        if (!reports.isEmpty()) {
+            try {
+                profile.hexagonScore = reports.get(0).getDimensionScore();
+                profile.personality = reports.get(0).getEvaluationReport().getPersonalityAccelerator().getBigFivePersonality();
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "#getAppUserProfile", e);
+            }
+        }
 
         return profile;
     }

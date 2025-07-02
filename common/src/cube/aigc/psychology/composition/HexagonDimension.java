@@ -24,9 +24,9 @@ public enum HexagonDimension {
     Behavior("Behavior", "行为"),
 
     /**
-     * 人际关系。
+     * 人际关系敏感。
      */
-    InterpersonalRelationship("InterpersonalRelationship", "人际关系"),
+    InterpersonalRelationship("InterpersonalRelationship", "人际关系敏感"),
 
     /**
      * 自我评价。
