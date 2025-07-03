@@ -40,7 +40,7 @@ public class FrameworkWrapper {
         this.baseInfoList.clear();
         List<KnowledgeBaseInfo> list = this.service.getStorage().readKnowledgeBaseInfo(this.contactId);
         this.baseInfoList.addAll(list);
-        return this.baseInfoList;
+        return new ArrayList<>(this.baseInfoList);
     }
 
     public List<KnowledgeBase> getAllKnowledgeBases() {

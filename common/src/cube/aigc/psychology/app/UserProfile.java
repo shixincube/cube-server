@@ -96,7 +96,7 @@ public class UserProfile implements JSONable {
         }
 
         if (null != this.personality) {
-            json.put("personality", this.personality.toCompactJSON());
+            json.put("personality", this.personality.toJSON());
         }
 
         // 旧版本兼容 1.0.4 及之前的版本
