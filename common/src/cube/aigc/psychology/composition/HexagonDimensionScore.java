@@ -8,8 +8,11 @@ package cube.aigc.psychology.composition;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.psychology.Dataset;
 import cube.aigc.psychology.Indicator;
+import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.algorithm.Attention;
+import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.algorithm.PaintingConfidence;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -32,37 +35,42 @@ public class HexagonDimensionScore {
 
     public HexagonDimensionScore(int mood, int cognition, int behavior, int interpersonalRelationship,
                                  int selfAssessment, int mentalHealth) {
-        this.record(HexagonDimension.Mood, mood);
-        this.record(HexagonDimension.Cognition, cognition);
-        this.record(HexagonDimension.Behavior, behavior);
-        this.record(HexagonDimension.InterpersonalRelationship, interpersonalRelationship);
-        this.record(HexagonDimension.SelfAssessment, selfAssessment);
-        this.record(HexagonDimension.MentalHealth, mentalHealth);
+        this.recordScore(HexagonDimension.Mood, mood, IndicatorRate.Medium);
+        this.recordScore(HexagonDimension.Cognition, cognition, IndicatorRate.Medium);
+        this.recordScore(HexagonDimension.Behavior, behavior, IndicatorRate.Medium);
+        this.recordScore(HexagonDimension.InterpersonalRelationship, interpersonalRelationship, IndicatorRate.Medium);
+        this.recordScore(HexagonDimension.SelfAssessment, selfAssessment, IndicatorRate.Medium);
+        this.recordScore(HexagonDimension.MentalHealth, mentalHealth, IndicatorRate.Medium);
     }
 
     public HexagonDimensionScore(Attention attention, List<EvaluationScore> scoreList, PaintingConfidence confidence,
                                  FactorSet factorSet) {
         for (HexagonDimension hd : HexagonDimension.values()) {
-            this.record(hd, 80);
+            this.recordScore(hd, 80, IndicatorRate.Medium);
         }
 
         if (null != confidence) {
             // 认知
             switch (confidence.getConfidenceLevel()) {
                 case PaintingConfidence.LEVEL_HIGHER:
-                    this.record(HexagonDimension.Cognition, Utils.randomInt(80, 89));
+                    this.recordScore(HexagonDimension.Cognition, Utils.randomInt(80, 89),
+                            IndicatorRate.Highest);
                     break;
                 case PaintingConfidence.LEVEL_HIGH:
-                    this.record(HexagonDimension.Cognition, Utils.randomInt(75, 79));
+                    this.recordScore(HexagonDimension.Cognition, Utils.randomInt(75, 79),
+                            IndicatorRate.High);
                     break;
                 case PaintingConfidence.LEVEL_NORMAL:
-                    this.record(HexagonDimension.Cognition, Utils.randomInt(70, 74));
+                    this.recordScore(HexagonDimension.Cognition, Utils.randomInt(70, 74),
+                            IndicatorRate.Medium);
                     break;
                 case PaintingConfidence.LEVEL_LOW:
-                    this.record(HexagonDimension.Cognition, Utils.randomInt(60, 69));
+                    this.recordScore(HexagonDimension.Cognition, Utils.randomInt(60, 69),
+                            IndicatorRate.Low);
                     break;
                 case PaintingConfidence.LEVEL_LOWER:
-                    this.record(HexagonDimension.Cognition, Utils.randomInt(50, 59));
+                    this.recordScore(HexagonDimension.Cognition, Utils.randomInt(50, 59),
+                            IndicatorRate.Lowest);
                     break;
                 default:
                     break;
@@ -77,100 +85,124 @@ public class HexagonDimensionScore {
             if (factorSet.affectFactor.positive > factorSet.affectFactor.negative) {
                 if (attention == Attention.SpecialAttention || attention == Attention.FocusedAttention) {
                     if (factorSet.affectFactor.positive - factorSet.affectFactor.negative > 10) {
-                        this.record(HexagonDimension.Mood, Utils.randomInt(70, 79));
+                        this.recordScore(HexagonDimension.Mood, Utils.randomInt(70, 79),
+                                IndicatorRate.High);
                     }
                     else {
-                        this.record(HexagonDimension.Mood, Utils.randomInt(60, 69));
+                        this.recordScore(HexagonDimension.Mood, Utils.randomInt(60, 69),
+                                IndicatorRate.Medium);
                     }
                 }
                 else {
                     if (factorSet.affectFactor.positive - factorSet.affectFactor.negative > 10) {
-                        this.record(HexagonDimension.Mood, Utils.randomInt(80, 89));
+                        this.recordScore(HexagonDimension.Mood, Utils.randomInt(80, 89),
+                                IndicatorRate.Highest);
                     }
                     else {
-                        this.record(HexagonDimension.Mood, Utils.randomInt(70, 79));
+                        this.recordScore(HexagonDimension.Mood, Utils.randomInt(70, 79),
+                                IndicatorRate.High);
                     }
                 }
             }
             else {
                 if (factorSet.affectFactor.negative - factorSet.affectFactor.positive > 10) {
-                    this.record(HexagonDimension.Mood, Utils.randomInt(50, 59));
+                    this.recordScore(HexagonDimension.Mood, Utils.randomInt(50, 59),
+                            IndicatorRate.Low);
                 }
                 else {
-                    this.record(HexagonDimension.Mood, Utils.randomInt(60, 69));
+                    this.recordScore(HexagonDimension.Mood, Utils.randomInt(60, 69),
+                            IndicatorRate.Medium);
                 }
             }
 
             // 心理健康
             if (attention == Attention.SpecialAttention) {
-                this.record(HexagonDimension.MentalHealth, Utils.randomInt(40, 49));
+                this.recordScore(HexagonDimension.MentalHealth, Utils.randomInt(40, 49),
+                        IndicatorRate.Lowest);
             }
             else if (attention == Attention.FocusedAttention) {
                 if (factorSet.calcSymptomTotal() > 160) {
-                    this.record(HexagonDimension.MentalHealth, Utils.randomInt(50, 54));
+                    this.recordScore(HexagonDimension.MentalHealth, Utils.randomInt(50, 54),
+                            IndicatorRate.Low);
                 }
                 else {
                     if (factorSet.normDepression().norm && factorSet.normSomatization().norm && factorSet.normAnxiety().norm) {
-                        this.record(HexagonDimension.MentalHealth, Utils.randomInt(60, 69));
+                        this.recordScore(HexagonDimension.MentalHealth, Utils.randomInt(60, 69),
+                                IndicatorRate.Medium);
                     }
                     else {
-                        this.record(HexagonDimension.MentalHealth, Utils.randomInt(55, 59));
+                        this.recordScore(HexagonDimension.MentalHealth, Utils.randomInt(55, 59),
+                                IndicatorRate.Low);
                     }
                 }
             }
             else if (attention == Attention.GeneralAttention) {
                 if (factorSet.calcSymptomTotal() > 160) {
-                    this.record(HexagonDimension.MentalHealth, Utils.randomInt(70, 74));
+                    this.recordScore(HexagonDimension.MentalHealth, Utils.randomInt(70, 74),
+                            IndicatorRate.High);
                 }
                 else {
                     if (factorSet.normDepression().norm && factorSet.normSomatization().norm && factorSet.normAnxiety().norm) {
-                        this.record(HexagonDimension.MentalHealth, Utils.randomInt(78, 79));
+                        this.recordScore(HexagonDimension.MentalHealth, Utils.randomInt(78, 79),
+                                IndicatorRate.High);
                     }
                     else {
-                        this.record(HexagonDimension.MentalHealth, Utils.randomInt(75, 77));
+                        this.recordScore(HexagonDimension.MentalHealth, Utils.randomInt(75, 77),
+                                IndicatorRate.Medium);
                     }
                 }
             }
             else {
                 if (factorSet.calcSymptomTotal() > 160) {
-                    this.record(HexagonDimension.MentalHealth, Utils.randomInt(80, 84));
+                    this.recordScore(HexagonDimension.MentalHealth, Utils.randomInt(80, 84),
+                            IndicatorRate.High);
                 }
                 else {
                     if (factorSet.normDepression().norm && factorSet.normSomatization().norm && factorSet.normAnxiety().norm) {
-                        this.record(HexagonDimension.MentalHealth, Utils.randomInt(88, 89));
+                        this.recordScore(HexagonDimension.MentalHealth, Utils.randomInt(88, 89),
+                                IndicatorRate.Highest);
                     }
                     else {
-                        this.record(HexagonDimension.MentalHealth, Utils.randomInt(85, 87));
+                        this.recordScore(HexagonDimension.MentalHealth, Utils.randomInt(85, 87),
+                                IndicatorRate.High);
                     }
                 }
             }
 
             // 人际敏感
             if (factorSet.symptomFactor.interpersonal > 3.0) {
-                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(80, 89));
+                this.recordScore(HexagonDimension.InterpersonalRelationship, Utils.randomInt(80, 89),
+                        IndicatorRate.High);
             }
             else if (factorSet.symptomFactor.interpersonal > 2.5) {
-                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(70, 79));
+                this.recordScore(HexagonDimension.InterpersonalRelationship, Utils.randomInt(70, 79),
+                        IndicatorRate.Medium);
             }
             else if (factorSet.symptomFactor.interpersonal > 1.66) {
-                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(60, 69));
+                this.recordScore(HexagonDimension.InterpersonalRelationship, Utils.randomInt(60, 69),
+                        IndicatorRate.Low);
             }
             else {
-                this.record(HexagonDimension.InterpersonalRelationship, Utils.randomInt(55, 59));
+                this.recordScore(HexagonDimension.InterpersonalRelationship, Utils.randomInt(55, 59),
+                        IndicatorRate.Low);
             }
 
             // 行为
             if (factorSet.normHostile().norm && factorSet.normHorror().norm && factorSet.normParanoid().norm) {
-                this.record(HexagonDimension.Behavior, Utils.randomInt(80, 89));
+                this.recordScore(HexagonDimension.Behavior, Utils.randomInt(80, 89),
+                        IndicatorRate.Highest);
             }
             else if (factorSet.normHostile().norm && factorSet.normParanoid().norm) {
-                this.record(HexagonDimension.Behavior, Utils.randomInt(70, 79));
+                this.recordScore(HexagonDimension.Behavior, Utils.randomInt(70, 79),
+                        IndicatorRate.High);
             }
             else if (factorSet.symptomFactor.hostile <= 2.5 && factorSet.symptomFactor.paranoid <= 2.5) {
-                this.record(HexagonDimension.Behavior, Utils.randomInt(60, 69));
+                this.recordScore(HexagonDimension.Behavior, Utils.randomInt(60, 69),
+                        IndicatorRate.Medium);
             }
             else {
-                this.record(HexagonDimension.Behavior, Utils.randomInt(50, 59));
+                this.recordScore(HexagonDimension.Behavior, Utils.randomInt(50, 59),
+                        IndicatorRate.Low);
             }
 
             // 自我评价
@@ -193,14 +225,17 @@ public class HexagonDimensionScore {
                 }
             }
             if (attention == Attention.FocusedAttention || attention == Attention.SpecialAttention) {
-                this.record(HexagonDimension.SelfAssessment, Utils.randomInt(60, 69));
+                this.recordScore(HexagonDimension.SelfAssessment, Utils.randomInt(60, 69),
+                        IndicatorRate.Medium);
             }
             else {
                 if (selfConsciousness.calcScore() > 0 && socialAdaptability.calcScore() > 0 && realism.calcScore() > idealism.calcScore()) {
-                    this.record(HexagonDimension.SelfAssessment, Utils.randomInt(80, 89));
+                    this.recordScore(HexagonDimension.SelfAssessment, Utils.randomInt(80, 89),
+                            IndicatorRate.High);
                 }
                 else {
-                    this.record(HexagonDimension.SelfAssessment, Utils.randomInt(70, 79));
+                    this.recordScore(HexagonDimension.SelfAssessment, Utils.randomInt(70, 79),
+                            IndicatorRate.Medium);
                 }
             }
         }
@@ -242,12 +277,12 @@ public class HexagonDimensionScore {
         }
     }
 
-    public void record(HexagonDimension dim, int value) {
+    public void recordScore(HexagonDimension dim, int value, IndicatorRate rate) {
         this.scores.put(dim, value);
+        this.rates.put(dim, rate.value);
     }
 
-    public void record(HexagonDimension dim, int rate, String description) {
-        this.rates.put(dim, rate);
+    public void recordDescription(HexagonDimension dim, String description) {
         this.descriptions.put(dim, description);
     }
 
@@ -256,6 +291,13 @@ public class HexagonDimensionScore {
             return 0;
         }
         return this.scores.get(hexagonDimension);
+    }
+
+    public int getDimensionRate(HexagonDimension hexagonDimension) {
+        if (!this.rates.containsKey(hexagonDimension)) {
+            return 0;
+        }
+        return this.rates.get(hexagonDimension);
     }
 
     public String getDimensionDescription(HexagonDimension hexagonDimension) {

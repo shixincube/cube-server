@@ -6,6 +6,7 @@
 
 package cube.aigc.psychology;
 
+import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.HexagonDimension;
 import cube.aigc.psychology.composition.HexagonDimensionScore;
@@ -83,7 +84,7 @@ public class HexagonDimensionProjection {
         index = 0;
         for (HexagonDimension dim : HexagonDimension.values()) {
             double value = hdScores[index];
-            result.record(dim, (int) Math.ceil(value));
+            result.recordScore(dim, (int) Math.ceil(value), IndicatorRate.None);
             ++index;
         }
 

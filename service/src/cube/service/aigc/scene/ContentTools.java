@@ -10,10 +10,7 @@ import cell.core.net.Endpoint;
 import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.psychology.*;
-import cube.aigc.psychology.algorithm.Attention;
-import cube.aigc.psychology.algorithm.BigFivePersonality;
-import cube.aigc.psychology.algorithm.PersonalityAccelerator;
-import cube.aigc.psychology.algorithm.Suggestion;
+import cube.aigc.psychology.algorithm.*;
 import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.*;
 import cube.common.entity.AIGCChannel;
@@ -39,21 +36,18 @@ public class ContentTools {
     private ContentTools() {
     }
 
-    public static void fillDimensionScoreDescription(Tokenizer tokenizer, HexagonDimensionScore sds) {
+    public static void fillHexagonScoreDescription(Tokenizer tokenizer, HexagonDimensionScore sds) {
         TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
         for (HexagonDimension dim : HexagonDimension.values()) {
             int score = sds.getDimensionScore(dim);
             String query = null;
-            int rate = 0;
-            if (score <= 70) {
+            int rate = sds.getDimensionRate(dim);
+            if (rate <= IndicatorRate.Low.value) {
                 query = "六维分析中" + dim.displayName + "维度得分低的表现";
-                rate = 1;
-            } else if (score >= 90) {
+            } else if (score >= IndicatorRate.High.value) {
                 query = "六维分析中" + dim.displayName + "维度得分高的表现";
-                rate = 3;
             } else {
                 query = "六维分析中" + dim.displayName + "维度得分中等的表现";
-                rate = 2;
             }
 
             List<String> keywordList = analyzer.analyzeOnlyWords(query, 7);
@@ -61,10 +55,10 @@ public class ContentTools {
             Dataset dataset = Resource.getInstance().loadDataset();
             String answer = dataset.matchContent(keywordList.toArray(new String[0]), 7);
             if (null != answer) {
-                sds.record(dim, rate, answer);
+                sds.recordDescription(dim, answer);
             }
             else {
-                Logger.e(ContentTools.class, "#fillDimensionScoreDescription - Answer is null: " + query);
+                Logger.e(ContentTools.class, "#fillHexagonScoreDescription - Answer is null: " + query);
             }
         }
     }

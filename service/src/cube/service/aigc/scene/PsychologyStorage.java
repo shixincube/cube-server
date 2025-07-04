@@ -1370,7 +1370,7 @@ public class PsychologyStorage implements Storagable {
                     80, 80, 80, 80, 80, 80);
 
             // 描述
-            ContentTools.fillDimensionScoreDescription(this.tokenizer, dimensionScore);
+            ContentTools.fillHexagonScoreDescription(this.tokenizer, dimensionScore);
 
             report.setDimensionalScore(dimensionScore, normDimensionScore);
         } catch (Exception e) {

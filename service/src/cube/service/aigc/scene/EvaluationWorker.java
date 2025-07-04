@@ -171,7 +171,7 @@ public class EvaluationWorker {
             this.normDimensionScore = new HexagonDimensionScore(
                     80, 80, 80, 80, 80, 80);
             // 描述
-            ContentTools.fillDimensionScoreDescription(this.service.getTokenizer(), this.dimensionScore);
+            ContentTools.fillHexagonScoreDescription(this.service.getTokenizer(), this.dimensionScore);
         } catch (Exception e) {
             Logger.w(this.getClass(), "#make", e);
         }
