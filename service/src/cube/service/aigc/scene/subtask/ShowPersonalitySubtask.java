@@ -47,7 +47,7 @@ public class ShowPersonalitySubtask extends ConversationSubtask {
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = Resource.getInstance().getCorpus(CORPUS,
                                 "ANSWER_NO_REPORTS_DATA");
-                        convCtx.record(record);
+                        convCtx.recordTask(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 
@@ -70,7 +70,7 @@ public class ShowPersonalitySubtask extends ConversationSubtask {
                                 ContentTools.makeContent(report, false, 0, true));
                         record.answer += "\n\n" + ContentTools.makePageLink(channel.getHttpsEndpoint(),
                                 channel.getAuthToken().getCode(), report, false, true);
-                        convCtx.record(record);
+                        convCtx.recordTask(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 
@@ -93,7 +93,7 @@ public class ShowPersonalitySubtask extends ConversationSubtask {
                             ContentTools.makeContent(report, false, 0, true));
                     record.answer += "\n\n" + ContentTools.makePageLink(channel.getHttpsEndpoint(),
                             channel.getAuthToken().getCode(), report, false, true);
-                    convCtx.record(record);
+                    convCtx.recordTask(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 

@@ -47,7 +47,7 @@ public class UnselectReportSubtask extends ConversationSubtask {
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = answer;
                     record.context = context;
-                    convCtx.record(record);
+                    convCtx.recordTask(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
@@ -60,7 +60,7 @@ public class UnselectReportSubtask extends ConversationSubtask {
                             Resource.getInstance().getCorpus(CORPUS, "ANSWER_UNSELECT_REPORT_WARNING") :
                             fastPolish(Resource.getInstance().getCorpus(CORPUS, "ANSWER_UNSELECT_REPORT_WARNING"));
                     record.context = context;
-                    convCtx.record(record);
+                    convCtx.recordTask(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 

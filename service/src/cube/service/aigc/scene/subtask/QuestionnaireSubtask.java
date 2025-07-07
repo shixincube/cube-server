@@ -395,6 +395,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = answer.toString();
                         record.context = complexContext;
+                        convCtx.recordTask(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 

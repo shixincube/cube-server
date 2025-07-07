@@ -52,7 +52,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = polish(Resource.getInstance().getCorpus(CORPUS,
                             "ANSWER_NO_REPORTS_DATA"));
-                    convCtx.record(record);
+                    convCtx.recordTask(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
@@ -83,7 +83,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                             record.answer = polish(String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_PLEASE_INPUT_REPORT_DESC"),
                                     convCtx.getReportList().size()));
-                            convCtx.record(record);
+                            convCtx.recordTask(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
 
@@ -115,7 +115,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                                         ContentTools.makeSummary(channel, report),
                                         ContentTools.makePageLink(channel.getHttpsEndpoint(), channel.getAuthToken().getCode(),
                                                 report, true, true));
-                                convCtx.record(record);
+                                convCtx.recordTask(record);
                                 listener.onGenerated(channel, record);
                                 channel.setProcessing(false);
 
@@ -133,7 +133,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                                 record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                         "FORMAT_ANSWER_SELECT_REPORT_LOCATION_OVERFLOW"),
                                         location, list.size());
-                                convCtx.record(record);
+                                convCtx.recordTask(record);
                                 listener.onGenerated(channel, record);
                                 channel.setProcessing(false);
 
@@ -154,7 +154,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_SELECT_REPORT_NOT_FIND_SN"), sn);
-                            convCtx.record(record);
+                            convCtx.recordTask(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
 
@@ -181,7 +181,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                                     ContentTools.makeBrief(channel, report),
                                     ContentTools.makePageLink(channel.getHttpsEndpoint(), channel.getAuthToken().getCode(),
                                             report, true, true));
-                            convCtx.record(record);
+                            convCtx.recordTask(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
 
@@ -205,7 +205,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                             record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_YMD"),
                                     convCtx.getReportList().size(), year, month, day);
-                            convCtx.record(record);
+                            convCtx.recordTask(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
                             SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
@@ -216,7 +216,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                             record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_YM"),
                                     convCtx.getReportList().size(), year, month);
-                            convCtx.record(record);
+                            convCtx.recordTask(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
                             SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
@@ -227,7 +227,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                             record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_MD"),
                                     convCtx.getReportList().size(), month, day);
-                            convCtx.record(record);
+                            convCtx.recordTask(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
                             SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
@@ -238,7 +238,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                             record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_DAY"),
                                     convCtx.getReportList().size(), day);
-                            convCtx.record(record);
+                            convCtx.recordTask(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
                             SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
@@ -249,7 +249,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                             record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_MONTH"),
                                     convCtx.getReportList().size(), month);
-                            convCtx.record(record);
+                            convCtx.recordTask(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
                             SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
@@ -260,7 +260,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                             record.answer = String.format(Resource.getInstance().getCorpus(CORPUS,
                                     "FORMAT_ANSWER_NO_REPORT_WAS_FOUND_FOR_YEAR"),
                                     convCtx.getReportList().size(), year);
-                            convCtx.record(record);
+                            convCtx.recordTask(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
                             SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
@@ -297,7 +297,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                                     ContentTools.makeContent(reports.get(0), true, 0, false),
                                     ContentTools.makePageLink(channel.getHttpsEndpoint(), channel.getAuthToken().getCode(),
                                             reports.get(0), true, true));
-                            convCtx.record(record);
+                            convCtx.recordTask(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
 
@@ -316,7 +316,7 @@ public class SelectReportSubtask extends ConversationSubtask {
                                     ContentTools.makeReportList(reports));
                             GeneratingRecord record = new GeneratingRecord(query);
                             record.answer = answer;
-                            convCtx.record(record);
+                            convCtx.recordTask(record);
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
 

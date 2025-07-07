@@ -45,7 +45,7 @@ public class ShowCoTSubtask extends ConversationSubtask {
                                 ContentTools.makeReportTitle(convCtx.getCurrentReport())));
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = answer;
-                        convCtx.record(record);
+                        convCtx.recordTask(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 
@@ -76,7 +76,7 @@ public class ShowCoTSubtask extends ConversationSubtask {
                         }
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = answer;
-                        convCtx.record(record);
+                        convCtx.recordTask(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 
@@ -106,7 +106,7 @@ public class ShowCoTSubtask extends ConversationSubtask {
                     }
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = answer;
-                    convCtx.record(record);
+                    convCtx.recordTask(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 

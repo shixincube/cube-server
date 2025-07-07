@@ -37,22 +37,19 @@ public class ConversationContext implements JSONable {
 
     private Subtask currentSubtask;
 
-    private List<GeneratingRecord> records;
-
     private List<PaintingReport> reportList;
 
     private AbstractGuideFlow guideFlow;
+
+    private List<GeneratingRecord> taskRecords = new ArrayList<>();
+
+    private List<GeneratingRecord> normalRecords = new ArrayList<>();
 
     private boolean superAdmin;
 
     public ConversationContext(ConversationRelation relation, AuthToken authToken) {
         this.relation = relation;
         this.authToken = authToken;
-        this.records = new ArrayList<>();
-    }
-
-    public ConversationContext(JSONObject json) {
-        this.records = new ArrayList<>();
     }
 
     public long getRelationId() {
@@ -133,7 +130,7 @@ public class ConversationContext implements JSONable {
         this.currentAttribute = null;
         this.currentReport = null;
         this.currentSubtask = null;
-        this.records.clear();
+        this.taskRecords.clear();
         this.reportList = null;
         this.guideFlow = null;
     }
@@ -150,8 +147,14 @@ public class ConversationContext implements JSONable {
     }
 
     public FileLabel getRecentFile() {
-        for (int i = this.records.size() - 1; i >= 0; --i) {
-            GeneratingRecord record = this.records.get(i);
+        for (int i = this.normalRecords.size() - 1; i >= 0; --i) {
+            GeneratingRecord record = this.normalRecords.get(i);
+            if (null != record.queryFileLabels && !record.queryFileLabels.isEmpty()) {
+                return record.queryFileLabels.get(0);
+            }
+        }
+        for (int i = this.taskRecords.size() - 1; i >= 0; --i) {
+            GeneratingRecord record = this.taskRecords.get(i);
             if (null != record.queryFileLabels && !record.queryFileLabels.isEmpty()) {
                 return record.queryFileLabels.get(0);
             }
@@ -159,16 +162,38 @@ public class ConversationContext implements JSONable {
         return null;
     }
 
-    public void record(GeneratingRecord record) {
-        this.records.add(record);
+    public void recordTask(GeneratingRecord record) {
+        this.taskRecords.add(record);
     }
 
-    public GeneratingRecord getRecent() {
-        if (this.records.isEmpty()) {
+    public GeneratingRecord getRecentTaskRecord() {
+        if (this.taskRecords.isEmpty()) {
             return null;
         }
 
-        return this.records.get(this.records.size() - 1);
+        return this.taskRecords.get(this.taskRecords.size() - 1);
+    }
+
+    public void recordNormal(GeneratingRecord record) {
+        this.normalRecords.add(record);
+    }
+
+    /**
+     * 获取时间倒序的历史记录。
+     *
+     * @param num
+     * @return
+     */
+    public List<GeneratingRecord> getNormalHistories(int num) {
+        List<GeneratingRecord> list = new ArrayList<>();
+        for (int i = this.normalRecords.size() - 1; i >= 0; --i) {
+            GeneratingRecord record = this.normalRecords.get(i);
+            list.add(record);
+            if (list.size() >= num) {
+                break;
+            }
+        }
+        return list;
     }
 
     @Override

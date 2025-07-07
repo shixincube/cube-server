@@ -350,8 +350,11 @@ public class ConversationWorker {
             }
         }
 
-        this.service.generateText(channel, unit, query, prompt.content, new GeneratingOption(false), null, 0,
-                null, null, true, new GenerateTextListener() {
+        // 从一般性对话中提取历史记录
+        List<GeneratingRecord> histories = convCtx.getNormalHistories(3);
+
+        this.service.generateText(channel, unit, query, prompt.content, new GeneratingOption(false),
+                histories, 0,null, null, true, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                         if (null != prompt.prefix) {
@@ -361,7 +364,8 @@ public class ConversationWorker {
                             record.answer += prompt.postfix;
                         }
 
-                        convCtx.record(record);
+                        // 记录为一般性记录
+                        convCtx.recordNormal(record);
                         listener.onGenerated(channel, record);
                     }
 

@@ -52,7 +52,7 @@ public class QueryReportSubtask extends ConversationSubtask {
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = Resource.getInstance().getCorpus(CORPUS,
                             "ANSWER_NO_REPORTS_DATA");
-                    convCtx.record(record);
+                    convCtx.recordTask(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
@@ -100,7 +100,7 @@ public class QueryReportSubtask extends ConversationSubtask {
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.context = complexContext;
                     record.answer = answer;
-                    convCtx.record(record);
+                    convCtx.recordTask(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 

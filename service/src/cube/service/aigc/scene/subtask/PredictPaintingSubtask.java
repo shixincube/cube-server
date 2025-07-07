@@ -205,7 +205,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
 
                     // 进入子任务
                     convCtx.setCurrentSubtask(Subtask.PredictPainting);
-                    convCtx.record(record);
+                    convCtx.recordTask(record);
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
@@ -229,7 +229,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
 
                     // 进入子任务
                     convCtx.setCurrentSubtask(Subtask.PredictPainting);
-                    convCtx.record(record);
+                    convCtx.recordTask(record);
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
@@ -253,7 +253,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
 
                     // 进入子任务
                     convCtx.setCurrentSubtask(Subtask.PredictPainting);
-                    convCtx.record(record);
+                    convCtx.recordTask(record);
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
@@ -277,7 +277,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
 
                     // 进入子任务
                     convCtx.setCurrentSubtask(Subtask.PredictPainting);
-                    convCtx.record(record);
+                    convCtx.recordTask(record);
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
@@ -317,7 +317,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                     @Override
                     public void onPaintingPredictFailed(PaintingReport report) {
                         Logger.d(this.getClass(), "#onPaintingPredictFailed: " + channel.getCode());
-                        GeneratingRecord record = convCtx.getRecent();
+                        GeneratingRecord record = convCtx.getRecentTaskRecord();
                         if (null != record.context) {
                             record.context.setInferring(false);
                         }
@@ -337,7 +337,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                     @Override
                     public void onReportEvaluateCompleted(PaintingReport report) {
                         Logger.d(this.getClass(), "#onReportEvaluateCompleted: " + channel.getCode());
-                        GeneratingRecord record = convCtx.getRecent();
+                        GeneratingRecord record = convCtx.getRecentTaskRecord();
                         if (null != record.context) {
                             record.context.setInferring(false);
                         }
@@ -358,7 +358,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                     @Override
                     public void onReportEvaluateFailed(PaintingReport report) {
                         Logger.d(this.getClass(), "#onReportEvaluateFailed - Clear current subtask");
-                        GeneratingRecord record = convCtx.getRecent();
+                        GeneratingRecord record = convCtx.getRecentTaskRecord();
                         if (null != record.context) {
                             record.context.setInferring(false);
                         }
@@ -391,7 +391,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
 
             record.context = complexContext;
             // 记录
-            convCtx.record(record);
+            convCtx.recordTask(record);
 
             // 启动生成流程，不记录历史，不更新频道状态
             this.service.getExecutor().execute(new Runnable() {
