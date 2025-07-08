@@ -398,7 +398,7 @@ public class PsychologyScene {
                         // 预测
                         reportTask.listener.onPaintingPredicting(reportTask.report, reportTask.fileLabel);
 
-                        Painting painting = processPainting(unit, reportTask.fileLabel, true);
+                        Painting painting = processPainting(unit, reportTask.fileLabel, true, false);
                         if (null == painting) {
                             // 预测绘图失败
                             Logger.w(PsychologyScene.class, "#generatePsychologyReport - onPaintingPredictFailed: " +
@@ -1031,6 +1031,7 @@ public class PsychologyScene {
             return null;
         }
 
+        /*
         File file = this.service.loadFile(authToken.getDomain(), fileLabel.getFileCode());
         if (null == file) {
             Logger.e(this.getClass(), "#getPredictedPainting - Can NOT find painting file: " +
@@ -1056,6 +1057,7 @@ public class PsychologyScene {
         String filename = fileLabel.getFileCode() + "_predict.jpg";
         String newFileCode = FileUtils.makeFileCode(fileCode, authToken.getDomain(), filename);
         FileLabel resultFile = this.service.saveFile(authToken, newFileCode, outputFile, filename, true);
+        */
 
         AIGCUnit unit = this.service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
         if (null == unit) {
@@ -1063,12 +1065,12 @@ public class PsychologyScene {
             return null;
         }
         // 进行绘画元素预测
-        Painting resultPainting = this.processPainting(unit, resultFile, false);
+        Painting resultPainting = this.processPainting(unit, fileLabel, true, true);
         if (null == resultPainting) {
             Logger.e(this.getClass(), "#getPredictedPainting - Predict painting failed: " + fileCode);
             return null;
         }
-        resultPainting.fileLabel = resultFile;
+        resultPainting.fileLabel = resultPainting.processedFileLabel;
         return resultPainting;
     }
 
@@ -1090,6 +1092,7 @@ public class PsychologyScene {
             painting.fileLabel = report.getFileLabel();
         }
 
+        /*
         File file = this.service.loadFile(authToken.getDomain(), painting.fileLabel.getFileCode());
         if (null == file) {
             Logger.e(this.getClass(), "#getPredictedPainting - Can NOT find painting file: " +
@@ -1115,6 +1118,7 @@ public class PsychologyScene {
         String filename = painting.fileLabel.getFileCode() + "_predict.jpg";
         String tmpFileCode = FileUtils.makeFileCode(reportSn, authToken.getDomain(), filename);
         FileLabel rawFileLabel = this.service.saveFile(authToken, tmpFileCode, rawFile, filename, false);
+        */
 
         AIGCUnit unit = this.service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
         if (null == unit) {
@@ -1122,12 +1126,12 @@ public class PsychologyScene {
             return null;
         }
         // 进行绘画元素预测
-        Painting resultPainting = this.processPainting(unit, rawFileLabel, false);
+        Painting resultPainting = this.processPainting(unit, painting.fileLabel, true, true);
         if (null == resultPainting) {
             Logger.e(this.getClass(), "#getPredictedPainting - Process painting failed");
             return null;
         }
-        resultPainting.fileLabel = rawFileLabel;
+        resultPainting.fileLabel = resultPainting.processedFileLabel;
 
         List<Material> materials = new ArrayList<>();
         for (Material material : resultPainting.getMaterials()) {
@@ -1135,23 +1139,21 @@ public class PsychologyScene {
                 materials.add(material);
             }
         }
+
+        File rawFile = this.service.loadFile(authToken.getDomain(), resultPainting.fileLabel.getFileCode());
+
         // 绘制预测数据
         File outputFile = new File(this.service.getWorkingPath(),
-                rawFileLabel.getFileCode() + "_result.jpg");
+                resultPainting.fileLabel.getFileCode() + "_result.jpg");
         PaintingUtils.drawMaterial(rawFile, materials, bbox, vparam, outputFile);
-
-        // 删除中间文件
-        if (rawFile.exists()) {
-            rawFile.delete();
-        }
 
         if (!outputFile.exists()) {
             Logger.e(this.getClass(), "#getPredictedPainting - Drawing picture material box failed: " + reportSn);
             return null;
         }
 
-        filename = reportSn + "_predict.jpg";
-        tmpFileCode = FileUtils.makeFileCode(reportSn, authToken.getDomain(), filename);
+        String filename = reportSn + "_predict.jpg";
+        String tmpFileCode = FileUtils.makeFileCode(reportSn, authToken.getDomain(), filename);
         FileLabel result = this.service.saveFile(authToken, tmpFileCode, outputFile, filename, true);
         return result;
     }
@@ -1360,10 +1362,11 @@ public class PsychologyScene {
         return profile;
     }
 
-    private Painting processPainting(AIGCUnit unit, FileLabel fileLabel, boolean adjust) {
+    private Painting processPainting(AIGCUnit unit, FileLabel fileLabel, boolean adjust, boolean upload) {
         JSONObject data = new JSONObject();
         data.put("fileLabel", fileLabel.toJSON());
         data.put("adjust", adjust);
+        data.put("upload", upload);
         Packet request = new Packet(AIGCAction.PredictPsychologyPainting.name, data);
         ActionDialect dialect = this.service.getCellet().transmit(unit.getContext(), request.toDialect(), 5 * 60 * 1000);
         if (null == dialect) {

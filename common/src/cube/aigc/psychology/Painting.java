@@ -36,6 +36,8 @@ public class Painting implements JSONable {
 
     public FileLabel fileLabel;
 
+    public FileLabel processedFileLabel;
+
     private PaintingType type;
 
     private long elapsed;
@@ -113,6 +115,10 @@ public class Painting implements JSONable {
 
         if (json.has("fileLabel")) {
             this.fileLabel = new FileLabel(json.getJSONObject("fileLabel"));
+        }
+
+        if (json.has("processed")) {
+            this.processedFileLabel = new FileLabel(json.getJSONObject("processed"));
         }
 
         if (json.has("shapes")) {
@@ -883,6 +889,10 @@ public class Painting implements JSONable {
             json.put("shapes", this.shapes);
         }
 
+        if (null != this.processedFileLabel) {
+            json.put("processed", this.processedFileLabel.toJSON());
+        }
+
         return json;
     }
 
@@ -891,6 +901,9 @@ public class Painting implements JSONable {
         JSONObject json = this.toJSON();
         if (json.has("attribute")) {
             json.remove("attribute");
+        }
+        if (json.has("processed")) {
+            json.remove("processed");
         }
         return json;
     }

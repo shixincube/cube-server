@@ -45,7 +45,7 @@ public class ShowPaintingSubtask extends ConversationSubtask {
                         GeneratingRecord record = new GeneratingRecord(query);
                         record.answer = Resource.getInstance().getCorpus(CORPUS,
                                 "ANSWER_NO_REPORTS_DATA");
-                        convCtx.record(record);
+                        convCtx.recordTask(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 
@@ -65,7 +65,7 @@ public class ShowPaintingSubtask extends ConversationSubtask {
                                 "FORMAT_ANSWER_SHOW_PAINTING_RECENT_ONE"),
                                 ContentTools.makeReportTitle(report),
                                 ContentTools.makeReportPaintingLink(channel, report));
-                        convCtx.record(record);
+                        convCtx.recordTask(record);
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 
@@ -85,7 +85,7 @@ public class ShowPaintingSubtask extends ConversationSubtask {
                             "FORMAT_ANSWER_SHOW_PAINTING"),
                             ContentTools.makeReportTitle(report),
                             ContentTools.makeReportPaintingLink(channel, report));
-                    convCtx.record(record);
+                    convCtx.recordTask(record);
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
