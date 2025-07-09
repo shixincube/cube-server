@@ -36,7 +36,7 @@ public class UserModify extends ContextHandler {
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             try {
                 String token = this.getApiToken(request);
-                if (null == token) {
+                if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                     this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                     return;

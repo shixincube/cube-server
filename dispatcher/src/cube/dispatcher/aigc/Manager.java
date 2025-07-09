@@ -56,8 +56,12 @@ public class Manager implements Tickable, PerformerListener {
 
     private Performer performer;
 
+    private long lastTickTime;
+
+    /**
+     * Key：Token code
+     */
     private Map<String, ContactToken> validTokenMap;
-    private long lastClearToken;
 
     /**
      * Key：操作序号。
@@ -84,7 +88,7 @@ public class Manager implements Tickable, PerformerListener {
         this.performer.addTickable(this);
         this.performer.setListener(AIGCCellet.NAME, this);
 
-        this.lastClearToken = System.currentTimeMillis();
+        this.lastTickTime = System.currentTimeMillis();
 
         (new Thread() {
             @Override
@@ -115,7 +119,6 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new SemanticSearch());
         httpServer.addContextHandler(new SpeechEmotionRecognition());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
-        httpServer.addContextHandler(new Conversation());
         httpServer.addContextHandler(new KnowledgeQA());
         httpServer.addContextHandler(new KnowledgeProfiles());
         httpServer.addContextHandler(new KnowledgeInfos());
@@ -183,18 +186,28 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Inject());
     }
 
-    public boolean checkToken(String token) {
-        return (null != this.checkAndGetToken(token));
+    public boolean checkToken(String token, Device device) {
+        return (null != this.checkAndGetToken(token, device));
     }
 
-    public String checkAndGetToken(String token) {
-        if (null == token) {
+    public String checkAndGetToken(String token, Device device) {
+        if (null == token || null == device) {
+            if (null == token) {
+                Logger.w(this.getClass(), "#checkAndGetToken - The token is null");
+            }
+            else {
+                Logger.w(this.getClass(), "#checkAndGetToken - The device is null");
+            }
             return null;
         }
 
         if (this.validTokenMap.containsKey(token)) {
             ContactToken contactToken = this.validTokenMap.get(token);
-            return contactToken.authToken.getCode();
+            if (device.getName().equalsIgnoreCase("Unknown") ||
+                    device.getName().equalsIgnoreCase(contactToken.device.getName())) {
+                // 相同设备
+                return contactToken.authToken.getCode();
+            }
         }
 
         JSONObject data = new JSONObject();
@@ -206,16 +219,17 @@ public class Manager implements Tickable, PerformerListener {
         else {
             data.put("token", token);
         }
+        data.put("device", device.toJSON());
         Packet packet = new Packet(AIGCAction.CheckToken.name, data);
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
         if (null == response) {
-            Logger.w(Manager.class, "#checkToken - Response is null : " + token);
+            Logger.w(Manager.class, "#checkAndGetToken - Response is null : " + token);
             return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.d(Manager.class, "#checkToken - Response state is NOT ok : " +
+            Logger.d(Manager.class, "#checkAndGetToken - Response state is NOT ok : " +
                     Packet.extractCode(responsePacket) + " - " + token);
             return null;
         }
@@ -224,12 +238,16 @@ public class Manager implements Tickable, PerformerListener {
         AuthToken authToken = new AuthToken(payload.getJSONObject("token"));
         String resultToken = authToken.getCode();
         Contact contact = new Contact(payload.getJSONObject("contact"));
-        this.validTokenMap.put(resultToken, new ContactToken(authToken, contact));
+        this.validTokenMap.put(resultToken, new ContactToken(authToken, contact, device));
 
         return resultToken;
     }
 
-    public ContactToken getContactToken(String token) {
+    public ContactToken getContactToken(String token, Device device) {
+        ContactToken contactToken = this.validTokenMap.get(token);
+        if (null == contactToken) {
+            this.checkAndGetToken(token, device);
+        }
         return this.validTokenMap.get(token);
     }
 
@@ -271,7 +289,8 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public JSONObject checkInUser(String token, JSONObject data) {
+    public JSONObject checkInUser(String token, JSONObject data, String address) {
+        data.put("address", address);
         Packet packet = new Packet(AIGCAction.AppCheckInUser.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
@@ -446,7 +465,7 @@ public class Manager implements Tickable, PerformerListener {
         JSONObject responseJson = Packet.extractDataPayload(responsePacket);
         AuthToken authToken = new AuthToken(responseJson.getJSONObject("token"));
         Contact contact = new Contact(responseJson.getJSONObject("contact"));
-        return new ContactToken(authToken, contact);
+        return new ContactToken(authToken, contact, new Device("Unknown", "Unknown"));
     }
 
     public ConfigInfo getConfigInfo(String token) {
@@ -2720,9 +2739,16 @@ public class Manager implements Tickable, PerformerListener {
 
     @Override
     public void onTick(long now) {
-        if (now - this.lastClearToken > 60 * 1000) {
-            this.validTokenMap.clear();
-            this.lastClearToken = now;
+        if (now - this.lastTickTime > 60 * 1000) {
+            this.lastTickTime = now;
+
+            Iterator<Map.Entry<String, ContactToken>> ctIter = this.validTokenMap.entrySet().iterator();
+            while (ctIter.hasNext()) {
+                ContactToken contactToken = ctIter.next().getValue();
+                if (now - contactToken.timestamp > 60 * 1000) {
+                    ctIter.remove();
+                }
+            }
 
             Iterator<Map.Entry<Long, TextToFileFuture>> ttfIter = this.textToFileFutureMap.entrySet().iterator();
             while (ttfIter.hasNext()) {
@@ -2992,17 +3018,21 @@ public class Manager implements Tickable, PerformerListener {
 
         public final Contact contact;
 
+        public final Device device;
+
         public final long timestamp = System.currentTimeMillis();
 
-        protected ContactToken(AuthToken authToken, Contact contact) {
+        protected ContactToken(AuthToken authToken, Contact contact, Device device) {
             this.authToken = authToken;
             this.contact = contact;
+            this.device = device;
         }
 
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
             json.put("token", this.authToken.toJSON());
             json.put("contact", this.contact.toJSON());
+            json.put("device", this.device.toJSON());
             return json;
         }
     }

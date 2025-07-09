@@ -6,6 +6,7 @@
 
 package cube.service.aigc;
 
+import cube.aigc.AppEvent;
 import cube.common.entity.KnowledgeDocument;
 import cube.plugin.PluginContext;
 import cube.service.aigc.knowledge.KnowledgeBase;
@@ -19,9 +20,15 @@ public class AIGCPluginContext extends PluginContext {
 
     private KnowledgeDocument knowledgeDocument;
 
+    private AppEvent appEvent;
+
     public AIGCPluginContext(KnowledgeBase knowledgeBase, KnowledgeDocument knowledgeDocument) {
         this.knowledgeBase = knowledgeBase;
         this.knowledgeDocument = knowledgeDocument;
+    }
+
+    public AIGCPluginContext(AppEvent appEvent) {
+        this.appEvent = appEvent;
     }
 
     public void setKnowledgeBase(KnowledgeBase knowledgeBase) {
@@ -36,9 +43,16 @@ public class AIGCPluginContext extends PluginContext {
         return this.knowledgeDocument;
     }
 
+    public AppEvent getAppEvent() {
+        return this.appEvent;
+    }
+
     @Override
     public Object get(String name) {
-        if (name.equalsIgnoreCase("knowledgeBase")) {
+        if (name.equalsIgnoreCase("appEvent")) {
+            return this.appEvent;
+        }
+        else if (name.equalsIgnoreCase("knowledgeBase")) {
             return this.knowledgeBase;
         }
         else if (name.equalsIgnoreCase("knowledgeDoc")) {

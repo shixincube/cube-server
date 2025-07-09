@@ -14,6 +14,7 @@ import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -44,6 +45,14 @@ public class CheckTokenTask extends ServiceTask {
 
         String tokenCode = packet.data.has("token") ? packet.data.getString("token") : null;
         String invitationCode = packet.data.has("invitation") ? packet.data.getString("invitation") : null;
+        JSONObject deviceJson = packet.data.has("device") ? packet.data.getJSONObject("device") : null;
+
+        if (null == deviceJson) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
@@ -59,8 +68,9 @@ public class CheckTokenTask extends ServiceTask {
             }
         }
 
-        // 使用令牌码登录
-        Contact contact = ContactManager.getInstance().signIn(tokenCode, null);
+        // 校验唯一性
+        Device device = new Device(deviceJson);
+        Contact contact = ContactManager.getInstance().verifyOnlineUniqueness(tokenCode, device);
         if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

@@ -33,7 +33,7 @@ public class UpdateContactTask extends ClientTask {
                 ? actionDialect.getParamAsJson("context") : null;
 
         // 获取联系人
-        Contact contact = ContactManager.getInstance().updateContact(domain, contactId, name, context);
+        Contact contact = ContactManager.getInstance().updateContact(domain, contactId, name, context, null);
 
         ActionDialect result = new ActionDialect(ClientAction.UpdateContact.name);
         copyNotifier(result);

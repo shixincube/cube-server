@@ -46,7 +46,7 @@ public class NLGeneralTask extends ContextHandler {
             }
 
             String token = this.getRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
                 return;

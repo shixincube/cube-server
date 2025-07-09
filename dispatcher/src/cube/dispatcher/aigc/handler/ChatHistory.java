@@ -32,9 +32,9 @@ public class ChatHistory extends ContextHandler {
 
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -65,7 +65,7 @@ public class ChatHistory extends ContextHandler {
                     end = System.currentTimeMillis();
                 }
             } catch (Exception e) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
@@ -73,7 +73,7 @@ public class ChatHistory extends ContextHandler {
             JSONObject responseData = Manager.getInstance().queryChatHistory(token, channel,
                     contactId, feedback, start, end);
             if (null == responseData) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
                 return;
             }
@@ -84,9 +84,9 @@ public class ChatHistory extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, getDevice(request))) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -99,7 +99,7 @@ public class ChatHistory extends ContextHandler {
                 sn = data.getLong("sn");
                 feedback = data.getInt("feedback");
             } catch (Exception e) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
@@ -112,7 +112,7 @@ public class ChatHistory extends ContextHandler {
                 this.complete();
             }
             else {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
             }
         }

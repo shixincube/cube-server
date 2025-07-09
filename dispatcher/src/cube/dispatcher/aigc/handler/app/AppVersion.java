@@ -39,7 +39,7 @@ public class AppVersion extends ContextHandler {
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
             try {
                 String token = getApiToken(request);
-                if (!Manager.getInstance().checkToken(token)) {
+                if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                     this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                     this.complete();
                     return;
@@ -86,8 +86,8 @@ public class AppVersion extends ContextHandler {
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             try {
-                String token = getApiToken(request);
-                if (!Manager.getInstance().checkToken(token)) {
+                String token = this.getApiToken(request);
+                if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                     this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                     this.complete();
                     return;

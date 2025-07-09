@@ -37,7 +37,7 @@ public class ASCIIArt extends ContextHandler {
                 return;
             }
 
-            if (!Manager.getInstance().checkToken(token)) {
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                 this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;

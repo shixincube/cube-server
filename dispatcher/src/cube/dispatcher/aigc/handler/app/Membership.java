@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 用户侧写数据。
+ * 会员信息数据。
  */
 public class Membership extends ContextHandler {
 
@@ -35,8 +35,8 @@ public class Membership extends ContextHandler {
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
             try {
-                String token = getApiToken(request);
-                if (!Manager.getInstance().checkToken(token)) {
+                String token = this.getApiToken(request);
+                if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                     this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                     this.complete();
                     return;
@@ -67,7 +67,12 @@ public class Membership extends ContextHandler {
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             try {
-                String token = getApiToken(request);
+                String token = this.getApiToken(request);
+                if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                    this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
+                    this.complete();
+                    return;
+                }
 
                 JSONObject data = this.readBodyAsJSONObject(request);
                 String channel = data.getString("channel");

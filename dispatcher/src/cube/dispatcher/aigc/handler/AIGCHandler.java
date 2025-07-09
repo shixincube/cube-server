@@ -6,7 +6,9 @@
 
 package cube.dispatcher.aigc.handler;
 
+import cube.common.entity.Device;
 import cube.util.CrossDomainHandler;
+import cube.util.HttpHandler;
 import org.eclipse.jetty.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
@@ -26,7 +28,7 @@ public abstract class AIGCHandler extends CrossDomainHandler {
         String token = this.getLastRequestPath(request);
         if (null == token || token.length() < 32) {
             try {
-                token = request.getHeader("x-baize-api-token");
+                token = request.getHeader(HttpHandler.HEADER_X_BAIZE_API_TOKEN);
                 if (null == token || token.length() < 16) {
                     token = request.getParameter("token");
                 }
@@ -38,6 +40,18 @@ public abstract class AIGCHandler extends CrossDomainHandler {
             }
         }
         return token;
+    }
+
+    protected Device getDevice(HttpServletRequest request) {
+        String deviceName = request.getHeader(HttpHandler.HEADER_X_BAIZE_API_DEVICE);
+        String devicePlatform = request.getHeader(HttpHandler.HEADER_X_BAIZE_API_PLATFORM);
+        if (null == deviceName) {
+            deviceName = "Unknown";
+        }
+        if (null == devicePlatform) {
+            devicePlatform = "Unknown";
+        }
+        return new Device(deviceName, devicePlatform);
     }
 
     protected String getRequestPath(HttpServletRequest request) {

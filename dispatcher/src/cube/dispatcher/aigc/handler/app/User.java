@@ -36,7 +36,7 @@ public class User extends ContextHandler {
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
             try {
                 String token = this.getApiToken(request);
-                if (null == token) {
+                if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                     this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                     return;
@@ -58,14 +58,16 @@ public class User extends ContextHandler {
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             try {
                 String token = this.getApiToken(request);
-                if (null == token) {
+                if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                     this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                     return;
                 }
 
                 JSONObject data = this.readBodyAsJSONObject(request);
-                JSONObject result = Manager.getInstance().checkInUser(token, data);
+                String address = request.getRemoteAddr();
+                JSONObject result = Manager.getInstance().checkInUser(token, data,
+                        (null != address) ? address : "");
                 if (null == result) {
                     this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();

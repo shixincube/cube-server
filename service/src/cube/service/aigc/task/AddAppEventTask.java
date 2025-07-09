@@ -54,7 +54,7 @@ public class AddAppEventTask extends ServiceTask {
         AppEvent appEvent = new AppEvent(packet.data);
         appEvent.contactId = token.getContactId();
 
-        if (!service.getStorage().writeAppEvent(appEvent)) {
+        if (!service.fireEvent(appEvent)) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
             markResponseTime();

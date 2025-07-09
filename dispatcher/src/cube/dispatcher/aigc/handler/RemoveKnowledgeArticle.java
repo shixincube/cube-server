@@ -33,9 +33,9 @@ public class RemoveKnowledgeArticle extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -44,21 +44,21 @@ public class RemoveKnowledgeArticle extends ContextHandler {
             try {
                 JSONObject data = readBodyAsJSONObject(request);
                 if (null == data) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                     return;
                 }
 
                 idList = data.getJSONArray("ids");
             } catch (Exception e) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
 
             JSONObject result = Manager.getInstance().removeKnowledgeArticle(token, idList);
             if (null == result) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
                 return;
             }

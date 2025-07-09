@@ -240,6 +240,10 @@ public class AIGCService extends AbstractModule implements Generatable {
                     Logger.e(AIGCService.class, "Can NOT find AIGC storage config");
                 }
 
+                // 应用事件
+                AppEventPlugin appEventPlugin = new AppEventPlugin(AIGCService.this);
+                pluginSystem.register(AIGCHook.AppEvent, appEventPlugin);
+
                 // 知识库事件
                 KnowledgeBaseEventPlugin plugin = new KnowledgeBaseEventPlugin(AIGCService.this);
                 pluginSystem.register(AIGCHook.ImportKnowledgeDoc, plugin);
@@ -715,6 +719,14 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     //-------- App Interface - Start --------
 
+    public boolean fireEvent(AppEvent appEvent) {
+        AIGCHook hook = this.pluginSystem.getAppEventHook();
+        AIGCPluginContext context = new AIGCPluginContext(appEvent);
+        hook.apply(context);
+
+        return this.storage.writeAppEvent(appEvent);
+    }
+
     public User getUser(String token) {
         User user = null;
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
@@ -797,7 +809,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             user.setDisplayName(modification.displayName);
         }
         ContactManager.getInstance().updateContact(contact.getDomain().getName(), contact.getId(), contact.getName(),
-                user.toJSON());
+                user.toJSON(), null);
         return user;
     }
 
@@ -816,7 +828,8 @@ public class AIGCService extends AbstractModule implements Generatable {
             user.setPhoneNumber(verificationCode.dialCode + "-" + verificationCode.phoneNumber);
 
             ContactManager.getInstance().updateContact(contact.getDomain().getName(),
-                    contact.getId(), verificationCode.phoneNumber, user.toJSON());
+                    contact.getId(), verificationCode.phoneNumber, user.toJSON(),
+                    contact.getDevice());
 
             // 更新个人知识记忆
             this.updatePersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
@@ -862,7 +875,8 @@ public class AIGCService extends AbstractModule implements Generatable {
             user.setAuthToken(newToken);
 
             ContactManager.getInstance().updateContact(userContact.getDomain().getName(),
-                    userContact.getId(), verificationCode.phoneNumber, user.toJSON());
+                    userContact.getId(), verificationCode.phoneNumber, user.toJSON(),
+                    contact.getDevice());
             return user;
         }
     }
@@ -884,7 +898,8 @@ public class AIGCService extends AbstractModule implements Generatable {
                 user.setPassword(password);
 
                 ContactManager.getInstance().updateContact(contact.getDomain().getName(),
-                        contact.getId(), userName, user.toJSON());
+                        contact.getId(), userName, user.toJSON(),
+                        contact.getDevice());
 
                 // 更新个人知识记忆
                 this.updatePersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
@@ -943,7 +958,8 @@ public class AIGCService extends AbstractModule implements Generatable {
                     user.setAuthToken(newToken);
 
                     ContactManager.getInstance().updateContact(userContact.getDomain().getName(),
-                            userContact.getId(), user.getName(), user.toJSON());
+                            userContact.getId(), user.getName(), user.toJSON(),
+                            contact.getDevice());
 
                     // 更新个人知识记忆
                     this.updatePersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(userContact.getDomain().getName(),
@@ -1049,7 +1065,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         user.setAuthToken(null);
         // 更新名称
         ContactManager.getInstance().updateContact(contact.getDomain().getName(), contact.getId(),
-                contact.getName() + "-" + ContactMask.SignOut.mask, user.toJSON());
+                contact.getName() + "-" + ContactMask.SignOut.mask, user.toJSON(),
+                contact.getDevice());
         // 删除令牌
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         authService.deleteToken(contact.getDomain().getName(), contact.getId());

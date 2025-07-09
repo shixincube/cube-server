@@ -51,7 +51,7 @@ public class ImprovementChat extends ContextHandler {
             }
 
             String token = this.getRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
+            if (!Manager.getInstance().checkToken(token, getDevice(request))) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
                 return;

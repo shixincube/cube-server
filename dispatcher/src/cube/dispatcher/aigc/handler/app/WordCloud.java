@@ -36,7 +36,7 @@ public class WordCloud extends ContextHandler {
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
             try {
                 String token = getApiToken(request);
-                if (!Manager.getInstance().checkToken(token)) {
+                if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                     this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                     this.complete();
                     return;

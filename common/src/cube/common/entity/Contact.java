@@ -215,6 +215,13 @@ public class Contact extends AbstractContact {
     }
 
     /**
+     * 移除所有设备。
+     */
+    public void removeDevices() {
+        this.deviceList.clear();
+    }
+
+    /**
      * 返回设备数量。
      *
      * @return 返回设备数量。
@@ -263,7 +270,7 @@ public class Contact extends AbstractContact {
      * @return
      */
     public Device getDevice() {
-        return (this.deviceList.isEmpty()) ? new Device("Dummy", "Cube") : this.deviceList.get(0);
+        return (this.deviceList.isEmpty()) ? new Device("Dummy", "Unknown") : this.deviceList.get(0);
     }
 
     /**

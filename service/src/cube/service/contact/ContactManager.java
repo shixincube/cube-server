@@ -441,6 +441,30 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
     }
 
     /**
+     * 验证当前令牌设备的唯一性，如果不是最近一次登录使用的，则返回 null 值。
+     *
+     * @param tokenCode
+     * @param device
+     * @return
+     */
+    public Contact verifyOnlineUniqueness(String tokenCode, Device device) {
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthToken authToken = authService.getToken(tokenCode);
+        if (null == authToken) {
+            Logger.w(this.getClass(), "#verifyOnlineUniqueness - Can NOT find token code: " + tokenCode);
+            return null;
+        }
+
+        Contact contact = this.getContact(authToken.getDomain(), authToken.getContactId());
+
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#verifyOnlineUniqueness - Device name: " + device.getName());
+        }
+
+        return contact;
+    }
+
+    /**
      * 终端签入。
      *
      * @param contact 指定联系人。
@@ -746,9 +770,10 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param contactId 指定联系人 ID 。
      * @param newName 指定联系人的新名称。
      * @param newContext 指定联系人的新上下文数据。
+     * @param device 指定设备信息。
      * @return 返回更新后的联系人实例。
      */
-    public Contact updateContact(String domain, Long contactId, String newName, JSONObject newContext) {
+    public Contact updateContact(String domain, Long contactId, String newName, JSONObject newContext, Device device) {
         String key = UniqueKey.make(contactId, domain);
 
         // 更新缓存里的数据
@@ -776,7 +801,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
             }
 
             // 更新数据库
-            this.storage.writeContact(contact);
+            this.storage.writeContact(contact, device);
 
             // 尝试更新在线数据
             ContactTable table = this.onlineTables.get(domain);

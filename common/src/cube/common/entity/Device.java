@@ -168,6 +168,15 @@ public class Device implements JSONable {
     }
 
     /**
+     * 设置设备地址。
+     *
+     * @param address 指定地址。
+     */
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    /**
      * 获取设备的通信端口。
      *
      * @return 返回设备的通信端口。

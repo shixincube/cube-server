@@ -33,9 +33,9 @@ public class SubmitEvent extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -49,11 +49,11 @@ public class SubmitEvent extends ContextHandler {
                     this.complete();
                 }
                 else {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                 }
             } catch (Exception e) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
             }
         }

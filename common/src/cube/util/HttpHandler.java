@@ -35,6 +35,8 @@ public abstract class HttpHandler extends AbstractHandler {
     public final static String HEADER_X_BAIZE_API_TOKEN = "x-baize-api-token";
     public final static String HEADER_X_BAIZE_API_CLIENT = "x-baize-api-client";
     public final static String HEADER_X_BAIZE_API_VERSION = "x-baize-api-version";
+    public final static String HEADER_X_BAIZE_API_DEVICE = "x-baize-api-device";
+    public final static String HEADER_X_BAIZE_API_PLATFORM = "x-baize-api-platform";
 
     protected String target;
 

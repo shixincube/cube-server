@@ -8,8 +8,9 @@ package cube.dispatcher.aigc.handler.app;
 
 import cell.util.log.Logger;
 import cube.aigc.AppEvent;
-import cube.aigc.app.ConfigInfo;
 import cube.aigc.ModelConfig;
+import cube.aigc.app.ConfigInfo;
+import cube.common.entity.Device;
 import cube.common.entity.KnowledgeProfile;
 import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.aigc.handler.AIGCHandler;
@@ -53,9 +54,19 @@ public class Session extends ContextHandler {
                     JSONObject data = this.readBodyAsJSONObject(request);
                     JSONObject eventData = new JSONObject();
                     eventData.put("token", token);
-                    eventData.put("ip", data.has("ip") ? data.getString("ip") : request.getRemoteAddr());
-                    eventData.put("device", data.has("device") ? data.getString("device") : "");
-                    eventData.put("platform", data.has("platform") ? data.getString("platform") : "");
+
+                    if (data.has("device") && data.has("platform")) {
+                        // 兼容 App 1.0.8 及之前的版本
+                        eventData.put("ip", data.has("ip") ? data.getString("ip") : request.getRemoteAddr());
+                        eventData.put("device", data.has("device") ? data.getString("device") : "");
+                        eventData.put("platform", data.has("platform") ? data.getString("platform") : "");
+                    }
+                    else {
+                        Device device = getDevice(request);
+                        device.setAddress(request.getRemoteAddr());
+                        eventData.put("device", device.toJSON());
+                    }
+
                     eventData.put("channel", data.has("channel") ? data.getString("channel") : "");
                     AppEvent appEvent = new AppEvent(AppEvent.Session, System.currentTimeMillis(), eventData);
                     if (!Manager.getInstance().addAppEvent(token, appEvent)) {
@@ -63,7 +74,10 @@ public class Session extends ContextHandler {
                     }
 
                     ConfigInfo configInfo = Manager.getInstance().getConfigInfo(token);
-                    this.respondOk(response, configInfo.toJSON());
+                    JSONObject responseData = configInfo.toJSON();
+                    // TODO XJW
+                    responseData.put("valid", true);
+                    this.respondOk(response, responseData);
                     this.complete();
                 } catch (Exception e) {
                     Logger.w(Session.class, "#doPost", e);
@@ -77,19 +91,19 @@ public class Session extends ContextHandler {
                 try {
                     JSONObject data = this.readBodyAsJSONObject(request);
                     if (null == data) {
-                        this.respond(response, HttpStatus.BAD_REQUEST_400);
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                         this.complete();
                         return;
                     }
 
                     if (!data.has("app")) {
-                        this.respond(response, HttpStatus.BAD_REQUEST_400);
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                         this.complete();
                         return;
                     }
 
                     if (!data.getString("app").equalsIgnoreCase("baize")) {
-                        this.respond(response, HttpStatus.BAD_REQUEST_400);
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                         this.complete();
                         return;
                     }
@@ -103,7 +117,7 @@ public class Session extends ContextHandler {
                     }
                 } catch (Exception e) {
                     Logger.w(Session.class, "#doPost", e);
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                     return;
                 }
@@ -125,7 +139,7 @@ public class Session extends ContextHandler {
                 }
 
                 if (null != token) {
-                    if (Manager.getInstance().checkToken(token)) {
+                    if (Manager.getInstance().checkToken(token, getDevice(request))) {
                         JSONObject eventData = new JSONObject();
                         eventData.put("token", token);
                         if (null != ip) {
@@ -152,7 +166,13 @@ public class Session extends ContextHandler {
                             responseData.put("channel", channel.code);
                             responseData.put("models", configInfo.getModelsAsJSONArray());
 
-                            Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
+                            Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token,
+                                    this.getDevice(request));
+                            if (null == contactToken) {
+                                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                                this.complete();
+                                return;
+                            }
                             responseData.put("context", contactToken.toJSON());
 
                             // 知识库概述

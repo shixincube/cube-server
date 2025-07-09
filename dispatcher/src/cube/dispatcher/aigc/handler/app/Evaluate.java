@@ -16,6 +16,9 @@ import org.json.JSONObject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * For Web
+ */
 public class Evaluate extends ContextHandler {
 
     public Evaluate() {
@@ -33,13 +36,16 @@ public class Evaluate extends ContextHandler {
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             String token = Helper.extractToken(request);
             if (null == token) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
-                this.complete();
-                return;
+                token = this.getApiToken(request);
+                if (null == token) {
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                    this.complete();
+                    return;
+                }
             }
 
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
@@ -51,13 +57,13 @@ public class Evaluate extends ContextHandler {
             try {
                 data = this.readBodyAsJSONObject(request);
                 if (null == data) {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                     return;
                 }
 
                 if (!data.has("sn") || !data.has("scores")) {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                     return;
                 }
@@ -66,7 +72,7 @@ public class Evaluate extends ContextHandler {
                 scores = data.getInt("scores");
             } catch (Exception e) {
                 Logger.w(Session.class, "#doPost", e);
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }

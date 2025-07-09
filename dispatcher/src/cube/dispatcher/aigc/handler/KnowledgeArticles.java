@@ -35,8 +35,8 @@ public class KnowledgeArticles extends ContextHandler {
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
             // 获取文章数据
-            String token = this.getLastRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
@@ -94,8 +94,8 @@ public class KnowledgeArticles extends ContextHandler {
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             // 更新文章数据
-            String token = this.getLastRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
@@ -111,7 +111,7 @@ public class KnowledgeArticles extends ContextHandler {
                 }
 
                 if (!data.has("contactId")) {
-                    Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
+                    Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token, this.getDevice(request));
                     data.put("contactId", contactToken.contact.getId());
                 }
 

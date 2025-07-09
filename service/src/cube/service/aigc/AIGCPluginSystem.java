@@ -17,6 +17,10 @@ public class AIGCPluginSystem extends PluginSystem<AIGCHook> {
         this.build();
     }
 
+    public AIGCHook getAppEventHook() {
+        return this.getHook(AIGCHook.AppEvent);
+    }
+
     public AIGCHook getImportKnowledgeDocHook() {
         return this.getHook(AIGCHook.ImportKnowledgeDoc);
     }
@@ -26,7 +30,10 @@ public class AIGCPluginSystem extends PluginSystem<AIGCHook> {
     }
 
     private void build() {
-        AIGCHook hook = new AIGCHook(AIGCHook.ImportKnowledgeDoc);
+        AIGCHook hook = new AIGCHook(AIGCHook.AppEvent);
+        this.addHook(hook);
+
+        hook = new AIGCHook(AIGCHook.ImportKnowledgeDoc);
         this.addHook(hook);
 
         hook = new AIGCHook(AIGCHook.RemoveKnowledgeDoc);

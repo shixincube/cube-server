@@ -42,14 +42,14 @@ public class RemoveKnowledgeDoc extends ContextHandler {
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             if (!this.controller.filter(request)) {
-                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
                 this.complete();
                 return;
             }
 
-            String token = this.getRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -57,14 +57,14 @@ public class RemoveKnowledgeDoc extends ContextHandler {
             try {
                 JSONObject data = readBodyAsJSONObject(request);
                 if (null == data) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                     return;
                 }
 
                 String baseName = data.getString("base");
                 if (null == baseName) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                     return;
                 }
@@ -73,7 +73,7 @@ public class RemoveKnowledgeDoc extends ContextHandler {
                     String fileCode = data.getString("fileCode");
                     KnowledgeDocument doc = Manager.getInstance().removeKnowledgeDoc(token, baseName, fileCode);
                     if (null == doc) {
-                        this.respond(response, HttpStatus.BAD_REQUEST_400);
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                         this.complete();
                     }
                     else {
@@ -85,7 +85,7 @@ public class RemoveKnowledgeDoc extends ContextHandler {
                     JSONArray fileCodeList = data.getJSONArray("fileCodeList");
                     KnowledgeProgress progress = Manager.getInstance().removeKnowledgeDocs(token, baseName, fileCodeList);
                     if (null == progress) {
-                        this.respond(response, HttpStatus.BAD_REQUEST_400);
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                         this.complete();
                     }
                     else {
@@ -94,20 +94,20 @@ public class RemoveKnowledgeDoc extends ContextHandler {
                     }
                 }
                 else {
-                    this.respond(response, HttpStatus.FORBIDDEN_403);
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                 }
             } catch (IOException e) {
-                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
             }
         }
 
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -117,7 +117,7 @@ public class RemoveKnowledgeDoc extends ContextHandler {
                 String baseName = request.getParameter("base");
                 KnowledgeProgress progress = Manager.getInstance().getKnowledgeProgress(token, baseName, Long.parseLong(paramSN));
                 if (null == progress) {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                     return;
                 }
@@ -125,7 +125,7 @@ public class RemoveKnowledgeDoc extends ContextHandler {
                 this.respondOk(response, progress.toJSON());
                 this.complete();
             } catch (Exception e) {
-                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
             }
         }

@@ -16,6 +16,9 @@ import org.json.JSONObject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * 验证令牌。
+ */
 public class Verify extends ContextHandler {
 
     public Verify() {
@@ -49,7 +52,7 @@ public class Verify extends ContextHandler {
                 }
 
                 token = data.getString("token");
-                token = Manager.getInstance().checkAndGetToken(token);
+                token = Manager.getInstance().checkAndGetToken(token, this.getDevice(request));
                 String version = request.getHeader(HEADER_X_BAIZE_API_VERSION);
                 if (null != version) {
                     if (null != token) {

@@ -19,6 +19,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
+/**
+ * For Web
+ */
 public class Chat extends ContextHandler {
 
     public Chat() {
@@ -36,13 +39,16 @@ public class Chat extends ContextHandler {
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             String token = Helper.extractToken(request);
             if (null == token) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
-                this.complete();
-                return;
+                token = this.getApiToken(request);
+                if (null == token) {
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                    this.complete();
+                    return;
+                }
             }
 
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
@@ -51,7 +57,7 @@ public class Chat extends ContextHandler {
             try {
                 data = this.readBodyAsJSONObject(request);
             } catch (Exception e) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
                 return;
             }
@@ -59,7 +65,7 @@ public class Chat extends ContextHandler {
             ConversationRequest convRequest = new ConversationRequest(data);
             List<ConversationResponse> convResponseList = App.getInstance().requestConversation(token, convRequest);
             if (null == convResponseList || convResponseList.isEmpty()) {
-                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
                 return;
             }

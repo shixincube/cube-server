@@ -34,9 +34,9 @@ public class PaintingLabels extends ContextHandler {
 
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -46,7 +46,7 @@ public class PaintingLabels extends ContextHandler {
 
                 JSONObject data = Manager.getInstance().getPaintingLabels(token, sn);
                 if (null == data) {
-                    this.respond(response, HttpStatus.NOT_FOUND_404);
+                    this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                     this.complete();
                     return;
                 }
@@ -55,16 +55,16 @@ public class PaintingLabels extends ContextHandler {
                 this.complete();
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#doGet", e);
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
             }
         }
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -81,13 +81,13 @@ public class PaintingLabels extends ContextHandler {
                     this.respondOk(response, responseData);
                 }
                 else {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 }
 
                 this.complete();
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#doPost", e);
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
             }
         }

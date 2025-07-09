@@ -21,7 +21,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 智能对话。
+ * 对话。
+ * @deprecated
  */
 public class Conversation extends ContextHandler {
 
@@ -41,7 +42,7 @@ public class Conversation extends ContextHandler {
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
             String token = this.getRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
                 return;
@@ -70,7 +71,7 @@ public class Conversation extends ContextHandler {
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             String token = this.getRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
                 return;

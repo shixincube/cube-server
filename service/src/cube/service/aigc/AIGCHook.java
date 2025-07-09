@@ -23,6 +23,11 @@ public class AIGCHook extends Hook {
      */
     public final static String RemoveKnowledgeDoc = "RemoveKnowledgeDoc";
 
+    /**
+     * 应用层事件。
+     */
+    public final static String AppEvent = "AppEvent";
+
     public AIGCHook(String key) {
         super(key);
     }

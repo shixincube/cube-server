@@ -32,9 +32,9 @@ public class Segmentation extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
             }
@@ -44,14 +44,14 @@ public class Segmentation extends ContextHandler {
                 JSONObject json = this.readBodyAsJSONObject(request);
                 text = json.getString("text");
             } catch (Exception e) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
 
             if (null == text) {
                 // 参数错误
-                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
                 return;
             }
@@ -60,7 +60,7 @@ public class Segmentation extends ContextHandler {
             JSONObject result = Manager.getInstance().segmentation(token, text);
             if (null == result) {
                 // 不允许该参与者申请或者服务故障
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
                 return;
             }

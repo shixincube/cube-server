@@ -18,6 +18,10 @@ import org.json.JSONObject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * 切换模型。
+ * For Web
+ */
 public class Change extends ContextHandler {
 
     public Change() {
@@ -35,13 +39,16 @@ public class Change extends ContextHandler {
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             String token = Helper.extractToken(request);
             if (null == token) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
-                this.complete();
-                return;
+                token = this.getApiToken(request);
+                if (null == token) {
+                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                    this.complete();
+                    return;
+                }
             }
 
-            if (!Manager.getInstance().checkToken(token)) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
@@ -49,7 +56,7 @@ public class Change extends ContextHandler {
             // 当前使用的模型
             ModelConfig modelConfig = App.getInstance().getModelConfig(token);
             if (null == modelConfig) {
-                this.respond(response, HttpStatus.NOT_FOUND_404);
+                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
                 return;
             }
@@ -60,7 +67,7 @@ public class Change extends ContextHandler {
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
                 if (null == data) {
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                     return;
                 }
@@ -80,13 +87,13 @@ public class Change extends ContextHandler {
                     newModelConfig = Manager.getInstance().getModelConfigByModel(configInfo, name);
                 }
             } catch (Exception e) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
                 return;
             }
 
             if (null == newModelConfig) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
@@ -99,7 +106,12 @@ public class Change extends ContextHandler {
             responseData.put("selectedModel", newModelConfig.toJSON());
             responseData.put("models", configInfo.getModelsAsJSONArray());
 
-            Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token);
+            Manager.ContactToken contactToken = Manager.getInstance().getContactToken(token, this.getDevice(request));
+            if (null == contactToken) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
+                this.complete();
+                return;
+            }
             responseData.put("context", contactToken.toJSON());
 
             // 知识库概述
