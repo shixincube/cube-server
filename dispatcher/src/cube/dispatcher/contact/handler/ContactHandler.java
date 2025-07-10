@@ -6,8 +6,10 @@
 
 package cube.dispatcher.contact.handler;
 
+import cube.common.entity.Device;
 import cube.dispatcher.Performer;
 import cube.util.CrossDomainHandler;
+import cube.util.HttpHandler;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -27,12 +29,29 @@ public abstract class ContactHandler extends CrossDomainHandler {
         String token = this.getLastRequestPath(request);
         if (null == token || token.length() < 32) {
             try {
-                token = request.getHeader("x-baize-api-token").trim();
+                token = request.getHeader(HttpHandler.HEADER_X_BAIZE_API_TOKEN);
             } catch (Exception e) {
                 // Nothing
             }
         }
         return token;
+    }
+
+    protected Device getDevice(HttpServletRequest request) {
+        String deviceName = request.getHeader(HttpHandler.HEADER_X_BAIZE_API_DEVICE);
+        String devicePlatform = request.getHeader(HttpHandler.HEADER_X_BAIZE_API_PLATFORM);
+        if (null == deviceName) {
+            deviceName = "Unknown";
+        }
+        if (null == devicePlatform) {
+            devicePlatform = "Unknown";
+        }
+        Device device = new Device(deviceName, devicePlatform);
+        String address = request.getRemoteAddr();
+        if (null != address) {
+            device.setAddress(address);
+        }
+        return device;
     }
 
     protected String getRequestPath(HttpServletRequest request) {

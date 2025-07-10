@@ -14,6 +14,7 @@ import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.Device;
 import cube.common.entity.VerificationCode;
 import cube.common.state.ContactStateCode;
 import cube.service.ServiceTask;
@@ -45,7 +46,8 @@ public class VerifyVerificationCodeTask extends ServiceTask {
         try {
             AuthToken authToken = ContactManager.getInstance().getAuthService().getToken(tokenCode);
             VerificationCode verificationCode = ContactManager.getInstance().verifyVerificationCode(
-                    authToken, packet.data.getString("phoneNumber"), packet.data.getString("codeMD5"));
+                    authToken, packet.data.getString("phoneNumber"), packet.data.getString("codeMD5"),
+                    new Device(packet.data.getJSONObject("device")));
             if (null == verificationCode) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(actionDialect, packet, ContactStateCode.InvalidParameter.code, packet.data));

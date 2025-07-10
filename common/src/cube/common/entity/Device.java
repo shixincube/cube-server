@@ -222,6 +222,15 @@ public class Device implements JSONable {
     }
 
     /**
+     * 判断设备是未知类型。
+     *
+     * @return 如果设备是未知类型返回 {@code true} ，否则返回 {@code false} 。
+     */
+    public boolean isUnknown() {
+        return (this.name.equalsIgnoreCase("Unknown"));
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override

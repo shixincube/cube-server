@@ -45,6 +45,8 @@ public class PsychologyStorage implements Storagable {
 
     private final String reportTextTable = "psychology_report_text";
 
+    private final String reportHexagonScoreTable = "psychology_report_hexagon";
+
     private final String scaleTable = "psychology_scale";
 
     private final String scaleAnswerTable = "psychology_scale_answer";

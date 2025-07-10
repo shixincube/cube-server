@@ -51,6 +51,9 @@ public class Session extends ContextHandler {
                         return;
                     }
 
+                    // 设备信息
+                    Device device = getDevice(request);
+
                     JSONObject data = this.readBodyAsJSONObject(request);
                     JSONObject eventData = new JSONObject();
                     eventData.put("token", token);
@@ -62,8 +65,6 @@ public class Session extends ContextHandler {
                         eventData.put("platform", data.has("platform") ? data.getString("platform") : "");
                     }
                     else {
-                        Device device = getDevice(request);
-                        device.setAddress(request.getRemoteAddr());
                         eventData.put("device", device.toJSON());
                     }
 
@@ -75,8 +76,12 @@ public class Session extends ContextHandler {
 
                     ConfigInfo configInfo = Manager.getInstance().getConfigInfo(token);
                     JSONObject responseData = configInfo.toJSON();
-                    // TODO XJW
-                    responseData.put("valid", true);
+
+                    // 移除缓存
+                    Manager.getInstance().removeTokenCache(token);
+                    // 校验
+                    boolean valid = Manager.getInstance().checkToken(token, device);
+                    responseData.put("valid", valid);
                     this.respondOk(response, responseData);
                     this.complete();
                 } catch (Exception e) {

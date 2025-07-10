@@ -58,6 +58,10 @@ public class ContactEventPlugin implements Plugin {
         else if (ContactHook.VerifyVerificationCode.equals(hook)) {
             if (ctx.hasParameter()) {
                 VerificationCode verificationCode = (VerificationCode) ctx.getParameter();
+                if (0 == ctx.getContact().numDevices()) {
+                    // 如果没有设备，指定设备
+                    ctx.getContact().addDevice(ctx.getDevice());
+                }
                 this.service.checkInUser(ctx.getContact(), verificationCode);
             }
         }

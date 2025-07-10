@@ -11,6 +11,7 @@ import cube.common.Packet;
 import cube.common.action.ContactAction;
 import cube.common.state.ContactStateCode;
 import cube.dispatcher.Performer;
+import cube.dispatcher.aigc.Manager;
 import cube.dispatcher.contact.ContactCellet;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -35,7 +36,7 @@ public class VerificationCode extends ContextHandler {
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             String token = this.getApiToken(request);
-            if (null == token) {
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
@@ -43,6 +44,7 @@ public class VerificationCode extends ContextHandler {
 
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
+                data.put("device", this.getDevice(request).toJSON());
                 Packet requestPacket = new Packet(ContactAction.RequestVerificationCode.name, data);
                 ActionDialect dialect = requestPacket.toDialect();
                 dialect.addParam("token", token);
@@ -71,7 +73,7 @@ public class VerificationCode extends ContextHandler {
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
             String token = this.getApiToken(request);
-            if (null == token) {
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
@@ -84,6 +86,7 @@ public class VerificationCode extends ContextHandler {
                 JSONObject data = new JSONObject();
                 data.put("phoneNumber", phoneNumber);
                 data.put("codeMD5", codeMD5);
+                data.put("device", this.getDevice(request).toJSON());
                 Packet requestPacket = new Packet(ContactAction.VerifyVerificationCode.name, data);
                 ActionDialect dialect = requestPacket.toDialect();
                 dialect.addParam("token", token);

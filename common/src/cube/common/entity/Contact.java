@@ -270,7 +270,7 @@ public class Contact extends AbstractContact {
      * @return
      */
     public Device getDevice() {
-        return (this.deviceList.isEmpty()) ? new Device("Dummy", "Unknown") : this.deviceList.get(0);
+        return (this.deviceList.isEmpty()) ? new Device("Unknown", "Unknown") : this.deviceList.get(0);
     }
 
     /**

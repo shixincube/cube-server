@@ -447,18 +447,29 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param device
      * @return
      */
-    public Contact verifyOnlineUniqueness(String tokenCode, Device device) {
+    public Contact verifyDeviceUniqueness(String tokenCode, Device device) {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(tokenCode);
         if (null == authToken) {
-            Logger.w(this.getClass(), "#verifyOnlineUniqueness - Can NOT find token code: " + tokenCode);
+            Logger.w(this.getClass(), "#verifyDeviceUniqueness - Can NOT find token code: " + tokenCode);
             return null;
         }
 
-        Contact contact = this.getContact(authToken.getDomain(), authToken.getContactId());
-
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#verifyOnlineUniqueness - Device name: " + device.getName());
+            Logger.d(this.getClass(), "#verifyDeviceUniqueness - Device name: " + device.getName());
+        }
+
+        Contact contact = this.getContact(authToken.getDomain(), authToken.getContactId());
+        Device contactDevice = contact.getDevice();
+        if (contactDevice.isUnknown() || device.isUnknown()) {
+            // 未知类型设备，不进行判断
+            return contact;
+        }
+
+        if (!device.getName().equalsIgnoreCase(contactDevice.getName())) {
+            Logger.w(this.getClass(), "#verifyDeviceUniqueness - Device name inconsistency - " +
+                    device.getName() + " <-> " + contactDevice.getName());
+            return null;
         }
 
         return contact;
@@ -2119,9 +2130,11 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      * @param authToken
      * @param phoneNumber
      * @param codeMD5
+     * @param device
      * @return
      */
-    public VerificationCode verifyVerificationCode(AuthToken authToken, String phoneNumber, String codeMD5) {
+    public VerificationCode verifyVerificationCode(AuthToken authToken, String phoneNumber, String codeMD5,
+                                                   Device device) {
         VerificationCode current = this.verificationCodes.get(authToken.getCode());
         if (null == current) {
             Logger.w(this.getClass(), "#verifyVerificationCode - No verification code: " + authToken.getCode());
@@ -2130,11 +2143,14 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
 
         if (current.phoneNumber.equals(phoneNumber) && current.getCodeMD5().equalsIgnoreCase(codeMD5)) {
             Contact contact = this.getContact(authToken.getDomain(), authToken.getContactId());
+            contact.removeDevices();
+            contact.addDevice(device);
 
             // Hook
             ContactHook hook = this.pluginSystem.getVerifyVerificationCodeHook();
             ContactPluginContext cpc = new ContactPluginContext(ContactHook.VerifyVerificationCode, contact, null);
             cpc.setAuthToken(authToken);
+            cpc.setDevice(device);
             cpc.setParameter(current);
             hook.apply(cpc);
 

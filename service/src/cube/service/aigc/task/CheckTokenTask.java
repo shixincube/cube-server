@@ -70,7 +70,7 @@ public class CheckTokenTask extends ServiceTask {
 
         // 校验唯一性
         Device device = new Device(deviceJson);
-        Contact contact = ContactManager.getInstance().verifyOnlineUniqueness(tokenCode, device);
+        Contact contact = ContactManager.getInstance().verifyDeviceUniqueness(tokenCode, device);
         if (null == contact) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

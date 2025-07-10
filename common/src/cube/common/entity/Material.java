@@ -7,6 +7,7 @@
 package cube.common.entity;
 
 import cell.util.Utils;
+import cube.aigc.psychology.composition.Palette;
 import cube.aigc.psychology.composition.Texture;
 import cube.common.JSONable;
 import cube.vision.BoundingBox;
@@ -34,9 +35,12 @@ public class Material implements JSONable {
 
     public Texture texture;
 
+    public Palette palette;
+
     public Material(String label) {
         this.sn = Utils.generateSerialNumber();
         this.label = label;
+        this.palette = new Palette();
     }
 
     public Material(Material other) {
@@ -48,6 +52,7 @@ public class Material implements JSONable {
         this.area = other.area;
         this.color = other.color;
         this.texture = other.texture;
+        this.palette = other.palette;
     }
 
     public Material(String label, BoundingBox boundingBox, Box box) {
@@ -59,6 +64,7 @@ public class Material implements JSONable {
         this.prob = 0.8;
         this.color = "#FF0000";
         this.texture = new Texture();
+        this.palette = new Palette();
     }
 
     public Material(JSONObject json) {
@@ -88,6 +94,13 @@ public class Material implements JSONable {
         }
         else {
             this.texture = new Texture();
+        }
+
+        if (json.has("palette")) {
+            this.palette = new Palette(json.getJSONObject("palette"));
+        }
+        else {
+            this.palette = new Palette();
         }
     }
 
@@ -167,6 +180,7 @@ public class Material implements JSONable {
         json.put("area", this.area);
         json.put("color", this.color);
         json.put("texture", this.texture.toJSON());
+        json.put("palette", this.palette.toJSON());
         return json;
     }
 

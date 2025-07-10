@@ -10,6 +10,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.algorithm.PaintingType;
 import cube.aigc.psychology.composition.Line;
+import cube.aigc.psychology.composition.Palette;
 import cube.aigc.psychology.composition.Texture;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.house.*;
@@ -58,6 +59,8 @@ public class Painting implements JSONable {
 
     private Texture whole;
 
+    private Palette palette;
+
     private Line line;
 
     private JSONArray materials;
@@ -90,6 +93,10 @@ public class Painting implements JSONable {
             this.quadrants = new ArrayList<>();
             this.parseQuadrants(json.getJSONObject("texture").getJSONArray("quadrants"));
             this.whole = new Texture(json.getJSONObject("texture").getJSONObject("whole"));
+        }
+
+        if (json.has("palette")) {
+            this.palette = new Palette(json.getJSONObject("palette"));
         }
 
         if (json.has("line")) {
@@ -848,6 +855,10 @@ public class Painting implements JSONable {
             textureJson.put("quadrants", array);
             textureJson.put("whole", this.whole.toJSON());
             json.put("texture", textureJson);
+        }
+
+        if (null != this.palette) {
+            json.put("palette", this.palette.toJSON());
         }
 
         if (null != this.line) {

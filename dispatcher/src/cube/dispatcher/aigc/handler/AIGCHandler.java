@@ -51,7 +51,12 @@ public abstract class AIGCHandler extends CrossDomainHandler {
         if (null == devicePlatform) {
             devicePlatform = "Unknown";
         }
-        return new Device(deviceName, devicePlatform);
+        Device device = new Device(deviceName, devicePlatform);
+        String address = request.getRemoteAddr();
+        if (null != address) {
+            device.setAddress(address);
+        }
+        return device;
     }
 
     protected String getRequestPath(HttpServletRequest request) {

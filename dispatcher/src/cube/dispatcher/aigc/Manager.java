@@ -203,7 +203,7 @@ public class Manager implements Tickable, PerformerListener {
 
         if (this.validTokenMap.containsKey(token)) {
             ContactToken contactToken = this.validTokenMap.get(token);
-            if (device.getName().equalsIgnoreCase("Unknown") ||
+            if (device.isUnknown() ||
                     device.getName().equalsIgnoreCase(contactToken.device.getName())) {
                 // 相同设备
                 return contactToken.authToken.getCode();
@@ -249,6 +249,10 @@ public class Manager implements Tickable, PerformerListener {
             this.checkAndGetToken(token, device);
         }
         return this.validTokenMap.get(token);
+    }
+
+    public void removeTokenCache(String token) {
+        this.validTokenMap.remove(token);
     }
 
     public JSONObject getOrCreateUser(JSONObject data) {

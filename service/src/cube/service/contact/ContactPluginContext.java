@@ -59,6 +59,10 @@ public class ContactPluginContext extends PluginContext implements JSONable {
         return this.contact;
     }
 
+    public void setDevice(Device device) {
+        this.device = device;
+    }
+
     public Device getDevice() {
         return this.device;
     }
