@@ -8,12 +8,11 @@ package cube.aigc.psychology.composition;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.aigc.psychology.Dataset;
 import cube.aigc.psychology.Indicator;
-import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.algorithm.PaintingConfidence;
+import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -22,7 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class HexagonDimensionScore {
+public class HexagonDimensionScore implements JSONable {
 
     private Map<HexagonDimension, Integer> scores = new LinkedHashMap<>();
 
@@ -304,6 +303,20 @@ public class HexagonDimensionScore {
         return this.descriptions.get(hexagonDimension);
     }
 
+    public void setFactor(JSONObject hexagonFactorJson) {
+        HexagonFactor hexagonFactor = new HexagonFactor(hexagonFactorJson);
+        this.scores.put(hexagonFactor.hexagonDimension, hexagonFactor.score);
+        this.descriptions.put(hexagonFactor.hexagonDimension, hexagonFactor.description);
+        this.rates.put(hexagonFactor.hexagonDimension, hexagonFactor.rate);
+    }
+
+    public HexagonFactor getFactor(HexagonDimension hexagonDimension) {
+        return new HexagonFactor(hexagonDimension, this.scores.get(hexagonDimension),
+                this.descriptions.get(hexagonDimension),
+                this.rates.get(hexagonDimension));
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
 
@@ -343,5 +356,44 @@ public class HexagonDimensionScore {
         }
 
         return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
+
+    public class HexagonFactor {
+
+        public final HexagonDimension hexagonDimension;
+
+        public final int score;
+
+        public final String description;
+
+        public final int rate;
+
+        public HexagonFactor(HexagonDimension hexagonDimension, int score, String description, int rate) {
+            this.hexagonDimension = hexagonDimension;
+            this.score = score;
+            this.description = description;
+            this.rate = rate;
+        }
+
+        public HexagonFactor(JSONObject json) {
+            this.hexagonDimension = HexagonDimension.parse(json.getString("dimension"));
+            this.score = json.getInt("score");
+            this.description = json.getString("description");
+            this.rate = json.getInt("rate");
+        }
+
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("dimension", this.hexagonDimension.name);
+            json.put("score", this.score);
+            json.put("description", this.description);
+            json.put("rate", this.rate);
+            return json;
+        }
     }
 }

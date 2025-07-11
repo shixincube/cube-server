@@ -45,7 +45,7 @@ public class PsychologyStorage implements Storagable {
 
     private final String reportTextTable = "psychology_report_text";
 
-    private final String reportHexagonScoreTable = "psychology_report_hexagon";
+    private final String reportHexagonTable = "psychology_report_hexagon";
 
     private final String scaleTable = "psychology_scale";
 
@@ -234,6 +234,33 @@ public class PsychologyStorage implements Storagable {
             new StorageField("rate", LiteralBase.INT, new Constraint[] {
                     Constraint.DEFAULT_0
             })
+    };
+
+    private final StorageField[] reportHexagonFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("mood", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("cognition", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("behavior", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("interpersonal_relationship", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("self_assessment", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("mental_health", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
     };
 
     private final StorageField[] scaleFields = new StorageField[] {
@@ -453,6 +480,13 @@ public class PsychologyStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.reportTextTable, this.reportTextFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.reportTextTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.reportHexagonTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.reportHexagonTable, this.reportHexagonFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.reportHexagonTable + "' successfully");
             }
         }
 
@@ -713,7 +747,7 @@ public class PsychologyStorage implements Storagable {
 
         if (null != report.getReportSections()) {
             for (ReportSection rs : report.getReportSections()) {
-                this.storage.executeInsert(this.reportTextTable, new StorageField[] {
+                this.storage.executeInsert(this.reportTextTable, new StorageField[]{
                         new StorageField("report_sn", report.sn),
                         new StorageField("indicator", rs.indicator.name),
                         new StorageField("title", rs.title),
@@ -722,6 +756,36 @@ public class PsychologyStorage implements Storagable {
                         new StorageField("rate", rs.rate.value)
                 });
             }
+        }
+
+        if (null != report.getDimensionScore()) {
+            // 先移除旧数据
+            this.storage.executeDelete(this.reportHexagonTable, new Conditional[] {
+                    Conditional.createEqualTo("sn", report.sn)
+            });
+            // 插入数据
+            this.storage.executeInsert(this.reportHexagonTable, new StorageField[] {
+                    new StorageField("sn", report.sn),
+                    new StorageField("timestamp", System.currentTimeMillis()),
+                    new StorageField("mood",
+                            JSONUtils.serializeEscape(
+                                    report.getDimensionScore().getFactor(HexagonDimension.Mood).toJSON().toString())),
+                    new StorageField("cognition",
+                            JSONUtils.serializeEscape(
+                                    report.getDimensionScore().getFactor(HexagonDimension.Cognition).toJSON().toString())),
+                    new StorageField("behavior",
+                            JSONUtils.serializeEscape(
+                                    report.getDimensionScore().getFactor(HexagonDimension.Behavior).toJSON().toString())),
+                    new StorageField("interpersonal_relationship",
+                            JSONUtils.serializeEscape(
+                                    report.getDimensionScore().getFactor(HexagonDimension.InterpersonalRelationship).toJSON().toString())),
+                    new StorageField("self_assessment",
+                            JSONUtils.serializeEscape(
+                                    report.getDimensionScore().getFactor(HexagonDimension.SelfAssessment).toJSON().toString())),
+                    new StorageField("mental_health",
+                            JSONUtils.serializeEscape(
+                                    report.getDimensionScore().getFactor(HexagonDimension.MentalHealth).toJSON().toString())),
+            });
         }
 
         this.storage.executeDelete(this.reportTable, new Conditional[] {
@@ -1365,16 +1429,35 @@ public class PsychologyStorage implements Storagable {
         report.setReportTextList(textList);
 
         try {
-            HexagonDimensionScore dimensionScore = new HexagonDimensionScore(evaluationReport.getAttention(),
-                    evaluationReport.getFullEvaluationScores(),
-                    evaluationReport.getPaintingConfidence(), evaluationReport.getFactorSet());
             HexagonDimensionScore normDimensionScore = new HexagonDimensionScore(
                     80, 80, 80, 80, 80, 80);
 
-            // 描述
-            ContentTools.fillHexagonScoreDescription(this.tokenizer, dimensionScore);
+            fields = this.storage.executeQuery(this.reportHexagonTable, this.reportHexagonFields, new Conditional[] {
+                    Conditional.createEqualTo("sn", report.sn)
+            });
+            if (fields.isEmpty()) {
+                HexagonDimensionScore dimensionScore = new HexagonDimensionScore(evaluationReport.getAttention(),
+                        evaluationReport.getFullEvaluationScores(),
+                        evaluationReport.getPaintingConfidence(), evaluationReport.getFactorSet());
 
-            report.setDimensionalScore(dimensionScore, normDimensionScore);
+                // 描述
+                ContentTools.fillHexagonScoreDescription(this.tokenizer, dimensionScore);
+
+                report.setDimensionalScore(dimensionScore, normDimensionScore);
+            }
+            else {
+                HexagonDimensionScore dimensionScore = new HexagonDimensionScore();
+                Map<String, StorageField> map = StorageFields.get(fields.get(0));
+
+                dimensionScore.setFactor(new JSONObject(JSONUtils.serializeLineFeed(map.get("mood").getString())));
+                dimensionScore.setFactor(new JSONObject(JSONUtils.serializeLineFeed(map.get("cognition").getString())));
+                dimensionScore.setFactor(new JSONObject(JSONUtils.serializeLineFeed(map.get("behavior").getString())));
+                dimensionScore.setFactor(new JSONObject(JSONUtils.serializeLineFeed(map.get("interpersonal_relationship").getString())));
+                dimensionScore.setFactor(new JSONObject(JSONUtils.serializeLineFeed(map.get("self_assessment").getString())));
+                dimensionScore.setFactor(new JSONObject(JSONUtils.serializeLineFeed(map.get("mental_health").getString())));
+
+                report.setDimensionalScore(dimensionScore, normDimensionScore);
+            }
         } catch (Exception e) {
             Logger.e(this.getClass(), "#makeReport", e);
         }

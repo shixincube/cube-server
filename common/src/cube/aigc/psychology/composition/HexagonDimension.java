@@ -51,7 +51,7 @@ public enum HexagonDimension {
 
     public static HexagonDimension parse(String name) {
         for (HexagonDimension hd : HexagonDimension.values()) {
-            if (hd.name.equalsIgnoreCase(name)) {
+            if (hd.name.equalsIgnoreCase(name) || hd.displayName.equalsIgnoreCase(name)) {
                 return hd;
             }
         }
