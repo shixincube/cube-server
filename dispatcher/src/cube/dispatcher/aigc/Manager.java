@@ -2609,7 +2609,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 120 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#getPsychologyPainting - No response");
             return null;

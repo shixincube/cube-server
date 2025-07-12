@@ -13,7 +13,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,6 +29,7 @@ public final class CacheCenter {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final int maxCache = 5000;
 
+    private final List<String> processingFileList = new ArrayList<>();
     private final Map<String, Painting> paintingMap = new ConcurrentHashMap<>();
     private final Map<String, File> fileMap = new ConcurrentHashMap<>();
 
@@ -41,11 +44,32 @@ public final class CacheCenter {
         return CacheCenter.instance;
     }
 
+    public boolean isProcessing(String fileCode) {
+        synchronized (this) {
+            return this.processingFileList.contains(fileCode);
+        }
+    }
+
+    public void markProcessing(String fileCode) {
+        synchronized (this) {
+            this.processingFileList.add(fileCode);
+        }
+    }
+
+    public void finishProcessing(String fileCode) {
+        synchronized (this) {
+            this.processingFileList.remove(fileCode);
+        }
+    }
+
     public Painting getPainting(String fileCode) {
         return this.paintingMap.get(fileCode);
     }
 
     public void cache(String fileCode, Painting painting) {
+        synchronized (this) {
+            this.processingFileList.remove(fileCode);
+        }
         this.paintingMap.put(fileCode, painting);
         tickCache();
     }

@@ -42,6 +42,11 @@ public class PsychologyPaintings extends ContextHandler {
                 if (null != fileCode) {
                     JSONObject result = Manager.getInstance().getPsychologyPainting(token, fileCode);
                     if (null != result) {
+                        if (result.has("fileLabel")) {
+                            FileLabels.reviseFileLabel(result.getJSONObject("fileLabel"), token,
+                                    Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                                    Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                        }
                         this.respondOk(response, result);
                     }
                     else {

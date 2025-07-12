@@ -30,13 +30,10 @@ import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import cube.util.FileUtils;
-import cube.util.ImageUtils;
 import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

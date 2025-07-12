@@ -80,12 +80,21 @@ public class ChainOfThought extends ContextHandler {
                     String fileCode = FileUtils.extractFileName(resource);
                     Painting painting = CacheCenter.getInstance().getPainting(fileCode);
                     if (null == painting) {
+                        // 是否正在处理
+                        if (CacheCenter.getInstance().isProcessing(fileCode)) {
+                            this.respond(response, HttpStatus.GONE_410);
+                            this.complete();
+                            return;
+                        }
+
+                        CacheCenter.getInstance().markProcessing(fileCode);
                         try {
                             JSONObject result = Manager.getInstance().getPsychologyPainting(token, fileCode);
                             painting = new Painting(result);
                             painting.timestamp = System.currentTimeMillis();
                             CacheCenter.getInstance().cache(fileCode, painting);
                         } catch (Exception e) {
+                            CacheCenter.getInstance().finishProcessing(fileCode);
                             this.respond(response, HttpStatus.NOT_FOUND_404);
                             this.complete();
                             return;
@@ -122,6 +131,9 @@ public class ChainOfThought extends ContextHandler {
                 }
                 this.complete();
                 return;
+            }
+            else {
+                Logger.w(this.getClass(), "Unknown path: " + path);
             }
 
             if (null == token) {
