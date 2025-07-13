@@ -248,7 +248,7 @@ public class QueryRevolver {
                 result.append("问题是：").append(query).append("\n");
             }
             else {
-                result.append("具体的评测数据因为积分不足无法获得详细数据，仅限于上述信息回答问题“");
+                result.append("具体的评测数据因为权限不足无法获得详细数据，仅限于上述信息回答问题“");
                 result.append(query);
                 result.append("”。\n");
                 result.append("要求如下：\n\n- 如果无法从中得到答案，请说“受限于未能获得评测报告全部数据无法为您提供更多信息。”");
