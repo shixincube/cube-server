@@ -2834,13 +2834,13 @@ public class Manager implements Tickable, PerformerListener {
                 // 获取结果数据
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
                 SpeechRecognitionInfo result = new SpeechRecognitionInfo(resultJson);
-                SpeechRecognitionFuture future = this.speechRecognitionFutureMap.get(result.getFileCode());
+                SpeechRecognitionFuture future = this.speechRecognitionFutureMap.get(result.file.getFileCode());
                 if (null != future) {
                     future.result = result;
                     future.stateCode = AIGCStateCode.Ok;
                 }
                 else {
-                    Logger.w(this.getClass(), "#onReceived - Speech recognition result error: " + result.getFileCode());
+                    Logger.w(this.getClass(), "#onReceived - Speech recognition result error: " + result.file.getFileCode());
                 }
             }
             else {

@@ -4441,7 +4441,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     private class SpeechRecognitionUnitMeta extends UnitMeta {
 
-        protected final static String PROMPT = "合理使用标点符号给以下文本断句并修正错别字：%s";
+//        protected final static String PROMPT = "合理使用标点符号给以下文本断句并修正错别字：%s";
 
         protected FileLabel file;
 
@@ -4476,15 +4476,23 @@ public class AIGCService extends AbstractModule implements Generatable {
             JSONObject payload = Packet.extractDataPayload(response);
             SpeechRecognitionInfo info = new SpeechRecognitionInfo(payload.getJSONObject("result"));
 
-            // 进行标点断句
-            String prompt = String.format(PROMPT, info.getText());
-            AIGCUnit unit = selectUnitByName(ModelConfig.BAIZE_UNIT);
-            if (null != unit) {
-                GeneratingRecord result = syncGenerateText(unit, prompt, null, null, null);
-                if (null != result) {
-                    info.setText(result.answer);
-                }
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#process STT result -\nfile: " + info.file.getFileCode() +
+                        "\nelapsed: " + info.elapsed +
+                        "\nlang: " + info.lang +
+                        "\ntext: " + info.text +
+                        "\nduration: " + info.durationInSeconds);
             }
+
+            // 进行标点断句
+//            String prompt = String.format(PROMPT, info.getText());
+//            AIGCUnit unit = selectUnitByName(ModelConfig.BAIZE_UNIT);
+//            if (null != unit) {
+//                GeneratingRecord result = syncGenerateText(unit, prompt, null, null, null);
+//                if (null != result) {
+//                    info.setText(result.answer);
+//                }
+//            }
             this.listener.onCompleted(this.file, info);
         }
     }
