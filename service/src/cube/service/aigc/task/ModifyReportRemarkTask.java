@@ -10,22 +10,22 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cube.aigc.psychology.Resource;
-import cube.aigc.psychology.algorithm.Benchmark;
+import cube.aigc.psychology.PaintingReport;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.scene.PsychologyScene;
 import org.json.JSONObject;
 
 /**
  * 获取心理学分数基线任务。
  */
-public class GetPsychologyScoreBenchmarkTask extends ServiceTask {
+public class ModifyReportRemarkTask extends ServiceTask {
 
-    public GetPsychologyScoreBenchmarkTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public ModifyReportRemarkTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -50,26 +50,25 @@ public class GetPsychologyScoreBenchmarkTask extends ServiceTask {
             return;
         }
 
-        int age = packet.data.has("age") ? packet.data.getInt("age") : 30;
+        try {
+            long reportSn = packet.data.getLong("sn");
+            String remark = packet.data.getString("remark");
 
-        Benchmark benchmark = Resource.getInstance().getBenchmark();
-        if (null == benchmark) {
+            PaintingReport report = PsychologyScene.getInstance().modifyPsychologyReportRemark(reportSn, remark);
+            if (null == report) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                markResponseTime();
+                return;
+            }
+
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, report.toCompactJSON()));
             markResponseTime();
-            return;
-        }
-
-        JSONObject responseData = benchmark.toJSON(age);
-        if (null == responseData) {
+        } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
-            return;
         }
-
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
-        markResponseTime();
     }
 }

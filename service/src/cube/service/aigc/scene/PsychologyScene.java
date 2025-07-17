@@ -300,6 +300,22 @@ public class PsychologyScene {
     }
 
     /**
+     * 修改报告备注。
+     *
+     * @param reportSn
+     * @param remark
+     * @return
+     */
+    public PaintingReport modifyPsychologyReportRemark(long reportSn, String remark) {
+        if (this.storage.updatePsychologyReportRemark(reportSn, remark)) {
+            PaintingReport report = this.storage.readPsychologyReport(reportSn);
+            report.setRemark(remark);
+            return report;
+        }
+        return null;
+    }
+
+    /**
      * 根据主题生成评测报告。
      *
      * @param channel

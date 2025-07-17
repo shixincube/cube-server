@@ -14,6 +14,9 @@ import org.json.JSONObject;
 
 import java.util.*;
 
+/**
+ * @deprecated
+ */
 public class Benchmark {
 
     private List<GenerationBenchmark> benchmarkList;

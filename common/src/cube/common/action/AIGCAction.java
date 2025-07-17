@@ -442,9 +442,9 @@ public enum AIGCAction {
     ResetReportAttention("resetReportAttention"),
 
     /**
-     * 获取心理学分数基线值。
+     * 修改报告备注。
      */
-    GetPsychologyScoreBenchmark("getPsychologyScoreBenchmark"),
+    ModifyReportRemark("modifyReportRemark"),
 
     /**
      * 获取心理学量表列表。

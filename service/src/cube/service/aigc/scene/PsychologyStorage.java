@@ -836,16 +836,9 @@ public class PsychologyStorage implements Storagable {
         });
     }
 
-    public boolean updatePsychologyReportState(long sn, int state) {
-        this.storage.executeUpdate(this.paintingReportManagementTable, new StorageField[] {
-                new StorageField("timestamp", System.currentTimeMillis()),
-                new StorageField("state", state)
-        }, new Conditional[] {
-                Conditional.createEqualTo("report_sn", sn)
-        });
-
+    public boolean updatePsychologyReportRemark(long sn, String remark) {
         return this.storage.executeUpdate(this.reportTable, new StorageField[] {
-                new StorageField("state", state)
+                new StorageField("remark", remark)
         }, new Conditional[] {
                 Conditional.createEqualTo("sn", sn)
         });

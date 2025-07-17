@@ -7,7 +7,6 @@
 package cube.aigc.psychology;
 
 import cell.util.log.Logger;
-import cube.aigc.psychology.algorithm.Benchmark;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import cube.aigc.psychology.composition.Scale;
 import cube.common.entity.Membership;
@@ -43,9 +42,9 @@ public class Resource {
     private long corpusLastModified = 0;
     private JSONObject corpusJson = null;
 
-    private File benchmarkScoreFile = new File("assets/psychology/benchmark.json");
-    private long benchmarkScoreLastModified = 0;
-    private Benchmark benchmark;
+//    private File benchmarkScoreFile = new File("assets/psychology/benchmark.json");
+//    private long benchmarkScoreLastModified = 0;
+//    private Benchmark benchmark;
 
 //    private File hexDimProjectionFile = new File("assets/psychology/projection.json");
 //    private long hexDimProjectionModified = 0;
@@ -149,25 +148,25 @@ public class Resource {
         return JSONUtils.toStringList(list);
     }
 
-    public Benchmark getBenchmark() {
-        if (this.benchmarkScoreFile.exists()) {
-            if (this.benchmarkScoreFile.lastModified() != this.benchmarkScoreLastModified) {
-                this.benchmarkScoreLastModified = this.benchmarkScoreFile.lastModified();
-
-                Logger.i(this.getClass(), "Read benchmark file: " + this.benchmarkScoreFile.getAbsolutePath());
-
-                try {
-                    byte[] data = Files.readAllBytes(Paths.get(this.benchmarkScoreFile.getAbsolutePath()));
-                    JSONArray jsonArray = new JSONArray(new String(data, StandardCharsets.UTF_8));
-                    this.benchmark = new Benchmark(jsonArray);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return this.benchmark;
-    }
+//    public Benchmark getBenchmark() {
+//        if (this.benchmarkScoreFile.exists()) {
+//            if (this.benchmarkScoreFile.lastModified() != this.benchmarkScoreLastModified) {
+//                this.benchmarkScoreLastModified = this.benchmarkScoreFile.lastModified();
+//
+//                Logger.i(this.getClass(), "Read benchmark file: " + this.benchmarkScoreFile.getAbsolutePath());
+//
+//                try {
+//                    byte[] data = Files.readAllBytes(Paths.get(this.benchmarkScoreFile.getAbsolutePath()));
+//                    JSONArray jsonArray = new JSONArray(new String(data, StandardCharsets.UTF_8));
+//                    this.benchmark = new Benchmark(jsonArray);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//
+//        return this.benchmark;
+//    }
 
 //    public HexagonDimensionProjection getHexDimProjection() {
 //        if (this.hexDimProjectionFile.exists()) {

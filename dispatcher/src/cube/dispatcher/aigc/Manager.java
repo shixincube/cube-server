@@ -32,7 +32,6 @@ import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.PerformerListener;
 import cube.dispatcher.aigc.handler.Chart;
-import cube.dispatcher.aigc.handler.Conversation;
 import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.aigc.handler.app.App;
 import cube.dispatcher.util.Tickable;
@@ -154,7 +153,6 @@ public class Manager implements Tickable, PerformerListener {
 
         httpServer.addContextHandler(new PsychologyReports());
         httpServer.addContextHandler(new CheckPsychology());
-        httpServer.addContextHandler(new PsychologyBenchmark());
         httpServer.addContextHandler(new PsychologyStopping());
         httpServer.addContextHandler(new PsychologyReportParts());
         httpServer.addContextHandler(new PsychologyScales());
@@ -165,6 +163,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new PaintingLabels());
         httpServer.addContextHandler(new PsychologyPaintingReportState());
         httpServer.addContextHandler(new PsychologyReportPage());
+        httpServer.addContextHandler(new PsychologyModifyReportRemark());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Activate());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.User());
@@ -2427,22 +2426,20 @@ public class Manager implements Tickable, PerformerListener {
         return Packet.extractDataPayload(responsePacket);
     }
 
-    public JSONObject getPsychologyScoreBenchmark(String token, int age) {
-        JSONObject data = new JSONObject();
-        data.put("age", age);
-        Packet packet = new Packet(AIGCAction.GetPsychologyScoreBenchmark.name, data);
+    public JSONObject modifyReportRemark(String token, JSONObject data) {
+        Packet packet = new Packet(AIGCAction.ModifyReportRemark.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
         ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
-            Logger.w(this.getClass(), "#getPsychologyScoreBenchmark - No response");
+            Logger.w(this.getClass(), "#modifyReportRemark - No response");
             return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#getPsychologyScoreBenchmark - Response state is " + Packet.extractCode(responsePacket));
+            Logger.w(this.getClass(), "#modifyReportRemark - Response state is " + Packet.extractCode(responsePacket));
             return null;
         }
         return Packet.extractDataPayload(responsePacket);
