@@ -22,7 +22,7 @@ public class WordCloud implements JSONable {
             "|", "\\", ":", ";", "<", ">", "=", "+", "`", "~", "/",
             "，", "。", "！", "？", "《", "》", "“", "”", "…", "：", "；",
             "http", "https", "sn", "page", "bigfive", "indicator", "html",
-            "7017", "7010"
+            "7017", "7010", "prompt", "direct", "answer", "scale"
     };
 
     private long timestamp;
