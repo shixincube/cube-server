@@ -29,8 +29,8 @@ public class GeneratingOption implements JSONable {
     public GeneratingOption() {
     }
 
-    public GeneratingOption(boolean recognizeFlow) {
-        this.recognizeContext = recognizeFlow;
+    public GeneratingOption(boolean recognizeContext) {
+        this.recognizeContext = recognizeContext;
     }
 
     public GeneratingOption(double temperature, double topP, double repetitionPenalty, int maxNewTokens, int topK) {

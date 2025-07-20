@@ -8,6 +8,8 @@ package cube.service.aigc.scene;
 
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
+import cube.aigc.complex.attachment.Attachment;
+import cube.aigc.complex.attachment.FileAttachment;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
@@ -90,6 +92,9 @@ public class ConversationWorker {
         // 获取对话上下文
         ConversationContext cc = SceneManager.getInstance().getConversationContext(channel.getCode());
         if (null == cc) {
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#work - New channel conversation context: " + channel.getAuthToken().getContactId());
+            }
             cc = new ConversationContext(relation, channel.getAuthToken());
             SceneManager.getInstance().putConversationContext(channel.getCode(), cc);
         }
@@ -350,11 +355,19 @@ public class ConversationWorker {
             }
         }
 
+        // 提取上下文里的文件资源为附录
+        List<Attachment> attachments = null;
+        if (context.hasResource(ComplexResource.Subject.File)) {
+            attachments = new ArrayList<>();
+            FileResource resource = context.getFileResource();
+            attachments.add(new FileAttachment(resource.getFileLabel()));
+        }
+
         // 从一般性对话中提取历史记录
         List<GeneratingRecord> histories = convCtx.getNormalHistories(3);
 
         this.service.generateText(channel, unit, query, prompt.content, new GeneratingOption(false),
-                histories, 0,null, null, true, new GenerateTextListener() {
+                histories, 0, attachments, null, true, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                         if (null != prompt.prefix) {

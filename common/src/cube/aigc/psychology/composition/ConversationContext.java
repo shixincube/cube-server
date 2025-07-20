@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 谈话上下文。
+ * 对话上下文。
  */
 public class ConversationContext implements JSONable {
 

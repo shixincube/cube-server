@@ -6,5 +6,16 @@
 
 package cube.aigc.complex.attachment;
 
-public class FileAttachment {
+import cube.common.entity.FileLabel;
+
+public class FileAttachment extends Attachment {
+
+    public final static String TYPE = "File";
+
+    public FileLabel fileLabel;
+
+    public FileAttachment(FileLabel fileLabel) {
+        super(TYPE);
+        this.fileLabel = fileLabel;
+    }
 }

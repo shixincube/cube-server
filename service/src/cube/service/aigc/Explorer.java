@@ -46,6 +46,8 @@ public class Explorer {
 
     private final static Explorer instance = new Explorer();
 
+
+
     private final String[] chartKeywords = new String[] {
             "数据", "报告",
             "图表", "统计图", "曲线图", "线图", "折线图", "柱图", "柱状图", "柱形图",

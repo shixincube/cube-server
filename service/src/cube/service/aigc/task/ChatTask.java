@@ -142,7 +142,7 @@ public class ChatTask extends ServiceTask {
             else {
                 // 执行文本生成
                 success = service.generateText(channelCode, content, unit, option, recordList, histories,
-                        recordList, categories, recordable, networking, new GenerateTextListener() {
+                        null, categories, recordable, networking, new GenerateTextListener() {
                     @Override
                     public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
                         cellet.speak(talkContext,

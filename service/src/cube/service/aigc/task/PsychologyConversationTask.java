@@ -69,6 +69,7 @@ public class PsychologyConversationTask extends ServiceTask {
             }
 
             if (packet.data.has("relations")) {
+                // 兼容爱心理平台
                 JSONArray array = packet.data.getJSONArray("relations");
                 conversationRelationList = new ArrayList<>();
                 for (int i = 0; i < array.length(); ++i) {

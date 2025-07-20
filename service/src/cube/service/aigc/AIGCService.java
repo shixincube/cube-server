@@ -12,6 +12,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
 import cube.aigc.app.Notification;
+import cube.aigc.complex.attachment.Attachment;
 import cube.aigc.complex.widget.Event;
 import cube.aigc.complex.widget.EventResult;
 import cube.aigc.psychology.Attribute;
@@ -39,6 +40,7 @@ import cube.service.aigc.guidance.GuideFlow;
 import cube.service.aigc.guidance.Guides;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.knowledge.KnowledgeFramework;
+import cube.aigc.complex.attachment.FileAttachment;
 import cube.service.aigc.listener.*;
 import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Agent;
@@ -1642,7 +1644,7 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @return
      */
     public boolean generateText(String channelCode, String content, String unitName, GeneratingOption option,
-                                List<GeneratingRecord> histories, int maxHistories, List<GeneratingRecord> attachments,
+                                List<GeneratingRecord> histories, int maxHistories, List<Attachment> attachments,
                                 List<String> categories, boolean recordable, boolean networking,
                                 GenerateTextListener listener) {
         if (!this.isStarted()) {
@@ -1882,7 +1884,7 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param listener
      */
     public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt, GeneratingOption option,
-                             List<GeneratingRecord> histories, int maxHistories, List<GeneratingRecord> attachments,
+                             List<GeneratingRecord> histories, int maxHistories, List<Attachment> attachments,
                              List<String> categories, boolean recordable, GenerateTextListener listener) {
         if (this.useAgent) {
             unit = Agent.getInstance().selectUnit(unit.getCapability().getName());
@@ -2457,6 +2459,25 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         return true;
+    }
+
+    private RetrieveReRankResult syncRetrieveReRank(FileLabel fileLabel, String query) {
+        try {
+            Thread.sleep(Utils.randomInt(10 * 1000, 30 * 1000));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        JSONObject json = new JSONObject();
+        json.put("query", query);
+        JSONArray array = new JSONArray();
+        JSONObject answer = new JSONObject();
+        answer.put("id", 1);
+        answer.put("content", "这是分析" + fileLabel.getFileName() + "文件对于\"" + query + "\"的提问的Re-rank测试。");
+        answer.put("score", 0.8);
+        array.put(answer);
+        json.put("list", array);
+        RetrieveReRankResult result = new RetrieveReRankResult(json);
+        return result;
     }
 
     /**
@@ -3252,40 +3273,57 @@ public class AIGCService extends AbstractModule implements Generatable {
             this.unit = unit;
         }
 
-        protected List<String> readFileContent(List<FileLabel> fileLabels) {
-            List<String> result = new ArrayList<>();
-
-            AbstractModule fileStorage = getKernel().getModule("FileStorage");
-            for (FileLabel fileLabel : fileLabels) {
-                if (fileLabel.getFileType() == FileType.TEXT
-                        || fileLabel.getFileType() == FileType.TXT
-                        || fileLabel.getFileType() == FileType.MD
-                        || fileLabel.getFileType() == FileType.LOG) {
-                    String fullpath = fileStorage.notify(new LoadFile(fileLabel.getDomain().getName(), fileLabel.getFileCode()));
-                    if (null == fullpath) {
-                        Logger.w(this.getClass(), "#readFileContent - Load file error: " + fileLabel.getFileCode());
-                        continue;
-                    }
-
-                    try {
-                        List<String> lines = Files.readAllLines(Paths.get(fullpath));
-                        for (String text : lines) {
-                            if (text.trim().length() < 3) {
-                                continue;
-                            }
-                            result.add(text);
-                        }
-                    } catch (Exception e) {
-                        Logger.w(this.getClass(), "#readFileContent - Read file error: " + fullpath);
-                    }
-                }
-                else {
-                    Logger.w(this.getClass(), "#readFileContent - File type error: " + fileLabel.getFileType().getMimeType());
-                }
+        protected List<RetrieveReRankResult> analyseFiles(List<FileLabel> fileLabels, String query) {
+            List<RetrieveReRankResult> result = new ArrayList<>();
+            if (fileLabels.isEmpty()) {
+                return result;
             }
 
+            for (FileLabel fileLabel : fileLabels) {
+                RetrieveReRankResult retrieveReRankResult = syncRetrieveReRank(fileLabel, query);
+                if (null == retrieveReRankResult) {
+                    continue;
+                }
+                
+                result.add(retrieveReRankResult);
+            }
             return result;
         }
+
+//        protected List<String> readFileContent(List<FileLabel> fileLabels) {
+//            List<String> result = new ArrayList<>();
+//
+//            AbstractModule fileStorage = getKernel().getModule("FileStorage");
+//            for (FileLabel fileLabel : fileLabels) {
+//                if (fileLabel.getFileType() == FileType.TEXT
+//                        || fileLabel.getFileType() == FileType.TXT
+//                        || fileLabel.getFileType() == FileType.MD
+//                        || fileLabel.getFileType() == FileType.LOG) {
+//                    String fullpath = fileStorage.notify(new LoadFile(fileLabel.getDomain().getName(), fileLabel.getFileCode()));
+//                    if (null == fullpath) {
+//                        Logger.w(this.getClass(), "#readFileContent - Load file error: " + fileLabel.getFileCode());
+//                        continue;
+//                    }
+//
+//                    try {
+//                        List<String> lines = Files.readAllLines(Paths.get(fullpath));
+//                        for (String text : lines) {
+//                            if (text.trim().length() < 3) {
+//                                continue;
+//                            }
+//                            result.add(text);
+//                        }
+//                    } catch (Exception e) {
+//                        Logger.w(this.getClass(), "#readFileContent - Read file error: " + fullpath);
+//                    }
+//                }
+//                else {
+//                    Logger.w(this.getClass(), "#readFileContent - File type error: " + fileLabel.getFileType().getMimeType());
+//                }
+//            }
+//
+//            return result;
+//        }
 
         public abstract void process();
     }
@@ -3311,7 +3349,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         protected int maxHistories;
 
-        protected List<GeneratingRecord> attachments;
+        protected List<Attachment> attachments;
 
         protected GenerateTextListener listener;
 
@@ -3324,7 +3362,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, GeneratingOption option,
                                     List<String> categories,
                                     List<GeneratingRecord> histories,
-                                    List<GeneratingRecord> attachments,
+                                    List<Attachment> attachments,
                                     GenerateTextListener listener) {
             super(unit);
             this.sn = Utils.generateSerialNumber();
@@ -3381,7 +3419,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
             GeneratingRecord result = null;
 
-            final StringBuilder realPrompt = new StringBuilder(this.content);
+            final StringBuilder prompt = new StringBuilder(this.content);
 
             if (complexContext.isSimplified()) {
                 // 一般文本
@@ -3398,108 +3436,56 @@ public class AIGCService extends AbstractModule implements Generatable {
                 data.put("participant", this.participant.toCompactJSON());
                 data.put("option", this.option.toJSON());
 
-                boolean useQueryAttachment = false;
                 if (null != this.attachments) {
-                    for (GeneratingRecord record : this.attachments) {
-                        if (record.hasQueryFile()) {
+                    // 处理附件
+                    List<FileLabel> fileList = new ArrayList<>();
+                    for (Attachment attachment : this.attachments) {
+                        if (attachment.getType().equals(FileAttachment.TYPE)) {
                             if (null == this.history.queryFileLabels) {
                                 this.history.queryFileLabels = new ArrayList<>();
                             }
-                            this.history.queryFileLabels.addAll(record.queryFileLabels);
+                            FileAttachment fileAttachment = (FileAttachment) attachment;
+                            this.history.queryFileLabels.add(fileAttachment.fileLabel);
+                            fileList.add(fileAttachment.fileLabel);
                         }
+                    }
 
-                        if (record.hasQueryFile() || record.hasQueryAddition()) {
-                            useQueryAttachment = true;
+                    // 构建提示词
+                    StringBuilder buf = new StringBuilder();
+
+                    List<RetrieveReRankResult> retrieveReRankList = analyseFiles(fileList, this.content);
+                    List<RetrieveReRankResult.Answer> answerList = new ArrayList<>();
+                    for (RetrieveReRankResult rrr : retrieveReRankList) {
+                        for (RetrieveReRankResult.Answer answer : rrr.getAnswerList()) {
+                            answerList.add(answer);
+                        }
+                    }
+                    // 按照得分从高到底
+                    Collections.sort(answerList, new Comparator<RetrieveReRankResult.Answer>() {
+                        @Override
+                        public int compare(RetrieveReRankResult.Answer a1, RetrieveReRankResult.Answer a2) {
+                            return (int) Math.round((a2.score - a1.score) * 100);
+                        }
+                    });
+                    for (RetrieveReRankResult.Answer answer : answerList) {
+                        if (buf.length() + answer.content.length() >= lengthLimit) {
                             break;
                         }
+                        buf.append(answer.content).append("\n");
+                    }
+
+                    if (buf.length() > 0) {
+                        prompt.delete(0, prompt.length());
+                        prompt.append(Consts.formatQuestion(buf.toString(), this.content));
+
+                        // 更新提示词
+                        data.remove("content");
+                        data.put("content", prompt.toString());
                     }
                 }
 
-                if (useQueryAttachment) {
-                    // 构建提示词
-                    StringBuilder buf = new StringBuilder();
-                    int bufLen = 0;
-
-                    for (GeneratingRecord record : this.attachments) {
-                        if (record.hasQueryAddition()) {
-                            for (String text : record.queryAdditions) {
-                                String[] qaBuf = text.split("\n");
-                                for (String s : qaBuf) {
-                                    if (s.trim().length() <= 1) {
-                                        continue;
-                                    }
-
-                                    // 计算长度
-                                    bufLen = buf.length() + s.length();
-                                    if (bufLen >= lengthLimit) {
-                                        break;
-                                    }
-
-                                    buf.append(s).append("\n");
-                                }
-
-                                if (bufLen >= lengthLimit) {
-                                    break;
-                                }
-                            }
-
-                            Logger.d(this.getClass(), "#process - Attachment text content length: "
-                                    + buf.length());
-                        }
-
-                        if (bufLen >= lengthLimit) {
-                            break;
-                        }
-
-                        if (record.hasQueryFile()) {
-                            // 读取文件内容
-                            List<String> fileContent = this.readFileContent(record.queryFileLabels);
-
-                            if (!fileContent.isEmpty()) {
-                                for (String text : fileContent) {
-                                    // 计算长度
-                                    bufLen = buf.length() + text.length();
-                                    if (bufLen >= lengthLimit) {
-                                        break;
-                                    }
-
-                                    buf.append(text).append("\n");
-                                }
-
-                                Logger.d(this.getClass(), "#process - Attachment file content length: "
-                                        + buf.length());
-                            }
-                            else {
-                                Logger.d(this.getClass(), "#process - Attachment file error: "
-                                        + record.queryFileLabels.get(0).getFileName());
-                            }
-                        }
-
-                        if (bufLen >= lengthLimit) {
-                            break;
-                        }
-                    }
-
-                    // 处理内容
-                    try {
-                        buf.delete(buf.length() - 1, buf.length());
-
-                        realPrompt.delete(0, realPrompt.length());
-                        realPrompt.append(Consts.formatQuestion(buf.toString(), this.content));
-
-                        // 修改提示词
-                        data.remove("content");
-                        data.put("content", realPrompt.toString());
-
-                        Logger.d(this.getClass(), "#process - Use query attachments creating the prompt - length: "
-                                + realPrompt.length());
-                    } catch (Exception e) {
-                        Logger.w(this.getClass(), "#process", e);
-                    }
-                } // End useQueryAttachment
-
                 // 处理多轮历史记录
-                int lengthCount = data.getString("content").length();
+                int lengthCount = prompt.length();
                 List<GeneratingRecord> candidateRecords = new ArrayList<>();
                 if (null == this.histories) {
                     int validNumHistories = this.maxHistories;
@@ -3704,7 +3690,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                 @Override
                 public void run() {
                     // 更新用量
-                    List<String> tokens = calcTokens(realPrompt.toString());
+                    List<String> tokens = calcTokens(prompt.toString());
                     long promptTokens = tokens.size();
                     tokens = calcTokens(history.answerContent);
                     long completionTokens = tokens.size();
