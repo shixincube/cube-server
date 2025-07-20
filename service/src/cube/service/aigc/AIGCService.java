@@ -24,7 +24,6 @@ import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
-import cube.common.action.FileProcessorAction;
 import cube.common.entity.*;
 import cube.common.notice.GetFile;
 import cube.common.notice.LoadFile;
@@ -40,15 +39,14 @@ import cube.service.aigc.guidance.GuideFlow;
 import cube.service.aigc.guidance.Guides;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.knowledge.KnowledgeFramework;
-import cube.aigc.complex.attachment.FileAttachment;
 import cube.service.aigc.listener.*;
 import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Agent;
-import cube.service.aigc.resource.ResourceAnswer;
 import cube.service.aigc.scene.ContentTools;
 import cube.service.aigc.scene.PaintingReportListener;
 import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.ScaleReportListener;
+import cube.service.aigc.unit.*;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactHook;
@@ -64,10 +62,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -165,7 +159,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 工作路径。
      */
-    private final File workingPath = new File("storage/tmp/");
+    public final File workingPath = new File("storage/tmp/");
 
     /**
      * 生成文本任务执行实时计数。
@@ -175,7 +169,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 是否访问，仅用于本地测试
      */
-    private boolean useAgent = false;
+    public boolean useAgent = false;
 
     /**
      * 配置文件最后修改时间。
@@ -1693,7 +1687,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, content, option, categories,
+        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(this, unit, channel, content, option, categories,
                 histories, attachments, listener);
         meta.maxHistories = maxHistories;
         meta.recordHistoryEnabled = recordable;
@@ -1901,7 +1895,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return;
         }
 
-        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(unit, channel, prompt, option, categories,
+        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(this, unit, channel, prompt, option, categories,
                 histories, attachments, listener);
         meta.setMaxHistories(maxHistories);
         meta.setOriginalQuery(query);
@@ -1945,6 +1939,7 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param parameter
      * @param listener
      * @return
+     * @deprecated
      */
     public long executeConversation(String tokenCode, String channelCode, String content, AIGCConversationParameter parameter,
                              ConversationListener listener) {
@@ -2163,7 +2158,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         // 修正文本内容
         String modified = text.replaceAll("\n", "。");
 
-        UnitMeta meta = new SummarizationUnitMeta(unit, modified, listener);
+        UnitMeta meta = new SummarizationUnitMeta(this, unit, modified, listener);
 
         synchronized (this.summarizationQueueMap) {
             Queue<UnitMeta> queue = this.summarizationQueueMap.get(unit.getQueryKey());
@@ -2251,7 +2246,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        UnitMeta meta = new TextToImageUnitMeta(unit, channel, text, listener);
+        UnitMeta meta = new TextToImageUnitMeta(this, unit, channel, text, listener);
 
         synchronized (this.textToImageQueueMap) {
             Queue<UnitMeta> queue = this.textToImageQueueMap.get(unit.getQueryKey());
@@ -2300,7 +2295,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
         }
 
-        UnitMeta meta = new TextToFileUnitMeta(unit, channel, text, attachment.queryFileLabels, listener);
+        UnitMeta meta = new TextToFileUnitMeta(this, unit, channel, text, attachment.queryFileLabels, listener);
 
         synchronized (this.textToFileQueueMap) {
             Queue<UnitMeta> queue = this.textToFileQueueMap.get(unit.getQueryKey());
@@ -2345,7 +2340,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        UnitMeta meta = new ExtractKeywordsUnitMeta(unit, text, listener);
+        UnitMeta meta = new ExtractKeywordsUnitMeta(this, unit, text, listener);
 
         synchronized (this.extractKeywordsQueueMap) {
             Queue<UnitMeta> queue = this.extractKeywordsQueueMap.get(unit.getQueryKey());
@@ -2390,7 +2385,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        UnitMeta meta = new SemanticSearchUnitMeta(unit, query, listener);
+        UnitMeta meta = new SemanticSearchUnitMeta(this, unit, query, listener);
 
         synchronized (this.semanticSearchQueueMap) {
             Queue<UnitMeta> queue = this.semanticSearchQueueMap.get(unit.getQueryKey());
@@ -2435,7 +2430,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        UnitMeta meta = new RetrieveReRankUnitMeta(unit, queries, listener);
+        UnitMeta meta = new RetrieveReRankUnitMeta(this, unit, queries, listener);
 
         synchronized (this.retrieveReRankQueueMap) {
             Queue<UnitMeta> queue = this.retrieveReRankQueueMap.get(unit.getQueryKey());
@@ -2461,7 +2456,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         return true;
     }
 
-    private RetrieveReRankResult syncRetrieveReRank(FileLabel fileLabel, String query) {
+    public RetrieveReRankResult syncRetrieveReRank(FileLabel fileLabel, String query) {
         try {
             Thread.sleep(Utils.randomInt(10 * 1000, 30 * 1000));
         } catch (InterruptedException e) {
@@ -2641,7 +2636,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        UnitMeta meta = new SpeechRecognitionUnitMeta(unit, fileLabel, listener);
+        UnitMeta meta = new SpeechRecognitionUnitMeta(this, unit, fileLabel, listener);
 
         synchronized (this.speechQueueMap) {
             Queue<UnitMeta> queue = this.speechQueueMap.get(unit.getQueryKey());
@@ -2866,25 +2861,13 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 计算文本的 Token 列表。
-     *
-     * @param text
-     * @return
-     */
-    public List<String> calcTokens(String text) {
-        List<String> tokens = this.tokenizer.sentenceProcess(text);
-        tokens.removeIf(s -> !TextUtils.isChineseWord(s) && !TextUtils.isWord(s));
-        return tokens;
-    }
-
-    /**
      * 识别上下文数据。
      *
      * @param text
      * @param authToken
      * @return
      */
-    private ComplexContext recognizeContext(String text, AuthToken authToken) {
+    public ComplexContext recognizeContext(String text, AuthToken authToken) {
         final String content = text.trim();
         ComplexContext result = new ComplexContext();
 
@@ -3153,106 +3136,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
-    /*private void processSummarizationQueue(String queryKey) {
-        Queue<SummarizationUnitMeta> queue = this.summarizationQueueMap.get(queryKey);
-        if (null == queue) {
-            Logger.w(AIGCService.class, "#processSummarizationQueue - No found unit: " + queryKey);
-            return;
-        }
-
-        SummarizationUnitMeta meta = queue.poll();
-        while (null != meta) {
-            // 执行处理
-            try {
-                meta.process();
-            } catch (Exception e) {
-                Logger.e(this.getClass(), "#processSummarizationQueue - meta process", e);
-            }
-
-            meta = queue.poll();
-        }
-
-        AIGCUnit unit = this.unitMap.get(queryKey);
-        if (null != unit) {
-            unit.setRunning(false);
-        }
-    }*/
-
-    /*private void processTextToImageQueue(String queryKey) {
-        Queue<TextToImageUnitMeta> queue = this.textToImageQueueMap.get(queryKey);
-        if (null == queue) {
-            Logger.w(AIGCService.class, "#processTextToImageQueue - No found unit: " + queryKey);
-            return;
-        }
-
-        TextToImageUnitMeta meta = queue.poll();
-        while (null != meta) {
-            // 执行处理
-            try {
-                meta.process();
-            } catch (Exception e) {
-                Logger.e(this.getClass(), "#processTextToImageQueue - meta process", e);
-            }
-
-            meta = queue.poll();
-        }
-
-        AIGCUnit unit = this.unitMap.get(queryKey);
-        if (null != unit) {
-            unit.setRunning(false);
-        }
-    }*/
-
-    /*private void processExtractKeywordsQueue(String queryKey) {
-        Queue<ExtractKeywordsUnitMeta> queue = this.extractKeywordsQueueMap.get(queryKey);
-        if (null == queue) {
-            Logger.w(AIGCService.class, "#processExtractKeywordsQueue - No found unit: " + queryKey);
-            return;
-        }
-
-        ExtractKeywordsUnitMeta meta = queue.poll();
-        while (null != meta) {
-            // 执行处理
-            try {
-                meta.process();
-            } catch (Exception e) {
-                Logger.e(this.getClass(), "#processExtractKeywordsQueue - meta process", e);
-            }
-
-            meta = queue.poll();
-        }
-
-        AIGCUnit unit = this.unitMap.get(queryKey);
-        if (null != unit) {
-            unit.setRunning(false);
-        }
-    }*/
-
-    /*private void processASRQueue(String queryKey) {
-        Queue<ASRUnitMeta> queue = this.asrQueueMap.get(queryKey);
-        if (null == queue) {
-            Logger.w(AIGCService.class, "No found unit: " + queryKey);
-            return;
-        }
-
-        ASRUnitMeta meta = queue.poll();
-        while (null != meta) {
-            // 执行处理
-            try {
-                meta.process();
-            } catch (Exception e) {
-                Logger.e(this.getClass(), "#processASRQueue - meta process", e);
-            }
-
-            meta = queue.poll();
-        }
-
-        AIGCUnit unit = this.unitMap.get(queryKey);
-        if (null != unit) {
-            unit.setRunning(false);
-        }
-    }*/
-
     private boolean checkParticipantName(String name) {
         if (name.equalsIgnoreCase("AIGC") || name.equalsIgnoreCase("Cube") ||
             name.equalsIgnoreCase("Baize") || name.equalsIgnoreCase("白泽") ||
@@ -3264,596 +3147,9 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
-
-    protected abstract class UnitMeta {
-
-        protected AIGCUnit unit;
-
-        public UnitMeta(AIGCUnit unit) {
-            this.unit = unit;
-        }
-
-        protected List<RetrieveReRankResult> analyseFiles(List<FileLabel> fileLabels, String query) {
-            List<RetrieveReRankResult> result = new ArrayList<>();
-            if (fileLabels.isEmpty()) {
-                return result;
-            }
-
-            for (FileLabel fileLabel : fileLabels) {
-                RetrieveReRankResult retrieveReRankResult = syncRetrieveReRank(fileLabel, query);
-                if (null == retrieveReRankResult) {
-                    continue;
-                }
-                
-                result.add(retrieveReRankResult);
-            }
-            return result;
-        }
-
-//        protected List<String> readFileContent(List<FileLabel> fileLabels) {
-//            List<String> result = new ArrayList<>();
-//
-//            AbstractModule fileStorage = getKernel().getModule("FileStorage");
-//            for (FileLabel fileLabel : fileLabels) {
-//                if (fileLabel.getFileType() == FileType.TEXT
-//                        || fileLabel.getFileType() == FileType.TXT
-//                        || fileLabel.getFileType() == FileType.MD
-//                        || fileLabel.getFileType() == FileType.LOG) {
-//                    String fullpath = fileStorage.notify(new LoadFile(fileLabel.getDomain().getName(), fileLabel.getFileCode()));
-//                    if (null == fullpath) {
-//                        Logger.w(this.getClass(), "#readFileContent - Load file error: " + fileLabel.getFileCode());
-//                        continue;
-//                    }
-//
-//                    try {
-//                        List<String> lines = Files.readAllLines(Paths.get(fullpath));
-//                        for (String text : lines) {
-//                            if (text.trim().length() < 3) {
-//                                continue;
-//                            }
-//                            result.add(text);
-//                        }
-//                    } catch (Exception e) {
-//                        Logger.w(this.getClass(), "#readFileContent - Read file error: " + fullpath);
-//                    }
-//                }
-//                else {
-//                    Logger.w(this.getClass(), "#readFileContent - File type error: " + fileLabel.getFileType().getMimeType());
-//                }
-//            }
-//
-//            return result;
-//        }
-
-        public abstract void process();
-    }
-
-
-    private class GenerateTextUnitMeta extends UnitMeta {
-
-        protected final long sn;
-
-        protected AIGCChannel channel;
-
-        protected Contact participant;
-
-        protected String content;
-
-        protected String originalQuery;
-
-        protected GeneratingOption option;
-
-        protected List<String> categories;
-
-        protected List<GeneratingRecord> histories;
-
-        protected int maxHistories;
-
-        protected List<Attachment> attachments;
-
-        protected GenerateTextListener listener;
-
-        protected AIGCChatHistory history;
-
-        protected boolean recordHistoryEnabled = true;
-
-        protected boolean networkingEnabled = false;
-
-        public GenerateTextUnitMeta(AIGCUnit unit, AIGCChannel channel, String content, GeneratingOption option,
-                                    List<String> categories,
-                                    List<GeneratingRecord> histories,
-                                    List<Attachment> attachments,
-                                    GenerateTextListener listener) {
-            super(unit);
-            this.sn = Utils.generateSerialNumber();
-            this.channel = channel;
-            this.participant = ContactManager.getInstance().getContact(channel.getAuthToken().getDomain(),
-                    channel.getAuthToken().getContactId());
-            this.content = content;
-            this.option = option;
-            this.categories = categories;
-            this.histories = histories;
-            this.attachments = attachments;
-            this.maxHistories = 0;
-            this.listener = listener;
-
-            this.history = new AIGCChatHistory(this.sn, this.channel.getCode(), unit.getCapability().getName(),
-                    this.participant.getDomain().getName());
-            this.history.queryContactId = channel.getAuthToken().getContactId();
-            this.history.queryTime = System.currentTimeMillis();
-            this.history.queryContent = content;
-        }
-
-        public void setNetworkingEnabled(boolean value) {
-            this.networkingEnabled = value;
-        }
-
-        public void setRecordHistoryEnabled(boolean value) {
-            this.recordHistoryEnabled = value;
-        }
-
-        public void setOriginalQuery(String originalQuery) {
-            if (null == originalQuery) {
-                return;
-            }
-
-            this.originalQuery = originalQuery;
-            this.history.queryContent = originalQuery;
-        }
-
-        public void setMaxHistories(int max) {
-            this.maxHistories = max;
-        }
-
-        @Override
-        public void process() {
-            this.channel.setLastUnitMetaSn(this.sn);
-
-            // 识别内容
-            ComplexContext complexContext = option.recognizeContext ?
-                    recognizeContext(this.content, this.channel.getAuthToken()) :
-                    new ComplexContext();
-
-            // 设置是否进行联网分析
-            complexContext.setNetworking(this.networkingEnabled);
-
-            GeneratingRecord result = null;
-
-            final StringBuilder prompt = new StringBuilder(this.content);
-
-            if (complexContext.isSimplified()) {
-                // 一般文本
-
-                int recommendHistories = 5;
-
-                // 提示词长度限制
-                int lengthLimit = ModelConfig.getPromptLengthLimit(this.unit.getCapability().getName());
-                lengthLimit -= this.content.length();
-
-                JSONObject data = new JSONObject();
-                data.put("unit", this.unit.getCapability().getName());
-                data.put("content", this.content);
-                data.put("participant", this.participant.toCompactJSON());
-                data.put("option", this.option.toJSON());
-
-                if (null != this.attachments) {
-                    // 处理附件
-                    List<FileLabel> fileList = new ArrayList<>();
-                    for (Attachment attachment : this.attachments) {
-                        if (attachment.getType().equals(FileAttachment.TYPE)) {
-                            if (null == this.history.queryFileLabels) {
-                                this.history.queryFileLabels = new ArrayList<>();
-                            }
-                            FileAttachment fileAttachment = (FileAttachment) attachment;
-                            this.history.queryFileLabels.add(fileAttachment.fileLabel);
-                            fileList.add(fileAttachment.fileLabel);
-                        }
-                    }
-
-                    // 构建提示词
-                    StringBuilder buf = new StringBuilder();
-
-                    List<RetrieveReRankResult> retrieveReRankList = analyseFiles(fileList, this.content);
-                    List<RetrieveReRankResult.Answer> answerList = new ArrayList<>();
-                    for (RetrieveReRankResult rrr : retrieveReRankList) {
-                        for (RetrieveReRankResult.Answer answer : rrr.getAnswerList()) {
-                            answerList.add(answer);
-                        }
-                    }
-                    // 按照得分从高到底
-                    Collections.sort(answerList, new Comparator<RetrieveReRankResult.Answer>() {
-                        @Override
-                        public int compare(RetrieveReRankResult.Answer a1, RetrieveReRankResult.Answer a2) {
-                            return (int) Math.round((a2.score - a1.score) * 100);
-                        }
-                    });
-                    for (RetrieveReRankResult.Answer answer : answerList) {
-                        if (buf.length() + answer.content.length() >= lengthLimit) {
-                            break;
-                        }
-                        buf.append(answer.content).append("\n");
-                    }
-
-                    if (buf.length() > 0) {
-                        prompt.delete(0, prompt.length());
-                        prompt.append(Consts.formatQuestion(buf.toString(), this.content));
-
-                        // 更新提示词
-                        data.remove("content");
-                        data.put("content", prompt.toString());
-                    }
-                }
-
-                // 处理多轮历史记录
-                int lengthCount = prompt.length();
-                List<GeneratingRecord> candidateRecords = new ArrayList<>();
-                if (null == this.histories) {
-                    int validNumHistories = this.maxHistories;
-                    if (validNumHistories > 0) {
-                        List<GeneratingRecord> records = this.channel.getLastHistory(validNumHistories);
-                        // 正序列表转为倒序以便计算上下文长度
-                        Collections.reverse(records);
-                        for (GeneratingRecord record : records) {
-                            // 判断长度
-                            lengthCount += record.totalWords();
-                            if (lengthCount > lengthLimit) {
-                                // 长度越界
-                                break;
-                            }
-                            // 加入候选
-                            candidateRecords.add(record);
-                        }
-                        // 候选列表的倒序转为正序
-                        Collections.reverse(candidateRecords);
-                    }
-                }
-                else {
-                    for (int i = 0; i < this.histories.size(); ++i) {
-                        GeneratingRecord record = this.histories.get(i);
-                        if (record.hasQueryFile() || record.hasQueryAddition()) {
-                            // 为了兼容旧版本，排除掉附件类型
-                            continue;
-                        }
-
-                        lengthCount += record.totalWords();
-                        // 判断长度
-                        if (lengthCount > lengthLimit) {
-                            // 长度越界
-                            break;
-                        }
-                        // 加入候选
-                        candidateRecords.add(record);
-                        if (candidateRecords.size() >= recommendHistories) {
-                            break;
-                        }
-                    }
-                    // 翻转顺序
-                    Collections.reverse(candidateRecords);
-                }
-
-                // 加入分类释义
-                if (null != this.categories && !this.categories.isEmpty()) {
-                    this.fillRecords(candidateRecords, this.categories, lengthLimit - lengthCount,
-                            this.unit.getCapability().getName());
-                }
-
-                // 写入多轮对话历史数组
-                JSONArray history = new JSONArray();
-                for (GeneratingRecord record : candidateRecords) {
-                    history.put(record.toJSON());
-                }
-                data.put("history", history);
-
-                if (this.content.contains(Consts.NO_CONTENT_SENTENCE) || Consts.NO_CONTENT_SENTENCE.contains(this.content)) {
-                    // 知识库会使用 NO_CONTENT_SENTENCE 作为答案
-                    String responseText = Consts.NO_CONTENT_SENTENCE;
-                    result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
-                            (null != this.originalQuery) ? this.originalQuery : this.content,
-                            responseText, "", complexContext);
-                }
-                else if (this.networkingEnabled) {
-                    // 启用搜索或者启用联网信息检索都执行搜索
-                    executor.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            // 进行资源搜索
-                            SearchResult searchResult = Explorer.getInstance().search(
-                                    (null != originalQuery) ? originalQuery : content, channel.getAuthToken());
-                            if (searchResult.hasResult()) {
-                                // 执行搜索问答
-                                performSearchPageQA(content, unit.getCapability().getName(),
-                                        searchResult, complexContext, 3);
-                            }
-                            else {
-                                // 没有搜索结果
-                                complexContext.fixNetworkingResult(null, null);
-                            }
-                        }
-                    });
-
-                    String responseText = Consts.SEARCHING_INTERNET_FOR_INFORMATION;
-                    result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
-                            (null != this.originalQuery) ? this.originalQuery : this.content,
-                            responseText, "", complexContext);
-                }
-                else if (useAgent) {
-                    GeneratingRecord generatingRecord =
-                            Agent.getInstance().generateText(channel.getCode(), this.unit.getCapability().getName(),
-                                    this.content, new GeneratingOption(), this.histories);
-                    if (null != generatingRecord) {
-                        // 过滤中文字符
-                        result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
-                                (null != this.originalQuery) ? this.originalQuery : this.content,
-                                generatingRecord.answer, generatingRecord.thought, complexContext);
-                    }
-                    else {
-                        this.channel.setProcessing(false);
-                        // 回调失败
-                        this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
-                        return;
-                    }
-                }
-                else {
-                    Packet request = new Packet(AIGCAction.TextToText.name, data);
-                    ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(),
-                            3 * 60 * 1000, this.sn);
-                    if (null == dialect) {
-                        Logger.w(AIGCService.class, "Unit error - channel: " + this.channel.getCode());
-                        // 记录故障
-                        this.unit.markFailure(AIGCStateCode.UnitError.code, System.currentTimeMillis(),
-                                channel.getAuthToken().getContactId());
-                        // 频道状态
-                        this.channel.setProcessing(false);
-                        // 回调错误
-                        this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
-                        return;
-                    }
-
-                    // 是否被中断
-                    if (cellet.isInterruption(dialect)) {
-                        Logger.d(AIGCService.class, "Channel interrupted: " + this.channel.getCode());
-                        this.channel.setProcessing(false);
-                        // 回调错误
-                        this.listener.onFailed(this.channel, AIGCStateCode.Interrupted);
-                        return;
-                    }
-
-                    Packet response = new Packet(dialect);
-                    JSONObject payload = Packet.extractDataPayload(response);
-
-                    String responseText = "";
-                    String thoughtText = "";
-                    try {
-                        responseText = payload.getString("response");
-                        thoughtText = payload.getString("thought");
-                    } catch (Exception e) {
-                        Logger.w(AIGCService.class, "Unit respond failed - channel: " + this.channel.getCode());
-                        // 记录故障
-                        this.unit.markFailure(AIGCStateCode.Failure.code, System.currentTimeMillis(),
-                                channel.getAuthToken().getContactId());
-                        // 频道状态
-                        this.channel.setProcessing(false);
-                        // 回调错误
-                        this.listener.onFailed(this.channel, AIGCStateCode.Failure);
-                        return;
-                    }
-
-                    // 过滤中文字符
-                    responseText = this.filterChinese(this.unit, responseText);
-                    result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
-                            (null != this.originalQuery) ? this.originalQuery : this.content,
-                            responseText.trim(), thoughtText.trim(), complexContext);
-                }
-            }
-            else {
-                // 复合型数据
-                if (complexContext.stage.isFlowable()) {
-                    GeneratingRecord record = complexContext.stage.flowable.generate(AIGCService.this);
-                    result = this.channel.appendRecord(this.sn, record);
-                }
-                else {
-                    ResourceAnswer resourceAnswer = new ResourceAnswer(complexContext);
-                    // 提取内容
-                    String content = resourceAnswer.extractContent(AIGCService.this, this.channel.getAuthToken());
-                    String answer = resourceAnswer.answer(content);
-                    result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
-                            (null != this.originalQuery) ? this.originalQuery : this.content, answer.trim(), "",
-                            complexContext);
-                }
-            }
-
-            if (complexContext.isSimplified()) {
-                if (this.networkingEnabled) {
-                    // 缓存上下文
-                    Explorer.getInstance().cacheComplexContext(complexContext);
-                }
-            }
-            else {
-                // 缓存上下文
-                Explorer.getInstance().cacheComplexContext(complexContext);
-            }
-
-            this.history.answerContactId = unit.getContact().getId();
-            this.history.answerTime = System.currentTimeMillis();
-            this.history.answerContent = result.answer;
-            this.history.thought = result.thought;
-
-            // 设置上下文
-            this.history.context = complexContext;
-
-            // 重置状态位
-            this.channel.setProcessing(false);
-
-            this.listener.onGenerated(this.channel, result);
-
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    // 更新用量
-                    List<String> tokens = calcTokens(prompt.toString());
-                    long promptTokens = tokens.size();
-                    tokens = calcTokens(history.answerContent);
-                    long completionTokens = tokens.size();
-                    storage.updateUsage(history.queryContactId, ModelConfig.getModelByUnit(history.unit),
-                            completionTokens, promptTokens);
-
-                    // 保存历史记录
-                    if (recordHistoryEnabled) {
-                        storage.writeHistory(history);
-                    }
-                }
-            });
-        }
-
-        protected String filterChinese(AIGCUnit unit, String text) {
-            if (unit.getCapability().getName().equalsIgnoreCase(ModelConfig.CHAT_UNIT)) {
-                if (TextUtils.containsChinese(text)) {
-                    return text.replaceAll(",", "，");
-                }
-                else {
-                    return text;
-                }
-            }
-            else {
-                return text;
-            }
-        }
-
-        protected void performSearchPageQA(String query, String unitName, SearchResult searchResult,
-                                         ComplexContext context, int maxPages) {
-            Object mutex = new Object();
-            AtomicInteger pageCount = new AtomicInteger(0);
-
-            List<String> urlList = new ArrayList<>();
-            for (SearchResult.OrganicResult or : searchResult.organicResults) {
-                if (Explorer.getInstance().isIgnorableUrl(or.link)) {
-                    // 跳过忽略的 URL
-                    continue;
-                }
-
-                urlList.add(or.link);
-                if (urlList.size() >= maxPages) {
-                    break;
-                }
-            }
-
-            List<Page> pages = new ArrayList<>();
-
-            for (String url : urlList) {
-                Explorer.getInstance().readPageContent(url, new ReadPageListener() {
-                    @Override
-                    public void onCompleted(String url, Page page) {
-                        pageCount.incrementAndGet();
-
-                        if (null != page) {
-                            pages.add(page);
-                        }
-
-                        if (pageCount.get() >= urlList.size()) {
-                            synchronized (mutex) {
-                                mutex.notify();
-                            }
-                        }
-                    }
-                });
-            }
-
-            synchronized (mutex) {
-                try {
-                    mutex.wait(60 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            StringBuilder pageContent = new StringBuilder();
-
-            for (Page page : pages) {
-                StringBuilder buf = new StringBuilder();
-                for (String text : page.textList) {
-                    buf.append(text).append("\n");
-                    if (buf.length() > ModelConfig.BAIZE_CONTEXT_LIMIT) {
-                        break;
-                    }
-                }
-
-                if (buf.length() > 2) {
-                    buf.delete(buf.length() - 1, buf.length());
-                    // 提取页面与提问匹配的信息
-                    String prompt = Consts.formatExtractContent(buf.toString(), query);
-                    GeneratingRecord answer = syncGenerateText(this.channel.getAuthToken(), ModelConfig.BAIZE_X_UNIT, prompt,
-                            new GeneratingOption());
-                    if (null != answer) {
-                        // 记录内容
-                        pageContent.append(answer.answer);
-                    }
-                }
-            }
-
-            if (pageContent.length() <= 10) {
-                Logger.d(this.getClass(), "#performSearchPageQA - No page content, cid:"
-                        + this.channel.getAuthToken().getContactId());
-                // 使用 null 值填充
-                context.fixNetworkingResult(null, null);
-                return;
-            }
-
-            final int lengthLimit = ModelConfig.getPromptLengthLimit(unitName);
-            if (pageContent.length() > lengthLimit) {
-                String[] tmp = pageContent.toString().split("。");
-                pageContent = new StringBuilder();
-                for (String text : tmp) {
-                    pageContent.append(text).append("。");
-                    if (pageContent.length() >= lengthLimit) {
-                        break;
-                    }
-                }
-                pageContent.delete(pageContent.length() - 1, pageContent.length());
-            }
-
-            // 对提取出来的内容进行推理
-            String prompt = Consts.formatQuestion(pageContent.toString(), query);
-            GeneratingRecord result = syncGenerateText(this.channel.getAuthToken(), unitName, prompt, new GeneratingOption());
-            if (null == result) {
-                Logger.w(this.getClass(), "#performSearchPageQA - Infers page content failed, cid:"
-                        + this.channel.getAuthToken().getContactId());
-                // 使用 null 值填充
-                context.fixNetworkingResult(null, null);
-                return;
-            }
-
-            if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#performSearchPageQA - Result length: " + result.answer.length());
-            }
-
-            // 将页面推理结果填充到上下文
-            context.fixNetworkingResult(pages, result.answer);
-        }
-
-        protected void fillRecords(List<GeneratingRecord> recordList, List<String> categories, int lengthLimit,
-                                   String unitName) {
-            int total = 0;
-            for (String category : categories) {
-                List<KnowledgeParaphrase> list = storage.readKnowledgeParaphrases(category);
-                for (KnowledgeParaphrase paraphrase : list) {
-                    total += paraphrase.getWord().length() + paraphrase.getParaphrase().length();
-                    if (total > lengthLimit) {
-                        break;
-                    }
-
-                    GeneratingRecord record = new GeneratingRecord(unitName,
-                            paraphrase.getWord(), paraphrase.getParaphrase());
-                    recordList.add(record);
-                }
-
-                if (total > lengthLimit) {
-                    break;
-                }
-            }
-        }
-    }
-
-
+    /**
+     * @deprecated
+     */
     private class ConversationUnitMeta extends GenerateTextUnitMeta {
 
         protected AIGCConversationParameter parameter;
@@ -3875,7 +3171,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         public ConversationUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
                                     AIGCConversationParameter parameter,
                                     ConversationListener listener) {
-            super(unit, channel, content, parameter.toGenerativeOption(), parameter.categories,
+            super(AIGCService.this, unit, channel, content, parameter.toGenerativeOption(), parameter.categories,
                     parameter.records, null, null);
             this.listener = this.generateListener;
             this.maxHistories = parameter.histories;
@@ -3883,603 +3179,6 @@ public class AIGCService extends AbstractModule implements Generatable {
             this.networkingEnabled = parameter.networking;
             this.parameter = parameter;
             this.conversationListener = listener;
-        }
-    }
-
-    private class SemanticSearchUnitMeta extends UnitMeta {
-
-        private String query;
-
-        private SemanticSearchListener listener;
-
-        public SemanticSearchUnitMeta(AIGCUnit unit, String query, SemanticSearchListener listener) {
-            super(unit);
-            this.query = query;
-            this.listener = listener;
-        }
-
-        @Override
-        public void process() {
-            JSONObject data = new JSONObject();
-            data.put("query", this.query);
-            Packet request = new Packet(AIGCAction.SemanticSearch.name, data);
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
-            if (null == dialect) {
-                Logger.w(AIGCService.class, "The semantic search unit error");
-                // 回调错误
-                this.listener.onFailed(this.query, AIGCStateCode.UnitError);
-                return;
-            }
-
-            List<QuestionAnswer> qaList = new ArrayList<>();
-
-            Packet response = new Packet(dialect);
-            JSONObject payload = Packet.extractDataPayload(response);
-            JSONArray resultList = payload.getJSONArray("result");
-            for (int i = 0; i < resultList.length(); ++i) {
-                QuestionAnswer qa = new QuestionAnswer(resultList.getJSONObject(i));
-                qaList.add(qa);
-            }
-
-            this.listener.onCompleted(this.query, qaList);
-        }
-    }
-
-    private class RetrieveReRankUnitMeta extends UnitMeta {
-
-        private List<String> queries;
-
-        private RetrieveReRankListener listener;
-
-        public RetrieveReRankUnitMeta(AIGCUnit unit, List<String> queries, RetrieveReRankListener listener) {
-            super(unit);
-            this.queries = queries;
-            this.listener = listener;
-        }
-
-        @Override
-        public void process() {
-            JSONObject data = new JSONObject();
-            data.put("queries", JSONUtils.toStringArray(this.queries));
-            Packet request = new Packet(AIGCAction.RetrieveReRank.name, data);
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
-            if (null == dialect) {
-                Logger.w(AIGCService.class, "The retrieve re-rank unit error");
-                // 回调错误
-                this.listener.onFailed(this.queries, AIGCStateCode.UnitError);
-                return;
-            }
-
-            List<RetrieveReRankResult> list = new ArrayList<>();
-
-            Packet response = new Packet(dialect);
-            if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
-                Logger.w(AIGCService.class, "The retrieve re-rank unit failed: " + Packet.extractCode(response));
-                // 回调错误
-                this.listener.onFailed(this.queries, AIGCStateCode.Failure);
-                return;
-            }
-            JSONObject payload = Packet.extractDataPayload(response);
-            JSONArray resultList = payload.getJSONArray("result");
-            for (int i = 0; i < resultList.length(); ++i) {
-                RetrieveReRankResult result = new RetrieveReRankResult(resultList.getJSONObject(i));
-                list.add(result);
-            }
-
-            this.listener.onCompleted(list);
-        }
-    }
-
-    /*private class NaturalLanguageTaskMeta {
-
-        protected AIGCUnit unit;
-
-        protected NLTask task;
-
-        protected NaturalLanguageTaskListener listener;
-
-        public NaturalLanguageTaskMeta(AIGCUnit unit, NLTask task, NaturalLanguageTaskListener listener) {
-            this.unit = unit;
-            this.task = task;
-            this.listener = listener;
-        }
-
-        public void process() {
-            JSONObject data = new JSONObject();
-            data.put("task", this.task.toJSON());
-            Packet request = new Packet(AIGCAction.NaturalLanguageTask.name, data);
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect());
-            if (null == dialect) {
-                Logger.w(AIGCService.class, "Natural language task unit error");
-                // 回调错误
-                this.listener.onFailed();
-                return;
-            }
-
-            Packet response = new Packet(dialect);
-            JSONObject payload = Packet.extractDataPayload(response);
-
-            String type = payload.getString("task");
-            JSONArray resultList = payload.getJSONArray("result");
-
-            this.listener.onCompleted(new NLTask(type, resultList));
-        }
-    }*/
-
-    /*private class SentimentUnitMeta {
-
-        protected AIGCUnit unit;
-
-        protected String text;
-
-        protected SentimentAnalysisListener listener;
-
-        public SentimentUnitMeta(AIGCUnit unit, String text, SentimentAnalysisListener listener) {
-            this.unit = unit;
-            this.text = text;
-            this.listener = listener;
-        }
-
-        public void process() {
-            JSONObject data = new JSONObject();
-            data.put("text", this.text);
-
-            Packet request = new Packet(AIGCAction.Sentiment.name, data);
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 60 * 1000);
-            if (null == dialect) {
-                Logger.w(AIGCService.class, "Sentiment unit error");
-                // 回调错误
-                this.listener.onFailed();
-                return;
-            }
-
-            Packet response = new Packet(dialect);
-            JSONObject payload = Packet.extractDataPayload(response);
-
-            SentimentResult result = new SentimentResult(payload);
-
-            this.listener.onCompleted(result);
-        }
-    }*/
-
-    private class TextToImageUnitMeta extends UnitMeta {
-
-        protected long sn;
-
-        protected AIGCChannel channel;
-
-        protected String text;
-
-        protected FileLabel fileLabel;
-
-        protected TextToImageListener listener;
-
-        protected AIGCChatHistory history;
-
-        public TextToImageUnitMeta(AIGCUnit unit, AIGCChannel channel, String text, TextToImageListener listener) {
-            super(unit);
-            this.sn = Utils.generateSerialNumber();
-            this.unit = unit;
-            this.channel = channel;
-            this.text = text;
-            this.listener = listener;
-
-            this.history = new AIGCChatHistory(this.sn, channel.getCode(), unit.getCapability().getName(),
-                    channel.getDomain().getName());
-            this.history.queryContactId = channel.getAuthToken().getContactId();
-            this.history.queryTime = System.currentTimeMillis();
-            this.history.queryContent = text;
-        }
-
-        @Override
-        public void process() {
-            this.channel.setLastUnitMetaSn(this.sn);
-
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    listener.onProcessing(channel);
-                }
-            });
-
-            JSONObject data = new JSONObject();
-            data.put("text", this.text);
-
-            Packet request = new Packet(AIGCAction.TextToImage.name, data);
-            // 使用较长的超时时间，以便等待上传数据
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(),
-                    180 * 1000, this.sn);
-            if (null == dialect) {
-                Logger.w(AIGCService.class, "TextToImage unit error");
-                this.channel.setProcessing(false);
-                // 回调错误
-                this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
-                return;
-            }
-
-            // 是否被中断
-            if (cellet.isInterruption(dialect)) {
-                Logger.d(AIGCService.class, "Channel interrupted: " + this.channel.getCode());
-                this.channel.setProcessing(false);
-                // 回调错误
-                this.listener.onFailed(this.channel, AIGCStateCode.Interrupted);
-                return;
-            }
-
-            Packet response = new Packet(dialect);
-            JSONObject payload = Packet.extractDataPayload(response);
-            if (payload.has("fileLabel")) {
-                this.fileLabel = new FileLabel(payload.getJSONObject("fileLabel"));
-                this.fileLabel.resetURLsToken(this.channel.getAuthToken().getCode());
-
-                // 记录
-                GeneratingRecord record = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
-                        this.text, this.fileLabel);
-                this.listener.onCompleted(record);
-
-                // 填写历史
-                this.history.answerContactId = this.unit.getContact().getId();
-                this.history.answerTime = System.currentTimeMillis();
-                this.history.answerContent = this.fileLabel.toCompactJSON().toString();
-
-                this.history.answerFileLabels = new ArrayList<>();
-                this.history.answerFileLabels.add(this.fileLabel);
-
-                executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        // 计算用量
-                        long contactId = channel.getAuthToken().getContactId();
-                        List<String> tokens = calcTokens(text);
-                        long promptTokens = tokens.size();
-                        long completionTokens = (long) Math.floor(fileLabel.getFileSize() / 1024.0);
-                        storage.updateUsage(contactId, ModelConfig.getModelByUnit(history.unit),
-                                completionTokens, promptTokens);
-
-                        // 保存历史记录
-                        storage.writeHistory(history);
-                    }
-                });
-            }
-            else {
-                this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
-            }
-
-            // 重置状态
-            this.channel.setProcessing(false);
-        }
-    }
-
-    private class TextToFileUnitMeta extends UnitMeta {
-
-        private long sn;
-
-        private AIGCChannel channel;
-
-        private String text;
-
-        private List<FileLabel> sources;
-
-        private TextToFileListener listener;
-
-        public TextToFileUnitMeta(AIGCUnit unit, AIGCChannel channel, String text, List<FileLabel> sources, TextToFileListener listener) {
-            super(unit);
-            this.sn = Utils.generateSerialNumber();
-            this.channel = channel;
-            this.text = text;
-            this.sources = new ArrayList<>(sources);
-            this.listener = listener;
-        }
-
-        @Override
-        public void process() {
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    listener.onProcessing(channel);
-                }
-            });
-
-            int promptLimit = ModelConfig.getPromptLengthLimit(this.unit.getCapability().getName());
-
-            List<FileLabel> queryFiles = new ArrayList<>();
-            StringBuilder answerBuf = new StringBuilder("已处理文件");
-            long processedSize = 0;
-            long generatingSize = 0;
-
-            FileType fileType = FileType.UNKNOWN;
-            JSONArray files = new JSONArray();
-            for (FileLabel fileLabel : this.sources) {
-                fileType = fileLabel.getFileType();
-                if (fileType == FileType.XLSX || fileType == FileType.XLS) {
-                    files.put(fileLabel.toJSON());
-                    queryFiles.add(fileLabel);
-
-                    answerBuf.append("“**").append(fileLabel.getFileName()).append("**”，");
-                    processedSize += fileLabel.getFileSize();
-                }
-            }
-            answerBuf.delete(answerBuf.length() - 1, answerBuf.length());
-            answerBuf.append("。");
-
-            ActionDialect dialect = null;
-            if (fileType == FileType.XLSX || fileType == FileType.XLS) {
-                JSONObject data = new JSONObject();
-                data.put("files", files);
-                Packet request = new Packet(FileProcessorAction.ReadExcel.name, data);
-                dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 60 * 1000, this.sn);
-                if (null == dialect) {
-                    Logger.w(this.getClass(), "File processor service error");
-                    // 回调错误
-                    this.listener.onFailed(this.channel, AIGCStateCode.UnitError);
-                    return;
-                }
-            }
-            else {
-                Logger.w(this.getClass(), "Unsupported file type： " + fileType.getPreferredExtension());
-                // 回调错误
-                this.listener.onFailed(this.channel, AIGCStateCode.IllegalOperation);
-                return;
-            }
-
-            Packet response = new Packet(dialect);
-            JSONObject payload = Packet.extractDataPayload(response);
-            JSONArray fileResult = payload.getJSONArray("result");
-            if (fileResult.length() == 0) {
-                Logger.w(this.getClass(), "File error");
-                // 回调错误
-                this.listener.onFailed(this.channel, AIGCStateCode.FileError);
-                return;
-            }
-
-            String notice = null;
-            GeneratingRecord result = new GeneratingRecord(ModelConfig.BAIZE_UNIT, this.text, answerBuf.toString());
-            result.queryFileLabels = queryFiles;
-
-            for (int i = 0; i < fileResult.length(); ++i) {
-                JSONObject fileData = fileResult.getJSONObject(i);
-                String fileCode = fileData.getString("fileCode");
-                JSONArray sheets = fileData.getJSONArray("sheets");
-                for (int n = 0; n < sheets.length(); ++n) {
-                    JSONObject sheetJson = sheets.getJSONObject(n);
-                    String name = sheetJson.getString("name");
-                    String content = sheetJson.getString("content");
-
-                    if (content.length() > promptLimit) {
-                        Logger.w(this.getClass(), "#process - Content length exceeded the limit: " +
-                                content.length() + "/" + promptLimit);
-                        continue;
-                    }
-
-                    StringBuilder prompt = new StringBuilder();
-                    prompt.append("已知以下表格数据：\n\n");
-                    prompt.append("表格名称：").append(name).append("\n\n");
-                    prompt.append("表格数据内容：\n\n").append(content);
-                    prompt.append("\n\n");
-                    prompt.append(String.format(Consts.PROMPT_SUFFIX_FORMAT, this.text));
-
-                    GeneratingRecord generating = syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt.toString(),
-                            null, null, null);
-                    if (null == generating) {
-                        Logger.w(this.getClass(), "#process - Generating failed: " + fileCode);
-                        continue;
-                    }
-
-                    String answer = generating.answer;
-
-                    String tmpNotice = this.extractNotice(answer);
-                    String csv = TextUtils.extractMarkdownTable(answer);
-
-                    if (null != tmpNotice) {
-                        notice = tmpNotice;
-                    }
-
-                    if (null != csv) {
-                        generatingSize += csv.length();
-
-                        // 文件码
-                        String tmpFileCode = FileUtils.makeFileCode(fileCode, channel.getAuthToken().getDomain(), name);
-                        Path path = Paths.get(workingPath.getAbsolutePath(), tmpFileCode + ".csv");
-                        try {
-                            // 写入文件
-                            Files.write(path, csv.getBytes(StandardCharsets.UTF_8));
-                        } catch (IOException e) {
-                            Logger.e(this.getClass(), "#process - File write failed: " + path.toString(), e);
-                        }
-
-                        FileLabel fileLabel = saveFile(this.channel.getAuthToken(),
-                                tmpFileCode, path.toFile(), name + ".csv", true);
-                        if (null != fileLabel) {
-                            result.addAnswerFileLabel(fileLabel);
-                        }
-                        else {
-                            Logger.e(this.getClass(), "#process - Save file failed: " + path.toString());
-                        }
-                    }
-                    else {
-                        Logger.e(this.getClass(), "#process - Extract markdown table failed: " + fileCode);
-                    }
-                }
-            }
-
-            if (null != result.answerFileLabels) {
-                answerBuf.append("处理的数据大小合计 ").append(FileUtils.scaleFileSize(processedSize)).append(" 。");
-                answerBuf.append("生成").append(result.answerFileLabels.size()).append("个文件，合计 ");
-                answerBuf.append(FileUtils.scaleFileSize(generatingSize)).append(" 。\n");
-            }
-            else {
-                answerBuf.append("处理的数据大小合计 ").append(FileUtils.scaleFileSize(processedSize)).append(" 。");
-                answerBuf.append("但是未能正确读取数据，建议检查一下待处理文件。");
-            }
-
-            if (null != notice) {
-                answerBuf.append("\n").append(notice);
-            }
-
-            result.answer = answerBuf.toString();
-            listener.onCompleted(result);
-        }
-
-        private String extractNotice(String text) {
-            String[] lines = text.split("\n");
-            for (String line : lines) {
-                if (line.length() < 2) {
-                    continue;
-                }
-
-                if (line.contains("注意")) {
-                    return line;
-                }
-            }
-            return null;
-        }
-    }
-
-    private class SummarizationUnitMeta extends UnitMeta {
-
-        protected String text;
-
-        protected SummarizationListener listener;
-
-        public SummarizationUnitMeta(AIGCUnit unit, String text, SummarizationListener listener) {
-            super(unit);
-            this.text = text;
-            this.listener = listener;
-        }
-
-        @Override
-        public void process() {
-            JSONObject data = new JSONObject();
-            data.put("text", this.text);
-
-            Packet request = new Packet(AIGCAction.Summarization.name, data);
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 60 * 1000);
-            if (null == dialect) {
-                Logger.w(AIGCService.class, "Summarization unit error");
-                // 回调错误
-                this.listener.onFailed(this.text, AIGCStateCode.UnitError);
-                return;
-            }
-
-            Packet response = new Packet(dialect);
-            JSONObject payload = Packet.extractDataPayload(response);
-            if (payload.has("summarization")) {
-                this.listener.onCompleted(this.text, payload.getString("summarization"));
-            }
-            else {
-                Logger.w(AIGCService.class, "Summarization unit return error");
-                this.listener.onFailed(this.text, AIGCStateCode.NoData);
-            }
-        }
-    }
-
-    private class ExtractKeywordsUnitMeta extends UnitMeta {
-
-        protected String text;
-
-        protected ExtractKeywordsListener listener;
-
-        public ExtractKeywordsUnitMeta(AIGCUnit unit, String text, ExtractKeywordsListener listener) {
-            super(unit);
-            this.text = text;
-            this.listener = listener;
-        }
-
-        @Override
-        public void process() {
-            JSONObject data = new JSONObject();
-            data.put("text", this.text);
-            Packet request = new Packet(AIGCAction.ExtractKeywords.name, data);
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 60 * 1000);
-            if (null == dialect) {
-                Logger.w(AIGCService.class, "Extract keywords unit error");
-                // 回调错误
-                this.listener.onFailed(this.text, AIGCStateCode.UnitError);
-                return;
-            }
-
-            Packet response = new Packet(dialect);
-            JSONObject payload = Packet.extractDataPayload(response);
-            if (payload.has("words")) {
-                JSONArray array = payload.getJSONArray("words");
-                List<String> words = new ArrayList<>(array.length());
-                for (int i = 0; i < array.length(); ++i) {
-                    String word = array.getString(i).replaceAll("\n", "");
-                    if (word.length() == 0) {
-                        continue;
-                    }
-                    words.add(word);
-                }
-
-                if (words.isEmpty()) {
-                    this.listener.onFailed(this.text, AIGCStateCode.NoData);
-                }
-                else {
-                    this.listener.onCompleted(this.text, words);
-                }
-            }
-            else {
-                this.listener.onFailed(this.text, AIGCStateCode.DataStructureError);
-            }
-        }
-    }
-
-
-    private class SpeechRecognitionUnitMeta extends UnitMeta {
-
-//        protected final static String PROMPT = "合理使用标点符号给以下文本断句并修正错别字：%s";
-
-        protected FileLabel file;
-
-        protected AutomaticSpeechRecognitionListener listener;
-
-        public SpeechRecognitionUnitMeta(AIGCUnit unit, FileLabel file, AutomaticSpeechRecognitionListener listener) {
-            super(unit);
-            this.file = file;
-            this.listener = listener;
-        }
-
-        @Override
-        public void process() {
-            JSONObject data = new JSONObject();
-            data.put("fileLabel", this.file.toJSON());
-            Packet request = new Packet(AIGCAction.AutomaticSpeechRecognition.name, data);
-            ActionDialect dialect = cellet.transmit(this.unit.getContext(), request.toDialect(), 5 * 60 * 1000);
-            if (null == dialect) {
-                Logger.w(AIGCService.class, "#process - Speech unit error: " + this.file.getFileCode());
-                // 回调错误
-                this.listener.onFailed(this.file, AIGCStateCode.UnitError);
-                return;
-            }
-
-            Packet response = new Packet(dialect);
-            if (AIGCStateCode.Ok.code != Packet.extractCode(response)) {
-                Logger.w(AIGCService.class, "#process - Speech unit failed: " + this.file.getFileCode());
-                this.listener.onFailed(this.file, AIGCStateCode.Failure);
-                return;
-            }
-
-            JSONObject payload = Packet.extractDataPayload(response);
-            SpeechRecognitionInfo info = new SpeechRecognitionInfo(payload.getJSONObject("result"));
-
-            if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#process STT result -\nfile: " + info.file.getFileCode() +
-                        "\nelapsed: " + info.elapsed +
-                        "\nlang: " + info.lang +
-                        "\ntext: " + info.text +
-                        "\nduration: " + info.durationInSeconds);
-            }
-
-            // 进行标点断句
-//            String prompt = String.format(PROMPT, info.getText());
-//            AIGCUnit unit = selectUnitByName(ModelConfig.BAIZE_UNIT);
-//            if (null != unit) {
-//                GeneratingRecord result = syncGenerateText(unit, prompt, null, null, null);
-//                if (null != result) {
-//                    info.setText(result.answer);
-//                }
-//            }
-            this.listener.onCompleted(this.file, info);
         }
     }
 }
