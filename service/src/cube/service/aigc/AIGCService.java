@@ -1689,9 +1689,9 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         GenerateTextUnitMeta meta = new GenerateTextUnitMeta(this, unit, channel, content, option, categories,
                 histories, attachments, listener);
-        meta.maxHistories = maxHistories;
-        meta.recordHistoryEnabled = recordable;
-        meta.networkingEnabled = networking;
+        meta.setMaxHistories(maxHistories);
+        meta.setRecordHistoryEnabled(recordable);
+        meta.setNetworkingEnabled(networking);
 
         synchronized (this.generateQueueMap) {
             Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(unit.getQueryKey());
@@ -2456,22 +2456,77 @@ public class AIGCService extends AbstractModule implements Generatable {
         return true;
     }
 
-    public RetrieveReRankResult syncRetrieveReRank(FileLabel fileLabel, String query) {
-        try {
-            Thread.sleep(Utils.randomInt(10 * 1000, 30 * 1000));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    public List<RetrieveReRankResult> syncRetrieveReRank(List<FileLabel> fileLabels, String query) {
+        AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.RetrieveReRank);
+        if (null == unit) {
+            Logger.w(this.getClass(), "#syncRetrieveReRank - No retrieve re-rank unit setup in server");
+            return null;
         }
-        JSONObject json = new JSONObject();
-        json.put("query", query);
-        JSONArray array = new JSONArray();
-        JSONObject answer = new JSONObject();
-        answer.put("id", 1);
-        answer.put("content", "这是分析" + fileLabel.getFileName() + "文件对于\"" + query + "\"的提问的Re-rank测试。");
-        answer.put("score", 0.8);
-        array.put(answer);
-        json.put("list", array);
-        RetrieveReRankResult result = new RetrieveReRankResult(json);
+
+        final List<RetrieveReRankResult> result = new ArrayList<>();
+
+        UnitMeta meta = new RetrieveReRankUnitMeta(this, unit, fileLabels, query, new RetrieveReRankListener() {
+            @Override
+            public void onCompleted(List<RetrieveReRankResult> retrieveReRankResults) {
+                result.addAll(retrieveReRankResults);
+                synchronized (result) {
+                    result.notify();
+                }
+            }
+
+            @Override
+            public void onFailed(List<String> queries, AIGCStateCode stateCode) {
+                synchronized (result) {
+                    result.notify();
+                }
+            }
+        });
+
+        synchronized (this.retrieveReRankQueueMap) {
+            Queue<UnitMeta> queue = this.retrieveReRankQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.retrieveReRankQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    processQueue(meta.unit.getQueryKey(), retrieveReRankQueueMap);
+                }
+            });
+        }
+
+        synchronized (result) {
+            try {
+                result.wait(5 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+//        try {
+//            Thread.sleep(Utils.randomInt(10 * 1000, 30 * 1000));
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//        JSONObject json = new JSONObject();
+//        json.put("query", query);
+//        JSONArray array = new JSONArray();
+//        JSONObject answer = new JSONObject();
+//        answer.put("id", 1);
+//        answer.put("content", "这是分析" + fileLabels.get(0).getFileName() + "文件对于\"" + query + "\"的提问的Re-rank测试。");
+//        answer.put("score", 0.8);
+//        array.put(answer);
+//        json.put("list", array);
+//        result.add(new RetrieveReRankResult(json));
+
         return result;
     }
 

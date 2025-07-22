@@ -32,15 +32,7 @@ public abstract class UnitMeta {
             return result;
         }
 
-        for (FileLabel fileLabel : fileLabels) {
-            RetrieveReRankResult retrieveReRankResult = this.service.syncRetrieveReRank(fileLabel, query);
-            if (null == retrieveReRankResult) {
-                continue;
-            }
-
-            result.add(retrieveReRankResult);
-        }
-        return result;
+        return this.service.syncRetrieveReRank(fileLabels, query);
     }
 
 //        protected List<String> readFileContent(List<FileLabel> fileLabels) {

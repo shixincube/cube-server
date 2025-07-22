@@ -18,6 +18,8 @@ public class RetrieveReRankResult extends Entity {
 
     private List<Answer> answerList;
 
+    private RetrieveReRankResultSource source;
+
     public RetrieveReRankResult(JSONObject json) {
         super(json);
         this.query = json.getString("query");
@@ -25,6 +27,9 @@ public class RetrieveReRankResult extends Entity {
         JSONArray list = json.getJSONArray("list");
         for (int i = 0; i < list.length(); ++i) {
             this.answerList.add(new Answer(list.getJSONObject(i)));
+        }
+        if (json.has("source")) {
+            this.source = new RetrieveReRankResultSource(json.getJSONObject("source"));
         }
     }
 
@@ -40,6 +45,10 @@ public class RetrieveReRankResult extends Entity {
         return !this.answerList.isEmpty();
     }
 
+    public RetrieveReRankResultSource getSource() {
+        return this.source;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
@@ -49,6 +58,9 @@ public class RetrieveReRankResult extends Entity {
             list.put(answer.toJSON());
         }
         json.put("list", list);
+        if (null != this.source) {
+            json.put("source", this.source.toJSON());
+        }
         return json;
     }
 

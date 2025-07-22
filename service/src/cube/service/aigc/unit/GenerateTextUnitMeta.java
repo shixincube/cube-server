@@ -53,7 +53,7 @@ public class GenerateTextUnitMeta extends UnitMeta {
 
     protected List<GeneratingRecord> histories;
 
-    public int maxHistories;
+    protected int maxHistories;
 
     protected List<Attachment> attachments;
 
@@ -61,9 +61,9 @@ public class GenerateTextUnitMeta extends UnitMeta {
 
     protected AIGCChatHistory history;
 
-    public boolean recordHistoryEnabled = true;
+    protected boolean recordHistoryEnabled = true;
 
-    public boolean networkingEnabled = false;
+    protected boolean networkingEnabled = false;
 
     public GenerateTextUnitMeta(AIGCService service, AIGCUnit unit, AIGCChannel channel, String content,
                                 GeneratingOption option,
@@ -163,9 +163,7 @@ public class GenerateTextUnitMeta extends UnitMeta {
                 List<RetrieveReRankResult> retrieveReRankList = analyseFiles(fileList, this.content);
                 List<RetrieveReRankResult.Answer> answerList = new ArrayList<>();
                 for (RetrieveReRankResult rrr : retrieveReRankList) {
-                    for (RetrieveReRankResult.Answer answer : rrr.getAnswerList()) {
-                        answerList.add(answer);
-                    }
+                    answerList.addAll(rrr.getAnswerList());
                 }
                 // 按照得分从高到底
                 Collections.sort(answerList, new Comparator<RetrieveReRankResult.Answer>() {

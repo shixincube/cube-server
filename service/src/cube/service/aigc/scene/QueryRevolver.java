@@ -107,6 +107,13 @@ public class QueryRevolver {
             "报告全部内容",
     };
 
+    /**
+     * 学生心理推理策略。
+     */
+    private final static String[] sStudentStrategy = new String[] {
+            "学生", "孩子"
+    };
+
     private AIGCService service;
 
     private Tokenizer tokenizer;
@@ -120,6 +127,8 @@ public class QueryRevolver {
         public String prefix;
 
         public String postfix;
+
+        public Prompt next = null;
 
         public Prompt(String content) {
             this.content = content;
@@ -207,7 +216,7 @@ public class QueryRevolver {
         if (needReportData && !hitLazy) {
             PaintingReport report = context.getCurrentReport();
             result.append("已知评测数据：\n\n");
-            result.append("此评测数据是由AiXinLi模型生成的，采用的评测方法是“房树人”绘画投射测试。");
+            result.append("此评测数据由AiXinLi模型生成，采用的评测方法是“房树人”绘画投射测试。");
             result.append("评测数据的受测人是匿名的，");
             result.append("年龄是：").append(report.getAttribute().age).append("岁，");
             result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n\n");
@@ -215,7 +224,7 @@ public class QueryRevolver {
 
             ReportPermission permission = report.getPermission();
             if (permission.isPermissioned()) {
-                result.append("受测人的心理特征摘要如下：");
+                result.append("受测人的心理特征摘要如下：\n");
                 result.append(report.getSummary());
                 result.append("\n\n");
 
@@ -973,22 +982,22 @@ public class QueryRevolver {
         return result.toString();
     }
 
-//    private String generateKnowledge(String query) {
-//        String fixQuery = query.replaceAll("你", "爱心理");
-//
-//        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
-//        List<String> keywords = analyzer.analyzeOnlyWords(fixQuery, 7);
-//
-//        StringBuilder buf = new StringBuilder();
-//
-//        Dataset dataset = Resource.getInstance().loadDataset();
-//        List<String> list = dataset.searchContent(keywords.toArray(new String[0]), 2);
-//        for (String content : list) {
-//            buf.append(content).append("\n\n");
-//        }
-//
-//        return buf.toString();
-//    }
+    /**
+     * 生成策略描述。
+     *
+     * @param report
+     * @param query
+     * @return
+     */
+    public Prompt generateStrategy(PaintingReport report, String query) {
+        StringBuilder buf = new StringBuilder();
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+        List<String> words = analyzer.analyzeOnlyWords(query, 10);
+        for (String word : words) {
+            
+        }
+        return null;
+    }
 
     private String tryGenerateFactorDesc(PaintingReport report, String query) {
         StringBuilder result = new StringBuilder();

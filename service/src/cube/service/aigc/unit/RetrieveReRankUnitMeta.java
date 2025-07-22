@@ -11,6 +11,7 @@ import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.AIGCUnit;
+import cube.common.entity.FileLabel;
 import cube.common.entity.RetrieveReRankResult;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
@@ -26,6 +27,8 @@ public class RetrieveReRankUnitMeta extends UnitMeta {
 
     private List<String> queries;
 
+    private List<FileLabel> fileLabels;
+
     private RetrieveReRankListener listener;
 
     public RetrieveReRankUnitMeta(AIGCService service, AIGCUnit unit, List<String> queries, RetrieveReRankListener listener) {
@@ -34,10 +37,30 @@ public class RetrieveReRankUnitMeta extends UnitMeta {
         this.listener = listener;
     }
 
+    public RetrieveReRankUnitMeta(AIGCService service, AIGCUnit unit, List<FileLabel> fileLabels, String query,
+                                  RetrieveReRankListener listener) {
+        super(service, unit);
+        this.fileLabels = fileLabels;
+        this.queries = new ArrayList<>();
+        this.queries.add(query);
+        this.listener = listener;
+    }
+
     @Override
     public void process() {
         JSONObject data = new JSONObject();
-        data.put("queries", JSONUtils.toStringArray(this.queries));
+        if (null != this.fileLabels) {
+            data.put("query", this.queries.get(0));
+            JSONArray array = new JSONArray();
+            for (FileLabel fileLabel : this.fileLabels) {
+                array.put(fileLabel.toJSON());
+            }
+            data.put("files", array);
+        }
+        else {
+            data.put("queries", JSONUtils.toStringArray(this.queries));
+        }
+
         Packet request = new Packet(AIGCAction.RetrieveReRank.name, data);
         ActionDialect dialect = this.service.getCellet().transmit(this.unit.getContext(), request.toDialect());
         if (null == dialect) {

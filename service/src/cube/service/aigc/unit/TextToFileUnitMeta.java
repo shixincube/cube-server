@@ -123,7 +123,8 @@ public class TextToFileUnitMeta extends UnitMeta {
 
         for (int i = 0; i < fileResult.length(); ++i) {
             JSONObject fileData = fileResult.getJSONObject(i);
-            String fileCode = fileData.getString("fileCode");
+            JSONObject fileLabelJson = fileData.getJSONObject("fileLabel");
+            FileLabel fileLabel = new FileLabel(fileLabelJson);
             JSONArray sheets = fileData.getJSONArray("sheets");
             for (int n = 0; n < sheets.length(); ++n) {
                 JSONObject sheetJson = sheets.getJSONObject(n);
@@ -146,7 +147,7 @@ public class TextToFileUnitMeta extends UnitMeta {
                 GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt.toString(),
                         null, null, null);
                 if (null == generating) {
-                    Logger.w(this.getClass(), "#process - Generating failed: " + fileCode);
+                    Logger.w(this.getClass(), "#process - Generating failed: " + fileLabel.getFileCode());
                     continue;
                 }
 
@@ -163,7 +164,7 @@ public class TextToFileUnitMeta extends UnitMeta {
                     generatingSize += csv.length();
 
                     // 文件码
-                    String tmpFileCode = FileUtils.makeFileCode(fileCode, channel.getAuthToken().getDomain(), name);
+                    String tmpFileCode = FileUtils.makeFileCode(fileLabel.getFileCode(), channel.getAuthToken().getDomain(), name);
                     Path path = Paths.get(this.service.workingPath.getAbsolutePath(), tmpFileCode + ".csv");
                     try {
                         // 写入文件
@@ -172,17 +173,17 @@ public class TextToFileUnitMeta extends UnitMeta {
                         Logger.e(this.getClass(), "#process - File write failed: " + path.toString(), e);
                     }
 
-                    FileLabel fileLabel = this.service.saveFile(this.channel.getAuthToken(),
+                    FileLabel newFileLabel = this.service.saveFile(this.channel.getAuthToken(),
                             tmpFileCode, path.toFile(), name + ".csv", true);
-                    if (null != fileLabel) {
-                        result.addAnswerFileLabel(fileLabel);
+                    if (null != newFileLabel) {
+                        result.addAnswerFileLabel(newFileLabel);
                     }
                     else {
                         Logger.e(this.getClass(), "#process - Save file failed: " + path.toString());
                     }
                 }
                 else {
-                    Logger.e(this.getClass(), "#process - Extract markdown table failed: " + fileCode);
+                    Logger.e(this.getClass(), "#process - Extract markdown table failed: " + fileLabel.getFileCode());
                 }
             }
         }

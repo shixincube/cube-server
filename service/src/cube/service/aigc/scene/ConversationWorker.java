@@ -342,7 +342,7 @@ public class ConversationWorker {
         }
 
         // 获取单元
-        String unitName = prompt.content.length() > 1000 || prompt.content.contains(JUMP_POLISH) ?
+        String unitName = prompt.content.length() > 2000 || prompt.content.contains(JUMP_POLISH) ?
                 ModelConfig.BAIZE_X_UNIT : ModelConfig.BAIZE_NEXT_UNIT;
         AIGCUnit unit = this.service.selectIdleUnitByName(unitName);
         if (null == unit) {
