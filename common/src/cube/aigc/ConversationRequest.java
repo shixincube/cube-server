@@ -10,6 +10,9 @@ import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+/**
+ * @deprecated
+ */
 public class ConversationRequest implements JSONable {
 
     public final String prompt;

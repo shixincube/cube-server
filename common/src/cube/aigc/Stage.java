@@ -11,6 +11,7 @@ import cube.auth.AuthToken;
 import cube.common.entity.AttachmentResource;
 import cube.common.entity.ChartResource;
 import cube.common.entity.Entity;
+import cube.common.entity.GeneratingRecord;
 import org.json.JSONObject;
 
 import java.util.List;
@@ -22,21 +23,15 @@ public class Stage extends Entity {
 
     public AuthToken authToken;
 
-    public Module module;
-
     public Flowable flowable;
-
-    public List<ChartResource> chartResources;
-
-    public List<AttachmentResource> attachmentResources;
 
     public Stage(AuthToken authToken) {
         super(Utils.generateSerialNumber());
         this.authToken = authToken;
     }
 
-    public boolean isFlowable() {
-        return (null != this.module && null != flowable);
+    public GeneratingRecord perform() {
+        return null;
     }
 
     /*public void perform(AIGCService service, AIGCChannel channel, StageListener listener) {

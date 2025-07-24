@@ -85,9 +85,9 @@ public class AppManager implements Module {
                 continue;
             }
 
-            if (qa.getAnswers().get(0).equalsIgnoreCase(QueryUser.TASK_NAME)) {
-                return new QueryUser(this.service, token, query);
-            }
+//            if (qa.getAnswers().get(0).equalsIgnoreCase(QueryUser.TASK_NAME)) {
+//                return new QueryUser(this.service, token, query);
+//            }
         }
 
         return null;

@@ -12,6 +12,7 @@ import java.util.List;
 
 /**
  * 业务模组。
+ * @deprecated
  */
 public interface Module {
 

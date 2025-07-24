@@ -10,6 +10,8 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
+import cube.aigc.StrategyFlow;
+import cube.aigc.StrategyNode;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.PerceptronThing;
@@ -24,6 +26,8 @@ import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.scene.node.ChildClassicSceneStrategyNode;
+import cube.service.aigc.scene.node.DetectChildQueryStrategyNode;
 import cube.service.contact.ContactManager;
 import cube.service.cv.CVService;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -955,7 +959,7 @@ public class PsychologyScene {
             List<Report> reportList = new ArrayList<>();
 
             for (ConversationRelation relation : relations) {
-                Report report = null;
+                Report report;
                 PaintingReport paintingReport = this.getPaintingReport(relation.reportSn);
                 if (null == paintingReport) {
                     ScaleReport scaleReport = this.getScaleReport(relation.reportSn);
@@ -1009,8 +1013,32 @@ public class PsychologyScene {
      * @param query
      * @return
      */
-    public QueryRevolver.Prompt buildPrompt(ConversationContext context, String query) {
+    public PromptRevolver buildPrompt(ConversationContext context, String query) {
         QueryRevolver revolver = new QueryRevolver(this.service, this.storage);
+
+        // 尝试情景推理
+        if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
+            PaintingReport report = context.getCurrentReport();
+            if (report.getAttribute().age < 18) {
+                Logger.d(this.getClass(), "#generateStrategy - Age is less then 18: " + report.sn);
+
+                // 添加节点
+                StrategyNode detectChildQuery = new DetectChildQueryStrategyNode(query);
+                StrategyNode childClassicScene = new ChildClassicSceneStrategyNode(query, revolver, context.getCurrentReport());
+                detectChildQuery.link(childClassicScene);
+
+                // 创建流
+                StrategyFlow flow = new StrategyFlow(detectChildQuery);
+
+                // 执行
+                GeneratingRecord result = flow.generate(this.service);
+                if (null != result) {
+                    PromptRevolver prompt = new PromptRevolver(result.answer);
+                    return prompt;
+                }
+            }
+        }
+
         return revolver.generatePrompt(context, query);
     }
 

@@ -91,9 +91,11 @@ public abstract class ConversationSubtask {
             return text;
         }
         int pos = result.answer.indexOf("\n");
-        String substring = result.answer.substring(0, pos);
-        if (substring.contains(JUMP_POLISH)) {
-            result.answer = result.answer.substring(pos + 1);
+        if (pos > 0) {
+            String substring = result.answer.substring(0, pos);
+            if (substring.contains(JUMP_POLISH)) {
+                result.answer = result.answer.substring(pos + 1);
+            }
         }
         while (result.answer.startsWith("\n")) {
             result.answer = result.answer.substring(1);

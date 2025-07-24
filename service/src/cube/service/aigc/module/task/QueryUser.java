@@ -11,6 +11,7 @@ import cell.util.log.Logger;
 import cube.aigc.AppEvent;
 import cube.aigc.Generatable;
 import cube.aigc.ModelConfig;
+import cube.aigc.StrategyNode;
 import cube.auth.AuthToken;
 import cube.common.entity.Contact;
 import cube.common.entity.GeneratingOption;
@@ -24,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class QueryUser extends FlowTask {
+public class QueryUser extends StrategyNode {
 
     public final static String TASK_NAME = "{{app_query_user}}";
 
@@ -33,11 +34,10 @@ public class QueryUser extends FlowTask {
     private int maxNum = 50;
 
     public QueryUser(AIGCService service, AuthToken token, String query) {
-        super(service, query);
+        super(query);
         this.token = token;
     }
 
-    @Override
     public GeneratingRecord generate(Generatable generator) {
         List<String> platforms = new ArrayList<>();
         platforms.add("Android");
@@ -49,7 +49,7 @@ public class QueryUser extends FlowTask {
         prompt.append("已知用户数据表格：\n\n");
         prompt.append(data);
         prompt.append("\n\n");
-        prompt.append("请根据以上表格数据回答问题：").append(this.query);
+        prompt.append("请根据以上表格数据回答问题：").append("");
 
         return generator.generateText(ModelConfig.BAIZE_NEXT_UNIT, prompt.toString(),
                 new GeneratingOption(), null);
@@ -74,7 +74,7 @@ public class QueryUser extends FlowTask {
         for (Contact contact : contacts) {
             try {
                 User user = new User(contact.getContext());
-                List<AppEvent> appEvents = this.service.getStorage().readAppEvents(contact.getId(), AppEvent.Session, 1);
+                List<AppEvent> appEvents = null;//this.service.getStorage().readAppEvents(contact.getId(), AppEvent.Session, 1);
                 AppEvent sessionEvent = appEvents.isEmpty() ? null : appEvents.get(0);
 
                 long id = contact.getId();
@@ -114,5 +114,10 @@ public class QueryUser extends FlowTask {
         }
         buf.append("\n");
         return buf.toString();
+    }
+
+    @Override
+    public String perform(GeneratingRecord input) {
+        return null;
     }
 }

@@ -334,7 +334,7 @@ public class ConversationWorker {
             convCtx.cancelCurrentPredict();
         }
 
-        QueryRevolver.Prompt prompt = PsychologyScene.getInstance().buildPrompt(convCtx, query);
+        PromptRevolver prompt = PsychologyScene.getInstance().buildPrompt(convCtx, query);
         if (null == prompt) {
             Logger.e(this.getClass(), "#work - Builds prompt failed");
             channel.setProcessing(false);

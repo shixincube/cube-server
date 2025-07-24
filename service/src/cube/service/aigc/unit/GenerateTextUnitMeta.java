@@ -351,9 +351,9 @@ public class GenerateTextUnitMeta extends UnitMeta {
             }
         }
         else {
-            // 复合型数据
-            if (complexContext.stage.isFlowable()) {
-                GeneratingRecord record = complexContext.stage.flowable.generate(this.service);
+            // 进入舞台流程
+            if (null != complexContext.stage) {
+                GeneratingRecord record = complexContext.stage.perform();
                 result = this.channel.appendRecord(this.sn, record);
             }
             else {

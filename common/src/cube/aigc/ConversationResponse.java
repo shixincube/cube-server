@@ -17,6 +17,9 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated
+ */
 public class ConversationResponse implements JSONable {
 
     private long sn;

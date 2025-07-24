@@ -3017,11 +3017,12 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
         }
         else {
-            Stage stage = Explorer.getInstance().perform(authToken, content);
-            if (stage.isFlowable()) {
-                result = new ComplexContext(false);
-                result.stage = stage;
-            }
+            // TODO 2025-7-24 需要重写该工作流
+//            Stage stage = Explorer.getInstance().perform(authToken, content);
+//            if (stage.isFlowable()) {
+//                result = new ComplexContext(false);
+//                result.stage = stage;
+//            }
 
             /*Stage stage = Explorer.getInstance().infer(content);
             if (stage.isComplex()) {

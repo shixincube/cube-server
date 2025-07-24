@@ -17,7 +17,6 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
-import cube.service.aigc.listener.RetrieveReRankListener;
 import cube.service.aigc.listener.SemanticSearchListener;
 import cube.service.contact.ContactManager;
 import cube.service.tokenizer.Tokenizer;
@@ -107,33 +106,11 @@ public class QueryRevolver {
             "报告全部内容",
     };
 
-    /**
-     * 学生心理推理策略。
-     */
-    private final static String[] sStudentStrategy = new String[] {
-            "学生", "孩子"
-    };
-
     private AIGCService service;
 
     private Tokenizer tokenizer;
 
     private PsychologyStorage storage;
-
-    public final class Prompt {
-
-        public final String content;
-
-        public String prefix;
-
-        public String postfix;
-
-        public Prompt next = null;
-
-        public Prompt(String content) {
-            this.content = content;
-        }
-    }
 
     public QueryRevolver(AIGCService service, PsychologyStorage storage) {
         this.service = service;
@@ -141,7 +118,7 @@ public class QueryRevolver {
         this.storage = storage;
     }
 
-    public Prompt generatePrompt(ConversationContext context, String query) {
+    public PromptRevolver generatePrompt(ConversationContext context, String query) {
         final StringBuilder result = new StringBuilder();
         String prefix = null;
         String postfix = null;
@@ -295,43 +272,6 @@ public class QueryRevolver {
                     }
                 });
 
-                /*List<String> queries = new ArrayList<>();
-                queries.add(query);
-                boolean success = this.service.retrieveReRank(queries, new RetrieveReRankListener() {
-                    @Override
-                    public void onCompleted(List<RetrieveReRankResult> retrieveReRankResults) {
-                        for (RetrieveReRankResult retrieveReRankResult : retrieveReRankResults) {
-                            QuestionAnswer questionAnswer = new QuestionAnswer(query);
-                            for (RetrieveReRankResult.Answer answer : retrieveReRankResult.getAnswerList()) {
-                                // 排除子任务
-                                Subtask subtask = Subtask.extract(answer.content);
-                                if (Subtask.None != subtask) {
-                                    continue;
-                                }
-
-                                // 收录高分答案
-                                if (answer.score >= 0.68) {
-                                    questionAnswer.addAnswers(answer.content, answer.score);
-                                }
-                            }
-                            // 有答案就收录
-                            if (questionAnswer.hasAnswer()) {
-                                questionAnswerList.add(questionAnswer);
-                            }
-                        }
-                        synchronized (result) {
-                            result.notify();
-                        }
-                    }
-
-                    @Override
-                    public void onFailed(List<String> queries, AIGCStateCode stateCode) {
-                        synchronized (result) {
-                            result.notify();
-                        }
-                    }
-                });*/
-
                 if (success) {
                     synchronized (result) {
                         try {
@@ -459,7 +399,7 @@ public class QueryRevolver {
             postfix = "\n\n我的更多功能您可以点击：**[功能介绍](" + Link.formatPromptDirect("请你介绍一下你自己。") + ")** 了解。";
         }
 
-        Prompt prompt = new Prompt(result.toString());
+        PromptRevolver prompt = new PromptRevolver(result.toString());
         prompt.prefix = prefix;
         prompt.postfix = postfix;
         return prompt;
@@ -820,7 +760,7 @@ public class QueryRevolver {
         return buf.toString();
     }
 
-    private String formatReportDate(PaintingReport report) {
+    public String formatReportDate(PaintingReport report) {
         return sDateFormat.format(new Date(report.getFinishedTimestamp()));
     }
 
@@ -980,23 +920,6 @@ public class QueryRevolver {
         }
 
         return result.toString();
-    }
-
-    /**
-     * 生成策略描述。
-     *
-     * @param report
-     * @param query
-     * @return
-     */
-    public Prompt generateStrategy(PaintingReport report, String query) {
-        StringBuilder buf = new StringBuilder();
-        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
-        List<String> words = analyzer.analyzeOnlyWords(query, 10);
-        for (String word : words) {
-            
-        }
-        return null;
     }
 
     private String tryGenerateFactorDesc(PaintingReport report, String query) {
