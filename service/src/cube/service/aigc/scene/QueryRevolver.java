@@ -1171,7 +1171,7 @@ public class QueryRevolver {
         return count / pole.size();
     }
 
-    private String filterPersonalityDescription(String desc) {
+    public String filterPersonalityDescription(String desc) {
         String result = desc.replaceAll("你", "受测人");
         return result.replaceAll("您", "受测人");
     }

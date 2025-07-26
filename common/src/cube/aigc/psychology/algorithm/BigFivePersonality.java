@@ -155,7 +155,7 @@ public class BigFivePersonality implements JSONable {
 
     private String obligingnessContent = "";
 
-    private ScoreAnnotation obligingnessAnnotation = new ScoreAnnotation(
+    public final ScoreAnnotation obligingnessAnnotation = new ScoreAnnotation(
             new String[] {
                     "有同情心、关心别人。", "愿意支持别人。", "和善、对人真诚。", "开明、能理解信任别人。"
             }, new String[] {
@@ -175,7 +175,7 @@ public class BigFivePersonality implements JSONable {
 
     private String conscientiousnessContent = "";
 
-    private ScoreAnnotation conscientiousnessAnnotation = new ScoreAnnotation(
+    public final ScoreAnnotation conscientiousnessAnnotation = new ScoreAnnotation(
             new String[] {
                     "有计划、未雨绸缪。", "忠诚可靠、有职业道德。", "尽职尽责、实干。", "尊重维护秩序、结构。"
             }, new String[] {
@@ -195,7 +195,7 @@ public class BigFivePersonality implements JSONable {
 
     private String extraversionContent = "";
 
-    private ScoreAnnotation extraversionAnnotation = new ScoreAnnotation(
+    public final ScoreAnnotation extraversionAnnotation = new ScoreAnnotation(
             new String[] {
                     "积极的、精力充沛的。", "热情外向的。", "好交际的。", "乐观的、友善的。"
             }, new String[] {
@@ -215,7 +215,7 @@ public class BigFivePersonality implements JSONable {
 
     private String achievementContent = "";
 
-    private ScoreAnnotation achievementAnnotation = new ScoreAnnotation(
+    public final ScoreAnnotation achievementAnnotation = new ScoreAnnotation(
             new String[] {
                     "有支配力、有决心。", "坚定的、完全投入的。", "有推动力的。", "以目标为导向的。"
             }, new String[] {
@@ -235,7 +235,7 @@ public class BigFivePersonality implements JSONable {
 
     private String neuroticismContent = "";
 
-    private ScoreAnnotation neuroticismAnnotation = new ScoreAnnotation(
+    public final ScoreAnnotation neuroticismAnnotation = new ScoreAnnotation(
             new String[] {
                     "易动感情、易兴奋。", "反应快。", "感染力和带动性，能鼓舞人心。", "有洞察力，会不断提问和澄清。", "乐于学习和发展。"
             }, new String[] {
@@ -960,13 +960,13 @@ public class BigFivePersonality implements JSONable {
 
     public class ScoreAnnotation {
 
-        protected String[] highAdvantages;
+        protected final String[] highAdvantages;
 
-        protected String[] highDisadvantages;
+        protected final String[] highDisadvantages;
 
-        protected String[] lowAdvantages;
+        protected final String[] lowAdvantages;
 
-        protected String[] lowDisadvantages;
+        protected final String[] lowDisadvantages;
 
         public ScoreAnnotation(String[] highAdvantages, String[] highDisadvantages,
                                String[] lowAdvantages, String[] lowDisadvantages) {
@@ -981,6 +981,46 @@ public class BigFivePersonality implements JSONable {
             this.highDisadvantages = JSONUtils.toStringArray(json.getJSONArray("highDisadvantages"));
             this.lowAdvantages = JSONUtils.toStringArray(json.getJSONArray("lowAdvantages"));
             this.lowDisadvantages = JSONUtils.toStringArray(json.getJSONArray("lowDisadvantages"));
+        }
+
+        public String getHighAdvantages() {
+            StringBuilder buf = new StringBuilder();
+            for (String text : this.highAdvantages) {
+                buf.append(text).append("，");
+            }
+            buf.delete(buf.length() - 1, buf.length());
+            buf.append("。");
+            return buf.toString();
+        }
+
+        public String getHighDisadvantages() {
+            StringBuilder buf = new StringBuilder();
+            for (String text : this.highDisadvantages) {
+                buf.append(text).append("，");
+            }
+            buf.delete(buf.length() - 1, buf.length());
+            buf.append("。");
+            return buf.toString();
+        }
+
+        public String getLowAdvantages() {
+            StringBuilder buf = new StringBuilder();
+            for (String text : this.lowAdvantages) {
+                buf.append(text).append("，");
+            }
+            buf.delete(buf.length() - 1, buf.length());
+            buf.append("。");
+            return buf.toString();
+        }
+
+        public String getLowDisadvantages() {
+            StringBuilder buf = new StringBuilder();
+            for (String text : this.lowDisadvantages) {
+                buf.append(text).append("，");
+            }
+            buf.delete(buf.length() - 1, buf.length());
+            buf.append("。");
+            return buf.toString();
         }
 
         public JSONObject toJSON() {
