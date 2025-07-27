@@ -394,7 +394,7 @@ public class HTPEvaluation extends Evaluation {
                         new Thing[] { house, tree, person }));
 
                 result.addScore(Indicator.Realism, 1, FloatUtils.random(0.3, 0.4));
-                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.2 * count, 0.25 * count));
+                result.addScore(Indicator.Depression, -1, FloatUtils.random(0.1 * count, 0.15 * count));
                 // FIXME 1030
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(6.0, 7.0));
                 result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(7.0, 8.0));
@@ -1618,8 +1618,19 @@ public class HTPEvaluation extends Evaluation {
 
                 String desc = "房子有涂鸦痕迹";
                 result.addFeature(desc, Term.Defensiveness, Tendency.Positive, new Thing[] { house });
+                result.addFeature(desc, Term.Depression, Tendency.Positive, new Thing[] { house });
+                result.addFeature(desc, Term.Anxiety, Tendency.Positive, new Thing[] { house });
 
-                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
+                if (house.isDeepnessDoodle()) {
+                    result.addScore(Indicator.Family, -1, FloatUtils.random(0.6, 0.7));
+                    result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
+                    result.removeScores(Indicator.Depression);
+                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.7, 0.8));
+                }
+                else {
+                    result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
+                    result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
+                }
 
                 result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.5, 8.0));
                 if (printBigFive) {
@@ -1781,7 +1792,7 @@ public class HTPEvaluation extends Evaluation {
                     });
 
                     result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.2, 0.3));
-                    result.addScore(Indicator.Depression, -1, FloatUtils.random(0.3, 0.4));
+                    result.addScore(Indicator.Depression, -1, FloatUtils.random(0.2, 0.3));
                     Logger.d(this.getClass(), "#evalTree [Depression] : -1");
 
                     result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(6.5, 7.5));
@@ -1801,7 +1812,7 @@ public class HTPEvaluation extends Evaluation {
                     });
 
                     result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.2, 0.3));
-                    result.addScore(Indicator.Depression, -1, FloatUtils.random(0.4, 0.5));
+                    result.addScore(Indicator.Depression, -1, FloatUtils.random(0.3, 0.4));
                     Logger.d(this.getClass(), "#evalTree [Depression] : -1");
 
                     result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(6.5, 7.5));
@@ -1905,6 +1916,12 @@ public class HTPEvaluation extends Evaluation {
                     result.addFeature(desc, Term.Childish, Tendency.Positive, new Thing[] {
                             tree.getCanopies().get(0)
                     });
+                }
+
+                // 判断树冠涂鸦
+                if (tree.isDoodleCanopy()) {
+                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.2, 0.3));
+                    result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.4, 0.5));
                 }
             }
             /* 树冠存在识别失败的可能性

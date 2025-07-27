@@ -334,11 +334,24 @@ public class ConversationWorker {
             convCtx.cancelCurrentPredict();
         }
 
-        PromptRevolver prompt = PsychologyScene.getInstance().buildPrompt(convCtx, query);
+        PromptRevolver prompt = PsychologyScene.getInstance().revolve(convCtx, query);
         if (null == prompt) {
             Logger.e(this.getClass(), "#work - Builds prompt failed");
             channel.setProcessing(false);
             return AIGCStateCode.NoData;
+        }
+
+        if (null != prompt.result) {
+            (new Thread() {
+                @Override
+                public void run() {
+                    channel.setProcessing(false);
+                    // 记录为一般性记录
+                    convCtx.recordNormal(prompt.result);
+                    listener.onGenerated(channel, prompt.result);
+                }
+            }).start();
+            return AIGCStateCode.Ok;
         }
 
         // 获取单元

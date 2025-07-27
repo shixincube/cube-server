@@ -142,9 +142,19 @@ public class House extends Thing {
                 if (this.texture.standardDeviation >= 0.4 && this.texture.hierarchy <= 0.03) {
                     return true;
                 }
+                else if (this.texture.standardDeviation >= 2 && this.texture.hierarchy > 1.0) {
+                    return true;
+                }
             }
         }
 
+        return false;
+    }
+
+    public boolean isDeepnessDoodle() {
+        if (this.texture.max >= 5.0 && this.texture.avg > 3.0) {
+            return true;
+        }
         return false;
     }
 

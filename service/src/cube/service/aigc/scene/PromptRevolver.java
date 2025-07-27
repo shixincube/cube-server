@@ -6,6 +6,8 @@
 
 package cube.service.aigc.scene;
 
+import cube.common.entity.GeneratingRecord;
+
 public class PromptRevolver {
 
     public final String content;
@@ -13,6 +15,8 @@ public class PromptRevolver {
     public String prefix;
 
     public String postfix;
+
+    public GeneratingRecord result;
 
     public PromptRevolver(String content) {
         this.content = content;

@@ -198,6 +198,29 @@ public class Tree extends Thing {
         return height / this.getHeight();
     }
 
+    /**
+     * 树冠涂鸦
+     *
+     * @return
+     */
+    public boolean isDoodleCanopy() {
+        if (null == this.canopyList) {
+            return false;
+        }
+
+        Canopy canopy = this.getMaxAreaThing(this.canopyList);
+        if (null == canopy) {
+            return false;
+        }
+
+        if (canopy.texture.max > 4 && canopy.texture.avg > 2 && canopy.texture.hierarchy < 0.7) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
     public void addRoot(Root root) {
         if (null == this.rootList) {
             this.rootList = new ArrayList<>();
@@ -277,6 +300,11 @@ public class Tree extends Thing {
 
     public List<DroopingLeaves> getDroopingLeaves() {
         return this.droopingLeavesList;
+    }
+
+    @Override
+    public boolean isDoodle() {
+        return super.isDoodle();
     }
 
     @Override

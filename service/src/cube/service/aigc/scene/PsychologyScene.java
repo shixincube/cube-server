@@ -1013,14 +1013,14 @@ public class PsychologyScene {
      * @param query
      * @return
      */
-    public PromptRevolver buildPrompt(ConversationContext context, String query) {
+    public PromptRevolver revolve(ConversationContext context, String query) {
         QueryRevolver revolver = new QueryRevolver(this.service, this.storage);
 
         // 尝试情景推理
         if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
             PaintingReport report = context.getCurrentReport();
             if (report.getAttribute().age < 18) {
-                Logger.d(this.getClass(), "#buildPrompt - Age is less then 18: " + report.sn);
+                Logger.d(this.getClass(), "#revolve - Age is less then 18: " + report.sn);
 
                 // 添加节点
                 StrategyNode detectChildQuery = new DetectChildQueryStrategyNode(query);
@@ -1033,7 +1033,8 @@ public class PsychologyScene {
                 // 执行
                 GeneratingRecord result = flow.generate(this.service);
                 if (null != result) {
-                    PromptRevolver prompt = new PromptRevolver(result.answer);
+                    PromptRevolver prompt = new PromptRevolver(result.query);
+                    prompt.result = result;
                     return prompt;
                 }
             }

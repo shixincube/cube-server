@@ -82,10 +82,10 @@
 		<cellet port="6000">
 			<class>cube.service.riskmgmt.RiskManagementCellet</class>
 		</cellet>
-		<cellet port="6000">
+		<!--<cellet port="6000">
 			<class>cube.service.ferry.FerryCellet</class>
 		</cellet>
-		<!--cellet port="6000">
+		cellet port="6000">
 			<class>cube.service.hub.HubCellet</class>
 		</cellet-->
 	</cellets>
