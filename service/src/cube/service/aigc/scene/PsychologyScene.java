@@ -26,8 +26,8 @@ import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.scene.node.ChildClassicSceneStrategyNode;
-import cube.service.aigc.scene.node.DetectChildQueryStrategyNode;
+import cube.service.aigc.scene.node.TeenagerClassicSceneStrategyNode;
+import cube.service.aigc.scene.node.DetectTeenagerQueryStrategyNode;
 import cube.service.contact.ContactManager;
 import cube.service.cv.CVService;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -1023,8 +1023,8 @@ public class PsychologyScene {
                 Logger.d(this.getClass(), "#revolve - Age is less then 18: " + report.sn);
 
                 // 添加节点
-                StrategyNode detectChildQuery = new DetectChildQueryStrategyNode(query);
-                StrategyNode childClassicScene = new ChildClassicSceneStrategyNode(query, revolver, context.getCurrentReport());
+                StrategyNode detectChildQuery = new DetectTeenagerQueryStrategyNode(query);
+                StrategyNode childClassicScene = new TeenagerClassicSceneStrategyNode(query, revolver, context.getCurrentReport());
                 detectChildQuery.link(childClassicScene);
 
                 // 创建流

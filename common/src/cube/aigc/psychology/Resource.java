@@ -65,6 +65,10 @@ public class Resource {
     private long suggestionScriptFileModified = 0;
     private String suggestionScriptFileContent = null;
 
+    private File teenagerStrategyFile = new File("assets/psychology/teenager_strategy.md");
+    private long teenagerStrategyModified = 0;
+    private String teenagerStrategyContent = null;
+
     private File memberFile = new File("assets/psychology/membership.json");
     private long memberFileModified = 0;
     private JSONObject membershipData;
@@ -147,46 +151,6 @@ public class Resource {
         JSONArray list = data.has(memberType) ? data.getJSONArray(memberType) : data.getJSONArray(Membership.TYPE_PREMIUM);
         return JSONUtils.toStringList(list);
     }
-
-//    public Benchmark getBenchmark() {
-//        if (this.benchmarkScoreFile.exists()) {
-//            if (this.benchmarkScoreFile.lastModified() != this.benchmarkScoreLastModified) {
-//                this.benchmarkScoreLastModified = this.benchmarkScoreFile.lastModified();
-//
-//                Logger.i(this.getClass(), "Read benchmark file: " + this.benchmarkScoreFile.getAbsolutePath());
-//
-//                try {
-//                    byte[] data = Files.readAllBytes(Paths.get(this.benchmarkScoreFile.getAbsolutePath()));
-//                    JSONArray jsonArray = new JSONArray(new String(data, StandardCharsets.UTF_8));
-//                    this.benchmark = new Benchmark(jsonArray);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//
-//        return this.benchmark;
-//    }
-
-//    public HexagonDimensionProjection getHexDimProjection() {
-//        if (this.hexDimProjectionFile.exists()) {
-//            if (this.hexDimProjectionFile.lastModified() != this.hexDimProjectionModified) {
-//                this.hexDimProjectionModified = this.hexDimProjectionFile.lastModified();
-//
-//                Logger.i(this.getClass(), "Read projection file: " + this.hexDimProjectionFile.getAbsolutePath());
-//
-//                try {
-//                    byte[] data = Files.readAllBytes(Paths.get(this.hexDimProjectionFile.getAbsolutePath()));
-//                    JSONObject json = new JSONObject(new String(data, StandardCharsets.UTF_8));
-//                    this.hexDimProjection = new HexagonDimensionProjection(json);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//
-//        return this.hexDimProjection;
-//    }
 
     public File getQuestionnairesPath() {
         return this.questionnairesPath;
@@ -336,6 +300,21 @@ public class Resource {
         JSONObject categoryJson = this.corpusJson.getJSONObject(category);
         JSONObject contentJson = categoryJson.getJSONObject(content);
         return contentJson.getString(lang.toLowerCase());
+    }
+
+    public String getTeenagerStrategyContent() {
+        if (this.teenagerStrategyFile.exists()) {
+            if (this.teenagerStrategyFile.lastModified() != this.teenagerStrategyModified) {
+                try {
+                    byte[] data = Files.readAllBytes(Paths.get(this.teenagerStrategyFile.getAbsolutePath()));
+                    this.teenagerStrategyContent = new String(data, StandardCharsets.UTF_8);
+                    this.teenagerStrategyModified = this.teenagerStrategyFile.lastModified();
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#getTeenagerStrategyContent", e);
+                }
+            }
+        }
+        return this.teenagerStrategyContent;
     }
 
     public List<String> getMandalaFlowerFiles() {

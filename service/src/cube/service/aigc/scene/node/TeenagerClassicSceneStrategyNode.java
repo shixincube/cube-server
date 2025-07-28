@@ -16,7 +16,7 @@ import cube.aigc.psychology.composition.BigFiveFactor;
 import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.scene.QueryRevolver;
 
-public class ChildClassicSceneStrategyNode extends StrategyNode {
+public class TeenagerClassicSceneStrategyNode extends StrategyNode {
 
     private String query;
 
@@ -24,7 +24,7 @@ public class ChildClassicSceneStrategyNode extends StrategyNode {
 
     private PaintingReport report;
 
-    public ChildClassicSceneStrategyNode(String query, QueryRevolver revolver, PaintingReport report) {
+    public TeenagerClassicSceneStrategyNode(String query, QueryRevolver revolver, PaintingReport report) {
         super(ModelConfig.BAIZE_NEXT_UNIT);
         this.query = query;
         this.revolver = revolver;
@@ -48,7 +48,7 @@ public class ChildClassicSceneStrategyNode extends StrategyNode {
         if (!this.report.getPermission().isPermissioned()) {
             // 无权限
             result.append("具体的评测数据因为权限不足无法获得详细数据，仅限于上述信息回答问题“");
-            result.append(query);
+            result.append(this.query);
             result.append("”。\n");
             result.append("要求如下：\n\n- 如果无法从中得到答案，请说“受限于未能获得评测报告全部数据无法为您提供更多信息。”");
             result.append("\n- 不允许在答案中添加编造成分。");
@@ -57,7 +57,7 @@ public class ChildClassicSceneStrategyNode extends StrategyNode {
         }
 
         result.append("受测人的心理特征如下：\n");
-        result.append(report.getSummary());
+        result.append(this.report.getSummary());
         result.append("\n\n");
 
         // 人格特质描述
