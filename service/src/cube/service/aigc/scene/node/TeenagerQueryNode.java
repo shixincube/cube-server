@@ -14,22 +14,25 @@ import cube.aigc.psychology.Resource;
 import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.scene.QueryRevolver;
 
-public class TeenagerProblemClassificationNode extends StrategyNode  {
+public class TeenagerQueryNode extends StrategyNode {
+
+    private String query;
 
     private QueryRevolver revolver;
 
     private PaintingReport report;
 
-    public TeenagerProblemClassificationNode(QueryRevolver revolver, PaintingReport report) {
+    public TeenagerQueryNode(String query, QueryRevolver revolver, PaintingReport report) {
         super(ModelConfig.BAIZE_NEXT_UNIT);
+        this.query = query;
         this.revolver = revolver;
         this.report = report;
     }
 
     @Override
     public String perform(GeneratingRecord input) {
-        if (input.answer.contains("不是")) {
-            Logger.d(this.getClass(), "#perform - No teenager query");
+        if (input.answer.length() < 10) {
+            Logger.d(this.getClass(), "#perform - No query: " + this.query);
             return null;
         }
 
@@ -38,22 +41,29 @@ public class TeenagerProblemClassificationNode extends StrategyNode  {
         result.append("评测数据的受测人是匿名的，");
         result.append("年龄是：").append(report.getAttribute().age).append("岁，");
         result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n\n");
-//        result.append("评测日期是：").append(this.revolver.formatReportDate(report)).append("。\n\n");
+        result.append("评测日期是：").append(this.revolver.formatReportDate(report)).append("。\n\n");
 
         if (!this.report.getPermission().isPermissioned()) {
-            Logger.d(this.getClass(), "#perform - No Permission: " + this.report.sn);
-            return null;
+            // 无权限
+            result.append("具体的评测数据因为权限不足无法获得详细数据，仅限于上述信息回答问题“");
+            result.append(this.query);
+            result.append("”。\n");
+            result.append("要求如下：\n\n- 如果无法从中得到答案，请说“受限于未能获得评测报告全部数据无法为您提供更多信息。”");
+            result.append("\n- 不允许在答案中添加编造成分。");
+            result.append("\n");
+            return result.toString();
         }
 
         result.append("受测人的心理特征如下：\n");
         result.append(this.report.getSummary());
         result.append("\n\n");
 
-        String dataTable = Resource.getInstance().getTeenagerStrategyContent();
+        result.append("受测人可能有以下的行为表现：\n");
+        result.append(input.answer);
+        result.append("\n\n");
 
-        String prompt = String.format(
-                Resource.getInstance().getCorpus("report", "SYMPTOM_STRATEGY_WITH_TEENAGER_TABLE"),
-                result.toString(), dataTable);
+        String prompt = String.format(Resource.getInstance().getCorpus("report", "SYMPTOM_STRATEGY_WITH_QUERY"),
+                result.toString(), this.query);
         return prompt;
     }
 }

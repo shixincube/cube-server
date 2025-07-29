@@ -34,7 +34,7 @@ public class TeenagerClassicSceneStrategyNode extends StrategyNode {
     @Override
     public String perform(GeneratingRecord input) {
         if (input.answer.contains("不是")) {
-            Logger.d(this.getClass(), "#perform - No child query: " + this.query);
+            Logger.d(this.getClass(), "#perform - No query: " + this.query);
             return null;
         }
 
@@ -167,7 +167,7 @@ public class TeenagerClassicSceneStrategyNode extends StrategyNode {
         }
         result.append("\n\n");
 
-        String prompt = String.format(Resource.getInstance().getCorpus("report", "SYMPTOM_STRATEGY_WITH_PERSONALITY"),
+        String prompt = String.format(Resource.getInstance().getCorpus("report", "SYMPTOM_STRATEGY_PROMPT"),
                 result.toString(), this.query);
         return prompt;
     }

@@ -26,8 +26,9 @@ import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.scene.node.TeenagerClassicSceneStrategyNode;
 import cube.service.aigc.scene.node.DetectTeenagerQueryStrategyNode;
+import cube.service.aigc.scene.node.TeenagerProblemClassificationNode;
+import cube.service.aigc.scene.node.TeenagerQueryNode;
 import cube.service.contact.ContactManager;
 import cube.service.cv.CVService;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -1023,12 +1024,13 @@ public class PsychologyScene {
                 Logger.d(this.getClass(), "#revolve - Age is less then 18: " + report.sn);
 
                 // 添加节点
-                StrategyNode detectChildQuery = new DetectTeenagerQueryStrategyNode(query);
-                StrategyNode childClassicScene = new TeenagerClassicSceneStrategyNode(query, revolver, context.getCurrentReport());
-                detectChildQuery.link(childClassicScene);
+                StrategyNode detectQuery = new DetectTeenagerQueryStrategyNode(query);
+                StrategyNode problemClassification = new TeenagerProblemClassificationNode(revolver, context.getCurrentReport());
+                StrategyNode queryNode = new TeenagerQueryNode(query, revolver, context.getCurrentReport());
+                detectQuery.link(problemClassification).link(queryNode);
 
                 // 创建流
-                StrategyFlow flow = new StrategyFlow(detectChildQuery);
+                StrategyFlow flow = new StrategyFlow(detectQuery);
 
                 // 执行
                 GeneratingRecord result = flow.generate(this.service);
