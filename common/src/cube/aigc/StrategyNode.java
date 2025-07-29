@@ -44,6 +44,20 @@ public abstract class StrategyNode implements JSONable {
 
     public abstract String perform(GeneratingRecord input);
 
+    protected String filterFirstLine(String text) {
+        int index = text.indexOf("\n");
+        if (index > 0) {
+            String result = text.substring(index);
+            while (result.startsWith("\n")) {
+                result = result.substring(1);
+            }
+            return result;
+        }
+        else {
+            return text;
+        }
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

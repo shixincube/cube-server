@@ -112,6 +112,9 @@ public class PsychologyScene {
 
             this.lastConfigModified = System.currentTimeMillis();
 
+            // 检查资源文件
+            Resource.getInstance().checkFiles();
+
             // 数据管理器设置
             SceneManager.getInstance().setService(service);
 

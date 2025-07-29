@@ -47,13 +47,16 @@ public class TeenagerProblemClassificationNode extends StrategyNode  {
 
         result.append("受测人的心理特征如下：\n");
         result.append(this.report.getSummary());
-        result.append("\n\n");
+        if (!result.toString().endsWith("\n")) {
+            result.append("\n\n");
+        }
 
-        String dataTable = Resource.getInstance().getTeenagerStrategyContent();
+        String table = this.report.getAttribute().age <= 12 ?
+                Resource.getInstance().getChildStrategyContent() : Resource.getInstance().getTeenagerStrategyContent();
 
         String prompt = String.format(
                 Resource.getInstance().getCorpus("report", "SYMPTOM_STRATEGY_WITH_TEENAGER_TABLE"),
-                result.toString(), dataTable);
+                result.toString(), table);
         return prompt;
     }
 }

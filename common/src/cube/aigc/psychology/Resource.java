@@ -65,8 +65,12 @@ public class Resource {
     private long suggestionScriptFileModified = 0;
     private String suggestionScriptFileContent = null;
 
+    private File childStrategyFile = new File("assets/psychology/child_strategy.md");
+    private long childStrategyFileModified = 0;
+    private String childStrategyContent = null;
+
     private File teenagerStrategyFile = new File("assets/psychology/teenager_strategy.md");
-    private long teenagerStrategyModified = 0;
+    private long teenagerStrategyFileModified = 0;
     private String teenagerStrategyContent = null;
 
     private File memberFile = new File("assets/psychology/membership.json");
@@ -79,11 +83,46 @@ public class Resource {
 
     private Resource() {
         this.knowledgeStrategies = new ArrayList<>();
-//        this.themeTemplates = new ConcurrentHashMap<>();
     }
 
     public static Resource getInstance() {
         return Resource.instance;
+    }
+
+    public boolean checkFiles() {
+        if (!this.termDescriptionFile.exists()) {
+            Logger.e(this.getClass(), "#checkFiles - File is NOT exists: " + this.termDescriptionFile.getName());
+            return false;
+        }
+        else {
+            Logger.i(this.getClass(), "#checkFiles - File exists: " + this.termDescriptionFile.getName());
+        }
+
+        if (!this.corpusFile.exists()) {
+            Logger.e(this.getClass(), "#checkFiles - File is NOT exists: " + this.corpusFile.getName());
+            return false;
+        }
+        else {
+            Logger.i(this.getClass(), "#checkFiles - File exists: " + this.corpusFile.getName());
+        }
+
+        if (!this.childStrategyFile.exists()) {
+            Logger.e(this.getClass(), "#checkFiles - File is NOT exists: " + this.childStrategyFile.getName());
+            return false;
+        }
+        else {
+            Logger.i(this.getClass(), "#checkFiles - File exists: " + this.childStrategyFile.getName());
+        }
+
+        if (!this.teenagerStrategyFile.exists()) {
+            Logger.e(this.getClass(), "#checkFiles - File is NOT exists: " + this.teenagerStrategyFile.getName());
+            return false;
+        }
+        else {
+            Logger.i(this.getClass(), "#checkFiles - File exists: " + this.teenagerStrategyFile.getName());
+        }
+
+        return true;
     }
 
     public synchronized List<KnowledgeStrategy> loadTermInterpretations() {
@@ -302,13 +341,28 @@ public class Resource {
         return contentJson.getString(lang.toLowerCase());
     }
 
+    public String getChildStrategyContent() {
+        if (this.childStrategyFile.exists()) {
+            if (this.childStrategyFile.lastModified() != this.childStrategyFileModified) {
+                try {
+                    byte[] data = Files.readAllBytes(Paths.get(this.childStrategyFile.getAbsolutePath()));
+                    this.childStrategyContent = new String(data, StandardCharsets.UTF_8);
+                    this.childStrategyFileModified = this.childStrategyFile.lastModified();
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#getChildStrategyContent", e);
+                }
+            }
+        }
+        return this.childStrategyContent;
+    }
+
     public String getTeenagerStrategyContent() {
         if (this.teenagerStrategyFile.exists()) {
-            if (this.teenagerStrategyFile.lastModified() != this.teenagerStrategyModified) {
+            if (this.teenagerStrategyFile.lastModified() != this.teenagerStrategyFileModified) {
                 try {
                     byte[] data = Files.readAllBytes(Paths.get(this.teenagerStrategyFile.getAbsolutePath()));
                     this.teenagerStrategyContent = new String(data, StandardCharsets.UTF_8);
-                    this.teenagerStrategyModified = this.teenagerStrategyFile.lastModified();
+                    this.teenagerStrategyFileModified = this.teenagerStrategyFile.lastModified();
                 } catch (Exception e) {
                     Logger.e(this.getClass(), "#getTeenagerStrategyContent", e);
                 }

@@ -54,13 +54,17 @@ public class TeenagerQueryNode extends StrategyNode {
             return result.toString();
         }
 
+        result.append("受测人有以下的行为表现：\n");
+        result.append(this.filterFirstLine(input.answer));
+        if (!result.toString().endsWith("\n")) {
+            result.append("\n\n");
+        }
+
         result.append("受测人的心理特征如下：\n");
         result.append(this.report.getSummary());
-        result.append("\n\n");
-
-        result.append("受测人可能有以下的行为表现：\n");
-        result.append(input.answer);
-        result.append("\n\n");
+        if (!result.toString().endsWith("\n")) {
+            result.append("\n\n");
+        }
 
         String prompt = String.format(Resource.getInstance().getCorpus("report", "SYMPTOM_STRATEGY_WITH_QUERY"),
                 result.toString(), this.query);
