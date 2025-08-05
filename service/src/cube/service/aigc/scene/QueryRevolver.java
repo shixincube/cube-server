@@ -334,7 +334,7 @@ public class QueryRevolver {
                         if (null != knowledge) {
                             result.append(knowledge);
                         }
-                        result.append("根据以上知识点，按要求回答问题。要求是：\n* 如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”\n");
+                        result.append("使用以上知识点，按要求回答问题。要求是：\n* 如果无法从中得到答案，请说“暂时没有获得足够的相关信息。”\n");
                         result.append("* 不允许说“根据提供的信息”\n");
                         result.append("* 不允许在答案中添加编造成分\n\n");
                         result.append("问题是：“");

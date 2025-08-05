@@ -32,6 +32,45 @@ public class SpeechEmotionRecognition extends ContextHandler {
         }
 
         @Override
+        public void doGet(HttpServletRequest request, HttpServletResponse response) {
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
+                this.complete();
+                return;
+            }
+
+            String fileCode = request.getParameter("fc");
+            if (null == fileCode) {
+                fileCode = request.getParameter("code");
+            }
+
+            if (null == fileCode) {
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                this.complete();
+                return;
+            }
+
+            Manager.SpeechEmotionRecognitionFuture future = Manager.getInstance().getSpeechEmotionRecognitionFuture(fileCode);
+            if (null == future) {
+                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
+                this.complete();
+                return;
+            }
+
+            JSONObject responseData = future.toJSON();
+            if (responseData.has("result")) {
+                JSONObject fileJson = responseData.getJSONObject("result").getJSONObject("file");
+                FileLabels.reviseFileLabel(fileJson, token,
+                        Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                        Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+            }
+
+            this.respondOk(response, responseData);
+            this.complete();
+        }
+
+        @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
             String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
@@ -43,22 +82,18 @@ public class SpeechEmotionRecognition extends ContextHandler {
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
                 String fileCode = json.getString("fileCode");
-                JSONObject result = Manager.getInstance().speechEmotionRecognition(token, fileCode);
-                if (null == result) {
+
+                boolean reset = json.has("reset") && json.getBoolean("reset");
+
+                Manager.SpeechEmotionRecognitionFuture future = Manager.getInstance().speechEmotionRecognition(token, fileCode, reset);
+                if (null == future) {
                     // 故障
                     this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                     return;
                 }
 
-                if (result.has("file")) {
-                    JSONObject fileJson = result.getJSONObject("file");
-                    FileLabels.reviseFileLabel(fileJson, token,
-                            Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
-                            Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
-                }
-
-                this.respondOk(response, result);
+                this.respondOk(response, future.toJSON());
                 this.complete();
             } catch (Exception e) {
                 this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));

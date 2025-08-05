@@ -72,6 +72,11 @@ public class Manager implements Tickable, PerformerListener {
      */
     private Map<String, SpeechRecognitionFuture> speechRecognitionFutureMap;
 
+    /**
+     * Key：文件码
+     */
+    private Map<String, SpeechEmotionRecognitionFuture> speechEmotionRecognitionFutureMap;
+
     public static Manager getInstance() {
         return Manager.instance;
     }
@@ -81,6 +86,7 @@ public class Manager implements Tickable, PerformerListener {
         this.validTokenMap = new ConcurrentHashMap<>();
         this.textToFileFutureMap = new ConcurrentHashMap<>();
         this.speechRecognitionFutureMap = new ConcurrentHashMap<>();
+        this.speechEmotionRecognitionFutureMap = new ConcurrentHashMap<>();
 
         this.setupHandler();
 
@@ -1833,26 +1839,32 @@ public class Manager implements Tickable, PerformerListener {
         return this.speechRecognitionFutureMap.get(fileCode);
     }
 
-    public JSONObject speechEmotionRecognition(String token, String fileCode) {
+    public SpeechEmotionRecognitionFuture speechEmotionRecognition(String token, String fileCode, boolean reset) {
+        if (reset) {
+            this.speechEmotionRecognitionFutureMap.remove(fileCode);
+        }
+        else {
+            if (this.speechEmotionRecognitionFutureMap.containsKey(fileCode)) {
+                // 正在处理
+                return this.speechEmotionRecognitionFutureMap.get(fileCode);
+            }
+        }
+
         JSONObject payload = new JSONObject();
         payload.put("fileCode", fileCode);
         Packet packet = new Packet(AIGCAction.SpeechEmotionRecognition.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
-        if (null == response) {
-            Logger.w(this.getClass(), "#speechEmotionRecognition - No response: " + fileCode);
-            return null;
-        }
+        SpeechEmotionRecognitionFuture future = new SpeechEmotionRecognitionFuture(token, fileCode);
+        this.speechEmotionRecognitionFutureMap.put(fileCode, future);
 
-        Packet responsePacket = new Packet(response);
-        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#speechEmotionRecognition - Response state is " + Packet.extractCode(responsePacket));
-            return null;
-        }
+        this.performer.transmit(AIGCCellet.NAME, request);
+        return future;
+    }
 
-        return Packet.extractDataPayload(responsePacket);
+    public SpeechEmotionRecognitionFuture getSpeechEmotionRecognitionFuture(String fileCode) {
+        return this.speechEmotionRecognitionFutureMap.get(fileCode);
     }
 
     public JSONObject getUserEmotionData(String token) {
@@ -2767,6 +2779,15 @@ public class Manager implements Tickable, PerformerListener {
                     srfIter.remove();
                 }
             }
+
+            Iterator<Map.Entry<String, SpeechEmotionRecognitionFuture>> serfIter = this.speechEmotionRecognitionFutureMap.entrySet().iterator();
+            while (serfIter.hasNext()) {
+                Map.Entry<String, SpeechEmotionRecognitionFuture> e = serfIter.next();
+                SpeechEmotionRecognitionFuture future = e.getValue();
+                if (now - future.timestamp > 60 * 60 * 1000) {
+                    serfIter.remove();
+                }
+            }
         }
 
         // 回调 App 的 onTick
@@ -2840,13 +2861,39 @@ public class Manager implements Tickable, PerformerListener {
                     future.stateCode = AIGCStateCode.Ok;
                 }
                 else {
-                    Logger.w(this.getClass(), "#onReceived - Speech recognition result error: " + result.file.getFileCode());
+                    Logger.w(this.getClass(), "#onReceived - Speech recognition error: " + result.file.getFileCode());
                 }
             }
             else {
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
                 String fileCode = resultJson.getString("fileCode");
                 SpeechRecognitionFuture future = this.speechRecognitionFutureMap.get(fileCode);
+                if (null != future) {
+                    future.stateCode = AIGCStateCode.parse(stateCode);
+                }
+            }
+        }
+        else if (AIGCAction.SpeechEmotionRecognition.name.equals(action)) {
+            Packet responsePacket = new Packet(actionDialect);
+            // 状态码
+            int stateCode = Packet.extractCode(responsePacket);
+            if (stateCode == AIGCStateCode.Ok.code) {
+                // 获取结果数据
+                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
+                SpeechEmotion result = new SpeechEmotion(resultJson);
+                SpeechEmotionRecognitionFuture future = this.speechEmotionRecognitionFutureMap.get(result.file.getFileCode());
+                if (null != future) {
+                    future.result = result;
+                    future.stateCode = AIGCStateCode.Ok;
+                }
+                else {
+                    Logger.w(this.getClass(), "#onReceived - Speech emotion recognition error: " + result.file.getFileCode());
+                }
+            }
+            else {
+                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
+                String fileCode = resultJson.getString("fileCode");
+                SpeechEmotionRecognitionFuture future = this.speechEmotionRecognitionFutureMap.get(fileCode);
                 if (null != future) {
                     future.stateCode = AIGCStateCode.parse(stateCode);
                 }
@@ -2989,6 +3036,42 @@ public class Manager implements Tickable, PerformerListener {
         protected AIGCStateCode stateCode = AIGCStateCode.Processing;
 
         protected SpeechRecognitionFuture(String token, String fileCode) {
+            this.timestamp = System.currentTimeMillis();
+            this.token = token;
+            this.fileCode = fileCode;
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("fileCode", this.fileCode);
+            json.put("timestamp", this.timestamp);
+            json.put("stateCode", this.stateCode.code);
+            if (null != this.result) {
+                json.put("result", this.result.toJSON());
+            }
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
+        }
+    }
+
+    public class SpeechEmotionRecognitionFuture implements JSONable {
+
+        protected final long timestamp;
+
+        protected String token;
+
+        protected String fileCode;
+
+        protected SpeechEmotion result;
+
+        protected AIGCStateCode stateCode = AIGCStateCode.Processing;
+
+        public SpeechEmotionRecognitionFuture(String token, String fileCode) {
             this.timestamp = System.currentTimeMillis();
             this.token = token;
             this.fileCode = fileCode;

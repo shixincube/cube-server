@@ -1024,7 +1024,7 @@ public class PsychologyScene {
         if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
             PaintingReport report = context.getCurrentReport();
             if (report.getAttribute().age < 18) {
-                Logger.d(this.getClass(), "#revolve - Age is less then 18: " + report.sn);
+                Logger.d(this.getClass(), "#revolve - The age is less then 18: " + report.sn);
 
                 // 添加节点
                 StrategyNode detectQuery = new DetectTeenagerQueryStrategyNode(query);

@@ -346,9 +346,10 @@ public class ConversationWorker {
                 @Override
                 public void run() {
                     channel.setProcessing(false);
-                    // 记录为一般性记录
-                    convCtx.recordNormal(prompt.result);
                     listener.onGenerated(channel, prompt.result);
+                    // 记录
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            convCtx, prompt.result);
                 }
             }).start();
             return AIGCStateCode.Ok;
