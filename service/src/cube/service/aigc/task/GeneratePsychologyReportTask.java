@@ -51,14 +51,16 @@ public class GeneratePsychologyReportTask extends ServiceTask {
             Attribute attribute = null;
             String fileCode = null;
             String themeName = null;
-            int maxIndicatorTexts = 10;
+            int maxIndicators = 10;
+            boolean adjust = true;
             final StringBuilder remote = new StringBuilder();
 
             try {
                 attribute = new Attribute(packet.data.getJSONObject("attribute"));
                 fileCode = packet.data.getString("fileCode");
                 themeName = packet.data.getString("theme");
-                maxIndicatorTexts = packet.data.has("indicators") ? packet.data.getInt("indicators") : 10;
+                maxIndicators = packet.data.has("indicators") ? packet.data.getInt("indicators") : 10;
+                adjust = packet.data.has("adjust") ? packet.data.getBoolean("adjust") : true;
                 remote.append(packet.data.has("remote") ? packet.data.getString("remote") : "");
             } catch (Exception e) {
                 this.cellet.speak(this.talkContext,
@@ -77,7 +79,7 @@ public class GeneratePsychologyReportTask extends ServiceTask {
 
             AIGCService service = ((AIGCCellet) this.cellet).getService();
             PaintingReport report = service.generatePaintingReport(token, attribute, fileCode, theme,
-                    maxIndicatorTexts, new PaintingReportListener() {
+                    maxIndicators, adjust, new PaintingReportListener() {
                         @Override
                         public void onPaintingPredicting(PaintingReport report, FileLabel file) {
                             Logger.d(GeneratePsychologyReportTask.class, "#onPaintingPredicting - " + token);

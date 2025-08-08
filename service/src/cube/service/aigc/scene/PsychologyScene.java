@@ -330,14 +330,16 @@ public class PsychologyScene {
      * @param attribute
      * @param fileLabel
      * @param theme
-     * @param maxIndicatorTexts
+     * @param maxIndicators
+     * @param adjust
      * @param retention
      * @param listener
      * @return
      */
     public synchronized PaintingReport generatePsychologyReport(AIGCChannel channel, Attribute attribute,
                                                                 FileLabel fileLabel, Theme theme,
-                                                                int maxIndicatorTexts, int retention,
+                                                                int maxIndicators, boolean adjust,
+                                                                int retention,
                                                                 PaintingReportListener listener) {
         // 判断属性限制
         if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
@@ -362,7 +364,7 @@ public class PsychologyScene {
         PaintingReport report = new PaintingReport(channel.getAuthToken().getContactId(),
                 attribute, fileLabel, theme);
 
-        ReportTask task = new ReportTask(channel, attribute, fileLabel, theme, maxIndicatorTexts, listener, report);
+        ReportTask task = new ReportTask(channel, attribute, fileLabel, theme, maxIndicators, adjust, listener, report);
 
         this.taskQueue.offer(task);
 
@@ -419,7 +421,7 @@ public class PsychologyScene {
                         // 预测
                         reportTask.listener.onPaintingPredicting(reportTask.report, reportTask.fileLabel);
 
-                        Painting painting = processPainting(unit, reportTask.fileLabel, true, false);
+                        Painting painting = processPainting(unit, reportTask.fileLabel, reportTask.adjust, false);
                         if (null == painting) {
                             // 预测绘图失败
                             Logger.w(PsychologyScene.class, "#generatePsychologyReport - onPaintingPredictFailed: " +
@@ -466,7 +468,7 @@ public class PsychologyScene {
                         reportTask.report.setState(AIGCStateCode.Inferencing);
 
                         // 执行工作流，制作报告数据
-                        evaluationWorker = evaluationWorker.make(reportTask.theme, reportTask.maxIndicatorTexts);
+                        evaluationWorker = evaluationWorker.make(reportTask.theme, reportTask.maxIndicators);
                         if (null == evaluationWorker) {
                             // 推理生成报告失败
                             Logger.w(PsychologyScene.class, "#generatePsychologyReport - onReportEvaluateFailed (IllegalOperation): " +
@@ -1582,20 +1584,23 @@ public class PsychologyScene {
 
         protected Theme theme;
 
-        protected int maxIndicatorTexts;
+        protected int maxIndicators;
+
+        protected boolean adjust;
 
         protected PaintingReportListener listener;
 
         protected PaintingReport report;
 
         public ReportTask(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
-                          Theme theme, int maxIndicatorTexts,
+                          Theme theme, int maxIndicators, boolean adjust,
                           PaintingReportListener listener, PaintingReport report) {
             this.channel = channel;
             this.attribute = attribute;
             this.fileLabel = fileLabel;
             this.theme = theme;
-            this.maxIndicatorTexts = Math.min(maxIndicatorTexts, 36);
+            this.maxIndicators = Math.min(maxIndicators, 36);
+            this.adjust = adjust;
             this.listener = listener;
             this.report = report;
         }

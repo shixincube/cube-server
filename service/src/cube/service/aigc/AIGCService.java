@@ -2565,12 +2565,13 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param attribute
      * @param fileCode
      * @param theme
-     * @param maxIndicatorTexts
+     * @param maxIndicators
+     * @param adjust
      * @param listener
      * @return
      */
     public PaintingReport generatePaintingReport(String token, Attribute attribute, String fileCode,
-                                                 Theme theme, int maxIndicatorTexts,
+                                                 Theme theme, int maxIndicators, boolean adjust,
                                                  PaintingReportListener listener) {
         if (!this.isStarted()) {
             return null;
@@ -2597,8 +2598,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#generatePaintingReport - max indicator texts: " + maxIndicatorTexts +
-                    " , file: " + fileCode);
+            Logger.d(this.getClass(), "#generatePaintingReport - max indicators: " + maxIndicators +
+                    ", file: " + fileCode);
         }
 
         FileLabel fileLabel = new FileLabel(fileLabelJson);
@@ -2610,7 +2611,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         // 生成报告
         PaintingReport report = PsychologyScene.getInstance().generatePsychologyReport(channel,
-                attribute, fileLabel, theme, maxIndicatorTexts, 0, listener);
+                attribute, fileLabel, theme, maxIndicators, adjust, 0, listener);
 
         return report;
     }
