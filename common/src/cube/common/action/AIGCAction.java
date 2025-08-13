@@ -192,6 +192,11 @@ public enum AIGCAction {
     AutomaticSpeechRecognition("automaticSpeechRecognition"),
 
     /**
+     * 说话人分割聚类。
+     */
+    SpeakerDiarization("speakerDiarization"),
+
+    /**
      * 分词。
      */
     Segmentation("segmentation"),

@@ -213,6 +213,21 @@ public class AICapability implements JSONable {
 
         public final static String VoiceActivityDetection = "VoiceActivityDetection";
 
+        /**
+         * 说话人验证。
+         */
+        public final static String SpeakerVerification = "SpeakerVerification";
+
+        /**
+         * 说话人识别。
+         */
+        public final static String SpeakerIdentification = "SpeakerIdentification";
+
+        /**
+         * 说话人分割聚类、说话人分离。
+         */
+        public final static String SpeakerDiarization = "SpeakerDiarization";
+
         private AudioProcessing() {
         }
     }

@@ -23,9 +23,12 @@ public class SpeechEmotion implements JSONable {
 
     public double score;
 
+    public double duration;
+
     public SpeechEmotion(JSONObject json) {
-        this.file = new FileLabel(json.getJSONObject("file"));
-        this.elapsed = json.getLong("elapsed");
+        this.file = json.has("file") ? new FileLabel(json.getJSONObject("file")) : null;
+        this.elapsed = json.has("elapsed") ? json.getLong("elapsed") : 0;
+
         if (json.has("emotion")) {
             Object obj = json.get("emotion");
             if (obj instanceof String) {
@@ -39,15 +42,19 @@ public class SpeechEmotion implements JSONable {
             this.emotion = Emotion.None;
         }
         this.score = json.getDouble("score");
+        this.duration = json.getDouble("duration");
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("file", this.file.toJSON());
+        if (null != this.file) {
+            json.put("file", this.file.toJSON());
+        }
         json.put("elapsed", this.elapsed);
         json.put("emotion", this.emotion.toJSON());
         json.put("score", this.score);
+        json.put("duration", this.duration);
         return json;
     }
 

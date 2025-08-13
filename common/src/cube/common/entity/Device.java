@@ -146,7 +146,7 @@ public class Device implements JSONable {
      * @return 返回设备名称。
      */
     public String getName() {
-        return this.name;
+        return this.name.trim();
     }
 
     /**
