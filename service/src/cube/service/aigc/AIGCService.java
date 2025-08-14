@@ -135,6 +135,11 @@ public class AIGCService extends AbstractModule implements Generatable {
     private final Map<String, Queue<UnitMeta>> speechQueueMap;
 
     /**
+     * Key 是 AIGC 的 Query Key
+     */
+    private final Map<String, Queue<UnitMeta>> audioQueueMap;
+
+    /**
      * 最大频道数量。
      */
     private final int maxChannel = 10000;
@@ -192,6 +197,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         this.semanticSearchQueueMap = new ConcurrentHashMap<>();
         this.retrieveReRankQueueMap = new ConcurrentHashMap<>();
         this.speechQueueMap = new ConcurrentHashMap<>();
+        this.audioQueueMap = new ConcurrentHashMap<>();
         this.generateTextUnitCountMap = new ConcurrentHashMap<>();
         this.tokenizer = new Tokenizer();
     }
@@ -2719,6 +2725,61 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
+     * 说话者分割与分析。
+     *
+     * @param authToken
+     * @param fileCode
+     * @param listener
+     * @return
+     */
+    public boolean applySpeakerDiarization(AuthToken authToken, String fileCode, VoiceDiarizationListener listener) {
+        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        if (null == fileStorage) {
+            Logger.e(this.getClass(), "#applySpeakerDiarization - File storage service is not ready");
+            return false;
+        }
+
+        FileLabel fileLabel = this.getFile(authToken.getDomain(), fileCode);
+        if (null == fileLabel) {
+            Logger.e(this.getClass(), "#applySpeakerDiarization - Get file failed: " + fileCode);
+            return false;
+        }
+
+        // 查找有该能力的单元
+        AIGCUnit unit = this.selectUnitBySubtask(AICapability.AudioProcessing.SpeakerDiarization);
+        if (null == unit) {
+            Logger.w(this.getClass(), "#applySpeakerDiarization - No task unit setup in server");
+            return false;
+        }
+
+        AudioUnitMeta meta = new AudioUnitMeta(this, unit, AIGCAction.SpeakerDiarization, fileLabel);
+        meta.voiceDiarizationListener = listener;
+
+        synchronized (this.audioQueueMap) {
+            Queue<UnitMeta> queue = this.audioQueueMap.get(unit.getQueryKey());
+            if (null == queue) {
+                queue = new ConcurrentLinkedQueue<>();
+                this.audioQueueMap.put(unit.getQueryKey(), queue);
+            }
+
+            queue.offer(meta);
+        }
+
+        if (!unit.isRunning()) {
+            unit.setRunning(true);
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    processQueue(meta.unit.getQueryKey(), audioQueueMap);
+                }
+            });
+        }
+
+        return true;
+    }
+
+    /**
      * 语音情绪识别。
      *
      * @param token
@@ -3181,7 +3242,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             try {
                 meta.process();
             } catch (Exception e) {
-                Logger.e(this.getClass(), "#processQueue - meta process", e);
+                Logger.e(this.getClass(), "#processQueue - meta process error", e);
             }
 
             meta = queue.poll();
