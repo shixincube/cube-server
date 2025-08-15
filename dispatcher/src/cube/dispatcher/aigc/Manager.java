@@ -77,6 +77,11 @@ public class Manager implements Tickable, PerformerListener {
      */
     private Map<String, SpeechEmotionRecognitionFuture> speechEmotionRecognitionFutureMap;
 
+    /**
+     * Key：文件码
+     */
+    private Map<String, SpeakerDiarizationFuture> speakerDiarizationFutureMap;
+
     public static Manager getInstance() {
         return Manager.instance;
     }
@@ -87,6 +92,7 @@ public class Manager implements Tickable, PerformerListener {
         this.textToFileFutureMap = new ConcurrentHashMap<>();
         this.speechRecognitionFutureMap = new ConcurrentHashMap<>();
         this.speechEmotionRecognitionFutureMap = new ConcurrentHashMap<>();
+        this.speakerDiarizationFutureMap = new ConcurrentHashMap<>();
 
         this.setupHandler();
 
@@ -124,6 +130,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new SemanticSearch());
         httpServer.addContextHandler(new SpeechEmotionRecognition());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
+        httpServer.addContextHandler(new SpeakerDiarization());
         httpServer.addContextHandler(new KnowledgeQA());
         httpServer.addContextHandler(new KnowledgeProfiles());
         httpServer.addContextHandler(new KnowledgeInfos());
@@ -1867,6 +1874,34 @@ public class Manager implements Tickable, PerformerListener {
         return this.speechEmotionRecognitionFutureMap.get(fileCode);
     }
 
+    public SpeakerDiarizationFuture speakerDiarization(String token, String fileCode, boolean reset) {
+        if (reset) {
+            this.speakerDiarizationFutureMap.remove(fileCode);
+        }
+        else {
+            if (this.speakerDiarizationFutureMap.containsKey(fileCode)) {
+                // 正在处理
+                return this.speakerDiarizationFutureMap.get(fileCode);
+            }
+        }
+
+        JSONObject payload = new JSONObject();
+        payload.put("fileCode", fileCode);
+        Packet packet = new Packet(AIGCAction.SpeakerDiarization.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        SpeakerDiarizationFuture future = new SpeakerDiarizationFuture(token, fileCode);
+        this.speakerDiarizationFutureMap.put(fileCode, future);
+
+        this.performer.transmit(AIGCCellet.NAME, request);
+        return future;
+    }
+
+    public SpeakerDiarizationFuture getSpeakerDiarizationFuture(String fileCode) {
+        return this.speakerDiarizationFutureMap.get(fileCode);
+    }
+
     public JSONObject getUserEmotionData(String token) {
         JSONObject result = new JSONObject();
         JSONArray data = new JSONArray();
@@ -2790,6 +2825,15 @@ public class Manager implements Tickable, PerformerListener {
                     serfIter.remove();
                 }
             }
+
+            Iterator<Map.Entry<String, SpeakerDiarizationFuture>> sdfIter = this.speakerDiarizationFutureMap.entrySet().iterator();
+            while (sdfIter.hasNext()) {
+                Map.Entry<String, SpeakerDiarizationFuture> e = sdfIter.next();
+                SpeakerDiarizationFuture future = e.getValue();
+                if (now - future.timestamp > 60 * 60 * 1000) {
+                    sdfIter.remove();
+                }
+            }
         }
 
         // 回调 App 的 onTick
@@ -2863,7 +2907,7 @@ public class Manager implements Tickable, PerformerListener {
                     future.stateCode = AIGCStateCode.Ok;
                 }
                 else {
-                    Logger.w(this.getClass(), "#onReceived - Speech recognition error: " + result.file.getFileCode());
+                    Logger.w(this.getClass(), "#onReceived - Speech recognition timeout: " + result.file.getFileCode());
                 }
             }
             else {
@@ -2889,13 +2933,39 @@ public class Manager implements Tickable, PerformerListener {
                     future.stateCode = AIGCStateCode.Ok;
                 }
                 else {
-                    Logger.w(this.getClass(), "#onReceived - Speech emotion recognition error: " + result.file.getFileCode());
+                    Logger.w(this.getClass(), "#onReceived - Speech emotion recognition timeout: " + result.file.getFileCode());
                 }
             }
             else {
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
                 String fileCode = resultJson.getString("fileCode");
                 SpeechEmotionRecognitionFuture future = this.speechEmotionRecognitionFutureMap.get(fileCode);
+                if (null != future) {
+                    future.stateCode = AIGCStateCode.parse(stateCode);
+                }
+            }
+        }
+        else if (AIGCAction.SpeakerDiarization.name.equals(action)) {
+            Packet responsePacket = new Packet(actionDialect);
+            // 状态码
+            int stateCode = Packet.extractCode(responsePacket);
+            if (stateCode == AIGCStateCode.Ok.code) {
+                // 获取结果数据
+                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
+                VoiceDiarization result = new VoiceDiarization(resultJson);
+                SpeakerDiarizationFuture future = this.speakerDiarizationFutureMap.get(result.file.getFileCode());
+                if (null != future) {
+                    future.result = result;
+                    future.stateCode = AIGCStateCode.Ok;
+                }
+                else {
+                    Logger.w(this.getClass(), "#onReceived - Speaker diarization timeout: " + result.file.getFileCode());
+                }
+            }
+            else {
+                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
+                String fileCode = resultJson.getString("fileCode");
+                SpeakerDiarizationFuture future = this.speakerDiarizationFutureMap.get(fileCode);
                 if (null != future) {
                     future.stateCode = AIGCStateCode.parse(stateCode);
                 }
@@ -2980,6 +3050,7 @@ public class Manager implements Tickable, PerformerListener {
         }
     }
 
+
     public class ObjectDetectionFuture implements JSONable {
 
         protected final long sn;
@@ -3025,6 +3096,7 @@ public class Manager implements Tickable, PerformerListener {
         }
     }
 
+
     public class SpeechRecognitionFuture implements JSONable {
 
         protected final long timestamp;
@@ -3061,6 +3133,7 @@ public class Manager implements Tickable, PerformerListener {
         }
     }
 
+
     public class SpeechEmotionRecognitionFuture implements JSONable {
 
         protected final long timestamp;
@@ -3074,6 +3147,43 @@ public class Manager implements Tickable, PerformerListener {
         protected AIGCStateCode stateCode = AIGCStateCode.Processing;
 
         public SpeechEmotionRecognitionFuture(String token, String fileCode) {
+            this.timestamp = System.currentTimeMillis();
+            this.token = token;
+            this.fileCode = fileCode;
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("fileCode", this.fileCode);
+            json.put("timestamp", this.timestamp);
+            json.put("stateCode", this.stateCode.code);
+            if (null != this.result) {
+                json.put("result", this.result.toJSON());
+            }
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
+        }
+    }
+
+
+    public class SpeakerDiarizationFuture implements JSONable {
+
+        protected final long timestamp;
+
+        protected String token;
+
+        protected String fileCode;
+
+        protected VoiceDiarization result;
+
+        protected AIGCStateCode stateCode = AIGCStateCode.Processing;
+
+        public SpeakerDiarizationFuture(String token, String fileCode) {
             this.timestamp = System.currentTimeMillis();
             this.token = token;
             this.fileCode = fileCode;

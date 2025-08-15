@@ -14,7 +14,9 @@ import org.json.JSONObject;
  */
 public class BarCode extends Entity {
 
-    public static Container Ultra = new Container(500, 250, 32);
+    public static Container Ultra = new Container(1000, 500, 64);
+
+    public static Container Large = new Container(500, 250, 32);
 
     public static Container Normal = new Container(252, 126, 16);
 
@@ -97,6 +99,9 @@ public class BarCode extends Entity {
     public static Container parseContainer(String text) {
         if (text.equalsIgnoreCase("Ultra")) {
             return BarCode.Ultra;
+        }
+        else if (text.equalsIgnoreCase("Large")) {
+            return BarCode.Large;
         }
         else if (text.equalsIgnoreCase("Normal")) {
             return BarCode.Normal;

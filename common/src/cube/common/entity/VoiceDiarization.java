@@ -25,7 +25,7 @@ public class VoiceDiarization extends Entity {
     public VoiceDiarization(JSONObject json) {
         super(json);
         if (json.has("file")) {
-
+            this.file = new FileLabel(json.getJSONObject("file"));
         }
         this.duration = json.getDouble("duration");
         this.elapsed = json.getLong("elapsed");
@@ -39,6 +39,16 @@ public class VoiceDiarization extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        if (null != this.file) {
+            json.put("file", this.file.toJSON());
+        }
+        json.put("duration", this.duration);
+        json.put("elapsed", this.elapsed);
+        JSONArray array = new JSONArray();
+        for (VoiceTrack track : this.tracks) {
+            array.put(track.toJSON());
+        }
+        json.put("tracks", array);
         return json;
     }
 

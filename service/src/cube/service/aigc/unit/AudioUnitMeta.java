@@ -78,5 +78,8 @@ public class AudioUnitMeta extends UnitMeta {
                 this.voiceDiarizationListener.onCompleted(this.file, result);
             }
         }
+        else {
+            Logger.e(this.getClass(), "#process - Unknown action: " + this.action.name);
+        }
     }
 }

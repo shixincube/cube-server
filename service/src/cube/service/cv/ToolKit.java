@@ -86,7 +86,13 @@ public class ToolKit {
 
         List<File> fileList = null;
         if (null != layout && layout.equalsIgnoreCase("tile")) {
-            fileList = this.makeBarCodePaperFiles(prefix + "_", list, PrintUtils.PaperA4Small);
+            fileList = this.makeBarCodeTilePaperFiles(prefix + "_", list, PrintUtils.PaperA4Small);
+        }
+        else if (null != layout && layout.equalsIgnoreCase("single")) {
+            for (BarCode barCode : list) {
+                barCode.setContainer(BarCode.Ultra);
+            }
+            fileList = this.makeBarCodeSinglePaperFiles(prefix + "_", list);
         }
         else {
             fileList = new ArrayList<>();
@@ -149,7 +155,40 @@ public class ToolKit {
         return this.saveTo(authToken, fileCode, file);
     }
 
-    private List<File> makeBarCodePaperFiles(String filenamePrefix, List<BarCode> barCodeList, Size paperSize) {
+    private List<File> makeBarCodeSinglePaperFiles(String filenamePrefix, List<BarCode> barCodeList) {
+        List<File> results = new ArrayList<>();
+
+        for (int i = 0; i < barCodeList.size(); ++i) {
+            BarCode barCode = barCodeList.get(i);
+            BufferedImage barCodeImage = CodeUtils.generateBarCode(barCode.data, barCode.width, barCode.height,
+                    barCode.header, barCode.footer, barCode.fontSize);
+            if (null == barCodeImage) {
+                Logger.e(this.getClass(), "#makeBarCodeSinglePaperFiles - Generate bar code image failed");
+                return null;
+            }
+
+            String ext = "png";
+            File file = new File(this.workingPath, filenamePrefix + String.format("%03d", i) + "." + ext);
+            if (file.exists()) {
+                try {
+                    file.delete();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                ImageIO.write(barCodeImage, ext, file);
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#makeBarCodeSinglePaperFiles - Writer image data failed", e);
+                return null;
+            }
+            results.add(file);
+        }
+
+        return results;
+    }
+
+    private List<File> makeBarCodeTilePaperFiles(String filenamePrefix, List<BarCode> barCodeList, Size paperSize) {
         List<File> results = new ArrayList<>();
 
         BarCode first = barCodeList.get(0);
