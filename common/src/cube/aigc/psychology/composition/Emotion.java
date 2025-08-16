@@ -49,6 +49,17 @@ public enum Emotion {
         return json;
     }
 
+    public static Emotion[] commonEmotions() {
+        return new Emotion[]{
+                Emotion.Angry,
+                Emotion.Fearful,
+                Emotion.Happy,
+                Emotion.Neutral,
+                Emotion.Sad,
+                Emotion.Surprise
+        };
+    }
+
     public static Emotion parse(String word) {
         for (Emotion emotion : Emotion.values()) {
             if (emotion.name().equalsIgnoreCase(word) ||
