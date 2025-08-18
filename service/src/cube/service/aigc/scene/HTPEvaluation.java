@@ -657,6 +657,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addFeature(desc, Term.SelfControl, Tendency.Negative, PerceptronThing.createThingSize(
                         new Thing[] { house, person }));
 
+                result.addScore(Indicator.Family, 1, FloatUtils.random(0.1, 0.2));
                 result.addScore(Indicator.SelfConsciousness, 1, FloatUtils.random(0.3, 0.4));
             }
 
@@ -1190,14 +1191,14 @@ public class HTPEvaluation extends Evaluation {
                 String desc = "画面中房元素穿越左半边中线";
                 result.addFeature(desc, Term.PayAttentionToFamily, Tendency.Positive,
                         PerceptronThing.createPictureLayout(new Thing[] { house }));
-                result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.Family, -1, FloatUtils.random(0.1, 0.2));
             }
             else if (cX > halfRightCenterX) {
                 // house 中线越过右半边中线
                 String desc = "画面中房元素穿越右半边中线";
                 result.addFeature(desc, Term.PayAttentionToFamily, Tendency.Negative,
                         PerceptronThing.createPictureLayout(new Thing[] { house }));
-                result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.Family, -1, FloatUtils.random(0.1, 0.2));
             }
 
             if (hAreaRatio < this.houseAreaRatioThreshold) {
@@ -1206,7 +1207,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addFeature(desc, Term.PayAttentionToFamily, Tendency.Negative,
                         PerceptronThing.createThingSize(new Thing[] { house }));
 
-                result.addScore(Indicator.Family, -1, FloatUtils.random(0.5, 0.6));
+                result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
 
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.0, 2.0));
@@ -1494,9 +1495,11 @@ public class HTPEvaluation extends Evaluation {
             if (!house.hasDoor() && !house.hasWindow()) {
                 String desc = "房屋没有门和窗";
                 result.addFeature(desc, Term.WillingnessToCommunicate, Tendency.Negative, new Thing[] { house });
-                result.addScore(Indicator.Family, -1, FloatUtils.random(0.4, 0.5));
+                result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
             }
             else {
+                result.addScore(Indicator.Family, 1, FloatUtils.random(0.4, 0.5));
+
                 if (house.hasDoor()) {
                     result.addScore(Indicator.InterpersonalRelation, 1, FloatUtils.random(0.6, 0.7));
 
@@ -1624,6 +1627,7 @@ public class HTPEvaluation extends Evaluation {
                 if (house.isDeepnessDoodle()) {
                     result.addScore(Indicator.Family, -1, FloatUtils.random(0.6, 0.7));
                     result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
+                    // 重置抑郁
                     result.removeScores(Indicator.Depression);
                     result.addScore(Indicator.Depression, 1, FloatUtils.random(0.7, 0.8));
                 }
@@ -2468,7 +2472,7 @@ public class HTPEvaluation extends Evaluation {
             // 床
             String desc = "画面中有床";
             result.addFeature(desc, Term.PayAttentionToFamily, Tendency.Positive, new Thing[] { other.get(Label.Bed) });
-            result.addScore(Indicator.Family, -1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.Family, 1, FloatUtils.random(0.7, 0.8));
 
             result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.0, 2.5));
             if (printBigFive) {
@@ -2827,7 +2831,7 @@ public class HTPEvaluation extends Evaluation {
             // 电视
             String desc = "画面中有电视";
             result.addFeature(desc, Term.PayAttentionToFamily, Tendency.Negative, new Thing[] { other.get(Label.TV) });
-            result.addScore(Indicator.Family, -1, FloatUtils.random(0.4, 0.5));
+            result.addScore(Indicator.Family, 1, FloatUtils.random(0.4, 0.5));
         }
 
         if (other.has(Label.Pole)) {
