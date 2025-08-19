@@ -11,8 +11,12 @@ import cube.aigc.ModelConfig;
 import cube.aigc.Sentiment;
 import cube.aigc.psychology.composition.Emotion;
 import cube.common.JSONable;
-import cube.common.entity.*;
+import cube.common.entity.GeneratingOption;
+import cube.common.entity.GeneratingRecord;
+import cube.common.entity.VoiceDiarization;
+import cube.common.entity.VoiceTrack;
 import cube.service.aigc.AIGCService;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -27,7 +31,6 @@ public class VoiceIndicator implements JSONable {
 
     public enum Tense {
         Future,
-
         Past
     }
 
@@ -48,10 +51,23 @@ public class VoiceIndicator implements JSONable {
 
     public Map<String, SpeakerIndicator> speakerIndicators = new HashMap<>();
 
+    public VoiceIndicator() {
+    }
+
     public VoiceIndicator(JSONObject json) {
+        this.silenceDuration = json.getDouble("silenceDuration");
+        JSONObject speakerIndicatorMap = json.getJSONObject("speakerIndicators");
+        for (String key : speakerIndicatorMap.keySet()) {
+            JSONObject value = speakerIndicatorMap.getJSONObject(key);
+            this.speakerIndicators.put(key, new SpeakerIndicator(value));
+        }
     }
 
     public void analyse(AIGCService service, VoiceDiarization voiceDiarization) {
+        if (voiceDiarization.duration == 0) {
+            return;
+        }
+
         double totalDuration = 0;
 
         for (VoiceTrack track : voiceDiarization.tracks) {
@@ -77,7 +93,13 @@ public class VoiceIndicator implements JSONable {
                 Logger.w(this.getClass(), "#build - No emotion: " + track.emotion.emotion.name());
             }
 
-            Sentiment sentiment = this.calcSentiment(service, track);
+            Sentiment sentiment = this.evalSentiment(service, track);
+            SegmentIndicator segmentIndicator = new SegmentIndicator(track.track,
+                    (track.segment.duration != 0) ?
+                            (int) Math.round(track.recognition.words.size() / (track.segment.duration / 60.0)) : 0,
+                    sentiment);
+            // 内容描述情绪正负面指标
+            speakerIndicator.addSegmentIndicator(segmentIndicator);
         }
 
         // 沉默时长
@@ -95,11 +117,29 @@ public class VoiceIndicator implements JSONable {
             speakerIndicator.rhythm = (int) Math.round(speakerIndicator.totalWords / (speakerIndicator.totalDuration / 60.0));
 
             // 情绪比例
-            speakerIndicator.emotionRatio = calcEmotionRatio(speakerIndicator);
+            speakerIndicator.emotionRatio = this.evalEmotionRatio(speakerIndicator);
+
+            float positive = 0;
+            float negative = 0;
+            float neutral = 0;
+            for (SegmentIndicator segmentIndicator : speakerIndicator.segmentIndicators) {
+                if (Sentiment.Positive == segmentIndicator.sentiment) {
+                    ++positive;
+                }
+                else if (Sentiment.Negative == segmentIndicator.sentiment) {
+                    ++negative;
+                }
+                else if (Sentiment.Neutral == segmentIndicator.sentiment) {
+                    ++neutral;
+                }
+            }
+            speakerIndicator.positiveSegmentRatio = Math.round((positive / speakerIndicator.segmentIndicators.size()) * 100);
+            speakerIndicator.negativeSegmentRatio = Math.round((negative / speakerIndicator.segmentIndicators.size()) * 100);
+            speakerIndicator.neutralSegmentRatio = Math.round((neutral / speakerIndicator.segmentIndicators.size()) * 100);
         }
     }
 
-    private EmotionRatio calcEmotionRatio(SpeakerIndicator speakerIndicator) {
+    private EmotionRatio evalEmotionRatio(SpeakerIndicator speakerIndicator) {
         double score = 0;
         int positiveCounts = 0;
         int negativeCounts = 0;
@@ -126,7 +166,7 @@ public class VoiceIndicator implements JSONable {
         return new EmotionRatio(score, positive, negative, 100 - positive - negative);
     }
 
-    private Sentiment calcSentiment(AIGCService service, VoiceTrack track) {
+    private Sentiment evalSentiment(AIGCService service, VoiceTrack track) {
         GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT,
                 String.format(sPromptSentiment, track.recognition.text),
                 new GeneratingOption(), null, null);
@@ -135,16 +175,33 @@ public class VoiceIndicator implements JSONable {
             return Sentiment.Undefined;
         }
 
-        if (result.answer.equalsIgnoreCase("中立")) {
-
+        if (result.answer.contains("中立")) {
+            return Sentiment.Neutral;
         }
-        return null;
+        else if (result.answer.contains("均有")) {
+            return Sentiment.Both;
+        }
+        else if (result.answer.contains("积极")) {
+            return Sentiment.Positive;
+        }
+        else if (result.answer.contains("消极")) {
+            return Sentiment.Negative;
+        }
+        else {
+            return Sentiment.Undefined;
+        }
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("silenceDuration", this.silenceDuration);
 
+        JSONObject speakerIndicatorMap = new JSONObject();
+        for (Map.Entry<String, SpeakerIndicator> e : this.speakerIndicators.entrySet()) {
+            speakerIndicatorMap.put(e.getKey(), e.getValue().toJSON());
+        }
+        json.put("speakerIndicators", speakerIndicatorMap);
         return json;
     }
 
@@ -153,7 +210,122 @@ public class VoiceIndicator implements JSONable {
         return this.toJSON();
     }
 
-    public class EmotionRatio {
+    public class SpeakerIndicator implements JSONable {
+
+        public String speaker;
+
+        public String label;
+
+        public double totalDuration;
+
+        public int totalWords;
+
+        public Map<Emotion, AtomicInteger> emotionCounts;
+
+        /**
+         * 说话比例
+         */
+        public int durationRatio;
+
+        /**
+         * 说话节奏，w/m，每分钟词数。
+         */
+        public int rhythm;
+
+        /**
+         * 情绪比例。
+         */
+        public EmotionRatio emotionRatio;
+
+        /**
+         * 分段的内容指标。
+         */
+        public List<SegmentIndicator> segmentIndicators;
+
+        public int positiveSegmentRatio;
+        public int negativeSegmentRatio;
+        public int neutralSegmentRatio;
+
+        public SpeakerIndicator(String speaker, String label) {
+            this.speaker = speaker;
+            this.label = label;
+            this.emotionCounts = new HashMap<>();
+            for (Emotion emotion : Emotion.commonEmotions()) {
+                this.emotionCounts.put(emotion, new AtomicInteger(0));
+            }
+            this.segmentIndicators = new ArrayList<>();
+        }
+
+        public SpeakerIndicator(JSONObject json) {
+            this.speaker = json.getString("speaker");
+            this.label = json.getString("label");
+            this.totalDuration = json.getDouble("totalDuration");
+            this.totalWords = json.getInt("totalWords");
+
+            this.emotionCounts = new HashMap<>();
+            JSONObject emotionCountsMap = json.getJSONObject("emotionCounts");
+            for (String key : emotionCountsMap.keySet()) {
+                int value = emotionCountsMap.getInt(key);
+                this.emotionCounts.put(Emotion.parse(key), new AtomicInteger(value));
+            }
+
+            this.durationRatio = json.getInt("durationRatio");
+            this.rhythm = json.getInt("rhythm");
+            this.emotionRatio = new EmotionRatio(json.getJSONObject("emotionRatio"));
+
+            this.segmentIndicators = new ArrayList<>();
+            JSONArray segmentIndicatorArray = json.getJSONArray("segmentIndicators");
+            for (int i = 0; i < segmentIndicatorArray.length(); ++i) {
+                this.segmentIndicators.add(new SegmentIndicator(segmentIndicatorArray.getJSONObject(i)));
+            }
+
+            this.positiveSegmentRatio = json.getInt("positiveSegmentRatio");
+            this.negativeSegmentRatio = json.getInt("negativeSegmentRatio");
+            this.neutralSegmentRatio = json.getInt("neutralSegmentRatio");
+        }
+
+        public void addSegmentIndicator(SegmentIndicator segmentIndicator) {
+            this.segmentIndicators.add(segmentIndicator);
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("speaker", this.speaker);
+            json.put("label", this.label);
+            json.put("totalDuration", this.totalDuration);
+            json.put("totalWords", this.totalWords);
+
+            JSONObject emotionCountsMap = new JSONObject();
+            for (Map.Entry<Emotion, AtomicInteger> e : this.emotionCounts.entrySet()) {
+                emotionCountsMap.put(e.getKey().name(), e.getValue().get());
+            }
+            json.put("emotionCounts", emotionCountsMap);
+
+            json.put("durationRatio", this.durationRatio);
+            json.put("rhythm", this.rhythm);
+            json.put("emotionRatio", this.emotionRatio.toJSON());
+
+            JSONArray segmentIndicatorArray = new JSONArray();
+            for (SegmentIndicator indicator : this.segmentIndicators) {
+                segmentIndicatorArray.put(indicator.toJSON());
+            }
+            json.put("segmentIndicators", segmentIndicatorArray);
+
+            json.put("positiveSegmentRatio", this.positiveSegmentRatio);
+            json.put("negativeSegmentRatio", this.negativeSegmentRatio);
+            json.put("neutralSegmentRatio", this.neutralSegmentRatio);
+
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
+        }
+    }
+
+    public class EmotionRatio implements JSONable {
 
         public final double score;
 
@@ -169,54 +341,62 @@ public class VoiceIndicator implements JSONable {
             this.negativeRatio = negativeRatio;
             this.neutralRatio = neutralRatio;
         }
-    }
 
-    public class SpeakerIndicator {
-
-        public String speaker;
-
-        public String label;
-
-        public double totalDuration;
-
-        public int totalWords;
-
-        public Map<Emotion, AtomicInteger> emotionCounts;
-
-        public int durationRatio;
-
-        /**
-         * 说话节奏，w/m，每分钟词数。
-         */
-        public int rhythm;
-
-        public EmotionRatio emotionRatio;
-
-        public List<SegmentIndicator> segmentIndicators;
-
-        public SpeakerIndicator(String speaker, String label) {
-            this.speaker = speaker;
-            this.label = label;
-            this.emotionCounts = new HashMap<>();
-            for (Emotion emotion : Emotion.commonEmotions()) {
-                this.emotionCounts.put(emotion, new AtomicInteger(0));
-            }
-            this.segmentIndicators = new ArrayList<>();
+        public EmotionRatio(JSONObject json) {
+            this.score = json.getDouble("score");
+            this.positiveRatio = json.getInt("positiveRatio");
+            this.negativeRatio = json.getInt("negativeRatio");
+            this.neutralRatio = json.getInt("neutralRatio");
         }
 
-        public void addSegmentIndicator(SegmentIndicator segmentIndicator) {
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("score", this.score);
+            json.put("positiveRatio", this.positiveRatio);
+            json.put("negativeRatio", this.negativeRatio);
+            json.put("neutralRatio", this.neutralRatio);
+            return json;
+        }
 
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
         }
     }
 
-    public class SegmentIndicator {
+    public class SegmentIndicator implements JSONable {
 
-        public int rhythm;
+        public final String track;
 
-        public Sentiment sentiment;
+        public final int rhythm;
 
-        public SegmentIndicator() {
+        public final Sentiment sentiment;
 
+        public SegmentIndicator(String track, int rhythm, Sentiment sentiment) {
+            this.track = track;
+            this.rhythm = rhythm;
+            this.sentiment = sentiment;
+        }
+
+        public SegmentIndicator(JSONObject json) {
+            this.track = json.getString("track");
+            this.rhythm = json.getInt("rhythm");
+            this.sentiment = Sentiment.parse(json.getString("sentiment"));
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("track", this.track);
+            json.put("rhythm", this.rhythm);
+            json.put("sentiment", this.sentiment.code);
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
         }
     }
 }
