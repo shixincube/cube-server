@@ -8,6 +8,7 @@ package cube.service.aigc.listener;
 
 import cube.common.entity.FileLabel;
 import cube.common.entity.VoiceDiarization;
+import cube.common.entity.VoiceIndicator;
 import cube.common.state.AIGCStateCode;
 
 /**
@@ -15,7 +16,7 @@ import cube.common.state.AIGCStateCode;
  */
 public interface VoiceDiarizationListener {
 
-    void onCompleted(FileLabel source, VoiceDiarization result);
+    void onCompleted(FileLabel source, VoiceDiarization diarization, VoiceIndicator indicator);
 
     void onFailed(FileLabel source, AIGCStateCode stateCode);
 }

@@ -15,11 +15,13 @@ import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.FileLabel;
 import cube.common.entity.VoiceDiarization;
+import cube.common.entity.VoiceIndicator;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.VoiceDiarizationListener;
+import org.json.JSONObject;
 
 /**
  * 说话者分割与分析。
@@ -50,9 +52,13 @@ public class SpeakerDiarizationTask extends ServiceTask {
         // 执行 Speaker Diarization
         boolean success = service.applySpeakerDiarization(authToken, fileCode, new VoiceDiarizationListener() {
             @Override
-            public void onCompleted(FileLabel source, VoiceDiarization result) {
+            public void onCompleted(FileLabel source, VoiceDiarization diarization, VoiceIndicator indicator) {
+                JSONObject result = new JSONObject();
+                result.put("diarization", diarization.toJSON());
+                result.put("indicator", indicator.toJSON());
+
                 cellet.speak(talkContext,
-                        makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.toJSON()));
+                        makeResponse(dialect, packet, AIGCStateCode.Ok.code, result));
                 markResponseTime();
             }
 

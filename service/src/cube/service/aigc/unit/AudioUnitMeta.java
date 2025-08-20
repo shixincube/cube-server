@@ -12,12 +12,11 @@ import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.AIGCUnit;
 import cube.common.entity.FileLabel;
-import cube.common.entity.SpeechRecognitionInfo;
 import cube.common.entity.VoiceDiarization;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.AutomaticSpeechRecognitionListener;
 import cube.service.aigc.listener.VoiceDiarizationListener;
+import cube.service.aigc.scene.VoiceDiarizationIndicator;
 import org.json.JSONObject;
 
 public class AudioUnitMeta extends UnitMeta {
@@ -74,9 +73,18 @@ public class AudioUnitMeta extends UnitMeta {
                         "\nduration: " + result.duration);
             }
 
-            if (null != this.voiceDiarizationListener) {
-                this.voiceDiarizationListener.onCompleted(this.file, result);
-            }
+            // 执行分析
+            this.service.getExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    VoiceDiarizationIndicator voiceIndicator = new VoiceDiarizationIndicator();
+                    voiceIndicator.analyse(service, result);
+
+                    if (null != voiceDiarizationListener) {
+                        voiceDiarizationListener.onCompleted(file, result, voiceIndicator);
+                    }
+                }
+            });
         }
         else {
             Logger.e(this.getClass(), "#process - Unknown action: " + this.action.name);

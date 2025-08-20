@@ -60,10 +60,12 @@ public class SpeakerDiarization extends ContextHandler {
 
             JSONObject responseData = future.toJSON();
             if (responseData.has("result")) {
-                JSONObject fileJson = responseData.getJSONObject("result").getJSONObject("file");
-                FileLabels.reviseFileLabel(fileJson, token,
-                        Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
-                        Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                if (responseData.getJSONObject("result").getJSONObject("diarization").has("file")) {
+                    JSONObject fileJson = responseData.getJSONObject("result").getJSONObject("diarization").getJSONObject("file");
+                    FileLabels.reviseFileLabel(fileJson, token,
+                            Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                            Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                }
             }
 
             this.respondOk(response, responseData);

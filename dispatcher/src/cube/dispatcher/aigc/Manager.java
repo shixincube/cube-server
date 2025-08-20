@@ -2955,7 +2955,8 @@ public class Manager implements Tickable, PerformerListener {
                 VoiceDiarization result = new VoiceDiarization(resultJson);
                 SpeakerDiarizationFuture future = this.speakerDiarizationFutureMap.get(result.file.getFileCode());
                 if (null != future) {
-                    future.result = result;
+                    future.diarization = new VoiceDiarization(resultJson.getJSONObject("diarization"));
+                    future.indicator = new VoiceIndicator(resultJson.getJSONObject("indicator"));
                     future.stateCode = AIGCStateCode.Ok;
                 }
                 else {
@@ -3179,7 +3180,9 @@ public class Manager implements Tickable, PerformerListener {
 
         protected String fileCode;
 
-        protected VoiceDiarization result;
+        protected VoiceDiarization diarization;
+
+        protected VoiceIndicator indicator;
 
         protected AIGCStateCode stateCode = AIGCStateCode.Processing;
 
@@ -3195,8 +3198,11 @@ public class Manager implements Tickable, PerformerListener {
             json.put("fileCode", this.fileCode);
             json.put("timestamp", this.timestamp);
             json.put("stateCode", this.stateCode.code);
-            if (null != this.result) {
-                json.put("result", this.result.toJSON());
+            if (null != this.diarization && null != this.indicator) {
+                JSONObject result = new JSONObject();
+                result.put("diarization", this.diarization.toJSON());
+                result.put("indicator", this.indicator.toJSON());
+                json.put("result", result);
             }
             return json;
         }
