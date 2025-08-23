@@ -14,6 +14,12 @@ import java.util.List;
 
 public class VoiceDiarization extends Entity {
 
+    public long contactId;
+
+    public String title;
+
+    public String remark;
+
     public FileLabel file;
 
     public double duration;
@@ -24,6 +30,15 @@ public class VoiceDiarization extends Entity {
 
     public VoiceDiarization(JSONObject json) {
         super(json);
+        if (json.has("contactId")) {
+            this.contactId = json.getLong("contactId");
+        }
+        if (json.has("title")) {
+            this.title = json.getString("title");
+        }
+        if (json.has("remark")) {
+            this.remark = json.getString("remark");
+        }
         if (json.has("file")) {
             this.file = new FileLabel(json.getJSONObject("file"));
         }
@@ -39,6 +54,13 @@ public class VoiceDiarization extends Entity {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        json.put("contactId", this.contactId);
+        if (null != this.title) {
+            json.put("title", this.title);
+        }
+        if (null != this.remark) {
+            json.put("remark", this.remark);
+        }
         if (null != this.file) {
             json.put("file", this.file.toJSON());
         }

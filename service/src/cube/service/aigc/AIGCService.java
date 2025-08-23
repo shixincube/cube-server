@@ -2752,7 +2752,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        AudioUnitMeta meta = new AudioUnitMeta(this, unit, AIGCAction.SpeakerDiarization, fileLabel);
+        AudioUnitMeta meta = new AudioUnitMeta(this, unit, authToken, AIGCAction.SpeakerDiarization, fileLabel);
         meta.voiceDiarizationListener = listener;
 
         synchronized (this.audioQueueMap) {

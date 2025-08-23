@@ -78,6 +78,12 @@ public class AIGCStorage implements Storagable {
 
     private final String emotionTable = "aigc_speech_emotion";
 
+    private final String voiceDiarizationTable = "aigc_voice_diarization";
+
+    private final String voiceTrackTable = "aigc_voice_track";
+
+    private final String voiceIndicatorTable = "aigc_voice_indicator";
+
     private final StorageField[] appConfigFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
@@ -506,6 +512,89 @@ public class AIGCStorage implements Storagable {
             }),
     };
 
+    private final StorageField[] voiceDiarizationFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("cid", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("title", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("remark", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 单位是：毫秒，读取之后，转为：秒，浮点数形式。
+            new StorageField("duration", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("elapsed", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
+    private final StorageField[] voiceTrackFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("vid", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("track", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("label", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("segment", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("emotion", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("recognition", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+    };
+
+    private final StorageField[] voiceIndicatorFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("vid", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            // 单位是：毫秒，读取之后，转为：秒，浮点数形式。
+            new StorageField("silence_duration", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("indicator_1", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("indicator_2", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("indicator_3", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("indicator_4", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("indicator_5", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            })
+    };
+
     private Storage storage;
 
     public AIGCStorage(StorageType type, JSONObject config) {
@@ -656,6 +745,27 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.emotionTable, this.emotionFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.emotionTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.voiceDiarizationTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.voiceDiarizationTable, this.voiceDiarizationFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.voiceDiarizationTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.voiceTrackTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.voiceTrackTable, this.voiceTrackFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.voiceTrackTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.voiceIndicatorTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.voiceIndicatorTable, this.voiceIndicatorFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.voiceIndicatorTable + "' successfully");
             }
         }
     }
@@ -2366,6 +2476,47 @@ public class AIGCStorage implements Storagable {
             list.add(record);
         }
         return list;
+    }
+
+    public boolean writeVoiceDiarization(VoiceDiarization diarization, VoiceIndicator indicator) {
+        long id = diarization.getId();
+        this.storage.executeInsert(this.voiceDiarizationTable, new StorageField[] {
+                new StorageField("id", id),
+                new StorageField("timestamp", diarization.getTimestamp()),
+                new StorageField("cid", diarization.contactId),
+                new StorageField("file_code", diarization.file.getFileCode()),
+                new StorageField("title", diarization.title),
+                new StorageField("remark", diarization.remark),
+                new StorageField("duration", Math.round(diarization.duration * 1000)),
+                new StorageField("elapsed", diarization.elapsed)
+        });
+
+        for (VoiceTrack track : diarization.tracks) {
+            this.storage.executeInsert(this.voiceTrackTable, new StorageField[] {
+                    new StorageField("vid", id),
+                    new StorageField("track", track.track),
+                    new StorageField("label", track.label),
+                    new StorageField("segment", track.segment.toJSON().toString()),
+                    new StorageField("emotion", track.emotion.toJSON().toString()),
+                    new StorageField("recognition", track.recognition.toJSON().toString()),
+            });
+        }
+
+        List<StorageField> voiceIndicatorFields = new ArrayList<>();
+        voiceIndicatorFields.add(new StorageField("vid", id));
+        voiceIndicatorFields.add(new StorageField("timestamp", indicator.timestamp));
+        voiceIndicatorFields.add(new StorageField("silence_duration", Math.round(indicator.silenceDuration * 1000)));
+        int index = 0;
+        for (Map.Entry<String, SpeakerIndicator> indicatorEntry : indicator.speakerIndicators.entrySet()) {
+            ++index;
+            voiceIndicatorFields.add(new StorageField("indicator_" + index, indicatorEntry.getValue().toJSON().toString()));
+        }
+
+        return this.storage.executeInsert(this.voiceIndicatorTable, voiceIndicatorFields.toArray(new StorageField[0]));
+    }
+
+    public VoiceDiarization readVoiceDiarization(String fileCode) {
+        return null;
     }
 
     private void resetDefaultConfig() {

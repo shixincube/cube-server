@@ -18,8 +18,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class VoiceDiarizationIndicator extends VoiceIndicator {
 
-    public VoiceDiarizationIndicator() {
-        super();
+    public VoiceDiarizationIndicator(long id) {
+        super(id);
     }
 
     public VoiceDiarizationIndicator(JSONObject json) {
@@ -62,7 +62,7 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
             }
 
             Sentiment sentiment = this.evalSentiment(service, track);
-            SegmentIndicator segmentIndicator = new SegmentIndicator(track.track,
+            SpeakerSegmentIndicator segmentIndicator = new SpeakerSegmentIndicator(track.track,
                     (track.segment.duration != 0) ?
                             (int) Math.round(track.recognition.words.size() / (track.segment.duration / 60.0)) : 0,
                     sentiment);
@@ -90,7 +90,7 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
             float positive = 0;
             float negative = 0;
             float neutral = 0;
-            for (SegmentIndicator segmentIndicator : speakerIndicator.segmentIndicators) {
+            for (SpeakerSegmentIndicator segmentIndicator : speakerIndicator.segmentIndicators) {
                 if (Sentiment.Positive == segmentIndicator.sentiment) {
                     ++positive;
                 }

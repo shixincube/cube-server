@@ -8,6 +8,7 @@ package cube.service.aigc.unit;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.AIGCUnit;
@@ -21,14 +22,17 @@ import org.json.JSONObject;
 
 public class AudioUnitMeta extends UnitMeta {
 
+    protected AuthToken authToken;
+
     protected FileLabel file;
 
     protected AIGCAction action;
 
     public VoiceDiarizationListener voiceDiarizationListener;
 
-    public AudioUnitMeta(AIGCService service, AIGCUnit unit, AIGCAction action, FileLabel file) {
+    public AudioUnitMeta(AIGCService service, AIGCUnit unit, AuthToken authToken, AIGCAction action, FileLabel file) {
         super(service, unit);
+        this.authToken = authToken;
         this.action = action;
         this.file = file;
     }
@@ -65,6 +69,10 @@ public class AudioUnitMeta extends UnitMeta {
         JSONObject payload = Packet.extractDataPayload(response);
         if (this.action == AIGCAction.SpeakerDiarization) {
             VoiceDiarization result = new VoiceDiarization(payload.getJSONObject("result"));
+            // 补齐参数
+            result.contactId = this.authToken.getContactId();
+            result.title = "语音-" + this.file.getFileName();
+            result.remark = "";
 
             if (Logger.isDebugLevel()) {
                 Logger.d(this.getClass(), "#process Speaker Diarization result -\nfile: " + result.file.getFileCode() +
@@ -77,7 +85,7 @@ public class AudioUnitMeta extends UnitMeta {
             this.service.getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
-                    VoiceDiarizationIndicator voiceIndicator = new VoiceDiarizationIndicator();
+                    VoiceDiarizationIndicator voiceIndicator = new VoiceDiarizationIndicator(result.getId());
                     voiceIndicator.analyse(service, result);
 
                     if (null != voiceDiarizationListener) {

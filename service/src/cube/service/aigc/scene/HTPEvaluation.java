@@ -1191,7 +1191,7 @@ public class HTPEvaluation extends Evaluation {
                 String desc = "画面中房元素穿越左半边中线";
                 result.addFeature(desc, Term.PayAttentionToFamily, Tendency.Positive,
                         PerceptronThing.createPictureLayout(new Thing[] { house }));
-                result.addScore(Indicator.Family, -1, FloatUtils.random(0.1, 0.2));
+                result.addScore(Indicator.Family, 1, FloatUtils.random(0.1, 0.2));
             }
             else if (cX > halfRightCenterX) {
                 // house 中线越过右半边中线
