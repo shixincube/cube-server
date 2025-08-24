@@ -18,9 +18,9 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * 说话者分隔与分析。
  */
-public class SpeakerDiarization extends ContextHandler {
+public class AudioDiarization extends ContextHandler {
 
-    public SpeakerDiarization() {
+    public AudioDiarization() {
         super("/aigc/audio/diarization");
         setHandler(new Handler());
     }
@@ -60,8 +60,8 @@ public class SpeakerDiarization extends ContextHandler {
 
             JSONObject responseData = future.toJSON();
             if (responseData.has("result")) {
-                if (responseData.getJSONObject("result").getJSONObject("diarization").has("file")) {
-                    JSONObject fileJson = responseData.getJSONObject("result").getJSONObject("diarization").getJSONObject("file");
+                if (responseData.getJSONObject("result").has("file")) {
+                    JSONObject fileJson = responseData.getJSONObject("result").getJSONObject("file");
                     FileLabels.reviseFileLabel(fileJson, token,
                             Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
                             Manager.getInstance().getPerformer().getExternalHttpsEndpoint());

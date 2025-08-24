@@ -48,6 +48,12 @@ public class VoiceIndicator implements JSONable {
         this.timestamp = System.currentTimeMillis();
     }
 
+    public VoiceIndicator(long id, long timestamp, double silenceDuration) {
+        this.id = id;
+        this.timestamp = timestamp;
+        this.silenceDuration = silenceDuration;
+    }
+
     public VoiceIndicator(JSONObject json) {
         this.id = json.getLong("id");
         this.timestamp = json.getLong("timestamp");

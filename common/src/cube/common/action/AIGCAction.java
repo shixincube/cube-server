@@ -197,6 +197,11 @@ public enum AIGCAction {
     SpeakerDiarization("speakerDiarization"),
 
     /**
+     * 获取说话人分割数据清单。
+     */
+    ListSpeakerDiarizations("listSpeakerDiarizations"),
+
+    /**
      * 分词。
      */
     Segmentation("segmentation"),

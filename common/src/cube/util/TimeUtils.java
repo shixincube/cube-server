@@ -6,6 +6,8 @@
 
 package cube.util;
 
+import cube.util.lunar.LunarCalendar;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -104,5 +106,46 @@ public final class TimeUtils {
         calendar.set(Integer.parseInt(ymdArray[0]), Integer.parseInt(ymdArray[1]) - 1, Integer.parseInt(ymdArray[2]),
                 Integer.parseInt(hmsArray[0]), Integer.parseInt(hmsArray[1]), Integer.parseInt(hmsArray[2]));
         return calendar.getTimeInMillis();
+    }
+
+    /**
+     * 格式化输出今天日期的全部信息。<br/>
+     * 例如：今天是2025年8月24日，星期日，农历二〇二五年七月初二 乙巳年 蛇
+     *
+     * @return
+     */
+    public static String formatTodayFullDate() {
+        Calendar today = Calendar.getInstance();
+        LunarCalendar lunar = LunarCalendar.solar2Lunar(today);
+
+        StringBuilder result = new StringBuilder();
+        result.append(today.get(Calendar.YEAR)).append("年");
+        result.append(today.get(Calendar.MONTH) + 1).append("月");
+        result.append(today.get(Calendar.DATE)).append("日，");
+        result.append(convertDayOfWeek(today.get(Calendar.DAY_OF_WEEK))).append("，");
+        result.append("农历");
+        result.append(lunar.getFullLunarName());
+        return result.toString();
+    }
+
+    public static String convertDayOfWeek(int value) {
+        switch (value) {
+            case Calendar.SUNDAY:
+                return "星期日";
+            case Calendar.MONDAY:
+                return "星期一";
+            case Calendar.TUESDAY:
+                return "星期二";
+            case Calendar.WEDNESDAY:
+                return "星期三";
+            case Calendar.THURSDAY:
+                return "星期四";
+            case Calendar.FRIDAY:
+                return "星期五";
+            case Calendar.SATURDAY:
+                return "星期六";
+            default:
+                return "";
+        }
     }
 }

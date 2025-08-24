@@ -18,6 +18,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.VoiceDiarizationListener;
 import cube.service.aigc.scene.VoiceDiarizationIndicator;
+import cube.util.TimeUtils;
 import org.json.JSONObject;
 
 public class AudioUnitMeta extends UnitMeta {
@@ -71,7 +72,7 @@ public class AudioUnitMeta extends UnitMeta {
             VoiceDiarization result = new VoiceDiarization(payload.getJSONObject("result"));
             // 补齐参数
             result.contactId = this.authToken.getContactId();
-            result.title = "语音-" + this.file.getFileName();
+            result.title = "Voice-" + this.file.getFileName() + "-" + TimeUtils.formatDateForPathSymbol(result.getTimestamp());
             result.remark = "";
 
             if (Logger.isDebugLevel()) {
@@ -88,9 +89,14 @@ public class AudioUnitMeta extends UnitMeta {
                     VoiceDiarizationIndicator voiceIndicator = new VoiceDiarizationIndicator(result.getId());
                     voiceIndicator.analyse(service, result);
 
+                    // 设置指标
+                    result.indicator = voiceIndicator;
+
                     if (null != voiceDiarizationListener) {
-                        voiceDiarizationListener.onCompleted(file, result, voiceIndicator);
+                        voiceDiarizationListener.onCompleted(file, result);
                     }
+
+                    service.getStorage().writeVoiceDiarization(result);
                 }
             });
         }

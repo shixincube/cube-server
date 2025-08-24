@@ -10,7 +10,6 @@ import cell.core.talk.LiteralBase;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
-import cube.aigc.ModelConfig;
 import cube.aigc.app.Notification;
 import cube.aigc.atom.Atom;
 import cube.aigc.psychology.composition.Emotion;
@@ -2478,13 +2477,13 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public boolean writeVoiceDiarization(VoiceDiarization diarization, VoiceIndicator indicator) {
+    public boolean writeVoiceDiarization(VoiceDiarization diarization) {
         long id = diarization.getId();
         this.storage.executeInsert(this.voiceDiarizationTable, new StorageField[] {
                 new StorageField("id", id),
                 new StorageField("timestamp", diarization.getTimestamp()),
                 new StorageField("cid", diarization.contactId),
-                new StorageField("file_code", diarization.file.getFileCode()),
+                new StorageField("file_code", diarization.fileCode),
                 new StorageField("title", diarization.title),
                 new StorageField("remark", diarization.remark),
                 new StorageField("duration", Math.round(diarization.duration * 1000)),
@@ -2502,6 +2501,8 @@ public class AIGCStorage implements Storagable {
             });
         }
 
+        // 写入指标
+        VoiceIndicator indicator = diarization.indicator;
         List<StorageField> voiceIndicatorFields = new ArrayList<>();
         voiceIndicatorFields.add(new StorageField("vid", id));
         voiceIndicatorFields.add(new StorageField("timestamp", indicator.timestamp));
@@ -2515,8 +2516,65 @@ public class AIGCStorage implements Storagable {
         return this.storage.executeInsert(this.voiceIndicatorTable, voiceIndicatorFields.toArray(new StorageField[0]));
     }
 
-    public VoiceDiarization readVoiceDiarization(String fileCode) {
-        return null;
+    public List<VoiceDiarization> readVoiceDiarization(long contactId) {
+        List<VoiceDiarization> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.voiceDiarizationTable, this.voiceDiarizationFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("cid", contactId),
+                        Conditional.createOrderBy("timestamp", true)
+                });
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> map = StorageFields.get(fields);
+            VoiceDiarization voiceDiarization = new VoiceDiarization(map.get("id").getLong(), map.get("timestamp").getLong(),
+                    map.get("cid").getLong(), map.get("title").getString(), map.get("remark").getString(),
+                    map.get("file_code").getString(),
+                    map.get("duration").getLong() / 1000.d, map.get("elapsed").getLong());
+
+            List<StorageField[]> trackResult = this.storage.executeQuery(this.voiceTrackTable, this.voiceTrackFields, new Conditional[] {
+                    Conditional.createEqualTo("vid", voiceDiarization.getId())
+            });
+            for (StorageField[] trackFields : trackResult) {
+               map = StorageFields.get(trackFields);
+               VoiceTrack track = new VoiceTrack(map.get("track").getString(), map.get("label").getString(),
+                       new VoiceSegment(new JSONObject(map.get("segment").getString())),
+                       new SpeechEmotion(new JSONObject(map.get("emotion").getString())),
+                       new SpeechRecognitionInfo(new JSONObject(map.get("recognition").getString())));
+                voiceDiarization.tracks.add(track);
+            }
+
+            // 读取指标
+            VoiceIndicator indicator = this.readVoiceIndicator(voiceDiarization.getId());
+            voiceDiarization.indicator = indicator;
+
+            list.add(voiceDiarization);
+        }
+
+        return list;
+    }
+
+    private VoiceIndicator readVoiceIndicator(long voiceId) {
+        List<StorageField[]> result = this.storage.executeQuery(this.voiceIndicatorTable, this.voiceIndicatorFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("vid", voiceId)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+        VoiceIndicator voiceIndicator = new VoiceIndicator(map.get("vid").getLong(), map.get("timestamp").getLong(),
+                map.get("silence_duration").getLong() / 1000.0d);
+
+        int index = 1;
+        while (map.containsKey("indicator_" + index)) {
+            JSONObject data = new JSONObject(map.get("indicator_" + index).getString());
+            SpeakerIndicator indicator = new SpeakerIndicator(data);
+            voiceIndicator.speakerIndicators.put(indicator.speaker, indicator);
+            ++index;
+        }
+
+        return voiceIndicator;
     }
 
     private void resetDefaultConfig() {

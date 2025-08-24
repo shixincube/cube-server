@@ -20,13 +20,17 @@ import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.VoiceDiarizationListener;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  * 说话者分割与分析。
  */
-public class SpeakerDiarizationTask extends ServiceTask {
+public class ListSpeakerDiarizationsTask extends ServiceTask {
 
-    public SpeakerDiarizationTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public ListSpeakerDiarizationsTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -36,7 +40,7 @@ public class SpeakerDiarizationTask extends ServiceTask {
         Packet packet = new Packet(dialect);
 
         String token = this.getTokenCode(dialect);
-        if (null == token || !packet.data.has("fileCode")) {
+        if (null == token) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, packet.data));
             markResponseTime();
@@ -45,29 +49,18 @@ public class SpeakerDiarizationTask extends ServiceTask {
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         AuthToken authToken = service.getToken(token);
-        String fileCode = packet.data.getString("fileCode");
 
-        // 执行 Speaker Diarization
-        boolean success = service.applySpeakerDiarization(authToken, fileCode, new VoiceDiarizationListener() {
-            @Override
-            public void onCompleted(FileLabel source, VoiceDiarization diarization) {
-                cellet.speak(talkContext,
-                        makeResponse(dialect, packet, AIGCStateCode.Ok.code, diarization.toJSON()));
-                markResponseTime();
-            }
-
-            @Override
-            public void onFailed(FileLabel source, AIGCStateCode stateCode) {
-                cellet.speak(talkContext,
-                        makeResponse(dialect, packet, stateCode.code, packet.data));
-                markResponseTime();
-            }
-        });
-
-        if (!success) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
-            markResponseTime();
+        List<VoiceDiarization> list = service.getVoiceDiarizations(authToken);
+        JSONArray array = new JSONArray();
+        for (VoiceDiarization voiceDiarization : list) {
+            array.put(voiceDiarization.toJSON());
         }
+
+        JSONObject responseData = new JSONObject();
+        responseData.put("total", list.size());
+        responseData.put("list", array);
+        this.cellet.speak(this.talkContext,
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
+        markResponseTime();
     }
 }

@@ -130,7 +130,8 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new SemanticSearch());
         httpServer.addContextHandler(new SpeechEmotionRecognition());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
-        httpServer.addContextHandler(new SpeakerDiarization());
+        httpServer.addContextHandler(new AudioDiarization());
+        httpServer.addContextHandler(new AudioDiarizationOperation());
         httpServer.addContextHandler(new KnowledgeQA());
         httpServer.addContextHandler(new KnowledgeProfiles());
         httpServer.addContextHandler(new KnowledgeInfos());
@@ -1902,6 +1903,37 @@ public class Manager implements Tickable, PerformerListener {
         return this.speakerDiarizationFutureMap.get(fileCode);
     }
 
+    public JSONObject listSpeakerDiarizations(String token) {
+        JSONObject payload = new JSONObject();
+        Packet packet = new Packet(AIGCAction.ListSpeakerDiarizations.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 2 * 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#listSpeakerDiarizations - No response: " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#listSpeakerDiarizations - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        JSONObject responseData = Packet.extractDataPayload(responsePacket);
+        JSONArray list = responseData.getJSONArray("list");
+        for (int i = 0; i < list.length(); ++i) {
+            JSONObject json = list.getJSONObject(i);
+            if (json.has("file")) {
+                FileLabels.reviseFileLabel(json.getJSONObject("file"), token,
+                        getPerformer().getExternalHttpEndpoint(),
+                        getPerformer().getExternalHttpsEndpoint());
+            }
+        }
+        return responseData;
+    }
+
     public JSONObject getUserEmotionData(String token) {
         JSONObject result = new JSONObject();
         JSONArray data = new JSONArray();
@@ -2955,8 +2987,7 @@ public class Manager implements Tickable, PerformerListener {
                 VoiceDiarization result = new VoiceDiarization(resultJson);
                 SpeakerDiarizationFuture future = this.speakerDiarizationFutureMap.get(result.file.getFileCode());
                 if (null != future) {
-                    future.diarization = new VoiceDiarization(resultJson.getJSONObject("diarization"));
-                    future.indicator = new VoiceIndicator(resultJson.getJSONObject("indicator"));
+                    future.diarization = new VoiceDiarization(resultJson);
                     future.stateCode = AIGCStateCode.Ok;
                 }
                 else {
@@ -3182,8 +3213,6 @@ public class Manager implements Tickable, PerformerListener {
 
         protected VoiceDiarization diarization;
 
-        protected VoiceIndicator indicator;
-
         protected AIGCStateCode stateCode = AIGCStateCode.Processing;
 
         public SpeakerDiarizationFuture(String token, String fileCode) {
@@ -3198,11 +3227,8 @@ public class Manager implements Tickable, PerformerListener {
             json.put("fileCode", this.fileCode);
             json.put("timestamp", this.timestamp);
             json.put("stateCode", this.stateCode.code);
-            if (null != this.diarization && null != this.indicator) {
-                JSONObject result = new JSONObject();
-                result.put("diarization", this.diarization.toJSON());
-                result.put("indicator", this.indicator.toJSON());
-                json.put("result", result);
+            if (null != this.diarization) {
+                json.put("result", this.diarization.toJSON());
             }
             return json;
         }

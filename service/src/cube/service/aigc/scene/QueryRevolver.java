@@ -21,6 +21,7 @@ import cube.service.aigc.listener.SemanticSearchListener;
 import cube.service.contact.ContactManager;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+import cube.util.TimeUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -398,6 +399,12 @@ public class QueryRevolver {
             // aixinli://prompt.direct/请你介绍一下你自己。
             postfix = "\n\n我的更多功能您可以点击：**[功能介绍](" + Link.formatPromptDirect("请你介绍一下你自己。") + ")** 了解。";
         }
+
+        // 插入通识知识
+        String resultData = result.toString();
+        result.delete(0, result.length());
+        result.append(TimeUtils.formatTodayFullDate()).append("\n\n");
+        result.append(resultData);
 
         PromptRevolver prompt = new PromptRevolver(result.toString());
         prompt.prefix = prefix;

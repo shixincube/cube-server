@@ -16,7 +16,7 @@ import cube.common.state.AIGCStateCode;
  */
 public interface VoiceDiarizationListener {
 
-    void onCompleted(FileLabel source, VoiceDiarization diarization, VoiceIndicator indicator);
+    void onCompleted(FileLabel source, VoiceDiarization diarization);
 
     void onFailed(FileLabel source, AIGCStateCode stateCode);
 }
