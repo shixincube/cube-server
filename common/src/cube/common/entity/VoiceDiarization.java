@@ -79,12 +79,21 @@ public class VoiceDiarization extends Entity {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("contactId", this.contactId);
+
         if (null != this.title) {
             json.put("title", this.title);
         }
+        else {
+            json.put("title", "");
+        }
+
         if (null != this.remark) {
             json.put("remark", this.remark);
         }
+        else {
+            json.put("remark", "");
+        }
+
         if (null != this.file) {
             json.put("file", this.file.toJSON());
         }

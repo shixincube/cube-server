@@ -183,7 +183,7 @@ public class HexagonDimensionScore implements JSONable {
             }
             else {
                 this.recordScore(HexagonDimension.InterpersonalRelationship, Utils.randomInt(55, 59),
-                        IndicatorRate.Low);
+                        IndicatorRate.None);
             }
 
             // 行为

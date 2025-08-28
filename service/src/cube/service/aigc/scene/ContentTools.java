@@ -42,7 +42,9 @@ public class ContentTools {
             int score = sds.getDimensionScore(dim);
             String query = null;
             int rate = sds.getDimensionRate(dim);
-            if (rate <= IndicatorRate.Low.value) {
+            if (rate == IndicatorRate.None.value) {
+                query = "六维分析中" + dim.displayName + "维度表现常规";
+            } else if (rate <= IndicatorRate.Low.value) {
                 query = "六维分析中" + dim.displayName + "维度得分低的表现";
             } else if (score >= IndicatorRate.High.value) {
                 query = "六维分析中" + dim.displayName + "维度得分高的表现";
