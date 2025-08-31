@@ -2478,6 +2478,9 @@ public class AIGCStorage implements Storagable {
     }
 
     public boolean writeVoiceDiarization(VoiceDiarization diarization) {
+        // 删除旧数据
+        this.deleteVoiceDiarization(diarization.fileCode);
+
         long id = diarization.getId();
         this.storage.executeInsert(this.voiceDiarizationTable, new StorageField[] {
                 new StorageField("id", id),
@@ -2551,6 +2554,29 @@ public class AIGCStorage implements Storagable {
         }
 
         return list;
+    }
+
+    public void deleteVoiceDiarization(String fileCode) {
+        List<StorageField[]> result = this.storage.executeQuery(this.voiceDiarizationTable, this.voiceDiarizationFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("file_code", fileCode)
+                });
+        if (result.isEmpty()) {
+            return;
+        }
+
+        Map<String, StorageField> fields = StorageFields.get(result.get(0));
+        long id = fields.get("id").getLong();
+
+        this.storage.executeDelete(this.voiceDiarizationTable, new Conditional[] {
+                Conditional.createEqualTo("id", id)
+        });
+        this.storage.executeDelete(this.voiceTrackTable, new Conditional[] {
+                Conditional.createEqualTo("vid", id)
+        });
+        this.storage.executeDelete(this.voiceIndicatorTable, new Conditional[] {
+                Conditional.createEqualTo("vid", id)
+        });
     }
 
     private VoiceIndicator readVoiceIndicator(long voiceId) {

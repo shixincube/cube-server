@@ -24,6 +24,9 @@ public class VoiceDiarization extends Entity {
 
     public FileLabel file;
 
+    /**
+     * 单位：秒。
+     */
     public double duration;
 
     public long elapsed;
