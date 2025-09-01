@@ -2780,7 +2780,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     public List<VoiceDiarization> getVoiceDiarizations(AuthToken authToken) {
-        List<VoiceDiarization> result = this.storage.readVoiceDiarization(authToken.getContactId());
+        List<VoiceDiarization> result = this.storage.readVoiceDiarizations(authToken.getContactId());
         for (VoiceDiarization voiceDiarization : result) {
             voiceDiarization.file = this.getFile(authToken.getDomain(), voiceDiarization.fileCode);
         }

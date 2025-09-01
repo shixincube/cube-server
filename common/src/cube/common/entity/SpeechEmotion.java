@@ -21,9 +21,9 @@ public class SpeechEmotion implements JSONable {
 
     public Emotion emotion;
 
-    public double score;
+    public double score = 0.0;
 
-    public double duration;
+    public double duration = 0.0;
 
     public SpeechEmotion(JSONObject json) {
         this.file = json.has("file") ? new FileLabel(json.getJSONObject("file")) : null;

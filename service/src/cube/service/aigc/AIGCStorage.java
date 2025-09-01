@@ -2519,7 +2519,7 @@ public class AIGCStorage implements Storagable {
         return this.storage.executeInsert(this.voiceIndicatorTable, voiceIndicatorFields.toArray(new StorageField[0]));
     }
 
-    public List<VoiceDiarization> readVoiceDiarization(long contactId) {
+    public List<VoiceDiarization> readVoiceDiarizations(long contactId) {
         List<VoiceDiarization> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.voiceDiarizationTable, this.voiceDiarizationFields,
@@ -2593,7 +2593,7 @@ public class AIGCStorage implements Storagable {
                 map.get("silence_duration").getLong() / 1000.0d);
 
         int index = 1;
-        while (map.containsKey("indicator_" + index)) {
+        while (map.containsKey("indicator_" + index) && !map.get("indicator_" + index).isNullValue()) {
             JSONObject data = new JSONObject(map.get("indicator_" + index).getString());
             SpeakerIndicator indicator = new SpeakerIndicator(data);
             voiceIndicator.speakerIndicators.put(indicator.speaker, indicator);

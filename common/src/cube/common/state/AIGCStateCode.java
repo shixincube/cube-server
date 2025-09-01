@@ -22,6 +22,11 @@ public enum AIGCStateCode {
     InvalidParameter(1),
 
     /**
+     * 被取消。
+     */
+    Cancelled(2),
+
+    /**
      * 未找到指定数据。
      */
     NotFound(3),
