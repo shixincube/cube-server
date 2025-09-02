@@ -18,6 +18,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.VoiceDiarizationListener;
 import cube.service.aigc.scene.VoiceDiarizationIndicator;
+import cube.util.FileUtils;
 import cube.util.TimeUtils;
 import org.json.JSONObject;
 
@@ -72,7 +73,11 @@ public class AudioUnitMeta extends UnitMeta {
             VoiceDiarization result = new VoiceDiarization(payload.getJSONObject("result"));
             // 补齐参数
             result.contactId = this.authToken.getContactId();
-            result.title = "Voice-" + this.file.getFileName() + "-" + TimeUtils.formatDateForPathSymbol(result.getTimestamp());
+            String nameCode = FileUtils.extractFileName(this.file.getFileName());
+            if (nameCode.length() > 16) {
+                nameCode = nameCode.substring(0, 15);
+            }
+            result.title = "Voice-" + nameCode + "-" + TimeUtils.formatDateForPathSymbol(result.getTimestamp());
             result.remark = "";
 
             if (Logger.isDebugLevel()) {
