@@ -202,6 +202,11 @@ public enum AIGCAction {
     ListSpeakerDiarizations("listSpeakerDiarizations"),
 
     /**
+     * 删除说话人分析数据。
+     */
+    DeleteSpeakerDiarization("deleteSpeakerDiarization"),
+
+    /**
      * 分词。
      */
     Segmentation("segmentation"),

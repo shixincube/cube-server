@@ -1934,6 +1934,34 @@ public class Manager implements Tickable, PerformerListener {
         return responseData;
     }
 
+    public JSONObject deleteSpeakerDiarization(String token, String fileCode) {
+        JSONObject payload = new JSONObject();
+        payload.put("fileCode", fileCode);
+        Packet packet = new Packet(AIGCAction.DeleteSpeakerDiarization.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 2 * 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#deleteSpeakerDiarization - No response: " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#deleteSpeakerDiarization - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        JSONObject responseData = Packet.extractDataPayload(responsePacket);
+        if (responseData.has("file")) {
+            FileLabels.reviseFileLabel(responseData.getJSONObject("file"), token,
+                    getPerformer().getExternalHttpEndpoint(),
+                    getPerformer().getExternalHttpsEndpoint());
+        }
+        return responseData;
+    }
+
     public JSONObject getUserEmotionData(String token) {
         JSONObject result = new JSONObject();
         JSONArray data = new JSONArray();

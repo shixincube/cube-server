@@ -43,6 +43,9 @@ public class AudioDiarizationOperation extends ContextHandler {
             if (pathInfo.startsWith("/list")) {
                 this.optList(token, request, response);
             }
+            else if (pathInfo.startsWith("/delete")) {
+                this.optDelete(token, request, response);
+            }
             else {
                 this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
@@ -59,6 +62,19 @@ public class AudioDiarizationOperation extends ContextHandler {
 
             this.respondOk(response, result);
             this.complete();
+        }
+
+        private void optDelete(String token, HttpServletRequest request, HttpServletResponse response) {
+            try {
+                JSONObject requestData = this.readBodyAsJSONObject(request);
+                JSONObject result = Manager.getInstance().deleteSpeakerDiarization(token,
+                        requestData.getString("fileCode"));
+                this.respondOk(response, result);
+                this.complete();
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                this.complete();
+            }
         }
     }
 }

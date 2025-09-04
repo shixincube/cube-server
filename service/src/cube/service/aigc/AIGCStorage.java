@@ -2519,6 +2519,40 @@ public class AIGCStorage implements Storagable {
         return this.storage.executeInsert(this.voiceIndicatorTable, voiceIndicatorFields.toArray(new StorageField[0]));
     }
 
+    public VoiceDiarization readVoiceDiarization(String fileCode) {
+        List<StorageField[]> result = this.storage.executeQuery(this.voiceDiarizationTable, this.voiceDiarizationFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("file_code", fileCode),
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> map = StorageFields.get(result.get(0));
+        VoiceDiarization voiceDiarization = new VoiceDiarization(map.get("id").getLong(), map.get("timestamp").getLong(),
+                map.get("cid").getLong(), map.get("title").getString(), map.get("remark").getString(),
+                map.get("file_code").getString(),
+                map.get("duration").getLong() / 1000.d, map.get("elapsed").getLong());
+
+        List<StorageField[]> trackResult = this.storage.executeQuery(this.voiceTrackTable, this.voiceTrackFields, new Conditional[] {
+                Conditional.createEqualTo("vid", voiceDiarization.getId())
+        });
+        for (StorageField[] trackFields : trackResult) {
+            map = StorageFields.get(trackFields);
+            VoiceTrack track = new VoiceTrack(map.get("track").getString(), map.get("label").getString(),
+                    new VoiceSegment(new JSONObject(map.get("segment").getString())),
+                    new SpeechEmotion(new JSONObject(map.get("emotion").getString())),
+                    new SpeechRecognitionInfo(new JSONObject(map.get("recognition").getString())));
+            voiceDiarization.tracks.add(track);
+        }
+
+        // 读取指标
+        VoiceIndicator indicator = this.readVoiceIndicator(voiceDiarization.getId());
+        voiceDiarization.indicator = indicator;
+
+        return voiceDiarization;
+    }
+
     public List<VoiceDiarization> readVoiceDiarizations(long contactId) {
         List<VoiceDiarization> list = new ArrayList<>();
 
@@ -2556,13 +2590,13 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
-    public void deleteVoiceDiarization(String fileCode) {
+    public boolean deleteVoiceDiarization(String fileCode) {
         List<StorageField[]> result = this.storage.executeQuery(this.voiceDiarizationTable, this.voiceDiarizationFields,
                 new Conditional[] {
                         Conditional.createEqualTo("file_code", fileCode)
                 });
         if (result.isEmpty()) {
-            return;
+            return false;
         }
 
         Map<String, StorageField> fields = StorageFields.get(result.get(0));
@@ -2577,6 +2611,7 @@ public class AIGCStorage implements Storagable {
         this.storage.executeDelete(this.voiceIndicatorTable, new Conditional[] {
                 Conditional.createEqualTo("vid", id)
         });
+        return true;
     }
 
     private VoiceIndicator readVoiceIndicator(long voiceId) {

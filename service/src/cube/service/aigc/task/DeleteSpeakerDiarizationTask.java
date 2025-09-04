@@ -13,24 +13,18 @@ import cell.core.talk.dialect.ActionDialect;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.FileLabel;
 import cube.common.entity.VoiceDiarization;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.VoiceDiarizationListener;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.util.List;
 
 /**
- * 获取说话者分割与分析数据列表。
+ * 删除说话者分析数据。。
  */
-public class ListSpeakerDiarizationsTask extends ServiceTask {
+public class DeleteSpeakerDiarizationTask extends ServiceTask {
 
-    public ListSpeakerDiarizationsTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public DeleteSpeakerDiarizationTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -42,6 +36,14 @@ public class ListSpeakerDiarizationsTask extends ServiceTask {
         String token = this.getTokenCode(dialect);
         if (null == token) {
             this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.NoToken.code, packet.data));
+            markResponseTime();
+            return;
+        }
+
+        String fileCode = packet.data.getString("fileCode");
+        if (null == fileCode) {
+            this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, packet.data));
             markResponseTime();
             return;
@@ -49,18 +51,17 @@ public class ListSpeakerDiarizationsTask extends ServiceTask {
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         AuthToken authToken = service.getToken(token);
-
-        List<VoiceDiarization> list = service.getVoiceDiarizations(authToken);
-        JSONArray array = new JSONArray();
-        for (VoiceDiarization voiceDiarization : list) {
-            array.put(voiceDiarization.toJSON());
+        // 删除语音数据
+        VoiceDiarization voiceDiarization = service.deleteVoiceDiarization(authToken, fileCode);
+        if (null == voiceDiarization) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, packet.data));
+            markResponseTime();
+            return;
         }
 
-        JSONObject responseData = new JSONObject();
-        responseData.put("total", list.size());
-        responseData.put("list", array);
         this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseData));
+                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, voiceDiarization.toJSON()));
         markResponseTime();
     }
 }

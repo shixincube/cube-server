@@ -289,6 +289,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new ListSpeakerDiarizationsTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.DeleteSpeakerDiarization.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new DeleteSpeakerDiarizationTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.SpeechEmotionRecognition.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new SpeechEmotionRecognitionTask(this, talkContext, primitive,

@@ -14,6 +14,7 @@ import cube.common.action.AIGCAction;
 import cube.common.entity.AIGCUnit;
 import cube.common.entity.FileLabel;
 import cube.common.entity.VoiceDiarization;
+import cube.common.entity.VoiceTrack;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.VoiceDiarizationListener;
@@ -74,18 +75,21 @@ public class AudioUnitMeta extends UnitMeta {
             // 补齐参数
             result.contactId = this.authToken.getContactId();
             String nameCode = FileUtils.extractFileName(this.file.getFileName());
-            if (nameCode.length() > 16) {
-                nameCode = nameCode.substring(0, 15);
+            if (nameCode.length() > 10) {
+                nameCode = nameCode.substring(0, 9);
             }
             result.title = "Voice-" + nameCode + "-" + TimeUtils.formatDateForPathSymbol(result.getTimestamp());
             result.remark = "";
 
             if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#process Speaker Diarization result -\nfile: " + result.file.getFileCode() +
+                Logger.d(this.getClass(), "#process - Speaker Diarization result\nfile: " + result.file.getFileCode() +
                         "\nelapsed: " + result.elapsed +
                         "\ntracks: " + result.tracks.size() +
                         "\nduration: " + result.duration);
             }
+
+            // align labels
+            result.alignSpeakerLabels();
 
             // 执行分析
             this.service.getExecutor().execute(new Runnable() {

@@ -2787,6 +2787,13 @@ public class AIGCService extends AbstractModule implements Generatable {
         return result;
     }
 
+    public VoiceDiarization deleteVoiceDiarization(AuthToken authToken, String fileCode) {
+        VoiceDiarization voiceDiarization = this.storage.readVoiceDiarization(fileCode);
+        voiceDiarization.file = this.getFile(authToken.getDomain(), voiceDiarization.fileCode);
+        this.storage.deleteVoiceDiarization(fileCode);
+        return voiceDiarization;
+    }
+
     /**
      * 语音情绪识别。
      *
