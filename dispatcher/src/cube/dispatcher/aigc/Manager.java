@@ -1959,7 +1959,10 @@ public class Manager implements Tickable, PerformerListener {
                     getPerformer().getExternalHttpEndpoint(),
                     getPerformer().getExternalHttpsEndpoint());
         }
-        return responseData;
+        VoiceDiarization diarization = new VoiceDiarization(responseData);
+        SpeakerDiarizationFuture future = new SpeakerDiarizationFuture(diarization.getTimestamp(),
+                token, diarization.fileCode, AIGCStateCode.Ok);
+        return future.toJSON();
     }
 
     public JSONObject getUserEmotionData(String token) {
@@ -3247,6 +3250,13 @@ public class Manager implements Tickable, PerformerListener {
             this.timestamp = System.currentTimeMillis();
             this.token = token;
             this.fileCode = fileCode;
+        }
+
+        public SpeakerDiarizationFuture(long timestamp, String token, String fileCode, AIGCStateCode stateCode) {
+            this.timestamp = timestamp;
+            this.token = token;
+            this.fileCode = fileCode;
+            this.stateCode = stateCode;
         }
 
         @Override
