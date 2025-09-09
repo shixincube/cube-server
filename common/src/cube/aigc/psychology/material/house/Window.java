@@ -29,6 +29,19 @@ public class Window extends Thing {
     }
 
     @Override
+    public boolean isDoodle() {
+        if (super.isDoodle()) {
+            return true;
+        }
+
+        if (this.texture.avg >= 8 && this.texture.max >= 30) {
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("open", this.open);

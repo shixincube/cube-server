@@ -15,6 +15,7 @@ import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.*;
 import cube.aigc.psychology.material.*;
+import cube.aigc.psychology.material.house.Window;
 import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.Leg;
 import cube.util.FloatUtils;
@@ -427,6 +428,7 @@ public class HTPEvaluation extends Evaluation {
                     result.addFeature(desc, Term.Depression, Tendency.Positive, PerceptronThing.createThingSize(
                             new Thing[] { tree, person }));
                     result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
+                    System.out.println("DEBUG: Depression - 画面中人与树在空间位置上重叠");
                 }
             }
 
@@ -901,6 +903,8 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.8, 0.9));
                 result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.4, 0.5));
 
+                System.out.println("DEBUG: Depression - 画面中出现大面积涂鸦，线条凌乱");
+
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(2.0, 3.0));
                 result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(8.0, 9.0));
                 if (printBigFive) {
@@ -929,6 +933,8 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
+
+                System.out.println("DEBUG: Depression - 画面中部分画幅内容出现涂鸦");
 
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.0, 5.0));
                 result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(7.0, 8.0));
@@ -1210,6 +1216,8 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
 
+                System.out.println("DEBUG: Depression - 画面中房元素整体占比非常小");
+
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.0, 2.0));
                 result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(6.5, 7.0));
                 result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(2.0, 3.0));
@@ -1299,6 +1307,8 @@ public class HTPEvaluation extends Evaluation {
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.4, 0.5));
                 result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
                 result.addScore(Indicator.Introversion, 1, FloatUtils.random(0.3, 0.4));
+
+                System.out.println("DEBUG: Depression - " + desc);
 
                 result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(4.0, 5.0));
                 result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(2.0, 3.0));
@@ -1421,6 +1431,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addFeature(desc, Term.WorldWeariness, Tendency.Positive, new Thing[] { house });
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.5, 0.6));
+                System.out.println("DEBUG: Depression - " + desc);
             }
 
             // 房顶
@@ -1561,6 +1572,26 @@ public class HTPEvaluation extends Evaluation {
                                 house.getWindows().get(0)
                         });
                     }
+
+                    // 涂鸦计数
+                    int countDoodle = 0;
+                    for (Window window : house.getWindows()) {
+                        Logger.d(this.getClass(), "#evalHouse - Window doodle:\n" + window.texture.toJSON().toString(4));
+                        if (window.isDoodle()) {
+                            ++countDoodle;
+                        }
+                    }
+
+                    if (countDoodle >= 3) {
+                        result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.3, 0.4));
+                        result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
+                        System.out.println("DEBUG: Anxiety - House window - " + countDoodle);
+                    }
+                    else if (countDoodle >= 1) {
+                        result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.2, 0.3));
+                        result.addScore(Indicator.Family, -1, FloatUtils.random(0.2, 0.3));
+                        System.out.println("DEBUG: Anxiety - House window - " + countDoodle);
+                    }
                 }
 
                 // 计算总面积比例
@@ -1630,6 +1661,7 @@ public class HTPEvaluation extends Evaluation {
                     // 重置抑郁
                     result.removeScores(Indicator.Depression);
                     result.addScore(Indicator.Depression, 1, FloatUtils.random(0.7, 0.8));
+                    System.out.println("DEBUG: Depression - " + desc);
                 }
                 else {
                     result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
@@ -1661,6 +1693,7 @@ public class HTPEvaluation extends Evaluation {
         // 整个画面里没有树干
         boolean hasTrunk = false;
         int countTreeDoodle = 0;
+        int countCanopyDoodle = 0;
 
         List<Tree> treeList = this.painting.getTrees();
         for (Tree tree : treeList) {
@@ -1684,6 +1717,8 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.6, 0.7));
+
+                System.out.println("DEBUG: Depression - " + desc);
 
                 result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(6.5, 7.5));
                 if (printBigFive) {
@@ -1764,6 +1799,8 @@ public class HTPEvaluation extends Evaluation {
                     result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
                     result.addScore(Indicator.SelfEsteem, -1, FloatUtils.random(0.3, 0.4));
                     result.addScore(Indicator.SocialAdaptability, -1, FloatUtils.random(0.3, 0.4));
+
+                    System.out.println("DEBUG: Depression - " + desc);
 
                     result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(1.5, 2.5));
                     if (printBigFive) {
@@ -1924,8 +1961,7 @@ public class HTPEvaluation extends Evaluation {
 
                 // 判断树冠涂鸦
                 if (tree.isDoodleCanopy()) {
-                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.2, 0.3));
-                    result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.4, 0.5));
+                    ++countCanopyDoodle;
                 }
             }
             /* 树冠存在识别失败的可能性
@@ -2030,6 +2066,7 @@ public class HTPEvaluation extends Evaluation {
 
                 result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.55, 0.65));
                 result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
+                System.out.println("DEBUG: Depression - 树涂鸦");
 
                 result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(6.5, 7.0));
                 result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(5.0, 5.5));
@@ -2056,6 +2093,18 @@ public class HTPEvaluation extends Evaluation {
                 System.out.println("CP-094");
             }
         }
+
+        if (countCanopyDoodle >= 2 && countCanopyDoodle <= 4) {
+            result.addScore(Indicator.Depression, 1, FloatUtils.random(0.1, 0.2));
+            result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
+            System.out.println("DEBUG: Depression - " + countCanopyDoodle + " 树冠涂鸦");
+        }
+        else if (countCanopyDoodle > 4) {
+            result.addScore(Indicator.Depression, 1, FloatUtils.random(0.3, 0.4));
+            result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.5, 0.6));
+            System.out.println("DEBUG: Depression - " + countCanopyDoodle + " 树冠涂鸦");
+        }
+
 
         if (!hasTrunk) {
             // 无树干

@@ -1032,6 +1032,7 @@ public class PsychologyScene {
                 StrategyNode detectQuery = new DetectTeenagerQueryStrategyNode(query);
                 StrategyNode problemClassification = new TeenagerProblemClassificationNode(revolver, context.getCurrentReport());
                 StrategyNode queryNode = new TeenagerQueryNode(query, revolver, context.getCurrentReport());
+                // 连接节点
                 detectQuery.link(problemClassification).link(queryNode);
 
                 // 创建流
