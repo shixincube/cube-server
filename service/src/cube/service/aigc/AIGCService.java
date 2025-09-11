@@ -607,26 +607,30 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         ArrayList<AIGCUnit> candidates = new ArrayList<>();
 
-        // 1. 选择所有无故障节点
+        // 1. 选择所有可用节点
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
         while (iter.hasNext()) {
             AIGCUnit unit = iter.next();
             if (unit.getCapability().getName().equals(unitName) &&
-                    unit.getContext().isValid() &&
-                    unit.numFailure() == 0) {
+                    unit.getContext().isValid()) {
                 candidates.add(unit);
             }
         }
 
-        if (candidates.isEmpty()) {
-            // 2. 没有无故障节点，选择所有节点
-            iter = this.unitMap.values().iterator();
-            while (iter.hasNext()) {
-                AIGCUnit unit = iter.next();
-                if (unit.getCapability().getName().equals(unitName) &&
-                        unit.getContext().isValid()) {
-                    candidates.add(unit);
+        // 2. 如果可用节点超过3个，删除故障数最多的节点
+        if (candidates.size() >= 3) {
+            AIGCUnit excluded = null;
+            int maxNumFailure = -1;
+            for (AIGCUnit unit : candidates) {
+                if (unit.numFailure() > 0) {
+                    if (unit.numFailure() > maxNumFailure) {
+                        maxNumFailure = unit.numFailure();
+                        excluded = unit;
+                    }
                 }
+            }
+            if (null != excluded) {
+                candidates.remove(excluded);
             }
         }
 
@@ -635,8 +639,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         }
 
-        int num = candidates.size();
-        if (num == 1) {
+        if (candidates.size() == 1) {
             return candidates.get(0);
         }
 
@@ -657,7 +660,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         });
 
         // 先进行一次选择
-        AIGCUnit unit = candidates.get(0);
+        AIGCUnit unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
 
         iter = candidates.iterator();
         while (iter.hasNext()) {
@@ -669,12 +672,16 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         if (candidates.isEmpty()) {
-            // 所有单元都在运行，返回选择
+            // 所有单元都在运行，返回随机的
             return unit;
         }
 
-        // 权重最高，且没有正在运行的节点
-        unit = candidates.get(0);
+        if (candidates.size() == 1) {
+            return candidates.get(0);
+        }
+
+        // 随机选择正在运行的节点
+        unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
         return unit;
     }
 
