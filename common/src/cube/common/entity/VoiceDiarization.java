@@ -79,6 +79,17 @@ public class VoiceDiarization extends Entity {
         this.tracks = new ArrayList<>();
     }
 
+    public List<String> extractTrackLabels() {
+        List<String> result = new ArrayList<>();
+        for (VoiceTrack track : this.tracks) {
+            if (result.contains(track.label)) {
+                continue;
+            }
+            result.add(track.label);
+        }
+        return result;
+    }
+
     public void alignSpeakerLabels() {
         HashMap<String, List<VoiceTrack>> map = new HashMap<>();
         for (int i = 0; i < this.tracks.size(); ++i) {

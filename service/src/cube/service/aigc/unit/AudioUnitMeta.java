@@ -23,6 +23,9 @@ import cube.util.FileUtils;
 import cube.util.TimeUtils;
 import org.json.JSONObject;
 
+import java.util.List;
+import java.util.Map;
+
 public class AudioUnitMeta extends UnitMeta {
 
     protected AuthToken authToken;
@@ -88,8 +91,11 @@ public class AudioUnitMeta extends UnitMeta {
                         "\nduration: " + result.duration);
             }
 
+            // 分析说话者
+            String prompt = makeClassifyTrackLabelPrompt(result);
+
             // align labels
-            result.alignSpeakerLabels();
+//            result.alignSpeakerLabels();
 
             // 执行分析
             this.service.getExecutor().execute(new Runnable() {
@@ -112,5 +118,13 @@ public class AudioUnitMeta extends UnitMeta {
         else {
             Logger.e(this.getClass(), "#process - Unknown action: " + this.action.name);
         }
+    }
+
+    private String makeClassifyTrackLabelPrompt(VoiceDiarization diarization) {
+        StringBuffer buf = new StringBuffer();
+        for (VoiceTrack track : diarization.tracks) {
+
+        }
+        return buf.toString();
     }
 }
