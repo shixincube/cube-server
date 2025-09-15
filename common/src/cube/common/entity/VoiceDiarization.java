@@ -15,6 +15,14 @@ import java.util.List;
 
 public class VoiceDiarization extends Entity {
 
+    public final static String[] SPEAKER_NAMES = new String[] {
+            "张三", "李四", "王五", "赵六", "孙七", "周八", "吴九", "郑十"
+    };
+
+    public final static String LABEL_CUSTOMER = "customer";
+
+    public final static String LABEL_COUNSELOR = "counselor";
+
     public long contactId;
 
     public String title;
@@ -90,7 +98,37 @@ public class VoiceDiarization extends Entity {
         return result;
     }
 
-    public void alignSpeakerLabels() {
+    public int alignSpeakerLabels() {
+        HashMap<String, List<VoiceTrack>> map = new HashMap<>();
+        for (int i = 0; i < this.tracks.size(); ++i) {
+            VoiceTrack track = this.tracks.get(i);
+            track.track = String.valueOf(i + 1);
+
+            if (map.containsKey(track.label)) {
+                List<VoiceTrack> trackList = map.get(track.label);
+                trackList.add(track);
+            }
+            else {
+                List<VoiceTrack> trackList = new ArrayList<>();
+                trackList.add(track);
+                map.put(track.label, trackList);
+            }
+        }
+
+        int index = 0;
+        for (String key : map.keySet()) {
+            String newName = SPEAKER_NAMES[index];
+            ++index;
+            List<VoiceTrack> trackList = map.get(key);
+            for (VoiceTrack track : trackList) {
+                track.label = newName;
+            }
+        }
+
+        return map.size();
+    }
+
+    /*public void alignSpeakerLabels() {
         HashMap<String, List<VoiceTrack>> map = new HashMap<>();
         for (int i = 0; i < this.tracks.size(); ++i) {
             VoiceTrack track = this.tracks.get(i);
@@ -132,7 +170,7 @@ public class VoiceDiarization extends Entity {
                 }
             }
         }
-    }
+    }*/
 
     @Override
     public JSONObject toJSON() {
