@@ -128,7 +128,7 @@ public class VoiceDiarization extends Entity {
         return map.size();
     }
 
-    /*public void alignSpeakerLabels() {
+    public void guessSpeakerLabels() {
         HashMap<String, List<VoiceTrack>> map = new HashMap<>();
         for (int i = 0; i < this.tracks.size(); ++i) {
             VoiceTrack track = this.tracks.get(i);
@@ -147,7 +147,7 @@ public class VoiceDiarization extends Entity {
 
         if (map.size() == 1) {
             for (VoiceTrack track : this.tracks) {
-                track.label = "customer";
+                track.label = LABEL_COUNSELOR;
             }
         }
         else if (map.size() >= 2) {
@@ -170,7 +170,7 @@ public class VoiceDiarization extends Entity {
                 }
             }
         }
-    }*/
+    }
 
     @Override
     public JSONObject toJSON() {

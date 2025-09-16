@@ -98,6 +98,9 @@ public class AudioUnitMeta extends UnitMeta {
             }
             GeneratingRecord record = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt,
                     new GeneratingOption(), null, null);
+            if (null == record) {
+                result.guessSpeakerLabels();
+            }
             Map<String, String> nameMap = this.analyseSpeakerClassify(record, result);
 
             // 执行分析

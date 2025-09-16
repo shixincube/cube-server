@@ -14,29 +14,29 @@ import org.json.JSONObject;
 public enum ScaleFactorLevel {
 
     /**
-     * 没有。
+     * 无分级。
      */
-    None(0, "没有"),
+    None(0, "无分级"),
 
     /**
-     * 略有。
+     * 有。
      */
-    Slight(1, "略有"),
+    Slight(1, "有"),
 
     /**
-     * 轻度。
+     * 低。
      */
-    Mild(2, "轻度"),
+    Mild(2, "低"),
 
     /**
-     * 中度。
+     * 中。
      */
-    Moderate(3, "中度"),
+    Moderate(3, "中"),
 
     /**
-     * 重度。
+     * 高。
      */
-    Severe(4, "重度"),
+    Severe(4, "高"),
 
     ;
 
