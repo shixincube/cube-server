@@ -574,15 +574,16 @@ public class EvaluationReport implements JSONable {
         }
 
         if (this.reference == Reference.Abnormal) {
-            if (this.attribute.age <= 11) {
-                if (this.attention == Attention.FocusedAttention) {
-                    // 调整为特殊关注
-                    this.attention = Attention.SpecialAttention;
-                }
-                else if (this.attention == Attention.NoAttention) {
+            if (this.attribute.age < 11) {
+                // 降级
+                if (this.attention == Attention.SpecialAttention) {
                     // 调整为重点关注
                     this.attention = Attention.FocusedAttention;
                     Logger.d(this.getClass(), "Attention: Focused attention");
+                }
+                else if (this.attention == Attention.FocusedAttention) {
+                    // 调整为一般关注
+                    this.attention = Attention.GeneralAttention;
                 }
             }
             else {

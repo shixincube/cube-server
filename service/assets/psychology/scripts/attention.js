@@ -273,14 +273,15 @@ function calc(attribute, scores, factorSet, reference) {
 
     if (fixReference.name == Reference.Abnormal.name) {
         if (attribute.age <= 11) {
-            if (attention.level == Attention.FocusedAttention.level) {
-                // 调整为特殊关注
-                attention = Attention.SpecialAttention;
-            }
-            else if (attention.level == Attention.NoAttention.level) {
+            // 降级
+            if (attention.level == Attention.SpecialAttention.level) {
                 // 调整为重点关注
                 attention = Attention.FocusedAttention;
                 Logger.d('attention.js', "Attention: Focused attention");
+            }
+            else if (attention.level == Attention.FocusedAttention.level) {
+                // 调整为一般关注
+                attention = Attention.GeneralAttention;
             }
         }
         else {
