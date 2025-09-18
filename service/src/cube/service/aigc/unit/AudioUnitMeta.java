@@ -101,7 +101,18 @@ public class AudioUnitMeta extends UnitMeta {
             if (null == record) {
                 result.guessSpeakerLabels();
             }
-            Map<String, String> nameMap = this.analyseSpeakerClassify(record, result);
+            else {
+                Map<String, String> nameMap = this.analyseSpeakerClassify(record, result);
+                if (nameMap.isEmpty()) {
+                    result.guessSpeakerLabels();
+                }
+                else {
+                    for (Map.Entry<String, String> entry : nameMap.entrySet()) {
+                        result.setTrackLabel(entry.getKey(), entry.getValue());
+                        Logger.d(this.getClass(), "#process - analyse speaker classify - " + entry.getKey() + " -> " + entry.getValue());
+                    }
+                }
+            }
 
             // 执行分析
             this.service.getExecutor().execute(new Runnable() {

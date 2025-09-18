@@ -87,6 +87,14 @@ public class VoiceDiarization extends Entity {
         this.tracks = new ArrayList<>();
     }
 
+    public void setTrackLabel(String oldLabel, String newLabel) {
+        for (VoiceTrack track : this.tracks) {
+            if (track.label.equals(oldLabel)) {
+                track.label = newLabel;
+            }
+        }
+    }
+
     public List<String> extractTrackLabels() {
         List<String> result = new ArrayList<>();
         for (VoiceTrack track : this.tracks) {

@@ -372,7 +372,7 @@ public class PsychologyScene {
 
         // 判断并发数量
         if (this.numRunningTasks.get() >= concurrency) {
-            // 并发数量等于单元数量，在队列中等待
+            // 并发数量大于等于单元数量，在队列中等待
             return report;
         }
 
