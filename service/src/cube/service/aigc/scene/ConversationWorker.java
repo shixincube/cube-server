@@ -334,6 +334,7 @@ public class ConversationWorker {
             convCtx.cancelCurrentPredict();
         }
 
+        // 尝试通过上下文里的数据生成提示词
         PromptRevolver prompt = PsychologyScene.getInstance().revolve(convCtx, query);
         if (null == prompt) {
             Logger.e(this.getClass(), "#work - Builds prompt failed");

@@ -37,7 +37,7 @@ public class TeenagerQueryNode extends StrategyNode {
         }
 
         StringBuilder result = new StringBuilder();
-        result.append("此评测数据由AiXinLi模型生成，采用的评测方法是“房树人”绘画投射测试。");
+        result.append("此评测数据由AiXinLi模型生成，采用的评测方法是“房树人”绘画评测。");
         result.append("评测数据的受测人是匿名的，");
         result.append("年龄是：").append(report.getAttribute().age).append("岁，");
         result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n\n");

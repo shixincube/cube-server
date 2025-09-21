@@ -1053,7 +1053,7 @@ public class QueryRevolver {
                     }
                 }
                 else {
-                    String content = symptom + "数据得分超过常模范围，" + symptom + "症状可能异常。" + desc;
+                    String content = symptom + "数据得分不在常模范围内，" + symptom + "症状无评价。" + desc;
                     result.append(content).append("\n\n");
                 }
             }

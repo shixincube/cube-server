@@ -285,7 +285,7 @@ function calc(attribute, scores, factorSet, reference) {
             }
         }
         else {
-            if (attention.level == Attention.NoAttention.level) {
+            if (attention.level == Attention.NoAttention.level && nScore > 0) {
                 // 如果非模态，将非关注标注为一般关注
                 attention = Attention.GeneralAttention;
                 Logger.d('attention.js', "Attention: General attention");
@@ -300,7 +300,8 @@ function calc(attribute, scores, factorSet, reference) {
                 }
             }
             else {
-                if (null != factorSet && factorSet.symptomFactor.total > 160 && !rollbackState) {
+                // 细化年龄分段
+                if (null != factorSet && factorSet.symptomFactor.total > 160 && !rollbackState && nScore > 3) {
                     if (attention.level == Attention.GeneralAttention.level) {
                         attention = Attention.FocusedAttention;
                         Logger.d('attention.js', "Attention (age>20 && factor>160): Focused attention");

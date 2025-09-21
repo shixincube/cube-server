@@ -857,7 +857,7 @@ public class PsychologyScene {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                Logger.i(PsychologyScene.class, "Generating thread start");
+                Logger.i(PsychologyScene.class, "#generateScaleReport - Generating thread start");
 
                 ScaleReportTask scaleReportTask = scaleTaskQueue.poll();
                 while (null != scaleReportTask) {
