@@ -34,7 +34,7 @@ public class MessagingServiceCellet extends AbstractCellet {
         Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
         kernel.installModule(this.getName(), new MessagingService(this));
 
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(32);
         return true;
     }
 

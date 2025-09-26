@@ -94,7 +94,7 @@ public class FileChunkStorage {
     public void open(FileStorageCellet cellet, Performer performer) {
         this.cellet = cellet;
         this.performer = performer;
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(64);
     }
 
     public void close() {

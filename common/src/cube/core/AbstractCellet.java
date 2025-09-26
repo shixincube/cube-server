@@ -40,7 +40,7 @@ public abstract class AbstractCellet extends Cellet {
 
     public static void initialize() {
         if (null == AbstractCellet.sExecutor) {
-            AbstractCellet.sExecutor = CachedQueueExecutor.newCachedQueueThreadPool(32);
+            AbstractCellet.sExecutor = CachedQueueExecutor.newCachedQueueThreadPool(512);
         }
     }
 

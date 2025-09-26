@@ -65,7 +65,7 @@ public final class ClientManager {
     private AtomicBoolean sendingEvent;
 
     private ClientManager() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(2);
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
         this.clientMap = new ConcurrentHashMap<>();
         this.talkContextIndex = new ConcurrentHashMap<>();
         this.eventQueue = new ConcurrentLinkedQueue<>();

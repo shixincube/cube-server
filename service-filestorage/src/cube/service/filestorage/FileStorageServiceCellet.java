@@ -32,7 +32,7 @@ public class FileStorageServiceCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(64);
 
         Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
         kernel.installModule(this.getName(), new FileStorageService(this, this.executor));

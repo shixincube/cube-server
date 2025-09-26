@@ -40,7 +40,7 @@ public class FileProcessorServiceCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(16);
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(64);
 
         this.service = new FileProcessorService(this.executor, this);
 
