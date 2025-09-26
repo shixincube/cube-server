@@ -9,7 +9,6 @@ package cube.service.filestorage.task;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.core.talk.dialect.DialectFactory;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -37,7 +36,7 @@ public class GetFileTask extends ServiceTask {
 
     @Override
     public void run() {
-        ActionDialect action = DialectFactory.getInstance().createActionDialect(this.primitive);
+        ActionDialect action = new ActionDialect(this.primitive);
         Packet packet = new Packet(action);
 
         // 域

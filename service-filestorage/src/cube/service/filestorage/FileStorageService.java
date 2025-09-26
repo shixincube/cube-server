@@ -745,6 +745,9 @@ public class FileStorageService extends AbstractModule {
      * @return
      */
     public FileLabel getFile(String domainName, String fileCode) {
+        return this.serviceStorage.readFileLabel(domainName, fileCode);
+
+        /* Cache 需要重构 2025-09-26
         CacheValue value = this.fileLabelCache.get(new CacheKey(fileCode));
         if (null == value) {
             FileLabel fileLabel = this.serviceStorage.readFileLabel(domainName, fileCode);
@@ -752,11 +755,18 @@ public class FileStorageService extends AbstractModule {
                 return null;
             }
 
-            this.fileLabelCache.put(new CacheKey(fileCode), new CacheValue(fileLabel.toJSON()));
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    fileLabelCache.put(new CacheKey(fileCode), new CacheValue(fileLabel.toJSON()));
+                }
+            });
+
             return fileLabel;
         }
-
-        return new FileLabel(value.get());
+        else {
+            return new FileLabel(value.get());
+        }*/
     }
 
     /**
