@@ -52,7 +52,7 @@ public class MySQLStorage extends AbstractStorage {
             e.printStackTrace();
         }
 
-        this.pool = new ConnectionPool(8, this.config);
+        this.pool = new ConnectionPool(512, this.config);
     }
 
     @Override
@@ -477,6 +477,7 @@ public class MySQLStorage extends AbstractStorage {
             this.count = new AtomicInteger(0);
             this.timer = new Timer();
             this.timer.schedule(this, 60 * 1000, 60 * 1000);
+            Logger.i(this.getClass(), "ConnectionPool - max connections: " + maxConn);
         }
 
         protected Connection get() {
