@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.net.URLDecoder;
 
 /**
  * 接收文件。
@@ -86,6 +87,7 @@ public class ReceiveFileHandler extends ContextHandler {
                     this.complete();
                     return;
                 }
+                filename = URLDecoder.decode(filename, "UTF-8");
 
                 String fileCode = FileUtils.makeFileCode(contact.getId(), contact.getDomain().getName(), filename);
                 // 写入文件数据

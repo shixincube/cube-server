@@ -186,7 +186,9 @@ public class CVService extends AbstractModule {
             return false;
         }
 
-        final int limit = 100;
+        endpoint.setWorking(true);
+
+        final int limit = 10;
         final List<FileLabel> fileLabels = new ArrayList<>();
         for (String fileCode : fileCodes) {
             FileLabel fileLabel = this.getFile(token.getDomain(), fileCode);
@@ -204,6 +206,7 @@ public class CVService extends AbstractModule {
         }
 
         if (fileLabels.isEmpty()) {
+            endpoint.setWorking(false);
             Logger.e(this.getClass(), "#detectBarCode - Can NOT find files");
             return false;
         }
@@ -211,41 +214,45 @@ public class CVService extends AbstractModule {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                List<BarCodeInfo> infoList = new ArrayList<>();
+                try {
+                    List<BarCodeInfo> infoList = new ArrayList<>();
 
-                for (FileLabel fileLabel : fileLabels) {
-                    JSONObject payload = new JSONObject();
-                    payload.put("file", fileLabel.toJSON());
-                    Packet request = new Packet(CVAction.DetectBarCode.name, payload);
-                    ActionDialect dialect = cellet.transmit(endpoint.talkContext, request.toDialect(), 60 * 1000);
-                    if (null == dialect) {
-                        Logger.w(this.getClass(), "#detectBarCode - Endpoint is error");
-                        continue;
+                    for (FileLabel fileLabel : fileLabels) {
+                        JSONObject payload = new JSONObject();
+                        payload.put("file", fileLabel.toJSON());
+                        Packet request = new Packet(CVAction.DetectBarCode.name, payload);
+                        ActionDialect dialect = cellet.transmit(endpoint.talkContext, request.toDialect(), 60 * 1000);
+                        if (null == dialect) {
+                            Logger.w(this.getClass(), "#detectBarCode - Endpoint is error");
+                            continue;
+                        }
+
+                        Packet response = new Packet(dialect);
+                        if (Packet.extractCode(response) != CVStateCode.Ok.code) {
+                            Logger.d(this.getClass(), "#detectBarCode - Process failed");
+                            continue;
+                        }
+
+                        List<BarCode> codeList = new ArrayList<>();
+
+                        JSONObject data = Packet.extractDataPayload(response);
+                        JSONArray result = data.getJSONArray("result");
+                        for (int i = 0; i < result.length(); ++i) {
+                            BarCode barCode = new BarCode(result.getJSONObject(i));
+                            codeList.add(barCode);
+
+                            Logger.d(this.getClass(), "#detectBarCode - result: " + barCode.data +
+                                    " from " + fileLabel.getFileCode());
+                        }
+
+                        BarCodeInfo info = new BarCodeInfo(fileLabel, codeList);
+                        infoList.add(info);
                     }
 
-                    Packet response = new Packet(dialect);
-                    if (Packet.extractCode(response) != CVStateCode.Ok.code) {
-                        Logger.d(this.getClass(), "#detectBarCode - Process failed");
-                        continue;
-                    }
-
-                    List<BarCode> codeList = new ArrayList<>();
-
-                    JSONObject data = Packet.extractDataPayload(response);
-                    JSONArray result = data.getJSONArray("result");
-                    for (int i = 0; i < result.length(); ++i) {
-                        BarCode barCode = new BarCode(result.getJSONObject(i));
-                        codeList.add(barCode);
-
-                        Logger.d(this.getClass(), "#detectBarCode - result: " + barCode.data +
-                                " from " + fileLabel.getFileCode());
-                    }
-
-                    BarCodeInfo info = new BarCodeInfo(fileLabel, codeList);
-                    infoList.add(info);
+                    listener.onCompleted(infoList);
+                } finally {
+                    endpoint.setWorking(false);
                 }
-
-                listener.onCompleted(infoList);
             }
         });
 
@@ -267,6 +274,8 @@ public class CVService extends AbstractModule {
             return false;
         }
 
+        endpoint.setWorking(true);
+
         final int limit = 10;
         final List<FileLabel> fileLabels = new ArrayList<>();
         for (String fileCode : fileCodes) {
@@ -285,6 +294,7 @@ public class CVService extends AbstractModule {
         }
 
         if (fileLabels.isEmpty()) {
+            endpoint.setWorking(false);
             Logger.e(this.getClass(), "#detectObject - Can NOT find files");
             return false;
         }
@@ -292,40 +302,44 @@ public class CVService extends AbstractModule {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                JSONArray list = new JSONArray();
-                for (FileLabel fileLabel : fileLabels) {
-                    list.put(fileLabel.toJSON());
+                try {
+                    JSONArray list = new JSONArray();
+                    for (FileLabel fileLabel : fileLabels) {
+                        list.put(fileLabel.toJSON());
+                    }
+
+                    JSONObject payload = new JSONObject();
+                    payload.put("list", list);
+                    Packet request = new Packet(CVAction.ObjectDetection.name, payload);
+                    ActionDialect dialect = cellet.transmit(endpoint.talkContext, request.toDialect(), 3 * 60 * 1000);
+                    if (null == dialect) {
+                        Logger.w(this.getClass(), "#detectObject - Endpoint is error");
+                        listener.onFailed(fileCodes, CVStateCode.EndpointException);
+                        return;
+                    }
+
+                    Packet response = new Packet(dialect);
+                    if (Packet.extractCode(response) != CVStateCode.Ok.code) {
+                        Logger.d(this.getClass(), "#detectObject - Process failed");
+                        listener.onFailed(fileCodes, CVStateCode.Failure);
+                        return;
+                    }
+
+                    List<ObjectInfo> objectList = new ArrayList<>();
+
+                    JSONObject data = Packet.extractDataPayload(response);
+                    JSONArray result = data.getJSONArray("result");
+                    for (int i = 0; i < result.length(); ++i) {
+                        ObjectInfo info = new ObjectInfo(result.getJSONObject(i));
+                        info.setFileLabel(findFileLabel(fileLabels, info.getFileCode()));
+                        objectList.add(info);
+                    }
+
+                    long elapsed = data.getLong("elapsed");
+                    listener.onCompleted(objectList, elapsed);
+                } finally {
+                    endpoint.setWorking(false);
                 }
-
-                JSONObject payload = new JSONObject();
-                payload.put("list", list);
-                Packet request = new Packet(CVAction.ObjectDetection.name, payload);
-                ActionDialect dialect = cellet.transmit(endpoint.talkContext, request.toDialect(), 3 * 60 * 1000);
-                if (null == dialect) {
-                    Logger.w(this.getClass(), "#detectObject - Endpoint is error");
-                    listener.onFailed(fileCodes, CVStateCode.EndpointException);
-                    return;
-                }
-
-                Packet response = new Packet(dialect);
-                if (Packet.extractCode(response) != CVStateCode.Ok.code) {
-                    Logger.d(this.getClass(), "#detectObject - Process failed");
-                    listener.onFailed(fileCodes, CVStateCode.Failure);
-                    return;
-                }
-
-                List<ObjectInfo> objectList = new ArrayList<>();
-
-                JSONObject data = Packet.extractDataPayload(response);
-                JSONArray result = data.getJSONArray("result");
-                for (int i = 0; i < result.length(); ++i) {
-                    ObjectInfo info = new ObjectInfo(result.getJSONObject(i));
-                    info.setFileLabel(findFileLabel(fileLabels, info.getFileCode()));
-                    objectList.add(info);
-                }
-
-                long elapsed = data.getLong("elapsed");
-                listener.onCompleted(objectList, elapsed);
             }
         });
 
@@ -381,6 +395,8 @@ public class CVService extends AbstractModule {
             return false;
         }
 
+        endpoint.setWorking(true);
+
         final int limit = 10;
         final List<FileLabel> fileLabels = new ArrayList<>();
         for (String fileCode : fileCodes) {
@@ -399,6 +415,7 @@ public class CVService extends AbstractModule {
         }
 
         if (fileLabels.isEmpty()) {
+            endpoint.setWorking(false);
             Logger.e(this.getClass(), "#clipPaper - Can NOT find files");
             return false;
         }
@@ -406,45 +423,49 @@ public class CVService extends AbstractModule {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                JSONArray list = new JSONArray();
-                for (FileLabel fileLabel : fileLabels) {
-                    list.put(fileLabel.toJSON());
-                }
-
-                JSONObject payload = new JSONObject();
-                payload.put("list", list);
-                Packet request = new Packet(CVAction.ClipPaper.name, payload);
-                ActionDialect dialect = cellet.transmit(endpoint.talkContext, request.toDialect(), 3 * 60 * 1000);
-                if (null == dialect) {
-                    Logger.w(this.getClass(), "#clipPaper - Endpoint is error");
-                    listener.onFailed(fileCodes, CVStateCode.EndpointException);
-                    return;
-                }
-
-                Packet response = new Packet(dialect);
-                if (Packet.extractCode(response) != CVStateCode.Ok.code) {
-                    Logger.d(this.getClass(), "#clipPaper - Process failed");
-                    listener.onFailed(fileCodes, CVStateCode.Failure);
-                    return;
-                }
-
-                List<ProcessedFile> processedFileList = new ArrayList<>();
-
-                JSONObject data = Packet.extractDataPayload(response);
-                JSONArray result = data.getJSONArray("result");
-                for (int i = 0; i < result.length(); ++i) {
-                    ProcessedFile info = new ProcessedFile(result.getJSONObject(i));
-                    Size size = getImageSize(token.getDomain(), info.getProcessed().getFileCode());
-                    if (null != size) {
-                        info.getProcessed().setContext(size.toJSON());
+                try {
+                    JSONArray list = new JSONArray();
+                    for (FileLabel fileLabel : fileLabels) {
+                        list.put(fileLabel.toJSON());
                     }
-                    info.setFileLabel(findFileLabel(fileLabels, info.getFileCode()));
-                    processedFileList.add(info);
-                }
 
-                long elapsed = data.getLong("elapsed");
-                listener.onCompleted(processedFileList, elapsed);
-                Logger.d(this.getClass(), "#clipPaper - elapsed: " + elapsed);
+                    JSONObject payload = new JSONObject();
+                    payload.put("list", list);
+                    Packet request = new Packet(CVAction.ClipPaper.name, payload);
+                    ActionDialect dialect = cellet.transmit(endpoint.talkContext, request.toDialect(), 3 * 60 * 1000);
+                    if (null == dialect) {
+                        Logger.w(this.getClass(), "#clipPaper - Endpoint is error");
+                        listener.onFailed(fileCodes, CVStateCode.EndpointException);
+                        return;
+                    }
+
+                    Packet response = new Packet(dialect);
+                    if (Packet.extractCode(response) != CVStateCode.Ok.code) {
+                        Logger.d(this.getClass(), "#clipPaper - Process failed");
+                        listener.onFailed(fileCodes, CVStateCode.Failure);
+                        return;
+                    }
+
+                    List<ProcessedFile> processedFileList = new ArrayList<>();
+
+                    JSONObject data = Packet.extractDataPayload(response);
+                    JSONArray result = data.getJSONArray("result");
+                    for (int i = 0; i < result.length(); ++i) {
+                        ProcessedFile info = new ProcessedFile(result.getJSONObject(i));
+                        Size size = getImageSize(token.getDomain(), info.getProcessed().getFileCode());
+                        if (null != size) {
+                            info.getProcessed().setContext(size.toJSON());
+                        }
+                        info.setFileLabel(findFileLabel(fileLabels, info.getFileCode()));
+                        processedFileList.add(info);
+                    }
+
+                    long elapsed = data.getLong("elapsed");
+                    listener.onCompleted(processedFileList, elapsed);
+                    Logger.d(this.getClass(), "#clipPaper - elapsed: " + elapsed);
+                } finally {
+                    endpoint.setWorking(false);
+                }
             }
         });
 
@@ -499,8 +520,22 @@ public class CVService extends AbstractModule {
                 return null;
             }
 
+            // 先选择空闲节点
+            CVEndpoint endpoint = null;
+            for (CVEndpoint selected : this.endpointList) {
+                if (!selected.isWorking() && selected.talkContext.isValid()) {
+                    endpoint = selected;
+                    break;
+                }
+            }
+
+            if (null != endpoint) {
+                return endpoint;
+            }
+
+            // 没有空闲，随机选择
             int index = Utils.randomInt(0, this.endpointList.size() - 1);
-            CVEndpoint endpoint = this.endpointList.get(index);
+            endpoint = this.endpointList.get(index);
             if (!endpoint.talkContext.isValid()) {
                 // 删除无效的终端节点
                 this.endpointList.remove(index);

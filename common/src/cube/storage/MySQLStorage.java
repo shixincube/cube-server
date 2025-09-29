@@ -52,7 +52,7 @@ public class MySQLStorage extends AbstractStorage {
             e.printStackTrace();
         }
 
-        this.pool = new ConnectionPool(512, this.config);
+        this.pool = new ConnectionPool(64, this.config);
     }
 
     @Override

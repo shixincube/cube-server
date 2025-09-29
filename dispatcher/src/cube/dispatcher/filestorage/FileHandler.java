@@ -19,11 +19,13 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.SharingTag;
 import cube.common.state.AuthStateCode;
 import cube.common.state.FileStorageStateCode;
+import cube.dispatcher.Director;
 import cube.dispatcher.Performer;
 import cube.dispatcher.auth.AuthCellet;
 import cube.dispatcher.util.FormData;
 import cube.util.CrossDomainHandler;
 import cube.util.FileType;
+import cube.util.FileUtils;
 import cube.util.HttpClientFactory;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Response;
@@ -39,11 +41,12 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -101,6 +104,14 @@ public class FileHandler extends CrossDomainHandler {
                 this.complete();
                 return;
             }
+        }
+
+        // 回传方式
+        boolean streamTransmission = true;  // 使用 HTTP 流模式
+        String st = request.getParameter("st");
+        if (null != st && (st.equalsIgnoreCase("false") || st.equals("0"))) {
+            streamTransmission = false;
+            Logger.d(this.getClass(), "#doPost - NO stream transmission - " + token);
         }
 
         // Version
@@ -180,7 +191,6 @@ public class FileHandler extends CrossDomainHandler {
 
         if (null != fileName && !contentType.contains("multipart/form-data")) {
             // 非 Form 格式
-//            fileName = URLDecoder.decode(fileName, "UTF-8");
             String sizeStr = request.getParameter("filesize");
             if (null == sizeStr) {
                 fileSize = total;
@@ -233,35 +243,128 @@ public class FileHandler extends CrossDomainHandler {
 
             String fileCode = null;
 
-            byte[] fb = new byte[2048];
-            for (File file : tempFiles) {
-                FileInputStream fis = null;
-                FlexibleByteBuffer fbuf = new FlexibleByteBuffer();
+            if (streamTransmission) {
+                fileCode = FileUtils.makeFileCode(contactId, domain, fileName);
+
+                Director director = this.performer.selectDirector(token, FileStorageCellet.NAME);
+                Logger.d(this.getClass(), "#doPost - stream transmission on HTTP: " + fileCode + " - "
+                        + director.fileEndpoint.toString());
+
+                HttpURLConnection conn = null;
+                OutputStream os = null;
+                BufferedInputStream bis = null;
+                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
                 try {
-                    fis = new FileInputStream(file);
-                    int len = 0;
-                    while ((len = fis.read(fb)) > 0) {
-                        fbuf.put(fb, 0, len);
-                    }
-                } catch (Exception e) {
-                    Logger.e(this.getClass(), "Read temp file failed", e);
-                } finally {
-                    if (null != fis) {
+                    URL url = new URL("http://" + director.fileEndpoint.toString() + "/files/receive/"
+                            + "?token=" + token + "&filename=" + URLEncoder.encode(fileName, "UTF-8"));
+                    conn = (HttpURLConnection) url.openConnection();
+                    conn.setDoInput(true);
+                    conn.setDoOutput(true);
+                    conn.setRequestMethod("POST");
+                    conn.setUseCaches(false);
+                    conn.setRequestProperty("Content-Type", "binary");
+                    conn.setRequestProperty("Connection", "Keep-Alive");
+                    conn.setRequestProperty("Accept", "*/*");
+                    conn.setRequestProperty("Cache-Control", "no-cache");
+                    // Connect
+                    conn.connect();
+                    os = conn.getOutputStream();
+                    byte[] fb = new byte[8 * 1024];
+                    for (File file : tempFiles) {
+                        FileInputStream fis = null;
                         try {
-                            fis.close();
-                        } catch (IOException e) {
-                            // Nothing
+                            fis = new FileInputStream(file);
+                            int len = 0;
+                            while ((len = fis.read(fb)) > 0) {
+                                os.write(fb, 0, len);
+                                cursor += len;
+                            }
+                        } catch (Exception e) {
+                            Logger.e(this.getClass(), "Read temp file failed", e);
+                        } finally {
+                            if (null != fis) {
+                                try {
+                                    fis.close();
+                                } catch (IOException e) {
+                                    // Nothing
+                                }
+                            }
                         }
                     }
-                }
 
-                fbuf.flip();
-                byte[] data = new byte[fbuf.limit()];
-                System.arraycopy(fbuf.array(), 0, data, 0, fbuf.limit());
-                size = data.length;
-                FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, lastModified, cursor, size, data);
-                fileCode = this.fileChunkStorage.append(chunk);
-                cursor += size;
+                    os.flush();
+
+                    int stateCode = conn.getResponseCode();
+                    if (stateCode == 200) {
+                        bis = new BufferedInputStream(conn.getInputStream());
+                        int len = 0;
+                        while ((len = bis.read(fb)) > 0) {
+                            buffer.write(fb, 0, len);
+                            buffer.flush();
+                        }
+
+                        String responseString = new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+                        FileLabel fileLabel = new FileLabel(new JSONObject(responseString));
+                        // Update file code
+                        fileCode = fileLabel.getFileCode();
+                    }
+                    else {
+                        Logger.e(this.getClass(), "#doPost - Upload file failed - code: " + stateCode);
+                        clearTempFiles(tempFiles);
+                        this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
+                        this.complete();
+                        return;
+                    }
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#doPost - Upload file failed", e);
+                } finally {
+                    try {
+                        if (null != os) {
+                            os.close();
+                        }
+                        if (null != bis) {
+                            bis.close();
+                        }
+                        buffer.close();
+                        if (null != conn) {
+                            conn.disconnect();
+                        }
+                    } catch (Exception e) {
+                        // Nothing
+                    }
+                }
+            }
+            else {
+                byte[] fb = new byte[4 * 1024];
+                for (File file : tempFiles) {
+                    FileInputStream fis = null;
+                    FlexibleByteBuffer fbuf = new FlexibleByteBuffer();
+                    try {
+                        fis = new FileInputStream(file);
+                        int len = 0;
+                        while ((len = fis.read(fb)) > 0) {
+                            fbuf.put(fb, 0, len);
+                        }
+                    } catch (Exception e) {
+                        Logger.e(this.getClass(), "Read temp file failed", e);
+                    } finally {
+                        if (null != fis) {
+                            try {
+                                fis.close();
+                            } catch (IOException e) {
+                                // Nothing
+                            }
+                        }
+                    }
+
+                    fbuf.flip();
+                    byte[] data = new byte[fbuf.limit()];
+                    System.arraycopy(fbuf.array(), 0, data, 0, fbuf.limit());
+                    size = data.length;
+                    FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, lastModified, cursor, size, data);
+                    fileCode = this.fileChunkStorage.append(chunk);
+                    cursor += size;
+                }
             }
 
             JSONObject responseData = new JSONObject();

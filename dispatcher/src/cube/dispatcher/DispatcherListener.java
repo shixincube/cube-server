@@ -122,11 +122,16 @@ public class DispatcherListener implements CellListener {
             }
 
             String keyPort = prefix + (i) + ".port";
+            String keyFileAddress = prefix + (i) + ".fs.address";
+            String keyFilePort = prefix + (i) + ".fs.port";
             String keyCellets = prefix + (i) + ".cellets";
             String keyWeight = prefix + (i) + ".weight";
 
             String address = properties.getProperty(keyAddress);
             int port = Integer.parseInt(properties.getProperty(keyPort, "6000"));
+
+            String fsAddress = properties.getProperty(keyFileAddress, address);
+            int fsPort = Integer.parseInt(properties.getProperty(keyFilePort, "6080"));
 
             String celletString = properties.getProperty(keyCellets);
             String[] cellets = celletString.split(",");
@@ -139,7 +144,7 @@ public class DispatcherListener implements CellListener {
             }
             scope.weight = weight;
             // 添加导演机节点
-            performer.addDirector(address, port, scope);
+            performer.addDirector(address, port, fsAddress, fsPort, scope);
 
             Logger.i(this.getClass(), "Add director point " + address + ":" + port + " #" + weight);
         }

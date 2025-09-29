@@ -15,9 +15,24 @@ public class CVEndpoint {
 
     public final TalkContext talkContext;
 
+    private boolean working;
+
     public CVEndpoint(Contact contact, TalkContext talkContext) {
         this.contact = contact;
         this.talkContext = talkContext;
+        this.working = false;
+    }
+
+    public boolean isWorking() {
+        synchronized (this) {
+            return this.working;
+        }
+    }
+
+    public void setWorking(boolean value) {
+        synchronized (this) {
+            this.working = value;
+        }
     }
 
     @Override

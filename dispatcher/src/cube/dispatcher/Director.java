@@ -16,16 +16,19 @@ import java.util.HashMap;
  */
 public class Director {
 
-    public Endpoint endpoint;
+    public final Endpoint endpoint;
 
-    public Scope scope;
+    public final Endpoint fileEndpoint;
+
+    public final Scope scope;
 
     public Speakable speaker;
 
     protected HashMap<String, Section> sectionMap;
 
-    public Director(Endpoint endpoint, Scope scope) {
+    public Director(Endpoint endpoint, Endpoint fileEndpoint, Scope scope) {
         this.endpoint = endpoint;
+        this.fileEndpoint = fileEndpoint;
         this.scope = scope;
         this.sectionMap = new HashMap();
 

@@ -240,12 +240,15 @@ public class Performer implements TalkListener, Tickable {
      * 添加 Director 节点。
      * @param address 导演机的地址。
      * @param port 导演机的端口。
+     * @param fsAddress 文件系统地址。
+     * @param fsPort 文件系统端口。
      * @param scope 该导演机的配置范围。
      * @return 返回导演机节点。
      */
-    public Director addDirector(String address, int port, Scope scope) {
+    public Director addDirector(String address, int port, String fsAddress, int fsPort, Scope scope) {
         Endpoint endpoint = new Endpoint(address, port);
-        Director director = new Director(endpoint, scope);
+        Endpoint fileEndpoint = new Endpoint(fsAddress, fsPort);
+        Director director = new Director(endpoint, fileEndpoint, scope);
 
         if (this.directorList.contains(director)) {
             return null;
@@ -312,7 +315,7 @@ public class Performer implements TalkListener, Tickable {
      * @param celletName Cellet 名称。
      * @return 返回被选中的导演机。
      */
-    private synchronized Director selectDirector(String tokenCode, String celletName) {
+    public synchronized Director selectDirector(String tokenCode, String celletName) {
         Director director = this.tokenDirectorMap.get(tokenCode);
         if (null != director) {
             return director;
