@@ -510,7 +510,7 @@ public class Performer implements TalkListener, Tickable {
     public void stop() {
         for (Block block : this.blockMap.values()) {
             synchronized (block) {
-                block.notify();
+                block.notifyAll();
             }
         }
         this.blockMap.clear();
@@ -531,7 +531,7 @@ public class Performer implements TalkListener, Tickable {
     public void restart() {
         for (Block block : this.blockMap.values()) {
             synchronized (block) {
-                block.notify();
+                block.notifyAll();
             }
         }
         this.blockMap.clear();
@@ -984,7 +984,7 @@ public class Performer implements TalkListener, Tickable {
                     block.dialect = actionDialect;
                     // 唤醒阻塞的线程
                     synchronized (block) {
-                        block.notify();
+                        block.notifyAll();
                     }
                 }
                 else {

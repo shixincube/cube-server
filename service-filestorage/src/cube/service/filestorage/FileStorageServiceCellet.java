@@ -18,6 +18,7 @@ import cube.core.Kernel;
 import cube.service.filestorage.task.*;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 文件存储器 Cellet 服务单元。
@@ -32,7 +33,7 @@ public class FileStorageServiceCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(64);
+        this.executor = Executors.newCachedThreadPool();
 
         Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
         kernel.installModule(this.getName(), new FileStorageService(this, this.executor));

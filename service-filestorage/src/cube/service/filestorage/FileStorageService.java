@@ -736,6 +736,7 @@ public class FileStorageService extends AbstractModule {
         return list;
     }
 
+    protected ConcurrentHashMap<String, FileLabel> cacheFileLabelMap = new ConcurrentHashMap<>();
 
     /**
      * 读文件标签。
@@ -745,7 +746,17 @@ public class FileStorageService extends AbstractModule {
      * @return
      */
     public FileLabel getFile(String domainName, String fileCode) {
-        return this.serviceStorage.readFileLabel(domainName, fileCode);
+        if (this.cacheFileLabelMap.containsKey(fileCode)) {
+            return this.cacheFileLabelMap.get(fileCode);
+        }
+
+        FileLabel fileLabel = this.serviceStorage.readFileLabel(domainName, fileCode);
+        if (null == fileLabel) {
+            return null;
+        }
+
+        this.cacheFileLabelMap.put(fileCode, fileLabel);
+        return fileLabel;
 
         /* Cache 需要重构 2025-09-26
         CacheValue value = this.fileLabelCache.get(new CacheKey(fileCode));
