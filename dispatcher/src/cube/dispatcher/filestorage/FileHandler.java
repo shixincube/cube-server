@@ -154,7 +154,7 @@ public class FileHandler extends CrossDomainHandler {
             }
         }
 
-        if (null == tempFiles) {
+        if (null == tempFiles || tempFiles.size() == 0) {
             this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
             this.complete();
             return;
@@ -186,7 +186,8 @@ public class FileHandler extends CrossDomainHandler {
 
         String contentType = request.getHeader(HttpHeader.CONTENT_TYPE.asString());
         if (null == contentType) {
-            contentType = "image/jpeg";
+            FileType fileType = FileUtils.extractFileExtensionType(fileName);
+            contentType = fileType.getMimeType();
         }
 
         if (null != fileName && !contentType.contains("multipart/form-data")) {

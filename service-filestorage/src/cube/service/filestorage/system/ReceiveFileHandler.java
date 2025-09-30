@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLDecoder;
 
 /**
@@ -91,10 +92,16 @@ public class ReceiveFileHandler extends ContextHandler {
 
                 String fileCode = FileUtils.makeFileCode(contact.getId(), contact.getDomain().getName(), filename);
                 // 写入文件数据
-                File file = service.writeFile(filename, fileCode, request.getInputStream());
+                InputStream ris = request.getInputStream();
+                File file = service.writeFile(filename, fileCode, ris);
                 if (null == file) {
                     Logger.e(ReceiveFileHandler.class, "#doPost - Write file failed: " + filename);
                     this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    try {
+                        ris.close();
+                    } catch (Exception e) {
+                        // Nothing
+                    }
                     this.complete();
                     return;
                 }
@@ -108,11 +115,21 @@ public class ReceiveFileHandler extends ContextHandler {
                 if (null == newFileLabel) {
                     Logger.e(ReceiveFileHandler.class, "#doPost - Put file failed: " + filename);
                     this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    try {
+                        ris.close();
+                    } catch (Exception e) {
+                        // Nothing
+                    }
                     this.complete();
                     return;
                 }
 
                 this.respondOk(response, newFileLabel.toJSON());
+                try {
+                    ris.close();
+                } catch (Exception e) {
+                    // Nothing
+                }
                 this.complete();
             }
             else {

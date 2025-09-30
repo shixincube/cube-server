@@ -12,6 +12,7 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.ExecutorThreadPool;
 
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
@@ -123,7 +124,8 @@ public class HttpServer {
         this.plainPort = plainPort;
         this.securePort = securePort;
 
-        this.server = new Server();
+        ExecutorThreadPool executorThreadPool = new ExecutorThreadPool(512, 32);
+        this.server = new Server(executorThreadPool);
 
         ServerConnector https = null;
 

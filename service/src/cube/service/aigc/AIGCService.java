@@ -1807,42 +1807,48 @@ public class AIGCService extends AbstractModule implements Generatable {
             count.incrementAndGet();
         }
 
-        if (this.useAgent) {
-            Logger.d(this.getClass(), "#syncGenerateText - Agent - \"" + unit.getCapability().getName() + "\" - history:"
-                    + ((null != history) ? history.size() : 0));
-            count.decrementAndGet();
-            return Agent.getInstance().generateText(Utils.randomString(16),
-                    unit.getCapability().getName(), prompt, option, history);
-        }
-
-        JSONArray historyArray = new JSONArray();
-        if (null != history) {
-            for (GeneratingRecord record : history) {
-                historyArray.put(record.toJSON());
-            }
-        }
-
-        Contact participant = (null == participantContact) ?
-                unit.getContact() : participantContact;
-
+        Packet request = null;
+        ActionDialect dialect = null;
         long sn = Utils.generateSerialNumber();
+        unit.setRunning(true);
+        try {
+            if (this.useAgent) {
+                Logger.d(this.getClass(), "#syncGenerateText - Agent - \"" + unit.getCapability().getName() + "\" - history:"
+                        + ((null != history) ? history.size() : 0));
+                count.decrementAndGet();
+                return Agent.getInstance().generateText(Utils.randomString(16),
+                        unit.getCapability().getName(), prompt, option, history);
+            }
 
-        JSONObject data = new JSONObject();
-        data.put("unit", unit.getCapability().getName());
-        data.put("content", prompt);
-        data.put("participant", participant.toCompactJSON());
-        data.put("history", historyArray);
-        data.put("option", (null == option) ? (new GeneratingOption()).toJSON() : option.toJSON());
+            JSONArray historyArray = new JSONArray();
+            if (null != history) {
+                for (GeneratingRecord record : history) {
+                    historyArray.put(record.toJSON());
+                }
+            }
 
-        Packet request = new Packet(AIGCAction.TextToText.name, data);
-        ActionDialect dialect = this.cellet.transmit(unit.getContext(), request.toDialect(),
-                5 * 60 * 1000, sn);
-        if (null == dialect) {
-            Logger.w(AIGCService.class, "#syncGenerateText - transmit failed, sn:" + sn);
-            // 记录故障
-            unit.markFailure(AIGCStateCode.UnitError.code, System.currentTimeMillis(), participant.getId());
-            count.decrementAndGet();
-            return null;
+            Contact participant = (null == participantContact) ?
+                    unit.getContact() : participantContact;
+
+            JSONObject data = new JSONObject();
+            data.put("unit", unit.getCapability().getName());
+            data.put("content", prompt);
+            data.put("participant", participant.toCompactJSON());
+            data.put("history", historyArray);
+            data.put("option", (null == option) ? (new GeneratingOption()).toJSON() : option.toJSON());
+
+            request = new Packet(AIGCAction.TextToText.name, data);
+            dialect = this.cellet.transmit(unit.getContext(), request.toDialect(),
+                    5 * 60 * 1000, sn);
+            if (null == dialect) {
+                Logger.w(AIGCService.class, "#syncGenerateText - transmit failed, sn:" + sn);
+                // 记录故障
+                unit.markFailure(AIGCStateCode.UnitError.code, System.currentTimeMillis(), participant.getId());
+                count.decrementAndGet();
+                return null;
+            }
+        } finally {
+            unit.setRunning(false);
         }
 
         Packet response = new Packet(dialect);

@@ -432,7 +432,7 @@ public class FileStorageService extends AbstractModule {
         // 获取标识
         FileDescriptor descriptor = this.fileDescriptors.get(fileLabel.getFileCode());
 
-        int count = 1000;
+        int count = 500;
         while (null == descriptor) {
             --count;
             if (count <= 0) {
@@ -481,13 +481,13 @@ public class FileStorageService extends AbstractModule {
         // 写入到存储器进行记录
         this.serviceStorage.writeFileLabel(fileLabel, descriptor);
 
-        // 写入集群缓存
-        this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
-
-        // 触发 Hook
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
+                // 写入集群缓存
+                fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
+
+                // 触发 Hook
                 Contact contact = ContactManager.getInstance().getContact(fileLabel.getDomain().getName(),
                         fileLabel.getOwnerId());
                 FileStorageHook hook = pluginSystem.getSaveFileHook();
