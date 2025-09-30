@@ -96,22 +96,23 @@ public class FileHandler extends CrossDomainHandler {
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
         // Token Code
-        String token = request.getParameter("token");
-        if (null == token) {
-            token = request.getHeader(HEADER_X_BAIZE_API_TOKEN);
-            if (null == token) {
-                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+        String tokenParam = request.getParameter("token");
+        if (null == tokenParam) {
+            tokenParam = request.getHeader(HEADER_X_BAIZE_API_TOKEN);
+            if (null == tokenParam) {
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
                 this.complete();
                 return;
             }
         }
+        final String token = tokenParam;
 
-        // 回传方式
-        boolean streamTransmission = true;  // 使用 HTTP 流模式
+        // 回传方式，是否使用 HTTP 流方式
+        boolean streamTransmission = true;
         String st = request.getParameter("st");
         if (null != st && (st.equalsIgnoreCase("false") || st.equals("0"))) {
             streamTransmission = false;
-            Logger.d(this.getClass(), "#doPost - NO stream transmission - " + token);
+            Logger.d(this.getClass(), "#doPost - Close stream transmission - " + token);
         }
 
         // Version
@@ -126,13 +127,14 @@ public class FileHandler extends CrossDomainHandler {
 
         // 读取流
         FlexibleByteBuffer buf = new FlexibleByteBuffer();
-        byte[] bytes = new byte[4096];
+        byte[] bytes = new byte[8 * 1024];
         InputStream is = request.getInputStream();
 
-        ArrayList<File> tempFiles = new ArrayList<>();
+        final ArrayList<File> tempFiles = new ArrayList<>();
 
         long total = 0;
         int length = 0;
+        boolean error = false;
         while ((length = is.read(bytes)) > 0) {
             buf.put(bytes, 0, length);
             total += length;
@@ -145,7 +147,8 @@ public class FileHandler extends CrossDomainHandler {
                     for (File f : tempFiles) {
                         f.delete();
                     }
-                    tempFiles = null;
+                    tempFiles.clear();
+                    error = true;
                     break;
                 }
 
@@ -154,7 +157,8 @@ public class FileHandler extends CrossDomainHandler {
             }
         }
 
-        if (null == tempFiles || tempFiles.size() == 0) {
+        if (error) {
+            Logger.w(this.getClass(), "#doPost - No file data");
             this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
             this.complete();
             return;
@@ -164,25 +168,12 @@ public class FileHandler extends CrossDomainHandler {
         File lastFile = this.writeToTempFile(buf, token);
         tempFiles.add(lastFile);
 
-        // Contact ID
-        long contactId = 0;
-        // 域
-        String domain = null;
-        // 文件大小
-        long fileSize = 0;
-        // 文件修改时间
-        long lastModified = 0;
-        // 文件块所处的索引位置
-        long cursor = 0;
-        // 文件块大小
-        int size = 0;
-        // 文件名
-        String fileName = null;
-
-        fileName = request.getParameter("filename");
-        if (null != fileName) {
-            fileName = URLDecoder.decode(fileName, "UTF-8");
+        String fileNameParam = request.getParameter("filename");
+        if (null != fileNameParam) {
+            fileNameParam = URLDecoder.decode(fileNameParam, "UTF-8");
         }
+        // 文件名
+        final String fileName = fileNameParam;
 
         String contentType = request.getHeader(HttpHeader.CONTENT_TYPE.asString());
         if (null == contentType) {
@@ -193,20 +184,27 @@ public class FileHandler extends CrossDomainHandler {
         if (null != fileName && !contentType.contains("multipart/form-data")) {
             // 非 Form 格式
             String sizeStr = request.getParameter("filesize");
+            long fsize = 0;
             if (null == sizeStr) {
-                fileSize = total;
+                fsize = total;
             }
             else {
-                fileSize = Long.parseLong(sizeStr);
+                fsize = Long.parseLong(sizeStr);
             }
 
             String modifiedStr = request.getParameter("modified");
+            long lm = 0;
             if (null == modifiedStr) {
-                lastModified = System.currentTimeMillis();
+                lm = System.currentTimeMillis();
             }
             else {
-                lastModified = Long.parseLong(modifiedStr);
+                lm = Long.parseLong(modifiedStr);
             }
+
+            // 文件大小
+            final long fileSize = fsize;
+            // 文件修改时间
+            final long lastModified = lm;
 
             // 校验 Token 是否存在
             JSONObject payload = new JSONObject();
@@ -239,133 +237,142 @@ public class FileHandler extends CrossDomainHandler {
                 return;
             }
 
-            contactId = authToken.getContactId();
-            domain = authToken.getDomain();
+            final long contactId = authToken.getContactId();
+            final String domain = authToken.getDomain();
 
-            String fileCode = null;
+            final String fileCode = FileUtils.makeFileCode(contactId, domain, fileName);
 
             if (streamTransmission) {
-                fileCode = FileUtils.makeFileCode(contactId, domain, fileName);
+                (new Thread() {
+                    @Override
+                    public void run() {
+                        Director director = performer.selectDirector(token, FileStorageCellet.NAME);
+                        Logger.d(this.getClass(), "#doPost - stream transmission on HTTP: " + fileCode + " - "
+                                + director.fileEndpoint.toString());
 
-                Director director = this.performer.selectDirector(token, FileStorageCellet.NAME);
-                Logger.d(this.getClass(), "#doPost - stream transmission on HTTP: " + fileCode + " - "
-                        + director.fileEndpoint.toString());
-
-                HttpURLConnection conn = null;
-                OutputStream os = null;
-                BufferedInputStream bis = null;
-                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-                try {
-                    URL url = new URL("http://" + director.fileEndpoint.toString() + "/files/receive/"
-                            + "?token=" + token + "&filename=" + URLEncoder.encode(fileName, "UTF-8"));
-                    conn = (HttpURLConnection) url.openConnection();
-                    conn.setDoInput(true);
-                    conn.setDoOutput(true);
-                    conn.setRequestMethod("POST");
-                    conn.setUseCaches(false);
-                    conn.setRequestProperty("Content-Type", "binary");
-                    conn.setRequestProperty("Connection", "Keep-Alive");
-                    conn.setRequestProperty("Accept", "*/*");
-                    conn.setRequestProperty("Cache-Control", "no-cache");
-                    // Connect
-                    conn.connect();
-                    os = conn.getOutputStream();
-                    byte[] fb = new byte[8 * 1024];
-                    for (File file : tempFiles) {
-                        FileInputStream fis = null;
+                        HttpURLConnection conn = null;
+                        OutputStream os = null;
+                        BufferedInputStream bis = null;
+                        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
                         try {
-                            fis = new FileInputStream(file);
-                            int len = 0;
-                            while ((len = fis.read(fb)) > 0) {
-                                os.write(fb, 0, len);
-                                cursor += len;
-                            }
-                        } catch (Exception e) {
-                            Logger.e(this.getClass(), "Read temp file failed", e);
-                        } finally {
-                            if (null != fis) {
+                            URL url = new URL("http://" + director.fileEndpoint.toString() + "/files/receive/"
+                                    + "?token=" + token + "&filename=" + URLEncoder.encode(fileName, "UTF-8"));
+                            conn = (HttpURLConnection) url.openConnection();
+                            conn.setDoInput(true);
+                            conn.setDoOutput(true);
+                            conn.setRequestMethod("POST");
+                            conn.setUseCaches(false);
+                            conn.setRequestProperty("Content-Type", "binary");
+                            conn.setRequestProperty("Connection", "Keep-Alive");
+                            conn.setRequestProperty("Accept", "*/*");
+                            conn.setRequestProperty("Cache-Control", "no-cache");
+                            // Connect
+                            conn.connect();
+                            os = conn.getOutputStream();
+                            byte[] fb = new byte[8 * 1024];
+                            for (File file : tempFiles) {
+                                FileInputStream fis = null;
                                 try {
-                                    fis.close();
-                                } catch (IOException e) {
-                                    // Nothing
+                                    fis = new FileInputStream(file);
+                                    int len = 0;
+                                    while ((len = fis.read(fb)) > 0) {
+                                        os.write(fb, 0, len);
+                                    }
+                                } catch (Exception e) {
+                                    Logger.e(this.getClass(), "Read temp file failed", e);
+                                } finally {
+                                    if (null != fis) {
+                                        try {
+                                            fis.close();
+                                        } catch (IOException e) {
+                                            // Nothing
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    }
 
-                    os.flush();
+                            os.flush();
 
-                    int stateCode = conn.getResponseCode();
-                    if (stateCode == 200) {
-                        bis = new BufferedInputStream(conn.getInputStream());
-                        int len = 0;
-                        while ((len = bis.read(fb)) > 0) {
-                            buffer.write(fb, 0, len);
-                            buffer.flush();
-                        }
+                            int stateCode = conn.getResponseCode();
+                            if (stateCode == 200) {
+                                bis = new BufferedInputStream(conn.getInputStream());
+                                int len = 0;
+                                while ((len = bis.read(fb)) > 0) {
+                                    buffer.write(fb, 0, len);
+                                    buffer.flush();
+                                }
 
-                        String responseString = new String(buffer.toByteArray(), StandardCharsets.UTF_8);
-                        FileLabel fileLabel = new FileLabel(new JSONObject(responseString));
-                        // Update file code
-                        fileCode = fileLabel.getFileCode();
-                    }
-                    else {
-                        Logger.e(this.getClass(), "#doPost - Upload file failed - code: " + stateCode);
-                        clearTempFiles(tempFiles);
-                        this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
-                        this.complete();
-                        return;
-                    }
-                } catch (Exception e) {
-                    Logger.e(this.getClass(), "#doPost - Upload file failed", e);
-                } finally {
-                    try {
-                        if (null != os) {
-                            os.close();
-                        }
-                        if (null != bis) {
-                            bis.close();
-                        }
-                        buffer.close();
-                        if (null != conn) {
-                            conn.disconnect();
-                        }
-                    } catch (Exception e) {
-                        // Nothing
-                    }
-                }
-            }
-            else {
-                byte[] fb = new byte[4 * 1024];
-                for (File file : tempFiles) {
-                    FileInputStream fis = null;
-                    FlexibleByteBuffer fbuf = new FlexibleByteBuffer();
-                    try {
-                        fis = new FileInputStream(file);
-                        int len = 0;
-                        while ((len = fis.read(fb)) > 0) {
-                            fbuf.put(fb, 0, len);
-                        }
-                    } catch (Exception e) {
-                        Logger.e(this.getClass(), "Read temp file failed", e);
-                    } finally {
-                        if (null != fis) {
+                                String responseString = new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+                                FileLabel fileLabel = new FileLabel(new JSONObject(responseString));
+                                Logger.d(this.getClass(), "#doPost - Upload file: " + fileLabel.getFileCode());
+                            }
+                            else {
+                                Logger.e(this.getClass(), "#doPost - Upload file failed - code: " + stateCode);
+                            }
+                        } catch (Exception e) {
+                            Logger.e(this.getClass(), "#doPost - Upload file failed", e);
+                        } finally {
                             try {
-                                fis.close();
-                            } catch (IOException e) {
+                                if (null != os) {
+                                    os.close();
+                                }
+                                if (null != bis) {
+                                    bis.close();
+                                }
+                                buffer.close();
+                                if (null != conn) {
+                                    conn.disconnect();
+                                }
+                            } catch (Exception e) {
                                 // Nothing
                             }
+
+                            clearTempFiles(tempFiles);
                         }
                     }
+                }).start();
+            }
+            else {
+                (new Thread() {
+                    @Override
+                    public void run() {
+                        int size = 0;
+                        long cursor = 0;
 
-                    fbuf.flip();
-                    byte[] data = new byte[fbuf.limit()];
-                    System.arraycopy(fbuf.array(), 0, data, 0, fbuf.limit());
-                    size = data.length;
-                    FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, lastModified, cursor, size, data);
-                    fileCode = this.fileChunkStorage.append(chunk);
-                    cursor += size;
-                }
+                        byte[] fb = new byte[8 * 1024];
+                        for (File file : tempFiles) {
+                            FileInputStream fis = null;
+                            FlexibleByteBuffer fbuf = new FlexibleByteBuffer();
+                            try {
+                                fis = new FileInputStream(file);
+                                int len = 0;
+                                while ((len = fis.read(fb)) > 0) {
+                                    fbuf.put(fb, 0, len);
+                                }
+                            } catch (Exception e) {
+                                Logger.e(this.getClass(), "Read temp file failed", e);
+                            } finally {
+                                if (null != fis) {
+                                    try {
+                                        fis.close();
+                                    } catch (IOException e) {
+                                        // Nothing
+                                    }
+                                }
+                            }
+
+                            fbuf.flip();
+                            byte[] data = new byte[fbuf.limit()];
+                            System.arraycopy(fbuf.array(), 0, data, 0, fbuf.limit());
+                            size = data.length;
+                            FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, lastModified, cursor, size, data);
+                            fileChunkStorage.append(chunk, fileCode);
+                            cursor += size;
+                        }
+
+                        clearTempFiles(tempFiles);
+                    }
+                }).start();
             }
 
             JSONObject responseData = new JSONObject();
@@ -374,7 +381,7 @@ public class FileHandler extends CrossDomainHandler {
                 responseData.put("fileSize", fileSize);
                 responseData.put("fileCode", fileCode);
                 responseData.put("lastModified", lastModified);
-                responseData.put("position", cursor);
+                responseData.put("position", fileSize);
             } catch (JSONException e) {
                 Logger.w(this.getClass(), "#doPost", e);
                 clearTempFiles(tempFiles);
@@ -394,7 +401,18 @@ public class FileHandler extends CrossDomainHandler {
         else {
             // 文件块数据
             byte[] data = null;
+            // Contact ID
+            long contactId = 0;
+            // 域
+            String domain = null;
+            // 文件块所处的索引位置
+            long cursor = 0;
+            // 文件块大小
+            int size = 0;
+            long fileSize = 0;
+            long lastModified = 0;
 
+            String pFileName = fileName;
             try {
                 buf = this.readFiles(tempFiles);
                 FormData formData = new FormData(buf.array(), 0, buf.limit());
@@ -405,7 +423,7 @@ public class FileHandler extends CrossDomainHandler {
                 lastModified = Long.parseLong(formData.getValue("lastModified"));
                 cursor = Long.parseLong(formData.getValue("cursor"));
                 size = Integer.parseInt(formData.getValue("size"));
-                fileName = formData.getFileName();
+                pFileName = formData.getFileName();
                 data = formData.getFileChunk();
             } catch (Exception e) {
                 Logger.w(this.getClass(), "#doPost", e);
@@ -415,8 +433,9 @@ public class FileHandler extends CrossDomainHandler {
                 return;
             }
 
-            FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, lastModified, cursor, size, data);
-            String fileCode = this.fileChunkStorage.append(chunk);
+            final String fileCode = FileUtils.makeFileCode(contactId, domain, pFileName);
+            FileChunk chunk = new FileChunk(contactId, domain, token, pFileName, fileSize, lastModified, cursor, size, data);
+            this.fileChunkStorage.append(chunk, fileCode);
 
             JSONObject responseData = new JSONObject();
             try {
@@ -440,9 +459,10 @@ public class FileHandler extends CrossDomainHandler {
                 Packet packet = new Packet(sn, FileStorageAction.UploadFile.name, responseData);
                 this.respondOk(response, packet.toJSON());
             }
+
+            clearTempFiles(tempFiles);
         }
 
-        clearTempFiles(tempFiles);
         this.complete();
     }
 

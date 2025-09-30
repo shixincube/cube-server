@@ -113,11 +113,14 @@ public class FileChunkStorage {
      * 添加文件数据块。
      *
      * @param chunk
+     * @param fileCode
      * @return
      */
-    public String append(FileChunk chunk) {
+    public String append(FileChunk chunk, String fileCode) {
         // 匹配文件码
-        String fileCode = this.matchFileCode(chunk);
+        if (null == fileCode) {
+            fileCode = this.matchFileCode(chunk);
+        }
 
         FileChunkStore store = null;
 
