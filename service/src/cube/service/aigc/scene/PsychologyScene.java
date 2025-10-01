@@ -60,6 +60,8 @@ public class PsychologyScene {
 
     private Queue<ReportTask> taskQueue;
 
+    private final int maxQueueLength = 30;
+
     private Queue<ReportTask> runningTaskQueue;
 
     private AtomicInteger numRunningTasks;
@@ -341,6 +343,12 @@ public class PsychologyScene {
                                                                 int maxIndicators, boolean adjust,
                                                                 int retention,
                                                                 PaintingReportListener listener) {
+        if (this.taskQueue.size() >= this.maxQueueLength) {
+            Logger.w(this.getClass(), "#generatePsychologyReport - The queue length has reached the maximum limit: "
+                    + this.taskQueue.size() + "/" + this.maxQueueLength);
+            return null;
+        }
+
         // 判断属性限制
         if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
             Logger.w(this.getClass(), "#generatePsychologyReport - Age param overflow: " +

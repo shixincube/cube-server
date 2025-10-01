@@ -548,7 +548,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
         while (iter.hasNext()) {
             AIGCUnit unit = iter.next();
-            if (unit.getCapability().getName().equals(unitName)) {
+            if (unit.getCapability().getName().equals(unitName)
+                    && unit.getContext().isValid()) {
                 ++num;
             }
         }

@@ -124,7 +124,7 @@ public class HttpServer {
         this.plainPort = plainPort;
         this.securePort = securePort;
 
-        ExecutorThreadPool executorThreadPool = new ExecutorThreadPool(512, 32);
+        ExecutorThreadPool executorThreadPool = new ExecutorThreadPool(256, 16);
         this.server = new Server(executorThreadPool);
 
         ServerConnector https = null;
