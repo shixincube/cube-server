@@ -60,7 +60,7 @@ public class PsychologyScene {
 
     private Queue<ReportTask> taskQueue;
 
-    private final int maxQueueLength = 30;
+    private int maxQueueLength = 30;
 
     private Queue<ReportTask> runningTaskQueue;
 
@@ -108,6 +108,11 @@ public class PsychologyScene {
             else {
                 this.storage = new PsychologyStorage(StorageType.MySQL, storage);
             }
+
+            // 读取性能配置
+            JSONObject preference = config.getJSONObject("preference");
+            this.maxQueueLength = preference.getInt("maxQueueLength");
+            Logger.i(this.getClass(), "#start - max queue length: " + this.maxQueueLength);
 
             this.storage.open(this.service.getTokenizer());
             this.storage.execSelfChecking(null);

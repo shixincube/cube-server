@@ -183,6 +183,8 @@ public class AIGCService extends AbstractModule implements Generatable {
     // 配置文件上一次检测事件
     private long configFileLastTime = 0;
 
+    private long lastResetUnitTime = 0;
+
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
         this.unitMap = new ConcurrentHashMap<>();
@@ -359,6 +361,14 @@ public class AIGCService extends AbstractModule implements Generatable {
             if (null != unit.getContext() && !unit.getContext().isValid()) {
                 // 已失效
                 unitIter.remove();
+            }
+        }
+
+        if (now - this.lastResetUnitTime > 5 * 60 * 1000) {
+            this.lastResetUnitTime = now;
+            unitIter = this.unitMap.values().iterator();
+            while (unitIter.hasNext()) {
+                unitIter.next().resetRunning();
             }
         }
 

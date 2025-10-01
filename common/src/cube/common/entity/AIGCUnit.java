@@ -86,7 +86,7 @@ public class AIGCUnit extends Entity {
         this.weight = value;
     }
 
-    public synchronized void setRunning(boolean value) {
+    public void setRunning(boolean value) {
         if (value) {
             this.runningCounter.incrementAndGet();
         }
@@ -96,7 +96,11 @@ public class AIGCUnit extends Entity {
     }
 
     public boolean isRunning() {
-        return this.runningCounter.get() != 0;
+        return this.runningCounter.get() > 0;
+    }
+
+    public void resetRunning() {
+        this.runningCounter.set(0);
     }
 
     public void markFailure(int code, long timestamp, long contactId) {

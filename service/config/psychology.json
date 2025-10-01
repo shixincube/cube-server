@@ -8,6 +8,10 @@
 		"password" : "Baizejingzhi#2023"
 	},
 
+	"preference": {
+		"maxQueueLength" : 30
+	},
+
 	"unit": {
 		"name": "Baize",
 		"contextLength" : 5000

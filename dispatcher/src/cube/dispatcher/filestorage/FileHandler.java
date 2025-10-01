@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 文件上传/下载处理。
@@ -57,6 +58,10 @@ import java.util.concurrent.TimeoutException;
 public class FileHandler extends CrossDomainHandler {
 
     public final static String PATH = "/filestorage/file/";
+
+    protected final static AtomicInteger sConcurrency = new AtomicInteger(0);
+
+    protected final static int sMaxConcurrency = 50;
 
     private FileChunkStorage fileChunkStorage;
 
@@ -95,6 +100,15 @@ public class FileHandler extends CrossDomainHandler {
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
+        // 判断并发数量
+        if (sConcurrency.get() >= sMaxConcurrency) {
+            Logger.w(this.getClass(), "#doPost - The connection reaches the maximum concurrent number : " +
+                    sConcurrency.get() + "/" + sMaxConcurrency);
+            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
+            this.complete();
+            return;
+        }
+
         // Token Code
         String tokenParam = request.getParameter("token");
         if (null == tokenParam) {
@@ -206,8 +220,9 @@ public class FileHandler extends CrossDomainHandler {
             // 文件修改时间
             final long lastModified = lm;
 
-            // 校验 Token 是否存在
-            JSONObject payload = new JSONObject();
+            // 校验 Token
+            AuthToken authToken = this.performer.verifyToken(token);
+            /*JSONObject payload = new JSONObject();
             payload.put("code", token);
             Packet packet = new Packet(AuthAction.GetToken.name, payload);
             ActionDialect dialect = this.performer.syncTransmit(AuthCellet.NAME, packet.toDialect());
@@ -226,7 +241,7 @@ public class FileHandler extends CrossDomainHandler {
                 return;
             }
 
-            // 存在合法令牌
+            // 令牌有效期
             AuthToken authToken = new AuthToken(Packet.extractDataPayload(responsePacket));
             if (authToken.getExpiry() < System.currentTimeMillis()) {
                 // 令牌过期
@@ -235,7 +250,7 @@ public class FileHandler extends CrossDomainHandler {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
-            }
+            }*/
 
             final long contactId = authToken.getContactId();
             final String domain = authToken.getDomain();
@@ -243,6 +258,8 @@ public class FileHandler extends CrossDomainHandler {
             final String fileCode = FileUtils.makeFileCode(contactId, domain, fileName);
 
             if (streamTransmission) {
+                sConcurrency.incrementAndGet();
+
                 (new Thread() {
                     @Override
                     public void run() {
@@ -328,11 +345,14 @@ public class FileHandler extends CrossDomainHandler {
                             }
 
                             clearTempFiles(tempFiles);
+                            sConcurrency.decrementAndGet();
                         }
                     }
                 }).start();
             }
             else {
+                sConcurrency.incrementAndGet();
+
                 (new Thread() {
                     @Override
                     public void run() {
@@ -371,6 +391,7 @@ public class FileHandler extends CrossDomainHandler {
                         }
 
                         clearTempFiles(tempFiles);
+                        sConcurrency.decrementAndGet();
                     }
                 }).start();
             }
@@ -384,7 +405,6 @@ public class FileHandler extends CrossDomainHandler {
                 responseData.put("position", fileSize);
             } catch (JSONException e) {
                 Logger.w(this.getClass(), "#doPost", e);
-                clearTempFiles(tempFiles);
                 this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
                 return;
@@ -394,11 +414,13 @@ public class FileHandler extends CrossDomainHandler {
                 this.respondOk(response, responseData);
             }
             else {
-                packet = new Packet(sn, FileStorageAction.UploadFile.name, responseData);
+                Packet packet = new Packet(sn, FileStorageAction.UploadFile.name, responseData);
                 this.respondOk(response, packet.toJSON());
             }
         }
         else {
+            sConcurrency.incrementAndGet();
+
             // 文件块数据
             byte[] data = null;
             // Contact ID
@@ -428,6 +450,7 @@ public class FileHandler extends CrossDomainHandler {
             } catch (Exception e) {
                 Logger.w(this.getClass(), "#doPost", e);
                 clearTempFiles(tempFiles);
+                sConcurrency.decrementAndGet();
                 this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
@@ -447,6 +470,7 @@ public class FileHandler extends CrossDomainHandler {
             } catch (JSONException e) {
                 Logger.w(this.getClass(), "#doPost", e);
                 clearTempFiles(tempFiles);
+                sConcurrency.decrementAndGet();
                 this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
                 return;
@@ -461,6 +485,7 @@ public class FileHandler extends CrossDomainHandler {
             }
 
             clearTempFiles(tempFiles);
+            sConcurrency.decrementAndGet();
         }
 
         this.complete();
