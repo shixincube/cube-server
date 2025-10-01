@@ -354,12 +354,15 @@ public class PsychologyScene {
         }
 
         // 并发数量
-        int concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_NEXT_UNIT) +
-                this.service.numUnitsByName(ModelConfig.BAIZE_UNIT);
+        int concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_NEXT_UNIT);
         if (0 == concurrency) {
-            Logger.e(this.getClass(), "#generatePsychologyReport - No baize unit");
-            return null;
+            concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_X_UNIT);
+            if (0 == concurrency) {
+                Logger.e(this.getClass(), "#generatePsychologyReport - No baize unit");
+                return null;
+            }
         }
+        Logger.d(this.getClass(), "#generatePsychologyReport - Number of concurrency: " + concurrency);
 
         PaintingReport report = new PaintingReport(channel.getAuthToken().getContactId(),
                 attribute, fileLabel, theme);

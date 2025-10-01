@@ -2858,7 +2858,7 @@ public class Manager implements Tickable, PerformerListener {
             Iterator<Map.Entry<String, ContactToken>> ctIter = this.validTokenMap.entrySet().iterator();
             while (ctIter.hasNext()) {
                 ContactToken contactToken = ctIter.next().getValue();
-                if (now - contactToken.timestamp > 60 * 1000) {
+                if (now - contactToken.timestamp > 7 * 24 * 60 * 60 * 1000) {
                     ctIter.remove();
                 }
             }
