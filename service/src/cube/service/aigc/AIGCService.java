@@ -92,12 +92,12 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private final Map<String, Queue<GenerateTextUnitMeta>> generateQueueMap;
+//    private final Map<String, Queue<GenerateTextUnitMeta>> generateQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private final Map<String, Queue<ConversationUnitMeta>> conversationQueueMap;
+//    private final Map<String, Queue<ConversationUnitMeta>> conversationQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
@@ -190,8 +190,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         this.unitMap = new ConcurrentHashMap<>();
         this.unitWeightMap = new ConcurrentHashMap<>();
         this.channelMap = new ConcurrentHashMap<>();
-        this.generateQueueMap = new ConcurrentHashMap<>();
-        this.conversationQueueMap = new ConcurrentHashMap<>();
+//        this.generateQueueMap = new ConcurrentHashMap<>();
+//        this.conversationQueueMap = new ConcurrentHashMap<>();
         this.textToFileQueueMap = new ConcurrentHashMap<>();
         this.textToImageQueueMap = new ConcurrentHashMap<>();
         this.summarizationQueueMap = new ConcurrentHashMap<>();
@@ -533,8 +533,8 @@ public class AIGCService extends AbstractModule implements Generatable {
             if (unit.getContact().getId().equals(contact.getId())) {
                 result.add(unit);
                 iter.remove();
-                this.generateQueueMap.remove(unit.getQueryKey());
-                this.conversationQueueMap.remove(unit.getQueryKey());
+//                this.generateQueueMap.remove(unit.getQueryKey());
+//                this.conversationQueueMap.remove(unit.getQueryKey());
             }
         }
 
@@ -618,7 +618,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         ArrayList<AIGCUnit> candidates = new ArrayList<>();
 
-        // 1. 选择所有可用节点
+        // 选择所有可用节点
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
         while (iter.hasNext()) {
             AIGCUnit unit = iter.next();
@@ -628,22 +628,22 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
         }
 
-        // 2. 如果可用节点超过3个，删除故障数最多的节点
-        if (candidates.size() >= 3) {
-            AIGCUnit excluded = null;
-            int maxNumFailure = -1;
-            for (AIGCUnit unit : candidates) {
-                if (unit.numFailure() > 0) {
-                    if (unit.numFailure() > maxNumFailure) {
-                        maxNumFailure = unit.numFailure();
-                        excluded = unit;
-                    }
-                }
-            }
-            if (null != excluded) {
-                candidates.remove(excluded);
-            }
-        }
+        // 如果可用节点超过3个，删除故障数最多的节点
+//        if (candidates.size() >= 3) {
+//            AIGCUnit excluded = null;
+//            int maxNumFailure = -1;
+//            for (AIGCUnit unit : candidates) {
+//                if (unit.numFailure() > 0) {
+//                    if (unit.numFailure() > maxNumFailure) {
+//                        maxNumFailure = unit.numFailure();
+//                        excluded = unit;
+//                    }
+//                }
+//            }
+//            if (null != excluded) {
+//                candidates.remove(excluded);
+//            }
+//        }
 
         // 无候选节点
         if (candidates.isEmpty()) {
@@ -655,23 +655,31 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         // 按照发生错误的数量从低到高排序
-        Collections.sort(candidates, new Comparator<AIGCUnit>() {
-            @Override
-            public int compare(AIGCUnit u1, AIGCUnit u2) {
-                return u1.numFailure() - u2.numFailure();
-            }
-        });
+//        Collections.sort(candidates, new Comparator<AIGCUnit>() {
+//            @Override
+//            public int compare(AIGCUnit u1, AIGCUnit u2) {
+//                return u1.numFailure() - u2.numFailure();
+//            }
+//        });
 
         // 按照权重从高到低排序
+//        Collections.sort(candidates, new Comparator<AIGCUnit>() {
+//            @Override
+//            public int compare(AIGCUnit u1, AIGCUnit u2) {
+//                return (int)(u2.getWeight() - u1.getWeight());
+//            }
+//        });
+
+        // 按照最近执行时间戳从低到高排序
         Collections.sort(candidates, new Comparator<AIGCUnit>() {
             @Override
             public int compare(AIGCUnit u1, AIGCUnit u2) {
-                return (int)(u2.getWeight() - u1.getWeight());
+                return (int)(u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
             }
         });
 
-        // 先进行一次选择
-        AIGCUnit unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
+        // 先进行一次选择，选择最久没有执行的
+        AIGCUnit unit = candidates.get(0);
 
         iter = candidates.iterator();
         while (iter.hasNext()) {
@@ -683,17 +691,20 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         if (candidates.isEmpty()) {
-            // 所有单元都在运行，返回随机的
+            // 所有单元都在运行
             return unit;
         }
 
-        if (candidates.size() == 1) {
-            return candidates.get(0);
-        }
+        // 总是返回最久的单元
+        return candidates.get(0);
 
-        // 随机选择正在运行的节点
-        unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
-        return unit;
+//        if (candidates.size() == 1) {
+//            return candidates.get(0);
+//        }
+//
+//        // 随机选择正在运行的节点
+//        unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
+//        return unit;
     }
 
     public AIGCUnit selectUnitBySubtask(String subtask) {
@@ -1476,21 +1487,22 @@ public class AIGCService extends AbstractModule implements Generatable {
             boolean hit = false;
 
             // 进入队列，但是没有被执行线程处理
-            for (Queue<GenerateTextUnitMeta> queue : this.generateQueueMap.values()) {
-                Iterator<GenerateTextUnitMeta> iter = queue.iterator();
-                while (iter.hasNext()) {
-                    GenerateTextUnitMeta meta = iter.next();
-                    if (meta.channel.getCode().equals(channelCode)) {
-                        iter.remove();
-                        channel.setProcessing(false);
-                        hit = true;
-                        break;
-                    }
-                }
-                if (hit) {
-                    break;
-                }
-            }
+            // TODO XJW
+//            for (Queue<GenerateTextUnitMeta> queue : this.generateQueueMap.values()) {
+//                Iterator<GenerateTextUnitMeta> iter = queue.iterator();
+//                while (iter.hasNext()) {
+//                    GenerateTextUnitMeta meta = iter.next();
+//                    if (meta.channel.getCode().equals(channelCode)) {
+//                        iter.remove();
+//                        channel.setProcessing(false);
+//                        hit = true;
+//                        break;
+//                    }
+//                }
+//                if (hit) {
+//                    break;
+//                }
+//            }
 
             if (!hit) {
                 // 已经执行
@@ -1711,32 +1723,28 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(this, unit, channel, content, option, categories,
+        final GenerateTextUnitMeta meta = new GenerateTextUnitMeta(this, unit, channel, content, option, categories,
                 histories, attachments, listener);
         meta.setMaxHistories(maxHistories);
         meta.setRecordHistoryEnabled(recordable);
         meta.setNetworkingEnabled(networking);
 
-        synchronized (this.generateQueueMap) {
-            Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.generateQueueMap.put(unit.getQueryKey(), queue);
+//        synchronized (this.generateQueueMap) {
+//            Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(unit.getQueryKey());
+//            if (null == queue) {
+//                queue = new ConcurrentLinkedQueue<>();
+//                this.generateQueueMap.put(unit.getQueryKey(), queue);
+//            }
+//
+//            queue.offer(meta);
+//        }
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                processGenerateTextMeta(meta);
             }
-
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            unit.setRunning(true);
-
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    processGenerateTextQueue(meta.unit.getQueryKey());
-                }
-            });
-        }
+        });
 
         return true;
     }
@@ -1925,7 +1933,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return;
         }
 
-        GenerateTextUnitMeta meta = new GenerateTextUnitMeta(this, unit, channel, prompt, option, categories,
+        final GenerateTextUnitMeta meta = new GenerateTextUnitMeta(this, unit, channel, prompt, option, categories,
                 histories, attachments, listener);
         meta.setMaxHistories(maxHistories);
         meta.setOriginalQuery(query);
@@ -1938,26 +1946,22 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
         }
 
-        synchronized (this.generateQueueMap) {
-            Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.generateQueueMap.put(unit.getQueryKey(), queue);
+//        synchronized (this.generateQueueMap) {
+//            Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(unit.getQueryKey());
+//            if (null == queue) {
+//                queue = new ConcurrentLinkedQueue<>();
+//                this.generateQueueMap.put(unit.getQueryKey(), queue);
+//            }
+//
+//            queue.offer(meta);
+//        }
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                processGenerateTextMeta(meta);
             }
-
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            unit.setRunning(true);
-
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    processGenerateTextQueue(meta.unit.getQueryKey());
-                }
-            });
-        }
+        });
     }
 
     /**
@@ -2008,28 +2012,24 @@ public class AIGCService extends AbstractModule implements Generatable {
             return 0;
         }
 
-        ConversationUnitMeta meta = new ConversationUnitMeta(unit, channel, content, parameter, listener);
+        final ConversationUnitMeta meta = new ConversationUnitMeta(unit, channel, content, parameter, listener);
 
-        synchronized (this.conversationQueueMap) {
-            Queue<ConversationUnitMeta> queue = this.conversationQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.conversationQueueMap.put(unit.getQueryKey(), queue);
+//        synchronized (this.conversationQueueMap) {
+//            Queue<ConversationUnitMeta> queue = this.conversationQueueMap.get(unit.getQueryKey());
+//            if (null == queue) {
+//                queue = new ConcurrentLinkedQueue<>();
+//                this.conversationQueueMap.put(unit.getQueryKey(), queue);
+//            }
+//
+//            queue.offer(meta);
+//        }
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                processConversationMeta(meta);
             }
-
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            unit.setRunning(true);
-
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    processConversationQueue(meta.unit.getQueryKey());
-                }
-            });
-        }
+        });
 
         return meta.sn;
     }
@@ -2046,20 +2046,20 @@ public class AIGCService extends AbstractModule implements Generatable {
         if (null == record) {
             ConversationUnitMeta unitMeta = null;
 
-            synchronized (this.conversationQueueMap) {
-                for (Queue<ConversationUnitMeta> queue : this.conversationQueueMap.values()) {
-                    for (ConversationUnitMeta meta : queue) {
-                        if (meta.sn == sn) {
-                            unitMeta = meta;
-                            break;
-                        }
-                    }
-
-                    if (null != unitMeta) {
-                        break;
-                    }
-                }
-            }
+//            synchronized (this.conversationQueueMap) {
+//                for (Queue<ConversationUnitMeta> queue : this.conversationQueueMap.values()) {
+//                    for (ConversationUnitMeta meta : queue) {
+//                        if (meta.sn == sn) {
+//                            unitMeta = meta;
+//                            break;
+//                        }
+//                    }
+//
+//                    if (null != unitMeta) {
+//                        break;
+//                    }
+//                }
+//            }
 
             if (null == unitMeta) {
                 Logger.w(this.getClass(), "#queryConversation - Can NOT find conversation : " + sn);
@@ -2188,10 +2188,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         // 修正文本内容
         String modified = text.replaceAll("\n", "。");
 
-        UnitMeta meta = new SummarizationUnitMeta(this, unit, modified, listener);
+        final UnitMeta meta = new SummarizationUnitMeta(this, unit, modified, listener);
 
+        Queue<UnitMeta> queue = null;
         synchronized (this.summarizationQueueMap) {
-            Queue<UnitMeta> queue = this.summarizationQueueMap.get(unit.getQueryKey());
+            queue = this.summarizationQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
                 this.summarizationQueueMap.put(unit.getQueryKey(), queue);
@@ -2201,12 +2202,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         if (!unit.isRunning()) {
-            unit.setRunning(true);
-
+            final Queue<UnitMeta> metaQueue = queue;
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processQueue(meta.unit.getQueryKey(), summarizationQueueMap);
+                    processQueue(meta.unit, metaQueue);
                 }
             });
         }
@@ -2269,32 +2269,31 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        unit = this.selectUnitBySubtask(AICapability.Multimodal.TextToImage);
-        if (null == unit) {
-            Logger.w(AIGCService.class, "No text to image unit setup in server");
-            channel.setProcessing(false);
-            return false;
-        }
+//        unit = this.selectUnitBySubtask(AICapability.Multimodal.TextToImage);
+//        if (null == unit) {
+//            Logger.w(AIGCService.class, "No text to image unit setup in server");
+//            channel.setProcessing(false);
+//            return false;
+//        }
 
-        UnitMeta meta = new TextToImageUnitMeta(this, unit, channel, text, listener);
+        final UnitMeta meta = new TextToImageUnitMeta(this, unit, channel, text, listener);
 
+        Queue<UnitMeta> queue = null;
         synchronized (this.textToImageQueueMap) {
-            Queue<UnitMeta> queue = this.textToImageQueueMap.get(unit.getQueryKey());
+            queue = this.textToImageQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
                 this.textToImageQueueMap.put(unit.getQueryKey(), queue);
             }
-
             queue.offer(meta);
         }
 
         if (!unit.isRunning()) {
-            unit.setRunning(true);
-
+            final Queue<UnitMeta> metaQueue = queue;
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processQueue(meta.unit.getQueryKey(), textToImageQueueMap);
+                    processQueue(meta.unit, metaQueue);
                 }
             });
         }
@@ -2316,6 +2315,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
+        // 临时使用 PSYCHOLOGY_UNIT
         AIGCUnit unit = this.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
         if (null == unit) {
             unit = this.selectUnitByName(ModelConfig.BAIZE_UNIT);
@@ -2325,25 +2325,24 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
         }
 
-        UnitMeta meta = new TextToFileUnitMeta(this, unit, channel, text, attachment.queryFileLabels, listener);
+        final UnitMeta meta = new TextToFileUnitMeta(this, unit, channel, text, attachment.queryFileLabels, listener);
 
+        Queue<UnitMeta> queue = null;
         synchronized (this.textToFileQueueMap) {
-            Queue<UnitMeta> queue = this.textToFileQueueMap.get(unit.getQueryKey());
+            queue = this.textToFileQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
                 this.textToFileQueueMap.put(unit.getQueryKey(), queue);
             }
-
             queue.offer(meta);
         }
 
         if (!unit.isRunning()) {
-            unit.setRunning(true);
-
+            final Queue<UnitMeta> metaQueue = queue;
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processQueue(meta.unit.getQueryKey(), textToFileQueueMap);
+                    processQueue(meta.unit, metaQueue);
                 }
             });
         }
@@ -2370,10 +2369,11 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        UnitMeta meta = new ExtractKeywordsUnitMeta(this, unit, text, listener);
+        final UnitMeta meta = new ExtractKeywordsUnitMeta(this, unit, text, listener);
 
+        Queue<UnitMeta> queue = null;
         synchronized (this.extractKeywordsQueueMap) {
-            Queue<UnitMeta> queue = this.extractKeywordsQueueMap.get(unit.getQueryKey());
+            queue = this.extractKeywordsQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
                 this.extractKeywordsQueueMap.put(unit.getQueryKey(), queue);
@@ -2383,12 +2383,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         if (!unit.isRunning()) {
-            unit.setRunning(true);
-
+            final Queue<UnitMeta> metaQueue = queue;
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processQueue(meta.unit.getQueryKey(), extractKeywordsQueueMap);
+                    processQueue(meta.unit, metaQueue);
                 }
             });
         }
@@ -2415,10 +2414,11 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        UnitMeta meta = new SemanticSearchUnitMeta(this, unit, query, listener);
+        final UnitMeta meta = new SemanticSearchUnitMeta(this, unit, query, listener);
 
+        Queue<UnitMeta> queue = null;
         synchronized (this.semanticSearchQueueMap) {
-            Queue<UnitMeta> queue = this.semanticSearchQueueMap.get(unit.getQueryKey());
+            queue = this.semanticSearchQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
                 this.semanticSearchQueueMap.put(unit.getQueryKey(), queue);
@@ -2428,12 +2428,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         if (!unit.isRunning()) {
-            unit.setRunning(true);
-
+            final Queue<UnitMeta> metaQueue = queue;
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processQueue(meta.unit.getQueryKey(), semanticSearchQueueMap);
+                    processQueue(meta.unit, metaQueue);
                 }
             });
         }
@@ -2460,10 +2459,11 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        UnitMeta meta = new RetrieveReRankUnitMeta(this, unit, queries, listener);
+        final UnitMeta meta = new RetrieveReRankUnitMeta(this, unit, queries, listener);
 
+        Queue<UnitMeta> queue = null;
         synchronized (this.retrieveReRankQueueMap) {
-            Queue<UnitMeta> queue = this.retrieveReRankQueueMap.get(unit.getQueryKey());
+            queue = this.retrieveReRankQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
                 this.retrieveReRankQueueMap.put(unit.getQueryKey(), queue);
@@ -2473,12 +2473,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         if (!unit.isRunning()) {
-            unit.setRunning(true);
-
+            final Queue<UnitMeta> metaQueue = queue;
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processQueue(meta.unit.getQueryKey(), retrieveReRankQueueMap);
+                    processQueue(meta.unit, metaQueue);
                 }
             });
         }
@@ -2512,8 +2511,9 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
         });
 
+        Queue<UnitMeta> queue = null;
         synchronized (this.retrieveReRankQueueMap) {
-            Queue<UnitMeta> queue = this.retrieveReRankQueueMap.get(unit.getQueryKey());
+            queue = this.retrieveReRankQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
                 this.retrieveReRankQueueMap.put(unit.getQueryKey(), queue);
@@ -2523,12 +2523,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         if (!unit.isRunning()) {
-            unit.setRunning(true);
-
+            final Queue<UnitMeta> metaQueue = queue;
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processQueue(meta.unit.getQueryKey(), retrieveReRankQueueMap);
+                    processQueue(meta.unit, metaQueue);
                 }
             });
         }
@@ -2722,10 +2721,11 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        UnitMeta meta = new SpeechRecognitionUnitMeta(this, unit, fileLabel, listener);
+        final UnitMeta meta = new SpeechRecognitionUnitMeta(this, unit, fileLabel, listener);
 
+        Queue<UnitMeta> queue = null;
         synchronized (this.speechQueueMap) {
-            Queue<UnitMeta> queue = this.speechQueueMap.get(unit.getQueryKey());
+            queue = this.speechQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
                 this.speechQueueMap.put(unit.getQueryKey(), queue);
@@ -2735,12 +2735,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         if (!unit.isRunning()) {
-            unit.setRunning(true);
-
+            final Queue<UnitMeta> metaQueue = queue;
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processQueue(meta.unit.getQueryKey(), speechQueueMap);
+                    processQueue(meta.unit, metaQueue);
                 }
             });
         }
@@ -2776,11 +2775,12 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        AudioUnitMeta meta = new AudioUnitMeta(this, unit, authToken, AIGCAction.SpeakerDiarization, fileLabel);
+        final AudioUnitMeta meta = new AudioUnitMeta(this, unit, authToken, AIGCAction.SpeakerDiarization, fileLabel);
         meta.voiceDiarizationListener = listener;
 
+        Queue<UnitMeta> queue = null;
         synchronized (this.audioQueueMap) {
-            Queue<UnitMeta> queue = this.audioQueueMap.get(unit.getQueryKey());
+            queue = this.audioQueueMap.get(unit.getQueryKey());
             if (null == queue) {
                 queue = new ConcurrentLinkedQueue<>();
                 this.audioQueueMap.put(unit.getQueryKey(), queue);
@@ -2790,12 +2790,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         if (!unit.isRunning()) {
-            unit.setRunning(true);
-
+            final Queue<UnitMeta> metaQueue = queue;
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    processQueue(meta.unit.getQueryKey(), audioQueueMap);
+                    processQueue(meta.unit, metaQueue);
                 }
             });
         }
@@ -3189,91 +3188,75 @@ public class AIGCService extends AbstractModule implements Generatable {
         return null;
     }
 
-    private void processGenerateTextQueue(String queryKey) {
-        Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(queryKey);
-        if (null == queue) {
-            Logger.w(AIGCService.class, "#processGenerateTextQueue - Not found unit: " + queryKey);
-            AIGCUnit unit = this.unitMap.get(queryKey);
-            if (null != unit) {
-                unit.setRunning(false);
-            }
-            return;
-        }
+    private void processGenerateTextMeta(GenerateTextUnitMeta meta) {
+//        Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(queryKey);
+//        if (null == queue) {
+//            Logger.w(AIGCService.class, "#processGenerateTextQueue - Not found unit: " + queryKey);
+//            AIGCUnit unit = this.unitMap.get(queryKey);
+//            if (null != unit) {
+//                unit.setRunning(false);
+//            }
+//            return;
+//        }
 
-        AIGCUnit unit = null;
+        AIGCUnit unit = meta.unit;
 
-        GenerateTextUnitMeta meta = queue.poll();
-        while (null != meta) {
-            if (null == unit) {
-                unit = meta.unit;
-            }
-
-            AtomicInteger count = this.generateTextUnitCountMap.get(meta.unit.getCapability().getName());
-            if (null == count) {
-                count = new AtomicInteger(1);
-                this.generateTextUnitCountMap.put(meta.unit.getCapability().getName(), count);
-            }
-            else {
-                count.incrementAndGet();
-            }
-
-            // 执行处理
+        int countdown = 50;
+        while (unit.isRunning()) {
             try {
-                meta.process();
-            } catch (Exception e) {
-                Logger.e(this.getClass(), "#processGenerateTextQueue - meta process", e);
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-
-            count.decrementAndGet();
-
-            meta = queue.poll();
+            --countdown;
+            if (countdown <= 0) {
+                break;
+            }
         }
 
-        if (null == unit) {
-            unit = this.unitMap.get(queryKey);
-            if (null != unit) {
-                unit.setRunning(false);
-            }
-            else {
-                Logger.e(this.getClass(), "#processGenerateTextQueue - Unit is null: " + queryKey);
-            }
+        unit.setRunning(true);
+
+        AtomicInteger count = this.generateTextUnitCountMap.get(unit.getCapability().getName());
+        if (null == count) {
+            count = new AtomicInteger(1);
+            this.generateTextUnitCountMap.put(unit.getCapability().getName(), count);
         }
         else {
-            unit.setRunning(false);
+            count.incrementAndGet();
         }
+
+        // 执行处理
+        try {
+            meta.process();
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#processGenerateTextMeta - meta process", e);
+        }
+
+        count.decrementAndGet();
+
+        unit.setRunning(false);
     }
 
-    private void processConversationQueue(String queryKey) {
-        Queue<ConversationUnitMeta> queue = this.conversationQueueMap.get(queryKey);
-        if (null == queue) {
-            Logger.w(AIGCService.class, "Not found unit: " + queryKey);
-            return;
+    private void processConversationMeta(ConversationUnitMeta meta) {
+//        Queue<ConversationUnitMeta> queue = this.conversationQueueMap.get(queryKey);
+//        if (null == queue) {
+//            Logger.w(AIGCService.class, "Not found unit: " + queryKey);
+//            return;
+//        }
+
+        meta.unit.setRunning(true);
+
+        try {
+            meta.process();
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#processConversationMeta - meta process", e);
         }
 
-        ConversationUnitMeta meta = queue.poll();
-        while (null != meta) {
-            // 执行处理
-            try {
-                meta.process();
-            } catch (Exception e) {
-                Logger.e(this.getClass(), "#processConversationQueue - meta process", e);
-            }
-
-            meta = queue.poll();
-        }
-
-        AIGCUnit unit = this.unitMap.get(queryKey);
-        if (null != unit) {
-            unit.setRunning(false);
-        }
+        meta.unit.setRunning(false);
     }
 
-    private void processQueue(String queryKey, Map<String, Queue<UnitMeta>> queueMap) {
-        Queue<UnitMeta> queue = queueMap.get(queryKey);
-        if (null == queue) {
-            Logger.w(AIGCService.class, "#processQueue - No found unit: " + queryKey);
-            return;
-        }
+    private void processQueue(AIGCUnit unit, Queue<UnitMeta> queue) {
+        unit.setRunning(true);
 
         UnitMeta meta = queue.poll();
         while (null != meta) {
@@ -3287,10 +3270,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             meta = queue.poll();
         }
 
-        AIGCUnit unit = this.unitMap.get(queryKey);
-        if (null != unit) {
-            unit.setRunning(false);
-        }
+        unit.setRunning(false);
     }
 
     private boolean checkParticipantName(String name) {

@@ -135,12 +135,18 @@ public class PsychologyScene {
             e.printStackTrace();
             Logger.w(this.getClass(), "#start", e);
         }
+
+        this.numRunningTasks.set(0);
     }
 
     public void stop() {
         if (null != this.storage) {
             this.storage.close();
         }
+
+        // 阻止新任务进入
+        this.maxQueueLength = 0;
+        this.numRunningTasks.set(Integer.MAX_VALUE);
     }
 
     private void loadConfig() {
@@ -377,6 +383,11 @@ public class PsychologyScene {
         }
         Logger.d(this.getClass(), "#generatePsychologyReport - Number of concurrency: " + concurrency);
 
+        if (!this.service.hasUnit(ModelConfig.PSYCHOLOGY_UNIT)) {
+            Logger.e(this.getClass(), "#generatePsychologyReport - No psychology unit");
+            return null;
+        }
+
         PaintingReport report = new PaintingReport(channel.getAuthToken().getContactId(),
                 attribute, fileLabel, theme);
 
@@ -397,17 +408,14 @@ public class PsychologyScene {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                Logger.i(PsychologyScene.class, "Generating thread START (" + numRunningTasks.get() + ") - "
+                Logger.i(PsychologyScene.class, "Generating thread START ("
+                        + numRunningTasks.get() + "/" + taskQueue.size() + ") - "
                         + Thread.currentThread().getName()
                         + " - " + Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
 
                 try {
-                    while (!taskQueue.isEmpty()) {
-                        final ReportTask reportTask = taskQueue.poll();
-                        if (null == reportTask) {
-                            continue;
-                        }
-
+                    ReportTask reportTask = taskQueue.poll();
+                    while (null != reportTask) {
                         long start = System.currentTimeMillis();
                         Logger.i(getClass(), "Starts generating report: " + reportTask.report.sn);
 
@@ -559,15 +567,19 @@ public class PsychologyScene {
 
                         Logger.i(getClass(), "End generating report: " + reportTask.report.sn + " - elapsed: " +
                                 Math.round((System.currentTimeMillis() - start) / 1000.0) + "s");
-                    }
+
+                        // 新任务
+                        reportTask = taskQueue.poll();
+                    } // while
                 } catch (Exception e) {
-                    Logger.e(getClass(), "#run", e);
+                    Logger.e(PsychologyScene.class, "#run", e);
                 }
 
                 // 更新运行计数
                 numRunningTasks.decrementAndGet();
 
-                Logger.i(PsychologyScene.class, "Generating thread END (" + numRunningTasks.get() + ") - "
+                Logger.i(PsychologyScene.class, "Generating thread END ("
+                        + numRunningTasks.get() + "/" + taskQueue.size() + ") - "
                         + Thread.currentThread().getName()
                         + " - " + Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
             }

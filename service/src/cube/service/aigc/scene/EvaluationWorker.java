@@ -460,8 +460,8 @@ public class EvaluationWorker {
                     null, null);
             result = (null != generating) ? generating.answer : null;
         }
-        if (null != result) {
 
+        if (null != result) {
             summary.append(result);
         }
 

@@ -30,6 +30,8 @@ public class AIGCUnit extends Entity {
 
     private AtomicInteger runningCounter;
 
+    private long lastRunningTimestamp;
+
     private ConcurrentLinkedQueue<Failure> failures;
 
     public AIGCUnit(Contact contact, AICapability capability, TalkContext context) {
@@ -41,6 +43,7 @@ public class AIGCUnit extends Entity {
         this.weight = 5.0;
         this.runningCounter = new AtomicInteger(0);
         this.failures = new ConcurrentLinkedQueue<>();
+        this.lastRunningTimestamp = System.currentTimeMillis();
     }
 
     public AIGCUnit(JSONObject json) {
@@ -86,12 +89,15 @@ public class AIGCUnit extends Entity {
         this.weight = value;
     }
 
-    public void setRunning(boolean value) {
+    public synchronized void setRunning(boolean value) {
+        this.lastRunningTimestamp = System.currentTimeMillis();
         if (value) {
             this.runningCounter.incrementAndGet();
         }
         else {
-            this.runningCounter.decrementAndGet();
+            if (this.runningCounter.decrementAndGet() < 0) {
+                this.runningCounter.set(0);
+            }
         }
     }
 
@@ -100,7 +106,13 @@ public class AIGCUnit extends Entity {
     }
 
     public void resetRunning() {
-        this.runningCounter.set(0);
+        if (System.currentTimeMillis() - this.lastRunningTimestamp > 5 * 60 * 1000) {
+            this.runningCounter.set(0);
+        }
+    }
+
+    public long getLastRunningTimestamp() {
+        return this.lastRunningTimestamp;
     }
 
     public void markFailure(int code, long timestamp, long contactId) {

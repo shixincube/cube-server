@@ -21,6 +21,11 @@ public enum CVAction {
     MakeBarCode("makeBarCode"),
 
     /**
+     * 合并条形码。
+     */
+    CombineBarcodes("combineBarcodes"),
+
+    /**
      * 检测条形码。
      */
     DetectBarCode("detectBarCode"),

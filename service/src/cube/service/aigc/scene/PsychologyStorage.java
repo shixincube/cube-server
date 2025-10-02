@@ -728,14 +728,22 @@ public class PsychologyStorage implements Storagable {
         return this.writePsychologyReport(report, 0);
     }
 
-    public boolean writePsychologyReport(PaintingReport report, int retention) {
+    public synchronized boolean writePsychologyReport(PaintingReport report, int retention) {
         // 插入状态
-        if (!this.storage.executeInsert(this.paintingReportManagementTable, new StorageField[] {
-                new StorageField("report_sn", report.sn),
-                new StorageField("timestamp", System.currentTimeMillis()),
-                new StorageField("state", 0),
-                new StorageField("retention", retention)
-        })) {
+        List<StorageField[]> result = this.storage.executeQuery(this.paintingReportManagementTable, new StorageField[] {
+                    new StorageField("report_sn", LiteralBase.LONG)
+                }, new Conditional[] {
+                    Conditional.createEqualTo("report_sn", report.sn)
+                });
+        if (result.isEmpty()) {
+            this.storage.executeInsert(this.paintingReportManagementTable, new StorageField[] {
+                    new StorageField("report_sn", report.sn),
+                    new StorageField("timestamp", System.currentTimeMillis()),
+                    new StorageField("state", 0),
+                    new StorageField("retention", retention)
+            });
+        }
+        else {
             this.storage.executeUpdate(this.paintingReportManagementTable, new StorageField[] {
                     new StorageField("timestamp", System.currentTimeMillis()),
                     new StorageField("state", 0),
