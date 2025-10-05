@@ -6,7 +6,6 @@
 
 package cube.service.messaging.test;
 
-import cell.util.CachedQueueExecutor;
 import cell.util.Utils;
 import cube.auth.AuthConsts;
 import cube.common.entity.Message;
@@ -20,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -39,7 +39,7 @@ public class MessagingStorageTest {
     private HashMap<Long, Message> messageMap;
 
     public MessagingStorageTest() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(2);
+        this.executor = Executors.newCachedThreadPool();
 
         String dbfile = "storage/test-messages.db";
         if (clean) {

@@ -125,17 +125,17 @@ public class Daemon extends TimerTask implements LogHandle {
             }
         }
 
-        if (now - this.lastReportTime >= this.reportInterval) {
-            // 提交 JVM 报告
-            this.submitJVMReport(now);
-            // 提交性能报告
-            this.submitPerformanceReport(now);
-            // 更新时间戳
-            this.lastReportTime = now;
-        }
+//        if (now - this.lastReportTime >= this.reportInterval) {
+//            // 提交 JVM 报告
+//            this.submitJVMReport(now);
+//            // 提交性能报告
+//            this.submitPerformanceReport(now);
+//            // 更新时间戳
+//            this.lastReportTime = now;
+//        }
 
         // 提交日志报告
-        this.submitLogReport();
+//        this.submitLogReport();
 
         if (now - this.lastLatency >= this.latencyInterval) {
             latency();

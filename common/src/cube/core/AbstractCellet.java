@@ -9,13 +9,10 @@ package cube.core;
 import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
-import cell.util.CachedQueueExecutor;
 import cube.benchmark.ResponseTime;
-import cube.common.entity.AbstractContact;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -41,7 +38,7 @@ public abstract class AbstractCellet extends Cellet {
 
     public static void initialize() {
         if (null == AbstractCellet.sExecutor) {
-            AbstractCellet.sExecutor = Executors.newCachedThreadPool(); //CachedQueueExecutor.newCachedQueueThreadPool(128);
+            AbstractCellet.sExecutor = Executors.newCachedThreadPool(); // CachedQueueExecutor.newCachedQueueThreadPool(128);
         }
     }
 

@@ -1587,7 +1587,7 @@ public class PsychologyScene {
         Iterator<Map.Entry<Long, Report>> iter = this.reportMap.entrySet().iterator();
         while (iter.hasNext()) {
             Report report = iter.next().getValue();
-            if (now - report.timestamp > 72 * 60 * 60 * 1000) {
+            if (now - report.timestamp > 12 * 60 * 60 * 1000) {
                 iter.remove();
             }
         }
@@ -1595,7 +1595,7 @@ public class PsychologyScene {
         Iterator<Map.Entry<Long, Painting>> piter = this.paintingMap.entrySet().iterator();
         while (piter.hasNext()) {
             Painting painting = piter.next().getValue();
-            if (now - painting.timestamp > 72 * 60 * 60 * 1000) {
+            if (now - painting.timestamp > 12 * 60 * 60 * 1000) {
                 piter.remove();
             }
         }

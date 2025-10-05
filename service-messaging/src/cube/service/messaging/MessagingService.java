@@ -46,6 +46,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 消息管理器。
@@ -100,7 +101,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      */
     public MessagingService(MessagingServiceCellet cellet) {
         this.cellet = cellet;
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(64);
+        this.executor = Executors.newCachedThreadPool();
         this.messageStateMap = new ConcurrentHashMap<>();
     }
 

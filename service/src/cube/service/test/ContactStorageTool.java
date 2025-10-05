@@ -6,7 +6,6 @@
 
 package cube.service.test;
 
-import cell.util.CachedQueueExecutor;
 import cube.auth.AuthConsts;
 import cube.common.entity.Group;
 import cube.common.entity.GroupState;
@@ -18,6 +17,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 联系人存储工具。
@@ -29,7 +29,7 @@ public class ContactStorageTool {
     private ContactStorage storage;
 
     public ContactStorageTool() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(1);
+        this.executor = Executors.newCachedThreadPool();
 
         JSONObject config = new JSONObject();
         try {

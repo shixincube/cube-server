@@ -9,10 +9,10 @@ package cube.core;
 import cell.api.Servable;
 import cell.core.talk.BaseServer;
 import cell.core.talk.TalkContext;
-import cell.util.CachedQueueExecutor;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 管理器守护线程。
@@ -34,7 +34,7 @@ public class ManagementDaemon extends Thread {
         setName("ManagementDaemon");
         setDaemon(true);
         this.kernel = kernel;
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(4);
+        this.executor = Executors.newCachedThreadPool();
     }
 
     @Override

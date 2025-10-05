@@ -6,16 +6,13 @@
 
 package cube.util;
 
-import cell.util.CachedQueueExecutor;
-import cell.util.log.Logger;
-
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 进程管理器。
@@ -27,7 +24,7 @@ public final class ProcessManager {
     private ExecutorService executor;
 
     private ProcessManager() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(64);
+        this.executor = Executors.newCachedThreadPool();
     }
 
     public final static ProcessManager getInstance() {

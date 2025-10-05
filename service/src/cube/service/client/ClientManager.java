@@ -8,7 +8,6 @@ package cube.service.client;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
 import cube.common.entity.ClientDescription;
 import cube.common.entity.Contact;
@@ -34,10 +33,7 @@ import cube.util.ConfigUtils;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -65,7 +61,7 @@ public final class ClientManager {
     private AtomicBoolean sendingEvent;
 
     private ClientManager() {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
+        this.executor = Executors.newCachedThreadPool();
         this.clientMap = new ConcurrentHashMap<>();
         this.talkContextIndex = new ConcurrentHashMap<>();
         this.eventQueue = new ConcurrentLinkedQueue<>();

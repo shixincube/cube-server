@@ -493,46 +493,51 @@ public class MySQLStorage extends AbstractStorage {
 
             this.count.incrementAndGet();
 
-            Connection conn = this.connections.poll();
-            if (null != conn) {
-                try {
-                    if (conn.isClosed()) {
-                        conn = null;
+            try {
+                Connection conn = this.connections.poll();
+                if (null != conn) {
+                    try {
+                        if (conn.isClosed()) {
+                            conn = null;
+                        }
+                    } catch (SQLException e) {
+                        Logger.w(this.getClass(), "#get", e);
                     }
-                } catch (SQLException e) {
-                    Logger.w(this.getClass(), "#get", e);
                 }
-            }
 
-            if (null == conn) {
-                StringBuilder url = new StringBuilder();
-                url.append("jdbc:mysql://");
-                url.append(this.config.has(CONFIG_HOST) ? this.config.getString(CONFIG_HOST) : "127.0.0.1");
-                url.append(":");
-                url.append(this.config.has(CONFIG_PORT) ? this.config.getInt(CONFIG_PORT) : 3306);
-                url.append("/");
-                url.append(this.config.has(CONFIG_SCHEMA) ? this.config.getString(CONFIG_SCHEMA) : "cube");
-                url.append("?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8");
-                url.append("&useInformationSchema=true");
-                url.append("&nullCatalogMeansCurrent=true");
+                if (null == conn) {
+                    StringBuilder url = new StringBuilder();
+                    url.append("jdbc:mysql://");
+                    url.append(this.config.has(CONFIG_HOST) ? this.config.getString(CONFIG_HOST) : "127.0.0.1");
+                    url.append(":");
+                    url.append(this.config.has(CONFIG_PORT) ? this.config.getInt(CONFIG_PORT) : 3306);
+                    url.append("/");
+                    url.append(this.config.has(CONFIG_SCHEMA) ? this.config.getString(CONFIG_SCHEMA) : "cube");
+                    url.append("?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8");
+                    url.append("&useInformationSchema=true");
+                    url.append("&nullCatalogMeansCurrent=true");
 
-                try {
-                   conn = DriverManager.getConnection(url.toString(),
-                            this.config.getString(CONFIG_USER), this.config.getString(CONFIG_PASSWORD));
-                } catch (SQLException e) {
-                    Logger.e(this.getClass(), "#open - " + url.toString(), e);
+                    try {
+                        conn = DriverManager.getConnection(url.toString(),
+                                this.config.getString(CONFIG_USER), this.config.getString(CONFIG_PASSWORD));
+                    } catch (SQLException e) {
+                        Logger.e(this.getClass(), "#open - " + url.toString(), e);
+                    }
                 }
-            }
 
-            if (null == conn) {
-                this.count.decrementAndGet();
-                synchronized (this) {
-                    this.notify();
+                if (null == conn) {
+                    this.count.decrementAndGet();
+                    synchronized (this) {
+                        this.notifyAll();
+                    }
+                    return null;
                 }
+
+                return conn;
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#open - Error", e);
                 return null;
             }
-
-            return conn;
         }
 
         protected void returnConn(Connection connection) {
@@ -551,7 +556,7 @@ public class MySQLStorage extends AbstractStorage {
             this.count.decrementAndGet();
 
             synchronized (this) {
-                this.notify();
+                this.notifyAll();
             }
         }
 

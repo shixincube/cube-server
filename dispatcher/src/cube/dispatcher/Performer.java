@@ -11,7 +11,6 @@ import cell.core.cellet.Cellet;
 import cell.core.net.Endpoint;
 import cell.core.talk.*;
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.CachedQueueExecutor;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
@@ -467,7 +466,7 @@ public class Performer implements TalkListener, Tickable {
      * 启动执行机，并对路由权重和范围进行初始化。
      */
     public void start(List<String> cellets) {
-        this.executor = Executors.newCachedThreadPool();//CachedQueueExecutor.newCachedQueueThreadPool(128);
+        this.executor = Executors.newCachedThreadPool();
 
         // 添加全局监听
         this.talkService.addListener(this);
