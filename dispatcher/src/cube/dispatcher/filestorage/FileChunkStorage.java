@@ -8,7 +8,6 @@ package cube.dispatcher.filestorage;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.FileStorageAction;
@@ -30,6 +29,7 @@ import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -94,7 +94,7 @@ public class FileChunkStorage {
     public void open(FileStorageCellet cellet, Performer performer) {
         this.cellet = cellet;
         this.performer = performer;
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(64);
+        this.executor = Executors.newCachedThreadPool(); // CachedQueueExecutor.newCachedQueueThreadPool(64);
     }
 
     public void close() {

@@ -265,7 +265,7 @@ public class FileHandler extends CrossDomainHandler {
                 final String fileCode = FileUtils.makeFileCode(contactId, domain, fileName);
 
                 if (streamTransmission) {
-                    (new Thread() {
+                    this.performer.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
                             Director director = performer.selectDirector(token, FileStorageCellet.NAME);
@@ -352,10 +352,10 @@ public class FileHandler extends CrossDomainHandler {
                                 clearTempFiles(tempFiles);
                             }
                         }
-                    }).start();
+                    });
                 }
                 else {
-                    (new Thread() {
+                    this.performer.getExecutor().execute(new Runnable() {
                         @Override
                         public void run() {
                             int size = 0;
@@ -394,7 +394,7 @@ public class FileHandler extends CrossDomainHandler {
 
                             clearTempFiles(tempFiles);
                         }
-                    }).start();
+                    });
                 }
 
                 JSONObject responseData = new JSONObject();

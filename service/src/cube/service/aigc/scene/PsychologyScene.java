@@ -384,7 +384,6 @@ public class PsychologyScene {
         if (concurrency > 2) {
             concurrency -= 1;
         }
-        Logger.d(this.getClass(), "#generatePsychologyReport - Number of concurrency: " + concurrency);
 
         if (!this.service.hasUnit(ModelConfig.PSYCHOLOGY_UNIT)) {
             Logger.e(this.getClass(), "#generatePsychologyReport - No psychology unit");
@@ -397,6 +396,9 @@ public class PsychologyScene {
         ReportTask task = new ReportTask(channel, attribute, fileLabel, theme, maxIndicators, adjust, listener, report);
 
         this.taskQueue.offer(task);
+
+        Logger.d(this.getClass(), "#generatePsychologyReport - Number of concurrency (C/Q/R): " + concurrency
+                + "/" + this.taskQueue.size() + "/" + this.numRunningTasks.get());
 
         this.reportMap.put(report.sn, report);
 

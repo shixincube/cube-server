@@ -19,6 +19,7 @@ import java.util.Queue;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -40,7 +41,7 @@ public abstract class AbstractCellet extends Cellet {
 
     public static void initialize() {
         if (null == AbstractCellet.sExecutor) {
-            AbstractCellet.sExecutor = CachedQueueExecutor.newCachedQueueThreadPool(512);
+            AbstractCellet.sExecutor = Executors.newCachedThreadPool(); //CachedQueueExecutor.newCachedQueueThreadPool(128);
         }
     }
 

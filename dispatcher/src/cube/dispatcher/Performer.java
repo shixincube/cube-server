@@ -37,6 +37,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Performer 接入层连接器。
@@ -466,7 +467,7 @@ public class Performer implements TalkListener, Tickable {
      * 启动执行机，并对路由权重和范围进行初始化。
      */
     public void start(List<String> cellets) {
-        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(128);
+        this.executor = Executors.newCachedThreadPool();//CachedQueueExecutor.newCachedQueueThreadPool(128);
 
         // 添加全局监听
         this.talkService.addListener(this);
