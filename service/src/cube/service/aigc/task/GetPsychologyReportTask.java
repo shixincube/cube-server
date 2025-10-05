@@ -10,6 +10,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.ScaleReport;
 import cube.auth.AuthToken;
@@ -88,23 +89,29 @@ public class GetPsychologyReportTask extends ServiceTask {
             // 绘画报告
             PaintingReport report = PsychologyScene.getInstance().getPaintingReport(sn);
             if (null != report) {
-                JSONObject reportJson = null;
-                if (markdown) {
-                    reportJson = report.toMarkdown();
-                }
-                else {
-                    if (sections) {
-                        reportJson = report.makeReportSectionJSON();
+                try {
+                    JSONObject reportJson = null;
+                    if (markdown) {
+                        reportJson = report.toMarkdown();
                     }
                     else {
-                        reportJson = report.toCompactJSON();
-                        // 所在队列位置
-                        reportJson.put("queuePosition", PsychologyScene.getInstance().getGeneratingQueuePosition(sn));
+                        if (sections) {
+                            reportJson = report.makeReportSectionJSON();
+                        }
+                        else {
+                            reportJson = report.toCompactJSON();
+                            // 所在队列位置
+                            reportJson.put("queuePosition", PsychologyScene.getInstance().getGeneratingQueuePosition(sn));
+                        }
                     }
-                }
 
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, reportJson));
+                    this.cellet.speak(this.talkContext,
+                            this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, reportJson));
+                } catch (Exception e) {
+                    Logger.w(this.getClass(), "#run", e);
+                    this.cellet.speak(this.talkContext,
+                            this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                }
             }
             else {
                 // 量表报告

@@ -381,6 +381,9 @@ public class PsychologyScene {
                 return null;
             }
         }
+        if (concurrency > 2) {
+            concurrency -= 1;
+        }
         Logger.d(this.getClass(), "#generatePsychologyReport - Number of concurrency: " + concurrency);
 
         if (!this.service.hasUnit(ModelConfig.PSYCHOLOGY_UNIT)) {

@@ -67,6 +67,9 @@ public abstract class Thing extends Material {
     }
 
     protected <T> T getMaxAreaThing(List<T> list) {
+        if (list.isEmpty()) {
+            return null;
+        }
         int max = 0;
         T result = null;
         for (T t : list) {

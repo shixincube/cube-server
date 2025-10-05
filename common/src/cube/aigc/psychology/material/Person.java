@@ -397,6 +397,9 @@ public class Person extends Thing {
         }
 
         Eye eye = this.getMaxAreaThing(this.eyeList);
+        if (null == eye) {
+            return 0;
+        }
         return ((double) eye.area)
                 / ((double) this.head.area);
     }

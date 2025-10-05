@@ -9,7 +9,7 @@
 	},
 
 	"preference": {
-		"maxQueueLength" : 30
+		"maxQueueLength" : 20
 	},
 
 	"unit": {
