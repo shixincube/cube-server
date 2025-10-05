@@ -23,6 +23,7 @@ import cube.core.Module;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
 import cube.service.cv.listener.ClipPaperListener;
+import cube.service.cv.listener.CombineBarCodeListener;
 import cube.service.cv.listener.DetectBarCodeListener;
 import cube.service.cv.listener.DetectObjectListener;
 import cube.util.FileType;
@@ -169,6 +170,63 @@ public class CVService extends AbstractModule {
             Logger.e(this.getClass(), "#loadFile - File storage service load failed", e);
             return null;
         }
+    }
+
+    /**
+     * 合并二维码到文件。
+     *
+     * @param token
+     * @param barcodeList
+     * @return
+     */
+    public boolean combineBarcodes(AuthToken token, List<BarCode> barcodeList, CombineBarCodeListener listener) {
+        final CVEndpoint endpoint = this.selectEndpoint();
+        if (null == endpoint) {
+            Logger.e(this.getClass(), "#combineBarcodes - No endpoints");
+            return false;
+        }
+
+        endpoint.setWorking(true);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    JSONObject payload = new JSONObject();
+                    JSONArray barcodes = new JSONArray();
+                    for (BarCode barCode : barcodeList) {
+                        barcodes.put(barCode.toJSON());
+                    }
+                    payload.put("barcodes", barcodes);
+                    Packet request = new Packet(CVAction.CombineBarcodes.name, payload);
+                    ActionDialect dialect = cellet.transmit(endpoint.talkContext, request.toDialect(), 3 * 60 * 1000);
+                    if (null == dialect) {
+                        Logger.w(this.getClass(), "#combineBarcodes - Endpoint is error");
+                        listener.onFailed(barcodeList, CVStateCode.EndpointException);
+                        return;
+                    }
+
+                    Packet response = new Packet(dialect);
+                    if (Packet.extractCode(response) != CVStateCode.Ok.code) {
+                        Logger.w(this.getClass(), "#combineBarcodes - Process failed : " + Packet.extractCode(response));
+                        listener.onFailed(barcodeList, CVStateCode.FileError);
+                        return;
+                    }
+
+                    JSONObject data = Packet.extractDataPayload(response);
+                    JSONObject fileLabelJson = data.getJSONObject("fileLabel");
+                    FileLabel fileLabel = new FileLabel(fileLabelJson);
+                    listener.onCompleted(barcodeList, fileLabel);
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#combineBarcodes - Error", e);
+                    listener.onFailed(barcodeList, CVStateCode.Failure);
+                } finally {
+                    endpoint.setWorking(false);
+                }
+            }
+        });
+
+        return true;
     }
 
     /**

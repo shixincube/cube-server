@@ -102,7 +102,8 @@ public class AIGCUnit extends Entity {
     }
 
     public boolean isRunning() {
-        return this.runningCounter.get() > 0;
+        // 如果注册时间小于60秒，标记为正在运行
+        return (System.currentTimeMillis() - this.timestamp <= 60 * 1000) || (this.runningCounter.get() > 0);
     }
 
     public void resetRunning() {

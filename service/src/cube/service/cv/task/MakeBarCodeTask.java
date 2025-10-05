@@ -21,6 +21,7 @@ import cube.service.ServiceTask;
 import cube.service.cv.CVCellet;
 import cube.service.cv.CVService;
 import cube.service.cv.ToolKit;
+import cube.service.cv.listener.CombineBarCodeListener;
 import cube.util.PrintUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -78,15 +79,64 @@ public class MakeBarCodeTask extends ServiceTask {
             if (merge) {
                 List<BarCode> list = new ArrayList<>();
                 JSONArray array = packet.data.getJSONArray("list");
+                if (array.length() == 0) {
+                    this.cellet.speak(this.talkContext,
+                            this.makeResponse(dialect, packet, CVStateCode.InvalidData.code, new JSONObject()));
+                    markResponseTime();
+                    return;
+                }
+
                 for (int i = 0; i < array.length(); ++i) {
                     BarCode barCode = new BarCode(array.getJSONObject(i));
                     barCode.setContainer(BarCode.parseContainer(size));
                     list.add(barCode);
                 }
-                FileLabel fileLabel = ToolKit.getInstance().makeBarCodeA4Paper(token, list, layout);
-                if (null != fileLabel) {
-                    ++amount;
-                    result.put(fileLabel.toJSON());
+
+                if (layout.equalsIgnoreCase("single")) {
+                    if (Logger.isDebugLevel()) {
+                        Logger.d(this.getClass(), "#run - Use work endpoint");
+                    }
+
+                    boolean success = service.combineBarcodes(token, list, new CombineBarCodeListener() {
+                        @Override
+                        public void onCompleted(List<BarCode> barCodeList, FileLabel fileLabel) {
+                            result.put(fileLabel.toJSON());
+                            JSONObject responseJson = new JSONObject();
+                            responseJson.put("list", result);
+                            responseJson.put("amount", 1);
+                            cellet.speak(talkContext,
+                                    makeResponse(dialect, packet, CVStateCode.Ok.code, responseJson));
+                            markResponseTime();
+                        }
+
+                        @Override
+                        public void onFailed(List<BarCode> barCodeList, CVStateCode stateCode) {
+                            cellet.speak(talkContext,
+                                    makeResponse(dialect, packet, stateCode.code, new JSONObject()));
+                            markResponseTime();
+                        }
+                    });
+                    if (!success) {
+                        this.cellet.speak(this.talkContext,
+                                this.makeResponse(dialect, packet, CVStateCode.IllegalOperation.code, new JSONObject()));
+                        markResponseTime();
+                        return;
+                    }
+                }
+                else {
+                    FileLabel fileLabel = ToolKit.getInstance().makeBarCodeA4Paper(token, list, layout);
+                    if (null != fileLabel) {
+                        ++amount;
+                        result.put(fileLabel.toJSON());
+                    }
+
+                    JSONObject responseJson = new JSONObject();
+                    responseJson.put("list", result);
+                    responseJson.put("amount", amount);
+
+                    this.cellet.speak(this.talkContext,
+                            this.makeResponse(dialect, packet, CVStateCode.Ok.code, responseJson));
+                    markResponseTime();
                 }
             }
             else {
@@ -115,17 +165,24 @@ public class MakeBarCodeTask extends ServiceTask {
                         }
                     }
                 }
+
+                JSONObject responseJson = new JSONObject();
+                responseJson.put("list", result);
+                responseJson.put("amount", amount);
+
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, CVStateCode.Ok.code, responseJson));
+                markResponseTime();
             }
         } catch (Exception e) {
             Logger.e(this.getClass(), "#run", e);
+
+            JSONObject responseJson = new JSONObject();
+            responseJson.put("list", result);
+            responseJson.put("amount", amount);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, CVStateCode.Failure.code, responseJson));
+            markResponseTime();
         }
-
-        JSONObject responseJson = new JSONObject();
-        responseJson.put("list", result);
-        responseJson.put("amount", amount);
-
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, CVStateCode.Ok.code, responseJson));
-        markResponseTime();
     }
 }
