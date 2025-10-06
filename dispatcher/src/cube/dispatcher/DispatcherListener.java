@@ -165,6 +165,8 @@ public class DispatcherListener implements CellListener {
         config.keystore = properties.getProperty("keystore", "");
         config.storePassword = properties.getProperty("storePassword", "");
         config.managerPassword = properties.getProperty("managerPassword", "");
+        config.maxThreads = Integer.parseInt(properties.getProperty("maxThreads", "32"));
+        config.minThreads = Integer.parseInt(properties.getProperty("minThreads", "4"));
 
         return config;
     }

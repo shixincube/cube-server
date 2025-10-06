@@ -10,6 +10,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.CachedQueueExecutor;
 import cube.common.action.FileProcessorAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
@@ -19,7 +20,6 @@ import cube.service.fileprocessor.task.SteganographicTask;
 import cube.service.fileprocessor.task.SubmitWorkflowTask;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * 文件处理服务的 Cellet 服务。
@@ -40,7 +40,7 @@ public class FileProcessorServiceCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = Executors.newCachedThreadPool();
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
 
         this.service = new FileProcessorService(this.executor, this);
 

@@ -182,7 +182,7 @@ public class ContactManager extends AbstractModule implements CelletAdapterListe
      */
     @Override
     public void start() {
-        this.executor = Executors.newCachedThreadPool();
+        this.executor = Executors.newFixedThreadPool(8);
 
         this.daemon = new DaemonTask(this);
 

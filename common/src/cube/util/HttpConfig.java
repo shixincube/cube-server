@@ -17,4 +17,7 @@ public class HttpConfig {
     public String storePassword = null;
     public String managerPassword = null;
 
+    public int maxThreads = 32;
+    public int minThreads = 8;
+
 }

@@ -41,6 +41,9 @@ public class DiskSystem implements FileSystem {
 
     private Endpoint endpoint;
 
+    private int maxThreads = 8;
+    private int minThreads = 2;
+
     private String url;
 
     private HttpServer httpServer;
@@ -54,10 +57,11 @@ public class DiskSystem implements FileSystem {
     private ReceiveFileHandler receiveFileHandler;
 
     public DiskSystem(String managingPath, String host, int port) {
-        this(managingPath, host, port, null, 0);
+        this(managingPath, host, port, null, 0, 8, 2);
     }
 
-    public DiskSystem(String managingPath, String host, int port, String masterHost, int masterPort) {
+    public DiskSystem(String managingPath, String host, int port, String masterHost, int masterPort,
+                      int maxThreads, int minThreads) {
         this.managingPath = Paths.get(managingPath);
         if (!Files.exists(this.managingPath)) {
             try {
@@ -68,6 +72,9 @@ public class DiskSystem implements FileSystem {
         }
 
         this.endpoint = new Endpoint(host, port);
+
+        this.maxThreads = maxThreads;
+        this.minThreads = minThreads;
 
         if (null != masterHost && 0 != masterPort) {
             this.masterEndpoint = new Endpoint(masterHost, masterPort);
@@ -85,6 +92,7 @@ public class DiskSystem implements FileSystem {
     @Override
     public void start() {
         this.httpServer = new HttpServer();
+        this.httpServer.setThreads(this.maxThreads, this.minThreads);
 
         Resource resource = new PathResource(this.managingPath);
 

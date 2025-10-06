@@ -11,6 +11,7 @@ import cell.core.cellet.Cellet;
 import cell.core.net.Endpoint;
 import cell.core.talk.*;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.CachedQueueExecutor;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
@@ -196,6 +197,10 @@ public class Performer implements TalkListener, Tickable {
         }
 
         this.httpServer.setPort(config.httpPort, config.httpsPort);
+        this.httpServer.setThreads(config.maxThreads, config.minThreads);
+
+        Logger.i(this.getClass(), "#configHttpServer - The http server threads: "
+                + config.maxThreads + "/" + config.minThreads);
     }
 
     /**
@@ -466,7 +471,20 @@ public class Performer implements TalkListener, Tickable {
      * 启动执行机，并对路由权重和范围进行初始化。
      */
     public void start(List<String> cellets) {
-        this.executor = Executors.newCachedThreadPool();
+        int max = 8;
+        try {
+            max = Integer.parseInt(this.properties.getProperty("threadpool.max", "16"));
+        } catch (Exception e) {
+            // Nothing
+        }
+        if (this.properties.getProperty("threadpool.type", "cached").equalsIgnoreCase("cached")) {
+            this.executor = CachedQueueExecutor.newCachedQueueThreadPool(max);
+        }
+        else {
+            this.executor = Executors.newFixedThreadPool(max);
+        }
+        Logger.i(this.getClass(), "#start - The thread pool type: "
+                + this.properties.getProperty("threadpool.type", "cached") + " - max: " + max);
 
         // 添加全局监听
         this.talkService.addListener(this);

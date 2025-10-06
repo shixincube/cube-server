@@ -38,6 +38,10 @@ public class HttpServer {
 
     private String keyManagerPassword;
 
+    private int maxThreads = 16;
+
+    private int minThreads = 4;
+
     private List<ContextHandler> handlers;
 
     private HandlerList handlerList;
@@ -63,6 +67,11 @@ public class HttpServer {
     public void setPort(int plainPort, int securePort) {
         this.plainPort = plainPort;
         this.securePort = securePort;
+    }
+
+    public void setThreads(int maxThreads, int minThreads) {
+        this.maxThreads = maxThreads > 1 ? maxThreads : 16;
+        this.minThreads = minThreads > 0 ? minThreads : 4;
     }
 
     public void addContextHandler(ContextHandler handler) {
@@ -124,7 +133,7 @@ public class HttpServer {
         this.plainPort = plainPort;
         this.securePort = securePort;
 
-        ExecutorThreadPool executorThreadPool = new ExecutorThreadPool(256, 16);
+        ExecutorThreadPool executorThreadPool = new ExecutorThreadPool(this.maxThreads, this.minThreads);
         this.server = new Server(executorThreadPool);
 
         ServerConnector https = null;

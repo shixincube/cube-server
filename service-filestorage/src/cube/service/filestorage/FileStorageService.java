@@ -178,11 +178,16 @@ public class FileStorageService extends AbstractModule {
                 String path = properties.getProperty("disk.path", "storage/files");
                 String host = properties.getProperty("disk.host", "127.0.0.1");
                 int port = Integer.parseInt(properties.getProperty("disk.port", "6080"));
+                int maxThreads = Integer.parseInt(properties.getProperty("disk.threads.max", "16"));
+                int minThreads = Integer.parseInt(properties.getProperty("disk.threads.min", "2"));
 
                 String masterHost = properties.getProperty("disk.master.host", "127.0.0.1");
                 int masterPort = Integer.parseInt(properties.getProperty("disk.master.port", "0"));
 
-                this.fileSystem = new DiskSystem(path, host, port, masterHost, masterPort);
+                this.fileSystem = new DiskSystem(path, host, port, masterHost, masterPort, maxThreads, minThreads);
+
+                Logger.i(this.getClass(), "File system settings - port: " + port + " - "
+                        + "threads: " + maxThreads + "/" + minThreads);
             }
             else {
                 Logger.w(this.getClass(), "Unsupported file system: " + filesystem);

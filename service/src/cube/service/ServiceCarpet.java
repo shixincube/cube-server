@@ -149,7 +149,14 @@ public class ServiceCarpet implements CellListener {
 
 
     private void setupKernel() {
-        AbstractCellet.initialize();
+        // Read configs
+        Properties properties = null;
+        try {
+            properties = ConfigUtils.readProperties("config/service.properties");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        AbstractCellet.initialize(properties);
 
         JSONObject tokenCache = new JSONObject();
         try {

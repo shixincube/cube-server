@@ -130,6 +130,8 @@ public class ContainerManager {
         this.httpConfig.keystore = properties.getProperty("keystore");
         this.httpConfig.storePassword = properties.getProperty("storePassword");
         this.httpConfig.managerPassword = properties.getProperty("managerPassword");
+        this.httpConfig.maxThreads = Integer.parseInt(properties.getProperty("maxThreads", "8"));
+        this.httpConfig.minThreads = Integer.parseInt(properties.getProperty("minThreads", "2"));
         return this.httpConfig;
     }
 

@@ -10,13 +10,13 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
+import cell.util.CachedQueueExecutor;
 import cube.common.action.MessagingAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.messaging.task.*;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * 消息服务 Cellet 。
@@ -34,7 +34,7 @@ public class MessagingServiceCellet extends AbstractCellet {
         Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
         kernel.installModule(this.getName(), new MessagingService(this));
 
-        this.executor = Executors.newCachedThreadPool();
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
         return true;
     }
 

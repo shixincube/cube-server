@@ -59,7 +59,7 @@ public class CVService extends AbstractModule {
 
     @Override
     public void start() {
-        this.executor = Executors.newCachedThreadPool();
+        this.executor = Executors.newFixedThreadPool(8);
 
         this.executor.execute(new Runnable() {
             @Override

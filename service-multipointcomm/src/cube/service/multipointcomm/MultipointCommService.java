@@ -13,6 +13,7 @@ import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
 import cube.common.ModuleEvent;
 import cube.common.Packet;
@@ -106,7 +107,7 @@ public class MultipointCommService extends AbstractModule implements CelletAdapt
         this.contactsAdapter = CelletAdapterFactory.getInstance().getAdapter("Contacts");
         this.contactsAdapter.addListener(this);
 
-        this.executor = Executors.newCachedThreadPool();
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(4);
 
         this.scheduledExecutor = Executors.newScheduledThreadPool(16);
 

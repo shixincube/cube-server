@@ -34,7 +34,7 @@ public class ManagementDaemon extends Thread {
         setName("ManagementDaemon");
         setDaemon(true);
         this.kernel = kernel;
-        this.executor = Executors.newCachedThreadPool();
+        this.executor = Executors.newFixedThreadPool(8);
     }
 
     @Override

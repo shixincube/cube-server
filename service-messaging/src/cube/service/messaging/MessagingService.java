@@ -101,7 +101,7 @@ public final class MessagingService extends AbstractModule implements CelletAdap
      */
     public MessagingService(MessagingServiceCellet cellet) {
         this.cellet = cellet;
-        this.executor = Executors.newCachedThreadPool();
+        this.executor = CachedQueueExecutor.newCachedQueueThreadPool(8);
         this.messageStateMap = new ConcurrentHashMap<>();
     }
 

@@ -206,7 +206,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     @Override
     public void start() {
-        this.executor = Executors.newCachedThreadPool();
+        this.executor = Executors.newFixedThreadPool(32);
 
         this.pluginSystem = new AIGCPluginSystem();
 
@@ -599,11 +599,11 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         }
 
-        // 按照权重从高到低排序
+        // 按照最近执行时间戳从低到高排序
         Collections.sort(candidates, new Comparator<AIGCUnit>() {
             @Override
             public int compare(AIGCUnit u1, AIGCUnit u2) {
-                return (int)(u2.getWeight() - u1.getWeight());
+                return (int)(u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
             }
         });
 
@@ -727,8 +727,16 @@ public class AIGCService extends AbstractModule implements Generatable {
             return candidates.get(0);
         }
 
-        // 先进行一次随机选择
-        AIGCUnit unit = candidates.get(Utils.randomInt(0, num - 1));
+        // 按照最近执行时间戳从低到高排序
+        Collections.sort(candidates, new Comparator<AIGCUnit>() {
+            @Override
+            public int compare(AIGCUnit u1, AIGCUnit u2) {
+                return (int)(u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
+            }
+        });
+
+        // 先进行一次选择，选择最久没有执行的
+        AIGCUnit unit = candidates.get(0);
 
         iter = candidates.iterator();
         while (iter.hasNext()) {
@@ -740,12 +748,14 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         if (candidates.isEmpty()) {
-            // 所有单元都在运行，返回随机选择
+            // 所有单元都在运行
             return unit;
         }
 
-        unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
-        return unit;
+        // 返回最久的单元
+        return candidates.get(0);
+//        unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
+//        return unit;
     }
 
     //-------- App Interface - Start --------

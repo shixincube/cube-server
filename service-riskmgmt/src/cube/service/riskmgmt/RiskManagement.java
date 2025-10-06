@@ -66,7 +66,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
 
     @Override
     public void start() {
-        this.executor = Executors.newCachedThreadPool();
+        this.executor = Executors.newFixedThreadPool(8);
 
         ContactManager.getInstance().addListener(this);
 

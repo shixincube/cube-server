@@ -39,7 +39,7 @@ public class MessagingStorageTest {
     private HashMap<Long, Message> messageMap;
 
     public MessagingStorageTest() {
-        this.executor = Executors.newCachedThreadPool();
+        this.executor = Executors.newFixedThreadPool(2);
 
         String dbfile = "storage/test-messages.db";
         if (clean) {

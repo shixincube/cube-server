@@ -11,7 +11,6 @@ import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
-import cell.util.CachedQueueExecutor;
 import cube.common.action.FileStorageAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
@@ -33,7 +32,7 @@ public class FileStorageServiceCellet extends AbstractCellet {
 
     @Override
     public boolean install() {
-        this.executor = Executors.newCachedThreadPool();
+        this.executor = Executors.newFixedThreadPool(16);
 
         Kernel kernel = (Kernel) this.nucleus.getParameter("kernel");
         kernel.installModule(this.getName(), new FileStorageService(this, this.executor));

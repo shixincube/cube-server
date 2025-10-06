@@ -24,7 +24,7 @@ public final class ProcessManager {
     private ExecutorService executor;
 
     private ProcessManager() {
-        this.executor = Executors.newCachedThreadPool();
+        this.executor = Executors.newFixedThreadPool(16);
     }
 
     public final static ProcessManager getInstance() {

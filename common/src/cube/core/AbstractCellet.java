@@ -9,10 +9,13 @@ package cube.core;
 import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
+import cell.util.CachedQueueExecutor;
+import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -36,9 +39,28 @@ public abstract class AbstractCellet extends Cellet {
         super(name);
     }
 
-    public static void initialize() {
+    public static void initialize(Properties properties) {
         if (null == AbstractCellet.sExecutor) {
-            AbstractCellet.sExecutor = Executors.newCachedThreadPool(); // CachedQueueExecutor.newCachedQueueThreadPool(128);
+            if (null == properties) {
+                AbstractCellet.sExecutor = Executors.newFixedThreadPool(32);
+                Logger.i(AbstractCellet.class, "The thread pool type (NO configs): " + "fixed - max: " + 32);
+            }
+            else {
+                int max = 8;
+                try {
+                    max = Integer.parseInt(properties.getProperty("threadpool.max", "32"));
+                } catch (Exception e) {
+                    // Nothing
+                }
+                if (properties.getProperty("threadpool.type", "cached").equalsIgnoreCase("cached")) {
+                    AbstractCellet.sExecutor = CachedQueueExecutor.newCachedQueueThreadPool(max);
+                }
+                else {
+                    AbstractCellet.sExecutor = Executors.newFixedThreadPool(max);
+                }
+                Logger.i(AbstractCellet.class, "The thread pool type: "
+                        + properties.getProperty("threadpool.type", "cached") + " - max: " + max);
+            }
         }
     }
 
