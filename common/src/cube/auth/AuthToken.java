@@ -19,6 +19,11 @@ import java.util.Date;
 public class AuthToken implements JSONable {
 
     /**
+     * 实例活跃时间戳。
+     */
+    public long timestamp = System.currentTimeMillis();
+
+    /**
      * 令牌的编码。
      */
     private String code;

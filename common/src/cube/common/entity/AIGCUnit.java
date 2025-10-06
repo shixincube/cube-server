@@ -12,6 +12,7 @@ import org.json.JSONObject;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * AIGC 服务单元。
@@ -30,7 +31,7 @@ public class AIGCUnit extends Entity {
 
     private AtomicInteger runningCounter;
 
-    private long lastRunningTimestamp;
+    private AtomicLong lastRunningTimestamp;
 
     private ConcurrentLinkedQueue<Failure> failures;
 
@@ -43,7 +44,7 @@ public class AIGCUnit extends Entity {
         this.weight = 5.0;
         this.runningCounter = new AtomicInteger(0);
         this.failures = new ConcurrentLinkedQueue<>();
-        this.lastRunningTimestamp = System.currentTimeMillis();
+        this.lastRunningTimestamp.set(System.currentTimeMillis());
     }
 
     public AIGCUnit(JSONObject json) {
@@ -90,7 +91,7 @@ public class AIGCUnit extends Entity {
     }
 
     public synchronized void setRunning(boolean value) {
-        this.lastRunningTimestamp = System.currentTimeMillis();
+        this.lastRunningTimestamp.set(System.currentTimeMillis());
         if (value) {
             this.runningCounter.incrementAndGet();
         }
@@ -107,13 +108,13 @@ public class AIGCUnit extends Entity {
     }
 
     public void resetRunning() {
-        if (System.currentTimeMillis() - this.lastRunningTimestamp > 5 * 60 * 1000) {
+        if (System.currentTimeMillis() - this.lastRunningTimestamp.get() > 10 * 60 * 1000) {
             this.runningCounter.set(0);
         }
     }
 
     public long getLastRunningTimestamp() {
-        return this.lastRunningTimestamp;
+        return this.lastRunningTimestamp.get();
     }
 
     public void markFailure(int code, long timestamp, long contactId) {

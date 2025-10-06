@@ -59,9 +59,13 @@ public class FileHandler extends CrossDomainHandler {
 
     public final static String PATH = "/filestorage/file/";
 
-    protected final static AtomicInteger sConcurrency = new AtomicInteger(0);
+    protected final int maxUploadConcurrency;
 
-    protected final static int sMaxConcurrency = 50;
+    protected final int maxDownloadConcurrency;
+
+    protected final AtomicInteger uploadConcurrency = new AtomicInteger(0);
+
+    protected final AtomicInteger downloadConcurrency = new AtomicInteger(0);
 
     private FileChunkStorage fileChunkStorage;
 
@@ -84,9 +88,13 @@ public class FileHandler extends CrossDomainHandler {
         super();
         this.fileChunkStorage = fileChunkStorage;
         this.performer = performer;
+        this.maxUploadConcurrency = performer.getConcurrentFileInputLimit();
+        this.maxDownloadConcurrency = performer.getConcurrentFileOutputLimit();
         if (!this.tempPath.exists()) {
             this.tempPath.mkdirs();
         }
+        Logger.i(this.getClass(), "The file handler concurrency config (U/D): "
+                + this.maxUploadConcurrency + "/" + this.maxDownloadConcurrency);
     }
 
     /**
@@ -101,19 +109,19 @@ public class FileHandler extends CrossDomainHandler {
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
         // 判断并发数量
-        if (sConcurrency.get() >= sMaxConcurrency) {
-            Logger.w(this.getClass(), "#doPost - The connection reaches the maximum concurrent number : " +
-                    sConcurrency.get() + "/" + sMaxConcurrency);
+        if (this.uploadConcurrency.get() >= this.maxUploadConcurrency) {
+            Logger.w(this.getClass(), "#doPost - The upload connection reaches the maximum concurrent number : " +
+                    uploadConcurrency.get() + "/" + maxUploadConcurrency);
 //            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
 //            this.complete();
 //            return;
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#doPost - The realtime concurrency: " + sConcurrency.get());
+            Logger.d(this.getClass(), "#doPost - The realtime upload concurrency: " + uploadConcurrency.get());
         }
 
-        sConcurrency.incrementAndGet();
+        this.uploadConcurrency.incrementAndGet();
 
         try {
             // Token Code
@@ -490,7 +498,7 @@ public class FileHandler extends CrossDomainHandler {
         } catch (Exception e) {
             Logger.e(this.getClass(), "#doPost", e);
         } finally {
-            sConcurrency.decrementAndGet();
+            this.uploadConcurrency.decrementAndGet();
         }
     }
 
@@ -549,8 +557,12 @@ public class FileHandler extends CrossDomainHandler {
     }
 
     private void clearTempFiles(ArrayList<File> files) {
-        for (File file : files) {
-            file.delete();
+        try {
+            for (File file : files) {
+                file.delete();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -565,184 +577,204 @@ public class FileHandler extends CrossDomainHandler {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        // Version
-        String version = request.getHeader(HEADER_X_BAIZE_API_VERSION);
-        if (null == version) {
-            version = "v0";
+        if (this.downloadConcurrency.get() >= this.maxDownloadConcurrency) {
+            Logger.w(this.getClass(), "#doPost - The download connection reaches the maximum concurrent number : " +
+                    downloadConcurrency.get() + "/" + maxDownloadConcurrency);
+//            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
+//            this.complete();
+//            return;
         }
 
-        // Sharing Code
-        String sharingCode = request.getParameter("sc");
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#doGet - The realtime download concurrency: " + downloadConcurrency.get());
+        }
 
-        FileLabel fileLabel = null;
-        FileType type = null;
+        this.downloadConcurrency.incrementAndGet();
 
-        if (null != sharingCode) {
-            // TODO 支持版本选择和 makeError
-            JSONObject payload = new JSONObject();
-            payload.put("code", sharingCode);
-            payload.put("refresh", false);
-            payload.put("full", true);
-            Packet packet = new Packet(FileStorageAction.GetSharingTag.name, payload);
-            // 请求数据
-            ActionDialect dialect = this.performer.syncTransmit(FileStorageCellet.NAME, packet.toDialect());
-            if (null == dialect) {
-                response.setStatus(HttpStatus.BAD_REQUEST_400);
-                this.complete();
-                return;
+        try {
+            // Version
+            String version = request.getHeader(HEADER_X_BAIZE_API_VERSION);
+            if (null == version) {
+                version = "v0";
             }
 
-            Packet responsePacket = new Packet(dialect);
+            // Sharing Code
+            String sharingCode = request.getParameter("sc");
 
-            int stateCode = Packet.extractCode(responsePacket);
-            if (stateCode != FileStorageStateCode.Ok.code) {
-                // 状态错误
-                this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
-                this.complete();
-                return;
-            }
+            FileLabel fileLabel = null;
+            FileType type = null;
 
-            JSONObject tagJson = Packet.extractDataPayload(responsePacket);
-            SharingTag sharingTag = new SharingTag(tagJson);
-
-            // 识别权限
-            if (sharingTag.getConfig().isTraceDownload()) {
-                // 需要用户进行登录
-                String token = request.getParameter("token");
-                if (null == token) {
-                    Logger.d(this.getClass(), "Need token to download: " + sharingTag.getCode());
-                    response.setStatus(HttpStatus.FORBIDDEN_403);
-                    this.complete();
-                    return;
-                }
-
-                // 校验令牌
-                payload = new JSONObject();
-                payload.put("code", token);
-                packet = new Packet(AuthAction.GetToken.name, payload);
-                dialect = this.performer.syncTransmit(AuthCellet.NAME, packet.toDialect());
+            if (null != sharingCode) {
+                // TODO 支持版本选择和 makeError
+                JSONObject payload = new JSONObject();
+                payload.put("code", sharingCode);
+                payload.put("refresh", false);
+                payload.put("full", true);
+                Packet packet = new Packet(FileStorageAction.GetSharingTag.name, payload);
+                // 请求数据
+                ActionDialect dialect = this.performer.syncTransmit(FileStorageCellet.NAME, packet.toDialect());
                 if (null == dialect) {
-                    response.setStatus(HttpStatus.NOT_FOUND_404);
+                    response.setStatus(HttpStatus.BAD_REQUEST_400);
                     this.complete();
                     return;
                 }
 
-                responsePacket = new Packet(dialect);
-                if (Packet.extractCode(responsePacket) == AuthStateCode.Ok.code) {
-                    // 存在合法令牌
-                    AuthToken authToken = new AuthToken(Packet.extractDataPayload(responsePacket));
-                    if (authToken.getExpiry() < System.currentTimeMillis()) {
-                        // 令牌过期
-                        Logger.d(this.getClass(), "Token have expired - " + authToken.getCode());
-                        response.setStatus(HttpStatus.NOT_ACCEPTABLE_406);
+                Packet responsePacket = new Packet(dialect);
+
+                int stateCode = Packet.extractCode(responsePacket);
+                if (stateCode != FileStorageStateCode.Ok.code) {
+                    // 状态错误
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
+                    this.complete();
+                    return;
+                }
+
+                JSONObject tagJson = Packet.extractDataPayload(responsePacket);
+                SharingTag sharingTag = new SharingTag(tagJson);
+
+                // 识别权限
+                if (sharingTag.getConfig().isTraceDownload()) {
+                    // 需要用户进行登录
+                    String token = request.getParameter("token");
+                    if (null == token) {
+                        Logger.d(this.getClass(), "Need token to download: " + sharingTag.getCode());
+                        response.setStatus(HttpStatus.FORBIDDEN_403);
+                        this.complete();
+                        return;
+                    }
+
+                    // 校验令牌
+                    payload = new JSONObject();
+                    payload.put("code", token);
+                    packet = new Packet(AuthAction.GetToken.name, payload);
+                    dialect = this.performer.syncTransmit(AuthCellet.NAME, packet.toDialect());
+                    if (null == dialect) {
+                        response.setStatus(HttpStatus.NOT_FOUND_404);
+                        this.complete();
+                        return;
+                    }
+
+                    responsePacket = new Packet(dialect);
+                    if (Packet.extractCode(responsePacket) == AuthStateCode.Ok.code) {
+                        // 存在合法令牌
+                        AuthToken authToken = new AuthToken(Packet.extractDataPayload(responsePacket));
+                        if (authToken.getExpiry() < System.currentTimeMillis()) {
+                            // 令牌过期
+                            Logger.d(this.getClass(), "Token have expired - " + authToken.getCode());
+                            response.setStatus(HttpStatus.NOT_ACCEPTABLE_406);
+                            this.complete();
+                            return;
+                        }
+                    }
+                }
+
+                // 文件标签
+                fileLabel = sharingTag.getConfig().getFileLabel();
+                // 文件类型
+                type = fileLabel.getFileType();
+            }
+            else {
+                // Token Code
+                String token = request.getParameter("token");
+                // File Code
+                String fileCode = request.getParameter("fc");
+                // Domain, optional
+                String domain = request.getParameter("domain");
+                // Device, optional
+                String device = request.getParameter("device");
+
+                if (null == token) {
+                    token = request.getHeader(HEADER_X_BAIZE_API_TOKEN);
+                    if (null == token) {
+                        this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                         this.complete();
                         return;
                     }
                 }
-            }
-
-            // 文件标签
-            fileLabel = sharingTag.getConfig().getFileLabel();
-            // 文件类型
-            type = fileLabel.getFileType();
-        }
-        else {
-            // Token Code
-            String token = request.getParameter("token");
-            // File Code
-            String fileCode = request.getParameter("fc");
-            // Domain, optional
-            String domain = request.getParameter("domain");
-            // Device, optional
-            String device = request.getParameter("device");
-
-            if (null == token) {
-                token = request.getHeader(HEADER_X_BAIZE_API_TOKEN);
-                if (null == token) {
+                if (null == fileCode) {
                     this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                     this.complete();
                     return;
                 }
-            }
-            if (null == fileCode) {
-                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
-                this.complete();
-                return;
+
+                // Type
+                String typeDesc = request.getParameter("type");
+                type = FileType.matchExtension(typeDesc);
+
+                // SN
+                Long sn = null;
+                if (null != request.getParameter("sn")) {
+                    sn = Long.parseLong(request.getParameter("sn"));
+                }
+                else {
+                    sn = Utils.generateSerialNumber();
+                }
+
+                JSONObject payload = new JSONObject();
+                payload.put("fileCode", fileCode);
+
+                if (null != domain) {
+                    domain = URLDecoder.decode(domain, "UTF-8");
+                    domain = new String(Base64.decode(domain), StandardCharsets.UTF_8);
+                    payload.put("domain", domain);
+                }
+
+                Packet packet = new Packet(sn, FileStorageAction.GetFile.name, payload);
+                ActionDialect packetDialect = packet.toDialect();
+
+                if (null != device) {
+                    // 设置设备信息用于判定是否产生下载事件
+                    packetDialect.addParam("device", device);
+                }
+
+                ActionDialect responseDialect = null;
+                token = token.trim();
+                packetDialect.addParam("token", token);
+                if (this.performer.existsTokenCode(token)) {
+                    responseDialect = this.performer.syncTransmit(token, FileStorageCellet.NAME, packetDialect);
+                }
+                else {
+                    responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
+                }
+                if (null == responseDialect) {
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                    this.complete();
+                    return;
+                }
+
+                Packet responsePacket = new Packet(responseDialect);
+
+                int stateCode = Packet.extractCode(responsePacket);
+                if (stateCode != FileStorageStateCode.Ok.code) {
+                    Logger.w(this.getClass(), "#doGet - Service state code : " + stateCode);
+                    // 状态错误
+                    this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
+                    this.complete();
+                    return;
+                }
+
+                JSONObject fileLabelJson = Packet.extractDataPayload(responsePacket);
+                // 文件标签
+                fileLabel = new FileLabel(fileLabelJson);
+                // 文件类型
+                type = fileLabel.getFileType();
             }
 
-            // Type
-            String typeDesc = request.getParameter("type");
-            type = FileType.matchExtension(typeDesc);
+            // 识别文件类型
+            if (type == FileType.UNKNOWN) {
+                type = FileType.matchExtension(fileLabel.getFileExtension());
+            }
 
-            // SN
-            Long sn = null;
-            if (null != request.getParameter("sn")) {
-                sn = Long.parseLong(request.getParameter("sn"));
+            if (fileLabel.getFileSize() > (long) this.bufferSize) {
+                this.processByNonBlocking(request, response, fileLabel, type);
             }
             else {
-                sn = Utils.generateSerialNumber();
+                this.processByBlocking(request, response, fileLabel, type);
             }
-
-            JSONObject payload = new JSONObject();
-            payload.put("fileCode", fileCode);
-
-            if (null != domain) {
-                domain = URLDecoder.decode(domain, "UTF-8");
-                domain = new String(Base64.decode(domain), StandardCharsets.UTF_8);
-                payload.put("domain", domain);
-            }
-
-            Packet packet = new Packet(sn, FileStorageAction.GetFile.name, payload);
-            ActionDialect packetDialect = packet.toDialect();
-
-            if (null != device) {
-                // 设置设备信息用于判定是否产生下载事件
-                packetDialect.addParam("device", device);
-            }
-
-            ActionDialect responseDialect = null;
-            token = token.trim();
-            packetDialect.addParam("token", token);
-            if (this.performer.existsTokenCode(token)) {
-                responseDialect = this.performer.syncTransmit(token, FileStorageCellet.NAME, packetDialect);
-            }
-            else {
-                responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
-            }
-            if (null == responseDialect) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
-                this.complete();
-                return;
-            }
-
-            Packet responsePacket = new Packet(responseDialect);
-
-            int stateCode = Packet.extractCode(responsePacket);
-            if (stateCode != FileStorageStateCode.Ok.code) {
-                Logger.w(this.getClass(), "#doGet - Service state code : " + stateCode);
-                // 状态错误
-                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
-                this.complete();
-                return;
-            }
-
-            JSONObject fileLabelJson = Packet.extractDataPayload(responsePacket);
-            // 文件标签
-            fileLabel = new FileLabel(fileLabelJson);
-            // 文件类型
-            type = fileLabel.getFileType();
-        }
-
-        // 识别文件类型
-        if (type == FileType.UNKNOWN) {
-            type = FileType.matchExtension(fileLabel.getFileExtension());
-        }
-
-        if (fileLabel.getFileSize() > (long) this.bufferSize) {
-            this.processByNonBlocking(request, response, fileLabel, type);
-        }
-        else {
-            this.processByBlocking(request, response, fileLabel, type);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#doGet", e);
+        } finally {
+            this.downloadConcurrency.decrementAndGet();
         }
     }
 

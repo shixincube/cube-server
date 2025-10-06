@@ -203,6 +203,22 @@ public class Performer implements TalkListener, Tickable {
                 + config.maxThreads + "/" + config.minThreads);
     }
 
+    public int getConcurrentFileInputLimit() {
+        try {
+            return Integer.parseInt(this.properties.getProperty("concurrency.file.in", "10"));
+        } catch (Exception e) {
+            return 10;
+        }
+    }
+
+    public int getConcurrentFileOutputLimit() {
+        try {
+            return Integer.parseInt(this.properties.getProperty("concurrency.file.out", "10"));
+        } catch (Exception e) {
+            return 10;
+        }
+    }
+
     /**
      * 设置配置属性。
      *
@@ -576,6 +592,8 @@ public class Performer implements TalkListener, Tickable {
         }
     }
 
+
+
     /**
      * 指定的令牌是否在当前节点建立连接。
      *
@@ -630,6 +648,7 @@ public class Performer implements TalkListener, Tickable {
     public AuthToken verifyToken(String tokenCode) {
         AuthToken authToken = this.validAuthTokenMap.get(tokenCode);
         if (null != authToken) {
+            authToken.timestamp = System.currentTimeMillis();
             return authToken;
         }
 
@@ -990,6 +1009,14 @@ public class Performer implements TalkListener, Tickable {
     public void onTick(long now) {
         for (Tickable tickable : this.tickableList) {
             tickable.onTick(now);
+        }
+
+        Iterator<Map.Entry<String, AuthToken>> atiter = this.validAuthTokenMap.entrySet().iterator();
+        while (atiter.hasNext()) {
+            Map.Entry<String, AuthToken> entry = atiter.next();
+            if (now - entry.getValue().timestamp > 60 * 60 * 1000) {
+                atiter.remove();
+            }
         }
     }
 
