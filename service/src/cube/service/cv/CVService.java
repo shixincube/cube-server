@@ -216,7 +216,30 @@ public class CVService extends AbstractModule {
                     JSONObject data = Packet.extractDataPayload(response);
                     JSONObject fileLabelJson = data.getJSONObject("fileLabel");
                     FileLabel fileLabel = new FileLabel(fileLabelJson);
-                    listener.onCompleted(barcodeList, fileLabel);
+
+                    // 从文件系统检查文件
+                    int countdown = 100;
+                    FileLabel current = null;
+                    do {
+                        try {
+                            Thread.sleep(100);
+                        } catch (Exception e) {
+                            // Nothing
+                        }
+                        current = getFile(token.getDomain(), fileLabel.getFileCode());
+                        --countdown;
+                        if (countdown <= 0) {
+                            break;
+                        }
+                    } while (null == current);
+
+                    if (null != current) {
+                        listener.onCompleted(barcodeList, fileLabel);
+                    }
+                    else {
+                        Logger.e(this.getClass(), "#combineBarcodes - Endpoint upload file failed: " + endpoint.toString());
+                        listener.onFailed(barcodeList, CVStateCode.FileError);
+                    }
                 } catch (Exception e) {
                     Logger.e(this.getClass(), "#combineBarcodes - Error", e);
                     listener.onFailed(barcodeList, CVStateCode.Failure);

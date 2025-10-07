@@ -36,6 +36,11 @@ public class CVEndpoint {
     }
 
     @Override
+    public String toString() {
+        return contact.getId() + "@" + talkContext.getSessionHost() + ":" + talkContext.getSessionPort();
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof CVEndpoint) {
             CVEndpoint other = (CVEndpoint) obj;

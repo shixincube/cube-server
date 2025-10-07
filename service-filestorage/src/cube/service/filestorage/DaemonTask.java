@@ -117,7 +117,7 @@ public class DaemonTask implements Runnable {
             }).start();
         }
 
-        if (this.service.cacheFileLabelMap.size() > 100) {
+        if (this.service.cacheFileLabelMap.size() > 500) {
             // 删除大于30分钟的文件
             Iterator<Map.Entry<String, FileLabel>> iter = this.service.cacheFileLabelMap.entrySet().iterator();
             while (iter.hasNext()) {

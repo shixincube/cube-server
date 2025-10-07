@@ -468,7 +468,7 @@ public class ServiceStorage implements Storagable {
      * @param fileLabel
      * @param fileDescriptor
      */
-    public void writeFileLabel(final FileLabel fileLabel, final FileDescriptor fileDescriptor) {
+    public synchronized void writeFileLabel(final FileLabel fileLabel, final FileDescriptor fileDescriptor) {
         String labelTable = this.labelTableNameMap.get(fileLabel.getDomain().getName());
         String descriptorTable = this.descriptorTableNameMap.get(fileLabel.getDomain().getName());
 

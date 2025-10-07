@@ -1868,7 +1868,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
             request = new Packet(AIGCAction.TextToText.name, data);
             dialect = this.cellet.transmit(unit.getContext(), request.toDialect(),
-                    6 * 60 * 1000, sn);
+                    8 * 60 * 1000, sn);
             if (null == dialect) {
                 Logger.w(AIGCService.class, "#syncGenerateText - transmit failed, sn:" + sn);
                 // 记录故障

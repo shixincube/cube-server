@@ -96,12 +96,12 @@ public class ReceiveFileHandler extends ContextHandler {
                 File file = service.writeFile(filename, fileCode, ris);
                 if (null == file) {
                     Logger.e(ReceiveFileHandler.class, "#doPost - Write file failed: " + filename);
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
                     try {
                         ris.close();
                     } catch (Exception e) {
                         // Nothing
                     }
+                    this.respond(response, HttpStatus.BAD_REQUEST_400);
                     this.complete();
                     return;
                 }
@@ -114,22 +114,22 @@ public class ReceiveFileHandler extends ContextHandler {
                 FileLabel newFileLabel = service.putFile(fileLabel);
                 if (null == newFileLabel) {
                     Logger.e(ReceiveFileHandler.class, "#doPost - Put file failed: " + filename);
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
                     try {
                         ris.close();
                     } catch (Exception e) {
                         // Nothing
                     }
+                    this.respond(response, HttpStatus.BAD_REQUEST_400);
                     this.complete();
                     return;
                 }
 
-                this.respondOk(response, newFileLabel.toJSON());
                 try {
                     ris.close();
                 } catch (Exception e) {
                     // Nothing
                 }
+                this.respondOk(response, newFileLabel.toJSON());
                 this.complete();
             }
             else {

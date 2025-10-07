@@ -31,7 +31,7 @@ public class AIGCUnit extends Entity {
 
     private AtomicInteger runningCounter;
 
-    private AtomicLong lastRunningTimestamp;
+    private AtomicLong lastRunningTimestamp = new AtomicLong(System.currentTimeMillis());
 
     private ConcurrentLinkedQueue<Failure> failures;
 
@@ -44,7 +44,6 @@ public class AIGCUnit extends Entity {
         this.weight = 5.0;
         this.runningCounter = new AtomicInteger(0);
         this.failures = new ConcurrentLinkedQueue<>();
-        this.lastRunningTimestamp.set(System.currentTimeMillis());
     }
 
     public AIGCUnit(JSONObject json) {

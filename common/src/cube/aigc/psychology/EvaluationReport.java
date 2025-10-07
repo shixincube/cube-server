@@ -31,8 +31,6 @@ import java.util.List;
  */
 public class EvaluationReport implements JSONable {
 
-    public final static String UNIT = ModelConfig.BAIZE_UNIT;
-
     private final long contactId;
 
     private Attribute attribute;
