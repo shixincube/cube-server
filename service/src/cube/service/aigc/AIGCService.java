@@ -582,7 +582,7 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param unitName
      * @return
      */
-    public AIGCUnit selectIdleUnitByName(String unitName) {
+    public synchronized AIGCUnit selectIdleUnitByName(String unitName) {
         ArrayList<AIGCUnit> candidates = new ArrayList<>();
 
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
@@ -607,10 +607,12 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
         });
 
+        Logger.d(this.getClass(), "#selectIdleUnitByName - Unit: " + unitName + "@"
+                + candidates.get(0).getContact().getId());
         return candidates.get(0);
     }
 
-    public AIGCUnit selectUnitByName(String unitName) {
+    public synchronized AIGCUnit selectUnitByName(String unitName) {
         AIGCUnit idleUnit = this.selectIdleUnitByName(unitName);
         if (null != idleUnit) {
             return idleUnit;
@@ -651,6 +653,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         if (candidates.size() == 1) {
+            Logger.d(this.getClass(), "#selectUnitByName - Unit: " + unitName + "@"
+                    + candidates.get(0).getContact().getId());
             return candidates.get(0);
         }
 
@@ -692,10 +696,14 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         if (candidates.isEmpty()) {
             // 所有单元都在运行
+            Logger.d(this.getClass(), "#selectUnitByName - Unit: " + unitName + "@"
+                    + unit.getContact().getId());
             return unit;
         }
 
         // 总是返回最久的单元
+        Logger.d(this.getClass(), "#selectUnitByName - Unit: " + unitName + "@"
+                + candidates.get(0).getContact().getId());
         return candidates.get(0);
 
 //        if (candidates.size() == 1) {
@@ -724,6 +732,8 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         int num = candidates.size();
         if (num == 1) {
+            Logger.d(this.getClass(), "#selectUnitBySubtask - Unit: " +
+                    candidates.get(0).getCapability().getName() + "@" + candidates.get(0).getContact().getId());
             return candidates.get(0);
         }
 
@@ -749,10 +759,14 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         if (candidates.isEmpty()) {
             // 所有单元都在运行
+            Logger.d(this.getClass(), "#selectUnitBySubtask - Unit: " +
+                    unit.getCapability().getName() + "@" + unit.getContact().getId());
             return unit;
         }
 
         // 返回最久的单元
+        Logger.d(this.getClass(), "#selectUnitBySubtask - Unit: " +
+                candidates.get(0).getCapability().getName() + "@" + candidates.get(0).getContact().getId());
         return candidates.get(0);
 //        unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
 //        return unit;
