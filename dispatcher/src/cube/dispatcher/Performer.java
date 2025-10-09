@@ -129,6 +129,8 @@ public class Performer implements TalkListener, Tickable {
      */
     private List<Tickable> tickableList;
 
+    private ExecutorService notifyBlockExecutor;
+
     /**
      * 构造函数。
      *
@@ -148,6 +150,7 @@ public class Performer implements TalkListener, Tickable {
         this.transmissionMap = new ConcurrentHashMap<>();
         this.blockMap = new ConcurrentHashMap<>();
         this.tickableList = new ArrayList<>();
+        this.notifyBlockExecutor = Executors.newFixedThreadPool(16);
     }
 
     /**
@@ -1027,13 +1030,18 @@ public class Performer implements TalkListener, Tickable {
             if (actionDialect.containsParam(this.performerKey)) {
                 JSONObject performer = actionDialect.getParamAsJson(this.performerKey);
                 Long sn = performer.getLong("sn");
-                Block block = this.blockMap.remove(sn);
+                final Block block = this.blockMap.remove(sn);
                 if (null != block) {
                     block.dialect = actionDialect;
-                    // 唤醒阻塞的线程
-                    synchronized (block) {
-                        block.notifyAll();
-                    }
+                    this.notifyBlockExecutor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            // 唤醒阻塞的线程
+                            synchronized (block) {
+                                block.notifyAll();
+                            }
+                        }
+                    });
                 }
                 else {
                     Transmission transmission = this.transmissionMap.get(sn);
@@ -1097,10 +1105,8 @@ public class Performer implements TalkListener, Tickable {
                     listener.onReceived(celletName, primitive);
                 }
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(this.getClass(), "#onListened", e);
         }
     }
 

@@ -218,11 +218,11 @@ public class CVService extends AbstractModule {
                     FileLabel fileLabel = new FileLabel(fileLabelJson);
 
                     // 从文件系统检查文件
-                    int countdown = 100;
+                    int countdown = 10;
                     FileLabel current = null;
                     do {
                         try {
-                            Thread.sleep(100);
+                            Thread.sleep(1000);
                         } catch (Exception e) {
                             // Nothing
                         }

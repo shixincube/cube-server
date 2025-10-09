@@ -112,9 +112,9 @@ public class FileHandler extends CrossDomainHandler {
         if (this.uploadConcurrency.get() >= this.maxUploadConcurrency) {
             Logger.w(this.getClass(), "#doPost - The upload connection reaches the maximum concurrent number : " +
                     uploadConcurrency.get() + "/" + maxUploadConcurrency);
-//            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
-//            this.complete();
-//            return;
+            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
+            this.complete();
+            return;
         }
 
         if (Logger.isDebugLevel()) {
@@ -237,35 +237,35 @@ public class FileHandler extends CrossDomainHandler {
 
                 // 校验 Token
                 AuthToken authToken = this.performer.verifyToken(token);
-            /*JSONObject payload = new JSONObject();
-            payload.put("code", token);
-            Packet packet = new Packet(AuthAction.GetToken.name, payload);
-            ActionDialect dialect = this.performer.syncTransmit(AuthCellet.NAME, packet.toDialect());
-            if (null == dialect) {
-                clearTempFiles(tempFiles);
-                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
-                this.complete();
-                return;
-            }
+                /*JSONObject payload = new JSONObject();
+                payload.put("code", token);
+                Packet packet = new Packet(AuthAction.GetToken.name, payload);
+                ActionDialect dialect = this.performer.syncTransmit(AuthCellet.NAME, packet.toDialect());
+                if (null == dialect) {
+                    clearTempFiles(tempFiles);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                    this.complete();
+                    return;
+                }
 
-            Packet responsePacket = new Packet(dialect);
-            if (Packet.extractCode(responsePacket) != AuthStateCode.Ok.code) {
-                clearTempFiles(tempFiles);
-                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
-                this.complete();
-                return;
-            }
+                Packet responsePacket = new Packet(dialect);
+                if (Packet.extractCode(responsePacket) != AuthStateCode.Ok.code) {
+                    clearTempFiles(tempFiles);
+                    this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
+                    this.complete();
+                    return;
+                }
 
-            // 令牌有效期
-            AuthToken authToken = new AuthToken(Packet.extractDataPayload(responsePacket));
-            if (authToken.getExpiry() < System.currentTimeMillis()) {
-                // 令牌过期
-                Logger.d(this.getClass(), "Token have expired - " + authToken.getCode());
-                clearTempFiles(tempFiles);
-                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
-                this.complete();
-                return;
-            }*/
+                // 令牌有效期
+                AuthToken authToken = new AuthToken(Packet.extractDataPayload(responsePacket));
+                if (authToken.getExpiry() < System.currentTimeMillis()) {
+                    // 令牌过期
+                    Logger.d(this.getClass(), "Token have expired - " + authToken.getCode());
+                    clearTempFiles(tempFiles);
+                    this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
+                    this.complete();
+                    return;
+                }*/
 
                 final long contactId = authToken.getContactId();
                 final String domain = authToken.getDomain();
@@ -578,11 +578,11 @@ public class FileHandler extends CrossDomainHandler {
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
         if (this.downloadConcurrency.get() >= this.maxDownloadConcurrency) {
-            Logger.w(this.getClass(), "#doPost - The download connection reaches the maximum concurrent number : " +
+            Logger.w(this.getClass(), "#doGet - The download connection reaches the maximum concurrent number : " +
                     downloadConcurrency.get() + "/" + maxDownloadConcurrency);
-//            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
-//            this.complete();
-//            return;
+            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
+            this.complete();
+            return;
         }
 
         if (Logger.isDebugLevel()) {
