@@ -418,14 +418,20 @@ public class PsychologyScene {
                         + Thread.currentThread().getName()
                         + " - " + Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
 
-                try {
+                while (!taskQueue.isEmpty()) {
+                    // 新任务
                     ReportTask reportTask = taskQueue.poll();
-                    while (null != reportTask) {
-                        long start = System.currentTimeMillis();
-                        Logger.i(getClass(), "Starts generating report: " + reportTask.report.sn);
+                    if (null == reportTask) {
+                        // 队列空，结束
+                        break;
+                    }
 
-                        runningTaskQueue.offer(reportTask);
+                    long start = System.currentTimeMillis();
+                    Logger.i(getClass(), "Starts generating report: " + reportTask.report.sn);
 
+                    runningTaskQueue.offer(reportTask);
+
+                    try {
                         // 设置为正在操作
                         reportTask.channel.setProcessing(true);
 
@@ -433,8 +439,6 @@ public class PsychologyScene {
                         AIGCUnit unit = service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
                         if (null == unit) {
                             // 没有可用单元
-                            runningTaskQueue.remove(reportTask);
-                            reportTask.channel.setProcessing(false);
                             reportTask.report.setState(AIGCStateCode.UnitError);
                             reportTask.report.setFinished(true);
                             reportTask.listener.onPaintingPredictFailed(reportTask.report);
@@ -460,8 +464,6 @@ public class PsychologyScene {
                                     reportTask.channel.getAuthToken().getContactId());
                             // 更新单元状态
                             unit.setRunning(false);
-                            runningTaskQueue.remove(reportTask);
-                            reportTask.channel.setProcessing(false);
                             reportTask.report.setState(AIGCStateCode.FileError);
                             reportTask.report.setFinished(true);
                             reportTask.listener.onPaintingPredictFailed(reportTask.report);
@@ -502,8 +504,6 @@ public class PsychologyScene {
                             // 推理生成报告失败
                             Logger.w(PsychologyScene.class, "#generatePsychologyReport - onReportEvaluateFailed (IllegalOperation): " +
                                     reportTask.fileLabel.getFileCode());
-                            runningTaskQueue.remove(reportTask);
-                            reportTask.channel.setProcessing(false);
                             reportTask.report.setState(AIGCStateCode.IllegalOperation);
                             reportTask.report.setFinished(true);
                             reportTask.listener.onReportEvaluateFailed(reportTask.report);
@@ -517,8 +517,6 @@ public class PsychologyScene {
                             // 未能处理的图片
                             Logger.w(PsychologyScene.class, "#generatePsychologyReport - onReportEvaluateCompleted (InvalidData): " +
                                     reportTask.fileLabel.getFileCode());
-                            runningTaskQueue.remove(reportTask);
-                            reportTask.channel.setProcessing(false);
                             reportTask.report.setState(AIGCStateCode.InvalidData);
                             reportTask.report.setFinished(true);
 
@@ -532,7 +530,7 @@ public class PsychologyScene {
 
                             // 按照正常状态返回
                             reportTask.listener.onReportEvaluateCompleted(reportTask.report);
-                            //                        reportTask.listener.onReportEvaluateFailed(reportTask.report);
+                            // reportTask.listener.onReportEvaluateFailed(reportTask.report);
                             continue;
                         }
 
@@ -549,7 +547,6 @@ public class PsychologyScene {
                         // 修改结束状态
                         reportTask.report.setFinished(true);
                         reportTask.listener.onReportEvaluateCompleted(reportTask.report);
-                        reportTask.channel.setProcessing(false);
 
                         // 填写数据
                         evaluationWorker.fillReport(reportTask.report);
@@ -565,20 +562,19 @@ public class PsychologyScene {
                         }
 
                         // 使用数据管理器生成关联数据
-//                        SceneManager.getInstance().writeReportChart(reportTask.report);
-
-                        // 从正在执行队列移除
-                        runningTaskQueue.remove(reportTask);
+    //                        SceneManager.getInstance().writeReportChart(reportTask.report);
 
                         Logger.i(getClass(), "End generating report: " + reportTask.report.sn + " - elapsed: " +
                                 Math.round((System.currentTimeMillis() - start) / 1000.0) + "s");
-
-                        // 新任务
-                        reportTask = taskQueue.poll();
-                    } // while
-                } catch (Exception e) {
-                    Logger.e(PsychologyScene.class, "#run", e);
-                }
+                    } catch (Exception e) {
+                        Logger.e(PsychologyScene.class, "#run", e);
+                    } finally {
+                        // 从正在执行队列移除
+                        runningTaskQueue.remove(reportTask);
+                        // 频道状态恢复
+                        reportTask.channel.setProcessing(false);
+                    }
+                } // while
 
                 // 更新运行计数
                 numRunningTasks.decrementAndGet();

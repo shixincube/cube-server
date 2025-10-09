@@ -26,7 +26,7 @@ public class GuideFlowSubtask extends ConversationSubtask {
     public GuideFlowSubtask(AIGCService service, AIGCChannel channel, String query,
                             ComplexContext context, ConversationRelation relation, ConversationContext convCtx,
                             GenerateTextListener listener) {
-        super(Subtask.StartGuideFlow, service, channel, query, context, relation, convCtx, listener);
+        super(Subtask.GuideFlow, service, channel, query, context, relation, convCtx, listener);
     }
 
     @Override

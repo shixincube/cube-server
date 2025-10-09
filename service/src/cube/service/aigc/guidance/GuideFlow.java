@@ -175,7 +175,20 @@ public class GuideFlow extends AbstractGuideFlow {
                 // -1 无，0 否，1 是
                 int yesOrNo = -1;
 
-                if (null != candidate) {
+                // 对 Query 内容进行验证
+                String prompt = String.format(Prompts.getPrompt("FORMAT_VERIFY_TRUE_OR_FALSE"),
+                        currentQuestionAnswer);
+                GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                        prompt, null, null, null);
+
+                if (result.answer.trim().contains(Prompts.getPrompt("SURE"))) {
+                    yesOrNo = 1;
+                }
+                else if (result.answer.trim().contains(Prompts.getPrompt("DENY"))) {
+                    yesOrNo = 0;
+                }
+
+                /*if (null != candidate) {
                     Logger.d(this.getClass(), "#input - candidate: " + candidate.code);
 
                     // 检测候选
@@ -200,7 +213,7 @@ public class GuideFlow extends AbstractGuideFlow {
                     else if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("NO"))) {
                         yesOrNo = 0;
                     }
-                }
+                }*/
 
                 if (1 == yesOrNo) {
                     // 处理答案组

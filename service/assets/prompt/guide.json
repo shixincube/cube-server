@@ -11,6 +11,18 @@
 		"cn": "无",
 		"en": ""
 	},
+	"SURE": {
+		"cn": "肯定",
+		"en": ""
+	},
+	"DENY": {
+		"cn": "否定",
+		"en": ""
+	},
+	"UNCERTAIN": {
+		"cn": "不确定",
+		"en": ""
+	},
 	"FAILED": {
 		"cn": "我遇到了一些问题，未能正确处理相关数据，请稍后再尝试。",
 		"en": ""
@@ -29,6 +41,10 @@
 	},
 	"FORMAT_ANSWER_STARTS_GUIDE_FLOW": {
 		"cn": "%s\n\n现在让我们开始吧：\n\n%s",
+		"en": ""
+	},
+	"FORMAT_VERIFY_TRUE_OR_FALSE": {
+		"cn": "已知句子：“%s”。请判断已知句子表达的含义是“肯定”含义、“否定”含义还是“不确定”含义？不要回复判断情况，只回复判断结果。",
 		"en": ""
 	},
 	"FORMAT_TRUE_OR_FALSE": {

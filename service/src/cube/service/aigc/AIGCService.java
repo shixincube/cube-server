@@ -1321,7 +1321,15 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @return
      */
     public AuthToken getToken(String tokenCode) {
+        if (null == tokenCode) {
+            return null;
+        }
+
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        if (null == authService) {
+            return null;
+        }
+
         AuthToken authToken = authService.getToken(tokenCode);
         return authToken;
     }
