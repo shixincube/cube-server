@@ -16,10 +16,8 @@ import cube.util.SQLUtils;
 import org.json.JSONObject;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -466,6 +464,8 @@ public class MySQLStorage extends AbstractStorage {
 
         private ConcurrentLinkedQueue<Connection> connections;
 
+        private ConcurrentHashMap<Connection, Long> timestamps;
+
         private AtomicInteger count;
 
         private Timer timer;
@@ -474,6 +474,7 @@ public class MySQLStorage extends AbstractStorage {
             this.maxConn = maxConn;
             this.config = config;
             this.connections = new ConcurrentLinkedQueue<>();
+            this.timestamps = new ConcurrentHashMap<>();
             this.count = new AtomicInteger(0);
             this.timer = new Timer();
             this.timer.schedule(this, 60 * 1000, 60 * 1000);
@@ -498,10 +499,21 @@ public class MySQLStorage extends AbstractStorage {
                 if (null != conn) {
                     try {
                         if (conn.isClosed()) {
+                            this.timestamps.remove(conn);
                             conn = null;
                         }
                     } catch (SQLException e) {
                         Logger.w(this.getClass(), "#get", e);
+                    }
+                }
+
+                if (null != conn) {
+                    Long timestamp = this.timestamps.get(conn);
+                    if (null != timestamp) {
+                        if (System.currentTimeMillis() - timestamp < 5000) {
+                            this.connections.offer(conn);
+                            conn = null;
+                        }
                     }
                 }
 
@@ -516,12 +528,14 @@ public class MySQLStorage extends AbstractStorage {
                     url.append("?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8");
                     url.append("&useInformationSchema=true");
                     url.append("&nullCatalogMeansCurrent=true");
+                    url.append("&autoReconnect=true");
+                    url.append("&failOverReadOnly=false");
 
                     try {
                         conn = DriverManager.getConnection(url.toString(),
                                 this.config.getString(CONFIG_USER), this.config.getString(CONFIG_PASSWORD));
                     } catch (SQLException e) {
-                        Logger.e(this.getClass(), "#open - " + url.toString(), e);
+                        Logger.e(this.getClass(), "#get - " + url.toString(), e);
                     }
                 }
 
@@ -535,7 +549,8 @@ public class MySQLStorage extends AbstractStorage {
 
                 return conn;
             } catch (Exception e) {
-                Logger.e(this.getClass(), "#open - Error", e);
+                Logger.e(this.getClass(), "#get - Error", e);
+                this.count.decrementAndGet();
                 return null;
             }
         }
@@ -547,6 +562,7 @@ public class MySQLStorage extends AbstractStorage {
 
             try {
                 if (!connection.isClosed()) {
+                    this.timestamps.put(connection, System.currentTimeMillis());
                     this.connections.offer(connection);
                 }
             } catch (SQLException e) {
@@ -563,6 +579,7 @@ public class MySQLStorage extends AbstractStorage {
         protected void close() {
             ArrayList<Connection> connList = new ArrayList<>(this.connections);
             this.connections.clear();
+            this.timestamps.clear();
 
             synchronized (this) {
                 this.notifyAll();
@@ -589,13 +606,17 @@ public class MySQLStorage extends AbstractStorage {
         @Override
         public void run() {
             List<Connection> list = new ArrayList<>(this.connections);
-            for (Connection conn : list) {
+            this.connections.clear();
+
+            Iterator<Connection> iter = list.iterator();
+            while (iter.hasNext()) {
+                Connection conn = iter.next();
                 Statement statement = null;
                 try {
                     statement = conn.createStatement();
                     ResultSet rs = statement.executeQuery("select version()");
                     if (rs.next()) {
-//                        Logger.d(this.getClass(), "Connection keep alive: " + rs.getString("version()"));
+                        Logger.d(this.getClass(), "Connection keep alive: " + rs.getString("version()"));
                     }
                     else {
                         try {
@@ -603,7 +624,8 @@ public class MySQLStorage extends AbstractStorage {
                         } catch (SQLException ex) {
                         }
 
-                        this.connections.remove(conn);
+                        this.timestamps.remove(conn);
+                        iter.remove();
                     }
                 } catch (Exception e) {
                     Logger.d(this.getClass(), e.getMessage());
@@ -613,7 +635,8 @@ public class MySQLStorage extends AbstractStorage {
                     }
 
                     // 移除失效连接
-                    this.connections.remove(conn);
+                    this.timestamps.remove(conn);
+                    iter.remove();
                 } finally {
                     if (null != statement) {
                         try {
@@ -622,6 +645,14 @@ public class MySQLStorage extends AbstractStorage {
                         }
                     }
                 }
+            }
+
+            for (Connection conn : list) {
+                this.connections.offer(conn);
+            }
+
+            synchronized (this) {
+                this.notifyAll();
             }
         }
     }
