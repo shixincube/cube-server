@@ -11,6 +11,7 @@ import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.CVAction;
 import cube.common.state.CVStateCode;
+import cube.dispatcher.Performer;
 import cube.dispatcher.cv.CVCellet;
 import cube.util.FileLabels;
 import org.eclipse.jetty.http.HttpStatus;
@@ -26,8 +27,11 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class ClipPaper extends ContextHandler {
 
-    public ClipPaper() {
+    private Performer performer;
+
+    public ClipPaper(Performer performer) {
         super("/cv/clippaper");
+        this.performer = performer;
         setHandler(new Handler());
     }
 
@@ -53,7 +57,7 @@ public class ClipPaper extends ContextHandler {
                 ActionDialect requestAction = packet.toDialect();
                 requestAction.addParam("token", token);
 
-                ActionDialect responseAction = CVCellet.getPerformer().syncTransmit(CVCellet.NAME,
+                ActionDialect responseAction = performer.syncTransmit(CVCellet.NAME,
                         requestAction, 2 * 60 * 1000);
                 if (null == responseAction) {
                     Logger.w(this.getClass(), "#doPost - Response is null");
@@ -77,13 +81,13 @@ public class ClipPaper extends ContextHandler {
                     // 原文件的 FileLabel
                     JSONObject fileLabelJson = json.getJSONObject("fileLabel");
                     FileLabels.reviseFileLabel(fileLabelJson, token,
-                            CVCellet.getPerformer().getExternalHttpEndpoint(),
-                            CVCellet.getPerformer().getExternalHttpsEndpoint());
+                            performer.getExternalHttpEndpoint(),
+                            performer.getExternalHttpsEndpoint());
                     // 处理后文件的 FileLabel
                     fileLabelJson = json.getJSONObject("processed");
                     FileLabels.reviseFileLabel(fileLabelJson, token,
-                            CVCellet.getPerformer().getExternalHttpEndpoint(),
-                            CVCellet.getPerformer().getExternalHttpsEndpoint());
+                            performer.getExternalHttpEndpoint(),
+                            performer.getExternalHttpsEndpoint());
                 }
                 this.respondOk(response, responseData);
                 this.complete();

@@ -242,7 +242,7 @@ public class FileOperationHandler extends CrossDomainHandler {
         ActionDialect packetDialect = packet.toDialect();
         packetDialect.addParam("token", token);
 
-        ActionDialect responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect, 10 * 1000);
+        ActionDialect responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
         if (null == responseDialect) {
             this.respond(response, HttpStatus.BAD_REQUEST_400, packet.toJSON());
             this.complete();

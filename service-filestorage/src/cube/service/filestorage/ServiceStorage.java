@@ -542,7 +542,7 @@ public class ServiceStorage implements Storagable {
      * @param fileCode
      * @return
      */
-    public FileLabel readFileLabel(String domain, String fileCode) {
+    public synchronized FileLabel readFileLabel(String domain, String fileCode) {
         String labelTable = this.labelTableNameMap.get(domain);
         if (null == labelTable) {
             return null;

@@ -129,7 +129,7 @@ public class Performer implements TalkListener, Tickable {
      */
     private List<Tickable> tickableList;
 
-    private ExecutorService notifyBlockExecutor;
+//    private ExecutorService notifyBlockExecutor;
 
     /**
      * 构造函数。
@@ -150,7 +150,7 @@ public class Performer implements TalkListener, Tickable {
         this.transmissionMap = new ConcurrentHashMap<>();
         this.blockMap = new ConcurrentHashMap<>();
         this.tickableList = new ArrayList<>();
-        this.notifyBlockExecutor = Executors.newFixedThreadPool(16);
+//        this.notifyBlockExecutor = Executors.newFixedThreadPool(16);
     }
 
     /**
@@ -217,6 +217,14 @@ public class Performer implements TalkListener, Tickable {
     public int getConcurrentFileOutputLimit() {
         try {
             return Integer.parseInt(this.properties.getProperty("concurrency.file.out", "10"));
+        } catch (Exception e) {
+            return 10;
+        }
+    }
+
+    public int getCVConcurrencyLimit() {
+        try {
+            return Integer.parseInt(this.properties.getProperty("concurrency.cv", "10"));
         } catch (Exception e) {
             return 10;
         }
@@ -954,13 +962,24 @@ public class Performer implements TalkListener, Tickable {
             return null;
         }
 
-        synchronized (block) {
+        long time = System.currentTimeMillis();
+        while (System.currentTimeMillis() - time < timeout) {
             try {
-                block.wait(timeout);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            if (null != block.dialect) {
+                break;
+            }
         }
+//        synchronized (block) {
+//            try {
+//                block.wait(timeout);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
 
         this.blockMap.remove(block.sn);
 
@@ -1033,15 +1052,15 @@ public class Performer implements TalkListener, Tickable {
                 final Block block = this.blockMap.remove(sn);
                 if (null != block) {
                     block.dialect = actionDialect;
-                    this.notifyBlockExecutor.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            // 唤醒阻塞的线程
-                            synchronized (block) {
-                                block.notifyAll();
-                            }
-                        }
-                    });
+//                    this.notifyBlockExecutor.execute(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            // 唤醒阻塞的线程
+//                            synchronized (block) {
+//                                block.notifyAll();
+//                            }
+//                        }
+//                    });
                 }
                 else {
                     Transmission transmission = this.transmissionMap.get(sn);

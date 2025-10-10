@@ -11,6 +11,7 @@ import cell.util.log.Logger;
 import cube.common.Packet;
 import cube.common.action.CVAction;
 import cube.common.state.CVStateCode;
+import cube.dispatcher.Performer;
 import cube.dispatcher.cv.CVCellet;
 import cube.util.FileLabels;
 import org.eclipse.jetty.http.HttpStatus;
@@ -22,12 +23,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 制作条形码。
+ * 对象检测。
  */
 public class ObjectDetection extends ContextHandler {
 
-    public ObjectDetection() {
+    private Performer performer;
+
+    public ObjectDetection(Performer performer) {
         super("/cv/object/detect");
+        this.performer = performer;
         setHandler(new Handler());
     }
 
@@ -53,7 +57,7 @@ public class ObjectDetection extends ContextHandler {
                 ActionDialect requestAction = packet.toDialect();
                 requestAction.addParam("token", token);
 
-                ActionDialect responseAction = CVCellet.getPerformer().syncTransmit(CVCellet.NAME,
+                ActionDialect responseAction = performer.syncTransmit(CVCellet.NAME,
                         requestAction, 2 * 60 * 1000);
                 if (null == responseAction) {
                     Logger.w(this.getClass(), "#doPost - Response is null");
@@ -76,8 +80,8 @@ public class ObjectDetection extends ContextHandler {
                     JSONObject json = result.getJSONObject(i);
                     JSONObject fileLabelJson = json.getJSONObject("fileLabel");
                     FileLabels.reviseFileLabel(fileLabelJson, token,
-                            CVCellet.getPerformer().getExternalHttpEndpoint(),
-                            CVCellet.getPerformer().getExternalHttpsEndpoint());
+                            performer.getExternalHttpEndpoint(),
+                            performer.getExternalHttpsEndpoint());
                 }
                 this.respondOk(response, responseData);
                 this.complete();

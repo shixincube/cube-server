@@ -25,8 +25,6 @@ public class CVCellet extends AbstractCellet {
 
     public final static String NAME = "CV";
 
-    private static Performer sPerformer;
-
     /**
      * 执行机。
      */
@@ -42,20 +40,15 @@ public class CVCellet extends AbstractCellet {
         this.taskQueue = new ConcurrentLinkedQueue<>();
     }
 
-    public static Performer getPerformer() {
-        return sPerformer;
-    }
-
     @Override
     public boolean install() {
         this.performer = (Performer) this.getNucleus().getParameter("performer");
-        CVCellet.sPerformer = this.performer;
 
         HttpServer httpServer = this.performer.getHttpServer();
-        httpServer.addContextHandler(new MakeBarCode());
-        httpServer.addContextHandler(new DetectBarCode());
-        httpServer.addContextHandler(new ObjectDetection());
-        httpServer.addContextHandler(new ClipPaper());
+        httpServer.addContextHandler(new MakeBarCode(this.performer));
+        httpServer.addContextHandler(new DetectBarCode(this.performer));
+        httpServer.addContextHandler(new ObjectDetection(this.performer));
+        httpServer.addContextHandler(new ClipPaper(this.performer));
 
         return true;
     }
