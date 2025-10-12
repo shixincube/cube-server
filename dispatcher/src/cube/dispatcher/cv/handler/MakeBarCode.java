@@ -72,7 +72,7 @@ public class MakeBarCode extends ContextHandler {
                         requestAction, 2 * 60 * 1000);
                 if (null == responseAction) {
                     Logger.w(this.getClass(), "#doPost - Response is null");
-                    this.respond(response, HttpStatus.REQUEST_TIMEOUT_408);
+                    this.respond(response, HttpStatus.REQUEST_TIMEOUT_408, this.makeError(HttpStatus.REQUEST_TIMEOUT_408));
                     this.complete();
                     return;
                 }
@@ -80,7 +80,7 @@ public class MakeBarCode extends ContextHandler {
                 Packet responsePacket = new Packet(responseAction);
                 if (Packet.extractCode(responsePacket) != CVStateCode.Ok.code) {
                     Logger.w(this.getClass(), "#doPost - Response state is " + Packet.extractCode(responsePacket));
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                     return;
                 }
@@ -96,7 +96,7 @@ public class MakeBarCode extends ContextHandler {
                 this.respondOk(response, responseData);
                 this.complete();
             } catch (Exception e) {
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
             } finally {
                 this.concurrency.decrementAndGet();

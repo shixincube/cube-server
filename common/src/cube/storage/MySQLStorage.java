@@ -16,7 +16,10 @@ import cube.util.SQLUtils;
 import org.json.JSONObject;
 
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -468,7 +471,7 @@ public class MySQLStorage extends AbstractStorage {
 
         private AtomicInteger count;
 
-        private Timer timer;
+//        private Timer timer;
 
         protected ConnectionPool(int maxConn, JSONObject config) {
             this.maxConn = maxConn;
@@ -476,8 +479,8 @@ public class MySQLStorage extends AbstractStorage {
             this.connections = new ConcurrentLinkedQueue<>();
             this.timestamps = new ConcurrentHashMap<>();
             this.count = new AtomicInteger(0);
-            this.timer = new Timer();
-            this.timer.schedule(this, 60 * 1000, 60 * 1000);
+//            this.timer = new Timer();
+//            this.timer.schedule(this, 60 * 1000, 60 * 1000);
             Logger.i(this.getClass(), "ConnectionPool - max connections: " + maxConn);
         }
 
@@ -499,21 +502,26 @@ public class MySQLStorage extends AbstractStorage {
                 if (null != conn) {
                     try {
                         if (conn.isClosed()) {
-                            this.timestamps.remove(conn);
                             conn = null;
+                        }
+                        else {
+                            Long timestamp = this.timestamps.get(conn);
+                            if (null != timestamp) {
+                                if (System.currentTimeMillis() - timestamp > 60 * 1000) {
+                                    this.timestamps.remove(conn);
+                                    Logger.d(this.getClass(), "#get - The connection timeout, create new connection");
+                                    try {
+                                        conn.close();
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    } finally {
+                                        conn = null;
+                                    }
+                                }
+                            }
                         }
                     } catch (SQLException e) {
                         Logger.w(this.getClass(), "#get", e);
-                    }
-                }
-
-                if (null != conn) {
-                    Long timestamp = this.timestamps.get(conn);
-                    if (null != timestamp) {
-                        if (System.currentTimeMillis() - timestamp < 5000) {
-                            this.connections.offer(conn);
-                            conn = null;
-                        }
                     }
                 }
 
@@ -585,8 +593,8 @@ public class MySQLStorage extends AbstractStorage {
                 this.notifyAll();
             }
 
-            this.timer.purge();
-            this.timer.cancel();
+//            this.timer.purge();
+//            this.timer.cancel();
 
             this.count.set(0);
 
@@ -605,10 +613,7 @@ public class MySQLStorage extends AbstractStorage {
 
         @Override
         public void run() {
-            List<Connection> list = new ArrayList<>(this.connections);
-            this.connections.clear();
-
-            Iterator<Connection> iter = list.iterator();
+            Iterator<Connection> iter = this.connections.iterator();
             while (iter.hasNext()) {
                 Connection conn = iter.next();
                 Statement statement = null;
@@ -624,7 +629,6 @@ public class MySQLStorage extends AbstractStorage {
                         } catch (SQLException ex) {
                         }
 
-                        this.timestamps.remove(conn);
                         iter.remove();
                     }
                 } catch (Exception e) {
@@ -635,7 +639,6 @@ public class MySQLStorage extends AbstractStorage {
                     }
 
                     // 移除失效连接
-                    this.timestamps.remove(conn);
                     iter.remove();
                 } finally {
                     if (null != statement) {
@@ -645,10 +648,6 @@ public class MySQLStorage extends AbstractStorage {
                         }
                     }
                 }
-            }
-
-            for (Connection conn : list) {
-                this.connections.offer(conn);
             }
 
             synchronized (this) {

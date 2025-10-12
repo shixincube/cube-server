@@ -21,6 +21,7 @@ import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 识别条形码。
@@ -32,20 +33,35 @@ public class DetectBarCode extends ContextHandler {
     public DetectBarCode(Performer performer) {
         super("/cv/barcode/detect");
         this.performer = performer;
-        setHandler(new Handler());
+        setHandler(new Handler(performer.getCVConcurrencyLimit()));
     }
 
     private class Handler extends CVHandler {
 
-        public Handler() {
+        protected final int maxConcurrency;
+
+        protected final AtomicInteger concurrency = new AtomicInteger(0);
+
+        public Handler(int maxConcurrency) {
             super();
+            this.maxConcurrency = maxConcurrency;
         }
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getLastRequestPath(request);
+            if (this.concurrency.get() >= this.maxConcurrency) {
+                Logger.w(this.getClass(), "#doPost - The connection reaches the maximum concurrent number : " +
+                        concurrency.get() + "/" + maxConcurrency);
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
+                this.complete();
+                return;
+            }
+
+            this.concurrency.incrementAndGet();
 
             try {
+                String token = this.getLastRequestPath(request);
+
                 JSONObject data = this.readBodyAsJSONObject(request);
 
                 Packet packet = new Packet(CVAction.DetectBarCode.name, data);
@@ -56,7 +72,7 @@ public class DetectBarCode extends ContextHandler {
                         requestAction, 60 * 1000);
                 if (null == responseAction) {
                     Logger.w(this.getClass(), "#doPost - Response is null");
-                    this.respond(response, HttpStatus.REQUEST_TIMEOUT_408);
+                    this.respond(response, HttpStatus.REQUEST_TIMEOUT_408, this.makeError(HttpStatus.REQUEST_TIMEOUT_408));
                     this.complete();
                     return;
                 }
@@ -64,7 +80,7 @@ public class DetectBarCode extends ContextHandler {
                 Packet responsePacket = new Packet(responseAction);
                 if (Packet.extractCode(responsePacket) != CVStateCode.Ok.code) {
                     Logger.w(this.getClass(), "#doPost - Response state is " + Packet.extractCode(responsePacket));
-                    this.respond(response, HttpStatus.BAD_REQUEST_400);
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();
                     return;
                 }
@@ -82,8 +98,10 @@ public class DetectBarCode extends ContextHandler {
                 this.complete();
             } catch (Exception e) {
                 Logger.e(this.getClass(), "", e);
-                this.respond(response, HttpStatus.FORBIDDEN_403);
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
+            } finally {
+                this.concurrency.decrementAndGet();
             }
         }
     }
