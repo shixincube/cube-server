@@ -42,6 +42,8 @@ public class MakeBarCode extends ContextHandler {
 
         protected final AtomicInteger concurrency = new AtomicInteger(0);
 
+        protected final int total = 100;
+
         public Handler(int maxConcurrency) {
             super();
             this.maxConcurrency = maxConcurrency;
@@ -63,6 +65,18 @@ public class MakeBarCode extends ContextHandler {
                 String token = this.getLastRequestPath(request);
 
                 JSONObject data = this.readBodyAsJSONObject(request);
+
+                if (data.has("list")) {
+                    JSONArray array = data.getJSONArray("list");
+                    if (array.length() > this.total) {
+                        JSONArray newArray = new JSONArray();
+                        for (int i = 0; i < this.total; ++i) {
+                            newArray.put(array.getJSONObject(i));
+                        }
+                        data.remove("list");
+                        data.put("list", newArray);
+                    }
+                }
 
                 Packet packet = new Packet(CVAction.MakeBarCode.name, data);
                 ActionDialect requestAction = packet.toDialect();
