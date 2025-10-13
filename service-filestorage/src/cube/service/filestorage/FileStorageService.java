@@ -144,6 +144,11 @@ public class FileStorageService extends AbstractModule {
     private FileSharingManager sharingManager;
 
     /**
+     * 文件标签缓存。
+     */
+    protected ConcurrentHashMap<String, FileLabel> cacheFileLabelMap = new ConcurrentHashMap<>();
+
+    /**
      * 构造函数。
      *
      * @param executor 多线程执行器。
@@ -483,6 +488,9 @@ public class FileStorageService extends AbstractModule {
             fileLabel.setExpiryTime(fileLabel.getCompletedTime() + this.defaultFileDuration);
         }
 
+        // 写入内存缓存
+        this.cacheFileLabelMap.put(fileLabel.getFileCode(), fileLabel);
+
         // 写入到存储器进行记录
         this.serviceStorage.writeFileLabel(fileLabel, descriptor);
 
@@ -740,8 +748,6 @@ public class FileStorageService extends AbstractModule {
 
         return list;
     }
-
-    protected ConcurrentHashMap<String, FileLabel> cacheFileLabelMap = new ConcurrentHashMap<>();
 
     /**
      * 读文件标签。
