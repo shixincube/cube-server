@@ -23,6 +23,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 文件操作处理。
@@ -33,36 +34,56 @@ public class FileOperationHandler extends CrossDomainHandler {
 
     private Performer performer;
 
+    protected final int maxConcurrency;
+
+    protected final AtomicInteger concurrency = new AtomicInteger(0);
+
     public FileOperationHandler(Performer performer) {
         super();
         this.performer = performer;
+        this.maxConcurrency = performer.getConcurrentFileOperationLimit();
     }
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        JSONObject data = null;
-        try {
-            data = this.readBodyAsJSONObject(request);
-        } catch (IOException e) {
-            this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+        if (this.concurrency.get() >= this.maxConcurrency) {
+            Logger.w(this.getClass(), "#doPost - The connection reaches the maximum concurrent number : " +
+                    concurrency.get() + "/" + maxConcurrency);
+            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
             this.complete();
             return;
         }
 
-        String pathInfo = request.getPathInfo();
-        if (pathInfo.startsWith("/list")) {
-            this.listFiles(data, request, response);
-        }
-        else if (pathInfo.startsWith("/find")) {
-            this.findFile(data, request, response);
-        }
-        else if (pathInfo.startsWith("/delete")) {
-            this.deleteFile(data, request, response);
-        }
-        else {
-            this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
+        this.concurrency.incrementAndGet();
+
+        try {
+            JSONObject data = null;
+            try {
+                data = this.readBodyAsJSONObject(request);
+            } catch (IOException e) {
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                this.complete();
+                return;
+            }
+
+            String pathInfo = request.getPathInfo();
+            if (pathInfo.startsWith("/find")) {
+                this.findFile(data, request, response);
+            } else if (pathInfo.startsWith("/list")) {
+                this.listFiles(data, request, response);
+            } else if (pathInfo.startsWith("/delete")) {
+                this.deleteFile(data, request, response);
+            } else {
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                this.complete();
+            }
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#doPost", e);
+            this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
             this.complete();
+        } finally {
+            this.concurrency.decrementAndGet();
         }
     }
 

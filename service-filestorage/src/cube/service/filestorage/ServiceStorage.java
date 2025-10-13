@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -367,7 +368,7 @@ public class ServiceStorage implements Storagable {
     public ServiceStorage(ExecutorService executorService, StorageType type, JSONObject config) {
         this.executor = executorService;
         this.storage = StorageFactory.getInstance().createStorage(type, "FileStructStorage", config);
-        this.labelTableNameMap = new HashMap<>();
+        this.labelTableNameMap = new ConcurrentHashMap<>();
         this.descriptorTableNameMap = new HashMap<>();
         this.performanceTableNameMap = new HashMap<>();
         this.hierarchyTableNameMap = new HashMap<>();
@@ -548,40 +549,45 @@ public class ServiceStorage implements Storagable {
             return null;
         }
 
-        List<StorageField[]> result = this.storage.executeQuery(labelTable, this.labelFields, new Conditional[] {
-                Conditional.createEqualTo(new StorageField("file_code", fileCode))
-        });
+        try {
+            List<StorageField[]> result = this.storage.executeQuery(labelTable, this.labelFields, new Conditional[] {
+                    Conditional.createEqualTo(new StorageField("file_code", fileCode))
+            });
 
-        if (!result.isEmpty()) {
-            StorageField[] fields = result.get(0);
+            if (!result.isEmpty()) {
+                StorageField[] fields = result.get(0);
 
-            // 将字段转为映射关系，便于代码阅读
-            Map<String, StorageField> map = StorageFields.get(fields);
+                // 将字段转为映射关系，便于代码阅读
+                Map<String, StorageField> map = StorageFields.get(fields);
 
-            FileLabel label = new FileLabel(map.get("id").getLong(), domain, map.get("file_code").getString(),
-                    map.get("owner_id").getLong(), map.get("file_name").getString(), map.get("file_size").getLong(),
-                    map.get("last_modified").getLong(), map.get("completed_time").getLong(), map.get("expiry_time").getLong());
+                FileLabel label = new FileLabel(map.get("id").getLong(), domain, map.get("file_code").getString(),
+                        map.get("owner_id").getLong(), map.get("file_name").getString(), map.get("file_size").getLong(),
+                        map.get("last_modified").getLong(), map.get("completed_time").getLong(), map.get("expiry_time").getLong());
 
-            label.setFileType(FileType.matchExtension(map.get("file_type").getString()));
+                label.setFileType(FileType.matchExtension(map.get("file_type").getString()));
 
-            if (!map.get("md5").isNullValue()) {
-                label.setMD5Code(map.get("md5").getString());
+                if (!map.get("md5").isNullValue()) {
+                    label.setMD5Code(map.get("md5").getString());
+                }
+
+                if (!map.get("sha1").isNullValue()) {
+                    label.setSHA1Code(map.get("sha1").getString());
+                }
+
+                label.setFileURLs(map.get("file_url").getString(),
+                        (map.get("file_secure_url").isNullValue()) ? null : map.get("file_secure_url").getString());
+
+                label.setDirectURL(map.get("direct_url").getString());
+
+                if (!map.get("context").isNullValue()) {
+                    label.setContext(new JSONObject(map.get("context").getString()));
+                }
+
+                return label;
             }
-
-            if (!map.get("sha1").isNullValue()) {
-                label.setSHA1Code(map.get("sha1").getString());
-            }
-
-            label.setFileURLs(map.get("file_url").getString(),
-                    (map.get("file_secure_url").isNullValue()) ? null : map.get("file_secure_url").getString());
-
-            label.setDirectURL(map.get("direct_url").getString());
-
-            if (!map.get("context").isNullValue()) {
-                label.setContext(new JSONObject(map.get("context").getString()));
-            }
-
-            return label;
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#readFileLabel", e);
+            return null;
         }
 
         return null;

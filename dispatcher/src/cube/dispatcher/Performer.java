@@ -122,7 +122,7 @@ public class Performer implements TalkListener, Tickable {
     /**
      * 阻塞超时时长。
      */
-    private long blockTimeout = 20000;
+    private long blockTimeout = 30000;
 
     /**
      * 定时回调清单。
@@ -217,6 +217,14 @@ public class Performer implements TalkListener, Tickable {
     public int getConcurrentFileOutputLimit() {
         try {
             return Integer.parseInt(this.properties.getProperty("concurrency.file.out", "10"));
+        } catch (Exception e) {
+            return 10;
+        }
+    }
+
+    public int getConcurrentFileOperationLimit() {
+        try {
+            return Integer.parseInt(this.properties.getProperty("concurrency.file.operation", "10"));
         } catch (Exception e) {
             return 10;
         }
