@@ -516,19 +516,24 @@ public class MySQLStorage extends AbstractStorage {
                             Long timestamp = this.timestamps.get(conn);
                             if (null != timestamp) {
                                 if (System.currentTimeMillis() - timestamp > this.timeout) {
-                                    this.timestamps.remove(conn);
-                                    Logger.d(this.getClass(), "#get - The connection timeout, create new connection");
-                                    try {
-                                        conn.close();
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                    } finally {
-                                        conn = null;
-                                    }
+                                    if (!this.testConnection(conn)) {
+                                        this.timestamps.remove(conn);
+                                        Logger.d(this.getClass(), "#get - The connection timeout, create new connection");
+                                        try {
+                                            conn.close();
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        } finally {
+                                            conn = null;
+                                        }
 
-                                    // 获取下一个
-                                    synchronized (this) {
-                                        conn = this.connections.poll();
+                                        // 获取下一个
+                                        synchronized (this) {
+                                            conn = this.connections.poll();
+                                        }
+                                    }
+                                    else {
+                                        break;
                                     }
                                 }
                                 else {

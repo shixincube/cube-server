@@ -149,8 +149,6 @@ public class AICapability implements JSONable {
 
         public final static String Conversational = "Conversational";
 
-//        public final static String ImprovedConversational = "ImprovedConversational";
-
         public final static String TextGeneration = "TextGeneration";
 
         public final static String Text2TextGeneration = "Text2TextGeneration";
@@ -195,6 +193,8 @@ public class AICapability implements JSONable {
         public final static String VideoClassification = "VideoClassification";
 
         public final static String ZeroShotImageClassification = "ZeroShotImageClassification";
+
+        public final static String FacialExpressionRecognition = "FacialExpressionRecognition";
 
         private ComputerVision() {
         }
