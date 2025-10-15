@@ -6,16 +6,19 @@
 
 package cube.service.aigc.listener;
 
+import cube.common.entity.FacialExpression;
 import cube.common.entity.FileLabel;
 import cube.common.entity.SpeechEmotion;
 import cube.common.state.AIGCStateCode;
 
-/**
- * 语音情绪识别监听器。
- */
-public interface SpeechEmotionRecognitionListener {
+import java.util.List;
 
-    void onCompleted(FileLabel input, SpeechEmotion result);
+/**
+ * 面部表情识别监听器。
+ */
+public interface FacialExpressionRecognitionListener {
+
+    void onCompleted(FileLabel input, List<FacialExpression> facialExpressions);
 
     void onFailed(FileLabel input, AIGCStateCode stateCode);
 }

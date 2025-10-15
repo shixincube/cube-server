@@ -20,7 +20,7 @@ public enum Emotion {
 
     Sad("悲伤", "伤心"),
 
-    Surprise("惊讶", "吃惊"),
+    Surprise("惊讶", "诧异"),
 
     Disgusted("厌恶", "讨厌"),
 

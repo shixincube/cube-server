@@ -11,7 +11,7 @@ import cube.common.JSONable;
 import org.json.JSONObject;
 
 /**
- * 物体检测结果。
+ * 语音情绪。
  */
 public class SpeechEmotion implements JSONable {
 

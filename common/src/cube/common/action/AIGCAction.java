@@ -512,6 +512,11 @@ public enum AIGCAction {
     SpeechEmotionRecognition("speechEmotionRecognition"),
 
     /**
+     * 面部表情识别。
+     */
+    FacialExpressionRecognition("facialExpressionRecognition"),
+
+    /**
      * 获取情绪记录。
      */
     GetEmotionRecords("getEmotionRecords"),

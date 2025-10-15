@@ -2932,6 +2932,10 @@ public class AIGCService extends AbstractModule implements Generatable {
         return true;
     }
 
+    public boolean facialExpressionRecognition() {
+        return false;
+    }
+
     public List<EmotionRecord> getEmotionRecords(AuthToken authToken) {
         return this.storage.readEmotionRecords(authToken.getContactId());
     }
