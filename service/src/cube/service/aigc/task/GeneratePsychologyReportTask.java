@@ -13,6 +13,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.Usage;
+import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.FileLabel;
@@ -41,6 +42,15 @@ public class GeneratePsychologyReportTask extends ServiceTask {
 
         String token = getTokenCode(dialect);
         if (null == token) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.NoToken.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
+        AIGCService service = ((AIGCCellet) this.cellet).getService();
+        final AuthToken authToken = service.getToken(token);
+        if (null == authToken) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.NoToken.code, new JSONObject()));
             markResponseTime();
@@ -77,7 +87,6 @@ public class GeneratePsychologyReportTask extends ServiceTask {
                 return;
             }
 
-            AIGCService service = ((AIGCCellet) this.cellet).getService();
             PaintingReport report = service.generatePaintingReport(token, attribute, fileCode, theme,
                     maxIndicators, adjust, new PaintingReportListener() {
                         @Override
@@ -104,8 +113,12 @@ public class GeneratePsychologyReportTask extends ServiceTask {
                         public void onReportEvaluateCompleted(PaintingReport report) {
                             Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted - " + token);
 
-                            Usage usage = new Usage(service.getToken(token), remote.toString(), report);
-                            PsychologyScene.getInstance().recordUsage(usage);
+                            try {
+                                Usage usage = new Usage(authToken, remote.toString(), report);
+                                PsychologyScene.getInstance().recordUsage(usage);
+                            } catch (Exception e) {
+                                Logger.w(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted", e);
+                            }
                         }
 
                         @Override
@@ -137,8 +150,6 @@ public class GeneratePsychologyReportTask extends ServiceTask {
                 markResponseTime();
                 return;
             }
-
-            AIGCService service = ((AIGCCellet) this.cellet).getService();
 
             ScaleReport report = service.generateScaleReport(token, scaleSn, new ScaleReportListener() {
                 @Override
