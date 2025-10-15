@@ -1892,7 +1892,8 @@ public class AIGCService extends AbstractModule implements Generatable {
             dialect = this.cellet.transmit(unit.getContext(), request.toDialect(),
                     8 * 60 * 1000, sn);
             if (null == dialect) {
-                Logger.w(AIGCService.class, "#syncGenerateText - transmit failed, sn:" + sn);
+                Logger.w(AIGCService.class, "#syncGenerateText - transmit failed, sn:" + sn
+                        + " - " + unit.getCapability().getName() + "@" + unit.getContact().getId());
                 // 记录故障
                 unit.markFailure(AIGCStateCode.UnitError.code, System.currentTimeMillis(), participant.getId());
                 count.decrementAndGet();
@@ -1903,6 +1904,13 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         Packet response = new Packet(dialect);
+        int stateCode = Packet.extractCode(response);
+        if (stateCode != AIGCStateCode.Ok.code) {
+            Logger.e(AIGCService.class, "#syncGenerateText - failed, state code:" + stateCode
+                    + " - " + unit.getCapability().getName() + "@" + unit.getContact().getId());
+            count.decrementAndGet();
+            return null;
+        }
         JSONObject payload = Packet.extractDataPayload(response);
 
         String responseText = "";
@@ -1913,7 +1921,8 @@ public class AIGCService extends AbstractModule implements Generatable {
             thoughtText = payload.getString("thought");
             thoughtText = thoughtText.trim();
         } catch (Exception e) {
-            Logger.w(AIGCService.class, "#syncGenerateText - failed, sn:" + sn);
+            Logger.w(AIGCService.class, "#syncGenerateText - failed, sn:" + sn
+                    + " - " + unit.getCapability().getName() + "@" + unit.getContact().getId());
             count.decrementAndGet();
             return null;
         }

@@ -456,7 +456,7 @@ public class EvaluationWorker {
                 e.printStackTrace();
             }
 
-            generating = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.toString(), new GeneratingOption(),
+            generating = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt.toString(), new GeneratingOption(),
                     null, null);
             result = (null != generating) ? generating.answer : null;
         }
