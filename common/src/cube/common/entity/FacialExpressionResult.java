@@ -31,14 +31,24 @@ public class FacialExpressionResult implements JSONable {
         this.list = new ArrayList<>();
         JSONArray array = json.getJSONArray("list");
         for (int i = 0; i < array.length(); ++i) {
-
+            JSONObject item = array.getJSONObject(i);
+            item.put("file", this.file.toCompactJSON());
+            this.list.add(new FacialExpression(item));
         }
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-
+        json.put("file", this.file.toJSON());
+        json.put("elapsed", this.elapsed);
+        JSONArray array = new JSONArray();
+        for (FacialExpression fe : this.list) {
+            JSONObject item = fe.toJSON();
+            item.remove("file");
+            array.put(item);
+        }
+        json.put("list", array);
         return json;
     }
 

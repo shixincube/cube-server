@@ -8,6 +8,7 @@ package cube.service.aigc;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.CachedQueueExecutor;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
@@ -206,8 +207,6 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     @Override
     public void start() {
-        this.executor = Executors.newFixedThreadPool(32);
-
         this.pluginSystem = new AIGCPluginSystem();
 
         // 读取配置文件
@@ -411,6 +410,23 @@ public class AIGCService extends AbstractModule implements Generatable {
             this.configFileLastModified = file.lastModified();
 
             Properties properties = ConfigUtils.readProperties(file.getAbsolutePath());
+
+            // 性能配置
+            int max = 8;
+            try {
+                max = Integer.parseInt(properties.getProperty("threadpool.max", "32"));
+            } catch (Exception e) {
+                // Nothing
+            }
+            if (properties.getProperty("threadpool.type", "fixed").equalsIgnoreCase("cached")) {
+                this.executor = CachedQueueExecutor.newCachedQueueThreadPool(max);
+                Logger.i(this.getClass(), "AI Service - Thread pool type: cached - max: " + max);
+            }
+            else {
+                this.executor = Executors.newFixedThreadPool(max);
+                Logger.i(this.getClass(), "AI Service - Thread pool type: fixed - max: " + max);
+            }
+
             // 上下文长度限制
             ModelConfig.EXTRA_LONG_CONTEXT_LIMIT = Math.max(Integer.parseInt(
                         properties.getProperty("context.length",
@@ -2932,7 +2948,17 @@ public class AIGCService extends AbstractModule implements Generatable {
         return true;
     }
 
-    public boolean facialExpressionRecognition() {
+    /**
+     * 面部表情识别。
+     *
+     * @param token
+     * @param fileCode
+     * @param listener
+     * @return
+     */
+    public boolean facialExpressionRecognition(AuthToken token, String fileCode,
+                                               FacialExpressionRecognitionListener listener) {
+
         return false;
     }
 

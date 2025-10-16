@@ -129,8 +129,6 @@ public class Performer implements TalkListener, Tickable {
      */
     private List<Tickable> tickableList;
 
-//    private ExecutorService notifyBlockExecutor;
-
     /**
      * 构造函数。
      *
@@ -150,7 +148,6 @@ public class Performer implements TalkListener, Tickable {
         this.transmissionMap = new ConcurrentHashMap<>();
         this.blockMap = new ConcurrentHashMap<>();
         this.tickableList = new ArrayList<>();
-//        this.notifyBlockExecutor = Executors.newFixedThreadPool(32);
     }
 
     /**
@@ -973,7 +970,7 @@ public class Performer implements TalkListener, Tickable {
         long time = System.currentTimeMillis();
         while (System.currentTimeMillis() - time < timeout) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -981,13 +978,6 @@ public class Performer implements TalkListener, Tickable {
                 break;
             }
         }
-//        synchronized (block) {
-//            try {
-//                block.wait(timeout);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
 
         this.blockMap.remove(block.sn);
 
@@ -1060,15 +1050,6 @@ public class Performer implements TalkListener, Tickable {
                 final Block block = this.blockMap.remove(sn);
                 if (null != block) {
                     block.dialect = actionDialect;
-//                    this.notifyBlockExecutor.execute(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            // 唤醒阻塞的线程
-//                            synchronized (block) {
-//                                block.notify();
-//                            }
-//                        }
-//                    });
                 }
                 else {
                     Transmission transmission = this.transmissionMap.get(sn);

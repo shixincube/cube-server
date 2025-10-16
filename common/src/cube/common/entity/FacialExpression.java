@@ -22,15 +22,17 @@ public class FacialExpression implements JSONable {
     public final BoundingBox boundingBox;
 
     public FacialExpression(JSONObject json) {
-        this.file = null;
-        this.expression = null;
-        this.boundingBox = null;
+        this.file = new FileLabel(json.getJSONObject("file"));
+        this.expression = Expression.parse(json.getString("expression"));
+        this.boundingBox = new BoundingBox(json.getJSONObject("bbox"));
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-
+        json.put("file", this.file.toCompactJSON());
+        json.put("expression", this.expression.name());
+        json.put("bbox", this.boundingBox.toJSON());
         return json;
     }
 
