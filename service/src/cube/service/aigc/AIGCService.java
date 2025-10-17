@@ -412,19 +412,21 @@ public class AIGCService extends AbstractModule implements Generatable {
             Properties properties = ConfigUtils.readProperties(file.getAbsolutePath());
 
             // 性能配置
-            int max = 8;
-            try {
-                max = Integer.parseInt(properties.getProperty("threadpool.max", "32"));
-            } catch (Exception e) {
-                // Nothing
-            }
-            if (properties.getProperty("threadpool.type", "fixed").equalsIgnoreCase("cached")) {
-                this.executor = CachedQueueExecutor.newCachedQueueThreadPool(max);
-                Logger.i(this.getClass(), "AI Service - Thread pool type: cached - max: " + max);
-            }
-            else {
-                this.executor = Executors.newFixedThreadPool(max);
-                Logger.i(this.getClass(), "AI Service - Thread pool type: fixed - max: " + max);
+            if (null == this.executor) {
+                int max = 8;
+                try {
+                    max = Integer.parseInt(properties.getProperty("threadpool.max", "32"));
+                } catch (Exception e) {
+                    // Nothing
+                }
+                if (properties.getProperty("threadpool.type", "fixed").equalsIgnoreCase("cached")) {
+                    this.executor = CachedQueueExecutor.newCachedQueueThreadPool(max);
+                    Logger.i(this.getClass(), "AI Service - Thread pool type: cached - max: " + max);
+                }
+                else {
+                    this.executor = Executors.newFixedThreadPool(max);
+                    Logger.i(this.getClass(), "AI Service - Thread pool type: fixed - max: " + max);
+                }
             }
 
             // 上下文长度限制
@@ -721,14 +723,70 @@ public class AIGCService extends AbstractModule implements Generatable {
         Logger.d(this.getClass(), "#selectUnitByName - Unit: " + unitName + "@"
                 + candidates.get(0).getContact().getId());
         return candidates.get(0);
+    }
 
-//        if (candidates.size() == 1) {
-//            return candidates.get(0);
-//        }
-//
-//        // 随机选择正在运行的节点
-//        unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
-//        return unit;
+    public synchronized AIGCUnit selectUnitByName(String unitName, long cid) {
+        if (cid > 9999999999L) {
+            // 10位以上ID进行一般选择
+            return this.selectUnitByName(unitName);
+        }
+
+        ArrayList<AIGCUnit> candidates = new ArrayList<>();
+
+        // 选择所有权重大于5.0的可用节点
+        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
+        while (iter.hasNext()) {
+            AIGCUnit unit = iter.next();
+            if (unit.getCapability().getName().equals(unitName) &&
+                    unit.getContext().isValid() &&
+                    unit.getWeight() > 5.0) {
+                candidates.add(unit);
+            }
+        }
+
+        // 无候选节点
+        if (candidates.isEmpty()) {
+            // 进行一般选择
+            return this.selectUnitByName(unitName);
+        }
+
+        if (candidates.size() == 1) {
+            Logger.d(this.getClass(), "#selectUnitByName - Unit: " + unitName + "@"
+                    + candidates.get(0).getContact().getId());
+            return candidates.get(0);
+        }
+
+        // 按照最近执行时间戳从低到高排序
+        Collections.sort(candidates, new Comparator<AIGCUnit>() {
+            @Override
+            public int compare(AIGCUnit u1, AIGCUnit u2) {
+                return (int)(u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
+            }
+        });
+
+        // 先进行一次选择，选择最久没有执行的
+        AIGCUnit unit = candidates.get(0);
+
+        iter = candidates.iterator();
+        while (iter.hasNext()) {
+            AIGCUnit u = iter.next();
+            if (u.isRunning()) {
+                // 把正在运行的单元从候选列表里删除
+                iter.remove();
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            // 所有单元都在运行
+            Logger.d(this.getClass(), "#selectUnitByName - Unit: " + unitName + "@"
+                    + unit.getContact().getId());
+            return unit;
+        }
+
+        // 总是返回最久的单元
+        Logger.d(this.getClass(), "#selectUnitByName - Unit: " + unitName + "@"
+                + candidates.get(0).getContact().getId());
+        return candidates.get(0);
     }
 
     public AIGCUnit selectUnitBySubtask(String subtask) {
@@ -843,6 +901,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 //        // 处理 ID
 //        id = Math.abs(id);
 
+        // 生成10位ID
         long id = Long.parseLong(Utils.randomInt(10000, 99999) + Utils.randomNumberString(5));
         while (ContactManager.getInstance().containsContact(domain, id)) {
             Logger.e(this.getClass(), "#getOrCreateUser - Retry contact id: " + id);
@@ -1842,13 +1901,31 @@ public class AIGCService extends AbstractModule implements Generatable {
      */
     public GeneratingRecord syncGenerateText(String unitName, String prompt, GeneratingOption option,
                                              List<GeneratingRecord> history, Contact participantContact) {
-        AIGCUnit unit = this.selectIdleUnitByName(unitName);
+        AIGCUnit unit = this.selectUnitByName(unitName);
         if (null == unit) {
-            unit = this.selectUnitByName(unitName);
-            if (null == unit) {
-                Logger.w(this.getClass(), "#syncGenerateText - Can NOT find unit: " + unitName);
-                return null;
-            }
+            Logger.w(this.getClass(), "#syncGenerateText - Can NOT find unit: " + unitName);
+            return null;
+        }
+        return this.syncGenerateText(unit, prompt, option, history, participantContact);
+    }
+
+    /**
+     * 同步方式生成文本。
+     *
+     * @param authToken
+     * @param unitName
+     * @param prompt
+     * @param option
+     * @param history
+     * @param participantContact
+     * @return
+     */
+    public GeneratingRecord syncGenerateText(AuthToken authToken, String unitName, String prompt, GeneratingOption option,
+                                            List<GeneratingRecord> history, Contact participantContact) {
+        AIGCUnit unit = this.selectUnitByName(unitName, authToken.getContactId());
+        if (null == unit) {
+            Logger.w(this.getClass(), "#syncGenerateText - Can NOT find unit: " + unitName);
+            return null;
         }
         return this.syncGenerateText(unit, prompt, option, history, participantContact);
     }
@@ -2906,7 +2983,8 @@ public class AIGCService extends AbstractModule implements Generatable {
                         fileLabel.getFileType() != FileType.M4A &&
                         fileLabel.getFileType() != FileType.AMR &&
                         fileLabel.getFileType() != FileType.AAC) {
-                    Logger.w(AIGCService.class, "#speechEmotionRecognition - No support file: " + fileLabel.getFileType().getPreferredExtension());
+                    Logger.w(AIGCService.class, "#speechEmotionRecognition - No support file: " +
+                            fileLabel.getFileType().getPreferredExtension());
                     listener.onFailed(fileLabel, AIGCStateCode.FileError);
                     return;
                 }
@@ -2958,8 +3036,59 @@ public class AIGCService extends AbstractModule implements Generatable {
      */
     public boolean facialExpressionRecognition(AuthToken token, String fileCode,
                                                FacialExpressionRecognitionListener listener) {
+        final FileLabel fileLabel = this.getFile(token.getDomain(), fileCode);
+        if (null == fileLabel) {
+            Logger.w(this.getClass(), "#facialExpressionRecognition - Can NOT find file: " + fileCode);
+            return false;
+        }
 
-        return false;
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                AIGCUnit unit = selectUnitByName(ModelConfig.FACIAL_EXPRESSION_UNIT);
+                if (null == unit) {
+                    Logger.w(AIGCService.class, "#facialExpressionRecognition - No unit");
+                    listener.onFailed(fileLabel, AIGCStateCode.UnitNoReady);
+                    return;
+                }
+
+                // 判断文件类型
+                if (fileLabel.getFileType() != FileType.JPEG &&
+                        fileLabel.getFileType() != FileType.PNG &&
+                        fileLabel.getFileType() != FileType.BMP) {
+                    Logger.w(AIGCService.class, "#facialExpressionRecognition - No support file: " +
+                            fileLabel.getFileType().getPreferredExtension());
+                    listener.onFailed(fileLabel, AIGCStateCode.FileError);
+                    return;
+                }
+
+                JSONObject payload = new JSONObject();
+                payload.put("fileLabel", fileLabel.toJSON());
+                Packet request = new Packet(AIGCAction.FacialExpressionRecognition.name, payload);
+                ActionDialect dialect = cellet.transmit(unit.getContext(), request.toDialect(), 3 * 60 * 1000);
+                if (null == dialect) {
+                    Logger.w(AIGCService.class, "#facialExpressionRecognition - Unit error");
+                    // 回调错误
+                    listener.onFailed(fileLabel, AIGCStateCode.UnitError);
+                    return;
+                }
+
+                Packet response = new Packet(dialect);
+                JSONObject data = Packet.extractDataPayload(response);
+                if (!data.has("result")) {
+                    Logger.w(AIGCService.class, "#facialExpressionRecognition - Unit process failed");
+                    // 回调错误
+                    listener.onFailed(fileLabel, AIGCStateCode.Failure);
+                    return;
+                }
+
+                FacialExpressionResult result = new FacialExpressionResult(data.getJSONObject("result"));
+                // 回调结束
+                listener.onCompleted(fileLabel, result);
+            }
+        });
+
+        return true;
     }
 
     public List<EmotionRecord> getEmotionRecords(AuthToken authToken) {

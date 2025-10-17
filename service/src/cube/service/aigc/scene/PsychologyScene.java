@@ -500,7 +500,7 @@ public class PsychologyScene {
                             reportTask.report.setState(AIGCStateCode.Inferencing);
 
                             // 执行工作流，制作报告数据
-                            evaluationWorker = evaluationWorker.make(reportTask.theme, reportTask.maxIndicators);
+                            evaluationWorker = evaluationWorker.make(reportTask.channel, reportTask.theme, reportTask.maxIndicators);
                             if (null == evaluationWorker) {
                                 // 推理生成报告失败
                                 Logger.w(PsychologyScene.class, "#generatePsychologyReport - onReportEvaluateFailed (IllegalOperation): " +

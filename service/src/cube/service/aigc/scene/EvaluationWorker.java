@@ -13,6 +13,8 @@ import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.composition.*;
+import cube.auth.AuthToken;
+import cube.common.entity.AIGCChannel;
 import cube.common.entity.GeneratingOption;
 import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
@@ -144,7 +146,7 @@ public class EvaluationWorker {
         return this.evaluationReport.isUnknown();
     }
 
-    public EvaluationWorker make(Theme theme, int maxIndicatorTexts) {
+    public EvaluationWorker make(AIGCChannel channel, Theme theme, int maxIndicatorTexts) {
         // 评估分推理
         List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation(Indicator.values().length);
         this.reportTextList = this.inferScore(scoreList, maxIndicatorTexts);
@@ -158,10 +160,10 @@ public class EvaluationWorker {
         }
 
         // 生成概述
-        this.summary = this.inferSummary(this.reportTextList);
+        this.summary = this.inferSummary(channel.getAuthToken(), this.reportTextList);
 
         // 生成人格描述
-        this.inferPersonality(this.evaluationReport.getPersonalityAccelerator());
+        this.inferPersonality(channel.getAuthToken(), this.evaluationReport.getPersonalityAccelerator());
 
         // 六维得分计算
         try {
@@ -216,10 +218,11 @@ public class EvaluationWorker {
     /**
      * 推理人格。
      *
+     * @param authToken
      * @param personalityAccelerator
      * @return
      */
-    private boolean inferPersonality(PersonalityAccelerator personalityAccelerator) {
+    private boolean inferPersonality(AuthToken authToken, PersonalityAccelerator personalityAccelerator) {
         BigFivePersonality feature = personalityAccelerator.getBigFivePersonality();
         String prompt = feature.generateReportPrompt();
         String answer = null;
@@ -238,10 +241,10 @@ public class EvaluationWorker {
             return false;
         }
 
-        // 对数据集数据进行推理
+        // 对人格画像进行描述
         prompt = String.format(PERSONALITY_FORMAT, fixSecondPerson(answer));
-        GeneratingRecord generatingResult = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
-                null, null);
+        GeneratingRecord generatingResult = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT,
+                prompt, new GeneratingOption(), null, null);
         String fixAnswer = (null != generatingResult) ? generatingResult.answer : null;
         if (null != fixAnswer) {
             answer = fixThirdPerson(fixAnswer);
@@ -415,7 +418,7 @@ public class EvaluationWorker {
         return result;
     }
 
-    private String inferSummary(List<ReportSection> list) {
+    private String inferSummary(AuthToken authToken, List<ReportSection> list) {
         if (list.isEmpty()) {
             return Resource.getInstance().getCorpus("report", "REPORT_NO_DATA_SUMMARY");
         }
@@ -437,7 +440,6 @@ public class EvaluationWorker {
         StringBuilder prompt = new StringBuilder("已知信息：\n\n");
         prompt.append("受测人心理评测结果如下：\n\n");
         for (ReportSection rs : list) {
-//            prompt.append("* **").append(rs.title).append("** ：");
             prompt.append(fixSecondPerson(rs.report)).append("\n\n");
             if (prompt.length() >= ModelConfig.getPromptLengthLimit(unitName)) {
                 break;
@@ -445,8 +447,8 @@ public class EvaluationWorker {
         }
         prompt.append("\n");
         prompt.append("根据上述已知信息，简洁和专业地来回答用户的问题。问题是：概述此人的心理评测结果，各内容之间分段展示。");
-        GeneratingRecord generating = this.service.syncGenerateText(unitName, prompt.toString(), new GeneratingOption(),
-                null, null);
+        GeneratingRecord generating = this.service.syncGenerateText(authToken, unitName, prompt.toString(),
+                new GeneratingOption(), null, null);
         String result = (null != generating) ? generating.answer : null;
 
         if (null == result || result.contains("我遇到一些问题") || result.contains("我遇到一些技术问题")) {
@@ -456,8 +458,8 @@ public class EvaluationWorker {
                 e.printStackTrace();
             }
 
-            generating = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt.toString(), new GeneratingOption(),
-                    null, null);
+            generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt.toString(),
+                    new GeneratingOption(), null, null);
             result = (null != generating) ? generating.answer : null;
         }
 

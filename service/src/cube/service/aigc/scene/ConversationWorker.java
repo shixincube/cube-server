@@ -55,7 +55,7 @@ public class ConversationWorker {
         }
 
         // 获取单元
-        AIGCUnit unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+        AIGCUnit unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT, channel.getAuthToken().getContactId());
         if (null == unit) {
             Logger.w(this.getClass(), "#work - Can NOT find unit \"" + ModelConfig.BAIZE_NEXT_UNIT + "\"");
 
@@ -359,12 +359,12 @@ public class ConversationWorker {
         // 获取单元
         String unitName = prompt.content.length() > 2000 || prompt.content.contains(JUMP_POLISH) ?
                 ModelConfig.BAIZE_X_UNIT : ModelConfig.BAIZE_NEXT_UNIT;
-        AIGCUnit unit = this.service.selectIdleUnitByName(unitName);
+        AIGCUnit unit = this.service.selectUnitByName(unitName, channel.getAuthToken().getContactId());
         if (null == unit) {
-            Logger.w(this.getClass(), "#work - Can NOT find idle unit \"" + unitName + "\"");
-            unit = this.service.selectUnitByName(ModelConfig.BAIZE_X_UNIT);
+            Logger.w(this.getClass(), "#work - Can NOT find unit \"" + unitName + "\"");
+            unit = this.service.selectUnitByName(ModelConfig.BAIZE_UNIT, channel.getAuthToken().getContactId());
             if (null == unit) {
-                Logger.w(this.getClass(), "#work - Can NOT find unit \"" + ModelConfig.BAIZE_X_UNIT + "\"");
+                Logger.w(this.getClass(), "#work - Can NOT find unit \"" + ModelConfig.BAIZE_UNIT + "\"");
                 channel.setProcessing(false);
                 return AIGCStateCode.UnitError;
             }
@@ -409,9 +409,9 @@ public class ConversationWorker {
     private String polish(String text) {
         AIGCUnit unit = this.service.selectUnitByName(ModelConfig.BAIZE_UNIT);
         if (null == unit) {
-            unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_X_UNIT);
+            unit = this.service.selectUnitByName(ModelConfig.BAIZE_X_UNIT);
             if (null == unit) {
-                unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+                unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
                 if (null == unit) {
                     Logger.d(this.getClass(), "#polish - Can NOT find unit");
                     return text;
