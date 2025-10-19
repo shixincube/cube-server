@@ -16,12 +16,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 语音情绪识别。
+ * 面部表情识别。
  */
-public class SpeechEmotionRecognition extends ContextHandler {
+public class FacialExpressionRecognition extends ContextHandler {
 
-    public SpeechEmotionRecognition() {
-        super("/aigc/speech/emotion");
+    public FacialExpressionRecognition() {
+        super("/aigc/facial/expression");
         setHandler(new Handler());
     }
 
@@ -51,7 +51,7 @@ public class SpeechEmotionRecognition extends ContextHandler {
                 return;
             }
 
-            Manager.SpeechEmotionRecognitionFuture future = Manager.getInstance().getSpeechEmotionRecognitionFuture(fileCode);
+            Manager.FacialExpressionRecognitionFuture future = Manager.getInstance().getFacialExpressionRecognitionFuture(fileCode);
             if (null == future) {
                 this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
@@ -85,7 +85,7 @@ public class SpeechEmotionRecognition extends ContextHandler {
 
                 boolean reset = json.has("reset") && json.getBoolean("reset");
 
-                Manager.SpeechEmotionRecognitionFuture future = Manager.getInstance().speechEmotionRecognition(token, fileCode, reset);
+                Manager.FacialExpressionRecognitionFuture future = Manager.getInstance().facialExpressionRecognition(token, fileCode, reset);
                 if (null == future) {
                     // 故障
                     this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));

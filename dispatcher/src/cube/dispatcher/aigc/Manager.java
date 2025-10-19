@@ -82,6 +82,11 @@ public class Manager implements Tickable, PerformerListener {
      */
     private Map<String, SpeakerDiarizationFuture> speakerDiarizationFutureMap;
 
+    /**
+     * Key：文件码
+     */
+    private Map<String, FacialExpressionRecognitionFuture> facialExpressionRecognitionFutureMap;
+
     public static Manager getInstance() {
         return Manager.instance;
     }
@@ -93,6 +98,7 @@ public class Manager implements Tickable, PerformerListener {
         this.speechRecognitionFutureMap = new ConcurrentHashMap<>();
         this.speechEmotionRecognitionFutureMap = new ConcurrentHashMap<>();
         this.speakerDiarizationFutureMap = new ConcurrentHashMap<>();
+        this.facialExpressionRecognitionFutureMap = new ConcurrentHashMap<>();
 
         this.setupHandler();
 
@@ -130,6 +136,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new SemanticSearch());
         httpServer.addContextHandler(new SpeechEmotionRecognition());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
+        httpServer.addContextHandler(new FacialExpressionRecognition());
         httpServer.addContextHandler(new AudioDiarization());
         httpServer.addContextHandler(new AudioDiarizationOperation());
         httpServer.addContextHandler(new KnowledgeQA());
@@ -1875,6 +1882,34 @@ public class Manager implements Tickable, PerformerListener {
         return this.speechEmotionRecognitionFutureMap.get(fileCode);
     }
 
+    public FacialExpressionRecognitionFuture facialExpressionRecognition(String token, String fileCode, boolean reset) {
+        if (reset) {
+            this.facialExpressionRecognitionFutureMap.remove(fileCode);
+        }
+        else {
+            if (this.facialExpressionRecognitionFutureMap.containsKey(fileCode)) {
+                // 正在处理
+                return this.facialExpressionRecognitionFutureMap.get(fileCode);
+            }
+        }
+
+        JSONObject payload = new JSONObject();
+        payload.put("fileCode", fileCode);
+        Packet packet = new Packet(AIGCAction.FacialExpressionRecognition.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        FacialExpressionRecognitionFuture future = new FacialExpressionRecognitionFuture(token, fileCode);
+        this.facialExpressionRecognitionFutureMap.put(fileCode, future);
+
+        this.performer.transmit(AIGCCellet.NAME, request);
+        return future;
+    }
+
+    public FacialExpressionRecognitionFuture getFacialExpressionRecognitionFuture(String fileCode) {
+        return this.facialExpressionRecognitionFutureMap.get(fileCode);
+    }
+
     public SpeakerDiarizationFuture speakerDiarization(String token, String fileCode, boolean reset) {
         if (reset) {
             this.speakerDiarizationFutureMap.remove(fileCode);
@@ -2982,6 +3017,31 @@ public class Manager implements Tickable, PerformerListener {
                 }
             }
         }
+        else if (AIGCAction.FacialExpressionRecognition.name.equals(action)) {
+            Packet responsePacket = new Packet(actionDialect);
+            // 状态码
+            int stateCode = Packet.extractCode(responsePacket);
+            if (stateCode == AIGCStateCode.Ok.code) {
+                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
+                FacialExpressionResult result = new FacialExpressionResult(resultJson);
+                FacialExpressionRecognitionFuture future = this.facialExpressionRecognitionFutureMap.get(result.file.getFileCode());
+                if (null != future) {
+                    future.result = result;
+                    future.stateCode = AIGCStateCode.Ok;
+                }
+                else {
+                    Logger.w(this.getClass(), "#onReceived - Facial expression recognition timeout: " + result.file.getFileCode());
+                }
+            }
+            else {
+                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
+                String fileCode = resultJson.getString("fileCode");
+                FacialExpressionRecognitionFuture future = this.facialExpressionRecognitionFutureMap.get(fileCode);
+                if (null != future) {
+                    future.stateCode = AIGCStateCode.parse(stateCode);
+                }
+            }
+        }
         else if (AIGCAction.SpeechEmotionRecognition.name.equals(action)) {
             Packet responsePacket = new Packet(actionDialect);
             // 状态码
@@ -3267,6 +3327,43 @@ public class Manager implements Tickable, PerformerListener {
             json.put("stateCode", this.stateCode.code);
             if (null != this.diarization) {
                 json.put("result", this.diarization.toJSON());
+            }
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            return this.toJSON();
+        }
+    }
+
+
+    public class FacialExpressionRecognitionFuture implements JSONable {
+
+        protected final long timestamp;
+
+        protected String token;
+
+        protected String fileCode;
+
+        protected FacialExpressionResult result;
+
+        protected AIGCStateCode stateCode = AIGCStateCode.Processing;
+
+        public FacialExpressionRecognitionFuture(String token, String fileCode) {
+            this.timestamp = System.currentTimeMillis();
+            this.token = token;
+            this.fileCode = fileCode;
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = new JSONObject();
+            json.put("fileCode", this.fileCode);
+            json.put("timestamp", this.timestamp);
+            json.put("stateCode", this.stateCode.code);
+            if (null != this.result) {
+                json.put("result", this.result.toJSON());
             }
             return json;
         }
