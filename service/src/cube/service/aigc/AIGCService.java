@@ -3031,10 +3031,11 @@ public class AIGCService extends AbstractModule implements Generatable {
      *
      * @param token
      * @param fileCode
+     * @param visualize
      * @param listener
      * @return
      */
-    public boolean facialExpressionRecognition(AuthToken token, String fileCode,
+    public boolean facialExpressionRecognition(AuthToken token, String fileCode, boolean visualize,
                                                FacialExpressionRecognitionListener listener) {
         final FileLabel fileLabel = this.getFile(token.getDomain(), fileCode);
         if (null == fileLabel) {
@@ -3064,8 +3065,9 @@ public class AIGCService extends AbstractModule implements Generatable {
 
                 JSONObject payload = new JSONObject();
                 payload.put("fileLabel", fileLabel.toJSON());
+                payload.put("visualize", visualize);
                 Packet request = new Packet(AIGCAction.FacialExpressionRecognition.name, payload);
-                ActionDialect dialect = cellet.transmit(unit.getContext(), request.toDialect(), 3 * 60 * 1000);
+                ActionDialect dialect = cellet.transmit(unit.getContext(), request.toDialect(), 2 * 60 * 1000);
                 if (null == dialect) {
                     Logger.w(AIGCService.class, "#facialExpressionRecognition - Unit error");
                     // 回调错误

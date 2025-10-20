@@ -1882,7 +1882,8 @@ public class Manager implements Tickable, PerformerListener {
         return this.speechEmotionRecognitionFutureMap.get(fileCode);
     }
 
-    public FacialExpressionRecognitionFuture facialExpressionRecognition(String token, String fileCode, boolean reset) {
+    public FacialExpressionRecognitionFuture facialExpressionRecognition(String token, String fileCode,
+                                                                         boolean visualize, boolean reset) {
         if (reset) {
             this.facialExpressionRecognitionFutureMap.remove(fileCode);
         }
@@ -1895,6 +1896,7 @@ public class Manager implements Tickable, PerformerListener {
 
         JSONObject payload = new JSONObject();
         payload.put("fileCode", fileCode);
+        payload.put("visualize", visualize);
         Packet packet = new Packet(AIGCAction.FacialExpressionRecognition.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);

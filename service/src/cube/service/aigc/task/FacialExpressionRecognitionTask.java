@@ -46,9 +46,11 @@ public class FacialExpressionRecognitionTask extends ServiceTask {
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         AuthToken authToken = service.getToken(token);
 
+        boolean visualize = packet.data.has("visualize") && packet.data.getBoolean("visualize");
+
         // Facial Expression Recognition
         boolean success = service.facialExpressionRecognition(authToken,
-                packet.data.getString("fileCode"), new FacialExpressionRecognitionListener() {
+                packet.data.getString("fileCode"), visualize, new FacialExpressionRecognitionListener() {
             @Override
             public void onCompleted(FileLabel input, FacialExpressionResult result) {
                 cellet.speak(talkContext,

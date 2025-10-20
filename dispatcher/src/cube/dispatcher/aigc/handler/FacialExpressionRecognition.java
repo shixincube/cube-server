@@ -64,6 +64,13 @@ public class FacialExpressionRecognition extends ContextHandler {
                 FileLabels.reviseFileLabel(fileJson, token,
                         Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
                         Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+
+                if (responseData.getJSONObject("result").has("visualization")) {
+                    JSONObject visualization = responseData.getJSONObject("result").getJSONObject("visualization");
+                    FileLabels.reviseFileLabel(visualization, token,
+                            Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                            Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                }
             }
 
             this.respondOk(response, responseData);
@@ -82,10 +89,12 @@ public class FacialExpressionRecognition extends ContextHandler {
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
                 String fileCode = json.getString("fileCode");
+                boolean visualize = json.has("visualize") && json.getBoolean("visualize");
 
                 boolean reset = json.has("reset") && json.getBoolean("reset");
 
-                Manager.FacialExpressionRecognitionFuture future = Manager.getInstance().facialExpressionRecognition(token, fileCode, reset);
+                Manager.FacialExpressionRecognitionFuture future =
+                        Manager.getInstance().facialExpressionRecognition(token, fileCode, visualize, reset);
                 if (null == future) {
                     // 故障
                     this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));

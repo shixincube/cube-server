@@ -6,7 +6,6 @@
 
 package cube.common.entity;
 
-import cube.aigc.psychology.composition.Expression;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -25,6 +24,8 @@ public class FacialExpressionResult implements JSONable {
 
     public final List<FacialExpression> list;
 
+    public FileLabel visualization;
+
     public FacialExpressionResult(JSONObject json) {
         this.file = new FileLabel(json.getJSONObject("file"));
         this.elapsed = json.getLong("elapsed");
@@ -34,6 +35,9 @@ public class FacialExpressionResult implements JSONable {
             JSONObject item = array.getJSONObject(i);
             item.put("file", this.file.toCompactJSON());
             this.list.add(new FacialExpression(item));
+        }
+        if (json.has("visualization")) {
+            this.visualization = new FileLabel(json.getJSONObject("visualization"));
         }
     }
 
@@ -49,6 +53,9 @@ public class FacialExpressionResult implements JSONable {
             array.put(item);
         }
         json.put("list", array);
+        if (null != this.visualization) {
+            json.put("visualization", this.visualization.toJSON());
+        }
         return json;
     }
 

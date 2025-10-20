@@ -583,7 +583,7 @@ public class PsychologyScene {
                     numRunningTasks.decrementAndGet();
 
                     Logger.i(PsychologyScene.class, "Generating thread END ("
-                            + numRunningTasks.get() + "/" + taskQueue.size() + ") - "
+                            + numRunningTasks.get() + "/" + runningTaskQueue.size() + ") - "
                             + Thread.currentThread().getName()
                             + " - " + Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
                 }
