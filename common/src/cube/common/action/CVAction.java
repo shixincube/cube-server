@@ -36,6 +36,11 @@ public enum CVAction {
     ObjectDetection("objectDetection"),
 
     /**
+     * 姿态估算。
+     */
+    PoseEstimation("poseEstimation"),
+
+    /**
      * 剪裁照片中的纸张。
      */
     ClipPaper("clipPaper"),

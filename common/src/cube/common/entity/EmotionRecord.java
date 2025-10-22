@@ -6,7 +6,6 @@
 
 package cube.common.entity;
 
-import cube.aigc.psychology.composition.Emotion;
 import org.json.JSONObject;
 
 public class EmotionRecord extends Entity {

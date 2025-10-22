@@ -469,6 +469,10 @@ public class CVService extends AbstractModule {
         return result.get(0);
     }
 
+    public void estimatePose() {
+
+    }
+
     public boolean clipPaper(AuthToken token, List<String> fileCodes, ClipPaperListener listener) {
         final CVEndpoint endpoint = this.selectEndpoint();
         if (null == endpoint) {

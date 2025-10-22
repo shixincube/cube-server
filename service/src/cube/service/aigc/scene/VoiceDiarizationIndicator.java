@@ -9,7 +9,7 @@ package cube.service.aigc.scene;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Sentiment;
-import cube.aigc.psychology.composition.Emotion;
+import cube.common.entity.Emotion;
 import cube.common.entity.*;
 import cube.service.aigc.AIGCService;
 import org.json.JSONObject;

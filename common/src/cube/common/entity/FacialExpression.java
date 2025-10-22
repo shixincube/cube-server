@@ -6,7 +6,6 @@
 
 package cube.common.entity;
 
-import cube.aigc.psychology.composition.Expression;
 import cube.common.JSONable;
 import org.json.JSONObject;
 

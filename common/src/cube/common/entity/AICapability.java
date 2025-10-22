@@ -196,6 +196,8 @@ public class AICapability implements JSONable {
 
         public final static String FacialExpressionRecognition = "FacialExpressionRecognition";
 
+        public final static String PoseEstimation = "PoseEstimation";
+
         private ComputerVision() {
         }
     }

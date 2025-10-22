@@ -12,7 +12,7 @@ import cell.util.log.Logger;
 import cube.aigc.*;
 import cube.aigc.app.Notification;
 import cube.aigc.atom.Atom;
-import cube.aigc.psychology.composition.Emotion;
+import cube.common.entity.Emotion;
 import cube.common.Storagable;
 import cube.common.entity.*;
 import cube.core.Conditional;

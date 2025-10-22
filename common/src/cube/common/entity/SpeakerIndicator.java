@@ -6,7 +6,6 @@
 
 package cube.common.entity;
 
-import cube.aigc.psychology.composition.Emotion;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;

@@ -20,7 +20,7 @@ import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.app.UserProfile;
 import cube.aigc.psychology.composition.AnswerSheet;
-import cube.aigc.psychology.composition.Emotion;
+import cube.common.entity.Emotion;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScaleResult;
 import cube.auth.AuthToken;
