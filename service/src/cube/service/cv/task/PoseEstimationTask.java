@@ -14,12 +14,12 @@ import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.ObjectInfo;
+import cube.common.entity.PoseEstimationInfo;
 import cube.common.state.CVStateCode;
 import cube.service.ServiceTask;
 import cube.service.cv.CVCellet;
 import cube.service.cv.CVService;
-import cube.service.cv.listener.DetectObjectListener;
+import cube.service.cv.listener.PoseEstimationListener;
 import cube.util.JSONUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,11 +27,11 @@ import org.json.JSONObject;
 import java.util.List;
 
 /**
- * 物体检测任务。
+ * 姿态估算任务。
  */
-public class ObjectDetectionTask extends ServiceTask {
+public class PoseEstimationTask extends ServiceTask {
 
-    public ObjectDetectionTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public PoseEstimationTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -65,12 +65,13 @@ public class ObjectDetectionTask extends ServiceTask {
         }
 
         try {
-            boolean success = service.detectObject(token, JSONUtils.toStringList(packet.data.getJSONArray("list")),
-                    new DetectObjectListener() {
+            boolean visualize = packet.data.has("visualize") && packet.data.getBoolean("visualize");
+            boolean success = service.estimatePose(token, JSONUtils.toStringList(packet.data.getJSONArray("list")),
+                    visualize, new PoseEstimationListener() {
                         @Override
-                        public void onCompleted(List<ObjectInfo> objects, long elapsed) {
+                        public void onCompleted(List<PoseEstimationInfo> objects, long elapsed) {
                             JSONArray array = new JSONArray();
-                            for (ObjectInfo info : objects) {
+                            for (PoseEstimationInfo info : objects) {
                                 array.put(info.toJSON());
                             }
 

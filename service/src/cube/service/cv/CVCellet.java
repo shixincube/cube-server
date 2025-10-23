@@ -139,6 +139,11 @@ public class CVCellet extends AbstractCellet {
             this.execute(new ObjectDetectionTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (CVAction.PoseEstimation.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new PoseEstimationTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (CVAction.Setup.name.equals(action)) {
             // 来自 Endpoint 的请求
             this.execute(new SetupTask(this, talkContext, primitive,

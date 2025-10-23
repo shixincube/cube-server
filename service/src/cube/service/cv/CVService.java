@@ -22,10 +22,7 @@ import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
-import cube.service.cv.listener.ClipPaperListener;
-import cube.service.cv.listener.CombineBarCodeListener;
-import cube.service.cv.listener.DetectBarCodeListener;
-import cube.service.cv.listener.DetectObjectListener;
+import cube.service.cv.listener.*;
 import cube.util.FileType;
 import cube.vision.Size;
 import org.json.JSONArray;
@@ -469,8 +466,84 @@ public class CVService extends AbstractModule {
         return result.get(0);
     }
 
-    public void estimatePose() {
+    public boolean estimatePose(AuthToken token, List<String> fileCodes, boolean visualize, PoseEstimationListener listener) {
+        final CVEndpoint endpoint = this.selectEndpoint();
+        if (null == endpoint) {
+            Logger.e(this.getClass(), "#estimatePose - No endpoints");
+            return false;
+        }
 
+        endpoint.setWorking(true);
+
+        final int limit = 10;
+        final List<FileLabel> fileLabels = new ArrayList<>();
+        for (String fileCode : fileCodes) {
+            FileLabel fileLabel = this.getFile(token.getDomain(), fileCode);
+            if (null != fileLabel) {
+                if (fileLabel.getFileType() == FileType.JPEG ||
+                        fileLabel.getFileType() == FileType.PNG ||
+                        fileLabel.getFileType() == FileType.BMP) {
+                    fileLabels.add(fileLabel);
+                    if (fileLabels.size() >= limit) {
+                        // 超限
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (fileLabels.isEmpty()) {
+            endpoint.setWorking(false);
+            Logger.e(this.getClass(), "#estimatePose - Can NOT find files");
+            return false;
+        }
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    JSONArray list = new JSONArray();
+                    for (FileLabel fileLabel : fileLabels) {
+                        list.put(fileLabel.toJSON());
+                    }
+
+                    JSONObject payload = new JSONObject();
+                    payload.put("list", list);
+                    payload.put("visualize", visualize);
+                    Packet request = new Packet(CVAction.PoseEstimation.name, payload);
+                    ActionDialect dialect = cellet.transmit(endpoint.talkContext, request.toDialect(), 2 * 60 * 1000);
+                    if (null == dialect) {
+                        Logger.w(this.getClass(), "#estimatePose - Endpoint is error");
+                        listener.onFailed(fileCodes, CVStateCode.EndpointException);
+                        return;
+                    }
+
+                    Packet response = new Packet(dialect);
+                    if (Packet.extractCode(response) != CVStateCode.Ok.code) {
+                        Logger.d(this.getClass(), "#estimatePose - Process failed");
+                        listener.onFailed(fileCodes, CVStateCode.Failure);
+                        return;
+                    }
+
+                    List<PoseEstimationInfo> poseEstimationList = new ArrayList<>();
+
+                    JSONObject data = Packet.extractDataPayload(response);
+                    JSONArray result = data.getJSONArray("result");
+                    for (int i = 0; i < result.length(); ++i) {
+                        PoseEstimationInfo info = new PoseEstimationInfo(result.getJSONObject(i));
+                        info.setFileLabel(findFileLabel(fileLabels, info.fileCode));
+                        poseEstimationList.add(info);
+                    }
+
+                    long elapsed = data.getLong("elapsed");
+                    listener.onCompleted(poseEstimationList, elapsed);
+                } finally {
+                    endpoint.setWorking(false);
+                }
+            }
+        });
+
+        return true;
     }
 
     public boolean clipPaper(AuthToken token, List<String> fileCodes, ClipPaperListener listener) {

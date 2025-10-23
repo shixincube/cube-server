@@ -11,39 +11,92 @@ package cube.common.entity;
  */
 public enum PoseKeypoint {
 
+    /**
+     * 鼻子。
+     */
     Nose(0),
 
+    /**
+     * 左眼。
+     */
     LeftEye(1),
 
-    right_eye(2),
+    /**
+     * 右眼。
+     */
+    RightEye(2),
 
-    left_ear(3),
+    /**
+     * 左耳。
+     */
+    LeftEar(3),
 
-    right_ear(4),
+    /**
+     * 右耳。
+     */
+    RightEar(4),
 
-    left_shoulder(5),
+    /**
+     * 左肩。
+     */
+    LeftShoulder(5),
 
-    right_shoulder(6),
+    /**
+     * 右肩。
+     */
+    RightShoulder(6),
 
-    left_elbow(7),
+    /**
+     * 左肘。
+     */
+    LeftElbow(7),
 
-    right_elbow(8),
+    /**
+     * 右肘。
+     */
+    RightElbow(8),
 
-    left_wrist(9),
+    /**
+     * 左腕。
+     */
+    LeftWrist(9),
 
-    right_wrist(10),
+    /**
+     * 右腕。
+     */
+    RightWrist(10),
 
-    left_hip(11),
+    /**
+     * 左髋。
+     */
+    LeftHip(11),
 
-    right_hip(12),
+    /**
+     * 右髋。
+     */
+    RightHip(12),
 
-    left_knee(13),
+    /**
+     * 左膝。
+     */
+    LeftKnee(13),
 
-    right_knee(14),
+    /**
+     * 右膝。
+     */
+    RightKnee(14),
 
-    left_ankle(15),
+    /**
+     * 左脚踝。
+     */
+    LeftAnkle(15),
 
-    right_ankle(16),
+    /**
+     * 右脚踝。
+     */
+    RightAnkle(16),
+
+    Unknown(99),
 
     ;
 
@@ -51,5 +104,24 @@ public enum PoseKeypoint {
 
     PoseKeypoint(int code) {
         this.code = code;
+    }
+
+    public static PoseKeypoint parse(int code) {
+        for (PoseKeypoint pk : PoseKeypoint.values()) {
+            if (pk.code == code) {
+                return pk;
+            }
+        }
+        return Unknown;
+    }
+
+    public static PoseKeypoint parse(String nameOrCode) {
+        for (PoseKeypoint pk : PoseKeypoint.values()) {
+            if (pk.name().equalsIgnoreCase(nameOrCode)
+                    || Integer.toString(pk.code).equals(nameOrCode)) {
+                return pk;
+            }
+        }
+        return Unknown;
     }
 }
