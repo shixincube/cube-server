@@ -14,12 +14,12 @@ import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.PoseEstimationInfo;
+import cube.common.entity.HandEstimationInfo;
 import cube.common.state.CVStateCode;
 import cube.service.ServiceTask;
 import cube.service.cv.CVCellet;
 import cube.service.cv.CVService;
-import cube.service.cv.listener.PoseEstimationListener;
+import cube.service.cv.listener.HandEstimationListener;
 import cube.util.JSONUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,11 +27,11 @@ import org.json.JSONObject;
 import java.util.List;
 
 /**
- * 姿态估算任务。
+ * 手势估算任务。
  */
-public class PoseEstimationTask extends ServiceTask {
+public class HandEstimationTask extends ServiceTask {
 
-    public PoseEstimationTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public HandEstimationTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -66,12 +66,12 @@ public class PoseEstimationTask extends ServiceTask {
 
         try {
             boolean visualize = packet.data.has("visualize") && packet.data.getBoolean("visualize");
-            boolean success = service.estimatePose(token, JSONUtils.toStringList(packet.data.getJSONArray("list")),
-                    visualize, new PoseEstimationListener() {
+            boolean success = service.estimateHand(token, JSONUtils.toStringList(packet.data.getJSONArray("list")),
+                    visualize, new HandEstimationListener() {
                         @Override
-                        public void onCompleted(List<PoseEstimationInfo> results, long elapsed) {
+                        public void onCompleted(List<HandEstimationInfo> results, long elapsed) {
                             JSONArray array = new JSONArray();
-                            for (PoseEstimationInfo info : results) {
+                            for (HandEstimationInfo info : results) {
                                 array.put(info.toJSON());
                             }
 

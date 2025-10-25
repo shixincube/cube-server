@@ -46,6 +46,7 @@ public class CVCellet extends AbstractCellet {
         httpServer.addContextHandler(new DetectBarCode(this.performer));
         httpServer.addContextHandler(new ObjectDetection(this.performer));
         httpServer.addContextHandler(new PoseEstimation(this.performer));
+        httpServer.addContextHandler(new HandEstimation(this.performer));
         httpServer.addContextHandler(new ClipPaper(this.performer));
 
         return true;

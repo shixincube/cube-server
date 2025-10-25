@@ -41,6 +41,11 @@ public enum CVAction {
     PoseEstimation("poseEstimation"),
 
     /**
+     * 手势估算。
+     */
+    HandEstimation("handEstimation"),
+
+    /**
      * 剪裁照片中的纸张。
      */
     ClipPaper("clipPaper"),

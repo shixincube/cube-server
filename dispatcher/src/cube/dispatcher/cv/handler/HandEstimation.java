@@ -23,14 +23,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 姿势估算。
+ * 手势估算。
  */
-public class PoseEstimation extends ContextHandler {
+public class HandEstimation extends ContextHandler {
 
     private Performer performer;
 
-    public PoseEstimation(Performer performer) {
-        super("/cv/estimation/pose");
+    public HandEstimation(Performer performer) {
+        super("/cv/estimation/hand");
         this.performer = performer;
         setHandler(new Handler());
     }
@@ -53,7 +53,7 @@ public class PoseEstimation extends ContextHandler {
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
 
-                Packet packet = new Packet(CVAction.PoseEstimation.name, data);
+                Packet packet = new Packet(CVAction.HandEstimation.name, data);
                 ActionDialect requestAction = packet.toDialect();
                 requestAction.addParam("token", token);
 
