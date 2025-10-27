@@ -58,6 +58,8 @@ public final class TextUtils {
     private final static Pattern sChineseWord =
             Pattern.compile("[\\u4E00-\\u9FA5]");
 
+    private final static Pattern sEnglish = Pattern.compile("^[a-zA-Z]*$");
+
     private TextUtils() {
     }
 
@@ -378,6 +380,45 @@ public final class TextUtils {
             }
         }
         return result;
+    }
+
+    /**
+     * 文本内容是否以英文为主。
+     *
+     * @param text
+     * @return
+     */
+    public static boolean isTextMainlyInEnglish(String text) {
+        // 按照空格进行分割
+        String[] words = text.split(" ");
+        int englishCounts = 0;
+        int chineseCounts = 0;
+        for (String word : words) {
+            if (word.length() > 1) {
+                for (int i = 0; i < word.length(); ++i) {
+                    String w = word.substring(i, i + 1);
+                    Matcher cm = sChineseWord.matcher(w);
+                    Matcher em = sEnglish.matcher(w);
+                    if (cm.matches()) {
+                        ++chineseCounts;
+                    }
+                    else if (em.matches()) {
+                        ++englishCounts;
+                    }
+                }
+            }
+            else {
+                Matcher cm = sChineseWord.matcher(word);
+                Matcher em = sEnglish.matcher(word);
+                if (cm.matches()) {
+                    ++chineseCounts;
+                }
+                else if (em.matches()) {
+                    ++englishCounts;
+                }
+            }
+        }
+        return englishCounts > (chineseCounts + chineseCounts);
     }
 
     /**

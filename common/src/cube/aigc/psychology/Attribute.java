@@ -7,6 +7,7 @@
 package cube.aigc.psychology;
 
 import cube.common.JSONable;
+import cube.common.Language;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -23,23 +24,35 @@ public class Attribute implements JSONable {
 
     public final int age;
 
+    public final Language language;
+
     public final boolean strict;
 
-    public Attribute(String gender, int age, boolean strict) {
+    public Attribute(String gender, int age, Language language, boolean strict) {
         this.gender = gender.equals("男") ? "male" : (gender.equals("女") ? "female" : gender.toLowerCase());
         this.age = age;
+        this.language = language;
         this.strict = strict;
     }
 
-    public Attribute(String gender, int age) {
-        this.gender = gender;
+    public Attribute(String gender, int age, Language language) {
+        this.gender = gender.equals("男") ? "male" : (gender.equals("女") ? "female" : gender.toLowerCase());
         this.age = age;
+        this.language = language;
+        this.strict = false;
+    }
+
+    public Attribute(String gender, int age) {
+        this.gender = gender.equals("男") ? "male" : (gender.equals("女") ? "female" : gender.toLowerCase());
+        this.age = age;
+        this.language = Language.Chinese;
         this.strict = false;
     }
 
     public Attribute(JSONObject json) {
         this.gender = json.getString("gender");
         this.age = json.getInt("age");
+        this.language = json.has("language") ? Language.parse(json.getString("language")) : Language.Chinese;
         this.strict = json.has("strict") && json.getBoolean("strict");
     }
 
@@ -54,11 +67,21 @@ public class Attribute implements JSONable {
     }
 
     public String getGenderText() {
-        return this.isMale() ? "男" : "女";
+        if (Language.Chinese == this.language) {
+            return this.isMale() ? "男" : "女";
+        }
+        else {
+            return this.isMale() ? "Male" : "Female";
+        }
     }
 
     public String getAgeText() {
-        return this.age + "岁";
+        if (Language.Chinese == this.language) {
+            return this.age + "岁";
+        }
+        else {
+            return this.age + " years";
+        }
     }
 
     public double[] calcFactor() {
@@ -90,6 +113,7 @@ public class Attribute implements JSONable {
         JSONObject json = new JSONObject();
         json.put("gender", this.gender);
         json.put("age", this.age);
+        json.put("language", this.language.simplified);
         json.put("strict", this.strict);
         return json;
     }

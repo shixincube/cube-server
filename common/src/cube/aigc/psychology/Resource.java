@@ -9,6 +9,7 @@ package cube.aigc.psychology;
 import cell.util.log.Logger;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import cube.aigc.psychology.composition.Scale;
+import cube.common.Language;
 import cube.common.entity.Membership;
 import cube.util.JSONUtils;
 import org.json.JSONArray;
@@ -318,10 +319,10 @@ public class Resource {
     }
 
     public String getCorpus(String category, String content) {
-        return this.getCorpus(category, content, "cn");
+        return this.getCorpus(category, content, Language.Chinese);
     }
 
-    public String getCorpus(String category, String content, String lang) {
+    public String getCorpus(String category, String content, Language language) {
         if (this.corpusFile.exists()) {
             if (this.corpusFile.lastModified() != this.corpusLastModified) {
                 try {
@@ -338,7 +339,7 @@ public class Resource {
         }
         JSONObject categoryJson = this.corpusJson.getJSONObject(category);
         JSONObject contentJson = categoryJson.getJSONObject(content);
-        return contentJson.getString(lang.toLowerCase());
+        return contentJson.getString(language.simplified);
     }
 
     public String getChildStrategyContent() {
