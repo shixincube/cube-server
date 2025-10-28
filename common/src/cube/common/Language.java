@@ -34,6 +34,14 @@ public enum Language {
         this.simplified = simplified;
     }
 
+    public boolean isEnglish() {
+        return this.simplified.equalsIgnoreCase(Language.English.simplified);
+    }
+
+    public boolean isChinese() {
+        return this.simplified.equalsIgnoreCase(Language.Chinese.simplified);
+    }
+
     public static Language parse(String name) {
         for (Language language : Language.values()) {
             if (language.simplified.equalsIgnoreCase(name) || language.name().equalsIgnoreCase(name)) {

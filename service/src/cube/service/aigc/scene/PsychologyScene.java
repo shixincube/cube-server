@@ -1028,7 +1028,7 @@ public class PsychologyScene {
         return result.toString();
     }
 
-    public GeneratingRecord buildHistory(List<ConversationRelation> relations, String currentQuery) {
+    /*public GeneratingRecord buildHistory(List<ConversationRelation> relations, String currentQuery) {
         ConversationRelation relation = relations.get(0);
 
         Report report = this.getPaintingReport(relation.reportSn);
@@ -1043,7 +1043,7 @@ public class PsychologyScene {
 
         QueryRevolver revolver = new QueryRevolver(this.service, this.storage);
         return revolver.generateSupplement(relation, report, currentQuery);
-    }
+    }*/
 
     /**
      * 构建基于上下文数据的提示词。
@@ -1477,7 +1477,7 @@ public class PsychologyScene {
     private EvaluationWorker processReport(AIGCChannel channel, Painting painting, AIGCUnit unit) {
         HTPEvaluation evaluation = (null == painting) ?
                 new HTPEvaluation(channel.getAuthToken().getContactId(),
-                        new Attribute("male", 28, false)) :
+                        new Attribute("male", 28, channel.getLanguage(), false)) :
                 new HTPEvaluation(channel.getAuthToken().getContactId(), painting);
 
         // 生成评估报告

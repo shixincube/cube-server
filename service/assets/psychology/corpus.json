@@ -16,11 +16,11 @@
         },
         "UNCORRELATED": {
             "cn": "不相关",
-            "en": ""
+            "en": "Uncorrelated"
         },
         "CORRELATED": {
             "cn": "相关",
-            "en": ""
+            "en": "Correlated"
         },
         "FORMAT_POLISH": {
             "cn": "逐行润色以下内容：\n\n%s\n\n要求不使用“感谢”，“润色”这样的用语，确保信息完整传达，不要编造内容，直接输出润色的内容。",

@@ -7,6 +7,7 @@
 package cube.aigc;
 
 import cube.common.JSONable;
+import cube.common.Language;
 import cube.common.entity.GeneratingRecord;
 import org.json.JSONObject;
 
@@ -15,18 +16,25 @@ import org.json.JSONObject;
  */
 public abstract class StrategyNode implements JSONable {
 
-    protected String unitName;
+    protected final String unitName;
+
+    protected final Language language;
 
     protected GeneratingRecord result;
 
     protected StrategyNode next;
 
-    public StrategyNode(String unitName) {
+    public StrategyNode(String unitName, Language language) {
         this.unitName = unitName;
+        this.language = language;
     }
 
     public String getUnitName() {
         return this.unitName;
+    }
+
+    public Language getLanguage() {
+        return this.language;
     }
 
     public GeneratingRecord getResult() {

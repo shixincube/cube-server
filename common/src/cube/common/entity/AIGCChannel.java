@@ -10,6 +10,7 @@ import cell.core.net.Endpoint;
 import cell.util.Utils;
 import cube.auth.AuthToken;
 import cube.common.Domain;
+import cube.common.Language;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -27,6 +28,8 @@ public class AIGCChannel extends Entity {
     private int historyLengthLimit = 2 * 1024;
 
     private AuthToken authToken;
+
+    private Language language;
 
     private String participant;
 
@@ -67,6 +70,7 @@ public class AIGCChannel extends Entity {
     public AIGCChannel(AuthToken authToken, String participant, String channelCode) {
         this.domain = new Domain(authToken.getDomain());
         this.authToken = authToken;
+        this.language = Language.Chinese;
         this.participant = participant;
         this.creationTime = System.currentTimeMillis();
         this.code = channelCode;
@@ -84,6 +88,13 @@ public class AIGCChannel extends Entity {
         if (json.has("authToken")) {
             this.authToken = new AuthToken(json.getJSONObject("authToken"));
             this.domain = new Domain(this.authToken.getDomain());
+        }
+
+        if (json.has("language")) {
+            this.language = Language.parse(json.getString("language"));
+        }
+        else {
+            this.language = Language.Chinese;
         }
 
         this.history = new LinkedList<>();
@@ -104,6 +115,10 @@ public class AIGCChannel extends Entity {
 
     public AuthToken getAuthToken() {
         return this.authToken;
+    }
+
+    public Language getLanguage() {
+        return this.language;
     }
 
     public String getCode() {
@@ -318,7 +333,7 @@ public class AIGCChannel extends Entity {
         if (null != this.authToken) {
             json.put("authToken", this.authToken.toJSON());
         }
-
+        json.put("language", this.language.simplified);
         return json;
     }
 
