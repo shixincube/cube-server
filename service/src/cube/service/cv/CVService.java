@@ -342,10 +342,11 @@ public class CVService extends AbstractModule {
      *
      * @param token
      * @param fileCodes
+     * @param visualize
      * @param listener
      * @return
      */
-    public boolean detectObject(AuthToken token, List<String> fileCodes, DetectObjectListener listener) {
+    public boolean detectObject(AuthToken token, List<String> fileCodes, boolean visualize, DetectObjectListener listener) {
         final CVEndpoint endpoint = this.selectEndpoint();
         if (null == endpoint) {
             Logger.e(this.getClass(), "#detectObject - No endpoints");

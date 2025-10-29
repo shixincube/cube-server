@@ -23,6 +23,7 @@ import cube.aigc.psychology.Theme;
 import cube.aigc.psychology.composition.Scale;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
+import cube.common.Language;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
@@ -1525,16 +1526,30 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param token
      * @param participant
      * @param channelCode
+     * @param language
      * @return
      */
-    public AIGCChannel createChannel(String token, String participant, String channelCode) {
+    public AIGCChannel createChannel(String token, String participant, String channelCode, Language language) {
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(token);
         if (null == authToken) {
             return null;
         }
 
-        AIGCChannel channel = new AIGCChannel(authToken, participant, channelCode);
+        return this.createChannel(authToken, participant, channelCode, language);
+    }
+
+    /**
+     * 创建频道。
+     *
+     * @param authToken
+     * @param participant
+     * @param channelCode
+     * @param language
+     * @return
+     */
+    public AIGCChannel createChannel(AuthToken authToken, String participant, String channelCode, Language language) {
+        AIGCChannel channel = new AIGCChannel(authToken, participant, channelCode, language);
         this.channelMap.put(channel.getCode(), channel);
         return channel;
     }
@@ -2127,7 +2142,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         if (null == channel) {
             Logger.d(AIGCService.class, "#conversation - Can NOT find channel, create new channel: " + channelCode);
             // 创建频道
-            channel = this.createChannel(tokenCode, "User-" + channelCode, channelCode);
+            channel = this.createChannel(tokenCode, "User-" + channelCode, channelCode, Language.Chinese);
         }
 
         // 如果频道正在应答上一次问题，则返回 null
@@ -2168,6 +2183,13 @@ public class AIGCService extends AbstractModule implements Generatable {
         return meta.sn;
     }
 
+    /**
+     *
+     * @param channelCode
+     * @param sn
+     * @return
+     * @deprecated
+     */
     public AIGCConversationResponse queryConversation(String channelCode, long sn) {
         // 获取频道
         AIGCChannel channel = this.channelMap.get(channelCode);
@@ -2737,6 +2759,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                                                  Theme theme, int maxIndicators, boolean adjust,
                                                  PaintingReportListener listener) {
         if (!this.isStarted()) {
+            Logger.w(this.getClass(), "#generatePaintingReport - The service has NOT started");
             return null;
         }
 
@@ -2769,7 +2792,8 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         AIGCChannel channel = this.getChannelByToken(token);
         if (null == channel) {
-            channel = this.createChannel(token, "Baize", Utils.randomString(16));
+            channel = this.createChannel(authToken, "Baize", Utils.randomString(16),
+                    attribute.language);
         }
 
         // 生成报告
@@ -2792,7 +2816,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         }
 
-        return PsychologyScene.getInstance().generateScaleReport(channel, scale, listener);
+        return PsychologyScene.getInstance().generateScaleReport(channel, scale, channel.getLanguage(), listener);
     }
 
     /**
@@ -2800,10 +2824,11 @@ public class AIGCService extends AbstractModule implements Generatable {
      *
      * @param token
      * @param scaleSn
+     * @param language
      * @param listener
      * @return
      */
-    public ScaleReport generateScaleReport(String token, long scaleSn, ScaleReportListener listener) {
+    public ScaleReport generateScaleReport(String token, long scaleSn, Language language, ScaleReportListener listener) {
         if (!this.isStarted()) {
             return null;
         }
@@ -2824,10 +2849,10 @@ public class AIGCService extends AbstractModule implements Generatable {
 
             AIGCChannel channel = this.getChannelByToken(token);
             if (null == channel) {
-                channel = this.createChannel(token, "Baize", Utils.randomString(16));
+                channel = this.createChannel(authToken, "Baize", Utils.randomString(16), language);
             }
 
-            ScaleReport report = PsychologyScene.getInstance().generateScaleReport(channel, scale, listener);
+            ScaleReport report = PsychologyScene.getInstance().generateScaleReport(channel, scale, language, listener);
             return report;
         } catch (Exception e) {
             Logger.e(this.getClass(), "#generateScaleReport", e);

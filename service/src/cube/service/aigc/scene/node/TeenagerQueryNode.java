@@ -23,7 +23,7 @@ public class TeenagerQueryNode extends StrategyNode {
     private PaintingReport report;
 
     public TeenagerQueryNode(String query, QueryRevolver revolver, PaintingReport report) {
-        super(ModelConfig.BAIZE_NEXT_UNIT);
+        super(ModelConfig.BAIZE_NEXT_UNIT, report.getAttribute().language);
         this.query = query;
         this.revolver = revolver;
         this.report = report;
@@ -41,7 +41,7 @@ public class TeenagerQueryNode extends StrategyNode {
         result.append("评测数据的受测人是匿名的，");
         result.append("年龄是：").append(report.getAttribute().age).append("岁，");
         result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n\n");
-        result.append("评测日期是：").append(this.revolver.formatReportDate(report)).append("。\n\n");
+        result.append("评测日期是：").append(this.revolver.formatReportDate(report, report.getAttribute().language.isEnglish())).append("。\n\n");
 
         if (!this.report.getPermission().isPermissioned()) {
             // 无权限

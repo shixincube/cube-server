@@ -7,6 +7,7 @@ import cube.aigc.psychology.composition.BigFiveFactor;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.HexagonDimension;
 import cube.aigc.psychology.composition.HexagonDimensionScore;
+import cube.common.Language;
 import cube.service.aigc.scene.HTPEvaluation;
 import cube.util.FileUtils;
 import cube.util.FloatUtils;
@@ -415,7 +416,7 @@ public class ReportDataset {
             return false;
         }
 
-        Attribute attribute = new Attribute("male", 18, false);
+        Attribute attribute = new Attribute("male", 18, Language.Chinese, false);
 
         FileOutputStream os = null;
         boolean head = false;

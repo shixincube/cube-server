@@ -13,13 +13,14 @@ import cube.aigc.Generatable;
 import cube.aigc.ModelConfig;
 import cube.aigc.StrategyNode;
 import cube.auth.AuthToken;
+import cube.common.Language;
 import cube.common.entity.Contact;
 import cube.common.entity.GeneratingOption;
 import cube.common.entity.GeneratingRecord;
 import cube.common.entity.User;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.module.FlowTask;
 import cube.service.contact.ContactManager;
+import cube.util.TextUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,7 +35,7 @@ public class QueryUser extends StrategyNode {
     private int maxNum = 50;
 
     public QueryUser(AIGCService service, AuthToken token, String query) {
-        super(query);
+        super(query, TextUtils.isTextMainlyInEnglish(query) ? Language.English : Language.Chinese);
         this.token = token;
     }
 

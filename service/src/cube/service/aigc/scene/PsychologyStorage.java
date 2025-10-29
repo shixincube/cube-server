@@ -11,6 +11,7 @@ import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.composition.*;
+import cube.common.Language;
 import cube.common.Storagable;
 import cube.common.state.AIGCStateCode;
 import cube.core.Conditional;
@@ -285,6 +286,9 @@ public class PsychologyStorage implements Storagable {
             new StorageField("age", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("language", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
             new StorageField("complete", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -326,6 +330,9 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("age", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("language", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             }),
             new StorageField("strict", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL, Constraint.DEFAULT_0
@@ -1156,6 +1163,7 @@ public class PsychologyStorage implements Storagable {
         Map<String, StorageField> data = StorageFields.get(result.get(0));
 
         Attribute attribute = new Attribute(data.get("gender").getString(), data.get("age").getInt(),
+                data.get("language").isNullValue() ? Language.Chinese : Language.parse(data.get("language").getString()),
                 data.get("strict").getInt() != 0);
 
         ScaleReport report = null;
@@ -1187,6 +1195,7 @@ public class PsychologyStorage implements Storagable {
             }
 
             Attribute attribute = new Attribute(data.get("gender").getString(), data.get("age").getInt(),
+                    data.get("language").isNullValue() ? Language.Chinese : Language.parse(data.get("language").getString()),
                     data.get("strict").getInt() != 0);
             ScaleReport report = new ScaleReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
                     data.get("timestamp").getLong(), attribute, new JSONArray(data.get("factor_data").getString()),
@@ -1216,6 +1225,7 @@ public class PsychologyStorage implements Storagable {
             }
 
             Attribute attribute = new Attribute(data.get("gender").getString(), data.get("age").getInt(),
+                    data.get("language").isNullValue() ? Language.Chinese : Language.parse(data.get("language").getString()),
                     data.get("strict").getInt() != 0);
             ScaleReport report = new ScaleReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
                     data.get("timestamp").getLong(), attribute, new JSONArray(data.get("factor_data").getString()),
@@ -1362,6 +1372,7 @@ public class PsychologyStorage implements Storagable {
         PaintingReport report = new PaintingReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
                 data.get("timestamp").getLong(), data.get("name").getString(),
                 new Attribute(data.get("gender").getString(), data.get("age").getInt(),
+                        data.get("language").isNullValue() ? Language.Chinese : Language.parse(data.get("language").getString()),
                         data.get("strict").getInt() == 1),
                 data.get("file_code").getString(), Theme.parse(data.get("theme").getString()),
                 data.get("finished_timestamp").getLong());

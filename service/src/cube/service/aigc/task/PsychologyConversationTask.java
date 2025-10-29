@@ -15,6 +15,7 @@ import cell.util.log.Logger;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
+import cube.common.Language;
 import cube.common.Packet;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
@@ -23,6 +24,7 @@ import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.ConversationWorker;
+import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -144,7 +146,9 @@ public class PsychologyConversationTask extends ServiceTask {
             // 获取频道
             AIGCChannel channel = service.getChannel(channelCode);
             if (null == channel) {
-                channel = service.createChannel(token, channelCode, channelCode);
+                boolean english = TextUtils.isTextMainlyInEnglish(query);
+                channel = service.createChannel(token, channelCode, channelCode,
+                        english ? Language.English : Language.Chinese);
             }
             channel.setEndpoint(httpEndpoint, httpsEndpoint);
 

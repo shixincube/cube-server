@@ -3,8 +3,8 @@ package cube.service.test;
 import cube.aigc.Consts;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Resource;
-import cube.aigc.psychology.Theme;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
+import cube.common.Language;
 import cube.service.tokenizer.Tokenizer;
 import cube.util.TextUtils;
 
@@ -105,7 +105,7 @@ public class TestPrompt {
             }
         }
 
-        return new Attribute(gender, age, false);
+        return new Attribute(gender, age, Language.Chinese, false);
     }
 
     public static void main(String[] args) {

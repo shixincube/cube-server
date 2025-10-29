@@ -25,7 +25,7 @@ public class TeenagerClassicSceneStrategyNode extends StrategyNode {
     private PaintingReport report;
 
     public TeenagerClassicSceneStrategyNode(String query, QueryRevolver revolver, PaintingReport report) {
-        super(ModelConfig.BAIZE_NEXT_UNIT);
+        super(ModelConfig.BAIZE_NEXT_UNIT, report.getAttribute().language);
         this.query = query;
         this.revolver = revolver;
         this.report = report;
@@ -39,11 +39,12 @@ public class TeenagerClassicSceneStrategyNode extends StrategyNode {
         }
 
         StringBuilder result = new StringBuilder();
-        result.append("此评测数据由AiXinLi模型生成，采用的评测方法是“房树人”绘画投射测试。");
+        result.append("此评测数据由 Baize-AiXinLi 模型生成，采用的评测方法是“房树人”绘画投射测试。");
         result.append("评测数据的受测人是匿名的，");
         result.append("年龄是：").append(report.getAttribute().age).append("岁，");
         result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n\n");
-        result.append("评测日期是：").append(this.revolver.formatReportDate(report)).append("。\n\n");
+        result.append("评测日期是：").append(
+                this.revolver.formatReportDate(report, this.getLanguage().isEnglish())).append("。\n\n");
 
         if (!this.report.getPermission().isPermissioned()) {
             // 无权限
@@ -64,7 +65,7 @@ public class TeenagerClassicSceneStrategyNode extends StrategyNode {
         BigFivePersonality personality = this.report.getEvaluationReport().getPersonalityAccelerator()
                 .getBigFivePersonality();
         result.append("受测人的大五人格描述如下：\n");
-        result.append(this.revolver.filterPersonalityDescription(personality.getDescription()));
+        result.append(this.revolver.filterPersonalityDescription(personality.getDescription(), this.getLanguage().isEnglish()));
         result.append("\n\n");
 
         // 宜人性

@@ -15,6 +15,7 @@ import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.Subtask;
+import cube.common.Language;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
@@ -48,10 +49,12 @@ public class ConversationWorker {
 
     public AIGCStateCode work(String token, String channelCode, List<ConversationRelation> conversationRelationList,
                               String query, GenerateTextListener listener) {
+        final boolean english = TextUtils.isTextMainlyInEnglish(query);
         // 获取频道
         AIGCChannel channel = this.service.getChannel(channelCode);
         if (null == channel) {
-            channel = this.service.createChannel(token, channelCode, channelCode);
+            channel = this.service.createChannel(token, channelCode, channelCode,
+                    english ? Language.English : Language.Chinese);
         }
 
         // 获取单元
@@ -335,7 +338,7 @@ public class ConversationWorker {
         }
 
         // 尝试通过上下文里的数据生成提示词
-        PromptRevolver prompt = PsychologyScene.getInstance().revolve(convCtx, query);
+        PromptRevolver prompt = PsychologyScene.getInstance().revolve(convCtx, query, channel.getLanguage());
         if (null == prompt) {
             Logger.e(this.getClass(), "#work - Builds prompt failed");
             channel.setProcessing(false);

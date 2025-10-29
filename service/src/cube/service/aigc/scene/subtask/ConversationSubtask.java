@@ -14,6 +14,7 @@ import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Subtask;
+import cube.common.Language;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
@@ -227,7 +228,7 @@ public abstract class ConversationSubtask {
             }
         }
 
-        return new Attribute(gender, age, false);
+        return new Attribute(gender, age, Language.Chinese, false);
     }
 
     private List<FileLabel> checkFileLabels(List<FileLabel> fileLabels) {

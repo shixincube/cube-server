@@ -21,6 +21,7 @@ import cube.aigc.psychology.composition.*;
 import cube.aigc.psychology.material.Label;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
+import cube.common.Language;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
@@ -354,6 +355,11 @@ public class PsychologyScene {
                                                                 int maxIndicators, boolean adjust,
                                                                 int retention,
                                                                 PaintingReportListener listener) {
+        if (null == channel) {
+            Logger.e(this.getClass(), "#generatePsychologyReport - Channel is null");
+            return null;
+        }
+
         if (this.taskQueue.size() >= this.maxQueueLength) {
             Logger.w(this.getClass(), "#generatePsychologyReport - The queue length has reached the maximum limit: "
                     + this.taskQueue.size() + "/" + this.maxQueueLength);
@@ -364,11 +370,6 @@ public class PsychologyScene {
         if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
             Logger.w(this.getClass(), "#generatePsychologyReport - Age param overflow: " +
                     attribute.age);
-            return null;
-        }
-
-        if (null == channel) {
-            Logger.e(this.getClass(), "#generatePsychologyReport - Channel is null");
             return null;
         }
 
@@ -840,12 +841,14 @@ public class PsychologyScene {
      *
      * @param channel
      * @param scale
+     * @param language
      * @param listener
      * @return
      */
-    public ScaleReport generateScaleReport(AIGCChannel channel, Scale scale, ScaleReportListener listener) {
+    public ScaleReport generateScaleReport(AIGCChannel channel, Scale scale, Language language,
+                                           ScaleReportListener listener) {
         if (!scale.isComplete()) {
-            Logger.e(this.getClass(), "#generateScaleReport - Scale is NOT complete: " + scale.getSN());
+            Logger.e(this.getClass(), "#generateScaleReport - The scale is NOT complete: " + scale.getSN());
             return null;
         }
 
@@ -855,7 +858,7 @@ public class PsychologyScene {
         }
 
         if (null == scale.getResult()) {
-            Logger.d(this.getClass(), "#generateScaleReport - Cale scale score: " + scale.getSN());
+            Logger.d(this.getClass(), "#generateScaleReport - Recalculates scale score: " + scale.getSN());
             this.submitScale(scale);
         }
 
@@ -1050,9 +1053,10 @@ public class PsychologyScene {
      *
      * @param context
      * @param query
+     * @param language
      * @return
      */
-    public PromptRevolver revolve(ConversationContext context, String query) {
+    public PromptRevolver revolve(ConversationContext context, String query, Language language) {
         QueryRevolver revolver = new QueryRevolver(this.service, this.storage);
 
         // 尝试情景推理
@@ -1062,7 +1066,7 @@ public class PsychologyScene {
                 Logger.d(this.getClass(), "#revolve - The age is less then 18: " + report.sn);
 
                 // 添加节点
-                StrategyNode detectQuery = new DetectTeenagerQueryStrategyNode(query);
+                StrategyNode detectQuery = new DetectTeenagerQueryStrategyNode(query, language);
                 StrategyNode problemClassification = new TeenagerProblemClassificationNode(revolver, context.getCurrentReport());
                 StrategyNode queryNode = new TeenagerQueryNode(query, revolver, context.getCurrentReport());
                 // 连接节点

@@ -15,6 +15,7 @@ import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.Subtask;
+import cube.common.Language;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.GeneratingRecord;
@@ -24,6 +25,7 @@ import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.SceneManager;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+import cube.util.TextUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,9 +87,11 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
             return AIGCStateCode.Ok;
         }
 
+        final boolean english = TextUtils.isTextMainlyInEnglish(query);
+
         // 生成
         Scale scale = PsychologyScene.getInstance().generateScale(channel.getAuthToken().getContactId(), scaleName,
-                new Attribute("male", 30, false));
+                new Attribute("male", 30, english ? Language.English : Language.Chinese, false));
         if (null == scale) {
             Logger.w(this.getClass(), "#execute - Load scale failed: " + channel.getAuthToken().getCode());
 

@@ -65,8 +65,9 @@ public class ObjectDetectionTask extends ServiceTask {
         }
 
         try {
+            boolean visualize = packet.data.has("visualize") && packet.data.getBoolean("visualize");
             boolean success = service.detectObject(token, JSONUtils.toStringList(packet.data.getJSONArray("list")),
-                    new DetectObjectListener() {
+                    visualize, new DetectObjectListener() {
                         @Override
                         public void onCompleted(List<ObjectInfo> objects, long elapsed) {
                             JSONArray array = new JSONArray();

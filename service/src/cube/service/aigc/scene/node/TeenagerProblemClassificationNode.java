@@ -21,7 +21,7 @@ public class TeenagerProblemClassificationNode extends StrategyNode  {
     private PaintingReport report;
 
     public TeenagerProblemClassificationNode(QueryRevolver revolver, PaintingReport report) {
-        super(ModelConfig.BAIZE_NEXT_UNIT);
+        super(ModelConfig.BAIZE_NEXT_UNIT, report.getAttribute().language);
         this.revolver = revolver;
         this.report = report;
     }

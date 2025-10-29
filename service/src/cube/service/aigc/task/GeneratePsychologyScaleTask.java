@@ -14,6 +14,7 @@ import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.composition.Scale;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
+import cube.common.Language;
 import cube.common.Packet;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
@@ -55,8 +56,10 @@ public class GeneratePsychologyScaleTask extends ServiceTask {
 
         try {
             String scaleName = packet.data.getString("name");
+            Language language = packet.data.has("language") ?
+                    Language.parse(packet.data.getString("language")) : Language.Chinese;
             Attribute attribute = new Attribute(packet.data.getString("gender"),
-                    packet.data.getInt("age"),
+                    packet.data.getInt("age"), language,
                     packet.data.has("strict") && packet.data.getBoolean("strict"));
 
             Scale scale = PsychologyScene.getInstance().generateScale(authToken.getContactId(), scaleName, attribute);

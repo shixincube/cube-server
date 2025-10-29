@@ -64,13 +64,13 @@ public class AIGCChannel extends Entity {
     private long lastUnitMetaSn;
 
     public AIGCChannel(AuthToken authToken, String participant) {
-        this(authToken, participant, Utils.randomString(16));
+        this(authToken, participant, Utils.randomString(16), Language.Chinese);
     }
 
-    public AIGCChannel(AuthToken authToken, String participant, String channelCode) {
+    public AIGCChannel(AuthToken authToken, String participant, String channelCode, Language language) {
         this.domain = new Domain(authToken.getDomain());
         this.authToken = authToken;
-        this.language = Language.Chinese;
+        this.language = language;
         this.participant = participant;
         this.creationTime = System.currentTimeMillis();
         this.code = channelCode;

@@ -15,6 +15,7 @@ import cube.aigc.AppEvent;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.benchmark.ResponseTime;
+import cube.common.Language;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GeneratingOption;
@@ -29,6 +30,7 @@ import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.listener.KnowledgeQAListener;
 import cube.service.aigc.listener.TextToImageListener;
+import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -98,7 +100,9 @@ public class ChatTask extends ServiceTask {
         if (null == channel) {
             // 创建指定的频道
             Logger.i(this.getClass(), "#run - Create new channel for token: " + token);
-            service.createChannel(token, "User-" + channelCode, channelCode);
+            boolean english = TextUtils.isTextMainlyInEnglish(content);
+            service.createChannel(token, "User-" + channelCode, channelCode,
+                    english ? Language.English : Language.Chinese);
         }
 
         // 根据工作模式进行调用

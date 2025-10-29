@@ -13,6 +13,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
+import cube.common.Language;
 import cube.common.Packet;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.FileLabel;
@@ -22,6 +23,7 @@ import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.TextToFileListener;
+import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -67,11 +69,6 @@ public class TextToFileTask extends ServiceTask {
             return;
         }
 
-        AIGCChannel channel = service.getChannelByToken(token);
-        if (null == channel) {
-            channel = service.createChannel(token, "Unknown", Utils.randomString(16));
-        }
-
         List<FileLabel> fileLabelList = new ArrayList<>();
         JSONArray array = packet.data.getJSONArray("files");
         for (int i = 0; i < array.length(); ++i) {
@@ -85,6 +82,13 @@ public class TextToFileTask extends ServiceTask {
 
         JSONObject responseData = new JSONObject();
         responseData.put("sn", sn);
+
+        AIGCChannel channel = service.getChannelByToken(token);
+        if (null == channel) {
+            boolean english = TextUtils.isTextMainlyInEnglish(text);
+            channel = service.createChannel(authToken, "Unknown", Utils.randomString(16),
+                    english ? Language.English : Language.Chinese);
+        }
 
         GeneratingRecord attachment = new GeneratingRecord(fileLabelList);
         boolean success = service.generateFile(channel, text, attachment, new TextToFileListener() {

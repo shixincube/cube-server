@@ -11,6 +11,7 @@ import cube.aigc.psychology.Indicator;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.algorithm.Score;
 import cube.common.JSONable;
+import cube.common.Language;
 import org.json.JSONObject;
 
 /**
@@ -69,7 +70,7 @@ public class EvaluationScore implements JSONable {
             this.rate = IndicatorRate.parse(json.getJSONObject("rate"));
         }
         else {
-            this.rate = this.getIndicatorRate(new Attribute("male", 18, false));
+            this.rate = this.getIndicatorRate(new Attribute("male", 18, Language.Chinese, false));
         }
     }
 
@@ -129,7 +130,7 @@ public class EvaluationScore implements JSONable {
             return null;
         }
 
-        return word + "的报告描述";
+        return word + (attribute.language.isChinese() ? "的报告描述" : " for reporting content");
     }
 
     public String generateSuggestionPrompt(Attribute attribute) {
@@ -151,22 +152,22 @@ public class EvaluationScore implements JSONable {
         switch (this.indicator) {
             case Depression:
                 if (rate == IndicatorRate.Low) {
-                    buf.append("抑郁倾向低");
+                    buf.append(attribute.language.isChinese() ? "抑郁倾向低" : "Low tendency to depression trend");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("抑郁倾向中等");
+                    buf.append(attribute.language.isChinese() ? "抑郁倾向中等" : "Moderate tendency to depression trend");
                 } else if (rate == IndicatorRate.High) {
-                    buf.append("抑郁倾向高");
+                    buf.append(attribute.language.isChinese() ? "抑郁倾向高" : "High tendency to depression trend");
                 } else {
                     return null;
                 }
                 break;
             case Anxiety:
                 if (rate == IndicatorRate.Low) {
-                    buf.append("轻度焦虑情绪");
+                    buf.append(attribute.language.isChinese() ? "轻度焦虑情绪" : "Mild anxiety");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度焦虑情绪");
+                    buf.append(attribute.language.isChinese() ? "中度焦虑情绪" : "Moderate anxiety");
                 } else if (rate == IndicatorRate.High) {
-                    buf.append("重度焦虑情绪");
+                    buf.append(attribute.language.isChinese() ? "重度焦虑情绪" : "Severe anxiety");
                 } else {
                     return null;
                 }
@@ -722,7 +723,7 @@ public class EvaluationScore implements JSONable {
         JSONObject json = new JSONObject();
         json.put("indicator", this.indicator.name);
         json.put("rate", (null != this.rate) ? this.rate.toJSON() :
-                this.getIndicatorRate(new Attribute("male", 18, false)).toJSON());
+                this.getIndicatorRate(new Attribute("male", 18, Language.Chinese, false)).toJSON());
         json.put("hit", this.hit);
         json.put("value", this.value);
         json.put("positiveScore", this.positiveScore);

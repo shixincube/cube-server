@@ -8,14 +8,15 @@ package cube.service.aigc.scene.node;
 
 import cube.aigc.ModelConfig;
 import cube.aigc.StrategyNode;
+import cube.common.Language;
 import cube.common.entity.GeneratingRecord;
 
 public class DetectTeenagerQueryStrategyNode extends StrategyNode {
 
     private String query;
 
-    public DetectTeenagerQueryStrategyNode(String query) {
-        super(ModelConfig.BAIZE_UNIT);
+    public DetectTeenagerQueryStrategyNode(String query, Language language) {
+        super(ModelConfig.BAIZE_UNIT, language);
         this.query = query;
     }
 

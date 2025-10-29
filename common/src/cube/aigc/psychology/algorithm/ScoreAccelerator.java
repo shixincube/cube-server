@@ -10,6 +10,7 @@ import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Indicator;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.JSONable;
+import cube.common.Language;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -82,7 +83,7 @@ public class ScoreAccelerator implements JSONable {
         }
 
         if (null == attribute) {
-            attribute = new Attribute("male", 18, false);
+            attribute = new Attribute("male", 18, Language.Chinese, false);
         }
 
         List<EvaluationScore> result = new ArrayList<>();

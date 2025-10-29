@@ -50,7 +50,7 @@ public class PsychologyReports extends ContextHandler {
                     Attribute attribute = new Attribute(data.getJSONObject("attribute"));
                     String fileCode = data.getString("fileCode");
                     String theme = data.has("theme") ? data.getString("theme") : Theme.Generic.code;
-                    int indicators = data.has("indicators") ? data.getInt("indicators") : 10;
+                    int indicators = data.has("indicators") ? data.getInt("indicators") : 30;
                     boolean adjust = data.has("adjust") ? data.getBoolean("adjust") : true;
 
                     PaintingReport report =

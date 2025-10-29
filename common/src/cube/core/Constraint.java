@@ -57,6 +57,11 @@ public enum Constraint {
     DEFAULT_NULL("DEFAULT NULL"),
 
     /**
+     * 对应 DEFAULT ''
+     */
+    DEFAULT_EMPTY("DEFAULT ''"),
+
+    /**
      * 对应 CHECK 。
      */
     CHECK("CHECK");

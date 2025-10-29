@@ -15,6 +15,7 @@ import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.Usage;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
+import cube.common.Language;
 import cube.common.Packet;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
@@ -69,7 +70,7 @@ public class GeneratePsychologyReportTask extends ServiceTask {
                 attribute = new Attribute(packet.data.getJSONObject("attribute"));
                 fileCode = packet.data.getString("fileCode");
                 themeName = packet.data.getString("theme");
-                maxIndicators = packet.data.has("indicators") ? packet.data.getInt("indicators") : 10;
+                maxIndicators = packet.data.has("indicators") ? packet.data.getInt("indicators") : 30;
                 adjust = packet.data.has("adjust") ? packet.data.getBoolean("adjust") : true;
                 remote.append(packet.data.has("remote") ? packet.data.getString("remote") : "");
             } catch (Exception e) {
@@ -139,10 +140,13 @@ public class GeneratePsychologyReportTask extends ServiceTask {
         }
         else if (packet.data.has("scaleSn")) {
             long scaleSn = 0;
+            Language language = Language.Other;
             final StringBuilder remote = new StringBuilder();
 
             try {
                 scaleSn = packet.data.getLong("scaleSn");
+                language = packet.data.has("language")
+                        ? Language.parse(packet.data.getString("language")) : Language.Chinese;
                 remote.append(packet.data.has("remote") ? packet.data.getString("remote") : "");
             } catch (Exception e) {
                 this.cellet.speak(this.talkContext,
@@ -151,7 +155,7 @@ public class GeneratePsychologyReportTask extends ServiceTask {
                 return;
             }
 
-            ScaleReport report = service.generateScaleReport(token, scaleSn, new ScaleReportListener() {
+            ScaleReport report = service.generateScaleReport(token, scaleSn, language, new ScaleReportListener() {
                 @Override
                 public void onReportEvaluating(ScaleReport report) {
                     Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluating - " + token);
