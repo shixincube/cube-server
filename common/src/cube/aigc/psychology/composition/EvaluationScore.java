@@ -130,7 +130,9 @@ public class EvaluationScore implements JSONable {
             return null;
         }
 
-        return word + (attribute.language.isChinese() ? "的报告描述" : " for reporting content");
+        return attribute.language.isChinese() ?
+                (word + "的报告描述") :
+                ("The report content when the assessment indicator is \"" + word.toLowerCase() + "\"");
     }
 
     public String generateSuggestionPrompt(Attribute attribute) {
@@ -143,7 +145,9 @@ public class EvaluationScore implements JSONable {
             return null;
         }
 
-        return word + "的建议";
+        return attribute.language.isChinese() ?
+                (word + "的建议") :
+                ("The suggestions when the assessment indicator is \"" + word.toLowerCase() + "\"");
     }
 
     public String generateWord(Attribute attribute) {
@@ -152,11 +156,11 @@ public class EvaluationScore implements JSONable {
         switch (this.indicator) {
             case Depression:
                 if (rate == IndicatorRate.Low) {
-                    buf.append(attribute.language.isChinese() ? "抑郁倾向低" : "Low tendency to depression trend");
+                    buf.append(attribute.language.isChinese() ? "抑郁倾向低" : "Low depressive tendency");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append(attribute.language.isChinese() ? "抑郁倾向中等" : "Moderate tendency to depression trend");
+                    buf.append(attribute.language.isChinese() ? "抑郁倾向中等" : "Moderate depressive tendency");
                 } else if (rate == IndicatorRate.High) {
-                    buf.append(attribute.language.isChinese() ? "抑郁倾向高" : "High tendency to depression trend");
+                    buf.append(attribute.language.isChinese() ? "抑郁倾向高" : "High depressive tendency");
                 } else {
                     return null;
                 }
@@ -174,233 +178,233 @@ public class EvaluationScore implements JSONable {
                 break;
             case Obsession:
                 if (rate == IndicatorRate.Low) {
-                    buf.append("轻度强迫症");
+                    buf.append(attribute.language.isChinese() ? "轻度强迫症" : "Mild obsession");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度强迫症");
+                    buf.append(attribute.language.isChinese() ? "中度强迫症" : "Moderate obsession");
                 } else if (rate == IndicatorRate.High) {
-                    buf.append("重度强迫症");
+                    buf.append(attribute.language.isChinese() ? "重度强迫症" : "Severe obsession");
                 } else {
                     return null;
                 }
                 break;
             case Creativity:
                 if (rate == IndicatorRate.High) {
-                    buf.append("有较强的创造力");
+                    buf.append(attribute.language.isChinese() ? "有较强的创造力" : "High level of creativity");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("有一定的创造力");
+                    buf.append(attribute.language.isChinese() ? "有一定的创造力" : "Moderate level of creativity");
                 } else {
-                    buf.append("创造力一般");
+                    buf.append(attribute.language.isChinese() ? "创造力一般" : "Creativity in general");
                 }
                 break;
             case Pessimism:
                 if (rate == IndicatorRate.High) {
-                    buf.append("悲观者");
+                    buf.append(attribute.language.isChinese() ? "悲观者" : "Pessimist");
                 } else {
                     return null;
                 }
                 break;
             case Optimism:
                 if (rate == IndicatorRate.High) {
-                    buf.append("乐观者");
+                    buf.append(attribute.language.isChinese() ? "乐观者" : "Optimist");
                 } else {
                     return null;
                 }
                 break;
             case SenseOfSecurity:
                 if (rate == IndicatorRate.High) {
-                    buf.append("安全感较好");
+                    buf.append(attribute.language.isChinese() ? "安全感较好" : "Good sense of security");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("安全感合格");
+                    buf.append(attribute.language.isChinese() ? "安全感合格" : "Sense of security is satisfactory");
                 } else {
-                    buf.append("安全感一般");
+                    buf.append(attribute.language.isChinese() ? "安全感一般" : "A moderate level of security");
                 }
                 break;
             case Extroversion:
                 if (rate == IndicatorRate.High) {
-                    buf.append("外倾");
+                    buf.append(attribute.language.isChinese() ? "外倾" : "Extroversion");
                 }
                 break;
             case Introversion:
                 if (rate == IndicatorRate.High) {
-                    buf.append("内倾");
+                    buf.append(attribute.language.isChinese() ? "内倾" : "Introversion");
                 }
                 break;
             case Impulsion:
                 if (rate == IndicatorRate.High) {
-                    buf.append("重度冲动性");
+                    buf.append(attribute.language.isChinese() ? "重度冲动性" : "Severe impulsiveness");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度冲动性");
+                    buf.append(attribute.language.isChinese() ? "中度冲动性" : "Moderate impulsiveness");
                 } else {
-                    buf.append("轻微冲动性");
+                    buf.append(attribute.language.isChinese() ? "轻微冲动性" : "Mild impulsiveness");
                 }
                 break;
             case Confidence:
                 if (rate == IndicatorRate.High) {
-                    buf.append("自信心很强");
+                    buf.append(attribute.language.isChinese() ? "自信心很强" : "Very high self-confidence");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("自信心较强");
+                    buf.append(attribute.language.isChinese() ? "自信心较强" : "High self-confidence");
                 } else if (rate == IndicatorRate.Low) {
-                    buf.append("自信心不足");
+                    buf.append(attribute.language.isChinese() ? "自信心不足" : "Lack of self-confidence");
                 } else {
                     return null;
                 }
                 break;
             case Mood:
                 if (rate == IndicatorRate.High) {
-                    buf.append("情绪较为稳定");
+                    buf.append(attribute.language.isChinese() ? "情绪较为稳定" : "Emotions are relatively stable");
                 } else {
-                    buf.append("情绪较不稳定");
+                    buf.append(attribute.language.isChinese() ? "情绪较不稳定" : "Emotions are unstable");
                 }
                 break;
             case Repression:
                 if (rate == IndicatorRate.High) {
-                    buf.append("重度压抑");
+                    buf.append(attribute.language.isChinese() ? "重度压抑" : "Severe suppression");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度压抑");
+                    buf.append(attribute.language.isChinese() ? "中度压抑" : "Moderate suppression");
                 } else {
-                    buf.append("不太压抑");
+                    buf.append(attribute.language.isChinese() ? "不太压抑" : "Mild suppression");
                 }
                 break;
             case Independence:
                 if (rate == IndicatorRate.High) {
-                    buf.append("较为独立");
+                    buf.append(attribute.language.isChinese() ? "较为独立" : "Relatively independent");
                 } else {
-                    buf.append("较为依赖环境");
+                    buf.append(attribute.language.isChinese() ? "较为依赖环境" : "Relatively dependent on the environment");
                 }
                 break;
             case AchievementMotivation:
                 if (rate == IndicatorRate.High) {
-                    buf.append("很强的成就动机");
+                    buf.append(attribute.language.isChinese() ? "很强的成就动机" : "Strong achievement motivation");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度的成就动机");
+                    buf.append(attribute.language.isChinese() ? "中度的成就动机" : "Moderate achievement motivation");
                 } else {
-                    buf.append("较弱的成就动机");
+                    buf.append(attribute.language.isChinese() ? "较弱的成就动机" : "Weak achievement motivation");
                 }
                 break;
             case Paranoid:
                 if (rate == IndicatorRate.Low) {
-                    buf.append("轻微偏执");
+                    buf.append(attribute.language.isChinese() ? "轻微偏执" : "Mild paranoia");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度偏执");
+                    buf.append(attribute.language.isChinese() ? "中度偏执" : "Moderate paranoia");
                 } else if (rate == IndicatorRate.High) {
-                    buf.append("严重偏执");
+                    buf.append(attribute.language.isChinese() ? "严重偏执" : "Severe paranoia");
                 } else {
                     return null;
                 }
                 break;
             case Hostile:
                 if (rate == IndicatorRate.Low) {
-                    buf.append("轻微敌对");
+                    buf.append(attribute.language.isChinese() ? "轻微敌对" : "Mild hostility");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度敌对");
+                    buf.append(attribute.language.isChinese() ? "中度敌对" : "Moderate hostility");
                 } else if (rate == IndicatorRate.High) {
-                    buf.append("严重敌对");
+                    buf.append(attribute.language.isChinese() ? "严重敌对" : "Severe hostility");
                 } else {
                     return null;
                 }
                 break;
             case SocialAdaptability:
                 if (rate == IndicatorRate.High) {
-                    buf.append("社会适应性良好");
+                    buf.append(attribute.language.isChinese() ? "社会适应性良好" : "Good social adaptability");
                 } else if (rate == IndicatorRate.Low) {
-                    buf.append("社会适应性一般");
+                    buf.append(attribute.language.isChinese() ? "社会适应性一般" : "General social adaptability");
                 } else {
                     return null;
                 }
                 break;
             case Narcissism:
                 if (rate == IndicatorRate.High) {
-                    buf.append("重度自恋");
+                    buf.append(attribute.language.isChinese() ? "重度自恋" : "Severe narcissism");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度自恋");
+                    buf.append(attribute.language.isChinese() ? "中度自恋" : "Moderate narcissism");
                 } else {
-                    buf.append("轻度自恋");
+                    buf.append(attribute.language.isChinese() ? "轻度自恋" : "Mild narcissism");
                 }
                 break;
             case EvaluationFromOutside:
                 if (rate == IndicatorRate.High) {
-                    buf.append("非常重视外在评价");
+                    buf.append(attribute.language.isChinese() ? "非常重视外在评价" : "High importance is placed on external evaluation");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("较为重视外在评价");
+                    buf.append(attribute.language.isChinese() ? "较为重视外在评价" : "Greater emphasis is placed on external evaluation");
                 } else {
-                    buf.append("一般重视外在评价");
+                    buf.append(attribute.language.isChinese() ? "一般重视外在评价" : "General attention is placed on external evaluation");
                 }
                 break;
-            case Attacking:
+            case Aggression:
                 if (rate == IndicatorRate.High) {
-                    buf.append("很强的攻击性");
+                    buf.append(attribute.language.isChinese() ? "很强的攻击性" : "Severe aggression");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度的攻击性");
+                    buf.append(attribute.language.isChinese() ? "中度的攻击性" : "Moderate aggression");
                 } else {
-                    buf.append("较小的攻击性");
+                    buf.append(attribute.language.isChinese() ? "较小的攻击性" : "Mild aggression");
                 }
                 break;
             case Family:
                 if (rate == IndicatorRate.High) {
-                    buf.append("较为重视家庭关系");
+                    buf.append(attribute.language.isChinese() ? "较为重视家庭关系" : "Putting greater emphasis on family relationships");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("一般重视家庭关系");
+                    buf.append(attribute.language.isChinese() ? "一般重视家庭关系" : "Putting general attention on family relationships");
                 } else {
-                    buf.append("不太重视家庭关系");
+                    buf.append(attribute.language.isChinese() ? "不太重视家庭关系" : "Not paying much attention to family relationships");
                 }
                 break;
             case InterpersonalRelation:
                 double score = this.positiveScore - this.negativeScore;
                 if (score >= 3.5) {
-                    buf.append("人际关系很好");
+                    buf.append(attribute.language.isChinese() ? "人际关系很好" : "Good interpersonal relationships");
                 } else if (score >= 2.1) {
-                    buf.append("人际关系良好");
+                    buf.append(attribute.language.isChinese() ? "人际关系良好" : "General interpersonal relationships");
                 } else if (score >= 1.0) {
-                    buf.append("人际关系有点距离感");
+                    buf.append(attribute.language.isChinese() ? "人际关系有点距离感" : "Distance in interpersonal relationships");
                 } else if (score > 0.1) {
-                    buf.append("人际关系疏远");
+                    buf.append(attribute.language.isChinese() ? "人际关系疏远" : "Weakening of interpersonal relationships");
                 } else if (score > -0.3 ) {
-                    buf.append("轻微人际敏感");
+                    buf.append(attribute.language.isChinese() ? "轻微人际敏感" : "Mild interpersonal sensitivity");
                 } else if (score > -0.8 ) {
-                    buf.append("中度人际敏感");
+                    buf.append(attribute.language.isChinese() ? "中度人际敏感" : "Moderate interpersonal sensitivity");
                 } else {
-                    buf.append("严重人际敏感");
+                    buf.append(attribute.language.isChinese() ? "严重人际敏感" : "Severe interpersonal sensitivity");
                 }
                 break;
             case SelfControl:
                 if (rate == IndicatorRate.High) {
-                    buf.append("自我控制较好");
+                    buf.append(attribute.language.isChinese() ? "自我控制较好" : "Good self-control");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("自我控制一般");
+                    buf.append(attribute.language.isChinese() ? "自我控制一般" : "Self-control in general");
                 } else {
-                    buf.append("自我控制较差");
+                    buf.append(attribute.language.isChinese() ? "自我控制较差" : "Poor self-control");
                 }
                 break;
             case SelfConsciousness:
                 if (rate == IndicatorRate.High) {
-                    buf.append("自我意识强");
+                    buf.append(attribute.language.isChinese() ? "自我意识强" : "High self-awareness");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("自我意识中等");
+                    buf.append(attribute.language.isChinese() ? "自我意识中等" : "Moderate self-awareness");
                 } else {
-                    buf.append("自我意识不强");
+                    buf.append(attribute.language.isChinese() ? "自我意识不强" : "Weak self-awareness");
                 }
                 break;
             case Idealism:
                 if (rate == IndicatorRate.High) {
-                    buf.append("理想主义者");
+                    buf.append(attribute.language.isChinese() ? "理想主义者" : "Idealists");
                 } else {
                     return null;
                 }
                 break;
             case Realism:
                 if (rate == IndicatorRate.High) {
-                    buf.append("现实主义者");
+                    buf.append(attribute.language.isChinese() ? "现实主义者" : "Realists");
                 } else {
                     return null;
                 }
                 break;
             case Psychosis:
                 if (rate == IndicatorRate.High) {
-                    buf.append("重度精神病性");
+                    buf.append(attribute.language.isChinese() ? "重度精神病性" : "Severe psychotic");
                 } else if (rate == IndicatorRate.Medium) {
-                    buf.append("中度精神病性");
+                    buf.append(attribute.language.isChinese() ? "中度精神病性" : "Moderate psychotic");
                 } else if (rate == IndicatorRate.Low) {
-                    buf.append("轻度精神病性");
+                    buf.append(attribute.language.isChinese() ? "轻度精神病性" : "Mild psychotic");
                 } else {
                     return null;
                 }
@@ -617,7 +621,7 @@ public class EvaluationScore implements JSONable {
                     rate = IndicatorRate.Low;
                 }
                 break;
-            case Attacking:
+            case Aggression:
                 if (score > 0.7) {
                     rate = IndicatorRate.High;
                 } else if (score > 0.4) {

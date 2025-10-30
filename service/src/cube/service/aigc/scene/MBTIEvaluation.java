@@ -313,7 +313,7 @@ public class MBTIEvaluation {
                     break;
                 case Hostile:
                     break;
-                case Attacking:
+                case Aggression:
                     break;
                 case Family:
                     break;

@@ -180,7 +180,7 @@ public class PsychologyScene {
 
         boolean more = false;
         CVService cvService = (CVService) this.service.getKernel().getModule(CVService.NAME);
-        ObjectInfo info = cvService.detectObject(authToken, fileCode);
+        ObjectInfo info = cvService.detectObject(authToken, fileCode, false);
         if (null != info) {
             more = this.hasMoreObjects(info);
         }

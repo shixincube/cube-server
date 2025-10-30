@@ -133,7 +133,7 @@ public enum Indicator {
     /**
      * 攻击性。
      */
-    Attacking("攻击性", "Attacking", 40),
+    Aggression("攻击性", "Aggression", 40),
 
     /**
      * 自尊。

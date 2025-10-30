@@ -389,6 +389,7 @@ public class CVService extends AbstractModule {
 
                     JSONObject payload = new JSONObject();
                     payload.put("list", list);
+                    payload.put("visualize", visualize);
                     Packet request = new Packet(CVAction.ObjectDetection.name, payload);
                     ActionDialect dialect = cellet.transmit(endpoint.talkContext, request.toDialect(), 3 * 60 * 1000);
                     if (null == dialect) {
@@ -425,12 +426,12 @@ public class CVService extends AbstractModule {
         return true;
     }
 
-    public ObjectInfo detectObject(AuthToken token, String fileCode) {
+    public ObjectInfo detectObject(AuthToken token, String fileCode, boolean visualize) {
         List<String> list = new ArrayList<>();
         list.add(fileCode);
 
         final List<ObjectInfo> result = new ArrayList<>();
-        boolean success = this.detectObject(token, list, new DetectObjectListener() {
+        boolean success = this.detectObject(token, list, visualize, new DetectObjectListener() {
             @Override
             public void onCompleted(List<ObjectInfo> objects, long elapsed) {
                 result.addAll(objects);

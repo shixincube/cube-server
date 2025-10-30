@@ -56,7 +56,7 @@ public class RepresentationStrategy {
             case Hostility:
                 return Indicator.Hostile;
             case Aggression:
-                return Indicator.Attacking;
+                return Indicator.Aggression;
             case PayAttentionToFamily:
                 return Indicator.Family;
             case PursueInterpersonalRelationships:

@@ -79,6 +79,9 @@ public class PsychologyStorage implements Storagable {
             new StorageField("age", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("language", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
             new StorageField("strict", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL, Constraint.DEFAULT_0
             }),
@@ -115,6 +118,7 @@ public class PsychologyStorage implements Storagable {
             new StorageField(reportTable, "name", LiteralBase.STRING),
             new StorageField(reportTable, "gender", LiteralBase.STRING),
             new StorageField(reportTable, "age", LiteralBase.INT),
+            new StorageField(reportTable, "language", LiteralBase.STRING),
             new StorageField(reportTable, "strict", LiteralBase.INT),
             new StorageField(reportTable, "file_code", LiteralBase.STRING),
             new StorageField(reportTable, "theme", LiteralBase.STRING),
@@ -820,6 +824,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("name", report.getName()),
                 new StorageField("gender", report.getAttribute().gender),
                 new StorageField("age", report.getAttribute().age),
+                new StorageField("language", report.getAttribute().language.simplified),
                 new StorageField("strict", report.getAttribute().strict ? 1 : 0),
                 new StorageField("file_code", report.getFileCode()),
                 new StorageField("theme", report.getTheme().code),
@@ -842,6 +847,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("name", report.getName()),
                 new StorageField("gender", report.getAttribute().gender),
                 new StorageField("age", report.getAttribute().age),
+                new StorageField("language", report.getAttribute().language.simplified),
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("summary", report.getSummary()),
                 new StorageField("evaluation_data", dataString),
@@ -1072,6 +1078,7 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("timestamp", scale.getTimestamp()),
                     new StorageField("gender", scale.getAttribute().gender),
                     new StorageField("age", scale.getAttribute().age),
+                    new StorageField("language", scale.getAttribute().language.simplified),
                     new StorageField("complete", scale.isComplete() ? 1 : 0),
                     new StorageField("data", dataString)
             });
@@ -1083,6 +1090,7 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("timestamp", scale.getTimestamp()),
                     new StorageField("gender", scale.getAttribute().gender),
                     new StorageField("age", scale.getAttribute().age),
+                    new StorageField("language", scale.getAttribute().language.simplified),
                     new StorageField("complete", scale.isComplete() ? 1 : 0),
                     new StorageField("data", dataString)
             }, new Conditional[] {
@@ -1253,6 +1261,7 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("name", scaleReport.getName()),
                     new StorageField("gender", scaleReport.getAttribute().gender),
                     new StorageField("age", scaleReport.getAttribute().age),
+                    new StorageField("language", scaleReport.getAttribute().language.simplified),
                     new StorageField("strict", scaleReport.getAttribute().strict ? 1 : 0),
                     new StorageField("factor_data", dataString),
                     new StorageField("state", scaleReport.getState().code),
@@ -1266,6 +1275,7 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("name", scaleReport.getName()),
                     new StorageField("gender", scaleReport.getAttribute().gender),
                     new StorageField("age", scaleReport.getAttribute().age),
+                    new StorageField("language", scaleReport.getAttribute().language.simplified),
                     new StorageField("strict", scaleReport.getAttribute().strict ? 1 : 0),
                     new StorageField("factor_data", dataString),
                     new StorageField("state", scaleReport.getState().code),

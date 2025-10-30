@@ -1327,7 +1327,7 @@ public class HTPEvaluation extends Evaluation {
                 result.addFeature(desc, Term.Aggression, Tendency.Positive,
                         PerceptronThing.createThingSize(new Thing[] { person }));
 
-                result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.1, 0.2));
+                result.addScore(Indicator.Aggression, 1, FloatUtils.random(0.1, 0.2));
                 result.addScore(Indicator.Extroversion, 1, FloatUtils.random(0.5, 0.6));
 
                 result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(8.5, 9.5));
@@ -2906,7 +2906,7 @@ public class HTPEvaluation extends Evaluation {
             // 枪
             String desc = "画面中有枪";
             result.addFeature(desc, Term.Aggression, Tendency.Positive, new Thing[] { other.get(Label.Gun) });
-            result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.Aggression, 1, FloatUtils.random(0.7, 0.8));
 
             result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(0.5, 1.5));
             if (printBigFive) {
@@ -2919,7 +2919,7 @@ public class HTPEvaluation extends Evaluation {
             String desc = "画面中有剑";
             result.addFeature(desc, Term.Aggression, Tendency.Positive, new Thing[] { other.get(Label.Sword) });
             result.addFeature(desc, Term.Hostility, Tendency.Positive, new Thing[] { other.get(Label.Sword) });
-            result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.Aggression, 1, FloatUtils.random(0.7, 0.8));
         }
 
         if (other.has(Label.Knife)) {
@@ -2927,7 +2927,7 @@ public class HTPEvaluation extends Evaluation {
             String desc = "画面中有刀";
             result.addFeature(desc, Term.Aggression, Tendency.Positive, new Thing[] { other.get(Label.Knife) });
             result.addFeature(desc, Term.Hostility, Tendency.Positive, new Thing[] { other.get(Label.Knife) });
-            result.addScore(Indicator.Attacking, 1, FloatUtils.random(0.7, 0.8));
+            result.addScore(Indicator.Aggression, 1, FloatUtils.random(0.7, 0.8));
         }
 
         if (other.has(Label.Shield)) {
