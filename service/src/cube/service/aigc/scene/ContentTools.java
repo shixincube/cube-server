@@ -13,6 +13,7 @@ import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.*;
 import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.*;
+import cube.common.Language;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.Membership;
 import cube.common.entity.User;
@@ -36,20 +37,21 @@ public class ContentTools {
     private ContentTools() {
     }
 
-    public static void fillHexagonScoreDescription(Tokenizer tokenizer, HexagonDimensionScore sds) {
+    public static void fillHexagonScoreDescription(Tokenizer tokenizer, HexagonDimensionScore hds, Language language) {
         TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
         for (HexagonDimension dim : HexagonDimension.values()) {
-            int score = sds.getDimensionScore(dim);
+            int score = hds.getDimensionScore(dim);
             String query = null;
-            int rate = sds.getDimensionRate(dim);
+            int rate = hds.getDimensionRate(dim);
             if (rate == IndicatorRate.None.value) {
-                query = "六维分析中" + dim.displayName + "维度表现常规";
+                query = language.isChinese() ? "六维分析中" + dim.displayNameInChinese + "维度表现常规"
+                    : "The " + dim.displayNameInEnglish + " dimension in six-dimensional analysis is generally normal";
             } else if (rate <= IndicatorRate.Low.value) {
-                query = "六维分析中" + dim.displayName + "维度得分低的表现";
+                query = "六维分析中" + dim.displayNameInChinese + "维度得分低的表现";
             } else if (score >= IndicatorRate.High.value) {
-                query = "六维分析中" + dim.displayName + "维度得分高的表现";
+                query = "六维分析中" + dim.displayNameInChinese + "维度得分高的表现";
             } else {
-                query = "六维分析中" + dim.displayName + "维度得分中等的表现";
+                query = "六维分析中" + dim.displayNameInChinese + "维度得分中等的表现";
             }
 
             List<String> keywordList = analyzer.analyzeOnlyWords(query, 7);
@@ -57,7 +59,7 @@ public class ContentTools {
             Dataset dataset = Resource.getInstance().loadDataset();
             String answer = dataset.matchContent(keywordList.toArray(new String[0]), 7);
             if (null != answer) {
-                sds.recordDescription(dim, answer);
+                hds.recordDescription(dim, answer);
             }
             else {
                 Logger.e(ContentTools.class, "#fillHexagonScoreDescription - Answer is null: " + query);

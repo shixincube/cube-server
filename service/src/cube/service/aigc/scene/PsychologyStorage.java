@@ -1463,7 +1463,7 @@ public class PsychologyStorage implements Storagable {
                         evaluationReport.getPaintingConfidence(), evaluationReport.getFactorSet());
 
                 // 描述
-                ContentTools.fillHexagonScoreDescription(this.tokenizer, dimensionScore);
+                ContentTools.fillHexagonScoreDescription(this.tokenizer, dimensionScore, report.getAttribute().language);
 
                 report.setDimensionalScore(dimensionScore, normDimensionScore);
             }

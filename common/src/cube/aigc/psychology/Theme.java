@@ -21,6 +21,8 @@ public enum Theme {
 
     SelfPortrait("自画像", "SP"),
 
+    AttachmentStyle("依恋类型", "AS"),
+
     ;
 
     public final String name;

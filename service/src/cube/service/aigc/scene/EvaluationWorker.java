@@ -14,6 +14,7 @@ import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.composition.*;
 import cube.auth.AuthToken;
+import cube.common.Language;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.GeneratingOption;
 import cube.common.entity.GeneratingRecord;
@@ -30,7 +31,11 @@ import java.util.List;
  */
 public class EvaluationWorker {
 
-    private final static String PERSONALITY_FORMAT = "已知受测人的人格特点如下：\n\n%s\n\n根据上述信息回答问题，不能编造成分，问题是：总结受测人的人格特点。";
+    private final static String PERSONALITY_FORMAT_CN = "已知受测人的人格特点如下：\n\n%s\n\n根据上述信息回答问题，不能编造成分，问题是：总结受测人的人格特点。";
+
+    private final static String PERSONALITY_FORMAT_EN = "The personality traits of the test subject are known as follows:\n\n" +
+            "%s" +
+            "\n\nAnswer the question based on the above information. Do not fabricate scores. The question is: Summarize the personality traits of the test subject.";
 
     private boolean speed = true;
 
@@ -160,10 +165,11 @@ public class EvaluationWorker {
         }
 
         // 生成概述
-        this.summary = this.inferSummary(channel.getAuthToken(), this.reportTextList);
+        this.summary = this.inferSummary(channel.getAuthToken(), this.reportTextList, channel.getLanguage());
 
         // 生成人格描述
-        this.inferPersonality(channel.getAuthToken(), this.evaluationReport.getPersonalityAccelerator());
+        this.inferPersonality(channel.getAuthToken(), this.evaluationReport.getPersonalityAccelerator(),
+                channel.getLanguage());
 
         // 六维得分计算
         try {
@@ -173,7 +179,8 @@ public class EvaluationWorker {
             this.normDimensionScore = new HexagonDimensionScore(
                     80, 80, 80, 80, 80, 80);
             // 描述
-            ContentTools.fillHexagonScoreDescription(this.service.getTokenizer(), this.dimensionScore);
+            ContentTools.fillHexagonScoreDescription(this.service.getTokenizer(), this.dimensionScore,
+                    channel.getLanguage());
         } catch (Exception e) {
             Logger.w(this.getClass(), "#make", e);
         }
@@ -220,9 +227,11 @@ public class EvaluationWorker {
      *
      * @param authToken
      * @param personalityAccelerator
+     * @param language
      * @return
      */
-    private boolean inferPersonality(AuthToken authToken, PersonalityAccelerator personalityAccelerator) {
+    private boolean inferPersonality(AuthToken authToken, PersonalityAccelerator personalityAccelerator,
+                                     Language language) {
         BigFivePersonality feature = personalityAccelerator.getBigFivePersonality();
         String prompt = feature.generateReportPrompt();
         String answer = null;
@@ -242,7 +251,8 @@ public class EvaluationWorker {
         }
 
         // 对人格画像进行描述
-        prompt = String.format(PERSONALITY_FORMAT, fixSecondPerson(answer));
+        prompt = String.format(language.isChinese() ? PERSONALITY_FORMAT_CN : PERSONALITY_FORMAT_EN,
+                fixSecondPerson(answer, language));
         GeneratingRecord generatingResult = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT,
                 prompt, new GeneratingOption(), null, null);
         String fixAnswer = (null != generatingResult) ? generatingResult.answer : null;
@@ -418,9 +428,10 @@ public class EvaluationWorker {
         return result;
     }
 
-    private String inferSummary(AuthToken authToken, List<ReportSection> list) {
+    private String inferSummary(AuthToken authToken, List<ReportSection> list, Language language) {
         if (list.isEmpty()) {
-            return Resource.getInstance().getCorpus("report", "REPORT_NO_DATA_SUMMARY");
+            return Resource.getInstance().getCorpus("report", "REPORT_NO_DATA_SUMMARY",
+                    language);
         }
 
         String unitName = null;
@@ -437,10 +448,12 @@ public class EvaluationWorker {
         StringBuilder summary = new StringBuilder();
 
         // 生成概述
-        StringBuilder prompt = new StringBuilder("已知信息：\n\n");
-        prompt.append("受测人心理评测结果如下：\n\n");
+        StringBuilder prompt = new StringBuilder();
+        prompt.append(language.isChinese() ? "已知信息：\n\n" : "The known information:\n\n");
+        prompt.append(language.isChinese() ?
+                "受测人心理评测结果如下：\n\n" : "The psychological assessment results of the test subjects are as follows:\n\n");
         for (ReportSection rs : list) {
-            prompt.append(fixSecondPerson(rs.report)).append("\n\n");
+            prompt.append(fixSecondPerson(rs.report, language)).append("\n\n");
             if (prompt.length() >= ModelConfig.getPromptLengthLimit(unitName)) {
                 break;
             }
@@ -453,7 +466,7 @@ public class EvaluationWorker {
 
         if (null == result || result.contains("我遇到一些问题") || result.contains("我遇到一些技术问题")) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -511,9 +524,15 @@ public class EvaluationWorker {
         return dataset.matchContent(keywords.toArray(new String[0]), 5);
     }
 
-    private String fixSecondPerson(String text) {
-        String result = text.replaceAll("你", "受测人");
-        return result.replaceAll("您", "受测人");
+    private String fixSecondPerson(String text, Language language) {
+        if (language.isChinese()) {
+            String result = text.replaceAll("你", "受测人");
+            return result.replaceAll("您", "受测人");
+        }
+        else {
+            String result = text.replaceAll("you", "subject");
+            return result.replaceAll("You", "Subject");
+        }
     }
 
     private String fixThirdPerson(String text) {
@@ -521,14 +540,29 @@ public class EvaluationWorker {
         result = result.replaceAll("人物", "受测人");
         result = result.replaceAll("该个体", "受测人");
 
+        result = result.replaceAll("This person", "The subject");
+        result = result.replaceAll("The individual", "The subject");
+
         StringBuffer buf = new StringBuffer();
         List<String> words = this.service.segmentation(result);
         for (String word : words) {
-            if (word.equals("他")) {
+            if (word.equals("他") || word.equals("她")) {
                 buf.append("受测人");
             }
-            else if (word.equals("他的")) {
+            else if (word.equals("他的") || word.equals("她的")) {
                 buf.append("受测人的");
+            }
+            else if (word.equals("he") || word.equals("she")) {
+                buf.append("the subject");
+            }
+            else if (word.equals("He") || word.equals("She")) {
+                buf.append("The subject");
+            }
+            else if (word.equals("his") || word.equals("her")) {
+                buf.append("the subject's");
+            }
+            else if (word.equals("His") || word.equals("Her")) {
+                buf.append("The subject's");
             }
             else {
                 buf.append(word);

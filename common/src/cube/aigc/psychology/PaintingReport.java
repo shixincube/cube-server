@@ -293,7 +293,7 @@ public class PaintingReport extends Report {
             buf.append("| ---- | ---- | ---- |");
             for (HexagonDimension dimension : HexagonDimension.values()) {
                 buf.append("\n");
-                buf.append("|").append(dimension.displayName);
+                buf.append("|").append(dimension.displayNameInChinese);
                 buf.append("|").append(this.dimensionScore.getDimensionScore(dimension));
                 buf.append("|").append(this.normDimensionScore.getDimensionScore(dimension));
                 buf.append("|");
@@ -301,7 +301,7 @@ public class PaintingReport extends Report {
             buf.append("\n\n");
 
             for (HexagonDimension dimension : HexagonDimension.values()) {
-                buf.append("**" + dimension.displayName + "**维度描述：");
+                buf.append("**" + dimension.displayNameInChinese + "**维度描述：");
                 buf.append(this.dimensionScore.getDimensionDescription(dimension));
                 buf.append("\n\n");
             }

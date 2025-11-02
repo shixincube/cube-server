@@ -490,7 +490,8 @@ public class PsychologyScene {
                             reportTask.listener.onReportEvaluating(reportTask.report);
 
                             // 根据图像推理报告
-                            EvaluationWorker evaluationWorker = processReport(reportTask.channel, painting, unit);
+                            EvaluationWorker evaluationWorker = processReport(reportTask.channel, painting,
+                                    reportTask.theme, unit);
 
                             // 将特征集数据填写到报告，这里仅仅是方便客户端获取特征描述文本
                             reportTask.report.paintingFeatureSet = evaluationWorker.getPaintingFeatureSet();
@@ -1478,11 +1479,25 @@ public class PsychologyScene {
         }
     }
 
-    private EvaluationWorker processReport(AIGCChannel channel, Painting painting, AIGCUnit unit) {
-        HTPEvaluation evaluation = (null == painting) ?
-                new HTPEvaluation(channel.getAuthToken().getContactId(),
-                        new Attribute("male", 28, channel.getLanguage(), false)) :
-                new HTPEvaluation(channel.getAuthToken().getContactId(), painting);
+    private EvaluationWorker processReport(AIGCChannel channel, Painting painting, Theme theme, AIGCUnit unit) {
+        Evaluation evaluation = null;
+        switch (theme) {
+            case HouseTreePerson:
+                evaluation = (null == painting) ?
+                        new HTPEvaluation(channel.getAuthToken().getContactId(),
+                                new Attribute("female", 28, channel.getLanguage(), false)) :
+                        new HTPEvaluation(channel.getAuthToken().getContactId(), painting);
+                break;
+            case AttachmentStyle:
+                evaluation = new AttachmentStyleEvaluation(channel.getAuthToken().getContactId(), painting);
+                break;
+            default:
+                evaluation = (null == painting) ?
+                        new HTPEvaluation(channel.getAuthToken().getContactId(),
+                                new Attribute("male", 28, channel.getLanguage(), false)) :
+                        new HTPEvaluation(channel.getAuthToken().getContactId(), painting);
+                break;
+        }
 
         // 生成评估报告
         EvaluationReport report = evaluation.makeEvaluationReport();

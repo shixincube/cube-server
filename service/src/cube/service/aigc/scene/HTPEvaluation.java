@@ -29,7 +29,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * 评估器。
+ * HTP 评估器。
  */
 public class HTPEvaluation extends Evaluation {
 
@@ -38,8 +38,6 @@ public class HTPEvaluation extends Evaluation {
     private final double treeAreaRatioThreshold = 0.049;
 
     private final double personAreaRatioThreshold = 0.015;
-
-    private long contactId;
 
     private Size canvasSize;
 
@@ -56,7 +54,7 @@ public class HTPEvaluation extends Evaluation {
     }
 
     public HTPEvaluation(long contactId, Painting painting) {
-        super(painting);
+        super(contactId, painting);
         this.contactId = contactId;
         this.canvasSize = painting.getCanvasSize();
         this.spaceLayout = new SpaceLayout(painting);
@@ -121,6 +119,7 @@ public class HTPEvaluation extends Evaluation {
         return report;
     }
 
+    @Override
     public PaintingFeatureSet getPaintingFeatureSet() {
         return this.paintingFeatureSet;
     }
