@@ -832,9 +832,9 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("summary", report.getSummary()),
                 new StorageField("evaluation_data", dataString),
-                new StorageField("remark", report.getRemark()),
-                new StorageField("mandala_flower", (null != report.getMandalaFlower() ?
-                        report.getMandalaFlower().toJSON().toString() : null))
+                new StorageField("remark", report.getRemark())
+//                new StorageField("mandala_flower", (null != report.getMandalaFlower() ?
+//                        report.getMandalaFlower().toJSON().toString() : null))
         });
     }
 
@@ -1395,12 +1395,12 @@ public class PsychologyStorage implements Storagable {
             report.setRemark(data.get("remark").getString());
         }
 
-        if (!data.get("mandala_flower").isNullValue()) {
-            report.setMandalaFlower(new MandalaFlower(new JSONObject(data.get("mandala_flower").getString())));
-        }
-        else {
-            report.setMandalaFlower(new MandalaFlower("AS_001"));
-        }
+//        if (!data.get("mandala_flower").isNullValue()) {
+//            report.setMandalaFlower(new MandalaFlower(new JSONObject(data.get("mandala_flower").getString())));
+//        }
+//        else {
+//            report.setMandalaFlower(new MandalaFlower("AS_001"));
+//        }
 
         EvaluationReport evaluationReport = null;
 

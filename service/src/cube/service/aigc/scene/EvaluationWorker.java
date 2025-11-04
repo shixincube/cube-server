@@ -53,7 +53,7 @@ public class EvaluationWorker {
 
     private String summary = "";
 
-    private MandalaFlower mandalaFlower = new MandalaFlower("AS_001");
+//    private MandalaFlower mandalaFlower = new MandalaFlower("AS_001");
 
     private PaintingFeatureSet paintingFeatureSet;
 
@@ -94,7 +94,7 @@ public class EvaluationWorker {
 
         report.setSummary(this.summary);
         report.setReportTextList(this.reportTextList);
-        report.setMandalaFlower(this.mandalaFlower);
+//        report.setMandalaFlower(this.mandalaFlower);
 
         if (null != this.paintingFeatureSet) {
             this.paintingFeatureSet.setSN(report.sn);
@@ -164,6 +164,16 @@ public class EvaluationWorker {
             Logger.d(this.getClass(), "#make - Report list size: " + this.reportTextList.size());
         }
 
+        switch (theme) {
+            case Generic:
+            case HouseTreePerson:
+                break;
+            case AttachmentStyle:
+                break;
+            default:
+                break;
+        }
+
         // 生成概述
         this.summary = this.inferSummary(channel.getAuthToken(), this.reportTextList, channel.getLanguage());
 
@@ -186,7 +196,7 @@ public class EvaluationWorker {
         }
 
         // 曼陀罗花
-        this.mandalaFlower = this.inferMandalaFlower(this.evaluationReport.getPersonalityAccelerator());
+//        this.mandalaFlower = this.inferMandalaFlower(this.evaluationReport.getPersonalityAccelerator());
 
         return this;
     }
