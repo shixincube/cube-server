@@ -9,6 +9,9 @@ package cube.aigc.psychology.composition;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
+/**
+ * @deprecated
+ */
 public class MandalaFlower implements JSONable {
 
     public String name;

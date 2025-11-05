@@ -100,13 +100,6 @@ public class PaintingReport extends Report {
             this.evaluationReport = new EvaluationReport(json.getJSONObject("evaluation"));
         }
 
-//        if (json.has("mandalaFlower")) {
-//            this.mandalaFlower = new MandalaFlower(json.getJSONObject("mandalaFlower"));
-//        } else if (json.has("daturaFlower")) {
-//            // 兼容旧版本
-//            this.mandalaFlower = new MandalaFlower(json.getJSONObject("daturaFlower"));
-//        }
-
         if (json.has("reportTextList")) {
             this.reportSectionList = new ArrayList<>();
             JSONArray array = json.getJSONArray("reportTextList");
@@ -138,7 +131,7 @@ public class PaintingReport extends Report {
         return this.dimensionScore;
     }
 
-    public void setReportTextList(List<ReportSection> sectionList) {
+    public void setReportSectionList(List<ReportSection> sectionList) {
         this.reportSectionList = new ArrayList<>();
         this.reportSectionList.addAll(sectionList);
     }
@@ -200,14 +193,6 @@ public class PaintingReport extends Report {
 
         return (null == this.evaluationReport);
     }
-
-//    public void setMandalaFlower(MandalaFlower mandalaFlower) {
-//        this.mandalaFlower = mandalaFlower;
-//    }
-
-//    public MandalaFlower getMandalaFlower() {
-//        return this.mandalaFlower;
-//    }
 
     public String makeMarkdown() {
         StringBuilder buf = new StringBuilder();

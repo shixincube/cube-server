@@ -3240,7 +3240,7 @@ public class HTPEvaluation extends Evaluation {
 
         FrameStructureDescription fsd = new FrameStructureDescription();
 
-        // 判读上下空间
+        // 判断上下空间
         int topArea = topSpaceBox.calculateCollisionArea(bbox);
         int bottomArea = bottomSpaceBox.calculateCollisionArea(bbox);
         if (topArea > bottomArea) {

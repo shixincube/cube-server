@@ -6,7 +6,6 @@
 
 package cube.service.aigc.scene;
 
-import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
@@ -21,7 +20,6 @@ import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
-import cube.util.FileUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,11 +47,9 @@ public class EvaluationWorker {
 
     private HexagonDimensionScore normDimensionScore;
 
-    private List<ReportSection> reportTextList;
+    private List<ReportSection> reportSectionList;
 
     private String summary = "";
-
-//    private MandalaFlower mandalaFlower = new MandalaFlower("AS_001");
 
     private PaintingFeatureSet paintingFeatureSet;
 
@@ -66,7 +62,7 @@ public class EvaluationWorker {
         this.attribute = evaluationReport.getAttribute();
         this.evaluationReport = evaluationReport;
         this.service = service;
-        this.reportTextList = new ArrayList<>();
+        this.reportSectionList = new ArrayList<>();
     }
 
     public EvaluationReport getEvaluationReport() {
@@ -93,7 +89,7 @@ public class EvaluationWorker {
         }
 
         report.setSummary(this.summary);
-        report.setReportTextList(this.reportTextList);
+        report.setReportSectionList(this.reportSectionList);
 //        report.setMandalaFlower(this.mandalaFlower);
 
         if (null != this.paintingFeatureSet) {
@@ -154,14 +150,14 @@ public class EvaluationWorker {
     public EvaluationWorker make(AIGCChannel channel, Theme theme, int maxIndicatorTexts) {
         // 评估分推理
         List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation(Indicator.values().length);
-        this.reportTextList = this.inferScore(scoreList, maxIndicatorTexts);
-        if (this.reportTextList.isEmpty()) {
+        this.reportSectionList = this.inferScore(scoreList, maxIndicatorTexts);
+        if (this.reportSectionList.isEmpty()) {
             Logger.w(this.getClass(), "#make - Report text error");
             return this;
         }
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#make - Report list size: " + this.reportTextList.size());
+            Logger.d(this.getClass(), "#make - The report section size: " + this.reportSectionList.size());
         }
 
         switch (theme) {
@@ -175,7 +171,7 @@ public class EvaluationWorker {
         }
 
         // 生成概述
-        this.summary = this.inferSummary(channel.getAuthToken(), this.reportTextList, channel.getLanguage());
+        this.summary = this.inferSummary(channel.getAuthToken(), this.reportSectionList, channel.getLanguage());
 
         // 生成人格描述
         this.inferPersonality(channel.getAuthToken(), this.evaluationReport.getPersonalityAccelerator(),
@@ -201,36 +197,36 @@ public class EvaluationWorker {
         return this;
     }
 
-    private MandalaFlower inferMandalaFlower(PersonalityAccelerator personalityAccelerator) {
-        BigFivePersonality feature = personalityAccelerator.getBigFivePersonality();
-        List<String> filenames = Resource.getInstance().getMandalaFlowerFiles();
-        String color = "A";
-        if (feature.getNeuroticism() < 3.0) {
-            color = "B";
-        }
-        else if (feature.getNeuroticism() < 4.0) {
-            color = "G";
-        }
-        else if (feature.getNeuroticism() < 5.0) {
-            color = "Y";
-        }
-        else if (feature.getNeuroticism() < 6.0) {
-            color = "R";
-        }
-        else {
-            color = "P";
-        }
-
-        List<String> filenameList = new ArrayList<>();
-        for (String filename : filenames) {
-            if (filename.startsWith(color)) {
-                filenameList.add(filename);
-            }
-        }
-        MandalaFlower mandalaFlower = new MandalaFlower(
-                FileUtils.extractFileName(filenameList.get(Utils.randomInt(0, filenameList.size() - 1))));
-        return mandalaFlower;
-    }
+//    private MandalaFlower inferMandalaFlower(PersonalityAccelerator personalityAccelerator) {
+//        BigFivePersonality feature = personalityAccelerator.getBigFivePersonality();
+//        List<String> filenames = Resource.getInstance().getMandalaFlowerFiles();
+//        String color = "A";
+//        if (feature.getNeuroticism() < 3.0) {
+//            color = "B";
+//        }
+//        else if (feature.getNeuroticism() < 4.0) {
+//            color = "G";
+//        }
+//        else if (feature.getNeuroticism() < 5.0) {
+//            color = "Y";
+//        }
+//        else if (feature.getNeuroticism() < 6.0) {
+//            color = "R";
+//        }
+//        else {
+//            color = "P";
+//        }
+//
+//        List<String> filenameList = new ArrayList<>();
+//        for (String filename : filenames) {
+//            if (filename.startsWith(color)) {
+//                filenameList.add(filename);
+//            }
+//        }
+//        MandalaFlower mandalaFlower = new MandalaFlower(
+//                FileUtils.extractFileName(filenameList.get(Utils.randomInt(0, filenameList.size() - 1))));
+//        return mandalaFlower;
+//    }
 
     /**
      * 推理人格。

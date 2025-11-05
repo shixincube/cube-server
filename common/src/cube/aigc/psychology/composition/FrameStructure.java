@@ -51,6 +51,26 @@ public enum FrameStructure {
      */
     CenterBottomRightSpace("CenterBottomRightSpace"),
 
+    /**
+     * 左上角。
+     */
+    TopLeftCorner("TopLeftCorner"),
+
+    /**
+     * 右上角。
+     */
+    TopRightCorner("TopRightCorner"),
+
+    /**
+     * 左下角。
+     */
+    BottomLeftCorner("BottomLeftCorner"),
+
+    /**
+     * 右下角。
+     */
+    BottomRightCorner("BottomRightCorner"),
+
     Normal("Normal");
 
     public final String name;

@@ -1436,9 +1436,9 @@ public class PsychologyStorage implements Storagable {
                 this.reportTextFields, new Conditional[] {
                         Conditional.createEqualTo("report_sn", report.sn)
                 });
-        List<ReportSection> textList = new ArrayList<>();
-        for (StorageField[] textFields : fields) {
-            Map<String, StorageField> tf = StorageFields.get(textFields);
+        List<ReportSection> sectionList = new ArrayList<>();
+        for (StorageField[] sectionFields : fields) {
+            Map<String, StorageField> tf = StorageFields.get(sectionFields);
             ReportSection rs = new ReportSection(
                     Indicator.parse(tf.get("indicator").getString()),
                     tf.get("title").getString(),
@@ -1446,9 +1446,9 @@ public class PsychologyStorage implements Storagable {
                     tf.get("suggestion").getString(),
                     IndicatorRate.parse(tf.get("rate").getInt())
             );
-            textList.add(rs);
+            sectionList.add(rs);
         }
-        report.setReportTextList(textList);
+        report.setReportSectionList(sectionList);
 
         try {
             HexagonDimensionScore normDimensionScore = new HexagonDimensionScore(
