@@ -18,12 +18,12 @@ public enum Indicator {
     /**
      * 抑郁。
      */
-    Depression("抑郁", "Depression", 92),
+    Depression("抑郁倾向", "Depression", 92),
 
     /**
      * 焦虑。
      */
-    Anxiety("焦虑", "Anxiety", 91),
+    Anxiety("焦虑情绪", "Anxiety", 91),
 
     /**
      * 强迫。
@@ -38,12 +38,12 @@ public enum Indicator {
     /**
      * 悲观。
      */
-    Pessimism("悲观", "Pessimism", 82),
+    Pessimism("悲观者", "Pessimism", 82),
 
     /**
      * 乐观。
      */
-    Optimism("乐观", "Optimism", 81),
+    Optimism("乐观者", "Optimism", 81),
 
     /**
      * 安全感。
@@ -73,12 +73,12 @@ public enum Indicator {
     /**
      * 冲动。
      */
-    Impulsion("冲动", "Impulsion", 66),
+    Impulsion("冲动性", "Impulsion", 66),
 
     /**
      * 自信。
      */
-    Confidence("自信", "Confidence", 64),
+    Confidence("自信心", "Confidence", 64),
 
     /**
      * 情绪。
@@ -143,12 +143,12 @@ public enum Indicator {
     /**
      * 家庭关系。
      */
-    Family("家庭关系", "Family", 34),
+    Family("重视家庭关系", "Family", 34),
 
     /**
      * 人际关系。
      */
-    InterpersonalRelation("人际关系", "InterpersonalRelation", 33),
+    InterpersonalRelation("人际关系敏感", "InterpersonalRelation", 33),
 
     /**
      * 单纯。
@@ -223,7 +223,7 @@ public enum Indicator {
 
     public static Indicator parse(String valueOrName) {
         for (Indicator indicator : Indicator.values()) {
-            if (indicator.name.equals(valueOrName) || indicator.code.equalsIgnoreCase(valueOrName)) {
+            if (indicator.name.equalsIgnoreCase(valueOrName) || indicator.code.equalsIgnoreCase(valueOrName)) {
                 return indicator;
             }
         }

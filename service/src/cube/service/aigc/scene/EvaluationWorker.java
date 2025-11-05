@@ -427,7 +427,8 @@ public class EvaluationWorker {
             }
 
             if (null != report && null != suggestion) {
-                result.add(new ReportSection(es.indicator, es.generateWord(this.attribute),
+                // 报告标题使用指标名称
+                result.add(new ReportSection(es.indicator, es.indicator.name,
                         report, suggestion, es.getIndicatorRate(this.attribute)));
                 if (result.size() >= maxIndicatorTexts) {
                     break;

@@ -633,7 +633,7 @@ public class EvaluationScore implements JSONable {
             case Family:
                 if (score > 1.0) {
                     rate = IndicatorRate.High;
-                } else if (score > 0.8) {
+                } else if (score > 0) {
                     rate = IndicatorRate.Medium;
                 } else {
                     rate = IndicatorRate.Low;

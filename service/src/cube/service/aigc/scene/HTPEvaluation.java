@@ -1196,7 +1196,7 @@ public class HTPEvaluation extends Evaluation {
                 String desc = "画面中房元素穿越左半边中线";
                 result.addFeature(desc, Term.PayAttentionToFamily, Tendency.Positive,
                         PerceptronThing.createPictureLayout(new Thing[] { house }));
-                result.addScore(Indicator.Family, 1, FloatUtils.random(0.1, 0.2));
+                result.addScore(Indicator.Family, 1, FloatUtils.random(0.2, 0.3));
             }
             else if (cX > halfRightCenterX) {
                 // house 中线越过右半边中线
@@ -1505,7 +1505,7 @@ public class HTPEvaluation extends Evaluation {
             if (!house.hasDoor() && !house.hasWindow()) {
                 String desc = "房屋没有门和窗";
                 result.addFeature(desc, Term.WillingnessToCommunicate, Tendency.Negative, new Thing[] { house });
-                result.addScore(Indicator.Family, -1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.Family, -1, FloatUtils.random(0.1, 0.2));
             }
             else {
                 result.addScore(Indicator.Family, 1, FloatUtils.random(0.4, 0.5));
