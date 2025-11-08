@@ -19,6 +19,7 @@ import cube.aigc.psychology.material.house.Window;
 import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.Leg;
 import cube.util.FloatUtils;
+import cube.util.calc.FrameStructure;
 import cube.vision.BoundingBox;
 import cube.vision.Point;
 import cube.vision.Size;
@@ -1590,6 +1591,15 @@ public class HTPEvaluation extends Evaluation {
                         result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.2, 0.3));
                         result.addScore(Indicator.Family, -1, FloatUtils.random(0.2, 0.3));
                         System.out.println("DEBUG: Anxiety - House window - " + countDoodle);
+                    }
+
+                    if (house.getWindows().size() > 4) {
+                        String desc = "画面里出现较多窗户。";
+                        result.addFeature(desc, Term.Imagination, Tendency.Positive);
+                        result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.8, 0.9));
+                    }
+                    else if (house.getWindows().size() > 2) {
+                        result.addScore(Indicator.Obsession, 1, FloatUtils.random(0.5, 0.6));
                     }
                 }
 

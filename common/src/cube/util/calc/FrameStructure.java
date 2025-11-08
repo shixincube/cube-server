@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.aigc.psychology.composition;
+package cube.util.calc;
 
 /**
  * 框架结构。

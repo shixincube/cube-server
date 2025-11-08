@@ -45,7 +45,7 @@ public class EvaluationReport implements JSONable {
 
     private PersonalityAccelerator personalityAccelerator;
 
-    private Attention attention;
+    private Attention attention = Attention.NoAttention;
 
     private List<Scale> additionScales;
 
@@ -196,7 +196,7 @@ public class EvaluationReport implements JSONable {
         for (EvaluationFeature result : resultList) {
             if (null != result.getScore(Indicator.Unknown)) {
                 this.unknown = true;
-                this.attention = Attention.FocusedAttention;
+                this.attention = Attention.NoAttention;
                 this.additionScales.add(Resource.getInstance().loadScaleByName("SCL-90", this.contactId));
                 return;
             }
@@ -853,7 +853,9 @@ public class EvaluationReport implements JSONable {
     public List<EvaluationScore> getFullEvaluationScores() {
         List<EvaluationScore> list = new ArrayList<>();
         for (Indicator indicator : Indicator.sortByPriority()) {
-            if (indicator == Indicator.Unknown || indicator == Indicator.Psychosis) {
+            if (indicator == Indicator.Unknown || indicator == Indicator.Psychosis ||
+                indicator == Indicator.AvoidantAttachment || indicator == Indicator.AnxiousAttachment ||
+                indicator == Indicator.SecureAttachment || indicator == Indicator.FearfulAttachment) {
                 continue;
             }
 
