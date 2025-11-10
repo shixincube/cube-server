@@ -292,7 +292,7 @@ function calc(attribute, scores, factorSet, reference) {
             }
 
             if (attribute.age < 20) {
-                if (null != factorSet && factorSet.symptomFactor.total > 180 && !rollbackState) {
+                if (null != factorSet && factorSet.symptomFactor.total > 160 && !rollbackState) {
                     if (attention.level == Attention.GeneralAttention.level) {
                         attention = Attention.FocusedAttention;
                         Logger.d('attention.js', "Attention (age<20 && factor>190): Focused attention");
@@ -301,11 +301,25 @@ function calc(attribute, scores, factorSet, reference) {
             }
             else {
                 // 细化年龄分段
-                if (null != factorSet && factorSet.symptomFactor.total > 160 && !rollbackState && nScore > 3) {
+                if (null != factorSet && factorSet.symptomFactor.total > 120 && !rollbackState && nScore > 3) {
                     if (attention.level == Attention.GeneralAttention.level) {
                         attention = Attention.FocusedAttention;
                         Logger.d('attention.js', "Attention (age>20 && factor>160): Focused attention");
                     }
+                }
+            }
+        }
+    }
+    else {
+        if (null != factorSet && attribute.age >= 18) {
+            if (factorSet.symptomFactor.total >= 120) {
+                if (attention.level == Attention.NoAttention.level) {
+                    attention = Attention.GeneralAttention;
+                    Logger.d('attention.js', "Attention (age>=18 && factor>120): No-Attention -> General-Attention");
+                }
+                else if (attention.level == Attention.GeneralAttention.level) {
+                    attention = Attention.FocusedAttention;
+                    Logger.d('attention.js', "Attention (age>=18 && factor>120): General-Attention -> Focused-Attention");
                 }
             }
         }

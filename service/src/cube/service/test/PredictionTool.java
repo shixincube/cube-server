@@ -59,7 +59,7 @@ public class PredictionTool {
     public static void main(String[] args) {
         PredictionTool tool = new PredictionTool();
 
-        String filepath = "/Users/ambrose/Public/年度工作/2025年/11月/志愿者数据/json/076.json";
+        String filepath = "/Users/ambrose/Public/年度工作/2025年/11月/志愿者数据/json/121.json";
         PaintingReport report = tool.read(filepath);
         tool.printIndicator(report);
     }

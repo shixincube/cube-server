@@ -20,6 +20,8 @@ import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.Leg;
 import cube.util.FloatUtils;
 import cube.util.calc.FrameStructure;
+import cube.util.calc.FrameStructureCalculator;
+import cube.util.calc.FrameStructureDescription;
 import cube.vision.BoundingBox;
 import cube.vision.Point;
 import cube.vision.Size;
@@ -1029,7 +1031,10 @@ public class HTPEvaluation extends Evaluation {
     private EvaluationFeature evalFrameStructure() {
         EvaluationFeature result = new EvaluationFeature();
 
-        FrameStructureDescription description = this.calcFrameStructure(this.spaceLayout.getPaintingBox());
+        FrameStructureCalculator calculator = new FrameStructureCalculator();
+
+        FrameStructureDescription description =
+                calculator.calcFrameStructure(this.canvasSize, this.spaceLayout.getPaintingBox());
         if (description.isWholeTop()) {
             // 整体顶部
             String desc = "整个画幅结构偏向画布顶部";
@@ -3235,7 +3240,7 @@ public class HTPEvaluation extends Evaluation {
         return list;
     }
 
-    private FrameStructureDescription calcFrameStructure(BoundingBox bbox) {
+    /*private FrameStructureDescription calcFrameStructure(BoundingBox bbox) {
         int halfHeight = (int) (this.canvasSize.height * 0.5);
         int halfWidth = (int) (this.canvasSize.width * 0.5);
 
@@ -3306,7 +3311,7 @@ public class HTPEvaluation extends Evaluation {
 
         fsd.addFrameStructure(list.get(list.size() - 1).structure);
         return fsd;
-    }
+    }*/
 
     private boolean calcSymmetry(List<? extends Thing> thingList) {
         if (null == thingList || thingList.isEmpty()) {
@@ -3333,7 +3338,7 @@ public class HTPEvaluation extends Evaluation {
         return false;
     }
 
-    public class FrameStructureDescription {
+    /*public class FrameStructureDescription {
 
         private List<FrameStructure> frameStructures;
 
@@ -3389,5 +3394,5 @@ public class HTPEvaluation extends Evaluation {
             this.area = area;
             this.structure = structure;
         }
-    }
+    }*/
 }

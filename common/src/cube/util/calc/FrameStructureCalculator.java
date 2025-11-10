@@ -107,6 +107,16 @@ public class FrameStructureCalculator {
         cornerList.add(new AreaDesc(bottomLeftArea, FrameStructure.BottomLeftCorner));
         cornerList.add(new AreaDesc(bottomRightArea, FrameStructure.BottomRightCorner));
 
+        // 面积从小到达排列
+        Collections.sort(cornerList, new Comparator<AreaDesc>() {
+            @Override
+            public int compare(AreaDesc ad1, AreaDesc ad2) {
+                return (int)(ad1.area - ad2.area);
+            }
+        });
+
+        fsd.addFrameStructure(cornerList.get(cornerList.size() - 1).structure);
+
         return fsd;
     }
 }

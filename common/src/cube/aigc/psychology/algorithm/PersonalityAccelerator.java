@@ -42,6 +42,7 @@ public class PersonalityAccelerator implements JSONable  {
             BigFivePersonality.Demonstrator,
             BigFivePersonality.Controller
     };
+
     private final static MBTIFeature[] sMBTIFeatures = new MBTIFeature[] {
             MBTIFeature.INTJ,
             MBTIFeature.INTP,
