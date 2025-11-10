@@ -14,22 +14,22 @@ public enum FrameStructure {
     /**
      * 整体上方空间。
      */
-    WholeTopSpace("WholeTopSpace"),
+    TopSpace("TopSpace"),
 
     /**
      * 整体下方空间。
      */
-    WholeBottomSpace("WholeBottomSpace"),
+    BottomSpace("BottomSpace"),
 
     /**
      * 整体左边空间。
      */
-    WholeLeftSpace("WholeLeftSpace"),
+    LeftSpace("LeftSpace"),
 
     /**
      * 整体右边空间。
      */
-    WholeRightSpace("WholeRightSpace"),
+    RightSpace("RightSpace"),
 
     /**
      * 中间左上部空间。
@@ -70,6 +70,11 @@ public enum FrameStructure {
      * 右下角。
      */
     BottomRightCorner("BottomRightCorner"),
+
+    /**
+     * 不在角落。
+     */
+    NotInCorner("NotInCorner"),
 
     Normal("Normal");
 

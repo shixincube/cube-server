@@ -11,5 +11,41 @@ public final class Functions {
     private Functions() {
     }
 
+    public static double sum(double[] data) {
+        double sum = 0;
+        for (double v : data) {
+            sum += v;
+        }
+        return sum;
+    }
 
+    public static double mean(double[] data) {
+        return sum(data) / (double) data.length;
+    }
+
+    public static double sampleVariance(double[] data) {
+        double variance = 0;
+        double mean = mean(data);
+        for (double v : data) {
+            variance = variance + (Math.pow((v - mean), 2));
+        }
+        variance = variance / (data.length - 1);
+        return variance;
+    }
+
+    public static double sampleStandardDeviation(double[] data) {
+        return Math.sqrt(sampleVariance(data));
+    }
+
+    public static void main(String[] args) {
+        double[] data = new double[]{ 1000, 1200, 1300, 2000 };
+        System.out.println(mean(data));
+        System.out.println(sampleStandardDeviation(data));
+        System.out.println(sampleStandardDeviation(data) / mean(data));
+
+        data = new double[]{ 1000, 1200, 1300, 5000};
+        System.out.println(mean(data));
+        System.out.println(sampleStandardDeviation(data));
+        System.out.println(sampleStandardDeviation(data) / mean(data));
+    }
 }

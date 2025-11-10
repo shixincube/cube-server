@@ -14,6 +14,8 @@ import cube.util.calc.FrameStructure;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.util.FloatUtils;
+import cube.util.calc.FrameStructureCalculator;
+import cube.util.calc.FrameStructureDescription;
 import cube.vision.BoundingBox;
 import cube.vision.Size;
 
@@ -34,7 +36,10 @@ public class AttachmentStyleEvaluation extends Evaluation {
     public EvaluationReport makeEvaluationReport() {
         EvaluationReport report = null;
         List<EvaluationFeature> results = new ArrayList<>();
-        results.add(this.evalSpaceStructure());
+
+        SpaceLayout spaceLayout = new SpaceLayout(this.painting);
+        results.add(this.evalSpaceStructure(spaceLayout));
+
         report = new EvaluationReport(this.contactId, this.painting.getAttribute(), this.reference,
                 new PaintingConfidence(this.painting), results);
         return report;
@@ -45,10 +50,8 @@ public class AttachmentStyleEvaluation extends Evaluation {
         return null;
     }
 
-    private EvaluationFeature evalSpaceStructure() {
+    private EvaluationFeature evalSpaceStructure(SpaceLayout spaceLayout) {
         EvaluationFeature result = new EvaluationFeature();
-
-        SpaceLayout spaceLayout = new SpaceLayout(this.painting);
 
         // 画面大小比例
         double areaRatio = spaceLayout.getAreaRatio();
@@ -62,174 +65,28 @@ public class AttachmentStyleEvaluation extends Evaluation {
             }
         }
 
-        FrameStructureDescription description = this.calcFrameStructure(spaceLayout.getPaintingBox());
+        FrameStructureCalculator calculator = new FrameStructureCalculator();
+        FrameStructureDescription description = calculator.calcFrameStructure(this.painting.getCanvasSize(),
+                spaceLayout.getPaintingBox());
+
+        if (description.isNotInCorner()) {
+            result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.2, 0.3));
+        }
+        else {
+            result.addScore(Indicator.AvoidantAttachment, 1, FloatUtils.random(0.3, 0.4));
+        }
 
         return result;
     }
 
-    private FrameStructureDescription calcFrameStructure(BoundingBox bbox) {
-        Size canvasSize = this.painting.getCanvasSize();
-        int halfHeight = (int) (canvasSize.height * 0.5);
-        int halfWidth = (int) (canvasSize.width * 0.5);
-
-        BoundingBox topSpaceBox = new BoundingBox(0, 0,
-                canvasSize.width, halfHeight);
-        BoundingBox bottomSpaceBox = new BoundingBox(0, halfHeight,
-                canvasSize.width, halfHeight);
-        BoundingBox leftSpaceBox = new BoundingBox(0, 0,
-                halfWidth, canvasSize.height);
-        BoundingBox rightSpaceBox = new BoundingBox(halfWidth, 0,
-                halfWidth, canvasSize.height);
-
-        FrameStructureDescription fsd = new FrameStructureDescription();
-
-        // 判断上下空间
-        int topArea = topSpaceBox.calculateCollisionArea(bbox);
-        int bottomArea = bottomSpaceBox.calculateCollisionArea(bbox);
-        if (topArea > bottomArea) {
-            fsd.addFrameStructure(FrameStructure.WholeTopSpace);
-        }
-        else {
-            fsd.addFrameStructure(FrameStructure.WholeBottomSpace);
-        }
-
-        // 判断左右空间
-        int leftArea = leftSpaceBox.calculateCollisionArea(bbox);
-        int rightArea = rightSpaceBox.calculateCollisionArea(bbox);
-        if (leftArea > rightArea) {
-            fsd.addFrameStructure(FrameStructure.WholeLeftSpace);
-        }
-        else {
-            fsd.addFrameStructure(FrameStructure.WholeRightSpace);
-        }
-
-        // 中间区域
-        int paddingWidth = Math.round(((float) canvasSize.width) / 6.0f);
-        int paddingHeight = Math.round(((float) canvasSize.height) / 6.0f);
-        BoundingBox centerBox = new BoundingBox(paddingWidth, paddingHeight,
-                canvasSize.width - paddingWidth * 2,
-                canvasSize.height - paddingHeight * 2);
-        halfHeight = (int) (centerBox.height * 0.5);
-        halfWidth = (int) (centerBox.width * 0.5);
-        BoundingBox topLeftBox = new BoundingBox(centerBox.x, centerBox.y, halfWidth, halfHeight);
-        BoundingBox topRightBox = new BoundingBox(centerBox.x + halfWidth, centerBox.y,
-                halfWidth, halfHeight);
-        BoundingBox bottomLeftBox = new BoundingBox(centerBox.x, centerBox.y + halfHeight,
-                halfWidth, halfHeight);
-        BoundingBox bottomRightBox = new BoundingBox(centerBox.x + halfWidth, centerBox.y + halfHeight,
-                halfWidth, halfHeight);
-        int topLeftArea = topLeftBox.calculateCollisionArea(bbox);
-        int topRightArea = topRightBox.calculateCollisionArea(bbox);
-        int bottomLeftArea = bottomLeftBox.calculateCollisionArea(bbox);
-        int bottomRightArea = bottomRightBox.calculateCollisionArea(bbox);
-
-        List<AreaDesc> centerList = new ArrayList<>(4);
-        centerList.add(new AreaDesc(topLeftArea, FrameStructure.CenterTopLeftSpace));
-        centerList.add(new AreaDesc(topRightArea, FrameStructure.CenterTopRightSpace));
-        centerList.add(new AreaDesc(bottomLeftArea, FrameStructure.CenterBottomLeftSpace));
-        centerList.add(new AreaDesc(bottomRightArea, FrameStructure.CenterBottomRightSpace));
-
-        // 面积从小到达排列
-        Collections.sort(centerList, new Comparator<AreaDesc>() {
-            @Override
-            public int compare(AreaDesc ad1, AreaDesc ad2) {
-                return ad1.area - ad2.area;
-            }
-        });
-
-        fsd.addFrameStructure(centerList.get(centerList.size() - 1).structure);
-
-        // 判断角落位置
-        topLeftBox = new BoundingBox(0, 0, halfWidth, halfHeight);
-        topRightBox = new BoundingBox(halfWidth, 0, halfWidth, halfHeight);
-        bottomLeftBox = new BoundingBox(0, halfHeight, halfWidth, halfHeight);
-        bottomRightBox = new BoundingBox(halfWidth, halfHeight, halfWidth, halfHeight);
-
-        topLeftArea = topLeftBox.calculateCollisionArea(bbox);
-        topRightArea = topRightBox.calculateCollisionArea(bbox);
-        bottomLeftArea = bottomLeftBox.calculateCollisionArea(bbox);
-        bottomRightArea = bottomRightBox.calculateCollisionArea(bbox);
-
-        List<AreaDesc> cornerList = new ArrayList<>(4);
-        cornerList.add(new AreaDesc(topLeftArea, FrameStructure.TopLeftCorner));
-        cornerList.add(new AreaDesc(topRightArea, FrameStructure.TopRightCorner));
-        cornerList.add(new AreaDesc(bottomLeftArea, FrameStructure.BottomLeftCorner));
-        cornerList.add(new AreaDesc(bottomRightArea, FrameStructure.BottomRightCorner));
-
-        return fsd;
+    private EvaluationFeature evalHouse(SpaceLayout spaceLayout) {
+        EvaluationFeature result = new EvaluationFeature();
+        return result;
     }
 
-    public class FrameStructureDescription {
+    private EvaluationFeature evalPerson(SpaceLayout spaceLayout) {
+        EvaluationFeature result = new EvaluationFeature();
 
-        private List<FrameStructure> frameStructures;
-
-        private FrameStructureDescription() {
-            this.frameStructures = new ArrayList<>();
-        }
-
-        protected void addFrameStructure(FrameStructure structure) {
-            if (this.frameStructures.contains(structure)) {
-                return;
-            }
-            this.frameStructures.add(structure);
-        }
-
-        public boolean isWholeTop() {
-            return this.frameStructures.contains(FrameStructure.WholeTopSpace);
-        }
-
-        public boolean isWholeBottom() {
-            return this.frameStructures.contains(FrameStructure.WholeBottomSpace);
-        }
-
-        public boolean isWholeLeft() {
-            return this.frameStructures.contains(FrameStructure.WholeLeftSpace);
-        }
-
-        public boolean isWholeRight() {
-            return this.frameStructures.contains(FrameStructure.WholeRightSpace);
-        }
-
-        public boolean isCenterTopLeft() {
-            return this.frameStructures.contains(FrameStructure.CenterTopLeftSpace);
-        }
-
-        public boolean isCenterTopRight() {
-            return this.frameStructures.contains(FrameStructure.CenterTopRightSpace);
-        }
-
-        public boolean isCenterBottomLeft() {
-            return this.frameStructures.contains(FrameStructure.CenterBottomLeftSpace);
-        }
-
-        public boolean isCenterBottomRight() {
-            return this.frameStructures.contains(FrameStructure.CenterBottomRightSpace);
-        }
-
-        public boolean isTopLeftCorner() {
-            return this.frameStructures.contains(FrameStructure.TopLeftCorner);
-        }
-
-        public boolean isTopRightCorner() {
-            return this.frameStructures.contains(FrameStructure.TopRightCorner);
-        }
-
-        public boolean isBottomLeftCorner() {
-            return this.frameStructures.contains(FrameStructure.BottomLeftCorner);
-        }
-
-        public boolean isBottomRightCorner() {
-            return this.frameStructures.contains(FrameStructure.BottomRightCorner);
-        }
-    }
-
-    private class AreaDesc {
-        protected int area;
-        protected FrameStructure structure;
-
-        protected AreaDesc(int area, FrameStructure structure) {
-            this.area = area;
-            this.structure = structure;
-        }
+        return result;
     }
 }

@@ -6,6 +6,7 @@
 
 package cube.util.calc;
 
+import cube.util.Functions;
 import cube.vision.BoundingBox;
 import cube.vision.Size;
 
@@ -38,20 +39,20 @@ public class FrameStructureCalculator {
         int topArea = topSpaceBox.calculateCollisionArea(bbox);
         int bottomArea = bottomSpaceBox.calculateCollisionArea(bbox);
         if (topArea > bottomArea) {
-            fsd.addFrameStructure(FrameStructure.WholeTopSpace);
+            fsd.addFrameStructure(FrameStructure.TopSpace);
         }
         else {
-            fsd.addFrameStructure(FrameStructure.WholeBottomSpace);
+            fsd.addFrameStructure(FrameStructure.BottomSpace);
         }
 
         // 判断左右空间
         int leftArea = leftSpaceBox.calculateCollisionArea(bbox);
         int rightArea = rightSpaceBox.calculateCollisionArea(bbox);
         if (leftArea > rightArea) {
-            fsd.addFrameStructure(FrameStructure.WholeLeftSpace);
+            fsd.addFrameStructure(FrameStructure.LeftSpace);
         }
         else {
-            fsd.addFrameStructure(FrameStructure.WholeRightSpace);
+            fsd.addFrameStructure(FrameStructure.RightSpace);
         }
 
         // 中间区域
@@ -101,21 +102,29 @@ public class FrameStructureCalculator {
         bottomLeftArea = bottomLeftBox.calculateCollisionArea(bbox);
         bottomRightArea = bottomRightBox.calculateCollisionArea(bbox);
 
-        List<AreaDesc> cornerList = new ArrayList<>(4);
-        cornerList.add(new AreaDesc(topLeftArea, FrameStructure.TopLeftCorner));
-        cornerList.add(new AreaDesc(topRightArea, FrameStructure.TopRightCorner));
-        cornerList.add(new AreaDesc(bottomLeftArea, FrameStructure.BottomLeftCorner));
-        cornerList.add(new AreaDesc(bottomRightArea, FrameStructure.BottomRightCorner));
+        // 计算变异系数
+        double[] data = new double[] { topLeftArea, topRightArea, bottomLeftArea, bottomRightArea };
+        if (Functions.sampleStandardDeviation(data) / Functions.mean(data) >= 0.5) {
+            // 变异系数大于 0.5 说明明显偏移在角落
+            List<AreaDesc> cornerList = new ArrayList<>(4);
+            cornerList.add(new AreaDesc(topLeftArea, FrameStructure.TopLeftCorner));
+            cornerList.add(new AreaDesc(topRightArea, FrameStructure.TopRightCorner));
+            cornerList.add(new AreaDesc(bottomLeftArea, FrameStructure.BottomLeftCorner));
+            cornerList.add(new AreaDesc(bottomRightArea, FrameStructure.BottomRightCorner));
 
-        // 面积从小到达排列
-        Collections.sort(cornerList, new Comparator<AreaDesc>() {
-            @Override
-            public int compare(AreaDesc ad1, AreaDesc ad2) {
-                return (int)(ad1.area - ad2.area);
-            }
-        });
+            // 面积从小到达排列
+            Collections.sort(cornerList, new Comparator<AreaDesc>() {
+                @Override
+                public int compare(AreaDesc ad1, AreaDesc ad2) {
+                    return (int)(ad1.area - ad2.area);
+                }
+            });
 
-        fsd.addFrameStructure(cornerList.get(cornerList.size() - 1).structure);
+            fsd.addFrameStructure(cornerList.get(cornerList.size() - 1).structure);
+        }
+        else {
+            fsd.addFrameStructure(FrameStructure.NotInCorner);
+        }
 
         return fsd;
     }

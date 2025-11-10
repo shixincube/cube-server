@@ -1035,7 +1035,7 @@ public class HTPEvaluation extends Evaluation {
 
         FrameStructureDescription description =
                 calculator.calcFrameStructure(this.canvasSize, this.spaceLayout.getPaintingBox());
-        if (description.isWholeTop()) {
+        if (description.isTop()) {
             // 整体顶部
             String desc = "整个画幅结构偏向画布顶部";
             result.addFeature(desc, Term.Idealization, Tendency.Positive, PerceptronThing.createPictureLayout());
@@ -1051,7 +1051,7 @@ public class HTPEvaluation extends Evaluation {
                 System.out.println("CP-026");
             }
         }
-        else if (description.isWholeBottom()) {
+        else if (description.isBottom()) {
             // 整体底部
             String desc = "整个画幅结构偏向画布底部";
             result.addFeature(desc, Term.Instinct, Tendency.Positive, PerceptronThing.createPictureLayout());
@@ -1065,7 +1065,7 @@ public class HTPEvaluation extends Evaluation {
                 System.out.println("CP-027");
             }
         }
-        else if (description.isWholeLeft()) {
+        else if (description.isLeft()) {
             // 整体左边
             String desc = "整个画幅结构偏向画布左边";
             result.addFeature(desc, Term.Nostalgia, Tendency.Positive, PerceptronThing.createPictureLayout());
@@ -1075,7 +1075,7 @@ public class HTPEvaluation extends Evaluation {
                 System.out.println("CP-028");
             }
         }
-        else if (description.isWholeRight()) {
+        else if (description.isRight()) {
             // 整体右边
             String desc = "整个画幅结构偏向画布右边";
             result.addFeature(desc, Term.Future, Tendency.Positive, PerceptronThing.createPictureLayout());

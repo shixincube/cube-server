@@ -147,52 +147,58 @@ public class EvaluationWorker {
         return this.evaluationReport.isUnknown();
     }
 
+    /**
+     * 生成报告内容。
+     *
+     * @param channel
+     * @param theme
+     * @param maxIndicatorTexts
+     * @return
+     */
     public EvaluationWorker make(AIGCChannel channel, Theme theme, int maxIndicatorTexts) {
-        // 评估分推理
-        List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation(Indicator.values().length);
-        this.reportSectionList = this.inferScore(scoreList, maxIndicatorTexts);
-        if (this.reportSectionList.isEmpty()) {
-            Logger.w(this.getClass(), "#make - Report text error");
-            return this;
-        }
-
-        if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#make - The report section size: " + this.reportSectionList.size());
-        }
-
         switch (theme) {
             case Generic:
             case HouseTreePerson:
+                // 评估分推理
+                List<EvaluationScore> scoreList = this.evaluationReport.getEvaluationScoresByRepresentation(Indicator.values().length);
+                this.reportSectionList = this.inferScore(scoreList, maxIndicatorTexts);
+                if (this.reportSectionList.isEmpty()) {
+                    Logger.w(this.getClass(), "#make - Report text error");
+                    return this;
+                }
+
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "#make - The report section size: " + this.reportSectionList.size());
+                }
+
+                // 生成概述
+                this.summary = this.inferSummary(channel.getAuthToken(), this.reportSectionList, channel.getLanguage());
+
+                // 生成人格描述
+                this.inferPersonality(channel.getAuthToken(), this.evaluationReport.getPersonalityAccelerator(),
+                        channel.getLanguage());
+
+                // 六维得分计算
+                try {
+                    this.dimensionScore = new HexagonDimensionScore(this.evaluationReport.getAttention(),
+                            this.evaluationReport.getFullEvaluationScores(),
+                            this.evaluationReport.getPaintingConfidence(), this.evaluationReport.getFactorSet());
+                    this.normDimensionScore = new HexagonDimensionScore(
+                            80, 80, 80, 80, 80, 80);
+                    // 描述
+                    ContentTools.fillHexagonScoreDescription(this.service.getTokenizer(), this.dimensionScore,
+                            channel.getLanguage());
+                } catch (Exception e) {
+                    Logger.w(this.getClass(), "#make", e);
+                }
                 break;
             case AttachmentStyle:
+                List<EvaluationScore> attachmentScores = this.evaluationReport.getEvaluationScores();
+                System.out.println("XJW: " + attachmentScores.size());
                 break;
             default:
                 break;
         }
-
-        // 生成概述
-        this.summary = this.inferSummary(channel.getAuthToken(), this.reportSectionList, channel.getLanguage());
-
-        // 生成人格描述
-        this.inferPersonality(channel.getAuthToken(), this.evaluationReport.getPersonalityAccelerator(),
-                channel.getLanguage());
-
-        // 六维得分计算
-        try {
-            this.dimensionScore = new HexagonDimensionScore(this.evaluationReport.getAttention(),
-                    this.evaluationReport.getFullEvaluationScores(),
-                    this.evaluationReport.getPaintingConfidence(), this.evaluationReport.getFactorSet());
-            this.normDimensionScore = new HexagonDimensionScore(
-                    80, 80, 80, 80, 80, 80);
-            // 描述
-            ContentTools.fillHexagonScoreDescription(this.service.getTokenizer(), this.dimensionScore,
-                    channel.getLanguage());
-        } catch (Exception e) {
-            Logger.w(this.getClass(), "#make", e);
-        }
-
-        // 曼陀罗花
-//        this.mandalaFlower = this.inferMandalaFlower(this.evaluationReport.getPersonalityAccelerator());
 
         return this;
     }

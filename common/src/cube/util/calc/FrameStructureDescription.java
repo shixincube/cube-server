@@ -24,20 +24,20 @@ public class FrameStructureDescription {
         this.frameStructures.add(structure);
     }
 
-    public boolean isWholeTop() {
-        return this.frameStructures.contains(FrameStructure.WholeTopSpace);
+    public boolean isTop() {
+        return this.frameStructures.contains(FrameStructure.TopSpace);
     }
 
-    public boolean isWholeBottom() {
-        return this.frameStructures.contains(FrameStructure.WholeBottomSpace);
+    public boolean isBottom() {
+        return this.frameStructures.contains(FrameStructure.BottomSpace);
     }
 
-    public boolean isWholeLeft() {
-        return this.frameStructures.contains(FrameStructure.WholeLeftSpace);
+    public boolean isLeft() {
+        return this.frameStructures.contains(FrameStructure.LeftSpace);
     }
 
-    public boolean isWholeRight() {
-        return this.frameStructures.contains(FrameStructure.WholeRightSpace);
+    public boolean isRight() {
+        return this.frameStructures.contains(FrameStructure.RightSpace);
     }
 
     public boolean isCenterTopLeft() {
@@ -70,5 +70,10 @@ public class FrameStructureDescription {
 
     public boolean isBottomRightCorner() {
         return this.frameStructures.contains(FrameStructure.BottomRightCorner);
+    }
+
+    public boolean isNotInCorner() {
+        return this.frameStructures.contains(FrameStructure.NotInCorner) ||
+                (!this.isTopLeftCorner() && !this.isTopRightCorner() && !this.isBottomLeftCorner() && !this.isBottomRightCorner());
     }
 }
