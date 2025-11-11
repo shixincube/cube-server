@@ -13,22 +13,21 @@ import cube.aigc.psychology.algorithm.PaintingConfidence;
 import cube.aigc.psychology.algorithm.PerceptronThing;
 import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
-import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.composition.BigFiveFactor;
+import cube.aigc.psychology.composition.PaintingFeatureSet;
+import cube.aigc.psychology.composition.SpaceLayout;
+import cube.aigc.psychology.composition.Texture;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.house.Window;
 import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.Leg;
 import cube.util.FloatUtils;
-import cube.util.calc.FrameStructure;
 import cube.util.calc.FrameStructureCalculator;
 import cube.util.calc.FrameStructureDescription;
-import cube.vision.BoundingBox;
 import cube.vision.Point;
 import cube.vision.Size;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**

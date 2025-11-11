@@ -6,6 +6,7 @@
 
 package cube.aigc.psychology;
 
+import cell.util.Utils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -33,9 +34,9 @@ public class Dataset {
                 JSONArray questions = item.getJSONArray("questions");
                 if (answers.length() > 0 && questions.length() > 0) {
                     // 内容
-                    Content content = new Content(answers.getString(0));
-                    if (answers.length() > 1) {
-                        content.subContent = answers.getString(1);
+                    Content content = new Content();
+                    for (int j = 0; j < answers.length(); ++j) {
+                        content.addText(answers.getString(j));
                     }
 
                     // 问题
@@ -135,17 +136,27 @@ public class Dataset {
             return null;
         }
 
-        return content.mainContent;
+        return content.getText();
     }
 
     public class Content {
 
-        public String mainContent;
+        private List<String> textList = new ArrayList<>();
 
-        public String subContent;
+        public Content() {
+        }
 
-        public Content(String mainContent) {
-            this.mainContent = mainContent;
+        public String getText() {
+            if (this.textList.size() == 1) {
+                return this.textList.get(0);
+            }
+            else {
+                return this.textList.get(Utils.randomInt(0, this.textList.size() - 1));
+            }
+        }
+
+        public void addText(String text) {
+            this.textList.add(text);
         }
     }
 }

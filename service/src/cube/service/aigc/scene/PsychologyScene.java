@@ -1557,7 +1557,7 @@ public class PsychologyScene {
             }
 
             String description = null;
-            if (evaluationWorker.isSpeed()) {
+            if (evaluationWorker.fast) {
                 Logger.d(this.getClass(), "processScaleReport - factor prompt: " +
                         prompt.name + " - " + prompt.description);
                 description = ContentTools.fastInfer(prompt.description, this.service.getTokenizer());
@@ -1580,7 +1580,7 @@ public class PsychologyScene {
 
             if (null != prompt.suggestion && prompt.suggestion.length() > 3) {
                 String suggestion = null;
-                if (evaluationWorker.isSpeed()) {
+                if (evaluationWorker.fast) {
                     Logger.d(this.getClass(), "processScaleReport - factor prompt: " +
                             prompt.name + " - " + prompt.suggestion);
                     suggestion =  ContentTools.fastInfer(prompt.suggestion, this.service.getTokenizer());

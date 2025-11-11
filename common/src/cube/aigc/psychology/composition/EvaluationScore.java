@@ -409,6 +409,18 @@ public class EvaluationScore implements JSONable {
                     return null;
                 }
                 break;
+            case AvoidantAttachment:
+                buf.append(attribute.language.isChinese() ? "回避型依恋" : "Avoidant attachment");
+                break;
+            case AnxiousAttachment:
+                buf.append(attribute.language.isChinese() ? "焦虑型依恋" : "Anxious attachment");
+                break;
+            case SecureAttachment:
+                buf.append(attribute.language.isChinese() ? "安全型依恋" : "Secure attachment");
+                break;
+            case FearfulAttachment:
+                buf.append(attribute.language.isChinese() ? "恐惧型依恋" : "Fearful attachment");
+                break;
             default:
                 return null;
         }
@@ -690,6 +702,20 @@ public class EvaluationScore implements JSONable {
                 } else if ( score > 1.0) {
                     rate = IndicatorRate.Medium;
                 } else if (score > 0.5) {
+                    rate = IndicatorRate.Low;
+                }
+                break;
+            case AvoidantAttachment:
+            case AnxiousAttachment:
+            case SecureAttachment:
+            case FearfulAttachment:
+                if (score >= 1.0) {
+                    rate = IndicatorRate.High;
+                }
+                else if (score >= 0.5) {
+                    rate = IndicatorRate.Medium;
+                }
+                else {
                     rate = IndicatorRate.Low;
                 }
                 break;

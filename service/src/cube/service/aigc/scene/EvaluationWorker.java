@@ -22,6 +22,8 @@ import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -29,13 +31,17 @@ import java.util.List;
  */
 public class EvaluationWorker {
 
+    private final static String REFINE_CN = "对以下内容进行适度润色，不要改变原内容的含义，不要添加额外内容。需要润色的内容如下：\n\n%s\n";
+
+    private final static String REFINE_EN = "The following content requires moderate refinement. Please do not alter the original meaning of the content or add any additional information. The content to be refined is as follows:\n\n%s\n";
+
     private final static String PERSONALITY_FORMAT_CN = "已知受测人的人格特点如下：\n\n%s\n\n根据上述信息回答问题，不能编造成分，问题是：总结受测人的人格特点。";
 
     private final static String PERSONALITY_FORMAT_EN = "The personality traits of the test subject are known as follows:\n\n" +
             "%s" +
             "\n\nAnswer the question based on the above information. Do not fabricate scores. The question is: Summarize the personality traits of the test subject.";
 
-    private boolean speed = true;
+    public final boolean fast = true;
 
     private EvaluationReport evaluationReport;
 
@@ -77,10 +83,6 @@ public class EvaluationWorker {
         return this.paintingFeatureSet;
     }
 
-    public boolean isSpeed() {
-        return this.speed;
-    }
-
     public PaintingReport fillReport(PaintingReport report) {
         report.setEvaluationReport(this.evaluationReport);
 
@@ -90,7 +92,6 @@ public class EvaluationWorker {
 
         report.setSummary(this.summary);
         report.setReportSectionList(this.reportSectionList);
-//        report.setMandalaFlower(this.mandalaFlower);
 
         if (null != this.paintingFeatureSet) {
             this.paintingFeatureSet.setSN(report.sn);
@@ -194,7 +195,32 @@ public class EvaluationWorker {
                 break;
             case AttachmentStyle:
                 List<EvaluationScore> attachmentScores = this.evaluationReport.getEvaluationScores();
-                System.out.println("XJW: " + attachmentScores.size());
+                // 进行指标排序
+                Collections.sort(attachmentScores, new Comparator<EvaluationScore>() {
+                    @Override
+                    public int compare(EvaluationScore es1, EvaluationScore es2) {
+                        return (int)(es1.calcScore() - es2.calcScore());
+                    }
+                });
+                EvaluationScore score = attachmentScores.get(attachmentScores.size() - 1);
+                List<EvaluationScore> newAttachmentScores = new ArrayList<>();
+                newAttachmentScores.add(score);
+                System.out.println("XJW: " + attachmentScores.size() + " - " + score.indicator.name);
+                this.reportSectionList = this.inferScore(newAttachmentScores, maxIndicatorTexts);
+                for (ReportSection section : this.reportSectionList) {
+                    String prompt = String.format(this.attribute.language.isChinese() ? REFINE_CN : REFINE_EN,
+                            section.report);
+                    GeneratingRecord record = this.service.syncGenerateText(channel.getAuthToken(),
+                            ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
+                            null, null);
+                    if (null != record) {
+                        section.report = record.answer;
+                    }
+                }
+
+                // 生成概述
+                this.summary = this.inferSummaryByTemplate(channel.getAuthToken(), this.reportSectionList, channel.getLanguage());
+
                 break;
             default:
                 break;
@@ -202,37 +228,6 @@ public class EvaluationWorker {
 
         return this;
     }
-
-//    private MandalaFlower inferMandalaFlower(PersonalityAccelerator personalityAccelerator) {
-//        BigFivePersonality feature = personalityAccelerator.getBigFivePersonality();
-//        List<String> filenames = Resource.getInstance().getMandalaFlowerFiles();
-//        String color = "A";
-//        if (feature.getNeuroticism() < 3.0) {
-//            color = "B";
-//        }
-//        else if (feature.getNeuroticism() < 4.0) {
-//            color = "G";
-//        }
-//        else if (feature.getNeuroticism() < 5.0) {
-//            color = "Y";
-//        }
-//        else if (feature.getNeuroticism() < 6.0) {
-//            color = "R";
-//        }
-//        else {
-//            color = "P";
-//        }
-//
-//        List<String> filenameList = new ArrayList<>();
-//        for (String filename : filenames) {
-//            if (filename.startsWith(color)) {
-//                filenameList.add(filename);
-//            }
-//        }
-//        MandalaFlower mandalaFlower = new MandalaFlower(
-//                FileUtils.extractFileName(filenameList.get(Utils.randomInt(0, filenameList.size() - 1))));
-//        return mandalaFlower;
-//    }
 
     /**
      * 推理人格。
@@ -247,8 +242,8 @@ public class EvaluationWorker {
         BigFivePersonality feature = personalityAccelerator.getBigFivePersonality();
         String prompt = feature.generateReportPrompt();
         String answer = null;
-        if (this.speed) {
-            answer = this.infer(prompt);
+        if (this.fast) {
+            answer = this.extract(prompt);
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
@@ -277,9 +272,9 @@ public class EvaluationWorker {
         // 宜人性
         prompt = feature.generateObligingnessPrompt();
         answer = null;
-        if (this.speed) {
+        if (this.fast) {
             Logger.d(this.getClass(), "#inferPersonality - Obligingness prompt: \"" + prompt + "\"");
-            answer = this.infer(prompt);
+            answer = this.extract(prompt);
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
@@ -294,14 +289,14 @@ public class EvaluationWorker {
             feature.setObligingnessContent(answer);
         }
         // 宜人性释义
-        feature.setObligingnessParaphrase(this.infer(feature.getObligingnessPrompt()));
+        feature.setObligingnessParaphrase(this.extract(feature.getObligingnessPrompt()));
 
         // 尽责性
         prompt = feature.generateConscientiousnessPrompt();
         answer = null;
-        if (this.speed) {
+        if (this.fast) {
             Logger.d(this.getClass(), "#inferPersonality - Conscientiousness prompt: \"" + prompt + "\"");
-            answer = this.infer(prompt);
+            answer = this.extract(prompt);
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
@@ -316,14 +311,14 @@ public class EvaluationWorker {
             feature.setConscientiousnessContent(answer);
         }
         // 尽责性释义
-        feature.setConscientiousnessParaphrase(this.infer(feature.getConscientiousnessPrompt()));
+        feature.setConscientiousnessParaphrase(this.extract(feature.getConscientiousnessPrompt()));
 
         // 外向性
         prompt = feature.generateExtraversionPrompt();
         answer = null;
-        if (this.speed) {
+        if (this.fast) {
             Logger.d(this.getClass(), "#inferPersonality - Extraversion prompt: \"" + prompt + "\"");
-            answer = this.infer(prompt);
+            answer = this.extract(prompt);
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
@@ -338,14 +333,14 @@ public class EvaluationWorker {
             feature.setExtraversionContent(answer);
         }
         // 外向性释义
-        feature.setExtraversionParaphrase(this.infer(feature.getExtraversionPrompt()));
+        feature.setExtraversionParaphrase(this.extract(feature.getExtraversionPrompt()));
 
         // 进取性
         prompt = feature.generateAchievementPrompt();
         answer = null;
-        if (this.speed) {
+        if (this.fast) {
             Logger.d(this.getClass(), "#inferPersonality - Achievement prompt: \"" + prompt + "\"");
-            answer = this.infer(prompt);
+            answer = this.extract(prompt);
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
@@ -360,14 +355,14 @@ public class EvaluationWorker {
             feature.setAchievementContent(answer);
         }
         // 进取性释义
-        feature.setAchievementParaphrase(this.infer(feature.getAchievementPrompt()));
+        feature.setAchievementParaphrase(this.extract(feature.getAchievementPrompt()));
 
         // 情绪性
         prompt = feature.generateNeuroticismPrompt();
         answer = null;
-        if (this.speed) {
+        if (this.fast) {
             Logger.d(this.getClass(), "#inferPersonality - Neuroticism prompt: \"" + prompt + "\"");
-            answer = this.infer(prompt);
+            answer = this.extract(prompt);
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
@@ -382,7 +377,7 @@ public class EvaluationWorker {
             feature.setNeuroticismContent(answer);
         }
         // 情绪性释义
-        feature.setNeuroticismParaphrase(this.infer(feature.getNeuroticismPrompt()));
+        feature.setNeuroticismParaphrase(this.extract(feature.getNeuroticismPrompt()));
 
         return true;
     }
@@ -400,8 +395,8 @@ public class EvaluationWorker {
 
             String report = null;
 
-            if (this.speed) {
-                report = this.infer(prompt);
+            if (this.fast) {
+                report = this.extract(prompt);
             }
             if (null == report) {
                 Logger.w(this.getClass(), "#inferScore - No report for \"" + prompt + "\"");
@@ -412,14 +407,19 @@ public class EvaluationWorker {
 
             prompt = es.generateSuggestionPrompt(this.attribute);
             if (null == prompt) {
-                // 不进行推理，下一个
+                // 下一个
+                result.add(new ReportSection(es.indicator, es.indicator.name,
+                        report, "", es.getIndicatorRate(this.attribute)));
+                if (result.size() >= maxIndicatorTexts) {
+                    break;
+                }
                 continue;
             }
 
             String suggestion = null;
 
-            if (this.speed) {
-                suggestion = this.infer(prompt);
+            if (this.fast) {
+                suggestion = this.extract(prompt);
             }
             if (null == suggestion) {
                 Logger.w(this.getClass(), "#inferScore - No suggestion for \"" + prompt + "\"");
@@ -496,7 +496,24 @@ public class EvaluationWorker {
         return fixThirdPerson(summary.toString());
     }
 
-    private String infer(String query) {
+    private String inferSummaryByTemplate(AuthToken authToken, List<ReportSection> list, Language language) {
+        StringBuilder buf = new StringBuilder();
+        for (ReportSection section : list) {
+            buf.append("受测人是").append(section.title).append("。\n\n");
+            buf.append(section.title).append("包含以下描述：\n\n");
+            buf.append(section.report).append("\n\n");
+        }
+        String prompt = String.format(Resource.getInstance().getCorpus("report", "REPORT_SUMMARY", language),
+                buf.toString());
+        GeneratingRecord generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt.toString(),
+                new GeneratingOption(), null, null);
+        if (null != generating) {
+            return generating.answer;
+        }
+        return null;
+    }
+
+    private String extract(String query) {
         Dataset dataset = Resource.getInstance().loadDataset();
         if (null == dataset) {
             Logger.w(this.getClass(), "#infer - Read dataset failed");
