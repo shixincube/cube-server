@@ -39,7 +39,7 @@ public class HTPEvaluation extends Evaluation {
 
     private final double treeAreaRatioThreshold = 0.049;
 
-    private final double personAreaRatioThreshold = 0.015;
+    private final double personAreaRatioThreshold = 0.013;
 
     private Size canvasSize;
 
@@ -845,7 +845,7 @@ public class HTPEvaluation extends Evaluation {
                      * "hierarchy": "0.7829784292035399",
                      * "standardDeviation": "4.663208252713476"
                      */
-                    if (texture.avg >= 4.0 && texture.max >= 10) {
+                    if (texture.avg >= 4.0 && texture.max >= 14) {
                         doodles += 2;
                     }
                     else if (texture.avg >= 2.0 && texture.density > 0.6 && texture.hierarchy > 0.02) {
@@ -875,7 +875,7 @@ public class HTPEvaluation extends Evaluation {
                 }
             }
 
-            Logger.d(this.getClass(), "#evalSpaceStructure - Space whole texture:\n"
+            Logger.d(this.getClass(), "#evalSpaceStructure - Space whole texture (" + doodles + "):\n"
                     + this.painting.getWhole().toJSON().toString(4));
             // 整体观感
             if (this.painting.getWhole().max < 2.0 && this.painting.getWhole().max != 0) {
@@ -887,7 +887,7 @@ public class HTPEvaluation extends Evaluation {
                 }
             }
             else if (this.painting.getWhole().max >= 2.0) {
-                if (this.painting.getWhole().avg >= 4.0) {
+                if (this.painting.getWhole().avg >= 6.0) {
                     doodles += 1;
                 }
                 else {
@@ -895,7 +895,7 @@ public class HTPEvaluation extends Evaluation {
                 }
             }
 
-            if (doodles >= 5) {
+            if (doodles >= 6) {
                 // 画面超过2/3画幅涂鸦
                 String desc = "画面中出现大面积涂鸦，线条凌乱";
                 result.addFeature(desc, Term.Anxiety, Tendency.Positive, PerceptronThing.createPictureSense());
@@ -917,7 +917,7 @@ public class HTPEvaluation extends Evaluation {
                 String desc = "画面中大部分画幅内容出现涂鸦";
                 result.addFeature(desc, Term.Anxiety, Tendency.Positive, PerceptronThing.createPictureSense());
 
-                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.8, 0.9));
+                result.addScore(Indicator.Anxiety, 1, FloatUtils.random(0.7, 0.8));
 
                 result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.0, 5.0));
                 result.addFiveFactor(BigFiveFactor.Neuroticism, FloatUtils.random(8.0, 9.0));
@@ -1183,8 +1183,23 @@ public class HTPEvaluation extends Evaluation {
         Person person = this.painting.getPerson();
 
         double hAreaRatio = (null != house) ? (double)house.area / (double)this.spaceLayout.getPaintingArea() : -1;
-        double tAreaRatio = (null != tree) ? (double)tree.area / (double)this.spaceLayout.getPaintingArea() : -1;
-        double pAreaRatio = (null != person) ? (double)person.area / (double)this.spaceLayout.getPaintingArea() : -1;
+        double tAreaRatio = -1;
+        double pAreaRatio = -1;
+
+        if (null != tree) {
+            double area = 0;
+            for (Tree t : this.painting.getTrees()) {
+                area += t.area;
+            }
+            tAreaRatio = area / (double)this.spaceLayout.getPaintingArea();
+        }
+        if (null != person) {
+            double area = 0;
+            for (Person p : this.painting.getPersons()) {
+                area += p.area;
+            }
+            pAreaRatio = area / (double)this.spaceLayout.getPaintingArea();
+        }
 
         Logger.d(this.getClass(), "#evalFrameStructure - Area ratio: " + hAreaRatio +
                 "/" + tAreaRatio + "/" + pAreaRatio);

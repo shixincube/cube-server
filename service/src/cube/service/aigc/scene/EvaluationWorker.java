@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class EvaluationWorker {
 
-    private final static String REFINE_CN = "对以下内容进行适度润色，不要改变原内容的含义，不要添加额外内容。需要润色的内容如下：\n\n%s\n";
+    private final static String REFINE_CN = "对以下内容进行优化改写，让内容更容易让大众读懂，不要编造成分。需要优化的内容如下：\n\n%s\n";
 
     private final static String REFINE_EN = "The following content requires moderate refinement. Please do not alter the original meaning of the content or add any additional information. The content to be refined is as follows:\n\n%s\n";
 
@@ -40,6 +40,8 @@ public class EvaluationWorker {
     private final static String PERSONALITY_FORMAT_EN = "The personality traits of the test subject are known as follows:\n\n" +
             "%s" +
             "\n\nAnswer the question based on the above information. Do not fabricate scores. The question is: Summarize the personality traits of the test subject.";
+
+    private final static String scenario_CN = "";
 
     public final boolean fast = true;
 
@@ -199,17 +201,17 @@ public class EvaluationWorker {
                 Collections.sort(attachmentScores, new Comparator<EvaluationScore>() {
                     @Override
                     public int compare(EvaluationScore es1, EvaluationScore es2) {
-                        return (int)(es1.calcScore() - es2.calcScore());
+                        return (int)(es1.calcScore() * 1000 - es2.calcScore() * 1000);
                     }
                 });
                 EvaluationScore score = attachmentScores.get(attachmentScores.size() - 1);
                 List<EvaluationScore> newAttachmentScores = new ArrayList<>();
                 newAttachmentScores.add(score);
-                System.out.println("XJW: " + attachmentScores.size() + " - " + score.indicator.name);
                 this.reportSectionList = this.inferScore(newAttachmentScores, maxIndicatorTexts);
                 for (ReportSection section : this.reportSectionList) {
                     String prompt = String.format(this.attribute.language.isChinese() ? REFINE_CN : REFINE_EN,
                             section.report);
+
                     GeneratingRecord record = this.service.syncGenerateText(channel.getAuthToken(),
                             ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
                             null, null);
@@ -220,7 +222,6 @@ public class EvaluationWorker {
 
                 // 生成概述
                 this.summary = this.inferSummaryByTemplate(channel.getAuthToken(), this.reportSectionList, channel.getLanguage());
-
                 break;
             default:
                 break;
@@ -423,7 +424,7 @@ public class EvaluationWorker {
             }
             if (null == suggestion) {
                 Logger.w(this.getClass(), "#inferScore - No suggestion for \"" + prompt + "\"");
-                GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt, new GeneratingOption(),
+                GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
                         null, null);
                 suggestion = (null != generating) ? generating.answer : null;
             }
@@ -497,20 +498,22 @@ public class EvaluationWorker {
     }
 
     private String inferSummaryByTemplate(AuthToken authToken, List<ReportSection> list, Language language) {
-        StringBuilder buf = new StringBuilder();
+        StringBuilder result = new StringBuilder();
         for (ReportSection section : list) {
-            buf.append("受测人是").append(section.title).append("。\n\n");
+            StringBuilder buf = new StringBuilder();
+            buf.append("您是").append(section.title).append("。\n\n");
             buf.append(section.title).append("包含以下描述：\n\n");
             buf.append(section.report).append("\n\n");
+            // make prompt
+            String prompt = String.format(Resource.getInstance().getCorpus("report", "REPORT_SUMMARY", language),
+                    section.title, buf.toString());
+            GeneratingRecord generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt.toString(),
+                    new GeneratingOption(), null, null);
+            if (null != generating) {
+                result.append(generating.answer).append("\n");
+            }
         }
-        String prompt = String.format(Resource.getInstance().getCorpus("report", "REPORT_SUMMARY", language),
-                buf.toString());
-        GeneratingRecord generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt.toString(),
-                new GeneratingOption(), null, null);
-        if (null != generating) {
-            return generating.answer;
-        }
-        return null;
+        return result.toString();
     }
 
     private String extract(String query) {
