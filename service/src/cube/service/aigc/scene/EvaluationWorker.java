@@ -9,7 +9,9 @@ package cube.service.aigc.scene;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.AttachmentStyle;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
+import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.composition.*;
 import cube.auth.AuthToken;
@@ -31,7 +33,7 @@ import java.util.List;
  */
 public class EvaluationWorker {
 
-    private final static String REFINE_CN = "对以下内容进行优化改写，让内容更容易让大众读懂，不要编造成分。需要优化的内容如下：\n\n%s\n";
+    private final static String REFINE_CN = "对以下内容进行优化改写，让内容更容易理解，不要编造成分，直接输出内容。需要优化的内容如下：\n\n%s\n";
 
     private final static String REFINE_EN = "The following content requires moderate refinement. Please do not alter the original meaning of the content or add any additional information. The content to be refined is as follows:\n\n%s\n";
 
@@ -41,7 +43,9 @@ public class EvaluationWorker {
             "%s" +
             "\n\nAnswer the question based on the above information. Do not fabricate scores. The question is: Summarize the personality traits of the test subject.";
 
-    private final static String scenario_CN = "";
+    private final static String SCENARIO_CN = "关于%s的描述如下：\n\n%s\n\n给定%s的相关信息如下：\n\n%s\n\n请将上述描述和信息相结合，说明此%s心理特征在%s会有什么样的内心独白和行为表现。";
+
+    private final static String SCENARIO_EN = "";
 
     public final boolean fast = true;
 
@@ -221,7 +225,37 @@ public class EvaluationWorker {
                 }
 
                 // 生成概述
-                this.summary = this.inferSummaryByTemplate(channel.getAuthToken(), this.reportSectionList, channel.getLanguage());
+                this.summary = this.inferSummaryByTemplate(channel.getAuthToken(), this.reportSectionList, this.attribute.language);
+
+                // 内容场景化
+                ReportSection section = this.reportSectionList.get(0);
+                this.reportSectionList.clear();
+                AttachmentStyle style = AttachmentStyle.parse(section.indicator);
+                if (null != style) {
+                    String sceneTitle = style.getScene1Title(this.attribute.language);
+                    String sceneContent = extract(sceneTitle);
+                    if (null == sceneContent) {
+                        Logger.d(this.getClass(), "#make - Extract dataset error: " + sceneTitle);
+                        break;
+                    }
+                    // 关于%s的描述如下：
+                    // %s
+                    // 给定%s的相关信息如下：
+                    // %s
+                    // 请将上述描述和信息相结合，说明此%s心理特征在%s会有什么样的内心独白和行为表现。
+                    String prompt = String.format(this.attribute.language.isChinese() ? SCENARIO_CN : SCENARIO_EN,
+                            section.title, section.report,
+                            sceneTitle, sceneContent,
+                            section.title, sceneTitle);
+                    GeneratingRecord record = this.service.syncGenerateText(channel.getAuthToken(),
+                            ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
+                            null, null);
+                    if (null != record) {
+                        ReportSection sceneSection = new ReportSection(section.indicator,
+                                sceneTitle, record.answer, "", section.rate);
+                        this.reportSectionList.add(sceneSection);
+                    }
+                }
                 break;
             default:
                 break;

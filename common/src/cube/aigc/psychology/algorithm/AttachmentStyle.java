@@ -6,6 +6,7 @@
 
 package cube.aigc.psychology.algorithm;
 
+import cube.aigc.psychology.Indicator;
 import cube.common.Language;
 
 public enum AttachmentStyle {
@@ -82,5 +83,20 @@ public enum AttachmentStyle {
     public String getScene3Title(Language language) {
         return language.isChinese() ? this.nameCN + this.scene3CN + "场景" :
                 "The scene of " + this.nameEN + this.scene3EN;
+    }
+
+    public static AttachmentStyle parse(Indicator indicator) {
+        switch (indicator) {
+            case AvoidantAttachment:
+                return AttachmentStyle.AvoidantAttachment;
+            case AnxiousAttachment:
+                return AttachmentStyle.AnxiousAttachment;
+            case SecureAttachment:
+                return AttachmentStyle.SecureAttachment;
+            case FearfulAttachment:
+                return AttachmentStyle.FearfulAttachment;
+            default:
+                return null;
+        }
     }
 }
