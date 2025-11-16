@@ -13,7 +13,9 @@ import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.material.House;
+import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Person;
+import cube.aigc.psychology.material.other.OtherSet;
 import cube.util.FloatUtils;
 import cube.util.calc.FrameStructureCalculator;
 import cube.util.calc.FrameStructureDescription;
@@ -136,12 +138,16 @@ public class AttachmentStyleEvaluation extends Evaluation {
 
             int countWindows = 0;
             int countDoors = 0;
+            int countChimneys = 0;
             for (House house : houses) {
                 if (house.hasWindow()) {
                     countWindows += house.getWindows().size();
                 }
                 else if (house.hasDoor()) {
                     countDoors += house.getDoors().size();
+                }
+                else if (house.hasChimney()) {
+                    countChimneys += 1;
                 }
             }
 
@@ -157,6 +163,13 @@ public class AttachmentStyleEvaluation extends Evaluation {
             }
             else {
                 result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.2, 0.3));
+            }
+
+            if (countChimneys > 0) {
+                result.addScore(Indicator.AnxiousAttachment, 1, FloatUtils.random(0.2, 0.3));
+            }
+            else {
+                result.addScore(Indicator.AvoidantAttachment, 1, FloatUtils.random(0.2, 0.3));
             }
         }
         else {
@@ -203,6 +216,34 @@ public class AttachmentStyleEvaluation extends Evaluation {
         }
         else {
             result.addScore(Indicator.FearfulAttachment, 1, FloatUtils.random(0.2, 0.3));
+        }
+
+        return result;
+    }
+
+    private EvaluationFeature evalOthers(SpaceLayout spaceLayout) {
+        EvaluationFeature result = new EvaluationFeature();
+
+        OtherSet other = this.painting.getOther();
+
+        if (other.has(Label.Table)) {
+            result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.4, 0.5));
+        }
+
+        if (other.has(Label.Sun)) {
+            result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.4, 0.5));
+
+            if (other.get(Label.Sun).isDoodle()) {
+                result.addScore(Indicator.AvoidantAttachment, 1, FloatUtils.random(0.4, 0.5));
+            }
+        }
+
+        if (other.has(Label.Moon)) {
+            result.addScore(Indicator.AvoidantAttachment, 1, FloatUtils.random(0.2, 0.3));
+        }
+
+        if (other.has(Label.Mountain)) {
+            result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.2, 0.3));
         }
 
         return result;

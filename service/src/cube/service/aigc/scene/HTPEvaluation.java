@@ -2586,6 +2586,8 @@ public class HTPEvaluation extends Evaluation {
             // 月亮
             String desc = "画面中有月亮";
             result.addFeature(desc, Term.Sentimentality, Tendency.Positive, new Thing[] { other.get(Label.Moon) });
+
+            result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.1, 0.2));
         }
 
         if (other.has(Label.Star)) {
