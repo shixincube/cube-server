@@ -11,7 +11,6 @@ import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.AttachmentStyle;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
-import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.composition.*;
 import cube.auth.AuthToken;
@@ -22,11 +21,10 @@ import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+import cube.util.FloatUtils;
+import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * 评估工作器。
@@ -63,6 +61,8 @@ public class EvaluationWorker {
 
     private String summary = "";
 
+    private List<JSONObject> keywords;
+
     private PaintingFeatureSet paintingFeatureSet;
 
     public EvaluationWorker(AIGCService service, Attribute attribute) {
@@ -98,6 +98,7 @@ public class EvaluationWorker {
 
         report.setSummary(this.summary);
         report.setReportSectionList(this.reportSectionList);
+        report.setKeywords(this.keywords);
 
         if (null != this.paintingFeatureSet) {
             this.paintingFeatureSet.setSN(report.sn);
@@ -232,28 +233,52 @@ public class EvaluationWorker {
                 this.reportSectionList.clear();
                 AttachmentStyle style = AttachmentStyle.parse(section.indicator);
                 if (null != style) {
-                    String sceneTitle = style.getScene1Title(this.attribute.language);
-                    String sceneContent = extract(sceneTitle);
-                    if (null == sceneContent) {
-                        Logger.d(this.getClass(), "#make - Extract dataset error: " + sceneTitle);
-                        break;
+                    // 关键词
+                    List<String> words = this.inferAttachmentSceneWords(style, section.report);
+                    if (null != words) {
+                        this.keywords = new ArrayList<>();
+                        for (String word : style.getKeywords(this.attribute.language)) {
+                            JSONObject wordValue = new JSONObject();
+                            wordValue.put("word", word);
+                            if (words.contains(word)) {
+                                wordValue.put("score", FloatUtils.random(0.5, 1.0));
+                            }
+                            else {
+                                wordValue.put("score", FloatUtils.random(0.0, 0.4));
+                            }
+                            this.keywords.add(wordValue);
+                        }
                     }
-                    // 关于%s的描述如下：
-                    // %s
-                    // 给定%s的相关信息如下：
-                    // %s
-                    // 请将上述描述和信息相结合，说明此%s心理特征在%s会有什么样的内心独白和行为表现。
-                    String prompt = String.format(this.attribute.language.isChinese() ? SCENARIO_CN : SCENARIO_EN,
-                            section.title, section.report,
-                            sceneTitle, sceneContent,
-                            section.title, sceneTitle);
-                    GeneratingRecord record = this.service.syncGenerateText(channel.getAuthToken(),
-                            ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
-                            null, null);
-                    if (null != record) {
-                        ReportSection sceneSection = new ReportSection(section.indicator,
-                                sceneTitle, record.answer, "", section.rate);
-                        this.reportSectionList.add(sceneSection);
+
+                    // 场景
+                    String[] scenes = new String[] {
+                            style.getScene1Title(this.attribute.language),
+                            style.getScene2Title(this.attribute.language),
+                            style.getScene3Title(this.attribute.language)
+                    };
+                    for (String sceneTitle : scenes) {
+                        String sceneContent = this.extract(sceneTitle);
+                        if (null == sceneContent) {
+                            Logger.d(this.getClass(), "#make - Extract dataset error: " + sceneTitle);
+                            continue;
+                        }
+                        // 关于%s的描述如下：
+                        // %s
+                        // 给定%s的相关信息如下：
+                        // %s
+                        // 请将上述描述和信息相结合，说明此%s心理特征在%s会有什么样的内心独白和行为表现。
+                        String prompt = String.format(this.attribute.language.isChinese() ? SCENARIO_CN : SCENARIO_EN,
+                                section.title, section.report,
+                                sceneTitle, sceneContent,
+                                section.title, sceneTitle);
+                        GeneratingRecord record = this.service.syncGenerateText(channel.getAuthToken(),
+                                ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
+                                null, null);
+                        if (null != record) {
+                            ReportSection sceneSection = new ReportSection(section.indicator,
+                                    sceneTitle, record.answer, "", section.rate);
+                            this.reportSectionList.add(sceneSection);
+                        }
                     }
                 }
                 break;
@@ -262,6 +287,38 @@ public class EvaluationWorker {
         }
 
         return this;
+    }
+
+    private List<String> inferAttachmentSceneWords(AttachmentStyle attachmentStyle, String content) {
+        String formatContent = "";
+        switch (attachmentStyle) {
+            case AvoidantAttachment:
+                formatContent = "AVOIDANT_ATTACHMENT_SCENE_WORDS";
+                break;
+            case AnxiousAttachment:
+                formatContent = "ANXIOUS_ATTACHMENT_SCENE_WORDS";
+                break;
+            case SecureAttachment:
+                formatContent = "SECURE_ATTACHMENT_SCENE_WORDS";
+                break;
+            case FearfulAttachment:
+                formatContent = "FEARFUL_ATTACHMENT_SCENE_WORDS";
+                break;
+            default:
+                break;
+        }
+        String prompt = String.format(Resource.getInstance().getCorpus("report", formatContent,
+                this.attribute.language), content);
+        GeneratingRecord record = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt,
+                new GeneratingOption(), null, null);
+        if (null != record) {
+            String separator = record.answer.contains(",") ? "," : "，";
+            String[] words = record.answer.split(separator);
+            if (words.length > 1) {
+                return Arrays.asList(words);
+            }
+        }
+        return null;
     }
 
     /**
@@ -544,9 +601,10 @@ public class EvaluationWorker {
             GeneratingRecord generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt.toString(),
                     new GeneratingOption(), null, null);
             if (null != generating) {
-                result.append(generating.answer).append("\n");
+                result.append(generating.answer).append("\n\n");
             }
         }
+        result.delete(result.length() - 2, result.length());
         return result.toString();
     }
 

@@ -106,7 +106,7 @@ public class PsychologyStorage implements Storagable {
             new StorageField("remark", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
-            new StorageField("mandala_flower", LiteralBase.STRING, new Constraint[] {
+            new StorageField("extension", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             })
     };
@@ -127,7 +127,7 @@ public class PsychologyStorage implements Storagable {
             new StorageField(reportTable, "summary", LiteralBase.STRING),
             new StorageField(reportTable, "evaluation_data", LiteralBase.STRING),
             new StorageField(reportTable, "remark", LiteralBase.STRING),
-            new StorageField(reportTable, "mandala_flower", LiteralBase.STRING)
+            new StorageField(reportTable, "extension", LiteralBase.STRING)
     };
 
     private final StorageField[] reportPermissionFields = new StorageField[] {
@@ -832,9 +832,9 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("summary", report.getSummary()),
                 new StorageField("evaluation_data", dataString),
-                new StorageField("remark", report.getRemark())
-//                new StorageField("mandala_flower", (null != report.getMandalaFlower() ?
-//                        report.getMandalaFlower().toJSON().toString() : null))
+                new StorageField("remark", report.getRemark()),
+                new StorageField("extension", (null != report.getExtension() ?
+                        JSONUtils.serializeEscape(report.getExtension().toString()) : null))
         });
     }
 
@@ -851,7 +851,9 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("summary", report.getSummary()),
                 new StorageField("evaluation_data", dataString),
-                new StorageField("remark", report.getRemark())
+                new StorageField("remark", report.getRemark()),
+                new StorageField("extension", (null != report.getExtension() ?
+                        JSONUtils.serializeEscape(report.getExtension().toString()) : null))
         }, new Conditional[] {
                 Conditional.createEqualTo("sn", report.sn)
         });
@@ -1395,12 +1397,22 @@ public class PsychologyStorage implements Storagable {
             report.setRemark(data.get("remark").getString());
         }
 
-//        if (!data.get("mandala_flower").isNullValue()) {
-//            report.setMandalaFlower(new MandalaFlower(new JSONObject(data.get("mandala_flower").getString())));
-//        }
-//        else {
-//            report.setMandalaFlower(new MandalaFlower("AS_001"));
-//        }
+        if (!data.get("extension").isNullValue()) {
+            JSONObject dataJson = null;
+            try {
+                dataJson = new JSONObject(data.get("extension").getString().trim());
+            } catch (Exception e) {
+                try {
+                    dataJson = new JSONObject(JSONUtils.serializeLineFeed(data.get("extension").getString().trim()));
+                } catch (Exception se) {
+                    Logger.e(this.getClass(), "#makeReport", se);
+                }
+            }
+
+            if (null != dataJson) {
+                report.setExtension(dataJson);
+            }
+        }
 
         EvaluationReport evaluationReport = null;
 

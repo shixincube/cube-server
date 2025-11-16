@@ -8,10 +8,13 @@ package cube.aigc.psychology;
 
 import cell.util.Utils;
 import cube.common.JSONable;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 报告基类。
@@ -35,6 +38,8 @@ public abstract class Report implements JSONable {
     protected String summary = "";
 
     protected String remark = "";
+
+    protected JSONObject extension;
 
     public Report(long contactId, Attribute attribute) {
         this.sn = Utils.generateSerialNumber();
@@ -80,6 +85,9 @@ public abstract class Report implements JSONable {
         if (json.has("remark")) {
             this.remark = json.getString("remark");
         }
+        if (json.has("extension")) {
+            this.extension = json.getJSONObject("extension");
+        }
     }
 
     public String getName() {
@@ -114,6 +122,44 @@ public abstract class Report implements JSONable {
         return this.permission;
     }
 
+    public void setExtension(JSONObject value) {
+        this.extension = value;
+    }
+
+    public JSONObject getExtension() {
+        return this.extension;
+    }
+
+    public void setKeywords(List<JSONObject> keywords) {
+        if (null == keywords) {
+            return;
+        }
+
+        if (null == this.extension) {
+            this.extension = new JSONObject();
+        }
+        JSONArray array = new JSONArray();
+        for (JSONObject value : keywords) {
+            array.put(value);
+        }
+        this.extension.put("keywords", array);
+    }
+
+    public List<JSONObject> getKeywords() {
+        if (null == this.extension) {
+            return null;
+        }
+        if (this.extension.has("keywords")) {
+            JSONArray array = this.extension.getJSONArray("keywords");
+            List<JSONObject> list = new ArrayList<>();
+            for (int i = 0; i < array.length(); ++i) {
+                list.add(array.getJSONObject(i));
+            }
+            return list;
+        }
+        return null;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -128,6 +174,9 @@ public abstract class Report implements JSONable {
         }
         if (null != this.remark) {
             json.put("remark", this.remark);
+        }
+        if (null != this.extension) {
+            json.put("extension", this.extension);
         }
         return json;
     }
@@ -146,6 +195,9 @@ public abstract class Report implements JSONable {
         }
         if (null != this.remark) {
             json.put("remark", this.remark);
+        }
+        if (null != this.extension) {
+            json.put("extension", this.extension);
         }
         return json;
     }
