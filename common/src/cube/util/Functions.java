@@ -43,7 +43,7 @@ public final class Functions {
         System.out.println(sampleStandardDeviation(data));
         System.out.println(sampleStandardDeviation(data) / mean(data));
 
-        data = new double[]{ 1000, 1200, 1300, 5000};
+        data = new double[]{ 0, 10, 23, 1000};
         System.out.println(mean(data));
         System.out.println(sampleStandardDeviation(data));
         System.out.println(sampleStandardDeviation(data) / mean(data));

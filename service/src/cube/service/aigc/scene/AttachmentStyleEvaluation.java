@@ -12,15 +12,16 @@ import cube.aigc.psychology.algorithm.PerceptronThing;
 import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
-import cube.aigc.psychology.material.House;
-import cube.aigc.psychology.material.Label;
-import cube.aigc.psychology.material.Person;
+import cube.aigc.psychology.composition.Texture;
+import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.other.OtherSet;
 import cube.util.FloatUtils;
+import cube.util.Functions;
 import cube.util.calc.FrameStructureCalculator;
 import cube.util.calc.FrameStructureDescription;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class AttachmentStyleEvaluation extends Evaluation {
@@ -40,6 +41,8 @@ public class AttachmentStyleEvaluation extends Evaluation {
         results.add(this.evalSpaceStructure(spaceLayout));
         results.add(this.evalHouse(spaceLayout));
         results.add(this.evalPerson(spaceLayout));
+        results.add(this.evalTree(spaceLayout));
+        results.add(this.evalOthers(spaceLayout));
 
         report = new EvaluationReport(this.contactId, this.painting.getAttribute(), this.reference,
                 new PaintingConfidence(this.painting), results);
@@ -62,7 +65,7 @@ public class AttachmentStyleEvaluation extends Evaluation {
                 String desc = "画面的画幅相对画布面积非常小";
                 result.addFeature(desc, Term.SenseOfSecurity, Tendency.Negative, PerceptronThing.createPictureSize());
 
-                result.addScore(Indicator.AnxiousAttachment, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.AnxiousPreoccupiedAttachment, 1, FloatUtils.random(0.2, 0.3));
             }
         }
 
@@ -74,7 +77,7 @@ public class AttachmentStyleEvaluation extends Evaluation {
             result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.2, 0.3));
         }
         else {
-            result.addScore(Indicator.AvoidantAttachment, 1, FloatUtils.random(0.3, 0.4));
+            result.addScore(Indicator.DismissiveAvoidantAttachment, 1, FloatUtils.random(0.3, 0.4));
         }
 
         if (this.painting.hasHouse() && this.painting.hasPerson()) {
@@ -94,17 +97,31 @@ public class AttachmentStyleEvaluation extends Evaluation {
                 result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.2, 0.3));
             }
             else {
-                result.addScore(Indicator.AvoidantAttachment, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.DismissiveAvoidantAttachment, 1, FloatUtils.random(0.3, 0.4));
             }
 
             // 判断面积
             if ((double)(person.area / house.area) > 0.3) {
                 // 人的面积较房大
-                result.addScore(Indicator.AnxiousAttachment, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.AnxiousPreoccupiedAttachment, 1, FloatUtils.random(0.3, 0.4));
             }
             else {
                 // 人的面积较房小
-                result.addScore(Indicator.FearfulAttachment, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.DisorganizedAttachment, 1, FloatUtils.random(0.3, 0.4));
+            }
+        }
+
+        // 画面涂鸦
+        if (null != this.painting.getWhole()) {
+            int doodles = 0;
+            for (Texture texture : this.painting.getQuadrants()) {
+                if (texture.max > 0 && texture.hierarchy > 0 && texture.density >= 0.5 && texture.max >= 5.0) {
+                    ++doodles;
+                }
+            }
+
+            if (doodles >= 2) {
+                result.addScore(Indicator.AnxiousPreoccupiedAttachment, 1, FloatUtils.random(0.2, 0.3));
             }
         }
 
@@ -115,9 +132,11 @@ public class AttachmentStyleEvaluation extends Evaluation {
         EvaluationFeature result = new EvaluationFeature();
 
         if (this.painting.hasHouse()) {
+            boolean housePath = false;
+
             List<House> houses = this.painting.getHouses();
             if (houses.size() >= 2) {
-                result.addScore(Indicator.AnxiousAttachment, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.AnxiousPreoccupiedAttachment, 1, FloatUtils.random(0.2, 0.3));
 
                 // 判断房之间的距离
                 House house1 = houses.get(0);
@@ -129,7 +148,7 @@ public class AttachmentStyleEvaluation extends Evaluation {
                 }
                 else {
                     // 房与房之间无间隔
-                    result.addScore(Indicator.FearfulAttachment, 1, FloatUtils.random(0.3, 0.4));
+                    result.addScore(Indicator.DisorganizedAttachment, 1, FloatUtils.random(0.3, 0.4));
                 }
             }
             else {
@@ -149,13 +168,17 @@ public class AttachmentStyleEvaluation extends Evaluation {
                 else if (house.hasChimney()) {
                     countChimneys += 1;
                 }
+
+                if (house.hasCobbledPath() || house.hasCurvePath() || house.hasPath()) {
+                    housePath = true;
+                }
             }
 
             if (countWindows >= 3) {
-                result.addScore(Indicator.AnxiousAttachment, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.AnxiousPreoccupiedAttachment, 1, FloatUtils.random(0.2, 0.3));
             }
             else {
-                result.addScore(Indicator.AvoidantAttachment, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.DismissiveAvoidantAttachment, 1, FloatUtils.random(0.2, 0.3));
             }
 
             if (countDoors >= 2) {
@@ -166,14 +189,19 @@ public class AttachmentStyleEvaluation extends Evaluation {
             }
 
             if (countChimneys > 0) {
-                result.addScore(Indicator.AnxiousAttachment, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.AnxiousPreoccupiedAttachment, 1, FloatUtils.random(0.2, 0.3));
             }
             else {
-                result.addScore(Indicator.AvoidantAttachment, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.DismissiveAvoidantAttachment, 1, FloatUtils.random(0.2, 0.3));
+            }
+
+            // 有小径
+            if (housePath) {
+                result.addScore(Indicator.AnxiousPreoccupiedAttachment, 1, FloatUtils.random(0.2, 0.3));
             }
         }
         else {
-            result.addScore(Indicator.FearfulAttachment, 1, FloatUtils.random(0.2, 0.3));
+            result.addScore(Indicator.DisorganizedAttachment, 1, FloatUtils.random(0.2, 0.3));
         }
 
         return result;
@@ -184,7 +212,49 @@ public class AttachmentStyleEvaluation extends Evaluation {
 
         if (this.painting.hasPerson()) {
             List<Person> persons = this.painting.getPersons();
+
+            FrameStructureCalculator calculator = new FrameStructureCalculator();
+
+            double[] areas = new double[persons.size()];
+            List<Double> distanceList = new ArrayList<>();
+            for (int i = 0; i < persons.size(); ++i) {
+                Person base = persons.get(i);
+                areas[i] = base.area;
+
+                FrameStructureDescription desc = calculator.calcFrameStructure(this.painting.getCanvasSize(), base.boundingBox);
+                if (desc.isInCorner()) {
+                    result.addScore(Indicator.DismissiveAvoidantAttachment, 1, FloatUtils.random(0.2, 0.3));
+                }
+
+                for (Person person : persons) {
+                    if (base == person) {
+                        continue;
+                    }
+
+                    int dist = base.distance(person);
+                    distanceList.add((double)dist);
+                }
+            }
+
+            // 计算面积变异系数
+            if (Functions.sampleStandardDeviation(areas) / Functions.mean(areas) <= 0.6) {
+                // 面积相当
+                result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.2, 0.3));
+            }
+            else {
+                result.addScore(Indicator.DismissiveAvoidantAttachment, 1, FloatUtils.random(0.2, 0.3));
+            }
+
+            // 计算距离变异系数
+            double[] distances = FloatUtils.toArray(distanceList.toArray(new Double[0]));
+            if (Functions.sampleStandardDeviation(distances) / Functions.mean(distances) > 0.7) {
+                result.addScore(Indicator.DisorganizedAttachment, 1, FloatUtils.random(0.2, 0.3));
+            }
+
             if (persons.size() >= 2) {
+                // 人物较多
+                result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.1, 0.2));
+
                 Person person1 = persons.get(0);
                 Person person2 = persons.get(1);
                 int dist = person1.distance(person2);
@@ -192,30 +262,54 @@ public class AttachmentStyleEvaluation extends Evaluation {
                     result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.3, 0.4));
                 }
                 else {
-                    result.addScore(Indicator.AnxiousAttachment, 1, FloatUtils.random(0.3, 0.4));
+                    result.addScore(Indicator.AnxiousPreoccupiedAttachment, 1, FloatUtils.random(0.3, 0.4));
                 }
             }
             else if (persons.size() == 1) {
-                result.addScore(Indicator.AvoidantAttachment, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.DismissiveAvoidantAttachment, 1, FloatUtils.random(0.3, 0.4));
             }
 
             Person person = this.painting.getPerson();
             if (!person.hasEye() && !person.hasEar() && !person.hasNose() && !person.hasMouth()) {
-                result.addScore(Indicator.AvoidantAttachment, 1, FloatUtils.random(0.3, 0.4));
+                result.addScore(Indicator.DismissiveAvoidantAttachment, 1, FloatUtils.random(0.3, 0.4));
             }
             else {
                 result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.3, 0.4));
             }
 
             if (!person.hasLeg() && !person.hasArm()) {
-                result.addScore(Indicator.FearfulAttachment, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.DisorganizedAttachment, 1, FloatUtils.random(0.2, 0.3));
             }
             else {
-                result.addScore(Indicator.AnxiousAttachment, 1, FloatUtils.random(0.2, 0.3));
+                result.addScore(Indicator.AnxiousPreoccupiedAttachment, 1, FloatUtils.random(0.2, 0.3));
             }
         }
         else {
-            result.addScore(Indicator.FearfulAttachment, 1, FloatUtils.random(0.2, 0.3));
+            result.addScore(Indicator.DisorganizedAttachment, 1, FloatUtils.random(0.2, 0.3));
+        }
+
+        return result;
+    }
+
+    private EvaluationFeature evalTree(SpaceLayout spaceLayout) {
+        EvaluationFeature result = new EvaluationFeature();
+
+        if (this.painting.hasTree()) {
+            boolean canopy = false;
+            for (Tree tree : this.painting.getTrees()) {
+                if (tree.hasCanopy()) {
+                    canopy = true;
+                }
+
+                if (Label.DeciduousTree == tree.getLabel()) {
+                    // 落叶树
+                    result.addScore(Indicator.DismissiveAvoidantAttachment, 1, FloatUtils.random(0.1, 0.2));
+                }
+            }
+
+            if (canopy) {
+                result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.2, 0.3));
+            }
         }
 
         return result;
@@ -234,16 +328,70 @@ public class AttachmentStyleEvaluation extends Evaluation {
             result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.4, 0.5));
 
             if (other.get(Label.Sun).isDoodle()) {
-                result.addScore(Indicator.AvoidantAttachment, 1, FloatUtils.random(0.4, 0.5));
+                result.addScore(Indicator.DismissiveAvoidantAttachment, 1, FloatUtils.random(0.4, 0.5));
             }
         }
 
         if (other.has(Label.Moon)) {
-            result.addScore(Indicator.AvoidantAttachment, 1, FloatUtils.random(0.2, 0.3));
+            result.addScore(Indicator.DismissiveAvoidantAttachment, 1, FloatUtils.random(0.2, 0.3));
         }
 
         if (other.has(Label.Mountain)) {
             result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.2, 0.3));
+        }
+
+        if (other.has(Label.Flower)) {
+            result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.2, 0.3));
+        }
+        else {
+            result.addScore(Indicator.DismissiveAvoidantAttachment, 1, FloatUtils.random(0.1, 0.2));
+        }
+
+        if (other.has(Label.Bird)) {
+            List<Thing> list = other.getList(Label.Bird);
+            if (list.size() > 2) {
+                int max = 0;
+                int min = Integer.MAX_VALUE;
+                int sum = 0;
+                int count = 0;
+                for (int i = 0; i < list.size(); ++i) {
+                    Thing base = list.get(i);
+                    for (Thing bird : list) {
+                        if (base == bird) {
+                            continue;
+                        }
+
+                        int d = base.distance(bird);
+                        if (d > max) {
+                            max = d;
+                        }
+                        if (d < min) {
+                            min = d;
+                        }
+                        sum += d;
+                        count += 1;
+                    }
+                }
+
+                // 判断鸟是否分散
+                if (count > 0 && max > 0 && min > list.get(0).getWidth()) {
+                    double avg = (double) sum / (double) count;
+                    if (avg > list.get(0).getWidth()) {
+                        result.addScore(Indicator.AnxiousPreoccupiedAttachment, 1, FloatUtils.random(0.2, 0.3));
+                    }
+                }
+            }
+        }
+
+        if (other.has(Label.Dog) || other.has(Label.Cat)) {
+            result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.1, 0.2));
+        }
+        else if (other.has(Label.Dog) && other.has(Label.Cat)) {
+            result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.2, 0.3));
+        }
+
+        if (other.has(Label.Butterfly)) {
+            result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.1, 0.2));
         }
 
         return result;

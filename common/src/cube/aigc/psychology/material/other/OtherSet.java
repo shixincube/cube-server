@@ -886,6 +886,207 @@ public class OtherSet {
         return result;
     }
 
+    public List<Thing> getList(Label label) {
+        List<Thing> result = null;
+        switch (label) {
+            case Table:
+                result = toThingList(this.tableList);
+                break;
+            case Bed:
+                result = toThingList(this.bedList);
+                break;
+            case Sun:
+                result = toThingList(this.sunList);
+                break;
+            case Moon:
+                result = toThingList(this.moonList);
+                break;
+            case Star:
+                result = toThingList(this.starList);
+                break;
+            case Mountain:
+                result = toThingList(this.mountainList);
+                break;
+            case Flower:
+                result = toThingList(this.flowerList);
+                break;
+            case Grass:
+                result = toThingList(this.grassList);
+                break;
+            case Sea:
+                result = toThingList(this.seaList);
+                break;
+            case Pool:
+                result = toThingList(this.poolList);
+                break;
+            case Sunflower:
+                result = toThingList(this.sunflowerList);
+                break;
+            case Mushroom:
+                result = toThingList(this.mushroomList);
+                break;
+            case Lotus:
+                result = toThingList(this.lotusList);
+                break;
+            case PlumFlower:
+                result = toThingList(this.plumFlowerList);
+                break;
+            case Rose:
+                result = toThingList(this.roseList);
+                break;
+            case Cloud:
+                result = toThingList(this.cloudList);
+                break;
+            case Rain:
+                result = toThingList(this.rainList);
+                break;
+            case Rainbow:
+                result = toThingList(this.rainbowList);
+                break;
+            case Torch:
+                result = toThingList(this.torchList);
+                break;
+            case Bonfire:
+                result = toThingList(this.bonfireList);
+                break;
+            case Bird:
+                result = toThingList(this.birdList);
+                break;
+            case Cat:
+                result = toThingList(this.catList);
+                break;
+            case Dog:
+                result = toThingList(this.dogList);
+                break;
+            case Cow:
+                result = toThingList(this.cowList);
+                break;
+            case Sheep:
+                result = toThingList(this.sheepList);
+                break;
+            case Pig:
+                result = toThingList(this.pigList);
+                break;
+            case Fish:
+                result = toThingList(this.fishList);
+                break;
+            case Rabbit:
+                result = toThingList(this.rabbitList);
+                break;
+            case Horse:
+                result = toThingList(this.horseList);
+                break;
+            case Hawk:
+                result = toThingList(hawkList);
+                break;
+            case Rat:
+                result = toThingList(this.ratList);
+                break;
+            case Butterfly:
+                result = toThingList(this.butterflyList);
+                break;
+            case Tiger:
+                result = toThingList(this.tigerList);
+                break;
+            case Hedgehog:
+                result = toThingList(this.hedgehogList);
+                break;
+            case Snake:
+                result = toThingList(this.snakeList);
+                break;
+            case Dragon:
+                result = toThingList(this.dragonList);
+                break;
+            case Watch:
+                result = toThingList(this.watchList);
+                break;
+            case Clock:
+                result = toThingList(this.clockList);
+                break;
+            case MusicalNotation:
+                result = toThingList(this.musicalNotationList);
+                break;
+            case TV:
+                result = toThingList(this.tvList);
+                break;
+            case Pole:
+                result = toThingList(this.poleList);
+                break;
+            case Tower:
+                result = toThingList(this.towerList);
+                break;
+            case Lighthouse:
+                result = toThingList(this.lighthouseList);
+                break;
+            case Gun:
+                result = toThingList(this.gunList);
+                break;
+            case Sword:
+                result = toThingList(this.swordList);
+                break;
+            case Knife:
+                result = toThingList(this.knifeList);
+                break;
+            case Shield:
+                result = toThingList(this.shieldList);
+                break;
+            case Sandglass:
+                result = toThingList(this.sandglassList);
+                break;
+            case Kite:
+                result = toThingList(this.kiteList);
+                break;
+            case Umbrella:
+                result = toThingList(this.umbrellaList);
+                break;
+            case Windmill:
+                result = toThingList(this.windmillList);
+                break;
+            case Flag:
+                result = toThingList(this.flagList);
+                break;
+            case Bridge:
+                result = toThingList(this.bridgeList);
+                break;
+            case Crossroads:
+                result = toThingList(this.crossroadsList);
+                break;
+            case Ladder:
+                result = toThingList(this.ladderList);
+                break;
+            case Stairs:
+                result = toThingList(this.stairsList);
+                break;
+            case Birdcage:
+                result = toThingList(this.birdcageList);
+                break;
+            case Car:
+                result = toThingList(this.carList);
+                break;
+            case Boat:
+                result = toThingList(this.boatList);
+                break;
+            case Airplane:
+                result = toThingList(this.airplaneList);
+                break;
+            case Bike:
+                result = toThingList(this.bikeList);
+                break;
+            case Skull:
+                result = toThingList(this.skullList);
+                break;
+            case Glasses:
+                result = toThingList(this.glassesList);
+                break;
+            case Swing:
+                result = toThingList(this.swingList);
+                break;
+            default:
+                break;
+        }
+        return result;
+    }
+
     public boolean has(Label label) {
         switch (label) {
             case Table:
@@ -1029,5 +1230,11 @@ public class OtherSet {
             array.put(thing.toJSON());
         }
         return array;
+    }
+
+    private List<Thing> toThingList(List<? extends Thing> list) {
+        List<Thing> result = new ArrayList<>();
+        result.addAll(list);
+        return result;
     }
 }

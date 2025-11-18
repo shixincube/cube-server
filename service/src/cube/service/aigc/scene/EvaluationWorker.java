@@ -292,17 +292,17 @@ public class EvaluationWorker {
     private List<String> inferAttachmentSceneWords(AttachmentStyle attachmentStyle, String content) {
         String formatContent = "";
         switch (attachmentStyle) {
-            case AvoidantAttachment:
-                formatContent = "AVOIDANT_ATTACHMENT_SCENE_WORDS";
-                break;
-            case AnxiousAttachment:
-                formatContent = "ANXIOUS_ATTACHMENT_SCENE_WORDS";
-                break;
-            case SecureAttachment:
+            case Secure:
                 formatContent = "SECURE_ATTACHMENT_SCENE_WORDS";
                 break;
-            case FearfulAttachment:
-                formatContent = "FEARFUL_ATTACHMENT_SCENE_WORDS";
+            case AnxiousPreoccupied:
+                formatContent = "ANXIOUS_PREOCCUPIED_ATTACHMENT_SCENE_WORDS";
+                break;
+            case DismissiveAvoidant:
+                formatContent = "DISMISSIVE_AVOIDANT_ATTACHMENT_SCENE_WORDS";
+                break;
+            case Disorganized:
+                formatContent = "DISORGANIZED_ATTACHMENT_SCENE_WORDS";
                 break;
             default:
                 break;

@@ -76,4 +76,9 @@ public class FrameStructureDescription {
         return this.frameStructures.contains(FrameStructure.NotInCorner) ||
                 (!this.isTopLeftCorner() && !this.isTopRightCorner() && !this.isBottomLeftCorner() && !this.isBottomRightCorner());
     }
+
+    public boolean isInCorner() {
+        return this.isTopLeftCorner() || this.isTopRightCorner() || this.isBottomLeftCorner() ||
+                this.isBottomRightCorner();
+    }
 }

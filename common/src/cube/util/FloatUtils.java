@@ -63,6 +63,14 @@ public final class FloatUtils {
         return output;
     }
 
+    public static double[] toArray(Double[] array) {
+        double[] result = new double[array.length];
+        for (int i = 0; i < array.length; ++i) {
+            result[i] = array[i];
+        }
+        return result;
+    }
+
     public static void main(String[] args) {
 //        double[] input = new double[] {
 //                1.5, 1.9, 1.888888889, 2.153846154, 2.0,

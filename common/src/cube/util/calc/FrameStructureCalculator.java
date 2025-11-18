@@ -104,7 +104,7 @@ public class FrameStructureCalculator {
 
         // 计算变异系数
         double[] data = new double[] { topLeftArea, topRightArea, bottomLeftArea, bottomRightArea };
-        if (Functions.sampleStandardDeviation(data) / Functions.mean(data) >= 0.5) {
+        if (Functions.sampleStandardDeviation(data) / Functions.mean(data) >= 0.8) {
             // 变异系数大于 0.5 说明明显偏移在角落
             List<AreaDesc> cornerList = new ArrayList<>(4);
             cornerList.add(new AreaDesc(topLeftArea, FrameStructure.TopLeftCorner));

@@ -196,24 +196,24 @@ public enum Indicator {
     Psychosis("精神病性", "Psychosis", 10),
 
     /**
-     * 回避型依恋。
+     * 安全型依恋。
      */
-    AvoidantAttachment("回避型依恋", "AvoidantAttachment", 54),
+    SecureAttachment("安全型依恋", "SecureAttachment", 54),
 
     /**
      * 焦虑型依恋。
      */
-    AnxiousAttachment("焦虑型依恋", "AnxiousAttachment", 53),
+    AnxiousPreoccupiedAttachment("焦虑型依恋", "AnxiousPreoccupiedAttachment", 53),
 
     /**
-     * 安全型依恋。
+     * 回避型依恋。
      */
-    SecureAttachment("安全型依恋", "SecureAttachment", 52),
+    DismissiveAvoidantAttachment("回避型依恋", "DismissiveAvoidantAttachment", 52),
 
     /**
-     * 恐惧型依恋。
+     * 混乱型依恋。
      */
-    FearfulAttachment("恐惧型依恋", "FearfulAttachment", 51),
+    DisorganizedAttachment("混乱型依恋", "DisorganizedAttachment", 51),
 
     /**
      * 未知。（服务无法进行处理）

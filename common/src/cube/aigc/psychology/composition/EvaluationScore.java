@@ -409,17 +409,17 @@ public class EvaluationScore implements JSONable {
                     return null;
                 }
                 break;
-            case AvoidantAttachment:
-                buf.append(attribute.language.isChinese() ? "回避型依恋" : "Avoidant attachment");
-                break;
-            case AnxiousAttachment:
-                buf.append(attribute.language.isChinese() ? "焦虑型依恋" : "Anxious attachment");
-                break;
             case SecureAttachment:
                 buf.append(attribute.language.isChinese() ? "安全型依恋" : "Secure attachment");
                 break;
-            case FearfulAttachment:
-                buf.append(attribute.language.isChinese() ? "恐惧型依恋" : "Fearful attachment");
+            case AnxiousPreoccupiedAttachment:
+                buf.append(attribute.language.isChinese() ? "焦虑型依恋" : "Anxious-Preoccupied attachment");
+                break;
+            case DismissiveAvoidantAttachment:
+                buf.append(attribute.language.isChinese() ? "回避型依恋" : "Dismissive-Avoidant attachment");
+                break;
+            case DisorganizedAttachment:
+                buf.append(attribute.language.isChinese() ? "混乱型依恋" : "Disorganized attachment");
                 break;
             default:
                 return null;
@@ -705,14 +705,14 @@ public class EvaluationScore implements JSONable {
                     rate = IndicatorRate.Low;
                 }
                 break;
-            case AvoidantAttachment:
-            case AnxiousAttachment:
             case SecureAttachment:
-            case FearfulAttachment:
-                if (score >= 1.0) {
+            case AnxiousPreoccupiedAttachment:
+            case DismissiveAvoidantAttachment:
+            case DisorganizedAttachment:
+                if (score >= 1.2) {
                     rate = IndicatorRate.High;
                 }
-                else if (score >= 0.5) {
+                else if (score >= 0.7) {
                     rate = IndicatorRate.Medium;
                 }
                 else {
