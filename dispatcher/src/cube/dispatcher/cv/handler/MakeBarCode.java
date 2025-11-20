@@ -42,7 +42,7 @@ public class MakeBarCode extends ContextHandler {
 
         protected final AtomicInteger concurrency = new AtomicInteger(0);
 
-        protected final int total = 100;
+        protected final int numLimits = 100;
 
         public Handler(int maxConcurrency) {
             super();
@@ -68,9 +68,9 @@ public class MakeBarCode extends ContextHandler {
 
                 if (data.has("list")) {
                     JSONArray array = data.getJSONArray("list");
-                    if (array.length() > this.total) {
+                    if (array.length() > this.numLimits) {
                         JSONArray newArray = new JSONArray();
-                        for (int i = 0; i < this.total; ++i) {
+                        for (int i = 0; i < this.numLimits; ++i) {
                             newArray.put(array.getJSONObject(i));
                         }
                         data.remove("list");
@@ -83,7 +83,7 @@ public class MakeBarCode extends ContextHandler {
                 requestAction.addParam("token", token);
 
                 ActionDialect responseAction = performer.syncTransmit(CVCellet.NAME,
-                        requestAction, 2 * 60 * 1000);
+                        requestAction, 12 * 60 * 1000);
                 if (null == responseAction) {
                     Logger.w(this.getClass(), "#doPost - Response is null");
                     this.respond(response, HttpStatus.REQUEST_TIMEOUT_408, this.makeError(HttpStatus.REQUEST_TIMEOUT_408));

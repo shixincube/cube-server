@@ -196,7 +196,7 @@ public class CVService extends AbstractModule {
                     }
                     payload.put("barcodes", barcodes);
                     Packet request = new Packet(CVAction.CombineBarcodes.name, payload);
-                    ActionDialect dialect = cellet.transmit(endpoint.talkContext, request.toDialect(), 3 * 60 * 1000);
+                    ActionDialect dialect = cellet.transmit(endpoint.talkContext, request.toDialect(), 10 * 60 * 1000);
                     if (null == dialect) {
                         Logger.w(this.getClass(), "#combineBarcodes - Endpoint is error");
                         listener.onFailed(barcodeList, CVStateCode.EndpointException);
