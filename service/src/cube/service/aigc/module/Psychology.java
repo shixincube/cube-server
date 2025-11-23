@@ -6,13 +6,14 @@
 
 package cube.service.aigc.module;
 
-import cube.aigc.Flowable;
 import cube.aigc.Module;
-import cube.auth.AuthToken;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated
+ */
 public class Psychology implements Module {
 
     private final String name = "Psychology";
@@ -30,11 +31,6 @@ public class Psychology implements Module {
     }
 
     @Override
-    public List<String> getMatchingWords() {
-        return this.matchingWords;
-    }
-
-    @Override
     public void start() {
 
     }
@@ -42,10 +38,5 @@ public class Psychology implements Module {
     @Override
     public void stop() {
 
-    }
-
-    @Override
-    public Flowable match(AuthToken token, String query) {
-        return null;
     }
 }

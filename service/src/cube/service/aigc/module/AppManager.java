@@ -14,7 +14,6 @@ import cube.common.entity.QuestionAnswer;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.SemanticSearchListener;
-import cube.service.aigc.module.task.QueryUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,11 +32,6 @@ public class AppManager implements Module {
     }
 
     @Override
-    public List<String> getMatchingWords() {
-        return null;
-    }
-
-    @Override
     public void start() {
 
     }
@@ -47,7 +41,6 @@ public class AppManager implements Module {
 
     }
 
-    @Override
     public Flowable match(AuthToken token, String query) {
         final List<QuestionAnswer> questionAnswerList = new ArrayList<>();
         boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {

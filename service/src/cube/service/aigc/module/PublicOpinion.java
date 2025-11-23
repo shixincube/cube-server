@@ -83,16 +83,6 @@ public class PublicOpinion implements Module {
         }
     }
 
-    @Override
-    public Flowable match(AuthToken token, String content) {
-        return null;
-    }
-
-    @Override
-    public List<String> getMatchingWords() {
-        return this.matchingWords;
-    }
-
     /**
      *
      * @param category
