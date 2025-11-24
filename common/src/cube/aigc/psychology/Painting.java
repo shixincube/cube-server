@@ -63,6 +63,8 @@ public class Painting implements JSONable {
 
     private Line line;
 
+    private boolean symmetry;
+
     private JSONArray materials;
 
     private JSONArray shapes;
@@ -97,6 +99,10 @@ public class Painting implements JSONable {
 
         if (json.has("palette")) {
             this.palette = new Palette(json.getJSONObject("palette"));
+        }
+
+        if (json.has("symmetry")) {
+            this.symmetry = json.getBoolean("symmetry");
         }
 
         if (json.has("line")) {
@@ -657,6 +663,14 @@ public class Painting implements JSONable {
         return this.line;
     }
 
+    public Palette getPalette() {
+        return this.palette;
+    }
+
+    public boolean isSymmetry() {
+        return this.symmetry;
+    }
+
     /**
      * 是否是有效的绘画。
      *
@@ -860,6 +874,8 @@ public class Painting implements JSONable {
         if (null != this.palette) {
             json.put("palette", this.palette.toJSON());
         }
+
+        json.put("symmetry", this.symmetry);
 
         if (null != this.line) {
             json.put("line", this.line.toJSON());

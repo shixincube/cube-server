@@ -74,9 +74,14 @@ public class QueryRevolver {
             "suggestion", "improve", "ease", "solve"
     };
 
+    private final static String[] sIndicatorData = new String[] {
+            "指标", "特征数据", "评测数据", "评测", "数据", "特征",
+            "index", "indicator", "data", "test", "feature"
+    };
+
     private final static String[] sPaintingDesc = new String[] {
             "画", "画面", "图画", "图像", "照片", "绘画", "看",
-            "painting", "picture"
+            "painting", "picture", "draw", "drawing", "content"
     };
 
     /**
@@ -1362,6 +1367,31 @@ public class QueryRevolver {
         return result.toString();
     }
 
+    private String tryGenerateIndicatorData(PaintingReport paintingReport, String query) {
+        StringBuilder buf = new StringBuilder();
+
+        boolean hit = false;
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
+        List<String> keywords = analyzer.analyzeOnlyWords(query, 10);
+        for (String keyword : keywords) {
+            for (String word : sIndicatorData) {
+                if (keyword.contains(word.toLowerCase())) {
+                    hit = true;
+                    break;
+                }
+            }
+            if (hit) {
+                break;
+            }
+        }
+
+        if (hit) {
+//            paintingReport.getEvaluationReport().getFullEvaluationScores()
+        }
+
+        return buf.toString();
+    }
+
     private String tryGeneratePaintingFeature(PaintingReport paintingReport, String query) {
         StringBuilder buf = new StringBuilder();
 
@@ -1370,7 +1400,7 @@ public class QueryRevolver {
         List<String> keywords = analyzer.analyzeOnlyWords(query, 10);
         for (String keyword : keywords) {
             for (String word : sPaintingDesc) {
-                if (keyword.contains(word)) {
+                if (keyword.contains(word.toLowerCase())) {
                     hit = true;
                     break;
                 }

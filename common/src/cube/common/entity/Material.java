@@ -37,6 +37,8 @@ public class Material implements JSONable {
 
     public Palette palette;
 
+    public boolean symmetry;
+
     public Material(String label) {
         this.sn = Utils.generateSerialNumber();
         this.label = label;
@@ -53,6 +55,7 @@ public class Material implements JSONable {
         this.color = other.color;
         this.texture = other.texture;
         this.palette = other.palette;
+        this.symmetry = other.symmetry;
     }
 
     public Material(String label, BoundingBox boundingBox, Box box) {
@@ -65,6 +68,7 @@ public class Material implements JSONable {
         this.color = "#FF0000";
         this.texture = new Texture();
         this.palette = new Palette();
+        this.symmetry = false;
     }
 
     public Material(JSONObject json) {
@@ -101,6 +105,11 @@ public class Material implements JSONable {
         }
         else {
             this.palette = new Palette();
+        }
+
+        this.symmetry = false;
+        if (json.has("symmetry")) {
+            this.symmetry = json.getBoolean("symmetry");
         }
     }
 
@@ -181,6 +190,7 @@ public class Material implements JSONable {
         json.put("color", this.color);
         json.put("texture", this.texture.toJSON());
         json.put("palette", this.palette.toJSON());
+        json.put("symmetry", this.symmetry);
         return json;
     }
 

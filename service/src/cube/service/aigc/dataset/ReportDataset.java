@@ -136,7 +136,9 @@ public class ReportDataset {
         StringBuilder buf = new StringBuilder();
         buf.append("gender").append(",").append("age").append(",");
         for (Indicator indicator : Indicator.sortByPriority()) {
-            if (indicator == Indicator.Unknown || indicator == Indicator.Psychosis) {
+            if (indicator == Indicator.Unknown || indicator == Indicator.Psychosis || indicator == Indicator.LogicalThinking
+                || indicator == Indicator.SecureAttachment || indicator == Indicator.DismissiveAvoidantAttachment
+                || indicator == Indicator.AnxiousPreoccupiedAttachment || indicator == Indicator.DisorganizedAttachment) {
                 continue;
             }
             buf.append(indicator.code.toLowerCase(Locale.ROOT)).append(",");

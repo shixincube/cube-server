@@ -1024,6 +1024,15 @@ public class HTPEvaluation extends Evaluation {
             }
         }
 
+        // 对称性判断
+        if (this.painting.isSymmetry()) {
+            String desc = "整体画面内容有对称感";
+            result.addFeature(desc, Term.HighEnergy, Tendency.Positive, PerceptronThing.createPictureSense());
+            result.addFeature(desc, Term.PositiveExpectation, Tendency.Positive, PerceptronThing.createPictureSense());
+
+            result.addScore(Indicator.LogicalThinking, 1, FloatUtils.random(0.4, 0.5));
+        }
+
         return result;
     }
 
@@ -1041,6 +1050,8 @@ public class HTPEvaluation extends Evaluation {
             result.addFeature(desc, Term.Fantasy, Tendency.Positive, PerceptronThing.createPictureLayout());
             result.addFeature(desc, Term.PositiveExpectation, Tendency.Positive, PerceptronThing.createPictureLayout());
 
+            result.addScore(Indicator.Idealism, 1, FloatUtils.random(0.3, 0.4));
+
             result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(7.0, 7.5));
             result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(7.0, 8.0));
             result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(7.0, 8.0));
@@ -1056,6 +1067,8 @@ public class HTPEvaluation extends Evaluation {
             result.addFeature(desc, Term.Instinct, Tendency.Positive, PerceptronThing.createPictureLayout());
             result.addFeature(desc, Term.SenseOfSecurity, Tendency.Negative, PerceptronThing.createPictureLayout());
 
+            result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.2, 0.3));
+
             result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(2.0, 2.5));
             result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(3.0, 4.0));
             result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(7.0, 8.0));
@@ -1069,6 +1082,8 @@ public class HTPEvaluation extends Evaluation {
             String desc = "整个画幅结构偏向画布左边";
             result.addFeature(desc, Term.Nostalgia, Tendency.Positive, PerceptronThing.createPictureLayout());
 
+            result.addScore(Indicator.AchievementMotivation, 1, FloatUtils.random(0.2, 0.3));
+
             result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(2.0, 3.0));
             if (printBigFive) {
                 System.out.println("CP-028");
@@ -1079,9 +1094,25 @@ public class HTPEvaluation extends Evaluation {
             String desc = "整个画幅结构偏向画布右边";
             result.addFeature(desc, Term.Future, Tendency.Positive, PerceptronThing.createPictureLayout());
 
+            result.addScore(Indicator.Thought, 1, FloatUtils.random(0.1, 0.2));
+
             result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(7.0, 8.0));
             if (printBigFive) {
                 System.out.println("CP-029");
+            }
+        }
+
+        if (description.isInCorner()) {
+            // 整体画面在角落
+            String desc = "整个画幅结构偏于画布角落";
+            result.addFeature(desc, Term.SelfConfidence, Tendency.Negative, PerceptronThing.createPictureLayout());
+            result.addFeature(desc, Term.Anxiety, Tendency.Positive, PerceptronThing.createPictureLayout());
+
+            result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.3, 0.4));
+
+            result.addFiveFactor(BigFiveFactor.Extraversion, FloatUtils.random(2.0, 3.0));
+            if (printBigFive) {
+                System.out.println("CP-101");
             }
         }
 
@@ -1404,6 +1435,10 @@ public class HTPEvaluation extends Evaluation {
                 result.addFeature(desc, Term.Creativity, Tendency.Positive, new Thing[] { house });
 
                 result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.7, 0.8));
+            }
+
+            if (house.symmetry) {
+                result.addScore(Indicator.LogicalThinking, 1, FloatUtils.random(0.1, 0.2));
             }
 
             // 房屋类型
@@ -2930,6 +2965,7 @@ public class HTPEvaluation extends Evaluation {
             // 灯塔
             String desc = "画面中有灯塔";
             result.addFeature(desc, Term.Idealization, Tendency.Positive, new Thing[] { other.get(Label.Lighthouse) });
+            result.addScore(Indicator.Idealism, 1, FloatUtils.random(0.3, 0.4));
         }
 
         if (other.has(Label.Gun)) {
@@ -3062,6 +3098,13 @@ public class HTPEvaluation extends Evaluation {
             // 汽车
             String desc = "画面中有汽车";
             result.addFeature(desc, Term.Luxurious, Tendency.Positive, new Thing[] { other.get(Label.Car) });
+
+            result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.1, 0.2));
+            for (Thing thing : other.getList(Label.Car)) {
+                if (thing.symmetry) {
+                    result.addScore(Indicator.LogicalThinking, 1, FloatUtils.random(0.1, 0.2));
+                }
+            }
         }
 
         if (other.has(Label.Boat)) {
@@ -3069,6 +3112,13 @@ public class HTPEvaluation extends Evaluation {
             String desc = "画面中有船";
             result.addFeature(desc, Term.DesireForFreedom, Tendency.Positive, new Thing[] { other.get(Label.Boat) });
             result.addScore(Indicator.DesireForFreedom, 1, FloatUtils.random(0.7, 0.8));
+
+            result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.1, 0.2));
+            for (Thing thing : other.getList(Label.Boat)) {
+                if (thing.symmetry) {
+                    result.addScore(Indicator.LogicalThinking, 1, FloatUtils.random(0.1, 0.2));
+                }
+            }
         }
 
         if (other.has(Label.Airplane)) {
@@ -3076,6 +3126,7 @@ public class HTPEvaluation extends Evaluation {
             String desc = "画面中有飞机";
             result.addFeature(desc, Term.Escapism, Tendency.Positive, new Thing[] { other.get(Label.Airplane) });
             result.addScore(Indicator.Independence, 1, FloatUtils.random(0.6, 0.7));
+            result.addScore(Indicator.Creativity, 1, FloatUtils.random(0.1, 0.2));
             result.addFiveFactor(BigFiveFactor.Achievement, FloatUtils.random(6.5, 7.5));
             if (printBigFive) {
                 System.out.println("CP-081");
@@ -3094,6 +3145,7 @@ public class HTPEvaluation extends Evaluation {
             String desc = "画面中有骷髅";
             result.addFeature(desc, Term.WorldWeariness, Tendency.Positive, new Thing[] { other.get(Label.Skull) });
             result.addScore(Indicator.Psychosis, 1, FloatUtils.random(0.6, 0.7));
+            result.addScore(Indicator.Hostile, 1, FloatUtils.random(0.2, 0.3));
         }
 
         if (other.has(Label.Glasses)) {

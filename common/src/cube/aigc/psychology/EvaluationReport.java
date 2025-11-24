@@ -854,6 +854,7 @@ public class EvaluationReport implements JSONable {
         List<EvaluationScore> list = new ArrayList<>();
         for (Indicator indicator : Indicator.sortByPriority()) {
             if (indicator == Indicator.Unknown || indicator == Indicator.Psychosis ||
+                indicator == Indicator.LogicalThinking ||
                 indicator == Indicator.SecureAttachment || indicator == Indicator.AnxiousPreoccupiedAttachment ||
                 indicator == Indicator.DismissiveAvoidantAttachment || indicator == Indicator.DisorganizedAttachment) {
                 continue;

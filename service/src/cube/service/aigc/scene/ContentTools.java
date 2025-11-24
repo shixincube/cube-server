@@ -354,6 +354,40 @@ public class ContentTools {
         return buf.toString();
     }
 
+    public static String makePaintingReport(PaintingReport report) {
+        StringBuilder buf = new StringBuilder();
+
+        EvaluationReport evalReport = report.getEvaluationReport();
+        if (evalReport.numEvaluationScores() > 0) {
+            for (EvaluationScore score : evalReport.getEvaluationScores()) {
+                if (score.indicator == Indicator.Unknown || score.indicator == Indicator.Psychosis) {
+                    continue;
+                }
+
+                ReportSection section = report.getReportSection(score.indicator);
+                if (null == section) {
+                    continue;
+                }
+
+                buf.append("## 指标：").append(section.title).append("\n\n");
+                String rate = score.generateWord(report.getAttribute());
+                if (null != rate) {
+                    buf.append("指标").append(section.title).append("属于");
+                    buf.append(score.generateWord(report.getAttribute()));
+                    buf.append("\n\n");
+                }
+
+
+                buf.append(section.title);
+            }
+        }
+        else {
+            buf.append("没有找到评测数据。");
+        }
+
+        return buf.toString();
+    }
+
     private static String evalPersonalityScore(double score) {
         if (score <= 3.5) {
             return "低";
