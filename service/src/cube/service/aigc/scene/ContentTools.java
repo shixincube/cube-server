@@ -354,7 +354,7 @@ public class ContentTools {
         return buf.toString();
     }
 
-    public static String makePaintingReport(PaintingReport report) {
+    public static String makeReportIndicators(PaintingReport report, Language language) {
         StringBuilder buf = new StringBuilder();
 
         EvaluationReport evalReport = report.getEvaluationReport();
@@ -372,13 +372,17 @@ public class ContentTools {
                 buf.append("## 指标：").append(section.title).append("\n\n");
                 String rate = score.generateWord(report.getAttribute());
                 if (null != rate) {
-                    buf.append("指标").append(section.title).append("属于");
-                    buf.append(score.generateWord(report.getAttribute()));
-                    buf.append("\n\n");
+                    if (language.isChinese()) {
+                        buf.append(section.title).append("指标属于").append(score.generateWord(report.getAttribute()));
+                        buf.append("\n\n");
+                    }
+                    else {
+                        buf.append(section.title).append(" index indicates a ").append(score.generateWord(report.getAttribute()));
+                        buf.append("\n\n");
+                    }
                 }
-
-
-                buf.append(section.title);
+                buf.append(section.report);
+                buf.append("\n\n");
             }
         }
         else {

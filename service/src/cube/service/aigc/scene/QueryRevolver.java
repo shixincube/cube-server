@@ -106,6 +106,7 @@ public class QueryRevolver {
     private final static String[] sLazyQuery = new String[] {
             "如何进行绘画评测",
             "报告全部内容",
+            "学生能力图谱", "学生个性",
             "How to conduct a psychological assessment for painting",
             "How to use painting for psychological assessment",
             "full report",
@@ -132,7 +133,7 @@ public class QueryRevolver {
 
         final boolean english = TextUtils.isTextMainlyInEnglish(query);
 
-        // Query 的关键词必须全部命中 Lazy 关键词
+        // Query 的关键词命中 Lazy 关键词
         boolean hitLazy = false;
         List<String> queryWords = this.tokenizer.sentenceProcess(query);
         for (String lazyQuery : sLazyQuery) {
@@ -143,19 +144,20 @@ public class QueryRevolver {
                     ++count;
                 }
             }
-            if (count == sentences.size()) {
+            if (count > 0 && count >= Math.floor(sentences.size() / 3.0)) {
                 hitLazy = true;
                 break;
             }
         }
 
+        final double scoreLimit = 0.82;
         final List<QuestionAnswer> questionAnswerList = new ArrayList<>();
         if (hitLazy) {
             boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
                 @Override
                 public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
                     for (QuestionAnswer questionAnswer : questionAnswers) {
-                        if (questionAnswer.getScore() < 0.86) {
+                        if (questionAnswer.getScore() < scoreLimit) {
                             // 排除得分较低答案
                             continue;
                         }
@@ -198,7 +200,7 @@ public class QueryRevolver {
 
         boolean needReportData = (null != context.getCurrentReport() && !context.getCurrentReport().isNull());
 
-        if (needReportData && !hitLazy) {
+        if (needReportData) {
             PaintingReport report = context.getCurrentReport();
             if (english) {
                 result.append("Known psychological assessment data:\n\n");
@@ -246,6 +248,30 @@ public class QueryRevolver {
                 result.append(this.tryGenerateFactorDesc(report, query, english));
 
                 if (result.length() < wordLimit) {
+                    // 知识库数据
+                    if (!questionAnswerList.isEmpty()) {
+                        if (english) {
+                            result.append("The following are some points to refer to:\n\n");
+                        }
+                        else {
+                            result.append("可参考的知识点如下：\n\n");
+                        }
+                        for (QuestionAnswer questionAnswer : questionAnswerList) {
+                            String question = questionAnswer.getQuestions().get(0);
+                            String answer = questionAnswer.getAnswers().get(0);
+                            if (english) {
+                                result.append("The question is: ").append(question).append("\n\n");
+                                result.append("The answer to the above questions is: ").append(answer).append("\n\n");
+                            }
+                            else {
+                                result.append("问题是：").append(question).append("\n\n");
+                                result.append("以上问题的答案是：").append(answer).append("\n\n");
+                            }
+                        }
+                    }
+                }
+
+                if (result.length() < wordLimit) {
                     // 尝试生成人格数据
                     result.append(this.tryGeneratePersonality(report, query, english));
                 }
@@ -266,7 +292,7 @@ public class QueryRevolver {
                 else {
                     prefix = "根据您的提问，";
                     result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“您提的问题与当前讨论的评测报告无关。”，");
-                    result.append("不允许在答案中添加编造成分，保持应有的文档结构。");
+                    result.append("不允许在答案中添加编造成分，保持应有的文档结构，请使用给出的问题和答案逻辑进行推理。");
                     result.append("问题是：").append(query).append("\n");
                 }
             }
@@ -1041,6 +1067,16 @@ public class QueryRevolver {
                 continue;
             }
 
+            ReportSection section = report.getReportSection(es.indicator);
+            if (null != section) {
+                if (english) {
+                    result.add(section.title + " index indicates a " + es.generateWord(report.getAttribute()));
+                }
+                else {
+                    result.add(section.title + "指标属于" + es.generateWord(report.getAttribute()));
+                }
+            }
+
             String content = ContentTools.fastInfer(prompt, this.service.getTokenizer());
             if (null == content) {
                 Logger.d(this.getClass(), "#extractEvaluationContent - Can NOT find content: " + prompt);
@@ -1386,7 +1422,8 @@ public class QueryRevolver {
         }
 
         if (hit) {
-//            paintingReport.getEvaluationReport().getFullEvaluationScores()
+            String content = ContentTools.makeReportIndicators(paintingReport, paintingReport.getAttribute().language);
+            buf.append(content);
         }
 
         return buf.toString();

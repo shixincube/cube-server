@@ -193,12 +193,14 @@ public enum Indicator {
     /**
      * 精神病性。
      */
-    Psychosis("精神病性", "Psychosis", 20),
+    Psychosis("精神病性", "Psychosis", 56),
 
     /**
      * 逻辑思维。
      */
-    LogicalThinking("逻辑思维", "LogicalThinking", 11),
+    LogicalThinking("逻辑思维", "LogicalThinking", 15),
+
+
 
     /**
      * 安全型依恋。
