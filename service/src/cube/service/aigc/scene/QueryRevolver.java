@@ -256,17 +256,19 @@ public class QueryRevolver {
                         else {
                             result.append("可参考的知识点如下：\n\n");
                         }
+                        int qaSN = 1;
                         for (QuestionAnswer questionAnswer : questionAnswerList) {
                             String question = questionAnswer.getQuestions().get(0);
                             String answer = questionAnswer.getAnswers().get(0);
                             if (english) {
-                                result.append("The question is: ").append(question).append("\n\n");
-                                result.append("The answer to the above questions is: ").append(answer).append("\n\n");
+                                result.append("The question ").append(qaSN).append(" is: ").append(question).append("\n\n");
+                                result.append("The answer to the question ").append(qaSN).append(" is: ").append(answer).append("\n\n");
                             }
                             else {
-                                result.append("问题是：").append(question).append("\n\n");
-                                result.append("以上问题的答案是：").append(answer).append("\n\n");
+                                result.append("问题").append(qaSN).append("是：").append(question).append("\n\n");
+                                result.append("问题").append(qaSN).append("的答案是：").append(answer).append("\n\n");
                             }
+                            ++qaSN;
                         }
                     }
                 }
@@ -286,12 +288,12 @@ public class QueryRevolver {
                     prefix = "Based on your question, ";
                     result.append("Answer questions professionally based on the information above. ");
                     result.append("If you cannot get an answer from the information above, please say \"Your question is not related to the evaluation report currently under discussion.\"");
-                    result.append("Fabricated answers are not permitted; maintain proper document structure.");
+                    result.append("Fabricated elements are not allowed in the answers. Please maintain the proper document structure and use the given question and answer logic for reasoning.");
                     result.append("The question is: ").append(query).append("\n");
                 }
                 else {
                     prefix = "根据您的提问，";
-                    result.append("根据以上信息，专业地回答问题。如果无法从中得到答案，请说“您提的问题与当前讨论的评测报告无关。”，");
+                    result.append("综合应用以上信息，专业地回答问题。如果无法从中得到答案，请说“您提的问题与当前讨论的评测报告无关。”，");
                     result.append("不允许在答案中添加编造成分，保持应有的文档结构，请使用给出的问题和答案逻辑进行推理。");
                     result.append("问题是：").append(query).append("\n");
                 }

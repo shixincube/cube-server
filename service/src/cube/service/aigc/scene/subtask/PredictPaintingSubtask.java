@@ -22,7 +22,13 @@ import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.*;
 import cube.service.contact.ContactManager;
 
+import java.util.List;
+
 public class PredictPaintingSubtask extends ConversationSubtask {
+
+    private static final String[] sAS_KEYWORDS = new String[] {
+            "依恋", "依恋类型"
+    };
 
     public PredictPaintingSubtask(AIGCService service, AIGCChannel channel, String query, ComplexContext context,
                                   ConversationRelation relation, ConversationContext convCtx,
@@ -302,8 +308,18 @@ public class PredictPaintingSubtask extends ConversationSubtask {
             numIndicators = 36;
         }
 
+        // 判断是什么评测主题
+        Theme theme = Theme.Generic;
+        List<String> words = service.getTokenizer().sentenceProcess(query);
+        for (String word : sAS_KEYWORDS) {
+            if (words.contains(word.toLowerCase())) {
+                theme = Theme.AttachmentStyle;
+                break;
+            }
+        }
+
         PaintingReport report = PsychologyScene.getInstance().generatePsychologyReport(channel, convCtx.getCurrentAttribute(),
-                convCtx.getCurrentFile(), Theme.Generic, numIndicators, true, retention, new PaintingReportListener() {
+                convCtx.getCurrentFile(), theme, numIndicators, true, retention, new PaintingReportListener() {
                     @Override
                     public void onPaintingPredicting(PaintingReport report, FileLabel file) {
                         Logger.d(this.getClass(), "#onPaintingPredicting");
