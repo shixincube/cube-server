@@ -21,6 +21,7 @@ import cube.common.action.ClientAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.state.AuthStateCode;
+import cube.dispatcher.stream.StreamServer;
 import cube.dispatcher.util.Tickable;
 import cube.util.FileUtils;
 import cube.util.HttpClientFactory;
@@ -130,6 +131,11 @@ public class Performer implements TalkListener, Tickable {
     private List<Tickable> tickableList;
 
     /**
+     * 流服务器。
+     */
+    private StreamServer streamServer;
+
+    /**
      * 构造函数。
      *
      * @param nucleus 当前 Cell 的内核实例。
@@ -201,6 +207,10 @@ public class Performer implements TalkListener, Tickable {
 
         Logger.i(this.getClass(), "#configHttpServer - The http server threads: "
                 + config.maxThreads + "/" + config.minThreads);
+    }
+
+    public StreamServer getStreamServer() {
+        return this.streamServer;
     }
 
     public int getConcurrentFileInputLimit() {
@@ -558,6 +568,11 @@ public class Performer implements TalkListener, Tickable {
 
         // 启动 HTTP 服务器
         this.httpServer.start();
+
+        // 启动流服务器
+        this.streamServer = new StreamServer(Integer.parseInt(
+                this.properties.getProperty("stream.port", "7171")));
+        this.streamServer.start();
     }
 
     public void stop() {
@@ -567,6 +582,11 @@ public class Performer implements TalkListener, Tickable {
             }
         }
         this.blockMap.clear();
+
+        // 停止流服务器
+        if (null != this.streamServer) {
+            this.streamServer.stop();
+        }
 
         // 停止 HTTP 服务器
         this.httpServer.stop();
@@ -970,7 +990,7 @@ public class Performer implements TalkListener, Tickable {
         long time = System.currentTimeMillis();
         while (System.currentTimeMillis() - time < timeout) {
             try {
-                Thread.sleep(500);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

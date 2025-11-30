@@ -200,8 +200,6 @@ public enum Indicator {
      */
     LogicalThinking("逻辑思维", "LogicalThinking", 15),
 
-
-
     /**
      * 安全型依恋。
      */

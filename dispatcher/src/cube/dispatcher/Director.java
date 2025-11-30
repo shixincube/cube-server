@@ -41,6 +41,15 @@ public class Director {
         return this.sectionMap.get(celletName);
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (object instanceof Director) {
+            Director other = (Director) object;
+            return this.endpoint.equals(other.endpoint);
+        }
+
+        return false;
+    }
 
     /**
      * 选择区间。

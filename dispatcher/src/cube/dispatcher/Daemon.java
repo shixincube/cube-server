@@ -49,7 +49,7 @@ public class Daemon extends TimerTask implements LogHandle {
      */
     private long lastReportTime = 0;
 
-    private long latencyInterval = 30 * 1000;
+    private long latencyInterval = 5 * 60 * 1000;
 
     private long lastLatency = 0;
 
@@ -138,8 +138,8 @@ public class Daemon extends TimerTask implements LogHandle {
 //        this.submitLogReport();
 
         if (now - this.lastLatency >= this.latencyInterval) {
-            latency();
             this.lastLatency = now;
+            latency();
         }
     }
 
