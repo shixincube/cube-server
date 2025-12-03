@@ -27,16 +27,17 @@ public class StreamServer {
 
     private NonblockingAcceptor acceptor;
 
-    public StreamServer(int port) {
-        this.port = port;
+    public StreamServer() {
+        this.port = 7171;
         this.listenerMap = new ConcurrentHashMap<>();
     }
 
-    public void start() {
+    public void start(int port) {
+        this.port = port;
         this.acceptor = new NonblockingAcceptor();
         this.acceptor.setHandler(new StreamDataHandler());
         this.acceptor.setMaxConnectNum(1000);
-        this.acceptor.setWorkerNum(32);
+        this.acceptor.setWorkerNum(16);
         (new Thread() {
             @Override
             public void run() {
@@ -57,12 +58,12 @@ public class StreamServer {
         }
     }
 
-    public void setListener(String type, StreamListener listener) {
-        this.listenerMap.put(type, listener);
+    public void setListener(StreamType type, StreamListener listener) {
+        this.listenerMap.put(type.name, listener);
     }
 
-    public void removeListener(String type) {
-        this.listenerMap.remove(type);
+    public void removeListener(StreamType type) {
+        this.listenerMap.remove(type.name);
     }
 
 

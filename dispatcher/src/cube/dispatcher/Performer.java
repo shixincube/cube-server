@@ -154,6 +154,7 @@ public class Performer implements TalkListener, Tickable {
         this.transmissionMap = new ConcurrentHashMap<>();
         this.blockMap = new ConcurrentHashMap<>();
         this.tickableList = new ArrayList<>();
+        this.streamServer = new StreamServer();
     }
 
     /**
@@ -570,9 +571,8 @@ public class Performer implements TalkListener, Tickable {
         this.httpServer.start();
 
         // 启动流服务器
-        this.streamServer = new StreamServer(Integer.parseInt(
+        this.streamServer.start(Integer.parseInt(
                 this.properties.getProperty("stream.port", "7171")));
-        this.streamServer.start();
     }
 
     public void stop() {
