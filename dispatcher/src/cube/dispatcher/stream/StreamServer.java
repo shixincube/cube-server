@@ -58,6 +58,10 @@ public class StreamServer {
         }
     }
 
+    public int getPort() {
+        return this.port;
+    }
+
     public void setListener(StreamType type, StreamListener listener) {
         this.listenerMap.put(type.name, listener);
     }
@@ -140,7 +144,8 @@ public class StreamServer {
                 String strName = new String(name, StandardCharsets.UTF_8);
                 String strIndex = new String(index);
                 Stream stream = new Stream(strType, strName, Integer.parseInt(strIndex), data);
-                StreamListener listener = listenerMap.get(strName);
+                StreamType streamType = StreamType.parse(strType);
+                StreamListener listener = listenerMap.get(streamType.name);
                 if (null != listener) {
                     listener.onStream(stream);
                 }

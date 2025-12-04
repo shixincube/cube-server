@@ -22,13 +22,25 @@ var SleepAndDietItems = [13, 25, 47, 50, 70, 75, 82];
 
 
 function explain(score) {
+    // if (score <= 0.5) {
+    //     return FactorLevel.None;
+    // } else if (score < 2.0) {
+    //     return FactorLevel.Slight;
+    // } else if (score < 3.0) {
+    //     return FactorLevel.Mild;
+    // } else if (score < 3.9) {
+    //     return FactorLevel.Moderate;
+    // } else {
+    //     return FactorLevel.Severe;
+    // }
+
     if (score <= 0.5) {
         return FactorLevel.None;
-    } else if (score < 2.0) {
+    } else if (score <= 1.5) {
         return FactorLevel.Slight;
-    } else if (score < 3.0) {
+    } else if (score <= 2.5) {
         return FactorLevel.Mild;
-    } else if (score < 3.9) {
+    } else if (score <= 3.5) {
         return FactorLevel.Moderate;
     } else {
         return FactorLevel.Severe;
@@ -50,7 +62,7 @@ function makePrompt(list) {
             "factor": factor
         };
 
-        if (score <= 2.0) {
+        if (score <= 1.5) {
             if (factor === 'InterpersonalRelation' || factor === 'SleepAndDiet') {
                 data["description"] = '无明显' + name + '的描述和表现';
                 data["suggestion"] = '无明显' + name + '的建议';
@@ -58,7 +70,7 @@ function makePrompt(list) {
                 data["description"] = '无明显' + name + '症状的描述和表现';
                 data["suggestion"] = '无明显' + name + '症状的建议';
             }
-        } else if (score <= 2.9) {
+        } else if (score <= 2.5) {
             if (factor === 'InterpersonalRelation' || factor === 'SleepAndDiet') {
                 data["description"] = '有较轻' + name + '的描述和表现';
                 data["suggestion"] = '有较轻' + name + '的建议';
@@ -66,7 +78,7 @@ function makePrompt(list) {
                 data["description"] = '有较轻' + name + '症状的描述和表现';
                 data["suggestion"] = '有较轻' + name + '症状的建议';
             }
-        } else if (score <= 3.8) {
+        } else if (score <= 3.5) {
             if (factor === 'InterpersonalRelation' || factor === 'SleepAndDiet') {
                 data["description"] = '有' + name + '的描述和表现';
                 data["suggestion"] = '有' + name + '的建议';
