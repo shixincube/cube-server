@@ -157,6 +157,10 @@ public class Performer implements TalkListener, Tickable {
         this.streamServer = new StreamServer();
     }
 
+    public Cellet getCellet(String name) {
+        return this.celletService.getCellet(name);
+    }
+
     /**
      * 设置节点名。
      *

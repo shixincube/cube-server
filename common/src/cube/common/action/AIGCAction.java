@@ -521,6 +521,11 @@ public enum AIGCAction {
      */
     GetEmotionRecords("getEmotionRecords"),
 
+    /**
+     * 音频流分析。
+     */
+    AudioStreamAnalysis("audioStreamAnalysis"),
+
     ;
 
     public final String name;

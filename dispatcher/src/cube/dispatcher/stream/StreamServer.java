@@ -147,7 +147,7 @@ public class StreamServer {
                 StreamType streamType = StreamType.parse(strType);
                 StreamListener listener = listenerMap.get(streamType.name);
                 if (null != listener) {
-                    listener.onStream(stream);
+                    listener.onStream(new Track(acceptor, session), stream);
                 }
             }
             else {

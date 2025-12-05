@@ -8,9 +8,11 @@ package cube.dispatcher.filestorage;
 
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
+import cube.auth.AuthToken;
 import cube.common.action.FileStorageAction;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.util.FileUtils;
 import cube.util.HttpServer;
 import org.eclipse.jetty.server.handler.ContextHandler;
 
@@ -123,5 +125,13 @@ public class FileStorageCellet extends AbstractCellet {
         task.markResponseTime();
 
         this.taskQueue.offer(task);
+    }
+
+    public String transfer(AuthToken authToken, String filename, byte[] data) {
+        final String fileCode = FileUtils.makeFileCode(authToken.getContactId(), authToken.getDomain(), filename);
+
+        FileChunk chunk = new FileChunk(authToken.getContactId(), authToken.getDomain(), authToken.getCode(),
+                filename, data.length, System.currentTimeMillis(), 0, data.length, data);
+        return this.fileChunkStorage.append(chunk, fileCode);
     }
 }

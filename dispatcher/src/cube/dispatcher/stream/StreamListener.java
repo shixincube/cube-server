@@ -8,5 +8,5 @@ package cube.dispatcher.stream;
 
 public interface StreamListener {
 
-    void onStream(Stream stream);
+    void onStream(Track track, Stream stream);
 }

@@ -10,9 +10,11 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.filestorage.FileStorageCellet;
 import cube.dispatcher.stream.Stream;
 import cube.dispatcher.stream.StreamListener;
 import cube.dispatcher.stream.StreamType;
+import cube.dispatcher.stream.Track;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -45,7 +47,8 @@ public class AIGCCellet extends AbstractCellet {
         this.performer = (Performer) this.getNucleus().getParameter("performer");
         Manager.getInstance().start(this.performer);
 
-        this.processor = new StreamProcessor();
+        this.processor = new StreamProcessor(this.performer,
+                (FileStorageCellet) this.performer.getCellet(FileStorageCellet.NAME));
 
         this.performer.getStreamServer().setListener(StreamType.SpeechRecognition,
                 new SpeechStreamListener(this.processor));
@@ -88,6 +91,10 @@ public class AIGCCellet extends AbstractCellet {
         this.taskQueue.offer(task);
     }
 
+    public StreamProcessor getStreamProcessor() {
+        return this.processor;
+    }
+
     protected class SpeechStreamListener implements StreamListener {
 
         private final StreamProcessor processor;
@@ -97,8 +104,8 @@ public class AIGCCellet extends AbstractCellet {
         }
 
         @Override
-        public void onStream(Stream stream) {
-            this.processor.receive(stream);
+        public void onStream(Track track, Stream stream) {
+            this.processor.receive(track, stream);
         }
     }
 }

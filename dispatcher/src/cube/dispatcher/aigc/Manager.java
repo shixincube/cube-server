@@ -6,6 +6,7 @@
 
 package cube.dispatcher.aigc;
 
+import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
@@ -34,6 +35,7 @@ import cube.dispatcher.PerformerListener;
 import cube.dispatcher.aigc.handler.Chart;
 import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.aigc.handler.app.App;
+import cube.dispatcher.stream.StreamType;
 import cube.dispatcher.util.Tickable;
 import cube.util.FileLabels;
 import cube.util.HttpServer;
@@ -171,6 +173,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new PreInfer());
         httpServer.addContextHandler(new TextToFile());
         httpServer.addContextHandler(new GetQueueCount());
+        httpServer.addContextHandler(new ApplyStream());
 
         httpServer.addContextHandler(new PsychologyReports());
         httpServer.addContextHandler(new CheckPsychology());
@@ -2884,6 +2887,29 @@ public class Manager implements Tickable, PerformerListener {
             return false;
         }
 
+        return true;
+    }
+
+    public boolean applyStream(String token, Device device, String streamType, String streamName) {
+        if (null == StreamType.parse(streamType)) {
+            Logger.w(this.getClass(), "#applyStream - Error on stream type: " + streamType);
+            return false;
+        }
+
+        ContactToken contactToken = this.getContactToken(token, device);
+        if (null == contactToken) {
+            Logger.w(this.getClass(), "#applyStream - Error on token: " + token);
+            return false;
+        }
+
+        Cellet cellet = this.performer.getCellet(AIGCCellet.NAME);
+        if (null == cellet) {
+            Logger.w(this.getClass(), "#applyStream - No the cellet");
+            return false;
+        }
+
+        AIGCCellet aigcCellet = (AIGCCellet) cellet;
+        aigcCellet.getStreamProcessor().register(streamName, contactToken.authToken);
         return true;
     }
 

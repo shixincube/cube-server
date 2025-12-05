@@ -2258,7 +2258,7 @@ public class HTPEvaluation extends Evaluation {
         }
         else {
             String desc = "人物没有细节";
-            result.addFeature(desc, Term.Creativity, Tendency.Normal);
+            result.addFeature(desc, Term.Creativity, Tendency.Negative);
 
             result.addFiveFactor(BigFiveFactor.Obligingness, FloatUtils.random(4.5, 5.0));
             result.addFiveFactor(BigFiveFactor.Conscientiousness, FloatUtils.random(2.0, 3.0));

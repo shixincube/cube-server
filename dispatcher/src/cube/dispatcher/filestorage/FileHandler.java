@@ -237,6 +237,7 @@ public class FileHandler extends CrossDomainHandler {
 
                 // 校验 Token
                 AuthToken authToken = this.performer.verifyToken(token);
+
                 /*JSONObject payload = new JSONObject();
                 payload.put("code", token);
                 Packet packet = new Packet(AuthAction.GetToken.name, payload);
