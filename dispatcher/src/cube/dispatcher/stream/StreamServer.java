@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class StreamServer {
 
-    private final static byte[] sSeparator = new byte[] { 0x10, 0x17 };
+    public final static byte[] sSeparator = new byte[] { 0x10, 0x17 };
 
     private int port;
 

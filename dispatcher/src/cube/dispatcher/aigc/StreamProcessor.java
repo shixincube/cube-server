@@ -13,6 +13,7 @@ import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.action.FileStorageAction;
+import cube.common.entity.AudioStreamSink;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.filestorage.FileStorageCellet;
@@ -20,7 +21,6 @@ import cube.dispatcher.stream.Stream;
 import cube.dispatcher.stream.StreamType;
 import cube.dispatcher.stream.Track;
 import cube.util.AudioUtils;
-import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -57,7 +57,7 @@ public class StreamProcessor {
         this.speechRecognitionCache = new HashMap<>();
 
         this.timer = new Timer();
-        this.timer.scheduleAtFixedRate(new Daemon(), 30 * 1000, 1000);
+        this.timer.scheduleAtFixedRate(new Daemon(), 10 * 1000, 1000);
 
         this.executorService = Executors.newCachedThreadPool();
 
@@ -134,6 +134,15 @@ public class StreamProcessor {
 
         @Override
         public void run() {
+            Register register = registerMap.get(this.name);
+            if (null == register) {
+                Logger.w(this.getClass(), "#run - No token for stream: " + this.name);
+                synchronized (this.streams) {
+                    this.streams.clear();
+                }
+                return;
+            }
+
             FlexibleByteBuffer buf = new FlexibleByteBuffer();
             synchronized (this.streams) {
                 for (Stream stream : this.streams) {
@@ -146,31 +155,32 @@ public class StreamProcessor {
             byte[] data = new byte[buf.limit()];
             System.arraycopy(buf.array(), 0, data, 0, data.length);
 
-            Register register = registerMap.get(this.name);
-            if (null == register) {
-                Logger.w(this.getClass(), "#run - No token for stream: " + this.name);
-                return;
-            }
-
             register.refresh = System.currentTimeMillis();
 
             // PCM 转 WAV
             byte[] waveData = AudioUtils.pcmToWav(data);
 
             List<String> fileLabels = streamFileCodeMap.computeIfAbsent(this.name, k -> new ArrayList<>());
-
-            String filename = "sr-" + this.name + "-" + String.format("%03d", fileLabels.size()) + ".wav";
+            int index = fileLabels.size();
+            String filename = "sr-" + this.name + "-" + String.format("%03d", index) + ".wav";
             // 发送文件
             String fileCode = fileStorageCellet.transfer(register.authToken, filename, waveData);
             fileLabels.add(fileCode);
 
-            while (!checkFile(register, fileCode)) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            while (!this.checkFile(register, fileCode) && System.currentTimeMillis() - register.refresh < 30 * 1000) {
                 try {
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
+
+            this.analysis(register, fileCode, index);
         }
 
         private boolean checkFile(Register register, String fileCode) {
@@ -197,14 +207,30 @@ public class StreamProcessor {
             return true;
         }
 
-        private void analysis(Register register, String fileCode) {
+        private void analysis(Register register, String fileCode, int index) {
             JSONObject payload = new JSONObject();
             payload.put("fileCode", fileCode);
-            Packet packet = new Packet(AIGCAction.AudioStreamAnalysis.name, payload);
+            payload.put("streamName", register.streamName);
+            payload.put("index", index);
+            Packet packet = new Packet(AIGCAction.AnalyseAudioStream.name, payload);
             ActionDialect packetDialect = packet.toDialect();
             packetDialect.addParam("token", register.authToken.getCode());
 
+            ActionDialect responseDialect = performer.syncTransmit(AIGCCellet.NAME, packetDialect);
+            if (null == responseDialect) {
+                Logger.w(this.getClass(), "#analysis - The response is null");
+                return;
+            }
 
+            Packet responsePacket = new Packet(responseDialect);
+            int stateCode = Packet.extractCode(responsePacket);
+            if (stateCode != FileStorageStateCode.Ok.code) {
+                Logger.w(this.getClass(), "#analysis - The state code is NOT ok: " + stateCode);
+                return;
+            }
+
+            AudioStreamSink streamSink = new AudioStreamSink(Packet.extractDataPayload(responsePacket));
+            register.track.write(streamSink.toJSON());
         }
     }
 

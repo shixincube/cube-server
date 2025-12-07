@@ -3051,6 +3051,32 @@ public class AIGCService extends AbstractModule implements Generatable {
         return true;
     }
 
+    public boolean analyseAudioStream(AuthToken authToken, String fileCode, String streamName, int index,
+                                      AudioStreamAnalysisListener listener) {
+        AudioStreamSink streamSink = new AudioStreamSink(streamName, index);
+
+        boolean success = this.applySpeakerDiarization(authToken, fileCode, new VoiceDiarizationListener() {
+            @Override
+            public void onCompleted(FileLabel source, VoiceDiarization diarization) {
+                streamSink.setDiarization(diarization);
+                streamSink.setFileLabel(source);
+
+                listener.onCompleted(source, streamSink);
+            }
+
+            @Override
+            public void onFailed(FileLabel source, AIGCStateCode stateCode) {
+                synchronized (streamSink) {
+                    streamSink.notify();
+                }
+
+                listener.onFailed(source, stateCode);
+            }
+        });
+
+        return success;
+    }
+
     /**
      * 面部表情识别。
      *

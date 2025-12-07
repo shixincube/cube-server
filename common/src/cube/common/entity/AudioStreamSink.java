@@ -1,0 +1,57 @@
+/*
+ * This source file is part of Cube.
+ *
+ * Copyright (c) 2023-2025 Ambrose Xu.
+ */
+
+package cube.common.entity;
+
+import cube.common.JSONable;
+import org.json.JSONObject;
+
+public class AudioStreamSink implements JSONable {
+
+    private String streamName;
+
+    private int index;
+
+    private VoiceDiarization diarization;
+
+    private FileLabel fileLabel;
+
+    public AudioStreamSink(String streamName, int index) {
+        this.streamName = streamName;
+        this.index = index;
+    }
+
+    public AudioStreamSink(JSONObject json) {
+
+    }
+
+    public void setDiarization(VoiceDiarization diarization) {
+        this.diarization = diarization;
+    }
+
+    public void setFileLabel(FileLabel fileLabel) {
+        this.fileLabel = fileLabel;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("streamName", this.streamName);
+        json.put("index", this.index);
+        if (null != this.diarization) {
+            json.put("diarization", this.diarization.toJSON());
+        }
+        if (null != this.fileLabel) {
+            json.put("file", this.fileLabel.toCompactJSON());
+        }
+        return json;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return this.toJSON();
+    }
+}

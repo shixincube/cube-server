@@ -524,7 +524,7 @@ public enum AIGCAction {
     /**
      * 音频流分析。
      */
-    AudioStreamAnalysis("audioStreamAnalysis"),
+    AnalyseAudioStream("analyseAudioStream"),
 
     ;
 
