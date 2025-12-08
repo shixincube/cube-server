@@ -21,6 +21,8 @@ import cube.dispatcher.stream.Stream;
 import cube.dispatcher.stream.StreamType;
 import cube.dispatcher.stream.Track;
 import cube.util.AudioUtils;
+import cube.util.FileLabels;
+import cube.util.FileUtils;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -230,7 +232,13 @@ public class StreamProcessor {
             }
 
             AudioStreamSink streamSink = new AudioStreamSink(Packet.extractDataPayload(responsePacket));
-            register.track.write(streamSink.toJSON());
+            JSONObject json = streamSink.toJSON();
+            if (json.has("file")) {
+                FileLabels.reviseFileLabel(json.getJSONObject("file"), register.authToken.getCode(),
+                        performer.getExternalHttpEndpoint(),
+                        performer.getExternalHttpsEndpoint());
+            }
+            register.track.write(StreamType.SpeechRecognition, json);
         }
     }
 

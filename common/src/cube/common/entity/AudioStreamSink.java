@@ -25,7 +25,14 @@ public class AudioStreamSink implements JSONable {
     }
 
     public AudioStreamSink(JSONObject json) {
-
+        this.streamName = json.getString("streamName");
+        this.index = json.getInt("index");
+        if (json.has("diarization")) {
+            this.diarization = new VoiceDiarization(json.getJSONObject("diarization"));
+        }
+        if (json.has("file")) {
+            this.fileLabel = new FileLabel(json.getJSONObject("file"));
+        }
     }
 
     public void setDiarization(VoiceDiarization diarization) {

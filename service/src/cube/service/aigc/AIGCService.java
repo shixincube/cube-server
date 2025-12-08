@@ -3051,9 +3051,44 @@ public class AIGCService extends AbstractModule implements Generatable {
         return true;
     }
 
+    private boolean testAnalyseAudioStream = true;
+
+    /**
+     * 分析音频流。
+     *
+     * @param authToken
+     * @param fileCode
+     * @param streamName
+     * @param index
+     * @param listener
+     * @return
+     */
     public boolean analyseAudioStream(AuthToken authToken, String fileCode, String streamName, int index,
                                       AudioStreamAnalysisListener listener) {
         AudioStreamSink streamSink = new AudioStreamSink(streamName, index);
+
+        if (testAnalyseAudioStream) {
+            VoiceDiarization voiceDiarization = new VoiceDiarization(Utils.generateSerialNumber(),
+                    System.currentTimeMillis(), authToken.getContactId(),
+                    "这是标题", "", fileCode, 6.1, Utils.randomInt(1000, 5000));
+            (new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(Utils.randomInt(5000, 9000));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    FileLabel fileLabel = getFile(authToken.getDomain(), fileCode);
+                    streamSink.setDiarization(voiceDiarization);
+                    streamSink.setFileLabel(fileLabel);
+
+                    listener.onCompleted(fileLabel, streamSink);
+                }
+            }).start();
+            return true;
+        }
 
         boolean success = this.applySpeakerDiarization(authToken, fileCode, new VoiceDiarizationListener() {
             @Override

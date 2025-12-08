@@ -25,9 +25,9 @@ public class Track {
         this.session = session;
     }
 
-    public void write(JSONObject data) {
+    public void write(StreamType streamType, JSONObject data) {
         // 数据格式：TYPE+DATA(Sink)
-        byte[] type = StreamType.SpeechRecognition.name.getBytes(StandardCharsets.UTF_8);
+        byte[] type = streamType.name.getBytes(StandardCharsets.UTF_8);
         byte[] sink = data.toString().getBytes(StandardCharsets.UTF_8);
 
         byte[] buf = new byte[type.length + StreamServer.sSeparator.length + sink.length];
