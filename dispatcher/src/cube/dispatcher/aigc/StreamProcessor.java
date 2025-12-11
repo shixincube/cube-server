@@ -170,7 +170,7 @@ public class StreamProcessor {
             fileLabels.add(fileCode);
 
             try {
-                Thread.sleep(500);
+                Thread.sleep(800);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -218,7 +218,8 @@ public class StreamProcessor {
             ActionDialect packetDialect = packet.toDialect();
             packetDialect.addParam("token", register.authToken.getCode());
 
-            ActionDialect responseDialect = performer.syncTransmit(AIGCCellet.NAME, packetDialect);
+            ActionDialect responseDialect = performer.syncTransmit(AIGCCellet.NAME, packetDialect,
+                    3 * 60 * 1000);
             if (null == responseDialect) {
                 Logger.w(this.getClass(), "#analysis - The response is null");
                 return;

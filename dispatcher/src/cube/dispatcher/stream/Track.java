@@ -36,6 +36,8 @@ public class Track {
         System.arraycopy(sink, 0, buf, type.length + StreamServer.sSeparator.length, sink.length);
 
         Message message = new Message(buf);
+        // 禁用压缩
+        message.disableCompression();
         try {
             this.acceptor.write(this.session, message);
         } catch (IOException e) {

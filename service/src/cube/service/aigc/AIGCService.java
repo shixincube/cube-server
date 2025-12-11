@@ -2911,10 +2911,12 @@ public class AIGCService extends AbstractModule implements Generatable {
      *
      * @param authToken
      * @param fileCode
+     * @param preprocess
      * @param listener
      * @return
      */
-    public boolean applySpeakerDiarization(AuthToken authToken, String fileCode, VoiceDiarizationListener listener) {
+    public boolean performSpeakerDiarization(AuthToken authToken, String fileCode, boolean preprocess,
+                                             VoiceDiarizationListener listener) {
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#applySpeakerDiarization - File storage service is not ready");
@@ -2934,7 +2936,8 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        final AudioUnitMeta meta = new AudioUnitMeta(this, unit, authToken, AIGCAction.SpeakerDiarization, fileLabel);
+        final AudioUnitMeta meta = new AudioUnitMeta(this, unit, authToken, AIGCAction.SpeakerDiarization,
+                fileLabel, preprocess);
         meta.voiceDiarizationListener = listener;
 
         Queue<UnitMeta> queue = null;
@@ -3051,8 +3054,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         return true;
     }
 
-    private boolean testAnalyseAudioStream = true;
-
     /**
      * 分析音频流。
      *
@@ -3067,34 +3068,39 @@ public class AIGCService extends AbstractModule implements Generatable {
                                       AudioStreamAnalysisListener listener) {
         AudioStreamSink streamSink = new AudioStreamSink(streamName, index);
 
-        if (testAnalyseAudioStream) {
-            VoiceDiarization voiceDiarization = new VoiceDiarization(Utils.generateSerialNumber(),
-                    System.currentTimeMillis(), authToken.getContactId(),
-                    "这是标题", "", fileCode, 6.1, Utils.randomInt(1000, 5000));
-            (new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        Thread.sleep(Utils.randomInt(5000, 9000));
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+//        {
+//            VoiceDiarization voiceDiarization = new VoiceDiarization(Utils.generateSerialNumber(),
+//                    System.currentTimeMillis(), authToken.getContactId(),
+//                    "这是标题", "", fileCode, 6.1, Utils.randomInt(1000, 5000));
+//            (new Thread() {
+//                @Override
+//                public void run() {
+//                    try {
+//                        Thread.sleep(Utils.randomInt(5000, 9000));
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//
+//                    FileLabel fileLabel = getFile(authToken.getDomain(), fileCode);
+//                    streamSink.setDiarization(voiceDiarization);
+//                    streamSink.setFileLabel(fileLabel);
+//
+//                    listener.onCompleted(fileLabel, streamSink);
+//                }
+//            }).start();
+//            return true;
+//        }
 
-                    FileLabel fileLabel = getFile(authToken.getDomain(), fileCode);
-                    streamSink.setDiarization(voiceDiarization);
-                    streamSink.setFileLabel(fileLabel);
-
-                    listener.onCompleted(fileLabel, streamSink);
-                }
-            }).start();
-            return true;
-        }
-
-        boolean success = this.applySpeakerDiarization(authToken, fileCode, new VoiceDiarizationListener() {
+        boolean success = this.performSpeakerDiarization(authToken, fileCode, false,
+                new VoiceDiarizationListener() {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {
                 streamSink.setDiarization(diarization);
                 streamSink.setFileLabel(source);
+
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "#onCompleted - stream sink completed: " + fileCode);
+                }
 
                 listener.onCompleted(source, streamSink);
             }

@@ -32,15 +32,19 @@ public class AudioUnitMeta extends UnitMeta {
 
     protected FileLabel file;
 
+    protected boolean preprocess;
+
     protected AIGCAction action;
 
     public VoiceDiarizationListener voiceDiarizationListener;
 
-    public AudioUnitMeta(AIGCService service, AIGCUnit unit, AuthToken authToken, AIGCAction action, FileLabel file) {
+    public AudioUnitMeta(AIGCService service, AIGCUnit unit, AuthToken authToken, AIGCAction action,
+                         FileLabel file, boolean preprocess) {
         super(service, unit);
         this.authToken = authToken;
         this.action = action;
         this.file = file;
+        this.preprocess = preprocess;
     }
 
     @Override
@@ -51,6 +55,7 @@ public class AudioUnitMeta extends UnitMeta {
 
         JSONObject data = new JSONObject();
         data.put("fileLabel", this.file.toJSON());
+        data.put("preprocess", this.preprocess);
         Packet request = new Packet(this.action.name, data);
         ActionDialect dialect = this.service.getCellet().transmit(this.unit.getContext(), request.toDialect(), 5 * 60 * 1000);
         if (null == dialect) {
