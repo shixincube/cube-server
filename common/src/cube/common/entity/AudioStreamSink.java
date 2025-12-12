@@ -15,6 +15,8 @@ public class AudioStreamSink implements JSONable {
 
     private int index;
 
+    private long timestamp;
+
     private VoiceDiarization diarization;
 
     private FileLabel fileLabel;
@@ -27,12 +29,17 @@ public class AudioStreamSink implements JSONable {
     public AudioStreamSink(JSONObject json) {
         this.streamName = json.getString("streamName");
         this.index = json.getInt("index");
+        this.timestamp = json.getLong("timestamp");
         if (json.has("diarization")) {
             this.diarization = new VoiceDiarization(json.getJSONObject("diarization"));
         }
         if (json.has("file")) {
             this.fileLabel = new FileLabel(json.getJSONObject("file"));
         }
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 
     public void setDiarization(VoiceDiarization diarization) {
@@ -48,6 +55,7 @@ public class AudioStreamSink implements JSONable {
         JSONObject json = new JSONObject();
         json.put("streamName", this.streamName);
         json.put("index", this.index);
+        json.put("timestamp", this.timestamp);
         if (null != this.diarization) {
             json.put("diarization", this.diarization.toJSON());
         }

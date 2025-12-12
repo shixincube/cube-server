@@ -9,6 +9,7 @@ package cube.dispatcher.stream;
 import cell.core.net.Message;
 import cell.core.net.NonblockingAcceptor;
 import cell.core.net.Session;
+import cell.util.log.Logger;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -41,7 +42,7 @@ public class Track {
         try {
             this.acceptor.write(this.session, message);
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(this.getClass(), "#write", e);
         }
     }
 }

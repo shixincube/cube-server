@@ -22,7 +22,6 @@ import cube.dispatcher.stream.StreamType;
 import cube.dispatcher.stream.Track;
 import cube.util.AudioUtils;
 import cube.util.FileLabels;
-import cube.util.FileUtils;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -129,9 +128,12 @@ public class StreamProcessor {
 
         private List<Stream> streams;
 
+        private long timestamp;
+
         public StreamTask(String name, List<Stream> streams) {
             this.name = name;
             this.streams = streams;
+            this.timestamp = streams.get(0).timestamp;
         }
 
         @Override
@@ -233,6 +235,7 @@ public class StreamProcessor {
             }
 
             AudioStreamSink streamSink = new AudioStreamSink(Packet.extractDataPayload(responsePacket));
+            streamSink.setTimestamp(this.timestamp);
             JSONObject json = streamSink.toJSON();
             if (json.has("file")) {
                 FileLabels.reviseFileLabel(json.getJSONObject("file"), register.authToken.getCode(),
