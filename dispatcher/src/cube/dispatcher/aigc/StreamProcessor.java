@@ -80,6 +80,12 @@ public class StreamProcessor {
                 List<Stream> streams = this.speechRecognitionCache.computeIfAbsent(stream.name, k -> new ArrayList<>());
                 synchronized (streams) {
                     streams.add(stream);
+                    streams.sort(new Comparator<Stream>() {
+                        @Override
+                        public int compare(Stream s1, Stream s2) {
+                            return s1.index - s2.index;
+                        }
+                    });
                 }
             }
 
@@ -133,7 +139,6 @@ public class StreamProcessor {
         public StreamTask(String name, List<Stream> streams) {
             this.name = name;
             this.streams = streams;
-            this.timestamp = streams.get(0).timestamp;
         }
 
         @Override
@@ -149,6 +154,7 @@ public class StreamProcessor {
 
             FlexibleByteBuffer buf = new FlexibleByteBuffer();
             synchronized (this.streams) {
+                this.timestamp = this.streams.get(0).timestamp;
                 for (Stream stream : this.streams) {
                     buf.put(stream.data);
                 }
@@ -166,7 +172,8 @@ public class StreamProcessor {
 
             List<String> fileLabels = streamFileCodeMap.computeIfAbsent(this.name, k -> new ArrayList<>());
             int index = fileLabels.size();
-            String filename = "sr-" + this.name + "-" + String.format("%03d", index) + ".wav";
+            String filename = "sr-" + this.name + "-" + String.format("%04d", index)
+                    + "-" + this.timestamp + ".wav";
             // 发送文件
             String fileCode = fileStorageCellet.transfer(register.authToken, filename, waveData);
             fileLabels.add(fileCode);

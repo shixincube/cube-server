@@ -38,6 +38,26 @@ public class AudioStreamSink implements JSONable {
         }
     }
 
+    public String getStreamName() {
+        return this.streamName;
+    }
+
+    public int getIndex() {
+        return this.index;
+    }
+
+    public long getTimestamp() {
+        return this.timestamp;
+    }
+
+    public VoiceDiarization getDiarization() {
+        return this.diarization;
+    }
+
+    public FileLabel getFileLabel() {
+        return this.fileLabel;
+    }
+
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }

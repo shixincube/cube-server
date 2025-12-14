@@ -95,11 +95,12 @@ public class StreamServer {
 
         @Override
         public void messageReceived(Session session, Message message) {
-            // 数据格式：TYPE+NAME+INDEX+STREAM
+            // 数据格式：TYPE+NAME+INDEX+TIMESTAMP+STREAM
             byte[] payload = message.getPayload();
             byte[] type = null;
             byte[] name = null;
             byte[] index = null;
+            byte[] timestamp = null;
             byte[] data = null;
             FlexibleByteBuffer buf = new FlexibleByteBuffer();
             for (int i = 0; i < payload.length; ++i) {
@@ -124,6 +125,12 @@ public class StreamServer {
                         System.arraycopy(buf.array(), 0, index, 0, index.length);
                         buf.clear();
                     }
+                    else if (null == timestamp) {
+                        buf.flip();
+                        timestamp = new byte[buf.limit()];
+                        System.arraycopy(buf.array(), 0, timestamp, 0, timestamp.length);
+                        buf.clear();
+                    }
 
                     // 更新 i
                     i += 1;
@@ -143,7 +150,9 @@ public class StreamServer {
                 String strType = new String(type, StandardCharsets.UTF_8);
                 String strName = new String(name, StandardCharsets.UTF_8);
                 String strIndex = new String(index);
-                Stream stream = new Stream(strType, strName, Integer.parseInt(strIndex), data);
+                String strTimestamp = new String(timestamp);
+                Stream stream = new Stream(strType, strName,
+                        Integer.parseInt(strIndex), Long.parseLong(strTimestamp), data);
                 StreamType streamType = StreamType.parse(strType);
                 StreamListener listener = listenerMap.get(streamType.name);
                 if (null != listener) {

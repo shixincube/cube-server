@@ -44,10 +44,7 @@ import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.*;
 import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Agent;
-import cube.service.aigc.scene.ContentTools;
-import cube.service.aigc.scene.PaintingReportListener;
-import cube.service.aigc.scene.PsychologyScene;
-import cube.service.aigc.scene.ScaleReportListener;
+import cube.service.aigc.scene.*;
 import cube.service.aigc.unit.*;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
@@ -3103,6 +3100,9 @@ public class AIGCService extends AbstractModule implements Generatable {
                 }
 
                 listener.onCompleted(source, streamSink);
+
+                // 记录流
+                AudioStreamManager.getInstance().record(streamSink);
             }
 
             @Override

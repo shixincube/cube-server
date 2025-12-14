@@ -16,12 +16,13 @@ public class Stream {
 
     public final byte[] data;
 
-    public final long timestamp = System.currentTimeMillis();
+    public final long timestamp;
 
-    public Stream(String type, String name, int index, byte[] data) {
+    public Stream(String type, String name, int index, long timestamp, byte[] data) {
         this.type = type;
         this.name = name;
         this.index = index;
+        this.timestamp = timestamp;
         this.data = data;
     }
 
@@ -37,6 +38,8 @@ public class Stream {
         buf.append(this.name);
         buf.append("|");
         buf.append(this.index);
+        buf.append("|");
+        buf.append(this.timestamp);
         buf.append("|");
         buf.append("(");
         buf.append(this.data.length);

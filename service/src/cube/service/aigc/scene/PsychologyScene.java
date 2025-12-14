@@ -1404,6 +1404,17 @@ public class PsychologyScene {
         return this.storage.writePaintingManagementState(sn, state);
     }
 
+    /**
+     *
+     * @param authToken
+     * @param streamName
+     * @return
+     */
+    public boolean analyseStreamCounselingStrategy(AuthToken authToken, String streamName) {
+
+        return true;
+    }
+
     public UserProfile getAppUserProfile(AuthToken authToken) {
         UserProfile profile = new UserProfile();
 
