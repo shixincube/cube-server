@@ -27,6 +27,7 @@ import cube.common.Language;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
+import cube.common.notice.DeleteFile;
 import cube.common.notice.GetFile;
 import cube.common.notice.LoadFile;
 import cube.common.notice.SaveFile;
@@ -302,6 +303,9 @@ public class AIGCService extends AbstractModule implements Generatable {
 
                 // 资源管理器
                 Explorer.getInstance().setup(AIGCService.this, tokenizer);
+
+                // 音频流管理
+                AudioStreamManager.getInstance().setService(AIGCService.this);
 
                 // 引导系统列表
                 List<GuideFlow> guideFlows = Guides.listGuideFlows();
@@ -3102,7 +3106,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                 listener.onCompleted(source, streamSink);
 
                 // 记录流
-                AudioStreamManager.getInstance().record(streamSink);
+                AudioStreamManager.getInstance().record(authToken, streamSink);
             }
 
             @Override
@@ -3223,7 +3227,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
-    public FileLabel saveFile(AuthToken authToken, String fileCode, File file, String filename, boolean delete) {
+    public FileLabel saveFile(AuthToken authToken, String fileCode, File file, String filename, boolean deleteAfterSave) {
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#saveFile - File storage service is not ready");
@@ -3244,13 +3248,30 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         } finally {
             // 删除临时文件
-            if (delete && file.exists()) {
+            if (deleteAfterSave && file.exists()) {
                 try {
                     file.delete();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    public FileLabel deleteFile(String domain, String fileCode) {
+        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        if (null == fileStorage) {
+            Logger.e(this.getClass(), "#deleteFile - File storage service is not ready");
+            return null;
+        }
+
+        DeleteFile deleteFile = new DeleteFile(domain, fileCode);
+        try {
+            JSONObject fileLabelJson = fileStorage.notify(deleteFile);
+            return new FileLabel(fileLabelJson);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#deleteFile - Delete file failed", e);
+            return null;
         }
     }
 

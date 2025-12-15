@@ -391,6 +391,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 向文件系统写入文件数据。
      *
+     * @param fileName
      * @param fileCode
      * @param inputStream
      */
@@ -412,6 +413,7 @@ public class FileStorageService extends AbstractModule {
     /**
      * 向文件系统写入文件数据。
      *
+     * @param fileName
      * @param fileCode
      * @param file
      * @return 返回文件描述。

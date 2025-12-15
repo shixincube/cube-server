@@ -9,12 +9,10 @@ package cube.service.aigc.scene;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Sentiment;
-import cube.common.entity.Emotion;
 import cube.common.entity.*;
 import cube.service.aigc.AIGCService;
+import cube.util.FloatUtils;
 import org.json.JSONObject;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class VoiceDiarizationIndicator extends VoiceIndicator {
 
@@ -53,13 +51,7 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
             speakerIndicator.totalWords += track.recognition.words.size();
 
             // 情绪计数
-            AtomicInteger counts = speakerIndicator.emotionCounts.get(track.emotion.emotion);
-            if (null != counts) {
-                counts.incrementAndGet();
-            }
-            else {
-                Logger.w(this.getClass(), "#build - No emotion: " + track.emotion.emotion.name());
-            }
+            speakerIndicator.speechEmotions.add(track.emotion);
 
             Sentiment sentiment = this.evalSentiment(service, track);
             SpeakerSegmentIndicator segmentIndicator = new SpeakerSegmentIndicator(track.track,
@@ -109,28 +101,34 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
 
     private EmotionRatio evalEmotionRatio(SpeakerIndicator speakerIndicator) {
         double score = 0;
-        int positiveCounts = 0;
-        int negativeCounts = 0;
-        int neutralCounts = 0;
-        for (Emotion emotion : Emotion.commonEmotions()) {
-            AtomicInteger counts = speakerIndicator.emotionCounts.get(emotion);
-            double weight = VoiceIndicator.sEmotionWeight.get(emotion);
-            // 计算加权得分
-            score += counts.get() * weight;
-            // 按照权重分类正负性
+        double positiveScore = 0;
+        double negativeScore = 0;
+        double neutralScore = 0;
+
+        for (SpeechEmotion speechEmotion : speakerIndicator.speechEmotions) {
+            double weight = VoiceIndicator.sEmotionWeight.get(speechEmotion.emotion);
             if (weight > 0) {
-                positiveCounts += counts.get();
+                // 积极
+                double value = speechEmotion.score * weight;
+                positiveScore += Math.abs(value);
+                score += value;
             }
             else if (weight < 0) {
-                negativeCounts += counts.get();
+                // 消极
+                double value = speechEmotion.score * weight;
+                negativeScore += Math.abs(value);
+                score += value;
             }
             else {
-                neutralCounts += counts.get();
+                // 中立
+                double value = speechEmotion.score;
+                neutralScore += Math.abs(value);
+                score += value;
             }
         }
-        float total = positiveCounts + negativeCounts + neutralCounts;
-        int positive = Math.round(positiveCounts / total) * 100;
-        int negative = Math.round(negativeCounts / total) * 100;
+        double[] probability = FloatUtils.softmax(new double[]{ positiveScore, negativeScore, neutralScore });
+        int positive = (int) Math.round(probability[0] * 100);
+        int negative = (int) Math.round(probability[1] * 100);
         return new EmotionRatio(score, positive, negative, 100 - positive - negative);
     }
 

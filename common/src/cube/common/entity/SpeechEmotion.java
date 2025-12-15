@@ -45,6 +45,19 @@ public class SpeechEmotion implements JSONable {
     }
 
     @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("[");
+        buf.append(this.emotion.name());
+        buf.append(",");
+        buf.append(this.score);
+        buf.append(",");
+        buf.append(this.duration);
+        buf.append("]");
+        return buf.toString();
+    }
+
+    @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         if (null != this.file) {

@@ -347,10 +347,25 @@ public class FileHandler extends CrossDomainHandler {
                                     if (null != os) {
                                         os.close();
                                     }
+                                } catch (Exception e) {
+                                    // Nothing
+                                }
+
+                                try {
                                     if (null != bis) {
                                         bis.close();
                                     }
+                                } catch (Exception e) {
+                                    // Nothing
+                                }
+
+                                try {
                                     buffer.close();
+                                } catch (Exception e) {
+                                    // Nothing
+                                }
+
+                                try {
                                     if (null != conn) {
                                         conn.disconnect();
                                     }

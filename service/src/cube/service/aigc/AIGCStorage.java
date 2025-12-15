@@ -2477,6 +2477,14 @@ public class AIGCStorage implements Storagable {
         return list;
     }
 
+    public boolean updateVoiceDiarizationRemark(VoiceDiarization diarization) {
+        return this.storage.executeUpdate(this.voiceDiarizationTable, new StorageField[] {
+                new StorageField("remark", diarization.remark)
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", diarization.getId())
+        });
+    }
+
     public boolean writeVoiceDiarization(VoiceDiarization diarization) {
         // 删除旧数据
         this.deleteVoiceDiarization(diarization.fileCode);

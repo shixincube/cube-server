@@ -6,6 +6,7 @@
 
 package cube.common.entity;
 
+import cube.auth.AuthToken;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
@@ -20,6 +21,8 @@ public class AudioStreamSink implements JSONable {
     private VoiceDiarization diarization;
 
     private FileLabel fileLabel;
+
+    public AuthToken authToken;
 
     public AudioStreamSink(String streamName, int index) {
         this.streamName = streamName;

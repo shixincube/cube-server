@@ -11,10 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class SpeakerIndicator implements JSONable {
 
@@ -26,10 +23,8 @@ public class SpeakerIndicator implements JSONable {
 
     public int totalWords;
 
-    public Map<Emotion, AtomicInteger> emotionCounts;
-
     /**
-     * 说话比例
+     * 说话比例。
      */
     public int durationRatio;
 
@@ -37,6 +32,11 @@ public class SpeakerIndicator implements JSONable {
      * 说话节奏，w/m，每分钟词数。
      */
     public int rhythm;
+
+    /**
+     * 情绪列表。
+     */
+    public List<SpeechEmotion> speechEmotions;
 
     /**
      * 情绪比例。
@@ -55,10 +55,7 @@ public class SpeakerIndicator implements JSONable {
     public SpeakerIndicator(String speaker, String label) {
         this.speaker = speaker;
         this.label = label;
-        this.emotionCounts = new HashMap<>();
-        for (Emotion emotion : Emotion.commonEmotions()) {
-            this.emotionCounts.put(emotion, new AtomicInteger(0));
-        }
+        this.speechEmotions = new ArrayList<>();
         this.segmentIndicators = new ArrayList<>();
     }
 
@@ -68,15 +65,15 @@ public class SpeakerIndicator implements JSONable {
         this.totalDuration = json.getDouble("totalDuration");
         this.totalWords = json.getInt("totalWords");
 
-        this.emotionCounts = new HashMap<>();
-        JSONObject emotionCountsMap = json.getJSONObject("emotionCounts");
-        for (String key : emotionCountsMap.keySet()) {
-            int value = emotionCountsMap.getInt(key);
-            this.emotionCounts.put(Emotion.parse(key), new AtomicInteger(value));
-        }
-
         this.durationRatio = json.getInt("durationRatio");
         this.rhythm = json.getInt("rhythm");
+
+        this.speechEmotions = new ArrayList<>();
+        JSONArray speechEmotionArray = json.getJSONArray("emotions");
+        for (int i = 0; i < speechEmotionArray.length(); ++i) {
+            this.speechEmotions.add(new SpeechEmotion(speechEmotionArray.getJSONObject(i)));
+        }
+
         this.emotionRatio = new EmotionRatio(json.getJSONObject("emotionRatio"));
 
         this.segmentIndicators = new ArrayList<>();
@@ -102,14 +99,15 @@ public class SpeakerIndicator implements JSONable {
         json.put("totalDuration", this.totalDuration);
         json.put("totalWords", this.totalWords);
 
-        JSONObject emotionCountsMap = new JSONObject();
-        for (Map.Entry<Emotion, AtomicInteger> e : this.emotionCounts.entrySet()) {
-            emotionCountsMap.put(e.getKey().name(), e.getValue().get());
-        }
-        json.put("emotionCounts", emotionCountsMap);
-
         json.put("durationRatio", this.durationRatio);
         json.put("rhythm", this.rhythm);
+
+        JSONArray emotionArray = new JSONArray();
+        for (SpeechEmotion speechEmotion : this.speechEmotions) {
+            emotionArray.put(speechEmotion.toJSON());
+        }
+        json.put("emotions", emotionArray);
+
         json.put("emotionRatio", this.emotionRatio.toJSON());
 
         JSONArray segmentIndicatorArray = new JSONArray();
