@@ -428,7 +428,8 @@ public class HTPEvaluation extends Evaluation {
                     String desc = "画面中人与树在空间位置上重叠";
                     result.addFeature(desc, Term.Depression, Tendency.Positive, PerceptronThing.createThingSize(
                             new Thing[] { tree, person }));
-                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.6, 0.7));
+                    result.addScore(Indicator.Depression, 1, FloatUtils.random(0.2, 0.3));
+                    result.addScore(Indicator.SenseOfSecurity, -1, FloatUtils.random(0.1, 0.2));
                     System.out.println("DEBUG: Depression - 画面中人与树在空间位置上重叠");
                 }
             }
@@ -1022,6 +1023,8 @@ public class HTPEvaluation extends Evaluation {
                 String desc = "画面的画幅有涂鸦且画面稀疏";
                 result.addFeature(desc, Term.MentalStress, Tendency.Positive, PerceptronThing.createPictureSense());
             }
+
+            Logger.d(this.getClass(), "#evalSpaceStructure - doodles:" + doodles + " - sparseness:" + sparseness);
         }
 
         // 对称性判断

@@ -305,7 +305,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                 Explorer.getInstance().setup(AIGCService.this, tokenizer);
 
                 // 音频流管理
-                AudioStreamManager.getInstance().setService(AIGCService.this);
+                CounselingManager.getInstance().setService(AIGCService.this);
 
                 // 引导系统列表
                 List<GuideFlow> guideFlows = Guides.listGuideFlows();
@@ -3106,7 +3106,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                 listener.onCompleted(source, streamSink);
 
                 // 记录流
-                AudioStreamManager.getInstance().record(authToken, streamSink);
+                CounselingManager.getInstance().record(authToken, streamSink);
             }
 
             @Override

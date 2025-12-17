@@ -526,6 +526,11 @@ public enum AIGCAction {
      */
     AnalyseAudioStream("analyseAudioStream"),
 
+    /**
+     * 查询咨询策略。
+     */
+    QueryCounselingStrategy("queryCounselingStrategy"),
+
     ;
 
     public final String name;

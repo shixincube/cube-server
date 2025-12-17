@@ -8,6 +8,10 @@ package cube.service.aigc.scene;
 
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
+import cube.aigc.ConsultationTheme;
+import cube.aigc.ModelConfig;
+import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.Resource;
 import cube.auth.AuthToken;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
@@ -25,7 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class AudioStreamManager {
+public class CounselingManager {
+
+    private final static String CATEGORY = "conversation";
 
     private AIGCService service;
 
@@ -33,15 +39,18 @@ public class AudioStreamManager {
 
     private Map<String, List<VoiceDiarization>> combinedVoiceMap;
 
-    private final static AudioStreamManager instance = new AudioStreamManager();
+    private Map<String, List<CounselingStrategy>> counselingStrategyMap;
 
-    private AudioStreamManager() {
+    private final static CounselingManager instance = new CounselingManager();
+
+    private CounselingManager() {
         this.streamSinkMap = new ConcurrentHashMap<>();
         this.combinedVoiceMap = new ConcurrentHashMap<>();
+        this.counselingStrategyMap = new ConcurrentHashMap<>();
     }
 
-    public static AudioStreamManager getInstance() {
-        return AudioStreamManager.instance;
+    public static CounselingManager getInstance() {
+        return CounselingManager.instance;
     }
 
     public void setService(AIGCService service) {
@@ -54,8 +63,22 @@ public class AudioStreamManager {
         List<AudioStreamSink> list = this.streamSinkMap.computeIfAbsent(streamSink.getStreamName(), k -> new ArrayList<>());
         synchronized (list) {
             list.add(streamSink);
+            list.sort(new Comparator<AudioStreamSink>() {
+                @Override
+                public int compare(AudioStreamSink s1, AudioStreamSink s2) {
+                    return s1.getIndex() - s2.getIndex();
+                }
+            });
             Logger.d(this.getClass(), "#record : " + list.size());
-            if (list.size() >= 5) {
+            if (list.size() >= 5 && this.isContinuous(list)) {
+                // 大约30秒，且数据连续
+                List<AudioStreamSink> copy = new ArrayList<>(list);
+                list.clear();
+                combine(copy);
+            }
+            else if (list.size() > 10) {
+                // 数据量大，即便不连续也处理
+                Logger.w(this.getClass(), "#record - list overflow: " + list.size());
                 List<AudioStreamSink> copy = new ArrayList<>(list);
                 list.clear();
                 combine(copy);
@@ -63,13 +86,31 @@ public class AudioStreamManager {
         }
     }
 
-    public List<ConversationTile> getConversations(String streamName) {
-        List<AudioStreamSink> list = this.streamSinkMap.get(streamName);
-        synchronized (list) {
-            for (AudioStreamSink sink : list) {
-                for (SpeakerIndicator indicator : sink.getDiarization().indicator.speakerIndicators.values()) {
+    public CounselingStrategy queryCounselingStrategy(AuthToken authToken, ConsultationTheme theme,
+                                                      Attribute attribute, String streamName) {
+        List<CounselingStrategy> strategies = this.counselingStrategyMap.computeIfAbsent(streamName, k -> new ArrayList<>());
 
+        List<VoiceDiarization> voiceDiarizations = this.combinedVoiceMap.get(streamName);
+        if (null == voiceDiarizations || voiceDiarizations.isEmpty()) {
+            // 无数据策略支持
+
+            if (strategies.isEmpty()) {
+                String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_OPENING"),
+                        attribute.language.isChinese() ? theme.nameCN : theme.nameEN,
+                        attribute.getGenderText(), attribute.age);
+
+                GeneratingRecord record = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt,
+                        new GeneratingOption(), null, null);
+                if (null == record) {
+                    Logger.w(this.getClass(), "#queryCounselingStrategy - The response is null");
+                    return null;
                 }
+
+                CounselingStrategy strategy = new CounselingStrategy();
+
+            }
+            else {
+
             }
         }
 
@@ -77,13 +118,6 @@ public class AudioStreamManager {
     }
 
     private void combine(List<AudioStreamSink> sinks) {
-        sinks.sort(new Comparator<AudioStreamSink>() {
-            @Override
-            public int compare(AudioStreamSink s1, AudioStreamSink s2) {
-                return s1.getIndex() - s2.getIndex();
-            }
-        });
-
         final AuthToken authToken = sinks.get(0).authToken;
         final String streamName = sinks.get(0).getStreamName();
         final int beginIndex = sinks.get(0).getIndex();
@@ -176,8 +210,19 @@ public class AudioStreamManager {
                 new VoiceDiarizationListener() {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {
-                List<VoiceDiarization> list = combinedVoiceMap.computeIfAbsent(streamName, k -> new ArrayList<>());
                 diarization.remark = beginIndex + "-" + endIndex;
+                List<VoiceDiarization> list = combinedVoiceMap.computeIfAbsent(streamName, k -> new ArrayList<>());
+                synchronized (list) {
+                    list.add(diarization);
+                    list.sort(new Comparator<VoiceDiarization>() {
+                        @Override
+                        public int compare(VoiceDiarization vd1, VoiceDiarization vd2) {
+                            String[] index1 = vd1.remark.split("-");
+                            String[] index2 = vd2.remark.split("-");
+                            return Integer.parseInt(index1[0]) - Integer.parseInt(index2[0]);
+                        }
+                    });
+                }
 
                 // 更新备注
                 service.getStorage().updateVoiceDiarizationRemark(diarization);
@@ -188,5 +233,19 @@ public class AudioStreamManager {
                 Logger.e(this.getClass(), "#onFailed - state: " + stateCode.code);
             }
         });
+    }
+
+    private boolean isContinuous(List<AudioStreamSink> sinkList) {
+        int begin = sinkList.get(0).getIndex();
+        int next = begin + 1;
+        for (int i = 1; i < sinkList.size(); ++i) {
+            int index = sinkList.get(i).getIndex();
+            if (index != next) {
+                // 索引不连续
+                return false;
+            }
+            ++next;
+        }
+        return true;
     }
 }
