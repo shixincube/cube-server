@@ -18,12 +18,15 @@ import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.composition.Texture;
 import cube.aigc.psychology.material.*;
+import cube.aigc.psychology.material.house.Roof;
 import cube.aigc.psychology.material.house.Window;
 import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.person.Leg;
+import cube.aigc.psychology.material.tree.Trunk;
 import cube.util.FloatUtils;
 import cube.util.calc.FrameStructureCalculator;
 import cube.util.calc.FrameStructureDescription;
+import cube.vision.Direction;
 import cube.vision.Point;
 import cube.vision.Size;
 
@@ -98,6 +101,7 @@ public class HTPEvaluation extends Evaluation {
             results.add(this.evalTree());
             results.add(this.evalPerson());
             results.add(this.evalOthers());
+            results.add(this.evalSpecialConstruction());
             // 矫正
             results = this.correct(results);
             report = new EvaluationReport(this.contactId, this.painting.getAttribute(), this.reference,
@@ -3167,6 +3171,120 @@ public class HTPEvaluation extends Evaluation {
             String desc = "画面中有其他物品";
             result.addFeature(desc, Term.Creativity, Tendency.Positive);
             result.addScore(Indicator.Creativity, counter, FloatUtils.random(0.7, 0.8));
+        }
+
+        return result;
+    }
+
+    private EvaluationFeature evalSpecialConstruction() {
+        EvaluationFeature result = new EvaluationFeature();
+
+        // 判断画面元素是否空间方向一致
+        Tree tree = this.painting.getTree();
+        Person person = this.painting.getPerson();
+
+        Direction houseDirection = Direction.Vertical;
+        if (this.painting.hasHouse()) {
+            List<House> houseList = this.painting.getHouses();
+            for (House house : houseList) {
+                Point center = house.boundingBox.getCenterPoint();
+
+                Roof roof = house.getRoof();
+                if (null != roof) {
+                    Point cp = roof.boundingBox.getCenterPoint();
+                    double dx = Math.abs(center.x - cp.x);
+                    double dy = Math.abs(center.y - cp.y);
+                    if (dx > dy + dy) {
+                        houseDirection = Direction.Horizontal;
+                    }
+                }
+                else if (house.hasWindow()) {
+                    List<Window> windowList = house.getWindows();
+                    if (windowList.size() >= 2) {
+                        Window window1 = windowList.get(0);
+                        Window window2 = windowList.get(1);
+                        Point pt1 = window1.boundingBox.getCenterPoint();
+                        Point pt2 = window2.boundingBox.getCenterPoint();
+                        double dx = Math.abs(pt1.x - pt2.x);
+                        double dy = Math.abs(pt1.y - pt2.y);
+                        if (dy > dx + dx) {
+                            houseDirection = Direction.Horizontal;
+                        }
+                    }
+                }
+            }
+        }
+
+        Direction treeDirection = Direction.Vertical;
+        if (null != tree) {
+            int width = tree.boundingBox.width;
+            int height = tree.boundingBox.height;
+            if (width > height + (height * 0.1)) {
+                treeDirection = Direction.Horizontal;
+            }
+
+            // 判断树干
+            List<Trunk> trunkList = tree.getTrunks();
+            if (null != trunkList) {
+                for (Trunk trunk : trunkList) {
+                    width = trunk.boundingBox.width;
+                    height = trunk.boundingBox.height;
+                    if (height > width + (width * 0.1)) {
+                        treeDirection = Direction.Vertical;
+                        break;
+                    }
+                    else if (width > height + (height * 0.1)) {
+                        treeDirection = Direction.Horizontal;
+                        break;
+                    }
+                }
+            }
+        }
+
+        Direction personDirection = Direction.Vertical;
+        if (null != person) {
+            int width = person.boundingBox.width;
+            int height = person.boundingBox.height;
+            if (width > height + (height * 0.2)) {
+                personDirection = Direction.Horizontal;
+            }
+        }
+
+        Logger.d(this.getClass(), "#evalSpecialConstruction - " + houseDirection.name() + "/"
+            + treeDirection.name() + "/" + personDirection.name());
+
+        if (houseDirection == Direction.Horizontal && treeDirection == Direction.Horizontal &&
+                personDirection == Direction.Horizontal) {
+            String desc = "房屋的方向、树的方向和人的方向与画幅方向不一致，作画方向异常。";
+            result.addFeature(desc, Term.ExternalPressure, Tendency.Positive);
+
+            KeyFeature keyFeature = new KeyFeature("元素方向异常", desc);
+            keyFeature.addIndicatorScore(new Score(Indicator.Stress, 1, FloatUtils.random(0.3, 0.4)));
+            result.addKeyFeature(keyFeature);
+        }
+        else if (houseDirection == Direction.Horizontal && treeDirection == Direction.Horizontal) {
+            String desc = "房屋的方向和树的方向不是画幅方向，作画方向异常。";
+            result.addFeature(desc, Term.ExternalPressure, Tendency.Positive);
+
+            KeyFeature keyFeature = new KeyFeature("元素方向异常", desc);
+            keyFeature.addIndicatorScore(new Score(Indicator.Stress, 1, FloatUtils.random(0.2, 0.3)));
+            result.addKeyFeature(keyFeature);
+        }
+        else if (treeDirection == Direction.Horizontal && personDirection == Direction.Horizontal) {
+            String desc = "树的方向和人的方向不是画幅方向，作画方向异常。";
+            result.addFeature(desc, Term.ExternalPressure, Tendency.Positive);
+
+            KeyFeature keyFeature = new KeyFeature("元素方向异常", desc);
+            keyFeature.addIndicatorScore(new Score(Indicator.Stress, 1, FloatUtils.random(0.2, 0.3)));
+            result.addKeyFeature(keyFeature);
+        }
+        else if (houseDirection == Direction.Horizontal && personDirection == Direction.Horizontal) {
+            String desc = "房屋的方向和人的方向不是画幅方向，作画方向异常。";
+            result.addFeature(desc, Term.ExternalPressure, Tendency.Positive);
+
+            KeyFeature keyFeature = new KeyFeature("元素方向异常", desc);
+            keyFeature.addIndicatorScore(new Score(Indicator.Stress, 1, FloatUtils.random(0.2, 0.3)));
+            result.addKeyFeature(keyFeature);
         }
 
         return result;

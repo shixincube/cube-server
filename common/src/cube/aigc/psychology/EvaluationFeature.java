@@ -26,10 +26,13 @@ public class EvaluationFeature {
 
     private List<FiveFactor> fiveFactors;
 
+    private List<KeyFeature> keyFeatures;
+
     public EvaluationFeature() {
         this.features = new ArrayList<>();
         this.scores = new ArrayList<>();
         this.fiveFactors = new ArrayList<>();
+        this.keyFeatures = new ArrayList<>();
     }
 
     public void addFeature(String description, Term term, Tendency tendency) {
@@ -105,6 +108,10 @@ public class EvaluationFeature {
 
     public List<FiveFactor> getFiveFactors() {
         return this.fiveFactors;
+    }
+
+    public void addKeyFeature(KeyFeature keyFeature) {
+        this.keyFeatures.add(keyFeature);
     }
 
     public class Feature {
