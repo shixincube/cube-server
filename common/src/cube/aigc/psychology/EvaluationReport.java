@@ -7,7 +7,6 @@
 package cube.aigc.psychology;
 
 import cell.util.log.Logger;
-import cube.aigc.ModelConfig;
 import cube.aigc.psychology.algorithm.*;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.FactorSet;
@@ -38,6 +37,8 @@ public class EvaluationReport implements JSONable {
     private Reference reference;
 
     private PaintingConfidence paintingConfidence;
+
+    private List<KeyFeature> keyFeatures;
 
     private List<Representation> representationList;
 
@@ -75,6 +76,7 @@ public class EvaluationReport implements JSONable {
         this.attribute = attribute;
         this.reference = reference;
         this.paintingConfidence = paintingConfidence;
+        this.keyFeatures = new ArrayList<>();
         this.representationList = new ArrayList<>();
         this.scoreAccelerator = new ScoreAccelerator();
         this.attention = Attention.NoAttention;
@@ -91,6 +93,15 @@ public class EvaluationReport implements JSONable {
         this.attribute = new Attribute(json.getJSONObject("attribute"));
         this.reference = json.has("reference") ?
                 Reference.parse(json.getString("reference")) : Reference.Normal;
+
+        this.keyFeatures = new ArrayList<>();
+        if (json.has("keyFeatures")) {
+            JSONArray array = json.getJSONArray("keyFeatures");
+            for (int i = 0; i < array.length(); ++i) {
+                KeyFeature keyFeature = new KeyFeature(array.getJSONObject(i));
+                this.keyFeatures.add(keyFeature);
+            }
+        }
 
         this.representationList = new ArrayList<>();
         JSONArray array = json.getJSONArray("representationList");
@@ -154,6 +165,10 @@ public class EvaluationReport implements JSONable {
 
     public Reference getReference() {
         return this.reference;
+    }
+
+    public List<KeyFeature> getKeyFeatures() {
+        return keyFeatures;
     }
 
     public ScoreAccelerator getScoreAccelerator() {
@@ -229,6 +244,11 @@ public class EvaluationReport implements JSONable {
             // 提取并合并分数
             for (Score score : result.getScores()) {
                 this.scoreAccelerator.addScore(score);
+            }
+
+            // 提取关键特征
+            for (KeyFeature keyFeature : result.getKeyFeatures()) {
+                this.keyFeatures.add(keyFeature);
             }
         }
 
@@ -339,6 +359,11 @@ public class EvaluationReport implements JSONable {
                     this.additionScales.add(scale);
                 }
             }
+        }
+
+        if (!this.keyFeatures.isEmpty()) {
+            this.reference = Reference.Abnormal;
+            this.attention = Attention.FocusedAttention;
         }
 
         return true;
@@ -884,6 +909,12 @@ public class EvaluationReport implements JSONable {
         json.put("reference", this.reference.name);
 
         JSONArray array = new JSONArray();
+        for (KeyFeature keyFeature : this.keyFeatures) {
+            array.put(keyFeature.toJSON());
+        }
+        json.put("keyFeatures", array);
+
+        array = new JSONArray();
         for (Representation representation : this.representationList) {
             array.put(representation.toJSON());
         }
@@ -929,6 +960,12 @@ public class EvaluationReport implements JSONable {
         json.put("reference", this.reference.name);
 
         JSONArray array = new JSONArray();
+        for (KeyFeature keyFeature : this.keyFeatures) {
+            array.put(keyFeature.toJSON());
+        }
+        json.put("keyFeatures", array);
+
+        array = new JSONArray();
         for (Representation representation : this.representationList) {
             array.put(representation.toCompactJSON());
         }
@@ -973,6 +1010,12 @@ public class EvaluationReport implements JSONable {
         json.put("reference", this.reference.name);
 
         JSONArray array = new JSONArray();
+        for (KeyFeature keyFeature : this.keyFeatures) {
+            array.put(keyFeature.toJSON());
+        }
+        json.put("keyFeatures", array);
+
+        array = new JSONArray();
         for (Representation representation : this.representationList) {
             array.put(representation.toStrictJSON());
         }

@@ -114,6 +114,10 @@ public class EvaluationFeature {
         this.keyFeatures.add(keyFeature);
     }
 
+    public List<KeyFeature> getKeyFeatures() {
+        return this.keyFeatures;
+    }
+
     public class Feature {
 
         public String description;

@@ -3255,36 +3255,44 @@ public class HTPEvaluation extends Evaluation {
 
         if (houseDirection == Direction.Horizontal && treeDirection == Direction.Horizontal &&
                 personDirection == Direction.Horizontal) {
-            String desc = "房屋的方向、树的方向和人的方向与画幅方向不一致，作画方向异常。";
+            String desc = "房屋的方向、树的方向和人的方向与画幅方向不一致，作画方向异常。在要求横幅作画的画面里，房屋、树、人等元素本该是竖立的，但是画面中房屋、树、人疑似是横向的。";
             result.addFeature(desc, Term.ExternalPressure, Tendency.Positive);
 
             KeyFeature keyFeature = new KeyFeature("元素方向异常", desc);
             keyFeature.addIndicatorScore(new Score(Indicator.Stress, 1, FloatUtils.random(0.3, 0.4)));
             result.addKeyFeature(keyFeature);
+
+            Logger.d(this.getClass(), "#evalSpecialConstruction - " + desc);
         }
         else if (houseDirection == Direction.Horizontal && treeDirection == Direction.Horizontal) {
-            String desc = "房屋的方向和树的方向不是画幅方向，作画方向异常。";
+            String desc = "房屋的方向和树的方向不是画幅方向，作画方向异常。在要求横幅作画的画面里，房屋、树等元素本该是竖立的，但是画面中房屋、树疑似是横向的。";
             result.addFeature(desc, Term.ExternalPressure, Tendency.Positive);
 
             KeyFeature keyFeature = new KeyFeature("元素方向异常", desc);
             keyFeature.addIndicatorScore(new Score(Indicator.Stress, 1, FloatUtils.random(0.2, 0.3)));
             result.addKeyFeature(keyFeature);
+
+            Logger.d(this.getClass(), "#evalSpecialConstruction - " + desc);
         }
         else if (treeDirection == Direction.Horizontal && personDirection == Direction.Horizontal) {
-            String desc = "树的方向和人的方向不是画幅方向，作画方向异常。";
+            String desc = "树的方向和人的方向不是画幅方向，作画方向异常。在要求横幅作画的画面里，树、人等元素本该是竖立的，但是画面中树、人疑似是横向的。";
             result.addFeature(desc, Term.ExternalPressure, Tendency.Positive);
 
             KeyFeature keyFeature = new KeyFeature("元素方向异常", desc);
             keyFeature.addIndicatorScore(new Score(Indicator.Stress, 1, FloatUtils.random(0.2, 0.3)));
             result.addKeyFeature(keyFeature);
+
+            Logger.d(this.getClass(), "#evalSpecialConstruction - " + desc);
         }
         else if (houseDirection == Direction.Horizontal && personDirection == Direction.Horizontal) {
-            String desc = "房屋的方向和人的方向不是画幅方向，作画方向异常。";
+            String desc = "房屋的方向和人的方向不是画幅方向，作画方向异常。在要求横幅作画的画面里，房屋、人等元素本该是竖立的，但是画面中房屋、人疑似是横向的。";
             result.addFeature(desc, Term.ExternalPressure, Tendency.Positive);
 
             KeyFeature keyFeature = new KeyFeature("元素方向异常", desc);
             keyFeature.addIndicatorScore(new Score(Indicator.Stress, 1, FloatUtils.random(0.2, 0.3)));
             result.addKeyFeature(keyFeature);
+
+            Logger.d(this.getClass(), "#evalSpecialConstruction - " + desc);
         }
 
         return result;

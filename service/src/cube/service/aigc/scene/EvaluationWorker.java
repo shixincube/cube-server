@@ -65,6 +65,8 @@ public class EvaluationWorker {
 
     private PaintingFeatureSet paintingFeatureSet;
 
+    private String keyFeatureDescription = "";
+
     public EvaluationWorker(AIGCService service, Attribute attribute) {
         this.service = service;
         this.attribute = attribute;
@@ -98,6 +100,7 @@ public class EvaluationWorker {
 
         report.setSummary(this.summary);
         report.setReportSectionList(this.reportSectionList);
+        report.setKeyFeatureDescription(this.keyFeatureDescription);
         report.setKeywords(this.keywords);
 
         if (null != this.paintingFeatureSet) {
@@ -185,6 +188,9 @@ public class EvaluationWorker {
                 // 生成人格描述
                 this.inferPersonality(channel.getAuthToken(), this.evaluationReport.getPersonalityAccelerator(),
                         channel.getLanguage());
+
+                // 关键特征描述
+                this.inferKeyFeatureDescription(channel.getAuthToken(), this.evaluationReport.getKeyFeatures());
 
                 // 六维得分计算
                 try {
@@ -319,6 +325,34 @@ public class EvaluationWorker {
             }
         }
         return null;
+    }
+
+    /**
+     * 推理关键特征描述。
+     *
+     * @param authToken
+     * @param keyFeatures
+     * @return
+     */
+    private void inferKeyFeatureDescription(AuthToken authToken, List<KeyFeature> keyFeatures) {
+        StringBuilder content = new StringBuilder();
+
+        for (KeyFeature keyFeature : keyFeatures) {
+            content.append("## ").append(keyFeature.getName()).append("\n\n");
+
+            String prompt = keyFeature.makePrompt(this.attribute);
+            GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
+                    new GeneratingOption(), null, null);
+            if (null == record) {
+                Logger.w(this.getClass(), "#inferKeyFeatureDescription - Generating failed");
+                content.append(keyFeature.getDescription()).append("\n\n");
+            }
+            else {
+                content.append(record.answer).append("\n\n");
+            }
+        }
+
+        this.keyFeatureDescription = content.toString();
     }
 
     /**

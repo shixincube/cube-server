@@ -47,6 +47,8 @@ public class PaintingReport extends Report {
 
     private List<ReportSection> reportSectionList;
 
+    private String keyFeatureDescription = null;
+
 //    private MandalaFlower mandalaFlower;
 
     public Painting painting;
@@ -89,6 +91,10 @@ public class PaintingReport extends Report {
             this.markdown = json.getString("markdown");
         }
 
+        if (json.has("keyFeatureDescription")) {
+            this.keyFeatureDescription = json.getString("keyFeatureDescription");
+        }
+
         if (json.has("dimensionScore")) {
             this.dimensionScore = new HexagonDimensionScore(json.getJSONObject("dimensionScore"));
         }
@@ -120,6 +126,14 @@ public class PaintingReport extends Report {
 
     public EvaluationReport getEvaluationReport() {
         return this.evaluationReport;
+    }
+
+    public void setKeyFeatureDescription(String content) {
+        this.keyFeatureDescription = content;
+    }
+
+    public String getKeyFeatureDescription() {
+        return this.keyFeatureDescription;
     }
 
     public void setDimensionalScore(HexagonDimensionScore score, HexagonDimensionScore normScore) {
@@ -397,6 +411,10 @@ public class PaintingReport extends Report {
             json.put("markdown", this.markdown);
         }
 
+        if (null != this.keyFeatureDescription) {
+            json.put("keyFeatureDescription", this.keyFeatureDescription);
+        }
+
         if (null != this.reportSectionList) {
             JSONArray jsonArray = new JSONArray();
             for (ReportSection rs : this.reportSectionList) {
@@ -449,6 +467,10 @@ public class PaintingReport extends Report {
             }
 
             json.put("evaluation", this.evaluationReport.toCompactJSON());
+        }
+
+        if (null != this.keyFeatureDescription) {
+            json.put("keyFeatureDescription", this.keyFeatureDescription);
         }
 
 //        if (null != this.mandalaFlower) {
