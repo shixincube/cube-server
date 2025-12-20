@@ -19,6 +19,7 @@ import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.VoiceDiarizationListener;
 import cube.util.AudioUtils;
 import cube.util.FileUtils;
+import cube.util.TextUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,7 +40,7 @@ public class CounselingManager {
 
     private Map<String, List<VoiceDiarization>> combinedVoiceMap;
 
-    private Map<String, List<CounselingStrategy>> counselingStrategyMap;
+    private Map<String, Wrapper> counselingStrategyMap;
 
     private final static CounselingManager instance = new CounselingManager();
 
@@ -86,35 +87,43 @@ public class CounselingManager {
         }
     }
 
+    /**
+     * 查询咨询策略。
+     *
+     * @param authToken
+     * @param theme
+     * @param attribute
+     * @param streamName
+     * @return
+     */
     public CounselingStrategy queryCounselingStrategy(AuthToken authToken, ConsultationTheme theme,
                                                       Attribute attribute, String streamName) {
-        List<CounselingStrategy> strategies = this.counselingStrategyMap.computeIfAbsent(streamName, k -> new ArrayList<>());
+        Wrapper wrapper = this.counselingStrategyMap.computeIfAbsent(streamName,
+                k -> new Wrapper(streamName, authToken, theme, attribute));
+        List<CounselingStrategy> strategies = wrapper.strategies;
 
-        List<VoiceDiarization> voiceDiarizations = this.combinedVoiceMap.get(streamName);
-        if (null == voiceDiarizations || voiceDiarizations.isEmpty()) {
+        if (strategies.isEmpty()) {
             // 无数据策略支持
+            String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_OPENING"),
+                    attribute.language.isChinese() ? theme.nameCN : theme.nameEN,
+                    attribute.getGenderText(), attribute.age);
 
-            if (strategies.isEmpty()) {
-                String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_OPENING"),
-                        attribute.language.isChinese() ? theme.nameCN : theme.nameEN,
-                        attribute.getGenderText(), attribute.age);
-
-                GeneratingRecord record = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt,
-                        new GeneratingOption(), null, null);
-                if (null == record) {
-                    Logger.w(this.getClass(), "#queryCounselingStrategy - The response is null");
-                    return null;
-                }
-
-                CounselingStrategy strategy = new CounselingStrategy();
-
+            GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
+                    new GeneratingOption(), null, null);
+            if (null == record) {
+                Logger.w(this.getClass(), "#queryCounselingStrategy - The response is null");
+                return null;
             }
-            else {
 
+            CounselingStrategy strategy = new CounselingStrategy(0, attribute, theme, streamName, record.answer);
+            synchronized (strategies) {
+                strategies.add(strategy);
             }
+            return strategy;
         }
-
-        return null;
+        else {
+            return strategies.get(strategies.size() - 1);
+        }
     }
 
     private void combine(List<AudioStreamSink> sinks) {
@@ -211,10 +220,10 @@ public class CounselingManager {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {
                 diarization.remark = beginIndex + "-" + endIndex;
-                List<VoiceDiarization> list = combinedVoiceMap.computeIfAbsent(streamName, k -> new ArrayList<>());
-                synchronized (list) {
-                    list.add(diarization);
-                    list.sort(new Comparator<VoiceDiarization>() {
+                final List<VoiceDiarization> voiceDiarizationList = combinedVoiceMap.computeIfAbsent(streamName, k -> new ArrayList<>());
+                synchronized (voiceDiarizationList) {
+                    voiceDiarizationList.add(diarization);
+                    voiceDiarizationList.sort(new Comparator<VoiceDiarization>() {
                         @Override
                         public int compare(VoiceDiarization vd1, VoiceDiarization vd2) {
                             String[] index1 = vd1.remark.split("-");
@@ -226,6 +235,39 @@ public class CounselingManager {
 
                 // 更新备注
                 service.getStorage().updateVoiceDiarizationRemark(diarization);
+
+                // 生成策略
+                Wrapper wrapper = counselingStrategyMap.get(streamName);
+                if (null != wrapper) {
+                    service.getExecutor().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            List<VoiceDiarization> diarizations = new ArrayList<>();
+                            double total = 0;
+                            synchronized (voiceDiarizationList) {
+                                for (int i = voiceDiarizationList.size() - 1; i >= 0; --i) {
+                                    VoiceDiarization vd = voiceDiarizationList.get(i);
+                                    diarizations.add(vd);
+                                    total += vd.duration;
+                                    if (total >= 5 * 60) {
+                                        break;
+                                    }
+                                }
+                            }
+                            // 排序
+                            diarizations.sort(new Comparator<VoiceDiarization>() {
+                                @Override
+                                public int compare(VoiceDiarization vd1, VoiceDiarization vd2) {
+                                    String[] index1 = vd1.remark.split("-");
+                                    String[] index2 = vd2.remark.split("-");
+                                    return Integer.parseInt(index1[0]) - Integer.parseInt(index2[0]);
+                                }
+                            });
+                            // 制作策略
+                            formulateStrategy(wrapper, diarizations);
+                        }
+                    });
+                }
             }
 
             @Override
@@ -233,6 +275,43 @@ public class CounselingManager {
                 Logger.e(this.getClass(), "#onFailed - state: " + stateCode.code);
             }
         });
+    }
+
+    /**
+     * 制订策略。
+     *
+     * @param wrapper
+     */
+    private void formulateStrategy(Wrapper wrapper, List<VoiceDiarization> diarizations) {
+        StringBuilder conversation = new StringBuilder();
+
+        for (VoiceDiarization voiceDiarization : diarizations) {
+            for (VoiceTrack track : voiceDiarization.tracks) {
+                // 角色
+                if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_COUNSELOR)) {
+                    conversation.append("咨询师").append(TextUtils.gColonInChinese);
+                }
+                else if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_CUSTOMER)) {
+                    conversation.append("来访者").append(TextUtils.gColonInChinese);
+                }
+                else {
+                    conversation.append("来访者").append(TextUtils.gColonInChinese);
+                }
+
+                // 内容
+                conversation.append(track.recognition.text);
+                // 语气情绪
+                conversation.append("（语气情绪").append(TextUtils.gColonInChinese);
+                conversation.append(track.emotion.emotion.primaryWord);
+                conversation.append("）\n\n");
+            }
+        }
+
+        String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_STRATEGY"),
+                conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
+                wrapper.theme.nameCN);
+
+        System.out.println("XJW:\n" + prompt);
     }
 
     private boolean isContinuous(List<AudioStreamSink> sinkList) {
@@ -247,5 +326,26 @@ public class CounselingManager {
             ++next;
         }
         return true;
+    }
+
+    protected class Wrapper {
+
+        public final String streamName;
+
+        public final AuthToken authToken;
+
+        public final ConsultationTheme theme;
+
+        public final Attribute attribute;
+
+        public final List<CounselingStrategy> strategies;
+
+        protected Wrapper(String streamName, AuthToken authToken, ConsultationTheme theme, Attribute attribute) {
+            this.streamName = streamName;
+            this.authToken = authToken;
+            this.theme = theme;
+            this.attribute = attribute;
+            this.strategies = new ArrayList<>();
+        }
     }
 }

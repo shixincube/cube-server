@@ -131,7 +131,7 @@ public final class Agent {
             client.getProtocolHandlers().remove(WWWAuthenticationProtocolHandler.NAME);
 
             StringContentProvider provider = new StringContentProvider(data.toString());
-            ContentResponse response = client.POST(chatUrl).timeout(5, TimeUnit.MINUTES).content(provider).send();
+            ContentResponse response = client.POST(chatUrl).timeout(8, TimeUnit.MINUTES).content(provider).send();
 
             if (response.getStatus() == HttpStatus.OK_200) {
                 JSONObject responseData = new JSONObject(response.getContentAsString());

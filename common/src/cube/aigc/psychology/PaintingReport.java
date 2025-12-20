@@ -136,6 +136,10 @@ public class PaintingReport extends Report {
         return this.keyFeatureDescription;
     }
 
+    public boolean hasKeyFeatureDescription() {
+        return (null != this.keyFeatureDescription);
+    }
+
     public void setDimensionalScore(HexagonDimensionScore score, HexagonDimensionScore normScore) {
         this.dimensionScore = score;
         this.normDimensionScore = normScore;

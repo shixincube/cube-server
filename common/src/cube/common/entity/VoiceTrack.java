@@ -9,6 +9,9 @@ package cube.common.entity;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
+/**
+ * 语音轨道记录。
+ */
 public class VoiceTrack implements JSONable {
 
     public String track;

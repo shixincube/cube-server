@@ -219,6 +219,9 @@ public class ContentTools {
             buf.append("# 概述\n\n");
             if (report.getPermission().indicatorSummary) {
                 buf.append(report.getSummary()).append("\n\n");
+                if (report.hasKeyFeatureDescription()) {
+                    buf.append(report.getKeyFeatureDescription()).append("\n\n");
+                }
             }
             else {
                 buf.append(clipContentByLines(report.getSummary(), 20));

@@ -174,6 +174,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new TextToFile());
         httpServer.addContextHandler(new GetQueueCount());
         httpServer.addContextHandler(new ApplyStream());
+        httpServer.addContextHandler(new QueryCounselingStrategy());
 
         httpServer.addContextHandler(new PsychologyReports());
         httpServer.addContextHandler(new CheckPsychology());
@@ -2911,6 +2912,40 @@ public class Manager implements Tickable, PerformerListener {
         AIGCCellet aigcCellet = (AIGCCellet) cellet;
         aigcCellet.getStreamProcessor().register(streamName, contactToken.authToken);
         return true;
+    }
+
+    /**
+     * 查询咨询策略。
+     *
+     * @param token
+     * @param streamName
+     * @param theme
+     * @param attribute
+     * @return
+     */
+    public CounselingStrategy queryCounselingStrategy(String token, String streamName, ConsultationTheme theme,
+                                                      Attribute attribute) {
+        JSONObject data = new JSONObject();
+        data.put("streamName", streamName);
+        data.put("theme", theme.code);
+        data.put("attribute", attribute.toJSON());
+        Packet packet = new Packet(AIGCAction.QueryCounselingStrategy.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#queryCounselingStrategy - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#setPaintingReportState - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new CounselingStrategy(Packet.extractDataPayload(responsePacket));
     }
 
     @Override

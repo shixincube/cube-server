@@ -60,6 +60,26 @@ public final class TextUtils {
 
     private final static Pattern sEnglish = Pattern.compile("^[a-zA-Z]*$");
 
+    /**
+     * 中文冒号。
+     */
+    public final static String gColonInChinese = "：";
+
+    /**
+     * 英文冒号。
+     */
+    public final static String gColonInEnglish = ":";
+
+    /**
+     * 中文句号。
+     */
+    public final static String gPeriodInChinese = "。";
+
+    /**
+     * 英文句号。
+     */
+    public final static String gPeriodInEnglish = ".";
+
     private TextUtils() {
     }
 
