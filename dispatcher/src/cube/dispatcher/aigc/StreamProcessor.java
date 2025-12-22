@@ -22,6 +22,7 @@ import cube.dispatcher.stream.StreamType;
 import cube.dispatcher.stream.Track;
 import cube.util.AudioUtils;
 import cube.util.FileLabels;
+import cube.util.JSONUtils;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -67,6 +68,13 @@ public class StreamProcessor {
 
     public void stop() {
         this.timer.cancel();
+
+        Iterator<Map.Entry<String, Register>> iter = this.registerMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Register register = iter.next().getValue();
+            clear(register);
+            iter.remove();
+        }
     }
 
     public void register(String streamName, AuthToken authToken) {
@@ -99,6 +107,31 @@ public class StreamProcessor {
         }
     }
 
+    protected void clear(Register register) {
+        this.speechRecognitionCache.remove(register.streamName);
+
+        List<String> fileCodes = this.streamFileCodeMap.remove(register.streamName);
+        if (null != fileCodes) {
+            JSONObject payload = new JSONObject();
+            payload.put("fileCodeList", JSONUtils.toStringArray(fileCodes));
+            Packet packet = new Packet(FileStorageAction.DeleteFile.name, payload);
+            ActionDialect packetDialect = packet.toDialect();
+            packetDialect.addParam("token", register.authToken.getCode());
+
+            ActionDialect responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
+            if (null == responseDialect) {
+                Logger.w(this.getClass(), "#clear - Deletes file no response");
+                return;
+            }
+
+            Packet responsePacket = new Packet(responseDialect);
+            int stateCode = Packet.extractCode(responsePacket);
+            if (stateCode != FileStorageStateCode.Ok.code) {
+                Logger.w(this.getClass(), "#clear - Not find file");
+            }
+        }
+    }
+
     protected class Daemon extends TimerTask {
 
         @Override
@@ -118,10 +151,9 @@ public class StreamProcessor {
             Iterator<Map.Entry<String, Register>> iter = registerMap.entrySet().iterator();
             while (iter.hasNext()) {
                 Register register = iter.next().getValue();
-                if (time - register.refresh > 5 * 60 * 1000) {
+                if (time - register.refresh > 30 * 60 * 1000) {
                     // 删除过期数据
-                    speechRecognitionCache.remove(register.streamName);
-                    streamFileCodeMap.remove(register.streamName);
+                    clear(register);
                     iter.remove();
                 }
             }

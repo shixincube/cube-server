@@ -23,6 +23,8 @@ public class CounselingStrategy implements JSONable {
 
     public String content;
 
+    public long timestamp;
+
     public CounselingStrategy(int index, Attribute attribute, ConsultationTheme theme, String streamName,
                               String content) {
         this.index = index;
@@ -30,6 +32,7 @@ public class CounselingStrategy implements JSONable {
         this.theme = theme;
         this.streamName = streamName;
         this.content = content;
+        this.timestamp = System.currentTimeMillis();
     }
 
     public CounselingStrategy(JSONObject json) {
@@ -38,6 +41,7 @@ public class CounselingStrategy implements JSONable {
         this.theme = ConsultationTheme.parse(json.getString("theme"));
         this.streamName = json.getString("streamName");
         this.content = json.getString("content");
+        this.timestamp = json.getLong("timestamp");
     }
 
     @Override
@@ -48,6 +52,7 @@ public class CounselingStrategy implements JSONable {
         json.put("theme", this.theme.code);
         json.put("streamName", this.streamName);
         json.put("content", this.content);
+        json.put("timestamp", this.timestamp);
         return json;
     }
 

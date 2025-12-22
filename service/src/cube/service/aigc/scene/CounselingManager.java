@@ -281,6 +281,7 @@ public class CounselingManager {
      * 制订策略。
      *
      * @param wrapper
+     * @param diarizations
      */
     private void formulateStrategy(Wrapper wrapper, List<VoiceDiarization> diarizations) {
         StringBuilder conversation = new StringBuilder();
@@ -311,7 +312,21 @@ public class CounselingManager {
                 conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
                 wrapper.theme.nameCN);
 
-        System.out.println("XJW:\n" + prompt);
+        GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
+                prompt, new GeneratingOption(), null, null);
+        if (null == record) {
+            Logger.w(this.getClass(), "#formulateStrategy - The record is null");
+            return;
+        }
+
+        List<CounselingStrategy> strategies = wrapper.strategies;
+        synchronized (strategies) {
+            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute,
+                    wrapper.theme, wrapper.streamName, record.answer);
+            strategies.add(strategy);
+        }
+
+        Logger.d(this.getClass(), "#formulateStrategy - New strategy : " + wrapper.streamName + "/" + strategies.size());
     }
 
     private boolean isContinuous(List<AudioStreamSink> sinkList) {
