@@ -522,9 +522,9 @@ public enum AIGCAction {
     GetEmotionRecords("getEmotionRecords"),
 
     /**
-     * 音频流分析。
+     * 语音流分析。
      */
-    AnalyseAudioStream("analyseAudioStream"),
+    AnalyseVoiceStream("analyseVoiceStream"),
 
     /**
      * 查询咨询策略。

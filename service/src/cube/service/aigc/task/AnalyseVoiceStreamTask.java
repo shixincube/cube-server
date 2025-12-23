@@ -13,21 +13,20 @@ import cell.core.talk.dialect.ActionDialect;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.AudioStreamSink;
 import cube.common.entity.FileLabel;
-import cube.common.entity.VoiceDiarization;
+import cube.common.entity.VoiceStreamSink;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.AudioStreamAnalysisListener;
+import cube.service.aigc.listener.VoiceStreamAnalysisListener;
 
 /**
- * 分析音频流任务。
+ * 分析语音流任务。
  */
-public class AnalyseAudioStreamTask extends ServiceTask {
+public class AnalyseVoiceStreamTask extends ServiceTask {
 
-    public AnalyseAudioStreamTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public AnalyseVoiceStreamTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -51,9 +50,9 @@ public class AnalyseAudioStreamTask extends ServiceTask {
         String streamName = packet.data.getString("streamName");
         int index = packet.data.getInt("index");
 
-        boolean success = service.analyseAudioStream(authToken, fileCode, streamName, index, new AudioStreamAnalysisListener() {
+        boolean success = service.analyseVoiceStream(authToken, fileCode, streamName, index, new VoiceStreamAnalysisListener() {
             @Override
-            public void onCompleted(FileLabel source, AudioStreamSink streamSink) {
+            public void onCompleted(FileLabel source, VoiceStreamSink streamSink) {
                 cellet.speak(talkContext,
                         makeResponse(dialect, packet, AIGCStateCode.Ok.code, streamSink.toJSON()));
                 markResponseTime();

@@ -137,7 +137,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private final Map<String, Queue<UnitMeta>> audioQueueMap;
+    private final Map<String, LinkedList<UnitMeta>> audioQueueMap;
 
     /**
      * 最大频道数量。
@@ -2911,29 +2911,23 @@ public class AIGCService extends AbstractModule implements Generatable {
      * 说话者分割与分析。
      *
      * @param authToken
-     * @param fileCode
+     * @param fileLabel
      * @param preprocess
      * @param listener
      * @return
      */
-    public boolean performSpeakerDiarization(AuthToken authToken, String fileCode, boolean preprocess,
-                                             VoiceDiarizationListener listener) {
-        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
-        if (null == fileStorage) {
-            Logger.e(this.getClass(), "#applySpeakerDiarization - File storage service is not ready");
-            return false;
-        }
-
-        FileLabel fileLabel = this.getFile(authToken.getDomain(), fileCode);
-        if (null == fileLabel) {
-            Logger.e(this.getClass(), "#applySpeakerDiarization - Get file failed: " + fileCode);
-            return false;
-        }
+    public boolean performSpeakerDiarization(AuthToken authToken, FileLabel fileLabel, boolean preprocess,
+                                             boolean jump, VoiceDiarizationListener listener) {
+//        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+//        if (null == fileStorage) {
+//            Logger.e(this.getClass(), "#performSpeakerDiarization - File storage service is not ready");
+//            return false;
+//        }
 
         // 查找有该能力的单元
         AIGCUnit unit = this.selectUnitBySubtask(AICapability.AudioProcessing.SpeakerDiarization);
         if (null == unit) {
-            Logger.w(this.getClass(), "#applySpeakerDiarization - No task unit setup in server");
+            Logger.w(this.getClass(), "#performSpeakerDiarization - No task unit setup in server");
             return false;
         }
 
@@ -2941,15 +2935,14 @@ public class AIGCService extends AbstractModule implements Generatable {
                 fileLabel, preprocess);
         meta.voiceDiarizationListener = listener;
 
-        Queue<UnitMeta> queue = null;
-        synchronized (this.audioQueueMap) {
-            queue = this.audioQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.audioQueueMap.put(unit.getQueryKey(), queue);
+        LinkedList<UnitMeta> queue = this.audioQueueMap.computeIfAbsent(unit.getQueryKey(), k -> new LinkedList<>());
+        synchronized (queue) {
+            if (jump) {
+                queue.addFirst(meta);
             }
-
-            queue.offer(meta);
+            else {
+                queue.offer(meta);
+            }
         }
 
         if (!unit.isRunning()) {
@@ -2963,6 +2956,32 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         return true;
+    }
+
+    /**
+     * 说话者分割与分析。
+     *
+     * @param authToken
+     * @param fileCode
+     * @param preprocess
+     * @param listener
+     * @return
+     */
+    public boolean performSpeakerDiarization(AuthToken authToken, String fileCode, boolean preprocess,
+                                             VoiceDiarizationListener listener) {
+//        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+//        if (null == fileStorage) {
+//            Logger.e(this.getClass(), "#performSpeakerDiarization - File storage service is not ready");
+//            return false;
+//        }
+
+        FileLabel fileLabel = this.getFile(authToken.getDomain(), fileCode);
+        if (null == fileLabel) {
+            Logger.e(this.getClass(), "#performSpeakerDiarization - Get file failed: " + fileCode);
+            return false;
+        }
+
+        return this.performSpeakerDiarization(authToken, fileLabel, preprocess, false, listener);
     }
 
     public List<VoiceDiarization> getVoiceDiarizations(AuthToken authToken) {
@@ -3056,7 +3075,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 分析音频流。
+     * 分析语音流。
      *
      * @param authToken
      * @param fileCode
@@ -3065,9 +3084,9 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param listener
      * @return
      */
-    public boolean analyseAudioStream(AuthToken authToken, String fileCode, String streamName, int index,
-                                      AudioStreamAnalysisListener listener) {
-        AudioStreamSink streamSink = new AudioStreamSink(streamName, index);
+    public boolean analyseVoiceStream(AuthToken authToken, String fileCode, String streamName, int index,
+                                      VoiceStreamAnalysisListener listener) {
+        VoiceStreamSink streamSink = new VoiceStreamSink(streamName, index);
 
 //        {
 //            VoiceDiarization voiceDiarization = new VoiceDiarization(Utils.generateSerialNumber(),
@@ -3573,7 +3592,10 @@ public class AIGCService extends AbstractModule implements Generatable {
     private void processQueue(AIGCUnit unit, Queue<UnitMeta> queue) {
         unit.setRunning(true);
 
-        UnitMeta meta = queue.poll();
+        UnitMeta meta = null;
+        synchronized (queue) {
+            meta = queue.poll();
+        }
         while (null != meta) {
             // 执行处理
             try {
@@ -3582,7 +3604,9 @@ public class AIGCService extends AbstractModule implements Generatable {
                 Logger.e(this.getClass(), "#processQueue - meta process error", e);
             }
 
-            meta = queue.poll();
+            synchronized (queue) {
+                meta = queue.poll();
+            }
         }
 
         unit.setRunning(false);

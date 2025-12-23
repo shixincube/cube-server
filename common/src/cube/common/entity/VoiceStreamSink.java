@@ -10,7 +10,7 @@ import cube.auth.AuthToken;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
-public class AudioStreamSink implements JSONable {
+public class VoiceStreamSink implements JSONable {
 
     private String streamName;
 
@@ -24,12 +24,12 @@ public class AudioStreamSink implements JSONable {
 
     public AuthToken authToken;
 
-    public AudioStreamSink(String streamName, int index) {
+    public VoiceStreamSink(String streamName, int index) {
         this.streamName = streamName;
         this.index = index;
     }
 
-    public AudioStreamSink(JSONObject json) {
+    public VoiceStreamSink(JSONObject json) {
         this.streamName = json.getString("streamName");
         this.index = json.getInt("index");
         this.timestamp = json.getLong("timestamp");

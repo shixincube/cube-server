@@ -29,6 +29,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class CounselingManager {
 
@@ -36,7 +38,9 @@ public class CounselingManager {
 
     private AIGCService service;
 
-    private Map<String, List<AudioStreamSink>> streamSinkMap;
+    private ExecutorService executor;
+
+    private Map<String, List<VoiceStreamSink>> streamSinkMap;
 
     private Map<String, List<VoiceDiarization>> combinedVoiceMap;
 
@@ -48,6 +52,7 @@ public class CounselingManager {
         this.streamSinkMap = new ConcurrentHashMap<>();
         this.combinedVoiceMap = new ConcurrentHashMap<>();
         this.counselingStrategyMap = new ConcurrentHashMap<>();
+        this.executor = Executors.newCachedThreadPool();
     }
 
     public static CounselingManager getInstance() {
@@ -58,32 +63,40 @@ public class CounselingManager {
         this.service = service;
     }
 
-    public void record(AuthToken authToken, AudioStreamSink streamSink) {
+    public void record(AuthToken authToken, VoiceStreamSink streamSink) {
         streamSink.authToken = authToken;
 
-        List<AudioStreamSink> list = this.streamSinkMap.computeIfAbsent(streamSink.getStreamName(), k -> new ArrayList<>());
+        List<VoiceStreamSink> list = this.streamSinkMap.computeIfAbsent(streamSink.getStreamName(), k -> new ArrayList<>());
+        final List<VoiceStreamSink> listCopy = new ArrayList<>();
         synchronized (list) {
             list.add(streamSink);
-            list.sort(new Comparator<AudioStreamSink>() {
+            list.sort(new Comparator<VoiceStreamSink>() {
                 @Override
-                public int compare(AudioStreamSink s1, AudioStreamSink s2) {
+                public int compare(VoiceStreamSink s1, VoiceStreamSink s2) {
                     return s1.getIndex() - s2.getIndex();
                 }
             });
             Logger.d(this.getClass(), "#record : " + list.size());
             if (list.size() >= 5 && this.isContinuous(list)) {
                 // 大约30秒，且数据连续
-                List<AudioStreamSink> copy = new ArrayList<>(list);
+                listCopy.addAll(list);
                 list.clear();
-                combine(copy);
             }
             else if (list.size() > 10) {
                 // 数据量大，即便不连续也处理
                 Logger.w(this.getClass(), "#record - list overflow: " + list.size());
-                List<AudioStreamSink> copy = new ArrayList<>(list);
+                listCopy.addAll(list);
                 list.clear();
-                combine(copy);
             }
+        }
+
+        if (!listCopy.isEmpty()) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    combine(listCopy);
+                }
+            });
         }
     }
 
@@ -98,6 +111,15 @@ public class CounselingManager {
      */
     public CounselingStrategy queryCounselingStrategy(AuthToken authToken, ConsultationTheme theme,
                                                       Attribute attribute, String streamName) {
+//        StringBuilder buf = new StringBuilder();
+//        buf.append("第一行：").append(Utils.randomString(32)).append("\n\n");
+//        buf.append("第二行：").append(Utils.randomString(64)).append("\n\n");
+//        buf.append("第三行：").append(Utils.randomString(32)).append("\n\n");
+//        CounselingStrategy r = new CounselingStrategy(0, attribute, theme, streamName, buf.toString());
+//        if (buf.length() > 32) {
+//            return r;
+//        }
+
         Wrapper wrapper = this.counselingStrategyMap.computeIfAbsent(streamName,
                 k -> new Wrapper(streamName, authToken, theme, attribute));
         List<CounselingStrategy> strategies = wrapper.strategies;
@@ -126,7 +148,7 @@ public class CounselingManager {
         }
     }
 
-    private void combine(List<AudioStreamSink> sinks) {
+    private void combine(List<VoiceStreamSink> sinks) {
         final AuthToken authToken = sinks.get(0).authToken;
         final String streamName = sinks.get(0).getStreamName();
         final int beginIndex = sinks.get(0).getIndex();
@@ -137,7 +159,7 @@ public class CounselingManager {
         FlexibleByteBuffer buffer = new FlexibleByteBuffer();
         FlexibleByteBuffer fileBuf = new FlexibleByteBuffer();
 
-        for (AudioStreamSink sink : sinks) {
+        for (VoiceStreamSink sink : sinks) {
             File file = this.service.loadFile(authToken.getDomain(), sink.getFileLabel().getFileCode());
             if (null == file) {
                 Logger.w(this.getClass(), "#combine - The file is NOT exists : " + sink.getFileLabel().getFileCode());
@@ -200,7 +222,7 @@ public class CounselingManager {
         }
 
         // 删除文件
-        for (AudioStreamSink sink : sinks) {
+        for (VoiceStreamSink sink : sinks) {
             this.service.deleteFile(authToken.getDomain(), sink.getFileLabel().getFileCode());
         }
         for (File file : fileList) {
@@ -215,7 +237,16 @@ public class CounselingManager {
         FileLabel fileLabel = this.service.saveFile(authToken, tmpFileCode, outputFile,
                 outputFile.getName(), true);
 
-        this.service.performSpeakerDiarization(authToken, fileLabel.getFileCode(), false,
+        if (null == fileLabel) {
+            Logger.e(this.getClass(), "#combine - Save file failed, stream: " + streamName);
+            return;
+        }
+
+        Logger.d(this.getClass(), "#combine - num: " + sinks.size() + " , stream: " + streamName + " " +
+                beginIndex + "-" + endIndex + " , file code: " + fileLabel.getFileCode());
+
+        // 任务以插队方式提高优先级
+        boolean success = this.service.performSpeakerDiarization(authToken, fileLabel, false, true,
                 new VoiceDiarizationListener() {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {
@@ -239,42 +270,54 @@ public class CounselingManager {
                 // 生成策略
                 Wrapper wrapper = counselingStrategyMap.get(streamName);
                 if (null != wrapper) {
-                    service.getExecutor().execute(new Runnable() {
+                    executor.execute(new Runnable() {
                         @Override
                         public void run() {
-                            List<VoiceDiarization> diarizations = new ArrayList<>();
-                            double total = 0;
-                            synchronized (voiceDiarizationList) {
-                                for (int i = voiceDiarizationList.size() - 1; i >= 0; --i) {
-                                    VoiceDiarization vd = voiceDiarizationList.get(i);
-                                    diarizations.add(vd);
-                                    total += vd.duration;
-                                    if (total >= 5 * 60) {
-                                        break;
+                            try {
+                                List<VoiceDiarization> diarizations = new ArrayList<>();
+                                double total = 0;
+                                synchronized (voiceDiarizationList) {
+                                    for (int i = voiceDiarizationList.size() - 1; i >= 0; --i) {
+                                        VoiceDiarization vd = voiceDiarizationList.get(i);
+                                        diarizations.add(vd);
+                                        total += vd.duration;
+                                        if (total >= 2 * 60) {
+                                            break;
+                                        }
                                     }
                                 }
+                                // 排序
+                                diarizations.sort(new Comparator<VoiceDiarization>() {
+                                    @Override
+                                    public int compare(VoiceDiarization vd1, VoiceDiarization vd2) {
+                                        String[] index1 = vd1.remark.split("-");
+                                        String[] index2 = vd2.remark.split("-");
+                                        return Integer.parseInt(index1[0]) - Integer.parseInt(index2[0]);
+                                    }
+                                });
+
+                                // 制作策略
+                                formulateStrategy(wrapper, diarizations);
+                            } catch (Exception e) {
+                                Logger.e(this.getClass(), "#combine", e);
                             }
-                            // 排序
-                            diarizations.sort(new Comparator<VoiceDiarization>() {
-                                @Override
-                                public int compare(VoiceDiarization vd1, VoiceDiarization vd2) {
-                                    String[] index1 = vd1.remark.split("-");
-                                    String[] index2 = vd2.remark.split("-");
-                                    return Integer.parseInt(index1[0]) - Integer.parseInt(index2[0]);
-                                }
-                            });
-                            // 制作策略
-                            formulateStrategy(wrapper, diarizations);
                         }
                     });
+                }
+                else {
+                    Logger.e(this.getClass(), "#combine - No wrapper data: " + streamName);
                 }
             }
 
             @Override
             public void onFailed(FileLabel source, AIGCStateCode stateCode) {
-                Logger.e(this.getClass(), "#onFailed - state: " + stateCode.code);
+                Logger.e(this.getClass(), "#combine - onFailed - state: " + stateCode.code);
             }
         });
+
+        if (!success) {
+            Logger.e(this.getClass(), "#combine - #performSpeakerDiarization ERROR: " + streamName);
+        }
     }
 
     /**
@@ -284,6 +327,8 @@ public class CounselingManager {
      * @param diarizations
      */
     private void formulateStrategy(Wrapper wrapper, List<VoiceDiarization> diarizations) {
+        Logger.d(this.getClass(), "#formulateStrategy - Formulates strategy : " + wrapper.streamName);
+
         StringBuilder conversation = new StringBuilder();
 
         for (VoiceDiarization voiceDiarization : diarizations) {
@@ -304,7 +349,7 @@ public class CounselingManager {
                 // 语气情绪
                 conversation.append("（语气情绪").append(TextUtils.gColonInChinese);
                 conversation.append(track.emotion.emotion.primaryWord);
-                conversation.append("）\n\n");
+                conversation.append("）。\n\n");
             }
         }
 
@@ -329,7 +374,7 @@ public class CounselingManager {
         Logger.d(this.getClass(), "#formulateStrategy - New strategy : " + wrapper.streamName + "/" + strategies.size());
     }
 
-    private boolean isContinuous(List<AudioStreamSink> sinkList) {
+    private boolean isContinuous(List<VoiceStreamSink> sinkList) {
         int begin = sinkList.get(0).getIndex();
         int next = begin + 1;
         for (int i = 1; i < sinkList.size(); ++i) {

@@ -13,7 +13,7 @@ import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.action.FileStorageAction;
-import cube.common.entity.AudioStreamSink;
+import cube.common.entity.VoiceStreamSink;
 import cube.common.state.FileStorageStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.filestorage.FileStorageCellet;
@@ -69,10 +69,12 @@ public class StreamProcessor {
     public void stop() {
         this.timer.cancel();
 
+        Logger.i(this.getClass(), "#stop - The number of register to be deleted is " + this.registerMap.size());
+
         Iterator<Map.Entry<String, Register>> iter = this.registerMap.entrySet().iterator();
         while (iter.hasNext()) {
             Register register = iter.next().getValue();
-            clear(register);
+            this.clear(register);
             iter.remove();
         }
     }
@@ -112,6 +114,8 @@ public class StreamProcessor {
 
         List<String> fileCodes = this.streamFileCodeMap.remove(register.streamName);
         if (null != fileCodes) {
+            Logger.i(this.getClass(), "#clear - Clear data - " + register.streamName + " : " + fileCodes.size());
+
             JSONObject payload = new JSONObject();
             payload.put("fileCodeList", JSONUtils.toStringArray(fileCodes));
             Packet packet = new Packet(FileStorageAction.DeleteFile.name, payload);
@@ -255,12 +259,12 @@ public class StreamProcessor {
             payload.put("fileCode", fileCode);
             payload.put("streamName", register.streamName);
             payload.put("index", index);
-            Packet packet = new Packet(AIGCAction.AnalyseAudioStream.name, payload);
+            Packet packet = new Packet(AIGCAction.AnalyseVoiceStream.name, payload);
             ActionDialect packetDialect = packet.toDialect();
             packetDialect.addParam("token", register.authToken.getCode());
 
             ActionDialect responseDialect = performer.syncTransmit(AIGCCellet.NAME, packetDialect,
-                    3 * 60 * 1000);
+                    8 * 60 * 1000);
             if (null == responseDialect) {
                 Logger.w(this.getClass(), "#analysis - The response is null");
                 return;
@@ -273,7 +277,7 @@ public class StreamProcessor {
                 return;
             }
 
-            AudioStreamSink streamSink = new AudioStreamSink(Packet.extractDataPayload(responsePacket));
+            VoiceStreamSink streamSink = new VoiceStreamSink(Packet.extractDataPayload(responsePacket));
             streamSink.setTimestamp(this.timestamp);
             JSONObject json = streamSink.toJSON();
             if (json.has("file")) {

@@ -994,7 +994,7 @@ public class Performer implements TalkListener, Tickable {
         long time = System.currentTimeMillis();
         while (System.currentTimeMillis() - time < timeout) {
             try {
-                Thread.sleep(100);
+                Thread.sleep(50);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

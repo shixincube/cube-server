@@ -101,7 +101,7 @@ public class AudioUnitMeta extends UnitMeta {
             if (Logger.isDebugLevel()) {
                 Logger.d(this.getClass(), "#process - makeClassifyTrackLabelPrompt: " + prompt);
             }
-            GeneratingRecord record = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
+            GeneratingRecord record = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt,
                     new GeneratingOption(), null, null);
             if (null == record) {
                 result.guessSpeakerLabels();
@@ -182,25 +182,44 @@ public class AudioUnitMeta extends UnitMeta {
         int totalTracks = diarization.tracks.size();
 
         StringBuffer buf = new StringBuffer();
-        buf.append("已知");
-        for (String name : speakerNames) {
-            buf.append(name).append("，");
+        if (speakerNames.size() == 1) {
+            buf.append("已知");
+            buf.append(speakerNames.get(0));
+            buf.append("所说内容如下：\n\n");
+            List<Integer> indexes = parseTrackIndexes(totalTracks);
+            for (Integer index : indexes) {
+                VoiceTrack track = diarization.tracks.get(index);
+                buf.append(track.recognition.text).append("\n");
+            }
+            buf.append("\n根据以上内容判断");
+            buf.append(speakerNames.get(0));
+            buf.append("是心理咨询师还是心理咨询客户。如果是心理咨询师回复：“");
+            buf.append(speakerNames.get(0));
+            buf.append("是心理咨询师”，如果是心理咨询客户回复：“");
+            buf.append(speakerNames.get(0));
+            buf.append("是客户”。");
         }
-        buf.delete(buf.length() - 1, buf.length());
-        buf.append("等");
-        buf.append(numSpeakers).append("个人的谈话内容如下：\n\n");
-        List<Integer> indexes = parseTrackIndexes(totalTracks);
-        for (Integer index : indexes) {
-            VoiceTrack track = diarization.tracks.get(index);
-            buf.append(track.label).append("说：").append(track.recognition.text).append("\n\n");
-        }
+        else {
+            buf.append("已知");
+            for (String name : speakerNames) {
+                buf.append(name).append("，");
+            }
+            buf.delete(buf.length() - 1, buf.length());
+            buf.append("等");
+            buf.append(numSpeakers).append("个人的谈话内容如下：\n\n");
+            List<Integer> indexes = parseTrackIndexes(totalTracks);
+            for (Integer index : indexes) {
+                VoiceTrack track = diarization.tracks.get(index);
+                buf.append(track.label).append("说：").append(track.recognition.text).append("\n\n");
+            }
 
-        buf.append("根据以上对话内容判断");
-        for (String name : speakerNames) {
-            buf.append(name).append("，");
+            buf.append("根据以上对话内容判断");
+            for (String name : speakerNames) {
+                buf.append(name).append("，");
+            }
+            buf.delete(buf.length() - 1, buf.length());
+            buf.append("等人中谁是心理咨询师，谁是心理咨询客户。使用回复格式：“XX是心理咨询师”，“YY是客户”，其中XX使用心理咨询师名字替换，YY使用客户名字替换。");
         }
-        buf.delete(buf.length() - 1, buf.length());
-        buf.append("等人中谁是心理咨询师，谁是心理咨询客户。使用回复格式：“XX是心理咨询师”，“YY是客户”，其中XX使用心理咨询师名字替换，YY使用客户名字替换。");
         return buf.toString();
     }
 

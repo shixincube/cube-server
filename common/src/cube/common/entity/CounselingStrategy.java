@@ -11,6 +11,9 @@ import cube.aigc.psychology.Attribute;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
+/**
+ * 咨询策略。
+ */
 public class CounselingStrategy implements JSONable {
 
     public int index;

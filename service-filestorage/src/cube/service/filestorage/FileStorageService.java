@@ -574,6 +574,9 @@ public class FileStorageService extends AbstractModule {
         // 写入集群缓存
         this.fileLabelCache.put(new CacheKey(fileLabel.getFileCode()), new CacheValue(fileLabel.toJSON()));
 
+        // 内存缓存
+        this.cacheFileLabelMap.put(fileLabel.getFileCode(), fileLabel);
+
         // 触发 Hook
         this.executor.execute(new Runnable() {
             @Override
@@ -769,9 +772,20 @@ public class FileStorageService extends AbstractModule {
         }
 
         this.cacheFileLabelMap.put(fileCode, fileLabel);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                CacheValue value = fileLabelCache.get(new CacheKey(fileCode));
+                if (null == value) {
+                    fileLabelCache.put(new CacheKey(fileCode), new CacheValue(fileLabel.toJSON()));
+                }
+            }
+        });
+
         return fileLabel;
 
-        /* Cache 需要重构 2025-09-26
+        /* 2025-12-23 废止一下方法
         CacheValue value = this.fileLabelCache.get(new CacheKey(fileCode));
         if (null == value) {
             FileLabel fileLabel = this.serviceStorage.readFileLabel(domainName, fileCode);
