@@ -863,6 +863,9 @@ public class FileStorageService extends AbstractModule {
             // 从缓存删除
             this.fileLabelCache.remove(new CacheKey(fileCode));
 
+            // 从内存中删除
+            this.cacheFileLabelMap.remove(fileCode);
+
             // 从数据库删除
             FileLabel fileLabel = this.serviceStorage.deleteFile(domainName, fileCode);
             if (null != fileLabel) {

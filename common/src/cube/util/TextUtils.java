@@ -486,6 +486,32 @@ public final class TextUtils {
     }
 
     /**
+     * 删除文本里的所有标点符号。
+     *
+     * @param text
+     * @return
+     */
+    public static String removePunctuations(String text) {
+        return text.replaceAll("\\p{P}", "");
+    }
+
+    /**
+     * 判断文本的最后一个字符是否是标点符号。
+     *
+     * @param text
+     * @return
+     */
+    public static boolean isLastPunctuationMark(String text) {
+        String last = text.substring(text.length() - 1);
+        if (removePunctuations(last).length() == 0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
      * 文本是否以数字符号开头。
      * 例如："1."开头的字符串。
      *
@@ -1016,7 +1042,7 @@ public final class TextUtils {
 //            System.out.println(str);
 //        }
 
-        System.out.println(TextUtils.extractEmailAccountName("xjw@163.com"));
+//        System.out.println(TextUtils.extractEmailAccountName("xjw@163.com"));
 
 //        String[] list = new String[] {
 //                "1. 是数字符号",
@@ -1034,5 +1060,10 @@ public final class TextUtils {
 //        String data = "这是表格数据：\n\n" + table + "\n以上是表格信息";
 //        String result = extractMarkdownTable(data);
 //        System.out.println(result);
+
+//        System.out.println(removePunctuations("Hello, 世界! (This) is a test... “测试。”－1，23."));
+        System.out.println(isLastPunctuationMark("Hello，世界！"));
+        System.out.println(isLastPunctuationMark("Hello, 世界."));
+        System.out.println(isLastPunctuationMark("Hello, 世界"));
     }
 }

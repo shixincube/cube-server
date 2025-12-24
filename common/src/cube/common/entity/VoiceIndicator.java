@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class VoiceIndicator implements JSONable {
 
-    protected final static String sPromptSentiment = "已知内容：%s。\n\n判断以上内容的情绪倾向属于以下哪种：\n\n* 积极的\n* 消极的\n* 中立的\n* 积极和消极均有\n。仅回答属于以上那种情绪倾向。";
+    protected final static String sPromptSentiment = "已知内容：\n\n%s。\n\n判断以上内容的情绪倾向属于以下哪种：\n\n* 积极的\n* 消极的\n* 中立的\n* 积极和消极均有\n\n仅回答属于以上那种情绪倾向。";
 
     protected static final Map<Emotion, Double> sEmotionWeight = new HashMap<>();
 
@@ -38,7 +38,7 @@ public class VoiceIndicator implements JSONable {
 
     public long timestamp;
 
-    public double silenceDuration;
+    public double silenceDuration = 0;
 
     public Map<String, SpeakerIndicator> speakerIndicators = new HashMap<>();
 

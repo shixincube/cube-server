@@ -2913,11 +2913,12 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param authToken
      * @param fileLabel
      * @param preprocess
+     * @param jumpToFirst
      * @param listener
      * @return
      */
     public boolean performSpeakerDiarization(AuthToken authToken, FileLabel fileLabel, boolean preprocess,
-                                             boolean jump, VoiceDiarizationListener listener) {
+                                             boolean jumpToFirst, VoiceDiarizationListener listener) {
 //        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
 //        if (null == fileStorage) {
 //            Logger.e(this.getClass(), "#performSpeakerDiarization - File storage service is not ready");
@@ -2937,7 +2938,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         LinkedList<UnitMeta> queue = this.audioQueueMap.computeIfAbsent(unit.getQueryKey(), k -> new LinkedList<>());
         synchronized (queue) {
-            if (jump) {
+            if (jumpToFirst) {
                 queue.addFirst(meta);
             }
             else {
@@ -3614,8 +3615,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     private boolean checkParticipantName(String name) {
         if (name.equalsIgnoreCase("AIGC") || name.equalsIgnoreCase("Cube") ||
-            name.equalsIgnoreCase("Baize") || name.equalsIgnoreCase("白泽") ||
-            name.equalsIgnoreCase("时信魔方")) {
+            name.equalsIgnoreCase("Baize") || name.equalsIgnoreCase("白泽")) {
             return false;
         }
         else {

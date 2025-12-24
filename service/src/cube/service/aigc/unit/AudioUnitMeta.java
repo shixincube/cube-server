@@ -96,6 +96,22 @@ public class AudioUnitMeta extends UnitMeta {
                         "\nduration: " + result.duration);
             }
 
+            if (result.tracks.size() == 0) {
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        Logger.d(this.getClass(), "#process - Diarization tracks length is 0: " + file.getFileCode());
+
+                        // 设置指标
+                        result.indicator = new VoiceDiarizationIndicator(result.getId());
+                        if (null != voiceDiarizationListener) {
+                            voiceDiarizationListener.onCompleted(file, result);
+                        }
+                    }
+                });
+                return;
+            }
+
             // 分析说话者
             String prompt = this.makeClassifyTrackLabelPrompt(result);
             if (Logger.isDebugLevel()) {

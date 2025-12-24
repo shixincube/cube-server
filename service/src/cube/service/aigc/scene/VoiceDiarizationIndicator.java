@@ -12,6 +12,7 @@ import cube.aigc.Sentiment;
 import cube.common.entity.*;
 import cube.service.aigc.AIGCService;
 import cube.util.FloatUtils;
+import cube.util.TextUtils;
 import org.json.JSONObject;
 
 public class VoiceDiarizationIndicator extends VoiceIndicator {
@@ -53,6 +54,7 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
             // 情绪计数
             speakerIndicator.speechEmotions.add(track.emotion);
 
+            // 评估观点
             Sentiment sentiment = this.evalSentiment(service, track);
             SpeakerSegmentIndicator segmentIndicator = new SpeakerSegmentIndicator(track.track,
                     (track.segment.duration != 0) ?
@@ -133,11 +135,17 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
     }
 
     private Sentiment evalSentiment(AIGCService service, VoiceTrack track) {
+        // 如果文本内容过短就不进行评估
+        String text = TextUtils.removePunctuations(track.recognition.text.trim()).trim();
+        if (text.length() <= 2) {
+            return Sentiment.Undefined;
+        }
+
         GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT,
-                String.format(sPromptSentiment, track.recognition.text),
+                String.format(sPromptSentiment, text),
                 new GeneratingOption(), null, null);
         if (null == result) {
-            Logger.w(this.getClass(), "#calcSentiment - process text failed");
+            Logger.w(this.getClass(), "#evalSentiment - process text failed");
             return Sentiment.Undefined;
         }
 

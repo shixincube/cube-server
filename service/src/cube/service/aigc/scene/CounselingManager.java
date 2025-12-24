@@ -82,7 +82,7 @@ public class CounselingManager {
                 listCopy.addAll(list);
                 list.clear();
             }
-            else if (list.size() > 10) {
+            else if (list.size() > 8) {
                 // 数据量大，即便不连续也处理
                 Logger.w(this.getClass(), "#record - list overflow: " + list.size());
                 listCopy.addAll(list);
@@ -264,9 +264,6 @@ public class CounselingManager {
                     });
                 }
 
-                // 更新备注
-                service.getStorage().updateVoiceDiarizationRemark(diarization);
-
                 // 生成策略
                 Wrapper wrapper = counselingStrategyMap.get(streamName);
                 if (null != wrapper) {
@@ -281,7 +278,7 @@ public class CounselingManager {
                                         VoiceDiarization vd = voiceDiarizationList.get(i);
                                         diarizations.add(vd);
                                         total += vd.duration;
-                                        if (total >= 2 * 60) {
+                                        if (total >= 25) {
                                             break;
                                         }
                                     }
@@ -307,6 +304,9 @@ public class CounselingManager {
                 else {
                     Logger.e(this.getClass(), "#combine - No wrapper data: " + streamName);
                 }
+
+                // 更新备注
+                service.getStorage().updateVoiceDiarizationRemark(diarization);
             }
 
             @Override
@@ -331,31 +331,66 @@ public class CounselingManager {
 
         StringBuilder conversation = new StringBuilder();
 
+        String lastLabel = "";
         for (VoiceDiarization voiceDiarization : diarizations) {
             for (VoiceTrack track : voiceDiarization.tracks) {
-                // 角色
-                if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_COUNSELOR)) {
-                    conversation.append("咨询师").append(TextUtils.gColonInChinese);
+                String text = track.recognition.text;
+                String mark = "";
+                if (TextUtils.isLastPunctuationMark(text)) {
+                    text = track.recognition.text.substring(0, track.recognition.text.length() - 1);
+                    mark = track.recognition.text.substring(track.recognition.text.length() - 1);
                 }
-                else if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_CUSTOMER)) {
-                    conversation.append("来访者").append(TextUtils.gColonInChinese);
+
+                if (text.length() == 0) {
+                    continue;
                 }
-                else {
-                    conversation.append("来访者").append(TextUtils.gColonInChinese);
+
+                if (!lastLabel.equalsIgnoreCase(track.label)) {
+                    // 标签变更
+                    conversation.append("\n\n");
+                    // 角色
+                    if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_COUNSELOR)) {
+                        conversation.append("咨询师").append(TextUtils.gColonInChinese);
+                    }
+                    else if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_CUSTOMER)) {
+                        conversation.append("来访者").append(TextUtils.gColonInChinese);
+                    }
+                    else {
+                        conversation.append("来访者").append(TextUtils.gColonInChinese);
+                    }
                 }
 
                 // 内容
-                conversation.append(track.recognition.text);
+                conversation.append(text);
                 // 语气情绪
-                conversation.append("（语气情绪").append(TextUtils.gColonInChinese);
+                conversation.append("（语气").append(TextUtils.gColonInChinese);
                 conversation.append(track.emotion.emotion.primaryWord);
-                conversation.append("）。\n\n");
+                conversation.append("）");
+                conversation.append(mark);
+
+                lastLabel = track.label;
+
+                if (conversation.length() > 300) {
+                    // 控制对话总字数
+                    break;
+                }
             }
+
+            if (conversation.length() > 300) {
+                // 控制对话总字数
+                break;
+            }
+        }
+
+        if (conversation.toString().startsWith("\n\n")) {
+            conversation.delete(0, 2);
         }
 
         String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_STRATEGY"),
                 conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
                 wrapper.theme.nameCN);
+
+        System.out.println("XJW prompt:\n" + prompt);
 
         GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
                 prompt, new GeneratingOption(), null, null);
