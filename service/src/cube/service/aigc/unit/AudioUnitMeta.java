@@ -34,17 +34,20 @@ public class AudioUnitMeta extends UnitMeta {
 
     protected boolean preprocess;
 
+    protected boolean storage;
+
     protected AIGCAction action;
 
     public VoiceDiarizationListener voiceDiarizationListener;
 
     public AudioUnitMeta(AIGCService service, AIGCUnit unit, AuthToken authToken, AIGCAction action,
-                         FileLabel file, boolean preprocess) {
+                         FileLabel file, boolean preprocess, boolean storage) {
         super(service, unit);
         this.authToken = authToken;
         this.action = action;
         this.file = file;
         this.preprocess = preprocess;
+        this.storage = storage;
     }
 
     @Override
@@ -149,7 +152,9 @@ public class AudioUnitMeta extends UnitMeta {
                         voiceDiarizationListener.onCompleted(file, result);
                     }
 
-                    service.getStorage().writeVoiceDiarization(result);
+                    if (storage) {
+                        service.getStorage().writeVoiceDiarization(result);
+                    }
                 }
             });
         }

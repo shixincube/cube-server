@@ -2913,12 +2913,14 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param authToken
      * @param fileLabel
      * @param preprocess
+     * @param storage
      * @param jumpToFirst
      * @param listener
      * @return
      */
     public boolean performSpeakerDiarization(AuthToken authToken, FileLabel fileLabel, boolean preprocess,
-                                             boolean jumpToFirst, VoiceDiarizationListener listener) {
+                                             boolean storage, boolean jumpToFirst,
+                                             VoiceDiarizationListener listener) {
 //        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
 //        if (null == fileStorage) {
 //            Logger.e(this.getClass(), "#performSpeakerDiarization - File storage service is not ready");
@@ -2933,7 +2935,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         final AudioUnitMeta meta = new AudioUnitMeta(this, unit, authToken, AIGCAction.SpeakerDiarization,
-                fileLabel, preprocess);
+                fileLabel, preprocess, storage);
         meta.voiceDiarizationListener = listener;
 
         LinkedList<UnitMeta> queue = this.audioQueueMap.computeIfAbsent(unit.getQueryKey(), k -> new LinkedList<>());
@@ -2965,11 +2967,12 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param authToken
      * @param fileCode
      * @param preprocess
+     * @param storage
      * @param listener
      * @return
      */
     public boolean performSpeakerDiarization(AuthToken authToken, String fileCode, boolean preprocess,
-                                             VoiceDiarizationListener listener) {
+                                             boolean storage, VoiceDiarizationListener listener) {
 //        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
 //        if (null == fileStorage) {
 //            Logger.e(this.getClass(), "#performSpeakerDiarization - File storage service is not ready");
@@ -2982,7 +2985,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        return this.performSpeakerDiarization(authToken, fileLabel, preprocess, false, listener);
+        return this.performSpeakerDiarization(authToken, fileLabel, preprocess, storage, false, listener);
     }
 
     public List<VoiceDiarization> getVoiceDiarizations(AuthToken authToken) {
@@ -3112,7 +3115,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 //            return true;
 //        }
 
-        boolean success = this.performSpeakerDiarization(authToken, fileCode, false,
+        boolean success = this.performSpeakerDiarization(authToken, fileCode, false, false,
                 new VoiceDiarizationListener() {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {
@@ -3124,6 +3127,20 @@ public class AIGCService extends AbstractModule implements Generatable {
                 }
 
                 listener.onCompleted(source, streamSink);
+
+                for (VoiceTrack track : diarization.tracks) {
+                    List<String> words = track.recognition.words;
+                    boolean japanese = false;
+                    for (String word : words) {
+                        if (TextUtils.isJapanese(word)) {
+                            japanese = true;
+                            break;
+                        }
+                    }
+                    if (japanese) {
+                        track.recognition = new SpeechRecognitionInfo(track.recognition, "…");
+                    }
+                }
 
                 // 记录流
                 CounselingManager.getInstance().record(authToken, streamSink);

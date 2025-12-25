@@ -94,6 +94,10 @@ public class CounselingManager {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
+                    // 生成策略
+                    formulateStrategy(listCopy);
+
+                    // 组合数据再次进行分析
                     combine(listCopy);
                 }
             });
@@ -145,6 +149,87 @@ public class CounselingManager {
         }
         else {
             return strategies.get(strategies.size() - 1);
+        }
+    }
+
+    private void formulateStrategy(List<VoiceStreamSink> sinks) {
+        final String streamName = sinks.get(0).getStreamName();
+        Wrapper wrapper = this.counselingStrategyMap.get(streamName);
+        if (null == wrapper) {
+            Logger.w(this.getClass(), "#formulateStrategy - No find wrapper: " + streamName);
+            return;
+        }
+
+        StringBuilder conversation = new StringBuilder();
+
+        String lastLabel = "";
+        for (VoiceStreamSink sink : sinks) {
+            for (VoiceTrack track : sink.getDiarization().tracks) {
+                String text = track.recognition.text;
+                String mark = "";
+                if (TextUtils.isLastPunctuationMark(text)) {
+                    text = track.recognition.text.substring(0, track.recognition.text.length() - 1);
+                    mark = track.recognition.text.substring(track.recognition.text.length() - 1);
+                }
+
+                if (text.length() == 0) {
+                    continue;
+                }
+
+                if (!lastLabel.equalsIgnoreCase(track.label)) {
+                    // 标签变更
+                    conversation.append("\n\n");
+                    // 角色
+                    if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_COUNSELOR)) {
+                        conversation.append("咨询师").append(TextUtils.gColonInChinese);
+                    }
+                    else if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_CUSTOMER)) {
+                        conversation.append("来访者").append(TextUtils.gColonInChinese);
+                    }
+                    else {
+                        conversation.append("来访者").append(TextUtils.gColonInChinese);
+                        lastLabel = VoiceDiarization.LABEL_CUSTOMER;
+                    }
+                }
+
+                // 内容
+                conversation.append(text);
+                // 语气情绪
+//                conversation.append("（语气").append(TextUtils.gColonInChinese);
+//                conversation.append(track.emotion.emotion.primaryWord);
+//                conversation.append("）");
+                conversation.append(mark);
+
+                lastLabel = track.label;
+
+                if (conversation.length() > 500) {
+                    // 控制对话总字数
+                    break;
+                }
+            }
+
+            if (conversation.length() > 500) {
+                // 控制对话总字数
+                break;
+            }
+        }
+
+        String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_STRATEGY_FROM_SINKS"),
+                conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
+                wrapper.theme.nameCN, wrapper.theme.nameCN);
+
+        GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
+                prompt, new GeneratingOption(), null, null);
+        if (null == record) {
+            Logger.w(this.getClass(), "#formulateStrategy - The record is null");
+            return;
+        }
+
+        List<CounselingStrategy> strategies = wrapper.strategies;
+        synchronized (strategies) {
+            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute,
+                    wrapper.theme, wrapper.streamName, record.answer);
+            strategies.add(strategy);
         }
     }
 
@@ -246,8 +331,8 @@ public class CounselingManager {
                 beginIndex + "-" + endIndex + " , file code: " + fileLabel.getFileCode());
 
         // 任务以插队方式提高优先级
-        boolean success = this.service.performSpeakerDiarization(authToken, fileLabel, false, true,
-                new VoiceDiarizationListener() {
+        boolean success = this.service.performSpeakerDiarization(authToken, fileLabel, false,
+                false, true, new VoiceDiarizationListener() {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {
                 diarization.remark = beginIndex + "-" + endIndex;
@@ -304,9 +389,6 @@ public class CounselingManager {
                 else {
                     Logger.e(this.getClass(), "#combine - No wrapper data: " + streamName);
                 }
-
-                // 更新备注
-                service.getStorage().updateVoiceDiarizationRemark(diarization);
             }
 
             @Override
@@ -330,7 +412,6 @@ public class CounselingManager {
         Logger.d(this.getClass(), "#formulateStrategy - Formulates strategy : " + wrapper.streamName);
 
         StringBuilder conversation = new StringBuilder();
-
         String lastLabel = "";
         for (VoiceDiarization voiceDiarization : diarizations) {
             for (VoiceTrack track : voiceDiarization.tracks) {
@@ -357,6 +438,7 @@ public class CounselingManager {
                     }
                     else {
                         conversation.append("来访者").append(TextUtils.gColonInChinese);
+                        lastLabel = VoiceDiarization.LABEL_CUSTOMER;
                     }
                 }
 
@@ -370,13 +452,13 @@ public class CounselingManager {
 
                 lastLabel = track.label;
 
-                if (conversation.length() > 300) {
+                if (conversation.length() > 500) {
                     // 控制对话总字数
                     break;
                 }
             }
 
-            if (conversation.length() > 300) {
+            if (conversation.length() > 500) {
                 // 控制对话总字数
                 break;
             }
@@ -389,8 +471,6 @@ public class CounselingManager {
         String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_STRATEGY"),
                 conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
                 wrapper.theme.nameCN);
-
-        System.out.println("XJW prompt:\n" + prompt);
 
         GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
                 prompt, new GeneratingOption(), null, null);

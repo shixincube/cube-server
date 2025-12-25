@@ -38,6 +38,15 @@ public class SpeechRecognitionInfo implements JSONable {
         this.durationInSeconds = Double.parseDouble(json.get("duration").toString());
     }
 
+    public SpeechRecognitionInfo(SpeechRecognitionInfo info, String text) {
+        this.file = info.file;
+        this.elapsed = info.elapsed;
+        this.text = text;
+        this.words = info.words;
+        this.lang = info.lang;
+        this.durationInSeconds = info.durationInSeconds;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

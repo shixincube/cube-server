@@ -48,7 +48,8 @@ public class SpeakerDiarizationTask extends ServiceTask {
         String fileCode = packet.data.getString("fileCode");
 
         // 执行 Speaker Diarization
-        boolean success = service.performSpeakerDiarization(authToken, fileCode, true, new VoiceDiarizationListener() {
+        boolean success = service.performSpeakerDiarization(authToken, fileCode, true, true,
+                new VoiceDiarizationListener() {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {
                 cellet.speak(talkContext,

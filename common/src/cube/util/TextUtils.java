@@ -467,6 +467,24 @@ public final class TextUtils {
     }
 
     /**
+     * 是否是日文内容。
+     *
+     * @param input
+     * @return
+     */
+    public static boolean isJapanese(String input) {
+        try {
+            if (isChineseWord(input)) {
+                return false;
+            }
+
+            return input.getBytes("shift-jis").length >= (2 * input.length());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * 是否是词。
      *
      * @param word
@@ -1062,8 +1080,27 @@ public final class TextUtils {
 //        System.out.println(result);
 
 //        System.out.println(removePunctuations("Hello, 世界! (This) is a test... “测试。”－1，23."));
-        System.out.println(isLastPunctuationMark("Hello，世界！"));
-        System.out.println(isLastPunctuationMark("Hello, 世界."));
-        System.out.println(isLastPunctuationMark("Hello, 世界"));
+//        System.out.println(isLastPunctuationMark("Hello，世界！"));
+//        System.out.println(isLastPunctuationMark("Hello, 世界."));
+//        System.out.println(isLastPunctuationMark("Hello, 世界"));
+
+//        System.out.println(isJapanese("Hello，世界！"));
+//        System.out.println(isJapanese("デディ"));
+//        System.out.println(isJapanese("こ"));
+//        System.out.println(isJapanese("Hello こか"));
+
+        StringBuilder buf = new StringBuilder();
+        String text = "世界 こかHello";
+        for (int i = 0; i < text.length(); ++i) {
+            String word = text.substring(i, i + 1);
+            if (isChineseWord(word)) {
+                buf.append(word);
+            }
+
+            if (i + 1 == text.length()) {
+                break;
+            }
+        }
+        System.out.println(buf.toString());
     }
 }
