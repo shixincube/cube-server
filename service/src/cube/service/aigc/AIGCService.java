@@ -304,8 +304,8 @@ public class AIGCService extends AbstractModule implements Generatable {
                 // 资源管理器
                 Explorer.getInstance().setup(AIGCService.this, tokenizer);
 
-                // 音频流管理
-                CounselingManager.getInstance().setService(AIGCService.this);
+                // 咨询管理器
+                CounselingManager.getInstance().start(AIGCService.this);
 
                 // 引导系统列表
                 List<GuideFlow> guideFlows = Guides.listGuideFlows();
@@ -322,6 +322,8 @@ public class AIGCService extends AbstractModule implements Generatable {
     @Override
     public void stop() {
         PsychologyScene.getInstance().stop();
+
+        CounselingManager.getInstance().stop();
 
         if (null != this.executor) {
             this.executor.shutdown();
@@ -393,6 +395,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         Explorer.getInstance().onTick(now);
 
         PsychologyScene.getInstance().onTick(now);
+
+        CounselingManager.getInstance().onTick(now);
     }
 
     private void loadConfig() {

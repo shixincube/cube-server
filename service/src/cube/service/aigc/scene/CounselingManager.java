@@ -24,10 +24,7 @@ import cube.util.TextUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -59,8 +56,63 @@ public class CounselingManager {
         return CounselingManager.instance;
     }
 
-    public void setService(AIGCService service) {
+    public void start(AIGCService service) {
         this.service = service;
+    }
+
+    public void stop() {
+        Iterator<Map.Entry<String, List<VoiceStreamSink>>> iter = this.streamSinkMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, List<VoiceStreamSink>> entry = iter.next();
+            for (VoiceStreamSink streamSink : entry.getValue()) {
+                this.service.deleteFile(streamSink.authToken.getDomain(), streamSink.getFileLabel().getFileCode());
+            }
+        }
+
+        Iterator<Map.Entry<String, List<VoiceDiarization>>> diarizationIter = this.combinedVoiceMap.entrySet().iterator();
+        while (diarizationIter.hasNext()) {
+            Map.Entry<String, List<VoiceDiarization>> entry = diarizationIter.next();
+            String streamName = entry.getKey();
+            Wrapper wrapper = this.counselingStrategyMap.get(streamName);
+            if (null != wrapper) {
+                for (VoiceDiarization diarization : entry.getValue()) {
+                    this.service.deleteFile(wrapper.authToken.getDomain(), diarization.fileCode);
+                }
+            }
+        }
+    }
+
+    public void onTick(long now) {
+        Iterator<Map.Entry<String, Wrapper>> iter = this.counselingStrategyMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, Wrapper> entry = iter.next();
+            Wrapper wrapper = entry.getValue();
+            if (now - wrapper.refreshTimestamp > 30 * 60 * 1000) {
+                // 删除超时的数据
+                String streamName = entry.getKey();
+
+                // 删除文件
+                List<VoiceStreamSink> sinkList = this.streamSinkMap.get(streamName);
+                if (null != sinkList) {
+                    for (VoiceStreamSink sink : sinkList) {
+                        this.service.deleteFile(sink.authToken.getDomain(), sink.getFileLabel().getFileCode());
+                    }
+                }
+
+                List<VoiceDiarization> diarizationList = this.combinedVoiceMap.get(streamName);
+                if (null != diarizationList) {
+                    for (VoiceDiarization diarization : diarizationList) {
+                        this.service.deleteFile(wrapper.authToken.getDomain(), diarization.fileCode);
+                    }
+                }
+
+                // 删除内存里的数据
+                this.streamSinkMap.remove(streamName);
+                this.combinedVoiceMap.remove(streamName);
+
+                iter.remove();
+            }
+        }
     }
 
     public void record(AuthToken authToken, VoiceStreamSink streamSink) {
@@ -115,17 +167,10 @@ public class CounselingManager {
      */
     public CounselingStrategy queryCounselingStrategy(AuthToken authToken, ConsultationTheme theme,
                                                       Attribute attribute, String streamName) {
-//        StringBuilder buf = new StringBuilder();
-//        buf.append("第一行：").append(Utils.randomString(32)).append("\n\n");
-//        buf.append("第二行：").append(Utils.randomString(64)).append("\n\n");
-//        buf.append("第三行：").append(Utils.randomString(32)).append("\n\n");
-//        CounselingStrategy r = new CounselingStrategy(0, attribute, theme, streamName, buf.toString());
-//        if (buf.length() > 32) {
-//            return r;
-//        }
-
         Wrapper wrapper = this.counselingStrategyMap.computeIfAbsent(streamName,
                 k -> new Wrapper(streamName, authToken, theme, attribute));
+        // 更新时间戳
+        wrapper.refreshTimestamp = System.currentTimeMillis();
         List<CounselingStrategy> strategies = wrapper.strategies;
 
         if (strategies.isEmpty()) {
@@ -515,12 +560,15 @@ public class CounselingManager {
 
         public final List<CounselingStrategy> strategies;
 
+        public long refreshTimestamp;
+
         protected Wrapper(String streamName, AuthToken authToken, ConsultationTheme theme, Attribute attribute) {
             this.streamName = streamName;
             this.authToken = authToken;
             this.theme = theme;
             this.attribute = attribute;
             this.strategies = new ArrayList<>();
+            this.refreshTimestamp = System.currentTimeMillis();
         }
     }
 }

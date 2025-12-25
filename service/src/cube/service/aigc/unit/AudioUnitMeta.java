@@ -85,6 +85,7 @@ public class AudioUnitMeta extends UnitMeta {
             VoiceDiarization result = new VoiceDiarization(payload.getJSONObject("result"));
             // 补齐参数
             result.contactId = this.authToken.getContactId();
+            result.setDomain(this.authToken.getDomain());
             String nameCode = FileUtils.extractFileName(this.file.getFileName());
             if (nameCode.length() > 10) {
                 nameCode = nameCode.substring(0, 9);
