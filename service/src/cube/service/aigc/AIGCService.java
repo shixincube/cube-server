@@ -92,16 +92,6 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * Key 是 AIGC 的 Query Key
      */
-//    private final Map<String, Queue<GenerateTextUnitMeta>> generateQueueMap;
-
-    /**
-     * Key 是 AIGC 的 Query Key
-     */
-//    private final Map<String, Queue<ConversationUnitMeta>> conversationQueueMap;
-
-    /**
-     * Key 是 AIGC 的 Query Key
-     */
     private final Map<String, Queue<UnitMeta>> textToFileQueueMap;
 
     /**
@@ -157,7 +147,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     private AIGCStorage storage;
 
-    private Tokenizer tokenizer;
+    private final Tokenizer tokenizer;
 
     private AIGCPluginSystem pluginSystem;
 
@@ -190,8 +180,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         this.unitMap = new ConcurrentHashMap<>();
         this.unitWeightMap = new ConcurrentHashMap<>();
         this.channelMap = new ConcurrentHashMap<>();
-//        this.generateQueueMap = new ConcurrentHashMap<>();
-//        this.conversationQueueMap = new ConcurrentHashMap<>();
         this.textToFileQueueMap = new ConcurrentHashMap<>();
         this.textToImageQueueMap = new ConcurrentHashMap<>();
         this.summarizationQueueMap = new ConcurrentHashMap<>();
@@ -2364,12 +2352,12 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         if (!unit.isRunning()) {
             final Queue<UnitMeta> metaQueue = queue;
-            this.executor.execute(new Runnable() {
+            (new Thread() {
                 @Override
                 public void run() {
                     processQueue(meta.unit, metaQueue);
                 }
-            });
+            }).start();
         }
 
         return true;
@@ -2451,12 +2439,12 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         if (!unit.isRunning()) {
             final Queue<UnitMeta> metaQueue = queue;
-            this.executor.execute(new Runnable() {
+            (new Thread() {
                 @Override
                 public void run() {
                     processQueue(meta.unit, metaQueue);
                 }
-            });
+            }).start();
         }
 
         return true;
@@ -2500,12 +2488,12 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         if (!unit.isRunning()) {
             final Queue<UnitMeta> metaQueue = queue;
-            this.executor.execute(new Runnable() {
+            (new Thread() {
                 @Override
                 public void run() {
                     processQueue(meta.unit, metaQueue);
                 }
-            });
+            }).start();
         }
 
         return true;
@@ -2545,12 +2533,12 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         if (!unit.isRunning()) {
             final Queue<UnitMeta> metaQueue = queue;
-            this.executor.execute(new Runnable() {
+            (new Thread() {
                 @Override
                 public void run() {
                     processQueue(meta.unit, metaQueue);
                 }
-            });
+            }).start();
         }
 
         return true;
@@ -2590,12 +2578,12 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         if (!unit.isRunning()) {
             final Queue<UnitMeta> metaQueue = queue;
-            this.executor.execute(new Runnable() {
+            (new Thread() {
                 @Override
                 public void run() {
                     processQueue(meta.unit, metaQueue);
                 }
-            });
+            }).start();
         }
 
         return true;
@@ -2635,12 +2623,12 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         if (!unit.isRunning()) {
             final Queue<UnitMeta> metaQueue = queue;
-            this.executor.execute(new Runnable() {
+            (new Thread() {
                 @Override
                 public void run() {
                     processQueue(meta.unit, metaQueue);
                 }
-            });
+            }).start();
         }
 
         return true;
@@ -2685,12 +2673,12 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         if (!unit.isRunning()) {
             final Queue<UnitMeta> metaQueue = queue;
-            this.executor.execute(new Runnable() {
+            (new Thread() {
                 @Override
                 public void run() {
                     processQueue(meta.unit, metaQueue);
                 }
-            });
+            }).start();
         }
 
         synchronized (result) {
@@ -2700,22 +2688,6 @@ public class AIGCService extends AbstractModule implements Generatable {
                 e.printStackTrace();
             }
         }
-
-//        try {
-//            Thread.sleep(Utils.randomInt(10 * 1000, 30 * 1000));
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//        JSONObject json = new JSONObject();
-//        json.put("query", query);
-//        JSONArray array = new JSONArray();
-//        JSONObject answer = new JSONObject();
-//        answer.put("id", 1);
-//        answer.put("content", "这是分析" + fileLabels.get(0).getFileName() + "文件对于\"" + query + "\"的提问的Re-rank测试。");
-//        answer.put("score", 0.8);
-//        array.put(answer);
-//        json.put("list", array);
-//        result.add(new RetrieveReRankResult(json));
 
         return result;
     }
@@ -2900,12 +2872,12 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         if (!unit.isRunning()) {
             final Queue<UnitMeta> metaQueue = queue;
-            this.executor.execute(new Runnable() {
+            (new Thread() {
                 @Override
                 public void run() {
                     processQueue(meta.unit, metaQueue);
                 }
-            });
+            }).start();
         }
 
         return true;
@@ -2925,12 +2897,6 @@ public class AIGCService extends AbstractModule implements Generatable {
     public boolean performSpeakerDiarization(AuthToken authToken, FileLabel fileLabel, boolean preprocess,
                                              boolean storage, boolean jumpToFirst,
                                              VoiceDiarizationListener listener) {
-//        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
-//        if (null == fileStorage) {
-//            Logger.e(this.getClass(), "#performSpeakerDiarization - File storage service is not ready");
-//            return false;
-//        }
-
         // 查找有该能力的单元
         AIGCUnit unit = this.selectUnitBySubtask(AICapability.AudioProcessing.SpeakerDiarization);
         if (null == unit) {
@@ -2954,12 +2920,12 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         if (!unit.isRunning()) {
             final Queue<UnitMeta> metaQueue = queue;
-            this.executor.execute(new Runnable() {
+            (new Thread() {
                 @Override
                 public void run() {
                     processQueue(meta.unit, metaQueue);
                 }
-            });
+            }).start();
         }
 
         return true;
@@ -2977,12 +2943,6 @@ public class AIGCService extends AbstractModule implements Generatable {
      */
     public boolean performSpeakerDiarization(AuthToken authToken, String fileCode, boolean preprocess,
                                              boolean storage, VoiceDiarizationListener listener) {
-//        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
-//        if (null == fileStorage) {
-//            Logger.e(this.getClass(), "#performSpeakerDiarization - File storage service is not ready");
-//            return false;
-//        }
-
         FileLabel fileLabel = this.getFile(authToken.getDomain(), fileCode);
         if (null == fileLabel) {
             Logger.e(this.getClass(), "#performSpeakerDiarization - Get file failed: " + fileCode);
