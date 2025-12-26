@@ -42,9 +42,10 @@ public class QueryCounselingStrategy extends ContextHandler {
                 String streamName = data.getString("streamName");
                 ConsultationTheme theme = ConsultationTheme.parse(data.getString("theme"));
                 Attribute attribute = new Attribute(data.getJSONObject("attribute"));
+                int index = data.has("index") ? data.getInt("index") : -1;
 
                 CounselingStrategy strategy = Manager.getInstance().queryCounselingStrategy(token,
-                        streamName, theme, attribute);
+                        streamName, theme, attribute, index);
                 if (null == strategy) {
                     this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();

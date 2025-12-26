@@ -61,6 +61,8 @@ public class CounselingManager {
     }
 
     public void stop() {
+        this.executor.shutdown();
+
         Iterator<Map.Entry<String, List<VoiceStreamSink>>> iter = this.streamSinkMap.entrySet().iterator();
         while (iter.hasNext()) {
             Map.Entry<String, List<VoiceStreamSink>> entry = iter.next();
@@ -147,7 +149,8 @@ public class CounselingManager {
                 @Override
                 public void run() {
                     // 生成策略
-                    formulateStrategy(listCopy);
+                    formulateStrategyWithText(listCopy);
+                    formulateStrategyWithEmotion(listCopy);
 
                     // 组合数据再次进行分析
                     combine(listCopy);
@@ -163,10 +166,11 @@ public class CounselingManager {
      * @param theme
      * @param attribute
      * @param streamName
+     * @param index
      * @return
      */
     public CounselingStrategy queryCounselingStrategy(AuthToken authToken, ConsultationTheme theme,
-                                                      Attribute attribute, String streamName) {
+                                                      Attribute attribute, String streamName, int index) {
         Wrapper wrapper = this.counselingStrategyMap.computeIfAbsent(streamName,
                 k -> new Wrapper(streamName, authToken, theme, attribute));
         // 更新时间戳
@@ -193,15 +197,23 @@ public class CounselingManager {
             return strategy;
         }
         else {
+            synchronized (strategies) {
+                for (CounselingStrategy strategy : strategies) {
+                    if (strategy.index == index) {
+                        return strategy;
+                    }
+                }
+            }
+
             return strategies.get(strategies.size() - 1);
         }
     }
 
-    private void formulateStrategy(List<VoiceStreamSink> sinks) {
+    private void formulateStrategyWithText(List<VoiceStreamSink> sinks) {
         final String streamName = sinks.get(0).getStreamName();
         Wrapper wrapper = this.counselingStrategyMap.get(streamName);
         if (null == wrapper) {
-            Logger.w(this.getClass(), "#formulateStrategy - No find wrapper: " + streamName);
+            Logger.w(this.getClass(), "#formulateStrategyWithText - No find wrapper: " + streamName);
             return;
         }
 
@@ -227,9 +239,11 @@ public class CounselingManager {
                     // 角色
                     if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_COUNSELOR)) {
                         conversation.append("咨询师").append(TextUtils.gColonInChinese);
+                        lastLabel = track.label;
                     }
                     else if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_CUSTOMER)) {
                         conversation.append("来访者").append(TextUtils.gColonInChinese);
+                        lastLabel = track.label;
                     }
                     else {
                         conversation.append("来访者").append(TextUtils.gColonInChinese);
@@ -239,13 +253,7 @@ public class CounselingManager {
 
                 // 内容
                 conversation.append(text);
-                // 语气情绪
-//                conversation.append("（语气").append(TextUtils.gColonInChinese);
-//                conversation.append(track.emotion.emotion.primaryWord);
-//                conversation.append("）");
                 conversation.append(mark);
-
-                lastLabel = track.label;
 
                 if (conversation.length() > 500) {
                     // 控制对话总字数
@@ -259,14 +267,74 @@ public class CounselingManager {
             }
         }
 
-        String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_STRATEGY_FROM_SINKS"),
+        String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_STRATEGY_TEXT"),
                 conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
                 wrapper.theme.nameCN, wrapper.theme.nameCN);
 
         GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
                 prompt, new GeneratingOption(), null, null);
         if (null == record) {
-            Logger.w(this.getClass(), "#formulateStrategy - The record is null");
+            Logger.w(this.getClass(), "#formulateStrategyWithText - The record is null");
+            return;
+        }
+
+        List<CounselingStrategy> strategies = wrapper.strategies;
+        synchronized (strategies) {
+            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute,
+                    wrapper.theme, wrapper.streamName, record.answer);
+            strategies.add(strategy);
+        }
+    }
+
+    private void formulateStrategyWithEmotion(List<VoiceStreamSink> sinks) {
+        final String streamName = sinks.get(0).getStreamName();
+        Wrapper wrapper = this.counselingStrategyMap.get(streamName);
+        if (null == wrapper) {
+            Logger.w(this.getClass(), "#formulateStrategyWithEmotion - No find wrapper: " + streamName);
+            return;
+        }
+
+        float totalRhythm = 0;
+        float countRhythm = 0;
+
+        float totalPositiveRatio = 0;
+        float countPositiveRatio = 0;
+
+        float totalNegativeRatio = 0;
+        float countNegativeRatio = 0;
+
+        for (VoiceStreamSink sink : sinks) {
+            for (SpeakerIndicator indicator : sink.getDiarization().indicator.speakerIndicators.values()) {
+                if (indicator.label.equalsIgnoreCase(VoiceDiarization.LABEL_CUSTOMER)) {
+                    // 语言节奏
+                    totalRhythm += indicator.rhythm;
+                    ++countRhythm;
+
+                    // 正面情绪
+                    totalPositiveRatio += indicator.emotionRatio.positiveRatio;
+                    ++countPositiveRatio;
+
+                    // 负面情绪
+                    totalNegativeRatio += indicator.emotionRatio.negativeRatio;
+                    ++countNegativeRatio;
+                    break;
+                }
+            }
+        }
+
+        int rhythm = Math.round(totalRhythm / countRhythm);
+        int positiveRatio = Math.round(totalPositiveRatio / countPositiveRatio);
+        int negativeRatio = Math.round(totalNegativeRatio / countNegativeRatio);
+        int neutralRatio = 100 - positiveRatio - negativeRatio;
+
+        String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_STRATEGY_EMOTION"),
+                wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(), wrapper.theme.nameCN,
+                rhythm, positiveRatio, negativeRatio, neutralRatio);
+
+        GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
+                prompt, new GeneratingOption(), null, null);
+        if (null == record) {
+            Logger.w(this.getClass(), "#formulateStrategyWithEmotion - The record is null");
             return;
         }
 
@@ -477,9 +545,11 @@ public class CounselingManager {
                     // 角色
                     if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_COUNSELOR)) {
                         conversation.append("咨询师").append(TextUtils.gColonInChinese);
+                        lastLabel = track.label;
                     }
                     else if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_CUSTOMER)) {
                         conversation.append("来访者").append(TextUtils.gColonInChinese);
+                        lastLabel = track.label;
                     }
                     else {
                         conversation.append("来访者").append(TextUtils.gColonInChinese);
@@ -494,8 +564,6 @@ public class CounselingManager {
                 conversation.append(track.emotion.emotion.primaryWord);
                 conversation.append("）");
                 conversation.append(mark);
-
-                lastLabel = track.label;
 
                 if (conversation.length() > 500) {
                     // 控制对话总字数

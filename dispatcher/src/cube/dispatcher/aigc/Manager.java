@@ -2921,14 +2921,16 @@ public class Manager implements Tickable, PerformerListener {
      * @param streamName
      * @param theme
      * @param attribute
+     * @param index
      * @return
      */
     public CounselingStrategy queryCounselingStrategy(String token, String streamName, ConsultationTheme theme,
-                                                      Attribute attribute) {
+                                                      Attribute attribute, int index) {
         JSONObject data = new JSONObject();
         data.put("streamName", streamName);
         data.put("theme", theme.code);
         data.put("attribute", attribute.toJSON());
+        data.put("index", index);
         Packet packet = new Packet(AIGCAction.QueryCounselingStrategy.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);

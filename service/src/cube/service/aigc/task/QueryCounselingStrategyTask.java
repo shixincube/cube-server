@@ -54,12 +54,13 @@ public class QueryCounselingStrategyTask extends ServiceTask {
             ConsultationTheme theme = ConsultationTheme.parse(packet.data.getString("theme"));
             Attribute attribute = new Attribute(packet.data.getJSONObject("attribute"));
             String streamName = packet.data.getString("streamName");
+            int index = packet.data.getInt("index");
 
             CounselingStrategy result = CounselingManager.getInstance().queryCounselingStrategy(authToken,
-                    theme, attribute, streamName);
+                    theme, attribute, streamName, index);
             if (null == result) {
                 this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.InconsistentToken.code, new JSONObject()));
+                        this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));
                 markResponseTime();
                 return;
             }
