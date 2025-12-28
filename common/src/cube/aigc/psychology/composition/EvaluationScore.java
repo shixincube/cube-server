@@ -410,16 +410,16 @@ public class EvaluationScore implements JSONable {
                 }
                 break;
             case LogicalThinking:
-                if (rate == IndicatorRate.High) {
-                    buf.append(attribute.language.isChinese() ? "逻辑思维很好" : "Excellent logical thinking");
-                }
-                else if (rate == IndicatorRate.Medium) {
-                    buf.append(attribute.language.isChinese() ? "逻辑思维较好" : "Good logical thinking");
-                }
-                else {
-                    buf.append(attribute.language.isChinese() ? "逻辑思维一般" : "Logical thinking is at an average level");
-                }
-                break;
+//                if (rate == IndicatorRate.High) {
+//                    buf.append(attribute.language.isChinese() ? "逻辑思维很好" : "Excellent logical thinking");
+//                }
+//                else if (rate == IndicatorRate.Medium) {
+//                    buf.append(attribute.language.isChinese() ? "逻辑思维较好" : "Good logical thinking");
+//                }
+//                else {
+//                    buf.append(attribute.language.isChinese() ? "逻辑思维一般" : "Logical thinking is at an average level");
+//                }
+                return null;
             case SecureAttachment:
                 buf.append(attribute.language.isChinese() ? "安全型依恋" : "Secure attachment");
                 break;
