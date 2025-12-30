@@ -76,11 +76,11 @@ public abstract class ConversationSubtask {
     protected String polish(String text) {
         AIGCUnit unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_X_UNIT);
         if (null == unit) {
-            unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+            unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_UNIT);
             if (null == unit) {
-                unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_UNIT);
+                unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
                 if (null == unit) {
-                    Logger.d(this.getClass(), "#polish - Can NOT find unit");
+                    Logger.d(this.getClass(), "#polish - Can NOT find idle unit");
                     return text;
                 }
             }

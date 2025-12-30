@@ -58,7 +58,7 @@ public class Guides {
         File[] files = sRootPath.listFiles();
         if (null != files) {
             for (File file : files) {
-                if (file.isFile() && file.getName().endsWith(".json")) {
+                if (file.isFile() && file.getName().endsWith(".json") && !file.getName().startsWith("_")) {
                     GuideFlow track = sGuideFlowMap.get(file.getName());
                     if (null == track || track.getLoadTimestamp() != file.lastModified()) {
                         try {

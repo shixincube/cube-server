@@ -21,7 +21,7 @@ public class Link {
 
     public final static String ScaleAnswer = "aixinli://scale.answer/";
 
-    public final static String GuideAnswer = "aixinli://guide.answer";
+    public final static String GuideAnswer = "aixinli://guide.answer/";
 
     private Link() {
     }

@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 心理学模块数据管理器。
+ * 场景数据管理器。
  */
 public class SceneManager {
 

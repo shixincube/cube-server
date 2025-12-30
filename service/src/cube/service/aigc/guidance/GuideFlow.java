@@ -149,7 +149,6 @@ public class GuideFlow extends AbstractGuideFlow {
 
     private String makeQuestionAnswer(AnswerGroup answerGroup) {
         StringBuilder buf = new StringBuilder();
-
         for (Answer answer : answerGroup.answers) {
             buf.append("- [");
             buf.append(answerGroup.content).append("：").append(answer.content);
