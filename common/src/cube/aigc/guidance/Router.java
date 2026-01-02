@@ -14,20 +14,67 @@ import java.util.Map;
 
 public class Router {
 
-    public final static String RULE_TRUE_FALSE = "true-or-false";
+    public enum Rule {
+        /**
+         * 是或否规则。
+         */
+        TrueOrFalse("true-or-false"),
 
+        /**
+         * 单选规则。
+         */
+        SingleChoice("single-choice"),
+
+        /**
+         * 多选规则。
+         */
+        MultipleChoice("multiple-choice"),
+
+        /**
+         * 讨论和论述规则。
+         */
+        Discuss("discuss"),
+
+        ;
+
+        public final String code;
+
+        Rule(String code) {
+            this.code = code;
+        }
+
+        public static Rule parse(String nameOrCode) {
+            for (Rule rule : Rule.values()) {
+                if (rule.code.equalsIgnoreCase(nameOrCode)) {
+                    return rule;
+                }
+            }
+            return Discuss;
+        }
+    }
+
+    /**
+     * 路由出口为：是。
+     */
     public final static String EXPORT_TRUE = "true";
 
+    /**
+     * 路由出口为：否。
+     */
     public final static String EXPORT_FALSE = "false";
 
+    /**
+     * 路由出口为：执行评估规则。
+     * 2026-1-2 为了兼容 MINI 评测保留，后续取消该出口。
+     */
     public final static String EXPORT_EVALUATION = "evaluation";
 
-    private String rule;
+    private Rule rule;
 
     private Map<String, RouteExport> exportMap;
 
     public Router(JSONObject json) {
-        this.rule = json.getString("rule");
+        this.rule = Rule.parse(json.getString("rule"));
 
         this.exportMap = new HashMap<>();
         JSONObject routeJson = json.getJSONObject("route");
@@ -69,7 +116,7 @@ public class Router {
         }
     }
 
-    public String getRule() {
+    public Rule getRule() {
         return this.rule;
     }
 
@@ -88,7 +135,7 @@ public class Router {
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("rule", this.rule);
+        json.put("rule", this.rule.code);
 
         JSONObject routeJson = new JSONObject();
         Iterator<Map.Entry<String, RouteExport>> iter = this.exportMap.entrySet().iterator();

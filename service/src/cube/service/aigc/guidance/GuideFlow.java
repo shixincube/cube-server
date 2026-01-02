@@ -126,16 +126,18 @@ public class GuideFlow extends AbstractGuideFlow {
 
             if (null != question.answers && !question.answers.isEmpty()) {
                 StringBuilder buf = new StringBuilder();
-                buf.append("\n\n请使用“是”或“否”作答：");
-                for (Answer answer : question.answers) {
-                    buf.append("\n\n* [");
-                    buf.append(answer.content);
-                    buf.append("](");
-                    buf.append(Link.GuideAnswer)
-                            .append(question.sn).append("/")
-                            .append(answer.code).append("/")
-                            .append(answer.content);
-                    buf.append(")");
+                if (question.router.getRule() == Router.Rule.TrueOrFalse) {
+                    buf.append("\n\n请使用“是”或“否”作答：");
+                    for (Answer answer : question.answers) {
+                        buf.append("\n\n* [");
+                        buf.append(answer.content);
+                        buf.append("](");
+                        buf.append(Link.GuideAnswer)
+                                .append(question.sn).append("/")
+                                .append(answer.code).append("/")
+                                .append(answer.content);
+                        buf.append(")");
+                    }
                 }
                 content += buf.toString();
             }
@@ -169,7 +171,7 @@ public class GuideFlow extends AbstractGuideFlow {
 
         Router router = this.currentQuestion.router;
         if (null != router) {
-            if (Router.RULE_TRUE_FALSE.equalsIgnoreCase(router.getRule())) {
+            if (Router.Rule.TrueOrFalse ==router.getRule()) {
                 // 答案判断
                 // -1 无，0 否，1 是
                 int yesOrNo = -1;
@@ -310,9 +312,14 @@ public class GuideFlow extends AbstractGuideFlow {
         }
     }
 
-    private AIGCStateCode jumpQuestion(String sn, String query) {
+    private AIGCStateCode jumpQuestion(String target, String query) {
+        if (target.trim().equalsIgnoreCase("finish")) {
+            // 跳转到结束
+            return finishSection();
+        }
+
         // 切换当前问题
-        Question question = getQuestion(sn);
+        Question question = getQuestion(target);
         this.currentQuestion = question;
 
         Question.Precondition precondition = this.currentQuestion.precondition;
@@ -500,6 +507,14 @@ public class GuideFlow extends AbstractGuideFlow {
         this.currentQuestion = this.currentSection.getQuestion(0);
 
         return jumpQuestion(this.currentQuestion.sn, query);
+    }
+
+    private AIGCStateCode finishSection() {
+        if (null == this.currentSection) {
+            return AIGCStateCode.Failure;
+        }
+
+        return evaluationSection(this.currentSection.evaluation, "报告结果");
     }
 
     private AIGCStateCode evaluationSection(String evaluation, String query) {
