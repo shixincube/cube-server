@@ -22,6 +22,8 @@ public class EvaluationResult implements JSONable {
 
     private Map<String, Boolean> evaluationItems;
 
+    private String description;
+
     private Map<String, String> qaPairs;
 
     private boolean terminated = false;
@@ -34,14 +36,19 @@ public class EvaluationResult implements JSONable {
 
     public EvaluationResult(JSONObject json) {
         this.name = json.getString("name");
-        this.result = json.getJSONObject("result");
+        this.result = json.has("result") ? json.getJSONObject("result") : null;
         this.evaluationItems = new LinkedHashMap<>();
         JSONArray array = json.getJSONArray("items");
         for (int i = 0; i < array.length(); ++i) {
             JSONObject data = array.getJSONObject(i);
             this.evaluationItems.put(data.getString("item"), data.getBoolean("value"));
         }
+        this.description = json.has("description") ? json.getString("description") : null;
         this.qaPairs = new LinkedHashMap<>();
+    }
+
+    public boolean isValid() {
+        return (null != this.result) || (null != this.description) || !this.evaluationItems.isEmpty();
     }
 
     public void setTerminated(boolean value) {
@@ -57,8 +64,8 @@ public class EvaluationResult implements JSONable {
         this.result.put("value", value.toString());
     }
 
-    public boolean hasResult() {
-        return (null != this.result);
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public void addItem(String name, boolean value) {
@@ -73,8 +80,8 @@ public class EvaluationResult implements JSONable {
         StringBuilder buf = new StringBuilder();
         buf.append("**").append(this.name).append("**\n\n");
 
-        buf.append("- ***");
-        if (this.result.has("value")) {
+        if (null != this.result && this.result.has("value")) {
+            buf.append("- ***");
             String value = this.result.getString("value");
             try {
                 if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
@@ -87,14 +94,23 @@ public class EvaluationResult implements JSONable {
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#toMarkdown", e);
             }
+            buf.append("***").append("\n\n");
         }
-        buf.append("***").append("\n\n");
 
         for (Map.Entry<String, Boolean> entry : this.evaluationItems.entrySet()) {
             buf.append("> ").append(entry.getKey());
             buf.append("    ").append(entry.getValue() ? "是" : "否");
             buf.append("\n");
         }
+
+        if (!this.evaluationItems.isEmpty()) {
+            buf.append("\n");
+        }
+
+        if (null != this.description) {
+            buf.append(this.description);
+        }
+
         return buf.toString().trim();
     }
 
@@ -102,7 +118,9 @@ public class EvaluationResult implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
-        json.put("result", this.result);
+        if (null != this.result) {
+            json.put("result", this.result);
+        }
         JSONArray array = new JSONArray();
         for (Map.Entry<String, Boolean> entry : this.evaluationItems.entrySet()) {
             JSONObject item = new JSONObject();
@@ -111,6 +129,9 @@ public class EvaluationResult implements JSONable {
             array.put(item);
         }
         json.put("items", array);
+        if (null != this.description) {
+            json.put("description", this.description);
+        }
         return json;
     }
 

@@ -1,13 +1,13 @@
 {
-  "name": "VocationalInterest",
+  "name": "CareerAssessment",
   "displayName": "职业兴趣测评",
   "keywords": [ "职业兴趣测评", "职业兴趣", "职业倾向", "职业", "工作", "兴趣", "规划", "倾向", "职业测评", "职业评测", "测评", "评测" ],
   "instruction": "这是关于您职业兴趣倾向的测评。\n\n请根据您的第一印象作答，不必仔细推敲，答案没有好坏、对错之分。请使用“是”或“否”作答。",
   "explainPrefix": "我们正在进行职业兴趣测评，你作为提问者正在提出问题，提出的问题需要我用“是”或“否”进行回答。",
-  "noResults": "",
+  "noResults": "职业兴趣测评结果显示您适合任何职业。",
   "questionableResults": "",
   "sections": [{
-    "name": "",
+    "name": "本次",
     "questions": [{
       "sn": "1",
       "question": "你喜欢把一件事情做完后再做另一件事。",
@@ -53,6 +53,6 @@
         }
       }
     }],
-    "evaluation": "VocationalInterest.js"
+    "evaluation": "CareerAssessment.js"
   }]
 }

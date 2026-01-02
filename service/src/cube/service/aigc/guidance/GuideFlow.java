@@ -543,7 +543,7 @@ public class GuideFlow extends AbstractGuideFlow {
             this.currentSection.evaluationResult = result;
             this.endTimestamp = System.currentTimeMillis();
 
-            if (result.hasResult()) {
+            if (result.isValid()) {
                 // 有结果，输出结果
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
