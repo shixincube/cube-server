@@ -45,6 +45,1084 @@
         "rule": "true-or-false",
         "route": {
           "true": {
+            "jump": "3"
+          },
+          "false": {
+            "jump": "3"
+          }
+        }
+      }
+    }, {
+      "sn": "3",
+      "question": "在集体讨论中，我往往保持沉默。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "4"
+          },
+          "false": {
+            "jump": "4"
+          }
+        }
+      }
+    }, {
+      "sn": "4",
+      "question": "我喜欢做戏剧、音乐、歌舞、新闻采访等方面的工作。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "5"
+          },
+          "false": {
+            "jump": "5"
+          }
+        }
+      }
+    }, {
+      "sn": "5",
+      "question": "每次写信我都一挥而就，不再重复。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "6"
+          },
+          "false": {
+            "jump": "6"
+          }
+        }
+      }
+    }, {
+      "sn": "6",
+      "question": "我经常不停地思考某一问题，直到想出正确答案。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "7"
+          },
+          "false": {
+            "jump": "7"
+          }
+        }
+      }
+    }, {
+      "sn": "7",
+      "question": "对别人借我的和我借别人的东西，我都能记得很清楚。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "8"
+          },
+          "false": {
+            "jump": "8"
+          }
+        }
+      }
+    }, {
+      "sn": "8",
+      "question": "我喜欢抽象思维的工作，不喜欢动手的工作。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "9"
+          },
+          "false": {
+            "jump": "9"
+          }
+        }
+      }
+    }, {
+      "sn": "9",
+      "question": "我喜欢成为人们注意的焦点。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "10"
+          },
+          "false": {
+            "jump": "10"
+          }
+        }
+      }
+    }, {
+      "sn": "10",
+      "question": "我喜欢不时地夸耀一下自己取得的好成绩。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "11"
+          },
+          "false": {
+            "jump": "11"
+          }
+        }
+      }
+    }, {
+      "sn": "11",
+      "question": "我曾经渴望有机会参加探险。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "12"
+          },
+          "false": {
+            "jump": "12"
+          }
+        }
+      }
+    }, {
+      "sn": "12",
+      "question": "当我一人独处时，会感到更愉快。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "13"
+          },
+          "false": {
+            "jump": "13"
+          }
+        }
+      }
+    }, {
+      "sn": "13",
+      "question": "我喜欢在做事情前，对此事情做出细致的安排。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "14"
+          },
+          "false": {
+            "jump": "14"
+          }
+        }
+      }
+    }, {
+      "sn": "14",
+      "question": "我讨厌修理自行车、电器、手机一类的工作。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "15"
+          },
+          "false": {
+            "jump": "15"
+          }
+        }
+      }
+    }, {
+      "sn": "15",
+      "question": "我喜欢参加各种各样的聚会。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "16"
+          },
+          "false": {
+            "jump": "16"
+          }
+        }
+      }
+    }, {
+      "sn": "16",
+      "question": "我愿意从事虽然工资少，但是比较稳定的职业。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "17"
+          },
+          "false": {
+            "jump": "17"
+          }
+        }
+      }
+    }, {
+      "sn": "17",
+      "question": "音乐能使我陶醉。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "18"
+          },
+          "false": {
+            "jump": "18"
+          }
+        }
+      }
+    }, {
+      "sn": "18",
+      "question": "我办事很少思前想后。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "19"
+          },
+          "false": {
+            "jump": "19"
+          }
+        }
+      }
+    }, {
+      "sn": "19",
+      "question": "我喜欢经常请示上级。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "20"
+          },
+          "false": {
+            "jump": "20"
+          }
+        }
+      }
+    }, {
+      "sn": "20",
+      "question": "我喜欢需要运用智力的游戏。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "21"
+          },
+          "false": {
+            "jump": "21"
+          }
+        }
+      }
+    }, {
+      "sn": "21",
+      "question": "我很难做那种需要持续集中注意力的工作。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "22"
+          },
+          "false": {
+            "jump": "22"
+          }
+        }
+      }
+    }, {
+      "sn": "22",
+      "question": "我喜欢亲自动手制作一些东西，从中得到乐趣。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "23"
+          },
+          "false": {
+            "jump": "23"
+          }
+        }
+      }
+    }, {
+      "sn": "23",
+      "question": "我的动手能力很差。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "24"
+          },
+          "false": {
+            "jump": "24"
+          }
+        }
+      }
+    }, {
+      "sn": "24",
+      "question": "和不熟悉的人交谈对我来说毫不困难。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "25"
+          },
+          "false": {
+            "jump": "25"
+          }
+        }
+      }
+    }, {
+      "sn": "25",
+      "question": "和别人谈判时，我总是很容易放弃自己的观点。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "26"
+          },
+          "false": {
+            "jump": "26"
+          }
+        }
+      }
+    }, {
+      "sn": "26",
+      "question": "我很容易结识同性朋友。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "27"
+          },
+          "false": {
+            "jump": "27"
+          }
+        }
+      }
+    }, {
+      "sn": "27",
+      "question": "对于社会问题，我通常持中庸的态度。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "28"
+          },
+          "false": {
+            "jump": "28"
+          }
+        }
+      }
+    }, {
+      "sn": "28",
+      "question": "当我开始做一件事情后，即使碰到再多的困难，我也要执着地干下去。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "29"
+          },
+          "false": {
+            "jump": "29"
+          }
+        }
+      }
+    }, {
+      "sn": "29",
+      "question": "我是一个沉静而不易动感情的人。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "30"
+          },
+          "false": {
+            "jump": "30"
+          }
+        }
+      }
+    }, {
+      "sn": "30",
+      "question": "当我工作时，我喜欢避免干扰。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "31"
+          },
+          "false": {
+            "jump": "31"
+          }
+        }
+      }
+    }, {
+      "sn": "31",
+      "question": "我的理想是当一名科学家。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "32"
+          },
+          "false": {
+            "jump": "32"
+          }
+        }
+      }
+    }, {
+      "sn": "32",
+      "question": "与言情小说相比，我更喜欢推理小说。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "33"
+          },
+          "false": {
+            "jump": "33"
+          }
+        }
+      }
+    }, {
+      "sn": "33",
+      "question": "有些人太霸道，有时明明知道他们是对的，也要和他们对着干。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "34"
+          },
+          "false": {
+            "jump": "34"
+          }
+        }
+      }
+    }, {
+      "sn": "34",
+      "question": "我爱幻想。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "35"
+          },
+          "false": {
+            "jump": "35"
+          }
+        }
+      }
+    }, {
+      "sn": "35",
+      "question": "我总是主动地向别人提出自己的建议。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "36"
+          },
+          "false": {
+            "jump": "36"
+          }
+        }
+      }
+    }, {
+      "sn": "36",
+      "question": "我喜欢使用锤子一类的工具。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "37"
+          },
+          "false": {
+            "jump": "37"
+          }
+        }
+      }
+    }, {
+      "sn": "37",
+      "question": "我乐于解除别人的痛苦。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "38"
+          },
+          "false": {
+            "jump": "38"
+          }
+        }
+      }
+    }, {
+      "sn": "38",
+      "question": "我更喜欢自己下了赌注的比赛或游戏。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "39"
+          },
+          "false": {
+            "jump": "39"
+          }
+        }
+      }
+    }, {
+      "sn": "39",
+      "question": "我喜欢按部就班地完成要做的工作。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "40"
+          },
+          "false": {
+            "jump": "40"
+          }
+        }
+      }
+    }, {
+      "sn": "40",
+      "question": "我希望能经常换不同的工作来做。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "41"
+          },
+          "false": {
+            "jump": "41"
+          }
+        }
+      }
+    }, {
+      "sn": "41",
+      "question": "我总留有充裕的时间去赴约会。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "42"
+          },
+          "false": {
+            "jump": "42"
+          }
+        }
+      }
+    }, {
+      "sn": "42",
+      "question": "我喜欢阅读自然科学方面的书籍和杂志。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "43"
+          },
+          "false": {
+            "jump": "43"
+          }
+        }
+      }
+    }, {
+      "sn": "43",
+      "question": "如果掌握一门手艺并能以此为生，我会感到非常满意。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "44"
+          },
+          "false": {
+            "jump": "44"
+          }
+        }
+      }
+    }, {
+      "sn": "44",
+      "question": "我曾渴望当一名汽车司机。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "45"
+          },
+          "false": {
+            "jump": "45"
+          }
+        }
+      }
+    }, {
+      "sn": "45",
+      "question": "听别人谈“家中被盗”一类的事，很难引起我的同情。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "46"
+          },
+          "false": {
+            "jump": "46"
+          }
+        }
+      }
+    }, {
+      "sn": "46",
+      "question": "如果待遇相同，我宁愿当商品推销员，而不愿当图书管理员。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "47"
+          },
+          "false": {
+            "jump": "47"
+          }
+        }
+      }
+    }, {
+      "sn": "47",
+      "question": "我讨厌跟各类机械打交道。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "48"
+          },
+          "false": {
+            "jump": "48"
+          }
+        }
+      }
+    }, {
+      "sn": "48",
+      "question": "我小时候经常把玩具拆开，把里面看个究竟。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "49"
+          },
+          "false": {
+            "jump": "49"
+          }
+        }
+      }
+    }, {
+      "sn": "49",
+      "question": "当接受新任务后，我喜欢以自己的独特方法去完成它。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "50"
+          },
+          "false": {
+            "jump": "50"
+          }
+        }
+      }
+    }, {
+      "sn": "50",
+      "question": "我有文艺方面的天赋。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "51"
+          },
+          "false": {
+            "jump": "51"
+          }
+        }
+      }
+    }, {
+      "sn": "99",
+      "question": "",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
             "jump": "finish"
           },
           "false": {

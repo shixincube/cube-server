@@ -1,5 +1,5 @@
 // Author: Ambrose Xu
-const R = {
+var fR = {
     "2": 1,
     "13": 1,
     "22": 1,
@@ -12,82 +12,295 @@ const R = {
     "48": -1
 };
 
-const I = {};
+var fI = {
+    "6": 1,
+    "8": 1,
+    "20": 1,
+    "30": 1,
+    "31": 1,
+    "42": 1,
+    "21": -1,
+    "55": -1,
+    "56": -1,
+    "58": -1
+};
 
+var fA = {
+    "4": 1,
+    "9": 1,
+    "10": 1,
+    "17": 1,
+    "33": 1,
+    "34": 1,
+    "49": 1,
+    "50": 1,
+    "54": 1,
+    "32": -1
+};
 
-const CareerComparisonTable = {};
+var fS = {
+    "26": 1,
+    "37": 1,
+    "52": 1,
+    "59": 1,
+    "1": -1,
+    "12": -1,
+    "15": -1,
+    "27": -1,
+    "45": -1,
+    "53": -1
+};
+
+var fE = {
+    "11": 1,
+    "24": 1,
+    "28": 1,
+    "35": 1,
+    "38": 1,
+    "46": 1,
+    "60": 1,
+    "3": -1,
+    "16": -1,
+    "25": -1
+};
+
+var fC = {
+    "7": 1,
+    "19": 1,
+    "29": 1,
+    "39": 1,
+    "41": 1,
+    "51": 1,
+    "57": 1,
+    "5": -1,
+    "18": -1,
+    "40": -1
+};
+
+var R_data = {
+    "name": '现实型',
+    "character": '具有顺从、坦率、谦虚、自然、坚毅、实际、有礼、害羞、稳健、节俭的特征，表现为：\n' +
+        '1. 喜爱实用性的职业或情境，以从事所喜好的活动，避免社会性的职业或情境。\n' +
+        '2. 用具体实际的能力解决工作及其他方面的问题，较缺乏人际关系方面的能力。\n' +
+        '3. 重视具体的事物，如金钱，权力、地位等。\n',
+    "career": '土木工程师、计算机硬件研发人员、摄影师、制图员、厨师、技工等。'
+};
+
+var I_data = {
+    "name": '研究型',
+    "character": '具有分析、谨慎、批评、好奇、独立、聪明、内向、条理、谦逊、精确、保守的特征，表现为：\n' +
+        '1. 喜爱研究性的职业或情境，避免企业性的职业或情境。\n' +
+        '2. 用研究的能力解决工作及其他方面的问题，即自觉、好学、自信，重视科学，但缺乏领导方面的才能。\n',
+    "career": '科研人员、数学、生物相关、计算机编程相关、医生、系统分析员等。'
+};
+
+var A_data = {
+    "name": '艺术型',
+    "character": '具有复杂、想象、冲动、独立、直觉、无秩序、情绪化、理想化、不顺从、有创意、富有表情、不重实际的特征，表现为：\n' +
+        '1. 喜爱艺术性的职业或情境，避免传统性的职业或情境。\n' +
+        '2. 富有表达能力和直觉、独立、具创意、不顺从（包括表演、写作、语言），并重视审美的领域。\n',
+    "career": '演员、艺术设计师、建筑师、摄影师、广告制作人、作曲家、乐队指挥、小说家、剧作家等。'
+};
+
+var S_data = {
+    "name": '社会型',
+    "character": '具有合作、友善、慷慨、助人、仁慈、负责、圆滑、善社交、善解人意、说服他人、理想主义等特征，表现为：\n' +
+        '1. 喜爱社会型的职业或情境，避免实用性的职业或情境，并以社交方面的能力解决工作及其他方面的问题，但缺乏机械能力与科学能力\n' +
+        '2. 喜欢帮助别人、了解别人，有教导别人的能力，且重视社会与伦理的活动与问题。\n',
+    "career": '教师、辅导人员、公关人员、培训人员等。'
+};
+
+var E_data = {
+    "name": '企业型',
+    "character": '具有冒险、野心、独断、冲动、乐观、自信、追求享受、精力充沛、善于社交、获取注意、知名度等特征，表现为：\n' +
+        '1. 喜欢企业性质的的职业或环境，避免研究性质的职业或情境，会以企业方面的能力解决工作或其他方面的问题能力。\n' +
+        '2. 有冲动、自信、善社交、知名度高、有领导与语言能力，缺乏科学能力，但重视政治与经济上的成就。\n',
+    "career": '推销员、政治家、企业家、项目经理、营销管理人员、法官等。'
+};
+
+var C_data = {
+    "name": '传统型',
+    "character": '具有顺从、谨慎、保守、自控、服从、规律、坚毅、实际稳重、有效率、但缺乏想象力等特征，表现为：\n' +
+        '1. 喜欢传统性质的的职业或环境，避免艺术性质的职业或情境，会以传统的能力解决工作或其他方面的问题。\n' +
+        '2. 喜欢顺从、规律、有文书与数字能力，并重视商业与经济上的成就。\n',
+    "career": '出纳员、会计师、秘书、投资分析员、行政助理等。'
+};
+
+var CareerDataTable = {
+    "R": R_data,
+    "I": I_data,
+    "A": A_data,
+    "S": S_data,
+    "E": E_data,
+    "C": C_data
+};
+
+var CareerComparisonTable = {
+    "RIA": '牙科医生、陶工、建筑设计员、模型工、细木工、制作链条人员。',
+    "RIS": '厨师、林务员、跳水运动员、潜水员、染色师、电器修理、眼镜制作、电工、服务员、装玻璃工人、发电厂工人、焊接工。',
+    "RIE": '建筑和桥梁工程、环境工程、航空工程、公路工程、电力工程、信号工程、通信工程、一般机械工程、自动工程、矿业工程、海洋工程、交通工程技术人员、制图员、家政经济人员、计量员、农民、农场工人、农业机械操作、清洁工、电器修理、汽车修理、管道工、线路装配工、工具仓库管理员。',
+    "RIC": '船上工作人员、接待员、杂志保管员、牙医助手、石匠、机器制造、机车制造、农业机器装配、汽车装配工、缝纫机装配工、钟表装配和检验、电动器具装配、货物检验员、电梯机修工、装配工、托儿所所长、钢琴调音员、印刷工、建筑钢铁工作、卡车司机。',
+    "RAI": '手工雕刻、玻璃雕刻、制作模型人员、家具木工、制作皮革品、手工绣花、手工钩针纺织、排字工作、印刷工作、图画雕刻、装订工。',
+    "RSE": '消防员、交通巡警、警察、门卫、理发师、保洁工、屠夫、锻工、开凿工人、管道安装工、出租汽车驾驶员、货物搬运工、勘探员、娱乐场所的服务员、起卸机操作工、灭害虫者、电梯操作工、厨房助手。',
+    "RSI": '纺织工、编织工、农业学校教师、职业课程教师。',
+    "REC": '保姆、住家护工、饲养员、动物管理员。',
+    "REI": '轮船船长、航海领航员、大副、实验室实验员。',
+    "RES": '旅馆服务员、家畜饲养员、渔民、渔网修补工、水手长、收割机操作工、搬运行李工人、公园服务员、救生员、登山导游、火车工程技术员、建筑工作、铺轨工人。',
+    "RCI": '测量员、勘测员、仪表操作者、农业工程技术、化学工程技师、民用工程技师、石油工程技师、资料室管理员、探矿工、煅烧工、烧窖工、矿工、保养工、样品检验员、纺纱工、漂洗工、电焊工、锯木工、刨床工、手工缝纫工、油漆工、木匠、农民建筑工作、电影放映员、勘测员助手。',
+    "RCS": '公共汽车驾驶员、水手、游泳池服务员、栽缝、建筑工作、混凝土工、修理工、邮递员。',
+    "RCE": '吊车驾驶员、农场工人、邮件分类员、快递分拣员、铲车司机、拖拉机司机。',
+    "IAS": '普通经济学家、农场经济学家、财政经济学家、国际贸易经济学家、实验心理学家、工程心理学家、心理学家、哲学家、内科医生、数学。',
+    "IAR": '人类学家、天文学家、化学家、物理学家、医学病理、动物标本剥制者、化石修复者、艺术品管理者。',
+    "ISE": '营养学家、饮食顾问、火灾检查员、邮政服务检查员。',
+    "ISC": '侦察员、电视播音室修理员、电视修理服务员、验尸室人员、医学实验定技师、调查研究者。',
+    "ISR": '水生生物学者、昆虫学者、微生物学家、配镜师、矫正视力者、细菌学家、牙科医生、骨科医生。',
+    "ISA": '实验心理学家、普通心理学家、发展心理学家、教育心理学家、社会心理学家、临床心理学家、皮肤病学家、精神病学家、妇产科医师、眼科医生、医学实验室技术专家、护士。',
+    "IES": '细菌学家、生理学家、化学专家、地质专家、地理物理学专家、医院药剂师、工业药剂师、药房营业员。',
+    "IEC": '档案保管员、保险统计员。',
+    "ICR": '质量检验技术员、地质学技师、工程师、法官、图书馆技术辅导员、计算机操作员、家禽检查员。',
+    "IRA": '地理学家、地质学家、声学物理学家、矿物学家、古生物学家、石油学家、地震学家、气象学家、原子和分子物理学家、电学和磁学物理学家、设计审核员、人口统计学家、数学统计学家、外科医生、城市规划师、气象员。',
+    "IRS": '流体物理学家、物理海洋学家、农业科学家、动物学家、食品科学家、园艺学家、植物学家、细菌学家、解剖学家、动物病理学家、药物学家、生物化学家、生物学家、细胞生物学家、临床化学家、遗传学家、分子生物学家、质量控制工程师、地理学家、兽医、放射性治疗技师。',
+    "IRE": '化验员、化学工程师、纺织工程师、食品技师、渔业技术专家、材料和测试工程师、电气工程师、土木工程师、航空工程师、行政官员、原子核工程师、陶瓷工程师、地质工程师、电力工程师、口腔科医生、牙科医生。',
+    "IRC": '飞行员、物理实验室技师、文献检查员、农业技术专家、生物技师、动植物技术专家、油管检查员、工商业规划者、工程技术员、计算机程序员、工具设计者、仪器维修工。',
+    "CRI": '会计员、记时员、打字员、按键操作工。',
+    "CRS": '仓库保管员、档案管理员、缝纫工、讲述员、收款人。',
+    "CRE": '实验室工作者、广告管理员、电动机装配工。',
+    "CIS": '记账员、顾客服务员、报刊发行员、土地测量员、保险公司职员、会计师、估价员、外贸检查员。',
+    "CIE": '打字员、统计员、订货员、校对员、办公室工作人员。',
+    "CIR": '校对员、工程职员、检修计划员。',
+    "CSE": '通讯员、电话客服员、旅馆服务员、私人职员、商学教师、旅游办事员。',
+    "CSR": '运货代理商、交通检查员、办公室通信员、薄记员、出纳员、银行财务职员。',
+    "CSA": '秘书、图书管理员、办公室办事员。',
+    "CER": '邮递员、数据处理员、办公室办事员。',
+    "CEI": '推销员、经济分析家。',
+    "CES": '银行会计，记账员、法院报告人。',
+    "ECI": '银行行长、审计员、信用管理员、地产管理员、商业管理员。',
+    "ECS": '保险人员、各类进货员、海关服务经理、售货员、会计。',
+    "ERI": '建筑物管理员、工业工程师、护士长、农场管理员、农业经营管理人员。',
+    "ERS": '仓库管理员、房屋管理员、货栈监督管理员。',
+    "ERC": '邮政局长、渔船船长、机械操作领班、木工领班、驾驶员领班。',
+    "EIR": '科学、技术和有关周期出版物的管理员。',
+    "EIC": '专利代理人、鉴定人、运输服务检查员、安全检查员。',
+    "EIS": '警官、侦察员、交通检验员、安全咨询员、合同管理者、商人。',
+    "EAS": '法官、律师、公证人。',
+    "EAR": '展览室管理员、舞台管理员、播音员、训兽员。',
+    "ESC": '理发师、裁判员、政府行政管理员、财政管理员、工程管理员、售货员、职业病防治、商业经理、办公室主任。',
+    "ESR": '售货员、公共汽车的驾驶员、护士长、自然科学和工程的行政领导。',
+    "ESI": '博物馆管理员、图书馆管理员、古迹管理员、饮食业经理、地区安全服务管理员、技术服务咨询者、超级市场管理员、零售商品店店员、批发商。',
+    "ESA": '博物馆馆长、报刊管理员、音乐器材售货员、广告商售画营业员、导游、轮船或班机上的事务长、飞机上的服务员、船员、法官、律师。',
+    "ASE": '戏剧导演、舞蹈教师、广告撰稿人、专栏作者、记者、演员、翻译。',
+    "ASI": '音乐教师、乐器教师、美术教师、管弦乐指挥，合唱队指挥、歌星、演奏家、作家、广告经理、时装模特。',
+    "AER": '新闻摄影师、电视摄影师、艺术指导、录音指导、丑角演员、魔术师、木偶戏演员。',
+    "AEI": '音乐指挥、舞台指导、电影导演。',
+    "AES": '流行歌手、舞蹈演员、电影导演、广播节目主持人、舞蹈教师、口技表演者、喜剧演员、模特。',
+    "AIS": '画家、编辑、评论家、时装艺术大师、新闻摄影师、演员、文学作者。',
+    "AIE": '皮衣设计师、工业产品设计师、剪影艺术家、复制雕刻品大师。',
+    "AIR": '建筑师、画家、摄影师、绘图员、雕刻家、环境美化工、包装设计师、陶器设计师、漫画工。',
+    "SEC": '社会活动家、工商会事务代表、教育咨询者、宿舍管理员、旅馆经理、饮食服务管理员。',
+    "SER": '体育教练、游泳指导、运动指导。',
+    "SEI": '大学校长、学院院长、医院行政管理员、历史学家、家政经济学家。',
+    "SEA": '娱乐活动管理员、国外服务办事员、社会服务助理、一般咨询者。',
+    "SCE": '部长助理、福利机构职员、环境卫生管理人员、餐馆经理。',
+    "SRI": '外科医师助手、医院服务人员、护工。',
+    "SRE": '体育教师、职业病治疗者、体育教练、专业运动员、儿童家庭教师、警察。',
+    "SRC": '护理员、护理助理、医院勤杂工、理发师、学校儿童服务人员。',
+    "SIA": '社会学家、心理咨询者、学校心理学家、政治科学家、大学或学院的教育学教师、医学、物理教师、大学社会科学教师、研究生助教。',
+    "SIE": '营养学家、饮食学家、安全检查员、税务稽查员、校长。',
+    "SIC": '兽医助手、诊所助理、娱乐指导者、监督缓刑犯的工作者、咨询人员、社会科学教师。',
+    "SIR": '理疗员、救护队工作人员、手足病医生、职业病治疗助手。',
+};
 
 function parseCareerComparisonTable(type) {
-    var desc = '';
-
-    for (const key in CareerComparisonTable) {
-        var count = 0;
-        for (var i = 0; i < type.length; ++i) {
-            var T = type[i];
-            if (key.indexOf(T) >= 0) {
-                ++count;
-            }
-        }
-
-        if (count === 3) {
-            desc = CareerComparisonTable[key];
-            return desc;
+    for (var key in CareerComparisonTable) {
+        var K1 = key.substr(0, 1);
+        var K2 = key.substr(1, 1);
+        var K3 = key.substr(2, 1);
+        if (K1 == type[0] && K2 == type[1] && K3 == type[2]) {
+            return CareerComparisonTable[key];
         }
     }
-    return desc;
+    return null;
 }
 
 function main(args) {
-    const R_score = {
+    var R_score = {
         "name": 'R',
         "yes": 0,
         "no": 0
     };
-    const I_score = {
+    var I_score = {
         "name": 'I',
         "yes": 0,
         "no": 0
     };
-    const A_score = {
+    var A_score = {
         "name": 'A',
         "yes": 0,
         "no": 0
     };
-    const S_score = {
+    var S_score = {
         "name": 'S',
         "yes": 0,
         "no": 0
     };
-    const E_score = {
+    var E_score = {
         "name": 'E',
         "yes": 0,
         "no": 0
     };
-    const C_score = {
+    var C_score = {
         "name": 'C',
         "yes": 0,
         "no": 0
     };
 
-    const description = [];
+    var description = [];
     for (var i = 0; i < args.length; ++i) {
         var question = args[i];
         var answer = question.getAnswer();
-        Logger.d('CareerAssessment.js', 'question: ' + question.question + ' -> ' + answer.code);
+        // Logger.d('CareerAssessment.js', 'question: ' + question.question + ' -> ' + answer.code);
 
-        if (R.hasOwnProperty(question.sn)) {
-            var score = R[question.sn];
+        if (fR.hasOwnProperty(question.sn)) {
+            var score = fR[question.sn];
             if (score > 0) {
                 R_score["yes"] += 1;
             } else {
                 R_score["no"] += 1;
             }
-        } else if (I.hasOwnProperty(question.sn)) {
-            var score = I[question.sn];
+        } else if (fI.hasOwnProperty(question.sn)) {
+            var score = fI[question.sn];
             if (score > 0) {
                 I_score["yes"] += 1;
             } else {
                 I_score["no"] += 1;
+            }
+        } else if (fA.hasOwnProperty(question.sn)) {
+            var score = fA[question.sn];
+            if (score > 0) {
+                A_score["yes"] += 1;
+            } else {
+                A_score["no"] += 1;
+            }
+        } else if (fS.hasOwnProperty(question.sn)) {
+            var score = fS[question.sn];
+            if (score > 0) {
+                S_score["yes"] += 1;
+            } else {
+                S_score["no"] += 1;
+            }
+        } else if (fE.hasOwnProperty(question.sn)) {
+            var score = fE[question.sn];
+            if (score > 0) {
+                E_score["yes"] += 1;
+            } else {
+                E_score["no"] += 1;
+            }
+        } else if (fC.hasOwnProperty(question.sn)) {
+            var score = fC[question.sn];
+            if (score > 0) {
+                C_score["yes"] += 1;
+            } else {
+                C_score["no"] += 1;
             }
         }
     }
@@ -96,12 +309,43 @@ function main(args) {
     yesList.sort(function(a, b) {
         return b["yes"] - a["yes"];
     });
+    var noList = [ R_score, I_score, A_score, S_score, E_score, C_score ];
+    noList.sort(function (a, b) {
+        return b["no"] - a["no"];
+    });
 
     var yesType = [yesList[0]["name"], yesList[1]["name"], yesList[2]["name"]];
+    var yesCareer = parseCareerComparisonTable(yesType);
 
-    var yesDesc = parseCareerComparisonTable(yesType);
+    var noType = [noList[0]["name"], noList[1]["name"], noList[2]["name"]];
+    var noCareer = parseCareerComparisonTable(noType);
 
-    const evaluationResult = new EvaluationResult('职业兴趣评测');
-    evaluationResult.setDescription(description.join(''));
+    description.push('## 性格倾向');
+    description.push('* ' + CareerDataTable[yesList[0].name].character);
+    description.push('* ' + CareerDataTable[yesList[1].name].character);
+    description.push('* ' + CareerDataTable[yesList[2].name].character);
+
+    if (null != yesCareer) {
+        Logger.d('CareerAssessment.js', 'Career recommended: ' + yesType[0] + yesType[1] + yesType[2]);
+
+        description.push('## 与性格较匹配的职业');
+        description.push(yesCareer);
+    }
+    else {
+        Logger.w('CareerAssessment.js', 'No career data: ' + yesType[0] + yesType[1] + yesType[2]);
+    }
+
+    if (null != noCareer) {
+        Logger.d('CareerAssessment.js', 'Career NOT recommended: ' + noType[0] + noType[1] + noType[2]);
+
+        description.push('## 与兴趣不匹配的职业');
+        description.push(noCareer);
+    }
+    else {
+        Logger.w('CareerAssessment.js', 'No career data: ' + noType[0] + noType[1] + noType[2]);
+    }
+
+    var evaluationResult = new EvaluationResult('职业兴趣评测');
+    evaluationResult.setDescription(description.join('\n\n'));
     return evaluationResult;
 }
