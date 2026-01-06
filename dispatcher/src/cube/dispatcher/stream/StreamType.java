@@ -9,9 +9,14 @@ package cube.dispatcher.stream;
 public enum StreamType {
 
     /**
+     * 语音分割及分析。
+     */
+    SpeakerDiarization("SpeakerDiarization"),
+
+    /**
      * 语音识别。
      */
-    SpeechRecognition("SpeechRecognition")
+    //SpeechRecognition("SpeechRecognition")
 
     ;
 

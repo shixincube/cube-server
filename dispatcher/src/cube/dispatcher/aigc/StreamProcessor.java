@@ -36,7 +36,7 @@ public class StreamProcessor {
 
     private final FileStorageCellet fileStorageCellet;
 
-    private Map<String, List<Stream>> speechRecognitionCache;
+    private Map<String, List<Stream>> speakerDiarizationCache;
 
     private Timer timer;
 
@@ -56,7 +56,7 @@ public class StreamProcessor {
         this.fileStorageCellet = fileStorageCellet;
 
         this.registerMap = new ConcurrentHashMap<>();
-        this.speechRecognitionCache = new HashMap<>();
+        this.speakerDiarizationCache = new HashMap<>();
 
         this.timer = new Timer();
         this.timer.scheduleAtFixedRate(new Daemon(), 10 * 1000, 1000);
@@ -85,9 +85,9 @@ public class StreamProcessor {
     }
 
     public void receive(Track track, Stream stream) {
-        if (stream.getType() == StreamType.SpeechRecognition) {
-            synchronized (this.speechRecognitionCache) {
-                List<Stream> streams = this.speechRecognitionCache.computeIfAbsent(stream.name, k -> new ArrayList<>());
+        if (stream.getType() == StreamType.SpeakerDiarization) {
+            synchronized (this.speakerDiarizationCache) {
+                List<Stream> streams = this.speakerDiarizationCache.computeIfAbsent(stream.name, k -> new ArrayList<>());
                 synchronized (streams) {
                     streams.add(stream);
                     streams.sort(new Comparator<Stream>() {
@@ -110,7 +110,7 @@ public class StreamProcessor {
     }
 
     protected void clear(Register register) {
-        this.speechRecognitionCache.remove(register.streamName);
+        this.speakerDiarizationCache.remove(register.streamName);
 
         List<String> fileCodes = this.streamFileCodeMap.remove(register.streamName);
         if (null != fileCodes) {
@@ -140,8 +140,8 @@ public class StreamProcessor {
 
         @Override
         public void run() {
-            synchronized (speechRecognitionCache) {
-                Iterator<Map.Entry<String, List<Stream>>> iter = speechRecognitionCache.entrySet().iterator();
+            synchronized (speakerDiarizationCache) {
+                Iterator<Map.Entry<String, List<Stream>>> iter = speakerDiarizationCache.entrySet().iterator();
                 while (iter.hasNext()) {
                     List<Stream> streams = iter.next().getValue();
                     if (streams.size() >= 64) {
@@ -285,7 +285,7 @@ public class StreamProcessor {
                         performer.getExternalHttpEndpoint(),
                         performer.getExternalHttpsEndpoint());
             }
-            register.track.write(StreamType.SpeechRecognition, json);
+            register.track.write(StreamType.SpeakerDiarization, json);
         }
     }
 

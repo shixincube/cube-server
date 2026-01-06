@@ -1109,8 +1109,206 @@
         }
       }
     }, {
-      "sn": "99",
-      "question": "",
+      "sn": "51",
+      "question": "我喜欢把一切安排得整整齐齐、井井有条。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "52"
+          },
+          "false": {
+            "jump": "52"
+          }
+        }
+      }
+    }, {
+      "sn": "52",
+      "question": "我喜欢成为一名教师。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "53"
+          },
+          "false": {
+            "jump": "53"
+          }
+        }
+      }
+    }, {
+      "sn": "53",
+      "question": "和一群人在一起的时候，我总想不出恰当的话来说。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "54"
+          },
+          "false": {
+            "jump": "54"
+          }
+        }
+      }
+    }, {
+      "sn": "54",
+      "question": "看感性影片时，我常禁不住眼圈红润。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "55"
+          },
+          "false": {
+            "jump": "55"
+          }
+        }
+      }
+    }, {
+      "sn": "55",
+      "question": "我讨厌学数学。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "56"
+          },
+          "false": {
+            "jump": "56"
+          }
+        }
+      }
+    }, {
+      "sn": "56",
+      "question": "在实验室里独自做实验会令我寂寞难耐。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "57"
+          },
+          "false": {
+            "jump": "57"
+          }
+        }
+      }
+    }, {
+      "sn": "57",
+      "question": "对于急躁、爱发脾气的人，我仍能以礼相待。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "58"
+          },
+          "false": {
+            "jump": "58"
+          }
+        }
+      }
+    }, {
+      "sn": "58",
+      "question": "遇到难解答的问题时，我常常放弃。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "59"
+          },
+          "false": {
+            "jump": "59"
+          }
+        }
+      }
+    }, {
+      "sn": "59",
+      "question": "大家公认我是一名勤劳踏实的、愿为大家服务的人。",
+      "original": true,
+      "answers": [{
+        "code": "true",
+        "content": "是"
+      }, {
+        "code": "false",
+        "content": "否"
+      }],
+      "router": {
+        "rule": "true-or-false",
+        "route": {
+          "true": {
+            "jump": "60"
+          },
+          "false": {
+            "jump": "60"
+          }
+        }
+      }
+    }, {
+      "sn": "60",
+      "question": "我喜欢在人事部门工作。",
       "original": true,
       "answers": [{
         "code": "true",

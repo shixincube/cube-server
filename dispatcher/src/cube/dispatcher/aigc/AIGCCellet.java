@@ -50,7 +50,7 @@ public class AIGCCellet extends AbstractCellet {
         this.processor = new StreamProcessor(this.performer,
                 (FileStorageCellet) this.performer.getCellet(FileStorageCellet.NAME));
 
-        this.performer.getStreamServer().setListener(StreamType.SpeechRecognition,
+        this.performer.getStreamServer().setListener(StreamType.SpeakerDiarization,
                 new SpeechStreamListener(this.processor));
 
         return true;
@@ -60,7 +60,7 @@ public class AIGCCellet extends AbstractCellet {
     public void uninstall() {
         this.processor.stop();
 
-        this.performer.getStreamServer().removeListener(StreamType.SpeechRecognition);
+        this.performer.getStreamServer().removeListener(StreamType.SpeakerDiarization);
 
         Manager.getInstance().stop();
     }
