@@ -32,6 +32,16 @@ public class Texture implements JSONable {
         this.density = 1;
     }
 
+    public Texture(double max, double avg, double squareDeviation, double standardDeviation,
+                   double hierarchy, double density) {
+        this.max = max;
+        this.avg = avg;
+        this.squareDeviation = squareDeviation;
+        this.standardDeviation = standardDeviation;
+        this.hierarchy = hierarchy;
+        this.density = density;
+    }
+
     public Texture(JSONObject json) {
         this.max = Double.parseDouble(json.getString("max"));
         this.avg = Double.parseDouble(json.getString("avg"));

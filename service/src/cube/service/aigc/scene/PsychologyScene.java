@@ -1502,6 +1502,9 @@ public class PsychologyScene {
             case AttachmentStyle:
                 evaluation = new AttachmentStyleEvaluation(channel.getAuthToken().getContactId(), painting);
                 break;
+            case PersonInRain:
+                evaluation = new PersonInRainEvaluation(channel.getAuthToken().getContactId(), painting);
+                break;
             default:
                 evaluation = (null == painting) ?
                         new HTPEvaluation(channel.getAuthToken().getContactId(),

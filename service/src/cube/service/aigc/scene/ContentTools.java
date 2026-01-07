@@ -434,7 +434,7 @@ public class ContentTools {
                 case HouseTreePerson:
                     tool = "房树人绘画";
                     break;
-                case PersonInTheRain:
+                case PersonInRain:
                     tool = "雨中人绘画";
                     break;
                 case TreeTest:
@@ -442,6 +442,9 @@ public class ContentTools {
                     break;
                 case SelfPortrait:
                     tool = "自画像";
+                    break;
+                case AttachmentStyle:
+                    tool = "依恋类型";
                     break;
                 default:
                     tool = "量表";
@@ -478,15 +481,17 @@ public class ContentTools {
         switch (report.getTheme()) {
             case Generic:
             case HouseTreePerson:
-                return "房树人绘画测验";
-            case PersonInTheRain:
-                return "雨中人绘画测验";
+                return "房树人绘画评测";
+            case PersonInRain:
+                return "雨中人绘画评测";
             case TreeTest:
-                return "树木绘画测验";
+                return "树木绘画评测";
             case SelfPortrait:
-                return "自画像绘画测验";
+                return "自画像绘画评测";
+            case AttachmentStyle:
+                return "依恋类型评测";
             default:
-                return "心理测验";
+                return "心理评测";
         }
     }
 
