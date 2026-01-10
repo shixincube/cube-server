@@ -102,7 +102,7 @@ public class HTPEvaluation extends Evaluation {
             results.add(this.evalPerson());
             results.add(this.evalOthers());
             results.add(this.evalSpecialConstruction());
-            // 矫正
+            // 微调
             results = this.correct(results);
             report = new EvaluationReport(this.contactId, this.painting.getAttribute(), this.reference,
                     new PaintingConfidence(this.painting), results);
