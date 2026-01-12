@@ -977,7 +977,7 @@ public class OtherSet {
                 result = toThingList(this.horseList);
                 break;
             case Hawk:
-                result = toThingList(hawkList);
+                result = toThingList(this.hawkList);
                 break;
             case Rat:
                 result = toThingList(this.ratList);
@@ -1148,7 +1148,7 @@ public class OtherSet {
             case Horse:
                 return (null != this.horseList);
             case Hawk:
-                return (null != hawkList);
+                return (null != this.hawkList);
             case Rat:
                 return (null != this.ratList);
             case Butterfly:
@@ -1234,7 +1234,9 @@ public class OtherSet {
 
     private List<Thing> toThingList(List<? extends Thing> list) {
         List<Thing> result = new ArrayList<>();
-        result.addAll(list);
+        if (null != list) {
+            result.addAll(list);
+        }
         return result;
     }
 }

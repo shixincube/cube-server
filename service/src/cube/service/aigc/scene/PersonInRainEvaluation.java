@@ -14,6 +14,11 @@ import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.composition.Texture;
+import cube.aigc.psychology.material.Label;
+import cube.aigc.psychology.material.Person;
+import cube.aigc.psychology.material.Thing;
+import cube.aigc.psychology.material.other.OtherSet;
+import cube.aigc.psychology.material.other.Umbrella;
 import cube.util.FloatUtils;
 
 import java.util.ArrayList;
@@ -72,6 +77,7 @@ public class PersonInRainEvaluation extends Evaluation {
         results.add(this.evalSpaceStructure(spaceLayout));
         results.add(this.evalTracesDensity(spaceLayout));
         results.add(this.evalPerson(spaceLayout));
+        results.add(this.evalRainShelterTools(spaceLayout));
 
         report = new EvaluationReport(this.contactId, this.painting.getAttribute(), Reference.Normal,
                 new PaintingConfidence(this.painting), results);
@@ -163,6 +169,31 @@ public class PersonInRainEvaluation extends Evaluation {
 
     private EvaluationFeature evalPerson(SpaceLayout spaceLayout) {
         EvaluationFeature result = new EvaluationFeature();
+
+        Person person = this.painting.getPerson();
+        if (null != person) {
+            long paintingArea = spaceLayout.getPaintingArea();
+            long personArea = person.area;
+            double areaRatio = ((double) personArea) / ((double) paintingArea);
+            System.out.println("XJW: areaRatio: " + areaRatio);
+        }
+
+        return result;
+    }
+
+    private EvaluationFeature evalRainShelterTools(SpaceLayout spaceLayout) {
+        EvaluationFeature result = new EvaluationFeature();
+
+        OtherSet otherSet = this.painting.getOther();
+        List<Thing> thingList = otherSet.getList(Label.Umbrella);
+
+        if (null != thingList && !thingList.isEmpty()) {
+            List<Person> personList = this.painting.getPersons();
+
+            for (Thing thing : thingList) {
+                Umbrella umbrella = (Umbrella) thing;
+            }
+        }
 
         return result;
     }
