@@ -47,18 +47,29 @@ public class KeyFeature implements JSONable {
         return this.description;
     }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public void addIndicatorScore(Score score) {
         this.indicators.add(score);
     }
 
-    public String makePrompt(Attribute attribute) {
+    public String makePrompt(Theme theme, Attribute attribute) {
         StringBuilder buf = new StringBuilder();
         if (attribute.language.isChinese()) {
-            buf.append("在房树人心理绘画中，");
-            buf.append(this.description);
-            buf.append("绘画者为").append(attribute.getGenderText()).append("性");
-            buf.append("，年龄是").append(attribute.getAgeText()).append("。");
-            buf.append("请根据房树人理论说明一下以上表述。");
+            switch (theme) {
+                case Generic:
+                case HouseTreePerson:
+                    buf.append("在房树人心理绘画中，");
+                    buf.append(this.description);
+                    buf.append("绘画者为").append(attribute.getGenderText()).append("性");
+                    buf.append("，年龄是").append(attribute.getAgeText()).append("。");
+                    buf.append("请根据房树人理论说明一下以上表述。");
+                    break;
+                default:
+                    break;
+            }
         }
         else {
             // TODO XJW

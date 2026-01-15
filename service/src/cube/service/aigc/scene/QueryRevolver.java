@@ -1079,7 +1079,7 @@ public class QueryRevolver {
                 }
             }
 
-            String content = ContentTools.fastInfer(prompt, this.service.getTokenizer());
+            String content = ContentTools.extract(prompt, this.service.getTokenizer());
             if (null == content) {
                 Logger.d(this.getClass(), "#extractEvaluationContent - Can NOT find content: " + prompt);
                 continue;

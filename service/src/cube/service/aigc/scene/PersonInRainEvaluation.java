@@ -17,8 +17,10 @@ import cube.aigc.psychology.composition.Texture;
 import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Person;
 import cube.aigc.psychology.material.Thing;
+import cube.aigc.psychology.material.Tree;
 import cube.aigc.psychology.material.other.OtherSet;
 import cube.aigc.psychology.material.other.Umbrella;
+import cube.service.tokenizer.Tokenizer;
 import cube.util.FloatUtils;
 
 import java.util.ArrayList;
@@ -29,7 +31,8 @@ public class PersonInRainEvaluation extends Evaluation {
     private static Indicator[] sIndicators = new Indicator[] {
             Indicator.Stress,
             Indicator.Confidence,
-            Indicator.Repression
+            Indicator.Repression,
+            Indicator.SelfConsciousness
     };
 
     public enum RainIntensity {
@@ -49,6 +52,23 @@ public class PersonInRainEvaluation extends Evaluation {
         Normal
     }
 
+    public enum DetailLevel {
+        /**
+         * 细节丰富。
+         */
+        Rich,
+
+        /**
+         * 细节一般。
+         */
+        Normal,
+
+        /**
+         * 细节匮乏。
+         */
+        Lack
+    }
+
     private static final double sDenseThresholdStandardDeviation = 0.5;
     private static final double sDenseThresholdHierarchy = 0.3;
     private static final Texture sDenseRain = new Texture(5.1562, 2.7135, 1.3571, 1.1649,
@@ -62,10 +82,19 @@ public class PersonInRainEvaluation extends Evaluation {
     private static final Texture sBlankRain = new Texture(0.0208, 0.0013, 0.00002, 0.005,
             0.0058, 0.1666);
 
+    private Tokenizer tokenizer;
+
     private RainIntensity rainIntensity;
 
-    public PersonInRainEvaluation(long contactId, Painting painting) {
+    private boolean hasShelter = false;
+
+    private DetailLevel detailLevel;
+
+    private PaintingFeatureSet paintingFeatureSet;
+
+    public PersonInRainEvaluation(long contactId, Painting painting, Tokenizer tokenizer) {
         super(contactId, painting);
+        this.tokenizer = tokenizer;
     }
 
     @Override
@@ -77,7 +106,7 @@ public class PersonInRainEvaluation extends Evaluation {
         results.add(this.evalSpaceStructure(spaceLayout));
         results.add(this.evalTracesDensity(spaceLayout));
         results.add(this.evalPerson(spaceLayout));
-        results.add(this.evalRainShelterTools(spaceLayout));
+        results.add(this.evalRainShelteringMethods(spaceLayout));
 
         report = new EvaluationReport(this.contactId, this.painting.getAttribute(), Reference.Normal,
                 new PaintingConfidence(this.painting), results);
@@ -86,7 +115,7 @@ public class PersonInRainEvaluation extends Evaluation {
 
     @Override
     public PaintingFeatureSet getPaintingFeatureSet() {
-        return null;
+        return this.paintingFeatureSet;
     }
 
     private EvaluationFeature evalSpaceStructure(SpaceLayout spaceLayout) {
@@ -113,7 +142,6 @@ public class PersonInRainEvaluation extends Evaluation {
         Texture texture = this.painting.getWhole();
         if (null != texture) {
             // 判断整体稠密度
-
         }
 
         List<Texture> quadrants = this.painting.getQuadrants();
@@ -164,6 +192,28 @@ public class PersonInRainEvaluation extends Evaluation {
 
         Logger.d(this.getClass(), "#evalTracesDensity - rain intensity: " + this.rainIntensity.name());
 
+        // 根据雨势加入关键特征
+        String title = "";
+        switch (this.rainIntensity) {
+            case Dense:
+                title = "雨中人绘画中雨势大";
+                break;
+            case Sparse:
+                title = "雨中人绘画中雨势小";
+                break;
+            default:
+                title = "雨中人绘画中雨势一般";
+                break;
+        }
+        String content = ContentTools.extract(title, this.tokenizer);
+        if (null != content) {
+            KeyFeature feature = new KeyFeature(title, content);
+            result.addKeyFeature(feature);
+        }
+        else {
+            Logger.w(this.getClass(), "#evalTracesDensity - NO title: " + title);
+        }
+
         return result;
     }
 
@@ -172,27 +222,178 @@ public class PersonInRainEvaluation extends Evaluation {
 
         Person person = this.painting.getPerson();
         if (null != person) {
+            // 大小比例
             long paintingArea = spaceLayout.getPaintingArea();
             long personArea = person.area;
             double areaRatio = ((double) personArea) / ((double) paintingArea);
-            System.out.println("XJW: areaRatio: " + areaRatio);
+            if (areaRatio > 0.21) {
+                result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.6, 0.7));
+            }
+            else if (areaRatio > 0.12) {
+                result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.5, 0.6));
+            }
+            else if (areaRatio > 0.04) {
+                result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.3, 0.4));
+            }
+            else {
+                result.addScore(Indicator.Confidence, 1, FloatUtils.random(0.1, 0.2));
+            }
+        }
+
+        this.detailLevel = DetailLevel.Lack;
+
+        List<Person> personList = this.painting.getPersons();
+        // 人的细节
+        if (null != personList && !personList.isEmpty()) {
+            for (Person p : personList) {
+                int count = 0;
+                if (p.hasEye()) {
+                    ++count;
+                }
+                if (p.hasEyebrow()) {
+                    ++count;
+                }
+                if (p.hasNose()) {
+                    ++count;
+                }
+                if (p.hasMouth()) {
+                    ++count;
+                }
+                if (p.hasEar()) {
+                    ++count;
+                }
+
+                if (p.hasHair() || p.hasHairAccessory()) {
+                    ++count;
+                }
+
+                if (p.hasBody()) {
+                    ++count;
+                }
+                if (p.hasArm()) {
+                    ++count;
+                }
+
+                if (count >= 5) {
+                    this.detailLevel = DetailLevel.Rich;
+                }
+                else if (count > 2) {
+                    this.detailLevel = DetailLevel.Normal;
+                }
+
+                if (this.detailLevel != DetailLevel.Lack) {
+                    break;
+                }
+            }
+        }
+
+        Logger.d(this.getClass(), "#evalPerson - person detail level: " + this.detailLevel.name());
+
+        String title = "";
+        switch (this.detailLevel) {
+            case Rich:
+                title = "雨中人绘画中人物细节丰富";
+                break;
+            case Lack:
+                title = "雨中人绘画中人物细节匮乏";
+                break;
+            default:
+                title = "雨中人绘画中人物细节一般";
+                break;
+        }
+
+        String content = ContentTools.extract(title, this.tokenizer);
+        if (null != content) {
+            KeyFeature feature = new KeyFeature(title, content);
+            result.addKeyFeature(feature);
+        }
+        else {
+            Logger.w(this.getClass(), "#evalPerson - NO title: " + title);
+        }
+
+        // 涂鸦情况
+        if (null != personList && !personList.isEmpty()) {
+
         }
 
         return result;
     }
 
-    private EvaluationFeature evalRainShelterTools(SpaceLayout spaceLayout) {
+    private EvaluationFeature evalRainShelteringMethods(SpaceLayout spaceLayout) {
         EvaluationFeature result = new EvaluationFeature();
+
+        boolean agreement = false;
 
         OtherSet otherSet = this.painting.getOther();
         List<Thing> thingList = otherSet.getList(Label.Umbrella);
-
         if (null != thingList && !thingList.isEmpty()) {
-            List<Person> personList = this.painting.getPersons();
+            this.hasShelter = true;
 
-            for (Thing thing : thingList) {
-                Umbrella umbrella = (Umbrella) thing;
+            List<Person> personList = this.painting.getPersons();
+            if (null != personList && !personList.isEmpty()) {
+                for (Thing thing : thingList) {
+                    Umbrella umbrella = (Umbrella) thing;
+                    Person selectedPerson = null;
+
+                    int maxArea = 0;
+                    for (Person person : personList) {
+                        int area = person.boundingBox.calculateCollisionArea(umbrella.boundingBox);
+                        if (area > maxArea) {
+                            maxArea = area;
+                            selectedPerson = person;
+                        }
+                    }
+
+                    if (null != selectedPerson) {
+                        if (umbrella.boundingBox.getCenterPoint().y > selectedPerson.boundingBox.getCenterPoint().y) {
+                            agreement = true;
+                            break;
+                        }
+                    }
+                }
             }
+        }
+
+        if (!this.hasShelter) {
+            List<Tree> treeList = this.painting.getTrees();
+            List<Person> personList = this.painting.getPersons();
+            if (null != treeList && !treeList.isEmpty() && null != personList && !personList.isEmpty()) {
+                for (Tree tree : treeList) {
+                    Person selectedPerson = null;
+                    int maxArea = 0;
+                    for (Person person : personList) {
+                        int area = person.boundingBox.calculateCollisionArea(tree.boundingBox);
+                        if (area > maxArea) {
+                            maxArea = area;
+                            selectedPerson = person;
+                        }
+                    }
+
+                    if (null != selectedPerson) {
+                        if (maxArea > selectedPerson.area * 0.02) {
+                            this.hasShelter = true;
+                            agreement = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        String title = "";
+        if (this.hasShelter) {
+            title = "雨中人绘画出现避雨方式";
+        }
+        else {
+            title = "雨中人绘画没有避雨方式";
+        }
+
+        String content = ContentTools.extract(title, this.tokenizer);
+        if (null != content) {
+            KeyFeature keyFeature = new KeyFeature(title, content);
+            result.addKeyFeature(keyFeature);
+        }
+        else {
+            Logger.w(this.getClass(), "#evalRainShelteringMethods - No title: " + title);
         }
 
         return result;

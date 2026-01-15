@@ -32,6 +32,7 @@ import cube.service.aigc.scene.node.TeenagerProblemClassificationNode;
 import cube.service.aigc.scene.node.TeenagerQueryNode;
 import cube.service.contact.ContactManager;
 import cube.service.cv.CVService;
+import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
@@ -127,7 +128,7 @@ public class PsychologyScene {
             SceneManager.getInstance().setService(service);
 
             // 激活数据集
-            String r = ContentTools.fastInfer("白泽京智", this.service.getTokenizer());
+            String r = ContentTools.extract("白泽京智", this.service.getTokenizer());
             Logger.i(this.getClass(), "#start - Active dataset: " + r);
 
             String corpus = Resource.getInstance().getCorpus("baize", "MIND_ECHO");
@@ -1503,7 +1504,8 @@ public class PsychologyScene {
                 evaluation = new AttachmentStyleEvaluation(channel.getAuthToken().getContactId(), painting);
                 break;
             case PersonInRain:
-                evaluation = new PersonInRainEvaluation(channel.getAuthToken().getContactId(), painting);
+                evaluation = new PersonInRainEvaluation(channel.getAuthToken().getContactId(), painting,
+                        this.service.getTokenizer());
                 break;
             default:
                 evaluation = (null == painting) ?
@@ -1525,31 +1527,33 @@ public class PsychologyScene {
         // 设置绘画特征集
         evaluationWorker.setPaintingFeatureSet(evaluation.getPaintingFeatureSet());
 
-        // 进行指标因子推理
-        JSONObject data = new JSONObject();
-        JSONArray indicators = new JSONArray();
-        for (EvaluationScore es : report.getFullEvaluationScores()) {
-            indicators.put(es.calcScore());
-        }
-        data.put("attribute", report.getAttribute().calcFactorToArray());
-        data.put("indicators", indicators);
-        Packet request = new Packet(AIGCAction.PredictPsychologyFactors.name, data);
-        ActionDialect dialect = this.service.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
-        if (null != dialect) {
-            Packet response = new Packet(dialect);
-            if (Packet.extractCode(response) == AIGCStateCode.Ok.code) {
-                JSONObject responseData = Packet.extractDataPayload(response);
-                FactorSet factorSet = new FactorSet(responseData.getJSONObject("result"));
-                // 合并因子集合
-                evaluationWorker.mergeFactorSet(factorSet);
+        if (theme == Theme.Generic || theme == Theme.HouseTreePerson) {
+            // 进行指标因子推理
+            JSONObject data = new JSONObject();
+            JSONArray indicators = new JSONArray();
+            for (EvaluationScore es : report.getFullEvaluationScores()) {
+                indicators.put(es.calcScore());
+            }
+            data.put("attribute", report.getAttribute().calcFactorToArray());
+            data.put("indicators", indicators);
+            Packet request = new Packet(AIGCAction.PredictPsychologyFactors.name, data);
+            ActionDialect dialect = this.service.getCellet().transmit(unit.getContext(), request.toDialect(), 60 * 1000);
+            if (null != dialect) {
+                Packet response = new Packet(dialect);
+                if (Packet.extractCode(response) == AIGCStateCode.Ok.code) {
+                    JSONObject responseData = Packet.extractDataPayload(response);
+                    FactorSet factorSet = new FactorSet(responseData.getJSONObject("result"));
+                    // 合并因子集合
+                    evaluationWorker.mergeFactorSet(factorSet);
+                }
+                else {
+                    Logger.w(this.getClass(), "#processReport - Predict factor response state: " +
+                            Packet.extractCode(response));
+                }
             }
             else {
-                Logger.w(this.getClass(), "#processReport - Predict factor response state: " +
-                        Packet.extractCode(response));
+                Logger.w(this.getClass(), "#processReport - Predict factor unit error");
             }
-        }
-        else {
-            Logger.w(this.getClass(), "#processReport - Predict factor unit error");
         }
 
         return evaluationWorker;
@@ -1574,7 +1578,7 @@ public class PsychologyScene {
             if (evaluationWorker.fast) {
                 Logger.d(this.getClass(), "processScaleReport - factor prompt: " +
                         prompt.name + " - " + prompt.description);
-                description = ContentTools.fastInfer(prompt.description, this.service.getTokenizer());
+                description = ContentTools.extract(prompt.description, this.service.getTokenizer());
             }
             if (null == description) {
                 GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
@@ -1597,7 +1601,7 @@ public class PsychologyScene {
                 if (evaluationWorker.fast) {
                     Logger.d(this.getClass(), "processScaleReport - factor prompt: " +
                             prompt.name + " - " + prompt.suggestion);
-                    suggestion =  ContentTools.fastInfer(prompt.suggestion, this.service.getTokenizer());
+                    suggestion =  ContentTools.extract(prompt.suggestion, this.service.getTokenizer());
                 }
                 if (null == suggestion) {
                     GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,

@@ -151,13 +151,15 @@ public class TestTokenizer {
 
 //                "用正性与负性情绪量表进行评测",
 //                "用正负情绪量表进行评测",
-                "用症状自评量表SCL-90进行评测",
+//                "用症状自评量表SCL-90进行评测",
 //                "用SCL进行评测",
 //                "用汉密顿焦虑量表进行评测",
 //                "用HAMA量表进行评测",
-                "用大五人格量表进行评测",
+//                "用大五人格量表进行评测",
+                "雨中人绘画出现避雨方式",
+                "雨中人绘画没有避雨方式"
 
-                "Assessment using the Big Five Personality Inventory"
+//                "Assessment using the Big Five Personality Inventory"
         };
 
         // 分词

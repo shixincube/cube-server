@@ -561,10 +561,10 @@ public class ContentTools {
         return buf.toString();
     }
 
-    public static String fastInfer(String query, Tokenizer tokenizer) {
+    public static String extract(String query, Tokenizer tokenizer) {
         Dataset dataset = Resource.getInstance().loadDataset();
         if (null == dataset) {
-            Logger.w(ContentTools.class, "#fastInfer - Read dataset failed");
+            Logger.w(ContentTools.class, "#extract - Read dataset failed");
             return null;
         }
 
@@ -588,9 +588,9 @@ public class ContentTools {
         }
 
         TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
-        List<Keyword> keywordList = analyzer.analyze(query, 5);
+        List<Keyword> keywordList = analyzer.analyze(query, 7);
         if (keywordList.isEmpty()) {
-            Logger.w(ContentTools.class, "#fastInfer - Query keyword is none");
+            Logger.w(ContentTools.class, "#extract - Query keyword is none");
             return null;
         }
 
@@ -599,7 +599,12 @@ public class ContentTools {
             keywords.add(keyword.getWord());
         }
 
-        return dataset.matchContent(keywords.toArray(new String[0]), 5);
+        List<String> result = dataset.searchContent(keywords.toArray(new String[0]), keywords.size());
+        if (!result.isEmpty()) {
+            return result.get(0);
+        }
+
+        return dataset.matchContent(keywords.toArray(new String[0]), 7);
     }
 
     private static String clipContent(String content) {

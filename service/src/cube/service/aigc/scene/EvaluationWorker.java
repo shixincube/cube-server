@@ -19,8 +19,6 @@ import cube.common.entity.AIGCChannel;
 import cube.common.entity.GeneratingOption;
 import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
-import cube.service.tokenizer.keyword.Keyword;
-import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.util.FloatUtils;
 import org.json.JSONObject;
 
@@ -190,7 +188,7 @@ public class EvaluationWorker {
                         channel.getLanguage());
 
                 // 关键特征描述
-                this.inferKeyFeatureDescription(channel.getAuthToken(), this.evaluationReport.getKeyFeatures());
+                this.inferKeyFeatureDescription(channel.getAuthToken(), theme, this.evaluationReport.getKeyFeatures());
 
                 // 六维得分计算
                 try {
@@ -263,7 +261,7 @@ public class EvaluationWorker {
                             style.getScene3Title(this.attribute.language)
                     };
                     for (String sceneTitle : scenes) {
-                        String sceneContent = this.extract(sceneTitle);
+                        String sceneContent = ContentTools.extract(sceneTitle, this.service.getTokenizer());
                         if (null == sceneContent) {
                             Logger.d(this.getClass(), "#make - Extract dataset error: " + sceneTitle);
                             continue;
@@ -288,7 +286,23 @@ public class EvaluationWorker {
                     }
                 }
                 break;
+            case PersonInRain:
+                // 处理关键特征描述
+                for (KeyFeature keyFeature : this.evaluationReport.getKeyFeatures()) {
+                    String prompt = String.format(this.attribute.language.isChinese() ? REFINE_CN : REFINE_EN,
+                            keyFeature.getDescription());
+                    GeneratingRecord record = this.service.syncGenerateText(channel.getAuthToken(),
+                            ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
+                            null, null);
+                    if (null != record) {
+                        keyFeature.setDescription(record.answer);
+                    }
+                }
+                // 生成概述
+
+                break;
             default:
+                Logger.e(this.getClass(), "#make - No theme: " + theme.name);
                 break;
         }
 
@@ -334,13 +348,13 @@ public class EvaluationWorker {
      * @param keyFeatures
      * @return
      */
-    private void inferKeyFeatureDescription(AuthToken authToken, List<KeyFeature> keyFeatures) {
+    private void inferKeyFeatureDescription(AuthToken authToken, Theme theme, List<KeyFeature> keyFeatures) {
         StringBuilder content = new StringBuilder();
 
         for (KeyFeature keyFeature : keyFeatures) {
             content.append("## ").append(keyFeature.getName()).append("\n\n");
 
-            String prompt = keyFeature.makePrompt(this.attribute);
+            String prompt = keyFeature.makePrompt(theme, this.attribute);
             GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
                     new GeneratingOption(), null, null);
             if (null == record) {
@@ -369,7 +383,7 @@ public class EvaluationWorker {
         String prompt = feature.generateReportPrompt();
         String answer = null;
         if (this.fast) {
-            answer = this.extract(prompt);
+            answer = ContentTools.extract(prompt, this.service.getTokenizer());
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
@@ -400,7 +414,7 @@ public class EvaluationWorker {
         answer = null;
         if (this.fast) {
             Logger.d(this.getClass(), "#inferPersonality - Obligingness prompt: \"" + prompt + "\"");
-            answer = this.extract(prompt);
+            answer = ContentTools.extract(prompt, this.service.getTokenizer());
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
@@ -415,14 +429,14 @@ public class EvaluationWorker {
             feature.setObligingnessContent(answer);
         }
         // 宜人性释义
-        feature.setObligingnessParaphrase(this.extract(feature.getObligingnessPrompt()));
+        feature.setObligingnessParaphrase(ContentTools.extract(feature.getObligingnessPrompt(), this.service.getTokenizer()));
 
         // 尽责性
         prompt = feature.generateConscientiousnessPrompt();
         answer = null;
         if (this.fast) {
             Logger.d(this.getClass(), "#inferPersonality - Conscientiousness prompt: \"" + prompt + "\"");
-            answer = this.extract(prompt);
+            answer = ContentTools.extract(prompt, this.service.getTokenizer());
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
@@ -437,14 +451,15 @@ public class EvaluationWorker {
             feature.setConscientiousnessContent(answer);
         }
         // 尽责性释义
-        feature.setConscientiousnessParaphrase(this.extract(feature.getConscientiousnessPrompt()));
+        feature.setConscientiousnessParaphrase(
+                ContentTools.extract(feature.getConscientiousnessPrompt(), this.service.getTokenizer()));
 
         // 外向性
         prompt = feature.generateExtraversionPrompt();
         answer = null;
         if (this.fast) {
             Logger.d(this.getClass(), "#inferPersonality - Extraversion prompt: \"" + prompt + "\"");
-            answer = this.extract(prompt);
+            answer = ContentTools.extract(prompt, this.service.getTokenizer());
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
@@ -459,14 +474,14 @@ public class EvaluationWorker {
             feature.setExtraversionContent(answer);
         }
         // 外向性释义
-        feature.setExtraversionParaphrase(this.extract(feature.getExtraversionPrompt()));
+        feature.setExtraversionParaphrase(ContentTools.extract(feature.getExtraversionPrompt(), this.service.getTokenizer()));
 
         // 进取性
         prompt = feature.generateAchievementPrompt();
         answer = null;
         if (this.fast) {
             Logger.d(this.getClass(), "#inferPersonality - Achievement prompt: \"" + prompt + "\"");
-            answer = this.extract(prompt);
+            answer = ContentTools.extract(prompt, this.service.getTokenizer());
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
@@ -481,14 +496,14 @@ public class EvaluationWorker {
             feature.setAchievementContent(answer);
         }
         // 进取性释义
-        feature.setAchievementParaphrase(this.extract(feature.getAchievementPrompt()));
+        feature.setAchievementParaphrase(ContentTools.extract(feature.getAchievementPrompt(), this.service.getTokenizer()));
 
         // 情绪性
         prompt = feature.generateNeuroticismPrompt();
         answer = null;
         if (this.fast) {
             Logger.d(this.getClass(), "#inferPersonality - Neuroticism prompt: \"" + prompt + "\"");
-            answer = this.extract(prompt);
+            answer = ContentTools.extract(prompt, this.service.getTokenizer());
         }
         if (null == answer) {
             Logger.w(this.getClass(), "#inferPersonality - No answer for \"" + prompt + "\"");
@@ -503,7 +518,7 @@ public class EvaluationWorker {
             feature.setNeuroticismContent(answer);
         }
         // 情绪性释义
-        feature.setNeuroticismParaphrase(this.extract(feature.getNeuroticismPrompt()));
+        feature.setNeuroticismParaphrase(ContentTools.extract(feature.getNeuroticismPrompt(), this.service.getTokenizer()));
 
         return true;
     }
@@ -522,7 +537,7 @@ public class EvaluationWorker {
             String report = null;
 
             if (this.fast) {
-                report = this.extract(prompt);
+                report = ContentTools.extract(prompt, this.service.getTokenizer());
             }
             if (null == report) {
                 Logger.w(this.getClass(), "#inferScore - No report for \"" + prompt + "\"");
@@ -545,7 +560,7 @@ public class EvaluationWorker {
             String suggestion = null;
 
             if (this.fast) {
-                suggestion = this.extract(prompt);
+                suggestion = ContentTools.extract(prompt, this.service.getTokenizer());
             }
             if (null == suggestion) {
                 Logger.w(this.getClass(), "#inferScore - No suggestion for \"" + prompt + "\"");
@@ -631,8 +646,8 @@ public class EvaluationWorker {
             buf.append(section.report).append("\n\n");
             // make prompt
             String prompt = String.format(Resource.getInstance().getCorpus("report", "REPORT_SUMMARY", language),
-                    section.title, buf.toString());
-            GeneratingRecord generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt.toString(),
+                    section.title + "表现特征", buf.toString());
+            GeneratingRecord generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
                     new GeneratingOption(), null, null);
             if (null != generating) {
                 result.append(generating.answer).append("\n\n");
@@ -642,45 +657,20 @@ public class EvaluationWorker {
         return result.toString();
     }
 
-    private String extract(String query) {
-        Dataset dataset = Resource.getInstance().loadDataset();
-        if (null == dataset) {
-            Logger.w(this.getClass(), "#infer - Read dataset failed");
-            return null;
+    private String inferSummaryWithKeyFeatures(AuthToken authToken, List<KeyFeature> list, Language language) {
+        StringBuilder buf = new StringBuilder();
+
+        buf.append("绘画里的关键特征有：\n\n");
+        for (KeyFeature keyFeature : list) {
+            buf.append(keyFeature.getDescription());
+            buf.append("\n\n");
         }
 
-        synchronized (dataset) {
-            if (!dataset.hasAnalyzed()) {
-                for (String question : dataset.getQuestions()) {
-                    TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
-                    List<Keyword> keywordList = analyzer.analyze(question, 7);
-                    if (keywordList.isEmpty()) {
-                        continue;
-                    }
+        // make prompt
+        String prompt = String.format(Resource.getInstance().getCorpus("report", "REPORT_SUMMARY", language),
+                "绘画的主要特征描述", buf.toString());
 
-                    List<String> keywords = new ArrayList<>();
-                    for (Keyword keyword : keywordList) {
-                        keywords.add(keyword.getWord());
-                    }
-                    // 填充问题关键词
-                    dataset.fillQuestionKeywords(question, keywords.toArray(new String[0]));
-                }
-            }
-        }
-
-        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.service.getTokenizer());
-        List<Keyword> keywordList = analyzer.analyze(query, 5);
-        if (keywordList.isEmpty()) {
-            Logger.w(this.getClass(), "#infer - Query keyword is none");
-            return null;
-        }
-
-        List<String> keywords = new ArrayList<>();
-        for (Keyword keyword : keywordList) {
-            keywords.add(keyword.getWord());
-        }
-
-        return dataset.matchContent(keywords.toArray(new String[0]), 5);
+        return null;
     }
 
     private String fixSecondPerson(String text, Language language) {
