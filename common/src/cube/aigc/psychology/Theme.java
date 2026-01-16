@@ -7,7 +7,7 @@
 package cube.aigc.psychology;
 
 /**
- * 测试主题。
+ * 评测主题。
  */
 public enum Theme {
 
@@ -23,7 +23,7 @@ public enum Theme {
 
     AttachmentStyle("依恋类型", "AS", "请你在纸上画出你和你当下认为最重要的人（或你认为最亲近的人）正在一起做某件事的场景。不限人数，可以是现实中发生过的，也可以是你希望发生的，或者你想象中的样子。"),
 
-    
+    SocialIcebreakerGame("社交破冰", "SIG", "")
 
     ;
 

@@ -159,7 +159,7 @@ public class EvaluationReport implements JSONable {
     }
 
     public boolean isEmpty() {
-        return this.representationList.isEmpty();
+        return this.representationList.isEmpty() && this.keyFeatures.isEmpty();
     }
 
     public Attribute getAttribute() {

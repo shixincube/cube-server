@@ -102,7 +102,6 @@ public class PersonInRainEvaluation extends Evaluation {
 
     @Override
     public EvaluationReport makeEvaluationReport() {
-        EvaluationReport report = null;
         List<EvaluationFeature> results = new ArrayList<>();
 
         SpaceLayout spaceLayout = new SpaceLayout(this.painting);
@@ -111,7 +110,7 @@ public class PersonInRainEvaluation extends Evaluation {
         results.add(this.evalPerson(spaceLayout));
         results.add(this.evalRainShelteringMethods(spaceLayout));
 
-        report = new EvaluationReport(this.contactId, Theme.PersonInRain, this.painting.getAttribute(),
+        EvaluationReport report = new EvaluationReport(this.contactId, Theme.PersonInRain, this.painting.getAttribute(),
                 Reference.Normal, new PaintingConfidence(this.painting), results);
 
         this.paintingFeatureSet = new PaintingFeatureSet(results, report.getRepresentationList());
