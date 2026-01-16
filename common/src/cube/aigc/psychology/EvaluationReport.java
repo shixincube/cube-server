@@ -32,6 +32,8 @@ public class EvaluationReport implements JSONable {
 
     private final long contactId;
 
+    private final Theme theme;
+
     private Attribute attribute;
 
     private Reference reference;
@@ -65,14 +67,15 @@ public class EvaluationReport implements JSONable {
 
     private String version = AlgorithmVersion.toVersionString();
 
-    public EvaluationReport(long contactId, Attribute attribute, Reference reference, PaintingConfidence paintingConfidence,
+    public EvaluationReport(long contactId, Theme theme, Attribute attribute, Reference reference, PaintingConfidence paintingConfidence,
                             EvaluationFeature evaluationFeature) {
-        this(contactId, attribute, reference, paintingConfidence, Collections.singletonList((evaluationFeature)));
+        this(contactId, theme, attribute, reference, paintingConfidence, Collections.singletonList((evaluationFeature)));
     }
 
-    public EvaluationReport(long contactId, Attribute attribute, Reference reference, PaintingConfidence paintingConfidence,
+    public EvaluationReport(long contactId, Theme theme, Attribute attribute, Reference reference, PaintingConfidence paintingConfidence,
                             List<EvaluationFeature> evaluationFeatureList) {
         this.contactId = contactId;
+        this.theme = theme;
         this.attribute = attribute;
         this.reference = reference;
         this.paintingConfidence = paintingConfidence;
@@ -80,7 +83,6 @@ public class EvaluationReport implements JSONable {
         this.representationList = new ArrayList<>();
         this.scoreAccelerator = new ScoreAccelerator();
         this.attention = Attention.NoAttention;
-        this.personalityAccelerator = new PersonalityAccelerator(evaluationFeatureList);
         this.additionScales = new ArrayList<>();
         this.build(evaluationFeatureList);
     }
@@ -90,6 +92,7 @@ public class EvaluationReport implements JSONable {
             this.version = json.getString("version");
         }
         this.contactId = json.has("contactId") ? json.getLong("contactId") : 0;
+        this.theme = json.has("theme") ? Theme.parse(json.getString("theme")) : Theme.Generic;
         this.attribute = new Attribute(json.getJSONObject("attribute"));
         this.reference = json.has("reference") ?
                 Reference.parse(json.getString("reference")) : Reference.Normal;
@@ -195,6 +198,10 @@ public class EvaluationReport implements JSONable {
         return this.attention;
     }
 
+    public void setAttention(Attention attention) {
+        this.attention = attention;
+    }
+
     public Suggestion getSuggestion() {
         return this.suggestion;
     }
@@ -208,6 +215,10 @@ public class EvaluationReport implements JSONable {
     }
 
     private void build(List<EvaluationFeature> resultList) {
+        if (this.theme == Theme.Generic || this.theme == Theme.HouseTreePerson) {
+            this.personalityAccelerator = new PersonalityAccelerator(resultList);
+        }
+
         for (EvaluationFeature result : resultList) {
             if (null != result.getScore(Indicator.Unknown)) {
                 this.unknown = true;
@@ -311,6 +322,12 @@ public class EvaluationReport implements JSONable {
     }
 
     private boolean calcAttention() {
+        if (this.theme != Theme.Generic && this.theme != Theme.HouseTreePerson) {
+            this.reference = Reference.Normal;
+            this.attention = Attention.NoAttention;
+            return true;
+        }
+
         StringBuilder script = new StringBuilder();
         script.append("var Attribute = Java.type('cube.aigc.psychology.Attribute');\n");
         script.append("var Indicator = Java.type('cube.aigc.psychology.Indicator');\n");
@@ -620,6 +637,11 @@ public class EvaluationReport implements JSONable {
     }
 
     private boolean calcSuggestion() {
+        if (this.theme != Theme.Generic && this.theme != Theme.HouseTreePerson) {
+            this.suggestion = Suggestion.NoIntervention;
+            return true;
+        }
+
         StringBuilder script = new StringBuilder();
         script.append("var Attribute = Java.type('cube.aigc.psychology.Attribute');\n");
         script.append("var Reference = Java.type('cube.aigc.psychology.Reference');\n");
@@ -1006,6 +1028,7 @@ public class EvaluationReport implements JSONable {
         JSONObject json = new JSONObject();
         json.put("version", this.version);
         json.put("contactId", this.contactId);
+        json.put("theme", this.theme.code);
         json.put("attribute", this.attribute.toJSON());
         json.put("reference", this.reference.name);
 

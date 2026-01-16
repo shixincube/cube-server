@@ -156,8 +156,10 @@ public class TestTokenizer {
 //                "用汉密顿焦虑量表进行评测",
 //                "用HAMA量表进行评测",
 //                "用大五人格量表进行评测",
-                "雨中人绘画出现避雨方式",
-                "雨中人绘画没有避雨方式"
+//                "雨中人绘画出现避雨方式",
+//                "雨中人绘画没有避雨方式"
+                "雨中人绘画避雨有效",
+                "雨中人绘画避雨无效"
 
 //                "Assessment using the Big Five Personality Inventory"
         };

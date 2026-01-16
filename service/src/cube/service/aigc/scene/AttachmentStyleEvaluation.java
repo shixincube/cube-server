@@ -44,8 +44,8 @@ public class AttachmentStyleEvaluation extends Evaluation {
         results.add(this.evalTree(spaceLayout));
         results.add(this.evalOthers(spaceLayout));
 
-        report = new EvaluationReport(this.contactId, this.painting.getAttribute(), this.reference,
-                new PaintingConfidence(this.painting), results);
+        report = new EvaluationReport(this.contactId, Theme.AttachmentStyle, this.painting.getAttribute(),
+                this.reference, new PaintingConfidence(this.painting), results);
         return report;
     }
 

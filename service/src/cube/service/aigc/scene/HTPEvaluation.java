@@ -81,8 +81,8 @@ public class HTPEvaluation extends Evaluation {
 
                 this.reference = Reference.Abnormal;
                 Logger.d(this.getClass(), "#makeEvaluationReport - reference: " + this.reference.name);
-                report = new EvaluationReport(this.contactId, this.painting.getAttribute(), this.reference,
-                        new PaintingConfidence(this.painting), list);
+                report = new EvaluationReport(this.contactId, Theme.HouseTreePerson, this.painting.getAttribute(),
+                        this.reference, new PaintingConfidence(this.painting), list);
                 return report;
             }
 
@@ -104,8 +104,8 @@ public class HTPEvaluation extends Evaluation {
             results.add(this.evalSpecialConstruction());
             // 微调
             results = this.correct(results);
-            report = new EvaluationReport(this.contactId, this.painting.getAttribute(), this.reference,
-                    new PaintingConfidence(this.painting), results);
+            report = new EvaluationReport(this.contactId, Theme.HouseTreePerson, this.painting.getAttribute(),
+                    this.reference, new PaintingConfidence(this.painting), results);
 
             this.paintingFeatureSet = new PaintingFeatureSet(results, report.getRepresentationList());
         }
@@ -118,8 +118,8 @@ public class HTPEvaluation extends Evaluation {
                 int index = Utils.randomInt(0, Term.values().length - 1);
                 result.addFeature("", Term.values()[index], Tendency.Positive);
             }
-            report = new EvaluationReport(this.contactId, this.painting.getAttribute(), this.reference,
-                    new PaintingConfidence(this.painting), result);
+            report = new EvaluationReport(this.contactId, Theme.HouseTreePerson, this.painting.getAttribute(),
+                    this.reference, new PaintingConfidence(this.painting), result);
         }
 
         return report;

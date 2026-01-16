@@ -298,8 +298,10 @@ public class EvaluationWorker {
                         keyFeature.setDescription(record.answer);
                     }
                 }
-                // 生成概述
 
+                // 生成概述
+                this.summary = this.inferSummaryWithKeyFeatures(channel.getAuthToken(),
+                        this.evaluationReport.getKeyFeatures(), this.attribute.language);
                 break;
             default:
                 Logger.e(this.getClass(), "#make - No theme: " + theme.name);
@@ -669,6 +671,12 @@ public class EvaluationWorker {
         // make prompt
         String prompt = String.format(Resource.getInstance().getCorpus("report", "REPORT_SUMMARY", language),
                 "绘画的主要特征描述", buf.toString());
+        GeneratingRecord generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
+                new GeneratingOption(), null, null);
+
+        if (null != generating) {
+            return generating.answer;
+        }
 
         return null;
     }

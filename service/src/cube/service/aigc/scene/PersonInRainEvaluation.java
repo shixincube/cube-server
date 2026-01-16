@@ -8,6 +8,7 @@ package cube.service.aigc.scene;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.PaintingConfidence;
 import cube.aigc.psychology.algorithm.PerceptronThing;
 import cube.aigc.psychology.algorithm.Tendency;
@@ -86,6 +87,8 @@ public class PersonInRainEvaluation extends Evaluation {
 
     private RainIntensity rainIntensity;
 
+    private boolean rainShelterEffect = false;
+
     private boolean hasShelter = false;
 
     private DetailLevel detailLevel;
@@ -108,8 +111,22 @@ public class PersonInRainEvaluation extends Evaluation {
         results.add(this.evalPerson(spaceLayout));
         results.add(this.evalRainShelteringMethods(spaceLayout));
 
-        report = new EvaluationReport(this.contactId, this.painting.getAttribute(), Reference.Normal,
-                new PaintingConfidence(this.painting), results);
+        report = new EvaluationReport(this.contactId, Theme.PersonInRain, this.painting.getAttribute(),
+                Reference.Normal, new PaintingConfidence(this.painting), results);
+
+        this.paintingFeatureSet = new PaintingFeatureSet(results, report.getRepresentationList());
+
+        // 设置关注等级
+        if (!this.hasShelter && !this.rainShelterEffect && this.rainIntensity == RainIntensity.Dense) {
+            report.setAttention(Attention.FocusedAttention);
+        }
+        else if (!this.hasShelter && !this.rainShelterEffect) {
+            report.setAttention(Attention.GeneralAttention);
+        }
+        else {
+            report.setAttention(Attention.NoAttention);
+        }
+
         return report;
     }
 
@@ -130,6 +147,10 @@ public class PersonInRainEvaluation extends Evaluation {
                 result.addFeature(desc, Term.SenseOfSecurity, Tendency.Negative, PerceptronThing.createPictureSize());
 
                 result.addScore(Indicator.Confidence, -1, FloatUtils.random(0.2, 0.3));
+            }
+            else {
+                String desc = "画面的画幅相对画布面积适中";
+                result.addFeature(desc, Term.SelfConfidence, Tendency.Positive, PerceptronThing.createPictureSize());
             }
         }
 
@@ -181,13 +202,22 @@ public class PersonInRainEvaluation extends Evaluation {
         if (areaRainIntensity1 == RainIntensity.Dense || areaRainIntensity2 == RainIntensity.Dense) {
             this.rainIntensity = RainIntensity.Dense;
             result.addScore(Indicator.Stress, 1, FloatUtils.random(0.7, 0.8));
+
+            String desc = "画面里的雨势大";
+            result.addFeature(desc, Term.MentalStress, Tendency.Positive, PerceptronThing.createPictureSense());
         }
         else if (areaRainIntensity1 == RainIntensity.Sparse || areaRainIntensity2 == RainIntensity.Sparse) {
             this.rainIntensity = RainIntensity.Sparse;
             result.addScore(Indicator.Stress, 1, FloatUtils.random(0.1, 0.2));
+
+            String desc = "画面里的雨势小";
+            result.addFeature(desc, Term.MentalStress, Tendency.Negative, PerceptronThing.createPictureSense());
         }
         else {
             result.addScore(Indicator.Stress, 1, FloatUtils.random(0.4, 0.5));
+
+            String desc = "画面里的雨势一般";
+            result.addFeature(desc, Term.MentalStress, Tendency.Normal, PerceptronThing.createPictureSense());
         }
 
         Logger.d(this.getClass(), "#evalTracesDensity - rain intensity: " + this.rainIntensity.name());
@@ -206,6 +236,31 @@ public class PersonInRainEvaluation extends Evaluation {
                 break;
         }
         String content = ContentTools.extract(title, this.tokenizer);
+        if (null != content) {
+            KeyFeature feature = new KeyFeature(title, content);
+            result.addKeyFeature(feature);
+        }
+        else {
+            Logger.w(this.getClass(), "#evalTracesDensity - NO title: " + title);
+        }
+
+        // 对画面下半部空间判断雨势
+        Texture quadrant3 = quadrants.get(2);
+        Texture quadrant4 = quadrants.get(3);
+        double dSD1 = quadrant1.standardDeviation - quadrant3.standardDeviation;
+        double dSD2 = quadrant2.standardDeviation - quadrant4.standardDeviation;
+
+        if ((dSD1 < 0 && dSD2 < 0) || (dSD1 > 0.4 || dSD2 > 0.4)) {
+            this.rainShelterEffect = true;
+        }
+
+        if (this.rainShelterEffect) {
+            title = "雨中人绘画避雨有效";
+        }
+        else {
+            title = "雨中人绘画避雨无效";
+        }
+        content = ContentTools.extract(title, this.tokenizer);
         if (null != content) {
             KeyFeature feature = new KeyFeature(title, content);
             result.addKeyFeature(feature);
@@ -276,9 +331,18 @@ public class PersonInRainEvaluation extends Evaluation {
 
                 if (count >= 5) {
                     this.detailLevel = DetailLevel.Rich;
+
+                    String desc = "画面中的人物有绘制细节";
+                    result.addFeature(desc, Term.SelfExistence, Tendency.Positive, p);
                 }
                 else if (count > 2) {
                     this.detailLevel = DetailLevel.Normal;
+                    String desc = "画面中的人物细节一般";
+                    result.addFeature(desc, Term.SelfExistence, Tendency.Normal, p);
+                }
+                else {
+                    String desc = "画面中的人物没有细节";
+                    result.addFeature(desc, Term.SelfExistence, Tendency.Negative, p);
                 }
 
                 if (this.detailLevel != DetailLevel.Lack) {
@@ -313,7 +377,11 @@ public class PersonInRainEvaluation extends Evaluation {
 
         // 涂鸦情况
         if (null != personList && !personList.isEmpty()) {
-
+            for (Person p : personList) {
+                if (p.isDoodle()) {
+                    result.addScore(Indicator.Repression, 1, FloatUtils.random(0.2, 0.3));
+                }
+            }
         }
 
         return result;
