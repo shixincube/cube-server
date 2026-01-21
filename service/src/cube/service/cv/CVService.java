@@ -772,6 +772,20 @@ public class CVService extends AbstractModule {
         return result.get(0);
     }
 
+    /**
+     * 在指定文件里检索指定的目标模板。
+     *
+     * @param token
+     * @param fileLabel
+     * @param templateNames
+     * @param listener
+     * @return
+     */
+    public boolean matchSimilarity(AuthToken token, FileLabel fileLabel, List<String> templateNames,
+                                   MatchSimilarityListener listener) {
+        return true;
+    }
+
     private CVEndpoint selectEndpoint() {
         synchronized (this.endpointList) {
             if (this.endpointList.isEmpty()) {

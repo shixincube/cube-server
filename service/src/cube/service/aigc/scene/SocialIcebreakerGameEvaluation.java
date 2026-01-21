@@ -6,40 +6,50 @@
 
 package cube.service.aigc.scene;
 
-import cube.aigc.psychology.EvaluationFeature;
-import cube.aigc.psychology.EvaluationReport;
-import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.PaintingConfidence;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Person;
 import cube.aigc.psychology.material.Thing;
 import cube.aigc.psychology.material.Tree;
+import cube.service.tokenizer.Tokenizer;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class SocialIcebreakerGameEvaluation extends Evaluation {
 
+    private static final String sParaphrase = "火、树、人三元素的象征意义是：\n\n* 人：代表现实中的自己、社会角色、当下的状态。\n* 树：代表潜意识中的自我、生命力、成长史、内在的能量和稳定性。\n* 火：代表能量、动力、激情，但也象征毁灭、危险、焦虑或转化的渴望。";
+
     private PaintingFeatureSet paintingFeatureSet;
+
+    private Tokenizer tokenizer;
 
     private Person person;
     private Tree tree;
     private Thing fire;
 
-    public SocialIcebreakerGameEvaluation(long contactId, Painting painting) {
+    public SocialIcebreakerGameEvaluation(long contactId, Painting painting, Tokenizer tokenizer) {
         super(contactId, painting);
+        this.tokenizer = tokenizer;
     }
 
     @Override
     public EvaluationReport makeEvaluationReport() {
         List<EvaluationFeature> results = new ArrayList<>();
 
-        SpaceLayout spaceLayout = new SpaceLayout(this.painting);
-        results.add(this.evalPosition(spaceLayout));
-        results.add(this.evalSize(spaceLayout));
+        this.person = this.painting.getPerson();
+        this.tree = this.painting.getTree();
+        this.fire = this.parseFire();
 
-        EvaluationReport report = null;
+        SpaceLayout spaceLayout = new SpaceLayout(this.painting);
+        results.add(this.evalSize(spaceLayout));
+        results.add(this.evalPosition(spaceLayout));
+
+        EvaluationReport report = new EvaluationReport(this.contactId, Theme.SocialIcebreakerGame,
+                this.painting.getAttribute(), Reference.Normal, new PaintingConfidence(this.painting), results);
         return report;
     }
 
@@ -48,18 +58,50 @@ public class SocialIcebreakerGameEvaluation extends Evaluation {
         return this.paintingFeatureSet;
     }
 
-    private EvaluationFeature evalPosition(SpaceLayout spaceLayout) {
+    private EvaluationFeature evalSize(SpaceLayout spaceLayout) {
         EvaluationFeature result = new EvaluationFeature();
 
-        this.person = this.painting.getPerson();
-        this.tree = this.painting.getTree();
-        this.fire = this.painting.getOther().get(Label.Bonfire);
+        double paintingArea = (double) spaceLayout.getPaintingArea();
+        if (null != this.person) {
+            double ratio = ((double) this.person.area) / paintingArea;
+            System.out.println("XJW size p: " + ratio + "/" + this.person.area + "/" + paintingArea);
+        }
+
+        if (null != this.tree) {
+            double ratio = ((double) this.tree.area) / paintingArea;
+            System.out.println("XJW size t: " + ratio + "/" + this.tree.area + "/" + paintingArea);
+        }
+
+        if (null != this.fire) {
+            double ratio = ((double) this.fire.area) / paintingArea;
+            System.out.println("XJW size f: " + ratio + "/" + this.fire.area + "/" + paintingArea);
+        }
 
         return result;
     }
 
-    private EvaluationFeature evalSize(SpaceLayout spaceLayout) {
+    private EvaluationFeature evalPosition(SpaceLayout spaceLayout) {
         EvaluationFeature result = new EvaluationFeature();
+
+
+
+        return result;
+    }
+
+    private Thing parseFire() {
+        Thing result = this.painting.getOther().get(Label.Bonfire);
+
+        System.out.println("XJW: other: " + this.painting.getOther().getAll().size());
+        System.out.println("XJW: p n: " + ((null == this.painting.getPersons()) ? 0 : this.painting.getPersons().size()));
+        System.out.println("XJW: t n: " + ((null == this.painting.getTrees()) ? 0 : this.painting.getTrees().size()));
+        System.out.println("XJW: h n: " + ((null == this.painting.getHouses()) ? 0 : this.painting.getHouses().size()));
+
+        if (null == result) {
+            List<Thing> list = this.painting.getOther().getAll();
+            if (!list.isEmpty()) {
+                result = list.get(0);
+            }
+        }
 
         return result;
     }

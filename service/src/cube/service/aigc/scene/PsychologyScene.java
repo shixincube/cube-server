@@ -32,7 +32,6 @@ import cube.service.aigc.scene.node.TeenagerProblemClassificationNode;
 import cube.service.aigc.scene.node.TeenagerQueryNode;
 import cube.service.contact.ContactManager;
 import cube.service.cv.CVService;
-import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
@@ -457,7 +456,7 @@ public class PsychologyScene {
                             // 预测
                             reportTask.listener.onPaintingPredicting(reportTask.report, reportTask.fileLabel);
 
-                            Painting painting = processPainting(unit, reportTask.fileLabel, reportTask.adjust, false);
+                            Painting painting = processPainting(unit, reportTask.fileLabel, theme, reportTask.adjust, false);
                             if (null == painting) {
                                 // 预测绘图失败
                                 Logger.w(PsychologyScene.class, "#generatePsychologyReport - onPaintingPredictFailed: " +
@@ -1154,7 +1153,7 @@ public class PsychologyScene {
             return null;
         }
         // 进行绘画元素预测
-        Painting resultPainting = this.processPainting(unit, fileLabel, true, true);
+        Painting resultPainting = this.processPainting(unit, fileLabel, Theme.Generic, true, true);
         if (null == resultPainting) {
             Logger.e(this.getClass(), "#getPredictedPainting - Predict painting failed: " + fileCode);
             return null;
@@ -1215,7 +1214,7 @@ public class PsychologyScene {
             return null;
         }
         // 进行绘画元素预测
-        Painting resultPainting = this.processPainting(unit, painting.fileLabel, true, true);
+        Painting resultPainting = this.processPainting(unit, painting.fileLabel, Theme.Generic, true, true);
         if (null == resultPainting) {
             Logger.e(this.getClass(), "#getPredictedPainting - Process painting failed");
             return null;
@@ -1462,7 +1461,7 @@ public class PsychologyScene {
         return profile;
     }
 
-    private Painting processPainting(AIGCUnit unit, FileLabel fileLabel, boolean adjust, boolean upload) {
+    private Painting processPainting(AIGCUnit unit, FileLabel fileLabel, Theme theme, boolean adjust, boolean upload) {
         JSONObject data = new JSONObject();
         data.put("fileLabel", fileLabel.toJSON());
         data.put("adjust", adjust);
@@ -1506,6 +1505,10 @@ public class PsychologyScene {
             case PersonInRain:
                 evaluation = new PersonInRainEvaluation(channel.getAuthToken().getContactId(), painting,
                         this.service.getTokenizer());
+                break;
+            case SocialIcebreakerGame:
+                evaluation = new SocialIcebreakerGameEvaluation(channel.getAuthToken().getContactId(),
+                        painting, this.service.getTokenizer());
                 break;
             default:
                 evaluation = (null == painting) ?

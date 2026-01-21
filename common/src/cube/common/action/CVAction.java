@@ -50,6 +50,11 @@ public enum CVAction {
      */
     ClipPaper("clipPaper"),
 
+    /**
+     * 匹配图像相似度。
+     */
+    MatchSimilarity("matchSimilarity"),
+
     ;
 
     public final String name;
