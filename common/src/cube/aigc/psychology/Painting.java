@@ -14,7 +14,8 @@ import cube.aigc.psychology.composition.Palette;
 import cube.aigc.psychology.composition.Texture;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.house.*;
-import cube.aigc.psychology.material.other.OtherSet;
+import cube.aigc.psychology.material.other.DrawingSet;
+import cube.aigc.psychology.material.other.Fire;
 import cube.aigc.psychology.material.person.*;
 import cube.aigc.psychology.material.tree.*;
 import cube.common.JSONable;
@@ -53,7 +54,7 @@ public class Painting implements JSONable {
 
     private List<Person> personList;
 
-    private OtherSet otherSet;
+    private DrawingSet drawingSet;
 
     private List<Texture> quadrants;
 
@@ -73,7 +74,7 @@ public class Painting implements JSONable {
         this.timestamp = System.currentTimeMillis();
         this.type = PaintingType.HouseTreePerson;
         this.attribute = attribute;
-        this.otherSet = new OtherSet();
+        this.drawingSet = new DrawingSet();
         this.quadrants = new ArrayList<>();
     }
 
@@ -84,7 +85,7 @@ public class Painting implements JSONable {
         this.elapsed = json.getLong("elapsed");
         this.canvasSize = new Size(json.getJSONObject("size"));
 
-        this.otherSet = json.has("others") ? new OtherSet(json.getJSONArray("others")) : new OtherSet();
+        this.drawingSet = json.has("others") ? new DrawingSet(json.getJSONArray("others")) : new DrawingSet();
 
         if (json.has("materials")) {
             this.materials = json.getJSONArray("materials");
@@ -240,7 +241,7 @@ public class Painting implements JSONable {
                     break;
                 default:
                     if (Label.isOther(label)) {
-                        this.otherSet.add(thing);
+                        this.drawingSet.add(thing);
                         unknownList.remove(thing);
                     }
                     break;
@@ -737,7 +738,7 @@ public class Painting implements JSONable {
             list.addAll(this.personList);
         }
 
-        list.addAll(this.otherSet.getAll());
+        list.addAll(this.drawingSet.getAll());
         return list;
     }
 
@@ -816,8 +817,8 @@ public class Painting implements JSONable {
         return (null != this.personList && !this.personList.isEmpty());
     }
 
-    public OtherSet getOther() {
-        return this.otherSet;
+    public DrawingSet getDrawingSet() {
+        return this.drawingSet;
     }
 
     public List<Thing> sortBySize() {
@@ -834,6 +835,17 @@ public class Painting implements JSONable {
 
         Collections.sort(bbdList, new AreaComparator());
         return bbdList;
+    }
+
+    public void append(Material material) {
+        String labelName = material.label;
+        Label label = Label.parse("p_" + labelName);
+        if (Label.Unknown == label) {
+            label = Label.parse(labelName);
+        }
+
+        material.label = label.name;
+        Thing thing = new Fire(material);
     }
 
     private Thing getMaxArea(List<? extends Thing> list) {
@@ -909,7 +921,7 @@ public class Painting implements JSONable {
                 json.put("persons", personArray);
             }
 
-            json.put("others", this.otherSet.toJSONArray());
+            json.put("others", this.drawingSet.toJSONArray());
         }
 
         if (null != this.shapes) {

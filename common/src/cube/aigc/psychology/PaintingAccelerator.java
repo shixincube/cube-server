@@ -8,7 +8,7 @@ package cube.aigc.psychology;
 
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.material.*;
-import cube.aigc.psychology.material.other.OtherSet;
+import cube.aigc.psychology.material.other.DrawingSet;
 import cube.common.entity.Material;
 import cube.util.FloatUtils;
 import cube.vision.Point;
@@ -734,11 +734,11 @@ public class PaintingAccelerator {
             this.parameter.person2 = new MaterialParameter(Label.Person);
         }
 
-        OtherSet otherSet = this.painting.getOther();
+        DrawingSet drawingSet = this.painting.getDrawingSet();
         // 将所有标签都加入
         for (Label label : Label.values()) {
             if (Label.isOther(label)) {
-                Thing thing = otherSet.get(label);
+                Thing thing = drawingSet.get(label);
                 if (null != thing) {
                     this.parameter.materials.add(new MaterialParameter(thing));
                 }

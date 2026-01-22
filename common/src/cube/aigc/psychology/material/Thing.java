@@ -36,6 +36,11 @@ public abstract class Thing extends Material {
         this.paintingLabel = Label.parse(this.label);
     }
 
+    public Thing(Material material) {
+        super(material);
+        this.paintingLabel = Label.parse(material.label);
+    }
+
     public Thing(Label paintingLabel) {
         super(paintingLabel.name);
         this.paintingLabel = paintingLabel;

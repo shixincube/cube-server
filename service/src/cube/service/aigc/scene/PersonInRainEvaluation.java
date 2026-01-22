@@ -19,7 +19,7 @@ import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Person;
 import cube.aigc.psychology.material.Thing;
 import cube.aigc.psychology.material.Tree;
-import cube.aigc.psychology.material.other.OtherSet;
+import cube.aigc.psychology.material.other.DrawingSet;
 import cube.aigc.psychology.material.other.Umbrella;
 import cube.service.tokenizer.Tokenizer;
 import cube.util.FloatUtils;
@@ -391,8 +391,8 @@ public class PersonInRainEvaluation extends Evaluation {
 
         boolean agreement = false;
 
-        OtherSet otherSet = this.painting.getOther();
-        List<Thing> thingList = otherSet.getList(Label.Umbrella);
+        DrawingSet drawingSet = this.painting.getDrawingSet();
+        List<Thing> thingList = drawingSet.getList(Label.Umbrella);
         if (null != thingList && !thingList.isEmpty()) {
             this.hasShelter = true;
 

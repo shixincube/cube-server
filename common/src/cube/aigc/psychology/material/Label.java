@@ -294,6 +294,10 @@ public enum Label {
 
     PersonGlasses("p_person_glasses"),
 
+
+    // 2026-01-22 增加标签 p_fire
+    Fire("p_fire"),
+
     Unknown("p_unknown");
 
     public final String name;

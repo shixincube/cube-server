@@ -20,7 +20,7 @@ import cube.aigc.psychology.composition.Texture;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.house.Roof;
 import cube.aigc.psychology.material.house.Window;
-import cube.aigc.psychology.material.other.OtherSet;
+import cube.aigc.psychology.material.other.DrawingSet;
 import cube.aigc.psychology.material.person.Leg;
 import cube.aigc.psychology.material.tree.Trunk;
 import cube.util.FloatUtils;
@@ -2576,7 +2576,7 @@ public class HTPEvaluation extends Evaluation {
     private EvaluationFeature evalOthers() {
         EvaluationFeature result = new EvaluationFeature();
 
-        OtherSet other = this.painting.getOther();
+        DrawingSet other = this.painting.getDrawingSet();
 
         int counter = 0;
 

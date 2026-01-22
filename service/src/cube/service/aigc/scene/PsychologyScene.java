@@ -26,12 +26,14 @@ import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
+import cube.common.state.CVStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.scene.node.DetectTeenagerQueryStrategyNode;
 import cube.service.aigc.scene.node.TeenagerProblemClassificationNode;
 import cube.service.aigc.scene.node.TeenagerQueryNode;
 import cube.service.contact.ContactManager;
 import cube.service.cv.CVService;
+import cube.service.cv.listener.MatchSimilarityListener;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
@@ -1483,7 +1485,44 @@ public class PsychologyScene {
         try {
             JSONObject responseData = Packet.extractDataPayload(response);
             // 绘画识别结果
-            return new Painting(responseData.getJSONArray("result").getJSONObject(0));
+            Painting painting = new Painting(responseData.getJSONArray("result").getJSONObject(0));
+
+            if (theme == Theme.SocialIcebreakerGame) {
+                CVService cvService = (CVService) this.service.getKernel().getModule(CVService.NAME);
+                List<String> templateNames = new ArrayList<>();
+                templateNames.add("fire");
+                boolean success = cvService.matchSimilarity(fileLabel, templateNames, new MatchSimilarityListener() {
+                    @Override
+                    public void onCompleted(FileLabel fileLabel, List<String> templateNames, List<Material> materials) {
+                        for (Material material : materials) {
+                            painting.append(material);
+                        }
+
+                        synchronized (templateNames) {
+                            templateNames.notify();
+                        }
+                    }
+
+                    @Override
+                    public void onFailed(FileLabel fileLabel, CVStateCode stateCode) {
+                        synchronized (templateNames) {
+                            templateNames.notify();
+                        }
+                    }
+                });
+
+                if (success) {
+                    synchronized (templateNames) {
+                        try {
+                            templateNames.wait(2 * 60 * 1000);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+
+            return painting;
         } catch (Exception e) {
             Logger.e(this.getClass(), "#processPainting", e);
             return null;

@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * 其他绘画元素集合。
  */
-public class OtherSet {
+public class DrawingSet {
 
     private List<Table> tableList;
 
@@ -148,10 +148,10 @@ public class OtherSet {
 
     private List<Swing> swingList;
 
-    public OtherSet() {
+    public DrawingSet() {
     }
 
-    public OtherSet(JSONArray array) {
+    public DrawingSet(JSONArray array) {
         Classification classification = new Classification();
         for (int i = 0; i < array.length(); ++i) {
             Thing thing = classification.recognize(array.getJSONObject(i));

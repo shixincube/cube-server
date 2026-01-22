@@ -14,14 +14,13 @@ import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.composition.Texture;
 import cube.aigc.psychology.material.*;
-import cube.aigc.psychology.material.other.OtherSet;
+import cube.aigc.psychology.material.other.DrawingSet;
 import cube.util.FloatUtils;
 import cube.util.Functions;
 import cube.util.calc.FrameStructureCalculator;
 import cube.util.calc.FrameStructureDescription;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class AttachmentStyleEvaluation extends Evaluation {
@@ -318,7 +317,7 @@ public class AttachmentStyleEvaluation extends Evaluation {
     private EvaluationFeature evalOthers(SpaceLayout spaceLayout) {
         EvaluationFeature result = new EvaluationFeature();
 
-        OtherSet other = this.painting.getOther();
+        DrawingSet other = this.painting.getDrawingSet();
 
         if (other.has(Label.Table)) {
             result.addScore(Indicator.SecureAttachment, 1, FloatUtils.random(0.4, 0.5));

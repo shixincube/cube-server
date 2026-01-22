@@ -24,6 +24,7 @@ import cube.plugin.PluginSystem;
 import cube.service.auth.AuthService;
 import cube.service.cv.listener.*;
 import cube.util.FileType;
+import cube.util.JSONUtils;
 import cube.vision.Size;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -775,15 +776,83 @@ public class CVService extends AbstractModule {
     /**
      * 在指定文件里检索指定的目标模板。
      *
-     * @param token
      * @param fileLabel
      * @param templateNames
      * @param listener
      * @return
      */
-    public boolean matchSimilarity(AuthToken token, FileLabel fileLabel, List<String> templateNames,
+    public boolean matchSimilarity(FileLabel fileLabel, List<String> templateNames,
                                    MatchSimilarityListener listener) {
+        final CVEndpoint endpoint = this.selectEndpoint();
+        if (null == endpoint) {
+            Logger.e(this.getClass(), "#matchSimilarity - No endpoints");
+            return false;
+        }
+
+        endpoint.setWorking(true);
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    JSONObject payload = new JSONObject();
+                    payload.put("fileLabel", fileLabel.toJSON());
+                    payload.put("templateNames", JSONUtils.toStringArray(templateNames));
+                    Packet request = new Packet(CVAction.MatchSimilarity.name, payload);
+                    ActionDialect dialect = cellet.transmit(endpoint.talkContext, request.toDialect(), 2 * 60 * 1000);
+                    if (null == dialect) {
+                        Logger.w(this.getClass(), "#matchSimilarity - Endpoint is error");
+                        listener.onFailed(fileLabel, CVStateCode.EndpointException);
+                        return;
+                    }
+
+                    Packet response = new Packet(dialect);
+                    if (Packet.extractCode(response) != CVStateCode.Ok.code) {
+                        Logger.d(this.getClass(), "#matchSimilarity - Process failed");
+                        listener.onFailed(fileLabel, CVStateCode.Failure);
+                        return;
+                    }
+
+                    List<Material> materialList = new ArrayList<>();
+
+                    JSONObject data = Packet.extractDataPayload(response);
+                    JSONArray materialsArray = data.getJSONArray("materials");
+                    for (int i = 0; i < materialsArray.length(); ++i) {
+                        Material material = new Material(materialsArray.getJSONObject(i));
+                        materialList.add(material);
+                    }
+
+                    listener.onCompleted(fileLabel, templateNames, materialList);
+                } catch (Exception e) {
+                    Logger.w(this.getClass(), "#matchSimilarity - error", e);
+                    listener.onFailed(fileLabel, CVStateCode.Failure);
+                } finally {
+                    endpoint.setWorking(false);
+                }
+            }
+        });
+
         return true;
+    }
+
+    /**
+     * 在指定文件里检索指定的目标模板。
+     *
+     * @param token
+     * @param fileCode
+     * @param templateNames
+     * @param listener
+     * @return
+     */
+    public boolean matchSimilarity(AuthToken token, String fileCode, List<String> templateNames,
+                                   MatchSimilarityListener listener) {
+        FileLabel fileLabel = this.getFile(token.getDomain(), fileCode);
+        if (null == fileLabel) {
+            Logger.e(this.getClass(), "#matchSimilarity - Can NOT find file: " + fileCode);
+            return false;
+        }
+
+        return this.matchSimilarity(fileLabel, templateNames, listener);
     }
 
     private CVEndpoint selectEndpoint() {

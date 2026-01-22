@@ -54,7 +54,7 @@ public class PaintingConfidence {
                 this.confidenceLevel = LEVEL_HIGHER;
             }
             else {
-                if (painting.getOther().getAll().size() > 4) {
+                if (painting.getDrawingSet().getAll().size() > 4) {
                     this.confidenceLevel = LEVEL_HIGHER;
                 }
             }
