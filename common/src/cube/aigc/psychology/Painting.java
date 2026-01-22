@@ -845,7 +845,17 @@ public class Painting implements JSONable {
         }
 
         material.label = label.name;
-        Thing thing = new Fire(material);
+        Thing thing = null;
+        switch (label) {
+            case Fire:
+                thing = new Fire(material);
+                break;
+            default:
+                break;
+        }
+        if (null != thing) {
+            this.drawingSet.add(thing);
+        }
     }
 
     private Thing getMaxArea(List<? extends Thing> list) {

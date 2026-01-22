@@ -148,6 +148,8 @@ public class DrawingSet {
 
     private List<Swing> swingList;
 
+    private List<Fire> fireList;
+
     public DrawingSet() {
     }
 
@@ -549,6 +551,12 @@ public class DrawingSet {
             }
             this.swingList.add((Swing) thing);
         }
+        else if (thing instanceof Fire) {
+            if (null == this.fireList) {
+                this.fireList = new ArrayList<>();
+            }
+            this.fireList.add((Fire) thing);
+        }
     }
 
     public Thing get(Label label) {
@@ -681,6 +689,8 @@ public class DrawingSet {
                 return (null != this.glassesList) ? this.glassesList.get(0) : null;
             case Swing:
                 return (null != this.swingList) ? this.swingList.get(0) : null;
+            case Fire:
+                return (null != this.fireList) ? this.fireList.get(0) : null;
             default:
                 break;
         }
@@ -882,6 +892,9 @@ public class DrawingSet {
         if (null != this.swingList) {
             result.addAll(this.swingList);
         }
+        if (null != this.fireList) {
+            result.addAll(this.fireList);
+        }
 
         return result;
     }
@@ -1081,6 +1094,9 @@ public class DrawingSet {
             case Swing:
                 result = toThingList(this.swingList);
                 break;
+            case Fire:
+                result = toThingList(this.fireList);
+                break;
             default:
                 break;
         }
@@ -1217,6 +1233,8 @@ public class DrawingSet {
                 return (null != this.glassesList);
             case Swing:
                 return (null != this.swingList);
+            case Fire:
+                return (null != this.fireList);
             default:
                 break;
         }

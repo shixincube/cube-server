@@ -90,19 +90,15 @@ public class SocialIcebreakerGameEvaluation extends Evaluation {
 
     private Thing parseFire() {
         Thing result = this.painting.getDrawingSet().get(Label.Bonfire);
-
-        System.out.println("XJW: other: " + this.painting.getDrawingSet().getAll().size());
-        System.out.println("XJW: p n: " + ((null == this.painting.getPersons()) ? 0 : this.painting.getPersons().size()));
-        System.out.println("XJW: t n: " + ((null == this.painting.getTrees()) ? 0 : this.painting.getTrees().size()));
-        System.out.println("XJW: h n: " + ((null == this.painting.getHouses()) ? 0 : this.painting.getHouses().size()));
-
         if (null == result) {
-            List<Thing> list = this.painting.getDrawingSet().getAll();
-            if (!list.isEmpty()) {
-                result = list.get(0);
+            result = this.painting.getDrawingSet().get(Label.Fire);
+            if (null == result) {
+                List<Thing> list = this.painting.getDrawingSet().getAll();
+                if (!list.isEmpty()) {
+                    result = list.get(0);
+                }
             }
         }
-
         return result;
     }
 }

@@ -1489,32 +1489,32 @@ public class PsychologyScene {
 
             if (theme == Theme.SocialIcebreakerGame) {
                 CVService cvService = (CVService) this.service.getKernel().getModule(CVService.NAME);
-                List<String> templateNames = new ArrayList<>();
-                templateNames.add("fire");
-                boolean success = cvService.matchSimilarity(fileLabel, templateNames, new MatchSimilarityListener() {
+                List<String> templateNameList = new ArrayList<>();
+                templateNameList.add("fire");
+                boolean success = cvService.matchSimilarity(fileLabel, templateNameList, new MatchSimilarityListener() {
                     @Override
                     public void onCompleted(FileLabel fileLabel, List<String> templateNames, List<Material> materials) {
                         for (Material material : materials) {
                             painting.append(material);
                         }
 
-                        synchronized (templateNames) {
-                            templateNames.notify();
+                        synchronized (templateNameList) {
+                            templateNameList.notify();
                         }
                     }
 
                     @Override
                     public void onFailed(FileLabel fileLabel, CVStateCode stateCode) {
-                        synchronized (templateNames) {
-                            templateNames.notify();
+                        synchronized (templateNameList) {
+                            templateNameList.notify();
                         }
                     }
                 });
 
                 if (success) {
-                    synchronized (templateNames) {
+                    synchronized (templateNameList) {
                         try {
-                            templateNames.wait(2 * 60 * 1000);
+                            templateNameList.wait(2 * 60 * 1000);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
