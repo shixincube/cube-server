@@ -64,7 +64,9 @@ public class SocialIcebreakerGameEvaluation extends Evaluation {
         double paintingArea = (double) spaceLayout.getPaintingArea();
         if (null != this.person) {
             double ratio = ((double) this.person.area) / paintingArea;
-            System.out.println("XJW size p: " + ratio + "/" + this.person.area + "/" + paintingArea);
+            if (ratio > 0.25) {
+                // 人大
+            }
         }
 
         if (null != this.tree) {

@@ -1489,7 +1489,7 @@ public class PsychologyScene {
 
             if (theme == Theme.SocialIcebreakerGame) {
                 CVService cvService = (CVService) this.service.getKernel().getModule(CVService.NAME);
-                List<String> templateNameList = new ArrayList<>();
+                final List<String> templateNameList = new ArrayList<>();
                 templateNameList.add("fire");
                 boolean success = cvService.matchSimilarity(fileLabel, templateNameList, new MatchSimilarityListener() {
                     @Override

@@ -79,7 +79,7 @@ public class Material implements JSONable {
         }
 
         this.label = json.getString("label");
-        this.prob = json.getDouble("prob");
+        this.prob = Double.parseDouble(json.get("prob").toString());
         this.boundingBox = new BoundingBox(json.getJSONObject("bbox"));
 
         if (json.has("box")) {
