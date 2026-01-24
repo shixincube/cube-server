@@ -588,7 +588,7 @@ public class ContentTools {
         }
 
         TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
-        List<Keyword> keywordList = analyzer.analyze(query, 7);
+        List<Keyword> keywordList = analyzer.analyze(query, 10);
         if (keywordList.isEmpty()) {
             Logger.w(ContentTools.class, "#extract - Query keyword is none");
             return null;
