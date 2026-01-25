@@ -70,15 +70,15 @@ public class SocialIcebreakerGameEvaluation extends Evaluation {
             String title = "";
             if (ratio > 0.15) {
                 // 较大
-                title = "人树火绘画人被画得较大";
+                title = "人树火绘画人物被画得较大";
             }
             else if (ratio < 0.05) {
                 // 较小
-                title = "人树火绘画人被画得较小";
+                title = "人树火绘画人物被画得较小";
             }
             else {
                 // 适中
-                title = "人树火绘画人被画得大小适中";
+                title = "人树火绘画人物被画得大小适中";
             }
 
             String content = ContentTools.extract(title, this.tokenizer);
@@ -152,11 +152,14 @@ public class SocialIcebreakerGameEvaluation extends Evaluation {
         EvaluationFeature result = new EvaluationFeature();
 
         double p2t = 0;
-        double p2tThreshold = 0;
+        double p2tMinThreshold = 0;
+        double p2tMaxThreshold = 0;
         double p2f = 0;
-        double p2fThreshold = 0;
+        double p2fMinThreshold = 0;
+        double p2fMaxThreshold = 0;
         double t2f = 0;
-        double t2fThreshold = 0;
+        double t2fMinThreshold = 0;
+        double t2fMaxThreshold = 0;
 
         if (null != this.person && null != this.tree) {
             Point cP = this.person.boundingBox.getCenterPoint();
@@ -165,23 +168,122 @@ public class SocialIcebreakerGameEvaluation extends Evaluation {
             p2t = cP.distance(cT);
 
             if (Math.abs(cP.x - cT.x) > Math.abs(cP.y - cT.y)) {
-                p2tThreshold = this.person.boundingBox.width * 0.5;
+                p2tMinThreshold = this.person.boundingBox.width * 0.5;
+                p2tMaxThreshold = p2tMinThreshold + this.tree.boundingBox.width * 0.5;
             }
             else {
-                p2tThreshold = this.person.boundingBox.height * 0.5;
+                p2tMinThreshold = this.person.boundingBox.height * 0.5;
+                p2tMaxThreshold = p2tMinThreshold + this.tree.boundingBox.height * 0.5;
             }
         }
+
         if (null != this.person && null != this.fire) {
-            p2f = this.person.boundingBox.getCenterPoint().distance(this.fire.boundingBox.getCenterPoint());
+            Point cP = this.person.boundingBox.getCenterPoint();
+            Point cF = this.fire.boundingBox.getCenterPoint();
+
+            p2f = cP.distance(cF);
+
+            if (Math.abs(cP.x - cF.x) > Math.abs(cP.y - cF.y)) {
+                p2fMinThreshold = this.person.boundingBox.width * 0.5;
+                p2fMaxThreshold = p2fMinThreshold + this.fire.boundingBox.width * 0.5;
+            }
+            else {
+                p2fMinThreshold = this.person.boundingBox.height * 0.5;
+                p2fMaxThreshold = p2fMinThreshold + this.fire.boundingBox.height * 0.5;
+            }
         }
+
         if (null != this.tree && null != this.fire) {
-            t2f = this.tree.boundingBox.getCenterPoint().distance(this.fire.boundingBox.getCenterPoint());
+            Point cT = this.tree.boundingBox.getCenterPoint();
+            Point cF = this.fire.boundingBox.getCenterPoint();
+
+            t2f = cT.distance(cF);
+
+            if (Math.abs(cT.x - cF.x) > Math.abs(cT.y - cF.y)) {
+                t2fMinThreshold = this.tree.boundingBox.width * 0.5;
+                t2fMaxThreshold = t2fMinThreshold + this.fire.boundingBox.width * 0.5;
+            }
+            else {
+                t2fMinThreshold = this.tree.boundingBox.height * 0.5;
+                t2fMaxThreshold = t2fMinThreshold + this.fire.boundingBox.height * 0.5;
+            }
         }
 
         Logger.d(this.getClass(), "#evalPosition - distance: p2t/p2f/t2f - " + p2t + "/" + p2f + "/" + t2f);
 
-        if (p2t > 0 && p2f > 0) {
+        if (p2t != 0) {
+            String title = "";
+            if (p2t > p2tMaxThreshold) {
+                // 人树火绘画人物与树木距离较远
+                title = "人树火绘画人物与树木距离较远";
+            }
+            else if (p2t < p2tMinThreshold) {
+                // 人树火绘画人物与树木距离较近
+                title = "人树火绘画人物与树木距离较近";
+            }
+            else {
+                // 人树火绘画人物与树木距离适中
+                title = "人树火绘画人物与树木距离适中";
+            }
 
+            String content = ContentTools.extract(title, this.tokenizer);
+            if (null != content) {
+                KeyFeature feature = new KeyFeature(title, content);
+                result.addKeyFeature(feature);
+            }
+            else {
+                Logger.w(this.getClass(), "#evalPosition - NO title: " + title);
+            }
+        }
+
+        if (p2f != 0) {
+            String title = "";
+            if (p2f > p2fMaxThreshold) {
+                // 人树火绘画人物与火焰距离较远
+                title = "人树火绘画人物与火焰距离较远";
+            }
+            else if (p2f < p2fMinThreshold) {
+                // 人树火绘画人物与火焰距离较近
+                title = "人树火绘画人物与火焰距离较近";
+            }
+            else {
+                // 人树火绘画人物与火焰距离适中
+                title = "人树火绘画人物与火焰距离适中";
+            }
+
+            String content = ContentTools.extract(title, this.tokenizer);
+            if (null != content) {
+                KeyFeature feature = new KeyFeature(title, content);
+                result.addKeyFeature(feature);
+            }
+            else {
+                Logger.w(this.getClass(), "#evalPosition - NO title: " + title);
+            }
+        }
+
+        if (t2f != 0) {
+            String title = "";
+            if (t2f > t2fMaxThreshold) {
+                // 人树火绘画树木与火焰距离较远
+                title = "人树火绘画树木与火焰距离较远";
+            }
+            else if (t2f < t2fMinThreshold) {
+                // 人树火绘画树木与火焰距离较近
+                title = "人树火绘画树木与火焰距离较近";
+            }
+            else {
+                // 人树火绘画树木与火焰距离适中
+                title = "人树火绘画树木与火焰距离适中";
+            }
+
+            String content = ContentTools.extract(title, this.tokenizer);
+            if (null != content) {
+                KeyFeature feature = new KeyFeature(title, content);
+                result.addKeyFeature(feature);
+            }
+            else {
+                Logger.w(this.getClass(), "#evalPosition - NO title: " + title);
+            }
         }
 
         return result;

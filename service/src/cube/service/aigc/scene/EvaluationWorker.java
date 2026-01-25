@@ -22,6 +22,7 @@ import cube.service.aigc.AIGCService;
 import cube.util.FloatUtils;
 import org.json.JSONObject;
 
+import java.security.Key;
 import java.util.*;
 
 /**
@@ -29,7 +30,7 @@ import java.util.*;
  */
 public class EvaluationWorker {
 
-    private final static String REFINE_CN = "对以下内容进行优化改写，让内容更容易理解，不要编造成分，直接输出内容。需要优化的内容如下：\n\n%s\n";
+    private final static String REFINE_CN = "对以下内容进行改写，让内容更容易理解，不要编造成分，直接输出内容。需要改写的内容如下：\n\n%s\n";
 
     private final static String REFINE_EN = "The following content requires moderate refinement. Please do not alter the original meaning of the content or add any additional information. The content to be refined is as follows:\n\n%s\n";
 
@@ -287,6 +288,23 @@ public class EvaluationWorker {
                 }
                 break;
             case PersonInRain:
+                // 处理关键特征描述
+                for (KeyFeature keyFeature : this.evaluationReport.getKeyFeatures()) {
+                    String prompt = String.format(this.attribute.language.isChinese() ? REFINE_CN : REFINE_EN,
+                            keyFeature.getDescription());
+                    GeneratingRecord record = this.service.syncGenerateText(channel.getAuthToken(),
+                            ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
+                            null, null);
+                    if (null != record) {
+                        keyFeature.setDescription(record.answer);
+                    }
+                }
+
+                // 生成概述
+                this.summary = this.inferSummaryWithKeyFeatures(channel.getAuthToken(),
+                        this.evaluationReport.getKeyFeatures(), this.attribute.language);
+                break;
+            case SocialIcebreakerGame:
                 // 处理关键特征描述
                 for (KeyFeature keyFeature : this.evaluationReport.getKeyFeatures()) {
                     String prompt = String.format(this.attribute.language.isChinese() ? REFINE_CN : REFINE_EN,
