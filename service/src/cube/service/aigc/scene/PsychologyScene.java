@@ -1487,10 +1487,47 @@ public class PsychologyScene {
             // 绘画识别结果
             Painting painting = new Painting(responseData.getJSONArray("result").getJSONObject(0));
 
-            if (theme == Theme.SocialIcebreakerGame) {
+            if (Theme.PersonInRain == theme) {
+                // 增加对伞的识别
+                CVService cvService = (CVService) this.service.getKernel().getModule(CVService.NAME);
+                final List<String> templateNameList = new ArrayList<>();
+                templateNameList.add("umbrella");
+                boolean success = cvService.matchSimilarity(fileLabel, templateNameList, new MatchSimilarityListener() {
+                    @Override
+                    public void onCompleted(FileLabel fileLabel, List<String> templateNames, List<Material> materials) {
+                        for (Material material : materials) {
+                            painting.append(material);
+                        }
+
+                        synchronized (templateNameList) {
+                            templateNameList.notify();
+                        }
+                    }
+
+                    @Override
+                    public void onFailed(FileLabel fileLabel, CVStateCode stateCode) {
+                        synchronized (templateNameList) {
+                            templateNameList.notify();
+                        }
+                    }
+                });
+
+                if (success) {
+                    synchronized (templateNameList) {
+                        try {
+                            templateNameList.wait(2 * 60 * 1000);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+            else if (Theme.SocialIcebreakerGame == theme) {
+                // 增加对"火"的识别
                 CVService cvService = (CVService) this.service.getKernel().getModule(CVService.NAME);
                 final List<String> templateNameList = new ArrayList<>();
                 templateNameList.add("fire");
+                templateNameList.add("torch");
                 boolean success = cvService.matchSimilarity(fileLabel, templateNameList, new MatchSimilarityListener() {
                     @Override
                     public void onCompleted(FileLabel fileLabel, List<String> templateNames, List<Material> materials) {

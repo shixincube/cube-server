@@ -150,7 +150,7 @@ public final class Agent {
                 Logger.e(this.getClass(), "#generateText - Response state: " + response.getStatus());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(this.getClass(), "#generateText", e);
         } finally {
             HttpClientFactory.getInstance().returnHttpClient(client);
         }

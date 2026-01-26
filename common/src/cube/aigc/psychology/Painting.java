@@ -16,6 +16,8 @@ import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.house.*;
 import cube.aigc.psychology.material.other.DrawingSet;
 import cube.aigc.psychology.material.other.Fire;
+import cube.aigc.psychology.material.other.Torch;
+import cube.aigc.psychology.material.other.Umbrella;
 import cube.aigc.psychology.material.person.*;
 import cube.aigc.psychology.material.tree.*;
 import cube.common.JSONable;
@@ -847,6 +849,12 @@ public class Painting implements JSONable {
         material.label = label.name;
         Thing thing = null;
         switch (label) {
+            case Umbrella:
+                thing = new Umbrella(material);
+                break;
+            case Torch:
+                thing = new Torch(material);
+                break;
             case Fire:
                 thing = new Fire(material);
                 break;

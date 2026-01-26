@@ -7,6 +7,7 @@
 package cube.aigc.psychology.material.other;
 
 import cube.aigc.psychology.material.Thing;
+import cube.common.entity.Material;
 import org.json.JSONObject;
 
 /**
@@ -16,5 +17,9 @@ public class Torch extends Thing {
 
     public Torch(JSONObject json) {
         super(json);
+    }
+
+    public Torch(Material material) {
+        super(material);
     }
 }
