@@ -175,6 +175,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new GetQueueCount());
         httpServer.addContextHandler(new ApplyStream());
         httpServer.addContextHandler(new QueryCounselingStrategy());
+        httpServer.addContextHandler(new QueryCounselingCaption());
 
         httpServer.addContextHandler(new PsychologyReports());
         httpServer.addContextHandler(new CheckPsychology());
@@ -2943,7 +2944,43 @@ public class Manager implements Tickable, PerformerListener {
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#setPaintingReportState - Response state is " + Packet.extractCode(responsePacket));
+            Logger.w(this.getClass(), "#queryCounselingStrategy - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        return new CounselingStrategy(Packet.extractDataPayload(responsePacket));
+    }
+
+    /**
+     * 查询咨询提示性说明。
+     *
+     * @param token
+     * @param streamName
+     * @param theme
+     * @param attribute
+     * @param index
+     * @return
+     */
+    public CounselingStrategy queryCounselingCaption(String token, String streamName, ConsultationTheme theme,
+                                                      Attribute attribute, int index) {
+        JSONObject data = new JSONObject();
+        data.put("streamName", streamName);
+        data.put("theme", theme.code);
+        data.put("attribute", attribute.toJSON());
+        data.put("index", index);
+        Packet packet = new Packet(AIGCAction.QueryCounselingCaption.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#queryCounselingCaption - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#queryCounselingCaption - Response state is " + Packet.extractCode(responsePacket));
             return null;
         }
 

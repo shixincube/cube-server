@@ -531,6 +531,11 @@ public enum AIGCAction {
      */
     QueryCounselingStrategy("queryCounselingStrategy"),
 
+    /**
+     * 查询咨询提示说明。
+     */
+    QueryCounselingCaption("queryCounselingCaption"),
+
     ;
 
     public final String name;

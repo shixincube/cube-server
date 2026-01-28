@@ -624,6 +624,53 @@ public final class TextUtils {
     }
 
     /**
+     * 提取 Markdown 格式的文本内容。
+     *
+     * @param markdown
+     * @return
+     */
+    public static String extractMarkdownText(String markdown) {
+        StringBuilder buf = new StringBuilder();
+
+        List<String> list = extractMarkdownTextAsList(markdown);
+        for (String text : list) {
+            buf.append(text).append("\n");
+        }
+
+        return buf.toString();
+    }
+
+    /**
+     * 按行提取 Markdown 格式的文本内容。
+     *
+     * @param markdown
+     * @return
+     */
+    public static List<String> extractMarkdownTextAsList(String markdown) {
+        List<String> result = new ArrayList<>();
+
+        String[] list = markdown.split("\n");
+        for (String text : list) {
+            String content = text.trim();
+            int index = 0;
+            if (content.startsWith("#") || content.startsWith("*") || content.startsWith("-")) {
+                index = content.indexOf(" ") + 1;
+            }
+            else if (startsWithNumberSign(content)) {
+                index = content.indexOf(" ") + 1;
+            }
+
+            if (index > 0) {
+                content = content.substring(index);
+            }
+
+            result.add(content);
+        }
+
+        return result;
+    }
+
+    /**
      * 提取 Markdown 格式的表格。
      *
      * @param text

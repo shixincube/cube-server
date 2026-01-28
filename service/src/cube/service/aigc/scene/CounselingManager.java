@@ -149,8 +149,11 @@ public class CounselingManager {
                 @Override
                 public void run() {
                     // 生成策略
-                    formulateStrategyWithText(listCopy);
-                    formulateStrategyWithEmotion(listCopy);
+//                    formulateStrategyWithText(listCopy);
+//                    formulateStrategyWithEmotion(listCopy);
+
+                    // 生成 Caption
+                    formulateCaption(listCopy);
 
                     // 组合数据再次进行分析
                     combine(listCopy);
@@ -206,6 +209,60 @@ public class CounselingManager {
             }
 
             return strategies.get(strategies.size() - 1);
+        }
+    }
+
+    /**
+     * 查询咨询字幕。
+     *
+     * @param authToken
+     * @param theme
+     * @param attribute
+     * @param streamName
+     * @param index
+     * @return
+     */
+    public CounselingStrategy queryCounselingCaption(AuthToken authToken, ConsultationTheme theme,
+                                                     Attribute attribute, String streamName, int index) {
+        Wrapper wrapper = this.counselingStrategyMap.computeIfAbsent(streamName,
+                k -> new Wrapper(streamName, authToken, theme, attribute));
+        List<CounselingStrategy> captions = wrapper.captions;
+        if (captions.isEmpty()) {
+            // 无数据策略支持
+            String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_OPENING_CAPTION"),
+                    attribute.language.isChinese() ? theme.nameCN : theme.nameEN,
+                    attribute.getGenderText(), attribute.age);
+
+            GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
+                    new GeneratingOption(), null, null);
+            if (null == record) {
+                Logger.w(this.getClass(), "#queryCounselingCaption - The response is null");
+                return null;
+            }
+
+            List<String> contents = TextUtils.extractMarkdownTextAsList(record.answer);
+
+            System.out.println("XJW:\n" + record.answer);
+
+            synchronized (captions) {
+                for (String content : contents) {
+                    CounselingStrategy caption = new CounselingStrategy(captions.size(),
+                            attribute, theme, streamName, content);
+                    captions.add(caption);
+                }
+            }
+            return captions.get(0);
+        }
+        else {
+            synchronized (captions) {
+                for (CounselingStrategy caption : captions) {
+                    if (caption.index == index) {
+                        return caption;
+                    }
+                }
+            }
+
+            return captions.get(captions.size() - 1);
         }
     }
 
@@ -344,6 +401,96 @@ public class CounselingManager {
                     wrapper.theme, wrapper.streamName, record.answer);
             strategies.add(strategy);
         }
+    }
+
+    private void formulateCaption(List<VoiceStreamSink> sinks) {
+        final String streamName = sinks.get(0).getStreamName();
+        Wrapper wrapper = this.counselingStrategyMap.get(streamName);
+        if (null == wrapper) {
+            Logger.w(this.getClass(), "#formulateCaption - No find wrapper: " + streamName);
+            return;
+        }
+        Logger.d(this.getClass(), "#formulateCaption - Formulates strategy : " + wrapper.streamName);
+
+        StringBuilder conversation = new StringBuilder();
+
+        String lastLabel = "";
+        for (VoiceStreamSink sink : sinks) {
+            for (VoiceTrack track : sink.getDiarization().tracks) {
+                String text = track.recognition.text;
+                String mark = "";
+                if (TextUtils.isLastPunctuationMark(text)) {
+                    text = track.recognition.text.substring(0, track.recognition.text.length() - 1);
+                    mark = track.recognition.text.substring(track.recognition.text.length() - 1);
+                }
+
+                if (text.length() == 0) {
+                    continue;
+                }
+
+                if (!lastLabel.equalsIgnoreCase(track.label)) {
+                    // 标签变更
+                    conversation.append("\n\n");
+                    // 角色
+                    if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_COUNSELOR)) {
+                        conversation.append("咨询师").append(TextUtils.gColonInChinese);
+                        lastLabel = track.label;
+                    }
+                    else if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_CUSTOMER)) {
+                        conversation.append("来访者").append(TextUtils.gColonInChinese);
+                        lastLabel = track.label;
+                    }
+                    else {
+                        conversation.append("来访者").append(TextUtils.gColonInChinese);
+                        lastLabel = VoiceDiarization.LABEL_CUSTOMER;
+                    }
+                }
+
+                // 内容
+                conversation.append(text);
+                // 语气情绪
+                conversation.append("（语气").append(TextUtils.gColonInChinese);
+                conversation.append(track.emotion.emotion.primaryWord);
+                conversation.append("）");
+                conversation.append(mark);
+
+                if (conversation.length() > 500) {
+                    // 控制对话总字数
+                    break;
+                }
+            }
+
+            if (conversation.length() > 500) {
+                // 控制对话总字数
+                break;
+            }
+        }
+
+        if (conversation.toString().startsWith("\n\n")) {
+            conversation.delete(0, 2);
+        }
+
+        String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_STRATEGY_CAPTION"),
+                conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
+                wrapper.theme.nameCN);
+
+        GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
+                prompt, new GeneratingOption(), null, null);
+        if (null == record) {
+            Logger.w(this.getClass(), "#formulateCaption - The record is null");
+            return;
+        }
+
+        TextUtils.extractMarkdownTextAsList(record.answer);
+
+        List<CounselingStrategy> strategies = wrapper.captions;
+        synchronized (strategies) {
+            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute,
+                    wrapper.theme, wrapper.streamName, record.answer);
+            strategies.add(strategy);
+        }
+
+        Logger.d(this.getClass(), "#formulateCaption - New caption : " + wrapper.streamName + "/" + strategies.size());
     }
 
     private void combine(List<VoiceStreamSink> sinks) {
@@ -628,6 +775,8 @@ public class CounselingManager {
 
         public final List<CounselingStrategy> strategies;
 
+        public final List<CounselingStrategy> captions;
+
         public long refreshTimestamp;
 
         protected Wrapper(String streamName, AuthToken authToken, ConsultationTheme theme, Attribute attribute) {
@@ -636,6 +785,7 @@ public class CounselingManager {
             this.theme = theme;
             this.attribute = attribute;
             this.strategies = new ArrayList<>();
+            this.captions = new ArrayList<>();
             this.refreshTimestamp = System.currentTimeMillis();
         }
     }
