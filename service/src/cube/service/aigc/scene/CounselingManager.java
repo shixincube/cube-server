@@ -149,8 +149,8 @@ public class CounselingManager {
                 @Override
                 public void run() {
                     // 生成策略
-//                    formulateStrategyWithText(listCopy);
-//                    formulateStrategyWithEmotion(listCopy);
+                    formulateStrategyWithText(listCopy);
+                    formulateStrategyWithEmotion(listCopy);
 
                     // 生成 Caption
                     formulateCaption(listCopy);
@@ -193,7 +193,8 @@ public class CounselingManager {
                 return null;
             }
 
-            CounselingStrategy strategy = new CounselingStrategy(0, attribute, theme, streamName, record.answer);
+            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), attribute, theme, streamName,
+                    CounselingStrategy.ConsultingAction.General, record.answer);
             synchronized (strategies) {
                 strategies.add(strategy);
             }
@@ -218,14 +219,19 @@ public class CounselingManager {
      * @param authToken
      * @param theme
      * @param attribute
+     * @param consultingAction
      * @param streamName
      * @param index
      * @return
      */
-    public CounselingStrategy queryCounselingCaption(AuthToken authToken, ConsultationTheme theme,
-                                                     Attribute attribute, String streamName, int index) {
+    public CounselingStrategy queryCounselingCaption(AuthToken authToken, ConsultationTheme theme, Attribute attribute,
+                                                     CounselingStrategy.ConsultingAction consultingAction,
+                                                     String streamName, int index) {
         Wrapper wrapper = this.counselingStrategyMap.computeIfAbsent(streamName,
                 k -> new Wrapper(streamName, authToken, theme, attribute));
+        // 设置策略动作
+        wrapper.consultingAction = consultingAction;
+
         List<CounselingStrategy> captions = wrapper.captions;
         if (captions.isEmpty()) {
             // 无数据策略支持
@@ -241,13 +247,10 @@ public class CounselingManager {
             }
 
             List<String> contents = TextUtils.extractMarkdownTextAsList(record.answer);
-
-            System.out.println("XJW:\n" + record.answer);
-
             synchronized (captions) {
                 for (String content : contents) {
-                    CounselingStrategy caption = new CounselingStrategy(captions.size(),
-                            attribute, theme, streamName, content);
+                    CounselingStrategy caption = new CounselingStrategy(captions.size(), attribute, theme,
+                            streamName, CounselingStrategy.ConsultingAction.General, content);
                     captions.add(caption);
                 }
             }
@@ -337,8 +340,8 @@ public class CounselingManager {
 
         List<CounselingStrategy> strategies = wrapper.strategies;
         synchronized (strategies) {
-            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute,
-                    wrapper.theme, wrapper.streamName, record.answer);
+            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute, wrapper.theme,
+                    wrapper.streamName, CounselingStrategy.ConsultingAction.Conversation, record.answer);
             strategies.add(strategy);
         }
     }
@@ -397,8 +400,8 @@ public class CounselingManager {
 
         List<CounselingStrategy> strategies = wrapper.strategies;
         synchronized (strategies) {
-            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute,
-                    wrapper.theme, wrapper.streamName, record.answer);
+            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute, wrapper.theme,
+                    wrapper.streamName, CounselingStrategy.ConsultingAction.Suggestion, record.answer);
             strategies.add(strategy);
         }
     }
@@ -470,7 +473,22 @@ public class CounselingManager {
             conversation.delete(0, 2);
         }
 
-        String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_STRATEGY_CAPTION"),
+        String promptTitle = "FORMAT_COUNSELING_STRATEGY_CAPTION_ANALYSIS";
+        switch (wrapper.consultingAction) {
+            case Analysis:
+                promptTitle = "FORMAT_COUNSELING_STRATEGY_CAPTION_ANALYSIS";
+                break;
+            case Suggestion:
+                promptTitle = "FORMAT_COUNSELING_STRATEGY_CAPTION_SUGGESTION";
+                break;
+            case Conversation:
+                promptTitle = "FORMAT_COUNSELING_STRATEGY_CAPTION_CONVERSATION";
+                break;
+            default:
+                break;
+        }
+
+        String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, promptTitle),
                 conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
                 wrapper.theme.nameCN);
 
@@ -481,16 +499,17 @@ public class CounselingManager {
             return;
         }
 
-        TextUtils.extractMarkdownTextAsList(record.answer);
-
-        List<CounselingStrategy> strategies = wrapper.captions;
-        synchronized (strategies) {
-            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute,
-                    wrapper.theme, wrapper.streamName, record.answer);
-            strategies.add(strategy);
+        List<String> contentList = TextUtils.extractMarkdownTextAsList(record.answer);
+        List<CounselingStrategy> captions = wrapper.captions;
+        synchronized (captions) {
+            for (String content : contentList) {
+                CounselingStrategy caption = new CounselingStrategy(captions.size(), wrapper.attribute,
+                        wrapper.theme, wrapper.streamName, wrapper.consultingAction, content);
+                captions.add(caption);
+            }
         }
 
-        Logger.d(this.getClass(), "#formulateCaption - New caption : " + wrapper.streamName + "/" + strategies.size());
+        Logger.d(this.getClass(), "#formulateCaption - New caption : " + wrapper.streamName + "/" + captions.size());
     }
 
     private void combine(List<VoiceStreamSink> sinks) {
@@ -741,8 +760,8 @@ public class CounselingManager {
 
         List<CounselingStrategy> strategies = wrapper.strategies;
         synchronized (strategies) {
-            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute,
-                    wrapper.theme, wrapper.streamName, record.answer);
+            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute, wrapper.theme,
+                    wrapper.streamName, CounselingStrategy.ConsultingAction.General, record.answer);
             strategies.add(strategy);
         }
 
@@ -777,6 +796,8 @@ public class CounselingManager {
 
         public final List<CounselingStrategy> captions;
 
+        public CounselingStrategy.ConsultingAction consultingAction;
+
         public long refreshTimestamp;
 
         protected Wrapper(String streamName, AuthToken authToken, ConsultationTheme theme, Attribute attribute) {
@@ -786,6 +807,7 @@ public class CounselingManager {
             this.attribute = attribute;
             this.strategies = new ArrayList<>();
             this.captions = new ArrayList<>();
+            this.consultingAction = CounselingStrategy.ConsultingAction.General;
             this.refreshTimestamp = System.currentTimeMillis();
         }
     }
