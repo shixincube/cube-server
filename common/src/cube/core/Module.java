@@ -16,26 +16,31 @@ public interface Module {
     /**
      * 启动模块。
      */
-    public void start();
+    void start();
 
     /**
      * 停止模块。
      */
-    public void stop();
+    void stop();
+
+    /**
+     * 关闭前清理。
+     */
+    void dispose();
 
     /**
      * 是否已启动。
      *
      * @return 返回是否已启动模块。
      */
-    public boolean isStarted();
+    boolean isStarted();
 
     /**
      * 获取模块的插件系统。
      *
      * @return 返回模块的插件系统实例。
      */
-    public <T extends PluginSystem> T getPluginSystem();
+    <T extends PluginSystem> T getPluginSystem();
 
     /**
      * 获取指定名称的缓存器。
@@ -43,7 +48,7 @@ public interface Module {
      * @param name 缓存器名称。
      * @return 返回缓存实例。
      */
-    public Cache getCache(String name);
+    Cache getCache(String name);
 
     /**
      * 获取指定名称的消息队列。
@@ -51,12 +56,12 @@ public interface Module {
      * @param name 消息队列名称。
      * @return 返回消息队列实例。
      */
-    public MessageQueue getMQ(String name);
+    MessageQueue getMQ(String name);
 
     /**
      * 内核每一个维护周期回调该方法。
      *
      * @param kernel 当前内核实例。
      */
-    public void onTick(Module module, Kernel kernel);
+    void onTick(Module module, Kernel kernel);
 }

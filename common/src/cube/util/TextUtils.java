@@ -653,7 +653,11 @@ public final class TextUtils {
         for (String text : list) {
             String content = text.trim();
             int index = 0;
-            if (content.startsWith("#") || content.startsWith("*") || content.startsWith("-")) {
+
+            if (content.startsWith("**") && content.endsWith("**")) {
+                content = content.replaceAll("\\*\\*", "").trim();
+            }
+            else if (content.startsWith("#") || content.startsWith("*") || content.startsWith("-")) {
                 index = content.indexOf(" ") + 1;
             }
             else if (startsWithNumberSign(content)) {
@@ -664,7 +668,9 @@ public final class TextUtils {
                 content = content.substring(index);
             }
 
-            result.add(content);
+            if (content.length() > 1) {
+                result.add(content);
+            }
         }
 
         return result;

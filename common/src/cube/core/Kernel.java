@@ -137,6 +137,21 @@ public final class Kernel {
     }
 
     /**
+     * 关闭内核前执行相关清理工作。
+     */
+    public void dispose() {
+        if (!this.started) {
+            return;
+        }
+
+        Iterator<AbstractModule> miter = this.moduleMap.values().iterator();
+        while (miter.hasNext()) {
+            AbstractModule module = miter.next();
+            module.dispose();
+        }
+    }
+
+    /**
      * 停止内核。
      */
     public void shutdown() {

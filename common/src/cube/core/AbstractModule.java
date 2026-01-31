@@ -51,6 +51,14 @@ public abstract class AbstractModule implements Module {
      * {@inheritDoc}
      */
     @Override
+    public void dispose() {
+        // Nothing
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean isStarted() {
         return this.started.get();
     }

@@ -100,6 +100,11 @@ public class ServiceCarpet implements CellListener {
     }
 
     @Override
+    public void cellPredestroy(Nucleus nucleus) {
+        this.kernel.dispose();
+    }
+
+    @Override
     public void cellDestroyed(Nucleus nucleus) {
         if (null != this.timer) {
             this.timer.cancel();

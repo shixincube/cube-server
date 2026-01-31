@@ -308,11 +308,16 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     @Override
-    public void stop() {
+    public void dispose() {
+        Logger.i(this.getClass(), "#dispose - AIGC service dispose");
+
         PsychologyScene.getInstance().stop();
 
         CounselingManager.getInstance().stop();
+    }
 
+    @Override
+    public void stop() {
         if (null != this.executor) {
             this.executor.shutdown();
             this.executor = null;

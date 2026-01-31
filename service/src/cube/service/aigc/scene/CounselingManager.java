@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CounselingManager {
 
@@ -181,6 +182,13 @@ public class CounselingManager {
         List<CounselingStrategy> strategies = wrapper.strategies;
 
         if (strategies.isEmpty()) {
+            if (wrapper.generatingStrategy.get()) {
+                Logger.d(this.getClass(), "#queryCounselingStrategy - Generating: " + streamName);
+                return null;
+            }
+
+            wrapper.generatingStrategy.set(true);
+
             // 无数据策略支持
             String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_OPENING"),
                     attribute.language.isChinese() ? theme.nameCN : theme.nameEN,
@@ -188,6 +196,9 @@ public class CounselingManager {
 
             GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
                     new GeneratingOption(), null, null);
+
+            wrapper.generatingStrategy.set(false);
+
             if (null == record) {
                 Logger.w(this.getClass(), "#queryCounselingStrategy - The response is null");
                 return null;
@@ -234,6 +245,13 @@ public class CounselingManager {
 
         List<CounselingStrategy> captions = wrapper.captions;
         if (captions.isEmpty()) {
+            if (wrapper.generatingCaption.get()) {
+                Logger.d(this.getClass(), "#queryCounselingCaption - Generating: " + streamName);
+                return null;
+            }
+
+            wrapper.generatingCaption.set(true);
+
             // 无数据策略支持
             String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_OPENING_CAPTION"),
                     attribute.language.isChinese() ? theme.nameCN : theme.nameEN,
@@ -241,12 +259,17 @@ public class CounselingManager {
 
             GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
                     new GeneratingOption(), null, null);
+
+            // 设置生成状态
+            wrapper.generatingCaption.set(false);
+
             if (null == record) {
                 Logger.w(this.getClass(), "#queryCounselingCaption - The response is null");
                 return null;
             }
 
             List<String> contents = TextUtils.extractMarkdownTextAsList(record.answer);
+            Logger.d(this.getClass(), "#queryCounselingCaption - Content lines: " + contents.size());
             synchronized (captions) {
                 for (String content : contents) {
                     CounselingStrategy caption = new CounselingStrategy(captions.size(), attribute, theme,
@@ -413,7 +436,15 @@ public class CounselingManager {
             Logger.w(this.getClass(), "#formulateCaption - No find wrapper: " + streamName);
             return;
         }
-        Logger.d(this.getClass(), "#formulateCaption - Formulates strategy : " + wrapper.streamName);
+
+        if (wrapper.generatingCaption.get()) {
+            Logger.d(this.getClass(), "#formulateCaption - Generating caption : " + wrapper.streamName);
+            return;
+        }
+
+        wrapper.generatingCaption.set(true);
+
+        Logger.d(this.getClass(), "#formulateCaption - Formulates caption : " + wrapper.streamName);
 
         StringBuilder conversation = new StringBuilder();
 
@@ -494,12 +525,17 @@ public class CounselingManager {
 
         GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
                 prompt, new GeneratingOption(), null, null);
+
+        // 设置生成状态
+        wrapper.generatingCaption.set(false);
+
         if (null == record) {
             Logger.w(this.getClass(), "#formulateCaption - The record is null");
             return;
         }
 
         List<String> contentList = TextUtils.extractMarkdownTextAsList(record.answer);
+        Logger.d(this.getClass(), "#formulateCaption - Content lines: " + contentList.size());
         List<CounselingStrategy> captions = wrapper.captions;
         synchronized (captions) {
             for (String content : contentList) {
@@ -517,6 +553,19 @@ public class CounselingManager {
         final String streamName = sinks.get(0).getStreamName();
         final int beginIndex = sinks.get(0).getIndex();
         final int endIndex = sinks.get(sinks.size() - 1).getIndex();
+
+        final Wrapper wrapper = this.counselingStrategyMap.get(streamName);
+        if (null == wrapper) {
+            Logger.w(this.getClass(), "#combine - No stream: " + streamName);
+            return;
+        }
+
+        if (wrapper.generatingStrategy.get()) {
+            Logger.d(this.getClass(), "#combine - Generating: " + streamName);
+            return;
+        }
+
+        wrapper.generatingStrategy.set(true);
 
         List<File> fileList = new ArrayList<>();
 
@@ -595,6 +644,12 @@ public class CounselingManager {
             }
         }
 
+        if (!outputFile.exists()) {
+            Logger.w(this.getClass(), "#combine - Creates file failed: " + outputFile.getName());
+            wrapper.generatingStrategy.set(false);
+            return;
+        }
+
         // 将文件保存到存储器
         String tmpFileCode = FileUtils.makeFileCode(authToken.getContactId(),
                 authToken.getDomain(), outputFile.getName());
@@ -603,6 +658,7 @@ public class CounselingManager {
 
         if (null == fileLabel) {
             Logger.e(this.getClass(), "#combine - Save file failed, stream: " + streamName);
+            wrapper.generatingStrategy.set(false);
             return;
         }
 
@@ -629,55 +685,53 @@ public class CounselingManager {
                 }
 
                 // 生成策略
-                Wrapper wrapper = counselingStrategyMap.get(streamName);
-                if (null != wrapper) {
-                    executor.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                List<VoiceDiarization> diarizations = new ArrayList<>();
-                                double total = 0;
-                                synchronized (voiceDiarizationList) {
-                                    for (int i = voiceDiarizationList.size() - 1; i >= 0; --i) {
-                                        VoiceDiarization vd = voiceDiarizationList.get(i);
-                                        diarizations.add(vd);
-                                        total += vd.duration;
-                                        if (total >= 25) {
-                                            break;
-                                        }
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            List<VoiceDiarization> diarizations = new ArrayList<>();
+                            double total = 0;
+                            synchronized (voiceDiarizationList) {
+                                for (int i = voiceDiarizationList.size() - 1; i >= 0; --i) {
+                                    VoiceDiarization vd = voiceDiarizationList.get(i);
+                                    diarizations.add(vd);
+                                    total += vd.duration;
+                                    if (total >= 25) {
+                                        break;
                                     }
                                 }
-                                // 排序
-                                diarizations.sort(new Comparator<VoiceDiarization>() {
-                                    @Override
-                                    public int compare(VoiceDiarization vd1, VoiceDiarization vd2) {
-                                        String[] index1 = vd1.remark.split("-");
-                                        String[] index2 = vd2.remark.split("-");
-                                        return Integer.parseInt(index1[0]) - Integer.parseInt(index2[0]);
-                                    }
-                                });
-
-                                // 制作策略
-                                formulateStrategy(wrapper, diarizations);
-                            } catch (Exception e) {
-                                Logger.e(this.getClass(), "#combine", e);
                             }
+                            // 排序
+                            diarizations.sort(new Comparator<VoiceDiarization>() {
+                                @Override
+                                public int compare(VoiceDiarization vd1, VoiceDiarization vd2) {
+                                    String[] index1 = vd1.remark.split("-");
+                                    String[] index2 = vd2.remark.split("-");
+                                    return Integer.parseInt(index1[0]) - Integer.parseInt(index2[0]);
+                                }
+                            });
+
+                            // 制作策略
+                            formulateStrategy(wrapper, diarizations);
+                        } catch (Exception e) {
+                            Logger.e(this.getClass(), "#combine", e);
+                        } finally {
+                            wrapper.generatingStrategy.set(false);
                         }
-                    });
-                }
-                else {
-                    Logger.e(this.getClass(), "#combine - No wrapper data: " + streamName);
-                }
+                    }
+                });
             }
 
             @Override
             public void onFailed(FileLabel source, AIGCStateCode stateCode) {
                 Logger.e(this.getClass(), "#combine - onFailed - state: " + stateCode.code);
+                wrapper.generatingStrategy.set(false);
             }
         });
 
         if (!success) {
             Logger.e(this.getClass(), "#combine - #performSpeakerDiarization ERROR: " + streamName);
+            wrapper.generatingStrategy.set(false);
         }
     }
 
@@ -799,6 +853,10 @@ public class CounselingManager {
         public CounselingStrategy.ConsultingAction consultingAction;
 
         public long refreshTimestamp;
+
+        protected AtomicBoolean generatingStrategy = new AtomicBoolean(false);
+
+        protected AtomicBoolean generatingCaption = new AtomicBoolean(false);
 
         protected Wrapper(String streamName, AuthToken authToken, ConsultationTheme theme, Attribute attribute) {
             this.streamName = streamName;
