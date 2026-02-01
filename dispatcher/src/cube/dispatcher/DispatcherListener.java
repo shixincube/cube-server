@@ -67,6 +67,11 @@ public class DispatcherListener implements CellListener {
     }
 
     @Override
+    public void cellPredestroy(Nucleus nucleus) {
+        // Nothing
+    }
+
+    @Override
     public void cellDestroyed(Nucleus nucleus) {
         if (null != this.timer) {
             this.timer.cancel();
