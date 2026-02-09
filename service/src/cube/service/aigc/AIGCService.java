@@ -3274,7 +3274,13 @@ public class AIGCService extends AbstractModule implements Generatable {
         DeleteFile deleteFile = new DeleteFile(domain, fileCode);
         try {
             JSONObject fileLabelJson = fileStorage.notify(deleteFile);
-            return new FileLabel(fileLabelJson);
+            if (null != fileLabelJson) {
+                return new FileLabel(fileLabelJson);
+            }
+            else {
+                Logger.d(this.getClass(), "#deleteFile - No file: " + fileCode + "@" + domain);
+                return null;
+            }
         } catch (Exception e) {
             Logger.e(this.getClass(), "#deleteFile - Delete file failed", e);
             return null;

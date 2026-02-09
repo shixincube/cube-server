@@ -58,6 +58,10 @@ public class Notifier {
             if (null != label) {
                 return label.toJSON();
             }
+            else {
+                Logger.w(this.getClass(), "PutFile - Can NOT find file: " + jsonData.getString("fileCode"));
+                return null;
+            }
         }
         else if (FileStorageAction.FindFile.name.equals(action)) {
             String domain = data.getString("domain");
@@ -70,6 +74,10 @@ public class Notifier {
             if (null != fileLabel) {
                 return fileLabel.toCompactJSON();
             }
+            else {
+                Logger.w(this.getClass(), "FindFile - Can NOT find file: " + fileName);
+                return null;
+            }
         }
         else if (FileStorageAction.DeleteFile.name.equals(action)) {
             String domain = data.getString("domain");
@@ -79,6 +87,10 @@ public class Notifier {
                 // 删除文件
                 this.service.deleteFile(domain, fileLabel);
                 return fileLabel.toCompactJSON();
+            }
+            else {
+                Logger.w(this.getClass(), "DeleteFile - Can NOT find file: " + fileCode);
+                return null;
             }
         }
         else if (FileStorageAction.LoadFile.name.equals(action)) {
@@ -92,6 +104,10 @@ public class Notifier {
             FileLabel result = this.service.saveFile(fileLabel, new File(path));
             if (null != result) {
                 return result.toJSON();
+            }
+            else {
+                Logger.w(this.getClass(), "SaveFile - Failed: " + path);
+                return null;
             }
         }
         else if (FileStorageAction.ListFiles.name.equals(action)) {
