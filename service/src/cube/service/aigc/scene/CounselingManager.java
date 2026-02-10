@@ -243,7 +243,7 @@ public class CounselingManager {
         // 设置策略动作
         wrapper.consultingAction = consultingAction;
 
-        List<CounselingStrategy> captions = wrapper.captions;
+        final List<CounselingStrategy> captions = wrapper.captions;
         if (captions.isEmpty()) {
             if (wrapper.generatingCaption.get()) {
                 Logger.d(this.getClass(), "#queryCounselingCaption - Generating: " + streamName);
@@ -277,6 +277,7 @@ public class CounselingManager {
                     captions.add(caption);
                 }
             }
+
             return captions.get(0);
         }
         else {
@@ -288,7 +289,12 @@ public class CounselingManager {
                 }
             }
 
-            return captions.get(captions.size() - 1);
+            if (index >= 0 && index < captions.size()) {
+                return captions.get(index);
+            }
+            else {
+                return captions.get(captions.size() - 1);
+            }
         }
     }
 
