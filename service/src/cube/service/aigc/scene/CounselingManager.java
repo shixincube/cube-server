@@ -370,7 +370,7 @@ public class CounselingManager {
         List<CounselingStrategy> strategies = wrapper.strategies;
         synchronized (strategies) {
             CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute, wrapper.theme,
-                    wrapper.streamName, CounselingStrategy.ConsultingAction.Conversation, record.answer);
+                    wrapper.streamName, CounselingStrategy.ConsultingAction.Suggestion, record.answer);
             strategies.add(strategy);
         }
     }
@@ -430,7 +430,7 @@ public class CounselingManager {
         List<CounselingStrategy> strategies = wrapper.strategies;
         synchronized (strategies) {
             CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute, wrapper.theme,
-                    wrapper.streamName, CounselingStrategy.ConsultingAction.Suggestion, record.answer);
+                    wrapper.streamName, CounselingStrategy.ConsultingAction.Analysis, record.answer);
             strategies.add(strategy);
         }
     }

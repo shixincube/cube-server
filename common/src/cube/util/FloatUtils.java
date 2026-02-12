@@ -72,23 +72,22 @@ public final class FloatUtils {
     }
 
     public static void main(String[] args) {
-//        double[] input = new double[] {
-//                1.5, 1.9, 1.888888889, 2.153846154, 2.0,
-//                1.166666667, 1.571428571, 1.333333333, 1.5, 1.571428571
-//        };
+        double[] input = new double[] {
+                0, 0, 100
+        };
 
-//        double[] output = FloatUtils.softmax(input);
-//        for (double v : output) {
-//            System.out.println(v);
-//        }
-//        System.out.println("----------------------------------------");
-
-        double[] input = new double[] { 10, 14, 60 };
-        double[] result = FloatUtils.normalization(input, 0, 1);
-        for (double v : result) {
+        double[] output = FloatUtils.softmax(input);
+        for (double v : output) {
             System.out.println(v);
         }
         System.out.println("----------------------------------------");
+
+//        double[] input = new double[] { 10, 14, 60 };
+//        double[] result = FloatUtils.normalization(input, 0, 1);
+//        for (double v : result) {
+//            System.out.println(v);
+//        }
+//        System.out.println("----------------------------------------");
 
 //        result = FloatUtils.scale(input, 100);
 //        for (double v : result) {

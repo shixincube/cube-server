@@ -77,6 +77,9 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
 
             // 节奏
             speakerIndicator.rhythm = (int) Math.round(speakerIndicator.totalWords / (speakerIndicator.totalDuration / 60.0));
+            if (speakerIndicator.rhythm > 220) {
+                speakerIndicator.rhythm = 220;
+            }
 
             // 情绪比例
             speakerIndicator.emotionRatio = this.evalEmotionRatio(speakerIndicator);
@@ -98,6 +101,11 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
             speakerIndicator.positiveSegmentRatio = Math.round((positive / speakerIndicator.segmentIndicators.size()) * 100);
             speakerIndicator.negativeSegmentRatio = Math.round((negative / speakerIndicator.segmentIndicators.size()) * 100);
             speakerIndicator.neutralSegmentRatio = Math.round((neutral / speakerIndicator.segmentIndicators.size()) * 100);
+
+            if (speakerIndicator.positiveSegmentRatio == 0
+                    && speakerIndicator.negativeSegmentRatio == 0) {
+                speakerIndicator.neutralSegmentRatio = 100;
+            }
         }
     }
 
@@ -128,6 +136,11 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
                 score += value;
             }
         }
+
+        if (positiveScore <= 0.01 && negativeScore <= 0.01) {
+            neutralScore = 99;
+        }
+
         double[] probability = FloatUtils.softmax(new double[]{ positiveScore, negativeScore, neutralScore });
         int positive = (int) Math.round(probability[0] * 100);
         int negative = (int) Math.round(probability[1] * 100);
