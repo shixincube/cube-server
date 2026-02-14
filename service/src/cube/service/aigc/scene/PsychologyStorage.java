@@ -60,6 +60,8 @@ public class PsychologyStorage implements Storagable {
 
     private final String usageTable = "psychology_usage";
 
+    private final String counselingRecordingTable = "counseling_recording";
+
     private final StorageField[] reportFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY

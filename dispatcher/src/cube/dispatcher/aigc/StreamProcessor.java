@@ -215,7 +215,7 @@ public class StreamProcessor {
             fileLabels.add(fileCode);
 
             try {
-                Thread.sleep(800);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

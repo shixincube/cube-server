@@ -47,10 +47,10 @@ public class CounselingManager {
     private final static CounselingManager instance = new CounselingManager();
 
     private CounselingManager() {
+        this.executor = Executors.newCachedThreadPool();
         this.streamSinkMap = new ConcurrentHashMap<>();
         this.combinedVoiceMap = new ConcurrentHashMap<>();
         this.counselingStrategyMap = new ConcurrentHashMap<>();
-        this.executor = Executors.newCachedThreadPool();
     }
 
     public static CounselingManager getInstance() {
@@ -90,7 +90,7 @@ public class CounselingManager {
         while (iter.hasNext()) {
             Map.Entry<String, Wrapper> entry = iter.next();
             Wrapper wrapper = entry.getValue();
-            if (now - wrapper.refreshTimestamp > 30 * 60 * 1000) {
+            if (now - wrapper.refreshTimestamp > 4 * 60 * 60 * 1000) {
                 // 删除超时的数据
                 String streamName = entry.getKey();
 
@@ -156,8 +156,8 @@ public class CounselingManager {
                     // 生成 Caption
                     formulateCaption(listCopy);
 
-                    // 组合数据再次进行分析
-                    combine(listCopy);
+                    // 组合数据再次进行分析并归档
+                    combine(listCopy, true);
                 }
             });
         }
@@ -554,7 +554,7 @@ public class CounselingManager {
         Logger.d(this.getClass(), "#formulateCaption - New caption : " + wrapper.streamName + "/" + captions.size());
     }
 
-    private void combine(List<VoiceStreamSink> sinks) {
+    private void combine(List<VoiceStreamSink> sinks, boolean archiving) {
         final AuthToken authToken = sinks.get(0).authToken;
         final String streamName = sinks.get(0).getStreamName();
         final int beginIndex = sinks.get(0).getIndex();
@@ -577,6 +577,9 @@ public class CounselingManager {
 
         FlexibleByteBuffer buffer = new FlexibleByteBuffer();
         FlexibleByteBuffer fileBuf = new FlexibleByteBuffer();
+
+        final VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
+                streamName, AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
 
         for (VoiceStreamSink sink : sinks) {
             File file = this.service.loadFile(authToken.getDomain(), sink.getFileLabel().getFileCode());
@@ -612,10 +615,26 @@ public class CounselingManager {
 
             // WAVE 转 PCM
             byte[] pcmData = AudioUtils.wavToPcm(fileBuf.array(), fileBuf.limit());
+
+            // 保存
+            if (archiving) {
+                archive.save(sink, pcmData);
+            }
+
             buffer.put(pcmData);
         }
 
         buffer.flip();
+
+        if (archiving) {
+            // 归档
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    archive.archive();
+                }
+            });
+        }
 
         // PCM 转 WAVE
         byte[] wavData = AudioUtils.pcmToWav(buffer.array(), 0, buffer.limit(),
