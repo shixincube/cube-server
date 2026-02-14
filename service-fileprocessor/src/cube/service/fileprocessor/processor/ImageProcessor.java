@@ -11,6 +11,8 @@ import cube.common.entity.FileResult;
 import cube.common.entity.TextConstraint;
 import cube.file.ImageOperation;
 import cube.file.operation.*;
+import cube.processor.Processor;
+import cube.processor.ProcessorContext;
 import cube.util.FileUtils;
 
 import java.io.File;

@@ -7,8 +7,8 @@
 package cube.service.fileprocessor.processor.video;
 
 import cube.common.entity.FileLabel;
-import cube.service.fileprocessor.processor.FFmpeg;
-import cube.service.fileprocessor.processor.ProcessorContext;
+import cube.processor.FFmpeg;
+import cube.processor.ProcessorContext;
 import cube.util.FileUtils;
 
 import java.io.File;

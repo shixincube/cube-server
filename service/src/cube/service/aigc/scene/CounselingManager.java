@@ -118,6 +118,12 @@ public class CounselingManager {
         }
     }
 
+    /**
+     * 记录并处理语音流片段。
+     *
+     * @param authToken
+     * @param streamSink
+     */
     public void record(AuthToken authToken, VoiceStreamSink streamSink) {
         streamSink.authToken = authToken;
 
@@ -161,6 +167,70 @@ public class CounselingManager {
                 }
             });
         }
+    }
+
+    /**
+     * 停止流。
+     *
+     * @param authToken
+     * @param streamName
+     */
+    public void stopStream(AuthToken authToken, String streamName) {
+        // 移除并处理余下的 sink
+        List<VoiceStreamSink> sinkList = this.streamSinkMap.remove(streamName);
+        if (null != sinkList && !sinkList.isEmpty()) {
+            // 归档
+            VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
+                    streamName, AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
+
+            FlexibleByteBuffer fileBuf = new FlexibleByteBuffer();
+            for (VoiceStreamSink sink : sinkList) {
+                File file = this.service.loadFile(authToken.getDomain(), sink.getFileLabel().getFileCode());
+                if (null == file) {
+                    Logger.w(this.getClass(), "#stopStream - The file is NOT exists : " + sink.getFileLabel().getFileCode());
+                    continue;
+                }
+
+                FileInputStream fis = null;
+                fileBuf.clear();
+
+                try {
+                    fis = new FileInputStream(file);
+                    byte[] bytes = new byte[8 * 1024];
+                    int bytesRead = 0;
+                    while ((bytesRead = fis.read(bytes)) > 0) {
+                        fileBuf.put(bytes, 0, bytesRead);
+                    }
+                    fileBuf.flip();
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#stopStream", e);
+                } finally {
+                    if (null != fis) {
+                        try {
+                            fis.close();
+                        } catch (Exception e) {
+                            // Nothing
+                        }
+                    }
+                }
+
+                // WAVE 转 PCM
+                byte[] pcmData = AudioUtils.wavToPcm(fileBuf.array(), fileBuf.limit());
+                archive.save(sink, pcmData);
+
+                if (file.exists()) {
+                    file.delete();
+                }
+            }
+
+            // 保存到文件
+            archive.archive();
+        }
+
+        // 归档文件转 MP3 进行持久化
+        VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
+                streamName, AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
+
     }
 
     /**

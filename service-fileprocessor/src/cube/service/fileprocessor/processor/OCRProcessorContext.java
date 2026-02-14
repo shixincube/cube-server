@@ -12,6 +12,7 @@ import cube.common.entity.FileLabel;
 import cube.file.OCRFile;
 import cube.file.TesseractHocrFile;
 import cube.file.operation.OCROperation;
+import cube.processor.ProcessorContext;
 import cube.util.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;

@@ -6,6 +6,7 @@
 
 package cube.service.fileprocessor.processor;
 
+import cube.processor.ProcessorContext;
 import org.json.JSONObject;
 
 /**

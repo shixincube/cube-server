@@ -9,6 +9,7 @@ package cube.service.fileprocessor.processor;
 import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
 import cube.common.entity.FileResult;
+import cube.processor.ProcessorContext;
 import cube.util.FileUtils;
 
 import java.io.File;

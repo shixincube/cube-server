@@ -426,6 +426,12 @@ public class PsychologyStorage implements Storagable {
             })
     };
 
+    private final StorageField[] counselingRecordingFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+    };
+
     private Storage storage;
 
     private Tokenizer tokenizer;

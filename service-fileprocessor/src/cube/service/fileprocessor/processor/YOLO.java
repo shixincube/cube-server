@@ -7,6 +7,8 @@
 package cube.service.fileprocessor.processor;
 
 import cube.file.YOLOResultFile;
+import cube.processor.Processor;
+import cube.processor.ProcessorContext;
 
 import java.io.File;
 import java.nio.file.Path;

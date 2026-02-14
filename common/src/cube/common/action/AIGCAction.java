@@ -527,6 +527,11 @@ public enum AIGCAction {
     AnalyseVoiceStream("analyseVoiceStream"),
 
     /**
+     * 停止语音流。
+     */
+    StopVoiceStream("stopVoiceStream"),
+
+    /**
      * 查询咨询策略。
      */
     QueryCounselingStrategy("queryCounselingStrategy"),

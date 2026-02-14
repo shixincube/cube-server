@@ -11,10 +11,10 @@ public class TestVoiceStreamArchive {
 
     public static void main(String[] args) {
 //        testWriteFile();
-//        testCoverData();
+        testCoverData();
 //        testAppendData();
 
-        testReadFile();
+//        testReadFile();
     }
 
     protected static void testReadFile() {
@@ -69,6 +69,9 @@ public class TestVoiceStreamArchive {
         boolean success = archive.save(sink, pcmData);
         File output = archive.archive();
         System.out.println("Cover to file: " + output.getAbsolutePath());
+
+        byte[] pcm = archive.readPCM();
+        System.out.println("PCM: " + new String(pcm, StandardCharsets.UTF_8));
     }
 
     protected static void testAppendData() {
@@ -89,7 +92,7 @@ public class TestVoiceStreamArchive {
         archive.save(sink, pcmData);
 
         File output = archive.archive();
-        System.out.println("Cover to file: " + output.getAbsolutePath());
+        System.out.println("Append to file: " + output.getAbsolutePath());
     }
 
 

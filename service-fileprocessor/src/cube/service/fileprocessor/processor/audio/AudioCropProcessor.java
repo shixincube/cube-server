@@ -9,7 +9,7 @@ package cube.service.fileprocessor.processor.audio;
 import cell.util.log.Logger;
 import cube.common.entity.FileResult;
 import cube.file.operation.AudioCropOperation;
-import cube.service.fileprocessor.processor.ProcessorContext;
+import cube.processor.ProcessorContext;
 import cube.util.FileUtils;
 import org.json.JSONObject;
 

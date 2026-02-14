@@ -8,7 +8,7 @@ package cube.service.fileprocessor.processor.audio;
 
 import cube.common.action.FileProcessorAction;
 import cube.file.AudioOperation;
-import cube.service.fileprocessor.processor.ProcessorContext;
+import cube.processor.ProcessorContext;
 import org.json.JSONObject;
 
 import java.io.File;

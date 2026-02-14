@@ -9,7 +9,7 @@ package cube.service.fileprocessor.processor.video;
 import cell.util.log.Logger;
 import cube.common.entity.FileResult;
 import cube.file.operation.SnapshotOperation;
-import cube.service.fileprocessor.processor.ProcessorContext;
+import cube.processor.ProcessorContext;
 import cube.util.TimeUtils;
 import cube.util.ZipUtils;
 

@@ -10,6 +10,7 @@ import cell.util.ByteUtils;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 import cube.common.entity.VoiceStreamSink;
+import cube.util.AudioUtils;
 import cube.util.FileUtils;
 
 import java.io.*;
@@ -76,7 +77,7 @@ public class VoiceStreamArchive {
         try {
             FlexibleByteBuffer buf = new FlexibleByteBuffer();
             raf = new RandomAccessFile(file.getAbsolutePath(), "r");
-            raf.seek(header.lengthInBytes);
+            raf.seek(this.header.lengthInBytes);
             byte[] bytes = new byte[4096];
             int len;
             while ((len = raf.read(bytes)) > 0) {
@@ -217,6 +218,44 @@ public class VoiceStreamArchive {
                     } catch (IOException e) {
                         // Nothing
                     }
+                }
+            }
+        }
+    }
+
+    /**
+     * 转为 WAV 文件。
+     *
+     * @return
+     */
+    public File convertToWavFile() {
+        if (null == this.header) {
+            this.load();
+        }
+
+        byte[] pcmData = this.readPCM();
+
+        byte[] wavData = AudioUtils.pcmToWav(pcmData);
+        File output = new File(this.workingPath, this.streamName + ".wav");
+        if (output.exists()) {
+            output.delete();
+        }
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(output);
+            fos.write(wavData);
+            fos.flush();
+            return output;
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#convertToWavFile", e);
+            return null;
+        } finally {
+            if (null != fos) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    // Nothing
                 }
             }
         }
@@ -389,6 +428,10 @@ public class VoiceStreamArchive {
 
             byte[] result = new byte[buf.limit()];
             System.arraycopy(buf.array(), 0, result, 0, buf.limit());
+
+            // 更新长度数据
+            this.lengthInBytes = buf.limit();
+
             return result;
         }
 

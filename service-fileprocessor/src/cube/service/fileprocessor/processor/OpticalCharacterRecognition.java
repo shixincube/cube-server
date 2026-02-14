@@ -6,6 +6,8 @@
 
 package cube.service.fileprocessor.processor;
 
+import cube.processor.Processor;
+
 import java.io.File;
 import java.nio.file.Path;
 

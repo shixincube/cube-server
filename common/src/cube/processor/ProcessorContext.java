@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.fileprocessor.processor;
+package cube.processor;
 
 import cube.common.JSONable;
 import cube.common.entity.FileResult;

@@ -8,6 +8,7 @@ package cube.service.fileprocessor.processor;
 
 import cube.common.entity.FileResult;
 import cube.file.operation.OfficeConvertToOperation;
+import cube.processor.ProcessorContext;
 import cube.util.FileType;
 import cube.util.FileUtils;
 

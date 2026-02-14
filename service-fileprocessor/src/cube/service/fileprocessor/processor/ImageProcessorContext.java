@@ -9,6 +9,7 @@ package cube.service.fileprocessor.processor;
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
 import cube.file.ImageOperation;
+import cube.processor.ProcessorContext;
 import org.json.JSONObject;
 
 /**

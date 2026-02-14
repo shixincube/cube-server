@@ -10,7 +10,7 @@ import cell.util.log.Logger;
 import cube.common.entity.FileResult;
 import cube.file.misc.MediaAttribute;
 import cube.file.operation.ExtractAudioOperation;
-import cube.service.fileprocessor.processor.ProcessorContext;
+import cube.processor.ProcessorContext;
 import org.json.JSONObject;
 
 import java.io.File;

@@ -7,6 +7,7 @@
 package cube.service.fileprocessor.processor;
 
 import cube.file.operation.OfficeConvertToOperation;
+import cube.processor.ProcessorContext;
 import org.json.JSONObject;
 
 /**

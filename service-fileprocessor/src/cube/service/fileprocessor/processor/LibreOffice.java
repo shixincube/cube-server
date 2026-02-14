@@ -7,6 +7,8 @@
 package cube.service.fileprocessor.processor;
 
 import cell.util.log.Logger;
+import cube.processor.Processor;
+import cube.processor.ProcessorContext;
 
 import java.io.IOException;
 import java.nio.file.Path;

@@ -9,7 +9,7 @@ package cube.service.fileprocessor.processor.audio;
 import cell.util.log.Logger;
 import cube.common.entity.FileResult;
 import cube.file.operation.AudioSamplingOperation;
-import cube.service.fileprocessor.processor.ProcessorContext;
+import cube.processor.ProcessorContext;
 
 import java.io.File;
 import java.nio.file.Path;
