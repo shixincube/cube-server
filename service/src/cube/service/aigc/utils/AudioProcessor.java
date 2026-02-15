@@ -26,7 +26,12 @@ public class AudioProcessor extends FFmpeg {
             ArrayList<String> params = new ArrayList<>();
             params.add("-i");
             params.add(ctx.getInputFile());
-
+            params.add("-vn");
+            params.add("-ac");
+            params.add(Integer.toString(ctx.getChannels()));
+            params.add("-ar");
+            params.add(Integer.toString(ctx.getSampleRate()));
+            params.add(ctx.getOutputFile());
         }
         else {
             Logger.w(this.getClass(), "#go - Unknown context");

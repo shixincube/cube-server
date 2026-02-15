@@ -3060,30 +3060,6 @@ public class AIGCService extends AbstractModule implements Generatable {
     public boolean analyseVoiceStream(AuthToken authToken, String fileCode, String streamName, int index,
                                       VoiceStreamAnalysisListener listener) {
         VoiceStreamSink streamSink = new VoiceStreamSink(streamName, index);
-
-//        {
-//            VoiceDiarization voiceDiarization = new VoiceDiarization(Utils.generateSerialNumber(),
-//                    System.currentTimeMillis(), authToken.getContactId(),
-//                    "这是标题", "", fileCode, 6.1, Utils.randomInt(1000, 5000));
-//            (new Thread() {
-//                @Override
-//                public void run() {
-//                    try {
-//                        Thread.sleep(Utils.randomInt(5000, 9000));
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//
-//                    FileLabel fileLabel = getFile(authToken.getDomain(), fileCode);
-//                    streamSink.setDiarization(voiceDiarization);
-//                    streamSink.setFileLabel(fileLabel);
-//
-//                    listener.onCompleted(fileLabel, streamSink);
-//                }
-//            }).start();
-//            return true;
-//        }
-
         boolean success = this.performSpeakerDiarization(authToken, fileCode, false, false,
                 new VoiceDiarizationListener() {
             @Override
@@ -3126,6 +3102,18 @@ public class AIGCService extends AbstractModule implements Generatable {
         });
 
         return success;
+    }
+
+    /**
+     * 停止语音流处理。停止后不可恢复。
+     *
+     * @param authToken
+     * @param streamName
+     * @return
+     */
+    public FileLabel stopVoiceStream(AuthToken authToken, String streamName) {
+        // 直接停止
+        return CounselingManager.getInstance().stopStream(authToken, streamName);
     }
 
     /**

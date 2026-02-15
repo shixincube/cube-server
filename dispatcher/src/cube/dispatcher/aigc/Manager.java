@@ -2915,6 +2915,29 @@ public class Manager implements Tickable, PerformerListener {
         return true;
     }
 
+    public FileLabel stopStream(String token, String streamName) {
+        JSONObject data = new JSONObject();
+        data.put("streamName", streamName);
+        Packet packet = new Packet(AIGCAction.StopVoiceStream.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#stopVoiceStream - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#stopVoiceStream - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        JSONObject json = Packet.extractDataPayload(responsePacket);
+        return new FileLabel(json);
+    }
+
     /**
      * 查询咨询策略。
      *

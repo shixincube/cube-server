@@ -17,6 +17,8 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.VoiceDiarizationListener;
+import cube.service.aigc.utils.AudioProcessor;
+import cube.service.aigc.utils.WavToMp3Context;
 import cube.util.AudioUtils;
 import cube.util.FileUtils;
 import cube.util.TextUtils;
@@ -24,6 +26,7 @@ import cube.util.TextUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -174,8 +177,9 @@ public class CounselingManager {
      *
      * @param authToken
      * @param streamName
+     * @return
      */
-    public void stopStream(AuthToken authToken, String streamName) {
+    public FileLabel stopStream(AuthToken authToken, String streamName) {
         // 移除并处理余下的 sink
         List<VoiceStreamSink> sinkList = this.streamSinkMap.remove(streamName);
         if (null != sinkList && !sinkList.isEmpty()) {
@@ -227,10 +231,33 @@ public class CounselingManager {
             archive.archive();
         }
 
-        // 归档文件转 MP3 进行持久化
+        // 归档文件转 WAV 文件
+        long start = System.currentTimeMillis();
+
         VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
                 streamName, AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
+        File wavFile = archive.convertToWavFile();
+        if (null != wavFile) {
+            // WAV 转 MP3
+            File mp3File = new File(this.service.getWorkingPath(), streamName + ".mp3");
+            WavToMp3Context context = new WavToMp3Context(wavFile.getName(), mp3File.getName(),
+                    AudioUtils.SAMPLE_RATE, AudioUtils.CHANNELS);
+            AudioProcessor processor = new AudioProcessor(Paths.get(this.service.workingPath.getAbsolutePath()));
+            processor.go(context);
+            if (context.isSuccessful()) {
+                long elapsed = System.currentTimeMillis() - start;
+                Logger.d(this.getClass(), "#stopStream - Convert to mp3 file: " + streamName +
+                        " - elapsed: " + Math.round(elapsed / 1000.0) + "s");
+            }
+            else {
+                Logger.w(this.getClass(), "#stopStream - Convert to mp3 file failed: " + streamName);
+            }
+        }
 
+        // 删除归档
+        archive.delete();
+
+        return null;
     }
 
     /**

@@ -261,6 +261,16 @@ public class VoiceStreamArchive {
         }
     }
 
+    /**
+     * 删除文件。
+     */
+    public void delete() {
+        File file = new File(this.workingPath, this.streamName + "." + Extension);
+        if (file.exists()) {
+            file.delete();
+        }
+    }
+
     private Header readHeader(File file) {
         FileInputStream fis = null;
         FlexibleByteBuffer buf = new FlexibleByteBuffer();
