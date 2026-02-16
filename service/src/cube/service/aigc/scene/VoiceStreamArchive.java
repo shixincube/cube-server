@@ -52,6 +52,15 @@ public class VoiceStreamArchive {
         return this.header;
     }
 
+    public long getTimestamp() {
+        return this.header.timestamp;
+    }
+
+    public boolean exists() {
+        File file = new File(this.workingPath, this.streamName + "." + Extension);
+        return file.exists();
+    }
+
     public boolean load() {
         File file = new File(this.workingPath, this.streamName + "." + Extension);
         Header header = this.readHeader(file);
@@ -90,7 +99,7 @@ public class VoiceStreamArchive {
             System.arraycopy(buf.array(), 0, result, 0, buf.limit());
             return result;
         } catch (Exception e) {
-            Logger.e(this.getClass(), "#load", e);
+            Logger.e(this.getClass(), "#readPCM", e);
             return null;
         } finally {
             if (null != raf) {
@@ -234,6 +243,9 @@ public class VoiceStreamArchive {
         }
 
         byte[] pcmData = this.readPCM();
+        if (null == pcmData) {
+            return null;
+        }
 
         byte[] wavData = AudioUtils.pcmToWav(pcmData);
         File output = new File(this.workingPath, this.streamName + ".wav");

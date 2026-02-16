@@ -174,6 +174,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new TextToFile());
         httpServer.addContextHandler(new GetQueueCount());
         httpServer.addContextHandler(new ApplyStream());
+        httpServer.addContextHandler(new StopStream());
         httpServer.addContextHandler(new QueryCounselingStrategy());
         httpServer.addContextHandler(new QueryCounselingCaption());
 
@@ -2924,13 +2925,13 @@ public class Manager implements Tickable, PerformerListener {
 
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
         if (null == response) {
-            Logger.w(this.getClass(), "#stopVoiceStream - No response");
+            Logger.w(this.getClass(), "#stopStream - No response");
             return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#stopVoiceStream - Response state is " + Packet.extractCode(responsePacket));
+            Logger.w(this.getClass(), "#stopStream - Response state is " + Packet.extractCode(responsePacket));
             return null;
         }
 

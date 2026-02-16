@@ -10,7 +10,9 @@ import cell.util.log.Logger;
 import cube.processor.FFmpeg;
 import cube.processor.ProcessorContext;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 public class AudioProcessor extends FFmpeg {
@@ -32,6 +34,11 @@ public class AudioProcessor extends FFmpeg {
             params.add("-ar");
             params.add(Integer.toString(ctx.getSampleRate()));
             params.add(ctx.getOutputFile());
+
+            this.call(params, ctx);
+
+            boolean success = Files.exists(Paths.get(this.getWorkPath().toString(), ctx.getOutputFile()));
+            ctx.setSuccessful(success);
         }
         else {
             Logger.w(this.getClass(), "#go - Unknown context");

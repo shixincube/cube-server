@@ -10,6 +10,7 @@ import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 import cube.aigc.ConsultationTheme;
 import cube.aigc.ModelConfig;
+import cube.aigc.atom.Atom;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Resource;
 import cube.auth.AuthToken;
@@ -22,6 +23,7 @@ import cube.service.aigc.utils.WavToMp3Context;
 import cube.util.AudioUtils;
 import cube.util.FileUtils;
 import cube.util.TextUtils;
+import cube.util.TimeUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -180,6 +182,26 @@ public class CounselingManager {
      * @return
      */
     public FileLabel stopStream(AuthToken authToken, String streamName) {
+        Wrapper wrapper = this.counselingStrategyMap.get(streamName);
+        if (null == wrapper) {
+            Logger.w(this.getClass(), "#stopStream - No stream data: " + streamName);
+            return null;
+        }
+
+        long start = System.currentTimeMillis();
+        while (wrapper.generatingStrategy.get()) {
+            // 等待完成
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (System.currentTimeMillis() - start > 60 * 1000) {
+                // 超时退出
+                break;
+            }
+        }
+
         // 移除并处理余下的 sink
         List<VoiceStreamSink> sinkList = this.streamSinkMap.remove(streamName);
         if (null != sinkList && !sinkList.isEmpty()) {
@@ -232,30 +254,42 @@ public class CounselingManager {
         }
 
         // 归档文件转 WAV 文件
-        long start = System.currentTimeMillis();
-
         VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
                 streamName, AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
-        File wavFile = archive.convertToWavFile();
-        if (null != wavFile) {
-            // WAV 转 MP3
-            File mp3File = new File(this.service.getWorkingPath(), streamName + ".mp3");
-            WavToMp3Context context = new WavToMp3Context(wavFile.getName(), mp3File.getName(),
-                    AudioUtils.SAMPLE_RATE, AudioUtils.CHANNELS);
-            AudioProcessor processor = new AudioProcessor(Paths.get(this.service.workingPath.getAbsolutePath()));
-            processor.go(context);
-            if (context.isSuccessful()) {
-                long elapsed = System.currentTimeMillis() - start;
-                Logger.d(this.getClass(), "#stopStream - Convert to mp3 file: " + streamName +
-                        " - elapsed: " + Math.round(elapsed / 1000.0) + "s");
+        if (archive.exists()) {
+            File wavFile = archive.convertToWavFile();
+            if (null != wavFile) {
+                // WAV 转 MP3
+                String fileName = "recording_counseling_" +
+                        TimeUtils.formatDateForPathSymbol(archive.getTimestamp()) + "_" + streamName + ".mp3";
+                File mp3File = new File(this.service.getWorkingPath(), fileName);
+                WavToMp3Context context = new WavToMp3Context(wavFile.getName(), mp3File.getName(),
+                        AudioUtils.SAMPLE_RATE, AudioUtils.CHANNELS);
+                AudioProcessor processor = new AudioProcessor(Paths.get(this.service.workingPath.getAbsolutePath()));
+                processor.go(context);
+                if (context.isSuccessful()) {
+                    long elapsed = System.currentTimeMillis() - start;
+                    Logger.d(this.getClass(), "#stopStream - Convert to mp3 file: " + streamName +
+                            " - elapsed: " + Math.round(elapsed / 1000.0) + "s");
+                }
+                else {
+                    Logger.w(this.getClass(), "#stopStream - Convert to mp3 file failed: " + streamName);
+                }
+
+//            if (wavFile.exists()) {
+//                wavFile.delete();
+//            }
             }
             else {
-                Logger.w(this.getClass(), "#stopStream - Convert to mp3 file failed: " + streamName);
+                Logger.w(this.getClass(), "#stopStream - Convert to wav file failed: " + streamName);
             }
-        }
 
-        // 删除归档
-        archive.delete();
+            // 删除归档
+            archive.delete();
+        }
+        else {
+            Logger.w(this.getClass(), "#stopStream - Archive file is NOT exists: " + streamName);
+        }
 
         return null;
     }
@@ -403,6 +437,13 @@ public class CounselingManager {
             return;
         }
 
+        if (wrapper.generatingWithText.get()) {
+            Logger.d(this.getClass(), "#formulateStrategyWithText - Generating strategy: " + streamName);
+            return;
+        }
+
+        wrapper.generatingWithText.set(true);
+
         StringBuilder conversation = new StringBuilder();
 
         String lastLabel = "";
@@ -459,6 +500,9 @@ public class CounselingManager {
 
         GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
                 prompt, new GeneratingOption(), null, null);
+
+        wrapper.generatingWithText.set(false);
+
         if (null == record) {
             Logger.w(this.getClass(), "#formulateStrategyWithText - The record is null");
             return;
@@ -479,6 +523,13 @@ public class CounselingManager {
             Logger.w(this.getClass(), "#formulateStrategyWithEmotion - No find wrapper: " + streamName);
             return;
         }
+
+        if (wrapper.generatingWithEmotion.get()) {
+            Logger.d(this.getClass(), "#formulateStrategyWithEmotion - Generating strategy: " + streamName);
+            return;
+        }
+
+        wrapper.generatingWithEmotion.set(true);
 
         float totalRhythm = 0;
         float countRhythm = 0;
@@ -519,6 +570,9 @@ public class CounselingManager {
 
         GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
                 prompt, new GeneratingOption(), null, null);
+
+        wrapper.generatingWithEmotion.set(false);
+
         if (null == record) {
             Logger.w(this.getClass(), "#formulateStrategyWithEmotion - The record is null");
             return;
@@ -976,9 +1030,13 @@ public class CounselingManager {
 
         public long refreshTimestamp;
 
-        protected AtomicBoolean generatingStrategy = new AtomicBoolean(false);
+        protected AtomicBoolean generatingWithText = new AtomicBoolean(false);
+
+        protected AtomicBoolean generatingWithEmotion = new AtomicBoolean(false);
 
         protected AtomicBoolean generatingCaption = new AtomicBoolean(false);
+
+        protected AtomicBoolean generatingStrategy = new AtomicBoolean(false);
 
         protected Wrapper(String streamName, AuthToken authToken, ConsultationTheme theme, Attribute attribute) {
             this.streamName = streamName;
