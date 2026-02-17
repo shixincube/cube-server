@@ -27,6 +27,7 @@ public class VoiceStreamSink implements JSONable {
     public VoiceStreamSink(String streamName, int index) {
         this.streamName = streamName;
         this.index = index;
+        this.timestamp = System.currentTimeMillis();
     }
 
     public VoiceStreamSink(JSONObject json) {

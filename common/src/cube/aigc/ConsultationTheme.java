@@ -43,10 +43,10 @@ public enum ConsultationTheme {
         this.nameEN = nameEN;
     }
 
-    public static ConsultationTheme parse(String name) {
+    public static ConsultationTheme parse(String nameOrCode) {
         for (ConsultationTheme theme : ConsultationTheme.values()) {
-            if (theme.name().equalsIgnoreCase(name) || theme.code.equalsIgnoreCase(name) ||
-                theme.nameCN.equals(name) || theme.nameEN.equalsIgnoreCase(name)) {
+            if (theme.name().equalsIgnoreCase(nameOrCode) || theme.code.equalsIgnoreCase(nameOrCode) ||
+                theme.nameCN.equals(nameOrCode) || theme.nameEN.equalsIgnoreCase(nameOrCode)) {
                 return theme;
             }
         }

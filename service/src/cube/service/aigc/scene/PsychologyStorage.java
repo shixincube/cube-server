@@ -8,9 +8,11 @@ package cube.service.aigc.scene;
 
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
+import cube.aigc.ConsultationTheme;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.composition.*;
+import cube.auth.AuthToken;
 import cube.common.Language;
 import cube.common.Storagable;
 import cube.common.state.AIGCStateCode;
@@ -59,8 +61,6 @@ public class PsychologyStorage implements Storagable {
     private final String paintingReportManagementTable = "psychology_painting_report_mgmt";
 
     private final String usageTable = "psychology_usage";
-
-    private final String counselingRecordingTable = "counseling_recording";
 
     private final StorageField[] reportFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
@@ -424,12 +424,6 @@ public class PsychologyStorage implements Storagable {
             new StorageField("completion_sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             })
-    };
-
-    private final StorageField[] counselingRecordingFields = new StorageField[] {
-            new StorageField("id", LiteralBase.LONG, new Constraint[] {
-                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
-            }),
     };
 
     private Storage storage;

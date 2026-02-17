@@ -43,6 +43,7 @@ public class VoiceStreamArchive {
         this.streamName = streamName;
         this.header = new Header();
         this.header.streamName = streamName;
+        this.header.timestamp = System.currentTimeMillis();
         this.header.sampleRate = sampleRate;
         this.header.sampleSizeInBits = sampleSizeInBits;
         this.header.channels = channels;

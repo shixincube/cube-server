@@ -10,7 +10,6 @@ import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 import cube.aigc.ConsultationTheme;
 import cube.aigc.ModelConfig;
-import cube.aigc.atom.Atom;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Resource;
 import cube.auth.AuthToken;
@@ -142,7 +141,9 @@ public class CounselingManager {
                     return s1.getIndex() - s2.getIndex();
                 }
             });
+
             Logger.d(this.getClass(), "#record : " + list.size());
+
             if (list.size() >= 5 && this.isContinuous(list)) {
                 // 大约30秒，且数据连续
                 listCopy.addAll(list);
@@ -160,13 +161,23 @@ public class CounselingManager {
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
+                    // 生成 Caption
+                    formulateCaption(listCopy);
+                }
+            });
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
                     // 生成策略
                     formulateStrategyWithText(listCopy);
                     formulateStrategyWithEmotion(listCopy);
+                }
+            });
 
-                    // 生成 Caption
-                    formulateCaption(listCopy);
-
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
                     // 组合数据再次进行分析并归档
                     combine(listCopy, true);
                 }
@@ -253,6 +264,8 @@ public class CounselingManager {
             archive.archive();
         }
 
+        FileLabel recordingFileLabel = null;
+
         // 归档文件转 WAV 文件
         VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
                 streamName, AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
@@ -271,14 +284,19 @@ public class CounselingManager {
                     long elapsed = System.currentTimeMillis() - start;
                     Logger.d(this.getClass(), "#stopStream - Convert to mp3 file: " + streamName +
                             " - elapsed: " + Math.round(elapsed / 1000.0) + "s");
+
+                    // 持久化 MP3 文件到存储
+                    String fileCode = FileUtils.makeFileCode(authToken.getContactId(), authToken.getDomain(),
+                            fileName);
+                    recordingFileLabel = this.service.saveFile(authToken, fileCode, mp3File, fileName, true);
                 }
                 else {
                     Logger.w(this.getClass(), "#stopStream - Convert to mp3 file failed: " + streamName);
                 }
 
-//            if (wavFile.exists()) {
-//                wavFile.delete();
-//            }
+                if (wavFile.exists()) {
+                    wavFile.delete();
+                }
             }
             else {
                 Logger.w(this.getClass(), "#stopStream - Convert to wav file failed: " + streamName);
@@ -291,7 +309,17 @@ public class CounselingManager {
             Logger.w(this.getClass(), "#stopStream - Archive file is NOT exists: " + streamName);
         }
 
-        return null;
+        // 记录
+        if (null != recordingFileLabel) {
+            boolean successful = this.service.getStorage().writeCounselingRecording(authToken, streamName, wrapper.timestamp,
+                    start - wrapper.timestamp, wrapper.attribute, wrapper.theme,
+                    recordingFileLabel.getFileCode());
+            if (!successful) {
+                Logger.w(this.getClass(), "#stopStream - Writes the counseling recording failed: " + streamName);
+            }
+        }
+
+        return recordingFileLabel;
     }
 
     /**
@@ -1016,6 +1044,8 @@ public class CounselingManager {
 
         public final String streamName;
 
+        public final long timestamp;
+
         public final AuthToken authToken;
 
         public final ConsultationTheme theme;
@@ -1040,6 +1070,7 @@ public class CounselingManager {
 
         protected Wrapper(String streamName, AuthToken authToken, ConsultationTheme theme, Attribute attribute) {
             this.streamName = streamName;
+            this.timestamp = System.currentTimeMillis();
             this.authToken = authToken;
             this.theme = theme;
             this.attribute = attribute;

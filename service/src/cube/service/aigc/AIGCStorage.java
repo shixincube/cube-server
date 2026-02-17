@@ -12,6 +12,8 @@ import cell.util.log.Logger;
 import cube.aigc.*;
 import cube.aigc.app.Notification;
 import cube.aigc.atom.Atom;
+import cube.aigc.psychology.Attribute;
+import cube.auth.AuthToken;
 import cube.common.entity.Emotion;
 import cube.common.Storagable;
 import cube.common.entity.*;
@@ -82,6 +84,8 @@ public class AIGCStorage implements Storagable {
     private final String voiceTrackTable = "aigc_voice_track";
 
     private final String voiceIndicatorTable = "aigc_voice_indicator";
+
+    private final String counselingRecordingTable = "aigc_counseling_recording";
 
     private final StorageField[] appConfigFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
@@ -594,6 +598,39 @@ public class AIGCStorage implements Storagable {
             })
     };
 
+    private final StorageField[] counselingRecordingFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("cid", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("stream", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("duration", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("gender", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("age", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("theme", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
     private Storage storage;
 
     public AIGCStorage(StorageType type, JSONObject config) {
@@ -765,6 +802,13 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.voiceIndicatorTable, this.voiceIndicatorFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.voiceIndicatorTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.counselingRecordingTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.counselingRecordingTable, this.counselingRecordingFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.counselingRecordingTable + "' successfully");
             }
         }
     }
@@ -2644,6 +2688,36 @@ public class AIGCStorage implements Storagable {
         }
 
         return voiceIndicator;
+    }
+
+    public String readCounselingRecordingFileCode(String streamName) {
+        List<StorageField[]> result = this.storage.executeQuery(this.counselingRecordingTable,
+                new StorageField[] {
+                        new StorageField("file_code", LiteralBase.STRING)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("stream", streamName)
+                });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        return result.get(0)[0].getString();
+    }
+
+    public boolean writeCounselingRecording(AuthToken authToken, String streamName, long timestamp, long duration,
+                                            Attribute attribute, ConsultationTheme theme, String fileCode) {
+        return (this.storage.executeInsert(this.counselingRecordingTable, new StorageField[] {
+                new StorageField("cid", authToken.getContactId()),
+                new StorageField("domain", authToken.getDomain()),
+                new StorageField("stream", streamName),
+                new StorageField("timestamp", timestamp),
+                new StorageField("duration", duration),
+                new StorageField("gender", attribute.gender),
+                new StorageField("age", attribute.age),
+                new StorageField("theme", theme.code),
+                new StorageField("file_code", fileCode)
+        }));
     }
 
     private void resetDefaultConfig() {
