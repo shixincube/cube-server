@@ -6,6 +6,7 @@
 
 package cube.util;
 
+import cell.util.Utils;
 import cell.util.log.Logger;
 import org.json.JSONObject;
 
@@ -42,6 +43,16 @@ public final class ConfigUtils {
     public final static String ORDER_DESC = "desc";
 
     private ConfigUtils() {
+    }
+
+    /**
+     * 生成随机序列号。
+     * 该序列号最大值是 0xFFFFFFFF 。
+     *
+     * @return
+     */
+    public static long generateSerialNumber() {
+        return Utils.randomInt(0x989680, 0xFFFFFFFF);
     }
 
     /**
