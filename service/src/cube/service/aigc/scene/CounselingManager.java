@@ -200,6 +200,13 @@ public class CounselingManager {
         }
 
         long start = System.currentTimeMillis();
+
+        // 判断时长，少于1分钟，不进行保存
+        if (start - wrapper.timestamp < 60 * 1000) {
+            Logger.w(this.getClass(), "#stopStream - Record less than 1 minute: " + streamName);
+            return null;
+        }
+
         while (wrapper.generatingStrategy.get()) {
             // 等待完成
             try {
