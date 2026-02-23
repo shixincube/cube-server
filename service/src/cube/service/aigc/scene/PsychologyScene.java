@@ -348,14 +348,15 @@ public class PsychologyScene {
      * @param theme
      * @param maxIndicators
      * @param adjust
-     * @param retention
+     * @param retention 保存天数
+     * @param remark 备注
      * @param listener
      * @return
      */
     public synchronized PaintingReport generatePsychologyReport(AIGCChannel channel, Attribute attribute,
                                                                 FileLabel fileLabel, Theme theme,
                                                                 int maxIndicators, boolean adjust,
-                                                                int retention,
+                                                                int retention, String remark,
                                                                 PaintingReportListener listener) {
         if (null == channel) {
             Logger.e(this.getClass(), "#generatePsychologyReport - Channel is null");
@@ -395,6 +396,10 @@ public class PsychologyScene {
 
         PaintingReport report = new PaintingReport(channel.getAuthToken().getContactId(),
                 attribute, fileLabel, theme);
+        // 设置备注
+        if (null != remark) {
+            report.setRemark(remark);
+        }
 
         ReportTask task = new ReportTask(channel, attribute, fileLabel, theme, maxIndicators, adjust, listener, report);
 
@@ -567,7 +572,7 @@ public class PsychologyScene {
                             }
 
                             // 使用数据管理器生成关联数据
-                            //                        SceneManager.getInstance().writeReportChart(reportTask.report);
+                            // SceneManager.getInstance().writeReportChart(reportTask.report);
 
                             Logger.i(getClass(), "End generating report: " + reportTask.report.sn + " - elapsed: " +
                                     Math.round((System.currentTimeMillis() - start) / 1000.0) + "s");

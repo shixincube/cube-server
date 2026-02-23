@@ -2293,11 +2293,13 @@ public class Manager implements Tickable, PerformerListener {
      * @param fileCode
      * @param theme
      * @param indicators
+     * @param adjust
+     * @param remark
      * @return
      */
     public PaintingReport generatePsychologyReport(String remote, String token, Attribute attribute,
                                                    String fileCode, String theme, int indicators,
-                                                   boolean adjust) {
+                                                   boolean adjust, String remark) {
         JSONObject data = new JSONObject();
         data.put("remote", remote);
         data.put("attribute", attribute.toJSON());
@@ -2305,6 +2307,9 @@ public class Manager implements Tickable, PerformerListener {
         data.put("theme", theme);
         data.put("indicators", indicators);
         data.put("adjust", adjust);
+        if (null != remark) {
+            data.put("remark", remark);
+        }
 
         Packet packet = new Packet(AIGCAction.GeneratePsychologyReport.name, data);
         ActionDialect request = packet.toDialect();

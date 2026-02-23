@@ -2734,12 +2734,13 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param theme
      * @param maxIndicators
      * @param adjust
+     * @param remark
      * @param listener
      * @return
      */
     public PaintingReport generatePaintingReport(String token, Attribute attribute, String fileCode,
                                                  Theme theme, int maxIndicators, boolean adjust,
-                                                 PaintingReportListener listener) {
+                                                 String remark, PaintingReportListener listener) {
         if (!this.isStarted()) {
             Logger.w(this.getClass(), "#generatePaintingReport - The service has NOT started");
             return null;
@@ -2780,7 +2781,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         // 生成报告
         PaintingReport report = PsychologyScene.getInstance().generatePsychologyReport(channel,
-                attribute, fileLabel, theme, maxIndicators, adjust, 0, listener);
+                attribute, fileLabel, theme, maxIndicators, adjust, 0, remark, listener);
 
         return report;
     }

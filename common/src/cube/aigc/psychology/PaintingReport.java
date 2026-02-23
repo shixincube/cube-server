@@ -49,8 +49,6 @@ public class PaintingReport extends Report {
 
     private String keyFeatureDescription = null;
 
-//    private MandalaFlower mandalaFlower;
-
     public Painting painting;
 
     public PaintingFeatureSet paintingFeatureSet;
@@ -355,13 +353,6 @@ public class PaintingReport extends Report {
             buf.append("\n\n");
         }
 
-//        if (null != this.mandalaFlower) {
-//            buf.append("\n\n");
-//            buf.append("## 曼陀罗绘画\n\n");
-//            buf.append("![曼陀罗绘画](").append(this.mandalaFlower.url).append(")");
-//            buf.append("\n\n");
-//        }
-
         this.markdown = buf.toString();
         return this.markdown;
     }
@@ -476,12 +467,6 @@ public class PaintingReport extends Report {
         if (null != this.keyFeatureDescription) {
             json.put("keyFeatureDescription", this.keyFeatureDescription);
         }
-
-//        if (null != this.mandalaFlower) {
-//            json.put("mandalaFlower", this.mandalaFlower.toJSON());
-//            // 兼容旧版本
-//            json.put("daturaFlower", this.mandalaFlower.toJSON());
-//        }
 
         return json;
     }

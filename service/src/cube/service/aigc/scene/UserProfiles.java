@@ -27,7 +27,7 @@ public final class UserProfiles {
     /**
      * 非会员报告保存天数。
      */
-    public final static int gsNonmemberRetention = 7;
+    public final static int gsNonmemberRetention = 365;
 
     /**
      * 会员报告保存天数。

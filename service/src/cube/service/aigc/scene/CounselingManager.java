@@ -731,6 +731,10 @@ public class CounselingManager {
         List<CounselingStrategy> captions = wrapper.captions;
         synchronized (captions) {
             for (String content : contentList) {
+                // 过滤提示段
+                if (content.trim().endsWith(":") || content.trim().endsWith("：")) {
+                    continue;
+                }
                 CounselingStrategy caption = new CounselingStrategy(captions.size(), wrapper.attribute,
                         wrapper.theme, wrapper.streamName, wrapper.consultingAction, content);
                 captions.add(caption);

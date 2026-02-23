@@ -52,10 +52,11 @@ public class PsychologyReports extends ContextHandler {
                     String theme = data.has("theme") ? data.getString("theme") : Theme.Generic.code;
                     int indicators = data.has("indicators") ? data.getInt("indicators") : 30;
                     boolean adjust = data.has("adjust") ? data.getBoolean("adjust") : true;
+                    String remark = data.has("remark") ? data.getString("remark") : null;
 
                     PaintingReport report =
                             Manager.getInstance().generatePsychologyReport(request.getRemoteHost(), token, attribute,
-                                    fileCode, theme, indicators, adjust);
+                                    fileCode, theme, indicators, adjust, remark);
                     if (null != report) {
                         JSONObject responseData = report.toJSON();
                         if (responseData.has("fileLabel")) {
