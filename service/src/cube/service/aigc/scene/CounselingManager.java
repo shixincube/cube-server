@@ -23,6 +23,7 @@ import cube.util.AudioUtils;
 import cube.util.FileUtils;
 import cube.util.TextUtils;
 import cube.util.TimeUtils;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -277,6 +278,9 @@ public class CounselingManager {
         VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
                 streamName, AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
         if (archive.exists()) {
+            // 计算 duration
+            long duration = archive.calculateDurationMillis();
+            // 转 WAV 文件
             File wavFile = archive.convertToWavFile();
             if (null != wavFile) {
                 // WAV 转 MP3
@@ -295,7 +299,12 @@ public class CounselingManager {
                     // 持久化 MP3 文件到存储
                     String fileCode = FileUtils.makeFileCode(authToken.getContactId(), authToken.getDomain(),
                             fileName);
-                    recordingFileLabel = this.service.saveFile(authToken, fileCode, mp3File, fileName, true);
+
+                    JSONObject fileContext = new JSONObject();
+                    fileContext.put("duration", duration);
+                    // 保存到文件系统
+                    recordingFileLabel = this.service.saveFile(authToken, fileCode, mp3File,
+                            fileName, true, fileContext);
                 }
                 else {
                     Logger.w(this.getClass(), "#stopStream - Convert to mp3 file failed: " + streamName);

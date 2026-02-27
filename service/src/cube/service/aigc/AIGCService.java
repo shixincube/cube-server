@@ -3223,6 +3223,11 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     public FileLabel saveFile(AuthToken authToken, String fileCode, File file, String filename, boolean deleteAfterSave) {
+        return this.saveFile(authToken, fileCode, file, filename, deleteAfterSave, null);
+    }
+
+    public FileLabel saveFile(AuthToken authToken, String fileCode, File file, String filename, boolean deleteAfterSave,
+                              JSONObject context) {
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#saveFile - File storage service is not ready");
@@ -3233,6 +3238,9 @@ public class AIGCService extends AbstractModule implements Generatable {
         FileLabel fileLabel = FileUtils.makeFileLabel(authToken.getDomain(), fileCode, authToken.getContactId(), file);
         if (null != filename) {
             fileLabel.setFileName(filename);
+        }
+        if (null != context) {
+            fileLabel.setContext(context);
         }
 
         try {

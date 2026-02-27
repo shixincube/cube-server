@@ -234,6 +234,21 @@ public class VoiceStreamArchive {
     }
 
     /**
+     * 计算以毫秒为单位的播放时长。
+     *
+     * @return
+     */
+    public long calculateDurationMillis() {
+        byte[] pcmData = this.readPCM();
+        if (null == pcmData) {
+            return 0;
+        }
+
+        int frames = pcmData.length / (this.header.sampleSizeInBits / 8 * this.header.channels);
+        return (frames / this.header.sampleRate * 1000L);
+    }
+
+    /**
      * 转为 WAV 文件。
      *
      * @return
