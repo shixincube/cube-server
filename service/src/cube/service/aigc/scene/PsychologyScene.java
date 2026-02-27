@@ -16,7 +16,6 @@ import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.PerceptronThing;
 import cube.aigc.psychology.algorithm.Representation;
-import cube.aigc.psychology.app.UserProfile;
 import cube.aigc.psychology.composition.*;
 import cube.aigc.psychology.material.Label;
 import cube.auth.AuthConsts;
@@ -31,7 +30,6 @@ import cube.service.aigc.AIGCService;
 import cube.service.aigc.scene.node.DetectTeenagerQueryStrategyNode;
 import cube.service.aigc.scene.node.TeenagerProblemClassificationNode;
 import cube.service.aigc.scene.node.TeenagerQueryNode;
-import cube.service.contact.ContactManager;
 import cube.service.cv.CVService;
 import cube.service.cv.listener.MatchSimilarityListener;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -1409,52 +1407,6 @@ public class PsychologyScene {
 
     public boolean writePaintingReportState(long sn, int state) {
         return this.storage.writePaintingManagementState(sn, state);
-    }
-
-    public UserProfile getAppUserProfile(AuthToken authToken) {
-        UserProfile profile = new UserProfile();
-
-        Contact contact = ContactManager.getInstance().getContact(authToken.getDomain(), authToken.getContactId());
-        profile.totalPoints = ContactManager.getInstance().getPointSystem().total(contact);
-        profile.pointList = ContactManager.getInstance().getPointSystem().listPoints(contact);
-
-        Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(contact, Membership.STATE_NORMAL);
-        if (null != membership) {
-            // 是会员
-            profile.membership = membership;
-            if (membership.type.equals(Membership.TYPE_ORDINARY)) {
-                // 本月用量
-                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact.getId(), membership);
-                // 每月限制
-                profile.limitPerMonth = UserProfiles.gsOrdinaryMemberTimesPerMonth;
-            }
-            else {
-                // 本月用量
-                profile.usageOfThisMonth = UserProfiles.getUsageOfThisMonth(contact.getId(), membership);
-                // 每月限制
-                profile.limitPerMonth = UserProfiles.gsPremiumMemberTimesPerMonth;
-            }
-        }
-        else {
-            // 本月用量，非会员标记为 -1
-            profile.usageOfThisMonth = -1;
-        }
-
-        // 总报告数
-        profile.permissibleReports = this.numPsychologyReports(authToken.getContactId(),
-                AIGCStateCode.Ok.code, true);
-
-        List<PaintingReport> reports = this.getPsychologyReports(authToken.getContactId(), AIGCStateCode.Ok.code, 1);
-        if (!reports.isEmpty()) {
-            try {
-                profile.hexagonScore = reports.get(0).getDimensionScore();
-                profile.personality = reports.get(0).getEvaluationReport().getPersonalityAccelerator().getBigFivePersonality();
-            } catch (Exception e) {
-                Logger.w(this.getClass(), "#getAppUserProfile", e);
-            }
-        }
-
-        return profile;
     }
 
     private Painting processPainting(AIGCUnit unit, FileLabel fileLabel, Theme theme, boolean adjust, boolean upload) {

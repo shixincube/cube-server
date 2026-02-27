@@ -220,7 +220,7 @@ public class QueryRevolver {
             }
 
             ReportPermission permission = report.getPermission();
-            if (permission.isPermissioned()) {
+            if (permission.isPermissionAllowed()) {
                 if (english) {
                     result.append("A summary of the subject's psychological characteristics is as follows:\n");
                 }

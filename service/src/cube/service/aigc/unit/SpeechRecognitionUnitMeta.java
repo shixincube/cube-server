@@ -57,7 +57,7 @@ public class SpeechRecognitionUnitMeta extends UnitMeta {
         SpeechRecognitionInfo info = new SpeechRecognitionInfo(payload.getJSONObject("result"));
 
         if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#process STT result -\nfile: " + info.file.getFileCode() +
+            Logger.d(this.getClass(), "#process SR result -\nfile: " + info.file.getFileCode() +
                     "\nelapsed: " + info.elapsed +
                     "\nlang: " + info.lang +
                     "\ntext: " + info.text +

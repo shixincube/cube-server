@@ -43,6 +43,7 @@ import cube.service.aigc.guidance.Guides;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.*;
+import cube.service.aigc.member.MemberCenter;
 import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.scene.*;
@@ -301,6 +302,9 @@ public class AIGCService extends AbstractModule implements Generatable {
                     Logger.i(AIGCService.class, "Guide flow: " + flow.getName());
                 }
 
+                // 会员中心
+                MemberCenter.getInstance().start(AIGCService.this);
+
                 started.set(true);
                 Logger.i(AIGCService.class, "AIGC service is ready");
             }
@@ -314,6 +318,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         PsychologyScene.getInstance().stop();
 
         CounselingManager.getInstance().stop();
+
+        MemberCenter.getInstance().stop();
     }
 
     @Override
@@ -2844,12 +2850,6 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     public boolean automaticSpeechRecognition(AuthToken authToken, String fileCode, AutomaticSpeechRecognitionListener listener) {
-        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
-        if (null == fileStorage) {
-            Logger.e(this.getClass(), "#automaticSpeechRecognition - File storage service is not ready");
-            return false;
-        }
-
         FileLabel fileLabel = this.getFile(authToken.getDomain(), fileCode);
         if (null == fileLabel) {
             Logger.e(this.getClass(), "#automaticSpeechRecognition - Get file failed: " + fileCode);

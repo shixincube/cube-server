@@ -27,8 +27,6 @@ public class UserProfile implements JSONable {
 
     public List<Point> pointList = new ArrayList<>();
 
-    public int permissibleReports = 0;
-
     /**
      * 本月用量。
      */
@@ -38,6 +36,8 @@ public class UserProfile implements JSONable {
      * 每月用量限制。
      */
     public int limitPerMonth = 0;
+
+    public int permissibleReports = 0;
 
     public HexagonDimensionScore hexagonScore;
 
@@ -59,14 +59,15 @@ public class UserProfile implements JSONable {
             this.pointList.add(new Point(array.getJSONObject(i)));
         }
 
-        this.permissibleReports = json.getInt("permissibleReports");
         this.usageOfThisMonth = json.getInt("usageOfThisMonth");
         this.limitPerMonth = json.getInt("limitPerMonth");
 
+        if (json.has("permissibleReports")) {
+            this.permissibleReports = json.getInt("permissibleReports");
+        }
         if (json.has("hexagonScore")) {
             this.hexagonScore = new HexagonDimensionScore(json.getJSONObject("hexagonScore"));
         }
-
         if (json.has("personality")) {
             this.personality = new BigFivePersonality(json.getJSONObject("personality"));
         }
@@ -87,14 +88,16 @@ public class UserProfile implements JSONable {
         }
         json.put("pointList", array);
 
-        json.put("permissibleReports", this.permissibleReports);
         json.put("usageOfThisMonth", this.usageOfThisMonth);
         json.put("limitPerMonth", this.limitPerMonth);
 
+        // 兼容 1.0.10 及之前版本
+        json.put("permissibleReports", this.permissibleReports);
+        // 兼容 1.0.10 及之前版本
         if (null != this.hexagonScore) {
             json.put("hexagonScore", this.hexagonScore.toJSON());
         }
-
+        // 兼容 1.0.10 及之前版本
         if (null != this.personality) {
             json.put("personality", this.personality.toJSON());
         }

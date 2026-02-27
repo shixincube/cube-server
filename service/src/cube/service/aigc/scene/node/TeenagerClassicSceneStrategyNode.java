@@ -46,7 +46,7 @@ public class TeenagerClassicSceneStrategyNode extends StrategyNode {
         result.append("评测日期是：").append(
                 this.revolver.formatReportDate(report, this.getLanguage().isEnglish())).append("。\n\n");
 
-        if (!this.report.getPermission().isPermissioned()) {
+        if (!this.report.getPermission().isPermissionAllowed()) {
             // 无权限
             result.append("具体的评测数据因为权限不足无法获得详细数据，仅限于上述信息回答问题“");
             result.append(this.query);

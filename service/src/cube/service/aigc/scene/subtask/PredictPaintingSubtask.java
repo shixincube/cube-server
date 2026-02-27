@@ -19,7 +19,11 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
-import cube.service.aigc.scene.*;
+import cube.service.aigc.member.MemberCenter;
+import cube.service.aigc.scene.ContentTools;
+import cube.service.aigc.scene.PaintingReportListener;
+import cube.service.aigc.scene.PsychologyScene;
+import cube.service.aigc.scene.SceneManager;
 import cube.service.contact.ContactManager;
 
 import java.util.List;
@@ -42,9 +46,10 @@ public class PredictPaintingSubtask extends ConversationSubtask {
         Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(
                 channel.getAuthToken().getDomain(), channel.getAuthToken().getContactId(), Membership.STATE_NORMAL);
 
-        // 判断是否剩余可用次数
-        int remaining = UserProfiles.remainingUsages(user, membership);
-        if (remaining <= 0) {
+        // 判断是否剩余用量
+        int remaining = MemberCenter.getInstance().getRemainingUsages(user, membership);
+        if (remaining < MemberCenter.gsPowerOfPredictPainting) {
+            // 剩余用量不够执行预测绘画
             this.service.getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
@@ -300,11 +305,11 @@ public class PredictPaintingSubtask extends ConversationSubtask {
         }
 
         // 由会员属性确定留存天数
-        int retention = UserProfiles.gsNonmemberRetention;
+        int retention = MemberCenter.gsNonmemberRetention;
         int numIndicators = user.isRegistered() ? 10 : 5;
         if (null != membership) {
             // 会员
-            retention = UserProfiles.gsMemberRetention;
+            retention = MemberCenter.gsMemberRetention;
             numIndicators = 36;
         }
 
@@ -389,7 +394,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
 
         if (null != report) {
             // 生成权限
-            ReportPermission permission = UserProfiles.allowPredictPainting(channel.getAuthToken().getDomain(),
+            ReportPermission permission = MemberCenter.getInstance().allowPredictPainting(channel.getAuthToken().getDomain(),
                     user, report.sn);
             // 设置权限
             report.setPermission(permission);

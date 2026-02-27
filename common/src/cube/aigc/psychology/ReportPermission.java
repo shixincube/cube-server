@@ -103,7 +103,7 @@ public final class ReportPermission implements JSONable {
         this.personalityFactor = json.getBoolean("personalityFactor");
     }
 
-    public boolean isPermissioned() {
+    public boolean isPermissionAllowed() {
         return (this.indicatorSummary && this.indicatorDetails && this.personalityDetails);
     }
 

@@ -84,6 +84,22 @@ public class Membership extends Entity {
         }
     }
 
+    public boolean isOrdinaryRank() {
+        return this.type.equalsIgnoreCase(Membership.TYPE_ORDINARY);
+    }
+
+    public boolean isSeniorRank() {
+        return this.type.equalsIgnoreCase(Membership.TYPE_SENIOR);
+    }
+
+    public boolean isPremiumRank() {
+        return this.type.equalsIgnoreCase(Membership.TYPE_PREMIUM);
+    }
+
+    public boolean isSupremeRank() {
+        return this.type.equalsIgnoreCase(Membership.TYPE_SUPREME);
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();

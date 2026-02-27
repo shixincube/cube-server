@@ -18,7 +18,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.scene.PsychologyScene;
+import cube.service.aigc.member.MemberCenter;
 import org.json.JSONObject;
 
 /**
@@ -52,7 +52,7 @@ public class AppGetUserProfileTask extends ServiceTask {
             return;
         }
 
-        UserProfile profile = PsychologyScene.getInstance().getAppUserProfile(token);
+        UserProfile profile = MemberCenter.getInstance().getAppUserProfile(token);
         this.cellet.speak(this.talkContext,
                 this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, profile.toJSON()));
         markResponseTime();

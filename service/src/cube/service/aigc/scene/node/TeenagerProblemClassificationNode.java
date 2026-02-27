@@ -33,7 +33,7 @@ public class TeenagerProblemClassificationNode extends StrategyNode  {
             return null;
         }
 
-        if (!this.report.getPermission().isPermissioned()) {
+        if (!this.report.getPermission().isPermissionAllowed()) {
             Logger.d(this.getClass(), "#perform - No Permission: " + this.report.sn);
             return null;
         }

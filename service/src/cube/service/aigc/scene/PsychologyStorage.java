@@ -8,11 +8,9 @@ package cube.service.aigc.scene;
 
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
-import cube.aigc.ConsultationTheme;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.composition.*;
-import cube.auth.AuthToken;
 import cube.common.Language;
 import cube.common.Storagable;
 import cube.common.state.AIGCStateCode;
@@ -20,6 +18,7 @@ import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
+import cube.service.aigc.member.MemberCenter;
 import cube.service.tokenizer.Tokenizer;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
@@ -706,7 +705,7 @@ public class PsychologyStorage implements Storagable {
         String sql = "SELECT `sn`," + this.reportTable + ".timestamp FROM " + this.reportTable + "," + this.paintingReportManagementTable +
                 " WHERE " + this.reportTable + ".sn=" + this.paintingReportManagementTable + ".report_sn " +
                 " AND " + this.reportTable + ".state=" + AIGCStateCode.Ok.code +
-                " AND " + this.paintingReportManagementTable + ".retention=" + UserProfiles.gsNonmemberRetention;
+                " AND " + this.paintingReportManagementTable + ".retention=" + MemberCenter.gsNonmemberRetention;
         List<StorageField[]> list = this.storage.executeQuery(sql);
         if (list.isEmpty()) {
             return 0;
@@ -714,7 +713,7 @@ public class PsychologyStorage implements Storagable {
 
         int count = 0;
         long now = System.currentTimeMillis();
-        long delta = UserProfiles.gsNonmemberRetention * 24 * 60 * 60 * 1000;
+        long delta = MemberCenter.gsNonmemberRetention * 24 * 60 * 60 * 1000L;
         for (StorageField[] fields : list) {
             long sn = fields[0].getLong();
             long timestamp = fields[1].getLong();
