@@ -208,7 +208,7 @@ public class CounselingManager {
             return null;
         }
 
-        while (wrapper.generatingStrategy.get()) {
+        while (wrapper.archiveMutex.get()) {
             // 等待完成
             try {
                 Thread.sleep(100);
@@ -219,6 +219,12 @@ public class CounselingManager {
                 // 超时退出
                 break;
             }
+        }
+
+        // 解除所有归档互斥
+        wrapper.archiveMutex.set(false);
+        synchronized (wrapper.archiveMutex) {
+            wrapper.archiveMutex.notifyAll();
         }
 
         // 移除并处理余下的 sink
@@ -280,12 +286,13 @@ public class CounselingManager {
         if (archive.exists()) {
             // 计算 duration
             long duration = archive.calculateDurationMillis();
+            Logger.d(this.getClass(), "#stopStream - Voice duration: " + duration);
             // 转 WAV 文件
             File wavFile = archive.convertToWavFile();
             if (null != wavFile) {
                 // WAV 转 MP3
-                String fileName = "recording_counseling_" +
-                        TimeUtils.formatDateForPathSymbol(archive.getTimestamp()) + "_" + streamName + ".mp3";
+                String fileName = "recording_counseling_" + streamName + "_" +
+                        TimeUtils.formatDateForPathSymbol(archive.getTimestamp()) + ".mp3";
                 File mp3File = new File(this.service.getWorkingPath(), fileName);
                 WavToMp3Context context = new WavToMp3Context(wavFile.getName(), mp3File.getName(),
                         AudioUtils.SAMPLE_RATE, AudioUtils.CHANNELS);
@@ -765,13 +772,6 @@ public class CounselingManager {
             return;
         }
 
-        if (wrapper.generatingStrategy.get()) {
-            Logger.d(this.getClass(), "#combine - Generating: " + streamName);
-            return;
-        }
-
-        wrapper.generatingStrategy.set(true);
-
         List<File> fileList = new ArrayList<>();
 
         FlexibleByteBuffer buffer = new FlexibleByteBuffer();
@@ -827,13 +827,54 @@ public class CounselingManager {
 
         if (archiving) {
             // 归档
-            this.executor.execute(new Runnable() {
+            (new Thread() {
                 @Override
                 public void run() {
-                    archive.archive();
+                    if (wrapper.archiveMutex.get()) {
+                        synchronized (wrapper.archiveMutex) {
+                            try {
+                                wrapper.archiveMutex.wait(30 * 1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+
+                    wrapper.archiveMutex.set(true);
+
+                    File file = archive.archive();
+                    if (Logger.isDebugLevel()) {
+                        Logger.d(this.getClass(), "#combine - PCM archive: " + file.getName() +
+                                " - size: " + FileUtils.scaleFileSize(file.length()).toString());
+                    }
+
+                    wrapper.archiveMutex.set(false);
+
+                    synchronized (wrapper.archiveMutex) {
+                        wrapper.archiveMutex.notifyAll();
+                    }
                 }
-            });
+            }).start();
         }
+
+        // 删除已处理的 Sink 文件
+        for (VoiceStreamSink sink : sinks) {
+            this.service.deleteFile(authToken.getDomain(), sink.getFileLabel().getFileCode());
+        }
+        // 删除临时文件
+        for (File file : fileList) {
+            if (file.exists()) {
+                file.delete();
+            }
+        }
+
+        if (wrapper.generatingStrategy.get()) {
+            Logger.d(this.getClass(), "#combine - Generating: " + streamName);
+            buffer.clear();
+            return;
+        }
+
+        wrapper.generatingStrategy.set(true);
 
         // PCM 转 WAVE
         byte[] wavData = AudioUtils.pcmToWav(buffer.array(), 0, buffer.limit(),
@@ -855,16 +896,6 @@ public class CounselingManager {
                 } catch (Exception e) {
                     // Nothing
                 }
-            }
-        }
-
-        // 删除文件
-        for (VoiceStreamSink sink : sinks) {
-            this.service.deleteFile(authToken.getDomain(), sink.getFileLabel().getFileCode());
-        }
-        for (File file : fileList) {
-            if (file.exists()) {
-                file.delete();
             }
         }
 
@@ -1087,6 +1118,8 @@ public class CounselingManager {
         protected AtomicBoolean generatingCaption = new AtomicBoolean(false);
 
         protected AtomicBoolean generatingStrategy = new AtomicBoolean(false);
+
+        protected final AtomicBoolean archiveMutex = new AtomicBoolean(false);
 
         protected Wrapper(String streamName, AuthToken authToken, ConsultationTheme theme, Attribute attribute) {
             this.streamName = streamName;

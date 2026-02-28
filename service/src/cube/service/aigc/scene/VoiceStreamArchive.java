@@ -244,8 +244,8 @@ public class VoiceStreamArchive {
             return 0;
         }
 
-        int frames = pcmData.length / (this.header.sampleSizeInBits / 8 * this.header.channels);
-        return (frames / this.header.sampleRate * 1000L);
+        double frames = ((double) pcmData.length) / (((double) this.header.sampleSizeInBits) / 8.0 * (double) this.header.channels);
+        return Math.round(frames / ((double) this.header.sampleRate * 1000.0));
     }
 
     /**
