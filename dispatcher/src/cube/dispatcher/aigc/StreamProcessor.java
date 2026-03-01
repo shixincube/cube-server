@@ -104,6 +104,16 @@ public class StreamProcessor {
                 register.track = track;
             }
         }
+        else if (stream.getType() == StreamType.Stop) {
+            synchronized (this.speakerDiarizationCache) {
+                List<Stream> streams = this.speakerDiarizationCache.get(stream.name);
+                if (null != streams) {
+                    synchronized (streams) {
+                        streams.add(stream);
+                    }
+                }
+            }
+        }
         else {
             Logger.w(this.getClass(), "#receive - stream type is unknown: " + stream.type);
         }
@@ -146,6 +156,26 @@ public class StreamProcessor {
                     List<Stream> streams = iter.next().getValue();
                     if (streams.size() >= 64) {
                         executorService.execute(new StreamTask(streams.get(0).name, streams));
+                    }
+                    else {
+                        // 判断是否有 Stop 信号流
+                        boolean stopped = false;
+                        synchronized (streams) {
+                            for (int i = streams.size() - 1; i >= 0; --i) {
+                                Stream stream = streams.get(i);
+                                if (stream.getType() == StreamType.Stop) {
+                                    // 标记
+                                    stopped = true;
+                                    // 删除 Stop 信号
+                                    streams.remove(i);
+                                    break;
+                                }
+                            }
+                        }
+                        if (stopped && !streams.isEmpty()) {
+                            // 停止流，则发送所有流
+                            executorService.execute(new StreamTask(streams.get(0).name, streams));
+                        }
                     }
                 }
             }

@@ -14,8 +14,6 @@ import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class StreamServer {
 
@@ -23,13 +21,12 @@ public class StreamServer {
 
     private int port;
 
-    private Map<String, StreamListener> listenerMap;
-
     private NonblockingAcceptor acceptor;
+
+    private StreamListener listener;
 
     public StreamServer() {
         this.port = 7171;
-        this.listenerMap = new ConcurrentHashMap<>();
     }
 
     public void start(int port) {
@@ -62,12 +59,12 @@ public class StreamServer {
         return this.port;
     }
 
-    public void setListener(StreamType type, StreamListener listener) {
-        this.listenerMap.put(type.name, listener);
+    public void setListener(StreamListener listener) {
+        this.listener = listener;
     }
 
-    public void removeListener(StreamType type) {
-        this.listenerMap.remove(type.name);
+    public void removeListener() {
+        this.listener = null;
     }
 
 
@@ -153,8 +150,6 @@ public class StreamServer {
                 String strTimestamp = new String(timestamp);
                 Stream stream = new Stream(strType, strName,
                         Integer.parseInt(strIndex), Long.parseLong(strTimestamp), data);
-                StreamType streamType = StreamType.parse(strType);
-                StreamListener listener = listenerMap.get(streamType.name);
                 if (null != listener) {
                     listener.onStream(new Track(acceptor, session), stream);
                 }

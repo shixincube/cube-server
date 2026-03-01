@@ -47,7 +47,7 @@ public class CounselingManager {
 
     private Map<String, List<VoiceDiarization>> combinedVoiceMap;
 
-    private Map<String, Wrapper> counselingStrategyMap;
+    private Map<String, Wrapper> wrapperMap;
 
     private final static CounselingManager instance = new CounselingManager();
 
@@ -55,7 +55,7 @@ public class CounselingManager {
         this.executor = Executors.newCachedThreadPool();
         this.streamSinkMap = new ConcurrentHashMap<>();
         this.combinedVoiceMap = new ConcurrentHashMap<>();
-        this.counselingStrategyMap = new ConcurrentHashMap<>();
+        this.wrapperMap = new ConcurrentHashMap<>();
     }
 
     public static CounselingManager getInstance() {
@@ -81,17 +81,19 @@ public class CounselingManager {
         while (diarizationIter.hasNext()) {
             Map.Entry<String, List<VoiceDiarization>> entry = diarizationIter.next();
             String streamName = entry.getKey();
-            Wrapper wrapper = this.counselingStrategyMap.get(streamName);
+            Wrapper wrapper = this.wrapperMap.get(streamName);
             if (null != wrapper) {
                 for (VoiceDiarization diarization : entry.getValue()) {
                     this.service.deleteFile(wrapper.authToken.getDomain(), diarization.fileCode);
                 }
             }
         }
+
+        this.wrapperMap.clear();
     }
 
     public void onTick(long now) {
-        Iterator<Map.Entry<String, Wrapper>> iter = this.counselingStrategyMap.entrySet().iterator();
+        Iterator<Map.Entry<String, Wrapper>> iter = this.wrapperMap.entrySet().iterator();
         while (iter.hasNext()) {
             Map.Entry<String, Wrapper> entry = iter.next();
             Wrapper wrapper = entry.getValue();
@@ -118,6 +120,7 @@ public class CounselingManager {
                 this.streamSinkMap.remove(streamName);
                 this.combinedVoiceMap.remove(streamName);
 
+                // 删除 Wrapper 记录
                 iter.remove();
             }
         }
@@ -131,6 +134,12 @@ public class CounselingManager {
      */
     public void record(AuthToken authToken, VoiceStreamSink streamSink) {
         streamSink.authToken = authToken;
+
+        Wrapper wrapper = this.wrapperMap.get(streamSink.getStreamName());
+        if (null != wrapper) {
+            // 更新时间戳
+            wrapper.refreshTimestamp = System.currentTimeMillis();
+        }
 
         List<VoiceStreamSink> list = this.streamSinkMap.computeIfAbsent(streamSink.getStreamName(), k -> new ArrayList<>());
         final List<VoiceStreamSink> listCopy = new ArrayList<>();
@@ -194,18 +203,33 @@ public class CounselingManager {
      * @return
      */
     public FileLabel stopStream(AuthToken authToken, String streamName) {
-        Wrapper wrapper = this.counselingStrategyMap.get(streamName);
+        Wrapper wrapper = this.wrapperMap.get(streamName);
         if (null == wrapper) {
             Logger.w(this.getClass(), "#stopStream - No stream data: " + streamName);
             return null;
         }
 
-        long start = System.currentTimeMillis();
+        // 标记结束
+        wrapper.endTimestamp = System.currentTimeMillis();
 
         // 判断时长，少于1分钟，不进行保存
-        if (start - wrapper.timestamp < 60 * 1000) {
+        if (wrapper.endTimestamp - wrapper.timestamp < 60 * 1000) {
             Logger.w(this.getClass(), "#stopStream - Record less than 1 minute: " + streamName);
             return null;
+        }
+
+        // 等待数据接收完成，判断刷新时间戳与当前时间是否超过60秒
+        while (System.currentTimeMillis() - wrapper.refreshTimestamp < 60 * 1000) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // 让 combine 里的子线程完成归档
+        synchronized (wrapper.archiveMutex) {
+            wrapper.archiveMutex.notifyAll();
         }
 
         while (wrapper.archiveMutex.get()) {
@@ -215,7 +239,7 @@ public class CounselingManager {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            if (System.currentTimeMillis() - start > 60 * 1000) {
+            if (System.currentTimeMillis() - wrapper.endTimestamp > 60 * 1000) {
                 // 超时退出
                 break;
             }
@@ -275,7 +299,11 @@ public class CounselingManager {
             }
 
             // 保存到文件
-            archive.archive();
+            File file = archive.archive();
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#stopStream - PCM archive: " + file.getName() +
+                        " - size: " + FileUtils.scaleFileSize(file.length()).toString());
+            }
         }
 
         FileLabel recordingFileLabel = null;
@@ -299,7 +327,7 @@ public class CounselingManager {
                 AudioProcessor processor = new AudioProcessor(Paths.get(this.service.workingPath.getAbsolutePath()));
                 processor.go(context);
                 if (context.isSuccessful()) {
-                    long elapsed = System.currentTimeMillis() - start;
+                    long elapsed = System.currentTimeMillis() - wrapper.endTimestamp;
                     Logger.d(this.getClass(), "#stopStream - Convert to mp3 file: " + streamName +
                             " - elapsed: " + Math.round(elapsed / 1000.0) + "s");
 
@@ -326,7 +354,9 @@ public class CounselingManager {
             }
 
             // 删除归档
-            archive.delete();
+            if (!archive.delete()) {
+                Logger.w(this.getClass(), "#stopStream - Deletes file failed: " + archive.getFile().getAbsolutePath());
+            }
         }
         else {
             Logger.w(this.getClass(), "#stopStream - Archive file is NOT exists: " + streamName);
@@ -335,7 +365,7 @@ public class CounselingManager {
         // 记录
         if (null != recordingFileLabel) {
             boolean successful = this.service.getStorage().writeCounselingRecording(authToken, streamName, wrapper.timestamp,
-                    start - wrapper.timestamp, wrapper.attribute, wrapper.theme,
+                    wrapper.endTimestamp - wrapper.timestamp, wrapper.attribute, wrapper.theme,
                     recordingFileLabel.getFileCode());
             if (!successful) {
                 Logger.w(this.getClass(), "#stopStream - Writes the counseling recording failed: " + streamName);
@@ -357,7 +387,7 @@ public class CounselingManager {
      */
     public CounselingStrategy queryCounselingStrategy(AuthToken authToken, ConsultationTheme theme,
                                                       Attribute attribute, String streamName, int index) {
-        Wrapper wrapper = this.counselingStrategyMap.computeIfAbsent(streamName,
+        Wrapper wrapper = this.wrapperMap.computeIfAbsent(streamName,
                 k -> new Wrapper(streamName, authToken, theme, attribute));
         // 更新时间戳
         wrapper.refreshTimestamp = System.currentTimeMillis();
@@ -420,7 +450,7 @@ public class CounselingManager {
     public CounselingStrategy queryCounselingCaption(AuthToken authToken, ConsultationTheme theme, Attribute attribute,
                                                      CounselingStrategy.ConsultingAction consultingAction,
                                                      String streamName, int index) {
-        Wrapper wrapper = this.counselingStrategyMap.computeIfAbsent(streamName,
+        Wrapper wrapper = this.wrapperMap.computeIfAbsent(streamName,
                 k -> new Wrapper(streamName, authToken, theme, attribute));
         // 设置策略动作
         wrapper.consultingAction = consultingAction;
@@ -482,9 +512,14 @@ public class CounselingManager {
 
     private void formulateStrategyWithText(List<VoiceStreamSink> sinks) {
         final String streamName = sinks.get(0).getStreamName();
-        Wrapper wrapper = this.counselingStrategyMap.get(streamName);
+        Wrapper wrapper = this.wrapperMap.get(streamName);
         if (null == wrapper) {
             Logger.w(this.getClass(), "#formulateStrategyWithText - No find wrapper: " + streamName);
+            return;
+        }
+
+        if (wrapper.hasStopped()) {
+            Logger.d(this.getClass(), "#formulateStrategyWithText - The wrapper has stopped: " + streamName);
             return;
         }
 
@@ -569,9 +604,14 @@ public class CounselingManager {
 
     private void formulateStrategyWithEmotion(List<VoiceStreamSink> sinks) {
         final String streamName = sinks.get(0).getStreamName();
-        Wrapper wrapper = this.counselingStrategyMap.get(streamName);
+        Wrapper wrapper = this.wrapperMap.get(streamName);
         if (null == wrapper) {
             Logger.w(this.getClass(), "#formulateStrategyWithEmotion - No find wrapper: " + streamName);
+            return;
+        }
+
+        if (wrapper.hasStopped()) {
+            Logger.d(this.getClass(), "#formulateStrategyWithEmotion - The wrapper has stopped: " + streamName);
             return;
         }
 
@@ -639,9 +679,14 @@ public class CounselingManager {
 
     private void formulateCaption(List<VoiceStreamSink> sinks) {
         final String streamName = sinks.get(0).getStreamName();
-        Wrapper wrapper = this.counselingStrategyMap.get(streamName);
+        Wrapper wrapper = this.wrapperMap.get(streamName);
         if (null == wrapper) {
             Logger.w(this.getClass(), "#formulateCaption - No find wrapper: " + streamName);
+            return;
+        }
+
+        if (wrapper.hasStopped()) {
+            Logger.d(this.getClass(), "#formulateCaption - The wrapper has stopped: " + streamName);
             return;
         }
 
@@ -766,7 +811,7 @@ public class CounselingManager {
         final int beginIndex = sinks.get(0).getIndex();
         final int endIndex = sinks.get(sinks.size() - 1).getIndex();
 
-        final Wrapper wrapper = this.counselingStrategyMap.get(streamName);
+        final Wrapper wrapper = this.wrapperMap.get(streamName);
         if (null == wrapper) {
             Logger.w(this.getClass(), "#combine - No stream: " + streamName);
             return;
@@ -868,9 +913,13 @@ public class CounselingManager {
             }
         }
 
+        if (wrapper.hasStopped()) {
+            Logger.d(this.getClass(), "#combine - The stream has stopped: " + streamName);
+            return;
+        }
+
         if (wrapper.generatingStrategy.get()) {
             Logger.d(this.getClass(), "#combine - Generating: " + streamName);
-            buffer.clear();
             return;
         }
 
@@ -1109,7 +1158,9 @@ public class CounselingManager {
 
         public CounselingStrategy.ConsultingAction consultingAction;
 
-        public long refreshTimestamp;
+        public long refreshTimestamp = 0;
+
+        public long endTimestamp = 0;
 
         protected AtomicBoolean generatingWithText = new AtomicBoolean(false);
 
@@ -1131,6 +1182,10 @@ public class CounselingManager {
             this.captions = new ArrayList<>();
             this.consultingAction = CounselingStrategy.ConsultingAction.General;
             this.refreshTimestamp = System.currentTimeMillis();
+        }
+
+        protected boolean hasStopped() {
+            return this.endTimestamp != 0;
         }
     }
 }

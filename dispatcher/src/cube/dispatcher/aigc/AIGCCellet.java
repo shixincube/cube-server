@@ -13,7 +13,6 @@ import cube.dispatcher.Performer;
 import cube.dispatcher.filestorage.FileStorageCellet;
 import cube.dispatcher.stream.Stream;
 import cube.dispatcher.stream.StreamListener;
-import cube.dispatcher.stream.StreamType;
 import cube.dispatcher.stream.Track;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -50,8 +49,7 @@ public class AIGCCellet extends AbstractCellet {
         this.processor = new StreamProcessor(this.performer,
                 (FileStorageCellet) this.performer.getCellet(FileStorageCellet.NAME));
 
-        this.performer.getStreamServer().setListener(StreamType.SpeakerDiarization,
-                new SpeechStreamListener(this.processor));
+        this.performer.getStreamServer().setListener(new DefaultStreamListener(this.processor));
 
         return true;
     }
@@ -60,7 +58,7 @@ public class AIGCCellet extends AbstractCellet {
     public void uninstall() {
         this.processor.stop();
 
-        this.performer.getStreamServer().removeListener(StreamType.SpeakerDiarization);
+        this.performer.getStreamServer().removeListener();
 
         Manager.getInstance().stop();
     }
@@ -95,11 +93,15 @@ public class AIGCCellet extends AbstractCellet {
         return this.processor;
     }
 
-    protected class SpeechStreamListener implements StreamListener {
+
+    /**
+     * 流监听器。
+     */
+    protected class DefaultStreamListener implements StreamListener {
 
         private final StreamProcessor processor;
 
-        public SpeechStreamListener(StreamProcessor processor) {
+        public DefaultStreamListener(StreamProcessor processor) {
             this.processor = processor;
         }
 

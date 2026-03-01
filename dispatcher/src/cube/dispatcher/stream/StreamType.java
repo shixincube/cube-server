@@ -14,9 +14,14 @@ public enum StreamType {
     SpeakerDiarization("SpeakerDiarization"),
 
     /**
+     * 停止。
+     */
+    Stop("Stop"),
+
+    /**
      * 语音识别。
      */
-    //SpeechRecognition("SpeechRecognition")
+    // SpeechRecognition("SpeechRecognition")
 
     ;
 

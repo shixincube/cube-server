@@ -49,6 +49,10 @@ public class VoiceStreamArchive {
         this.header.channels = channels;
     }
 
+    public File getFile() {
+        return new File(this.workingPath, this.streamName + "." + Extension);
+    }
+
     public Header getHeader() {
         return this.header;
     }
@@ -239,13 +243,18 @@ public class VoiceStreamArchive {
      * @return
      */
     public long calculateDurationMillis() {
+        if (null == this.header) {
+            this.load();
+        }
+
         byte[] pcmData = this.readPCM();
         if (null == pcmData) {
+            Logger.w(this.getClass(), "#calculateDurationMillis - No PCM data: " + this.streamName);
             return 0;
         }
 
         double frames = ((double) pcmData.length) / (((double) this.header.sampleSizeInBits) / 8.0 * (double) this.header.channels);
-        return Math.round(frames / ((double) this.header.sampleRate * 1000.0));
+        return Math.round(frames / ((double) this.header.sampleRate) * 1000.0);
     }
 
     /**
@@ -292,11 +301,12 @@ public class VoiceStreamArchive {
     /**
      * 删除文件。
      */
-    public void delete() {
+    public boolean delete() {
         File file = new File(this.workingPath, this.streamName + "." + Extension);
         if (file.exists()) {
-            file.delete();
+            return file.delete();
         }
+        return false;
     }
 
     private Header readHeader(File file) {
