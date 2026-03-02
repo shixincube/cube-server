@@ -118,9 +118,7 @@ public class VoiceStreamArchive {
 
     public boolean save(int index, byte[] pcmData, long timestamp) {
         if (null == this.header) {
-            if (!this.load()) {
-                this.header = new Header();
-            }
+            this.header = new Header();
         }
 
         if (0 == this.header.timestamp) {
@@ -157,8 +155,6 @@ public class VoiceStreamArchive {
                 return null;
             }
 
-            System.out.println("XJW X: " + header.numStreams());
-
             // 旧数据
             if (!this.readPCMIntoTag(output, header)) {
                 Logger.e(this.getClass(), "#archive - PCM data error: " + output.getAbsolutePath());
@@ -167,7 +163,6 @@ public class VoiceStreamArchive {
 
             // 新数据覆盖旧数据
             for (StreamTag tag : this.header.streamTags) {
-                System.out.println("XJW: " + tag.index + "/" + tag.pcmData.length);
                 header.addStream(tag);
             }
 
@@ -178,7 +173,6 @@ public class VoiceStreamArchive {
 
             FlexibleByteBuffer buf = new FlexibleByteBuffer();
             for (StreamTag tag : header.streamTags) {
-                System.out.println("XJW NEW: " + tag.index + "/" + tag.pcmData.length);
                 buf.put(tag.pcmData);
             }
             buf.flip();
@@ -331,8 +325,15 @@ public class VoiceStreamArchive {
                 if (b == Header.SEP) {
                     lastSepIndex = index;
                 }
-                else if (b == Header.EOH) {
-                    break;
+                else if (b == Header.EOH_1) {
+                    // 下一字节
+                    byte next;
+                    if ((next = (byte) fis.read()) >= 0) {
+                        buf.put(next);
+                        if (next == Header.EOH_2) {
+                            break;
+                        }
+                    }
                 }
                 ++index;
             }
@@ -348,7 +349,8 @@ public class VoiceStreamArchive {
             byte[] info = new byte[lastSepIndex - 1];
             System.arraycopy(data, 1, info, 0, info.length);
 
-            byte[] tags = new byte[buf.limit() - lastSepIndex - 2];
+            byte[] tags = new byte[buf.limit() - lastSepIndex - 3];
+            System.out.println("XJW: " + tags.length + " - " + buf.limit() + " - " + lastSepIndex);
             System.arraycopy(data, lastSepIndex + 1, tags, 0, tags.length);
 
             Header header = new Header(info, tags);
@@ -396,7 +398,8 @@ public class VoiceStreamArchive {
     public class Header {
 
         protected final static byte BOH = 0x11;
-        protected final static byte EOH = 0x03;
+        protected final static byte EOH_1 = 0x17;
+        protected final static byte EOH_2 = 0x03;
         protected final static byte SEP = '\n';
         protected final static byte EMP = '~';
 
@@ -453,7 +456,8 @@ public class VoiceStreamArchive {
                 }
             }
 
-            this.lengthInBytes = info.length + tags.length + 3;
+            // 1 byte BOH + 1 byte SEP + 2 bytes EOH = 4 bytes
+            this.lengthInBytes = info.length + tags.length + 4;
         }
 
         protected byte[] toBytes() {
@@ -479,7 +483,8 @@ public class VoiceStreamArchive {
                     buf.put(tag.toBytes());
                 }
             }
-            buf.put(EOH);
+            buf.put(EOH_1);
+            buf.put(EOH_2);
 
             buf.flip();
 

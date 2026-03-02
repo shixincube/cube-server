@@ -1,5 +1,6 @@
 package cube.service.test;
 
+import cell.util.Utils;
 import cube.service.aigc.scene.VoiceStreamArchive;
 import cube.util.AudioUtils;
 
@@ -14,14 +15,15 @@ public class TestVoiceStreamArchive {
 
 //        testAppendData();
 
-//        testReadFile();
+        testReadFile();
 
-        testData();
+//        testData();
     }
 
     protected static void testReadFile() {
         String path = "storage/test/";
         String streamName = "STREAM_NAME";
+//        String streamName = "SEDPLLfr";
 
         VoiceStreamArchive archive = new VoiceStreamArchive(new File(path, streamName + "." + VoiceStreamArchive.Extension));
         if (archive.load()) {
@@ -36,7 +38,7 @@ public class TestVoiceStreamArchive {
 
             byte[] pcm = archive.readPCM();
             System.out.println("PCM length: " + pcm.length);
-            System.out.println("PCM data: " + new String(pcm, StandardCharsets.UTF_8));
+//            System.out.println("PCM data: " + new String(pcm, StandardCharsets.UTF_8));
         }
         else {
             System.out.println("Load failed");
@@ -97,18 +99,28 @@ public class TestVoiceStreamArchive {
 
         VoiceStreamArchive archive = new VoiceStreamArchive(path, streamName, AudioUtils.SAMPLE_RATE,
                 AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
-        byte[] pcmData = new byte[] { 49, 50, 51, 52 };
-        archive.save(2, pcmData, System.currentTimeMillis());
+
+        byte[] pcmData = new byte[1024];
+        for (int i = 0; i < pcmData.length; ++i) {
+            pcmData[i] = (byte) Utils.randomInt(0, 127);
+        }
+
+        archive.save(0, pcmData, System.currentTimeMillis());
         File file = archive.archive();
         header = archive.getHeader();
-        System.out.println("1: " + header.numStreams() + " - file: " + file.length());
+        System.out.println("0: " + header.numStreams() + " - file: " + file.length());
 
         archive = new VoiceStreamArchive(path, streamName, AudioUtils.SAMPLE_RATE,
                 AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
-        pcmData = new byte[] { 53, 54, 55, 56 };
+
+        pcmData = new byte[1024];
+        for (int i = 0; i < pcmData.length; ++i) {
+            pcmData[i] = (byte) Utils.randomInt(0, 127);
+        }
+
         archive.save(1, pcmData, System.currentTimeMillis());
         file = archive.archive();
         header = archive.getHeader();
-        System.out.println("2: " + header.numStreams() + " - file: " + file.length());
+        System.out.println("1: " + header.numStreams() + " - file: " + file.length());
     }
 }

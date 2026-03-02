@@ -224,42 +224,50 @@ public class CounselingManager {
             return;
         }
 
-        RecordingArchive recordingArchive = new RecordingArchive(fileCode, index);
+        FileInputStream fis = null;
+        FlexibleByteBuffer buf = new FlexibleByteBuffer();
+        try {
+            fis = new FileInputStream(file);
+            byte[] bytes = new byte[8 * 1024];
+            int bytesRead = 0;
+            while ((bytesRead = fis.read(bytes)) > 0) {
+                buf.put(bytes, 0, bytesRead);
+            }
+            buf.flip();
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#archive", e);
+        } finally {
+            if (null != fis) {
+                try {
+                    fis.close();
+                } catch (Exception e) {
+                    // Nothing
+                }
+            }
+        }
+
+        // WAVE 转 PCM
+        byte[] pcmData = AudioUtils.wavToPcm(buf.array(), buf.limit());
+
+        // 新归档数据
+        RecordingArchive recordingArchive = new RecordingArchive(pcmData, index, timestamp);
         wrapper.appendArchive(recordingArchive);
+
+        if (wrapper.archiveMutex.get()) {
+            Logger.d(this.getClass(), "#archive - Archiving is in progress: " + streamName);
+            return;
+        }
+
+        wrapper.archiveMutex.set(true);
 
         RecordingArchive current = wrapper.pollArchive();
         while (null != current) {
             try {
-                final VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
+                VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
                         streamName, AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
 
-                FileInputStream fis = null;
-                FlexibleByteBuffer buf = new FlexibleByteBuffer();
-                try {
-                    fis = new FileInputStream(file);
-                    byte[] bytes = new byte[8 * 1024];
-                    int bytesRead = 0;
-                    while ((bytesRead = fis.read(bytes)) > 0) {
-                        buf.put(bytes, 0, bytesRead);
-                    }
-                    buf.flip();
-                } catch (Exception e) {
-                    Logger.e(this.getClass(), "#archive", e);
-                } finally {
-                    if (null != fis) {
-                        try {
-                            fis.close();
-                        } catch (Exception e) {
-                            // Nothing
-                        }
-                    }
-                }
-
-                // WAVE 转 PCM
-                byte[] pcmData = AudioUtils.wavToPcm(buf.array(), buf.limit());
-
                 // 保存
-                archive.save(index, pcmData, timestamp);
+                archive.save(current.index, current.pcmData, current.timestamp);
 
                 // 归档
                 File vsaFile = archive.archive();
@@ -273,11 +281,13 @@ public class CounselingManager {
                 }
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#archive", e);
-            } finally {
             }
 
+            // 下一个
             current = wrapper.pollArchive();
         }
+
+        wrapper.archiveMutex.set(false);
     }
 
     /**
@@ -312,18 +322,18 @@ public class CounselingManager {
             }
         }
 
-//        while (wrapper.archiveMutex.get()) {
-//            // 等待完成
-//            try {
-//                Thread.sleep(100);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//            if (System.currentTimeMillis() - wrapper.endTimestamp > 60 * 1000) {
-//                // 超时退出
-//                break;
-//            }
-//        }
+        while (wrapper.archiveMutex.get()) {
+            // 等待完成
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (System.currentTimeMillis() - wrapper.endTimestamp > 60 * 1000) {
+                // 超时退出
+                break;
+            }
+        }
 
         FileLabel recordingFileLabel = null;
 
@@ -1123,13 +1133,16 @@ public class CounselingManager {
 
     protected class RecordingArchive {
 
-        public final String fileCode;
+        public final byte[] pcmData;
 
         public final int index;
 
-        public RecordingArchive(String fileCode, int index) {
-            this.fileCode = fileCode;
+        public final long timestamp;
+
+        public RecordingArchive(byte[] pcmData, int index, long timestamp) {
+            this.pcmData = pcmData;
             this.index = index;
+            this.timestamp = timestamp;
         }
     }
 
@@ -1162,6 +1175,8 @@ public class CounselingManager {
         protected AtomicBoolean generatingCaption = new AtomicBoolean(false);
 
         protected AtomicBoolean generatingStrategy = new AtomicBoolean(false);
+
+        protected final AtomicBoolean archiveMutex = new AtomicBoolean(false);
 
         protected final ConcurrentLinkedQueue<RecordingArchive> recordingArchives = new ConcurrentLinkedQueue<>();
 
