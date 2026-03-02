@@ -3060,7 +3060,15 @@ public class AIGCService extends AbstractModule implements Generatable {
      */
     public boolean analyseVoiceStream(AuthToken authToken, String fileCode, String streamName, int index,
                                       VoiceStreamAnalysisListener listener) {
-        VoiceStreamSink streamSink = new VoiceStreamSink(streamName, index);
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                // 归档
+                CounselingManager.getInstance().archive(authToken, fileCode, streamName, index);
+            }
+        });
+
+        final VoiceStreamSink streamSink = new VoiceStreamSink(streamName, index);
         boolean success = this.performSpeakerDiarization(authToken, fileCode, false, false,
                 new VoiceDiarizationListener() {
             @Override

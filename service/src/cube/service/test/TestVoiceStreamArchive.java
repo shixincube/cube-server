@@ -1,6 +1,5 @@
 package cube.service.test;
 
-import cube.common.entity.VoiceStreamSink;
 import cube.service.aigc.scene.VoiceStreamArchive;
 import cube.util.AudioUtils;
 
@@ -11,10 +10,13 @@ public class TestVoiceStreamArchive {
 
     public static void main(String[] args) {
 //        testWriteFile();
-        testCoverData();
+//        testCoverData();
+
 //        testAppendData();
 
 //        testReadFile();
+
+        testData();
     }
 
     protected static void testReadFile() {
@@ -45,13 +47,11 @@ public class TestVoiceStreamArchive {
         String path = "storage/test/";
         String streamName = "STREAM_NAME";
 
-        VoiceStreamSink sink = new VoiceStreamSink(streamName, 0);
-        sink.setTimestamp(System.currentTimeMillis());
         byte[] pcmData = new byte[] { 49, 50, 51, 52 };
 
         VoiceStreamArchive archive = new VoiceStreamArchive(path, streamName, AudioUtils.SAMPLE_RATE,
                 AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
-        boolean success = archive.save(sink, pcmData);
+        boolean success = archive.save(0, pcmData, System.currentTimeMillis());
         File output = archive.archive();
         System.out.println("Write to file: " + output.getAbsolutePath());
     }
@@ -60,13 +60,11 @@ public class TestVoiceStreamArchive {
         String path = "storage/test/";
         String streamName = "STREAM_NAME";
 
-        VoiceStreamSink sink = new VoiceStreamSink(streamName, 0);
-        sink.setTimestamp(System.currentTimeMillis());
         byte[] pcmData = new byte[] { 52, 51, 50, 49 };
 
         VoiceStreamArchive archive = new VoiceStreamArchive(path, streamName, AudioUtils.SAMPLE_RATE,
                 AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
-        boolean success = archive.save(sink, pcmData);
+        boolean success = archive.save(0, pcmData, System.currentTimeMillis());
         File output = archive.archive();
         System.out.println("Cover to file: " + output.getAbsolutePath());
 
@@ -81,19 +79,36 @@ public class TestVoiceStreamArchive {
         VoiceStreamArchive archive = new VoiceStreamArchive(path, streamName, AudioUtils.SAMPLE_RATE,
                 AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
 
-        VoiceStreamSink sink = new VoiceStreamSink(streamName, 1);
-        sink.setTimestamp(System.currentTimeMillis());
         byte[] pcmData = new byte[] { 53, 54, 55, 56 };
-        archive.save(sink, pcmData);
+        archive.save(1, pcmData, System.currentTimeMillis());
 
-        sink = new VoiceStreamSink(streamName, 2);
-        sink.setTimestamp(System.currentTimeMillis());
         pcmData = new byte[] { 57, 58, 59, 60 };
-        archive.save(sink, pcmData);
+        archive.save(2, pcmData, System.currentTimeMillis());
 
         File output = archive.archive();
         System.out.println("Append to file: " + output.getAbsolutePath());
     }
 
+    protected static void testData() {
+        String path = "storage/test/";
+        String streamName = "STREAM_NAME";
 
+        VoiceStreamArchive.Header header;
+
+        VoiceStreamArchive archive = new VoiceStreamArchive(path, streamName, AudioUtils.SAMPLE_RATE,
+                AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
+        byte[] pcmData = new byte[] { 49, 50, 51, 52 };
+        archive.save(2, pcmData, System.currentTimeMillis());
+        File file = archive.archive();
+        header = archive.getHeader();
+        System.out.println("1: " + header.numStreams() + " - file: " + file.length());
+
+        archive = new VoiceStreamArchive(path, streamName, AudioUtils.SAMPLE_RATE,
+                AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
+        pcmData = new byte[] { 53, 54, 55, 56 };
+        archive.save(1, pcmData, System.currentTimeMillis());
+        file = archive.archive();
+        header = archive.getHeader();
+        System.out.println("2: " + header.numStreams() + " - file: " + file.length());
+    }
 }

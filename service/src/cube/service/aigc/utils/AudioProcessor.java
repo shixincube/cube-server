@@ -33,6 +33,8 @@ public class AudioProcessor extends FFmpeg {
             params.add(Integer.toString(ctx.getChannels()));
             params.add("-ar");
             params.add(Integer.toString(ctx.getSampleRate()));
+            params.add("-af");
+            params.add("\"loudnorm=i=-16:volume=2\"");
             params.add(ctx.getOutputFile());
 
             this.call(params, ctx);

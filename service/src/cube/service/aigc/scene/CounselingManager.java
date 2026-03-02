@@ -31,6 +31,7 @@ import java.io.FileOutputStream;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -189,9 +190,93 @@ public class CounselingManager {
                 @Override
                 public void run() {
                     // 组合数据再次进行分析并归档
-                    combine(listCopy, true);
+                    combine(listCopy);
                 }
             });
+        }
+    }
+
+    /**
+     * 归档数据。
+     *
+     * @param authToken
+     * @param fileCode
+     * @param streamName
+     * @param index
+     */
+    public void archive(AuthToken authToken, String fileCode, String streamName, int index) {
+        long timestamp = System.currentTimeMillis();
+
+        Wrapper wrapper = this.wrapperMap.get(streamName);
+        if (null == wrapper) {
+            Logger.w(this.getClass(), "#archive - No stream data: " + streamName + "/" + index);
+            return;
+        }
+
+        if (wrapper.hasStopped()) {
+            Logger.w(this.getClass(), "#archive - Has stopped: " + streamName + "/" + index);
+            return;
+        }
+
+        File file = this.service.loadFile(authToken.getDomain(), fileCode);
+        if (null == file) {
+            Logger.w(this.getClass(), "#archive - Can NOT find file: " + fileCode);
+            return;
+        }
+
+        RecordingArchive recordingArchive = new RecordingArchive(fileCode, index);
+        wrapper.appendArchive(recordingArchive);
+
+        RecordingArchive current = wrapper.pollArchive();
+        while (null != current) {
+            try {
+                final VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
+                        streamName, AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
+
+                FileInputStream fis = null;
+                FlexibleByteBuffer buf = new FlexibleByteBuffer();
+                try {
+                    fis = new FileInputStream(file);
+                    byte[] bytes = new byte[8 * 1024];
+                    int bytesRead = 0;
+                    while ((bytesRead = fis.read(bytes)) > 0) {
+                        buf.put(bytes, 0, bytesRead);
+                    }
+                    buf.flip();
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#archive", e);
+                } finally {
+                    if (null != fis) {
+                        try {
+                            fis.close();
+                        } catch (Exception e) {
+                            // Nothing
+                        }
+                    }
+                }
+
+                // WAVE 转 PCM
+                byte[] pcmData = AudioUtils.wavToPcm(buf.array(), buf.limit());
+
+                // 保存
+                archive.save(index, pcmData, timestamp);
+
+                // 归档
+                File vsaFile = archive.archive();
+                if (null != vsaFile) {
+                    if (Logger.isDebugLevel()) {
+                        Logger.d(this.getClass(), "#archive - PCM archive: " + vsaFile.getName() +
+                                " - size: " + FileUtils.scaleFileSize(vsaFile.length()).toString());
+                    }
+                } else {
+                    Logger.e(this.getClass(), "#archive - Archives file failed: " + streamName);
+                }
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#archive", e);
+            } finally {
+            }
+
+            current = wrapper.pollArchive();
         }
     }
 
@@ -218,8 +303,8 @@ public class CounselingManager {
             return null;
         }
 
-        // 等待数据接收完成，判断刷新时间戳与当前时间是否超过60秒
-        while (System.currentTimeMillis() - wrapper.refreshTimestamp < 60 * 1000) {
+        // 等待数据接收完成，判断刷新时间戳与当前时间是否超过30秒
+        while (System.currentTimeMillis() - wrapper.refreshTimestamp < 30 * 1000) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -227,84 +312,18 @@ public class CounselingManager {
             }
         }
 
-        // 让 combine 里的子线程完成归档
-        synchronized (wrapper.archiveMutex) {
-            wrapper.archiveMutex.notifyAll();
-        }
-
-        while (wrapper.archiveMutex.get()) {
-            // 等待完成
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            if (System.currentTimeMillis() - wrapper.endTimestamp > 60 * 1000) {
-                // 超时退出
-                break;
-            }
-        }
-
-        // 解除所有归档互斥
-        wrapper.archiveMutex.set(false);
-        synchronized (wrapper.archiveMutex) {
-            wrapper.archiveMutex.notifyAll();
-        }
-
-        // 移除并处理余下的 sink
-        List<VoiceStreamSink> sinkList = this.streamSinkMap.remove(streamName);
-        if (null != sinkList && !sinkList.isEmpty()) {
-            // 归档
-            VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
-                    streamName, AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
-
-            FlexibleByteBuffer fileBuf = new FlexibleByteBuffer();
-            for (VoiceStreamSink sink : sinkList) {
-                File file = this.service.loadFile(authToken.getDomain(), sink.getFileLabel().getFileCode());
-                if (null == file) {
-                    Logger.w(this.getClass(), "#stopStream - The file is NOT exists : " + sink.getFileLabel().getFileCode());
-                    continue;
-                }
-
-                FileInputStream fis = null;
-                fileBuf.clear();
-
-                try {
-                    fis = new FileInputStream(file);
-                    byte[] bytes = new byte[8 * 1024];
-                    int bytesRead = 0;
-                    while ((bytesRead = fis.read(bytes)) > 0) {
-                        fileBuf.put(bytes, 0, bytesRead);
-                    }
-                    fileBuf.flip();
-                } catch (Exception e) {
-                    Logger.e(this.getClass(), "#stopStream", e);
-                } finally {
-                    if (null != fis) {
-                        try {
-                            fis.close();
-                        } catch (Exception e) {
-                            // Nothing
-                        }
-                    }
-                }
-
-                // WAVE 转 PCM
-                byte[] pcmData = AudioUtils.wavToPcm(fileBuf.array(), fileBuf.limit());
-                archive.save(sink, pcmData);
-
-                if (file.exists()) {
-                    file.delete();
-                }
-            }
-
-            // 保存到文件
-            File file = archive.archive();
-            if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#stopStream - PCM archive: " + file.getName() +
-                        " - size: " + FileUtils.scaleFileSize(file.length()).toString());
-            }
-        }
+//        while (wrapper.archiveMutex.get()) {
+//            // 等待完成
+//            try {
+//                Thread.sleep(100);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            if (System.currentTimeMillis() - wrapper.endTimestamp > 60 * 1000) {
+//                // 超时退出
+//                break;
+//            }
+//        }
 
         FileLabel recordingFileLabel = null;
 
@@ -805,7 +824,7 @@ public class CounselingManager {
         Logger.d(this.getClass(), "#formulateCaption - New caption : " + wrapper.streamName + "/" + captions.size());
     }
 
-    private void combine(List<VoiceStreamSink> sinks, boolean archiving) {
+    private void combine(List<VoiceStreamSink> sinks) {
         final AuthToken authToken = sinks.get(0).authToken;
         final String streamName = sinks.get(0).getStreamName();
         final int beginIndex = sinks.get(0).getIndex();
@@ -817,13 +836,22 @@ public class CounselingManager {
             return;
         }
 
+        if (wrapper.hasStopped()) {
+            Logger.d(this.getClass(), "#combine - The stream has stopped: " + streamName);
+            return;
+        }
+
+        if (wrapper.generatingStrategy.get()) {
+            Logger.d(this.getClass(), "#combine - Generating: " + streamName);
+            return;
+        }
+
+        wrapper.generatingStrategy.set(true);
+
         List<File> fileList = new ArrayList<>();
 
         FlexibleByteBuffer buffer = new FlexibleByteBuffer();
         FlexibleByteBuffer fileBuf = new FlexibleByteBuffer();
-
-        final VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
-                streamName, AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
 
         for (VoiceStreamSink sink : sinks) {
             File file = this.service.loadFile(authToken.getDomain(), sink.getFileLabel().getFileCode());
@@ -859,48 +887,10 @@ public class CounselingManager {
 
             // WAVE 转 PCM
             byte[] pcmData = AudioUtils.wavToPcm(fileBuf.array(), fileBuf.limit());
-
-            // 保存
-            if (archiving) {
-                archive.save(sink, pcmData);
-            }
-
             buffer.put(pcmData);
         }
 
         buffer.flip();
-
-        if (archiving) {
-            // 归档
-            (new Thread() {
-                @Override
-                public void run() {
-                    if (wrapper.archiveMutex.get()) {
-                        synchronized (wrapper.archiveMutex) {
-                            try {
-                                wrapper.archiveMutex.wait(30 * 1000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-
-                    wrapper.archiveMutex.set(true);
-
-                    File file = archive.archive();
-                    if (Logger.isDebugLevel()) {
-                        Logger.d(this.getClass(), "#combine - PCM archive: " + file.getName() +
-                                " - size: " + FileUtils.scaleFileSize(file.length()).toString());
-                    }
-
-                    wrapper.archiveMutex.set(false);
-
-                    synchronized (wrapper.archiveMutex) {
-                        wrapper.archiveMutex.notifyAll();
-                    }
-                }
-            }).start();
-        }
 
         // 删除已处理的 Sink 文件
         for (VoiceStreamSink sink : sinks) {
@@ -912,18 +902,6 @@ public class CounselingManager {
                 file.delete();
             }
         }
-
-        if (wrapper.hasStopped()) {
-            Logger.d(this.getClass(), "#combine - The stream has stopped: " + streamName);
-            return;
-        }
-
-        if (wrapper.generatingStrategy.get()) {
-            Logger.d(this.getClass(), "#combine - Generating: " + streamName);
-            return;
-        }
-
-        wrapper.generatingStrategy.set(true);
 
         // PCM 转 WAVE
         byte[] wavData = AudioUtils.pcmToWav(buffer.array(), 0, buffer.limit(),
@@ -963,6 +941,9 @@ public class CounselingManager {
         if (null == fileLabel) {
             Logger.e(this.getClass(), "#combine - Save file failed, stream: " + streamName);
             wrapper.generatingStrategy.set(false);
+            if (outputFile.exists()) {
+                outputFile.delete();
+            }
             return;
         }
 
@@ -1140,6 +1121,18 @@ public class CounselingManager {
         return true;
     }
 
+    protected class RecordingArchive {
+
+        public final String fileCode;
+
+        public final int index;
+
+        public RecordingArchive(String fileCode, int index) {
+            this.fileCode = fileCode;
+            this.index = index;
+        }
+    }
+
     protected class Wrapper {
 
         public final String streamName;
@@ -1170,7 +1163,7 @@ public class CounselingManager {
 
         protected AtomicBoolean generatingStrategy = new AtomicBoolean(false);
 
-        protected final AtomicBoolean archiveMutex = new AtomicBoolean(false);
+        protected final ConcurrentLinkedQueue<RecordingArchive> recordingArchives = new ConcurrentLinkedQueue<>();
 
         protected Wrapper(String streamName, AuthToken authToken, ConsultationTheme theme, Attribute attribute) {
             this.streamName = streamName;
@@ -1186,6 +1179,14 @@ public class CounselingManager {
 
         protected boolean hasStopped() {
             return this.endTimestamp != 0;
+        }
+
+        protected void appendArchive(RecordingArchive archive) {
+            this.recordingArchives.add(archive);
+        }
+
+        protected RecordingArchive pollArchive() {
+            return this.recordingArchives.poll();
         }
     }
 }

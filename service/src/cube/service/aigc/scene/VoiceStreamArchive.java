@@ -9,7 +9,6 @@ package cube.service.aigc.scene;
 import cell.util.ByteUtils;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
-import cube.common.entity.VoiceStreamSink;
 import cube.util.AudioUtils;
 import cube.util.FileUtils;
 
@@ -117,16 +116,18 @@ public class VoiceStreamArchive {
         }
     }
 
-    public boolean save(VoiceStreamSink sink, byte[] pcmData) {
+    public boolean save(int index, byte[] pcmData, long timestamp) {
         if (null == this.header) {
-            this.header = new Header();
+            if (!this.load()) {
+                this.header = new Header();
+            }
         }
 
         if (0 == this.header.timestamp) {
-            this.header.timestamp = sink.getTimestamp();
+            this.header.timestamp = timestamp;
         }
 
-        StreamTag tag = new StreamTag(sink.getIndex(), pcmData.length);
+        StreamTag tag = new StreamTag(index, pcmData.length);
         tag.pcmData = pcmData;
         this.header.addStream(tag);
 
@@ -141,6 +142,8 @@ public class VoiceStreamArchive {
     public File archive() {
         File output = new File(this.workingPath, this.streamName + "." + Extension);
         if (output.exists()) {
+            Logger.d(this.getClass(), "#archive - File exists: " + output.getAbsolutePath());
+
             // 覆盖写入
             if (null == this.header || null == this.header.streamTags) {
                 Logger.e(this.getClass(), "#archive - No data: " + output.getAbsolutePath());
@@ -154,6 +157,8 @@ public class VoiceStreamArchive {
                 return null;
             }
 
+            System.out.println("XJW X: " + header.numStreams());
+
             // 旧数据
             if (!this.readPCMIntoTag(output, header)) {
                 Logger.e(this.getClass(), "#archive - PCM data error: " + output.getAbsolutePath());
@@ -162,6 +167,7 @@ public class VoiceStreamArchive {
 
             // 新数据覆盖旧数据
             for (StreamTag tag : this.header.streamTags) {
+                System.out.println("XJW: " + tag.index + "/" + tag.pcmData.length);
                 header.addStream(tag);
             }
 
@@ -172,6 +178,7 @@ public class VoiceStreamArchive {
 
             FlexibleByteBuffer buf = new FlexibleByteBuffer();
             for (StreamTag tag : header.streamTags) {
+                System.out.println("XJW NEW: " + tag.index + "/" + tag.pcmData.length);
                 buf.put(tag.pcmData);
             }
             buf.flip();
@@ -202,6 +209,8 @@ public class VoiceStreamArchive {
             }
         }
         else {
+            Logger.d(this.getClass(), "#archive - New file: " + output.getAbsolutePath());
+
             // 新文件
             if (null == this.header || null == this.header.streamTags) {
                 Logger.e(this.getClass(), "#archive - No data: " + output.getAbsolutePath());
