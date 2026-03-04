@@ -210,6 +210,27 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Evaluate());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.KeepAlive());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Inject());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.NewCustomer());
+    }
+
+    public JSONObject syncRequest(String token, AIGCAction action, JSONObject data) {
+        Packet packet = new Packet(action.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        if (null == response) {
+            Logger.w(Manager.class, "#syncRequest - Response is null, action: " + action.name);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        int state = Packet.extractCode(responsePacket);
+        if (AIGCStateCode.Ok.code != state) {
+            Logger.w(Manager.class, "#syncRequest - " + action.name + " response state is " + state);
+            return null;
+        }
+
+        return Packet.extractDataPayload(responsePacket);
     }
 
     public boolean checkToken(String token, Device device) {

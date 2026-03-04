@@ -169,6 +169,26 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new AppSignOutUserTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.AppQueryCustomer.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new AppQueryCustomerTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (AIGCAction.AppUpdateCustomer.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new AppUpdateCustomerTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (AIGCAction.AppNewCustomer.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new AppNewCustomerTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (AIGCAction.AppDeleteCustomer.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new AppDeleteCustomerTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.AppVersion.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new AppVersionTask(this, talkContext, primitive,

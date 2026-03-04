@@ -14,15 +14,32 @@ public enum Gender {
     /**
      * 男性。
      */
-    Male,
+    Male("male"),
 
     /**
      * 女性。
      */
-    Female,
+    Female("female"),
 
     /**
      * 未知。
      */
-    Unknown
+    Unknown("unknown")
+
+    ;
+
+    public final String name;
+
+    Gender(String name) {
+        this.name = name;
+    }
+
+    public static Gender parse(String name) {
+        for (Gender gender : Gender.values()) {
+            if (gender.name.equalsIgnoreCase(name)) {
+                return gender;
+            }
+        }
+        return Gender.Unknown;
+    }
 }

@@ -166,6 +166,10 @@ public class PsychologyScene {
         }
     }
 
+    public PsychologyStorage getStorage() {
+        return this.storage;
+    }
+
     public boolean recordUsage(Usage usage) {
         return this.storage.writeUsage(usage.cid, usage.token, usage.timestamp, usage.remoteHost, usage.query,
                 usage.queryType, usage.queryTokens, usage.completionTokens, usage.completionSN);

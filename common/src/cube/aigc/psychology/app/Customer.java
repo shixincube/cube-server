@@ -11,7 +11,20 @@ import cube.util.ConfigUtils;
 import cube.util.Gender;
 import org.json.JSONObject;
 
+/**
+ * 客户。
+ */
 public class Customer implements JSONable {
+
+    /**
+     * 正常状态。
+     */
+    public final static int STATE_NORMAL = 0;
+
+    /**
+     * 已删除。
+     */
+    public final static int STATE_DELETE = 1;
 
     public long id;
 
@@ -25,15 +38,55 @@ public class Customer implements JSONable {
 
     public String comment;
 
-    public Customer() {
+    public long timestamp;
+
+    public int state = STATE_NORMAL;
+
+    public Customer(String name, Gender gender, int age, String mobile, String comment, long timestamp) {
         this.id = ConfigUtils.generateSerialNumber();
+        this.name = name;
+        this.gender = gender;
+        this.age = age;
+        this.mobile = mobile;
+        this.comment = comment;
+        this.timestamp = timestamp;
+    }
+
+    public Customer(long id, String name, Gender gender, int age, String mobile, String comment, long timestamp,
+                    int state) {
+        this.id = id;
+        this.name = name;
+        this.gender = gender;
+        this.age = age;
+        this.mobile = mobile;
+        this.comment = comment;
+        this.timestamp = timestamp;
+        this.state = state;
+    }
+
+    public Customer(JSONObject json) {
+        this.id = json.getLong("id");
+        this.name = json.getString("name");
+        this.gender = Gender.parse(json.getString("gender"));
+        this.age = json.getInt("age");
+        this.mobile = json.getString("mobile");
+        this.comment = json.has("comment") ? json.getString("comment") : null;
+        this.timestamp = json.has("timestamp") ? json.getLong("timestamp") : System.currentTimeMillis();
+        this.state = json.has("state") ? json.getInt("state") : STATE_NORMAL;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("id", this.id);
-        
+        json.put("name", this.name);
+        json.put("gender", this.gender.name);
+        json.put("age", this.age);
+        json.put("mobile", this.mobile);
+        json.put("timestamp", this.timestamp);
+        if (null != this.comment) {
+            json.put("comment", this.comment);
+        }
         return json;
     }
 

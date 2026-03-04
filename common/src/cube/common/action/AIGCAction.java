@@ -77,6 +77,26 @@ public enum AIGCAction {
     AppCancelMembership("appCancelMembership"),
 
     /**
+     * 应用层新建客户数据。
+     */
+    AppNewCustomer("appNewCustomer"),
+
+    /**
+     * 应用层删除客户数据。
+     */
+    AppDeleteCustomer("appDeleteCustomer"),
+
+    /**
+     * 应用层更新客户数据。
+     */
+    AppUpdateCustomer("appUpdateCustomer"),
+
+    /**
+     * 应用层查询客户数据。
+     */
+    AppQueryCustomer("appQueryCustomer"),
+
+    /**
      * 应用层 App 版本信息。
      */
     AppVersion("appVersion"),

@@ -10,6 +10,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.IndicatorRate;
+import cube.aigc.psychology.app.Customer;
 import cube.aigc.psychology.composition.*;
 import cube.common.Language;
 import cube.common.Storagable;
@@ -24,6 +25,7 @@ import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.EmojiFilter;
+import cube.util.Gender;
 import cube.util.JSONUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -58,6 +60,8 @@ public class PsychologyStorage implements Storagable {
     private final String paintingLabelTable = "psychology_painting_label";
 
     private final String paintingReportManagementTable = "psychology_painting_report_mgmt";
+
+    private final String customerTable = "psychology_customer";
 
     private final String usageTable = "psychology_usage";
 
@@ -392,6 +396,36 @@ public class PsychologyStorage implements Storagable {
             })
     };
 
+    private final StorageField[] customerFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY,
+            }),
+            new StorageField("cid", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("gender", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("age", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("mobile", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("comment", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+    };
+
     private final StorageField[] usageFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
@@ -534,6 +568,13 @@ public class PsychologyStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.paintingReportManagementTable, this.paintingReportManagementFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.paintingReportManagementTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.customerTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.customerTable, this.customerFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.customerTable + "' successfully");
             }
         }
 
@@ -1362,6 +1403,90 @@ public class PsychologyStorage implements Storagable {
         }, new Conditional[] {
                 Conditional.createEqualTo("report_sn", reportSn)
         });
+    }
+
+    public boolean writeCustomer(long contactId, Customer customer) {
+        List<StorageField[]> result = this.storage.executeQuery(this.customerTable, new StorageField[] {
+                new StorageField("id", LiteralBase.LONG),
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", customer.id),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("cid", contactId)
+        });
+
+        if (result.isEmpty()) {
+            // 插入
+            return this.storage.executeInsert(this.customerTable, new StorageField[] {
+                    new StorageField("id", customer.id),
+                    new StorageField("cid", contactId),
+                    new StorageField("name", customer.name),
+                    new StorageField("gender", customer.gender.name),
+                    new StorageField("age", customer.age),
+                    new StorageField("mobile", customer.mobile),
+                    new StorageField("comment", customer.comment),
+                    new StorageField("timestamp", customer.timestamp),
+                    new StorageField("state", customer.state),
+            });
+        }
+        else {
+            // 更新
+            return this.storage.executeUpdate(this.customerTable, new StorageField[] {
+                    new StorageField("name", customer.name),
+                    new StorageField("gender", customer.gender.name),
+                    new StorageField("age", customer.age),
+                    new StorageField("mobile", customer.mobile),
+                    new StorageField("comment", customer.comment),
+                    new StorageField("timestamp", customer.timestamp),
+                    new StorageField("state", customer.state),
+            }, new Conditional[] {
+                    Conditional.createEqualTo("id", customer.id),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("cid", contactId)
+            });
+        }
+    }
+
+    public Customer readCustomer(long contactId, long id) {
+        List<StorageField[]> result = this.storage.executeQuery(this.customerTable, this.customerFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("id", id),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("cid", contactId)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        Customer customer = new Customer(data.get("id").getLong(), data.get("name").getString(),
+                Gender.parse(data.get("gender").getString()), data.get("age").getInt(), data.get("mobile").getString(),
+                data.get("comment").getString(), data.get("timestamp").getLong(), data.get("state").getInt());
+        return customer;
+    }
+
+    public List<Customer> readCustomers(long contactId) {
+        List<Customer> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.customerTable, this.customerFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("cid", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("state", Customer.STATE_NORMAL),
+                });
+
+        if (result.isEmpty()) {
+            return list;
+        }
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            Customer customer = new Customer(data.get("id").getLong(), data.get("name").getString(),
+                    Gender.parse(data.get("gender").getString()), data.get("age").getInt(), data.get("mobile").getString(),
+                    data.get("comment").getString(), data.get("timestamp").getLong(), data.get("state").getInt());
+            list.add(customer);
+        }
+
+        return list;
     }
 
     public boolean writeUsage(long cid, String token, long timestamp, String remote, String query,
