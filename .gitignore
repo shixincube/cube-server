@@ -64,3 +64,4 @@ service/assets/psychology/mandalaflower
 deploy/assets
 dispatcher/cache
 dispatcher/assets/app
+service/storage/test
