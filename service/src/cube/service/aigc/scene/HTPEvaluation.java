@@ -24,6 +24,7 @@ import cube.aigc.psychology.material.other.DrawingSet;
 import cube.aigc.psychology.material.person.Leg;
 import cube.aigc.psychology.material.tree.Trunk;
 import cube.util.FloatUtils;
+import cube.util.Gender;
 import cube.util.calc.FrameStructureCalculator;
 import cube.util.calc.FrameStructureDescription;
 import cube.vision.Direction;
@@ -2279,7 +2280,7 @@ public class HTPEvaluation extends Evaluation {
 
         for (Person person : this.painting.getPersons()) {
             // 性别
-            if (person.getGender() == Person.Gender.Female) {
+            if (person.getGender() == Gender.Female) {
                 if (this.painting.getAttribute().isMale()) {
                     // 男画女
                     String desc = "男性作者绘制女性人物";
@@ -2288,7 +2289,7 @@ public class HTPEvaluation extends Evaluation {
                     break;
                 }
             }
-            else if (person.getGender() == Person.Gender.Male) {
+            else if (person.getGender() == Gender.Male) {
                 if (this.painting.getAttribute().isFemale()) {
                     // 女画男
                     String desc = "女性作者绘制男性人物";

@@ -7,6 +7,7 @@
 package cube.aigc.psychology.material;
 
 import cube.aigc.psychology.material.person.*;
+import cube.util.Gender;
 import cube.vision.BoundingBox;
 import cube.vision.Box;
 import cube.vision.Point;
@@ -19,17 +20,6 @@ import java.util.List;
  * 人。
  */
 public class Person extends Thing {
-
-    /**
-     * 性别。
-     */
-    public enum Gender {
-        Male,
-
-        Female,
-
-        Unknown
-    }
 
     private boolean sideFace = false;
 

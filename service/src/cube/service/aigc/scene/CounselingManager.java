@@ -213,8 +213,8 @@ public class CounselingManager {
             return;
         }
 
-        if (wrapper.hasStopped()) {
-            Logger.w(this.getClass(), "#archive - Has stopped: " + streamName + "/" + index);
+        if (wrapper.archiveStopped) {
+            Logger.w(this.getClass(), "#archive - Stopped: " + streamName + "/" + index);
             return;
         }
 
@@ -263,14 +263,9 @@ public class CounselingManager {
         RecordingArchive current = wrapper.pollArchive();
         while (null != current) {
             try {
-                VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
-                        streamName, AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
-
+                StreamArchive archive = new StreamArchive(this.service.workingPath.getAbsolutePath(), streamName);
                 // 保存
-                archive.save(current.index, current.pcmData, current.timestamp);
-
-                // 归档
-                File vsaFile = archive.archive();
+                File vsaFile = archive.save(current.index, current.pcmData);
                 if (null != vsaFile) {
                     if (Logger.isDebugLevel()) {
                         Logger.d(this.getClass(), "#archive - PCM archive: " + vsaFile.getName() +
@@ -313,19 +308,19 @@ public class CounselingManager {
             return null;
         }
 
-        // 等待数据接收完成，判断刷新时间戳与当前时间是否超过30秒
-        while (System.currentTimeMillis() - wrapper.refreshTimestamp < 30 * 1000) {
+        // 等待数据接收完成，判断时间戳与当前时间是否超过30秒
+        while (System.currentTimeMillis() - wrapper.endTimestamp < 30 * 1000) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(200);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
-        while (wrapper.archiveMutex.get()) {
+        while (wrapper.archiveMutex.get() || !wrapper.recordingArchives.isEmpty()) {
             // 等待完成
             try {
-                Thread.sleep(100);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -335,60 +330,66 @@ public class CounselingManager {
             }
         }
 
+        // 停止归档
+        wrapper.archiveStopped = true;
+
         FileLabel recordingFileLabel = null;
 
-        // 归档文件转 WAV 文件
-        VoiceStreamArchive archive = new VoiceStreamArchive(this.service.workingPath.getAbsolutePath(),
-                streamName, AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
-        if (archive.exists()) {
-            // 计算 duration
-            long duration = archive.calculateDurationMillis();
-            Logger.d(this.getClass(), "#stopStream - Voice duration: " + duration);
-            // 转 WAV 文件
-            File wavFile = archive.convertToWavFile();
-            if (null != wavFile) {
-                // WAV 转 MP3
-                String fileName = "recording_counseling_" + streamName + "_" +
-                        TimeUtils.formatDateForPathSymbol(archive.getTimestamp()) + ".mp3";
-                File mp3File = new File(this.service.getWorkingPath(), fileName);
-                WavToMp3Context context = new WavToMp3Context(wavFile.getName(), mp3File.getName(),
-                        AudioUtils.SAMPLE_RATE, AudioUtils.CHANNELS);
-                AudioProcessor processor = new AudioProcessor(Paths.get(this.service.workingPath.getAbsolutePath()));
-                processor.go(context);
-                if (context.isSuccessful()) {
-                    long elapsed = System.currentTimeMillis() - wrapper.endTimestamp;
-                    Logger.d(this.getClass(), "#stopStream - Convert to mp3 file: " + streamName +
-                            " - elapsed: " + Math.round(elapsed / 1000.0) + "s");
+        try {
+            // 归档文件转 WAV 文件
+            StreamArchive archive = new StreamArchive(this.service.workingPath.getAbsolutePath(), streamName);
+            if (archive.exists()) {
+                // 计算 duration
+                long duration = archive.calculateDurationMillis();
+                Logger.d(this.getClass(), "#stopStream - Voice duration: " + duration);
+                // 转 WAV 文件
+                File wavFile = archive.outputWavFile();
+                if (null != wavFile) {
+                    // WAV 转 MP3
+                    String fileName = "recording_counseling_" + streamName + "_" +
+                            TimeUtils.formatDateForPathSymbol(archive.getTimestamp()) + ".mp3";
+                    File mp3File = new File(this.service.getWorkingPath(), fileName);
+                    WavToMp3Context context = new WavToMp3Context(wavFile.getName(), mp3File.getName(),
+                            AudioUtils.SAMPLE_RATE, AudioUtils.CHANNELS);
+                    AudioProcessor processor = new AudioProcessor(Paths.get(this.service.workingPath.getAbsolutePath()));
+                    processor.go(context);
+                    if (context.isSuccessful()) {
+                        long elapsed = System.currentTimeMillis() - wrapper.endTimestamp;
+                        Logger.d(this.getClass(), "#stopStream - Convert to mp3 file: " + streamName +
+                                " - elapsed: " + Math.round(elapsed / 1000.0) + "s");
 
-                    // 持久化 MP3 文件到存储
-                    String fileCode = FileUtils.makeFileCode(authToken.getContactId(), authToken.getDomain(),
-                            fileName);
+                        // 持久化 MP3 文件到存储
+                        String fileCode = FileUtils.makeFileCode(authToken.getContactId(), authToken.getDomain(),
+                                fileName);
 
-                    JSONObject fileContext = new JSONObject();
-                    fileContext.put("duration", duration);
-                    // 保存到文件系统
-                    recordingFileLabel = this.service.saveFile(authToken, fileCode, mp3File,
-                            fileName, true, fileContext);
+                        JSONObject fileContext = new JSONObject();
+                        fileContext.put("duration", duration);
+                        // 保存到文件系统
+                        recordingFileLabel = this.service.saveFile(authToken, fileCode, mp3File,
+                                fileName, true, fileContext);
+                    }
+                    else {
+                        Logger.w(this.getClass(), "#stopStream - Convert to mp3 file failed: " + streamName);
+                    }
+
+                    if (wavFile.exists()) {
+                        wavFile.delete();
+                    }
                 }
                 else {
-                    Logger.w(this.getClass(), "#stopStream - Convert to mp3 file failed: " + streamName);
+                    Logger.w(this.getClass(), "#stopStream - Convert to wav file failed: " + streamName);
                 }
 
-                if (wavFile.exists()) {
-                    wavFile.delete();
+                // 删除归档
+                if (!archive.delete()) {
+                    Logger.w(this.getClass(), "#stopStream - Deletes file failed: " + archive.getFile().getAbsolutePath());
                 }
             }
             else {
-                Logger.w(this.getClass(), "#stopStream - Convert to wav file failed: " + streamName);
+                Logger.w(this.getClass(), "#stopStream - Archive file is NOT exists: " + streamName);
             }
-
-            // 删除归档
-            if (!archive.delete()) {
-                Logger.w(this.getClass(), "#stopStream - Deletes file failed: " + archive.getFile().getAbsolutePath());
-            }
-        }
-        else {
-            Logger.w(this.getClass(), "#stopStream - Archive file is NOT exists: " + streamName);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#stopStream: " + streamName, e);
         }
 
         // 记录
@@ -1168,17 +1169,19 @@ public class CounselingManager {
 
         public long endTimestamp = 0;
 
-        protected AtomicBoolean generatingWithText = new AtomicBoolean(false);
+        protected final AtomicBoolean generatingWithText = new AtomicBoolean(false);
 
-        protected AtomicBoolean generatingWithEmotion = new AtomicBoolean(false);
+        protected final AtomicBoolean generatingWithEmotion = new AtomicBoolean(false);
 
-        protected AtomicBoolean generatingCaption = new AtomicBoolean(false);
+        protected final AtomicBoolean generatingCaption = new AtomicBoolean(false);
 
-        protected AtomicBoolean generatingStrategy = new AtomicBoolean(false);
+        protected final AtomicBoolean generatingStrategy = new AtomicBoolean(false);
 
         protected final AtomicBoolean archiveMutex = new AtomicBoolean(false);
 
         protected final ConcurrentLinkedQueue<RecordingArchive> recordingArchives = new ConcurrentLinkedQueue<>();
+
+        protected boolean archiveStopped = false;
 
         protected Wrapper(String streamName, AuthToken authToken, ConsultationTheme theme, Attribute attribute) {
             this.streamName = streamName;

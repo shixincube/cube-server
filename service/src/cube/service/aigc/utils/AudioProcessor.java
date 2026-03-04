@@ -34,10 +34,15 @@ public class AudioProcessor extends FFmpeg {
             params.add("-ar");
             params.add(Integer.toString(ctx.getSampleRate()));
             params.add("-af");
-            params.add("\"loudnorm=i=-16:volume=2\"");
+            params.add("volume=4");
+            // loudnorm=I=-16
             params.add(ctx.getOutputFile());
 
             this.call(params, ctx);
+
+            for (String line : ctx.getStdOutput()) {
+                System.out.println("@AudioProcessor$ " + line);
+            }
 
             boolean success = Files.exists(Paths.get(this.getWorkPath().toString(), ctx.getOutputFile()));
             ctx.setSuccessful(success);

@@ -6,6 +6,7 @@
 
 package cube.aigc.psychology.material;
 
+import cube.util.Gender;
 import org.json.JSONObject;
 
 /**

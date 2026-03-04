@@ -65,7 +65,7 @@ public abstract class ProcessorContext implements JSONable {
         this.stdOutput.add(line);
     }
 
-    protected List<String> getStdOutput() {
+    public List<String> getStdOutput() {
         return this.stdOutput;
     }
 
