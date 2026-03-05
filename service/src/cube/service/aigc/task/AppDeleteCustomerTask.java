@@ -10,6 +10,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.aigc.psychology.app.Customer;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
@@ -52,26 +53,33 @@ public class AppDeleteCustomerTask extends ServiceTask {
             return;
         }
 
-        long id = packet.data.getLong("id");
-        Customer customer = PsychologyScene.getInstance().getStorage().readCustomer(token.getContactId(), id);
-        if (null == customer) {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, new JSONObject()));
-            markResponseTime();
-            return;
-        }
+        try {
+            long id = packet.data.getLong("id");
+            Customer customer = PsychologyScene.getInstance().getStorage().readCustomer(token.getContactId(), id);
+            if (null == customer) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, packet.data));
+                markResponseTime();
+                return;
+            }
 
-        // 修改状态
-        customer.state = Customer.STATE_DELETE;
+            // 修改状态
+            customer.state = Customer.STATE_DELETE;
 
-        if (PsychologyScene.getInstance().getStorage().writeCustomer(token.getContactId(), customer)) {
+            if (PsychologyScene.getInstance().getStorage().writeCustomer(token.getContactId(), customer)) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, customer.toJSON()));
+                markResponseTime();
+            }
+            else {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                markResponseTime();
+            }
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "", e);
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, packet.data));
-            markResponseTime();
-        }
-        else {
-            this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
         }
     }

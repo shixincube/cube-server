@@ -10,6 +10,7 @@ import cell.core.cellet.Cellet;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.log.Logger;
 import cube.aigc.psychology.app.Customer;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
@@ -22,6 +23,7 @@ import cube.service.aigc.scene.PsychologyScene;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,17 +57,34 @@ public class AppQueryCustomerTask extends ServiceTask {
             return;
         }
 
-        List<Customer> list = PsychologyScene.getInstance().getStorage().readCustomers(token.getContactId());
+        try {
+            int page = packet.data.has("page") ? packet.data.getInt("page") : 0;
+            int size = packet.data.has("size") ? packet.data.getInt("size") : 0;
 
-        JSONObject responseJson = new JSONObject();
-        JSONArray array = new JSONArray();
-        for (Customer customer : list) {
-            array.put(customer.toJSON());
+            int total = PsychologyScene.getInstance().getStorage().countCustomers(token.getContactId());
+            List<Customer> list = new ArrayList<>();
+            if (page == 0 && size == 0) {
+                list = PsychologyScene.getInstance().getStorage().readCustomers(token.getContactId());
+            }
+
+            JSONObject responseJson = new JSONObject();
+            JSONArray array = new JSONArray();
+            for (Customer customer : list) {
+                array.put(customer.toJSON());
+            }
+            responseJson.put("list", array);
+            responseJson.put("total", total);
+            responseJson.put("page", page);
+            responseJson.put("size", size);
+
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseJson));
+            markResponseTime();
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "", e);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, packet.data));
+            markResponseTime();
         }
-        responseJson.put("customers", array);
-
-        this.cellet.speak(this.talkContext,
-                this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseJson));
-        markResponseTime();
     }
 }

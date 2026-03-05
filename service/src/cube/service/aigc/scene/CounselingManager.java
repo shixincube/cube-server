@@ -8,7 +8,7 @@ package cube.service.aigc.scene;
 
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
-import cube.aigc.ConsultationTheme;
+import cube.aigc.psychology.ConsultationTheme;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Resource;

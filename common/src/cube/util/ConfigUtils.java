@@ -6,7 +6,6 @@
 
 package cube.util;
 
-import cell.util.Utils;
 import cell.util.log.Logger;
 import org.json.JSONObject;
 
@@ -25,6 +24,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 /**
@@ -47,12 +47,14 @@ public final class ConfigUtils {
 
     /**
      * 生成随机序列号。
-     * 该序列号最大值是 0xFFFFFFFF 。
+     * 该序列号最大值是 0x0FFFFFFE 。
      *
      * @return
      */
     public static long generateSerialNumber() {
-        return Utils.randomInt(0x989680, 0xFFFFFFFF);
+        long min = 10000000L;
+        long max = 999999999L;
+        return ThreadLocalRandom.current().nextLong(min, max + 1);
     }
 
     /**

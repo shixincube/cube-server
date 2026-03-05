@@ -17,10 +17,10 @@ import org.json.JSONObject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class NewCustomer extends ContextHandler {
+public class DeleteCustomer extends ContextHandler {
 
-    public NewCustomer() {
-        super("/app/customer/new/");
+    public DeleteCustomer() {
+        super("/app/customer/delete/");
         setHandler(new Handler());
     }
 
@@ -47,7 +47,7 @@ public class NewCustomer extends ContextHandler {
 
             try {
                 JSONObject requestData = this.readBodyAsJSONObject(request);
-                JSONObject responseData = Manager.getInstance().syncRequest(token, AIGCAction.AppNewCustomer, requestData);
+                JSONObject responseData = Manager.getInstance().syncRequest(token, AIGCAction.AppDeleteCustomer, requestData);
                 if (null == responseData) {
                     this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     this.complete();

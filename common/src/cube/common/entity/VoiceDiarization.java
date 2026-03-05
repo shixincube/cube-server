@@ -6,6 +6,7 @@
 
 package cube.common.entity;
 
+import cube.util.ConfigUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -46,6 +47,12 @@ public class VoiceDiarization extends Entity {
 
     public VoiceDiarization(JSONObject json) {
         super(json);
+
+        // 处理 ID
+        if (!json.has("id")) {
+            this.id = ConfigUtils.generateSerialNumber();
+        }
+
         if (json.has("contactId")) {
             this.contactId = json.getLong("contactId");
         }

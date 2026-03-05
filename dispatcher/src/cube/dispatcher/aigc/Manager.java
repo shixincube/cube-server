@@ -14,10 +14,7 @@ import cell.util.log.Logger;
 import cube.aigc.*;
 import cube.aigc.app.ConfigInfo;
 import cube.aigc.complex.widget.Event;
-import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.PaintingReport;
-import cube.aigc.psychology.Report;
-import cube.aigc.psychology.ScaleReport;
+import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.app.UserProfile;
 import cube.aigc.psychology.composition.AnswerSheet;
@@ -211,6 +208,8 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.KeepAlive());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Inject());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.NewCustomer());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.DeleteCustomer());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Customers());
     }
 
     public JSONObject syncRequest(String token, AIGCAction action, JSONObject data) {

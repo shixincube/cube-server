@@ -3,6 +3,7 @@ package cube.service.test;
 import cell.util.Utils;
 import cube.service.aigc.scene.StreamArchive;
 import cube.util.AudioUtils;
+import cube.util.ConfigUtils;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -12,11 +13,14 @@ public class TestVoiceStreamArchive {
     public static void main(String[] args) {
 //        testWriteFile();
 
-        testReadFile();
+//        testReadFile();
 
 //        testAppendData();
 
 //        testData();
+
+        long num = ConfigUtils.generateSerialNumber();
+        System.out.println(num);
     }
 
     protected static void testReadFile() {

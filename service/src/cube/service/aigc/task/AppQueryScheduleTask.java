@@ -11,6 +11,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.aigc.psychology.app.CounselingSchedule;
 import cube.aigc.psychology.app.Customer;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
@@ -20,14 +21,18 @@ import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.scene.PsychologyScene;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
-/**
- * 新增客户数据任务。
- */
-public class AppNewCustomerTask extends ServiceTask {
+import java.util.ArrayList;
+import java.util.List;
 
-    public AppNewCustomerTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+/**
+ * 查询日程数据任务。
+ */
+public class AppQueryScheduleTask extends ServiceTask {
+
+    public AppQueryScheduleTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -54,25 +59,36 @@ public class AppNewCustomerTask extends ServiceTask {
         }
 
         try {
-            // 提交的数据
-            Customer customer = new Customer(packet.data);
-            // 创建的数据
-            Customer newCustomer = new Customer(customer.name, customer.gender, customer.age, customer.mobile,
-                    customer.comment, customer.timestamp);
-            if (PsychologyScene.getInstance().getStorage().writeCustomer(token.getContactId(), newCustomer)) {
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, newCustomer.toJSON()));
-                markResponseTime();
+            long starting = packet.data.has("starting") ?
+                    packet.data.getLong("starting") :
+                    System.currentTimeMillis() - (365 * 24 * 60 * 60 * 1000L);
+            long ending = packet.data.has("ending") ?
+                    packet.data.getLong("ending") :
+                    System.currentTimeMillis() + (365 * 24 * 60 * 60 * 1000L);
+
+            // 总数
+            int total = PsychologyScene.getInstance().getStorage().countSchedules(token.getContactId(), starting, ending);
+            // 列表
+            List<CounselingSchedule> list = PsychologyScene.getInstance().getStorage().readSchedules(
+                    token.getContactId(), starting, ending);
+
+            JSONObject responseJson = new JSONObject();
+            JSONArray array = new JSONArray();
+            for (CounselingSchedule schedule : list) {
+                array.put(schedule.toJSON());
             }
-            else {
-                this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
-                markResponseTime();
-            }
+            responseJson.put("list", array);
+            responseJson.put("total", total);
+            responseJson.put("starting", starting);
+            responseJson.put("ending", ending);
+
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseJson));
+            markResponseTime();
         } catch (Exception e) {
             Logger.e(this.getClass(), "", e);
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, packet.data));
             markResponseTime();
         }
     }

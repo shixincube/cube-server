@@ -10,6 +10,7 @@ import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.IndicatorRate;
+import cube.aigc.psychology.app.CounselingSchedule;
 import cube.aigc.psychology.app.Customer;
 import cube.aigc.psychology.composition.*;
 import cube.common.Language;
@@ -62,6 +63,8 @@ public class PsychologyStorage implements Storagable {
     private final String paintingReportManagementTable = "psychology_painting_report_mgmt";
 
     private final String customerTable = "psychology_customer";
+
+    private final String scheduleTable = "psychology_schedule";
 
     private final String usageTable = "psychology_usage";
 
@@ -423,7 +426,55 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("state", LiteralBase.INT, new Constraint[] {
                     Constraint.DEFAULT_0
+            })
+    };
+
+    private final StorageField[] scheduleFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY,
             }),
+            new StorageField("cid", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("customer_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("appointment_time", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("appointment_duration", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("appointment_theme", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("appointment_consultation", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("counseling_time", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("counseling_duration", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("counseling_theme", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("counseling_consultation", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("recording_name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("recording_file_code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("voice_diarization_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            })
     };
 
     private final StorageField[] usageFields = new StorageField[] {
@@ -575,6 +626,13 @@ public class PsychologyStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.customerTable, this.customerFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.customerTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.scheduleTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.scheduleTable, this.scheduleFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.scheduleTable + "' successfully");
             }
         }
 
@@ -1425,7 +1483,7 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("mobile", customer.mobile),
                     new StorageField("comment", customer.comment),
                     new StorageField("timestamp", customer.timestamp),
-                    new StorageField("state", customer.state),
+                    new StorageField("state", customer.state)
             });
         }
         else {
@@ -1437,7 +1495,7 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("mobile", customer.mobile),
                     new StorageField("comment", customer.comment),
                     new StorageField("timestamp", customer.timestamp),
-                    new StorageField("state", customer.state),
+                    new StorageField("state", customer.state)
             }, new Conditional[] {
                     Conditional.createEqualTo("id", customer.id),
                     Conditional.createAnd(),
@@ -1487,6 +1545,150 @@ public class PsychologyStorage implements Storagable {
         }
 
         return list;
+    }
+
+    public int countCustomers(long contactId) {
+        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(*) FROM " + this.customerTable +
+                " WHERE `cid`=" + contactId + " AND `state`=" + Customer.STATE_NORMAL);
+        return result.get(0)[0].getInt();
+    }
+
+    public boolean writeSchedule(long contactId, CounselingSchedule schedule) {
+        List<StorageField[]> result = this.storage.executeQuery(this.scheduleTable, new StorageField[] {
+                new StorageField("id", LiteralBase.LONG),
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", schedule.id),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("cid", contactId)
+        });
+
+        if (result.isEmpty()) {
+            // 插入
+            return this.storage.executeInsert(this.scheduleTable, new StorageField[] {
+                    new StorageField("id", schedule.id),
+                    new StorageField("cid", contactId),
+                    new StorageField("customer_id", schedule.customerId),
+                    new StorageField("appointment_time", schedule.appointmentTime),
+                    new StorageField("appointment_duration", schedule.appointmentDuration),
+                    new StorageField("appointment_theme", schedule.appointmentTheme.code),
+                    new StorageField("appointment_consultation", schedule.appointmentConsultation.code),
+                    new StorageField("state", schedule.state.code),
+                    new StorageField("counseling_time", schedule.counselingTime),
+                    new StorageField("counseling_duration", schedule.counselingDuration),
+                    new StorageField("counseling_theme", schedule.counselingTheme.code),
+                    new StorageField("counseling_consultation", schedule.counselingConsultation.code),
+                    new StorageField("recording_name", schedule.recordingName),
+                    new StorageField("recording_file_code", schedule.recordingFileCode),
+                    new StorageField("voice_diarization_id", schedule.voiceDiarizationId)
+            });
+        }
+        else {
+            // 更新
+            return this.storage.executeUpdate(this.customerTable, new StorageField[] {
+                    new StorageField("customer_id", schedule.customerId),
+                    new StorageField("appointment_time", schedule.appointmentTime),
+                    new StorageField("appointment_duration", schedule.appointmentDuration),
+                    new StorageField("appointment_theme", schedule.appointmentTheme.code),
+                    new StorageField("appointment_consultation", schedule.appointmentConsultation.code),
+                    new StorageField("state", schedule.state.code),
+                    new StorageField("counseling_time", schedule.counselingTime),
+                    new StorageField("counseling_duration", schedule.counselingDuration),
+                    new StorageField("counseling_theme", schedule.counselingTheme.code),
+                    new StorageField("counseling_consultation", schedule.counselingConsultation.code),
+                    new StorageField("recording_name", schedule.recordingName),
+                    new StorageField("recording_file_code", schedule.recordingFileCode),
+                    new StorageField("voice_diarization_id", schedule.voiceDiarizationId)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("id", schedule.id),
+                    Conditional.createAnd(),
+                    Conditional.createEqualTo("cid", contactId)
+            });
+        }
+    }
+
+    public CounselingSchedule readSchedule(long contactId, long id) {
+        List<StorageField[]> result = this.storage.executeQuery(this.scheduleTable, this.scheduleFields, new Conditional[] {
+                Conditional.createEqualTo("id", id),
+                Conditional.createAnd(),
+                Conditional.createEqualTo("cid", contactId)
+        });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        CounselingSchedule schedule = new CounselingSchedule(data.get("id").getLong(), data.get("customer_id").getLong());
+        schedule.appointmentTime = data.get("appointment_time").getLong();
+        schedule.appointmentDuration = data.get("appointment_duration").getLong();
+        schedule.appointmentTheme = ConsultationTheme.parse(data.get("appointment_theme").getString());
+        schedule.appointmentConsultation = Consultation.parse(data.get("appointment_consultation").getInt());
+        schedule.state = CounselingScheduleState.parse(data.get("state").getInt());
+        schedule.counselingTime = data.get("counseling_time").getLong();
+        schedule.counselingDuration = data.get("counseling_duration").getLong();
+        schedule.counselingTheme = ConsultationTheme.parse(data.get("counseling_theme").getString());
+        schedule.counselingConsultation = Consultation.parse(data.get("counseling_consultation").getInt());
+        schedule.recordingName = data.get("recording_name").getString();
+        schedule.recordingFileCode = data.get("recording_file_code").getString();
+        schedule.voiceDiarizationId = data.get("voice_diarization_id").isNullValue() ?
+                0 : data.get("voice_diarization_id").getLong();
+        return schedule;
+    }
+
+    public List<CounselingSchedule> readSchedules(long contactId, long starting, long ending) {
+        List<CounselingSchedule> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.scheduleTable, this.scheduleFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("cid", contactId),
+                        Conditional.createAnd(),
+                        Conditional.createUnequalTo("state", CounselingScheduleState.Deleted.code),
+                        Conditional.createAnd(),
+                        Conditional.createBracket(new Conditional[] {
+                                Conditional.createGreaterThanEqual(new StorageField("appointment_time", starting)),
+                                Conditional.createOr(),
+                                Conditional.createGreaterThanEqual(new StorageField("counseling_time", starting))
+                        }),
+                        Conditional.createAnd(),
+                        Conditional.createBracket(new Conditional[] {
+                                Conditional.createLessThanEqual(new StorageField("appointment_time", ending)),
+                                Conditional.createOr(),
+                                Conditional.createLessThanEqual(new StorageField("counseling_time", ending))
+                        }),
+                });
+
+        if (result.isEmpty()) {
+            return list;
+        }
+
+        for (StorageField[] fields : result) {
+            Map<String, StorageField> data = StorageFields.get(fields);
+            CounselingSchedule schedule = new CounselingSchedule(data.get("id").getLong(), data.get("customer_id").getLong());
+            schedule.appointmentTime = data.get("appointment_time").getLong();
+            schedule.appointmentDuration = data.get("appointment_duration").getLong();
+            schedule.appointmentTheme = ConsultationTheme.parse(data.get("appointment_theme").getString());
+            schedule.appointmentConsultation = Consultation.parse(data.get("appointment_consultation").getInt());
+            schedule.state = CounselingScheduleState.parse(data.get("state").getInt());
+            schedule.counselingTime = data.get("counseling_time").getLong();
+            schedule.counselingDuration = data.get("counseling_duration").getLong();
+            schedule.counselingTheme = ConsultationTheme.parse(data.get("counseling_theme").getString());
+            schedule.counselingConsultation = Consultation.parse(data.get("counseling_consultation").getInt());
+            schedule.recordingName = data.get("recording_name").getString();
+            schedule.recordingFileCode = data.get("recording_file_code").getString();
+            schedule.voiceDiarizationId = data.get("voice_diarization_id").isNullValue() ?
+                    0 : data.get("voice_diarization_id").getLong();
+
+            list.add(schedule);
+        }
+
+        return list;
+    }
+
+    public int countSchedules(long contactId, long starting, long ending) {
+        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(*) FROM " + this.scheduleTable +
+                " WHERE `cid`=" + contactId + " AND `state`<>" + CounselingScheduleState.Deleted.code +
+                " AND (`appointment_time`>=" + starting + " OR `counseling_time`>=" + starting + ")" +
+                " AND (`appointment_time`<=" + ending + " OR `counseling_time`<=" + ending + ")");
+        return result.get(0)[0].getInt();
     }
 
     public boolean writeUsage(long cid, String token, long timestamp, String remote, String query,

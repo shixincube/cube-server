@@ -6,7 +6,7 @@
 
 package cube.dispatcher.aigc.handler;
 
-import cube.aigc.ConsultationTheme;
+import cube.aigc.psychology.ConsultationTheme;
 import cube.aigc.psychology.Attribute;
 import cube.common.entity.CounselingStrategy;
 import cube.dispatcher.aigc.Manager;

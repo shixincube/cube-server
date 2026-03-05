@@ -11,7 +11,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
-import cube.aigc.psychology.app.Customer;
+import cube.aigc.psychology.app.CounselingSchedule;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
@@ -23,11 +23,11 @@ import cube.service.aigc.scene.PsychologyScene;
 import org.json.JSONObject;
 
 /**
- * 新增客户数据任务。
+ * 新建日程数据任务。
  */
-public class AppNewCustomerTask extends ServiceTask {
+public class AppNewScheduleTask extends ServiceTask {
 
-    public AppNewCustomerTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public AppNewScheduleTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -55,13 +55,12 @@ public class AppNewCustomerTask extends ServiceTask {
 
         try {
             // 提交的数据
-            Customer customer = new Customer(packet.data);
-            // 创建的数据
-            Customer newCustomer = new Customer(customer.name, customer.gender, customer.age, customer.mobile,
-                    customer.comment, customer.timestamp);
-            if (PsychologyScene.getInstance().getStorage().writeCustomer(token.getContactId(), newCustomer)) {
+            CounselingSchedule schedule = new CounselingSchedule(packet.data);
+            // 新日程
+            CounselingSchedule newSchedule = new CounselingSchedule(schedule);
+            if (PsychologyScene.getInstance().getStorage().writeSchedule(token.getContactId(), newSchedule)) {
                 this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, newCustomer.toJSON()));
+                        this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, newSchedule.toJSON()));
                 markResponseTime();
             }
             else {
