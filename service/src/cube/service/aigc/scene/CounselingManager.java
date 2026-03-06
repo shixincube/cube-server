@@ -8,9 +8,9 @@ package cube.service.aigc.scene;
 
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
-import cube.aigc.psychology.ConsultationTheme;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.ConsultationTheme;
 import cube.aigc.psychology.Resource;
 import cube.auth.AuthToken;
 import cube.common.entity.*;
@@ -117,6 +117,9 @@ public class CounselingManager {
                     }
                 }
 
+                // 关闭归档线程
+                wrapper.archiveStopped.set(true);
+
                 // 删除内存里的数据
                 this.streamSinkMap.remove(streamName);
                 this.combinedVoiceMap.remove(streamName);
@@ -213,7 +216,7 @@ public class CounselingManager {
             return;
         }
 
-        if (wrapper.archiveStopped) {
+        if (wrapper.archiveStopped.get()) {
             Logger.w(this.getClass(), "#archive - Stopped: " + streamName + "/" + index);
             return;
         }
@@ -236,6 +239,7 @@ public class CounselingManager {
             buf.flip();
         } catch (Exception e) {
             Logger.e(this.getClass(), "#archive", e);
+            return;
         } finally {
             if (null != fis) {
                 try {
@@ -252,37 +256,6 @@ public class CounselingManager {
         // 新归档数据
         RecordingArchive recordingArchive = new RecordingArchive(pcmData, index, timestamp);
         wrapper.appendArchive(recordingArchive);
-
-        if (wrapper.archiveMutex.get()) {
-            Logger.d(this.getClass(), "#archive - Archiving is in progress: " + streamName);
-            return;
-        }
-
-        wrapper.archiveMutex.set(true);
-
-        RecordingArchive current = wrapper.pollArchive();
-        while (null != current) {
-            try {
-                StreamArchive archive = new StreamArchive(this.service.workingPath.getAbsolutePath(), streamName);
-                // 保存
-                File vsaFile = archive.save(current.index, current.pcmData);
-                if (null != vsaFile) {
-                    if (Logger.isDebugLevel()) {
-                        Logger.d(this.getClass(), "#archive - PCM archive: " + vsaFile.getName() +
-                                " - size: " + FileUtils.scaleFileSize(vsaFile.length()).toString());
-                    }
-                } else {
-                    Logger.e(this.getClass(), "#archive - Archives file failed: " + streamName);
-                }
-            } catch (Exception e) {
-                Logger.e(this.getClass(), "#archive", e);
-            }
-
-            // 下一个
-            current = wrapper.pollArchive();
-        }
-
-        wrapper.archiveMutex.set(false);
     }
 
     /**
@@ -317,7 +290,7 @@ public class CounselingManager {
             }
         }
 
-        while (wrapper.archiveMutex.get() || !wrapper.recordingArchives.isEmpty()) {
+        while (!wrapper.recordingArchives.isEmpty()) {
             // 等待完成
             try {
                 Thread.sleep(1000);
@@ -331,7 +304,7 @@ public class CounselingManager {
         }
 
         // 停止归档
-        wrapper.archiveStopped = true;
+        wrapper.archiveStopped.set(true);
 
         FileLabel recordingFileLabel = null;
 
@@ -1147,7 +1120,7 @@ public class CounselingManager {
         }
     }
 
-    protected class Wrapper {
+    protected class Wrapper implements Runnable {
 
         public final String streamName;
 
@@ -1177,11 +1150,9 @@ public class CounselingManager {
 
         protected final AtomicBoolean generatingStrategy = new AtomicBoolean(false);
 
-        protected final AtomicBoolean archiveMutex = new AtomicBoolean(false);
-
         protected final ConcurrentLinkedQueue<RecordingArchive> recordingArchives = new ConcurrentLinkedQueue<>();
 
-        protected boolean archiveStopped = false;
+        protected final AtomicBoolean archiveStopped = new AtomicBoolean(false);
 
         protected Wrapper(String streamName, AuthToken authToken, ConsultationTheme theme, Attribute attribute) {
             this.streamName = streamName;
@@ -1193,6 +1164,8 @@ public class CounselingManager {
             this.captions = new ArrayList<>();
             this.consultingAction = CounselingStrategy.ConsultingAction.General;
             this.refreshTimestamp = System.currentTimeMillis();
+            // 启动归档线程
+            (new Thread(this)).start();
         }
 
         protected boolean hasStopped() {
@@ -1203,8 +1176,39 @@ public class CounselingManager {
             this.recordingArchives.add(archive);
         }
 
-        protected RecordingArchive pollArchive() {
-            return this.recordingArchives.poll();
+        @Override
+        public void run() {
+            Logger.i(this.getClass(), "#run - The archive thread start: " + this.streamName);
+
+            while (!this.archiveStopped.get()) {
+                RecordingArchive current = this.recordingArchives.poll();
+                if (null == current) {
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    continue;
+                }
+
+                try {
+                    StreamArchive archive = new StreamArchive(service.workingPath.getAbsolutePath(), streamName);
+                    // 保存
+                    File vsaFile = archive.save(current.index, current.pcmData);
+                    if (null != vsaFile) {
+                        if (Logger.isDebugLevel()) {
+                            Logger.d(this.getClass(), "#archive - PCM archive: " + vsaFile.getName() +
+                                    " - size: " + FileUtils.scaleFileSize(vsaFile.length()).toString());
+                        }
+                    } else {
+                        Logger.e(this.getClass(), "#archive - Archives file failed: " + streamName);
+                    }
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#archive", e);
+                }
+            }
+
+            Logger.i(this.getClass(), "#run - The archive thread end: " + this.streamName);
         }
     }
 }

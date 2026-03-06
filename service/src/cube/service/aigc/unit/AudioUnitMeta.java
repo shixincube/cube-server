@@ -18,13 +18,11 @@ import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.VoiceDiarizationListener;
 import cube.service.aigc.scene.VoiceDiarizationIndicator;
 import cube.util.FileUtils;
+import cube.util.TextUtils;
 import cube.util.TimeUtils;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AudioUnitMeta extends UnitMeta {
 
@@ -98,6 +96,23 @@ public class AudioUnitMeta extends UnitMeta {
                         "\nelapsed: " + result.elapsed +
                         "\ntracks: " + result.tracks.size() +
                         "\nduration: " + result.duration);
+            }
+
+            // 排除日语
+            Iterator<VoiceTrack> iter = result.tracks.iterator();
+            while (iter.hasNext()) {
+                VoiceTrack track = iter.next();
+                List<String> words = track.recognition.words;
+                boolean japanese = false;
+                for (String word : words) {
+                    if (TextUtils.isJapanese(word)) {
+                        japanese = true;
+                        break;
+                    }
+                }
+                if (japanese) {
+                    iter.remove();
+                }
             }
 
             if (result.tracks.size() == 0) {

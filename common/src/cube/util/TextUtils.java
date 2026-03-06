@@ -654,10 +654,12 @@ public final class TextUtils {
             String content = text.trim();
             int index = 0;
 
-            if (content.startsWith("**") && content.endsWith("**")) {
-                content = content.replaceAll("\\*\\*", "").trim();
-            }
-            else if (content.startsWith("#") || content.startsWith("*") || content.startsWith("-")) {
+            content = content.replaceAll("\\*\\*", "").trim();
+
+//            if (content.startsWith("**") || content.endsWith("**")) {
+//                content = content.replaceAll("\\*\\*", "").trim();
+//            }
+            if (content.startsWith("#") || content.startsWith("*") || content.startsWith("-")) {
                 index = content.indexOf(" ") + 1;
             }
             else if (startsWithNumberSign(content)) {
@@ -1141,9 +1143,11 @@ public final class TextUtils {
 //        System.out.println(isJapanese("デディ"));
 //        System.out.println(isJapanese("こ"));
 //        System.out.println(isJapanese("Hello こか"));
+        System.out.println(isJapanese("世界せだって"));
 
         StringBuilder buf = new StringBuilder();
-        String text = "世界 こかHello";
+//        String text = "世界 こかHello";
+        String text = "せだって";
         for (int i = 0; i < text.length(); ++i) {
             String word = text.substring(i, i + 1);
             if (isChineseWord(word)) {

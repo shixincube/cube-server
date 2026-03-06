@@ -3082,19 +3082,20 @@ public class AIGCService extends AbstractModule implements Generatable {
 
                 listener.onCompleted(source, streamSink);
 
-                for (VoiceTrack track : diarization.tracks) {
-                    List<String> words = track.recognition.words;
-                    boolean japanese = false;
-                    for (String word : words) {
-                        if (TextUtils.isJapanese(word)) {
-                            japanese = true;
-                            break;
-                        }
-                    }
-                    if (japanese) {
-                        track.recognition = new SpeechRecognitionInfo(track.recognition, "…");
-                    }
-                }
+                // 排除日语
+//                for (VoiceTrack track : diarization.tracks) {
+//                    List<String> words = track.recognition.words;
+//                    boolean japanese = false;
+//                    for (String word : words) {
+//                        if (TextUtils.isJapanese(word)) {
+//                            japanese = true;
+//                            break;
+//                        }
+//                    }
+//                    if (japanese) {
+//                        track.recognition = new SpeechRecognitionInfo(track.recognition, "…");
+//                    }
+//                }
 
                 // 记录流
                 CounselingManager.getInstance().record(authToken, streamSink);

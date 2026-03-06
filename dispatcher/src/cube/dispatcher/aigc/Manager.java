@@ -207,6 +207,9 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Evaluate());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.KeepAlive());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Inject());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.NewSchedule());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.DeleteSchedule());
+        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Schedules());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.NewCustomer());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.DeleteCustomer());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Customers());

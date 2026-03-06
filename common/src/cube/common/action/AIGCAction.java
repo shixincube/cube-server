@@ -97,6 +97,26 @@ public enum AIGCAction {
     AppQueryCustomer("appQueryCustomer"),
 
     /**
+     * 应用层新建日程数据。
+     */
+    AppNewSchedule("appNewSchedule"),
+
+    /**
+     * 应用层删除日程数据。
+     */
+    AppDeleteSchedule("appDeleteSchedule"),
+
+    /**
+     * 应用层更新日程数据。
+     */
+    AppUpdateSchedule("appUpdateSchedule"),
+
+    /**
+     * 应用层查询日程数据。
+     */
+    AppQuerySchedule("appQuerySchedule"),
+
+    /**
      * 应用层 App 版本信息。
      */
     AppVersion("appVersion"),
