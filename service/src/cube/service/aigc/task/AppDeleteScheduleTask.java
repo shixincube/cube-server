@@ -13,9 +13,9 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.psychology.CounselingScheduleState;
 import cube.aigc.psychology.app.CounselingSchedule;
-import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.User;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -46,17 +46,24 @@ public class AppDeleteScheduleTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        AuthToken token = service.getToken(tokenCode);
-        if (null == token) {
+        User user = service.getUser(tokenCode);
+        if (null == user) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InconsistentToken.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
+        if (!user.isRegistered()) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
         try {
             long id = packet.data.getLong("id");
-            CounselingSchedule schedule = PsychologyScene.getInstance().getStorage().readSchedule(token.getContactId(), id);
+            CounselingSchedule schedule = PsychologyScene.getInstance().getStorage().readSchedule(user.getContactId(), id);
             if (null == schedule) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, packet.data));
@@ -67,7 +74,7 @@ public class AppDeleteScheduleTask extends ServiceTask {
             // 修改状态
             schedule.state = CounselingScheduleState.Deleted;
 
-            if (PsychologyScene.getInstance().getStorage().writeSchedule(token.getContactId(), schedule)) {
+            if (PsychologyScene.getInstance().getStorage().writeSchedule(user.getContactId(), schedule)) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, schedule.toJSON()));
                 markResponseTime();

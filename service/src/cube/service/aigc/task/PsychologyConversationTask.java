@@ -81,6 +81,9 @@ public class PsychologyConversationTask extends ServiceTask {
 
             if (packet.data.has("relation")) {
                 relation = new ConversationRelation(packet.data.getJSONObject("relation"));
+                if (relation.uid > 0) {
+                    relation.user = service.getUser(relation.uid);
+                }
             }
 
             if (packet.data.has("context")) {

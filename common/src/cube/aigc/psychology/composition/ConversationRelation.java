@@ -6,8 +6,8 @@
 
 package cube.aigc.psychology.composition;
 
-import cell.util.Cryptology;
 import cube.common.JSONable;
+import cube.common.entity.User;
 import org.json.JSONObject;
 
 /**
@@ -19,7 +19,9 @@ public class ConversationRelation implements JSONable {
 
     public long reportSn = 0;
 
-    private long uid = 0;
+    public long uid = 0;
+
+    public User user;
 
     public ConversationRelation() {
         this.name = "Anonymous";
@@ -40,12 +42,12 @@ public class ConversationRelation implements JSONable {
         }
     }
 
-    public synchronized long getId() {
-        if (0 == this.uid) {
-            long hash = Cryptology.getInstance().fastHash(this.name);
-            this.uid = Math.abs(hash);
+    public boolean isValidUser() {
+        if (null != this.user) {
+            return this.user.isRegistered();
         }
-        return this.uid;
+
+        return false;
     }
 
     @Override

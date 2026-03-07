@@ -861,8 +861,24 @@ public class AIGCService extends AbstractModule implements Generatable {
         return this.storage.writeAppEvent(appEvent);
     }
 
+    public User getUser(long uid) {
+        Contact contact = ContactManager.getInstance().getContact(AuthConsts.DEFAULT_DOMAIN, uid);
+        if (null == contact) {
+            Logger.w(this.getClass(), "#getUser - Can NOT find contact: " + uid);
+            return null;
+        }
+        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthToken authToken = authService.getToken(AuthConsts.DEFAULT_DOMAIN, uid);
+        if (null == authToken) {
+            Logger.w(this.getClass(), "#getUser - Can NOT find token: " + uid);
+            return null;
+        }
+        User user = new User(contact.getContext());
+        user.setAuthToken(authToken);
+        return user;
+    }
+
     public User getUser(String token) {
-        User user = null;
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
         AuthToken authToken = authService.getToken(token);
         if (null == authToken) {
@@ -874,7 +890,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             Logger.w(this.getClass(), "#getUser - Can NOT find contact: " + token);
             return null;
         }
-        user = new User(contact.getContext());
+        User user = new User(contact.getContext());
         user.setAuthToken(authToken);
         return user;
     }

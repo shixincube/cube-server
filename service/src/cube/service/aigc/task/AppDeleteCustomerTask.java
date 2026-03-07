@@ -12,9 +12,9 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.psychology.app.Customer;
-import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.User;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -45,17 +45,24 @@ public class AppDeleteCustomerTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        AuthToken token = service.getToken(tokenCode);
-        if (null == token) {
+        User user = service.getUser(tokenCode);
+        if (null == user) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InconsistentToken.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
+        if (!user.isRegistered()) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
         try {
             long id = packet.data.getLong("id");
-            Customer customer = PsychologyScene.getInstance().getStorage().readCustomer(token.getContactId(), id);
+            Customer customer = PsychologyScene.getInstance().getStorage().readCustomer(user.getContactId(), id);
             if (null == customer) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, packet.data));
@@ -66,7 +73,7 @@ public class AppDeleteCustomerTask extends ServiceTask {
             // 修改状态
             customer.state = Customer.STATE_DELETE;
 
-            if (PsychologyScene.getInstance().getStorage().writeCustomer(token.getContactId(), customer)) {
+            if (PsychologyScene.getInstance().getStorage().writeCustomer(user.getContactId(), customer)) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, customer.toJSON()));
                 markResponseTime();

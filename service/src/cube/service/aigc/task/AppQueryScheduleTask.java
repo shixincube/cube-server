@@ -12,10 +12,9 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.psychology.app.CounselingSchedule;
-import cube.aigc.psychology.app.Customer;
-import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.User;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -24,7 +23,6 @@ import cube.service.aigc.scene.PsychologyScene;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -50,10 +48,24 @@ public class AppQueryScheduleTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        AuthToken token = service.getToken(tokenCode);
-        if (null == token) {
+        User user = service.getUser(tokenCode);
+        if (null == user) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InconsistentToken.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
+        if (!user.isRegistered()) {
+            // 非注册用户无数据
+            JSONObject responseJson = new JSONObject();
+            JSONArray array = new JSONArray();
+            responseJson.put("list", array);
+            responseJson.put("total", 0);
+            responseJson.put("starting", 0);
+            responseJson.put("ending", 0);
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, responseJson));
             markResponseTime();
             return;
         }
@@ -67,10 +79,10 @@ public class AppQueryScheduleTask extends ServiceTask {
                     System.currentTimeMillis() + (365 * 24 * 60 * 60 * 1000L);
 
             // 总数
-            int total = PsychologyScene.getInstance().getStorage().countSchedules(token.getContactId(), starting, ending);
+            int total = PsychologyScene.getInstance().getStorage().countSchedules(user.getContactId(), starting, ending);
             // 列表
             List<CounselingSchedule> list = PsychologyScene.getInstance().getStorage().readSchedules(
-                    token.getContactId(), starting, ending);
+                    user.getContactId(), starting, ending);
 
             JSONObject responseJson = new JSONObject();
             JSONArray array = new JSONArray();

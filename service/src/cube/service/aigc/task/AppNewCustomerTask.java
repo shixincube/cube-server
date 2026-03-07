@@ -12,9 +12,9 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.psychology.app.Customer;
-import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.User;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -45,10 +45,17 @@ public class AppNewCustomerTask extends ServiceTask {
         }
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        AuthToken token = service.getToken(tokenCode);
-        if (null == token) {
+        User user = service.getUser(tokenCode);
+        if (null == user) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InconsistentToken.code, new JSONObject()));
+            markResponseTime();
+            return;
+        }
+
+        if (!user.isRegistered()) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.IllegalOperation.code, new JSONObject()));
             markResponseTime();
             return;
         }
@@ -59,7 +66,7 @@ public class AppNewCustomerTask extends ServiceTask {
             // 创建的数据
             Customer newCustomer = new Customer(customer.name, customer.gender, customer.age, customer.mobile,
                     customer.comment, customer.timestamp);
-            if (PsychologyScene.getInstance().getStorage().writeCustomer(token.getContactId(), newCustomer)) {
+            if (PsychologyScene.getInstance().getStorage().writeCustomer(user.getContactId(), newCustomer)) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, newCustomer.toJSON()));
                 markResponseTime();

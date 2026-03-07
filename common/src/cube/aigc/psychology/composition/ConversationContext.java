@@ -52,8 +52,8 @@ public class ConversationContext implements JSONable {
         this.authToken = authToken;
     }
 
-    public long getRelationId() {
-        return this.relation.getId();
+    public ConversationRelation getRelation() {
+        return this.relation;
     }
 
     public AuthToken getAuthToken() {

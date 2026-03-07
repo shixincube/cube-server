@@ -104,7 +104,7 @@ public class ConversationWorker {
         final ConversationContext convCtx = cc;
 
         // try analysis subtask in query
-        final Subtask roundSubtask = this.matchSubtask(query, convCtx);
+        final Subtask roundSubtask = relation.isValidUser() ? this.matchSubtask(query, convCtx) : Subtask.None;
 
         if (convCtx.isSuperAdmin()) {
             if (roundSubtask == Subtask.SuperAdmin) {
@@ -351,9 +351,27 @@ public class ConversationWorker {
                 public void run() {
                     channel.setProcessing(false);
                     listener.onGenerated(channel, prompt.result);
-                    // 记录
-                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
-                            convCtx, prompt.result);
+
+                    if (relation.isValidUser()) {
+                        // 记录
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                                convCtx, prompt.result);
+                    }
+                }
+            }).start();
+            return AIGCStateCode.Ok;
+        }
+
+        if (!relation.isValidUser()) {
+            Logger.d(this.getClass(), "#work - The user is NOT valid: " + relation.uid);
+
+            String result = Resource.getInstance().getCorpus("baize", "VISITOR_NOTICE", channel.getLanguage());
+            final GeneratingRecord record = new GeneratingRecord(ModelConfig.AIXINLI, query, result);
+            (new Thread() {
+                @Override
+                public void run() {
+                    channel.setProcessing(false);
+                    listener.onGenerated(channel, record);
                 }
             }).start();
             return AIGCStateCode.Ok;

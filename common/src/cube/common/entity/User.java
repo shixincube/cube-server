@@ -129,6 +129,13 @@ public class User extends Entity {
         return this.phoneNumber.length() > 8 || this.email.length() > 6;
     }
 
+    public long getContactId() {
+        if (null != this.authToken) {
+            return this.authToken.getContactId();
+        }
+        return 0;
+    }
+
     public String markdown() {
         StringBuilder buf = new StringBuilder();
         buf.append("# 用户“").append(this.name).append("”的信息\n\n");
