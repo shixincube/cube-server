@@ -21,6 +21,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 六维得分。
+ */
 public class HexagonDimensionScore implements JSONable {
 
     private Map<HexagonDimension, Integer> scores = new LinkedHashMap<>();

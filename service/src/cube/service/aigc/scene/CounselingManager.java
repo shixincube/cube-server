@@ -457,6 +457,9 @@ public class CounselingManager {
                 k -> new Wrapper(streamName, authToken, theme, attribute));
         // 设置策略动作
         wrapper.consultingAction = consultingAction;
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#queryCounselingCaption - Consulting action: " + consultingAction.code);
+        }
 
         final List<CounselingStrategy> captions = wrapper.captions;
         if (captions.isEmpty()) {
@@ -1162,7 +1165,7 @@ public class CounselingManager {
             this.attribute = attribute;
             this.strategies = new ArrayList<>();
             this.captions = new ArrayList<>();
-            this.consultingAction = CounselingStrategy.ConsultingAction.General;
+            this.consultingAction = CounselingStrategy.ConsultingAction.Analysis;
             this.refreshTimestamp = System.currentTimeMillis();
             // 启动归档线程
             (new Thread(this)).start();

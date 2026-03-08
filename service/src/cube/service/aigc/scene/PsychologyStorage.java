@@ -9,6 +9,7 @@ package cube.service.aigc.scene;
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.app.CounselingSchedule;
 import cube.aigc.psychology.app.Customer;
@@ -426,6 +427,12 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("state", LiteralBase.INT, new Constraint[] {
                     Constraint.DEFAULT_0
+            }),
+            new StorageField("hexagon_score", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("personality", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 
@@ -1483,7 +1490,11 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("mobile", customer.mobile),
                     new StorageField("comment", customer.comment),
                     new StorageField("timestamp", customer.timestamp),
-                    new StorageField("state", customer.state)
+                    new StorageField("state", customer.state),
+                    new StorageField("hexagon_score", (null != customer.hexagonScore) ?
+                            JSONUtils.serializeEscape(customer.hexagonScore.toJSON().toString()) : null),
+                    new StorageField("personality", (null != customer.personality) ?
+                            JSONUtils.serializeEscape(customer.personality.toJSON().toString()) : null)
             });
         }
         else {
@@ -1495,7 +1506,11 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("mobile", customer.mobile),
                     new StorageField("comment", customer.comment),
                     new StorageField("timestamp", customer.timestamp),
-                    new StorageField("state", customer.state)
+                    new StorageField("state", customer.state),
+                    new StorageField("hexagon_score", (null != customer.hexagonScore) ?
+                            JSONUtils.serializeEscape(customer.hexagonScore.toJSON().toString()) : null),
+                    new StorageField("personality", (null != customer.personality) ?
+                            JSONUtils.serializeEscape(customer.personality.toJSON().toString()) : null)
             }, new Conditional[] {
                     Conditional.createEqualTo("id", customer.id),
                     Conditional.createAnd(),
@@ -1519,6 +1534,14 @@ public class PsychologyStorage implements Storagable {
         Customer customer = new Customer(data.get("id").getLong(), data.get("name").getString(),
                 Gender.parse(data.get("gender").getString()), data.get("age").getInt(), data.get("mobile").getString(),
                 data.get("comment").getString(), data.get("timestamp").getLong(), data.get("state").getInt());
+        if (!data.get("hexagon_score").isNullValue()) {
+            customer.hexagonScore = new HexagonDimensionScore(new JSONObject(
+                    JSONUtils.serializeLineFeed(data.get("hexagon_score").getString().trim())));
+        }
+        if (!data.get("personality").isNullValue()) {
+            customer.personality = new BigFivePersonality(new JSONObject(
+                    JSONUtils.serializeLineFeed(data.get("personality").getString().trim())));
+        }
         return customer;
     }
 
@@ -1541,6 +1564,14 @@ public class PsychologyStorage implements Storagable {
             Customer customer = new Customer(data.get("id").getLong(), data.get("name").getString(),
                     Gender.parse(data.get("gender").getString()), data.get("age").getInt(), data.get("mobile").getString(),
                     data.get("comment").getString(), data.get("timestamp").getLong(), data.get("state").getInt());
+            if (!data.get("hexagon_score").isNullValue()) {
+                customer.hexagonScore = new HexagonDimensionScore(new JSONObject(
+                        JSONUtils.serializeLineFeed(data.get("hexagon_score").getString().trim())));
+            }
+            if (!data.get("personality").isNullValue()) {
+                customer.personality = new BigFivePersonality(new JSONObject(
+                        JSONUtils.serializeLineFeed(data.get("personality").getString().trim())));
+            }
             list.add(customer);
         }
 

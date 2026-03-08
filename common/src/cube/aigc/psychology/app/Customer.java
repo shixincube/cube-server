@@ -6,6 +6,8 @@
 
 package cube.aigc.psychology.app;
 
+import cube.aigc.psychology.algorithm.BigFivePersonality;
+import cube.aigc.psychology.composition.HexagonDimensionScore;
 import cube.common.JSONable;
 import cube.util.ConfigUtils;
 import cube.util.Gender;
@@ -41,6 +43,10 @@ public class Customer implements JSONable {
     public long timestamp;
 
     public int state = STATE_NORMAL;
+
+    public HexagonDimensionScore hexagonScore;
+
+    public BigFivePersonality personality;
 
     public Customer(String name, Gender gender, int age, String mobile, String comment, long timestamp) {
         this.id = ConfigUtils.generateSerialNumber();
