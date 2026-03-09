@@ -79,6 +79,10 @@ public class Customer implements JSONable {
         this.comment = json.has("comment") ? json.getString("comment") : null;
         this.timestamp = json.has("timestamp") ? json.getLong("timestamp") : System.currentTimeMillis();
         this.state = json.has("state") ? json.getInt("state") : STATE_NORMAL;
+        this.hexagonScore = json.has("hexagonScore") ?
+                new HexagonDimensionScore(json.getJSONObject("hexagonScore")) : null;
+        this.personality = json.has("personality") ?
+                new BigFivePersonality(json.getJSONObject("personality")) : null;
     }
 
     @Override
@@ -92,6 +96,12 @@ public class Customer implements JSONable {
         json.put("timestamp", this.timestamp);
         if (null != this.comment) {
             json.put("comment", this.comment);
+        }
+        if (null != this.hexagonScore) {
+            json.put("hexagonScore", this.hexagonScore.toJSON());
+        }
+        if (null != this.personality) {
+            json.put("personality", this.personality.toJSON());
         }
         return json;
     }

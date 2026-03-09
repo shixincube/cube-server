@@ -85,7 +85,7 @@ public class AppDeleteScheduleTask extends ServiceTask {
                 markResponseTime();
             }
         } catch (Exception e) {
-            Logger.e(this.getClass(), "", e);
+            Logger.e(this.getClass(), "#run", e);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();

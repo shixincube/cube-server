@@ -1615,7 +1615,7 @@ public class PsychologyStorage implements Storagable {
         }
         else {
             // 更新
-            return this.storage.executeUpdate(this.customerTable, new StorageField[] {
+            return this.storage.executeUpdate(this.scheduleTable, new StorageField[] {
                     new StorageField("customer_id", schedule.customerId),
                     new StorageField("appointment_time", schedule.appointmentTime),
                     new StorageField("appointment_duration", schedule.appointmentDuration),
