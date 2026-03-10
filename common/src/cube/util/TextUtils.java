@@ -58,6 +58,8 @@ public final class TextUtils {
     private final static Pattern sChineseWord =
             Pattern.compile("[\\u4E00-\\u9FA5]");
 
+    private final static Pattern sChinesePunctuation = Pattern.compile("[\\\\！|\\\\，|\\\\。|\\\\（|\\\\）|\\\\《|\\\\》|\\\\“|\\\\”|\\\\？|\\\\：|\\\\；|\\\\【|\\\\】]");
+
     private final static Pattern sEnglish = Pattern.compile("^[a-zA-Z]*$");
 
     /**
@@ -363,7 +365,26 @@ public final class TextUtils {
     }
 
     /**
-     * 指定字符串是否是中文内容。
+     * 判断指定文本中是否包含中文标点符号。
+     *
+     * @param text
+     * @return
+     */
+    public static boolean containsChinesePunctuation(String text) {
+        boolean result = false;
+        for (int i = 0; i < text.length(); ++i) {
+            String s = text.substring(i, i + 1);
+            Matcher m = sChinesePunctuation.matcher(s);
+            if (m.matches()) {
+                result = true;
+                break;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 指定字符串是否是中文内容，包括中文标点符号。
      *
      * @param value
      * @return
@@ -474,7 +495,7 @@ public final class TextUtils {
      */
     public static boolean isJapanese(String input) {
         try {
-            if (isChineseWord(input)) {
+            if (containsChinese(input)) {
                 return false;
             }
 

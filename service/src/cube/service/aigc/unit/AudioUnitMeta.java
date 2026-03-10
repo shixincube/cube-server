@@ -10,6 +10,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.auth.AuthToken;
+import cube.common.Language;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
@@ -54,11 +55,16 @@ public class AudioUnitMeta extends UnitMeta {
             Logger.w(this.getClass(), "#process - The listener is null: " + this.file.getFileCode());
         }
 
+        // 计算等待时长，74秒的MP3文件，大约 302192 字节，耗时约2分10秒（130秒）
+        final double factor = (130.0 * 1000.0) / 302192;
+        double offset = ((double) this.file.getFileSize()) / factor;
+        long timeout = (5 * 60 * 1000) + ((long) offset);
+
         JSONObject data = new JSONObject();
         data.put("fileLabel", this.file.toJSON());
         data.put("preprocess", this.preprocess);
         Packet request = new Packet(this.action.name, data);
-        ActionDialect dialect = this.service.getCellet().transmit(this.unit.getContext(), request.toDialect(), 5 * 60 * 1000);
+        ActionDialect dialect = this.service.getCellet().transmit(this.unit.getContext(), request.toDialect(), timeout);
         if (null == dialect) {
             Logger.w(AIGCService.class, "#process - Audio unit error: " + this.file.getFileCode());
             // 回调错误
@@ -80,7 +86,7 @@ public class AudioUnitMeta extends UnitMeta {
 
         JSONObject payload = Packet.extractDataPayload(response);
         if (this.action == AIGCAction.SpeakerDiarization) {
-            VoiceDiarization result = new VoiceDiarization(payload.getJSONObject("result"));
+            final VoiceDiarization result = new VoiceDiarization(payload.getJSONObject("result"));
             // 补齐参数
             result.contactId = this.authToken.getContactId();
             result.setDomain(this.authToken.getDomain());
@@ -103,14 +109,17 @@ public class AudioUnitMeta extends UnitMeta {
             while (iter.hasNext()) {
                 VoiceTrack track = iter.next();
                 List<String> words = track.recognition.words;
-                boolean japanese = false;
-                for (String word : words) {
+                Iterator<String> wordIter = words.iterator();
+                while (wordIter.hasNext()) {
+                    String word = wordIter.next();
                     if (TextUtils.isJapanese(word)) {
-                        japanese = true;
-                        break;
+                        track.recognition.text = track.recognition.text.replace(word, "");
+                        wordIter.remove();
                     }
                 }
-                if (japanese) {
+
+                if (track.recognition.text.length() == 1 && TextUtils.containsChinesePunctuation(track.recognition.text)) {
+                    // 只有一个字符，且是标点符号，则删除
                     iter.remove();
                 }
             }
@@ -163,6 +172,9 @@ public class AudioUnitMeta extends UnitMeta {
 
                     // 设置指标
                     result.indicator = voiceIndicator;
+
+                    // 优化标签名称
+                    result.enhanceSpeakerDisplayNames(Language.Chinese);
 
                     if (null != voiceDiarizationListener) {
                         voiceDiarizationListener.onCompleted(file, result);

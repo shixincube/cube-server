@@ -6,6 +6,7 @@
 
 package cube.common.entity;
 
+import cube.common.Language;
 import cube.util.ConfigUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -13,11 +14,16 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class VoiceDiarization extends Entity {
 
     public final static String[] SPEAKER_NAMES = new String[] {
-            "张三", "李四", "王五", "赵六", "孙七", "周八", "吴九", "郑十"
+            "张三", "李四", "王五", "赵六", "孙七", "周八", "吴九", "郑十", "徐大", "田二"
+    };
+
+    public final static String[] SPEAKER_DISPLAY_NAMES = new String[] {
+            "说话人1", "说话人2", "说话人3", "说话人4", "说话人5", "说话人6", "说话人7", "说话人8", "说话人9", "说话人10"
     };
 
     public final static String LABEL_CUSTOMER = "customer";
@@ -183,6 +189,24 @@ public class VoiceDiarization extends Entity {
                 else if (track.label.equals(otherLabel)) {
                     track.label = "customer";
                 }
+            }
+        }
+    }
+
+    /**
+     * 优化说话者标签显示。
+     *
+     * @param language
+     */
+    public void enhanceSpeakerDisplayNames(Language language) {
+        Map<String, String> usedNameMap = new HashMap<>();
+        for (int i = 0; i < this.tracks.size(); ++i) {
+            VoiceTrack track = this.tracks.get(i);
+            if (usedNameMap.containsKey(track.display)) {
+                track.display = usedNameMap.get(track.display);
+            }
+            else {
+                usedNameMap.put(track.display, SPEAKER_DISPLAY_NAMES[usedNameMap.size()]);
             }
         }
     }

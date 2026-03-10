@@ -557,6 +557,9 @@ public class AIGCStorage implements Storagable {
             new StorageField("label", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("display", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("segment", LiteralBase.STRING, new Constraint[] {
                     Constraint.NOT_NULL
             }),
@@ -2551,6 +2554,7 @@ public class AIGCStorage implements Storagable {
                     new StorageField("vid", id),
                     new StorageField("track", track.track),
                     new StorageField("label", track.label),
+                    new StorageField("display", track.display),
                     new StorageField("segment", track.segment.toJSON().toString()),
                     new StorageField("emotion", track.emotion.toJSON().toString()),
                     new StorageField("recognition", track.recognition.toJSON().toString()),
@@ -2593,6 +2597,7 @@ public class AIGCStorage implements Storagable {
         for (StorageField[] trackFields : trackResult) {
             map = StorageFields.get(trackFields);
             VoiceTrack track = new VoiceTrack(map.get("track").getString(), map.get("label").getString(),
+                    map.get("display").getString(),
                     new VoiceSegment(new JSONObject(map.get("segment").getString())),
                     new SpeechEmotion(new JSONObject(map.get("emotion").getString())),
                     new SpeechRecognitionInfo(new JSONObject(map.get("recognition").getString())));
@@ -2627,6 +2632,7 @@ public class AIGCStorage implements Storagable {
             for (StorageField[] trackFields : trackResult) {
                map = StorageFields.get(trackFields);
                VoiceTrack track = new VoiceTrack(map.get("track").getString(), map.get("label").getString(),
+                       map.get("display").getString(),
                        new VoiceSegment(new JSONObject(map.get("segment").getString())),
                        new SpeechEmotion(new JSONObject(map.get("emotion").getString())),
                        new SpeechRecognitionInfo(new JSONObject(map.get("recognition").getString())));

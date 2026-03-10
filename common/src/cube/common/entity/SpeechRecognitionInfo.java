@@ -21,7 +21,7 @@ public class SpeechRecognitionInfo implements JSONable {
 
     public final long elapsed;
 
-    public final String text;
+    public String text;
 
     public final List<String> words;
 
