@@ -2984,9 +2984,23 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     public VoiceDiarization deleteVoiceDiarization(AuthToken authToken, String fileCode) {
         VoiceDiarization voiceDiarization = this.storage.readVoiceDiarization(fileCode);
+        if (null == voiceDiarization) {
+            Logger.w(this.getClass(), "#deleteVoiceDiarization - Can NOT find the voice diarization: " + fileCode);
+            return null;
+        }
         voiceDiarization.file = this.getFile(authToken.getDomain(), voiceDiarization.fileCode);
         this.storage.deleteVoiceDiarization(fileCode);
         return voiceDiarization;
+    }
+
+    /**
+     *
+     * @param authToken
+     * @param voiceDiarizationId
+     * @return
+     */
+    public Summary generateVoiceSummary(AuthToken authToken, long voiceDiarizationId) {
+        return null;
     }
 
     /**

@@ -33,7 +33,7 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
         double totalDuration = 0;
 
         for (VoiceTrack track : voiceDiarization.tracks) {
-            if (track.segment.duration < 1.0) {
+            if (track.segment.duration < 0.5) {
                 // 跳过时长较短的分段
                 continue;
             }
