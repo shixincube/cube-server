@@ -60,6 +60,8 @@ public final class TextUtils {
 
     private final static Pattern sChinesePunctuation = Pattern.compile("[\\\\！|\\\\，|\\\\。|\\\\（|\\\\）|\\\\《|\\\\》|\\\\“|\\\\”|\\\\？|\\\\：|\\\\；|\\\\【|\\\\】]");
 
+    private final static Pattern sEnglishPunctuation = Pattern.compile("[\\\\!|\\\\,|\\\\.|\\\\(|\\\\)|\\\\<|\\\\>|\\\\?|\\\\:|\\\\;]");
+
     private final static Pattern sEnglish = Pattern.compile("^[a-zA-Z]*$");
 
     /**
@@ -375,6 +377,25 @@ public final class TextUtils {
         for (int i = 0; i < text.length(); ++i) {
             String s = text.substring(i, i + 1);
             Matcher m = sChinesePunctuation.matcher(s);
+            if (m.matches()) {
+                result = true;
+                break;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 判断指定文本中是否包含英文标点符号。
+     *
+     * @param text
+     * @return
+     */
+    public static boolean containsEnglishPunctuation(String text) {
+        boolean result = false;
+        for (int i = 0; i < text.length(); ++i) {
+            String s = text.substring(i, i + 1);
+            Matcher m = sEnglishPunctuation.matcher(s);
             if (m.matches()) {
                 result = true;
                 break;

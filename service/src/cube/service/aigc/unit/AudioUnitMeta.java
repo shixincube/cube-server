@@ -272,9 +272,15 @@ public class AudioUnitMeta extends UnitMeta {
         return buf.toString();
     }
 
+    /**
+     * 解析可用的对话索引。
+     *
+     * @param length
+     * @return
+     */
     private List<Integer> parseTrackIndexes(int length) {
         List<Integer> result = new ArrayList<>();
-        if (length <= 12) {
+        if (length <= 20) {
             for (int i = 0; i < length; ++i) {
                 result.add(i);
             }

@@ -19,9 +19,9 @@ public class SpeakerIndicator implements JSONable {
 
     public String label;
 
-    public double totalDuration;
+    public double totalDuration = 0;
 
-    public int totalWords;
+    public int totalWords = 0;
 
     /**
      * 说话比例。

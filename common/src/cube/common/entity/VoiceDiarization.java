@@ -206,7 +206,10 @@ public class VoiceDiarization extends Entity {
                 track.display = usedNameMap.get(track.display);
             }
             else {
-                usedNameMap.put(track.display, SPEAKER_DISPLAY_NAMES[usedNameMap.size()]);
+                String oldDisplay = track.display;
+                String newDisplay = SPEAKER_DISPLAY_NAMES[usedNameMap.size()];
+                usedNameMap.put(oldDisplay, newDisplay);
+                track.display = newDisplay;
             }
         }
     }

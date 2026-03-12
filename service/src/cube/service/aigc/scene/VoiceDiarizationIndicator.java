@@ -15,6 +15,8 @@ import cube.util.FloatUtils;
 import cube.util.TextUtils;
 import org.json.JSONObject;
 
+import java.util.List;
+
 public class VoiceDiarizationIndicator extends VoiceIndicator {
 
     public VoiceDiarizationIndicator(long id) {
@@ -32,8 +34,10 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
 
         double totalDuration = 0;
 
+//        System.out.println("XJW voiceDiarization.duration: " + voiceDiarization.duration);
+
         for (VoiceTrack track : voiceDiarization.tracks) {
-            if (track.segment.duration < 0.5) {
+            if (track.segment.duration < 0.2) {
                 // 跳过时长较短的分段
                 continue;
             }
@@ -43,6 +47,10 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
                 speakerIndicator = new SpeakerIndicator(track.label, track.label);
                 this.speakerIndicators.put(track.label, speakerIndicator);
             }
+
+            // 重新分词
+            List<String> words = service.segmentation(track.recognition.text);
+            track.recognition.resetWords(words);
 
             // 总时长
             speakerIndicator.totalDuration += track.segment.duration;
@@ -62,7 +70,14 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
                     sentiment);
             // 内容描述情绪正负面指标
             speakerIndicator.addSegmentIndicator(segmentIndicator);
+
+//            System.out.println("XJW track " + track.label + " segment duration: " + track.segment.duration +
+//                    " | segment words: " + track.recognition.words.size());
+//            System.out.println("XJW Indicator " + track.label + " total duration: " + speakerIndicator.totalDuration +
+//                    " | total words: " + speakerIndicator.totalWords);
         }
+
+//        System.out.println("XJW totalDuration: " + totalDuration);
 
         // 沉默时长
         this.silenceDuration = voiceDiarization.duration - totalDuration;
@@ -73,12 +88,12 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
 
         for (SpeakerIndicator speakerIndicator : this.speakerIndicators.values()) {
             // 时长占比
-            speakerIndicator.durationRatio = (int) Math.round(speakerIndicator.totalDuration / voiceDiarization.duration);
+            speakerIndicator.durationRatio = (int) Math.round(speakerIndicator.totalDuration / voiceDiarization.duration * 100);
 
             // 节奏
             speakerIndicator.rhythm = (int) Math.round(speakerIndicator.totalWords / (speakerIndicator.totalDuration / 60.0));
-            if (speakerIndicator.rhythm > 220) {
-                speakerIndicator.rhythm = 220;
+            if (speakerIndicator.rhythm > 300) {
+                speakerIndicator.rhythm = 300;
             }
 
             // 情绪比例

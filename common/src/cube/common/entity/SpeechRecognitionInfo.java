@@ -8,6 +8,7 @@ package cube.common.entity;
 
 import cube.common.JSONable;
 import cube.util.JSONUtils;
+import cube.util.TextUtils;
 import org.json.JSONObject;
 
 import java.util.List;
@@ -29,6 +30,8 @@ public class SpeechRecognitionInfo implements JSONable {
 
     public final double durationInSeconds;
 
+    private int numWords;
+
     public SpeechRecognitionInfo(JSONObject json) {
         this.file = json.has("file") ? new FileLabel(json.getJSONObject("file")) : null;
         this.elapsed = json.getLong("elapsed");
@@ -45,6 +48,17 @@ public class SpeechRecognitionInfo implements JSONable {
         this.words = info.words;
         this.lang = info.lang;
         this.durationInSeconds = info.durationInSeconds;
+    }
+
+    public void resetWords(List<String> words) {
+        this.words.clear();
+        for (String word : words) {
+            if (TextUtils.containsChinesePunctuation(word) || TextUtils.containsEnglishPunctuation(word)) {
+                continue;
+            }
+
+            this.words.add(word);
+        }
     }
 
     @Override
