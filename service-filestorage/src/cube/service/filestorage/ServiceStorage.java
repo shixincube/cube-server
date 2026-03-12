@@ -455,7 +455,9 @@ public class ServiceStorage implements Storagable {
                 storage.executeUpdate(labelTable, new StorageField[] {
                         new StorageField("file_name", LiteralBase.STRING, fileLabel.getFileName()),
                         new StorageField("last_modified", LiteralBase.LONG, fileLabel.getLastModified()),
-                        new StorageField("expiry_time", LiteralBase.LONG, fileLabel.getExpiryTime())
+                        new StorageField("expiry_time", LiteralBase.LONG, fileLabel.getExpiryTime()),
+                        new StorageField("context", LiteralBase.STRING,
+                                (null != fileLabel.getContext()) ? fileLabel.getContext().toString() : null),
                 }, new Conditional[] {
                         Conditional.createEqualTo(new StorageField("file_code", LiteralBase.STRING, fileLabel.getFileCode()))
                 });

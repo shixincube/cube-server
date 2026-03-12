@@ -99,6 +99,11 @@ public enum FileStorageAction {
     DeleteFile("deleteFile"),
 
     /**
+     * 修改文件信息。
+     */
+    ModifyFile("modifyFile"),
+
+    /**
      * 罗列回收站里的废弃数据。
      */
     ListTrash("listTrash"),

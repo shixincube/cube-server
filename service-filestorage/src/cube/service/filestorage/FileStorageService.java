@@ -917,12 +917,41 @@ public class FileStorageService extends AbstractModule {
                         operatorId);
                 FileStorageHook hook = pluginSystem.getDestroyFileHook();
                 for (FileLabel fileLabel : fileLabelList) {
+                    // 从内存删除
+                    cacheFileLabelMap.remove(fileLabel.getFileCode());
+
                     hook.apply(new FileStoragePluginContext(fileLabel, contact, contact.getDevice()));
                 }
             }
         });
 
         return fileLabelList;
+    }
+
+    /**
+     * 修改文件上下文。
+     *
+     * @param domainName
+     * @param operatorId
+     * @param fileCode
+     * @param context
+     * @return
+     */
+    public FileLabel modifyFileContext(String domainName, long operatorId, String fileCode, JSONObject context) {
+        FileLabel fileLabel = this.serviceStorage.readFileLabel(domainName, fileCode);
+        if (null == fileLabel) {
+            Logger.w(this.getClass(), "#modifyFileContext - Can NOT find file: " + fileCode);
+            return null;
+        }
+
+        // 合并上下文
+        fileLabel.mergeContext(context);
+        // 更新
+        this.serviceStorage.updateFileLabel(fileLabel);
+        // 更新内存数据
+        this.cacheFileLabelMap.put(fileCode, fileLabel);
+
+        return fileLabel;
     }
 
     /**

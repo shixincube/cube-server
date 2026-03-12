@@ -470,6 +470,22 @@ public class FileLabel extends Entity {
     }
 
     /**
+     * 合并上下文。
+     *
+     * @param context
+     */
+    public void mergeContext(JSONObject context) {
+        if (null != this.context) {
+            for (String key : context.keySet()) {
+                this.context.put(key, context.get(key));
+            }
+        }
+        else {
+            this.context = context;
+        }
+    }
+
+    /**
      * 设置文件。
      *
      * @param file 文件实例。

@@ -54,7 +54,7 @@ public class DeleteFileTask extends ServiceTask {
         if (null == authToken) {
             // 发生错误
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.InvalidDomain.code, packet.data));
+                    this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
             markResponseTime();
             return;
         }
@@ -175,7 +175,7 @@ public class DeleteFileTask extends ServiceTask {
         else {
             // 发生错误
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(action, packet, FileStorageStateCode.Unauthorized.code, packet.data));
+                    this.makeResponse(action, packet, FileStorageStateCode.InvalidParameter.code, packet.data));
             markResponseTime();
         }
     }

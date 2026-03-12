@@ -74,6 +74,8 @@ public class FileOperationHandler extends CrossDomainHandler {
                 this.listFiles(data, request, response);
             } else if (pathInfo.startsWith("/delete")) {
                 this.deleteFile(data, request, response);
+            } else if (pathInfo.startsWith("/modify")) {
+                this.modifyFile(data, request, response);
             } else {
                 this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
@@ -375,5 +377,66 @@ public class FileOperationHandler extends CrossDomainHandler {
             this.respondOk(response, responsePacket.toJSON());
         }
         this.complete();
+    }
+
+    private void modifyFile(JSONObject data, HttpServletRequest request, HttpServletResponse response) {
+        String token = data.has("token") ? data.getString("token") : null;
+        String fileCode = data.has("fileCode") ? data.getString("fileCode") : null;
+        JSONObject context = data.has("context") ? data.getJSONObject("context") : null;
+
+        String version = request.getHeader(HEADER_X_BAIZE_API_VERSION);
+        if (null == version) {
+            version = "v0";
+        }
+
+        if (null == token) {
+            token = request.getHeader(HEADER_X_BAIZE_API_TOKEN);
+            if (null == token) {
+                response.setStatus(HttpStatus.FORBIDDEN_403);
+                this.complete();
+                return;
+            }
+        }
+
+        if (null != fileCode && null != context) {
+            JSONObject payload = new JSONObject();
+            payload.put("fileCode", fileCode);
+            payload.put("context", context);
+            Packet packet = new Packet(FileStorageAction.ModifyFile.name, payload);
+            ActionDialect packetDialect = packet.toDialect();
+            packetDialect.addParam("token", token);
+
+            ActionDialect responseDialect = this.performer.syncTransmit(FileStorageCellet.NAME, packetDialect);
+            if (null == responseDialect) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                this.complete();
+                return;
+            }
+
+            Packet responsePacket = new Packet(responseDialect);
+            int stateCode = Packet.extractCode(responsePacket);
+            if (stateCode != FileStorageStateCode.Ok.code) {
+                Logger.w(this.getClass(), "#modifyFile - Service state code : " + stateCode);
+                this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
+                this.complete();
+                return;
+            }
+
+            JSONObject responseData = Packet.extractDataPayload(responsePacket);
+            FileLabels.reviseFileLabel(responseData, token, this.performer.getExternalHttpEndpoint(),
+                    this.performer.getExternalHttpsEndpoint());
+            if (version.equalsIgnoreCase("v1")) {
+                this.respondOk(response, responseData);
+            }
+            else {
+                responsePacket = new Packet(FileStorageAction.ModifyFile.name, responseData);
+                this.respondOk(response, responsePacket.toJSON());
+            }
+            this.complete();
+        }
+        else {
+            this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+            this.complete();
+        }
     }
 }
