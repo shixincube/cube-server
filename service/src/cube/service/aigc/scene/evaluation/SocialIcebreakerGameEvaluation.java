@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.aigc.scene;
+package cube.service.aigc.scene.evaluation;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
@@ -15,6 +15,7 @@ import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Person;
 import cube.aigc.psychology.material.Thing;
 import cube.aigc.psychology.material.Tree;
+import cube.service.aigc.scene.ContentTools;
 import cube.service.tokenizer.Tokenizer;
 import cube.vision.Point;
 

@@ -9,7 +9,7 @@ import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.common.entity.FileLabel;
-import cube.service.aigc.scene.HTPEvaluation;
+import cube.service.aigc.scene.evaluation.HTPEvaluation;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentProvider;
 import org.eclipse.jetty.client.api.ContentResponse;

@@ -8,7 +8,7 @@ import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.HexagonDimension;
 import cube.aigc.psychology.composition.HexagonDimensionScore;
 import cube.common.Language;
-import cube.service.aigc.scene.HTPEvaluation;
+import cube.service.aigc.scene.evaluation.HTPEvaluation;
 import cube.util.FileUtils;
 import cube.util.FloatUtils;
 import org.json.JSONArray;

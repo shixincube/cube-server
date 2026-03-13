@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.aigc.scene;
+package cube.service.aigc.scene.evaluation;
 
 import cell.util.Utils;
 import cell.util.log.Logger;

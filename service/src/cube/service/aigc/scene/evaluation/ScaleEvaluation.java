@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.aigc.scene;
+package cube.service.aigc.scene.evaluation;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.EvaluationReport;
