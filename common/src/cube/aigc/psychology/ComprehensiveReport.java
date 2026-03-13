@@ -6,13 +6,33 @@
 
 package cube.aigc.psychology;
 
-public class ComprehensiveReport extends Report {
+import cube.aigc.psychology.composition.Comprehensive;
+import cube.common.JSONable;
+import cube.common.state.AIGCStateCode;
+import org.json.JSONObject;
 
-    private Theme theme;
+import java.util.List;
 
-    
+public class ComprehensiveReport implements JSONable {
 
-    public ComprehensiveReport(long contactId, Attribute attribute) {
-        super(contactId, attribute);
+    private final Theme theme;
+
+    private final List<Comprehensive> comprehensives;
+
+    private AIGCStateCode state = AIGCStateCode.Processing;
+
+    public ComprehensiveReport(Theme theme, List<Comprehensive> comprehensives) {
+        this.theme = theme;
+        this.comprehensives = comprehensives;
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        return null;
+    }
+
+    @Override
+    public JSONObject toCompactJSON() {
+        return null;
     }
 }

@@ -6,23 +6,34 @@
 
 package cube.service.aigc.scene;
 
-import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.ComprehensiveReport;
 import cube.aigc.psychology.Theme;
-import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.composition.Comprehensive;
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.FileLabel;
-import cube.common.state.AIGCStateCode;
+import cube.service.aigc.AIGCService;
 
 import java.util.List;
 
 public class ComprehensiveReportWorker implements Runnable {
 
-    private AIGCStateCode state = AIGCStateCode.Processing;
+    private AIGCService service;
 
-    public ComprehensiveReportWorker(AIGCChannel channel, Theme theme, List<Attribute> attributes,
-                                     List<FileLabel> fileLabels, List<Scale> scales,
-                                     ComprehensiveReportListener listener) {
+    private AIGCChannel channel;
 
+    private ComprehensiveReportListener listener;
+
+    private ComprehensiveReport report;
+
+    public ComprehensiveReportWorker(AIGCService service, AIGCChannel channel, Theme theme,
+                                     List<Comprehensive> comprehensives, ComprehensiveReportListener listener) {
+        this.service = service;
+        this.channel = channel;
+        this.listener = listener;
+        this.report = new ComprehensiveReport(theme, comprehensives);
+    }
+
+    public ComprehensiveReport getReport() {
+        return this.report;
     }
 
     @Override

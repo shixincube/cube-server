@@ -41,6 +41,15 @@ public enum Theme {
         this.instruction = instruction;
     }
 
+    public boolean isComprehensive() {
+        if (this.code.equalsIgnoreCase(SubconsciousRelationshipBetweenACouple.code)) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
     public static Theme parse(String nameOrCode) {
         for (Theme th : Theme.values()) {
             if (th.name.equalsIgnoreCase(nameOrCode) || th.code.equalsIgnoreCase(nameOrCode)) {

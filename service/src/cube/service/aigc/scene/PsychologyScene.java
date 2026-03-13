@@ -85,6 +85,8 @@ public class PsychologyScene {
      */
     private Queue<ComprehensiveReportWorker> comprehensiveReportWorkerQueue;
 
+    private AtomicInteger numRunningComprehensiveTasks;
+
     private PsychologyScene() {
         this.paintingReportTaskQueue = new ConcurrentLinkedQueue<>();
         this.numRunningPaintingTasks = new AtomicInteger(0);
@@ -93,6 +95,7 @@ public class PsychologyScene {
         this.reportMap = new ConcurrentHashMap<>();
         this.paintingMap = new ConcurrentHashMap<>();
         this.comprehensiveReportWorkerQueue = new ConcurrentLinkedQueue<>();
+        this.numRunningComprehensiveTasks = new AtomicInteger(0);
     }
 
     public static PsychologyScene getInstance() {
@@ -342,23 +345,6 @@ public class PsychologyScene {
             report.setRemark(remark);
             return report;
         }
-        return null;
-    }
-
-    /**
-     *
-     * @param channel
-     * @param theme
-     * @param attributes
-     * @param fileLabels
-     * @param scales
-     * @param listener
-     * @return
-     */
-    public synchronized ComprehensiveReport generateReport(AIGCChannel channel, Theme theme, List<Attribute> attributes,
-                                                           List<FileLabel> fileLabels, List<Scale> scales,
-                                                           ComprehensiveReportListener listener) {
-
         return null;
     }
 
@@ -996,6 +982,70 @@ public class PsychologyScene {
 
     public List<ScaleReport> getScaleReports(long contactId, int state, boolean descending) {
         return this.storage.readScaleReports(contactId, state, descending);
+    }
+
+    /**
+     *
+     * @param channel
+     * @param theme
+     * @param comprehensives
+     * @param listener
+     * @return
+     */
+    public synchronized ComprehensiveReport generateReport(AIGCChannel channel, Theme theme,
+                                                           List<Comprehensive> comprehensives,
+                                                           ComprehensiveReportListener listener) {
+        if (null == channel) {
+            Logger.e(this.getClass(), "#generateReport - Channel is null");
+            return null;
+        }
+
+        if (!theme.isComprehensive()) {
+            Logger.e(this.getClass(), "#generateReport - Unable to match the theme: " + theme.name);
+            return null;
+        }
+
+        if (this.comprehensiveReportWorkerQueue.size() >= this.maxQueueLength) {
+            Logger.w(this.getClass(), "#generateReport - The queue length has reached the maximum limit: "
+                    + this.comprehensiveReportWorkerQueue.size() + "/" + this.maxQueueLength);
+            return null;
+        }
+
+        ComprehensiveReportWorker worker = new ComprehensiveReportWorker(this.service, channel, theme,
+                comprehensives, listener);
+        // 添加到队列
+        this.comprehensiveReportWorkerQueue.offer(worker);
+
+        // 并发数
+        int concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_NEXT_UNIT);
+
+        if (this.numRunningComprehensiveTasks.get() >= concurrency) {
+            // 超过最大并发队列长度
+            return worker.getReport();
+        }
+
+        this.numRunningComprehensiveTasks.incrementAndGet();
+
+        (new Thread() {
+            @Override
+            public void run() {
+                try {
+                    ComprehensiveReportWorker reportWorker = comprehensiveReportWorkerQueue.poll();
+                    while (null != reportWorker) {
+                        // 工作器执行任务
+                        reportWorker.run();
+                        // 下一个
+                        reportWorker = comprehensiveReportWorkerQueue.poll();
+                    }
+                } catch (Exception e) {
+                    Logger.e(PsychologyScene.class, "#generateReport", e);
+                } finally {
+                    numRunningComprehensiveTasks.decrementAndGet();
+                }
+            }
+        }).start();
+
+        return worker.getReport();
     }
 
     public String buildPrompt(List<ConversationRelation> relations, String query) {
