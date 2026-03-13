@@ -60,13 +60,11 @@ public class PsychologyScene {
 
     private long lastConfigModified;
 
-    private Queue<PaintingReportTask> taskQueue;
-
     private int maxQueueLength = 30;
 
-    private Queue<PaintingReportTask> runningTaskQueue;
+    private Queue<PaintingReportTask> paintingReportTaskQueue;
 
-    private AtomicInteger numRunningTasks;
+    private AtomicInteger numRunningPaintingTasks;
 
     private Queue<ScaleReportTask> scaleTaskQueue;
 
@@ -82,14 +80,19 @@ public class PsychologyScene {
      */
     private Map<Long, Painting> paintingMap;
 
+    /**
+     * 综合报告工作器。
+     */
+    private Queue<ComprehensiveReportWorker> comprehensiveReportWorkerQueue;
+
     private PsychologyScene() {
-        this.taskQueue = new ConcurrentLinkedQueue<>();
-        this.runningTaskQueue = new ConcurrentLinkedQueue<>();
-        this.numRunningTasks = new AtomicInteger(0);
+        this.paintingReportTaskQueue = new ConcurrentLinkedQueue<>();
+        this.numRunningPaintingTasks = new AtomicInteger(0);
         this.scaleTaskQueue = new ConcurrentLinkedQueue<>();
         this.numRunningScaleTasks = new AtomicInteger(0);
         this.reportMap = new ConcurrentHashMap<>();
         this.paintingMap = new ConcurrentHashMap<>();
+        this.comprehensiveReportWorkerQueue = new ConcurrentLinkedQueue<>();
     }
 
     public static PsychologyScene getInstance() {
@@ -138,7 +141,7 @@ public class PsychologyScene {
             Logger.w(this.getClass(), "#start", e);
         }
 
-        this.numRunningTasks.set(0);
+        this.numRunningPaintingTasks.set(0);
     }
 
     public void stop() {
@@ -148,7 +151,7 @@ public class PsychologyScene {
 
         // 阻止新任务进入
         this.maxQueueLength = 0;
-        this.numRunningTasks.set(Integer.MAX_VALUE);
+        this.numRunningPaintingTasks.set(Integer.MAX_VALUE);
     }
 
     private void loadConfig() {
@@ -257,23 +260,23 @@ public class PsychologyScene {
         return report;
     }
 
-    public int numPsychologyReports(long contactId) {
+    public int numPaintingReports(long contactId) {
         return this.storage.countPsychologyReports(contactId);
     }
 
-    public int numPsychologyReports(long contactId, int state) {
+    public int numPaintingReports(long contactId, int state) {
         return this.storage.countPsychologyReports(contactId, state);
     }
 
-    public int numPsychologyReports(long contactId, int state, boolean permissible) {
+    public int numPaintingReports(long contactId, int state, boolean permissible) {
         return this.storage.countPsychologyReports(contactId, state, permissible);
     }
 
-    public int numPsychologyReports(long contactId, int state, boolean permissible, long starTime, long endTime) {
+    public int numPaintingReports(long contactId, int state, boolean permissible, long starTime, long endTime) {
         return this.storage.countPsychologyReports(contactId, state, permissible, starTime, endTime);
     }
 
-    public List<PaintingReport> getPsychologyReports(long contactId, int state, int limit) {
+    public List<PaintingReport> getPaintingReports(long contactId, int state, int limit) {
         List<PaintingReport> list = this.storage.readPsychologyReportsByContact(contactId, state, limit);
         Iterator<PaintingReport> iter = list.iterator();
         while (iter.hasNext()) {
@@ -284,14 +287,14 @@ public class PsychologyScene {
                 report.painting = this.storage.readPainting(report.sn);
             }
             else {
-                Logger.w(this.getClass(), "#getPsychologyReports - NOT find file: " + report.sn);
+                Logger.w(this.getClass(), "#getPaintingReports - NOT find file: " + report.sn);
                 iter.remove();
             }
         }
         return list;
     }
 
-    public List<PaintingReport> getPsychologyReports(long contactId, int pageIndex, int pageSize, boolean descending) {
+    public List<PaintingReport> getPaintingReports(long contactId, int pageIndex, int pageSize, boolean descending) {
         List<PaintingReport> list = this.storage.readPsychologyReports(contactId, pageIndex, pageSize, descending);
         Iterator<PaintingReport> iter = list.iterator();
         while (iter.hasNext()) {
@@ -308,7 +311,7 @@ public class PsychologyScene {
         return list;
     }
 
-    public List<PaintingReport> getPsychologyReportsWithState(long contactId, int pageIndex, int pageSize,
+    public List<PaintingReport> getPaintingReportsWithState(long contactId, int pageIndex, int pageSize,
                                                               boolean descending, int state) {
         List<PaintingReport> list = this.storage.readPsychologyReports(contactId, pageIndex, pageSize, descending, state);
         Iterator<PaintingReport> iter = list.iterator();
@@ -333,7 +336,7 @@ public class PsychologyScene {
      * @param remark
      * @return
      */
-    public PaintingReport modifyPsychologyReportRemark(long reportSn, String remark) {
+    public PaintingReport modifyPaintingReportRemark(long reportSn, String remark) {
         if (this.storage.updatePsychologyReportRemark(reportSn, remark)) {
             PaintingReport report = this.storage.readPsychologyReport(reportSn);
             report.setRemark(remark);
@@ -342,9 +345,20 @@ public class PsychologyScene {
         return null;
     }
 
-    public synchronized IntegratedReport generateReport(AIGCChannel channel, Theme theme, List<Attribute> attributes,
-                                                        List<FileLabel> fileLabels, List<Scale> scales,
-                                                        IntegratedReportListener listener) {
+    /**
+     *
+     * @param channel
+     * @param theme
+     * @param attributes
+     * @param fileLabels
+     * @param scales
+     * @param listener
+     * @return
+     */
+    public synchronized ComprehensiveReport generateReport(AIGCChannel channel, Theme theme, List<Attribute> attributes,
+                                                           List<FileLabel> fileLabels, List<Scale> scales,
+                                                           ComprehensiveReportListener listener) {
+
         return null;
     }
 
@@ -362,25 +376,25 @@ public class PsychologyScene {
      * @param listener
      * @return
      */
-    public synchronized PaintingReport generatePsychologyReport(AIGCChannel channel, Attribute attribute,
+    public synchronized PaintingReport generatePaintingReport(AIGCChannel channel, Attribute attribute,
                                                                 FileLabel fileLabel, Theme theme,
                                                                 int maxIndicators, boolean adjust,
                                                                 int retention, String remark,
                                                                 PaintingReportListener listener) {
         if (null == channel) {
-            Logger.e(this.getClass(), "#generatePsychologyReport - Channel is null");
+            Logger.e(this.getClass(), "#generatePaintingReport - Channel is null");
             return null;
         }
 
-        if (this.taskQueue.size() >= this.maxQueueLength) {
-            Logger.w(this.getClass(), "#generatePsychologyReport - The queue length has reached the maximum limit: "
-                    + this.taskQueue.size() + "/" + this.maxQueueLength);
+        if (this.paintingReportTaskQueue.size() >= this.maxQueueLength) {
+            Logger.w(this.getClass(), "#generatePaintingReport - The queue length has reached the maximum limit: "
+                    + this.paintingReportTaskQueue.size() + "/" + this.maxQueueLength);
             return null;
         }
 
         // 判断属性限制
         if (attribute.age < Attribute.MIN_AGE || attribute.age > Attribute.MAX_AGE) {
-            Logger.w(this.getClass(), "#generatePsychologyReport - Age param overflow: " +
+            Logger.w(this.getClass(), "#generatePaintingReport - Age param overflow: " +
                     attribute.age);
             return null;
         }
@@ -390,16 +404,17 @@ public class PsychologyScene {
         if (0 == concurrency) {
             concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_X_UNIT);
             if (0 == concurrency) {
-                Logger.e(this.getClass(), "#generatePsychologyReport - No baize unit");
+                Logger.e(this.getClass(), "#generatePaintingReport - No baize unit");
                 return null;
             }
         }
         if (concurrency > 2) {
+            // 留1个缓存节点
             concurrency -= 1;
         }
 
         if (!this.service.hasUnit(ModelConfig.PSYCHOLOGY_UNIT)) {
-            Logger.e(this.getClass(), "#generatePsychologyReport - No psychology unit");
+            Logger.e(this.getClass(), "#generatePaintingReport - No psychology unit");
             return null;
         }
 
@@ -412,33 +427,33 @@ public class PsychologyScene {
 
         PaintingReportTask task = new PaintingReportTask(channel, attribute, fileLabel, theme, maxIndicators, adjust, listener, report);
 
-        this.taskQueue.offer(task);
+        this.paintingReportTaskQueue.offer(task);
 
-        Logger.d(this.getClass(), "#generatePsychologyReport - Number of concurrency (C/Q/R): " + concurrency
-                + "/" + this.taskQueue.size() + "/" + this.numRunningTasks.get());
+        Logger.d(this.getClass(), "#generatePaintingReport - Number of concurrency (C/Q/R): " + concurrency
+                + "/" + this.paintingReportTaskQueue.size() + "/" + this.numRunningPaintingTasks.get());
 
         this.reportMap.put(report.sn, report);
 
         // 判断并发数量
-        if (this.numRunningTasks.get() >= concurrency) {
+        if (this.numRunningPaintingTasks.get() >= concurrency) {
             // 并发数量大于等于单元数量，在队列中等待
             return report;
         }
 
-        this.numRunningTasks.incrementAndGet();
+        this.numRunningPaintingTasks.incrementAndGet();
 
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 Logger.i(PsychologyScene.class, "Generating thread START ("
-                        + numRunningTasks.get() + "/" + taskQueue.size() + ") - "
+                        + numRunningPaintingTasks.get() + "/" + paintingReportTaskQueue.size() + ") - "
                         + Thread.currentThread().getName()
                         + " - " + Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
 
                 try {
-                    while (!taskQueue.isEmpty()) {
+                    while (!paintingReportTaskQueue.isEmpty()) {
                         // 新任务
-                        PaintingReportTask paintingReportTask = taskQueue.poll();
+                        PaintingReportTask paintingReportTask = paintingReportTaskQueue.poll();
                         if (null == paintingReportTask) {
                             // 队列空，结束
                             break;
@@ -446,8 +461,6 @@ public class PsychologyScene {
 
                         long start = System.currentTimeMillis();
                         Logger.i(getClass(), "Starts generating report: " + paintingReportTask.report.sn);
-
-                        runningTaskQueue.offer(paintingReportTask);
 
                         try {
                             // 设置为正在操作
@@ -475,7 +488,7 @@ public class PsychologyScene {
                             Painting painting = processPainting(unit, paintingReportTask.fileLabel, theme, paintingReportTask.adjust, false);
                             if (null == painting) {
                                 // 预测绘图失败
-                                Logger.w(PsychologyScene.class, "#generatePsychologyReport - onPaintingPredictFailed: " +
+                                Logger.w(PsychologyScene.class, "#generatePaintingReport - onPaintingPredictFailed: " +
                                         paintingReportTask.fileLabel.getFileCode());
                                 // 记录故障
                                 unit.markFailure(AIGCStateCode.FileError.code, System.currentTimeMillis(),
@@ -521,7 +534,7 @@ public class PsychologyScene {
                             evaluationWorker = evaluationWorker.make(paintingReportTask.channel, paintingReportTask.theme, paintingReportTask.maxIndicators);
                             if (null == evaluationWorker) {
                                 // 推理生成报告失败
-                                Logger.w(PsychologyScene.class, "#generatePsychologyReport - onReportEvaluateFailed (IllegalOperation): " +
+                                Logger.w(PsychologyScene.class, "#generatePaintingReport - onReportEvaluateFailed (IllegalOperation): " +
                                         paintingReportTask.fileLabel.getFileCode());
                                 paintingReportTask.report.setState(AIGCStateCode.IllegalOperation);
                                 paintingReportTask.report.setFinished(true);
@@ -534,7 +547,7 @@ public class PsychologyScene {
 
                             if (evaluationWorker.isUnknown()) {
                                 // 未能处理的图片
-                                Logger.w(PsychologyScene.class, "#generatePsychologyReport - onReportEvaluateCompleted (InvalidData): " +
+                                Logger.w(PsychologyScene.class, "#generatePaintingReport - onReportEvaluateCompleted (InvalidData): " +
                                         paintingReportTask.fileLabel.getFileCode());
                                 paintingReportTask.report.setState(AIGCStateCode.InvalidData);
                                 paintingReportTask.report.setFinished(true);
@@ -588,8 +601,6 @@ public class PsychologyScene {
                         } catch (Exception e) {
                             Logger.e(PsychologyScene.class, "#run", e);
                         } finally {
-                            // 从正在执行队列移除
-                            runningTaskQueue.remove(paintingReportTask);
                             // 频道状态恢复
                             paintingReportTask.channel.setProcessing(false);
                         }
@@ -598,10 +609,10 @@ public class PsychologyScene {
                     Logger.e(PsychologyScene.class, "#run", e);
                 } finally {
                     // 更新运行计数
-                    numRunningTasks.decrementAndGet();
+                    numRunningPaintingTasks.decrementAndGet();
 
                     Logger.i(PsychologyScene.class, "Generating thread END ("
-                            + numRunningTasks.get() + "/" + runningTaskQueue.size() + ") - "
+                            + numRunningPaintingTasks.get() + "/" + paintingReportTaskQueue.size() + ") - "
                             + Thread.currentThread().getName()
                             + " - " + Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
                 }
@@ -629,7 +640,7 @@ public class PsychologyScene {
             return null;
         }
 
-        Iterator<PaintingReportTask> iter = this.taskQueue.iterator();
+        Iterator<PaintingReportTask> iter = this.paintingReportTaskQueue.iterator();
         while (iter.hasNext()) {
             PaintingReportTask task = iter.next();
             if (task.report.sn == sn) {
@@ -644,13 +655,9 @@ public class PsychologyScene {
         return report;
     }
 
-    public Queue<PaintingReportTask> getRunningTaskQueue() {
-        return this.runningTaskQueue;
-    }
-
     public int getGeneratingQueuePosition(long sn) {
         int position = 0;
-        for (PaintingReportTask task : this.taskQueue) {
+        for (PaintingReportTask task : this.paintingReportTaskQueue) {
             ++position;
             if (task.report.sn == sn) {
                 return position;

@@ -54,7 +54,7 @@ public class ModifyReportRemarkTask extends ServiceTask {
             long reportSn = packet.data.getLong("sn");
             String remark = packet.data.getString("remark");
 
-            PaintingReport report = PsychologyScene.getInstance().modifyPsychologyReportRemark(reportSn, remark);
+            PaintingReport report = PsychologyScene.getInstance().modifyPaintingReportRemark(reportSn, remark);
             if (null == report) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, new JSONObject()));

@@ -323,7 +323,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
             }
         }
 
-        PaintingReport report = PsychologyScene.getInstance().generatePsychologyReport(channel, convCtx.getCurrentAttribute(),
+        PaintingReport report = PsychologyScene.getInstance().generatePaintingReport(channel, convCtx.getCurrentAttribute(),
                 convCtx.getCurrentFile(), theme, numIndicators, true, retention, null, new PaintingReportListener() {
                     @Override
                     public void onPaintingPredicting(PaintingReport report, FileLabel file) {

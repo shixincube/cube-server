@@ -88,7 +88,7 @@ public class SceneManager {
     }
 
     public List<PaintingReport> queryReports(long contactId, int state) {
-        return PsychologyScene.getInstance().getPsychologyReports(contactId, state, 10);
+        return PsychologyScene.getInstance().getPaintingReports(contactId, state, 10);
     }
 
     /**

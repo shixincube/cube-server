@@ -2802,7 +2802,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         // 生成报告
-        PaintingReport report = PsychologyScene.getInstance().generatePsychologyReport(channel,
+        PaintingReport report = PsychologyScene.getInstance().generatePaintingReport(channel,
                 attribute, fileLabel, theme, maxIndicators, adjust, 0, remark, listener);
 
         return report;

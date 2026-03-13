@@ -40,9 +40,9 @@ public class QueryReportSubtask extends ConversationSubtask {
 
     @Override
     public AIGCStateCode execute(Subtask roundSubtask) {
-        final List<PaintingReport> list = PsychologyScene.getInstance().getPsychologyReports(
+        final List<PaintingReport> list = PsychologyScene.getInstance().getPaintingReports(
                 convCtx.getAuthToken().getContactId(), 0, 10);
-        final int total = PsychologyScene.getInstance().numPsychologyReports(convCtx.getAuthToken().getContactId(), 0);
+        final int total = PsychologyScene.getInstance().numPaintingReports(convCtx.getAuthToken().getContactId(), 0);
 
         convCtx.setReportList(list);
         if (list.isEmpty()) {

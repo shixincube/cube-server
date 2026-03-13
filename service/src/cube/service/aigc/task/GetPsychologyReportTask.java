@@ -128,12 +128,12 @@ public class GetPsychologyReportTask extends ServiceTask {
         }
         else if (0 != pageSize) {
             if (type.equalsIgnoreCase("painting")) {
-                int num = (state == -1) ? PsychologyScene.getInstance().numPsychologyReports(contactId) :
-                        PsychologyScene.getInstance().numPsychologyReports(contactId, state);
+                int num = (state == -1) ? PsychologyScene.getInstance().numPaintingReports(contactId) :
+                        PsychologyScene.getInstance().numPaintingReports(contactId, state);
 
                 List<PaintingReport> list = (state == -1) ?
-                        PsychologyScene.getInstance().getPsychologyReports(contactId, pageIndex, pageSize, descending) :
-                        PsychologyScene.getInstance().getPsychologyReportsWithState(contactId, pageIndex, pageSize, descending, state);
+                        PsychologyScene.getInstance().getPaintingReports(contactId, pageIndex, pageSize, descending) :
+                        PsychologyScene.getInstance().getPaintingReportsWithState(contactId, pageIndex, pageSize, descending, state);
                 JSONArray array = new JSONArray();
                 for (PaintingReport report : list) {
                     array.put(report.toCompactJSON());

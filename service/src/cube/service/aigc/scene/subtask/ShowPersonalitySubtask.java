@@ -38,7 +38,7 @@ public class ShowPersonalitySubtask extends ConversationSubtask {
     public AIGCStateCode execute(Subtask roundSubtask) {
         final PaintingReport report = convCtx.getCurrentReport();
         if (null == report) {
-            final List<PaintingReport> list = PsychologyScene.getInstance().getPsychologyReports(
+            final List<PaintingReport> list = PsychologyScene.getInstance().getPaintingReports(
                     convCtx.getAuthToken().getContactId(), 0, 1);
             if (list.isEmpty()) {
                 this.service.getExecutor().execute(new Runnable() {

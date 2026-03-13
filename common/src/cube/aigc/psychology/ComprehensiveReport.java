@@ -6,13 +6,13 @@
 
 package cube.aigc.psychology;
 
-public class IntegratedReport extends Report {
+public class ComprehensiveReport extends Report {
 
     private Theme theme;
 
     
 
-    public IntegratedReport(long contactId, Attribute attribute) {
+    public ComprehensiveReport(long contactId, Attribute attribute) {
         super(contactId, attribute);
     }
 }
