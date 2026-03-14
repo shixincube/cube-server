@@ -22,7 +22,6 @@ import cube.service.aigc.AIGCService;
 import cube.util.FloatUtils;
 import org.json.JSONObject;
 
-import java.security.Key;
 import java.util.*;
 
 /**
@@ -546,7 +545,7 @@ public class EvaluationWorker {
     private List<ReportSection> inferScore(List<EvaluationScore> scoreList, int maxIndicatorTexts) {
         List<ReportSection> result = new ArrayList<>();
         for (EvaluationScore es : scoreList) {
-            Logger.d(this.getClass(), "#inferScore - score: " + es.indicator.name);
+            Logger.d(this.getClass(), "#inferScore - score: " + es.indicator.getName());
 
             String prompt = es.generateReportPrompt(this.attribute);
             if (null == prompt) {
@@ -569,7 +568,7 @@ public class EvaluationWorker {
             prompt = es.generateSuggestionPrompt(this.attribute);
             if (null == prompt) {
                 // 下一个
-                result.add(new ReportSection(es.indicator, es.indicator.name,
+                result.add(new ReportSection(es.getIndicator(), es.indicator.getName(),
                         report, "", es.getIndicatorRate(this.attribute)));
                 if (result.size() >= maxIndicatorTexts) {
                     break;
@@ -591,7 +590,7 @@ public class EvaluationWorker {
 
             if (null != report && null != suggestion) {
                 // 报告标题使用指标名称
-                result.add(new ReportSection(es.indicator, es.indicator.name,
+                result.add(new ReportSection(es.getIndicator(), es.indicator.getName(),
                         report, suggestion, es.getIndicatorRate(this.attribute)));
                 if (result.size() >= maxIndicatorTexts) {
                     break;

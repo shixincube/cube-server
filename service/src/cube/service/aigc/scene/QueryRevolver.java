@@ -1061,7 +1061,7 @@ public class QueryRevolver {
         List<String> result = new ArrayList<>();
 
         for (EvaluationScore es : report.getEvaluationReport().getEvaluationScores()) {
-            Logger.d(this.getClass(), "#extractEvaluationContent - indicator: " + es.indicator.name);
+            Logger.d(this.getClass(), "#extractEvaluationContent - indicator: " + es.indicator.getName());
 
             String prompt = es.generateReportPrompt(report.getAttribute());
             if (null == prompt) {
@@ -1069,7 +1069,7 @@ public class QueryRevolver {
                 continue;
             }
 
-            ReportSection section = report.getReportSection(es.indicator);
+            ReportSection section = report.getReportSection(es.getIndicator());
             if (null != section) {
                 if (english) {
                     result.add(section.title + " index indicates a " + es.generateWord(report.getAttribute()));

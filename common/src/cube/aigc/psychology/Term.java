@@ -9,7 +9,7 @@ package cube.aigc.psychology;
 /**
  * 专业描述词。
  */
-public enum Term {
+public enum Term implements Terminology {
 
     /**
      * 自我存在。
@@ -390,6 +390,11 @@ public enum Term {
 
     Term(String word) {
         this.word = word;
+    }
+
+    @Override
+    public String getWord() {
+        return this.word;
     }
 
     public static Term parse(String word) {

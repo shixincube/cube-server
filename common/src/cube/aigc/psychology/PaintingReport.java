@@ -260,7 +260,7 @@ public class PaintingReport extends Report {
                 buf.append("| ---- | ---- | ---- | ---- | ---- | ---- |");
                 for (EvaluationScore score : this.evaluationReport.getEvaluationScores()) {
                     buf.append("\n");
-                    buf.append("|").append(score.indicator.name);
+                    buf.append("|").append(score.indicator.getName());
                     buf.append("|").append(score.rate.value).append(" - ").append(score.rate.displayName);
                     buf.append("|").append(score.value);
                     buf.append("|").append(score.hit);

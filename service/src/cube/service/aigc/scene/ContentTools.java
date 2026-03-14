@@ -232,7 +232,7 @@ public class ContentTools {
         if (evalReport.numEvaluationScores() > 0 && maxIndicators > 0) {
             buf.append("# 指标因子\n\n");
             for (EvaluationScore score : evalReport.getEvaluationScores()) {
-                ReportSection section = report.getReportSection(score.indicator);
+                ReportSection section = report.getReportSection(score.getIndicator());
                 if (null == section) {
                     continue;
                 }
@@ -363,11 +363,11 @@ public class ContentTools {
         EvaluationReport evalReport = report.getEvaluationReport();
         if (evalReport.numEvaluationScores() > 0) {
             for (EvaluationScore score : evalReport.getEvaluationScores()) {
-                if (score.indicator == Indicator.Unknown || score.indicator == Indicator.Psychosis) {
+                if (score.getIndicator() == Indicator.Unknown || score.getIndicator() == Indicator.Psychosis) {
                     continue;
                 }
 
-                ReportSection section = report.getReportSection(score.indicator);
+                ReportSection section = report.getReportSection(score.getIndicator());
                 if (null == section) {
                     continue;
                 }

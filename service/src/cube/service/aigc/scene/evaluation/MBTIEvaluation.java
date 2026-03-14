@@ -186,7 +186,7 @@ public class MBTIEvaluation {
         for (EvaluationScore score : scoreList) {
             seed += score.value;
 
-            switch (score.indicator) {
+            switch (score.getIndicator()) {
                 case Extroversion:
                     list.add(new MBTICandidate(MyersBriggsTypeIndicator.Extraversion, 1, true));
                     break;

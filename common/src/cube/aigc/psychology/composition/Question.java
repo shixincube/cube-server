@@ -124,6 +124,16 @@ public class Question {
         return null;
     }
 
+    public List<Answer> getChosenAnswers() {
+        List<Answer> answers = new ArrayList<>();
+        for (Answer answer : this.answers) {
+            if (answer.chosen) {
+                answers.add(answer);
+            }
+        }
+        return answers;
+    }
+
     /**
      * 是否已答题。
      *

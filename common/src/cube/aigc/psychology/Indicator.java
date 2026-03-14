@@ -13,7 +13,7 @@ import java.util.*;
 /**
  * 评价指标。
  */
-public enum Indicator {
+public enum Indicator implements Indicable {
 
     /**
      * 抑郁。
@@ -237,6 +237,21 @@ public enum Indicator {
         this.name = name;
         this.code = code;
         this.priority = priority;
+    }
+
+    @Override
+    public String getName() {
+        return this.name;
+    }
+
+    @Override
+    public String getCode() {
+        return this.code;
+    }
+
+    @Override
+    public int getPriority() {
+        return this.priority;
     }
 
     public JSONObject toJSON() {

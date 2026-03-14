@@ -7,6 +7,7 @@
 package cube.aigc.psychology.algorithm;
 
 import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.Indicable;
 import cube.aigc.psychology.Indicator;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.JSONable;
@@ -103,7 +104,7 @@ public class ScoreAccelerator implements JSONable {
         Collections.sort(result, new Comparator<EvaluationScore>() {
             @Override
             public int compare(EvaluationScore s1, EvaluationScore s2) {
-                return s2.indicator.priority - s1.indicator.priority;
+                return s2.indicator.getPriority() - s1.indicator.getPriority();
             }
         });
 
@@ -113,7 +114,7 @@ public class ScoreAccelerator implements JSONable {
         return result;
     }
 
-    public EvaluationScore getEvaluationScore(Indicator indicator, Attribute attribute) {
+    public EvaluationScore getEvaluationScore(Indicable indicator, Attribute attribute) {
         List<EvaluationScore> list = this.getEvaluationScores(attribute);
         for (EvaluationScore es : list) {
             if (es.indicator == indicator) {
@@ -123,7 +124,7 @@ public class ScoreAccelerator implements JSONable {
         return null;
     }
 
-    private EvaluationScore findEvaluationScore(List<EvaluationScore> list, Indicator indicator) {
+    private EvaluationScore findEvaluationScore(List<EvaluationScore> list, Indicable indicator) {
         for (EvaluationScore es : list) {
             if (es.indicator == indicator) {
                 return es;

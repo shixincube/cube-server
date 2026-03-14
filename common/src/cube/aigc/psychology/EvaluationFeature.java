@@ -51,7 +51,7 @@ public class EvaluationFeature {
         return this.features;
     }
 
-    public Score addScore(Indicator indicator, int value, double weight) {
+    public Score addScore(Indicable indicator, int value, double weight) {
         Score score = new Score(indicator, value, weight);
         this.scores.add(score);
         return score;

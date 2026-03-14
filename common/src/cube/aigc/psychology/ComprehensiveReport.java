@@ -11,28 +11,35 @@ import cube.common.JSONable;
 import cube.common.state.AIGCStateCode;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ComprehensiveReport implements JSONable {
 
-    private final Theme theme;
+    public final Theme theme;
 
-    private final List<Comprehensive> comprehensives;
+    public final List<Comprehensive> comprehensives;
 
-    private AIGCStateCode state = AIGCStateCode.Processing;
+    public AIGCStateCode state = AIGCStateCode.Processing;
+
+    public boolean finished = false;
+
+    public List<ComprehensiveSection> sections;
 
     public ComprehensiveReport(Theme theme, List<Comprehensive> comprehensives) {
         this.theme = theme;
         this.comprehensives = comprehensives;
+        this.sections = new ArrayList<>();
     }
 
     @Override
     public JSONObject toJSON() {
-        return null;
+        JSONObject json = new JSONObject();
+        return json;
     }
 
     @Override
     public JSONObject toCompactJSON() {
-        return null;
+        return this.toJSON();
     }
 }

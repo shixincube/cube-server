@@ -7,13 +7,8 @@
 package cube.aigc.psychology.algorithm;
 
 import cube.aigc.psychology.Term;
-import cube.aigc.psychology.Theme;
 import cube.common.JSONable;
-import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 知识策略。

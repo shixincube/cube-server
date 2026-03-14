@@ -1870,12 +1870,13 @@ public class PsychologyStorage implements Storagable {
     private List<EvaluationScore> filter(List<EvaluationScore> indicatorList, List<EvaluationScore> sources) {
         List<EvaluationScore> result = new ArrayList<>();
         for (EvaluationScore es : indicatorList) {
-            Indicator indicator = es.indicator;
+            Indicator indicator = es.getIndicator();
             for (EvaluationScore score : sources) {
                 if (score.indicator == indicator) {
                     result.add(score);
                 }
             }
+
         }
         return result;
     }

@@ -6,6 +6,7 @@
 
 package cube.aigc.psychology.algorithm;
 
+import cube.aigc.psychology.Indicable;
 import cube.aigc.psychology.Indicator;
 import cube.common.JSONable;
 import org.json.JSONObject;
@@ -15,13 +16,13 @@ import org.json.JSONObject;
  */
 public class Score implements JSONable {
 
-    public final Indicator indicator;
+    public final Indicable indicator;
 
     public int value;
 
     public double weight;
 
-    public Score(Indicator indicator, int value, double weight) {
+    public Score(Indicable indicator, int value, double weight) {
         this.indicator = indicator;
         this.value = value;
         this.weight = weight;
@@ -53,7 +54,7 @@ public class Score implements JSONable {
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("indicator", this.indicator.name);
+        json.put("indicator", this.indicator.getName());
         json.put("value", this.value);
         json.put("weight", this.weight);
         return json;
@@ -62,7 +63,7 @@ public class Score implements JSONable {
     @Override
     public JSONObject toCompactJSON() {
         JSONObject json = new JSONObject();
-        json.put("indicator", this.indicator.name);
+        json.put("indicator", this.indicator.getName());
         json.put("value", this.value);
         json.put("weight", this.weight);
         return json;

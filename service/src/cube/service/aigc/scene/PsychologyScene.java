@@ -363,10 +363,10 @@ public class PsychologyScene {
      * @return
      */
     public synchronized PaintingReport generatePaintingReport(AIGCChannel channel, Attribute attribute,
-                                                                FileLabel fileLabel, Theme theme,
-                                                                int maxIndicators, boolean adjust,
-                                                                int retention, String remark,
-                                                                PaintingReportListener listener) {
+                                                              FileLabel fileLabel, Theme theme,
+                                                              int maxIndicators, boolean adjust,
+                                                              int retention, String remark,
+                                                              PaintingReportListener listener) {
         if (null == channel) {
             Logger.e(this.getClass(), "#generatePaintingReport - Channel is null");
             return null;
@@ -436,6 +436,9 @@ public class PsychologyScene {
                         + Thread.currentThread().getName()
                         + " - " + Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
 
+                // 加载配置
+                loadConfig();
+
                 try {
                     while (!paintingReportTaskQueue.isEmpty()) {
                         // 新任务
@@ -464,9 +467,6 @@ public class PsychologyScene {
 
                             // 更新单元状态
                             unit.setRunning(true);
-
-                            // 加载配置
-                            loadConfig();
 
                             // 预测
                             paintingReportTask.listener.onPaintingPredicting(paintingReportTask.report, paintingReportTask.fileLabel);
@@ -498,7 +498,7 @@ public class PsychologyScene {
                             // 关联绘画
                             paintingReportTask.report.painting = painting;
 
-                            // 绘图预测完成
+                            // 绘画预测完成
                             paintingReportTask.listener.onPaintingPredictCompleted(paintingReportTask.report, paintingReportTask.fileLabel, painting);
 
                             // 开始进行评估
@@ -604,7 +604,7 @@ public class PsychologyScene {
                 }
             }
         });
-        thread.setName("GeneratePredictingReport-" + System.currentTimeMillis());
+        thread.setName("GeneratePaintingReport-" + System.currentTimeMillis());
         thread.start();
 
         return report;
@@ -1026,12 +1026,20 @@ public class PsychologyScene {
 
         this.numRunningComprehensiveTasks.incrementAndGet();
 
-        (new Thread() {
+        Thread thread = new Thread() {
             @Override
             public void run() {
                 try {
+                    Logger.i(PsychologyScene.class, "Comprehensive report worker thread START ("
+                            + numRunningComprehensiveTasks.get() + "/" + comprehensiveReportWorkerQueue.size() + ") - "
+                            + Thread.currentThread().getName()
+                            + " - " + Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
+
                     ComprehensiveReportWorker reportWorker = comprehensiveReportWorkerQueue.poll();
                     while (null != reportWorker) {
+                        // 加载配置
+                        loadConfig();
+
                         // 工作器执行任务
                         reportWorker.run();
                         // 下一个
@@ -1041,9 +1049,16 @@ public class PsychologyScene {
                     Logger.e(PsychologyScene.class, "#generateReport", e);
                 } finally {
                     numRunningComprehensiveTasks.decrementAndGet();
+
+                    Logger.i(PsychologyScene.class, "Comprehensive report worker thread END ("
+                            + numRunningComprehensiveTasks.get() + "/" + comprehensiveReportWorkerQueue.size() + ") - "
+                            + Thread.currentThread().getName()
+                            + " - " + Utils.gsDateFormat.format(new Date(System.currentTimeMillis())));
                 }
             }
-        }).start();
+        };
+        thread.setName("ComprehensiveWorkerThread-" + System.currentTimeMillis());
+        thread.start();
 
         return worker.getReport();
     }

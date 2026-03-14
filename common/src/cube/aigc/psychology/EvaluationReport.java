@@ -113,8 +113,10 @@ public class EvaluationReport implements JSONable {
         }
 
         this.scoreAccelerator = new ScoreAccelerator(json.getJSONObject("accelerator"));
+
         this.personalityAccelerator = json.has("personality") ?
                 new PersonalityAccelerator(json.getJSONObject("personality")) : null;
+
         this.attention = Attention.parse(json.getInt("attention"));
 
         this.additionScales = new ArrayList<>();
@@ -404,7 +406,7 @@ public class EvaluationReport implements JSONable {
         boolean pessimism = false;
 
         for (EvaluationScore es : this.scoreAccelerator.getEvaluationScores(this.attribute)) {
-            switch (es.indicator) {
+            switch (es.getIndicator()) {
                 case Psychosis:
                     if (es.positiveScore > 0.9) {
                         score += 4;
@@ -817,7 +819,7 @@ public class EvaluationReport implements JSONable {
         Collections.sort(evaluationScores, new Comparator<EvaluationScore>() {
             @Override
             public int compare(EvaluationScore es1, EvaluationScore es2) {
-                return es2.indicator.priority - es1.indicator.priority;
+                return es2.indicator.getPriority() - es1.indicator.getPriority();
             }
         });
 
@@ -849,7 +851,7 @@ public class EvaluationReport implements JSONable {
         Collections.sort(result, new Comparator<EvaluationScore>() {
             @Override
             public int compare(EvaluationScore es1, EvaluationScore es2) {
-                return es2.indicator.priority - es1.indicator.priority;
+                return es2.indicator.getPriority() - es1.indicator.getPriority();
             }
         });
 
@@ -886,7 +888,7 @@ public class EvaluationReport implements JSONable {
         Collections.sort(result, new Comparator<EvaluationScore>() {
             @Override
             public int compare(EvaluationScore s1, EvaluationScore s2) {
-                return s2.indicator.priority - s1.indicator.priority;
+                return s2.indicator.getPriority() - s1.indicator.getPriority();
             }
         });
         return result;

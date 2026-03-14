@@ -7,11 +7,11 @@
 package cube.service.aigc.scene;
 
 import cube.aigc.psychology.ComprehensiveReport;
-import cube.common.entity.FileLabel;
+import cube.aigc.psychology.composition.Comprehensive;
 
 public interface ComprehensiveReportListener {
 
-    void onPredicting(ComprehensiveReport report, FileLabel file);
+    void onPredicting(ComprehensiveReport report, Comprehensive comprehensive);
 
     void onEvaluating(ComprehensiveReport report);
 
