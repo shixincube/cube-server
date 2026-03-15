@@ -9,7 +9,10 @@ package cube.service.aigc.scene;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.*;
+import cube.aigc.psychology.ComprehensiveReport;
+import cube.aigc.psychology.EvaluationReport;
+import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.Theme;
 import cube.aigc.psychology.composition.Answer;
 import cube.aigc.psychology.composition.Comprehensive;
 import cube.aigc.psychology.composition.EvaluationScore;
@@ -25,6 +28,7 @@ import cube.service.aigc.scene.evaluation.Evaluation;
 import cube.service.aigc.scene.evaluation.SubconsciousRelationshipBetweenACoupleEvaluation;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ComprehensiveReportWorker implements Runnable {
@@ -176,36 +180,46 @@ public class ComprehensiveReportWorker implements Runnable {
     }
 
     private void predictComprehensive(Comprehensive comprehensive, Evaluation evaluation, EvaluationReport evaluationReport) {
-        List<EvaluationScore> scoreList = evaluationReport.getEvaluationScores();
-
         switch (this.report.theme) {
             case SubconsciousRelationshipBetweenACouple:
-                SubconsciousRelationshipBetweenACoupleEvaluation.SRBCIndicator paintingIndicator =
-                        SubconsciousRelationshipBetweenACoupleEvaluation.SRBCIndicator.Unknown;
-                double maxScore = 0;
-                for (EvaluationScore es : scoreList) {
-                    if (es.calcScore() > maxScore) {
-                        maxScore = es.calcScore();
-                        paintingIndicator = (SubconsciousRelationshipBetweenACoupleEvaluation.SRBCIndicator) es.indicator;
-                    }
-                }
-
-//                Resource.getInstance().loadDataset().getContent();
-
                 SubconsciousRelationshipBetweenACoupleEvaluation srbcEvaluation =
                         (SubconsciousRelationshipBetweenACoupleEvaluation) evaluation;
 
+                // 提取绘画分数
+                List<EvaluationScore> scoreList = evaluationReport.getEvaluationScores();
+                // 合并指标
+                List<EvaluationScore> paintingScores = srbcEvaluation.mergeScoreList(scoreList);
+                printScore("Painting Scores", paintingScores);
+
+                // 提取词分数
                 Scale scale = comprehensive.getScale();
                 List<Answer> answerList = scale.getQuestions().get(0).getChosenAnswers();
+                List<String> words = new ArrayList<>();
                 for (Answer answer : answerList) {
-                    List<EvaluationScore> wordScores = srbcEvaluation.evaluateWords(answer.content);
+                    words.add(answer.content);
                 }
+                // 词指标
+                List<EvaluationScore> wordScores = srbcEvaluation.evaluateWords(words);
+                printScore("Word Scores", wordScores);
 
-
+                // Resource.getInstance().loadDataset().getContent();
                 break;
             default:
                 Logger.w(this.getClass(), "#predictComprehensive - Unsupported theme: " + this.report.theme.code);
                 break;
         }
+    }
+
+    private void printScore(String title, List<EvaluationScore> scores) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("----------------------------------------------------------------\n");
+        buf.append(title).append("\n");
+        for (EvaluationScore score : scores) {
+            buf.append(score.indicator.getName());
+            buf.append(" - ");
+            buf.append(score.calcScore());
+            buf.append("\n");
+        }
+        System.out.println(buf.toString());
     }
 }

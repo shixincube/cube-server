@@ -73,10 +73,10 @@ public final class FloatUtils {
 
     public static void main(String[] args) {
         double[] input = new double[] {
-                0, 0, 100
+                -2, 1, 7, -1, 3
         };
 
-        double[] output = FloatUtils.softmax(input);
+        double[] output = FloatUtils.normalization(input);
         for (double v : output) {
             System.out.println(v);
         }

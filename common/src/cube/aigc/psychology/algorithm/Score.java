@@ -22,6 +22,12 @@ public class Score implements JSONable {
 
     public double weight;
 
+    public Score(Indicable indicator, int value) {
+        this.indicator = indicator;
+        this.value = value;
+        this.weight = 1.0;
+    }
+
     public Score(Indicable indicator, int value, double weight) {
         this.indicator = indicator;
         this.value = value;

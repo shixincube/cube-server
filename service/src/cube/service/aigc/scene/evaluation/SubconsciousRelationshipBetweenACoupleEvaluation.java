@@ -6,74 +6,25 @@
 
 package cube.service.aigc.scene.evaluation;
 
+import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.PaintingConfidence;
+import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.material.Tree;
+import cube.util.FloatUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation {
-
-    /**
-     * 类型。
-     */
-    public enum SRBCType {
-        /**
-         * 榕树型。
-         */
-        BanyanTree,
-
-        /**
-         * 橡树型。
-         */
-        OakTree,
-
-        /**
-         * 藤蔓型。
-         */
-        Vine,
-
-        /**
-         * 向日葵型。
-         */
-        Sunflower,
-
-        /**
-         * 仙人掌型。
-         */
-        Cactus,
-
-        /**
-         * 竹子型。
-         */
-        Bamboo,
-
-        /**
-         * 并蒂莲型。
-         */
-        TwinLotus,
-
-        /**
-         * 蒲公英型。
-         */
-        Dandelion,
-
-        /**
-         * 雪松型。
-         */
-        Cedar,
-    }
-
     /**
      * 指标。
      */
     public enum SRBCIndicator implements Indicable {
-
         /**
          * 榕树型。
          */
@@ -84,6 +35,44 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
          */
         OakTree("OakTree", "OakTree", 9, "橡树型"),
 
+        /**
+         * 藤蔓型。
+         */
+        Vine("Vine", "Vine", 9, "藤蔓型"),
+
+        /**
+         * 向日葵型。
+         */
+        Sunflower("Sunflower", "Sunflower", 9, "向日葵型"),
+
+        /**
+         * 仙人掌型。
+         */
+        Cactus("Cactus", "Cactus", 9, "仙人掌型"),
+
+        /**
+         * 竹子型。
+         */
+        Bamboo("Bamboo", "Bamboo", 9, "竹子型"),
+
+        /**
+         * 并蒂莲型。
+         */
+        TwinLotus("TwinLotus", "TwinLotus", 9, "并蒂莲型"),
+
+        /**
+         * 蒲公英型。
+         */
+        Dandelion("Dandelion", "Dandelion", 9, "蒲公英型"),
+
+        /**
+         * 雪松型。
+         */
+        Cedar("Cedar", "Cedar", 9, "雪松型"),
+
+        /**
+         * 未知。
+         */
         Unknown("Unknown", "Unknown", 0, "未知")
 
         ;
@@ -123,9 +112,36 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
         }
     }
 
+    /**
+     * 核心词。
+     */
     public enum SRBCWord {
 
-        SRBCWord(1, "港湾"),
+        Harbour(1, "港湾"),
+
+        Battlefield(2, "战场"),
+
+        Stage(3, "舞台"),
+
+        Post(4, "驿站"),
+
+        Chains(5, "枷锁"),
+
+        Wing(6, "翅膀"),
+
+        Lights(7, "灯火"),
+
+        Tide(8, "潮汐"),
+
+        Melody(9, "旋律"),
+
+        Root(10, "根系"),
+
+        Shadow(11, "影子"),
+
+        Maze(12, "迷宫"),
+
+        Unknown(13, ""),
 
         ;
 
@@ -137,14 +153,163 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
             this.sn = sn;
             this.word = word;
         }
+
+        public final static SRBCWord parse(String word) {
+            for (SRBCWord srbcWord : SRBCWord.values()) {
+                if (srbcWord.word.equalsIgnoreCase(word)) {
+                    return srbcWord;
+                }
+            }
+            return Unknown;
+        }
     }
 
-    private final static HashMap<Integer, EvaluationScore[]> sWordMap = new HashMap<>();
+    private final static HashMap<SRBCWord, Score[]> sWordMap = new HashMap<>();
 
     static {
-        sWordMap.put(1, new EvaluationScore[] {
-                new EvaluationScore(SRBCIndicator.BanyanTree, 2),
-                new EvaluationScore(SRBCIndicator.OakTree, 2),
+        // 港湾
+        sWordMap.put(SRBCWord.Harbour, new Score[] {
+                new Score(SRBCIndicator.BanyanTree, 2),
+                new Score(SRBCIndicator.OakTree, 2),
+                new Score(SRBCIndicator.Vine, 1),
+                new Score(SRBCIndicator.Sunflower, 1),
+                new Score(SRBCIndicator.Cactus, 0),
+                new Score(SRBCIndicator.Bamboo, 0),
+                new Score(SRBCIndicator.TwinLotus, 1),
+                new Score(SRBCIndicator.Dandelion, -2),
+                new Score(SRBCIndicator.Cedar, 1),
+        });
+        // 战场
+        sWordMap.put(SRBCWord.Battlefield, new Score[] {
+                new Score(SRBCIndicator.BanyanTree, 0),
+                new Score(SRBCIndicator.OakTree, 1),
+                new Score(SRBCIndicator.Vine, -1),
+                new Score(SRBCIndicator.Sunflower, -2),
+                new Score(SRBCIndicator.Cactus, 2),
+                new Score(SRBCIndicator.Bamboo, 0),
+                new Score(SRBCIndicator.TwinLotus, -2),
+                new Score(SRBCIndicator.Dandelion, 0),
+                new Score(SRBCIndicator.Cedar, 1),
+        });
+        // 舞台
+        sWordMap.put(SRBCWord.Stage, new Score[] {
+                new Score(SRBCIndicator.BanyanTree, 0),
+                new Score(SRBCIndicator.OakTree, 0),
+                new Score(SRBCIndicator.Vine, 0),
+                new Score(SRBCIndicator.Sunflower, 2),
+                new Score(SRBCIndicator.Cactus, -1),
+                new Score(SRBCIndicator.Bamboo, 1),
+                new Score(SRBCIndicator.TwinLotus, 1),
+                new Score(SRBCIndicator.Dandelion, 1),
+                new Score(SRBCIndicator.Cedar, -1),
+        });
+        // 驿站
+        sWordMap.put(SRBCWord.Post, new Score[] {
+                new Score(SRBCIndicator.BanyanTree, -2),
+                new Score(SRBCIndicator.OakTree, -1),
+                new Score(SRBCIndicator.Vine,  -1),
+                new Score(SRBCIndicator.Sunflower, 0),
+                new Score(SRBCIndicator.Cactus,  0),
+                new Score(SRBCIndicator.Bamboo, 1),
+                new Score(SRBCIndicator.TwinLotus, -2),
+                new Score(SRBCIndicator.Dandelion, 2),
+                new Score(SRBCIndicator.Cedar, -1),
+        });
+        // 枷锁
+        sWordMap.put(SRBCWord.Chains, new Score[] {
+                new Score(SRBCIndicator.BanyanTree, 1),
+                new Score(SRBCIndicator.OakTree, -2),
+                new Score(SRBCIndicator.Vine,  2),
+                new Score(SRBCIndicator.Sunflower, -1),
+                new Score(SRBCIndicator.Cactus,  0),
+                new Score(SRBCIndicator.Bamboo, -1),
+                new Score(SRBCIndicator.TwinLotus, -1),
+                new Score(SRBCIndicator.Dandelion, -2),
+                new Score(SRBCIndicator.Cedar, -1),
+        });
+        // 翅膀
+        sWordMap.put(SRBCWord.Wing, new Score[] {
+                new Score(SRBCIndicator.BanyanTree, -1),
+                new Score(SRBCIndicator.OakTree, 0),
+                new Score(SRBCIndicator.Vine,  -1),
+                new Score(SRBCIndicator.Sunflower, 1),
+                new Score(SRBCIndicator.Cactus,  0),
+                new Score(SRBCIndicator.Bamboo, 1),
+                new Score(SRBCIndicator.TwinLotus, 0),
+                new Score(SRBCIndicator.Dandelion, 2),
+                new Score(SRBCIndicator.Cedar, 0),
+        });
+        // 灯火
+        sWordMap.put(SRBCWord.Lights, new Score[] {
+                new Score(SRBCIndicator.BanyanTree, 1),
+                new Score(SRBCIndicator.OakTree, 1),
+                new Score(SRBCIndicator.Vine,  1),
+                new Score(SRBCIndicator.Sunflower, 2),
+                new Score(SRBCIndicator.Cactus,  0),
+                new Score(SRBCIndicator.Bamboo, 1),
+                new Score(SRBCIndicator.TwinLotus, 1),
+                new Score(SRBCIndicator.Dandelion, 0),
+                new Score(SRBCIndicator.Cedar, 1),
+        });
+        // 潮汐
+        sWordMap.put(SRBCWord.Tide, new Score[] {
+                new Score(SRBCIndicator.BanyanTree, 1),
+                new Score(SRBCIndicator.OakTree, 1),
+                new Score(SRBCIndicator.Vine,  1),
+                new Score(SRBCIndicator.Sunflower, 0),
+                new Score(SRBCIndicator.Cactus,  0),
+                new Score(SRBCIndicator.Bamboo, 0),
+                new Score(SRBCIndicator.TwinLotus, 1),
+                new Score(SRBCIndicator.Dandelion, 0),
+                new Score(SRBCIndicator.Cedar, 1),
+        });
+        // 旋律
+        sWordMap.put(SRBCWord.Melody, new Score[] {
+                new Score(SRBCIndicator.BanyanTree, 1),
+                new Score(SRBCIndicator.OakTree, 1),
+                new Score(SRBCIndicator.Vine,  0),
+                new Score(SRBCIndicator.Sunflower, 1),
+                new Score(SRBCIndicator.Cactus,  0),
+                new Score(SRBCIndicator.Bamboo, 1),
+                new Score(SRBCIndicator.TwinLotus, 2),
+                new Score(SRBCIndicator.Dandelion, 0),
+                new Score(SRBCIndicator.Cedar, 0),
+        });
+        // 根系
+        sWordMap.put(SRBCWord.Root, new Score[] {
+                new Score(SRBCIndicator.BanyanTree, 2),
+                new Score(SRBCIndicator.OakTree, 1),
+                new Score(SRBCIndicator.Vine,  1),
+                new Score(SRBCIndicator.Sunflower, 0),
+                new Score(SRBCIndicator.Cactus,  0),
+                new Score(SRBCIndicator.Bamboo, 1),
+                new Score(SRBCIndicator.TwinLotus, 1),
+                new Score(SRBCIndicator.Dandelion, -2),
+                new Score(SRBCIndicator.Cedar, 1),
+        });
+        // 影子
+        sWordMap.put(SRBCWord.Shadow, new Score[] {
+                new Score(SRBCIndicator.BanyanTree, 1),
+                new Score(SRBCIndicator.OakTree, -1),
+                new Score(SRBCIndicator.Vine,  2),
+                new Score(SRBCIndicator.Sunflower, -1),
+                new Score(SRBCIndicator.Cactus,  0),
+                new Score(SRBCIndicator.Bamboo, -1),
+                new Score(SRBCIndicator.TwinLotus, 1),
+                new Score(SRBCIndicator.Dandelion, 0),
+                new Score(SRBCIndicator.Cedar, -1),
+        });
+        // 迷宫
+        sWordMap.put(SRBCWord.Maze, new Score[] {
+                new Score(SRBCIndicator.BanyanTree, 2),
+                new Score(SRBCIndicator.OakTree, -1),
+                new Score(SRBCIndicator.Vine,  1),
+                new Score(SRBCIndicator.Sunflower, -2),
+                new Score(SRBCIndicator.Cactus,  1),
+                new Score(SRBCIndicator.Bamboo, -1),
+                new Score(SRBCIndicator.TwinLotus, -1),
+                new Score(SRBCIndicator.Dandelion, 0),
+                new Score(SRBCIndicator.Cedar, -1),
         });
     }
 
@@ -171,12 +336,96 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
         return this.paintingFeatureSet;
     }
 
-    public List<EvaluationScore> evaluateWords(String word) {
+    /**
+     * 对关键词对应的指标进行评估。
+     *
+     * @param words
+     * @return
+     */
+    public List<EvaluationScore> evaluateWords(List<String> words) {
+        List<EvaluationScore> result = this.buildEmptyScoreList();
+        for (String word : words) {
+            SRBCWord srbcWord = SRBCWord.parse(word);
+            Score scoreList[] = sWordMap.get(srbcWord);
+            for (EvaluationScore res : result) {
+                for (Score score : scoreList) {
+                    if (score.indicator == res.indicator) {
+                        res.scoring(score);
+                        break;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 合并分数列表
+     *
+     * @param input
+     * @return
+     */
+    public List<EvaluationScore> mergeScoreList(List<EvaluationScore> input) {
+        List<EvaluationScore> result = this.buildEmptyScoreList();
+        for (EvaluationScore base : input) {
+            EvaluationScore target = null;
+            for (EvaluationScore es : result) {
+                if (es.indicator == base.indicator) {
+                    target = es;
+                    break;
+                }
+            }
+            target.value += base.value;
+            target.hit = base.hit;
+        }
+        return result;
+    }
+
+    /**
+     * 计算指标分。
+     *
+     * @param paintingScores
+     * @param wordScores
+     * @return
+     */
+    public List<Score> caleIndicatorScores(List<EvaluationScore> paintingScores, List<EvaluationScore> wordScores) {
+        if (paintingScores.size() != SRBCIndicator.values().length || wordScores.size() != SRBCIndicator.values().length) {
+            Logger.w(this.getClass(), "#caleIndicatorScores - Data length error");
+            return null;
+        }
+
+        // 归一化绘画分数
+        double[] paintingScoreArray = new double[SRBCIndicator.values().length];
+        for (int i = 0; i < paintingScoreArray.length; ++i) {
+            EvaluationScore score = paintingScores.get(i);
+            paintingScoreArray[i] = score.calcScore();
+        }
+        double[] paintingNormalizationScores = FloatUtils.normalization(paintingScoreArray, 0, 100);
+
+        // 归一化词分数
+        double[] wordScoreArray = new double[SRBCIndicator.values().length];
+        for (int i = 0; i < wordScoreArray.length; ++i) {
+            EvaluationScore score = wordScores.get(i);
+            wordScoreArray[i] = score.calcScore();
+        }
+        double[] wordNormalizationScores = FloatUtils.normalization(wordScoreArray, 0, 100);
+
+        // 总分数组
+        double[] totalArray = new double[SRBCIndicator.values().length];
+        for (int i = 0; i < totalArray.length; ++i) {
+            totalArray[i] = paintingNormalizationScores[i] * 0.6 + wordNormalizationScores[i] * 0.4;
+        }
+
+
+
         return null;
     }
 
-    public List<EvaluationScore> buildEmptyScoreList() {
+    private List<EvaluationScore> buildEmptyScoreList() {
         List<EvaluationScore> result = new ArrayList<>();
+        for (SRBCIndicator indicator : SRBCIndicator.values()) {
+            result.add(new EvaluationScore(indicator, 0));
+        }
         return result;
     }
 
