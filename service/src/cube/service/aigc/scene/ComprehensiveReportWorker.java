@@ -9,10 +9,7 @@ package cube.service.aigc.scene;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.ComprehensiveReport;
-import cube.aigc.psychology.EvaluationReport;
-import cube.aigc.psychology.Painting;
-import cube.aigc.psychology.Theme;
+import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.composition.Answer;
 import cube.aigc.psychology.composition.Comprehensive;
@@ -120,10 +117,12 @@ public class ComprehensiveReportWorker implements Runnable {
             }
 
             // 4. 合成结果
-
+            this.generateComprehensiveReport();
 
             // 更新单元状态
             unit.setRunning(false);
+
+            this.listener.onEvaluateCompleted(this.report);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#run", e);
         } finally {
@@ -186,6 +185,8 @@ public class ComprehensiveReportWorker implements Runnable {
                 SubconsciousRelationshipBetweenACoupleEvaluation srbcEvaluation =
                         (SubconsciousRelationshipBetweenACoupleEvaluation) evaluation;
 
+                srbcEvaluation.service = this.service;
+
                 // 提取绘画分数
                 List<EvaluationScore> scoreList = evaluationReport.getEvaluationScores();
                 // 合并指标
@@ -216,14 +217,18 @@ public class ComprehensiveReportWorker implements Runnable {
                     }
                 }
 
-
-
-                // Resource.getInstance().loadDataset().getContent();
+                // 生成内容
+                ComprehensiveSection section = srbcEvaluation.generateComprehensiveSection(result);
+                comprehensive.addComprehensiveSection(section);
                 break;
             default:
                 Logger.w(this.getClass(), "#predictComprehensive - Unsupported theme: " + this.report.theme.code);
                 break;
         }
+    }
+
+    private void generateComprehensiveReport() {
+
     }
 
     private void printEvaluationScore(String title, List<EvaluationScore> scores) {

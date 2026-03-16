@@ -33,7 +33,7 @@ public class StartGuideFlowSubtask extends ConversationSubtask {
 
     @Override
     public AIGCStateCode execute(Subtask roundSubtask) {
-        List<String> words = this.service.segmentation(this.query);
+        List<String> words = this.service.segmentText(this.query);
         GuideFlow guideFlow = Guides.matchGuideFlow(words);
         if (null == guideFlow) {
             this.service.getExecutor().execute(new Runnable() {

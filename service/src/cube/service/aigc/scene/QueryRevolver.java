@@ -1195,7 +1195,7 @@ public class QueryRevolver {
         }
 
         // 术语
-        List<String> words = this.service.segmentation(query);
+        List<String> words = this.service.segmentText(query);
         for (String word : words) {
             Term term = Term.parse(word);
             if (term == Term.Unknown) {
@@ -1241,7 +1241,7 @@ public class QueryRevolver {
         if (null != factorSet) {
             List<String> symptomList = new ArrayList<>();
 
-            List<String> words = this.service.segmentation(query);
+            List<String> words = this.service.segmentText(query);
             for (String word : words) {
                 for (String symptomWord : sSymptomScoreWords) {
                     if (symptomWord.equalsIgnoreCase(word)) {
@@ -1466,7 +1466,7 @@ public class QueryRevolver {
     private String tryGeneratePersonality(PaintingReport report, String query, boolean english) {
         StringBuilder result = new StringBuilder();
 
-        List<String> words = this.service.segmentation(query);
+        List<String> words = this.service.segmentText(query);
         boolean hit = false;
         for (String kw : sKeywordPersonality) {
             for (String word : words) {

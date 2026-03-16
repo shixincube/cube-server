@@ -3329,7 +3329,7 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param text
      * @return
      */
-    public List<String> segmentation(String text) {
+    public List<String> segmentText(String text) {
         return this.tokenizer.sentenceProcess(text);
     }
 

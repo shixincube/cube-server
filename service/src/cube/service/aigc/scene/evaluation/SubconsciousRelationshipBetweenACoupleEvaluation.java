@@ -18,6 +18,7 @@ import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Tree;
 import cube.aigc.psychology.material.other.DrawingSet;
 import cube.aigc.psychology.material.tree.Root;
+import cube.service.aigc.AIGCService;
 import cube.util.FloatUtils;
 
 import java.util.ArrayList;
@@ -317,6 +318,8 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
         });
     }
 
+    public AIGCService service;
+
     private PaintingFeatureSet paintingFeatureSet;
 
     public SubconsciousRelationshipBetweenACoupleEvaluation(long contactId, Painting painting) {
@@ -406,6 +409,10 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
             paintingScoreArray[i] = score.calcScore();
         }
         double[] paintingNormalizationScores = FloatUtils.normalization(paintingScoreArray, 0, 100);
+        if (null == paintingNormalizationScores) {
+            Logger.w(this.getClass(), "#caleIndicatorScores - The painting normalization scores is null");
+            return null;
+        }
 
         // 归一化词分数
         double[] wordScoreArray = new double[SRBCIndicator.values().length];
@@ -414,6 +421,10 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
             wordScoreArray[i] = score.calcScore();
         }
         double[] wordNormalizationScores = FloatUtils.normalization(wordScoreArray, 0, 100);
+        if (null == wordNormalizationScores) {
+            Logger.w(this.getClass(), "#caleIndicatorScores - The word normalization scores is null");
+            return null;
+        }
 
         // 总分数组
         double[] totalArray = new double[SRBCIndicator.values().length];
@@ -426,6 +437,22 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
             scoreList.add(new Score(SRBCIndicator.values()[i], (int) Math.round(totalArray[i])));
         }
         return scoreList;
+    }
+
+    public ComprehensiveSection generateComprehensiveSection(Score score) {
+        SRBCIndicator indicator = (SRBCIndicator) score.indicator;
+        String query = indicator.getWord() + "爱情关系特点";
+        List<String> words = this.service.segmentText(query);
+        // 从数据集查找
+        List<String> content = Resource.getInstance().loadDataset().searchContent(
+                words.toArray(new String[0]), 4);
+        if (content.isEmpty()) {
+            Logger.w(this.getClass(), "#generateComprehensiveSection - Can NOT find \"" + indicator.getWord() + "\" in dataset");
+            return null;
+        }
+
+        ComprehensiveSection section = new ComprehensiveSection(indicator.getWord(), content.get(0));
+        return section;
     }
 
     private List<EvaluationScore> buildEmptyScoreList() {

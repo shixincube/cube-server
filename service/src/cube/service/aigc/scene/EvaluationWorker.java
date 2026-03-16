@@ -718,7 +718,7 @@ public class EvaluationWorker {
         result = result.replaceAll("The individual", "The subject");
 
         StringBuffer buf = new StringBuffer();
-        List<String> words = this.service.segmentation(result);
+        List<String> words = this.service.segmentText(result);
         for (String word : words) {
             if (word.equals("他") || word.equals("她")) {
                 buf.append("受测人");

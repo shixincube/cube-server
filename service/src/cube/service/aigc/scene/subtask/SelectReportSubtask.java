@@ -68,7 +68,7 @@ public class SelectReportSubtask extends ConversationSubtask {
         final int day = TextUtils.extractDay(query);
         if (year == 0 && month == 0 && day == 0) {
             // 没有找到日期信息
-            List<String> sentences = this.service.segmentation(query);
+            List<String> sentences = this.service.segmentText(query);
 
             long sn = TextUtils.extractSnOrId(sentences);
             if (0 == sn) {

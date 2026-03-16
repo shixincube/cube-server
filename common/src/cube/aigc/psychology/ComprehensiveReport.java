@@ -9,6 +9,7 @@ package cube.aigc.psychology;
 import cube.aigc.psychology.composition.Comprehensive;
 import cube.common.JSONable;
 import cube.common.state.AIGCStateCode;
+import cube.util.Gender;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -30,6 +31,16 @@ public class ComprehensiveReport implements JSONable {
         this.theme = theme;
         this.comprehensives = comprehensives;
         this.sections = new ArrayList<>();
+    }
+
+    public Comprehensive getComprehensiveByGender(Gender gender) {
+        for (Comprehensive comprehensive : this.comprehensives) {
+            Gender current = Gender.parse(comprehensive.getAttribute().gender);
+            if (current == gender) {
+                return comprehensive;
+            }
+        }
+        return null;
     }
 
     @Override

@@ -83,11 +83,17 @@ public class Comprehensive implements JSONable {
     }
 
     public void addResultKeywords(String keyword) {
-
+        if (null == this.resultKeywords) {
+            this.resultKeywords = new ArrayList<>();
+        }
+        this.resultKeywords.add(keyword);
     }
 
     public void addComprehensiveSection(ComprehensiveSection section) {
-
+        if (null == this.resultSections) {
+            this.resultSections = new ArrayList<>();
+        }
+        this.resultSections.add(section);
     }
 
     @Override

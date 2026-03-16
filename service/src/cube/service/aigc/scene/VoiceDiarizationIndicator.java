@@ -49,7 +49,7 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
             }
 
             // 重新分词
-            List<String> words = service.segmentation(track.recognition.text);
+            List<String> words = service.segmentText(track.recognition.text);
             track.recognition.resetWords(words);
 
             // 总时长

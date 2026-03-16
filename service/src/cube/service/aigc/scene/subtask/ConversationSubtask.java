@@ -154,7 +154,7 @@ public abstract class ConversationSubtask {
         int age = 0;
         String gender = "";
 
-        List<String> words = this.service.segmentation(query);
+        List<String> words = this.service.segmentText(query);
         int ageIndex = -1;
         int genderIndex = -1;
         for (int i = 0; i < words.size(); ++i) {

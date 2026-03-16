@@ -47,7 +47,7 @@ public class SegmentationTask extends ServiceTask {
         AIGCService service = ((AIGCCellet) this.cellet).getService();
 
         long time = System.currentTimeMillis();
-        List<String> result = service.segmentation(text);
+        List<String> result = service.segmentText(text);
         long elapsed = System.currentTimeMillis() - time;
 
         JSONArray array = new JSONArray();
