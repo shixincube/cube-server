@@ -13,6 +13,7 @@ import cube.aigc.psychology.ComprehensiveReport;
 import cube.aigc.psychology.EvaluationReport;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.Theme;
+import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.composition.Answer;
 import cube.aigc.psychology.composition.Comprehensive;
 import cube.aigc.psychology.composition.EvaluationScore;
@@ -189,7 +190,7 @@ public class ComprehensiveReportWorker implements Runnable {
                 List<EvaluationScore> scoreList = evaluationReport.getEvaluationScores();
                 // 合并指标
                 List<EvaluationScore> paintingScores = srbcEvaluation.mergeScoreList(scoreList);
-                printScore("Painting Scores", paintingScores);
+                printEvaluationScore("Painting Scores", paintingScores);
 
                 // 提取词分数
                 Scale scale = comprehensive.getScale();
@@ -200,7 +201,22 @@ public class ComprehensiveReportWorker implements Runnable {
                 }
                 // 词指标
                 List<EvaluationScore> wordScores = srbcEvaluation.evaluateWords(words);
-                printScore("Word Scores", wordScores);
+                printEvaluationScore("Word Scores", wordScores);
+
+                // 计算指标得分
+                List<Score> scores = srbcEvaluation.caleIndicatorScores(paintingScores, wordScores);
+                printScore("Total", scores);
+
+                Score result = null;
+                int max = 0;
+                for (Score score : scores) {
+                    if (score.value > max) {
+                        max = score.value;
+                        result = score;
+                    }
+                }
+
+
 
                 // Resource.getInstance().loadDataset().getContent();
                 break;
@@ -210,7 +226,7 @@ public class ComprehensiveReportWorker implements Runnable {
         }
     }
 
-    private void printScore(String title, List<EvaluationScore> scores) {
+    private void printEvaluationScore(String title, List<EvaluationScore> scores) {
         StringBuilder buf = new StringBuilder();
         buf.append("----------------------------------------------------------------\n");
         buf.append(title).append("\n");
@@ -218,6 +234,19 @@ public class ComprehensiveReportWorker implements Runnable {
             buf.append(score.indicator.getName());
             buf.append(" - ");
             buf.append(score.calcScore());
+            buf.append("\n");
+        }
+        System.out.println(buf.toString());
+    }
+
+    private void printScore(String title, List<Score> scores) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("----------------------------------------------------------------\n");
+        buf.append(title).append("\n");
+        for (Score score : scores) {
+            buf.append(score.indicator.getName());
+            buf.append(" - ");
+            buf.append(score.value);
             buf.append("\n");
         }
         System.out.println(buf.toString());

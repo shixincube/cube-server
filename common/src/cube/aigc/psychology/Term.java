@@ -382,6 +382,11 @@ public enum Term implements Terminology {
     PayAttentionToFamily("重视家庭"),
 
     /**
+     * 其他。
+     */
+    Other("其他"),
+
+    /**
      * 未知。
      */
     Unknown("未知");

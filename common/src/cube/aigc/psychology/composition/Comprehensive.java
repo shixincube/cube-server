@@ -19,6 +19,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 融合评测里表示单一被测实体的类。
+ */
 public class Comprehensive implements JSONable {
 
     private String name;
@@ -77,6 +80,14 @@ public class Comprehensive implements JSONable {
 
     public void setPainting(String fileCode, Painting painting) {
         this.paintingMap.put(fileCode, painting);
+    }
+
+    public void addResultKeywords(String keyword) {
+
+    }
+
+    public void addComprehensiveSection(ComprehensiveSection section) {
+
     }
 
     @Override

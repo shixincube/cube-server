@@ -134,6 +134,15 @@ public class Tree extends Thing {
                 / ((double) this.box.width);
     }
 
+    public BoundingBox getTrunkBoundingBox() {
+        if (null == this.trunkList) {
+            return new BoundingBox((int) Math.round(this.boundingBox.x * 0.3), this.boundingBox.y,
+                    (int) Math.round(this.boundingBox.width * 0.8), this.boundingBox.height);
+        }
+
+        return this.trunkList.get(0).boundingBox;
+    }
+
     public void addBranch(Branch branch) {
         if (null == this.branchList) {
             this.branchList = new ArrayList<>();

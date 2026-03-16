@@ -35,6 +35,10 @@ public class EvaluationFeature {
         this.keyFeatures = new ArrayList<>();
     }
 
+    public void addFeature(String description, Tendency tendency, Thing thing) {
+        this.features.add(new Feature(description, Term.Other, tendency, new Thing[] { thing }));
+    }
+
     public void addFeature(String description, Term term, Tendency tendency) {
         this.features.add(new Feature(description, term, tendency));
     }

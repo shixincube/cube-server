@@ -13,7 +13,11 @@ import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
+import cube.aigc.psychology.material.House;
+import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Tree;
+import cube.aigc.psychology.material.other.DrawingSet;
+import cube.aigc.psychology.material.tree.Root;
 import cube.util.FloatUtils;
 
 import java.util.ArrayList;
@@ -325,6 +329,7 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
 
         SpaceLayout spaceLayout = new SpaceLayout(this.painting);
         results.add(this.evalTree(spaceLayout));
+        results.add(this.evalOthers(spaceLayout));
 
         EvaluationReport report = new EvaluationReport(this.contactId, Theme.SubconsciousRelationshipBetweenACouple,
                 this.painting.getAttribute(), Reference.Normal, new PaintingConfidence(this.painting), results);
@@ -416,9 +421,11 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
             totalArray[i] = paintingNormalizationScores[i] * 0.6 + wordNormalizationScores[i] * 0.4;
         }
 
-
-
-        return null;
+        List<Score> scoreList = new ArrayList<>();
+        for (int i = 0; i < totalArray.length; ++i) {
+            scoreList.add(new Score(SRBCIndicator.values()[i], (int) Math.round(totalArray[i])));
+        }
+        return scoreList;
     }
 
     private List<EvaluationScore> buildEmptyScoreList() {
@@ -434,10 +441,150 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
 
         if (this.painting.hasTree()) {
             for (Tree tree : this.painting.getTrees()) {
-                KeyFeature keyFeature = new KeyFeature("", "");
-                feature.addKeyFeature(keyFeature);
-                feature.addScore(SRBCIndicator.BanyanTree, 3, 1);
+                double trunkWidth = tree.getTrunkBoundingBox().width;
+
+                // 树根
+                if (tree.hasRoot()) {
+                    KeyFeature keyFeature = new KeyFeature("画面中的树有树根", "");
+                    feature.addKeyFeature(keyFeature);
+
+                    // 计算树干相对根的宽度占比
+                    Root root = tree.getRoots().get(0);
+                    double radio = trunkWidth / root.getWidth();
+                    if (radio > 0.3) {
+                        keyFeature = new KeyFeature("画面中的树树干相对树根来说树干较粗", "");
+                        feature.addKeyFeature(keyFeature);
+
+                        feature.addScore(SRBCIndicator.BanyanTree, 3, 1);
+                    }
+                    else if (radio < 0.18) {
+                        keyFeature = new KeyFeature("画面中的树树干相对树根来说树干较细", "");
+                        feature.addKeyFeature(keyFeature);
+
+                        feature.addScore(SRBCIndicator.BanyanTree, 3, 1);
+                        feature.addScore(SRBCIndicator.Cedar, 2, 1);
+                        feature.addScore(SRBCIndicator.Bamboo, 1, 1);
+                    }
+                    else {
+                        keyFeature = new KeyFeature("画面中的树树干粗细相较树干来说粗细适中", "");
+                        feature.addKeyFeature(keyFeature);
+
+                        feature.addScore(SRBCIndicator.BanyanTree, 3, 1);
+                        feature.addScore(SRBCIndicator.Vine, 2, 1);
+                    }
+                }
+                else {
+                    // 无树根
+                    KeyFeature keyFeature = new KeyFeature("画面中出现的树没有画树根", "");
+                    feature.addKeyFeature(keyFeature);
+                    feature.addScore(SRBCIndicator.Dandelion, 3, 1);
+                    feature.addScore(SRBCIndicator.BanyanTree, -2, 1);
+                    feature.addScore(SRBCIndicator.OakTree, -2, 1);
+                    feature.addScore(SRBCIndicator.Cedar, -2, 1);
+                }
+
+                // 树干
+                double ratio = tree.getTrunkWidthRatio();
+                if (ratio < 0.18) {
+                    KeyFeature keyFeature = new KeyFeature("画面中出现的树树干较细", "");
+                    feature.addKeyFeature(keyFeature);
+
+                    feature.addScore(SRBCIndicator.Bamboo, 2, 1);
+                    feature.addScore(SRBCIndicator.Vine, -1, 1);
+                }
+                else if (ratio > 0.3) {
+                    KeyFeature keyFeature = new KeyFeature("画面中出现的树树干较粗", "");
+                    feature.addKeyFeature(keyFeature);
+
+                    feature.addScore(SRBCIndicator.OakTree, 2, 1);
+                    feature.addScore(SRBCIndicator.BanyanTree, -1, 1);
+                }
+                else {
+                    KeyFeature keyFeature = new KeyFeature("画面中出现的树树干粗细适中", "");
+                    feature.addKeyFeature(keyFeature);
+
+                    feature.addScore(SRBCIndicator.OakTree, 2, 1);
+                    feature.addScore(SRBCIndicator.TwinLotus, 2, 1);
+                    feature.addScore(SRBCIndicator.BanyanTree, -1, 1);
+                }
+
+                // 树洞
+                if (tree.hasHole()) {
+                    KeyFeature keyFeature = new KeyFeature("画面中出现的有树洞", "");
+                    feature.addKeyFeature(keyFeature);
+
+                    feature.addScore(SRBCIndicator.Cactus, 3, 1);
+                    feature.addScore(SRBCIndicator.Cedar, 1, 1);
+                    feature.addScore(SRBCIndicator.Sunflower, -2, 1);
+                    feature.addScore(SRBCIndicator.TwinLotus, -1, 1);
+                }
+                else {
+                    KeyFeature keyFeature = new KeyFeature("画面中出现的没有树洞", "");
+                    feature.addKeyFeature(keyFeature);
+                }
+
+                // 树冠
+                // TODO
+
+                // 果实
+                if (tree.hasFruit()) {
+                    feature.addScore(SRBCIndicator.OakTree, 1, 1);
+                    feature.addScore(SRBCIndicator.Bamboo, 1, 1);
+                }
             }
+        }
+
+        return feature;
+    }
+
+    private EvaluationFeature evalOthers(SpaceLayout spaceLayout) {
+        EvaluationFeature feature = new EvaluationFeature();
+
+        if (this.painting.hasHouse()) {
+            feature.addScore(SRBCIndicator.BanyanTree, 3, 1);
+            feature.addScore(SRBCIndicator.OakTree, 2, 1);
+            feature.addScore(SRBCIndicator.Dandelion, -2, 1);
+
+            House house = this.painting.getHouse();
+            if (house.hasPath()) {
+                feature.addScore(SRBCIndicator.Bamboo, 2, 1);
+                feature.addScore(SRBCIndicator.OakTree, 1, 1);
+                feature.addScore(SRBCIndicator.BanyanTree, -1, 1);
+            }
+        }
+
+        DrawingSet set = this.painting.getDrawingSet();
+
+        if (set.has(Label.Sun)) {
+            feature.addScore(SRBCIndicator.Sunflower, 3, 1);
+            feature.addScore(SRBCIndicator.TwinLotus, 1, 1);
+            feature.addScore(SRBCIndicator.Cactus, -1, 1);
+            feature.addScore(SRBCIndicator.Cedar, -1, 1);
+        }
+
+        if (set.has(Label.Cloud)) {
+            feature.addScore(SRBCIndicator.TwinLotus, 1, 1);
+            feature.addScore(SRBCIndicator.Dandelion, 1, 1);
+            feature.addScore(SRBCIndicator.Sunflower, -1, 1);
+        }
+
+        if (set.has(Label.Rainbow)) {
+            feature.addScore(SRBCIndicator.TwinLotus, 2, 1);
+            feature.addScore(SRBCIndicator.Sunflower, 2, 1);
+            feature.addScore(SRBCIndicator.Cactus, -1, 1);
+        }
+
+        if (set.has(Label.Bird) || set.has(Label.Butterfly)) {
+            feature.addScore(SRBCIndicator.Dandelion, 2, 1);
+            feature.addScore(SRBCIndicator.Sunflower, 1, 1);
+            feature.addScore(SRBCIndicator.Vine, -1, 1);
+            feature.addScore(SRBCIndicator.BanyanTree, -1, 1);
+        }
+
+        if (set.has(Label.Rabbit)) {
+            feature.addScore(SRBCIndicator.Sunflower, 2, 1);
+            feature.addScore(SRBCIndicator.TwinLotus, 1, 1);
+            feature.addScore(SRBCIndicator.Cactus, -1, 1);
         }
 
         return feature;
