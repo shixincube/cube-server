@@ -19,9 +19,12 @@ public class Dataset {
 
     private Map<String, String[]> questionKeywordMap;
 
+    private Map<String, String[]> questionKeywordSequenceMap;
+
     public Dataset(JSONArray array) {
         this.contentMap = new ConcurrentHashMap<>();
         this.questionKeywordMap = new ConcurrentHashMap<>();
+        this.questionKeywordSequenceMap = new ConcurrentHashMap<>();
         this.load(array);
     }
 
@@ -56,8 +59,9 @@ public class Dataset {
         return this.contentMap.keySet();
     }
 
-    public void fillQuestionKeywords(String question, String[] keywords) {
+    public void fillQuestionKeywords(String question, String[] keywords, String[] keywordSequence) {
         this.questionKeywordMap.put(question, keywords);
+        this.questionKeywordSequenceMap.put(question, keywordSequence);
     }
 
     public String matchContent(String[] keywords, int length) {
@@ -121,6 +125,91 @@ public class Dataset {
                 }
             }
             if (count >= matching) {
+                String content = this.getContent(entry.getKey());
+                if (null != content) {
+                    result.add(content);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * 根据关键词检索内容和顺序。
+     *
+     * @param keywords
+     * @param matching
+     * @return
+     */
+    public List<String> searchContentInOrder(String[] keywords, int matching) {
+        List<String> result = new ArrayList<>();
+
+        Iterator<Map.Entry<String, String[]>> iter = this.questionKeywordSequenceMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, String[]> entry = iter.next();
+            String[] queryWords = entry.getValue();
+
+            List<String> candidate = new ArrayList<>();
+            for (String qw : queryWords) {
+                for (String keyword : keywords) {
+                    if (qw.equals(keyword)) {
+                        candidate.add(qw);
+                        break;
+                    }
+                }
+            }
+
+            // 排除重复内容
+            int count = 0;
+            for (String keyword : keywords) {
+                for (String cw : candidate) {
+                    if (keyword.equalsIgnoreCase(cw)) {
+                        ++count;
+                        break;
+                    }
+                }
+            }
+
+            if (count < keywords.length) {
+                continue;
+            }
+
+            boolean isOrder = true;
+            // 判断顺序
+            List<Integer> orderList = new ArrayList<>();
+            List<String> processed = new ArrayList<>();
+            if (candidate.size() >= matching) {
+                for (String word : candidate) {
+                    if (processed.contains(word)) {
+                        continue;
+                    }
+                    processed.add(word);
+
+                    for (int i = 0; i < keywords.length; ++i) {
+                        if (word.equalsIgnoreCase(keywords[i])) {
+                            orderList.add(i);
+                            break;
+                        }
+                    }
+                }
+
+                for (int i = 0; i < orderList.size(); ++i) {
+                    int current = orderList.get(i);
+                    if (i + 1 < orderList.size()) {
+                        int next = orderList.get(i + 1);
+                        if (current > next) {
+                            isOrder = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            else {
+                isOrder = false;
+            }
+
+            if (isOrder) {
                 String content = this.getContent(entry.getKey());
                 if (null != content) {
                     result.add(content);

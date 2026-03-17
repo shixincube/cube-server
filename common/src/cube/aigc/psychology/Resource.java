@@ -74,8 +74,6 @@ public class Resource {
     private long memberFileModified = 0;
     private JSONObject membershipData;
 
-    private File mandalaFlowerPath = new File("assets/psychology/mandalaflower/");
-
     private final static Resource instance = new Resource();
 
     private Resource() {
@@ -366,18 +364,5 @@ public class Resource {
             }
         }
         return this.teenagerStrategyContent;
-    }
-
-    public List<String> getMandalaFlowerFiles() {
-        List<String> result = new ArrayList<>();
-        File[] files = this.mandalaFlowerPath.listFiles();
-        if (null != files && files.length > 0) {
-            for (File file : files) {
-                if (file.getName().endsWith("jpg")) {
-                    result.add(file.getName());
-                }
-            }
-        }
-        return result;
     }
 }

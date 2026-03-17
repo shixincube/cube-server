@@ -11,10 +11,7 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Score;
-import cube.aigc.psychology.composition.Answer;
-import cube.aigc.psychology.composition.Comprehensive;
-import cube.aigc.psychology.composition.EvaluationScore;
-import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.composition.*;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.AIGCChannel;
@@ -24,6 +21,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.scene.evaluation.Evaluation;
 import cube.service.aigc.scene.evaluation.SubconsciousRelationshipBetweenACoupleEvaluation;
+import cube.util.Gender;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -53,9 +51,18 @@ public class ComprehensiveReportWorker implements Runnable {
 
     @Override
     public void run() {
+        // 设置为正在操作
+        this.channel.setProcessing(true);
+
         try {
-            // 设置为正在操作
-            this.channel.setProcessing(true);
+            if (!this.verifyParameters()) {
+                // 验证参数失败
+                Logger.w(this.getClass(), "#run - Invalid parameter - " + this.report.sn);
+                this.report.state = AIGCStateCode.InvalidParameter;
+                this.report.finished = true;
+                this.listener.onEvaluateFailed(this.report);
+                return;
+            }
 
             // 获取单元
             AIGCUnit unit = this.service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
@@ -81,7 +88,7 @@ public class ComprehensiveReportWorker implements Runnable {
                 Painting painting = this.predictPainting(unit, comprehensive.getFileLabel(), true, false);
                 if (null == painting) {
                     // 预测绘图失败
-                    Logger.w(PsychologyScene.class, "#run - #predictPainting failed: " +
+                    Logger.w(this.getClass(), "#run - predictPainting failed: " +
                             comprehensive.getFileLabel().getFileCode());
                     // 更新单元状态
                     unit.setRunning(false);
@@ -99,7 +106,7 @@ public class ComprehensiveReportWorker implements Runnable {
                 // 2. 执行绘画评估
                 Evaluation evaluation = this.evaluate(painting);
                 if (null == evaluation) {
-                    Logger.w(PsychologyScene.class, "#run - #evaluate failed: " +
+                    Logger.w(this.getClass(), "#run - evaluate failed: " +
                             comprehensive.getFileLabel().getFileCode());
                     // 更新单元状态
                     unit.setRunning(false);
@@ -124,9 +131,49 @@ public class ComprehensiveReportWorker implements Runnable {
 
             this.listener.onEvaluateCompleted(this.report);
         } catch (Exception e) {
-            Logger.e(this.getClass(), "#run", e);
+            Logger.e(this.getClass(), "#run - sn: " + this.report.sn, e);
         } finally {
             this.channel.setProcessing(false);
+        }
+    }
+
+    private boolean verifyParameters() {
+        switch (this.report.theme) {
+            case SubconsciousRelationshipBetweenACouple:
+                List<Comprehensive> comprehensiveList = this.report.comprehensives;
+                if (comprehensiveList.size() == 2) {
+                    Comprehensive comprehensive1 = comprehensiveList.get(0);
+                    Comprehensive comprehensive2 = comprehensiveList.get(1);
+
+                    boolean genderOk = false;
+                    Attribute attribute1 = comprehensive1.getAttribute();
+                    Attribute attribute2 = comprehensive2.getAttribute();
+                    // 必须一男一女
+                    if ((attribute1.isMale() && attribute2.isFemale()) ||
+                            (attribute1.isFemale() && attribute2.isMale())) {
+                        genderOk = true;
+                    }
+
+                    // 必须选择3个词
+                    boolean scaleOk = false;
+                    Scale scale1 = comprehensive1.getScale();
+                    Question question1 = scale1.getQuestions().get(0);
+                    Scale scale2 = comprehensive2.getScale();
+                    Question question2 = scale2.getQuestions().get(0);
+                    if (question1.getChosenAnswers().size() == 3 &&
+                            question2.getChosenAnswers().size() == 3) {
+                        scaleOk = true;
+                    }
+
+                    Logger.d(this.getClass(), "#verifyParameters - gender: " + genderOk + " , scale: " + scaleOk);
+
+                    return genderOk && scaleOk;
+                }
+                else {
+                    return false;
+                }
+            default:
+                return false;
         }
     }
 
@@ -227,8 +274,27 @@ public class ComprehensiveReportWorker implements Runnable {
         }
     }
 
-    private void generateComprehensiveReport() {
+    private boolean generateComprehensiveReport() {
+        switch (this.report.theme) {
+            case SubconsciousRelationshipBetweenACouple:
+                Comprehensive male = this.report.getComprehensiveByGender(Gender.Male);
+                Comprehensive female = this.report.getComprehensiveByGender(Gender.Female);
+                if (null == male || null == female) {
+                    Logger.e(this.getClass(), "#generateComprehensiveReport - No Male or Female data");
+                    return false;
+                }
 
+                StringBuilder query = new StringBuilder(male.getKeywordWithGender());
+                query.append("，").append(female.getKeywordWithGender());
+
+                System.out.println("XJW : " + query);
+
+                return true;
+            default:
+                break;
+        }
+
+        return false;
     }
 
     private void printEvaluationScore(String title, List<EvaluationScore> scores) {

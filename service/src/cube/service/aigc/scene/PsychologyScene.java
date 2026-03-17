@@ -985,6 +985,7 @@ public class PsychologyScene {
     }
 
     /**
+     * 生成融合内容。
      *
      * @param channel
      * @param theme
@@ -992,21 +993,35 @@ public class PsychologyScene {
      * @param listener
      * @return
      */
-    public synchronized ComprehensiveReport generateReport(AIGCChannel channel, Theme theme,
-                                                           List<Comprehensive> comprehensives,
-                                                           ComprehensiveReportListener listener) {
+    public synchronized ComprehensiveReport generateComprehensive(AIGCChannel channel, Theme theme,
+                                                                  List<Comprehensive> comprehensives,
+                                                                  ComprehensiveReportListener listener) {
         if (null == channel) {
-            Logger.e(this.getClass(), "#generateReport - Channel is null");
+            Logger.e(this.getClass(), "#generateComprehensive - Channel is null");
             return null;
         }
 
         if (!theme.isComprehensive()) {
-            Logger.e(this.getClass(), "#generateReport - Unable to match the theme: " + theme.name);
+            Logger.e(this.getClass(), "#generateComprehensive - Unable to match the theme: " + theme.name);
             return null;
         }
 
+        for (Comprehensive comprehensive : comprehensives) {
+            if (!comprehensive.hasFileLabels()) {
+                for (String fileCode : comprehensive.getFileCodes()) {
+                    FileLabel fileLabel = this.service.getFile(channel.getDomain().getName(), fileCode);
+                    if (null == fileLabel) {
+                        Logger.e(this.getClass(), "#generateComprehensive - Can NOT find file: " + fileCode);
+                        return null;
+                    }
+                    // 设置文件
+                    comprehensive.addFileLabel(fileLabel);
+                }
+            }
+        }
+
         if (this.comprehensiveReportWorkerQueue.size() >= this.maxQueueLength) {
-            Logger.w(this.getClass(), "#generateReport - The queue length has reached the maximum limit: "
+            Logger.w(this.getClass(), "#generateComprehensive - The queue length has reached the maximum limit: "
                     + this.comprehensiveReportWorkerQueue.size() + "/" + this.maxQueueLength);
             return null;
         }
@@ -1030,6 +1045,9 @@ public class PsychologyScene {
             @Override
             public void run() {
                 try {
+                    // 加载配置
+                    loadConfig();
+
                     Logger.i(PsychologyScene.class, "Comprehensive report worker thread START ("
                             + numRunningComprehensiveTasks.get() + "/" + comprehensiveReportWorkerQueue.size() + ") - "
                             + Thread.currentThread().getName()
@@ -1037,16 +1055,13 @@ public class PsychologyScene {
 
                     ComprehensiveReportWorker reportWorker = comprehensiveReportWorkerQueue.poll();
                     while (null != reportWorker) {
-                        // 加载配置
-                        loadConfig();
-
                         // 工作器执行任务
                         reportWorker.run();
                         // 下一个
                         reportWorker = comprehensiveReportWorkerQueue.poll();
                     }
                 } catch (Exception e) {
-                    Logger.e(PsychologyScene.class, "#generateReport", e);
+                    Logger.e(PsychologyScene.class, "#generateComprehensive", e);
                 } finally {
                     numRunningComprehensiveTasks.decrementAndGet();
 

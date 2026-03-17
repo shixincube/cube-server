@@ -529,6 +529,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new PreInferTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.GeneratePsychologyComprehensive.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new GeneratePsychologyComprehensiveTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.GeneratePsychologyReport.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new GeneratePsychologyReportTask(this, talkContext, primitive,

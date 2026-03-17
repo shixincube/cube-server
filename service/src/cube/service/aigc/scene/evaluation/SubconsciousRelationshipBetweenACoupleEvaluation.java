@@ -7,6 +7,7 @@
 package cube.service.aigc.scene.evaluation;
 
 import cell.util.log.Logger;
+import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.PaintingConfidence;
 import cube.aigc.psychology.algorithm.Score;
@@ -18,7 +19,9 @@ import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Tree;
 import cube.aigc.psychology.material.other.DrawingSet;
 import cube.aigc.psychology.material.tree.Root;
+import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.guidance.Prompts;
 import cube.util.FloatUtils;
 
 import java.util.ArrayList;
@@ -451,7 +454,20 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
             return null;
         }
 
-        ComprehensiveSection section = new ComprehensiveSection(indicator.getWord(), content.get(0));
+        ComprehensiveSection section = null;
+
+        // 润色
+        GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                String.format(Prompts.getPrompt("FORMAT_POLISH"), content.get(0)),
+                null, null, null);
+        if (null == result) {
+            Logger.d(this.getClass(), "#generateComprehensiveSection - Generating record failed");
+            section = new ComprehensiveSection(indicator.getWord(), content.get(0));
+        }
+        else {
+            section = new ComprehensiveSection(indicator.getWord(), result.answer);
+        }
+
         return section;
     }
 

@@ -405,6 +405,17 @@ public final class TextUtils {
     }
 
     /**
+     * 过滤所有标点符号。
+     *
+     * @param text
+     * @return
+     */
+    public static String filterPunctuation(String text) {
+        String result = text.replaceAll(sEnglishPunctuation.pattern(), "");
+        return result.replaceAll(sChinesePunctuation.pattern(), "");
+    }
+
+    /**
      * 指定字符串是否是中文内容，包括中文标点符号。
      *
      * @param value

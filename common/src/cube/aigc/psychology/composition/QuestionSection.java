@@ -21,8 +21,8 @@ public class QuestionSection {
     private final List<Question> questions;
 
     public QuestionSection(JSONObject structure) {
-        this.title = structure.getString("title");
-        this.content = structure.getString("content");
+        this.title = structure.has("title") ? structure.getString("title") : "";
+        this.content = structure.has("content") ? structure.getString("content") : "";
         this.questions = new ArrayList<>();
         JSONArray array = structure.getJSONArray("questions");
         for (int i = 0; i < array.length(); ++i) {

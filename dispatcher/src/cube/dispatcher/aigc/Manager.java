@@ -188,6 +188,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new PsychologyPaintingReportState());
         httpServer.addContextHandler(new PsychologyReportPage());
         httpServer.addContextHandler(new PsychologyModifyReportRemark());
+        httpServer.addContextHandler(new PsychologyComprehensives());
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Activate());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.User());

@@ -21,6 +21,7 @@ import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.util.FileLabels;
+import cube.util.TextUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -582,7 +583,8 @@ public class ContentTools {
                         keywords.add(keyword.getWord());
                     }
                     // 填充问题关键词
-                    dataset.fillQuestionKeywords(question, keywords.toArray(new String[0]));
+                    dataset.fillQuestionKeywords(question, keywords.toArray(new String[0]),
+                            tokenizer.sentenceProcess(TextUtils.filterPunctuation(question)).toArray(new String[0]));
                 }
             }
         }

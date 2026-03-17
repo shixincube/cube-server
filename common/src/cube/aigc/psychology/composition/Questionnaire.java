@@ -32,8 +32,8 @@ public class Questionnaire {
 
     protected void build(JSONObject structure) {
         this.name = structure.getString("name");
-        this.displayName = structure.getString("displayName");
-        this.instruction = structure.getString("instruction");
+        this.displayName = structure.has("displayName") ? structure.getString("displayName") : this.name;
+        this.instruction = structure.has("instruction") ? structure.getString("instruction") : "";
         this.questionSections = new ArrayList<>();
         if (structure.has("sections")) {
             JSONArray array = structure.getJSONArray("sections");

@@ -547,6 +547,16 @@ public enum AIGCAction {
     SetPaintingReportState("setPaintingReportState"),
 
     /**
+     * 生成心理融合内容。
+     */
+    GeneratePsychologyComprehensive("generatePsychologyComprehensive"),
+
+    /**
+     * 查询心理融合报告。
+     */
+    QueryPsychologyComprehensive("queryPsychologyComprehensive"),
+
+    /**
      * 语音情绪识别。
      */
     SpeechEmotionRecognition("speechEmotionRecognition"),

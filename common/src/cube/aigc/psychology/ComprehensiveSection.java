@@ -7,6 +7,8 @@
 package cube.aigc.psychology;
 
 import cube.common.JSONable;
+import cube.util.JSONUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -24,9 +26,17 @@ public class ComprehensiveSection implements JSONable {
         this.contents.add(content);
     }
 
+    public ComprehensiveSection(JSONObject json) {
+        this.title = json.getString("title");
+        JSONArray array = json.getJSONArray("contents");
+        this.contents = JSONUtils.toStringList(array);
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("title", this.title);
+        json.put("contents", JSONUtils.toStringArray(this.contents));
         return json;
     }
 

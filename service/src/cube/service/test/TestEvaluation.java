@@ -18,6 +18,7 @@ import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.util.FloatUtils;
+import cube.util.TextUtils;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -26,7 +27,34 @@ import java.util.List;
 
 public class TestEvaluation {
 
-    public static void testEvaluationReport() {
+    public static Dataset loadDataset() {
+        Tokenizer tokenizer = new Tokenizer();
+
+        Dataset dataset = Resource.getInstance().loadDataset();
+        if (null == dataset) {
+            System.err.println("Dateset file error");
+            return null;
+        }
+
+        if (!dataset.hasAnalyzed()) {
+            for (String question : dataset.getQuestions()) {
+                TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
+                List<Keyword> keywordList = analyzer.analyze(question, 7);
+                if (keywordList.isEmpty()) {
+                    continue;
+                }
+
+                List<String> keywords = new ArrayList<>();
+                for (Keyword keyword : keywordList) {
+                    keywords.add(keyword.getWord());
+                }
+                // 填充问题关键词
+                dataset.fillQuestionKeywords(question, keywords.toArray(new String[0]),
+                        tokenizer.sentenceProcess(TextUtils.filterPunctuation(question)).toArray(new String[0]));
+            }
+        }
+
+        return dataset;
     }
 
     public static void testDataset() {
@@ -53,7 +81,8 @@ public class TestEvaluation {
                     keywords.add(keyword.getWord());
                 }
                 // 填充问题关键词
-                dataset.fillQuestionKeywords(question, keywords.toArray(new String[0]));
+                dataset.fillQuestionKeywords(question, keywords.toArray(new String[0]),
+                        tokenizer.sentenceProcess(TextUtils.filterPunctuation(question)).toArray(new String[0]));
             }
         }
 
@@ -310,6 +339,29 @@ public class TestEvaluation {
         System.out.println(conclusion.toString(4));
     }
 
+    public static void testDatasetSearch() {
+        Dataset dataset = loadDataset();
+
+//        String query = TextUtils.filterPunctuation("男方榕树型，女方向日葵型");
+//        String query = TextUtils.filterPunctuation("男方向日葵型，女方榕树型");
+        String query = TextUtils.filterPunctuation("男方榕树型，女方榕树型");
+        System.out.println("Input: " + query);
+
+        Tokenizer tokenizer = new Tokenizer();
+        List<String> keywords = tokenizer.sentenceProcess(query);
+        for (String w : keywords) {
+            System.out.println("Input keyword: " + w);
+        }
+
+        List<String> result = dataset.searchContentInOrder(keywords.toArray(new String[0]), 6);
+        if (result.isEmpty()) {
+            System.err.println("No result: " + query);
+            return;
+        }
+
+        System.out.println("Total: " + result.size() + "\n" + result.get(0));
+    }
+
     public static void main(String[] args) {
 //        testDataset();
 
@@ -325,8 +377,10 @@ public class TestEvaluation {
 
 //        testBigFiveScale();
 
-        testPANASScale();
+//        testPANASScale();
 
 //        testPADScale();
+
+        testDatasetSearch();
     }
 }

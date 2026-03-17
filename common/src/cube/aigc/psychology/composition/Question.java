@@ -56,7 +56,7 @@ public class Question {
         this.prompt = structure.has("prompt") ? structure.getString("prompt") : "";
         this.inference = structure.has("inference") ? structure.getString("inference") : "";
         this.inferenceResult = structure.has("inferenceResult") ? structure.getString("inferenceResult") : "";
-        this.choice = structure.getString("choice");
+        this.choice = structure.has("choice") ? structure.getString("choice") : CHOICE_SINGLE;
         this.questionContent = structure.has("questionContent") ? structure.getString("questionContent") : this.content;
         this.answerContent = structure.has("answerContent") ? structure.getString("answerContent") : "";
         JSONArray array = structure.getJSONArray("answers");
