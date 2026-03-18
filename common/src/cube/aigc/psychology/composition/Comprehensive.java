@@ -35,9 +35,9 @@ public class Comprehensive implements JSONable {
 
     private Map<String, Painting> paintingMap;
 
-    private List<Scale> scales;
+    private List<String> choices;
 
-    private List<String> resultKeywords;
+    private List<Scale> scales;
 
     private List<ComprehensiveSection> resultSections;
 
@@ -64,14 +64,19 @@ public class Comprehensive implements JSONable {
         this.paintingMap = new HashMap<>();
 
         this.scales = new ArrayList<>();
-        JSONArray scaleArray = json.getJSONArray("scales");
-        for (int i = 0; i< scaleArray.length(); ++i) {
-            JSONObject scaleJson = scaleArray.getJSONObject(i);
-            this.scales.add(new Scale(scaleJson));
+        if (json.has("scales")) {
+            JSONArray scaleArray = json.getJSONArray("scales");
+            for (int i = 0; i< scaleArray.length(); ++i) {
+                JSONObject scaleJson = scaleArray.getJSONObject(i);
+                this.scales.add(new Scale(scaleJson));
+            }
         }
 
-        if (json.has("resultKeywords")) {
-            this.resultKeywords = JSONUtils.toStringList(json.getJSONArray("resultKeywords"));
+        if (json.has("choices")) {
+            this.choices = JSONUtils.toStringList(json.getJSONArray("choices"));
+        }
+        else {
+            this.choices = new ArrayList<>();
         }
 
         if (json.has("resultSections")) {
@@ -116,6 +121,28 @@ public class Comprehensive implements JSONable {
         return this.fileLabels.get(0);
     }
 
+    public List<String> getChoices() {
+        return this.choices;
+    }
+
+    public String buildChoicesString() {
+        StringBuilder buf = new StringBuilder();
+        for (String word : this.choices) {
+            buf.append(word);
+            buf.append("，");
+        }
+        buf.delete(buf.length() - 1, buf.length());
+        return buf.toString();
+    }
+
+    public boolean hasScales() {
+        return (!this.scales.isEmpty());
+    }
+
+    public void addScale(Scale scale) {
+        this.scales.add(scale);
+    }
+
     public Scale getScale() {
         if (this.scales.isEmpty()) {
             return null;
@@ -128,18 +155,15 @@ public class Comprehensive implements JSONable {
         this.paintingMap.put(fileCode, painting);
     }
 
-    public void addResultKeywords(String keyword) {
-        if (null == this.resultKeywords) {
-            this.resultKeywords = new ArrayList<>();
-        }
-        this.resultKeywords.add(keyword);
-    }
-
     public void addComprehensiveSection(ComprehensiveSection section) {
         if (null == this.resultSections) {
             this.resultSections = new ArrayList<>();
         }
         this.resultSections.add(section);
+    }
+
+    public ComprehensiveSection getComprehensiveSection() {
+        return this.resultSections.get(0);
     }
 
     @Override
@@ -165,9 +189,7 @@ public class Comprehensive implements JSONable {
         }
         json.put("scales", array);
 
-        if (null != this.resultKeywords) {
-            json.put("resultKeywords", JSONUtils.toStringArray(this.resultKeywords));
-        }
+        json.put("choices", JSONUtils.toStringArray(this.choices));
 
         if (null != this.resultSections) {
             JSONArray sectionArray = new JSONArray();

@@ -11,6 +11,7 @@ import cube.aigc.psychology.algorithm.*;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.FactorSet;
 import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.common.JSONable;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.json.JSONArray;
@@ -332,7 +333,7 @@ public class EvaluationReport implements JSONable {
 
         StringBuilder script = new StringBuilder();
         script.append("var Attribute = Java.type('cube.aigc.psychology.Attribute');\n");
-        script.append("var Indicator = Java.type('cube.aigc.psychology.Indicator');\n");
+        script.append("var Indicator = Java.type('cube.aigc.psychology.indicator.Indicator');\n");
         script.append("var Reference = Java.type('cube.aigc.psychology.Reference');\n");
         script.append("var IndicatorRate = Java.type('cube.aigc.psychology.algorithm.IndicatorRate');\n");
         script.append("var Attention = Java.type('cube.aigc.psychology.algorithm.Attention');\n");

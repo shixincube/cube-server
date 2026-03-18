@@ -7,6 +7,7 @@ import cube.aigc.psychology.composition.BigFiveFactor;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.HexagonDimension;
 import cube.aigc.psychology.composition.HexagonDimensionScore;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.common.Language;
 import cube.service.aigc.scene.evaluation.HTPEvaluation;
 import cube.util.FileUtils;

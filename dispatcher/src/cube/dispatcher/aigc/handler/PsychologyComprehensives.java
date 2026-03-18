@@ -85,11 +85,39 @@ public class PsychologyComprehensives extends ContextHandler {
             }
 
             try {
-                String fileCode = request.getParameter("fc");
+                String snString = request.getParameter("sn");
+                long sn = Long.parseLong(snString);
+                JSONObject data = new JSONObject();
+                data.put("sn", sn);
+                JSONObject responseData = Manager.getInstance().syncRequest(token,
+                        AIGCAction.QueryPsychologyComprehensive, data);
+                if (null == responseData) {
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                    this.complete();
+                    return;
+                }
 
+                ComprehensiveReport result = new ComprehensiveReport(responseData);
+
+                JSONObject resultJson = result.toJSON();
+                JSONArray array = resultJson.getJSONArray("comprehensives");
+                for (int i = 0; i < array.length(); ++i) {
+                    JSONObject comprehensive = array.getJSONObject(i);
+                    if (comprehensive.has("files")) {
+                        JSONArray fileArray = comprehensive.getJSONArray("files");
+                        for (int j = 0; j < fileArray.length(); ++j) {
+                            JSONObject fileJson = fileArray.getJSONObject(j);
+                            FileLabels.reviseFileLabel(fileJson, token,
+                                    Manager.getInstance().getPerformer().getExternalHttpEndpoint(),
+                                    Manager.getInstance().getPerformer().getExternalHttpsEndpoint());
+                        }
+                    }
+                }
+
+                this.respondOk(response, resultJson);
                 this.complete();
             } catch (Exception e) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
             }
         }

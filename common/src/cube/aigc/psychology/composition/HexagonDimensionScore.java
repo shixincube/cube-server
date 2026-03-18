@@ -8,7 +8,7 @@ package cube.aigc.psychology.composition;
 
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.aigc.psychology.Indicator;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.algorithm.PaintingConfidence;

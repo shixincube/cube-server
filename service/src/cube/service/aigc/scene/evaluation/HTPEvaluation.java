@@ -17,6 +17,7 @@ import cube.aigc.psychology.composition.BigFiveFactor;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.composition.Texture;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.aigc.psychology.material.*;
 import cube.aigc.psychology.material.house.Roof;
 import cube.aigc.psychology.material.house.Window;

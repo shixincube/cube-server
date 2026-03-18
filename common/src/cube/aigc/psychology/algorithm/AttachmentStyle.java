@@ -6,7 +6,7 @@
 
 package cube.aigc.psychology.algorithm;
 
-import cube.aigc.psychology.Indicator;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.common.Language;
 
 public enum AttachmentStyle {

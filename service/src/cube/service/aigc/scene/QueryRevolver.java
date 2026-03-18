@@ -13,6 +13,7 @@ import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.common.Language;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;

@@ -7,7 +7,7 @@
 package cube.aigc.psychology.algorithm;
 
 import cell.util.log.Logger;
-import cube.aigc.psychology.Indicator;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.aigc.psychology.composition.EvaluationScore;
 import org.json.JSONArray;
 import org.json.JSONObject;

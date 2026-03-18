@@ -13,6 +13,7 @@ import cube.aigc.psychology.algorithm.AttachmentStyle;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.PersonalityAccelerator;
 import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.auth.AuthToken;
 import cube.common.Language;
 import cube.common.entity.AIGCChannel;

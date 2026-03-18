@@ -342,9 +342,35 @@ public class TestEvaluation {
     public static void testDatasetSearch() {
         Dataset dataset = loadDataset();
 
+        String query = TextUtils.filterPunctuation("榕树型爱情关系特点");
+
+        System.out.println("Input: " + query);
+
+        Tokenizer tokenizer = new Tokenizer();
+//        List<String> keywords = tokenizer.sentenceProcess(query);
+        TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
+        List<String> keywords = analyzer.analyzeOnlyWords(query, 4);
+        for (String w : keywords) {
+            System.out.println("Input keyword: " + w);
+        }
+
+        List<String> result = dataset.searchContent(keywords.toArray(new String[0]), 4);
+        if (result.isEmpty()) {
+            System.err.println("No result: " + query);
+            return;
+        }
+
+        System.out.println("Total: " + result.size() + "\n" + result.get(0));
+    }
+
+    public static void testDatasetSearchInOrder() {
+        Dataset dataset = loadDataset();
+
 //        String query = TextUtils.filterPunctuation("男方榕树型，女方向日葵型");
-//        String query = TextUtils.filterPunctuation("男方向日葵型，女方榕树型");
-        String query = TextUtils.filterPunctuation("男方榕树型，女方榕树型");
+        String query = TextUtils.filterPunctuation("男方向日葵型，女方榕树型");
+//        String query = TextUtils.filterPunctuation("男方榕树型，女方榕树型");
+//        String query = "榕树型爱情关系特点";
+
         System.out.println("Input: " + query);
 
         Tokenizer tokenizer = new Tokenizer();
@@ -353,7 +379,7 @@ public class TestEvaluation {
             System.out.println("Input keyword: " + w);
         }
 
-        List<String> result = dataset.searchContentInOrder(keywords.toArray(new String[0]), 6);
+        List<String> result = dataset.searchContentInOrder(keywords.toArray(new String[0]), keywords.size());
         if (result.isEmpty()) {
             System.err.println("No result: " + query);
             return;
@@ -381,6 +407,8 @@ public class TestEvaluation {
 
 //        testPADScale();
 
-        testDatasetSearch();
+//        testDatasetSearch();
+
+        testDatasetSearchInOrder();
     }
 }

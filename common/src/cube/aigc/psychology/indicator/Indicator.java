@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.aigc.psychology;
+package cube.aigc.psychology.indicator;
 
 import org.json.JSONObject;
 

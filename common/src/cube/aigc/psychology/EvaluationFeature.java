@@ -9,6 +9,8 @@ package cube.aigc.psychology;
 import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.BigFiveFactor;
+import cube.aigc.psychology.indicator.Indicable;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.aigc.psychology.material.Thing;
 
 import java.util.ArrayList;

@@ -15,6 +15,7 @@ import cube.aigc.psychology.algorithm.Tendency;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.composition.Texture;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Person;
 import cube.aigc.psychology.material.Thing;

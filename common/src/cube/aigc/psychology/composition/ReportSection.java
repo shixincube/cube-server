@@ -6,7 +6,7 @@
 
 package cube.aigc.psychology.composition;
 
-import cube.aigc.psychology.Indicator;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.common.JSONable;
 import cube.util.TextUtils;

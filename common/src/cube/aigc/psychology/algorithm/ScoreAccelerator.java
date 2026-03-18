@@ -7,8 +7,8 @@
 package cube.aigc.psychology.algorithm;
 
 import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.Indicable;
-import cube.aigc.psychology.Indicator;
+import cube.aigc.psychology.indicator.Indicable;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.common.JSONable;
 import cube.common.Language;

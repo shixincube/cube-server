@@ -11,6 +11,7 @@ import cell.util.log.Logger;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
 import org.json.JSONArray;

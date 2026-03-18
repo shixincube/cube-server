@@ -87,6 +87,8 @@ public class PsychologyScene {
 
     private AtomicInteger numRunningComprehensiveTasks;
 
+    private Map<Long, ComprehensiveReport> comprehensiveReportMap;
+
     private PsychologyScene() {
         this.paintingReportTaskQueue = new ConcurrentLinkedQueue<>();
         this.numRunningPaintingTasks = new AtomicInteger(0);
@@ -96,6 +98,7 @@ public class PsychologyScene {
         this.paintingMap = new ConcurrentHashMap<>();
         this.comprehensiveReportWorkerQueue = new ConcurrentLinkedQueue<>();
         this.numRunningComprehensiveTasks = new AtomicInteger(0);
+        this.comprehensiveReportMap = new ConcurrentHashMap<>();
     }
 
     public static PsychologyScene getInstance() {
@@ -1031,6 +1034,10 @@ public class PsychologyScene {
         // 添加到队列
         this.comprehensiveReportWorkerQueue.offer(worker);
 
+        // 缓存报告
+        ComprehensiveReport report = worker.getReport();
+        this.comprehensiveReportMap.put(report.sn, report);
+
         // 并发数
         int concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_NEXT_UNIT);
 
@@ -1076,6 +1083,10 @@ public class PsychologyScene {
         thread.start();
 
         return worker.getReport();
+    }
+
+    public ComprehensiveReport getComprehensiveReport(long sn) {
+        return this.comprehensiveReportMap.get(sn);
     }
 
     public String buildPrompt(List<ConversationRelation> relations, String query) {
@@ -1765,6 +1776,14 @@ public class PsychologyScene {
             this.lastConfigModified = now;
             int count = this.storage.refreshPsychologyReportRetention();
             Logger.i(this.getClass(), "#onTick - Refresh report retention: " + count);
+        }
+
+        Iterator<Map.Entry<Long, ComprehensiveReport>> citer = this.comprehensiveReportMap.entrySet().iterator();
+        while (citer.hasNext()) {
+            ComprehensiveReport comprehensiveReport = citer.next().getValue();
+            if (now - comprehensiveReport.timestamp > 12 * 60 * 60 * 1000) {
+                citer.remove();
+            }
         }
     }
 

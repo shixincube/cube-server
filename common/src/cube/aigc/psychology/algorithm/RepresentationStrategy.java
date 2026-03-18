@@ -7,7 +7,7 @@
 package cube.aigc.psychology.algorithm;
 
 import cube.aigc.psychology.Term;
-import cube.aigc.psychology.Indicator;
+import cube.aigc.psychology.indicator.Indicator;
 
 public class RepresentationStrategy {
 

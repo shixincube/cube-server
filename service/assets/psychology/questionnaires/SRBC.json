@@ -1,0 +1,52 @@
+{
+	"name": "SRBC",
+	"displayName": "Subconscious Relationship Between a Couple",
+	"instruction": "请从以下12个词语中，直觉选择3个最符合你们关系氛围的词。",
+	"sections": [{
+		"title": "",
+		"content": "",
+		"questions": [{
+			"sn": 1,
+			"choice": "multiple",
+			"content": "请从以下12个词语中，直觉选择3个最符合你们关系氛围的词。",
+			"answers": [{
+				"code": "1",
+				"content": "港湾"
+			}, {
+				"code": "2",
+				"content": "战场"
+			}, {
+				"code": "3",
+				"content": "舞台"
+			}, {
+				"code": "4",
+				"content": "驿站"
+			}, {
+				"code": "5",
+				"content": "枷锁"
+			}, {
+				"code": "6",
+				"content": "翅膀"
+			}, {
+				"code": "7",
+				"content": "灯火"
+			}, {
+				"code": "8",
+				"content": "潮汐"
+			}, {
+				"code": "9",
+				"content": "旋律"
+			}, {
+				"code": "10",
+				"content": "根系"
+			}, {
+				"code": "11",
+				"content": "影子"
+			}, {
+				"code": "12",
+				"content": "迷宫"
+			}]
+		}]
+	}],
+	"scoringScript": ""
+}

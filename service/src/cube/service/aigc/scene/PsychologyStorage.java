@@ -14,6 +14,7 @@ import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.app.CounselingSchedule;
 import cube.aigc.psychology.app.Customer;
 import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.common.Language;
 import cube.common.Storagable;
 import cube.common.state.AIGCStateCode;

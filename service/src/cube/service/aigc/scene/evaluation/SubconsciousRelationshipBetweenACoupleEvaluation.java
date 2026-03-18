@@ -1,7 +1,7 @@
 /*
  * This source file is part of Cube.
  *
- * Copyright (c) 2023-2025 Ambrose Xu.
+ * Copyright (c) 2023-2026 Ambrose Xu.
  */
 
 package cube.service.aigc.scene.evaluation;
@@ -14,6 +14,7 @@ import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
+import cube.aigc.psychology.indicator.SRBCIndicator;
 import cube.aigc.psychology.material.House;
 import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Tree;
@@ -29,97 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 
 public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation {
-    /**
-     * 指标。
-     */
-    public enum SRBCIndicator implements Indicable {
-        /**
-         * 榕树型。
-         */
-        BanyanTree("BanyanTree", "BanyanTree", 9, "榕树型"),
-
-        /**
-         * 橡树型。
-         */
-        OakTree("OakTree", "OakTree", 9, "橡树型"),
-
-        /**
-         * 藤蔓型。
-         */
-        Vine("Vine", "Vine", 9, "藤蔓型"),
-
-        /**
-         * 向日葵型。
-         */
-        Sunflower("Sunflower", "Sunflower", 9, "向日葵型"),
-
-        /**
-         * 仙人掌型。
-         */
-        Cactus("Cactus", "Cactus", 9, "仙人掌型"),
-
-        /**
-         * 竹子型。
-         */
-        Bamboo("Bamboo", "Bamboo", 9, "竹子型"),
-
-        /**
-         * 并蒂莲型。
-         */
-        TwinLotus("TwinLotus", "TwinLotus", 9, "并蒂莲型"),
-
-        /**
-         * 蒲公英型。
-         */
-        Dandelion("Dandelion", "Dandelion", 9, "蒲公英型"),
-
-        /**
-         * 雪松型。
-         */
-        Cedar("Cedar", "Cedar", 9, "雪松型"),
-
-        /**
-         * 未知。
-         */
-        Unknown("Unknown", "Unknown", 0, "未知")
-
-        ;
-
-        private final String name;
-
-        private final String code;
-
-        private final int priority;
-
-        private final String word;
-
-        SRBCIndicator(String name, String code, int priority, String word) {
-            this.name = name;
-            this.code = code;
-            this.priority = priority;
-            this.word = word;
-        }
-
-        @Override
-        public String getName() {
-            return this.name;
-        }
-
-        @Override
-        public String getCode() {
-            return this.code;
-        }
-
-        @Override
-        public int getPriority() {
-            return this.priority;
-        }
-
-        public String getWord() {
-            return this.word;
-        }
-    }
-
     /**
      * 核心词。
      */
@@ -387,8 +297,39 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
                 }
             }
             target.value += base.value;
+            target.positiveScore += base.positiveScore;
+            target.negativeScore += base.negativeScore;
             target.hit = base.hit;
+            target.positive = base.positive;
+            target.negative = base.negative;
+            target.positiveWeight = base.positiveWeight;
+            target.negativeWeight = base.negativeWeight;
         }
+
+        boolean noZero = false;
+        for (EvaluationScore es : result) {
+            if (es.calcScore() != 0.0) {
+                noZero = true;
+                break;
+            }
+        }
+
+        if (!noZero) {
+            for (EvaluationScore es : result) {
+                if (es.indicator == SRBCIndicator.Bamboo) {
+                    es.value = 2;
+                    es.hit = 1;
+                    es.positiveScore = 2;
+                    es.negativeScore = 0;
+                    es.positive = 2;
+                    es.negative = 0;
+                    es.positiveWeight = 1;
+                    es.negativeWeight = 1;
+                    break;
+                }
+            }
+        }
+
         return result;
     }
 
@@ -400,13 +341,13 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
      * @return
      */
     public List<Score> caleIndicatorScores(List<EvaluationScore> paintingScores, List<EvaluationScore> wordScores) {
-        if (paintingScores.size() != SRBCIndicator.values().length || wordScores.size() != SRBCIndicator.values().length) {
+        if (paintingScores.size() != SRBCIndicator.length() || wordScores.size() != SRBCIndicator.length()) {
             Logger.w(this.getClass(), "#caleIndicatorScores - Data length error");
             return null;
         }
 
         // 归一化绘画分数
-        double[] paintingScoreArray = new double[SRBCIndicator.values().length];
+        double[] paintingScoreArray = new double[SRBCIndicator.length()];
         for (int i = 0; i < paintingScoreArray.length; ++i) {
             EvaluationScore score = paintingScores.get(i);
             paintingScoreArray[i] = score.calcScore();
@@ -418,7 +359,7 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
         }
 
         // 归一化词分数
-        double[] wordScoreArray = new double[SRBCIndicator.values().length];
+        double[] wordScoreArray = new double[SRBCIndicator.length()];
         for (int i = 0; i < wordScoreArray.length; ++i) {
             EvaluationScore score = wordScores.get(i);
             wordScoreArray[i] = score.calcScore();
@@ -430,7 +371,7 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
         }
 
         // 总分数组
-        double[] totalArray = new double[SRBCIndicator.values().length];
+        double[] totalArray = new double[SRBCIndicator.length()];
         for (int i = 0; i < totalArray.length; ++i) {
             totalArray[i] = paintingNormalizationScores[i] * 0.6 + wordNormalizationScores[i] * 0.4;
         }
@@ -444,13 +385,14 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
 
     public ComprehensiveSection generateComprehensiveSection(Score score) {
         SRBCIndicator indicator = (SRBCIndicator) score.indicator;
-        String query = indicator.getWord() + "爱情关系特点";
+        String query = indicator.getName() + "爱情关系特点";
         List<String> words = this.service.segmentText(query);
         // 从数据集查找
-        List<String> content = Resource.getInstance().loadDataset().searchContent(
+        List<String> content = Resource.getInstance().loadDataset().searchContentInOrder(
                 words.toArray(new String[0]), 4);
         if (content.isEmpty()) {
-            Logger.w(this.getClass(), "#generateComprehensiveSection - Can NOT find \"" + indicator.getWord() + "\" in dataset");
+            Logger.w(this.getClass(), "#generateComprehensiveSection - Can NOT find \"" + indicator.getName()
+                    + "\" in dataset - " + query);
             return null;
         }
 
@@ -462,10 +404,10 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
                 null, null, null);
         if (null == result) {
             Logger.d(this.getClass(), "#generateComprehensiveSection - Generating record failed");
-            section = new ComprehensiveSection(indicator.getWord(), content.get(0));
+            section = new ComprehensiveSection(indicator.getName(), content.get(0), indicator);
         }
         else {
-            section = new ComprehensiveSection(indicator.getWord(), result.answer);
+            section = new ComprehensiveSection(indicator.getName(), result.answer, indicator);
         }
 
         return section;
@@ -474,6 +416,10 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
     private List<EvaluationScore> buildEmptyScoreList() {
         List<EvaluationScore> result = new ArrayList<>();
         for (SRBCIndicator indicator : SRBCIndicator.values()) {
+            if (indicator == SRBCIndicator.Unknown) {
+                continue;
+            }
+
             result.add(new EvaluationScore(indicator, 0));
         }
         return result;
@@ -567,7 +513,22 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
                 }
 
                 // 树冠
-                // TODO
+                double canopyAreaRatio = tree.getCanopyAreaRatio();
+                if (canopyAreaRatio >= 0.45) {
+                    // 树冠较大
+                    feature.addScore(SRBCIndicator.BanyanTree, 2, 1);
+                    feature.addScore(SRBCIndicator.Sunflower, 1, 1);
+                    feature.addScore(SRBCIndicator.Bamboo, -1, 1);
+                } else if (canopyAreaRatio <= 0.2) {
+                    // 树冠较小
+                    feature.addScore(SRBCIndicator.Dandelion, 2, 1);
+                    feature.addScore(SRBCIndicator.Sunflower, -1, 1);
+                    feature.addScore(SRBCIndicator.TwinLotus, -1, 1);
+                } else {
+                    feature.addScore(SRBCIndicator.OakTree, 2, 1);
+                    feature.addScore(SRBCIndicator.Bamboo, 1, 1);
+                    feature.addScore(SRBCIndicator.Vine, -1, 1);
+                }
 
                 // 果实
                 if (tree.hasFruit()) {

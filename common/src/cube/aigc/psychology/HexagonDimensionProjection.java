@@ -10,6 +10,7 @@ import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.HexagonDimension;
 import cube.aigc.psychology.composition.HexagonDimensionScore;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.util.FloatUtils;
 import org.json.JSONObject;
 
