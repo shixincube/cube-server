@@ -64,6 +64,8 @@ public class PsychologyStorage implements Storagable {
 
     private final String paintingReportManagementTable = "psychology_painting_report_mgmt";
 
+    private final String comprehensiveReportTable = "psychology_comprehensive";
+
     private final String customerTable = "psychology_customer";
 
     private final String scheduleTable = "psychology_schedule";
@@ -398,6 +400,33 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("retention", LiteralBase.INT, new Constraint[] {
                     Constraint.DEFAULT_0
+            })
+    };
+
+    private final StorageField[] comprehensiveFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("theme", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("summary", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("sections", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("comprehensive_1", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("comprehensive_2", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 
