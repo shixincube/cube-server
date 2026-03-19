@@ -7,11 +7,13 @@
 package cube.aigc.psychology;
 
 import cell.util.log.Logger;
+import cube.aigc.Tokenizable;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import cube.aigc.psychology.composition.Scale;
 import cube.common.Language;
 import cube.common.entity.Membership;
 import cube.util.JSONUtils;
+import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -38,14 +40,6 @@ public class Resource {
     private File corpusFile = new File("assets/psychology/corpus.json");
     private long corpusLastModified = 0;
     private JSONObject corpusJson = null;
-
-//    private File benchmarkScoreFile = new File("assets/psychology/benchmark.json");
-//    private long benchmarkScoreLastModified = 0;
-//    private Benchmark benchmark;
-
-//    private File hexDimProjectionFile = new File("assets/psychology/projection.json");
-//    private long hexDimProjectionModified = 0;
-//    private HexagonDimensionProjection hexDimProjection;
 
     private File questionnairesPath = new File("assets/psychology/questionnaires/");
     private Map<String, File> scaleNameFileMap = new ConcurrentHashMap<>();
@@ -74,6 +68,8 @@ public class Resource {
     private long memberFileModified = 0;
     private JSONObject membershipData;
 
+    private Tokenizable tokenizer;
+
     private final static Resource instance = new Resource();
 
     private Resource() {
@@ -82,6 +78,10 @@ public class Resource {
 
     public static Resource getInstance() {
         return Resource.instance;
+    }
+
+    public void setTokenizer(Tokenizable tokenizer) {
+        this.tokenizer = tokenizer;
     }
 
     public boolean checkFiles() {
@@ -99,6 +99,14 @@ public class Resource {
         }
         else {
             Logger.i(this.getClass(), "#checkFiles - File exists: " + this.corpusFile.getName());
+        }
+
+        if (!this.datasetFile.exists()) {
+            Logger.e(this.getClass(), "#checkFiles - File is NOT exists: " + this.datasetFile.getName());
+            return false;
+        }
+        else {
+            Logger.i(this.getClass(), "#checkFiles - File exists: " + this.datasetFile.getName());
         }
 
         if (!this.childStrategyFile.exists()) {
@@ -271,6 +279,14 @@ public class Resource {
                 try {
                     byte[] data = Files.readAllBytes(Paths.get(this.datasetFile.getAbsolutePath()));
                     this.dataset = new Dataset(new JSONArray(new String(data, StandardCharsets.UTF_8)));
+
+                    // 预处理
+                    for (String question : this.dataset.getQuestions()) {
+                        List<String> keywords = this.tokenizer.analyze(question, 7);
+                        // 填充问题关键词
+                        this.dataset.fillQuestionKeywords(question, keywords.toArray(new String[0]),
+                                tokenizer.segment(TextUtils.filterPunctuation(question)).toArray(new String[0]));
+                    }
                 } catch (Exception e) {
                     Logger.e(this.getClass(), "#loadDataset", e);
                 }

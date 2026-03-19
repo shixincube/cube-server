@@ -574,19 +574,14 @@ public class ContentTools {
             if (!dataset.hasAnalyzed()) {
                 for (String question : dataset.getQuestions()) {
                     TFIDFAnalyzer analyzer = new TFIDFAnalyzer(tokenizer);
-                    List<Keyword> keywordList = analyzer.analyze(question, 7);
-                    if (keywordList.isEmpty()) {
-                        continue;
-                    }
-
-                    List<String> keywords = new ArrayList<>();
-                    for (Keyword keyword : keywordList) {
-                        keywords.add(keyword.getWord());
-                    }
+                    List<String> keywords = analyzer.analyzeOnlyWords(question, 7);
                     // 填充问题关键词
                     dataset.fillQuestionKeywords(question, keywords.toArray(new String[0]),
                             tokenizer.sentenceProcess(TextUtils.filterPunctuation(question)).toArray(new String[0]));
                 }
+            }
+            else {
+                Logger.d(ContentTools.class, "#extract - The dataset is ready");
             }
         }
 

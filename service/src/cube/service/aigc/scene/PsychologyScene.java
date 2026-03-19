@@ -27,6 +27,7 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.common.state.CVStateCode;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.resource.FastTokenizer;
 import cube.service.aigc.scene.evaluation.*;
 import cube.service.aigc.scene.node.DetectTeenagerQueryStrategyNode;
 import cube.service.aigc.scene.node.TeenagerProblemClassificationNode;
@@ -131,6 +132,7 @@ public class PsychologyScene {
             this.lastConfigModified = System.currentTimeMillis();
 
             // 检查资源文件
+            Resource.getInstance().setTokenizer(new FastTokenizer(this.service.getTokenizer()));
             Resource.getInstance().checkFiles();
 
             // 数据管理器设置
