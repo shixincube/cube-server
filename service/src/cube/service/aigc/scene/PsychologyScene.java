@@ -1029,7 +1029,7 @@ public class PsychologyScene {
             return null;
         }
 
-        ComprehensiveReportWorker worker = new ComprehensiveReportWorker(this.service, channel, theme,
+        ComprehensiveReportWorker worker = new ComprehensiveReportWorker(this.service, this.storage, channel, theme,
                 comprehensives, listener);
         // 添加到队列
         this.comprehensiveReportWorkerQueue.offer(worker);
@@ -1086,7 +1086,11 @@ public class PsychologyScene {
     }
 
     public ComprehensiveReport getComprehensiveReport(long sn) {
-        return this.comprehensiveReportMap.get(sn);
+        ComprehensiveReport report = this.comprehensiveReportMap.get(sn);
+        if (null == report) {
+            report = this.storage.readComprehensiveReport(sn);
+        }
+        return report;
     }
 
     public String buildPrompt(List<ConversationRelation> relations, String query) {

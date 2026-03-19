@@ -39,7 +39,7 @@ public class Comprehensive implements JSONable {
 
     private List<Scale> scales;
 
-    private List<ComprehensiveSection> resultSections;
+    private List<ComprehensiveSection> sections;
 
     public Comprehensive(JSONObject json) {
         this.name = json.getString("name");
@@ -79,11 +79,11 @@ public class Comprehensive implements JSONable {
             this.choices = new ArrayList<>();
         }
 
-        if (json.has("resultSections")) {
-            this.resultSections = new ArrayList<>();
-            JSONArray array = json.getJSONArray("resultSections");
+        if (json.has("sections")) {
+            this.sections = new ArrayList<>();
+            JSONArray array = json.getJSONArray("sections");
             for (int i = 0; i < array.length(); ++i) {
-                this.resultSections.add(new ComprehensiveSection(array.getJSONObject(i)));
+                this.sections.add(new ComprehensiveSection(array.getJSONObject(i)));
             }
         }
     }
@@ -106,10 +106,10 @@ public class Comprehensive implements JSONable {
 
     public String getKeywordWithGender() {
         if (this.attribute.isMale()) {
-            return "男方" + this.resultSections.get(0).title;
+            return "男方" + this.sections.get(0).title;
         }
         else {
-            return "女方" + this.resultSections.get(0).title;
+            return "女方" + this.sections.get(0).title;
         }
     }
 
@@ -156,14 +156,14 @@ public class Comprehensive implements JSONable {
     }
 
     public void addComprehensiveSection(ComprehensiveSection section) {
-        if (null == this.resultSections) {
-            this.resultSections = new ArrayList<>();
+        if (null == this.sections) {
+            this.sections = new ArrayList<>();
         }
-        this.resultSections.add(section);
+        this.sections.add(section);
     }
 
     public ComprehensiveSection getComprehensiveSection() {
-        return this.resultSections.get(0);
+        return this.sections.get(0);
     }
 
     @Override
@@ -191,12 +191,12 @@ public class Comprehensive implements JSONable {
 
         json.put("choices", JSONUtils.toStringArray(this.choices));
 
-        if (null != this.resultSections) {
+        if (null != this.sections) {
             JSONArray sectionArray = new JSONArray();
-            for (ComprehensiveSection section : this.resultSections) {
+            for (ComprehensiveSection section : this.sections) {
                 sectionArray.put(section.toJSON());
             }
-            json.put("resultSections", sectionArray);
+            json.put("sections", sectionArray);
         }
 
         return json;

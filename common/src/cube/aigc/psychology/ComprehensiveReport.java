@@ -34,9 +34,11 @@ public class ComprehensiveReport implements JSONable {
 
     public boolean finished = false;
 
-    public String summary;
+    public long elapsed;
 
-    public List<ComprehensiveSection> sections;
+    private String summary;
+
+    private List<ComprehensiveSection> sections;
 
     public ComprehensiveReport(Theme theme, List<Comprehensive> comprehensives) {
         this.sn = ConfigUtils.generateSerialNumber();
@@ -50,6 +52,7 @@ public class ComprehensiveReport implements JSONable {
     public ComprehensiveReport(JSONObject json) {
         this.sn = json.getLong("sn");
         this.timestamp = json.getLong("timestamp");
+        this.elapsed = json.getLong("elapsed");
         this.theme = Theme.parse(json.getString("theme"));
 
         this.comprehensives = new ArrayList<>();
@@ -67,6 +70,22 @@ public class ComprehensiveReport implements JSONable {
         for (int i = 0; i < array.length(); ++i) {
             this.sections.add(new ComprehensiveSection(array.getJSONObject(i)));
         }
+    }
+
+    public ComprehensiveReport(long sn, long timestamp, long elapsed, Theme theme, AIGCStateCode state) {
+        this.sn = sn;
+        this.timestamp = timestamp;
+        this.elapsed = elapsed;
+        this.theme = theme;
+        this.comprehensives = new ArrayList<>();
+        this.state = state;
+        this.finished = true;
+        this.summary = "";
+        this.sections = new ArrayList<>();
+    }
+
+    public void addComprehensive(Comprehensive comprehensive) {
+        this.comprehensives.add(comprehensive);
     }
 
     public Comprehensive getComprehensiveByGender(Gender gender) {
@@ -91,11 +110,20 @@ public class ComprehensiveReport implements JSONable {
         this.sections.add(section);
     }
 
+    public JSONArray outputSections() {
+        JSONArray array = new JSONArray();
+        for (ComprehensiveSection section : this.sections) {
+            array.put(section.toJSON());
+        }
+        return array;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
         json.put("timestamp", this.timestamp);
+        json.put("elapsed", this.elapsed);
         json.put("theme", this.theme.code);
 
         JSONArray array = new JSONArray();
@@ -108,13 +136,7 @@ public class ComprehensiveReport implements JSONable {
         json.put("finished", this.finished);
 
         json.put("summary", this.summary);
-
-        array = new JSONArray();
-        for (ComprehensiveSection section : this.sections) {
-            array.put(section.toJSON());
-        }
-        json.put("sections", array);
-
+        json.put("sections", this.outputSections());
         return json;
     }
 

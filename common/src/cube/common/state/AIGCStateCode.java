@@ -67,6 +67,11 @@ public enum AIGCStateCode {
     Interrupted(12),
 
     /**
+     * 已删除。
+     */
+    Deleted(13),
+
+    /**
      * 令牌不一致。
      */
     InconsistentToken(21),

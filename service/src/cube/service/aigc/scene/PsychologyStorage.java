@@ -403,7 +403,7 @@ public class PsychologyStorage implements Storagable {
             })
     };
 
-    private final StorageField[] comprehensiveFields = new StorageField[] {
+    private final StorageField[] comprehensiveReportFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY
             }),
@@ -413,7 +413,13 @@ public class PsychologyStorage implements Storagable {
             new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("elapsed", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
             new StorageField("theme", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
             new StorageField("summary", LiteralBase.STRING, new Constraint[] {
@@ -426,6 +432,15 @@ public class PsychologyStorage implements Storagable {
                     Constraint.DEFAULT_NULL
             }),
             new StorageField("comprehensive_2", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("comprehensive_3", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("comprehensive_4", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("comprehensive_5", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             })
     };
@@ -656,6 +671,22 @@ public class PsychologyStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.paintingReportManagementTable, this.paintingReportManagementFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.paintingReportManagementTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.comprehensiveReportTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.comprehensiveReportTable, this.comprehensiveReportFields)) {
+                // 优化字段
+                this.storage.execute("ALTER TABLE `" + this.comprehensiveReportTable +
+                        "` CHANGE COLUMN `summary` `summary` MEDIUMTEXT NULL DEFAULT NULL");
+                this.storage.execute("ALTER TABLE `" + this.comprehensiveReportTable +
+                        "` CHANGE COLUMN `sections` `sections` MEDIUMTEXT NULL DEFAULT NULL");
+                for (int i = 1; i <= 5; ++i) {
+                    this.storage.execute("ALTER TABLE `" + this.comprehensiveReportTable +
+                            "` CHANGE COLUMN `comprehensive_" + i + "` `comprehensive_" + i + "` MEDIUMTEXT NULL DEFAULT NULL");
+                }
+                Logger.i(this.getClass(), "Created table '" + this.comprehensiveReportTable + "' successfully");
             }
         }
 
@@ -1498,6 +1529,124 @@ public class PsychologyStorage implements Storagable {
         }, new Conditional[] {
                 Conditional.createEqualTo("report_sn", reportSn)
         });
+    }
+
+    public ComprehensiveReport readComprehensiveReport(long reportSn) {
+        List<StorageField[]> result = this.storage.executeQuery(this.comprehensiveReportTable,
+                this.comprehensiveReportFields, new Conditional[] {
+                        Conditional.createEqualTo("sn", reportSn)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        ComprehensiveReport report = new ComprehensiveReport(data.get("sn").getLong(), data.get("timestamp").getLong(),
+                data.get("elapsed").getLong(), Theme.parse(data.get("theme").getString()),
+                AIGCStateCode.parse(data.get("state").getInt()));
+        // 摘要
+        report.setSummary(data.get("summary").getString());
+
+        if (!data.get("sections").isNullValue()) {
+            JSONArray arrayJson = null;
+            try {
+                arrayJson = new JSONArray(data.get("sections").getString().trim());
+            } catch (Exception e) {
+                try {
+                    arrayJson = new JSONArray(JSONUtils.serializeLineFeed(data.get("sections").getString().trim()));
+                } catch (Exception se) {
+                    Logger.e(this.getClass(), "#readComprehensiveReport", se);
+                    return null;
+                }
+            }
+
+            for (int i = 0; i < arrayJson.length(); ++i) {
+                JSONObject sectionJson = arrayJson.getJSONObject(i);
+                ComprehensiveSection section = new ComprehensiveSection(sectionJson);
+                report.addSection(section);
+            }
+        }
+
+        for (int i = 1; i <= 5; ++i) {
+            String name = "comprehensive_" + i;
+            if (!data.get(name).isNullValue()) {
+                JSONObject json = null;
+                try {
+                    json = new JSONObject(data.get(name).getString().trim());
+                } catch (Exception e) {
+                    try {
+                        json = new JSONObject(JSONUtils.serializeLineFeed(data.get(name).getString().trim()));
+                    } catch (Exception se) {
+                        Logger.e(this.getClass(), "#readComprehensiveReport", se);
+                        return null;
+                    }
+                }
+
+                Comprehensive comprehensive = new Comprehensive(json);
+                report.addComprehensive(comprehensive);
+            }
+        }
+        return report;
+    }
+
+    public boolean writeComprehensiveReport(long contactId, ComprehensiveReport report) {
+        List<StorageField[]> result = this.storage.executeQuery(this.comprehensiveReportTable,
+                new StorageField[] {
+                        new StorageField("state", LiteralBase.INT)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("sn", report.sn),
+                        Conditional.createAnd(),
+                        Conditional.createEqualTo("contact_id", contactId)
+                });
+
+        String sectionsString = report.outputSections().toString();
+        sectionsString = JSONUtils.serializeEscape(sectionsString);
+
+        String[] comprehensiveStringArray = new String[5];
+        for (int i = 0; i < comprehensiveStringArray.length && i < report.comprehensives.size(); ++i) {
+            String jsonString = report.comprehensives.get(i).toJSON().toString();
+            comprehensiveStringArray[i] = JSONUtils.serializeEscape(jsonString);
+        }
+
+        if (result.isEmpty()) {
+            // 插入
+            return this.storage.executeInsert(this.comprehensiveReportTable, new StorageField[] {
+                    new StorageField("sn", report.sn),
+                    new StorageField("contact_id", contactId),
+                    new StorageField("timestamp", report.timestamp),
+                    new StorageField("elapsed", report.elapsed),
+                    new StorageField("theme", report.theme.code),
+                    new StorageField("state", report.state.code),
+                    new StorageField("summary", report.getSummary()),
+                    new StorageField("sections", sectionsString),
+                    new StorageField("comprehensive_1", comprehensiveStringArray[0]),
+                    new StorageField("comprehensive_2", comprehensiveStringArray[1]),
+                    new StorageField("comprehensive_3", comprehensiveStringArray[2]),
+                    new StorageField("comprehensive_4", comprehensiveStringArray[3]),
+                    new StorageField("comprehensive_5", comprehensiveStringArray[4])
+            });
+        }
+        else {
+            // 更新
+            return this.storage.executeUpdate(this.comprehensiveReportTable, new StorageField[] {
+                            new StorageField("timestamp", report.timestamp),
+                            new StorageField("elapsed", report.elapsed),
+                            new StorageField("theme", report.theme.code),
+                            new StorageField("state", report.state.code),
+                            new StorageField("summary", report.getSummary()),
+                            new StorageField("sections", sectionsString),
+                            new StorageField("comprehensive_1", comprehensiveStringArray[0]),
+                            new StorageField("comprehensive_2", comprehensiveStringArray[1]),
+                            new StorageField("comprehensive_3", comprehensiveStringArray[2]),
+                            new StorageField("comprehensive_4", comprehensiveStringArray[3]),
+                            new StorageField("comprehensive_5", comprehensiveStringArray[4])
+                    },
+                    new Conditional[] {
+                            Conditional.createEqualTo("sn", report.sn),
+                            Conditional.createAnd(),
+                            Conditional.createEqualTo("contact_id", contactId)
+                    });
+        }
     }
 
     public boolean writeCustomer(long contactId, Customer customer) {
