@@ -8,6 +8,7 @@ package cube.common.entity;
 
 import cube.common.Language;
 import cube.util.ConfigUtils;
+import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -51,6 +52,8 @@ public class VoiceDiarization extends Entity {
 
     public VoiceIndicator indicator;
 
+    public String analysis;
+
     public VoiceDiarization(JSONObject json) {
         super(json);
 
@@ -85,6 +88,10 @@ public class VoiceDiarization extends Entity {
 
         if (json.has("indicator")) {
             this.indicator = new VoiceIndicator(json.getJSONObject("indicator"));
+        }
+
+        if (json.has("analysis")) {
+            this.analysis = json.getString("analysis");
         }
     }
 
@@ -214,6 +221,15 @@ public class VoiceDiarization extends Entity {
         }
     }
 
+    public String buildVoiceText() {
+        StringBuilder buf = new StringBuilder();
+        for (VoiceTrack track : this.tracks) {
+            buf.append(track.display).append(TextUtils.gColonInChinese).append(track.recognition.text);
+            buf.append("\n");
+        }
+        return buf.toString();
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
@@ -247,6 +263,10 @@ public class VoiceDiarization extends Entity {
 
         if (null != this.indicator) {
             json.put("indicator", this.indicator.toJSON());
+        }
+
+        if (null != this.analysis) {
+            json.put("analysis", this.analysis);
         }
         return json;
     }

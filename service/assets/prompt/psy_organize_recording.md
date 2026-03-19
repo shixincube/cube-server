@@ -7,7 +7,7 @@
 # Input Data
 【访谈原始记录】：
 """
-(在此处粘贴访谈逐字稿或粗略笔记)
+{{访谈原始记录}}
 """
 
 # Instructions & Constraints

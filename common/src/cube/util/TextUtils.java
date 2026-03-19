@@ -1015,6 +1015,29 @@ public final class TextUtils {
         }
     }
 
+    /**
+     * 提取提示词模板里的标签。
+     *
+     * @param text
+     * @return
+     */
+    public static List<String> extractPromptTemplateTag(String text) {
+        List<String> result = new ArrayList<>();
+        int pos = 0;
+        int start = 0;
+        int end = 0;
+        while (pos >= 0) {
+            start = text.indexOf("{{", pos);
+            end = text.indexOf("}}", pos);
+            if (start < 0 || end < 0) {
+                break;
+            }
+            result.add(text.substring(start, end + 2));
+            pos = end + 2;
+        }
+        return result;
+    }
+
     public static List<String> randomSplitString(String text) {
         List<String> textList = new ArrayList<>();
         int length = text.length();
@@ -1196,21 +1219,27 @@ public final class TextUtils {
 //        System.out.println(isJapanese("デディ"));
 //        System.out.println(isJapanese("こ"));
 //        System.out.println(isJapanese("Hello こか"));
-        System.out.println(isJapanese("世界せだって"));
+//        System.out.println(isJapanese("世界せだって"));
 
-        StringBuilder buf = new StringBuilder();
+//        StringBuilder buf = new StringBuilder();
 //        String text = "世界 こかHello";
-        String text = "せだって";
-        for (int i = 0; i < text.length(); ++i) {
-            String word = text.substring(i, i + 1);
-            if (isChineseWord(word)) {
-                buf.append(word);
-            }
+//        String text = "せだって";
+//        for (int i = 0; i < text.length(); ++i) {
+//            String word = text.substring(i, i + 1);
+//            if (isChineseWord(word)) {
+//                buf.append(word);
+//            }
+//
+//            if (i + 1 == text.length()) {
+//                break;
+//            }
+//        }
+//        System.out.println(buf.toString());
 
-            if (i + 1 == text.length()) {
-                break;
-            }
+        String text = "\"\"\"\n测试文本：{{文本内容}}\n\"\"\"\n\n{{我是谁}} # 标题\n";
+        List<String> result = extractPromptTemplateTag(text);
+        for (String tag : result) {
+            System.out.println(tag);
         }
-        System.out.println(buf.toString());
     }
 }

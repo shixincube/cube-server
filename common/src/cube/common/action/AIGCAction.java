@@ -247,6 +247,11 @@ public enum AIGCAction {
     DeleteSpeakerDiarization("deleteSpeakerDiarization"),
 
     /**
+     * 谈话分析。
+     */
+    SpeechAnalysis("speechAnalysis"),
+
+    /**
      * 分词。
      */
     Segmentation("segmentation"),

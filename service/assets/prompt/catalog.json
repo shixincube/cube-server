@@ -1,6 +1,10 @@
 {
   "files": [
     {
+      "name": "psy_organize_recording",
+      "file": "psy_organize_recording.md"
+    },
+    {
       "name": "srbc-integration_zone",
       "file": "srbc-integration_zone.md"
     },

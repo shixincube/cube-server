@@ -541,6 +541,9 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("elapsed", LiteralBase.LONG, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("analysis", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 
@@ -791,6 +794,8 @@ public class AIGCStorage implements Storagable {
         if (!this.storage.exist(this.voiceDiarizationTable)) {
             // 不存在，建新表
             if (this.storage.executeCreate(this.voiceDiarizationTable, this.voiceDiarizationFields)) {
+                this.storage.execute("ALTER TABLE `" + this.voiceDiarizationTable +
+                        "` CHANGE COLUMN `analysis` `analysis` MEDIUMTEXT NULL DEFAULT NULL");
                 Logger.i(this.getClass(), "Created table '" + this.voiceDiarizationTable + "' successfully");
             }
         }
@@ -2533,6 +2538,14 @@ public class AIGCStorage implements Storagable {
         });
     }
 
+    public boolean updateVoiceDiarizationAnalysis(VoiceDiarization diarization) {
+        return this.storage.executeUpdate(this.voiceDiarizationTable, new StorageField[] {
+                new StorageField("analysis", diarization.analysis)
+        }, new Conditional[] {
+                Conditional.createEqualTo("id", diarization.getId())
+        });
+    }
+
     public boolean writeVoiceDiarization(VoiceDiarization diarization) {
         // 删除旧数据
         this.deleteVoiceDiarization(diarization.fileCode);
@@ -2546,7 +2559,8 @@ public class AIGCStorage implements Storagable {
                 new StorageField("title", diarization.title),
                 new StorageField("remark", diarization.remark),
                 new StorageField("duration", Math.round(diarization.duration * 1000)),
-                new StorageField("elapsed", diarization.elapsed)
+                new StorageField("elapsed", diarization.elapsed),
+                new StorageField("analysis", diarization.analysis)
         });
 
         for (VoiceTrack track : diarization.tracks) {
@@ -2591,6 +2605,10 @@ public class AIGCStorage implements Storagable {
                 map.get("file_code").getString(),
                 map.get("duration").getLong() / 1000.d, map.get("elapsed").getLong());
 
+        if (!map.get("analysis").isNullValue()) {
+            voiceDiarization.analysis = map.get("analysis").getString();
+        }
+
         List<StorageField[]> trackResult = this.storage.executeQuery(this.voiceTrackTable, this.voiceTrackFields, new Conditional[] {
                 Conditional.createEqualTo("vid", voiceDiarization.getId())
         });
@@ -2625,6 +2643,10 @@ public class AIGCStorage implements Storagable {
                     map.get("cid").getLong(), map.get("title").getString(), map.get("remark").getString(),
                     map.get("file_code").getString(),
                     map.get("duration").getLong() / 1000.d, map.get("elapsed").getLong());
+
+            if (!map.get("analysis").isNullValue()) {
+                voiceDiarization.analysis = map.get("analysis").getString();
+            }
 
             List<StorageField[]> trackResult = this.storage.executeQuery(this.voiceTrackTable, this.voiceTrackFields, new Conditional[] {
                     Conditional.createEqualTo("vid", voiceDiarization.getId())

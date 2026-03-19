@@ -40,6 +40,7 @@ import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.guidance.GuideFlow;
 import cube.service.aigc.guidance.Guides;
+import cube.service.aigc.guidance.Prompts;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.*;
@@ -3154,6 +3155,52 @@ public class AIGCService extends AbstractModule implements Generatable {
     public FileLabel stopVoiceStream(AuthToken authToken, String streamName) {
         // 直接停止
         return CounselingManager.getInstance().stopStream(authToken, streamName);
+    }
+
+    /**
+     * 执行语音内容分析。
+     *
+     * @param authToken
+     * @param fileCode
+     * @param templateName
+     * @return
+     */
+    public String performSpeechAnalysis(AuthToken authToken, String fileCode, String templateName) {
+        VoiceDiarization voiceDiarization = this.storage.readVoiceDiarization(fileCode);
+        if (null == voiceDiarization) {
+            Logger.w(this.getClass(), "#performSpeechAnalysis - No voice diarization: " + fileCode);
+            return null;
+        }
+
+        String prompt = Prompts.getPrompt(templateName);
+        if (null == prompt) {
+            Logger.w(this.getClass(), "#performSpeechAnalysis - No prompt template: " + templateName);
+            return null;
+        }
+
+        List<String> tag = TextUtils.extractPromptTemplateTag(prompt);
+        prompt = prompt.replace(tag.get(0), voiceDiarization.buildVoiceText());
+
+        System.out.println("XJW\n" + prompt);
+
+        GeneratingRecord result = this.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
+                new GeneratingOption());
+        if (null == result) {
+            Logger.w(this.getClass(), "#performSpeechAnalysis - Generates failed: " + fileCode);
+            return null;
+        }
+
+        // 填写数据
+        voiceDiarization.analysis = result.answer;
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                storage.updateVoiceDiarizationAnalysis(voiceDiarization);
+            }
+        });
+
+        return voiceDiarization.analysis;
     }
 
     /**
