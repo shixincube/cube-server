@@ -19,6 +19,8 @@ import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+
 /**
  * 语音分析任务。
  */
@@ -46,8 +48,18 @@ public class SpeechAnalysisTask extends ServiceTask {
         String fileCode = packet.data.getString("fileCode");
         String templateName = packet.data.getString("templateName");
 
+        HashMap<String, String> parameters = null;
+        if (packet.data.has("parameters")) {
+            parameters = new HashMap<>();
+            JSONObject parameterJson = packet.data.getJSONObject("parameters");
+            for (String key : parameterJson.keySet()) {
+                String value = parameterJson.get(key).toString();
+                parameters.put(key, value);
+            }
+        }
+
         // 执行 Speech Analysis
-        String result = service.performSpeechAnalysis(authToken, fileCode, templateName);
+        String result = service.performSpeechAnalysis(authToken, fileCode, templateName, parameters);
         if (null != result) {
             JSONObject resultJson = new JSONObject();
             resultJson.put("fileCode", fileCode);

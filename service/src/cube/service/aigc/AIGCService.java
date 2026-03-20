@@ -3163,9 +3163,11 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param authToken
      * @param fileCode
      * @param templateName
+     * @param parameters
      * @return
      */
-    public String performSpeechAnalysis(AuthToken authToken, String fileCode, String templateName) {
+    public String performSpeechAnalysis(AuthToken authToken, String fileCode, String templateName,
+                                        Map<String, String> parameters) {
         VoiceDiarization voiceDiarization = this.storage.readVoiceDiarization(fileCode);
         if (null == voiceDiarization) {
             Logger.w(this.getClass(), "#performSpeechAnalysis - No voice diarization: " + fileCode);
@@ -3179,9 +3181,15 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         List<String> tag = TextUtils.extractPromptTemplateTag(prompt);
-        prompt = prompt.replace(tag.get(0), voiceDiarization.buildVoiceText());
-
-        System.out.println("XJW: " + prompt.length() + "\n" + prompt);
+        if (null == parameters || parameters.isEmpty()) {
+            prompt = prompt.replace(tag.get(0), voiceDiarization.buildVoiceText());
+            prompt = prompt.replace(tag.get(1), TimeUtils.formatDateString(voiceDiarization.getTimestamp(), Language.Chinese));
+            prompt = prompt.replace(tag.get(2), TimeUtils.calcTimeDuration((long)(voiceDiarization.duration * 1000)).toHumanString());
+            prompt = prompt.replace(tag.get(3), "线下");
+        }
+        else {
+            // TODO XJW
+        }
 
         GeneratingRecord result = this.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
                 new GeneratingOption());

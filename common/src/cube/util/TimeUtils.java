@@ -6,11 +6,13 @@
 
 package cube.util;
 
+import cube.common.Language;
 import cube.util.lunar.LunarCalendar;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * 时间操作相关的辅助函数库。
@@ -26,6 +28,12 @@ public final class TimeUtils {
     private final static long TD_DAY = 24 * TD_HOUR;
 
     private final static SimpleDateFormat gsDateFormatPathSymbol = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+
+    private final static SimpleDateFormat sDateFormatForChinese =
+            new SimpleDateFormat("yyyy年MM月dd日，HH时mm分ss秒", Locale.CHINESE);
+
+    private final static SimpleDateFormat sDateFormatForEnglish =
+            new SimpleDateFormat("MMMM d, yyyy, hh:mm:ss", Locale.ENGLISH);
 
     private TimeUtils() {
     }
@@ -146,6 +154,17 @@ public final class TimeUtils {
                 return "星期六";
             default:
                 return "";
+        }
+    }
+
+    public static String formatDateString(long time, Language language) {
+        Date date = new Date();
+        date.setTime(time);
+        if (language.isChinese()) {
+            return sDateFormatForChinese.format(date);
+        }
+        else {
+            return sDateFormatForEnglish.format(date);
         }
     }
 }
