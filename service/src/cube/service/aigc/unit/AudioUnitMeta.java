@@ -85,7 +85,7 @@ public class AudioUnitMeta extends UnitMeta {
         }
 
         JSONObject payload = Packet.extractDataPayload(response);
-        if (this.action == AIGCAction.SpeakerDiarization) {
+        if (this.action == AIGCAction.SpeechDiarization) {
             final VoiceDiarization result = new VoiceDiarization(payload.getJSONObject("result"));
             // 补齐参数
             result.contactId = this.authToken.getContactId();

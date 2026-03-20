@@ -234,17 +234,17 @@ public enum AIGCAction {
     /**
      * 说话人分割聚类。
      */
-    SpeakerDiarization("speakerDiarization"),
+    SpeechDiarization("speechDiarization"),
 
     /**
      * 获取说话人分割数据清单。
      */
-    ListSpeakerDiarizations("listSpeakerDiarizations"),
+    ListSpeechDiarizations("listSpeechDiarizations"),
 
     /**
      * 删除说话人分析数据。
      */
-    DeleteSpeakerDiarization("deleteSpeakerDiarization"),
+    DeleteSpeechDiarization("deleteSpeechDiarization"),
 
     /**
      * 谈话分析。

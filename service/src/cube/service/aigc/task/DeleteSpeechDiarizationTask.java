@@ -22,9 +22,9 @@ import cube.service.aigc.AIGCService;
 /**
  * 删除说话者分析数据。。
  */
-public class DeleteSpeakerDiarizationTask extends ServiceTask {
+public class DeleteSpeechDiarizationTask extends ServiceTask {
 
-    public DeleteSpeakerDiarizationTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public DeleteSpeechDiarizationTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 

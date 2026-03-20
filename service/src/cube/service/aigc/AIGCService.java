@@ -2927,7 +2927,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        final AudioUnitMeta meta = new AudioUnitMeta(this, unit, authToken, AIGCAction.SpeakerDiarization,
+        final AudioUnitMeta meta = new AudioUnitMeta(this, unit, authToken, AIGCAction.SpeechDiarization,
                 fileLabel, preprocess, storage);
         meta.voiceDiarizationListener = listener;
 
@@ -3181,7 +3181,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         List<String> tag = TextUtils.extractPromptTemplateTag(prompt);
         prompt = prompt.replace(tag.get(0), voiceDiarization.buildVoiceText());
 
-        System.out.println("XJW\n" + prompt);
+        System.out.println("XJW: " + prompt.length() + "\n" + prompt);
 
         GeneratingRecord result = this.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
                 new GeneratingOption());

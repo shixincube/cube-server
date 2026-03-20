@@ -18,10 +18,10 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * 说话者分隔与分析。
  */
-public class AudioDiarization extends ContextHandler {
+public class SpeechDiarization extends ContextHandler {
 
-    public AudioDiarization() {
-        super("/aigc/audio/diarization");
+    public SpeechDiarization() {
+        super("/aigc/speech/diarization");
         setHandler(new Handler());
     }
 
@@ -51,7 +51,7 @@ public class AudioDiarization extends ContextHandler {
                 return;
             }
 
-            Manager.SpeakerDiarizationFuture future = Manager.getInstance().getSpeakerDiarizationFuture(fileCode);
+            Manager.SpeechDiarizationFuture future = Manager.getInstance().getSpeechDiarizationFuture(fileCode);
             if (null == future) {
                 this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();
@@ -87,7 +87,7 @@ public class AudioDiarization extends ContextHandler {
 
                 boolean reset = json.has("reset") && json.getBoolean("reset");
 
-                Manager.SpeakerDiarizationFuture future = Manager.getInstance().speakerDiarization(token, fileCode, reset);
+                Manager.SpeechDiarizationFuture future = Manager.getInstance().speechDiarization(token, fileCode, reset);
                 if (null == future) {
                     // 故障
                     this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));

@@ -28,9 +28,9 @@ import java.util.List;
 /**
  * 获取说话者分割与分析数据列表。
  */
-public class ListSpeakerDiarizationsTask extends ServiceTask {
+public class ListSpeechDiarizationsTask extends ServiceTask {
 
-    public ListSpeakerDiarizationsTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public ListSpeechDiarizationsTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 

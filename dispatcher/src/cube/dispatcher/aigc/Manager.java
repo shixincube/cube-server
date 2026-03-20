@@ -79,7 +79,7 @@ public class Manager implements Tickable, PerformerListener {
     /**
      * Key：文件码
      */
-    private Map<String, SpeakerDiarizationFuture> speakerDiarizationFutureMap;
+    private Map<String, SpeechDiarizationFuture> speechDiarizationFutureMap;
 
     /**
      * Key：文件码
@@ -96,7 +96,7 @@ public class Manager implements Tickable, PerformerListener {
         this.textToFileFutureMap = new ConcurrentHashMap<>();
         this.speechRecognitionFutureMap = new ConcurrentHashMap<>();
         this.speechEmotionRecognitionFutureMap = new ConcurrentHashMap<>();
-        this.speakerDiarizationFutureMap = new ConcurrentHashMap<>();
+        this.speechDiarizationFutureMap = new ConcurrentHashMap<>();
         this.facialExpressionRecognitionFutureMap = new ConcurrentHashMap<>();
 
         this.setupHandler();
@@ -136,8 +136,9 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new SpeechEmotionRecognition());
         httpServer.addContextHandler(new AutomaticSpeechRecognition());
         httpServer.addContextHandler(new FacialExpressionRecognition());
-        httpServer.addContextHandler(new AudioDiarization());
-        httpServer.addContextHandler(new AudioDiarizationOperation());
+        httpServer.addContextHandler(new SpeechDiarization());
+        httpServer.addContextHandler(new SpeechDiarizationOperation());
+        httpServer.addContextHandler(new SpeechAnalysis());
         httpServer.addContextHandler(new KnowledgeQA());
         httpServer.addContextHandler(new KnowledgeProfiles());
         httpServer.addContextHandler(new KnowledgeInfos());
@@ -1942,49 +1943,49 @@ public class Manager implements Tickable, PerformerListener {
         return this.facialExpressionRecognitionFutureMap.get(fileCode);
     }
 
-    public SpeakerDiarizationFuture speakerDiarization(String token, String fileCode, boolean reset) {
+    public SpeechDiarizationFuture speechDiarization(String token, String fileCode, boolean reset) {
         if (reset) {
-            this.speakerDiarizationFutureMap.remove(fileCode);
+            this.speechDiarizationFutureMap.remove(fileCode);
         }
         else {
-            if (this.speakerDiarizationFutureMap.containsKey(fileCode)) {
+            if (this.speechDiarizationFutureMap.containsKey(fileCode)) {
                 // 正在处理
-                return this.speakerDiarizationFutureMap.get(fileCode);
+                return this.speechDiarizationFutureMap.get(fileCode);
             }
         }
 
         JSONObject payload = new JSONObject();
         payload.put("fileCode", fileCode);
-        Packet packet = new Packet(AIGCAction.SpeakerDiarization.name, payload);
+        Packet packet = new Packet(AIGCAction.SpeechDiarization.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        SpeakerDiarizationFuture future = new SpeakerDiarizationFuture(token, fileCode);
-        this.speakerDiarizationFutureMap.put(fileCode, future);
+        SpeechDiarizationFuture future = new SpeechDiarizationFuture(token, fileCode);
+        this.speechDiarizationFutureMap.put(fileCode, future);
 
         this.performer.transmit(AIGCCellet.NAME, request);
         return future;
     }
 
-    public SpeakerDiarizationFuture getSpeakerDiarizationFuture(String fileCode) {
-        return this.speakerDiarizationFutureMap.get(fileCode);
+    public SpeechDiarizationFuture getSpeechDiarizationFuture(String fileCode) {
+        return this.speechDiarizationFutureMap.get(fileCode);
     }
 
-    public JSONObject listSpeakerDiarizations(String token) {
+    public JSONObject listSpeechDiarizations(String token) {
         JSONObject payload = new JSONObject();
-        Packet packet = new Packet(AIGCAction.ListSpeakerDiarizations.name, payload);
+        Packet packet = new Packet(AIGCAction.ListSpeechDiarizations.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 2 * 60 * 1000);
         if (null == response) {
-            Logger.w(this.getClass(), "#listSpeakerDiarizations - No response: " + token);
+            Logger.w(this.getClass(), "#listSpeechDiarizations - No response: " + token);
             return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#listSpeakerDiarizations - Response state is " + Packet.extractCode(responsePacket));
+            Logger.w(this.getClass(), "#listSpeechDiarizations - Response state is " + Packet.extractCode(responsePacket));
             return null;
         }
 
@@ -2001,22 +2002,22 @@ public class Manager implements Tickable, PerformerListener {
         return responseData;
     }
 
-    public JSONObject deleteSpeakerDiarization(String token, String fileCode) {
+    public JSONObject deleteSpeechDiarization(String token, String fileCode) {
         JSONObject payload = new JSONObject();
         payload.put("fileCode", fileCode);
-        Packet packet = new Packet(AIGCAction.DeleteSpeakerDiarization.name, payload);
+        Packet packet = new Packet(AIGCAction.DeleteSpeechDiarization.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 2 * 60 * 1000);
         if (null == response) {
-            Logger.w(this.getClass(), "#deleteSpeakerDiarization - No response: " + token);
+            Logger.w(this.getClass(), "#deleteSpeechDiarization - No response: " + token);
             return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#deleteSpeakerDiarization - Response state is " + Packet.extractCode(responsePacket));
+            Logger.w(this.getClass(), "#deleteSpeechDiarization - Response state is " + Packet.extractCode(responsePacket));
             return null;
         }
 
@@ -2027,7 +2028,7 @@ public class Manager implements Tickable, PerformerListener {
                     getPerformer().getExternalHttpsEndpoint());
         }
         VoiceDiarization diarization = new VoiceDiarization(responseData);
-        SpeakerDiarizationFuture future = new SpeakerDiarizationFuture(diarization.getTimestamp(),
+        SpeechDiarizationFuture future = new SpeechDiarizationFuture(diarization.getTimestamp(),
                 token, diarization.fileCode, AIGCStateCode.Ok);
         return future.toJSON();
     }
@@ -3083,10 +3084,10 @@ public class Manager implements Tickable, PerformerListener {
                 }
             }
 
-            Iterator<Map.Entry<String, SpeakerDiarizationFuture>> sdfIter = this.speakerDiarizationFutureMap.entrySet().iterator();
+            Iterator<Map.Entry<String, SpeechDiarizationFuture>> sdfIter = this.speechDiarizationFutureMap.entrySet().iterator();
             while (sdfIter.hasNext()) {
-                Map.Entry<String, SpeakerDiarizationFuture> e = sdfIter.next();
-                SpeakerDiarizationFuture future = e.getValue();
+                Map.Entry<String, SpeechDiarizationFuture> e = sdfIter.next();
+                SpeechDiarizationFuture future = e.getValue();
                 if (now - future.timestamp > 60 * 60 * 1000) {
                     sdfIter.remove();
                 }
@@ -3227,7 +3228,7 @@ public class Manager implements Tickable, PerformerListener {
                 }
             }
         }
-        else if (AIGCAction.SpeakerDiarization.name.equals(action)) {
+        else if (AIGCAction.SpeechDiarization.name.equals(action)) {
             Packet responsePacket = new Packet(actionDialect);
             // 状态码
             int stateCode = Packet.extractCode(responsePacket);
@@ -3235,19 +3236,19 @@ public class Manager implements Tickable, PerformerListener {
                 // 获取结果数据
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
                 VoiceDiarization result = new VoiceDiarization(resultJson);
-                SpeakerDiarizationFuture future = this.speakerDiarizationFutureMap.get(result.file.getFileCode());
+                SpeechDiarizationFuture future = this.speechDiarizationFutureMap.get(result.file.getFileCode());
                 if (null != future) {
                     future.diarization = new VoiceDiarization(resultJson);
                     future.stateCode = AIGCStateCode.Ok;
                 }
                 else {
-                    Logger.w(this.getClass(), "#onReceived - Speaker diarization timeout: " + result.file.getFileCode());
+                    Logger.w(this.getClass(), "#onReceived - Speech diarization timeout: " + result.file.getFileCode());
                 }
             }
             else {
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
                 String fileCode = resultJson.getString("fileCode");
-                SpeakerDiarizationFuture future = this.speakerDiarizationFutureMap.get(fileCode);
+                SpeechDiarizationFuture future = this.speechDiarizationFutureMap.get(fileCode);
                 if (null != future) {
                     future.stateCode = AIGCStateCode.parse(stateCode);
                 }
@@ -3453,7 +3454,7 @@ public class Manager implements Tickable, PerformerListener {
     }
 
 
-    public class SpeakerDiarizationFuture implements JSONable {
+    public class SpeechDiarizationFuture implements JSONable {
 
         protected final long timestamp;
 
@@ -3465,13 +3466,13 @@ public class Manager implements Tickable, PerformerListener {
 
         protected AIGCStateCode stateCode = AIGCStateCode.Processing;
 
-        public SpeakerDiarizationFuture(String token, String fileCode) {
+        public SpeechDiarizationFuture(String token, String fileCode) {
             this.timestamp = System.currentTimeMillis();
             this.token = token;
             this.fileCode = fileCode;
         }
 
-        public SpeakerDiarizationFuture(long timestamp, String token, String fileCode, AIGCStateCode stateCode) {
+        public SpeechDiarizationFuture(long timestamp, String token, String fileCode, AIGCStateCode stateCode) {
             this.timestamp = timestamp;
             this.token = token;
             this.fileCode = fileCode;

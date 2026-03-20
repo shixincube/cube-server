@@ -24,9 +24,9 @@ import cube.service.aigc.listener.VoiceDiarizationListener;
 /**
  * 说话者分割与分析。
  */
-public class SpeakerDiarizationTask extends ServiceTask {
+public class SpeechDiarizationTask extends ServiceTask {
 
-    public SpeakerDiarizationTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public SpeechDiarizationTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 

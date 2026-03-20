@@ -17,10 +17,10 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * 说话者分隔与分析。
  */
-public class AudioDiarizationOperation extends ContextHandler {
+public class SpeechDiarizationOperation extends ContextHandler {
 
-    public AudioDiarizationOperation() {
-        super("/aigc/audio/diarization/opt/");
+    public SpeechDiarizationOperation() {
+        super("/aigc/speech/diarization/opt/");
         setHandler(new Handler());
     }
 
@@ -53,7 +53,7 @@ public class AudioDiarizationOperation extends ContextHandler {
         }
 
         private void optList(String token, HttpServletRequest request, HttpServletResponse response) {
-            JSONObject result = Manager.getInstance().listSpeakerDiarizations(token);
+            JSONObject result = Manager.getInstance().listSpeechDiarizations(token);
             if (null == result) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
@@ -67,7 +67,7 @@ public class AudioDiarizationOperation extends ContextHandler {
         private void optDelete(String token, HttpServletRequest request, HttpServletResponse response) {
             try {
                 JSONObject requestData = this.readBodyAsJSONObject(request);
-                JSONObject result = Manager.getInstance().deleteSpeakerDiarization(token,
+                JSONObject result = Manager.getInstance().deleteSpeechDiarization(token,
                         requestData.getString("fileCode"));
                 this.respondOk(response, result);
                 this.complete();
