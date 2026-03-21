@@ -48,6 +48,7 @@ import cube.service.aigc.member.MemberCenter;
 import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.scene.*;
+import cube.service.aigc.scene.PromptBuilder;
 import cube.service.aigc.unit.*;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
@@ -3180,16 +3181,20 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         }
 
-        List<String> tag = TextUtils.extractPromptTemplateTag(prompt);
         if (null == parameters || parameters.isEmpty()) {
-            prompt = prompt.replace(tag.get(0), voiceDiarization.buildVoiceText());
-            prompt = prompt.replace(tag.get(1), TimeUtils.formatDateString(voiceDiarization.getTimestamp(), Language.Chinese));
-            prompt = prompt.replace(tag.get(2), TimeUtils.calcTimeDuration((long)(voiceDiarization.duration * 1000)).toHumanString());
-            prompt = prompt.replace(tag.get(3), "线下");
+            PromptBuilder builder = new PromptBuilder(templateName, prompt);
+            builder.put("访谈原始记录", voiceDiarization.buildVoiceText(true));
+            builder.put("访谈日期", TimeUtils.formatDateString(voiceDiarization.getTimestamp(), Language.Chinese));
+            builder.put("访谈时长", TimeUtils.calcTimeDuration((long)(voiceDiarization.duration * 1000)).toHumanStringDHMS());
+            builder.put("咨询形式", "线下");
+            prompt = builder.build();
         }
         else {
             // TODO XJW
+            return null;
         }
+
+        System.out.println("XJW size: " + prompt.length());
 
         GeneratingRecord result = this.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
                 new GeneratingOption());
@@ -3204,7 +3209,9 @@ public class AIGCService extends AbstractModule implements Generatable {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                storage.updateVoiceDiarizationAnalysis(voiceDiarization);
+                if (templateName.equalsIgnoreCase("psy_organize_record")) {
+                    storage.updateVoiceDiarizationAnalysis(voiceDiarization);
+                }
             }
         });
 

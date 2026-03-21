@@ -221,11 +221,28 @@ public class VoiceDiarization extends Entity {
         }
     }
 
-    public String buildVoiceText() {
+    public String buildVoiceText(boolean merge) {
         StringBuilder buf = new StringBuilder();
-        for (VoiceTrack track : this.tracks) {
-            buf.append(track.display).append(TextUtils.gColonInChinese).append(track.recognition.text);
-            buf.append("\n");
+        if (merge) {
+            String lastDisplay = null;
+            for (VoiceTrack track : this.tracks) {
+                if (null != lastDisplay && lastDisplay.equalsIgnoreCase(track.display)) {
+                    buf.delete(buf.length() - 1, buf.length());
+                    buf.append(track.recognition.text);
+                    buf.append("\n");
+                }
+                else {
+                    buf.append(track.display).append(TextUtils.gColonInChinese).append(track.recognition.text);
+                    buf.append("\n");
+                }
+                lastDisplay = track.display;
+            }
+        }
+        else {
+            for (VoiceTrack track : this.tracks) {
+                buf.append(track.display).append(TextUtils.gColonInChinese).append(track.recognition.text);
+                buf.append("\n");
+            }
         }
         return buf.toString();
     }

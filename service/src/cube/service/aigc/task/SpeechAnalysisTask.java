@@ -64,7 +64,7 @@ public class SpeechAnalysisTask extends ServiceTask {
             JSONObject resultJson = new JSONObject();
             resultJson.put("fileCode", fileCode);
             resultJson.put("templateName", templateName);
-            resultJson.put("analysis", result);
+            resultJson.put("result", result);
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, resultJson));
             markResponseTime();

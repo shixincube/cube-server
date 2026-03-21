@@ -20,7 +20,7 @@ public class ModelConfig implements JSONable {
 
     public static int BAIZE_X_CONTEXT_LIMIT = 800 * 1024;
 
-    public static int BAIZE_NEXT_CONTEXT_LIMIT = 32 * 1024;
+    public static int BAIZE_NEXT_CONTEXT_LIMIT = 64 * 1024;
 
     public final static String[] TEXT_TO_IMAGE_UNIT = new String[] { "DallE" };
 

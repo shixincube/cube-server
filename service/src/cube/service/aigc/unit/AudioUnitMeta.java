@@ -118,7 +118,9 @@ public class AudioUnitMeta extends UnitMeta {
                     }
                 }
 
-                if (track.recognition.text.length() == 1 && TextUtils.containsChinesePunctuation(track.recognition.text)) {
+                if (track.recognition.text.length() == 1 &&
+                        (TextUtils.containsChinesePunctuation(track.recognition.text)) ||
+                        (TextUtils.containsEnglishPunctuation(track.recognition.text))) {
                     // 只有一个字符，且是标点符号，则删除
                     iter.remove();
                 }
