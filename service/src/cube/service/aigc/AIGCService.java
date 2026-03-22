@@ -3194,8 +3194,6 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         }
 
-        System.out.println("XJW size: " + prompt.length());
-
         GeneratingRecord result = this.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
                 new GeneratingOption());
         if (null == result) {
@@ -3204,7 +3202,12 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         // 填写数据
-        voiceDiarization.analysis = result.answer;
+        if (templateName.equalsIgnoreCase("psy_supervise_record")) {
+            voiceDiarization.suggestion = result.answer;
+        }
+        else {
+            voiceDiarization.analysis = result.answer;
+        }
 
         this.executor.execute(new Runnable() {
             @Override
@@ -3212,10 +3215,16 @@ public class AIGCService extends AbstractModule implements Generatable {
                 if (templateName.equalsIgnoreCase("psy_organize_record")) {
                     storage.updateVoiceDiarizationAnalysis(voiceDiarization);
                 }
+                else if (templateName.equalsIgnoreCase("psy_supervise_record")) {
+                    storage.updateVoiceDiarizationSuggestion(voiceDiarization);
+                }
+                else {
+                    storage.updateVoiceDiarizationAnalysis(voiceDiarization);
+                }
             }
         });
 
-        return voiceDiarization.analysis;
+        return result.answer;
     }
 
     /**

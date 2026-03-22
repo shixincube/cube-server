@@ -54,6 +54,8 @@ public class VoiceDiarization extends Entity {
 
     public String analysis;
 
+    public String suggestion;
+
     public VoiceDiarization(JSONObject json) {
         super(json);
 
@@ -92,6 +94,10 @@ public class VoiceDiarization extends Entity {
 
         if (json.has("analysis")) {
             this.analysis = json.getString("analysis");
+        }
+
+        if (json.has("suggestion")) {
+            this.suggestion = json.getString("suggestion");
         }
     }
 
@@ -284,6 +290,10 @@ public class VoiceDiarization extends Entity {
 
         if (null != this.analysis) {
             json.put("analysis", this.analysis);
+        }
+
+        if (null != this.suggestion) {
+            json.put("suggestion", this.suggestion);
         }
         return json;
     }
