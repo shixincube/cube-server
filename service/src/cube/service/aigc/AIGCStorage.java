@@ -544,6 +544,9 @@ public class AIGCStorage implements Storagable {
             }),
             new StorageField("analysis", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
+            }),
+            new StorageField("suggestion", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             })
     };
 
