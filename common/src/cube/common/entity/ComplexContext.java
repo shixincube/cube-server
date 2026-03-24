@@ -23,34 +23,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ComplexContext extends Entity {
 
-    /* 2025-5-29 作废
-    public enum Type {
-
-        Lightweight("lightweight"),
-
-        Heavyweight("heavyweight");
-
-        public final String value;
-
-        Type(String value) {
-            this.value = value;
-        }
-
-        public static Type parse(String value) {
-            // simplex 兼容旧版
-            if (value.equalsIgnoreCase(Lightweight.value) || value.equalsIgnoreCase("simplex")) {
-                return Lightweight;
-            }
-            else {
-                return Heavyweight;
-            }
-        }
-    }
-
-    public final Type type;
-    */
-
     private final boolean simplex;
+
+    private PromptTemplate promptTemplate;
 
     private String subtask;
 
@@ -85,29 +60,35 @@ public class ComplexContext extends Entity {
         super(json);
         this.simplex = json.has("type") ?
                 parseSimplex(json.getString("type")) : json.getBoolean("simplex");
-        this.resources = new ArrayList<>();
 
-        JSONArray array = json.getJSONArray("resources");
-        for (int i = 0; i < array.length(); ++i) {
-            JSONObject data = array.getJSONObject(i);
-            String subject = data.getString("subject");
-            if (subject.equalsIgnoreCase(ComplexResource.Subject.File.name())) {
-                this.resources.add(new FileResource(data));
-            }
-            else if (subject.equalsIgnoreCase(ComplexResource.Subject.Attachment.name())) {
-                this.resources.add(new AttachmentResource(data));
-            }
-            else if (subject.equalsIgnoreCase(ComplexResource.Subject.Widget.name())) {
-                this.resources.add(new WidgetResource(data));
-            }
-            else if (subject.equalsIgnoreCase(ComplexResource.Subject.Hyperlink.name())) {
-                this.resources.add(new HyperlinkResource(data));
-            }
-            else if (subject.equalsIgnoreCase(ComplexResource.Subject.Chart.name())) {
-                this.resources.add(new ChartResource(data));
-            }
-            else {
-                Logger.e(this.getClass(), "Unknown complex context resource subject: " + subject);
+        if (json.has("promptTemplate")) {
+            this.promptTemplate = new PromptTemplate(json.getJSONObject("promptTemplate"));
+        }
+
+        this.resources = new ArrayList<>();
+        if (json.has("resources")) {
+            JSONArray array = json.getJSONArray("resources");
+            for (int i = 0; i < array.length(); ++i) {
+                JSONObject data = array.getJSONObject(i);
+                String subject = data.getString("subject");
+                if (subject.equalsIgnoreCase(ComplexResource.Subject.File.name())) {
+                    this.resources.add(new FileResource(data));
+                }
+                else if (subject.equalsIgnoreCase(ComplexResource.Subject.Attachment.name())) {
+                    this.resources.add(new AttachmentResource(data));
+                }
+                else if (subject.equalsIgnoreCase(ComplexResource.Subject.Widget.name())) {
+                    this.resources.add(new WidgetResource(data));
+                }
+                else if (subject.equalsIgnoreCase(ComplexResource.Subject.Hyperlink.name())) {
+                    this.resources.add(new HyperlinkResource(data));
+                }
+                else if (subject.equalsIgnoreCase(ComplexResource.Subject.Chart.name())) {
+                    this.resources.add(new ChartResource(data));
+                }
+                else {
+                    Logger.e(this.getClass(), "Unknown complex context resource subject: " + subject);
+                }
             }
         }
 
@@ -150,6 +131,10 @@ public class ComplexContext extends Entity {
 
     public boolean isSimplified() {
         return this.simplex;
+    }
+
+    public PromptTemplate getPromptTemplate() {
+        return this.promptTemplate;
     }
 
     public void setSubtask(Subtask subtask) {
@@ -254,6 +239,10 @@ public class ComplexContext extends Entity {
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
         json.put("simplex", this.simplex);
+
+        if (null != this.promptTemplate) {
+            json.put("promptTemplate", this.promptTemplate.toJSON());
+        }
 
         JSONArray array = new JSONArray();
         for (ComplexResource resource : this.resources) {

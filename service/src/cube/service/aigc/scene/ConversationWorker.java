@@ -19,6 +19,7 @@ import cube.common.Language;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.guidance.Prompts;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.listener.SemanticSearchListener;
 import cube.service.aigc.scene.subtask.*;
@@ -337,14 +338,24 @@ public class ConversationWorker {
             convCtx.cancelCurrentPredict();
         }
 
-        // 尝试通过上下文里的数据生成提示词
-        PromptRevolver prompt = PsychologyScene.getInstance().revolve(convCtx, query, channel.getLanguage());
-        if (null == prompt) {
+        PromptRevolver promptRevolver = null;
+
+        // 使用提示词模板
+        if (null != context.getPromptTemplate()) {
+            promptRevolver = this.buildPromptWithTemplate(context.getPromptTemplate());
+        }
+        else {
+            // 尝试通过上下文里的数据生成提示词
+            promptRevolver = PsychologyScene.getInstance().revolve(convCtx, query, channel.getLanguage());
+        }
+
+        if (null == promptRevolver) {
             Logger.e(this.getClass(), "#work - Builds prompt failed");
             channel.setProcessing(false);
             return AIGCStateCode.NoData;
         }
 
+        final PromptRevolver prompt = promptRevolver;
         if (null != prompt.result) {
             (new Thread() {
                 @Override
@@ -378,7 +389,7 @@ public class ConversationWorker {
         }
 
         // 获取单元
-        String unitName = prompt.content.length() > 2000 || prompt.content.contains(JUMP_POLISH) ?
+        String unitName = prompt.content.length() > ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT || prompt.content.contains(JUMP_POLISH) ?
                 ModelConfig.BAIZE_X_UNIT : ModelConfig.BAIZE_NEXT_UNIT;
         AIGCUnit unit = this.service.selectUnitByName(unitName, channel.getAuthToken().getContactId());
         if (null == unit) {
@@ -425,6 +436,16 @@ public class ConversationWorker {
                 });
 
         return AIGCStateCode.Ok;
+    }
+
+    private PromptRevolver buildPromptWithTemplate(PromptTemplate template) {
+        PromptBuilder builder = new PromptBuilder(template.name);
+        builder.putMap(template.parameters);
+        String prompt = builder.build();
+        if (null == prompt) {
+            return null;
+        }
+        return new PromptRevolver(prompt);
     }
 
     private String polish(String text) {

@@ -227,7 +227,7 @@ public class VoiceDiarization extends Entity {
         }
     }
 
-    public String buildVoiceText(boolean merge) {
+    public String buildSpeechText(boolean merge) {
         StringBuilder buf = new StringBuilder();
         if (merge) {
             String lastDisplay = null;

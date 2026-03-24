@@ -1,6 +1,10 @@
 {
   "files": [
     {
+      "name": "general",
+      "file": "general.md"
+    },
+    {
       "name": "psy_organize_record",
       "file": "psy_organize_record.md"
     },

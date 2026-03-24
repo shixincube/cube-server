@@ -17,6 +17,8 @@ public class ConversationRelation implements JSONable {
 
     public String name;
 
+    public String speechFileCode;
+
     public long reportSn = 0;
 
     public long uid = 0;
@@ -34,6 +36,9 @@ public class ConversationRelation implements JSONable {
 
     public ConversationRelation(JSONObject json) {
         this.name = json.getString("name");
+        if (json.has("speechFileCode")) {
+            this.speechFileCode = json.getString("speechFileCode");
+        }
         if (json.has("reportSn")) {
             this.reportSn = json.getLong("reportSn");
         }
@@ -54,6 +59,9 @@ public class ConversationRelation implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
+        if (null != this.speechFileCode) {
+            json.put("speechFileCode", this.speechFileCode);
+        }
         if (this.reportSn > 0) {
             json.put("reportSn", this.reportSn);
         }

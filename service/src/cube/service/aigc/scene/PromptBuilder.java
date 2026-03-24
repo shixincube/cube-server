@@ -8,6 +8,7 @@ package cube.service.aigc.scene;
 
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
+import cube.service.aigc.guidance.Prompts;
 import cube.util.TextUtils;
 
 import java.io.File;
@@ -28,16 +29,26 @@ public class PromptBuilder {
 
     private Map<String, String> tagDataMap = new HashMap<>();
 
-    public PromptBuilder(String templateName, String prompt) {
+    public PromptBuilder(String templateName) {
         this.templateName = templateName;
-        this.prompt = prompt;
+        this.prompt = Prompts.getPrompt(templateName);
     }
 
     public void put(String key, String value) {
         this.tagDataMap.put(key, value);
     }
 
+    public void putMap(Map<String, String> map) {
+        for (Map.Entry<String, String> e : map.entrySet()) {
+            this.tagDataMap.put(e.getKey(), e.getValue());
+        }
+    }
+
     public String build() {
+        if (null == this.prompt) {
+            return null;
+        }
+
         String result = this.prompt.toString();
         List<String> tags = TextUtils.extractPromptTemplateTag(this.prompt);
         for (String tag : tags) {

@@ -3175,19 +3175,19 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         }
 
-        String prompt = Prompts.getPrompt(templateName);
-        if (null == prompt) {
-            Logger.w(this.getClass(), "#performSpeechAnalysis - No prompt template: " + templateName);
-            return null;
-        }
-
+        String prompt = null;
         if (null == parameters || parameters.isEmpty()) {
-            PromptBuilder builder = new PromptBuilder(templateName, prompt);
-            builder.put("访谈原始记录", voiceDiarization.buildVoiceText(true));
+            PromptBuilder builder = new PromptBuilder(templateName);
+            builder.put("访谈原始记录", voiceDiarization.buildSpeechText(true));
             builder.put("访谈日期", TimeUtils.formatDateString(voiceDiarization.getTimestamp(), Language.Chinese));
             builder.put("访谈时长", TimeUtils.calcTimeDuration((long)(voiceDiarization.duration * 1000)).toHumanStringDHMS());
             builder.put("咨询形式", "线下");
             prompt = builder.build();
+
+            if (null == prompt) {
+                Logger.w(this.getClass(), "#performSpeechAnalysis - No prompt template: " + templateName);
+                return null;
+            }
         }
         else {
             // TODO XJW
