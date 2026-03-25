@@ -3178,10 +3178,10 @@ public class AIGCService extends AbstractModule implements Generatable {
         String prompt = null;
         if (null == parameters || parameters.isEmpty()) {
             PromptBuilder builder = new PromptBuilder(templateName);
-            builder.put("访谈原始记录", voiceDiarization.buildSpeechText(true));
-            builder.put("访谈日期", TimeUtils.formatDateString(voiceDiarization.getTimestamp(), Language.Chinese));
-            builder.put("访谈时长", TimeUtils.calcTimeDuration((long)(voiceDiarization.duration * 1000)).toHumanStringDHMS());
-            builder.put("咨询形式", "线下");
+            builder.put("original_transcript", voiceDiarization.buildSpeechText(true));
+            builder.put("interview_date", TimeUtils.formatDateString(voiceDiarization.getTimestamp(), Language.Chinese));
+            builder.put("interview_duration", TimeUtils.calcTimeDuration((long)(voiceDiarization.duration * 1000)).toHumanStringDHMS());
+            builder.put("interview_form", "线下");
             prompt = builder.build();
 
             if (null == prompt) {

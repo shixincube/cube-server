@@ -56,7 +56,7 @@ public class PromptBuilder {
             if (!this.tagDataMap.containsKey(tagName)) {
                 // 没有对应的数据
                 // 加入特定数据
-                if (tagName.contains("推荐书籍")) {
+                if (tagName.contains("recommended_books")) {
                     String books = this.readMarkdown("books");
                     result = result.replace(tag, books);
                 }
