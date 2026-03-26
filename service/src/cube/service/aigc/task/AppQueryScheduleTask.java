@@ -11,7 +11,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
-import cube.aigc.psychology.app.CounselingSchedule;
+import cube.aigc.psychology.app.ConsultationSchedule;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.User;
@@ -81,12 +81,12 @@ public class AppQueryScheduleTask extends ServiceTask {
             // 总数
             int total = PsychologyScene.getInstance().getStorage().countSchedules(user.getContactId(), starting, ending);
             // 列表
-            List<CounselingSchedule> list = PsychologyScene.getInstance().getStorage().readSchedules(
+            List<ConsultationSchedule> list = PsychologyScene.getInstance().getStorage().readSchedules(
                     user.getContactId(), starting, ending);
 
             JSONObject responseJson = new JSONObject();
             JSONArray array = new JSONArray();
-            for (CounselingSchedule schedule : list) {
+            for (ConsultationSchedule schedule : list) {
                 array.put(schedule.toJSON());
             }
             responseJson.put("list", array);

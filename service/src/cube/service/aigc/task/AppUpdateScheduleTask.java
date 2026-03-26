@@ -11,7 +11,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
-import cube.aigc.psychology.app.CounselingSchedule;
+import cube.aigc.psychology.app.ConsultationSchedule;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.User;
@@ -62,9 +62,9 @@ public class AppUpdateScheduleTask extends ServiceTask {
 
         try {
             // 提交的数据
-            CounselingSchedule schedule = new CounselingSchedule(packet.data);
+            ConsultationSchedule schedule = new ConsultationSchedule(packet.data);
             // 当前的数据
-            CounselingSchedule current = PsychologyScene.getInstance().getStorage().readSchedule(user.getContactId(), schedule.id);
+            ConsultationSchedule current = PsychologyScene.getInstance().getStorage().readSchedule(user.getContactId(), schedule.id);
             if (null == current) {
                 // 不存在该数据
                 this.cellet.speak(this.talkContext,

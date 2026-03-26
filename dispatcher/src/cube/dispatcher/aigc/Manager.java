@@ -3156,6 +3156,7 @@ public class Manager implements Tickable, PerformerListener {
             // 状态码
             int stateCode = Packet.extractCode(responsePacket);
             if (stateCode == AIGCStateCode.Ok.code) {
+                Logger.d(this.getClass(), "#onReceived - Automatic speech recognition response");
                 // 获取结果数据
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
                 SpeechRecognitionInfo result = new SpeechRecognitionInfo(resultJson);
@@ -3169,6 +3170,7 @@ public class Manager implements Tickable, PerformerListener {
                 }
             }
             else {
+                Logger.d(this.getClass(), "#onReceived - Automatic speech recognition failed: " + stateCode);
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
                 String fileCode = resultJson.getString("fileCode");
                 SpeechRecognitionFuture future = this.speechRecognitionFutureMap.get(fileCode);

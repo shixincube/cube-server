@@ -9,7 +9,7 @@ package cube.aigc.psychology;
 /**
  * 咨询日程状态。
  */
-public enum CounselingScheduleState {
+public enum ConsultationScheduleState {
 
     /**
      * 已预约。
@@ -40,16 +40,16 @@ public enum CounselingScheduleState {
 
     public final int code;
 
-    CounselingScheduleState(int code) {
+    ConsultationScheduleState(int code) {
         this.code = code;
     }
 
-    public static CounselingScheduleState parse(int code) {
-        for (CounselingScheduleState state : CounselingScheduleState.values()) {
+    public static ConsultationScheduleState parse(int code) {
+        for (ConsultationScheduleState state : ConsultationScheduleState.values()) {
             if (state.code == code) {
                 return state;
             }
         }
-        return CounselingScheduleState.Expired;
+        return ConsultationScheduleState.Expired;
     }
 }

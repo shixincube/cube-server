@@ -65,7 +65,7 @@ public class SpeechRecognitionInfo implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         if (null != this.file) {
-            json.put("file", this.file.toJSON());
+            json.put("file", this.file.toCompactJSON());
         }
         json.put("elapsed", this.elapsed);
         json.put("text", this.text);

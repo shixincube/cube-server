@@ -8,7 +8,7 @@ package cube.aigc.psychology.app;
 
 import cube.aigc.psychology.ConsultationTheme;
 import cube.aigc.psychology.Consultation;
-import cube.aigc.psychology.CounselingScheduleState;
+import cube.aigc.psychology.ConsultationScheduleState;
 import cube.common.JSONable;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
@@ -16,7 +16,7 @@ import org.json.JSONObject;
 /**
  * 咨询日程。
  */
-public class CounselingSchedule implements JSONable {
+public class ConsultationSchedule implements JSONable {
 
     public final long id;
 
@@ -30,7 +30,7 @@ public class CounselingSchedule implements JSONable {
 
     public Consultation appointmentConsultation;
 
-    public CounselingScheduleState state;
+    public ConsultationScheduleState state;
 
     public long counselingTime;
 
@@ -46,12 +46,12 @@ public class CounselingSchedule implements JSONable {
 
     public long voiceDiarizationId;
 
-    public CounselingSchedule(long id, long customerId) {
+    public ConsultationSchedule(long id, long customerId) {
         this.id = id;
         this.customerId = customerId;
     }
 
-    public CounselingSchedule(CounselingSchedule src) {
+    public ConsultationSchedule(ConsultationSchedule src) {
         this.id = ConfigUtils.generateSerialNumber();
         this.customerId = src.customerId;
         this.appointmentTime = src.appointmentTime;
@@ -68,14 +68,14 @@ public class CounselingSchedule implements JSONable {
         this.voiceDiarizationId = src.voiceDiarizationId;
     }
 
-    public CounselingSchedule(JSONObject json) {
+    public ConsultationSchedule(JSONObject json) {
         this.id = json.getLong("id");
         this.customerId = json.getLong("customerId");
         this.appointmentTime = json.getLong("appointmentTime");
         this.appointmentDuration = json.getLong("appointmentDuration");
         this.appointmentTheme = ConsultationTheme.parse(json.getString("appointmentTheme"));
         this.appointmentConsultation = Consultation.parse(json.getInt("appointmentConsultation"));
-        this.state = CounselingScheduleState.parse(json.getInt("state"));
+        this.state = ConsultationScheduleState.parse(json.getInt("state"));
         this.counselingTime = json.getLong("counselingTime");
         this.counselingDuration = json.getLong("counselingDuration");
         this.counselingTheme = ConsultationTheme.parse(json.getString("counselingTheme"));

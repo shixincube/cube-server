@@ -11,7 +11,7 @@ import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.IndicatorRate;
-import cube.aigc.psychology.app.CounselingSchedule;
+import cube.aigc.psychology.app.ConsultationSchedule;
 import cube.aigc.psychology.app.Customer;
 import cube.aigc.psychology.composition.*;
 import cube.aigc.psychology.indicator.Indicator;
@@ -1763,7 +1763,7 @@ public class PsychologyStorage implements Storagable {
         return result.get(0)[0].getInt();
     }
 
-    public boolean writeSchedule(long contactId, CounselingSchedule schedule) {
+    public boolean writeSchedule(long contactId, ConsultationSchedule schedule) {
         List<StorageField[]> result = this.storage.executeQuery(this.scheduleTable, new StorageField[] {
                 new StorageField("id", LiteralBase.LONG),
         }, new Conditional[] {
@@ -1816,7 +1816,7 @@ public class PsychologyStorage implements Storagable {
         }
     }
 
-    public CounselingSchedule readSchedule(long contactId, long id) {
+    public ConsultationSchedule readSchedule(long contactId, long id) {
         List<StorageField[]> result = this.storage.executeQuery(this.scheduleTable, this.scheduleFields, new Conditional[] {
                 Conditional.createEqualTo("id", id),
                 Conditional.createAnd(),
@@ -1827,12 +1827,12 @@ public class PsychologyStorage implements Storagable {
         }
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
-        CounselingSchedule schedule = new CounselingSchedule(data.get("id").getLong(), data.get("customer_id").getLong());
+        ConsultationSchedule schedule = new ConsultationSchedule(data.get("id").getLong(), data.get("customer_id").getLong());
         schedule.appointmentTime = data.get("appointment_time").getLong();
         schedule.appointmentDuration = data.get("appointment_duration").getLong();
         schedule.appointmentTheme = ConsultationTheme.parse(data.get("appointment_theme").getString());
         schedule.appointmentConsultation = Consultation.parse(data.get("appointment_consultation").getInt());
-        schedule.state = CounselingScheduleState.parse(data.get("state").getInt());
+        schedule.state = ConsultationScheduleState.parse(data.get("state").getInt());
         schedule.counselingTime = data.get("counseling_time").getLong();
         schedule.counselingDuration = data.get("counseling_duration").getLong();
         schedule.counselingTheme = ConsultationTheme.parse(data.get("counseling_theme").getString());
@@ -1844,14 +1844,14 @@ public class PsychologyStorage implements Storagable {
         return schedule;
     }
 
-    public List<CounselingSchedule> readSchedules(long contactId, long starting, long ending) {
-        List<CounselingSchedule> list = new ArrayList<>();
+    public List<ConsultationSchedule> readSchedules(long contactId, long starting, long ending) {
+        List<ConsultationSchedule> list = new ArrayList<>();
 
         List<StorageField[]> result = this.storage.executeQuery(this.scheduleTable, this.scheduleFields,
                 new Conditional[] {
                         Conditional.createEqualTo("cid", contactId),
                         Conditional.createAnd(),
-                        Conditional.createUnequalTo("state", CounselingScheduleState.Deleted.code),
+                        Conditional.createUnequalTo("state", ConsultationScheduleState.Deleted.code),
                         Conditional.createAnd(),
                         Conditional.createBracket(new Conditional[] {
                                 Conditional.createGreaterThanEqual(new StorageField("appointment_time", starting)),
@@ -1872,12 +1872,12 @@ public class PsychologyStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
-            CounselingSchedule schedule = new CounselingSchedule(data.get("id").getLong(), data.get("customer_id").getLong());
+            ConsultationSchedule schedule = new ConsultationSchedule(data.get("id").getLong(), data.get("customer_id").getLong());
             schedule.appointmentTime = data.get("appointment_time").getLong();
             schedule.appointmentDuration = data.get("appointment_duration").getLong();
             schedule.appointmentTheme = ConsultationTheme.parse(data.get("appointment_theme").getString());
             schedule.appointmentConsultation = Consultation.parse(data.get("appointment_consultation").getInt());
-            schedule.state = CounselingScheduleState.parse(data.get("state").getInt());
+            schedule.state = ConsultationScheduleState.parse(data.get("state").getInt());
             schedule.counselingTime = data.get("counseling_time").getLong();
             schedule.counselingDuration = data.get("counseling_duration").getLong();
             schedule.counselingTheme = ConsultationTheme.parse(data.get("counseling_theme").getString());
@@ -1895,7 +1895,7 @@ public class PsychologyStorage implements Storagable {
 
     public int countSchedules(long contactId, long starting, long ending) {
         List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(*) FROM " + this.scheduleTable +
-                " WHERE `cid`=" + contactId + " AND `state`<>" + CounselingScheduleState.Deleted.code +
+                " WHERE `cid`=" + contactId + " AND `state`<>" + ConsultationScheduleState.Deleted.code +
                 " AND (`appointment_time`>=" + starting + " OR `counseling_time`>=" + starting + ")" +
                 " AND (`appointment_time`<=" + ending + " OR `counseling_time`<=" + ending + ")");
         return result.get(0)[0].getInt();

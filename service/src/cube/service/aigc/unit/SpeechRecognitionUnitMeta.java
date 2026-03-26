@@ -40,7 +40,7 @@ public class SpeechRecognitionUnitMeta extends UnitMeta {
         Packet request = new Packet(AIGCAction.AutomaticSpeechRecognition.name, data);
         ActionDialect dialect = this.service.getCellet().transmit(this.unit.getContext(), request.toDialect(), 5 * 60 * 1000);
         if (null == dialect) {
-            Logger.w(AIGCService.class, "#process - Speech unit error: " + this.file.getFileCode());
+            Logger.w(this.getClass(), "#process - Speech unit error: " + this.file.getFileCode());
             // 回调错误
             this.listener.onFailed(this.file, AIGCStateCode.UnitError);
             return;
@@ -48,7 +48,7 @@ public class SpeechRecognitionUnitMeta extends UnitMeta {
 
         Packet response = new Packet(dialect);
         if (AIGCStateCode.Ok.code != Packet.extractCode(response)) {
-            Logger.w(AIGCService.class, "#process - Speech unit failed: " + this.file.getFileCode());
+            Logger.w(this.getClass(), "#process - Speech unit failed: " + this.file.getFileCode());
             this.listener.onFailed(this.file, AIGCStateCode.Failure);
             return;
         }

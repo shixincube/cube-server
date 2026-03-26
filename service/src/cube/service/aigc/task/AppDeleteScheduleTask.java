@@ -11,8 +11,8 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
-import cube.aigc.psychology.CounselingScheduleState;
-import cube.aigc.psychology.app.CounselingSchedule;
+import cube.aigc.psychology.ConsultationScheduleState;
+import cube.aigc.psychology.app.ConsultationSchedule;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
 import cube.common.entity.User;
@@ -63,7 +63,7 @@ public class AppDeleteScheduleTask extends ServiceTask {
 
         try {
             long id = packet.data.getLong("id");
-            CounselingSchedule schedule = PsychologyScene.getInstance().getStorage().readSchedule(user.getContactId(), id);
+            ConsultationSchedule schedule = PsychologyScene.getInstance().getStorage().readSchedule(user.getContactId(), id);
             if (null == schedule) {
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, packet.data));
@@ -72,7 +72,7 @@ public class AppDeleteScheduleTask extends ServiceTask {
             }
 
             // 修改状态
-            schedule.state = CounselingScheduleState.Deleted;
+            schedule.state = ConsultationScheduleState.Deleted;
 
             if (PsychologyScene.getInstance().getStorage().writeSchedule(user.getContactId(), schedule)) {
                 this.cellet.speak(this.talkContext,
