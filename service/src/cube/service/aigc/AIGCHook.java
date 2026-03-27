@@ -28,6 +28,11 @@ public class AIGCHook extends Hook {
      */
     public final static String AppEvent = "AppEvent";
 
+    /**
+     * 自动语音识别。
+     */
+    public final static String AutomaticSpeechRecognition = "AutomaticSpeechRecognition";
+
     public AIGCHook(String key) {
         super(key);
     }

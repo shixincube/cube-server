@@ -17,6 +17,9 @@ import cube.core.Kernel;
 import cube.core.Module;
 import cube.file.hook.FileStorageHook;
 import cube.plugin.PluginSystem;
+import cube.service.aigc.AIGCHook;
+import cube.service.aigc.AIGCPluginSystem;
+import cube.service.aigc.AIGCService;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
 import cube.service.auth.AuthServicePluginSystem;
@@ -362,6 +365,11 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         messagingPluginSystem.register(MessagingHook.ForwardMessage, new MessagingForwardPlugin(this));
         // 消息删除
         messagingPluginSystem.register(MessagingHook.DeleteMessage, new MessagingDeletePlugin(this));
+
+        // AIGC 服务
+        AIGCService aigcService = (AIGCService) this.getKernel().getModule(AIGCService.NAME);
+        AIGCPluginSystem aigcPluginSystem = aigcService.getPluginSystem();
+        aigcPluginSystem.register(AIGCHook.AutomaticSpeechRecognition, new AIAutomaticSpeechRecognitionPlugin(this));
 
         Logger.i(this.getClass(), "#initPlugin - Registers all plugin");
     }

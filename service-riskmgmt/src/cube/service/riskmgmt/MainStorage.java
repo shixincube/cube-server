@@ -43,6 +43,8 @@ public class MainStorage implements Storagable {
 
     private final String transChainNodeTablePrefix = "trans_chain_node_";
 
+    private final String aiTaskTable = "aigc_task";
+
     private final StorageField[] contactRiskFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT

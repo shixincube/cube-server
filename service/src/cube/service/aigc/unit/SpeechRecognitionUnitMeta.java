@@ -38,7 +38,8 @@ public class SpeechRecognitionUnitMeta extends UnitMeta {
         JSONObject data = new JSONObject();
         data.put("fileLabel", this.file.toJSON());
         Packet request = new Packet(AIGCAction.AutomaticSpeechRecognition.name, data);
-        ActionDialect dialect = this.service.getCellet().transmit(this.unit.getContext(), request.toDialect(), 5 * 60 * 1000);
+        ActionDialect dialect = this.service.getCellet().transmit(this.unit.getContext(),
+                request.toDialect(), 8 * 60 * 1000);
         if (null == dialect) {
             Logger.w(this.getClass(), "#process - Speech unit error: " + this.file.getFileCode());
             // 回调错误

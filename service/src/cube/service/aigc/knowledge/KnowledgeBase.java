@@ -291,7 +291,7 @@ public class KnowledgeBase {
 
             if (null != doc) {
                 // Hook
-                AIGCHook hook = this.service.getPluginSystem().getRemoveKnowledgeDoc();
+                AIGCHook hook = this.service.getPluginSystem().getRemoveKnowledgeDocHook();
                 hook.apply(new AIGCPluginContext(this, doc));
             }
 

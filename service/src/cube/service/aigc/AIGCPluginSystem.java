@@ -25,8 +25,12 @@ public class AIGCPluginSystem extends PluginSystem<AIGCHook> {
         return this.getHook(AIGCHook.ImportKnowledgeDoc);
     }
 
-    public AIGCHook getRemoveKnowledgeDoc() {
+    public AIGCHook getRemoveKnowledgeDocHook() {
         return this.getHook(AIGCHook.RemoveKnowledgeDoc);
+    }
+
+    public AIGCHook getAutomaticSpeechRecognitionHook() {
+        return this.getHook(AIGCHook.AutomaticSpeechRecognition);
     }
 
     private void build() {
@@ -37,6 +41,9 @@ public class AIGCPluginSystem extends PluginSystem<AIGCHook> {
         this.addHook(hook);
 
         hook = new AIGCHook(AIGCHook.RemoveKnowledgeDoc);
+        this.addHook(hook);
+
+        hook = new AIGCHook(AIGCHook.AutomaticSpeechRecognition);
         this.addHook(hook);
     }
 }

@@ -2904,6 +2904,17 @@ public class AIGCService extends AbstractModule implements Generatable {
             }).start();
         }
 
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                AIGCPluginContext pluginContext = new AIGCPluginContext(authToken,
+                        AICapability.AudioProcessing.AutomaticSpeechRecognition);
+                pluginContext.addFileLabel(fileLabel);
+                AIGCHook hook = getPluginSystem().getAutomaticSpeechRecognitionHook();
+                hook.apply(pluginContext);
+            }
+        });
+
         return true;
     }
 

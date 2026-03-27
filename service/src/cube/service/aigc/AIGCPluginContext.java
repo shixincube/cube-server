@@ -7,20 +7,39 @@
 package cube.service.aigc;
 
 import cube.aigc.AppEvent;
+import cube.auth.AuthToken;
+import cube.common.entity.AIGCUnit;
+import cube.common.entity.FileLabel;
 import cube.common.entity.KnowledgeDocument;
 import cube.plugin.PluginContext;
 import cube.service.aigc.knowledge.KnowledgeBase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * AIGC 插件上下文。
  */
 public class AIGCPluginContext extends PluginContext {
 
+    private AuthToken authToken;
+
+    private String task;
+
+    private List<FileLabel> fileLabelList;
+
+    private AIGCUnit unit;
+
     private KnowledgeBase knowledgeBase;
 
     private KnowledgeDocument knowledgeDocument;
 
     private AppEvent appEvent;
+
+    public AIGCPluginContext(AuthToken authToken, String task) {
+        this.authToken = authToken;
+        this.task = task;
+    }
 
     public AIGCPluginContext(KnowledgeBase knowledgeBase, KnowledgeDocument knowledgeDocument) {
         this.knowledgeBase = knowledgeBase;
@@ -45,6 +64,28 @@ public class AIGCPluginContext extends PluginContext {
 
     public AppEvent getAppEvent() {
         return this.appEvent;
+    }
+
+    public void setTask(String task) {
+        this.task = task;
+    }
+
+    public void setUnit(AIGCUnit unit) {
+        this.unit = unit;
+    }
+
+    public void addFileLabel(FileLabel fileLabel) {
+        if (null == this.fileLabelList) {
+            this.fileLabelList = new ArrayList<>();
+        }
+        this.fileLabelList.add(fileLabel);
+    }
+
+    public void removeFileLabel(FileLabel fileLabel) {
+        if (null == this.fileLabelList) {
+            return;
+        }
+        this.fileLabelList.remove(fileLabel);
     }
 
     @Override
