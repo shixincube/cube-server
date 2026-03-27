@@ -8,6 +8,7 @@ package cube.service.riskmgmt;
 
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
+import cube.aigc.TaskDescriptor;
 import cube.common.Storagable;
 import cube.common.entity.*;
 import cube.core.Conditional;
@@ -31,7 +32,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * 数据存储器。
  */
-public class MainStorage implements Storagable {
+public class RiskMgmtStorage implements Storagable {
 
     private final String contactRiskTablePrefix = "contact_risk_";
 
@@ -43,7 +44,7 @@ public class MainStorage implements Storagable {
 
     private final String transChainNodeTablePrefix = "trans_chain_node_";
 
-    private final String aiTaskTable = "aigc_task";
+    private final String aigcTaskTablePrefix = "aigc_task_";
 
     private final StorageField[] contactRiskFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
@@ -144,6 +145,51 @@ public class MainStorage implements Storagable {
             })
     };
 
+    private final StorageField[] aigcTaskFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("token", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("task", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("input_tokens", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            new StorageField("output_tokens", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            new StorageField("file_code_1", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("file_code_2", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("file_code_3", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("file_code_4", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("file_code_5", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("unit_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            })
+    };
+
     private ExecutorService executor;
 
     private Storage storage;
@@ -153,8 +199,9 @@ public class MainStorage implements Storagable {
     private Map<String, String> sensitiveWordTableNameMap;
     private Map<String, String> transChainTrackTableNameMap;
     private Map<String, String> transChainNodeTableNameMap;
+    private Map<String, String> aigcTaskTableNameMap;
 
-    public MainStorage(ExecutorService executor, StorageType type, JSONObject config) {
+    public RiskMgmtStorage(ExecutorService executor, StorageType type, JSONObject config) {
         this.executor = executor;
         this.storage = StorageFactory.getInstance().createStorage(type, "RickMgmtMainStorage", config);
         this.contactRiskTableNameMap = new HashMap<>();
@@ -162,6 +209,7 @@ public class MainStorage implements Storagable {
         this.sensitiveWordTableNameMap = new HashMap<>();
         this.transChainTrackTableNameMap = new HashMap<>();
         this.transChainNodeTableNameMap = new HashMap<>();
+        this.aigcTaskTableNameMap = new HashMap<>();
     }
 
     @Override
@@ -182,6 +230,7 @@ public class MainStorage implements Storagable {
             this.checkSensitiveWordTable(domain);
             this.checkChainTrackTable(domain);
             this.checkChainNodeTable(domain);
+            this.checkAigcTaskTable(domain);
         }
     }
 
@@ -364,6 +413,29 @@ public class MainStorage implements Storagable {
         }
     }
 
+    public boolean writeTaskDescriptor(TaskDescriptor descriptor) {
+        String table = this.aigcTaskTableNameMap.get(descriptor.domain);
+        if (null == table) {
+            return false;
+        }
+
+        return this.storage.executeInsert(table, new StorageField[] {
+                new StorageField("contact_id", descriptor.contactId),
+                new StorageField("domain", descriptor.domain),
+                new StorageField("token", descriptor.token),
+                new StorageField("task", descriptor.task),
+                new StorageField("timestamp", descriptor.timestamp),
+                new StorageField("input_tokens", descriptor.getInputTokens()),
+                new StorageField("output_tokens", descriptor.getOutputTokens()),
+                new StorageField("file_code_1", LiteralBase.STRING, descriptor.getFileCode()),
+                new StorageField("file_code_2", LiteralBase.STRING, descriptor.getFileCode2()),
+                new StorageField("file_code_3", LiteralBase.STRING, descriptor.getFileCode3()),
+                new StorageField("file_code_4", LiteralBase.STRING, descriptor.getFileCode4()),
+                new StorageField("file_code_5", LiteralBase.STRING, descriptor.getFileCode5()),
+                new StorageField("unit_id", descriptor.getUnitId())
+        });
+    }
+
     private void checkContactRiskTable(String domain) {
         String table = this.contactRiskTablePrefix + domain;
 
@@ -436,6 +508,20 @@ public class MainStorage implements Storagable {
         if (!this.storage.exist(table)) {
             // 表不存在，建表
             if (this.storage.executeCreate(table, this.transChainNodeFields)) {
+                Logger.i(this.getClass(), "Created table '" + table + "' successfully");
+            }
+        }
+    }
+
+    private void checkAigcTaskTable(String domain) {
+        String table = this.aigcTaskTablePrefix + domain;
+
+        table = SQLUtils.correctTableName(table);
+        this.aigcTaskTableNameMap.put(domain, table);
+
+        if (!this.storage.exist(table)) {
+            // 表不存在，建表
+            if (this.storage.executeCreate(table, this.aigcTaskFields)) {
                 Logger.i(this.getClass(), "Created table '" + table + "' successfully");
             }
         }

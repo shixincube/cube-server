@@ -6,7 +6,9 @@
 
 package cube.service.aigc;
 
+import cell.util.Utils;
 import cube.aigc.AppEvent;
+import cube.aigc.TaskDescriptor;
 import cube.auth.AuthToken;
 import cube.common.entity.AIGCUnit;
 import cube.common.entity.FileLabel;
@@ -66,12 +68,28 @@ public class AIGCPluginContext extends PluginContext {
         return this.appEvent;
     }
 
+    public AuthToken getAuthToken() {
+        return this.authToken;
+    }
+
+    public String getTask() {
+        return this.task;
+    }
+
     public void setTask(String task) {
         this.task = task;
     }
 
+    public AIGCUnit getUnit() {
+        return this.unit;
+    }
+
     public void setUnit(AIGCUnit unit) {
         this.unit = unit;
+    }
+
+    public List<FileLabel> getFileLabelList() {
+        return this.fileLabelList;
     }
 
     public void addFileLabel(FileLabel fileLabel) {
@@ -86,6 +104,25 @@ public class AIGCPluginContext extends PluginContext {
             return;
         }
         this.fileLabelList.remove(fileLabel);
+    }
+
+    public TaskDescriptor makeTaskDescriptor() {
+        if (null == this.authToken || null == this.task) {
+            return null;
+        }
+
+        TaskDescriptor descriptor = new TaskDescriptor(Utils.generateSerialNumber(), this.authToken.getContactId(),
+                this.authToken.getDomain(), this.authToken.getCode(), this.task, System.currentTimeMillis());
+        if (null != this.fileLabelList) {
+            for (FileLabel fileLabel : this.fileLabelList) {
+                descriptor.addFileCode(fileLabel.getFileCode());
+            }
+        }
+        if (null != this.unit) {
+            descriptor.setUnitId(this.unit.getId());
+        }
+
+        return descriptor;
     }
 
     @Override

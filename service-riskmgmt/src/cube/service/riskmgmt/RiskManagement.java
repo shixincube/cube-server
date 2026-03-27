@@ -56,7 +56,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
 
     private ExecutorService executor;
 
-    private MainStorage mainStorage;
+    private RiskMgmtStorage riskMgmtStorage;
 
     private HashMap<String, List<SensitiveWord>> sensitiveWordsMap;
 
@@ -78,19 +78,19 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
             config = config.getJSONObject(RiskManagement.NAME);
 
             if (config.getString("type").equalsIgnoreCase("MySQL")) {
-                this.mainStorage = new MainStorage(this.executor, StorageType.MySQL, config);
+                this.riskMgmtStorage = new RiskMgmtStorage(this.executor, StorageType.MySQL, config);
             }
             else {
-                this.mainStorage = new MainStorage(this.executor, StorageType.SQLite, config);
+                this.riskMgmtStorage = new RiskMgmtStorage(this.executor, StorageType.SQLite, config);
             }
 
             this.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    mainStorage.open();
+                    riskMgmtStorage.open();
 
                     AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
-                    mainStorage.execSelfChecking(authService.getDomainList());
+                    riskMgmtStorage.execSelfChecking(authService.getDomainList());
 
                     loadSensitiveWordToMemory(authService.getDomainList());
 
@@ -106,8 +106,8 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
     public void stop() {
         ContactManager.getInstance().removeListener(this);
 
-        if (null != this.mainStorage) {
-            this.mainStorage.close();
+        if (null != this.riskMgmtStorage) {
+            this.riskMgmtStorage.close();
         }
 
         if (null != this.executor) {
@@ -141,7 +141,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
     public void refreshDomain(AuthDomain authDomain) {
         List<String> list = new ArrayList<>();
         list.add(authDomain.domainName);
-        this.mainStorage.execSelfChecking(list);
+        this.riskMgmtStorage.execSelfChecking(list);
     }
 
     /**
@@ -152,7 +152,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
      * @return
      */
     public int getContactRiskMask(String domain, long contactId) {
-        return this.mainStorage.readContactRiskMask(domain, contactId);
+        return this.riskMgmtStorage.readContactRiskMask(domain, contactId);
     }
 
     /**
@@ -164,7 +164,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
      * @return
      */
     public boolean modifyContactRiskMask(String domain, long contactId, int mask) {
-        return this.mainStorage.writeContactRiskMask(domain, contactId, mask);
+        return this.riskMgmtStorage.writeContactRiskMask(domain, contactId, mask);
     }
 
     /**
@@ -173,7 +173,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
      * @param behavior
      */
     public void recordContactBehavior(ContactBehavior behavior) {
-        this.mainStorage.writeContactBehavior(behavior);
+        this.riskMgmtStorage.writeContactBehavior(behavior);
     }
 
     /**
@@ -188,7 +188,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
      */
     public List<ContactBehavior> listContactBehaviors(String domain, long contactId, long beginTime, long endTime,
                                                       String behavior) {
-        return this.mainStorage.readContactBehaviors(domain, contactId, beginTime, endTime, behavior);
+        return this.riskMgmtStorage.readContactBehaviors(domain, contactId, beginTime, endTime, behavior);
     }
 
     public boolean hasSensitiveWord(String domain, String text) {
@@ -241,7 +241,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
             node.setMethod(method);
 
             // 写入数据库
-            this.mainStorage.addTransmissionChainNode(node);
+            this.riskMgmtStorage.addTransmissionChainNode(node);
         });
     }
 
@@ -271,8 +271,12 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
             node.setMethod(method);
 
             // 写入数据库
-            this.mainStorage.addTransmissionChainNode(node);
+            this.riskMgmtStorage.addTransmissionChainNode(node);
         });
+    }
+
+    public RiskMgmtStorage getStorage() {
+        return this.riskMgmtStorage;
     }
 
     @Override
@@ -297,7 +301,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
 
     private void loadSensitiveWordToMemory(List<String> domainList) {
         for (String domain : domainList) {
-            List<SensitiveWord> list = this.mainStorage.readAllSensitiveWords(domain);
+            List<SensitiveWord> list = this.riskMgmtStorage.readAllSensitiveWords(domain);
             this.sensitiveWordsMap.put(domain, list);
         }
     }

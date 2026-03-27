@@ -2910,6 +2910,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                 AIGCPluginContext pluginContext = new AIGCPluginContext(authToken,
                         AICapability.AudioProcessing.AutomaticSpeechRecognition);
                 pluginContext.addFileLabel(fileLabel);
+                pluginContext.setUnit(unit);
                 AIGCHook hook = getPluginSystem().getAutomaticSpeechRecognitionHook();
                 hook.apply(pluginContext);
             }
