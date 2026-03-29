@@ -587,6 +587,11 @@ public enum AIGCAction {
     StopVoiceStream("stopVoiceStream"),
 
     /**
+     * 获取流对应的记录文件。
+     */
+    GetVoiceStreamFile("getVoiceStreamFile"),
+
+    /**
      * 查询咨询策略。
      */
     QueryCounselingStrategy("queryCounselingStrategy"),

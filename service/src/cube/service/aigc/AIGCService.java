@@ -3165,9 +3165,39 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param streamName
      * @return
      */
-    public FileLabel stopVoiceStream(AuthToken authToken, String streamName) {
-        // 直接停止
-        return CounselingManager.getInstance().stopStream(authToken, streamName);
+    public boolean stopVoiceStream(AuthToken authToken, String streamName) {
+        JSONObject data = this.storage.readCounselingRecording(streamName);
+        if (null == data) {
+            // 直接停止
+            (new Thread() {
+                @Override
+                public void run() {
+                    CounselingManager.getInstance().stopStream(authToken, streamName);
+                }
+            }).start();
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
+     * 获取语音流文件。
+     *
+     * @param authToken
+     * @param streamName
+     * @return
+     */
+    public FileLabel getVoiceStreamFile(AuthToken authToken, String streamName) {
+        JSONObject data = this.storage.readCounselingRecording(streamName);
+        if (null == data) {
+            return null;
+        }
+
+        String fileCode = data.getString("fileCode");
+        FileLabel file = this.getFile(authToken.getDomain(), fileCode);
+        return file;
     }
 
     /**

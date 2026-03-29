@@ -2771,6 +2771,25 @@ public class AIGCStorage implements Storagable {
         }));
     }
 
+    public JSONObject readCounselingRecording(String streamName) {
+        List<StorageField[]> storageFields = this.storage.executeQuery(this.counselingRecordingTable,
+                this.counselingRecordingFields, new Conditional[] {
+                        Conditional.createEqualTo("stream", streamName)
+                });
+        if (storageFields.isEmpty()) {
+            return null;
+        }
+
+        JSONObject result = new JSONObject();
+        Map<String, StorageField> data = StorageFields.get(storageFields.get(0));
+        result.put("stream", data.get("stream").getString());
+        result.put("timestamp", data.get("timestamp").getLong());
+        result.put("duration", data.get("duration").getLong());
+        result.put("theme", data.get("theme").getString());
+        result.put("fileCode", data.get("file_code").getString());
+        return result;
+    }
+
     private void resetDefaultConfig() {
         // 支持中英双语的对话语言模型，具有 70 亿参数。针对中文问答和对话进行了优化。
         // 经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的优化。

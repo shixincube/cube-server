@@ -23,7 +23,6 @@ public class FerryhouseCellListener implements CellListener {
 
     @Override
     public void cellPreinitialize(Nucleus nucleus) {
-
     }
 
     @Override
@@ -37,7 +36,10 @@ public class FerryhouseCellListener implements CellListener {
     }
 
     @Override
-    public void cellDestroyed(Nucleus nucleus) {
+    public void cellPredestroy(Nucleus nucleus) {
+    }
 
+    @Override
+    public void cellDestroyed(Nucleus nucleus) {
     }
 }

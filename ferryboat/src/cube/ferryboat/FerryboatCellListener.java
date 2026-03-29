@@ -38,6 +38,11 @@ public class FerryboatCellListener implements CellListener {
     }
 
     @Override
+    public void cellPredestroy(Nucleus nucleus) {
+        Logger.i(this.getClass(), "#cellPredestroy");
+    }
+
+    @Override
     public void cellDestroyed(Nucleus nucleus) {
         Logger.i(this.getClass(), "#cellDestroyed");
 

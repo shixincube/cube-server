@@ -2946,7 +2946,7 @@ public class Manager implements Tickable, PerformerListener {
         return true;
     }
 
-    public FileLabel stopStream(String token, String streamName) {
+    public boolean stopStream(String token, String streamName) {
         JSONObject data = new JSONObject();
         data.put("streamName", streamName);
         Packet packet = new Packet(AIGCAction.StopVoiceStream.name, data);
@@ -2956,12 +2956,34 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#stopStream - No response");
-            return null;
+            return false;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
             Logger.w(this.getClass(), "#stopStream - Response state is " + Packet.extractCode(responsePacket));
+            return false;
+        }
+
+        return true;
+    }
+
+    public FileLabel getStreamFile(String token, String streamName) {
+        JSONObject data = new JSONObject();
+        data.put("streamName", streamName);
+        Packet packet = new Packet(AIGCAction.GetVoiceStreamFile.name, data);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#getStreamFile - No response");
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getStreamFile - Response state is " + Packet.extractCode(responsePacket));
             return null;
         }
 

@@ -44,10 +44,36 @@ public class StopStream extends ContextHandler {
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
                 String streamName = data.has("streamName") ?
-                        data.getString("streamName") : data.getString("name");
+                        data.getString("streamName") : data.getString("stream");
 
-                FileLabel fileLabel = Manager.getInstance().stopStream(token, streamName);
+                boolean result = Manager.getInstance().stopStream(token, streamName);
+                if (result) {
+                    this.respondOk(response, data);
+                    this.complete();
+                }
+                else {
+                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                    this.complete();
+                }
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406, this.makeError(HttpStatus.NOT_ACCEPTABLE_406));
+                this.complete();
+            }
+        }
 
+        @Override
+        public void doGet(HttpServletRequest request, HttpServletResponse response) {
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
+                this.complete();
+                return;
+            }
+
+            try {
+                String streamName = request.getParameter("stream");
+
+                FileLabel fileLabel = Manager.getInstance().getStreamFile(token, streamName);
                 if (null != fileLabel) {
                     JSONObject responseData = fileLabel.toCompactJSON();
                     FileLabels.reviseFileLabel(responseData, token,

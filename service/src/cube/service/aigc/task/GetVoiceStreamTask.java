@@ -13,6 +13,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
+import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
@@ -21,9 +22,9 @@ import cube.service.aigc.AIGCService;
 /**
  * 停止语音流任务。
  */
-public class StopVoiceStreamTask extends ServiceTask {
+public class GetVoiceStreamTask extends ServiceTask {
 
-    public StopVoiceStreamTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public GetVoiceStreamTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -44,10 +45,10 @@ public class StopVoiceStreamTask extends ServiceTask {
         AuthToken authToken = service.getToken(token);
         String streamName = packet.data.getString("streamName");
 
-        boolean success = service.stopVoiceStream(authToken, streamName);
-        if (success) {
+        FileLabel fileLabel = service.getVoiceStreamFile(authToken, streamName);
+        if (null != fileLabel) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, packet.data));
+                    this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, fileLabel.toCompactJSON()));
             markResponseTime();
         }
         else {
