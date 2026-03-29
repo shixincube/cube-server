@@ -2867,7 +2867,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
-    public boolean automaticSpeechRecognition(AuthToken authToken, String fileCode, AutomaticSpeechRecognitionListener listener) {
+    public boolean automaticSpeechRecognition(AuthToken authToken, String fileCode,
+                                              AutomaticSpeechRecognitionListener listener) {
         FileLabel fileLabel = this.getFile(authToken.getDomain(), fileCode);
         if (null == fileLabel) {
             Logger.e(this.getClass(), "#automaticSpeechRecognition - Get file failed: " + fileCode);
@@ -2881,7 +2882,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        final UnitMeta meta = new SpeechRecognitionUnitMeta(this, unit, fileLabel, listener);
+        final UnitMeta meta = new SpeechRecognitionUnitMeta(this, unit, authToken, fileLabel, listener);
 
         Queue<UnitMeta> queue = null;
         synchronized (this.speechQueueMap) {
@@ -2903,18 +2904,6 @@ public class AIGCService extends AbstractModule implements Generatable {
                 }
             }).start();
         }
-
-        this.executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                AIGCPluginContext pluginContext = new AIGCPluginContext(authToken,
-                        AICapability.AudioProcessing.AutomaticSpeechRecognition);
-                pluginContext.addFileLabel(fileLabel);
-                pluginContext.setUnit(unit);
-                AIGCHook hook = getPluginSystem().getAutomaticSpeechRecognitionHook();
-                hook.apply(pluginContext);
-            }
-        });
 
         return true;
     }

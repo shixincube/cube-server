@@ -15,11 +15,11 @@ import cube.plugin.PluginContext;
 import cube.service.aigc.AIGCPluginContext;
 import cube.service.riskmgmt.RiskManagement;
 
-public class AIAutomaticSpeechRecognitionPlugin implements Plugin {
+public class AITaskPlugin implements Plugin {
 
     private final RiskManagement service;
 
-    public AIAutomaticSpeechRecognitionPlugin(RiskManagement service) {
+    public AITaskPlugin(RiskManagement service) {
         this.service = service;
     }
 

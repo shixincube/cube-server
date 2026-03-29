@@ -8,12 +8,16 @@ package cube.service.aigc.unit;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
+import cube.common.entity.AICapability;
 import cube.common.entity.AIGCUnit;
 import cube.common.entity.FileLabel;
 import cube.common.entity.SpeechRecognitionInfo;
 import cube.common.state.AIGCStateCode;
+import cube.service.aigc.AIGCHook;
+import cube.service.aigc.AIGCPluginContext;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.AutomaticSpeechRecognitionListener;
 import org.json.JSONObject;
@@ -24,11 +28,14 @@ public class SpeechRecognitionUnitMeta extends UnitMeta {
 
     protected FileLabel file;
 
+    protected AuthToken authToken;
+
     protected AutomaticSpeechRecognitionListener listener;
 
-    public SpeechRecognitionUnitMeta(AIGCService service, AIGCUnit unit, FileLabel file,
+    public SpeechRecognitionUnitMeta(AIGCService service, AIGCUnit unit, AuthToken authToken, FileLabel file,
                                      AutomaticSpeechRecognitionListener listener) {
         super(service, unit);
+        this.authToken = authToken;
         this.file = file;
         this.listener = listener;
     }
@@ -55,7 +62,7 @@ public class SpeechRecognitionUnitMeta extends UnitMeta {
         }
 
         JSONObject payload = Packet.extractDataPayload(response);
-        SpeechRecognitionInfo info = new SpeechRecognitionInfo(payload.getJSONObject("result"));
+        final SpeechRecognitionInfo info = new SpeechRecognitionInfo(payload.getJSONObject("result"));
 
         if (Logger.isDebugLevel()) {
             Logger.d(this.getClass(), "#process SR result -\nfile: " + info.file.getFileCode() +
@@ -74,6 +81,30 @@ public class SpeechRecognitionUnitMeta extends UnitMeta {
 //                    info.setText(result.answer);
 //                }
 //            }
+
         this.listener.onCompleted(this.file, info);
+
+        this.service.getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                int inputTokens = 0;
+                int outputTokens = 0;
+                try {
+                    inputTokens = (int) Math.ceil(info.durationInSeconds * 25.0);
+                    outputTokens = service.segmentText(info.text).size();
+                } catch (Exception e) {
+                    Logger.w(this.getClass(), "", e);
+                }
+
+                AIGCPluginContext pluginContext = new AIGCPluginContext(authToken,
+                        AICapability.AudioProcessing.AutomaticSpeechRecognition);
+                pluginContext.setInputTokens(inputTokens);
+                pluginContext.setOutputTokens(outputTokens);
+                pluginContext.addFileLabel(file);
+                pluginContext.setUnit(unit);
+                AIGCHook hook = service.getPluginSystem().getAutomaticSpeechRecognitionHook();
+                hook.apply(pluginContext);
+            }
+        });
     }
 }

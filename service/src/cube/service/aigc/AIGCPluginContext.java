@@ -32,6 +32,10 @@ public class AIGCPluginContext extends PluginContext {
 
     private AIGCUnit unit;
 
+    private int inputTokens;
+
+    private int outputTokens;
+
     private KnowledgeBase knowledgeBase;
 
     private KnowledgeDocument knowledgeDocument;
@@ -106,6 +110,14 @@ public class AIGCPluginContext extends PluginContext {
         this.fileLabelList.remove(fileLabel);
     }
 
+    public void setInputTokens(int tokens) {
+        this.inputTokens = tokens;
+    }
+
+    public void setOutputTokens(int tokens) {
+        this.outputTokens = tokens;
+    }
+
     public TaskDescriptor makeTaskDescriptor() {
         if (null == this.authToken || null == this.task) {
             return null;
@@ -113,6 +125,8 @@ public class AIGCPluginContext extends PluginContext {
 
         TaskDescriptor descriptor = new TaskDescriptor(Utils.generateSerialNumber(), this.authToken.getContactId(),
                 this.authToken.getDomain(), this.authToken.getCode(), this.task, System.currentTimeMillis());
+        descriptor.setInputTokens(this.inputTokens);
+        descriptor.setOutputTokens(this.outputTokens);
         if (null != this.fileLabelList) {
             for (FileLabel fileLabel : this.fileLabelList) {
                 descriptor.addFileCode(fileLabel.getFileCode());

@@ -46,8 +46,16 @@ public class TaskDescriptor implements JSONable {
 //    public TaskDescriptor(JSONObject json) {
 //    }
 
+    public void setInputTokens(int value) {
+        this.inputTokens = value;
+    }
+
     public int getInputTokens() {
         return this.inputTokens;
+    }
+
+    public void setOutputTokens(int value) {
+        this.outputTokens = value;
     }
 
     public int getOutputTokens() {
