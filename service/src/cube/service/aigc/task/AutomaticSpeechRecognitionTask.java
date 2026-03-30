@@ -20,6 +20,7 @@ import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.AutomaticSpeechRecognitionListener;
+import org.json.JSONObject;
 
 /**
  * 自动语音识别。
@@ -36,7 +37,7 @@ public class AutomaticSpeechRecognitionTask extends ServiceTask {
         Packet packet = new Packet(dialect);
 
         String token = this.getTokenCode(dialect);
-        if (null == token || !packet.data.has("fileCode")) {
+        if (null == token) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, packet.data));
             markResponseTime();
@@ -45,28 +46,36 @@ public class AutomaticSpeechRecognitionTask extends ServiceTask {
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         AuthToken authToken = service.getToken(token);
-        String fileCode = packet.data.getString("fileCode");
 
-        // 执行 Automatic Speech Recognition
-        boolean success = service.automaticSpeechRecognition(authToken, fileCode, new AutomaticSpeechRecognitionListener() {
-            @Override
-            public void onCompleted(FileLabel source, SpeechRecognitionInfo result) {
-                cellet.speak(talkContext,
-                        makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.toJSON()));
+        try {
+            String fileCodeOrUrl = packet.data.has("fileCode") ? packet.data.getString("fileCode") :
+                    packet.data.getString("fileUrl");
+
+            // 执行 Automatic Speech Recognition
+            boolean success = service.automaticSpeechRecognition(authToken, fileCodeOrUrl, new AutomaticSpeechRecognitionListener() {
+                @Override
+                public void onCompleted(FileLabel source, SpeechRecognitionInfo result) {
+                    cellet.speak(talkContext,
+                            makeResponse(dialect, packet, AIGCStateCode.Ok.code, result.toJSON()));
+                    markResponseTime();
+                }
+
+                @Override
+                public void onFailed(FileLabel source, AIGCStateCode stateCode) {
+                    cellet.speak(talkContext,
+                            makeResponse(dialect, packet, stateCode.code, packet.data));
+                    markResponseTime();
+                }
+            });
+
+            if (!success) {
+                this.cellet.speak(this.talkContext,
+                        this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
                 markResponseTime();
             }
-
-            @Override
-            public void onFailed(FileLabel source, AIGCStateCode stateCode) {
-                cellet.speak(talkContext,
-                        makeResponse(dialect, packet, stateCode.code, packet.data));
-                markResponseTime();
-            }
-        });
-
-        if (!success) {
+        } catch (Exception e) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
         }
     }

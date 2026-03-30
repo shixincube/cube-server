@@ -110,6 +110,20 @@ public class Notifier {
                 return null;
             }
         }
+        else if (FileStorageAction.DownloadFile.name.equals(action)) {
+            String domain = data.getString("domain");
+            long contactId = data.getLong("contactId");
+            String url = data.getString("url");
+            int limit = data.has("limit") ? data.getInt("limit") : -1;
+            FileLabel result = this.service.downloadFile(domain, contactId, url, limit);
+            if (null != result) {
+                return result.toJSON();
+            }
+            else {
+                Logger.w(this.getClass(), "DownloadFile - Failed: " + url);
+                return null;
+            }
+        }
         else if (FileStorageAction.ListFiles.name.equals(action)) {
             // 批量获取文件
             List<FileLabel> list = this.service.getFileHierarchyManager().listFiles(data.getString(NoticeData.DOMAIN),

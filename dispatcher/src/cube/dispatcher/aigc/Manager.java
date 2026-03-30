@@ -1857,7 +1857,8 @@ public class Manager implements Tickable, PerformerListener {
         return this.textToFileFutureMap.get(sn);
     }
 
-    public SpeechRecognitionFuture automaticSpeechRecognition(String token, String fileCode, boolean reset) {
+    public SpeechRecognitionFuture automaticSpeechRecognition(String token, String fileCode, String fileUrl,
+                                                              boolean reset) {
         if (reset) {
             this.speechRecognitionFutureMap.remove(fileCode);
         }
@@ -1869,7 +1870,12 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         JSONObject data = new JSONObject();
-        data.put("fileCode", fileCode);
+        if (null != fileCode) {
+            data.put("fileCode", fileCode);
+        }
+        else if (null != fileUrl) {
+            data.put("fileUrl", fileUrl);
+        }
         Packet packet = new Packet(AIGCAction.AutomaticSpeechRecognition.name, data);
         ActionDialect dialect = packet.toDialect();
         dialect.addParam("token", token);

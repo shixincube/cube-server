@@ -49,6 +49,11 @@ public enum FileStorageAction {
     SaveFile("saveFile"),
 
     /**
+     * 从外部链接下载文件。
+     */
+    DownloadFile("downloadFile"),
+
+    /**
      * 获取根目录信息。
      */
     GetRoot("getRoot"),

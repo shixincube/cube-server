@@ -91,7 +91,7 @@ public class SpeechRecognitionUnitMeta extends UnitMeta {
                 int outputTokens = 0;
                 try {
                     inputTokens = (int) Math.ceil(info.durationInSeconds * 25.0);
-                    outputTokens = service.segmentText(info.text).size();
+                    outputTokens = service.segmentText(info.text).size() + info.text.length();
                 } catch (Exception e) {
                     Logger.w(this.getClass(), "", e);
                 }

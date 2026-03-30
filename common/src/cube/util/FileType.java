@@ -1156,7 +1156,7 @@ public enum FileType {
      */
     public static FileType matchMimeType(String mimeType) {
         for (FileType type : FileType.values()) {
-            if (type.mimeType.equals(mimeType)) {
+            if (type.mimeType.equalsIgnoreCase(mimeType)) {
                 return type;
             }
         }

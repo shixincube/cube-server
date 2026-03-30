@@ -34,8 +34,7 @@ import cube.service.filestorage.system.DiskSystem;
 import cube.service.filestorage.system.FileDescriptor;
 import cube.service.filestorage.system.FileSystem;
 import cube.storage.StorageType;
-import cube.util.ConfigUtils;
-import cube.util.FileUtils;
+import cube.util.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -926,6 +925,47 @@ public class FileStorageService extends AbstractModule {
         });
 
         return fileLabelList;
+    }
+
+    /**
+     * 下载文件。
+     *
+     * @param domainName
+     * @param operatorId
+     * @param fileUrl
+     * @param sizeLimit
+     * @return
+     */
+    public FileLabel downloadFile(String domainName, long operatorId, String fileUrl, int sizeLimit) {
+        FileDownloader downloader = new FileDownloader(sizeLimit);
+        File file = downloader.downloadFile(fileUrl, new FileDownloaderListener() {
+            @Override
+            public void onProgress(String fileName, int progressLength, int totalLength) {
+                // Nothing
+            }
+
+            @Override
+            public void onCompleted(File file) {
+                // Nothing
+            }
+
+            @Override
+            public void onError(String error) {
+                // Nothing
+            }
+        });
+        if (null == file) {
+            Logger.e(this.getClass(), "#downloadFile - Download failed: " + fileUrl);
+            return null;
+        }
+
+        String fileCode = FileUtils.makeFileCode(operatorId, domainName, file.getName());
+        // 写入文件
+        this.writeFile(file.getName(), fileCode, file);
+        // 写入库
+        FileLabel fileLabel = FileUtils.makeFileLabel(domainName, fileCode, operatorId, file);
+        fileLabel = this.putFile(fileLabel);
+        return fileLabel;
     }
 
     /**

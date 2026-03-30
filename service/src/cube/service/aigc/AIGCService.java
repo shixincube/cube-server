@@ -27,10 +27,7 @@ import cube.common.Language;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
-import cube.common.notice.DeleteFile;
-import cube.common.notice.GetFile;
-import cube.common.notice.LoadFile;
-import cube.common.notice.SaveFile;
+import cube.common.notice.*;
 import cube.common.state.AIGCStateCode;
 import cube.core.AbstractModule;
 import cube.core.Kernel;
@@ -2867,11 +2864,27 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
-    public boolean automaticSpeechRecognition(AuthToken authToken, String fileCode,
+    /**
+     * 自动语音识别。
+     *
+     * @param authToken
+     * @param fileCodeOrUrl
+     * @param listener
+     * @return
+     */
+    public boolean automaticSpeechRecognition(AuthToken authToken, String fileCodeOrUrl,
                                               AutomaticSpeechRecognitionListener listener) {
-        FileLabel fileLabel = this.getFile(authToken.getDomain(), fileCode);
+        FileLabel fileLabel = null;
+        if (TextUtils.isURL(fileCodeOrUrl)) {
+            // 从外部链接下载
+            fileLabel = this.downloadFile(authToken, fileCodeOrUrl);
+        }
+        else {
+            fileLabel = this.getFile(authToken.getDomain(), fileCodeOrUrl);
+        }
+
         if (null == fileLabel) {
-            Logger.e(this.getClass(), "#automaticSpeechRecognition - Get file failed: " + fileCode);
+            Logger.e(this.getClass(), "#automaticSpeechRecognition - Get file failed: " + fileCodeOrUrl);
             return false;
         }
 
@@ -3651,6 +3664,24 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         return null;
+    }
+
+    private FileLabel downloadFile(AuthToken authToken, String fileUrl) {
+        // 从外部链接下载
+        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        if (null == fileStorage) {
+            Logger.w(this.getClass(), "#downloadFile - File storage service is not ready");
+            return null;
+        }
+
+        DownloadFile notice = new DownloadFile(fileUrl, authToken.getDomain(), authToken.getContactId(),
+                50 * 1024 * 1024);
+        JSONObject fileLabelJson = fileStorage.notify(notice);
+        if (null == fileLabelJson) {
+            Logger.w(this.getClass(), "#downloadFile - Download failed: " + fileUrl);
+            return null;
+        }
+        return new FileLabel(fileLabelJson);
     }
 
     private void processGenerateTextMeta(GenerateTextUnitMeta meta) {

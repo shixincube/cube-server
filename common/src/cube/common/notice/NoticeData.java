@@ -33,6 +33,10 @@ public class NoticeData extends JSONObject {
 
     public final static String FILE_LABEL = "fileLabel";
 
+    public final static String URL = "url";
+
+    public final static String LIMIT = "limit";
+
     public NoticeData(String action) {
         super();
         this.put(NoticeData.ACTION, action);

@@ -81,12 +81,12 @@ public class AutomaticSpeechRecognition extends ContextHandler {
 
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
-                String fileCode = json.getString("fileCode");
-
+                String fileCode = json.has("fileCode") ? json.getString("fileCode") : null;
+                String fileUrl = (null == fileCode) ? json.getString("fileUrl") : null;
                 boolean reset = json.has("reset") && json.getBoolean("reset");
 
                 Manager.SpeechRecognitionFuture future = Manager.getInstance()
-                        .automaticSpeechRecognition(token, fileCode, reset);
+                        .automaticSpeechRecognition(token, fileCode, fileUrl, reset);
                 if (null == future) {
                     // 故障
                     this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
