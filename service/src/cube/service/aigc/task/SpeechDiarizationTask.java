@@ -36,7 +36,19 @@ public class SpeechDiarizationTask extends ServiceTask {
         Packet packet = new Packet(dialect);
 
         String token = this.getTokenCode(dialect);
-        if (null == token || !packet.data.has("fileCode")) {
+        if (null == token) {
+            this.cellet.speak(this.talkContext,
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, packet.data));
+            markResponseTime();
+            return;
+        }
+
+        String fileCodeOrUrl = packet.data.has("fileCode") ? packet.data.getString("fileCode") : null;
+        if (null == fileCodeOrUrl && packet.data.has("fileUrl")) {
+            fileCodeOrUrl = packet.data.getString("fileUrl");
+        }
+
+        if (null == fileCodeOrUrl) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, packet.data));
             markResponseTime();
@@ -45,10 +57,9 @@ public class SpeechDiarizationTask extends ServiceTask {
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         AuthToken authToken = service.getToken(token);
-        String fileCode = packet.data.getString("fileCode");
 
         // 执行 Speaker Diarization
-        boolean success = service.performSpeakerDiarization(authToken, fileCode, true, true,
+        boolean success = service.performSpeakerDiarization(authToken, fileCodeOrUrl, true, true,
                 new VoiceDiarizationListener() {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {

@@ -1949,7 +1949,7 @@ public class Manager implements Tickable, PerformerListener {
         return this.facialExpressionRecognitionFutureMap.get(fileCode);
     }
 
-    public SpeechDiarizationFuture speechDiarization(String token, String fileCode, boolean reset) {
+    public SpeechDiarizationFuture speechDiarization(String token, String fileCode, String fileUrl, boolean reset) {
         if (reset) {
             this.speechDiarizationFutureMap.remove(fileCode);
         }
@@ -1961,7 +1961,12 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         JSONObject payload = new JSONObject();
-        payload.put("fileCode", fileCode);
+        if (null != fileCode) {
+            payload.put("fileCode", fileCode);
+        }
+        else if (null != fileUrl) {
+            payload.put("fileUrl", fileUrl);
+        }
         Packet packet = new Packet(AIGCAction.SpeechDiarization.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);

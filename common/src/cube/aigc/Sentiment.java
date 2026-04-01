@@ -51,6 +51,6 @@ public enum Sentiment {
             }
         }
 
-        return Sentiment.Undefined;
+        return Sentiment.Both;
     }
 }

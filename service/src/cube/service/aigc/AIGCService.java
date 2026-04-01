@@ -129,6 +129,8 @@ public class AIGCService extends AbstractModule implements Generatable {
      */
     private final Map<String, LinkedList<UnitMeta>> audioQueueMap;
 
+    private final List<UnitMeta> runningMetas;
+
     /**
      * 最大频道数量。
      */
@@ -188,6 +190,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         this.retrieveReRankQueueMap = new ConcurrentHashMap<>();
         this.speechQueueMap = new ConcurrentHashMap<>();
         this.audioQueueMap = new ConcurrentHashMap<>();
+        this.runningMetas = new LinkedList<>();
         this.generateTextUnitCountMap = new ConcurrentHashMap<>();
         this.tokenizer = new Tokenizer();
     }
@@ -555,8 +558,6 @@ public class AIGCService extends AbstractModule implements Generatable {
             if (unit.getContact().getId().equals(contact.getId())) {
                 result.add(unit);
                 iter.remove();
-//                this.generateQueueMap.remove(unit.getQueryKey());
-//                this.conversationQueueMap.remove(unit.getQueryKey());
             }
         }
 
@@ -2942,6 +2943,19 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
+        synchronized (this.runningMetas) {
+            for (UnitMeta meta : this.runningMetas) {
+                if (meta instanceof AudioUnitMeta) {
+                    AudioUnitMeta aum = (AudioUnitMeta) meta;
+                    if (aum.getFile().getFileCode().equals(fileLabel.getFileCode())) {
+                        Logger.w(this.getClass(), "#performSpeakerDiarization - Re-submit the task for file: " +
+                                fileLabel.getFileCode());
+                        return false;
+                    }
+                }
+            }
+        }
+
         final AudioUnitMeta meta = new AudioUnitMeta(this, unit, authToken, AIGCAction.SpeechDiarization,
                 fileLabel, preprocess, storage);
         meta.voiceDiarizationListener = listener;
@@ -2973,17 +2987,24 @@ public class AIGCService extends AbstractModule implements Generatable {
      * 说话者分割与分析。
      *
      * @param authToken
-     * @param fileCode
+     * @param fileCodeOrUrl
      * @param preprocess
      * @param storage
      * @param listener
      * @return
      */
-    public boolean performSpeakerDiarization(AuthToken authToken, String fileCode, boolean preprocess,
+    public boolean performSpeakerDiarization(AuthToken authToken, String fileCodeOrUrl, boolean preprocess,
                                              boolean storage, VoiceDiarizationListener listener) {
-        FileLabel fileLabel = this.getFile(authToken.getDomain(), fileCode);
+        FileLabel fileLabel = null;
+        if (TextUtils.isURL(fileCodeOrUrl)) {
+            fileLabel = this.downloadFile(authToken, fileCodeOrUrl);
+        }
+        else {
+            fileLabel = this.getFile(authToken.getDomain(), fileCodeOrUrl);
+        }
+
         if (null == fileLabel) {
-            Logger.e(this.getClass(), "#performSpeakerDiarization - Get file failed: " + fileCode);
+            Logger.e(this.getClass(), "#performSpeakerDiarization - Get file failed: " + fileCodeOrUrl);
             return false;
         }
 
@@ -3007,16 +3028,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         voiceDiarization.file = this.getFile(authToken.getDomain(), voiceDiarization.fileCode);
         this.storage.deleteVoiceDiarization(fileCode);
         return voiceDiarization;
-    }
-
-    /**
-     *
-     * @param authToken
-     * @param voiceDiarizationId
-     * @return
-     */
-    public Summary generateVoiceSummary(AuthToken authToken, long voiceDiarizationId) {
-        return null;
     }
 
     /**
@@ -3759,11 +3770,19 @@ public class AIGCService extends AbstractModule implements Generatable {
             meta = queue.poll();
         }
         while (null != meta) {
+            synchronized (this.runningMetas) {
+                this.runningMetas.add(meta);
+            }
+
             // 执行处理
             try {
                 meta.process();
             } catch (Exception e) {
                 Logger.e(this.getClass(), "#processQueue - meta process error", e);
+            }
+
+            synchronized (this.runningMetas) {
+                this.runningMetas.remove(meta);
             }
 
             synchronized (queue) {
@@ -3776,7 +3795,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     private boolean checkParticipantName(String name) {
         if (name.equalsIgnoreCase("AIGC") || name.equalsIgnoreCase("Cube") ||
-            name.equalsIgnoreCase("Baize") || name.equalsIgnoreCase("白泽")) {
+            name.equalsIgnoreCase("Baize") || name.contains("白泽")) {
             return false;
         }
         else {

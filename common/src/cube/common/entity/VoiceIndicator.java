@@ -7,6 +7,7 @@
 package cube.common.entity;
 
 import cube.common.JSONable;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.HashMap;
@@ -57,10 +58,11 @@ public class VoiceIndicator implements JSONable {
         this.id = json.getLong("id");
         this.timestamp = json.getLong("timestamp");
         this.silenceDuration = json.getDouble("silenceDuration");
-        JSONObject speakerIndicatorMap = json.getJSONObject("speakerIndicators");
-        for (String key : speakerIndicatorMap.keySet()) {
-            JSONObject value = speakerIndicatorMap.getJSONObject(key);
-            this.speakerIndicators.put(key, new SpeakerIndicator(value));
+
+        JSONArray speakers = json.getJSONArray("speakers");
+        for (int i = 0; i < speakers.length(); ++i) {
+            SpeakerIndicator indicator = new SpeakerIndicator(speakers.getJSONObject(i));
+            this.speakerIndicators.put(indicator.label, indicator);
         }
     }
 
@@ -71,11 +73,12 @@ public class VoiceIndicator implements JSONable {
         json.put("timestamp", this.timestamp);
         json.put("silenceDuration", this.silenceDuration);
 
-        JSONObject speakerIndicatorMap = new JSONObject();
+        JSONArray speakers = new JSONArray();
         for (Map.Entry<String, SpeakerIndicator> e : this.speakerIndicators.entrySet()) {
-            speakerIndicatorMap.put(e.getKey(), e.getValue().toJSON());
+            speakers.put(e.getValue().toJSON());
         }
-        json.put("speakerIndicators", speakerIndicatorMap);
+        json.put("speakers", speakers);
+
         return json;
     }
 

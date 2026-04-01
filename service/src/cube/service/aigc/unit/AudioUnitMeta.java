@@ -49,6 +49,10 @@ public class AudioUnitMeta extends UnitMeta {
         this.storage = storage;
     }
 
+    public FileLabel getFile() {
+        return this.file;
+    }
+
     @Override
     public void process() {
         if (null == this.voiceDiarizationListener) {
