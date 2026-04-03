@@ -104,6 +104,7 @@ public class PaintingFeatureSet implements JSONable {
         Iterator<Map.Entry<String, List<Representation>>> iter = this.dataMap.entrySet().iterator();
         while (iter.hasNext()) {
             Map.Entry<String, List<Representation>> e = iter.next();
+            // 画面内容
             buf.append("* ").append(e.getKey()).append("。");
             buf.append("该特征说明受测人有以下心理特征：");
             List<Representation> list = e.getValue();
@@ -140,9 +141,7 @@ public class PaintingFeatureSet implements JSONable {
             }
         }
 
-        buf.append("\n");
-
-        Logger.d(this.getClass(), "#makePrompt - Words: " + buf.length());
+        Logger.d(this.getClass(), "#makeMarkdown - Words: " + buf.length());
 
         return buf.toString();
     }

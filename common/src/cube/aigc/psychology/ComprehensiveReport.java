@@ -8,9 +8,11 @@ package cube.aigc.psychology;
 
 import cube.aigc.psychology.composition.Comprehensive;
 import cube.common.JSONable;
+import cube.common.Language;
 import cube.common.state.AIGCStateCode;
 import cube.util.ConfigUtils;
 import cube.util.Gender;
+import cube.util.TimeUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -116,6 +118,18 @@ public class ComprehensiveReport implements JSONable {
             array.put(section.toJSON());
         }
         return array;
+    }
+
+    public String outputMarkdown() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("## 测评报告基础信息\n\n");
+        buf.append("- 评测主题：").append(this.theme.name).append("\n");
+        buf.append("- 评测日期：").append(TimeUtils.formatDateString(this.timestamp, Language.Chinese)).append("\n");
+        buf.append("- 评测对象：共").append(this.comprehensives.size()).append("个评测对象参与。分别是：");
+        for (Comprehensive comprehensive : this.comprehensives) {
+
+        }
+        return buf.toString();
     }
 
     @Override

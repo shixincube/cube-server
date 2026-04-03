@@ -413,8 +413,8 @@ public class ContentTools {
         StringBuilder buf = new StringBuilder();
         buf.append("绘画");
         buf.append(featureSet.makeMarkdown(false));
-        buf.append("\n");
-        buf.append("根据上述特征，需要结合专业的知识结构，并根据对应症状的得分进行阐述并生成评测数据。");
+//        buf.append("\n");
+//        buf.append("根据上述特征，需要结合专业的知识结构，并根据对应症状的得分进行阐述并生成评测数据。");
         return buf.toString();
     }
 

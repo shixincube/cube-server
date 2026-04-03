@@ -552,6 +552,16 @@ public enum AIGCAction {
     SetPaintingReportState("setPaintingReportState"),
 
     /**
+     * 生成模板化报告。
+     */
+    GeneratePsychologyTemplateArticle("generatePsychologyTemplateArticle"),
+
+    /**
+     * 获取模板化报告。
+     */
+    GetPsychologyTemplateArticle("getPsychologyTemplateArticle"),
+
+    /**
      * 生成心理融合内容。
      */
     GeneratePsychologyComprehensive("generatePsychologyComprehensive"),

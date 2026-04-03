@@ -56,11 +56,11 @@ public class Resource {
     private long suggestionScriptFileModified = 0;
     private String suggestionScriptFileContent = null;
 
-    private File childStrategyFile = new File("assets/psychology/child_strategy.md");
+    private File childStrategyFile = new File("assets/psychology/strategies/child_strategy.md");
     private long childStrategyFileModified = 0;
     private String childStrategyContent = null;
 
-    private File teenagerStrategyFile = new File("assets/psychology/teenager_strategy.md");
+    private File teenagerStrategyFile = new File("assets/psychology/strategies/teenager_strategy.md");
     private long teenagerStrategyFileModified = 0;
     private String teenagerStrategyContent = null;
 

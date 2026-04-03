@@ -82,6 +82,11 @@ public class PsychologyScene {
     private Map<Long, Painting> paintingMap;
 
     /**
+     * Key：报告序列号。
+     */
+    private Map<Long, ArticleBuilder> articleBuilderMap;
+
+    /**
      * 综合报告工作器。
      */
     private Queue<ComprehensiveReportWorker> comprehensiveReportWorkerQueue;
@@ -97,6 +102,7 @@ public class PsychologyScene {
         this.numRunningScaleTasks = new AtomicInteger(0);
         this.reportMap = new ConcurrentHashMap<>();
         this.paintingMap = new ConcurrentHashMap<>();
+        this.articleBuilderMap = new ConcurrentHashMap<>();
         this.comprehensiveReportWorkerQueue = new ConcurrentLinkedQueue<>();
         this.numRunningComprehensiveTasks = new AtomicInteger(0);
         this.comprehensiveReportMap = new ConcurrentHashMap<>();
@@ -584,9 +590,6 @@ public class PsychologyScene {
                                 storage.writePaintingFeatureSet(paintingFeatureSet);
                             }
 
-                            // 使用数据管理器生成关联数据
-                            // SceneManager.getInstance().writeReportChart(reportTask.report);
-
                             Logger.i(getClass(), "End generating report: " + paintingReportTask.report.sn + " - elapsed: " +
                                     Math.round((System.currentTimeMillis() - start) / 1000.0) + "s");
                         } catch (Exception e) {
@@ -689,6 +692,94 @@ public class PsychologyScene {
         }
 
         return report;
+    }
+
+    /**
+     * 按照模板规则生成绘画报告内容。
+     *
+     * @param channel
+     * @param attribute
+     * @param fileLabel
+     * @param theme
+     * @param templateName
+     * @param listener
+     * @return 返回报告序号。
+     */
+    public long generatePaintingTemplateArticle(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
+                                                Theme theme, String templateName,
+                                                PaintingTemplateArticleListener listener) {
+        final ArticleBuilder builder = new ArticleBuilder(theme, templateName);
+        if (!builder.isValidTemplate()) {
+            Logger.w(this.getClass(), "#generatePaintingTemplate - The template is not correct: " + templateName);
+            return 0;
+        }
+
+        PaintingReport report = this.generatePaintingReport(channel, attribute, fileLabel, theme,
+                36, true, 0, null, new PaintingReportListener() {
+                    @Override
+                    public void onPaintingPredicting(PaintingReport report, FileLabel file) {
+                        // Nothing
+                    }
+
+                    @Override
+                    public void onPaintingPredictCompleted(PaintingReport report, FileLabel file, Painting painting) {
+                        // Nothing
+                    }
+
+                    @Override
+                    public void onPaintingPredictFailed(PaintingReport report) {
+                        builder.getArticle().state = AIGCStateCode.Failure;
+                        listener.onFailed(channel, fileLabel);
+                    }
+
+                    @Override
+                    public void onReportEvaluating(PaintingReport report) {
+                        // Nothing
+                    }
+
+                    @Override
+                    public void onReportEvaluateCompleted(PaintingReport report) {
+                        // 生成
+                        ReportArticle article = builder.build(service, report);
+                        if (null != article) {
+                            listener.onCompleted(report, article);
+                        }
+                        else {
+                            listener.onFailed(channel, fileLabel);
+                        }
+                    }
+
+                    @Override
+                    public void onReportEvaluateFailed(PaintingReport report) {
+                        builder.getArticle().state = AIGCStateCode.Failure;
+                        listener.onFailed(channel, fileLabel);
+                    }
+                });
+
+        if (null == report) {
+            Logger.w(this.getClass(), "#generatePaintingTemplate - The report is null: " + fileLabel.getFileCode());
+            return 0;
+        }
+
+        // 记录
+        this.articleBuilderMap.put(report.sn, builder);
+
+        return report.sn;
+    }
+
+    /**
+     *
+     * @param sn
+     * @return
+     */
+    public ReportArticle getPaintingTemplateArticle(long sn) {
+        ArticleBuilder builder = this.articleBuilderMap.get(sn);
+        if (null == builder) {
+            Logger.w(this.getClass(), "#getPaintingTemplateArticle - Can NOT find: " + sn);
+            return null;
+        }
+
+        return builder.getArticle();
     }
 
     public List<Scale> listScales(long contactId) {

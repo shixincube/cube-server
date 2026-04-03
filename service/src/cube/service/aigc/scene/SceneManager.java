@@ -39,12 +39,12 @@ public class SceneManager {
 
     private Map<String, ScaleTrack> channelScaleMap;
 
-    private Map<String, EvaluationResult> channelEvaluationResultMap;
+//    private Map<String, EvaluationResult> channelEvaluationResultMap;
 
     private SceneManager() {
         this.conversationContexts = new ConcurrentHashMap<>();
         this.channelScaleMap = new ConcurrentHashMap<>();
-        this.channelEvaluationResultMap = new ConcurrentHashMap<>();
+//        this.channelEvaluationResultMap = new ConcurrentHashMap<>();
     }
 
     public static SceneManager getInstance() {

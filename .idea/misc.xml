@@ -5,11 +5,12 @@
     <file url="file://$PROJECT_DIR$/service/assets/prompt/general.md" />
     <file url="file://$PROJECT_DIR$/service/assets/prompt/psy_organize_record.md" />
     <file url="file://$PROJECT_DIR$/service/assets/prompt/psy_supervise_record.md" />
+    <file url="file://$PROJECT_DIR$/service/assets/prompt/psy_template_report.md" />
     <file url="file://$PROJECT_DIR$/service/assets/prompt/srbc-blind_spots.md" />
     <file url="file://$PROJECT_DIR$/service/assets/prompt/srbc-integration_zone.md" />
-    <file url="file://$PROJECT_DIR$/service/assets/psychology/child_strategy.md" />
-    <file url="file://$PROJECT_DIR$/service/assets/psychology/teenager_personality_strategy.md" />
-    <file url="file://$PROJECT_DIR$/service/assets/psychology/teenager_strategy.md" />
+    <file url="file://$PROJECT_DIR$/service/assets/psychology/strategies/child_strategy.md" />
+    <file url="file://$PROJECT_DIR$/service/assets/psychology/strategies/teenager_personality_strategy.md" />
+    <file url="file://$PROJECT_DIR$/service/assets/psychology/strategies/teenager_strategy.md" />
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />

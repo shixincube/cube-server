@@ -13,6 +13,10 @@
       "file": "psy_supervise_record.md"
     },
     {
+      "name": "psy_template_report",
+      "file": "psy_template_report.md"
+    },
+    {
       "name": "srbc-integration_zone",
       "file": "srbc-integration_zone.md"
     },
