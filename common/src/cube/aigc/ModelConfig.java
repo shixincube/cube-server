@@ -14,13 +14,13 @@ import org.json.JSONObject;
  */
 public class ModelConfig implements JSONable {
 
-    public static int EXTRA_LONG_CONTEXT_LIMIT = 64 * 1024;
+    public static int EXTRA_LONG_CONTEXT_LIMIT = 256 * 1024;
 
     public static int BAIZE_CONTEXT_LIMIT = 256 * 1024;
 
     public static int BAIZE_X_CONTEXT_LIMIT = 800 * 1024;
 
-    public static int BAIZE_NEXT_CONTEXT_LIMIT = 64 * 1024;
+    public static int BAIZE_NEXT_CONTEXT_LIMIT = 128 * 1024;
 
     public final static String[] TEXT_TO_IMAGE_UNIT = new String[] { "DallE" };
 

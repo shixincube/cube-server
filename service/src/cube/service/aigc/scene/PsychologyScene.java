@@ -715,7 +715,7 @@ public class PsychologyScene {
         }
 
         PaintingReport report = this.generatePaintingReport(channel, attribute, fileLabel, theme,
-                36, true, 0, null, new PaintingReportListener() {
+                10, true, 0, null, new PaintingReportListener() {
                     @Override
                     public void onPaintingPredicting(PaintingReport report, FileLabel file) {
                         // Nothing
@@ -1880,6 +1880,14 @@ public class PsychologyScene {
             ComprehensiveReport comprehensiveReport = citer.next().getValue();
             if (now - comprehensiveReport.timestamp > 12 * 60 * 60 * 1000) {
                 citer.remove();
+            }
+        }
+
+        Iterator<Map.Entry<Long, ArticleBuilder>> aiter = this.articleBuilderMap.entrySet().iterator();
+        while (aiter.hasNext()) {
+            ArticleBuilder builder = aiter.next().getValue();
+            if (now - builder.timestamp > 12 * 60 * 60 * 1000) {
+                aiter.remove();
             }
         }
     }

@@ -7,6 +7,7 @@
 package cube.service.aigc.scene;
 
 import cell.util.log.Logger;
+import cube.aigc.ModelConfig;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.Theme;
@@ -15,6 +16,7 @@ import cube.aigc.psychology.composition.FactorSet;
 import cube.aigc.psychology.composition.ReportArticle;
 import cube.aigc.psychology.composition.ReportSection;
 import cube.aigc.psychology.indicator.Indicator;
+import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.guidance.Prompts;
@@ -30,8 +32,8 @@ public class ArticleBuilder {
      */
     public final static String Depression = "depression";
 
-    private final static String sDepressionTestTask =
-            "该测评是使用绘画投射方式进行的抑郁倾向测评，受测人是%s性，%s。抑郁倾向等级是 **%s** 。\n\n画面内容如下：\n%s\n\n";
+    private final static String sFormatDepressionTaskDesc = "该测评是使用绘画投射方式进行的抑郁倾向测评，受测人是%s性，%s。" +
+            "抑郁倾向级别是 **%s** （测评级别从低到高依次分为：很低、低、中等、高）。\n\n画面内容如下：\n%s\n";
 
     /**
      * 焦虑。
@@ -97,7 +99,7 @@ public class ArticleBuilder {
 
         // 3. 按照语料描述生成文章
         String title = this.makeTitle(rate);
-        String task = String.format(sDepressionTestTask, report.getAttribute().getGenderText(),
+        String task = String.format(sFormatDepressionTaskDesc, report.getAttribute().getGenderText(),
                 report.getAttribute().getAgeText(), rate.displayName,
                 ContentTools.makePaintingFeature(report.paintingFeatureSet));
         String content = "您的内心风景画像是： **" + title + "**\n\n" + contents.get(0);
@@ -105,17 +107,17 @@ public class ArticleBuilder {
         prompt = prompt.replace("{{task}}", task);
         prompt = prompt.replace("{{content}}", content);
 
-        System.out.println("XJW:\n" + prompt);
+        GeneratingRecord record = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt, null,
+                null, null);
+        if (null == record) {
+            Logger.w(this.getClass(), "#build - The record is null: " + task);
+            this.article.state = AIGCStateCode.Failure;
+            return null;
+        }
 
-//        GeneratingRecord record = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt, null,
-//                null, null);
-//        if (null == record) {
-//            Logger.w(this.getClass(), "#build - The record is null: " + task);
-//            return null;
-//        }
-
-        this.article.state = AIGCStateCode.Failure;
-        return null;
+        this.article.addParagraph(title, title, record.answer);
+        this.article.state = AIGCStateCode.Ok;
+        return this.article;
     }
 
     private IndicatorRate evaluate(PaintingReport report) {

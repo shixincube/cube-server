@@ -54,21 +54,33 @@ public class GeneratePsychologyTemplateArticleTask extends ServiceTask {
         final AuthToken authToken = service.getToken(token);
         if (null == authToken) {
             this.cellet.speak(this.talkContext,
-                    this.makeResponse(dialect, packet, AIGCStateCode.NoToken.code, new JSONObject()));
+                    this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
             markResponseTime();
             return;
         }
 
         try {
             Attribute attribute = new Attribute(packet.data.getJSONObject("attribute"));
-            String fileCode = packet.data.getString("fileCode");
             Theme theme = Theme.parse(packet.data.getString("theme"));
             String templateName = packet.data.getString("templateName");
 
-            FileLabel fileLabel = service.getFile(authToken.getDomain(), fileCode);
+            String fileCode = packet.data.has("fileCode") ? packet.data.getString("fileCode") : null;
+            String fileUrl = packet.data.has("fileUrl") ? packet.data.getString("fileUrl") : null;
+
+            FileLabel fileLabel = null;
+            if (null != fileCode) {
+                fileLabel = service.getFile(authToken.getDomain(), fileCode);
+            }
+            else if (null != fileUrl) {
+                fileLabel = service.downloadFile(authToken, fileUrl);
+                if (null == fileLabel) {
+                    Logger.w(this.getClass(), "#run - Download file failed: " + fileUrl);
+                }
+            }
+
             if (null == fileLabel) {
                 this.cellet.speak(this.talkContext,
-                        this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));
+                        this.makeResponse(dialect, packet, AIGCStateCode.NotFound.code, new JSONObject()));
                 markResponseTime();
                 return;
             }

@@ -3677,7 +3677,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         return null;
     }
 
-    private FileLabel downloadFile(AuthToken authToken, String fileUrl) {
+    public FileLabel downloadFile(AuthToken authToken, String fileUrl) {
         // 从外部链接下载
         AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
         if (null == fileStorage) {

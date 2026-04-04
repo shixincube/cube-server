@@ -51,7 +51,7 @@ public class PsychologyTemplateArticle extends ContextHandler {
                 this.respondOk(response, responseData);
                 this.complete();
             } catch (Exception e) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
             }
         }
@@ -88,7 +88,7 @@ public class PsychologyTemplateArticle extends ContextHandler {
                 this.complete();
             } catch (Exception e) {
                 Logger.w(this.getClass(), "#run", e);
-                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
             }
         }
