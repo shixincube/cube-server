@@ -231,8 +231,7 @@ public class PaintingReport extends Report {
             if (this.evaluationReport.numRepresentations() > 0) {
                 buf.append("\n");
                 buf.append("**Reference**：");
-                buf.append(this.evaluationReport.getReference() == Reference.Normal ?
-                        "正常" : "非正常");
+                buf.append(this.evaluationReport.getReference() == Reference.Normal ? "常模" : "偏模");
                 buf.append("\n");
 
                 buf.append("\n\n");

@@ -16,6 +16,8 @@ public class VoiceStreamSink implements JSONable {
 
     private int index;
 
+    private String fileCode;
+
     private long timestamp;
 
     private VoiceDiarization diarization;
@@ -24,9 +26,10 @@ public class VoiceStreamSink implements JSONable {
 
     public AuthToken authToken;
 
-    public VoiceStreamSink(String streamName, int index) {
+    public VoiceStreamSink(String streamName, int index, String fileCode) {
         this.streamName = streamName;
         this.index = index;
+        this.fileCode = fileCode;
         this.timestamp = System.currentTimeMillis();
     }
 
@@ -48,6 +51,10 @@ public class VoiceStreamSink implements JSONable {
 
     public int getIndex() {
         return this.index;
+    }
+
+    public String getFileCode() {
+        return this.fileCode;
     }
 
     public long getTimestamp() {

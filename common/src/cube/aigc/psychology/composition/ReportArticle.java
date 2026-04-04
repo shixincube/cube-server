@@ -7,6 +7,7 @@
 package cube.aigc.psychology.composition;
 
 import cube.aigc.psychology.Theme;
+import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.common.entity.Article;
 import cube.common.state.AIGCStateCode;
 import org.json.JSONObject;
@@ -21,7 +22,9 @@ public class ReportArticle extends Article {
 
     public long sn;
 
-    public AIGCStateCode state;
+    public IndicatorRate rate = IndicatorRate.Lowest;
+
+    public AIGCStateCode state = AIGCStateCode.Ok;
 
     public ReportArticle(String title, Theme theme, String templateName, long timestamp) {
         super(title);
@@ -37,6 +40,7 @@ public class ReportArticle extends Article {
         json.put("theme", this.theme.code);
         json.put("templateName", this.templateName);
         json.put("timestamp", this.timestamp);
+        json.put("rate", this.rate.value);
         json.put("state", this.state.code);
         return json;
     }

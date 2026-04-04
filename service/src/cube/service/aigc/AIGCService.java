@@ -129,6 +129,11 @@ public class AIGCService extends AbstractModule implements Generatable {
      */
     private final Map<String, LinkedList<UnitMeta>> audioQueueMap;
 
+    /**
+     * Key 是 Stream name
+     */
+    private Map<String, List<VoiceStreamSink>> waitingVoiceStreamSinks;
+
     private final List<UnitMeta> runningMetas;
 
     /**
@@ -190,6 +195,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         this.retrieveReRankQueueMap = new ConcurrentHashMap<>();
         this.speechQueueMap = new ConcurrentHashMap<>();
         this.audioQueueMap = new ConcurrentHashMap<>();
+        this.waitingVoiceStreamSinks = new ConcurrentHashMap<>();
         this.runningMetas = new LinkedList<>();
         this.generateTextUnitCountMap = new ConcurrentHashMap<>();
         this.tokenizer = new Tokenizer();
@@ -391,6 +397,23 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         if (null != this.knowledgeFramework) {
             this.knowledgeFramework.onTick(now);
+        }
+
+        Iterator<Map.Entry<String, List<VoiceStreamSink>>> vssListIter = this.waitingVoiceStreamSinks.entrySet().iterator();
+        while (vssListIter.hasNext()) {
+            Map.Entry<String, List<VoiceStreamSink>> entry = vssListIter.next();
+            List<VoiceStreamSink> list = entry.getValue();
+            Iterator<VoiceStreamSink> vssIter = list.iterator();
+            while (vssIter.hasNext()) {
+                VoiceStreamSink sink = vssIter.next();
+                if (now - sink.getTimestamp() > 4 * 60 * 60 * 1000) {
+                    deleteFile(sink.authToken.getDomain(), sink.getFileCode());
+                    vssIter.remove();
+                }
+            }
+            if (list.isEmpty()) {
+                vssListIter.remove();
+            }
         }
 
         Explorer.getInstance().onTick(now);
@@ -3125,11 +3148,25 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
         });
 
-        final VoiceStreamSink streamSink = new VoiceStreamSink(streamName, index);
+        final VoiceStreamSink streamSink = new VoiceStreamSink(streamName, index, fileCode);
+        streamSink.authToken = authToken;
+
+        List<VoiceStreamSink> list = this.waitingVoiceStreamSinks.computeIfAbsent(streamName, k -> new ArrayList<>());
+        synchronized (list) {
+            list.add(streamSink);
+        }
+
         boolean success = this.performSpeakerDiarization(authToken, fileCode, false, false,
                 new VoiceDiarizationListener() {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {
+                List<VoiceStreamSink> sinkList = waitingVoiceStreamSinks.get(streamName);
+                if (null != sinkList) {
+                    synchronized (sinkList) {
+                        sinkList.remove(streamSink);
+                    }
+                }
+
                 streamSink.setDiarization(diarization);
                 streamSink.setFileLabel(source);
 
@@ -3139,29 +3176,17 @@ public class AIGCService extends AbstractModule implements Generatable {
 
                 listener.onCompleted(source, streamSink);
 
-                // 排除日语
-//                for (VoiceTrack track : diarization.tracks) {
-//                    List<String> words = track.recognition.words;
-//                    boolean japanese = false;
-//                    for (String word : words) {
-//                        if (TextUtils.isJapanese(word)) {
-//                            japanese = true;
-//                            break;
-//                        }
-//                    }
-//                    if (japanese) {
-//                        track.recognition = new SpeechRecognitionInfo(track.recognition, "…");
-//                    }
-//                }
-
                 // 记录流
-                CounselingManager.getInstance().record(authToken, streamSink);
+                CounselingManager.getInstance().record(streamSink);
             }
 
             @Override
             public void onFailed(FileLabel source, AIGCStateCode stateCode) {
-                synchronized (streamSink) {
-                    streamSink.notify();
+                List<VoiceStreamSink> sinkList = waitingVoiceStreamSinks.get(streamName);
+                if (null != sinkList) {
+                    synchronized (sinkList) {
+                        sinkList.remove(streamSink);
+                    }
                 }
 
                 listener.onFailed(source, stateCode);
@@ -3188,6 +3213,48 @@ public class AIGCService extends AbstractModule implements Generatable {
                     CounselingManager.getInstance().stopStream(authToken, streamName);
                 }
             }).start();
+
+            // 删除队列里未处理数据
+            List<VoiceStreamSink> sinkList = this.waitingVoiceStreamSinks.remove(streamName);
+            if (null != sinkList) {
+                Logger.d(this.getClass(), "#stopVoiceStream - Waiting size: " + sinkList.size());
+
+                // 将尚未处理的 Unit Meta 从队列里删除
+                List<String> fileCodes = new ArrayList<>();
+                for (VoiceStreamSink sink : sinkList) {
+                    fileCodes.add(sink.getFileCode());
+                }
+
+                if (!fileCodes.isEmpty()) {
+                    for (Map.Entry<String, LinkedList<UnitMeta>> entry : this.audioQueueMap.entrySet()) {
+                        LinkedList<UnitMeta> metas = entry.getValue();
+                        Iterator<UnitMeta> metaIterator = metas.iterator();
+                        while (metaIterator.hasNext()) {
+                            UnitMeta meta = metaIterator.next();
+                            AudioUnitMeta aum = (AudioUnitMeta) meta;
+
+                            // 删除指定文件码的 meta
+                            for (String fileCode : fileCodes) {
+                                if (aum.getFile().getFileCode().equals(fileCode)) {
+                                    metaIterator.remove();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 45 秒后删除文件
+                new Timer().schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        for (VoiceStreamSink sink : sinkList) {
+                            deleteFile(authToken.getDomain(), sink.getFileCode());
+                        }
+                    }
+                }, 45 * 1000);
+            }
+
             return true;
         }
         else {

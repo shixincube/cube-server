@@ -21,9 +21,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.guidance.Prompts;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class ArticleBuilder {
 
@@ -40,7 +38,8 @@ public class ArticleBuilder {
      */
     public final static String Anxiety = "anxiety";
 
-    private final static String sFormatAnxietyTaskDesc = "";
+    private final static String sFormatAnxietyTaskDesc = "该测评是使用绘画投射方式进行的焦虑情绪测评，受测人是%s性，%s。" +
+            "焦虑情绪级别是 **%s** （测评级别从低到高依次分为：很低、低、中等、高）。\n\n画面内容如下：\n%s\n";
 
     private final static String sPromptName = "psy_template_report";
 
@@ -52,16 +51,13 @@ public class ArticleBuilder {
 
     private PaintingReport report;
 
-    private Map<Indicator, IndicatorRate> indicatorRateMap;
-
     private ReportArticle article;
 
     public ArticleBuilder(Theme theme, String templateName) {
         this.theme = theme;
         this.templateName = templateName;
         this.timestamp = System.currentTimeMillis();
-        this.indicatorRateMap = new HashMap<>();
-        this.article = new ReportArticle("内心的风景-潜意识情绪与抑郁倾向测评",
+        this.article = new ReportArticle(makeTitle(templateName),
                 theme, templateName, this.timestamp);
         this.article.state = AIGCStateCode.Processing;
     }
@@ -80,6 +76,7 @@ public class ArticleBuilder {
 
         // 1. 按照模板名提取关键指标
         IndicatorRate rate = this.evaluate(report);
+        this.article.rate = rate;
 
         // 2. 按照指标提取语料
         String query = this.makeQuery(rate);
@@ -99,14 +96,26 @@ public class ArticleBuilder {
         }
 
         // 3. 按照语料描述生成文章
-        String title = this.makeTitle(rate);
-        String task = String.format(sFormatDepressionTaskDesc, report.getAttribute().getGenderText(),
+        String title = this.makeParagraphTitle(rate);
+        String taskFormat = "%s\n%s\n%s\n%s";
+        String prefix = "您的画像是：";
+        if (Depression.equalsIgnoreCase(this.templateName)) {
+            taskFormat = sFormatDepressionTaskDesc;
+            prefix = "您的内心风景画像是：";
+        }
+        else if (Anxiety.equalsIgnoreCase(this.templateName)) {
+            taskFormat = sFormatAnxietyTaskDesc;
+            prefix = "您的内心焦虑画像是：";
+        }
+
+        String task = String.format(taskFormat, report.getAttribute().getGenderText(),
                 report.getAttribute().getAgeText(), rate.displayName,
                 ContentTools.makePaintingFeature(report.paintingFeatureSet));
-        String content = "您的内心风景画像是： **" + title + "**\n\n" + contents.get(0);
+        String content = prefix + " **" + title + "**\n\n" + contents.get(0);
         String prompt = Prompts.getPrompt(sPromptName);
         prompt = prompt.replace("{{task}}", task);
         prompt = prompt.replace("{{content}}", content);
+        prompt = prompt.replace("{{leading}}", prefix + " **" + title + "** 。\n\n");
 
         GeneratingRecord record = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt, null,
                 null, null);
@@ -122,9 +131,11 @@ public class ArticleBuilder {
     }
 
     private IndicatorRate evaluate(PaintingReport report) {
+        IndicatorRate rate = IndicatorRate.Lowest;
+
         if (Depression.equalsIgnoreCase(this.templateName)) {
             ReportSection section = report.getReportSection(Indicator.Depression);
-            IndicatorRate rate = IndicatorRate.Lowest;
+
             if (null != section) {
                 rate = fixRate(section.rate);
             }
@@ -141,13 +152,40 @@ public class ArticleBuilder {
                     rate = IndicatorRate.Lowest;
                 }
             }
-            return rate;
         }
         else if (Anxiety.equalsIgnoreCase(this.templateName)) {
-
+            ReportSection section = report.getReportSection(Indicator.Anxiety);
+            if (null != section) {
+                rate = fixRate(section.rate);
+            }
+            else {
+                FactorSet factorSet = report.getEvaluationReport().getFactorSet();
+                FactorSet.NormRange range = factorSet.normAnxiety();
+                if (range.norm) {
+                    rate = IndicatorRate.Low;
+                }
+                else if (range.value >= range.high) {
+                    rate = IndicatorRate.Medium;
+                }
+                else if (range.value <= range.low) {
+                    rate = IndicatorRate.Lowest;
+                }
+            }
         }
 
-        return null;
+        return rate;
+    }
+
+    private String makeTitle(String templateName) {
+        if (Depression.equalsIgnoreCase(templateName)) {
+            return "内心的风景-潜意识情绪与抑郁倾向测评";
+        }
+        else if (Anxiety.equalsIgnoreCase(templateName)) {
+            return "迷雾与彼岸-潜意识焦虑测评";
+        }
+        else {
+            return "潜意识测评";
+        }
     }
 
     private String makeQuery(IndicatorRate rate) {
@@ -172,13 +210,28 @@ public class ArticleBuilder {
             }
         }
         else if (Anxiety.equalsIgnoreCase(this.templateName)) {
-
+            switch (rate) {
+                case Lowest:
+                    query = "焦虑测评的坚固平稳的石桥的描述";
+                    break;
+                case Low:
+                    query = "焦虑测评的迷雾萦绕的晃动吊桥的描述";
+                    break;
+                case Medium:
+                    query = "焦虑测评的狂风巨浪中的独木桥的描述";
+                    break;
+                case High:
+                    query = "焦虑测评的濒临断裂的悬空残桥的描述";
+                    break;
+                default:
+                    break;
+            }
         }
 
         return query;
     }
 
-    private String makeTitle(IndicatorRate rate) {
+    private String makeParagraphTitle(IndicatorRate rate) {
         String title = null;
 
         if (Depression.equalsIgnoreCase(this.templateName)) {
@@ -200,7 +253,22 @@ public class ArticleBuilder {
             }
         }
         else if (Anxiety.equalsIgnoreCase(this.templateName)) {
-
+            switch (rate) {
+                case Lowest:
+                    title = "坚固平稳的石桥";
+                    break;
+                case Low:
+                    title = "迷雾萦绕的晃动吊桥";
+                    break;
+                case Medium:
+                    title = "狂风巨浪中的独木桥";
+                    break;
+                case High:
+                    title = "濒临断裂的悬空残桥";
+                    break;
+                default:
+                    break;
+            }
         }
 
         return title;

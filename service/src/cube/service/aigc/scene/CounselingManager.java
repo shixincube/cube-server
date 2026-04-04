@@ -133,14 +133,19 @@ public class CounselingManager {
     /**
      * 记录并处理语音流片段。
      *
-     * @param authToken
      * @param streamSink
      */
-    public void record(AuthToken authToken, VoiceStreamSink streamSink) {
-        streamSink.authToken = authToken;
-
+    public void record(VoiceStreamSink streamSink) {
         Wrapper wrapper = this.wrapperMap.get(streamSink.getStreamName());
         if (null != wrapper) {
+            // 判读是否已结束
+            if (wrapper.hasStopped()) {
+                // 删除文件
+                this.service.deleteFile(streamSink.authToken.getDomain(), streamSink.getFileLabel().getFileCode());
+                Logger.d(this.getClass(), "#record - The stream has stopped: " + wrapper.streamName);
+                return;
+            }
+
             // 更新时间戳
             wrapper.refreshTimestamp = System.currentTimeMillis();
         }
@@ -258,6 +263,14 @@ public class CounselingManager {
         wrapper.appendArchive(recordingArchive);
     }
 
+    public boolean hasStreamStopped(String streamName) {
+        Wrapper wrapper = this.wrapperMap.get(streamName);
+        if (null != wrapper) {
+            return wrapper.hasStopped();
+        }
+        return false;
+    }
+
     /**
      * 停止流。
      *
@@ -278,6 +291,17 @@ public class CounselingManager {
         // 判断时长，少于1分钟，不进行保存
         if (wrapper.endTimestamp - wrapper.timestamp < 60 * 1000) {
             Logger.w(this.getClass(), "#stopStream - Record less than 1 minute: " + streamName);
+            // 停止归档
+            wrapper.archiveStopped.set(true);
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            // 删除缓存的归档文件
+            wrapper.deleteArchive();
             return null;
         }
 
@@ -1177,6 +1201,11 @@ public class CounselingManager {
 
         protected void appendArchive(RecordingArchive archive) {
             this.recordingArchives.add(archive);
+        }
+
+        protected void deleteArchive() {
+            StreamArchive archive = new StreamArchive(service.workingPath.getAbsolutePath(), streamName);
+            archive.delete();
         }
 
         @Override
