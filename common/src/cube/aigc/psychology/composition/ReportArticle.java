@@ -19,7 +19,7 @@ public class ReportArticle extends Article {
 
     public final long timestamp;
 
-    public long reportSn;
+    public long sn;
 
     public AIGCStateCode state;
 
@@ -33,10 +33,10 @@ public class ReportArticle extends Article {
     @Override
     public JSONObject toJSON() {
         JSONObject json = super.toJSON();
+        json.put("sn", this.sn);
         json.put("theme", this.theme.code);
         json.put("templateName", this.templateName);
         json.put("timestamp", this.timestamp);
-        json.put("reportSn", reportSn);
         json.put("state", this.state.code);
         return json;
     }

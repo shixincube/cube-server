@@ -12,18 +12,17 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
-import cube.aigc.psychology.composition.Usage;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
 import cube.common.Language;
 import cube.common.Packet;
+import cube.common.entity.AIGCUnit;
 import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.scene.PaintingReportListener;
-import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.ScaleReportListener;
 import org.json.JSONObject;
 
@@ -113,15 +112,8 @@ public class GeneratePsychologyReportTask extends ServiceTask {
                         }
 
                         @Override
-                        public void onReportEvaluateCompleted(PaintingReport report) {
+                        public void onReportEvaluateCompleted(PaintingReport report, AIGCUnit unit) {
                             Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted - " + token);
-
-                            try {
-                                Usage usage = new Usage(authToken, remote.toString(), report);
-                                PsychologyScene.getInstance().recordUsage(usage);
-                            } catch (Exception e) {
-                                Logger.w(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted", e);
-                            }
                         }
 
                         @Override
@@ -166,13 +158,6 @@ public class GeneratePsychologyReportTask extends ServiceTask {
                 @Override
                 public void onReportEvaluateCompleted(ScaleReport report) {
                     Logger.d(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted - " + token);
-
-                    try {
-                        Usage usage = new Usage(service.getToken(token), remote.toString(), report);
-                        PsychologyScene.getInstance().recordUsage(usage);
-                    } catch (Exception e) {
-                        Logger.e(GeneratePsychologyReportTask.class, "#onReportEvaluateCompleted", e);
-                    }
                 }
 
                 @Override

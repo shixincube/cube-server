@@ -26,6 +26,8 @@ import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.common.state.CVStateCode;
+import cube.service.aigc.AIGCHook;
+import cube.service.aigc.AIGCPluginContext;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.resource.FastTokenizer;
 import cube.service.aigc.scene.evaluation.*;
@@ -38,6 +40,7 @@ import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
 import cube.util.FileUtils;
+import cube.util.ImageUtils;
 import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -188,10 +191,10 @@ public class PsychologyScene {
         return this.storage;
     }
 
-    public boolean recordUsage(Usage usage) {
-        return this.storage.writeUsage(usage.cid, usage.token, usage.timestamp, usage.remoteHost, usage.query,
-                usage.queryType, usage.queryTokens, usage.completionTokens, usage.completionSN);
-    }
+//    public boolean recordUsage(Usage usage) {
+//        return this.storage.writeUsage(usage.cid, usage.token, usage.timestamp, usage.remoteHost, usage.query,
+//                usage.queryType, usage.queryTokens, usage.completionTokens, usage.completionSN);
+//    }
 
     public boolean checkPsychologyPainting(AuthToken authToken, String fileCode) {
         FileLabel fileLabel = this.service.getFile(authToken.getDomain(), fileCode);
@@ -558,7 +561,7 @@ public class PsychologyScene {
                                 }
 
                                 // 按照正常状态返回
-                                paintingReportTask.listener.onReportEvaluateCompleted(paintingReportTask.report);
+                                paintingReportTask.listener.onReportEvaluateCompleted(paintingReportTask.report, unit);
                                 // reportTask.listener.onReportEvaluateFailed(reportTask.report);
                                 continue;
                             }
@@ -575,7 +578,7 @@ public class PsychologyScene {
 
                             // 修改结束状态
                             paintingReportTask.report.setFinished(true);
-                            paintingReportTask.listener.onReportEvaluateCompleted(paintingReportTask.report);
+                            paintingReportTask.listener.onReportEvaluateCompleted(paintingReportTask.report, unit);
 
                             // 填写数据
                             evaluationWorker.fillReport(paintingReportTask.report);
@@ -710,7 +713,7 @@ public class PsychologyScene {
                                                 PaintingTemplateArticleListener listener) {
         final ArticleBuilder builder = new ArticleBuilder(theme, templateName);
         if (!builder.isValidTemplate()) {
-            Logger.w(this.getClass(), "#generatePaintingTemplate - The template is not correct: " + templateName);
+            Logger.w(this.getClass(), "#generatePaintingTemplateArticle - The template is not correct: " + templateName);
             return 0;
         }
 
@@ -738,11 +741,34 @@ public class PsychologyScene {
                     }
 
                     @Override
-                    public void onReportEvaluateCompleted(PaintingReport report) {
+                    public void onReportEvaluateCompleted(PaintingReport report, AIGCUnit unit) {
                         // 生成
                         ReportArticle article = builder.build(service, report);
                         if (null != article) {
                             listener.onCompleted(report, article);
+
+                            service.getExecutor().execute(new Runnable() {
+                                @Override
+                                public void run() {
+                                    File file = service.loadFile(channel.getDomain().getName(), fileLabel.getFileCode());
+                                    if (null == file) {
+                                        Logger.w(this.getClass(), "#generatePaintingTemplateArticle - Can NOT find file: "
+                                            + fileLabel.getFileCode());
+                                        return;
+                                    }
+
+                                    int inputTokens = ImageUtils.calcImageTokens(file);
+                                    int outputTokens = service.segmentText(article.spliceParagraphContent()).size();
+                                    AIGCPluginContext context = new AIGCPluginContext(channel.getAuthToken(),
+                                            AICapability.PsychologyProcessing.GeneratePaintingTemplateArticle);
+                                    context.setInputTokens(inputTokens);
+                                    context.setOutputTokens(outputTokens);
+                                    context.addFileLabel(fileLabel);
+                                    context.setUnit(unit);
+                                    AIGCHook hook = service.getPluginSystem().getTaskProcessingHook();
+                                    hook.apply(context);
+                                }
+                            });
                         }
                         else {
                             listener.onFailed(channel, fileLabel);
@@ -757,10 +783,12 @@ public class PsychologyScene {
                 });
 
         if (null == report) {
-            Logger.w(this.getClass(), "#generatePaintingTemplate - The report is null: " + fileLabel.getFileCode());
+            Logger.w(this.getClass(), "#generatePaintingTemplateArticle - The report is null: " + fileLabel.getFileCode());
             return 0;
         }
 
+        // 设置 SN
+        builder.getArticle().sn = report.sn;
         // 记录
         this.articleBuilderMap.put(report.sn, builder);
 

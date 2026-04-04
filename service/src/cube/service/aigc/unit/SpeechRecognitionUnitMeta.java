@@ -102,7 +102,7 @@ public class SpeechRecognitionUnitMeta extends UnitMeta {
                 pluginContext.setOutputTokens(outputTokens);
                 pluginContext.addFileLabel(file);
                 pluginContext.setUnit(unit);
-                AIGCHook hook = service.getPluginSystem().getAutomaticSpeechRecognitionHook();
+                AIGCHook hook = service.getPluginSystem().getTaskProcessingHook();
                 hook.apply(pluginContext);
             }
         });

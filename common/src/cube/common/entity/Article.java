@@ -28,6 +28,19 @@ public class Article implements JSONable {
         this.paragraphs.add(new Paragraph(title, keyword, content));
     }
 
+    public List<Paragraph> getParagraphs() {
+        return this.paragraphs;
+    }
+
+    public String spliceParagraphContent() {
+        StringBuilder buf = new StringBuilder();
+        for (Paragraph paragraph : this.paragraphs) {
+            buf.append(paragraph.content);
+            buf.append("\n");
+        }
+        return buf.toString();
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -48,11 +61,11 @@ public class Article implements JSONable {
 
     public class Paragraph implements JSONable {
 
-        public String title;
+        public final String title;
 
-        public String keyword;
+        public final String keyword;
 
-        public String content;
+        public final String content;
 
         public Paragraph(String title, String keyword, String content) {
             this.title = title;

@@ -8,6 +8,7 @@ package cube.service.aigc.scene;
 
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.PaintingReport;
+import cube.common.entity.AIGCUnit;
 import cube.common.entity.FileLabel;
 
 /**
@@ -23,7 +24,7 @@ public interface PaintingReportListener {
 
     void onReportEvaluating(PaintingReport report);
 
-    void onReportEvaluateCompleted(PaintingReport report);
+    void onReportEvaluateCompleted(PaintingReport report, AIGCUnit unit);
 
     void onReportEvaluateFailed(PaintingReport report);
 }

@@ -243,6 +243,13 @@ public class AICapability implements JSONable {
         }
     }
 
+    public class PsychologyProcessing {
+
+        public final static String GeneratePaintingTemplateArticle = "GeneratePaintingTemplateArticle";
+
+        private PsychologyProcessing() {
+        }
+    }
 
     public class OtherProcessing {
 

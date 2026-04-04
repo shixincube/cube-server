@@ -43,9 +43,6 @@ public class TaskDescriptor implements JSONable {
         this.timestamp = timestamp;
     }
 
-//    public TaskDescriptor(JSONObject json) {
-//    }
-
     public void setInputTokens(int value) {
         this.inputTokens = value;
     }

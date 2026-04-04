@@ -373,7 +373,7 @@ public class RiskManagement extends AbstractModule implements ContactManagerList
         // AIGC 服务
         AIGCService aigcService = (AIGCService) this.getKernel().getModule(AIGCService.NAME);
         AIGCPluginSystem aigcPluginSystem = aigcService.getPluginSystem();
-        aigcPluginSystem.register(AIGCHook.AutomaticSpeechRecognition, new AITaskPlugin(this));
+        aigcPluginSystem.register(AIGCHook.TaskProcessing, new AITaskPlugin(this));
 
         Logger.i(this.getClass(), "#initPlugin - Registers all plugin");
     }

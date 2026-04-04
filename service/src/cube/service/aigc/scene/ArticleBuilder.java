@@ -40,6 +40,8 @@ public class ArticleBuilder {
      */
     public final static String Anxiety = "anxiety";
 
+    private final static String sFormatAnxietyTaskDesc = "";
+
     private final static String sPromptName = "psy_template_report";
 
     public final Theme theme;
@@ -75,7 +77,6 @@ public class ArticleBuilder {
 
     public ReportArticle build(AIGCService service, PaintingReport report) {
         this.report = report;
-        this.article.reportSn = report.sn;
 
         // 1. 按照模板名提取关键指标
         IndicatorRate rate = this.evaluate(report);

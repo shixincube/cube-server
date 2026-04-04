@@ -6,6 +6,8 @@
 
 package cube.util;
 
+import cube.vision.Size;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -16,6 +18,28 @@ import java.io.IOException;
 public final class ImageUtils {
 
     private ImageUtils() {
+    }
+
+    public static int calcImageTokens(File file) {
+        Size size = getImageSize(file);
+        if (null == size) {
+            return 0;
+        }
+
+        double width = Math.min(size.width, 1280);
+        double height = Math.min(size.height, 1280);
+        double value = Math.max(width, height);
+
+        return (int) Math.floor(Math.pow(value / 8.0, 2) + Math.pow(value / 16.0, 2) + (value / 32.0));
+    }
+
+    public static Size getImageSize(File file) {
+        try {
+            BufferedImage image = ImageIO.read(file);
+            return new Size(image.getWidth(), image.getHeight());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static BufferedImage rotateToLandscape(BufferedImage image) {

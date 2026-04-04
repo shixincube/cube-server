@@ -356,7 +356,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                     }
 
                     @Override
-                    public void onReportEvaluateCompleted(PaintingReport report) {
+                    public void onReportEvaluateCompleted(PaintingReport report, AIGCUnit unit) {
                         Logger.d(this.getClass(), "#onReportEvaluateCompleted: " + channel.getCode());
                         GeneratingRecord record = convCtx.getRecentTaskRecord();
                         if (null != record.context) {

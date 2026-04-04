@@ -29,9 +29,9 @@ public class AIGCHook extends Hook {
     public final static String AppEvent = "AppEvent";
 
     /**
-     * 自动语音识别。
+     * AI 任务。
      */
-    public final static String AutomaticSpeechRecognition = "AutomaticSpeechRecognition";
+    public final static String TaskProcessing = "TaskProcessing";
 
     public AIGCHook(String key) {
         super(key);
