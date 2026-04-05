@@ -64,13 +64,15 @@ public class PsychologyStorage implements Storagable {
 
     private final String paintingReportManagementTable = "psychology_painting_report_mgmt";
 
+    private final String reportArticleTable = "psychology_report_article";
+
     private final String comprehensiveReportTable = "psychology_comprehensive";
 
     private final String customerTable = "psychology_customer";
 
     private final String scheduleTable = "psychology_schedule";
 
-    private final String usageTable = "psychology_usage";
+//    private final String usageTable = "psychology_usage";
 
     private final StorageField[] reportFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
@@ -403,6 +405,48 @@ public class PsychologyStorage implements Storagable {
             })
     };
 
+    private final StorageField[] reportArticleFields = new StorageField[] {
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY,
+            }),
+            new StorageField("theme", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL,
+            }),
+            new StorageField("template", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL,
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL,
+            }),
+            new StorageField("state", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL,
+            }),
+            new StorageField("rate", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL,
+            }),
+            new StorageField("title", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL,
+            }),
+            new StorageField("content", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL,
+            }),
+            new StorageField("paragraph_1", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL,
+            }),
+            new StorageField("paragraph_2", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL,
+            }),
+            new StorageField("paragraph_3", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL,
+            }),
+            new StorageField("paragraph_4", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL,
+            }),
+            new StorageField("paragraph_5", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL,
+            })
+    };
+
     private final StorageField[] comprehensiveReportFields = new StorageField[] {
             new StorageField("sn", LiteralBase.LONG, new Constraint[] {
                     Constraint.PRIMARY_KEY
@@ -529,38 +573,38 @@ public class PsychologyStorage implements Storagable {
             })
     };
 
-    private final StorageField[] usageFields = new StorageField[] {
-            new StorageField("id", LiteralBase.LONG, new Constraint[] {
-                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
-            }),
-            new StorageField("cid", LiteralBase.LONG, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("token", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("remote", LiteralBase.STRING, new Constraint[] {
-                    Constraint.DEFAULT_NULL
-            }),
-            new StorageField("query", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("query_type", LiteralBase.STRING, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("query_tokens", LiteralBase.LONG, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("completion_tokens", LiteralBase.LONG, new Constraint[] {
-                    Constraint.NOT_NULL
-            }),
-            new StorageField("completion_sn", LiteralBase.LONG, new Constraint[] {
-                    Constraint.NOT_NULL
-            })
-    };
+//    private final StorageField[] usageFields = new StorageField[] {
+//            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+//                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+//            }),
+//            new StorageField("cid", LiteralBase.LONG, new Constraint[] {
+//                    Constraint.NOT_NULL
+//            }),
+//            new StorageField("token", LiteralBase.STRING, new Constraint[] {
+//                    Constraint.NOT_NULL
+//            }),
+//            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+//                    Constraint.NOT_NULL
+//            }),
+//            new StorageField("remote", LiteralBase.STRING, new Constraint[] {
+//                    Constraint.DEFAULT_NULL
+//            }),
+//            new StorageField("query", LiteralBase.STRING, new Constraint[] {
+//                    Constraint.NOT_NULL
+//            }),
+//            new StorageField("query_type", LiteralBase.STRING, new Constraint[] {
+//                    Constraint.NOT_NULL
+//            }),
+//            new StorageField("query_tokens", LiteralBase.LONG, new Constraint[] {
+//                    Constraint.NOT_NULL
+//            }),
+//            new StorageField("completion_tokens", LiteralBase.LONG, new Constraint[] {
+//                    Constraint.NOT_NULL
+//            }),
+//            new StorageField("completion_sn", LiteralBase.LONG, new Constraint[] {
+//                    Constraint.NOT_NULL
+//            })
+//    };
 
     private Storage storage;
 
@@ -674,6 +718,24 @@ public class PsychologyStorage implements Storagable {
             }
         }
 
+        if (!this.storage.exist(this.reportArticleTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.reportArticleTable, this.reportArticleFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.reportArticleTable + "' successfully");
+                // 优化字段
+                this.storage.execute("ALTER TABLE `" + this.reportArticleTable +
+                        "` CHANGE COLUMN `paragraph_1` `paragraph_1` MEDIUMTEXT NULL DEFAULT NULL");
+                this.storage.execute("ALTER TABLE `" + this.reportArticleTable +
+                        "` CHANGE COLUMN `paragraph_2` `paragraph_2` MEDIUMTEXT NULL DEFAULT NULL");
+                this.storage.execute("ALTER TABLE `" + this.reportArticleTable +
+                        "` CHANGE COLUMN `paragraph_3` `paragraph_3` MEDIUMTEXT NULL DEFAULT NULL");
+                this.storage.execute("ALTER TABLE `" + this.reportArticleTable +
+                        "` CHANGE COLUMN `paragraph_4` `paragraph_4` MEDIUMTEXT NULL DEFAULT NULL");
+                this.storage.execute("ALTER TABLE `" + this.reportArticleTable +
+                        "` CHANGE COLUMN `paragraph_5` `paragraph_5` MEDIUMTEXT NULL DEFAULT NULL");
+            }
+        }
+
         if (!this.storage.exist(this.comprehensiveReportTable)) {
             // 不存在，建新表
             if (this.storage.executeCreate(this.comprehensiveReportTable, this.comprehensiveReportFields)) {
@@ -704,12 +766,12 @@ public class PsychologyStorage implements Storagable {
             }
         }
 
-        if (!this.storage.exist(this.usageTable)) {
-            // 不存在，建新表
-            if (this.storage.executeCreate(this.usageTable, this.usageFields)) {
-                Logger.i(this.getClass(), "Created table '" + this.usageTable + "' successfully");
-            }
-        }
+//        if (!this.storage.exist(this.usageTable)) {
+//            // 不存在，建新表
+//            if (this.storage.executeCreate(this.usageTable, this.usageFields)) {
+//                Logger.i(this.getClass(), "Created table '" + this.usageTable + "' successfully");
+//            }
+//        }
 
         // 检查管理表里是否有遗漏数据
 //        this.recheckReportManagementTable();
@@ -1531,6 +1593,90 @@ public class PsychologyStorage implements Storagable {
         });
     }
 
+    public boolean writeReportArticle(ReportArticle article) {
+        List<StorageField[]> result = this.storage.executeQuery(this.reportArticleTable, new StorageField[] {
+                new StorageField("state", LiteralBase.INT)
+        }, new Conditional[] {
+                Conditional.createEqualTo("sn", article.sn)
+        });
+
+        if (result.isEmpty()) {
+            // 插入
+            return this.storage.executeInsert(this.reportArticleTable, new StorageField[] {
+                    new StorageField("sn", article.sn),
+                    new StorageField("theme", article.theme.code),
+                    new StorageField("template", article.templateName),
+                    new StorageField("timestamp", article.timestamp),
+                    new StorageField("state", article.state.code),
+                    new StorageField("rate", article.rate.value),
+                    new StorageField("title", article.getTitle()),
+                    new StorageField("content", article.getContent()),
+                    new StorageField("paragraph_1", (null != article.getParagraph(0)) ?
+                            JSONUtils.serializeEscape(article.getParagraph(0).toJSON().toString()) : null),
+                    new StorageField("paragraph_2", (null != article.getParagraph(1)) ?
+                            JSONUtils.serializeEscape(article.getParagraph(1).toJSON().toString()) : null),
+                    new StorageField("paragraph_3", (null != article.getParagraph(2)) ?
+                            JSONUtils.serializeEscape(article.getParagraph(2).toJSON().toString()) : null),
+                    new StorageField("paragraph_4", (null != article.getParagraph(3)) ?
+                            JSONUtils.serializeEscape(article.getParagraph(3).toJSON().toString()) : null),
+                    new StorageField("paragraph_5", (null != article.getParagraph(4)) ?
+                            JSONUtils.serializeEscape(article.getParagraph(4).toJSON().toString()) : null)
+            });
+        }
+        else {
+            // 更新
+            return this.storage.executeUpdate(this.reportArticleTable, new StorageField[] {
+                    new StorageField("state", article.state.code),
+                    new StorageField("rate", article.rate.value),
+                    new StorageField("title", article.getTitle()),
+                    new StorageField("content", article.getContent()),
+                    new StorageField("paragraph_1", (null != article.getParagraph(0)) ?
+                            JSONUtils.serializeEscape(article.getParagraph(0).toJSON().toString()) : null),
+                    new StorageField("paragraph_2", (null != article.getParagraph(1)) ?
+                            JSONUtils.serializeEscape(article.getParagraph(1).toJSON().toString()) : null),
+                    new StorageField("paragraph_3", (null != article.getParagraph(2)) ?
+                            JSONUtils.serializeEscape(article.getParagraph(2).toJSON().toString()) : null),
+                    new StorageField("paragraph_4", (null != article.getParagraph(3)) ?
+                            JSONUtils.serializeEscape(article.getParagraph(3).toJSON().toString()) : null),
+                    new StorageField("paragraph_5", (null != article.getParagraph(4)) ?
+                            JSONUtils.serializeEscape(article.getParagraph(4).toJSON().toString()) : null)
+            }, new Conditional[] {
+                    Conditional.createEqualTo("sn", article.sn)
+            });
+        }
+    }
+
+    public ReportArticle readReportArticle(long sn) {
+        List<StorageField[]> result = this.storage.executeQuery(this.reportArticleTable, this.reportArticleFields,
+                new Conditional[] {
+                    Conditional.createEqualTo("sn", sn)
+        });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        ReportArticle reportArticle = new ReportArticle(data.get("title").getString(),
+                Theme.parse(data.get("theme").getString()), data.get("template").getString(),
+                data.get("timestamp").getLong());
+        reportArticle.sn = sn;
+        reportArticle.state = AIGCStateCode.parse(data.get("state").getInt());
+        reportArticle.rate = IndicatorRate.parse(data.get("rate").getInt());
+        if (!data.get("content").isNullValue()) {
+            reportArticle.setContent(data.get("content").getString());
+        }
+        for (int i = 1; i <= 5; ++i) {
+            String name = "paragraph_" + i;
+            if (data.get(name).isNullValue()) {
+                continue;
+            }
+            JSONObject json = new JSONObject(JSONUtils.serializeLineFeed(data.get(name).getString()));
+            reportArticle.addParagraph(json);
+        }
+        return reportArticle;
+    }
+
     public ComprehensiveReport readComprehensiveReport(long reportSn) {
         List<StorageField[]> result = this.storage.executeQuery(this.comprehensiveReportTable,
                 this.comprehensiveReportFields, new Conditional[] {
@@ -1901,20 +2047,20 @@ public class PsychologyStorage implements Storagable {
         return result.get(0)[0].getInt();
     }
 
-    public boolean writeUsage(long cid, String token, long timestamp, String remote, String query,
-                              String queryType, long queryTokens, long completionTokens, long completionSN) {
-        return this.storage.executeInsert(this.usageTable, new StorageField[] {
-                new StorageField("cid", cid),
-                new StorageField("token", token),
-                new StorageField("timestamp", timestamp),
-                new StorageField("remote", remote),
-                new StorageField("query", query),
-                new StorageField("query_type", queryType),
-                new StorageField("query_tokens", queryTokens),
-                new StorageField("completion_tokens", completionTokens),
-                new StorageField("completion_sn", completionSN),
-        });
-    }
+//    public boolean writeUsage(long cid, String token, long timestamp, String remote, String query,
+//                              String queryType, long queryTokens, long completionTokens, long completionSN) {
+//        return this.storage.executeInsert(this.usageTable, new StorageField[] {
+//                new StorageField("cid", cid),
+//                new StorageField("token", token),
+//                new StorageField("timestamp", timestamp),
+//                new StorageField("remote", remote),
+//                new StorageField("query", query),
+//                new StorageField("query_type", queryType),
+//                new StorageField("query_tokens", queryTokens),
+//                new StorageField("completion_tokens", completionTokens),
+//                new StorageField("completion_sn", completionSN),
+//        });
+//    }
 
     private PaintingReport makeReport(StorageField[] storageFields) {
         Map<String, StorageField> data = StorageFields.get(storageFields);

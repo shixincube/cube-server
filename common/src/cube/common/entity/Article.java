@@ -17,6 +17,8 @@ public class Article implements JSONable {
 
     private String title;
 
+    private String content;
+
     private List<Paragraph> paragraphs;
 
     public Article(String title) {
@@ -24,12 +26,36 @@ public class Article implements JSONable {
         this.paragraphs = new ArrayList<>();
     }
 
-    public void addParagraph(String title, String keyword, String content) {
-        this.paragraphs.add(new Paragraph(title, keyword, content));
+    public String getTitle() {
+        return this.title;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public String getContent() {
+        return this.content;
+    }
+
+    public void addParagraph(JSONObject json) {
+        Paragraph paragraph = new Paragraph(json);
+        this.paragraphs.add(paragraph);
+    }
+
+    public void addParagraph(String title, String content) {
+        this.paragraphs.add(new Paragraph(title, content));
     }
 
     public List<Paragraph> getParagraphs() {
         return this.paragraphs;
+    }
+
+    public Paragraph getParagraph(int index) {
+        if (this.paragraphs.size() <= index) {
+            return null;
+        }
+        return this.paragraphs.get(index);
     }
 
     public String spliceParagraphContent() {
@@ -45,11 +71,16 @@ public class Article implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("title", this.title);
-        JSONArray array = new JSONArray();
-        for (Paragraph paragraph : this.paragraphs) {
-            array.put(paragraph.toJSON());
+        if (null != this.content && this.content.length() > 0) {
+            json.put("content", this.content);
         }
-        json.put("paragraphs", array);
+        if (!this.paragraphs.isEmpty()) {
+            JSONArray array = new JSONArray();
+            for (Paragraph paragraph : this.paragraphs) {
+                array.put(paragraph.toJSON());
+            }
+            json.put("paragraphs", array);
+        }
         return json;
     }
 
@@ -63,21 +94,22 @@ public class Article implements JSONable {
 
         public final String title;
 
-        public final String keyword;
-
         public final String content;
 
-        public Paragraph(String title, String keyword, String content) {
+        public Paragraph(String title, String content) {
             this.title = title;
-            this.keyword = keyword;
             this.content = content;
+        }
+
+        public Paragraph(JSONObject json) {
+            this.title = json.getString("title");
+            this.content = json.getString("content");
         }
 
         @Override
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
             json.put("title", this.title);
-            json.put("keyword", this.keyword);
             json.put("content", this.content);
             return json;
         }

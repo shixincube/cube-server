@@ -21,57 +21,57 @@ public interface Storage {
      *
      * @return
      */
-    public String getName();
+    String getName();
 
     /**
      * 获取配置。
      *
      * @return
      */
-    public JSONObject getConfig();
+    JSONObject getConfig();
 
     /**
      * 获取类型。
      *
      * @return
      */
-    public StorageType getType();
+    StorageType getType();
 
     /**
      *
      * @param config
      */
-    public void configure(JSONObject config);
+    void configure(JSONObject config);
 
     /**
      * 打开存储仓库。
      */
-    public void open();
+    void open();
 
     /**
      * 关闭存储仓库。
      */
-    public void close();
+    void close();
 
-    public boolean exist(String table);
+    boolean exist(String table);
 
-    public boolean executeCreate(String table, StorageField[] fields);
+    boolean executeCreate(String table, StorageField[] fields);
 
-    public boolean executeInsert(String table, StorageField[] fields);
+    boolean executeInsert(String table, StorageField[] fields);
 
-    public boolean executeInsert(String table, List<StorageField[]> fieldsList);
+    boolean executeInsert(String table, List<StorageField[]> fieldsList);
 
-    public boolean executeUpdate(String table, StorageField[] fields, Conditional[] conditionals);
+    boolean executeUpdate(String table, StorageField[] fields, Conditional[] conditionals);
 
-    public boolean executeDelete(String table, Conditional[] conditionals);
+    boolean executeDelete(String table, Conditional[] conditionals);
 
-    public List<StorageField[]> executeQuery(String table, StorageField[] fields);
+    List<StorageField[]> executeQuery(String table, StorageField[] fields);
 
-    public List<StorageField[]> executeQuery(String table, StorageField[] fields, Conditional[] conditionals);
+    List<StorageField[]> executeQuery(String table, StorageField[] fields, Conditional[] conditionals);
 
-    public List<StorageField[]> executeQuery(String[] tables, StorageField[] fields, Conditional[] conditionals);
+    List<StorageField[]> executeQuery(String[] tables, StorageField[] fields, Conditional[] conditionals);
 
-    public List<StorageField[]> executeQuery(String sql);
+    List<StorageField[]> executeQuery(String sql);
 
-    public boolean execute(String sql);
+    boolean execute(String sql);
 }

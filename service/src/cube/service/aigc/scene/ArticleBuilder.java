@@ -20,6 +20,7 @@ import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.guidance.Prompts;
+import cube.util.MarkdownParser;
 
 import java.util.List;
 
@@ -51,12 +52,15 @@ public class ArticleBuilder {
 
     private PaintingReport report;
 
+    private boolean structured = false;
+
     private ReportArticle article;
 
-    public ArticleBuilder(Theme theme, String templateName) {
+    public ArticleBuilder(Theme theme, String templateName, boolean structured) {
         this.theme = theme;
         this.templateName = templateName;
         this.timestamp = System.currentTimeMillis();
+        this.structured = structured;
         this.article = new ReportArticle(makeTitle(templateName),
                 theme, templateName, this.timestamp);
         this.article.state = AIGCStateCode.Processing;
@@ -67,13 +71,20 @@ public class ArticleBuilder {
                 Anxiety.equalsIgnoreCase(this.templateName));
     }
 
+    public void init(PaintingReport report) {
+        this.report = report;
+        this.article.sn = report.sn;
+    }
+
+    public String getFileCode() {
+        return this.report.getFileCode();
+    }
+
     public ReportArticle getArticle() {
         return this.article;
     }
 
-    public ReportArticle build(AIGCService service, PaintingReport report) {
-        this.report = report;
-
+    public ReportArticle build(AIGCService service) {
         // 1. 按照模板名提取关键指标
         IndicatorRate rate = this.evaluate(report);
         this.article.rate = rate;
@@ -125,7 +136,19 @@ public class ArticleBuilder {
             return null;
         }
 
-        this.article.addParagraph(title, title, record.answer);
+        if (this.structured) {
+            // 结构化输出
+            MarkdownParser markdownParser = new MarkdownParser(record.answer);
+            this.article.setContent(markdownParser.getOther());
+            for (MarkdownParser.Paragraph paragraph : markdownParser.getParagraphs()) {
+                this.article.addParagraph(paragraph.title, paragraph.content);
+            }
+        }
+        else {
+            // 非结构化输出
+            this.article.addParagraph(title, record.answer);
+        }
+
         this.article.state = AIGCStateCode.Ok;
         return this.article;
     }

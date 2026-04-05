@@ -26,6 +26,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.scene.ArticleBuilder;
 import cube.service.aigc.scene.PaintingTemplateArticleListener;
 import cube.service.aigc.scene.PsychologyScene;
 import org.json.JSONObject;
@@ -63,6 +64,7 @@ public class GeneratePsychologyTemplateArticleTask extends ServiceTask {
             Attribute attribute = new Attribute(packet.data.getJSONObject("attribute"));
             Theme theme = Theme.parse(packet.data.getString("theme"));
             String templateName = packet.data.getString("templateName");
+            boolean structured = packet.data.has("structured") && packet.data.getBoolean("structured");
 
             String fileCode = packet.data.has("fileCode") ? packet.data.getString("fileCode") : null;
             String fileUrl = packet.data.has("fileUrl") ? packet.data.getString("fileUrl") : null;
@@ -91,8 +93,8 @@ public class GeneratePsychologyTemplateArticleTask extends ServiceTask {
                         Language.Chinese);
             }
 
-            long sn = PsychologyScene.getInstance().generatePaintingTemplateArticle(channel, attribute, fileLabel, theme,
-                    templateName, new PaintingTemplateArticleListener() {
+            ArticleBuilder builder = PsychologyScene.getInstance().generatePaintingTemplateArticle(channel, attribute, fileLabel, theme,
+                    templateName, structured, new PaintingTemplateArticleListener() {
                         @Override
                         public void onPaintingPredicted(PaintingReport report) {
                             // Nothing
@@ -109,8 +111,9 @@ public class GeneratePsychologyTemplateArticleTask extends ServiceTask {
                         }
                     });
 
-            if (0 != sn) {
-                packet.data.put("sn", sn);
+            if (null != builder) {
+                packet.data.put("sn", builder.getArticle().sn);
+                packet.data.put("fileCode", builder.getFileCode());
                 this.cellet.speak(this.talkContext,
                         this.makeResponse(dialect, packet, AIGCStateCode.Ok.code, packet.data));
             }

@@ -705,16 +705,17 @@ public class PsychologyScene {
      * @param fileLabel
      * @param theme
      * @param templateName
+     * @param structured
      * @param listener
      * @return 返回报告序号。
      */
-    public long generatePaintingTemplateArticle(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
-                                                Theme theme, String templateName,
+    public ArticleBuilder generatePaintingTemplateArticle(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
+                                                Theme theme, String templateName, boolean structured,
                                                 PaintingTemplateArticleListener listener) {
-        final ArticleBuilder builder = new ArticleBuilder(theme, templateName);
+        final ArticleBuilder builder = new ArticleBuilder(theme, templateName, structured);
         if (!builder.isValidTemplate()) {
             Logger.w(this.getClass(), "#generatePaintingTemplateArticle - The template is not correct: " + templateName);
-            return 0;
+            return null;
         }
 
         PaintingReport report = this.generatePaintingReport(channel, attribute, fileLabel, theme,
@@ -743,9 +744,12 @@ public class PsychologyScene {
                     @Override
                     public void onReportEvaluateCompleted(PaintingReport report, AIGCUnit unit) {
                         // 生成
-                        ReportArticle article = builder.build(service, report);
+                        ReportArticle article = builder.build(service);
                         if (null != article) {
                             listener.onCompleted(report, article);
+
+                            // 入库
+                            storage.writeReportArticle(article);
 
                             service.getExecutor().execute(new Runnable() {
                                 @Override
@@ -784,15 +788,15 @@ public class PsychologyScene {
 
         if (null == report) {
             Logger.w(this.getClass(), "#generatePaintingTemplateArticle - The report is null: " + fileLabel.getFileCode());
-            return 0;
+            return null;
         }
 
-        // 设置 SN
-        builder.getArticle().sn = report.sn;
+        // 初始化构建器
+        builder.init(report);
         // 记录
         this.articleBuilderMap.put(report.sn, builder);
 
-        return report.sn;
+        return builder;
     }
 
     /**
@@ -802,12 +806,17 @@ public class PsychologyScene {
      */
     public ReportArticle getPaintingTemplateArticle(long sn) {
         ArticleBuilder builder = this.articleBuilderMap.get(sn);
-        if (null == builder) {
-            Logger.w(this.getClass(), "#getPaintingTemplateArticle - Can NOT find: " + sn);
-            return null;
+        if (null != builder) {
+            return builder.getArticle();
         }
 
-        return builder.getArticle();
+        ReportArticle article = this.storage.readReportArticle(sn);
+        if (null != article) {
+            return article;
+        }
+
+        Logger.w(this.getClass(), "#getPaintingTemplateArticle - Can NOT find: " + sn);
+        return null;
     }
 
     public List<Scale> listScales(long contactId) {
