@@ -3140,6 +3140,17 @@ public class AIGCService extends AbstractModule implements Generatable {
      */
     public boolean analyseVoiceStream(AuthToken authToken, String fileCode, String streamName, int index,
                                       VoiceStreamAnalysisListener listener) {
+        if (CounselingManager.getInstance().isOverDurationLimit(streamName)) {
+            Logger.i(this.getClass(), "#analyseVoiceStream - Over duration limit: " + streamName);
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    stopVoiceStream(authToken, streamName);
+                }
+            });
+            return false;
+        }
+
         this.executor.execute(new Runnable() {
             @Override
             public void run() {

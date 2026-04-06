@@ -1140,16 +1140,9 @@ public class PsychologyScene {
         }
 
         for (Comprehensive comprehensive : comprehensives) {
-            if (!comprehensive.hasFileLabels()) {
-                for (String fileCode : comprehensive.getFileCodes()) {
-                    FileLabel fileLabel = this.service.getFile(channel.getDomain().getName(), fileCode);
-                    if (null == fileLabel) {
-                        Logger.e(this.getClass(), "#generateComprehensive - Can NOT find file: " + fileCode);
-                        return null;
-                    }
-                    // 设置文件
-                    comprehensive.addFileLabel(fileLabel);
-                }
+            if (!comprehensive.isValidFile()) {
+                Logger.e(this.getClass(), "#generateComprehensive - No files: " + comprehensive.getName());
+                return null;
             }
         }
 
@@ -1192,6 +1185,30 @@ public class PsychologyScene {
 
                     ComprehensiveReportWorker reportWorker = comprehensiveReportWorkerQueue.poll();
                     while (null != reportWorker) {
+                        // 读取文件
+                        for (Comprehensive comprehensive : reportWorker.getReport().comprehensives) {
+                            if (!comprehensive.hasFileLabels()) {
+                                for (String fileCode : comprehensive.getFileCodes()) {
+                                    FileLabel fileLabel = service.getFile(worker.channel.getDomain().getName(), fileCode);
+                                    if (null == fileLabel) {
+                                        Logger.w(this.getClass(), "#generateComprehensive - Can NOT find file: " + fileCode);
+                                        continue;
+                                    }
+                                    // 设置文件
+                                    comprehensive.addFileLabel(fileLabel);
+                                }
+                                for (String fileUrl : comprehensive.getFileUrls()) {
+                                    FileLabel fileLabel = service.downloadFile(worker.channel.getAuthToken(), fileUrl);
+                                    if (null == fileLabel) {
+                                        Logger.w(this.getClass(), "#generateComprehensive - Can NOT download file: " + fileUrl);
+                                        continue;
+                                    }
+                                    // 设置文件
+                                    comprehensive.addFileLabel(fileLabel);
+                                }
+                            }
+                        }
+
                         // 工作器执行任务
                         reportWorker.run();
                         // 下一个

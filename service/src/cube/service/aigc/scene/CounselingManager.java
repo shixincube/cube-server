@@ -40,6 +40,8 @@ public class CounselingManager {
 
     private final static String CATEGORY = "conversation";
 
+    private final long maxDuration = 2 * 60 * 60 * 1000;
+
     private AIGCService service;
 
     private ExecutorService executor;
@@ -98,7 +100,16 @@ public class CounselingManager {
         while (iter.hasNext()) {
             Map.Entry<String, Wrapper> entry = iter.next();
             Wrapper wrapper = entry.getValue();
-            if (now - wrapper.refreshTimestamp > 4 * 60 * 60 * 1000) {
+            if (now - wrapper.timestamp > this.maxDuration) {
+                (new Thread() {
+                    @Override
+                    public void run() {
+                        // 关闭超过最大时长流
+                        stopStream(wrapper.authToken, wrapper.streamName);
+                    }
+                }).start();
+            }
+            else if (now - wrapper.refreshTimestamp > 4 * 60 * 60 * 1000) {
                 // 删除超时的数据
                 String streamName = entry.getKey();
 
@@ -263,10 +274,10 @@ public class CounselingManager {
         wrapper.appendArchive(recordingArchive);
     }
 
-    public boolean hasStreamStopped(String streamName) {
+    public boolean isOverDurationLimit(String streamName) {
         Wrapper wrapper = this.wrapperMap.get(streamName);
         if (null != wrapper) {
-            return wrapper.hasStopped();
+            return (System.currentTimeMillis() - wrapper.timestamp >= this.maxDuration);
         }
         return false;
     }

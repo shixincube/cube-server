@@ -27,9 +27,13 @@ public class Comprehensive implements JSONable {
 
     private String name;
 
+    private String role;
+
     private Attribute attribute;
 
     private List<String> fileCodes;
+
+    private List<String> fileUrls;
 
     private List<FileLabel> fileLabels;
 
@@ -43,9 +47,11 @@ public class Comprehensive implements JSONable {
 
     public Comprehensive(JSONObject json) {
         this.name = json.getString("name");
+        this.role = json.has("role") ? json.getString("role") : null;
         this.attribute = new Attribute(json.getJSONObject("attribute"));
 
         this.fileCodes = new ArrayList<>();
+        this.fileUrls = new ArrayList<>();
         this.fileLabels = new ArrayList<>();
         if (json.has("files")) {
             JSONArray fileLabelArray = json.getJSONArray("files");
@@ -59,6 +65,10 @@ public class Comprehensive implements JSONable {
         else if (json.has("fileCodes")) {
             JSONArray fileCodeArray = json.getJSONArray("fileCodes");
             this.fileCodes.addAll(JSONUtils.toStringList(fileCodeArray));
+        }
+        else if (json.has("fileUrls")) {
+            JSONArray fileUrlArray = json.getJSONArray("fileUrls");
+            this.fileUrls.addAll(JSONUtils.toStringList(fileUrlArray));
         }
 
         this.paintingMap = new HashMap<>();
@@ -88,8 +98,20 @@ public class Comprehensive implements JSONable {
         }
     }
 
+    public String getName() {
+        return this.name;
+    }
+
+    public String getRole() {
+        return this.role;
+    }
+
     public Attribute getAttribute() {
         return this.attribute;
+    }
+
+    public boolean isValidFile() {
+        return (!this.fileLabels.isEmpty()) || (!this.fileCodes.isEmpty()) || (!this.fileUrls.isEmpty());
     }
 
     public boolean hasFileLabels() {
@@ -98,6 +120,10 @@ public class Comprehensive implements JSONable {
 
     public List<String> getFileCodes() {
         return this.fileCodes;
+    }
+
+    public List<String> getFileUrls() {
+        return this.fileUrls;
     }
 
     public void addFileLabel(FileLabel fileLabel) {
@@ -172,6 +198,10 @@ public class Comprehensive implements JSONable {
         json.put("name", this.name);
         json.put("attribute", this.attribute.toJSON());
 
+        if (null != this.role) {
+            json.put("role", this.role);
+        }
+
         if (!this.fileLabels.isEmpty()) {
             JSONArray array = new JSONArray();
             for (FileLabel fileLabel : this.fileLabels) {
@@ -181,6 +211,9 @@ public class Comprehensive implements JSONable {
         }
         else if (!this.fileCodes.isEmpty()) {
             json.put("fileCodes", JSONUtils.toStringArray(this.fileCodes));
+        }
+        else if (!this.fileUrls.isEmpty()) {
+            json.put("fileUrls", JSONUtils.toStringArray(this.fileUrls));
         }
 
         JSONArray array = new JSONArray();

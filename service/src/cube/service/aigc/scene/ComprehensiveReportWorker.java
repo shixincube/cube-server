@@ -39,7 +39,7 @@ public class ComprehensiveReportWorker implements Runnable {
 
     private PsychologyStorage storage;
 
-    private AIGCChannel channel;
+    public AIGCChannel channel;
 
     private ComprehensiveReportListener listener;
 
@@ -177,6 +177,12 @@ public class ComprehensiveReportWorker implements Runnable {
                 if (comprehensiveList.size() == 2) {
                     // 将选择输入量表
                     for (Comprehensive comprehensive : comprehensiveList) {
+                        // 判断文件
+                        if (!comprehensive.hasFileLabels()) {
+                            Logger.e(this.getClass(), "#verifyParameters - No file: " + comprehensive.getName());
+                            return false;
+                        }
+
                         if (!comprehensive.hasScales()) {
                             Scale scale = Resource.getInstance().loadScaleByName("SRBC",
                                     this.channel.getAuthToken().getContactId());

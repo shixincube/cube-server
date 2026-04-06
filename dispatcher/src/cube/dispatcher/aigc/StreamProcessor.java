@@ -99,7 +99,7 @@ public class StreamProcessor {
                 }
             }
 
-            Register register =  this.registerMap.get(stream.name);
+            Register register = this.registerMap.get(stream.name);
             if (null != register && null == register.track) {
                 register.track = track;
             }
