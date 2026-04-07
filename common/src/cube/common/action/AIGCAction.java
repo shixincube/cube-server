@@ -237,6 +237,11 @@ public enum AIGCAction {
     SpeechDiarization("speechDiarization"),
 
     /**
+     * 获取说话人分割聚类。
+     */
+    GetSpeechDiarization("getSpeechDiarization"),
+
+    /**
      * 获取说话人分割数据清单。
      */
     ListSpeechDiarizations("listSpeechDiarizations"),

@@ -349,6 +349,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new FacialExpressionRecognitionTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.GetSpeechDiarization.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new GetSpeechDiarizationTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.SpeechDiarization.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new SpeechDiarizationTask(this, talkContext, primitive,

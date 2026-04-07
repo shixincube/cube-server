@@ -68,7 +68,7 @@ public class Manager implements Tickable, PerformerListener {
     private Map<Long, TextToFileFuture> textToFileFutureMap;
 
     /**
-     * Key：文件码
+     * Key：查询码
      */
     private Map<String, SpeechRecognitionFuture> speechRecognitionFutureMap;
 
@@ -1863,13 +1863,14 @@ public class Manager implements Tickable, PerformerListener {
 
     public SpeechRecognitionFuture automaticSpeechRecognition(String token, String fileCode, String fileUrl,
                                                               boolean reset) {
+        String queryCode = FileUtils.fastHash((null != fileCode) ? fileCode : fileUrl);
         if (reset) {
-            this.speechRecognitionFutureMap.remove(fileCode);
+            this.speechRecognitionFutureMap.remove(queryCode);
         }
         else {
-            if (this.speechRecognitionFutureMap.containsKey(fileCode)) {
+            if (this.speechRecognitionFutureMap.containsKey(queryCode)) {
                 // 正在处理
-                return this.speechRecognitionFutureMap.get(fileCode);
+                return this.speechRecognitionFutureMap.get(queryCode);
             }
         }
 
@@ -1877,22 +1878,22 @@ public class Manager implements Tickable, PerformerListener {
         if (null != fileCode) {
             data.put("fileCode", fileCode);
         }
-        else if (null != fileUrl) {
+        else {
             data.put("fileUrl", fileUrl);
         }
         Packet packet = new Packet(AIGCAction.AutomaticSpeechRecognition.name, data);
         ActionDialect dialect = packet.toDialect();
         dialect.addParam("token", token);
 
-        SpeechRecognitionFuture future = new SpeechRecognitionFuture(token, fileCode);
-        this.speechRecognitionFutureMap.put(fileCode, future);
+        SpeechRecognitionFuture future = new SpeechRecognitionFuture(token, fileCode, fileUrl, queryCode);
+        this.speechRecognitionFutureMap.put(queryCode, future);
 
         this.performer.transmit(AIGCCellet.NAME, dialect);
         return future;
     }
 
-    public SpeechRecognitionFuture getSpeechRecognitionFuture(String fileCode) {
-        return this.speechRecognitionFutureMap.get(fileCode);
+    public SpeechRecognitionFuture getSpeechRecognitionFuture(String queryCode) {
+        return this.speechRecognitionFutureMap.get(queryCode);
     }
 
     public SpeechEmotionRecognitionFuture speechEmotionRecognition(String token, String fileCode, boolean reset) {
@@ -1983,8 +1984,46 @@ public class Manager implements Tickable, PerformerListener {
         return future;
     }
 
-    public SpeechDiarizationFuture getSpeechDiarizationFuture(String queryCode) {
-        return this.speechDiarizationFutureMap.get(queryCode);
+    public SpeechDiarizationFuture getSpeechDiarization(String token, String queryCode) {
+        SpeechDiarizationFuture future = null;
+        if (queryCode.length() == 64) {
+            future = this.speechDiarizationFutureMap.get(FileUtils.fastHash(queryCode));
+        }
+        else {
+            future = this.speechDiarizationFutureMap.get(queryCode);
+        }
+        if (null != future) {
+            return future;
+        }
+
+        JSONObject payload = new JSONObject();
+        payload.put("fileCode", queryCode);
+        Packet packet = new Packet(AIGCAction.GetSpeechDiarization.name, payload);
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        if (null == response) {
+            Logger.w(this.getClass(), "#getSpeechDiarization - No response: " + token);
+            return null;
+        }
+
+        Packet responsePacket = new Packet(response);
+        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getSpeechDiarization - Response state is " + Packet.extractCode(responsePacket));
+            return null;
+        }
+
+        JSONObject responseData = Packet.extractDataPayload(responsePacket);
+        if (responseData.has("file")) {
+            FileLabels.reviseFileLabel(responseData.getJSONObject("file"), token,
+                    getPerformer().getExternalHttpEndpoint(),
+                    getPerformer().getExternalHttpsEndpoint());
+        }
+        VoiceDiarization diarization = new VoiceDiarization(responseData);
+        future = new SpeechDiarizationFuture(diarization.getTimestamp(),
+                token, diarization.fileCode, AIGCStateCode.Ok, diarization);
+        return future;
     }
 
     public JSONObject listSpeechDiarizations(String token) {
@@ -2045,7 +2084,7 @@ public class Manager implements Tickable, PerformerListener {
         }
         VoiceDiarization diarization = new VoiceDiarization(responseData);
         SpeechDiarizationFuture future = new SpeechDiarizationFuture(diarization.getTimestamp(),
-                token, diarization.fileCode, AIGCStateCode.Ok);
+                token, diarization.fileCode, AIGCStateCode.Ok, diarization);
         return future.toJSON();
     }
 
@@ -3198,7 +3237,9 @@ public class Manager implements Tickable, PerformerListener {
                 // 获取结果数据
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
                 SpeechRecognitionInfo result = new SpeechRecognitionInfo(resultJson);
-                SpeechRecognitionFuture future = this.speechRecognitionFutureMap.get(result.file.getFileCode());
+                String queryCode = FileUtils.fastHash((null != result.file.externalURL)
+                        ? result.file.externalURL : result.file.getFileCode());
+                SpeechRecognitionFuture future = this.speechRecognitionFutureMap.get(queryCode);
                 if (null != future) {
                     future.result = result;
                     future.stateCode = AIGCStateCode.Ok;
@@ -3210,8 +3251,9 @@ public class Manager implements Tickable, PerformerListener {
             else {
                 Logger.d(this.getClass(), "#onReceived - Automatic speech recognition failed: " + stateCode);
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                String fileCode = resultJson.getString("fileCode");
-                SpeechRecognitionFuture future = this.speechRecognitionFutureMap.get(fileCode);
+                String queryCode = FileUtils.fastHash(resultJson.has("fileUrl") ?
+                        resultJson.getString("fileUrl") : resultJson.getString("fileCode"));
+                SpeechRecognitionFuture future = this.speechRecognitionFutureMap.get(queryCode);
                 if (null != future) {
                     future.stateCode = AIGCStateCode.parse(stateCode);
                 }
@@ -3431,20 +3473,26 @@ public class Manager implements Tickable, PerformerListener {
 
         protected String fileCode;
 
+        protected String fileUrl;
+
+        public String queryCode;
+
         protected SpeechRecognitionInfo result;
 
         protected AIGCStateCode stateCode = AIGCStateCode.Processing;
 
-        protected SpeechRecognitionFuture(String token, String fileCode) {
+        protected SpeechRecognitionFuture(String token, String fileCode, String fileUrl, String queryCode) {
             this.timestamp = System.currentTimeMillis();
             this.token = token;
             this.fileCode = fileCode;
+            this.fileUrl = fileUrl;
+            this.queryCode = queryCode;
         }
 
         @Override
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
-            json.put("fileCode", this.fileCode);
+            json.put("queryCode", this.queryCode);
             json.put("timestamp", this.timestamp);
             json.put("stateCode", this.stateCode.code);
             if (null != this.result) {
@@ -3521,12 +3569,14 @@ public class Manager implements Tickable, PerformerListener {
             this.queryCode = queryCode;
         }
 
-        public SpeechDiarizationFuture(long timestamp, String token, String fileCode, AIGCStateCode stateCode) {
+        public SpeechDiarizationFuture(long timestamp, String token, String fileCode, AIGCStateCode stateCode,
+                                       VoiceDiarization diarization) {
             this.timestamp = timestamp;
             this.token = token;
             this.fileCode = fileCode;
             this.queryCode = FileUtils.fastHash(fileCode);
             this.stateCode = stateCode;
+            this.diarization = diarization;
         }
 
         @Override

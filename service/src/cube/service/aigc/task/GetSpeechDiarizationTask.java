@@ -1,7 +1,7 @@
 /*
  * This source file is part of Cube.
  *
- * Copyright (c) 2023-2025 Ambrose Xu.
+ * Copyright (c) 2023-2026 Ambrose Xu.
  */
 
 package cube.service.aigc.task;
@@ -22,9 +22,9 @@ import cube.service.aigc.AIGCService;
 /**
  * 删除说话者分析数据。
  */
-public class DeleteSpeechDiarizationTask extends ServiceTask {
+public class GetSpeechDiarizationTask extends ServiceTask {
 
-    public DeleteSpeechDiarizationTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
+    public GetSpeechDiarizationTask(Cellet cellet, TalkContext talkContext, Primitive primitive, ResponseTime responseTime) {
         super(cellet, talkContext, primitive, responseTime);
     }
 
@@ -51,8 +51,8 @@ public class DeleteSpeechDiarizationTask extends ServiceTask {
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         AuthToken authToken = service.getToken(token);
-        // 删除语音数据
-        VoiceDiarization voiceDiarization = service.deleteVoiceDiarization(authToken, fileCode);
+        // 获取数据
+        VoiceDiarization voiceDiarization = service.getVoiceDiarization(authToken, fileCode);
         if (null == voiceDiarization) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.NoData.code, packet.data));

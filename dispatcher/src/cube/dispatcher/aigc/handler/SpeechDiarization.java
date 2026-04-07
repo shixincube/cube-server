@@ -40,18 +40,18 @@ public class SpeechDiarization extends ContextHandler {
                 return;
             }
 
-            String fileCode = request.getParameter("fc");
-            if (null == fileCode) {
-                fileCode = request.getParameter("code");
+            String queryCode = request.getParameter("qc");
+            if (null == queryCode) {
+                queryCode = request.getParameter("code");
             }
 
-            if (null == fileCode) {
+            if (null == queryCode) {
                 this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
                 this.complete();
                 return;
             }
 
-            Manager.SpeechDiarizationFuture future = Manager.getInstance().getSpeechDiarizationFuture(fileCode);
+            Manager.SpeechDiarizationFuture future = Manager.getInstance().getSpeechDiarization(token, queryCode);
             if (null == future) {
                 this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 this.complete();

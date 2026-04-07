@@ -2902,6 +2902,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         if (TextUtils.isURL(fileCodeOrUrl)) {
             // 从外部链接下载
             fileLabel = this.downloadFile(authToken, fileCodeOrUrl);
+            fileLabel.externalURL = fileCodeOrUrl;
         }
         else {
             fileLabel = this.getFile(authToken.getDomain(), fileCodeOrUrl);
@@ -3035,6 +3036,16 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         return this.performSpeakerDiarization(authToken, fileLabel, preprocess, storage, false, listener);
+    }
+
+    public VoiceDiarization getVoiceDiarization(AuthToken authToken, String fileCode) {
+        VoiceDiarization voiceDiarization = this.storage.readVoiceDiarization(fileCode);
+        if (null == voiceDiarization) {
+            Logger.w(this.getClass(), "#getVoiceDiarization - Can NOT find the voice diarization: " + fileCode);
+            return null;
+        }
+        voiceDiarization.file = this.getFile(authToken.getDomain(), voiceDiarization.fileCode);
+        return voiceDiarization;
     }
 
     public List<VoiceDiarization> getVoiceDiarizations(AuthToken authToken) {
