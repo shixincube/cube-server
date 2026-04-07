@@ -196,6 +196,8 @@ public class StreamProcessor {
 
     protected class StreamTask implements Runnable {
 
+        private final long maxDuration = 2 * 60 * 60 * 1000;
+
         private String name;
 
         private List<Stream> streams;
@@ -212,6 +214,14 @@ public class StreamProcessor {
             Register register = registerMap.get(this.name);
             if (null == register) {
                 Logger.w(this.getClass(), "#run - No token for stream: " + this.name);
+                synchronized (this.streams) {
+                    this.streams.clear();
+                }
+                return;
+            }
+
+            // 判断是否超过最大时长
+            if (System.currentTimeMillis() - register.timestamp > this.maxDuration) {
                 synchronized (this.streams) {
                     this.streams.clear();
                 }

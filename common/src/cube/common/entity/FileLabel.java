@@ -96,6 +96,11 @@ public class FileLabel extends Entity {
     private File file;
 
     /**
+     * 站外链接。
+     */
+    public String externalURL;
+
+    /**
      * 构造函数。
      *
      * @param domainName 域名称。
@@ -195,6 +200,10 @@ public class FileLabel extends Entity {
         }
         if (json.has("directURL")) {
             this.directURL = json.getString("directURL");
+        }
+
+        if (json.has("externalURL")) {
+            this.externalURL = json.getString("externalURL");
         }
 
         if (json.has("context")) {
@@ -549,6 +558,10 @@ public class FileLabel extends Entity {
         }
         if (null != this.directURL) {
             json.put("directURL", this.directURL);
+        }
+
+        if (null != this.externalURL) {
+            json.put("externalURL", this.externalURL);
         }
 
         if (null != this.context) {

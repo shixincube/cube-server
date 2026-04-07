@@ -973,7 +973,7 @@ public class CounselingManager {
                 beginIndex + "-" + endIndex + " , file code: " + fileLabel.getFileCode());
 
         // 任务以插队方式提高优先级
-        boolean success = this.service.performSpeakerDiarization(authToken, fileLabel, false,
+        fileLabel = this.service.performSpeakerDiarization(authToken, fileLabel, false,
                 false, true, new VoiceDiarizationListener() {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {
@@ -1036,7 +1036,7 @@ public class CounselingManager {
             }
         });
 
-        if (!success) {
+        if (null == fileLabel) {
             Logger.e(this.getClass(), "#combine - #performSpeakerDiarization ERROR: " + streamName);
             wrapper.generatingStrategy.set(false);
         }

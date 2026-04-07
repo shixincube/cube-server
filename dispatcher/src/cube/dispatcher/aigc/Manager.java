@@ -35,6 +35,7 @@ import cube.dispatcher.aigc.handler.app.App;
 import cube.dispatcher.stream.StreamType;
 import cube.dispatcher.util.Tickable;
 import cube.util.FileLabels;
+import cube.util.FileUtils;
 import cube.util.HttpServer;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -77,7 +78,7 @@ public class Manager implements Tickable, PerformerListener {
     private Map<String, SpeechEmotionRecognitionFuture> speechEmotionRecognitionFutureMap;
 
     /**
-     * Key：文件码
+     * Key：查询码
      */
     private Map<String, SpeechDiarizationFuture> speechDiarizationFutureMap;
 
@@ -1953,13 +1954,14 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public SpeechDiarizationFuture speechDiarization(String token, String fileCode, String fileUrl, boolean reset) {
+        String queryCode = FileUtils.fastHash((null != fileCode) ? fileCode : fileUrl);
         if (reset) {
-            this.speechDiarizationFutureMap.remove(fileCode);
+            this.speechDiarizationFutureMap.remove(queryCode);
         }
         else {
-            if (this.speechDiarizationFutureMap.containsKey(fileCode)) {
+            if (this.speechDiarizationFutureMap.containsKey(queryCode)) {
                 // 正在处理
-                return this.speechDiarizationFutureMap.get(fileCode);
+                return this.speechDiarizationFutureMap.get(queryCode);
             }
         }
 
@@ -1967,22 +1969,22 @@ public class Manager implements Tickable, PerformerListener {
         if (null != fileCode) {
             payload.put("fileCode", fileCode);
         }
-        else if (null != fileUrl) {
+        else {
             payload.put("fileUrl", fileUrl);
         }
         Packet packet = new Packet(AIGCAction.SpeechDiarization.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        SpeechDiarizationFuture future = new SpeechDiarizationFuture(token, fileCode);
-        this.speechDiarizationFutureMap.put(fileCode, future);
+        SpeechDiarizationFuture future = new SpeechDiarizationFuture(token, fileCode, fileUrl, queryCode);
+        this.speechDiarizationFutureMap.put(queryCode, future);
 
         this.performer.transmit(AIGCCellet.NAME, request);
         return future;
     }
 
-    public SpeechDiarizationFuture getSpeechDiarizationFuture(String fileCode) {
-        return this.speechDiarizationFutureMap.get(fileCode);
+    public SpeechDiarizationFuture getSpeechDiarizationFuture(String queryCode) {
+        return this.speechDiarizationFutureMap.get(queryCode);
     }
 
     public JSONObject listSpeechDiarizations(String token) {
@@ -3274,9 +3276,11 @@ public class Manager implements Tickable, PerformerListener {
                 // 获取结果数据
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
                 VoiceDiarization result = new VoiceDiarization(resultJson);
-                SpeechDiarizationFuture future = this.speechDiarizationFutureMap.get(result.file.getFileCode());
+                String queryCode = FileUtils.fastHash((null != result.file.externalURL)
+                        ? result.file.externalURL : result.file.getFileCode());
+                SpeechDiarizationFuture future = this.speechDiarizationFutureMap.get(queryCode);
                 if (null != future) {
-                    future.diarization = new VoiceDiarization(resultJson);
+                    future.diarization = result;
                     future.stateCode = AIGCStateCode.Ok;
                 }
                 else {
@@ -3285,8 +3289,9 @@ public class Manager implements Tickable, PerformerListener {
             }
             else {
                 JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                String fileCode = resultJson.getString("fileCode");
-                SpeechDiarizationFuture future = this.speechDiarizationFutureMap.get(fileCode);
+                String queryCode = FileUtils.fastHash(resultJson.has("fileUrl") ?
+                        resultJson.getString("fileUrl") : resultJson.getString("fileCode"));
+                SpeechDiarizationFuture future = this.speechDiarizationFutureMap.get(queryCode);
                 if (null != future) {
                     future.stateCode = AIGCStateCode.parse(stateCode);
                 }
@@ -3500,27 +3505,34 @@ public class Manager implements Tickable, PerformerListener {
 
         protected String fileCode;
 
+        protected String fileUrl;
+
+        public String queryCode;
+
         protected VoiceDiarization diarization;
 
         protected AIGCStateCode stateCode = AIGCStateCode.Processing;
 
-        public SpeechDiarizationFuture(String token, String fileCode) {
+        public SpeechDiarizationFuture(String token, String fileCode, String fileUrl, String queryCode) {
             this.timestamp = System.currentTimeMillis();
             this.token = token;
             this.fileCode = fileCode;
+            this.fileUrl = fileUrl;
+            this.queryCode = queryCode;
         }
 
         public SpeechDiarizationFuture(long timestamp, String token, String fileCode, AIGCStateCode stateCode) {
             this.timestamp = timestamp;
             this.token = token;
             this.fileCode = fileCode;
+            this.queryCode = FileUtils.fastHash(fileCode);
             this.stateCode = stateCode;
         }
 
         @Override
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
-            json.put("fileCode", this.fileCode);
+            json.put("queryCode", this.queryCode);
             json.put("timestamp", this.timestamp);
             json.put("stateCode", this.stateCode.code);
             if (null != this.diarization) {

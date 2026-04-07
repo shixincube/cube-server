@@ -59,7 +59,7 @@ public class SpeechDiarizationTask extends ServiceTask {
         AuthToken authToken = service.getToken(token);
 
         // 执行 Speaker Diarization
-        boolean success = service.performSpeakerDiarization(authToken, fileCodeOrUrl, true, true,
+        FileLabel fileLabel = service.performSpeakerDiarization(authToken, fileCodeOrUrl, true, true,
                 new VoiceDiarizationListener() {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {
@@ -76,7 +76,7 @@ public class SpeechDiarizationTask extends ServiceTask {
             }
         });
 
-        if (!success) {
+        if (null == fileLabel) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.Failure.code, packet.data));
             markResponseTime();

@@ -2956,14 +2956,14 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param listener
      * @return
      */
-    public boolean performSpeakerDiarization(AuthToken authToken, FileLabel fileLabel, boolean preprocess,
+    public FileLabel performSpeakerDiarization(AuthToken authToken, FileLabel fileLabel, boolean preprocess,
                                              boolean storage, boolean jumpToFirst,
                                              VoiceDiarizationListener listener) {
         // 查找有该能力的单元
         AIGCUnit unit = this.selectUnitBySubtask(AICapability.AudioProcessing.SpeakerDiarization);
         if (null == unit) {
             Logger.w(this.getClass(), "#performSpeakerDiarization - No task unit setup in server");
-            return false;
+            return null;
         }
 
         synchronized (this.runningMetas) {
@@ -2973,7 +2973,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                     if (aum.getFile().getFileCode().equals(fileLabel.getFileCode())) {
                         Logger.w(this.getClass(), "#performSpeakerDiarization - Re-submit the task for file: " +
                                 fileLabel.getFileCode());
-                        return false;
+                        return fileLabel;
                     }
                 }
             }
@@ -3003,7 +3003,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             }).start();
         }
 
-        return true;
+        return fileLabel;
     }
 
     /**
@@ -3016,11 +3016,14 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param listener
      * @return
      */
-    public boolean performSpeakerDiarization(AuthToken authToken, String fileCodeOrUrl, boolean preprocess,
+    public FileLabel performSpeakerDiarization(AuthToken authToken, String fileCodeOrUrl, boolean preprocess,
                                              boolean storage, VoiceDiarizationListener listener) {
         FileLabel fileLabel = null;
         if (TextUtils.isURL(fileCodeOrUrl)) {
             fileLabel = this.downloadFile(authToken, fileCodeOrUrl);
+            if (null != fileLabel) {
+                fileLabel.externalURL = fileCodeOrUrl;
+            }
         }
         else {
             fileLabel = this.getFile(authToken.getDomain(), fileCodeOrUrl);
@@ -3028,7 +3031,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         if (null == fileLabel) {
             Logger.e(this.getClass(), "#performSpeakerDiarization - Get file failed: " + fileCodeOrUrl);
-            return false;
+            return null;
         }
 
         return this.performSpeakerDiarization(authToken, fileLabel, preprocess, storage, false, listener);
@@ -3167,7 +3170,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             list.add(streamSink);
         }
 
-        boolean success = this.performSpeakerDiarization(authToken, fileCode, false, false,
+        FileLabel fileLabel = this.performSpeakerDiarization(authToken, fileCode, false, false,
                 new VoiceDiarizationListener() {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {
@@ -3204,7 +3207,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
         });
 
-        return success;
+        return (null != fileLabel);
     }
 
     /**

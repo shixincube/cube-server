@@ -27,6 +27,8 @@ import java.util.*;
 
 public class AudioUnitMeta extends UnitMeta {
 
+    public final long timestamp;
+
     protected AuthToken authToken;
 
     protected FileLabel file;
@@ -42,6 +44,7 @@ public class AudioUnitMeta extends UnitMeta {
     public AudioUnitMeta(AIGCService service, AIGCUnit unit, AuthToken authToken, AIGCAction action,
                          FileLabel file, boolean preprocess, boolean storage) {
         super(service, unit);
+        this.timestamp = System.currentTimeMillis();
         this.authToken = authToken;
         this.action = action;
         this.file = file;
