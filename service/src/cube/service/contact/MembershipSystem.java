@@ -187,6 +187,11 @@ public class MembershipSystem {
         return invitationCode;
     }
 
+    public InvitationCode getIdleInvitationCode(String type, String validity) {
+        InvitationCode invitationCode = this.invitationCodeStorage.append(type, validity);
+        return invitationCode;
+    }
+
     public void onTick(long now) {
         // 检测所有过期的会员，设置为无效状态
         List<Membership> memberships = this.storage.readExpiredMemberships(AuthConsts.DEFAULT_DOMAIN);
@@ -312,6 +317,16 @@ public class MembershipSystem {
                 }
             }
             return count;
+        }
+
+        public InvitationCode append(String type, String validity) {
+            InvitationCode invitationCode = new InvitationCode(type, validity);
+            synchronized (this) {
+                List<InvitationCode> list = this.matchingList(type);
+                list.add(invitationCode);
+            }
+            this.save();
+            return invitationCode;
         }
 
         private void append(String type, String validity, int amount) {

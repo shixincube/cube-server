@@ -992,13 +992,13 @@ public class AIGCService extends AbstractModule implements Generatable {
         ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactName(
                 contact.getDomain().getName(), verificationCode.phoneNumber);
         if (searchResult.getContactList().isEmpty()) {
-            Logger.i(this.getClass(), "#updateUser - New user: " + contact.getId());
+            Logger.i(this.getClass(), "#checkInUser - New user: " + contact.getId());
 
             // 新注册用户
             User user = new User(contact.getContext());
             user.setRegisterTime(System.currentTimeMillis());
             user.setName(verificationCode.phoneNumber);
-            user.setDisplayName(verificationCode.phoneNumber);
+            user.setDisplayName("ME" + verificationCode.phoneNumber.substring(verificationCode.phoneNumber.length() - 4));
             user.setPhoneNumber(verificationCode.dialCode + "-" + verificationCode.phoneNumber);
 
             ContactManager.getInstance().updateContact(contact.getDomain().getName(),
@@ -1009,10 +1009,16 @@ public class AIGCService extends AbstractModule implements Generatable {
             this.updatePersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
                     contact.getId()), user);
 
+            // 激活1年会员
+            MembershipSystem.InvitationCode invitationCode = ContactManager.getInstance().getMembershipSystem().getIdleInvitationCode(
+                    Membership.TYPE_PREMIUM, MembershipSystem.VALIDITY_ANNUAL);
+            this.activateMembership(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
+                    contact.getId()), "MindEcho", invitationCode.code);
+
             return user;
         }
         else {
-            Logger.i(this.getClass(), "#updateUser - User login: " + contact.getId());
+            Logger.i(this.getClass(), "#checkInUser - User login: " + contact.getId());
 
             // 老用户登录
             // 老用户当前使用的令牌删除，但是不删除设备的临时联系人
@@ -1078,6 +1084,12 @@ public class AIGCService extends AbstractModule implements Generatable {
                 // 更新个人知识记忆
                 this.updatePersonalKnowledgeBase(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
                         contact.getId()), user);
+
+                // 激活1年会员
+                MembershipSystem.InvitationCode invitationCode = ContactManager.getInstance().getMembershipSystem().getIdleInvitationCode(
+                        Membership.TYPE_PREMIUM, MembershipSystem.VALIDITY_ANNUAL);
+                this.activateMembership(ContactManager.getInstance().getAuthToken(contact.getDomain().getName(),
+                        contact.getId()), "MindEcho", invitationCode.code);
 
                 return user;
             }

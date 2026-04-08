@@ -377,6 +377,12 @@ public class Manager implements Tickable, PerformerListener {
         return null;
     }
 
+    /**
+     * 注销用户。
+     *
+     * @param token
+     * @return
+     */
     public JSONObject signOutUser(String token) {
         Packet packet = new Packet(AIGCAction.AppSignOutUser.name, new JSONObject());
         ActionDialect request = packet.toDialect();
