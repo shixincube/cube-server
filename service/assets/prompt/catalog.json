@@ -5,6 +5,14 @@
       "file": "general.md"
     },
     {
+      "name": "revolver",
+      "file": "revolver.md"
+    },
+    {
+      "name": "revolver_no_info",
+      "file": "revolver_no_info.md"
+    },
+    {
       "name": "psy_organize_record",
       "file": "psy_organize_record.md"
     },

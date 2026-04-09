@@ -18,6 +18,7 @@ import cube.common.Language;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.guidance.Prompts;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.SemanticSearchListener;
 import cube.service.contact.ContactManager;
@@ -202,6 +203,11 @@ public class QueryRevolver {
         boolean needReportData = (null != context.getCurrentReport() && !context.getCurrentReport().isNull());
 
         if (needReportData) {
+            result.append("# 角色设定\n\n");
+            result.append("你是一位拥有10年经验的临床心理咨询师，你叫云宝。你擅长针对测评结果详细说明测评内容，针对问题给出专业回复。\n\n");
+            result.append("# 任务目标\n\n");
+            result.append("根据【评测数据】的内容对【用户提问】进行回复。评测数据包含【受测人的心理特征摘要】【受测人主要心理特征描述】【绘画画面内容】和【受测人大五人格数据】。\n\n");
+
             PaintingReport report = context.getCurrentReport();
             if (english) {
                 result.append("Known psychological assessment data:\n\n");
@@ -212,8 +218,10 @@ public class QueryRevolver {
                 result.append("The assessment date is ").append(formatReportDate(report, true)).append(".\n\n");
             }
             else {
-                result.append("已知评测数据：\n\n");
-                result.append("此评测数据由 Baize-AiXinLi 模型生成，采用的评测方法是“房树人”绘画投射测试。");
+                result.append("# 评测数据：\n\n");
+                result.append("此评测数据由 Baize-AiXinLi 模型生成，采用的评测方法是“");
+                result.append(report.getTheme().name);
+                result.append("”投射测试。\n");
                 result.append("评测数据的受测人是匿名的，");
                 result.append("年龄是：").append(report.getAttribute().age).append("岁，");
                 result.append("性别是：").append(report.getAttribute().getGenderText()).append("性。\n");
@@ -226,7 +234,7 @@ public class QueryRevolver {
                     result.append("A summary of the subject's psychological characteristics is as follows:\n");
                 }
                 else {
-                    result.append("受测人的心理特征摘要如下：\n");
+                    result.append("## 受测人的心理特征摘要\n\n");
                 }
                 result.append(report.getSummary());
                 result.append("\n\n");
@@ -235,7 +243,7 @@ public class QueryRevolver {
                     result.append("The subject's main psychological characteristics are described below:\n");
                 }
                 else {
-                    result.append("受测人主要心理特征描述如下：\n");
+                    result.append("## 受测人主要心理特征描述\n\n");
                 }
                 List<String> symptomContent = this.extractEvaluationContent(report, english);
                 for (String content : symptomContent) {
@@ -243,10 +251,26 @@ public class QueryRevolver {
                 }
 
                 // 画面特征
-                result.append(this.tryGeneratePaintingFeature(report, query));
+                String paintingFeature = this.tryGeneratePaintingFeature(report, query);
+                if (paintingFeature.length() > 1) {
+                    result.append("## 绘画画面内容\n\n");
+                    result.append(paintingFeature);
+                }
 
                 // 指标数据
-                result.append(this.tryGenerateFactorDesc(report, query, english));
+//                result.append(this.tryGenerateFactorDesc(report, query, english));
+
+                if (result.length() < wordLimit) {
+                    // 尝试生成人格数据
+                    result.append("## 受测人大五人格数据\n\n");
+                    result.append(this.tryGeneratePersonality(report, query, english));
+                }
+
+//                if (result.length() < wordLimit) {
+//                    // 尝试生成知识片段
+//                    result.append("\n");
+//                    result.append(this.generateKnowledgeFragment(report, query, english));
+//                }
 
                 if (result.length() < wordLimit) {
                     // 知识库数据
@@ -255,7 +279,7 @@ public class QueryRevolver {
                             result.append("The following are some points to refer to:\n\n");
                         }
                         else {
-                            result.append("可参考的知识点如下：\n\n");
+                            result.append("# 可参考知识点\n\n");
                         }
                         int qaSN = 1;
                         for (QuestionAnswer questionAnswer : questionAnswerList) {
@@ -274,17 +298,6 @@ public class QueryRevolver {
                     }
                 }
 
-                if (result.length() < wordLimit) {
-                    // 尝试生成人格数据
-                    result.append(this.tryGeneratePersonality(report, query, english));
-                }
-
-                if (result.length() < wordLimit) {
-                    // 尝试生成知识片段
-                    result.append("\n");
-                    result.append(this.generateKnowledgeFragment(report, query, english));
-                }
-
                 if (english) {
                     prefix = "Based on your question, ";
                     result.append("Answer questions professionally based on the information above. ");
@@ -294,9 +307,13 @@ public class QueryRevolver {
                 }
                 else {
                     prefix = "根据您的提问，";
-                    result.append("综合应用以上信息，专业地回答问题。如果无法从中得到答案，请说“您提的问题与当前讨论的评测报告无关。”，");
-                    result.append("不允许在答案中添加编造成分，保持应有的文档结构，请使用给出的问题和答案逻辑进行推理。");
-                    result.append("问题是：").append(query).append("\n");
+                    result.append("# 用户提问\n\n");
+                    result.append("\"\"\"\n").append(query).append("\n\"\"\"\n\n");
+
+                    result.append("# 注意事项\n\n");
+                    result.append("1. 综合应用以上信息，专业地回答问题。如果无法从中得到答案，请说“您提的问题与当前讨论的评测报告无关。”\n");
+                    result.append("2. 不允许在答案中添加编造成分，保持应有的文档结构，请使用给出的问题和答案逻辑进行推理。\n");
+                    result.append("3. 回复内容可以参考和引用【可参考知识点】\n");
                 }
             }
             else {
@@ -311,13 +328,26 @@ public class QueryRevolver {
                     result.append("\n");
                 }
                 else {
-                    result.append("具体的评测数据因为权限不足无法获得详细数据，仅限于上述信息回答问题“");
-                    result.append(query);
-                    result.append("”。\n");
-                    result.append("要求如下：\n");
-                    result.append("\n- 如果无法从中得到答案，请说“受限于未能获得评测报告全部数据无法为您提供更多信息。”");
-                    result.append("\n- 不允许在答案中添加编造成分。");
-                    result.append("\n");
+                    result.append("## 受测人的心理特征摘要\n\n无\n\n");
+                    result.append("## 受测人主要心理特征描述\n\n无\n\n");
+                    result.append("## 绘画画面内容\n\n无\n\n");
+                    result.append("## 受测人大五人格数据\n\n无\n\n");
+
+                    result.append("# 用户提问\n\n");
+                    result.append("\"\"\"\n").append(query).append("\n\"\"\"\n\n");
+
+                    result.append("# 注意事项\n\n");
+                    result.append("1. 具体的评测数据因为权限不足无法获得详细数据，仅限于上述信息回答问题。\n");
+                    result.append("2. 如果无法从中得到答案，请说“受限于未能获得评测报告全部数据无法为您提供更多信息。”\n");
+                    result.append("3. 不允许在答案中添加编造成分。\n");
+
+//                    result.append("具体的评测数据因为权限不足无法获得详细数据，仅限于上述信息回答问题“");
+//                    result.append(query);
+//                    result.append("”。\n");
+//                    result.append("要求如下：\n");
+//                    result.append("\n- 如果无法从中得到答案，请说“受限于未能获得评测报告全部数据无法为您提供更多信息。”");
+//                    result.append("\n- 不允许在答案中添加编造成分。");
+//                    result.append("\n");
                 }
             }
 
@@ -334,6 +364,8 @@ public class QueryRevolver {
         }
         else {
             // 无关联报告数据
+
+            // 进行语义搜索
             if (questionAnswerList.isEmpty()) {
                 boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
                     @Override
@@ -390,20 +422,53 @@ public class QueryRevolver {
                     result.append("The question is: ").append(query).append("\n");
                 }
                 else {
-                    result.append("已知信息：\n\n");
+//                    result.append("已知信息：\n\n");
                     for (QuestionAnswer questionAnswer : questionAnswerList) {
                         if (questionAnswer.getScore() >= 0.82) {
+                            result.append("## ");
+                            result.append(questionAnswer.getQuestions().get(0));
+                            result.append("\n\n");
                             result.append(questionAnswer.getAnswers().get(0));
                             result.append("\n\n");
                         }
                     }
-                    result.append("根据以上信息，回答问题，不允许在答案中添加编造成分。");
-                    result.append("问题是：").append(query).append("\n");
+                    String prompt = Prompts.getPrompt("revolver");
+                    prompt = prompt.replace("{{info}}", result.toString());
+                    prompt = prompt.replace("{{query}}", query);
+
+                    result.delete(0, result.length());
+                    result.append(prompt);
+
+//                    result.append("根据以上信息，回答问题，不允许在答案中添加编造成分。");
+//                    result.append("问题是：").append(query).append("\n");
                 }
             }
             else {
+                if (!questionAnswerList.isEmpty()) {
+                    for (QuestionAnswer questionAnswer : questionAnswerList) {
+                        if (questionAnswer.getScore() >= 0.82) {
+                            result.append("## ");
+                            result.append(questionAnswer.getQuestions().get(0));
+                            result.append("\n\n");
+                            result.append(questionAnswer.getAnswers().get(0));
+                            result.append("\n\n");
+                        }
+                    }
+                    String prompt = Prompts.getPrompt("revolver");
+                    prompt = prompt.replace("{{info}}", result.toString());
+                    prompt = prompt.replace("{{query}}", query);
+
+                    result.delete(0, result.length());
+                    result.append(prompt);
+                }
+                else {
+                    String prompt = Prompts.getPrompt("revolver_no_info");
+                    prompt = prompt.replace("{{query}}", query);
+                    result.append(prompt);
+                }
+
                 // 问题是否和心理学相关
-                String prompt = String.format(
+                /*String prompt = String.format(
                         Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_QUESTION_PSYCHOLOGY_POSSIBILITY",
                                 english ? Language.English : Language.Chinese),
                         query);
@@ -418,6 +483,7 @@ public class QueryRevolver {
                 String uncorrelated = Resource.getInstance().getCorpus(CORPUS_PROMPT, "UNCORRELATED",
                         english ? Language.English : Language.Chinese);
                 if (queryResponse.answer.contains(uncorrelated)) {
+                    // 与心理学不相关
                     Logger.d(this.getClass(), "#generatePrompt - No psychology question: " + query);
                     result.delete(0, result.length());
 
@@ -550,7 +616,7 @@ public class QueryRevolver {
                             result.append("问题是：").append(query).append("\n");
                         }
                     }
-                }
+                }*/
             }
         }
 
@@ -559,9 +625,9 @@ public class QueryRevolver {
                 result.append("Please answer the question professionally. The question is: ");
             }
             else {
-                result.append("专业地回答问题，问题是：");
+                result.append("专业地回答问题，问题是：\n\"\"\"");
             }
-            result.append(query).append("\n");
+            result.append(query).append("\"\"\"\n");
 
             // aixinli://prompt.direct/请你介绍一下你自己。
             if (english) {
@@ -574,10 +640,8 @@ public class QueryRevolver {
         }
 
         // 插入通识知识
-        String resultData = result.toString();
-        result.delete(0, result.length());
-        result.append(TimeUtils.formatTodayFullDate()).append("\n\n");
-        result.append(resultData);
+        result.append("\n# 其他信息\n\n");
+        result.append("- 今天是").append(TimeUtils.formatTodayFullDate()).append("\n\n");
 
         PromptRevolver prompt = new PromptRevolver(result.toString());
         prompt.prefix = prefix;
