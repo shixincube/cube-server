@@ -46,6 +46,8 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
         // 尝试匹配量表
         String scaleName = this.extractScaleName();
 
+        System.out.println("XJW: scaleName: " + scaleName);
+
         if (null == scaleName) {
             // 列出支持的量表
             Logger.d(this.getClass(), "#execute - List all scales");
@@ -154,7 +156,7 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
 
             for (String word : queryWords) {
                 for (String nameWord : nameWords) {
-                    if (word.equalsIgnoreCase(nameWord)) {
+                    if (nameWord.toLowerCase().contains(word.toLowerCase())) {
                         hitCountList.get(i).incrementAndGet();
                     }
                 }

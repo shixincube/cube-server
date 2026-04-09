@@ -39,7 +39,7 @@ public class ConversationWorker {
     private final static String JUMP_POLISH = "润色";
 
     private final static String[] TEST_WORDS = new String[] {
-            "评测", "测验", "测试", "评估"
+            "评测", "测验", "测试", "评估", "测评", "测测"
     };
 
     private AIGCService service;
