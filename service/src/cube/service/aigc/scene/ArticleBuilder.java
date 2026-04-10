@@ -8,6 +8,7 @@ package cube.service.aigc.scene;
 
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
+import cube.aigc.Tokenizable;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.Theme;
@@ -42,6 +43,14 @@ public class ArticleBuilder {
     private final static String sFormatAnxietyTaskDesc = "该测评是使用绘画投射方式进行的焦虑情绪测评，受测人是%s性，%s。" +
             "焦虑情绪级别是 **%s** （测评级别从低到高依次分为：很低、低、中等、高）。\n\n画面内容如下：\n%s\n";
 
+    /**
+     * 强迫。
+     */
+    public final static String Obsession = "obsession";
+
+    private final static String sFormatObsessionTaskDesc = "该测评是使用绘画投射方式进行的强迫程度测评，受测人是%s性，%s。" +
+            "强迫程度级别是 **%s** （测评级别从低到高依次分为：很低、低、中等、高）。\n\n画面内容如下：\n%s\n";
+
     private final static String sPromptName = "psy_template_report";
 
     public final Theme theme;
@@ -68,7 +77,8 @@ public class ArticleBuilder {
 
     public boolean isValidTemplate() {
         return (Depression.equalsIgnoreCase(this.templateName) ||
-                Anxiety.equalsIgnoreCase(this.templateName));
+                Anxiety.equalsIgnoreCase(this.templateName) ||
+                Obsession.equalsIgnoreCase(this.templateName));
     }
 
     public void init(PaintingReport report) {
@@ -82,6 +92,12 @@ public class ArticleBuilder {
 
     public ReportArticle getArticle() {
         return this.article;
+    }
+
+    public int calcOutputTokens(Tokenizable tokenizer) {
+        String base = this.report.makeMarkdown();
+        String text = this.article.spliceParagraphContent();
+        return tokenizer.segment(base).size() + tokenizer.segment(text).size();
     }
 
     public ReportArticle build(AIGCService service) {
@@ -118,6 +134,10 @@ public class ArticleBuilder {
             taskFormat = sFormatAnxietyTaskDesc;
             prefix = "您的内心焦虑画像是：";
         }
+        else if (Obsession.equalsIgnoreCase(this.templateName)) {
+            taskFormat = sFormatObsessionTaskDesc;
+            prefix = "您的内心强迫画像是：";
+        }
 
         String task = String.format(taskFormat, report.getAttribute().getGenderText(),
                 report.getAttribute().getAgeText(), rate.displayName,
@@ -126,7 +146,7 @@ public class ArticleBuilder {
         String prompt = Prompts.getPrompt(sPromptName);
         prompt = prompt.replace("{{task}}", task);
         prompt = prompt.replace("{{content}}", content);
-        prompt = prompt.replace("{{leading}}", prefix + " **" + title + "** 。\n\n");
+        prompt = prompt.replace("{{leading}}", prefix + " **" + title + "** 。");
 
         GeneratingRecord record = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt, null,
                 null, null);
@@ -195,6 +215,25 @@ public class ArticleBuilder {
                 }
             }
         }
+        else if (Obsession.equalsIgnoreCase(this.templateName)) {
+            ReportSection section = report.getReportSection(Indicator.Obsession);
+            if (null != section) {
+                rate = fixRate(section.rate);
+            }
+            else {
+                FactorSet factorSet = report.getEvaluationReport().getFactorSet();
+                FactorSet.NormRange range = factorSet.normObsession();
+                if (range.norm) {
+                    rate = IndicatorRate.Low;
+                }
+                else if (range.value >= range.high) {
+                    rate = IndicatorRate.Medium;
+                }
+                else if (range.value <= range.low) {
+                    rate = IndicatorRate.Lowest;
+                }
+            }
+        }
 
         return rate;
     }
@@ -204,7 +243,10 @@ public class ArticleBuilder {
             return "内心的风景-潜意识情绪与抑郁倾向测评";
         }
         else if (Anxiety.equalsIgnoreCase(templateName)) {
-            return "迷雾与彼岸-潜意识焦虑测评";
+            return "迷雾与彼岸-潜意识焦虑情绪测评";
+        }
+        else if (Obsession.equalsIgnoreCase(templateName)) {
+            return "内心的秩序-潜意识控制欲与强迫测评";
         }
         else {
             return "潜意识测评";
@@ -250,6 +292,24 @@ public class ArticleBuilder {
                     break;
             }
         }
+        else if (Obsession.equalsIgnoreCase(this.templateName)) {
+            switch (rate) {
+                case Lowest:
+                    query = "强迫测评的旷野漫步者的描述";
+                    break;
+                case Low:
+                    query = "强迫测评的精工雕刻师的描述";
+                    break;
+                case Medium:
+                    query = "强迫测评的秩序守夜人的描述";
+                    break;
+                case High:
+                    query = "强迫测评的无尽迷宫旅人的描述";
+                    break;
+                default:
+                    break;
+            }
+        }
 
         return query;
     }
@@ -288,6 +348,24 @@ public class ArticleBuilder {
                     break;
                 case High:
                     title = "濒临断裂的悬空残桥";
+                    break;
+                default:
+                    break;
+            }
+        }
+        else if (Obsession.equalsIgnoreCase(this.templateName)) {
+            switch (rate) {
+                case Lowest:
+                    title = "旷野漫步者";
+                    break;
+                case Low:
+                    title = "精工雕刻师";
+                    break;
+                case Medium:
+                    title = "秩序守夜人";
+                    break;
+                case High:
+                    title = "无尽迷宫旅人";
                     break;
                 default:
                     break;

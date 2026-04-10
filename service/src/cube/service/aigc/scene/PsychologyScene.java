@@ -762,7 +762,7 @@ public class PsychologyScene {
                                     }
 
                                     int inputTokens = ImageUtils.calcImageTokens(file);
-                                    int outputTokens = service.segmentText(article.spliceParagraphContent()).size();
+                                    int outputTokens = builder.calcOutputTokens(new FastTokenizer(service.getTokenizer()));
                                     AIGCPluginContext context = new AIGCPluginContext(channel.getAuthToken(),
                                             AICapability.PsychologyProcessing.GeneratePaintingTemplateArticle);
                                     context.setInputTokens(inputTokens);

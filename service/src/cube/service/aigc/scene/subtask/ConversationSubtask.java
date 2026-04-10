@@ -120,7 +120,7 @@ public abstract class ConversationSubtask {
             return text;
         }
         int pos = result.answer.indexOf("\n");
-        String substring = result.answer.substring(0, pos);
+        String substring = (pos > 0) ? result.answer.substring(0, pos) : result.answer;
         if (substring.contains(JUMP_POLISH)) {
             result.answer = result.answer.substring(pos + 1);
         }
