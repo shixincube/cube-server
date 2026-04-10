@@ -46,7 +46,8 @@ public class AppVersion extends ContextHandler {
                 }
 
                 String lastPath = this.getLastRequestPath(request);
-                if (lastPath.equalsIgnoreCase("android")) {
+                if (lastPath.equalsIgnoreCase("android") ||
+                        (lastPath.length() >= 32 && request.getPathInfo().toLowerCase().contains("android"))) {
                     JSONObject responseJson = Manager.getInstance().getAppVersion(token);
                     String version = responseJson.getString("version");
                     File file = new File("assets/app/MindEcho-" + version + ".apk");
@@ -56,7 +57,7 @@ public class AppVersion extends ContextHandler {
                     FileInputStream fis = null;
                     try {
                         fis = new FileInputStream(file);
-                        byte[] bytes = new byte[8 * 1024];
+                        byte[] bytes = new byte[10240];
                         int length = 0;
                         while ((length = fis.read(bytes)) > 0) {
                             response.getOutputStream().write(bytes, 0, length);

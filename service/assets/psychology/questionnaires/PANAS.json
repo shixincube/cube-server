@@ -2,6 +2,7 @@
 	"name": "PANAS",
 	"displayName": "正性与负性情绪量表",
 	"instruction": "请阅读每一个词语并根据你最近1-2星期的实际情况在相应的答案上进行选择。",
+	"open": true,
 	"sections": [{
 		"title": "",
 		"content": "",

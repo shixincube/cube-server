@@ -820,7 +820,15 @@ public class PsychologyScene {
     }
 
     public List<Scale> listScales(long contactId) {
-        return Resource.getInstance().listScales(contactId);
+        List<Scale> result = new ArrayList<>();
+        List<Scale> scales = Resource.getInstance().listScales(contactId);
+        for (Scale scale : scales) {
+            if (!scale.open) {
+                continue;
+            }
+            result.add(scale);
+        }
+        return result;
     }
 
     public Scale getScale(long sn) {

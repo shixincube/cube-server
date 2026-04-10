@@ -23,6 +23,8 @@ public class Questionnaire {
 
     public String instruction;
 
+    public boolean open = false;
+
     public List<QuestionSection> questionSections;
 
     protected String scoringScript;
@@ -34,6 +36,7 @@ public class Questionnaire {
         this.name = structure.getString("name");
         this.displayName = structure.has("displayName") ? structure.getString("displayName") : this.name;
         this.instruction = structure.has("instruction") ? structure.getString("instruction") : "";
+        this.open = structure.has("open") && structure.getBoolean("open");
         this.questionSections = new ArrayList<>();
         if (structure.has("sections")) {
             JSONArray array = structure.getJSONArray("sections");

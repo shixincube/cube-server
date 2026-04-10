@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 
 /**
- * AIGC RESTful 接口基类。
+ * AIGC REST 接口基类。
  */
 public abstract class AIGCHandler extends CrossDomainHandler {
 
