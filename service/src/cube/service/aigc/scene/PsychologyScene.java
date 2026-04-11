@@ -87,7 +87,7 @@ public class PsychologyScene {
     /**
      * Key：报告序列号。
      */
-    private Map<Long, ArticleBuilder> articleBuilderMap;
+    private Map<Long, TemplateArticleBuilder> articleBuilderMap;
 
     /**
      * 综合报告工作器。
@@ -709,10 +709,10 @@ public class PsychologyScene {
      * @param listener
      * @return 返回报告序号。
      */
-    public ArticleBuilder generatePaintingTemplateArticle(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
-                                                Theme theme, String templateName, boolean structured,
-                                                PaintingTemplateArticleListener listener) {
-        final ArticleBuilder builder = new ArticleBuilder(theme, templateName, structured);
+    public TemplateArticleBuilder generatePaintingTemplateArticle(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
+                                                                  Theme theme, String templateName, boolean structured,
+                                                                  PaintingTemplateArticleListener listener) {
+        final TemplateArticleBuilder builder = new TemplateArticleBuilder(theme, templateName, structured);
         if (!builder.isValidTemplate()) {
             Logger.w(this.getClass(), "#generatePaintingTemplateArticle - The template is not correct: " + templateName);
             return null;
@@ -805,7 +805,7 @@ public class PsychologyScene {
      * @return
      */
     public ReportArticle getPaintingTemplateArticle(long sn) {
-        ArticleBuilder builder = this.articleBuilderMap.get(sn);
+        TemplateArticleBuilder builder = this.articleBuilderMap.get(sn);
         if (null != builder) {
             return builder.getArticle();
         }
@@ -1945,9 +1945,9 @@ public class PsychologyScene {
             }
         }
 
-        Iterator<Map.Entry<Long, ArticleBuilder>> aiter = this.articleBuilderMap.entrySet().iterator();
+        Iterator<Map.Entry<Long, TemplateArticleBuilder>> aiter = this.articleBuilderMap.entrySet().iterator();
         while (aiter.hasNext()) {
-            ArticleBuilder builder = aiter.next().getValue();
+            TemplateArticleBuilder builder = aiter.next().getValue();
             if (now - builder.timestamp > 12 * 60 * 60 * 1000) {
                 aiter.remove();
             }

@@ -25,7 +25,7 @@ import cube.util.MarkdownParser;
 
 import java.util.List;
 
-public class ArticleBuilder {
+public class TemplateArticleBuilder {
 
     /**
      * 抑郁。
@@ -65,7 +65,7 @@ public class ArticleBuilder {
 
     private ReportArticle article;
 
-    public ArticleBuilder(Theme theme, String templateName, boolean structured) {
+    public TemplateArticleBuilder(Theme theme, String templateName, boolean structured) {
         this.theme = theme;
         this.templateName = templateName;
         this.timestamp = System.currentTimeMillis();

@@ -26,7 +26,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.scene.ArticleBuilder;
+import cube.service.aigc.scene.TemplateArticleBuilder;
 import cube.service.aigc.scene.PaintingTemplateArticleListener;
 import cube.service.aigc.scene.PsychologyScene;
 import org.json.JSONObject;
@@ -93,7 +93,7 @@ public class GeneratePsychologyTemplateArticleTask extends ServiceTask {
                         Language.Chinese);
             }
 
-            ArticleBuilder builder = PsychologyScene.getInstance().generatePaintingTemplateArticle(channel, attribute, fileLabel, theme,
+            TemplateArticleBuilder builder = PsychologyScene.getInstance().generatePaintingTemplateArticle(channel, attribute, fileLabel, theme,
                     templateName, structured, new PaintingTemplateArticleListener() {
                         @Override
                         public void onPaintingPredicted(PaintingReport report) {
