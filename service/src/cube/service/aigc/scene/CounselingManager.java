@@ -395,6 +395,7 @@ public class CounselingManager {
             }
             else {
                 Logger.w(this.getClass(), "#stopStream - Archive file is NOT exists: " + streamName);
+                this.wrapperMap.remove(streamName);
             }
         } catch (Exception e) {
             Logger.e(this.getClass(), "#stopStream: " + streamName, e);
@@ -407,6 +408,10 @@ public class CounselingManager {
                     recordingFileLabel.getFileCode());
             if (!successful) {
                 Logger.w(this.getClass(), "#stopStream - Writes the counseling recording failed: " + streamName);
+            }
+            else {
+                // 删除
+                this.wrapperMap.remove(streamName);
             }
         }
 
