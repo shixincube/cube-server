@@ -65,3 +65,4 @@ deploy/assets
 dispatcher/cache
 dispatcher/assets/app
 service/storage/test
+dispatcher/assets/static/vad
