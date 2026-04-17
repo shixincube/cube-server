@@ -128,6 +128,7 @@ public class Manager implements Tickable, PerformerListener {
     private void setupHandler() {
         HttpServer httpServer = this.performer.getHttpServer();
 
+        httpServer.addContextHandler(new Static());
         httpServer.addContextHandler(new InterfaceDocument());
 
         httpServer.addContextHandler(new Segmentation());

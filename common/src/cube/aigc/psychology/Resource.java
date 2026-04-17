@@ -56,13 +56,13 @@ public class Resource {
     private long suggestionScriptFileModified = 0;
     private String suggestionScriptFileContent = null;
 
-    private File childStrategyFile = new File("assets/psychology/strategies/child_strategy.md");
-    private long childStrategyFileModified = 0;
-    private String childStrategyContent = null;
+//    private File childStrategyFile = new File("assets/psychology/strategies/child_strategy.md");
+//    private long childStrategyFileModified = 0;
+//    private String childStrategyContent = null;
 
-    private File teenagerStrategyFile = new File("assets/psychology/strategies/teenager_strategy.md");
-    private long teenagerStrategyFileModified = 0;
-    private String teenagerStrategyContent = null;
+//    private File teenagerStrategyFile = new File("assets/psychology/strategies/teenager_strategy.md");
+//    private long teenagerStrategyFileModified = 0;
+//    private String teenagerStrategyContent = null;
 
     private File memberFile = new File("assets/psychology/membership.json");
     private long memberFileModified = 0;
@@ -107,22 +107,6 @@ public class Resource {
         }
         else {
             Logger.i(this.getClass(), "#checkFiles - File exists: " + this.datasetFile.getName());
-        }
-
-        if (!this.childStrategyFile.exists()) {
-            Logger.e(this.getClass(), "#checkFiles - File is NOT exists: " + this.childStrategyFile.getName());
-            return false;
-        }
-        else {
-            Logger.i(this.getClass(), "#checkFiles - File exists: " + this.childStrategyFile.getName());
-        }
-
-        if (!this.teenagerStrategyFile.exists()) {
-            Logger.e(this.getClass(), "#checkFiles - File is NOT exists: " + this.teenagerStrategyFile.getName());
-            return false;
-        }
-        else {
-            Logger.i(this.getClass(), "#checkFiles - File exists: " + this.teenagerStrategyFile.getName());
         }
 
         return true;
@@ -352,33 +336,51 @@ public class Resource {
         return contentJson.getString(language.simplified);
     }
 
-    public String getChildStrategyContent() {
-        if (this.childStrategyFile.exists()) {
-            if (this.childStrategyFile.lastModified() != this.childStrategyFileModified) {
-                try {
-                    byte[] data = Files.readAllBytes(Paths.get(this.childStrategyFile.getAbsolutePath()));
-                    this.childStrategyContent = new String(data, StandardCharsets.UTF_8);
-                    this.childStrategyFileModified = this.childStrategyFile.lastModified();
-                } catch (Exception e) {
-                    Logger.e(this.getClass(), "#getChildStrategyContent", e);
-                }
+    public String getStrategyContent(String name) {
+        String path = "assets/psychology/strategies/";
+        String filename = name.endsWith(".md") ? name : (name + ".md");
+        File file = new File(path, filename);
+        try {
+            if (file.exists()) {
+                byte[] data = Files.readAllBytes(Paths.get(file.getAbsolutePath()));
+                return new String(data, StandardCharsets.UTF_8);
             }
+            else {
+                return null;
+            }
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#getStrategyContent", e);
+            return null;
         }
-        return this.childStrategyContent;
     }
 
-    public String getTeenagerStrategyContent() {
-        if (this.teenagerStrategyFile.exists()) {
-            if (this.teenagerStrategyFile.lastModified() != this.teenagerStrategyFileModified) {
-                try {
-                    byte[] data = Files.readAllBytes(Paths.get(this.teenagerStrategyFile.getAbsolutePath()));
-                    this.teenagerStrategyContent = new String(data, StandardCharsets.UTF_8);
-                    this.teenagerStrategyFileModified = this.teenagerStrategyFile.lastModified();
-                } catch (Exception e) {
-                    Logger.e(this.getClass(), "#getTeenagerStrategyContent", e);
-                }
-            }
-        }
-        return this.teenagerStrategyContent;
-    }
+//    public String getChildStrategyContent() {
+//        if (this.childStrategyFile.exists()) {
+//            if (this.childStrategyFile.lastModified() != this.childStrategyFileModified) {
+//                try {
+//                    byte[] data = Files.readAllBytes(Paths.get(this.childStrategyFile.getAbsolutePath()));
+//                    this.childStrategyContent = new String(data, StandardCharsets.UTF_8);
+//                    this.childStrategyFileModified = this.childStrategyFile.lastModified();
+//                } catch (Exception e) {
+//                    Logger.e(this.getClass(), "#getChildStrategyContent", e);
+//                }
+//            }
+//        }
+//        return this.childStrategyContent;
+//    }
+
+//    public String getTeenagerStrategyContent() {
+//        if (this.teenagerStrategyFile.exists()) {
+//            if (this.teenagerStrategyFile.lastModified() != this.teenagerStrategyFileModified) {
+//                try {
+//                    byte[] data = Files.readAllBytes(Paths.get(this.teenagerStrategyFile.getAbsolutePath()));
+//                    this.teenagerStrategyContent = new String(data, StandardCharsets.UTF_8);
+//                    this.teenagerStrategyFileModified = this.teenagerStrategyFile.lastModified();
+//                } catch (Exception e) {
+//                    Logger.e(this.getClass(), "#getTeenagerStrategyContent", e);
+//                }
+//            }
+//        }
+//        return this.teenagerStrategyContent;
+//    }
 }

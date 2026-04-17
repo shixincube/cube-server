@@ -42,7 +42,8 @@ public class TeenagerProblemClassificationNode extends StrategyNode  {
         data.append(this.report.getSummary());
 
         String table = this.report.getAttribute().age <= 12 ?
-                Resource.getInstance().getChildStrategyContent() : Resource.getInstance().getTeenagerStrategyContent();
+                Resource.getInstance().getStrategyContent("child_strategy") :
+                Resource.getInstance().getStrategyContent("teenager_strategy");
 
         String prompt = String.format(
                 Resource.getInstance().getCorpus("report", "SYMPTOM_STRATEGY_WITH_TEENAGER_TABLE"),
