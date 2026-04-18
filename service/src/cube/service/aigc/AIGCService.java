@@ -304,6 +304,9 @@ public class AIGCService extends AbstractModule implements Generatable {
                 // 咨询管理器
                 CounselingManager.getInstance().start(AIGCService.this);
 
+                // 陪练管理器
+                CopilotManager.getInstance().start(AIGCService.this);
+
                 // 引导系统列表
                 List<GuideFlow> guideFlows = Guides.listGuideFlows();
                 for (GuideFlow flow : guideFlows) {
@@ -326,6 +329,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         PsychologyScene.getInstance().stop();
 
         CounselingManager.getInstance().stop();
+
+        CopilotManager.getInstance().stop();
 
         MemberCenter.getInstance().stop();
     }

@@ -616,6 +616,21 @@ public enum AIGCAction {
      */
     QueryCounselingCaption("queryCounselingCaption"),
 
+    /**
+     * 申请陪练。
+     */
+    ApplyCopilot("applyCopilot"),
+
+    /**
+     * 完成陪练。
+     */
+    DisposeCopilot("disposeCopilot"),
+
+    /**
+     * 提交陪练工作表。
+     */
+    SubmitCopilotSheet("submitCopilotSheet"),
+
     ;
 
     public final String name;

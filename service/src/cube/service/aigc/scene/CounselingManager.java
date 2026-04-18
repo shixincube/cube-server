@@ -10,7 +10,7 @@ import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.ConsultationTheme;
+import cube.aigc.psychology.consultation.ConsultationTheme;
 import cube.aigc.psychology.Resource;
 import cube.auth.AuthToken;
 import cube.common.entity.*;

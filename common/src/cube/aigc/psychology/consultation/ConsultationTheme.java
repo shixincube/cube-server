@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2026 Ambrose Xu.
  */
 
-package cube.aigc.psychology;
+package cube.aigc.psychology.consultation;
 
 /**
  * 咨询主题。

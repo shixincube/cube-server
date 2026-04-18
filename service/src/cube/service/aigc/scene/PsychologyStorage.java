@@ -14,6 +14,9 @@ import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.app.ConsultationSchedule;
 import cube.aigc.psychology.app.Customer;
 import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.consultation.ConsultationMethod;
+import cube.aigc.psychology.consultation.ConsultationScheduleState;
+import cube.aigc.psychology.consultation.ConsultationTheme;
 import cube.aigc.psychology.indicator.Indicator;
 import cube.common.Language;
 import cube.common.Storagable;
@@ -1977,12 +1980,12 @@ public class PsychologyStorage implements Storagable {
         schedule.appointmentTime = data.get("appointment_time").getLong();
         schedule.appointmentDuration = data.get("appointment_duration").getLong();
         schedule.appointmentTheme = ConsultationTheme.parse(data.get("appointment_theme").getString());
-        schedule.appointmentConsultation = Consultation.parse(data.get("appointment_consultation").getInt());
+        schedule.appointmentConsultation = ConsultationMethod.parse(data.get("appointment_consultation").getInt());
         schedule.state = ConsultationScheduleState.parse(data.get("state").getInt());
         schedule.counselingTime = data.get("counseling_time").getLong();
         schedule.counselingDuration = data.get("counseling_duration").getLong();
         schedule.counselingTheme = ConsultationTheme.parse(data.get("counseling_theme").getString());
-        schedule.counselingConsultation = Consultation.parse(data.get("counseling_consultation").getInt());
+        schedule.counselingConsultation = ConsultationMethod.parse(data.get("counseling_consultation").getInt());
         schedule.recordingName = data.get("recording_name").getString();
         schedule.recordingFileCode = data.get("recording_file_code").getString();
         schedule.voiceDiarizationId = data.get("voice_diarization_id").isNullValue() ?
@@ -2022,12 +2025,12 @@ public class PsychologyStorage implements Storagable {
             schedule.appointmentTime = data.get("appointment_time").getLong();
             schedule.appointmentDuration = data.get("appointment_duration").getLong();
             schedule.appointmentTheme = ConsultationTheme.parse(data.get("appointment_theme").getString());
-            schedule.appointmentConsultation = Consultation.parse(data.get("appointment_consultation").getInt());
+            schedule.appointmentConsultation = ConsultationMethod.parse(data.get("appointment_consultation").getInt());
             schedule.state = ConsultationScheduleState.parse(data.get("state").getInt());
             schedule.counselingTime = data.get("counseling_time").getLong();
             schedule.counselingDuration = data.get("counseling_duration").getLong();
             schedule.counselingTheme = ConsultationTheme.parse(data.get("counseling_theme").getString());
-            schedule.counselingConsultation = Consultation.parse(data.get("counseling_consultation").getInt());
+            schedule.counselingConsultation = ConsultationMethod.parse(data.get("counseling_consultation").getInt());
             schedule.recordingName = data.get("recording_name").getString();
             schedule.recordingFileCode = data.get("recording_file_code").getString();
             schedule.voiceDiarizationId = data.get("voice_diarization_id").isNullValue() ?

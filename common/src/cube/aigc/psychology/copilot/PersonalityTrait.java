@@ -6,6 +6,8 @@
 
 package cube.aigc.psychology.copilot;
 
+import cell.util.Utils;
+
 public enum PersonalityTrait {
 
     BPD("边缘型", "情绪极度不稳定，害怕被抛弃，黑白分明的思维（“你要么全好，要么全坏”），有自伤史。"),
@@ -26,18 +28,23 @@ public enum PersonalityTrait {
 
     ;
 
-    public final String name;
+    public final String display;
 
     public final String description;
 
-    PersonalityTrait(String name, String description) {
-        this.name = name;
+    PersonalityTrait(String display, String description) {
+        this.display = display;
         this.description = description;
+    }
+
+    public static PersonalityTrait random() {
+        int index = Utils.randomInt(0, values().length - 2);
+        return values()[index];
     }
 
     public static PersonalityTrait parse(String name) {
         for (PersonalityTrait pt : PersonalityTrait.values()) {
-            if (pt.name().equalsIgnoreCase(name) || pt.name.equalsIgnoreCase(name)) {
+            if (pt.name().equalsIgnoreCase(name) || pt.display.equalsIgnoreCase(name)) {
                 return pt;
             }
         }

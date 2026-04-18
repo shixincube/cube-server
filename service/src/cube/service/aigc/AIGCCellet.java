@@ -249,6 +249,16 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new StopVoiceStreamTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.ApplyCopilot.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new ApplyCopilotTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (AIGCAction.DisposeCopilot.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new DisposeCopilotTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.Summarization.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new SummarizationTask(this, talkContext, primitive,
@@ -269,11 +279,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new ChatTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (AIGCAction.Conversation.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new ConversationTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
+//        else if (AIGCAction.Conversation.name.equals(action)) {
+//            // 来自 Dispatcher 的请求
+//            this.execute(new ConversationTask(this, talkContext, primitive,
+//                    this.markResponseTime(action)));
+//        }
         else if (AIGCAction.QueryConversation.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new QueryConversationTask(this, talkContext, primitive,

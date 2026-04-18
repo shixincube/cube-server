@@ -13,7 +13,7 @@ import cube.aigc.*;
 import cube.aigc.app.Notification;
 import cube.aigc.atom.Atom;
 import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.ConsultationTheme;
+import cube.aigc.psychology.consultation.ConsultationTheme;
 import cube.auth.AuthToken;
 import cube.common.entity.Emotion;
 import cube.common.Storagable;

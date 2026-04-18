@@ -6,7 +6,7 @@
 
 package cube.common.entity;
 
-import cube.aigc.psychology.ConsultationTheme;
+import cube.aigc.psychology.consultation.ConsultationTheme;
 import cube.aigc.psychology.Attribute;
 import cube.common.JSONable;
 import org.json.JSONObject;

@@ -18,6 +18,7 @@ import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.app.UserProfile;
 import cube.aigc.psychology.composition.AnswerSheet;
+import cube.aigc.psychology.consultation.ConsultationTheme;
 import cube.common.entity.Emotion;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScaleResult;
@@ -179,6 +180,8 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new StopStream());
         httpServer.addContextHandler(new QueryCounselingStrategy());
         httpServer.addContextHandler(new QueryCounselingCaption());
+        httpServer.addContextHandler(new ApplyCopilot());
+        httpServer.addContextHandler(new DisposeCopilot());
 
         httpServer.addContextHandler(new PsychologyReports());
         httpServer.addContextHandler(new CheckPsychology());

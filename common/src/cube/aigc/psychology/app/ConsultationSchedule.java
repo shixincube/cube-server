@@ -6,9 +6,9 @@
 
 package cube.aigc.psychology.app;
 
-import cube.aigc.psychology.ConsultationTheme;
-import cube.aigc.psychology.Consultation;
-import cube.aigc.psychology.ConsultationScheduleState;
+import cube.aigc.psychology.consultation.ConsultationTheme;
+import cube.aigc.psychology.consultation.ConsultationMethod;
+import cube.aigc.psychology.consultation.ConsultationScheduleState;
 import cube.common.JSONable;
 import cube.util.ConfigUtils;
 import org.json.JSONObject;
@@ -28,7 +28,7 @@ public class ConsultationSchedule implements JSONable {
 
     public ConsultationTheme appointmentTheme;
 
-    public Consultation appointmentConsultation;
+    public ConsultationMethod appointmentConsultation;
 
     public ConsultationScheduleState state;
 
@@ -38,7 +38,7 @@ public class ConsultationSchedule implements JSONable {
 
     public ConsultationTheme counselingTheme;
 
-    public Consultation counselingConsultation;
+    public ConsultationMethod counselingConsultation;
 
     public String recordingName;
 
@@ -74,12 +74,12 @@ public class ConsultationSchedule implements JSONable {
         this.appointmentTime = json.getLong("appointmentTime");
         this.appointmentDuration = json.getLong("appointmentDuration");
         this.appointmentTheme = ConsultationTheme.parse(json.getString("appointmentTheme"));
-        this.appointmentConsultation = Consultation.parse(json.getInt("appointmentConsultation"));
+        this.appointmentConsultation = ConsultationMethod.parse(json.getInt("appointmentConsultation"));
         this.state = ConsultationScheduleState.parse(json.getInt("state"));
         this.counselingTime = json.getLong("counselingTime");
         this.counselingDuration = json.getLong("counselingDuration");
         this.counselingTheme = ConsultationTheme.parse(json.getString("counselingTheme"));
-        this.counselingConsultation = Consultation.parse(json.getInt("counselingConsultation"));
+        this.counselingConsultation = ConsultationMethod.parse(json.getInt("counselingConsultation"));
         this.recordingName = json.has("recordingName") ? json.getString("recordingName") : null;
         this.recordingFileCode = json.has("recordingFileCode") ? json.getString("recordingFileCode") : null;
         this.voiceDiarizationId = json.has("voiceDiarizationId") ? json.getLong("voiceDiarizationId") : 0;

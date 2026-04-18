@@ -6,5 +6,12 @@
 
 package cube.aigc.psychology.copilot;
 
-public enum Culture {
+/**
+ * 陪练每一步产生互动记录表。
+ */
+public class CopilotSheet {
+
+    public CopilotSheet() {
+
+    }
 }

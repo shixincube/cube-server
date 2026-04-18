@@ -11,7 +11,7 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
-import cube.aigc.psychology.ConsultationTheme;
+import cube.aigc.psychology.consultation.ConsultationTheme;
 import cube.aigc.psychology.Attribute;
 import cube.auth.AuthToken;
 import cube.benchmark.ResponseTime;
