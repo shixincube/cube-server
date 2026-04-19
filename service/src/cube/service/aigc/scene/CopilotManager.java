@@ -7,11 +7,13 @@
 package cube.service.aigc.scene;
 
 import cell.util.log.Logger;
+import cube.aigc.ModelConfig;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.copilot.CopilotSetting;
 import cube.aigc.psychology.copilot.CopilotSheet;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
+import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
 import org.json.JSONObject;
 
@@ -62,10 +64,16 @@ public class CopilotManager {
                 copilotSetting.hiddenAgendaModel, copilotSetting.multipleRolesModel, copilotSetting.ethicalTrapModel);
 
         copilotQuickStrategy = copilotQuickStrategy.replace("{{setting}}", setting.toMarkdown());
-        setting.setStrategyTemplate(copilotQuickStrategy);
 
         Copilot copilot = new Copilot(authToken, setting);
         this.copilotMap.put(authToken.getContactId(), copilot);
+
+        GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, copilotQuickStrategy,
+                null, null, null);
+        if (null != record) {
+            setting.setStrategyTemplate(filter(record.answer));
+        }
+
         return setting;
     }
 
@@ -82,6 +90,40 @@ public class CopilotManager {
 
     public void submitContent(AuthToken authToken, CopilotSheet sheet) {
 
+    }
+
+    private String filter(String text) {
+        StringBuilder buf = new StringBuilder();
+        String[] lines = text.split("\n");
+        for (String line : lines) {
+            if (line.length() == 0) {
+                buf.append("\n");
+                continue;
+            }
+            int start = line.indexOf("（");
+            if (start > 0) {
+                if (start < 6) {
+                    int end = line.indexOf("）");
+                    line = line.substring(0, start) + line.substring(end + 1).trim();
+                    start = line.indexOf("（");
+                    if (start > 0) {
+                        line = line.substring(0, start).trim();
+                    }
+                }
+                else {
+                    line = line.substring(0, start).trim();
+                }
+            }
+            else {
+                line = line.trim();
+            }
+            buf.append(line);
+            buf.append("\n");
+        }
+
+        // 提取来访者的话术
+
+        return buf.toString();
     }
 
     public class Copilot implements JSONable {

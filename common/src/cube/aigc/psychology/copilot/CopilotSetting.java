@@ -149,8 +149,8 @@ public class CopilotSetting implements JSONable {
                 .append("。").append(this.defenseMechanism.description).append("\n");
         buf.append("* 移情：").append(this.empathy.display)
                 .append("。").append(this.empathy.description).append("\n");
-        buf.append("* 言语风格：").append(this.speechStyle.display)
-                .append("。").append(this.speechStyle.description).append("\n");
+//        buf.append("* 言语风格：").append(this.speechStyle.display)
+//                .append("。").append(this.speechStyle.description).append("\n");
         return buf.toString();
     }
 
