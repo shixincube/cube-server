@@ -47,9 +47,8 @@ public class CopilotManager {
     }
 
     public CopilotSetting applyCopilot(AuthToken authToken, CopilotSetting copilotSetting) {
-        if (this.copilotMap.containsKey(authToken.getContactId())) {
-            return this.copilotMap.get(authToken.getContactId()).copilotSetting;
-        }
+        // 移除历史
+        this.copilotMap.remove(authToken.getContactId());
 
         String copilotQuickStrategy = Resource.getInstance().getStrategyContent("copilot_quick_strategy");
         if (null == copilotQuickStrategy) {
@@ -117,11 +116,13 @@ public class CopilotManager {
             else {
                 line = line.trim();
             }
-            buf.append(line);
-            buf.append("\n");
-        }
 
-        // 提取来访者的话术
+            // 提取来访者的话术
+            if (line.startsWith("来访者")) {
+                buf.append(line);
+                buf.append("\n");
+            }
+        }
 
         return buf.toString();
     }
