@@ -15,6 +15,7 @@ import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
+import cube.util.TextUtils;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -71,6 +72,10 @@ public class CopilotManager {
                 null, null, null);
         if (null != record) {
             setting.setStrategyTemplate(filter(record.answer));
+
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "Strategy template:\n" + setting.getStrategyTemplate());
+            }
         }
 
         return setting;
@@ -92,6 +97,7 @@ public class CopilotManager {
     }
 
     private String filter(String text) {
+        int sn = 1;
         StringBuilder buf = new StringBuilder();
         String[] lines = text.split("\n");
         for (String line : lines) {
@@ -118,12 +124,35 @@ public class CopilotManager {
             }
 
             // 提取来访者的话术
-            if (line.startsWith("来访者")) {
-                buf.append(line);
+            String newLine = filterLine(line.trim());
+            buf.append(sn++).append(". ");
+            buf.append(newLine);
+        }
+
+        return buf.toString();
+    }
+
+    private String filterLine(String line) {
+        StringBuilder buf = new StringBuilder();
+        if (line.startsWith("来访者：")) {
+            line = line.split("：")[1].trim();
+            line = line.replace("“", "");
+            line = line.replace("”", "");
+            buf.append(line);
+            buf.append("\n");
+        }
+        else if (TextUtils.startsWithNumberSign(line)) {
+            line = line.split(". ")[1].trim();
+            line = line.replace("“", "");
+            line = line.replace("”", "");
+            return filterLine(line);
+        }
+        else {
+            buf.append(line);
+            if (!buf.toString().endsWith("\n")) {
                 buf.append("\n");
             }
         }
-
         return buf.toString();
     }
 
