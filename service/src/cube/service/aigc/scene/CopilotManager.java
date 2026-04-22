@@ -15,7 +15,6 @@ import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
-import cube.util.TextUtils;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -97,64 +96,94 @@ public class CopilotManager {
     }
 
     private String filter(String text) {
-        int sn = 1;
         StringBuilder buf = new StringBuilder();
+        int num = 0;
         String[] lines = text.split("\n");
         for (String line : lines) {
-            if (line.length() == 0) {
-                buf.append("\n");
+            if (line.length() < 3) {
                 continue;
             }
-            int start = line.indexOf("（");
-            if (start > 0) {
-                if (start < 6) {
-                    int end = line.indexOf("）");
-                    line = line.substring(0, start) + line.substring(end + 1).trim();
-                    start = line.indexOf("（");
-                    if (start > 0) {
-                        line = line.substring(0, start).trim();
-                    }
-                }
-                else {
-                    line = line.substring(0, start).trim();
-                }
-            }
-            else {
-                line = line.trim();
-            }
 
-            // 提取来访者的话术
-            String newLine = filterLine(line.trim());
-            buf.append(sn++).append(". ");
-            buf.append(newLine);
-        }
-
-        return buf.toString();
-    }
-
-    private String filterLine(String line) {
-        StringBuilder buf = new StringBuilder();
-        if (line.startsWith("来访者：")) {
-            line = line.split("：")[1].trim();
-            line = line.replace("“", "");
-            line = line.replace("”", "");
-            buf.append(line);
-            buf.append("\n");
-        }
-        else if (TextUtils.startsWithNumberSign(line)) {
-            line = line.split(". ")[1].trim();
-            line = line.replace("“", "");
-            line = line.replace("”", "");
-            return filterLine(line);
-        }
-        else {
-            buf.append(line);
-            if (!buf.toString().endsWith("\n")) {
-                buf.append("\n");
+            buf.append("- ").append(line.trim()).append("\n");
+            ++num;
+            if (num >= 3) {
+                break;
             }
         }
         return buf.toString();
     }
+
+//    private String filter(String text) {
+//        int sn = 1;
+//        StringBuilder buf = new StringBuilder();
+//        String[] lines = text.split("\n");
+//        for (String line : lines) {
+//            if (line.length() == 0) {
+//                continue;
+//            }
+//            int start = line.indexOf("（");
+//            if (start > 0) {
+//                if (start < 6) {
+//                    int end = line.indexOf("）");
+//                    line = line.substring(0, start) + line.substring(end + 1).trim();
+//                    start = line.indexOf("（");
+//                    if (start > 0) {
+//                        line = line.substring(0, start).trim();
+//                    }
+//                }
+//                else {
+//                    line = line.substring(0, start).trim();
+//                }
+//            }
+//            else {
+//                line = line.trim();
+//            }
+//
+//            // 提取来访者的话术
+//            String newLine = filterLine(line.trim());
+//            if (null != newLine) {
+//                buf.append(sn++).append(". ");
+//                buf.append(newLine);
+//            }
+//        }
+//
+//        return buf.toString();
+//    }
+
+//    private String filterLine(String line) {
+//        StringBuilder buf = new StringBuilder();
+//        if (line.startsWith("来访者：")) {
+//            line = line.split("：")[1].trim();
+//            line = line.replace("“", "");
+//            line = line.replace("”", "");
+//            buf.append(line.trim());
+//            buf.append("\n");
+//        }
+//        else if (line.startsWith("咨询师：")) {
+//            return null;
+//        }
+//        else if (TextUtils.startsWithNumberSign(line)) {
+//            line = line.split(". ")[1].trim();
+//            line = line.replace("“", "");
+//            line = line.replace("”", "");
+//            return filterLine(line.trim());
+//        }
+//        else if (line.length() <= 3) {
+//            return null;
+//        }
+//        else {
+//            line = line.trim().replace("\n\n", "").trim();
+//            buf.append(line);
+//            if (!line.endsWith("\n")) {
+//                buf.append("\n");
+//            }
+//        }
+//
+//        if (buf.length() <= 3) {
+//            return null;
+//        }
+//        return buf.toString();
+//    }
 
     public class Copilot implements JSONable {
 
