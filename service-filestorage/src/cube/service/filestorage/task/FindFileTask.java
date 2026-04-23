@@ -70,6 +70,8 @@ public class FindFileTask extends ServiceTask {
         String md5Code = null;
         String fileCode = null;
 
+        boolean verify = false;
+
         try {
             if (packet.data.has("fileName")) {
                 fileName = packet.data.getString("fileName");
@@ -82,6 +84,8 @@ public class FindFileTask extends ServiceTask {
             if (packet.data.has("fileCode")) {
                 fileCode = packet.data.getString("fileCode");
             }
+
+            verify = packet.data.has("verify") && packet.data.getBoolean("verify");
 
             if (packet.data.has("lastModified")) {
                 lastModified = packet.data.getLong("lastModified");
@@ -103,28 +107,60 @@ public class FindFileTask extends ServiceTask {
             // 精确查找文件
             FileLabel fileLabel = service.findFile(domain, contactId, fileName, lastModified, fileSize);
             if (null != fileLabel) {
-                result.add(fileLabel);
+                if (verify) {
+                    if (service.existsFileData(fileLabel.getFileCode())) {
+                        result.add(fileLabel);
+                    }
+                }
+                else {
+                    result.add(fileLabel);
+                }
             }
         }
         else if (null != fileName) {
             // 使用文件名查找
             List<FileLabel> list = service.findFilesByFileName(domain, contactId, fileName);
             if (null != list) {
-                result.addAll(list);
+                if (verify) {
+                    for (FileLabel fl : list) {
+                        if (service.existsFileData(fl.getFileCode())) {
+                            result.add(fl);
+                        }
+                    }
+                }
+                else {
+                    result.addAll(list);
+                }
             }
         }
         else if (null != md5Code) {
             // 使用 MD5 查找
             List<FileLabel> list = service.findFilesByMD5(domain, contactId, md5Code);
             if (null != list) {
-                result.addAll(list);
+                if (verify) {
+                    for (FileLabel fl : list) {
+                        if (service.existsFileData(fl.getFileCode())) {
+                            result.add(fl);
+                        }
+                    }
+                }
+                else {
+                    result.addAll(list);
+                }
             }
         }
         else if (null != fileCode) {
             // 通过文件码查找
             FileLabel fileLabel = service.getFile(domain, fileCode);
             if (null != fileLabel) {
-                result.add(fileLabel);
+                if (verify) {
+                    if (service.existsFileData(fileLabel.getFileCode())) {
+                        result.add(fileLabel);
+                    }
+                }
+                else {
+                    result.add(fileLabel);
+                }
             }
         }
 

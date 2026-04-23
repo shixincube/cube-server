@@ -261,6 +261,8 @@ public class FileOperationHandler extends CrossDomainHandler {
             payload.put("fileCode", fileCode);
         }
 
+        payload.put("verify", data.has("verify") && data.getBoolean("verify"));
+
         Packet packet = new Packet(FileStorageAction.FindFile.name, payload);
         ActionDialect packetDialect = packet.toDialect();
         packetDialect.addParam("token", token);
