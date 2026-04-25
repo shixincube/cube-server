@@ -8,7 +8,11 @@ package cube.aigc.psychology.copilot;
 
 import cell.util.Utils;
 import cube.common.JSONable;
+import cube.util.JSONUtils;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class CopilotSetting implements JSONable {
 
@@ -77,6 +81,11 @@ public class CopilotSetting implements JSONable {
      */
     private String strategyTemplate;
 
+    /**
+     * 可选句子。
+     */
+    private List<String> sentences;
+
     public CopilotSetting(PersonalityTrait personalityTrait, AttachmentType attachmentType,
                           CulturalBackground culturalBackground, ChiefComplaintType chiefComplaintType,
                           PainLevel painLevel, DefenseMechanism defenseMechanism,
@@ -119,6 +128,9 @@ public class CopilotSetting implements JSONable {
         if (json.has("strategyTemplate")) {
             this.strategyTemplate = json.getString("strategyTemplate");
         }
+        if (json.has("sentences")) {
+            this.sentences = JSONUtils.toStringList(json.getJSONArray("sentences"));
+        }
     }
 
     public long getSn() {
@@ -131,6 +143,14 @@ public class CopilotSetting implements JSONable {
 
     public String getStrategyTemplate() {
         return this.strategyTemplate;
+    }
+
+    public void addSentences(List<String> sentences) {
+        if (null == this.sentences) {
+            this.sentences = new ArrayList<>();
+        }
+
+        this.sentences.addAll(sentences);
     }
 
     public String toMarkdown() {
@@ -172,6 +192,9 @@ public class CopilotSetting implements JSONable {
         if (null != this.strategyTemplate) {
             json.put("strategyTemplate", this.strategyTemplate);
         }
+        if (null != this.sentences) {
+            json.put("sentences", JSONUtils.toStringArray(this.sentences));
+        }
         return json;
     }
 
@@ -180,6 +203,9 @@ public class CopilotSetting implements JSONable {
         JSONObject json = this.toJSON();
         if (json.has("strategyTemplate")) {
             json.remove("strategyTemplate");
+        }
+        if (json.has("sentences")) {
+            json.remove("sentences");
         }
         return json;
     }

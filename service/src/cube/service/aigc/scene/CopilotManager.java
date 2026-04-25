@@ -71,11 +71,12 @@ public class CopilotManager {
         GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, copilotQuickStrategy,
                 null, null, null);
         if (null != record) {
-            setting.setStrategyTemplate(filter(record.answer));
+//            setting.setStrategyTemplate(filter(record.answer));
+            setting.addSentences(filter(record.answer));
 
-            if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "Strategy template:\n" + setting.getStrategyTemplate());
-            }
+//            if (Logger.isDebugLevel()) {
+//                Logger.d(this.getClass(), "Strategy template:\n" + setting.getStrategyTemplate());
+//            }
         }
 
         return setting;
@@ -114,9 +115,8 @@ public class CopilotManager {
 //        return buf.toString();
 //    }
 
-    private String filter(String text) {
-        int sn = 1;
-        StringBuilder buf = new StringBuilder();
+    private List<String> filter(String text) {
+        List<String> result = new ArrayList<>();
         String[] lines = text.split("\n");
         for (String line : lines) {
             if (line.length() == 0) {
@@ -143,13 +143,11 @@ public class CopilotManager {
             // 提取来访者的话术
             String newLine = filterLine(line.trim());
             if (null != newLine) {
-                buf.append(sn++).append(". ");
-//                buf.append("- ");
-                buf.append(newLine);
+                result.add(newLine);
             }
         }
 
-        return buf.toString();
+        return result;
     }
 
     private String filterLine(String line) {
