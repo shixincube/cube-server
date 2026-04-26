@@ -249,6 +249,11 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new StopVoiceStreamTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
+        else if (AIGCAction.SubmitCopilotSheet.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new SubmitCopilotSheetTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
         else if (AIGCAction.ApplyCopilot.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new ApplyCopilotTask(this, talkContext, primitive,

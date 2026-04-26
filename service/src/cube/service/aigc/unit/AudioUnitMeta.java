@@ -9,6 +9,7 @@ package cube.service.aigc.unit;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
+import cube.aigc.psychology.Role;
 import cube.auth.AuthToken;
 import cube.common.Language;
 import cube.common.Packet;
@@ -215,11 +216,11 @@ public class AudioUnitMeta extends UnitMeta {
                     for (int p = i + 1; p < words.size(); ++p) {
                         String next = words.get(p);
                         if (next.contains("咨询师")) {
-                            result.put(name, VoiceDiarization.LABEL_COUNSELOR);
+                            result.put(name, Role.Counselor.label);
                             break;
                         }
                         else if (next.contains("客户")) {
-                            result.put(name, VoiceDiarization.LABEL_CUSTOMER);
+                            result.put(name, Role.Customer.label);
                             break;
                         }
                     }

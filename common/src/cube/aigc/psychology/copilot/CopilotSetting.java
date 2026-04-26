@@ -145,6 +145,12 @@ public class CopilotSetting implements JSONable {
         return this.strategyTemplate;
     }
 
+    public void clearSentences() {
+        if (null != this.sentences) {
+            this.sentences.clear();
+        }
+    }
+
     public void addSentences(List<String> sentences) {
         if (null == this.sentences) {
             this.sentences = new ArrayList<>();

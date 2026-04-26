@@ -71,12 +71,7 @@ public class CopilotManager {
         GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, copilotQuickStrategy,
                 null, null, null);
         if (null != record) {
-//            setting.setStrategyTemplate(filter(record.answer));
             setting.addSentences(filter(record.answer));
-
-//            if (Logger.isDebugLevel()) {
-//                Logger.d(this.getClass(), "Strategy template:\n" + setting.getStrategyTemplate());
-//            }
         }
 
         return setting;
@@ -93,8 +88,34 @@ public class CopilotManager {
         return copilot;
     }
 
-    public void submitContent(AuthToken authToken, CopilotSheet sheet) {
+    public CopilotSetting submitContent(AuthToken authToken, CopilotSheet sheet) {
+        Copilot copilot = this.copilotMap.get(authToken.getContactId());
+        if (null == copilot) {
+            Logger.w(this.getClass(), "#submitContent - No copilot data: " + authToken.getContactId());
+            return null;
+        }
 
+        copilot.sheet.addRecords(sheet);
+
+        String copilotDeepStrategy = Resource.getInstance().getStrategyContent("copilot_deep_strategy");
+        if (null == copilotDeepStrategy) {
+            Logger.w(this.getClass(), "#submitContent - No copilot deep strategy: " + authToken.getContactId());
+            return null;
+        }
+
+        CopilotSetting setting = copilot.copilotSetting;
+
+        copilotDeepStrategy = copilotDeepStrategy.replace("{{setting}}", setting.toMarkdown());
+        copilotDeepStrategy = copilotDeepStrategy.replace("{{records}}", copilot.sheet.getRecordsAsMarkdown());
+
+        GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, copilotDeepStrategy,
+                null, null, null);
+        if (null != record) {
+            setting.clearSentences();
+            setting.addSentences(filter(record.answer));
+        }
+
+        return setting;
     }
 
 //    private String filter(String text) {
@@ -197,7 +218,7 @@ public class CopilotManager {
 
         public CopilotSetting copilotSetting;
 
-        public List<CopilotSheet> records;
+        public CopilotSheet sheet;
 
         public long duration;
 
@@ -206,7 +227,7 @@ public class CopilotManager {
             this.timestamp = System.currentTimeMillis();
             this.authToken = authToken;
             this.copilotSetting = copilotSetting;
-            this.records = new ArrayList<>();
+            this.sheet = new CopilotSheet();
         }
 
         @Override

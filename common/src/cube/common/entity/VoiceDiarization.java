@@ -6,6 +6,7 @@
 
 package cube.common.entity;
 
+import cube.aigc.psychology.Role;
 import cube.common.Language;
 import cube.util.ConfigUtils;
 import cube.util.TextUtils;
@@ -26,10 +27,6 @@ public class VoiceDiarization extends Entity {
     public final static String[] SPEAKER_DISPLAY_NAMES = new String[] {
             "说话人1", "说话人2", "说话人3", "说话人4", "说话人5", "说话人6", "说话人7", "说话人8", "说话人9", "说话人10"
     };
-
-    public final static String LABEL_CUSTOMER = "customer";
-
-    public final static String LABEL_COUNSELOR = "counselor";
 
     public long contactId;
 
@@ -181,7 +178,7 @@ public class VoiceDiarization extends Entity {
 
         if (map.size() == 1) {
             for (VoiceTrack track : this.tracks) {
-                track.label = LABEL_COUNSELOR;
+                track.label = Role.Counselor.label;
             }
         }
         else if (map.size() >= 2) {

@@ -203,6 +203,8 @@ public class QueryRevolver {
         boolean needReportData = (null != context.getCurrentReport() && !context.getCurrentReport().isNull());
 
         if (needReportData) {
+            Logger.d(this.getClass(), "#generatePrompt - Extracts report: " + context.getCurrentReport().sn);
+
             result.append("# 角色设定\n\n");
             result.append("你是一位拥有10年经验的临床心理咨询师，你叫云宝。你擅长针对测评结果详细说明测评内容，针对问题给出专业回复。\n\n");
             result.append("# 任务目标\n\n");

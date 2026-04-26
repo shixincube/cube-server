@@ -182,6 +182,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new QueryCounselingCaption());
         httpServer.addContextHandler(new ApplyCopilot());
         httpServer.addContextHandler(new DisposeCopilot());
+        httpServer.addContextHandler(new SubmitCopilotSheet());
 
         httpServer.addContextHandler(new PsychologyReports());
         httpServer.addContextHandler(new CheckPsychology());

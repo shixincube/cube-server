@@ -10,8 +10,9 @@ import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.consultation.ConsultationTheme;
 import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.Role;
+import cube.aigc.psychology.consultation.ConsultationTheme;
 import cube.auth.AuthToken;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
@@ -596,17 +597,17 @@ public class CounselingManager {
                     // 标签变更
                     conversation.append("\n\n");
                     // 角色
-                    if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_COUNSELOR)) {
+                    if (track.label.equalsIgnoreCase(Role.Counselor.label)) {
                         conversation.append("咨询师").append(TextUtils.gColonInChinese);
                         lastLabel = track.label;
                     }
-                    else if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_CUSTOMER)) {
+                    else if (track.label.equalsIgnoreCase(Role.Customer.label)) {
                         conversation.append("来访者").append(TextUtils.gColonInChinese);
                         lastLabel = track.label;
                     }
                     else {
                         conversation.append("来访者").append(TextUtils.gColonInChinese);
-                        lastLabel = VoiceDiarization.LABEL_CUSTOMER;
+                        lastLabel = Role.Customer.label;
                     }
                 }
 
@@ -679,7 +680,7 @@ public class CounselingManager {
 
         for (VoiceStreamSink sink : sinks) {
             for (SpeakerIndicator indicator : sink.getDiarization().indicator.speakerIndicators.values()) {
-                if (indicator.label.equalsIgnoreCase(VoiceDiarization.LABEL_CUSTOMER)) {
+                if (indicator.label.equalsIgnoreCase(Role.Customer.label)) {
                     // 语言节奏
                     totalRhythm += indicator.rhythm;
                     ++countRhythm;
@@ -765,17 +766,17 @@ public class CounselingManager {
                     // 标签变更
                     conversation.append("\n\n");
                     // 角色
-                    if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_COUNSELOR)) {
+                    if (track.label.equalsIgnoreCase(Role.Counselor.label)) {
                         conversation.append("咨询师").append(TextUtils.gColonInChinese);
                         lastLabel = track.label;
                     }
-                    else if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_CUSTOMER)) {
+                    else if (track.label.equalsIgnoreCase(Role.Customer.label)) {
                         conversation.append("来访者").append(TextUtils.gColonInChinese);
                         lastLabel = track.label;
                     }
                     else {
                         conversation.append("来访者").append(TextUtils.gColonInChinese);
-                        lastLabel = VoiceDiarization.LABEL_CUSTOMER;
+                        lastLabel = Role.Customer.label;
                     }
                 }
 
@@ -1075,17 +1076,17 @@ public class CounselingManager {
                     // 标签变更
                     conversation.append("\n\n");
                     // 角色
-                    if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_COUNSELOR)) {
+                    if (track.label.equalsIgnoreCase(Role.Counselor.label)) {
                         conversation.append("咨询师").append(TextUtils.gColonInChinese);
                         lastLabel = track.label;
                     }
-                    else if (track.label.equalsIgnoreCase(VoiceDiarization.LABEL_CUSTOMER)) {
+                    else if (track.label.equalsIgnoreCase(Role.Customer.label)) {
                         conversation.append("来访者").append(TextUtils.gColonInChinese);
                         lastLabel = track.label;
                     }
                     else {
                         conversation.append("来访者").append(TextUtils.gColonInChinese);
-                        lastLabel = VoiceDiarization.LABEL_CUSTOMER;
+                        lastLabel = Role.Customer.label;
                     }
                 }
 
