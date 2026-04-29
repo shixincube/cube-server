@@ -82,7 +82,8 @@ public class ConversationWorker {
         return AIGCStateCode.Ok;
     }
 
-    public AIGCStateCode work(AIGCChannel channel, final String query, ComplexContext context, ConversationRelation relation,
+    public AIGCStateCode work(AIGCChannel channel, final String query, ComplexContext context,
+                              ConversationRelation relation,
                               GenerateTextListener listener) {
         Logger.d(this.getClass(), "#work - channel code: " + channel.getCode());
         if (channel.isProcessing()) {
@@ -549,6 +550,17 @@ public class ConversationWorker {
                     if (subtask == Subtask.StartQuestionnaire || subtask == Subtask.StartGuideFlow ||
                             subtask == Subtask.StopQuestionnaire || subtask == Subtask.StopGuideFlow) {
                         continue;
+                    }
+                }
+
+                if (convCtx.getCurrentSubtask() == Subtask.Questionnaire) {
+                    if (subtask == Subtask.StopQuestionnaire || subtask == Subtask.StopGuideFlow) {
+                        return Subtask.StopQuestionnaire;
+                    }
+                }
+                else if (convCtx.getCurrentSubtask() == Subtask.GuideFlow) {
+                    if (subtask == Subtask.StopQuestionnaire || subtask == Subtask.StopGuideFlow) {
+                        return Subtask.StopGuideFlow;
                     }
                 }
 

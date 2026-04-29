@@ -233,8 +233,6 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
 
     public AIGCService service;
 
-    private PaintingFeatureSet paintingFeatureSet;
-
     public SubconsciousRelationshipBetweenACoupleEvaluation(long contactId, Painting painting) {
         super(contactId, painting);
     }
@@ -254,7 +252,7 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
 
     @Override
     public PaintingFeatureSet getPaintingFeatureSet() {
-        return this.paintingFeatureSet;
+        return null;
     }
 
     /**

@@ -230,6 +230,8 @@ public class ComprehensiveReportWorker implements Runnable {
                 else {
                     return false;
                 }
+            case KineticFamilyDrawing:
+                return true;
             default:
                 return false;
         }

@@ -6,54 +6,46 @@
 
 package cube.aigc.psychology.indicator;
 
-/**
- * 指标。
- */
-public enum SRBCIndicator implements Indicable {
+public enum KFDIndicator implements Indicable {
     /**
-     * 榕树型。
+     * 猫咪家族。
      */
-    BanyanTree("榕树型", "BanyanTree", 9),
+    CatFamily("猫咪家族", "CatFamily", 0),
 
     /**
-     * 橡树型。
+     * 金毛犬家族。
      */
-    OakTree("橡树型", "OakTree", 9),
+    GoldenRetrieverFamily("金毛犬家族", "GoldenRetrieverFamily", 0),
 
     /**
-     * 藤蔓型。
+     * 大雁家族。
      */
-    Vine("藤蔓型", "Vine", 9),
+    GooseFamily("大雁家族", "GooseFamily", 0),
 
     /**
-     * 向日葵型。
+     * 袋鼠家族。
      */
-    Sunflower("向日葵型", "Sunflower", 9),
+    KangarooFamily("袋鼠家族", "KangarooFamily", 0),
 
     /**
-     * 仙人掌型。
+     * 麻雀家族。
      */
-    Cactus("仙人掌型", "Cactus", 9),
+    SparrowFamily("麻雀家族", "SparrowFamily", 0),
 
     /**
-     * 竹子型。
+     * 刺猬家族。
      */
-    Bamboo("竹子型", "Bamboo", 9),
+    HedgehogFamily("刺猬家族", "HedgehogFamily", 0),
 
     /**
-     * 并蒂莲型。
+     * 老鹰家族。
      */
-    TwinLotus("并蒂莲型", "TwinLotus", 9),
+    EagleFamily("老鹰家族", "EagleFamily", 0),
 
     /**
-     * 蒲公英型。
+     * 老虎家族。
      */
-    Dandelion("蒲公英型", "Dandelion", 9),
-
-    /**
-     * 雪松型。
-     */
-    Cedar("雪松型", "Cedar", 9),
+    TigerFamily("老虎家族", "TigerFamily", 0),
 
     /**
      * 未知。
@@ -68,7 +60,7 @@ public enum SRBCIndicator implements Indicable {
 
     private final int priority;
 
-    SRBCIndicator(String name, String code, int priority) {
+    KFDIndicator(String name, String code, int priority) {
         this.name = name;
         this.code = code;
         this.priority = priority;
@@ -90,16 +82,16 @@ public enum SRBCIndicator implements Indicable {
     }
 
     public static int length() {
-        return SRBCIndicator.values().length - 1;
+        return KFDIndicator.values().length - 1;
     }
 
-    public static SRBCIndicator parse(String nameOrCode) {
-        for (SRBCIndicator indicator : SRBCIndicator.values()) {
+    public static KFDIndicator parse(String nameOrCode) {
+        for (KFDIndicator indicator : KFDIndicator.values()) {
             if (indicator.code.equalsIgnoreCase(nameOrCode) ||
                     indicator.name.equalsIgnoreCase(nameOrCode)) {
                 return indicator;
             }
         }
-        return SRBCIndicator.Unknown;
+        return KFDIndicator.Unknown;
     }
 }
