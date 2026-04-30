@@ -96,6 +96,9 @@ public class PsychologyStorage implements Storagable {
             new StorageField("age", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("role", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL,
+            }),
             new StorageField("language", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
@@ -135,6 +138,7 @@ public class PsychologyStorage implements Storagable {
             new StorageField(reportTable, "name", LiteralBase.STRING),
             new StorageField(reportTable, "gender", LiteralBase.STRING),
             new StorageField(reportTable, "age", LiteralBase.INT),
+            new StorageField(reportTable, "role", LiteralBase.STRING),
             new StorageField(reportTable, "language", LiteralBase.STRING),
             new StorageField(reportTable, "strict", LiteralBase.INT),
             new StorageField(reportTable, "file_code", LiteralBase.STRING),
@@ -307,6 +311,9 @@ public class PsychologyStorage implements Storagable {
             new StorageField("age", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
             }),
+            new StorageField("role", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
             new StorageField("language", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
             }),
@@ -351,6 +358,9 @@ public class PsychologyStorage implements Storagable {
             }),
             new StorageField("age", LiteralBase.INT, new Constraint[] {
                     Constraint.NOT_NULL
+            }),
+            new StorageField("role", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
             }),
             new StorageField("language", LiteralBase.STRING, new Constraint[] {
                     Constraint.DEFAULT_NULL
@@ -1057,6 +1067,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("name", report.getName()),
                 new StorageField("gender", report.getAttribute().gender),
                 new StorageField("age", report.getAttribute().age),
+                new StorageField("role", report.getAttribute().role),
                 new StorageField("language", report.getAttribute().language.simplified),
                 new StorageField("strict", report.getAttribute().strict ? 1 : 0),
                 new StorageField("file_code", report.getFileCode()),
@@ -1080,6 +1091,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("name", report.getName()),
                 new StorageField("gender", report.getAttribute().gender),
                 new StorageField("age", report.getAttribute().age),
+                new StorageField("role", report.getAttribute().role),
                 new StorageField("language", report.getAttribute().language.simplified),
                 new StorageField("finished_timestamp", report.getFinishedTimestamp()),
                 new StorageField("summary", report.getSummary()),
@@ -1313,6 +1325,7 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("timestamp", scale.getTimestamp()),
                     new StorageField("gender", scale.getAttribute().gender),
                     new StorageField("age", scale.getAttribute().age),
+                    new StorageField("role", scale.getAttribute().role),
                     new StorageField("language", scale.getAttribute().language.simplified),
                     new StorageField("complete", scale.isComplete() ? 1 : 0),
                     new StorageField("data", dataString)
@@ -1325,6 +1338,7 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("timestamp", scale.getTimestamp()),
                     new StorageField("gender", scale.getAttribute().gender),
                     new StorageField("age", scale.getAttribute().age),
+                    new StorageField("role", scale.getAttribute().role),
                     new StorageField("language", scale.getAttribute().language.simplified),
                     new StorageField("complete", scale.isComplete() ? 1 : 0),
                     new StorageField("data", dataString)
@@ -1406,6 +1420,7 @@ public class PsychologyStorage implements Storagable {
         Map<String, StorageField> data = StorageFields.get(result.get(0));
 
         Attribute attribute = new Attribute(data.get("gender").getString(), data.get("age").getInt(),
+                data.get("role").isNullValue() ? "" : data.get("role").getString(),
                 data.get("language").isNullValue() ? Language.Chinese : Language.parse(data.get("language").getString()),
                 data.get("strict").getInt() != 0);
 
@@ -1438,6 +1453,7 @@ public class PsychologyStorage implements Storagable {
             }
 
             Attribute attribute = new Attribute(data.get("gender").getString(), data.get("age").getInt(),
+                    data.get("role").isNullValue() ? "" : data.get("role").getString(),
                     data.get("language").isNullValue() ? Language.Chinese : Language.parse(data.get("language").getString()),
                     data.get("strict").getInt() != 0);
             ScaleReport report = new ScaleReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
@@ -1468,6 +1484,7 @@ public class PsychologyStorage implements Storagable {
             }
 
             Attribute attribute = new Attribute(data.get("gender").getString(), data.get("age").getInt(),
+                    data.get("role").isNullValue() ? "" : data.get("role").getString(),
                     data.get("language").isNullValue() ? Language.Chinese : Language.parse(data.get("language").getString()),
                     data.get("strict").getInt() != 0);
             ScaleReport report = new ScaleReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
@@ -1496,6 +1513,7 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("name", scaleReport.getName()),
                     new StorageField("gender", scaleReport.getAttribute().gender),
                     new StorageField("age", scaleReport.getAttribute().age),
+                    new StorageField("role", scaleReport.getAttribute().role),
                     new StorageField("language", scaleReport.getAttribute().language.simplified),
                     new StorageField("strict", scaleReport.getAttribute().strict ? 1 : 0),
                     new StorageField("factor_data", dataString),
@@ -1510,6 +1528,7 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("name", scaleReport.getName()),
                     new StorageField("gender", scaleReport.getAttribute().gender),
                     new StorageField("age", scaleReport.getAttribute().age),
+                    new StorageField("role", scaleReport.getAttribute().role),
                     new StorageField("language", scaleReport.getAttribute().language.simplified),
                     new StorageField("strict", scaleReport.getAttribute().strict ? 1 : 0),
                     new StorageField("factor_data", dataString),
@@ -2071,6 +2090,7 @@ public class PsychologyStorage implements Storagable {
         PaintingReport report = new PaintingReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
                 data.get("timestamp").getLong(), data.get("name").getString(),
                 new Attribute(data.get("gender").getString(), data.get("age").getInt(),
+                        data.get("role").isNullValue() ? "" : data.get("role").getString(),
                         data.get("language").isNullValue() ? Language.Chinese : Language.parse(data.get("language").getString()),
                         data.get("strict").getInt() == 1),
                 data.get("file_code").getString(), Theme.parse(data.get("theme").getString()),

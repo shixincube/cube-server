@@ -59,7 +59,9 @@ public class GeneratePsychologyScaleTask extends ServiceTask {
             Language language = packet.data.has("language") ?
                     Language.parse(packet.data.getString("language")) : Language.Chinese;
             Attribute attribute = new Attribute(packet.data.getString("gender"),
-                    packet.data.getInt("age"), language,
+                    packet.data.getInt("age"),
+                    packet.data.has("role") ? packet.data.getString("role") : "",
+                    language,
                     packet.data.has("strict") && packet.data.getBoolean("strict"));
 
             Scale scale = PsychologyScene.getInstance().generateScale(authToken.getContactId(), scaleName, attribute);

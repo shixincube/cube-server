@@ -199,7 +199,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
             if (extractedAttribute.gender.length() > 0) {
                 gender = extractedAttribute.gender;
             }
-            currentAttribute = new Attribute(gender, age);
+            currentAttribute = new Attribute(gender, age, "");
             convCtx.setCurrentAttribute(currentAttribute);
 
             if (!currentAttribute.isValid()) {

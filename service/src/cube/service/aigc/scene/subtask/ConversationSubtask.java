@@ -228,7 +228,7 @@ public abstract class ConversationSubtask {
             }
         }
 
-        return new Attribute(gender, age, Language.Chinese, false);
+        return new Attribute(gender, age, "", Language.Chinese, false);
     }
 
     private List<FileLabel> checkFileLabels(List<FileLabel> fileLabels) {

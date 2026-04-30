@@ -75,7 +75,7 @@ public class EvaluationScore implements JSONable {
             this.rate = IndicatorRate.parse(json.getJSONObject("rate"));
         }
         else {
-            this.rate = this.getIndicatorRate(new Attribute("male", 18, Language.Chinese, false));
+            this.rate = this.getIndicatorRate(new Attribute("male", 18, "", Language.Chinese, false));
         }
     }
 
@@ -755,7 +755,7 @@ public class EvaluationScore implements JSONable {
         JSONObject json = new JSONObject();
         json.put("indicator", this.indicator.getName());
         json.put("rate", (null != this.rate) ? this.rate.toJSON() :
-                this.getIndicatorRate(new Attribute("male", 18, Language.Chinese, false)).toJSON());
+                this.getIndicatorRate(new Attribute("male", 18, "", Language.Chinese, false)).toJSON());
         json.put("hit", this.hit);
         json.put("value", this.value);
         json.put("positiveScore", this.positiveScore);

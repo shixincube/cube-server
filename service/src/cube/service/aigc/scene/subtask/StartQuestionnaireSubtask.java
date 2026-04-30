@@ -93,7 +93,7 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
 
         // 生成
         Scale scale = PsychologyScene.getInstance().generateScale(channel.getAuthToken().getContactId(), scaleName,
-                new Attribute("male", 30, english ? Language.English : Language.Chinese, false));
+                new Attribute("male", 30, "", english ? Language.English : Language.Chinese, false));
         if (null == scale) {
             Logger.w(this.getClass(), "#execute - Load scale failed: " + channel.getAuthToken().getCode());
 

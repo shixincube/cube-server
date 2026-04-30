@@ -419,7 +419,7 @@ public class ReportDataset {
             return false;
         }
 
-        Attribute attribute = new Attribute("male", 18, Language.Chinese, false);
+        Attribute attribute = new Attribute("male", 18, "", Language.Chinese, false);
 
         FileOutputStream os = null;
         boolean head = false;

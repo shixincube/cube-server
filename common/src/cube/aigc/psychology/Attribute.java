@@ -24,27 +24,32 @@ public class Attribute implements JSONable {
 
     public final int age;
 
+    public final String role;
+
     public final Language language;
 
     public final boolean strict;
 
-    public Attribute(String gender, int age, Language language, boolean strict) {
+    public Attribute(String gender, int age, String role, Language language, boolean strict) {
         this.gender = gender.equals("男") ? "male" : (gender.equals("女") ? "female" : gender.toLowerCase());
         this.age = age;
+        this.role = role;
         this.language = language;
         this.strict = strict;
     }
 
-    public Attribute(String gender, int age, Language language) {
+    public Attribute(String gender, int age, String role, Language language) {
         this.gender = gender.equals("男") ? "male" : (gender.equals("女") ? "female" : gender.toLowerCase());
         this.age = age;
+        this.role = role;
         this.language = language;
         this.strict = false;
     }
 
-    public Attribute(String gender, int age) {
+    public Attribute(String gender, int age, String role) {
         this.gender = gender.equals("男") ? "male" : (gender.equals("女") ? "female" : gender.toLowerCase());
         this.age = age;
+        this.role = role;
         this.language = Language.Chinese;
         this.strict = false;
     }
@@ -52,6 +57,7 @@ public class Attribute implements JSONable {
     public Attribute(JSONObject json) {
         this.gender = json.getString("gender");
         this.age = json.getInt("age");
+        this.role = json.has("role") ? json.getString("role") : "";
         this.language = json.has("language") ? Language.parse(json.getString("language")) : Language.Chinese;
         this.strict = json.has("strict") && json.getBoolean("strict");
     }
@@ -113,6 +119,7 @@ public class Attribute implements JSONable {
         JSONObject json = new JSONObject();
         json.put("gender", this.gender);
         json.put("age", this.age);
+        json.put("role", this.role);
         json.put("language", this.language.simplified);
         json.put("strict", this.strict);
         return json;

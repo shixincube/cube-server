@@ -16,6 +16,51 @@ import java.util.List;
 
 public class KineticFamilyDrawingEvaluation extends Evaluation {
 
+    public enum FamilyMemberRole {
+        Child("child"),
+
+        Father("father"),
+
+        Mother("mother"),
+
+        Brother("brother"),
+
+        YoungerBrother("younger_brother"),
+
+        Sister("sister"),
+
+        YoungerSister("younger_sister"),
+
+        Grandpa("grandpa"),
+
+        Grandma("grandma"),
+
+        MaternalGrandpa("maternal_grandpa"),
+
+        MaternalGrandma("maternal_grandma"),
+
+        None("none"),
+
+        ;
+
+        public final String code;
+
+        FamilyMemberRole(String code) {
+            this.code = code;
+        }
+
+        public final static FamilyMemberRole parse(String nameOrCode) {
+            for (FamilyMemberRole role : FamilyMemberRole.values()) {
+                if (role.code.equalsIgnoreCase(nameOrCode) ||
+                    role.name().equalsIgnoreCase(nameOrCode)) {
+                    return role;
+                }
+            }
+
+            return FamilyMemberRole.None;
+        }
+    }
+
     public KineticFamilyDrawingEvaluation(long contactId, Painting painting) {
         super(contactId, painting);
     }
@@ -23,6 +68,7 @@ public class KineticFamilyDrawingEvaluation extends Evaluation {
     @Override
     public EvaluationReport makeEvaluationReport() {
         List<EvaluationFeature> results = new ArrayList<>();
+
         return null;
     }
 

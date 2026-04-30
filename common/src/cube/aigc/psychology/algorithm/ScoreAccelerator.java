@@ -84,7 +84,7 @@ public class ScoreAccelerator implements JSONable {
         }
 
         if (null == attribute) {
-            attribute = new Attribute("male", 18, Language.Chinese, false);
+            attribute = new Attribute("male", 18, "", Language.Chinese, false);
         }
 
         List<EvaluationScore> result = new ArrayList<>();

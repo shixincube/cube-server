@@ -2243,13 +2243,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         return meta.sn;
     }
 
-    /**
-     *
-     * @param channelCode
-     * @param sn
-     * @return
+    /*
      * @deprecated
-     */
     public AIGCConversationResponse queryConversation(String channelCode, long sn) {
         // 获取频道
         AIGCChannel channel = this.channelMap.get(channelCode);
@@ -2290,7 +2285,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         else {
             return new AIGCConversationResponse(record);
         }
-    }
+    }*/
 
     /*
      * 执行自然语言任务。

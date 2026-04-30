@@ -22,6 +22,7 @@ import org.json.JSONObject;
 
 /**
  * 查询 Conversation 任务。
+ * @deprecated
  */
 public class QueryConversationTask extends ServiceTask {
 
@@ -57,7 +58,7 @@ public class QueryConversationTask extends ServiceTask {
             long sn = packet.data.getLong("sn");
 
             // 查询
-            response = service.queryConversation(code, sn);
+//            response = service.queryConversation(code, sn);
         } catch (Exception e) {
             this.cellet.speak(this.talkContext,
                     this.makeResponse(dialect, packet, AIGCStateCode.InvalidParameter.code, new JSONObject()));

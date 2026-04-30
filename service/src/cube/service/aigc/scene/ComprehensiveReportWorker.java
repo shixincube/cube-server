@@ -11,7 +11,10 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Score;
-import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.composition.Answer;
+import cube.aigc.psychology.composition.Comprehensive;
+import cube.aigc.psychology.composition.EvaluationScore;
+import cube.aigc.psychology.composition.Scale;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.AIGCChannel;
@@ -64,7 +67,8 @@ public class ComprehensiveReportWorker implements Runnable {
         this.channel.setProcessing(true);
 
         try {
-            if (!this.verifyParameters()) {
+            ComprehensiveVerifier verifier = new ComprehensiveVerifier(this.channel, this.report);
+            if (!verifier.verifyParameters()) {
                 // 验证参数失败
                 Logger.w(this.getClass(), "#run - Invalid parameter - " + this.report.sn);
                 this.report.state = AIGCStateCode.InvalidParameter;
@@ -167,73 +171,6 @@ public class ComprehensiveReportWorker implements Runnable {
             Logger.e(this.getClass(), "#run - sn: " + this.report.sn, e);
         } finally {
             this.channel.setProcessing(false);
-        }
-    }
-
-    private boolean verifyParameters() {
-        switch (this.report.theme) {
-            case SubconsciousRelationshipBetweenACouple:
-                List<Comprehensive> comprehensiveList = this.report.comprehensives;
-                if (comprehensiveList.size() == 2) {
-                    // 将选择输入量表
-                    for (Comprehensive comprehensive : comprehensiveList) {
-                        // 判断文件
-                        if (!comprehensive.hasFileLabels()) {
-                            Logger.e(this.getClass(), "#verifyParameters - No file: " + comprehensive.getName());
-                            return false;
-                        }
-
-                        if (!comprehensive.hasScales()) {
-                            Scale scale = Resource.getInstance().loadScaleByName("SRBC",
-                                    this.channel.getAuthToken().getContactId());
-                            if (null == scale) {
-                                Logger.e(this.getClass(), "#verifyParameters - Can NOT find scale: SRBC");
-                                return false;
-                            }
-
-                            for (String word : comprehensive.getChoices()) {
-                                SubconsciousRelationshipBetweenACoupleEvaluation.SRBCWord srbcWord =
-                                        SubconsciousRelationshipBetweenACoupleEvaluation.SRBCWord.parse(word);
-                                scale.chooseAnswer(1, Integer.toString(srbcWord.sn));
-                            }
-                            comprehensive.addScale(scale);
-                        }
-                    }
-
-                    Comprehensive comprehensive1 = comprehensiveList.get(0);
-                    Comprehensive comprehensive2 = comprehensiveList.get(1);
-
-                    boolean genderOk = false;
-                    Attribute attribute1 = comprehensive1.getAttribute();
-                    Attribute attribute2 = comprehensive2.getAttribute();
-                    // 必须一男一女
-                    if ((attribute1.isMale() && attribute2.isFemale()) ||
-                            (attribute1.isFemale() && attribute2.isMale())) {
-                        genderOk = true;
-                    }
-
-                    // 必须选择3个词
-                    boolean scaleOk = false;
-                    Scale scale1 = comprehensive1.getScale();
-                    Question question1 = scale1.getQuestions().get(0);
-                    Scale scale2 = comprehensive2.getScale();
-                    Question question2 = scale2.getQuestions().get(0);
-                    if (question1.getChosenAnswers().size() == 3 &&
-                            question2.getChosenAnswers().size() == 3) {
-                        scaleOk = true;
-                    }
-
-                    Logger.d(this.getClass(), "#verifyParameters - gender: " + genderOk + " , scale: " + scaleOk);
-
-                    return genderOk && scaleOk;
-                }
-                else {
-                    return false;
-                }
-            case KineticFamilyDrawing:
-                return true;
-            default:
-                return false;
         }
     }
 

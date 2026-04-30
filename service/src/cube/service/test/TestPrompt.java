@@ -105,7 +105,7 @@ public class TestPrompt {
             }
         }
 
-        return new Attribute(gender, age, Language.Chinese, false);
+        return new Attribute(gender, age, "", Language.Chinese, false);
     }
 
     public static void main(String[] args) {

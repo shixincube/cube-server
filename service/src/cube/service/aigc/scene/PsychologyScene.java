@@ -1786,7 +1786,7 @@ public class PsychologyScene {
             case HouseTreePerson:
                 evaluation = (null == painting) ?
                         new HTPEvaluation(channel.getAuthToken().getContactId(),
-                                new Attribute("female", 28, channel.getLanguage(), false)) :
+                                new Attribute("female", 28, "", channel.getLanguage(), false)) :
                         new HTPEvaluation(channel.getAuthToken().getContactId(), painting);
                 break;
             case AttachmentStyle:
@@ -1803,7 +1803,7 @@ public class PsychologyScene {
             default:
                 evaluation = (null == painting) ?
                         new HTPEvaluation(channel.getAuthToken().getContactId(),
-                                new Attribute("male", 28, channel.getLanguage(), false)) :
+                                new Attribute("male", 28, "", channel.getLanguage(), false)) :
                         new HTPEvaluation(channel.getAuthToken().getContactId(), painting);
                 break;
         }
