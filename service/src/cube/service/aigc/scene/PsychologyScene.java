@@ -800,6 +800,7 @@ public class PsychologyScene {
     }
 
     /**
+     * 获取绘画模板报告文章。
      *
      * @param sn
      * @return
@@ -1253,20 +1254,24 @@ public class PsychologyScene {
 
         if (relations.size() == 1) {
             ConversationRelation relation = relations.get(0);
-            PaintingReport paintingReport = this.getPaintingReport(relation.reportSn);
-            if (null != paintingReport) {
-                QueryRevolver queryRevolver = new QueryRevolver(this.service, this.storage);
-                result.append(queryRevolver.generatePrompt(relation, paintingReport, query));
-            }
-            else {
-                ScaleReport scaleReport = this.getScaleReport(relation.reportSn);
-                if (null != scaleReport) {
-                    QueryRevolver queryRevolver = new QueryRevolver(this.service, this.storage);
-                    result.append(queryRevolver.generatePrompt(relation, scaleReport, query));
+            if (relation.hasReport()) {
+                PaintingReport report = this.getPaintingReport(relation.getReportSn());
+                if (null != report) {
+                    relation.setReport(report);
                 }
                 else {
-                    Logger.w(this.getClass(), "#buildPrompt - Can NOT find report: " + relation.reportSn);
-                    return null;
+                    ScaleReport scaleReport = this.getScaleReport(relation.getReportSn());
+                    if (null != scaleReport) {
+                        relation.setReport(scaleReport);
+                    }
+                }
+
+                if (null != relation.getReport()) {
+                    QueryRevolver queryRevolver = new QueryRevolver(this.service, this.storage);
+                    result.append(queryRevolver.generatePrompt(relation, query));
+                }
+                else {
+                    Logger.w(this.getClass(), "#buildPrompt - Can NOT find report: " + relation.getReportSn());
                 }
             }
         }
@@ -1276,18 +1281,20 @@ public class PsychologyScene {
 
             for (ConversationRelation relation : relations) {
                 Report report;
-                PaintingReport paintingReport = this.getPaintingReport(relation.reportSn);
+                PaintingReport paintingReport = this.getPaintingReport(relation.getReportSn());
                 if (null == paintingReport) {
-                    ScaleReport scaleReport = this.getScaleReport(relation.reportSn);
+                    ScaleReport scaleReport = this.getScaleReport(relation.getReportSn());
                     report = scaleReport;
                 }
                 else {
                     report = paintingReport;
                 }
                 if (null == report) {
-                    Logger.w(this.getClass(), "#buildPrompt - Can NOT find report: " + relation.reportSn);
+                    Logger.w(this.getClass(), "#buildPrompt - Can NOT find report: " + relation.getReportSn());
                     continue;
                 }
+
+                relation.setReport(report);
 
                 relationList.add(relation);
                 reportList.add(report);
@@ -1305,23 +1312,6 @@ public class PsychologyScene {
         return result.toString();
     }
 
-    /*public GeneratingRecord buildHistory(List<ConversationRelation> relations, String currentQuery) {
-        ConversationRelation relation = relations.get(0);
-
-        Report report = this.getPaintingReport(relation.reportSn);
-        if (null == report) {
-            report = this.getScaleReport(relation.reportSn);
-
-            if (null == report) {
-                Logger.w(this.getClass(), "#buildHistory - Can NOT find report: " + relation.reportSn);
-                return null;
-            }
-        }
-
-        QueryRevolver revolver = new QueryRevolver(this.service, this.storage);
-        return revolver.generateSupplement(relation, report, currentQuery);
-    }*/
-
     /**
      * 构建基于上下文数据的提示词。
      *
@@ -1334,8 +1324,8 @@ public class PsychologyScene {
         QueryRevolver revolver = new QueryRevolver(this.service, this.storage);
 
         // 尝试情景推理
-        if (null != context.getCurrentReport() && !context.getCurrentReport().isNull()) {
-            PaintingReport report = context.getCurrentReport();
+        if (null != context.getRelation().getReport()) {
+            Report report = context.getRelation().getReport();
             if (report.getAttribute().age < 18) {
                 Logger.d(this.getClass(), "#revolve - The age is less then 18: " + report.sn);
 

@@ -27,12 +27,24 @@ public class ConversationContext implements JSONable {
 
     private AuthToken authToken;
 
+    /**
+     * 仅用于实时推理。
+     */
     private FileLabel currentFile;
 
+    /**
+     * 仅用于实时推理。
+     */
     private boolean currentPaintingValidity;
 
+    /**
+     * 仅用于实时推理。
+     */
     private Attribute currentAttribute;
 
+    /**
+     * 仅用于实时推理。
+     */
     private PaintingReport currentReport;
 
     private Subtask currentSubtask;

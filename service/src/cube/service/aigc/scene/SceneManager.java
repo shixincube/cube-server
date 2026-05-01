@@ -74,7 +74,7 @@ public class SceneManager {
     public void saveHistoryRecord(String channelCode, String unitName, ConversationContext context, GeneratingRecord record) {
         AIGCChatHistory history = new AIGCChatHistory(Utils.generateSerialNumber(), channelCode, unitName,
                 context.getAuthToken().getDomain());
-        history.queryContactId = context.getRelation().uid;
+        history.queryContactId = context.getRelation().getUid();
         history.queryContent = record.query;
         history.queryTime = record.timestamp;
         history.queryFileLabels = record.queryFileLabels;

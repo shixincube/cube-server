@@ -6,7 +6,10 @@
 
 package cube.aigc.psychology.composition;
 
+import cube.aigc.psychology.ComprehensiveReport;
+import cube.aigc.psychology.Report;
 import cube.common.JSONable;
+import cube.common.entity.Article;
 import cube.common.entity.User;
 import org.json.JSONObject;
 
@@ -15,36 +18,111 @@ import org.json.JSONObject;
  */
 public class ConversationRelation implements JSONable {
 
-    public String name;
+    public final String name;
 
-    public String speechFileCode;
+    private long reportSn = 0;
 
-    public long reportSn = 0;
+    private Report report;
 
-    public long uid = 0;
+    private long articleSn = 0;
 
-    public User user;
+    private ReportArticle article;
+
+    private long comprehensiveReportSn = 0;
+
+    private ComprehensiveReport comprehensiveReport;
+
+    private long uid = 0;
+
+    private User user;
+
+    private String speechFileCode;
 
     public ConversationRelation() {
         this.name = "Anonymous";
     }
 
-    public ConversationRelation(String name, long reportSn) {
-        this.name = name;
-        this.reportSn = reportSn;
-    }
-
     public ConversationRelation(JSONObject json) {
         this.name = json.getString("name");
-        if (json.has("speechFileCode")) {
-            this.speechFileCode = json.getString("speechFileCode");
-        }
         if (json.has("reportSn")) {
             this.reportSn = json.getLong("reportSn");
+        }
+        if (json.has("articleSn")) {
+            this.articleSn = json.getLong("articleSn");
+        }
+        if (json.has("comprehensiveReportSn")) {
+            this.comprehensiveReportSn = json.getLong("comprehensiveReportSn");
         }
         if (json.has("uid")) {
             this.uid = json.getLong("uid");
         }
+        if (json.has("speechFileCode")) {
+            this.speechFileCode = json.getString("speechFileCode");
+        }
+    }
+
+    public boolean hasReport() {
+        return this.reportSn > 0;
+    }
+
+    public long getReportSn() {
+        return this.reportSn;
+    }
+
+    public void setReport(Report report) {
+        this.report = report;
+    }
+
+    public Report getReport() {
+        return this.report;
+    }
+
+    public boolean hasArticle() {
+        return this.articleSn > 0;
+    }
+
+    public long getArticleSn() {
+        return this.articleSn;
+    }
+
+    public void setArticle(ReportArticle article) {
+        this.article = article;
+    }
+
+    public Article getArticle() {
+        return this.article;
+    }
+
+    public boolean hasComprehensiveReport() {
+        return this.comprehensiveReportSn > 0;
+    }
+
+    public long getComprehensiveReportSn() {
+        return this.comprehensiveReportSn;
+    }
+
+    public void setComprehensiveReport(ComprehensiveReport comprehensiveReport) {
+        this.comprehensiveReport = comprehensiveReport;
+    }
+
+    public ComprehensiveReport getComprehensiveReport() {
+        return this.comprehensiveReport;
+    }
+
+    public boolean hasUser() {
+        return this.uid > 0;
+    }
+
+    public long getUid() {
+        return this.uid;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public User getUser() {
+        return this.user;
     }
 
     public boolean isValidUser() {
@@ -59,14 +137,20 @@ public class ConversationRelation implements JSONable {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
-        if (null != this.speechFileCode) {
-            json.put("speechFileCode", this.speechFileCode);
-        }
         if (this.reportSn > 0) {
             json.put("reportSn", this.reportSn);
         }
+        if (this.articleSn > 0) {
+            json.put("articleSn", this.articleSn);
+        }
+        if (this.comprehensiveReportSn > 0) {
+            json.put("comprehensiveReportSn", this.comprehensiveReportSn);
+        }
         if (this.uid > 0) {
             json.put("uid", this.uid);
+        }
+        if (null != this.speechFileCode) {
+            json.put("speechFileCode", this.speechFileCode);
         }
         return json;
     }

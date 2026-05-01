@@ -10,16 +10,15 @@ import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.complex.attachment.Attachment;
 import cube.aigc.complex.attachment.FileAttachment;
+import cube.aigc.psychology.ComprehensiveReport;
+import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
-import cube.aigc.psychology.composition.ConversationContext;
-import cube.aigc.psychology.composition.ConversationRelation;
-import cube.aigc.psychology.composition.Scale;
-import cube.aigc.psychology.composition.Subtask;
+import cube.aigc.psychology.ScaleReport;
+import cube.aigc.psychology.composition.*;
 import cube.common.Language;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.guidance.Prompts;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.listener.SemanticSearchListener;
 import cube.service.aigc.scene.subtask.*;
@@ -100,6 +99,42 @@ public class ConversationWorker {
             if (Logger.isDebugLevel()) {
                 Logger.d(this.getClass(), "#work - New channel conversation context: " + channel.getAuthToken().getContactId());
             }
+
+            // 提取 relation 数据
+            if (relation.hasReport()) {
+                PaintingReport report = PsychologyScene.getInstance().getPaintingReport(relation.getReportSn());
+                if (null != report) {
+                    relation.setReport(report);
+                }
+                else {
+                    ScaleReport scaleReport = PsychologyScene.getInstance().getScaleReport(relation.getReportSn());
+                    if (null != scaleReport) {
+                        relation.setReport(scaleReport);
+                    }
+                    else {
+                        Logger.w(this.getClass(), "#work - Can NOT find the report: " + relation.getReportSn());
+                    }
+                }
+            }
+            if (relation.hasArticle()) {
+                ReportArticle reportArticle = PsychologyScene.getInstance().getPaintingTemplateArticle(relation.getArticleSn());
+                relation.setArticle(reportArticle);
+                if (null == relation.getArticle()) {
+                    Logger.w(this.getClass(), "#work - Can NOT find the article: " + relation.getArticleSn());
+                }
+            }
+            if (relation.hasComprehensiveReport()) {
+                ComprehensiveReport report = PsychologyScene.getInstance().getComprehensiveReport(relation.getComprehensiveReportSn());
+                relation.setComprehensiveReport(report);
+                if (null == relation.getComprehensiveReport()) {
+                    Logger.w(this.getClass(), "#work - Can NOT find the comprehensive report: " + relation.getArticleSn());
+                }
+            }
+            if (relation.hasUser()) {
+                User user = this.service.getUser(relation.getUid());
+                relation.setUser(user);
+            }
+
             cc = new ConversationContext(relation, channel.getAuthToken());
             SceneManager.getInstance().putConversationContext(channel.getCode(), cc);
         }
@@ -375,7 +410,7 @@ public class ConversationWorker {
         }
 
         if (!relation.isValidUser()) {
-            Logger.d(this.getClass(), "#work - The user is NOT valid: " + relation.uid);
+            Logger.d(this.getClass(), "#work - The user is NOT valid: " + relation.getUid());
 
             String result = Resource.getInstance().getCorpus("baize", "VISITOR_NOTICE", channel.getLanguage());
             final GeneratingRecord record = new GeneratingRecord(ModelConfig.AIXINLI, query, result);

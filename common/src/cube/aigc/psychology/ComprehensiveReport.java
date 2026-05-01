@@ -120,14 +120,15 @@ public class ComprehensiveReport implements JSONable {
         return array;
     }
 
-    public String outputMarkdown() {
+    public String toMarkdown() {
         StringBuilder buf = new StringBuilder();
-        buf.append("## 测评报告基础信息\n\n");
+        buf.append("# 测评报告基础信息\n\n");
         buf.append("- 评测主题：").append(this.theme.name).append("\n");
         buf.append("- 评测日期：").append(TimeUtils.formatDateString(this.timestamp, Language.Chinese)).append("\n");
-        buf.append("- 评测对象：共").append(this.comprehensives.size()).append("个评测对象参与。分别是：");
+        buf.append("- 评测对象：共").append(this.comprehensives.size()).append("个评测对象参与。分别是：\n");
+        
         for (Comprehensive comprehensive : this.comprehensives) {
-
+            comprehensive.getAttribute();
         }
         return buf.toString();
     }

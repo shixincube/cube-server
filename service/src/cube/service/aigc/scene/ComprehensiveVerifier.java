@@ -94,8 +94,14 @@ public class ComprehensiveVerifier {
                     return false;
                 }
             case KineticFamilyDrawing:
+                if (comprehensiveList.size() >= 2) {
+                    boolean kidOk = false;
+                    boolean parentOk = false;
 
-                return true;
+                }
+                else {
+                    return false;
+                }
             default:
                 return false;
         }

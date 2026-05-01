@@ -15,11 +15,13 @@ import java.util.List;
 
 public class Article implements JSONable {
 
-    private String title;
+    public long sn;
 
-    private String content;
+    protected String title;
 
-    private List<Paragraph> paragraphs;
+    protected String content;
+
+    protected List<Paragraph> paragraphs;
 
     public Article(String title) {
         this.title = title;
@@ -67,9 +69,26 @@ public class Article implements JSONable {
         return buf.toString();
     }
 
+    public String toMarkdown() {
+        StringBuilder buf = new StringBuilder();
+        if (null != this.title) {
+            buf.append("# ").append(this.title).append("\n\n");
+        }
+        if (null != this.content) {
+            buf.append(this.content).append("\n\n");
+        }
+        if (!this.paragraphs.isEmpty()) {
+            for (Paragraph paragraph : this.paragraphs) {
+                buf.append(paragraph.toMarkdown());
+            }
+        }
+        return buf.toString();
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        json.put("sn", this.sn);
         json.put("title", this.title);
         if (null != this.content && this.content.length() > 0) {
             json.put("content", this.content);
@@ -104,6 +123,13 @@ public class Article implements JSONable {
         public Paragraph(JSONObject json) {
             this.title = json.getString("title");
             this.content = json.getString("content");
+        }
+
+        public String toMarkdown() {
+            StringBuilder buf = new StringBuilder();
+            buf.append("## ").append(this.title).append("\n");
+            buf.append(this.content).append("\n\n");
+            return buf.toString();
         }
 
         @Override

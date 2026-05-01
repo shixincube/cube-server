@@ -49,6 +49,19 @@ public class KineticFamilyDrawingEvaluation extends Evaluation {
             this.code = code;
         }
 
+        public boolean isKid() {
+            switch (this) {
+                case Child:
+                case Brother:
+                case YoungerBrother:
+                case Sister:
+                case YoungerSister:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         public final static FamilyMemberRole parse(String nameOrCode) {
             for (FamilyMemberRole role : FamilyMemberRole.values()) {
                 if (role.code.equalsIgnoreCase(nameOrCode) ||
