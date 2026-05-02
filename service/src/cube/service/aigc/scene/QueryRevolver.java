@@ -15,13 +15,14 @@ import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.*;
 import cube.aigc.psychology.indicator.Indicator;
 import cube.common.Language;
-import cube.common.entity.*;
+import cube.common.entity.Knowledge;
+import cube.common.entity.QuestionAnswer;
+import cube.common.entity.User;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.guidance.Prompts;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.SemanticSearchListener;
-import cube.service.contact.ContactManager;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.util.TextUtils;
@@ -115,6 +116,8 @@ public class QueryRevolver {
             "The entire content of the report"
     };
 
+    private double knowledgeScore = 0.82;
+
     private AIGCService service;
 
     private Tokenizer tokenizer;
@@ -152,14 +155,13 @@ public class QueryRevolver {
             }
         }
 
-        final double scoreLimit = 0.82;
         final List<QuestionAnswer> questionAnswerList = new ArrayList<>();
         if (hitLazy) {
             boolean success = this.service.semanticSearch(query, new SemanticSearchListener() {
                 @Override
                 public void onCompleted(String query, List<QuestionAnswer> questionAnswers) {
                     for (QuestionAnswer questionAnswer : questionAnswers) {
-                        if (questionAnswer.getScore() < scoreLimit) {
+                        if (questionAnswer.getScore() < knowledgeScore) {
                             // 排除得分较低答案
                             continue;
                         }
@@ -360,14 +362,34 @@ public class QueryRevolver {
         else if (null != context.getRelation().getArticle()) {
             ReportArticle article = (ReportArticle) context.getRelation().getArticle();
 
+            String strategyContent = null;
+            String strategy = context.getStrategy();
+            if (null != strategy) {
+                strategyContent = Resource.getInstance().getStrategyContent(strategy);
+                if (null == strategyContent) {
+                    Logger.w(this.getClass(), "#generatePrompt - Can NOT find the strategy: " + strategy);
+                }
+            }
+
             result.append("# 角色设定\n\n");
             result.append("你是一位拥有10年经验的临床心理专家。你擅长针对测评结果详细说明测评内容，针对问题给出专业回复。\n\n");
             result.append("# 任务目标\n\n");
-            result.append("根据【报告内容】对【用户提问】进行回复。\n\n");
+            result.append("根据【报告内容】对【用户提问】进行回复。");
+            if (null != strategyContent) {
+                result.append("需要按照【分析策略】的引导进行回复。\n\n");
+            }
+            else {
+                result.append("\n\n");
+            }
             result.append("# 报告内容\n\n");
             result.append("```\n");
             result.append(article.toMarkdown());
             result.append("```\n\n");
+            if (null != strategyContent) {
+                result.append("# 分析策略\n\n");
+                result.append(strategyContent);
+                result.append("\n\n");
+            }
             result.append("# 用户提问\n\n");
             result.append("```\n").append(query).append("\n```\n\n");
             result.append("# 注意事项\n\n");
@@ -375,7 +397,41 @@ public class QueryRevolver {
             result.append("2. 不允许在答案中添加编造成分，保持应有的文档结构。\n");
         }
         else if (null != context.getRelation().getComprehensiveReport()) {
+            ComprehensiveReport comprehensiveReport = context.getRelation().getComprehensiveReport();
 
+            String strategyContent = null;
+            String strategy = context.getStrategy();
+            if (null != strategy) {
+                strategyContent = Resource.getInstance().getStrategyContent(strategy);
+                if (null == strategyContent) {
+                    Logger.w(this.getClass(), "#generatePrompt - Can NOT find the strategy: " + strategy);
+                }
+            }
+
+            result.append("# 角色设定\n\n");
+            result.append("你是一位拥有10年经验的临床心理专家。你擅长针对测评结果详细说明测评内容，针对问题给出专业回复。\n\n");
+            result.append("# 任务目标\n\n");
+            result.append("根据【报告内容】对【用户提问】进行回复。");
+            if (null != strategyContent) {
+                result.append("需要按照【分析策略】的引导进行回复。\n\n");
+            }
+            else {
+                result.append("\n\n");
+            }
+            result.append("# 报告内容\n\n");
+            result.append("```\n");
+            result.append(comprehensiveReport.toMarkdown());
+            result.append("```\n\n");
+            if (null != strategyContent) {
+                result.append("# 分析策略\n\n");
+                result.append(strategyContent);
+                result.append("\n\n");
+            }
+            result.append("# 用户提问\n\n");
+            result.append("```\n").append(query).append("\n```\n\n");
+            result.append("# 注意事项\n\n");
+            result.append("1. 综合应用以上信息，专业地回答问题。如果无法从中得到答案，请说“您提的问题与当前讨论的报告数据无关。”\n");
+            result.append("2. 不允许在答案中添加编造成分，保持应有的文档结构。\n");
         }
         else {
             // 无关联报告数据
@@ -418,7 +474,7 @@ public class QueryRevolver {
 
             boolean selected = false;
             for (QuestionAnswer questionAnswer : questionAnswerList) {
-                if (questionAnswer.getScore() >= 0.82) {
+                if (questionAnswer.getScore() >= this.knowledgeScore) {
                     selected = true;
                     break;
                 }
@@ -428,7 +484,7 @@ public class QueryRevolver {
                 if (english) {
                     result.append("Known Information:\n\n");
                     for (QuestionAnswer questionAnswer : questionAnswerList) {
-                        if (questionAnswer.getScore() >= 0.82) {
+                        if (questionAnswer.getScore() >= this.knowledgeScore) {
                             result.append(questionAnswer.getAnswers().get(0));
                             result.append("\n\n");
                         }
@@ -439,7 +495,7 @@ public class QueryRevolver {
                 else {
 //                    result.append("已知信息：\n\n");
                     for (QuestionAnswer questionAnswer : questionAnswerList) {
-                        if (questionAnswer.getScore() >= 0.82) {
+                        if (questionAnswer.getScore() >= this.knowledgeScore) {
                             result.append("## ");
                             result.append(questionAnswer.getQuestions().get(0));
                             result.append("\n\n");
@@ -461,7 +517,7 @@ public class QueryRevolver {
             else {
                 if (!questionAnswerList.isEmpty()) {
                     for (QuestionAnswer questionAnswer : questionAnswerList) {
-                        if (questionAnswer.getScore() >= 0.82) {
+                        if (questionAnswer.getScore() >= this.knowledgeScore) {
                             result.append("## ");
                             result.append(questionAnswer.getQuestions().get(0));
                             result.append("\n\n");

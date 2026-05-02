@@ -48,6 +48,12 @@ public enum Subtask {
 
     GuideFlow("guide_flow"),
 
+    StartAppointment("start_appointment"),
+
+    StopAppointment("stop_appointment"),
+
+    Appointment("appointment"),
+
     SuperAdmin("super_admin"),
 
     AppQueryUser("app_query_user"),

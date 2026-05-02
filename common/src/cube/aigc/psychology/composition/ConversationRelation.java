@@ -36,8 +36,6 @@ public class ConversationRelation implements JSONable {
 
     private User user;
 
-    private String speechFileCode;
-
     public ConversationRelation() {
         this.name = "Anonymous";
     }
@@ -55,9 +53,6 @@ public class ConversationRelation implements JSONable {
         }
         if (json.has("uid")) {
             this.uid = json.getLong("uid");
-        }
-        if (json.has("speechFileCode")) {
-            this.speechFileCode = json.getString("speechFileCode");
         }
     }
 
@@ -148,9 +143,6 @@ public class ConversationRelation implements JSONable {
         }
         if (this.uid > 0) {
             json.put("uid", this.uid);
-        }
-        if (null != this.speechFileCode) {
-            json.put("speechFileCode", this.speechFileCode);
         }
         return json;
     }

@@ -49,6 +49,13 @@ public class ComprehensiveSection implements JSONable {
         return this.contents.get(0);
     }
 
+    public String toMarkdown() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("**标题** ：").append(this.title).append("\n");
+        buf.append("**内容** ：").append(this.contents.get(0)).append("\n\n");
+        return buf.toString();
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

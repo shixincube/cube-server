@@ -27,6 +27,8 @@ public class ComplexContext extends Entity {
 
     private PromptTemplate promptTemplate;
 
+    private String strategy;
+
     private String subtask;
 
     private List<ComplexResource> resources;
@@ -63,6 +65,10 @@ public class ComplexContext extends Entity {
 
         if (json.has("promptTemplate")) {
             this.promptTemplate = new PromptTemplate(json.getJSONObject("promptTemplate"));
+        }
+
+        if (json.has("strategy")) {
+            this.strategy = json.getString("strategy");
         }
 
         this.resources = new ArrayList<>();
@@ -135,6 +141,10 @@ public class ComplexContext extends Entity {
 
     public PromptTemplate getPromptTemplate() {
         return this.promptTemplate;
+    }
+
+    public String getStrategy() {
+        return this.strategy;
     }
 
     public void setSubtask(Subtask subtask) {
@@ -242,6 +252,10 @@ public class ComplexContext extends Entity {
 
         if (null != this.promptTemplate) {
             json.put("promptTemplate", this.promptTemplate.toJSON());
+        }
+
+        if (null != this.strategy) {
+            json.put("strategy", this.strategy);
         }
 
         JSONArray array = new JSONArray();

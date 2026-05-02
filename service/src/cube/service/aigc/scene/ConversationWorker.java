@@ -136,9 +136,14 @@ public class ConversationWorker {
             }
 
             cc = new ConversationContext(relation, channel.getAuthToken());
+            // 管理上下文
             SceneManager.getInstance().putConversationContext(channel.getCode(), cc);
         }
+        // final
         final ConversationContext convCtx = cc;
+
+        // 设置策略
+        convCtx.setStrategy(cc.getStrategy());
 
         // try analysis subtask in query
         final Subtask roundSubtask = relation.isValidUser() ? this.matchSubtask(query, convCtx) : Subtask.None;

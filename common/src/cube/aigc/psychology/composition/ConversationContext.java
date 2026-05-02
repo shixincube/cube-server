@@ -7,6 +7,7 @@
 package cube.aigc.psychology.composition;
 
 import cube.aigc.guidance.AbstractGuideFlow;
+import cube.aigc.memory.SubtaskMemory;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
 import cube.auth.AuthToken;
@@ -47,13 +48,15 @@ public class ConversationContext implements JSONable {
      */
     private PaintingReport currentReport;
 
-    private Subtask currentSubtask;
+    private Subtask subtask;
+
+    private SubtaskMemory subtaskMemory;
 
     private List<PaintingReport> reportList;
 
     private AbstractGuideFlow guideFlow;
 
-    private List<GeneratingRecord> taskRecords = new ArrayList<>();
+    private String strategy;
 
     private List<GeneratingRecord> normalRecords = new ArrayList<>();
 
@@ -73,11 +76,17 @@ public class ConversationContext implements JSONable {
     }
 
     public void setCurrentSubtask(Subtask subtask) {
-        this.currentSubtask = subtask;
+        this.subtask = subtask;
+        this.subtaskMemory = new SubtaskMemory();
+    }
+
+    public void cancelCurrentSubtask() {
+        this.subtask = null;
+        this.subtaskMemory = null;
     }
 
     public Subtask getCurrentSubtask() {
-        return this.currentSubtask;
+        return this.subtask;
     }
 
     public void setCurrentAttribute(Attribute attribute) {
@@ -128,6 +137,14 @@ public class ConversationContext implements JSONable {
         return this.guideFlow;
     }
 
+    public void setStrategy(String strategy) {
+        this.strategy = strategy;
+    }
+
+    public String getStrategy() {
+        return this.strategy;
+    }
+
     public void setSuperAdmin(boolean value) {
         this.superAdmin = value;
     }
@@ -141,21 +158,18 @@ public class ConversationContext implements JSONable {
         this.currentPaintingValidity = false;
         this.currentAttribute = null;
         this.currentReport = null;
-        this.currentSubtask = null;
-        this.taskRecords.clear();
+        this.subtask = null;
+        this.subtaskMemory = null;
         this.reportList = null;
         this.guideFlow = null;
     }
 
     public void cancelCurrentPredict() {
-        this.currentSubtask = null;
+        this.subtask = null;
+        this.subtaskMemory = null;
         this.currentAttribute = null;
         this.currentFile = null;
         this.currentPaintingValidity = false;
-    }
-
-    public void cancelCurrentSubtask() {
-        this.currentSubtask = null;
     }
 
     public FileLabel getRecentFile() {
@@ -165,26 +179,21 @@ public class ConversationContext implements JSONable {
                 return record.queryFileLabels.get(0);
             }
         }
-        for (int i = this.taskRecords.size() - 1; i >= 0; --i) {
-            GeneratingRecord record = this.taskRecords.get(i);
-            if (null != record.queryFileLabels && !record.queryFileLabels.isEmpty()) {
-                return record.queryFileLabels.get(0);
-            }
-        }
-        return null;
+
+        return this.subtaskMemory.getRecentFile();
     }
 
-    public void recordTask(GeneratingRecord record) {
-        this.taskRecords.add(record);
+    public SubtaskMemory getSubtaskMemory() {
+        return this.subtaskMemory;
     }
 
-    public GeneratingRecord getRecentTaskRecord() {
-        if (this.taskRecords.isEmpty()) {
-            return null;
-        }
-
-        return this.taskRecords.get(this.taskRecords.size() - 1);
-    }
+//    public void recordTask(GeneratingRecord record) {
+//        this.subtaskMemory.record(record);
+//    }
+//
+//    public GeneratingRecord getRecentTaskRecord() {
+//        return this.subtaskMemory.getRecent();
+//    }
 
     public void recordNormal(GeneratingRecord record) {
         this.normalRecords.add(record);

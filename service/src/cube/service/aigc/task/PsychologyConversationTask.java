@@ -110,7 +110,7 @@ public class PsychologyConversationTask extends ServiceTask {
         ConversationWorker worker = new ConversationWorker(service);
         AIGCStateCode stateCode = AIGCStateCode.Failure;
 
-        if (null != conversationRelationList) {
+        if (null != conversationRelationList && !conversationRelationList.isEmpty()) {
             stateCode = worker.work(token, channelCode, conversationRelationList, query, new GenerateTextListener() {
                 @Override
                 public void onGenerated(AIGCChannel channel, GeneratingRecord record) {

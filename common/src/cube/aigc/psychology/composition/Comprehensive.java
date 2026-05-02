@@ -192,6 +192,10 @@ public class Comprehensive implements JSONable {
         return this.sections.get(0);
     }
 
+    public List<ComprehensiveSection> getComprehensiveSections() {
+        return this.sections;
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

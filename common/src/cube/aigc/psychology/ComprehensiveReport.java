@@ -122,13 +122,37 @@ public class ComprehensiveReport implements JSONable {
 
     public String toMarkdown() {
         StringBuilder buf = new StringBuilder();
-        buf.append("# 测评报告基础信息\n\n");
-        buf.append("- 评测主题：").append(this.theme.name).append("\n");
-        buf.append("- 评测日期：").append(TimeUtils.formatDateString(this.timestamp, Language.Chinese)).append("\n");
-        buf.append("- 评测对象：共").append(this.comprehensives.size()).append("个评测对象参与。分别是：\n");
-        
+        buf.append("## 报告基础信息\n\n");
+        buf.append("- 测评主题：").append(this.theme.name).append("\n");
+        buf.append("- 测评指导语：").append(this.theme.instruction).append("\n");
+        buf.append("- 测评日期：").append(TimeUtils.formatDateString(this.timestamp, Language.Chinese)).append("\n");
+        buf.append("- 测评对象：共").append(this.comprehensives.size()).append("个测评对象参与。分别是：\n");
+        int sn = 1;
         for (Comprehensive comprehensive : this.comprehensives) {
-            comprehensive.getAttribute();
+            buf.append(sn++).append(". ");
+            buf.append("性别").append(comprehensive.getAttribute().getGenderText());
+            buf.append("，");
+            buf.append("年龄").append(comprehensive.getAttribute().getAgeText());
+            buf.append("\n");
+        }
+        buf.append("\n");
+        buf.append("## 报告摘要\n\n");
+        buf.append(this.summary);
+        buf.append("\n\n");
+
+        buf.append("## 各测评对象详细报告\n\n");
+        for (Comprehensive comprehensive : this.comprehensives) {
+            buf.append("### 测评人：");
+            buf.append(comprehensive.getName()).append("，");
+            buf.append("性别").append(comprehensive.getAttribute().getGenderText());
+            buf.append("，");
+            buf.append("年龄").append(comprehensive.getAttribute().getAgeText());
+            buf.append("\n\n");
+            int resultSn = 1;
+            for (ComprehensiveSection section : comprehensive.getComprehensiveSections()) {
+                buf.append("测评结果").append(resultSn++).append("：\n");
+                buf.append(section.toMarkdown());
+            }
         }
         return buf.toString();
     }
