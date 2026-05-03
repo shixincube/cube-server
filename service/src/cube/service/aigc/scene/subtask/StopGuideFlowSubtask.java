@@ -51,7 +51,7 @@ public class StopGuideFlowSubtask extends ConversationSubtask {
         }
 
         // 取消子任务
-        this.convCtx.cancelCurrentSubtask();
+        this.convCtx.deactivateSubtask();
 
         this.service.getExecutor().execute(new Runnable() {
             @Override
@@ -59,21 +59,16 @@ public class StopGuideFlowSubtask extends ConversationSubtask {
                 // 结束
                 guideFlow.stop();
 
-                GuideFlow impl = (GuideFlow) guideFlow;
+//                GuideFlow impl = (GuideFlow) guideFlow;
 
                 ComplexContext complexContext = new ComplexContext();
                 complexContext.setSubtask(Subtask.StopGuideFlow);
 
-                TimeDuration duration = TimeUtils.calcTimeDuration(
-                        impl.getEndTimestamp() - impl.getStartTimestamp());
+//                TimeDuration duration = TimeUtils.calcTimeDuration(
+//                        impl.getEndTimestamp() - impl.getStartTimestamp());
 
                 GeneratingRecord record = new GeneratingRecord(query);
-//                record.answer = polish(String.format(
-//                        Resource.getInstance().getCorpus(CORPUS, "FORMAT_ANSWER_GOOD_STOP_QUESTIONNAIRE"),
-//                        scaleTrack.scale.getAllChosenAnswers().size(),
-//                        duration.toHumanStringDHMS(),
-//                        ""
-//                ));
+                record.answer = polish(Prompts.getPrompt("FORMAT_ANSWER_STOP_GUIDE_FLOW")).trim();
                 record.context = complexContext;
                 listener.onGenerated(channel, record);
                 channel.setProcessing(false);

@@ -6,14 +6,19 @@
 
 package cube.service.aigc.scene.subtask;
 
+import cube.aigc.ModelConfig;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Subtask;
 import cube.common.entity.AIGCChannel;
+import cube.common.entity.Appointment;
 import cube.common.entity.ComplexContext;
+import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.guidance.Prompts;
 import cube.service.aigc.listener.GenerateTextListener;
+import cube.service.aigc.scene.SceneManager;
 
 public class AppointmentSubtask extends ConversationSubtask {
 
@@ -25,6 +30,47 @@ public class AppointmentSubtask extends ConversationSubtask {
 
     @Override
     public AIGCStateCode execute(Subtask roundSubtask) {
-        return null;
+        Appointment appointment = this.convCtx.getAppointment();
+        if (null == appointment) {
+            this.service.getExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    GeneratingRecord record = new GeneratingRecord(query);
+                    record.answer = Prompts.getPrompt("ANSWER_NO_APPOINTMENT_DATA");
+                    listener.onGenerated(channel, record);
+                    channel.setProcessing(false);
+                }
+            });
+            return AIGCStateCode.Ok;
+        }
+
+        if (roundSubtask == Subtask.StopAppointment) {
+            // 取消子任务
+            this.convCtx.deactivateSubtask();
+
+            this.service.getExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    ComplexContext complexContext = new ComplexContext();
+                    complexContext.setSubtask(Subtask.StopAppointment);
+
+                    String answer = fastPolish(Prompts.getPrompt("ANSWER_INTERRUPT_APPOINTMENT"));
+
+                    GeneratingRecord record = new GeneratingRecord(query);
+                    record.answer = answer;
+                    record.context = complexContext;
+                    listener.onGenerated(channel, record);
+                    channel.setProcessing(false);
+
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            convCtx, record);
+                }
+            });
+            return AIGCStateCode.Ok;
+        }
+
+
+
+        return AIGCStateCode.Ok;
     }
 }

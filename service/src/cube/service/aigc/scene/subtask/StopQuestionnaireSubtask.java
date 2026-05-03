@@ -51,7 +51,7 @@ public class StopQuestionnaireSubtask extends ConversationSubtask {
         // 结束时间
         scaleTrack.scale.setEndTimestamp(System.currentTimeMillis());
         // 取消子任务
-        this.convCtx.cancelCurrentSubtask();
+        this.convCtx.deactivateSubtask();
 
         this.service.getExecutor().execute(new Runnable() {
             @Override

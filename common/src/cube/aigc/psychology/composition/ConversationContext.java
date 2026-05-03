@@ -12,6 +12,7 @@ import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
+import cube.common.entity.Appointment;
 import cube.common.entity.FileLabel;
 import cube.common.entity.GeneratingRecord;
 import org.json.JSONObject;
@@ -56,6 +57,8 @@ public class ConversationContext implements JSONable {
 
     private AbstractGuideFlow guideFlow;
 
+    private Appointment appointment;
+
     private String strategy;
 
     private List<GeneratingRecord> normalRecords = new ArrayList<>();
@@ -75,12 +78,12 @@ public class ConversationContext implements JSONable {
         return this.authToken;
     }
 
-    public void setCurrentSubtask(Subtask subtask) {
+    public void activateSubtask(Subtask subtask) {
         this.subtask = subtask;
         this.subtaskMemory = new SubtaskMemory();
     }
 
-    public void cancelCurrentSubtask() {
+    public void deactivateSubtask() {
         this.subtask = null;
         this.subtaskMemory = null;
     }
@@ -137,6 +140,14 @@ public class ConversationContext implements JSONable {
         return this.guideFlow;
     }
 
+    public void setAppointment(Appointment appointment) {
+        this.appointment = appointment;
+    }
+
+    public Appointment getAppointment() {
+        return this.appointment;
+    }
+
     public void setStrategy(String strategy) {
         this.strategy = strategy;
     }
@@ -162,6 +173,7 @@ public class ConversationContext implements JSONable {
         this.subtaskMemory = null;
         this.reportList = null;
         this.guideFlow = null;
+        this.appointment = null;
     }
 
     public void cancelCurrentPredict() {
@@ -186,14 +198,6 @@ public class ConversationContext implements JSONable {
     public SubtaskMemory getSubtaskMemory() {
         return this.subtaskMemory;
     }
-
-//    public void recordTask(GeneratingRecord record) {
-//        this.subtaskMemory.record(record);
-//    }
-//
-//    public GeneratingRecord getRecentTaskRecord() {
-//        return this.subtaskMemory.getRecent();
-//    }
 
     public void recordNormal(GeneratingRecord record) {
         this.normalRecords.add(record);

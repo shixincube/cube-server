@@ -54,7 +54,7 @@ public class StartGuideFlowSubtask extends ConversationSubtask {
         // 设置问答引导流
         this.convCtx.setGuideFlow(guideFlow);
         // 设置子任务
-        this.convCtx.setCurrentSubtask(Subtask.GuideFlow);
+        this.convCtx.activateSubtask(Subtask.GuideFlow);
 
         this.service.getExecutor().execute(new Runnable() {
             @Override
@@ -62,7 +62,7 @@ public class StartGuideFlowSubtask extends ConversationSubtask {
                 // 启动
                 guideFlow.start(service);
 
-                String answer = String.format(Prompts.getPrompt("FORMAT_ANSWER_STARTS_GUIDE_FLOW"),
+                String answer = String.format(Prompts.getPrompt("FORMAT_ANSWER_START_GUIDE_FLOW"),
                         polish(guideFlow.getInstruction()).trim(),
                         guideFlow.makeQuestion(true));
 

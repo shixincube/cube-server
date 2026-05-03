@@ -57,7 +57,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             convCtx, record);
 
                     // 取消子任务
-                    convCtx.cancelCurrentSubtask();
+                    convCtx.deactivateSubtask();
                 }
             });
             return AIGCStateCode.Ok;
@@ -124,7 +124,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                                 convCtx, record);
 
                         // 取消子任务
-                        convCtx.cancelCurrentSubtask();
+                        convCtx.deactivateSubtask();
                     }
                 });
                 return AIGCStateCode.Ok;
@@ -153,7 +153,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                                     convCtx, record);
 
                             // 取消子任务
-                            convCtx.cancelCurrentSubtask();
+                            convCtx.deactivateSubtask();
                         }
                     });
                     return AIGCStateCode.Ok;
@@ -186,7 +186,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
             // 结束时间
             scaleTrack.scale.setEndTimestamp(System.currentTimeMillis());
             // 取消子任务
-            this.convCtx.cancelCurrentSubtask();
+            this.convCtx.deactivateSubtask();
 
             this.service.getExecutor().execute(new Runnable() {
                 @Override
@@ -492,7 +492,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             convCtx, record);
 
                     // 清空子任务
-                    convCtx.cancelCurrentSubtask();
+                    convCtx.deactivateSubtask();
                     return;
                 }
 
@@ -529,7 +529,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         convCtx, record);
 
                 // 清空子任务
-                convCtx.cancelCurrentSubtask();
+                convCtx.deactivateSubtask();
             }
         });
 
@@ -553,7 +553,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     convCtx, record);
 
             // 取消子任务
-            convCtx.cancelCurrentSubtask();
+            convCtx.deactivateSubtask();
         }
         else {
             ComplexContext complexContext = new ComplexContext();
@@ -656,7 +656,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             convCtx, record);
 
                     // 取消子任务
-                    convCtx.cancelCurrentSubtask();
+                    convCtx.deactivateSubtask();
                 }
                 else if (scaleTrack.offQueries.size() > 1) {
                     // 提示并进行指导

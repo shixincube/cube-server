@@ -29,6 +29,8 @@ public enum ConsultationTheme {
 
     CareerGuidance("CG", "生涯指导", "Career Guidance"),
 
+    Other("OTHER", "其他", "Other"),
+
     ;
 
     public final String code;

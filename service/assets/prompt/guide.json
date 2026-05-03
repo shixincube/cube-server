@@ -27,20 +27,24 @@
 		"cn": "我遇到了一些问题，未能正确处理相关数据，请稍后再尝试。",
 		"en": ""
 	},
-	"ANSWER_NO_GUIDE_FLOW_DATA" : {
-		"cn": "无可用的访谈向导数据流。",
-		"en": ""
-	},
-	"ANSWER_INTERRUPT_GUIDE_FLOW" : {
-		"cn": "您已结束了本次主题对话。",
-		"en": ""
-	},
 	"FORMAT_POLISH": {
 		"cn": "润色以下内容，不使用“感谢”，“润色”这样的用语，确保信息完整传达，不要编造内容，直接回复润色后的内容，内容是：\n\"\"\"\n%s\n\"\"\"",
 		"en": ""
 	},
-	"FORMAT_ANSWER_STARTS_GUIDE_FLOW": {
+	"ANSWER_NO_GUIDE_FLOW_DATA" : {
+		"cn": "无可用的向导数据流。",
+		"en": ""
+	},
+	"ANSWER_INTERRUPT_GUIDE_FLOW" : {
+		"cn": "您已结束了本次向导对话。",
+		"en": ""
+	},
+	"FORMAT_ANSWER_START_GUIDE_FLOW": {
 		"cn": "%s\n\n现在让我们开始吧：\n\n%s",
+		"en": ""
+	},
+	"FORMAT_ANSWER_STOP_GUIDE_FLOW": {
+		"cn": "先让我们结束这些问题吧。等您再次准备好了，我们可以继续这些相关的问题。",
 		"en": ""
 	},
 	"FORMAT_VERIFY_TRUE_OR_FALSE": {
@@ -65,6 +69,14 @@
 	},
 	"FORMAT_EVALUATION_RESULT": {
 		"cn": "%s的%s结果如下：\n\n%s\n\n该%s过程用时%s。",
+		"en": ""
+	},
+	"ANSWER_NO_APPOINTMENT_DATA": {
+		"cn": "无可用的预约数据流。",
+		"en": ""
+	},
+	"ANSWER_INTERRUPT_APPOINTMENT" : {
+		"cn": "您已结束了本次预约操作。",
 		"en": ""
 	}
 }

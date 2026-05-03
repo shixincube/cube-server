@@ -365,6 +365,33 @@ public class ConversationWorker {
                     relation, convCtx, listener);
             return task.execute(roundSubtask);
         }
+        else if (Subtask.Appointment == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - Appointment: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 执行子任务
+            AppointmentSubtask task = new AppointmentSubtask(this.service, channel, query, context,
+                    relation, convCtx, listener);
+            return task.execute(roundSubtask);
+        }
+        else if (Subtask.StartAppointment == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - StartAppointment: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 执行子任务
+            StartAppointmentSubtask task = new StartAppointmentSubtask(this.service, channel, query, context,
+                    relation, convCtx, listener);
+            return task.execute(roundSubtask);
+        }
+        else if (Subtask.StopAppointment == subtask) {
+            Logger.d(this.getClass(), "#work - Subtask - StopAppointment: " +
+                    channel.getAuthToken().getCode() + "/" + channel.getCode());
+
+            // 执行子任务
+            StopAppointmentSubtask task = new StopAppointmentSubtask(this.service, channel, query, context,
+                    relation, convCtx, listener);
+            return task.execute(roundSubtask);
+        }
         else if (Subtask.Yes == subtask) {
             Logger.d(this.getClass(), "#work - Subtask - Yes/Continue: " +
                     channel.getAuthToken().getCode() + "/" + channel.getCode());
@@ -587,20 +614,29 @@ public class ConversationWorker {
 
                 if (null != convCtx.getCurrentReport()) {
                     // 如果当前有上下文关联的报告，排除量表等任务
-                    if (subtask == Subtask.StartQuestionnaire || subtask == Subtask.StartGuideFlow ||
-                            subtask == Subtask.StopQuestionnaire || subtask == Subtask.StopGuideFlow) {
+                    if (subtask == Subtask.StartQuestionnaire || subtask == Subtask.StopQuestionnaire ||
+                            subtask == Subtask.StartGuideFlow || subtask == Subtask.StopGuideFlow ||
+                            subtask == Subtask.StartAppointment || subtask == Subtask.StopAppointment) {
                         continue;
                     }
                 }
 
                 if (convCtx.getCurrentSubtask() == Subtask.Questionnaire) {
-                    if (subtask == Subtask.StopQuestionnaire || subtask == Subtask.StopGuideFlow) {
+                    if (subtask == Subtask.StopQuestionnaire || subtask == Subtask.StopGuideFlow ||
+                            subtask == Subtask.StopAppointment) {
                         return Subtask.StopQuestionnaire;
                     }
                 }
                 else if (convCtx.getCurrentSubtask() == Subtask.GuideFlow) {
-                    if (subtask == Subtask.StopQuestionnaire || subtask == Subtask.StopGuideFlow) {
+                    if (subtask == Subtask.StopQuestionnaire || subtask == Subtask.StopGuideFlow ||
+                            subtask == Subtask.StopAppointment) {
                         return Subtask.StopGuideFlow;
+                    }
+                }
+                else if (convCtx.getCurrentSubtask() == Subtask.Appointment) {
+                    if (subtask == Subtask.StopQuestionnaire || subtask == Subtask.StopGuideFlow ||
+                            subtask == Subtask.StopAppointment) {
+                        return Subtask.StopAppointment;
                     }
                 }
 

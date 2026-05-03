@@ -115,7 +115,7 @@ public class StartQuestionnaireSubtask extends ConversationSubtask {
         // 添加量表
         SceneManager.getInstance().setScale(this.channel.getCode(), scale);
         // 设置问卷子任务
-        this.convCtx.setCurrentSubtask(Subtask.Questionnaire);
+        this.convCtx.activateSubtask(Subtask.Questionnaire);
 
         this.service.getExecutor().execute(new Runnable() {
             @Override

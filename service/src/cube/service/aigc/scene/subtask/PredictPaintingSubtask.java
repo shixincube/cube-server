@@ -162,7 +162,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                         convCtx.getCurrentFile().getFileCode());
                 if (!valid) {
                     // 进入子任务
-                    convCtx.setCurrentSubtask(Subtask.PredictPainting);
+                    convCtx.activateSubtask(Subtask.PredictPainting);
 
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
@@ -215,7 +215,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                             Resource.getInstance().getCorpus(CORPUS, "ANSWER_NEED_TO_PROVIDE_GENDER_AND_AGE")));
 
                     // 进入子任务
-                    convCtx.setCurrentSubtask(Subtask.PredictPainting);
+                    convCtx.activateSubtask(Subtask.PredictPainting);
                     convCtx.getSubtaskMemory().record(record);
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
@@ -239,7 +239,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                             "ANSWER_NEED_TO_PROVIDE_AGE"));
 
                     // 进入子任务
-                    convCtx.setCurrentSubtask(Subtask.PredictPainting);
+                    convCtx.activateSubtask(Subtask.PredictPainting);
                     convCtx.getSubtaskMemory().record(record);
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
@@ -263,7 +263,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                             "ANSWER_AGE_OUT_OF_LIMIT"));
 
                     // 进入子任务
-                    convCtx.setCurrentSubtask(Subtask.PredictPainting);
+                    convCtx.activateSubtask(Subtask.PredictPainting);
                     convCtx.getSubtaskMemory().record(record);
                     this.service.getExecutor().execute(new Runnable() {
                         @Override
@@ -287,7 +287,7 @@ public class PredictPaintingSubtask extends ConversationSubtask {
                             "ANSWER_NEED_TO_PROVIDE_GENDER"));
 
                     // 进入子任务
-                    convCtx.setCurrentSubtask(Subtask.PredictPainting);
+                    convCtx.activateSubtask(Subtask.PredictPainting);
                     convCtx.getSubtaskMemory().record(record);
                     this.service.getExecutor().execute(new Runnable() {
                         @Override

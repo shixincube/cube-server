@@ -49,8 +49,8 @@ public class GuideFlowSubtask extends ConversationSubtask {
         }
 
         if (roundSubtask == Subtask.StopGuideFlow) {
-            // 清空子任务
-            this.convCtx.cancelCurrentSubtask();
+            // 取消子任务
+            this.convCtx.deactivateSubtask();
 
             this.service.getExecutor().execute(new Runnable() {
                 @Override
@@ -67,6 +67,7 @@ public class GuideFlowSubtask extends ConversationSubtask {
                     GeneratingRecord record = new GeneratingRecord(query);
                     record.answer = answer;
                     record.context = complexContext;
+                    listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
                     SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
@@ -124,7 +125,7 @@ public class GuideFlowSubtask extends ConversationSubtask {
                     Logger.d(this.getClass(), "#execute - Guide flow completed: " + guideFlow.getName());
 
                     // 取消子任务
-                    convCtx.cancelCurrentSubtask();
+                    convCtx.deactivateSubtask();
                     // 停止
                     guideFlow.stop();
                 }
