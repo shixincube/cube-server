@@ -1,7 +1,7 @@
 /*
  * This source file is part of Cube.
  *
- * Copyright (c) 2023-2025 Ambrose Xu.
+ * Copyright (c) 2023-2026 Ambrose Xu.
  */
 
 package cube.aigc.memory;
@@ -42,5 +42,14 @@ public class SubtaskMemory {
             }
         }
         return null;
+    }
+
+    public String toMarkdown() {
+        StringBuilder buf = new StringBuilder();
+        for (GeneratingRecord record : this.records) {
+            buf.append("用户：").append(record.query.trim()).append("\n\n");
+            buf.append("云宝：").append(record.answer.trim()).append("\n\n");
+        }
+        return buf.toString();
     }
 }

@@ -37,7 +37,9 @@ public class StartAppointmentSubtask extends ConversationSubtask {
         this.service.getExecutor().execute(new Runnable() {
             @Override
             public void run() {
-                String answer = appointment.getInstruction();
+                String answer = String.format("%s\n\n%s",
+                        appointment.getInstruction(),
+                        appointment.makeConversation());
 
                 ComplexContext complexContext = new ComplexContext();
                 complexContext.setSubtask(Subtask.Appointment);

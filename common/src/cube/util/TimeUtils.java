@@ -118,7 +118,7 @@ public final class TimeUtils {
 
     /**
      * 格式化输出今天日期的全部信息。<br/>
-     * 例如：今天是2025年8月24日，星期日，农历二〇二五年七月初二 乙巳年 蛇
+     * 例如：2025年8月24日，星期日，农历二〇二五年七月初二 乙巳年 蛇
      *
      * @return
      */
@@ -166,5 +166,104 @@ public final class TimeUtils {
         else {
             return sDateFormatForEnglish.format(date);
         }
+    }
+
+    public static String formatDateYMD(long time) {
+        Date date = new Date();
+        date.setTime(time);
+        SimpleDateFormat format = new SimpleDateFormat("yyyy年MM月dd日", Locale.CHINESE);
+        return format.format(date);
+    }
+
+    public static String formatDateYMDH(long time) {
+        Date date = new Date();
+        date.setTime(time);
+        SimpleDateFormat format = new SimpleDateFormat("yyyy年MM月dd日，HH时", Locale.CHINESE);
+        return format.format(date);
+    }
+
+    /**
+     * 提取文本里的日期数据。
+     *
+     * @param text
+     * @return
+     */
+    public static Date extractDate(String text) {
+        int year = 0;
+        int month = 0;
+        int date = 0;
+        int hour = 0;
+
+        String[] lines = text.split("\n");
+        for (String line : lines) {
+            if (line.length() <= 2) {
+                continue;
+            }
+
+            StringBuilder buf = new StringBuilder();
+            for (int i = 0; i < line.length(); ++i) {
+                String word = line.substring(i, i + 1).trim();
+                if (word.length() == 0) {
+                    continue;
+                }
+
+                if (TextUtils.isNumeric(word)) {
+                    buf.append(word);
+                    continue;
+                }
+
+                if (i == 0) {
+                    continue;
+                }
+
+                try {
+                    if (buf.length() > 0) {
+                        if (word.equals("年")) {
+                            year = Integer.parseInt(buf.toString());
+                            buf.delete(0, buf.length());
+                        }
+                        else if (word.equals("月")) {
+                            month = Integer.parseInt(buf.toString());
+                            buf.delete(0, buf.length());
+                        }
+                        else if (word.equals("日") || word.equals("号")) {
+                            date = Integer.parseInt(buf.toString());
+                            buf.delete(0, buf.length());
+                        }
+                        else if (word.equals("时") || word.equals("点")) {
+                            hour = Integer.parseInt(buf.toString());
+                            buf.delete(0, buf.length());
+                        }
+                        else {
+                            buf.delete(0, buf.length());
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        if (date == 0) {
+            // 没有日期数据
+            return null;
+        }
+
+        Calendar calendar = Calendar.getInstance();
+        if (0 == year) {
+            year = calendar.get(Calendar.YEAR);
+        }
+        if (0 == month) {
+            month = calendar.get(Calendar.MONTH) + 1;
+        }
+
+        calendar.set(Calendar.YEAR, year);
+        calendar.set(Calendar.MONTH, month - 1);
+        calendar.set(Calendar.DATE, date);
+        calendar.set(Calendar.HOUR_OF_DAY, hour);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
     }
 }

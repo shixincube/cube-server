@@ -25,6 +25,14 @@
       "file": "psy_template_report.md"
     },
     {
+      "name": "psy_appointment_data",
+      "file": "psy_appointment_data.md"
+    },
+    {
+      "name": "psy_appointment_answer",
+      "file": "psy_appointment_answer.md"
+    },
+    {
       "name": "srbc-integration_zone",
       "file": "srbc-integration_zone.md"
     },

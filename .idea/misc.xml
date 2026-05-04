@@ -3,6 +3,8 @@
   <component name="ProjectPlainTextFileTypeManager">
     <file url="file://$PROJECT_DIR$/service/assets/prompt/books.md" />
     <file url="file://$PROJECT_DIR$/service/assets/prompt/general.md" />
+    <file url="file://$PROJECT_DIR$/service/assets/prompt/psy_appointment_answer.md" />
+    <file url="file://$PROJECT_DIR$/service/assets/prompt/psy_appointment_data.md" />
     <file url="file://$PROJECT_DIR$/service/assets/prompt/psy_organize_record.md" />
     <file url="file://$PROJECT_DIR$/service/assets/prompt/psy_supervise_record.md" />
     <file url="file://$PROJECT_DIR$/service/assets/prompt/psy_template_report.md" />

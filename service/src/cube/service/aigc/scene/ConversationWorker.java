@@ -146,7 +146,8 @@ public class ConversationWorker {
         convCtx.setStrategy(cc.getStrategy());
 
         // try analysis subtask in query
-        final Subtask roundSubtask = relation.isValidUser() ? this.matchSubtask(query, convCtx) : Subtask.None;
+//        final Subtask roundSubtask = relation.isValidUser() ? this.matchSubtask(query, convCtx) : Subtask.None;
+        final Subtask roundSubtask = this.matchSubtask(query, convCtx);
 
         if (convCtx.isSuperAdmin()) {
             if (roundSubtask == Subtask.SuperAdmin) {
@@ -441,20 +442,20 @@ public class ConversationWorker {
             return AIGCStateCode.Ok;
         }
 
-        if (!relation.isValidUser()) {
-            Logger.d(this.getClass(), "#work - The user is NOT valid: " + relation.getUid());
-
-            String result = Resource.getInstance().getCorpus("baize", "VISITOR_NOTICE", channel.getLanguage());
-            final GeneratingRecord record = new GeneratingRecord(ModelConfig.AIXINLI, query, result);
-            (new Thread() {
-                @Override
-                public void run() {
-                    channel.setProcessing(false);
-                    listener.onGenerated(channel, record);
-                }
-            }).start();
-            return AIGCStateCode.Ok;
-        }
+//        if (!relation.isValidUser()) {
+//            Logger.d(this.getClass(), "#work - The user is NOT valid: " + relation.getUid());
+//
+//            String result = Resource.getInstance().getCorpus("baize", "VISITOR_NOTICE", channel.getLanguage());
+//            final GeneratingRecord record = new GeneratingRecord(ModelConfig.AIXINLI, query, result);
+//            (new Thread() {
+//                @Override
+//                public void run() {
+//                    channel.setProcessing(false);
+//                    listener.onGenerated(channel, record);
+//                }
+//            }).start();
+//            return AIGCStateCode.Ok;
+//        }
 
         // 获取单元
         String unitName = prompt.content.length() > ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT || prompt.content.contains(JUMP_POLISH) ?
@@ -495,11 +496,13 @@ public class ConversationWorker {
                         // 记录为一般性记录
                         convCtx.recordNormal(record);
                         listener.onGenerated(channel, record);
+                        channel.setProcessing(false);
                     }
 
                     @Override
                     public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
                         listener.onFailed(channel, stateCode);
+                        channel.setProcessing(false);
                     }
                 });
 
@@ -603,8 +606,35 @@ public class ConversationWorker {
             }
             else if (questionAnswer.getScore() >= 0.95) {
                 List<String> answers = questionAnswer.getAnswers();
-                for (String answer : answers) {
-                    return Subtask.extract(answer);
+                String answer = answers.get(0);
+                Subtask subtask = Subtask.extract(answer);
+
+                if (convCtx.getCurrentSubtask() == Subtask.Questionnaire) {
+                    if (subtask == Subtask.EndTopic ||
+                            subtask == Subtask.StopQuestionnaire ||
+                            subtask == Subtask.StopGuideFlow ||
+                            subtask == Subtask.StopAppointment) {
+                        return Subtask.StopQuestionnaire;
+                    }
+                }
+                else if (convCtx.getCurrentSubtask() == Subtask.GuideFlow) {
+                    if (subtask == Subtask.EndTopic ||
+                            subtask == Subtask.StopQuestionnaire ||
+                            subtask == Subtask.StopGuideFlow ||
+                            subtask == Subtask.StopAppointment) {
+                        return Subtask.StopGuideFlow;
+                    }
+                }
+                else if (convCtx.getCurrentSubtask() == Subtask.Appointment) {
+                    if (subtask == Subtask.EndTopic ||
+                            subtask == Subtask.StopQuestionnaire ||
+                            subtask == Subtask.StopGuideFlow ||
+                            subtask == Subtask.StopAppointment) {
+                        return Subtask.StopAppointment;
+                    }
+                }
+                else {
+                    return subtask;
                 }
             }
 
