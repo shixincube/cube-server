@@ -14,7 +14,9 @@ import java.util.Calendar;
 
 public class Appointment extends Entity {
 
-    private String instruction = "我会根据您的情况和需求为您安排专业的咨询师为您服务。";
+    private final String instruction = "我会根据您的情况和需求为您安排专业的咨询师为您服务。";
+
+    private long userId;
 
     private ConsultationTheme consultationTheme;
 
@@ -22,17 +24,22 @@ public class Appointment extends Entity {
 
     private Calendar dateCalendar;
 
-    public Appointment() {
+    public Appointment(long userId) {
         super();
+        this.userId = userId;
     }
 
-    public Appointment(ConsultationTheme consultationTheme) {
-        super();
+    public Appointment(long userId, ConsultationTheme consultationTheme) {
+        this(userId);
         this.consultationTheme = consultationTheme;
     }
 
     public String getInstruction() {
         return this.instruction;
+    }
+
+    public long getUserId() {
+        return this.userId;
     }
 
     public void setConsultationTheme(ConsultationTheme theme) {

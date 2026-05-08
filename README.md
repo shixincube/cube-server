@@ -24,6 +24,8 @@ Matching subtasks ━▶ NO ━▶ Revolve pipline ━━━━━━━━━�
     ┃                                                   ┃
     ┣▶ Guide Flow ━▶ start ━▶ process ━▶ stop           ┃
     ┃                                                   ┃
+    ┣▶ Appointment ━▶ start ━▶ process ━▶ stop          ┃
+    ┃                                                   ┃
     ┗▶ Logic rules [BACK]                               ┃
                                                         ┃
                                         ┏━━━━━━━━━━━━━━━┻━━━━┓

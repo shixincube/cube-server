@@ -20,6 +20,7 @@ import cube.aigc.psychology.consultation.ConsultationTheme;
 import cube.aigc.psychology.indicator.Indicator;
 import cube.common.Language;
 import cube.common.Storagable;
+import cube.common.entity.Appointment;
 import cube.common.state.AIGCStateCode;
 import cube.core.Conditional;
 import cube.core.Constraint;
@@ -74,6 +75,8 @@ public class PsychologyStorage implements Storagable {
     private final String customerTable = "psychology_customer";
 
     private final String scheduleTable = "psychology_schedule";
+
+    private final String appointmentTable = "psychology_appointment";
 
 //    private final String usageTable = "psychology_usage";
 
@@ -586,6 +589,21 @@ public class PsychologyStorage implements Storagable {
             })
     };
 
+    private final StorageField[] appointmentFields = new StorageField[] {
+            new StorageField("uid", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY
+            }),
+            new StorageField("theme", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("date", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
 //    private final StorageField[] usageFields = new StorageField[] {
 //            new StorageField("id", LiteralBase.LONG, new Constraint[] {
 //                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
@@ -776,6 +794,13 @@ public class PsychologyStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.scheduleTable, this.scheduleFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.scheduleTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.appointmentTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.appointmentTable, this.appointmentFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.appointmentTable + "' successfully");
             }
         }
 
@@ -2067,6 +2092,18 @@ public class PsychologyStorage implements Storagable {
                 " AND (`appointment_time`>=" + starting + " OR `counseling_time`>=" + starting + ")" +
                 " AND (`appointment_time`<=" + ending + " OR `counseling_time`<=" + ending + ")");
         return result.get(0)[0].getInt();
+    }
+
+    public boolean writeAppointment(Appointment appointment) {
+        List<StorageField[]> result = this.storage.executeQuery(this.appointmentTable, this.appointmentFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("uid", appointment.getUserId())
+                });
+        return true;
+    }
+
+    public Appointment readAppointment(long contactId) {
+        return null;
     }
 
 //    public boolean writeUsage(long cid, String token, long timestamp, String remote, String query,

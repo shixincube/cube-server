@@ -6,18 +6,17 @@
 
 package cube.service.aigc.scene.subtask;
 
+import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Subtask;
-import cube.common.entity.AIGCChannel;
-import cube.common.entity.Appointment;
-import cube.common.entity.ComplexContext;
-import cube.common.entity.GeneratingRecord;
+import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.SceneManager;
+import cube.service.contact.ContactManager;
 
 public class StartAppointmentSubtask extends ConversationSubtask {
 
@@ -29,7 +28,16 @@ public class StartAppointmentSubtask extends ConversationSubtask {
 
     @Override
     public AIGCStateCode execute(Subtask roundSubtask) {
-        Appointment appointment = new Appointment();
+        User user = null;
+        try {
+            Contact contact = ContactManager.getInstance().getContact(this.channel.getAuthToken().getCode());
+            user = new User(contact.getContext());
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "", e);
+            return AIGCStateCode.Failure;
+        }
+
+        Appointment appointment = new Appointment(user.getId());
         // 激活子任务
         this.convCtx.activateSubtask(Subtask.Appointment);
         this.convCtx.setAppointment(appointment);

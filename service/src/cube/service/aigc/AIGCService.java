@@ -934,7 +934,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     public User createUser(String appAgent, Device device, String channel) {
         final String domain = AuthConsts.DEFAULT_DOMAIN;
         final String appKey = AuthConsts.DEFAULT_APP_KEY;
-        final long tokenDuration = 5L * 365 * 24 * 60 * 60 * 1000;
+        final long tokenDuration = 10L * 365 * 24 * 60 * 60 * 1000;
 
         User user = null;
 
@@ -959,7 +959,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         // 创建令牌
         AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
-        // 5年有效时长
+        // 10年有效时长
         AuthToken authToken = authService.applyToken(domain, appKey, id, tokenDuration);
 
         String name = "ME" + Utils.randomNumberString(8);

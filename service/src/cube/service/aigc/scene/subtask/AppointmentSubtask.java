@@ -182,9 +182,6 @@ public class AppointmentSubtask extends ConversationSubtask {
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
-                    // 建立记忆
-                    convCtx.getSubtaskMemory().record(record);
-
                     SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
                             convCtx, record);
                 }

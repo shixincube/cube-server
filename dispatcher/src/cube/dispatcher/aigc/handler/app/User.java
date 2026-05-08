@@ -37,7 +37,7 @@ public class User extends ContextHandler {
             try {
                 String token = this.getApiToken(request);
                 if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                    this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                     this.complete();
                     return;
                 }
@@ -59,7 +59,7 @@ public class User extends ContextHandler {
             try {
                 String token = this.getApiToken(request);
                 if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
-                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                    this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                     this.complete();
                     return;
                 }

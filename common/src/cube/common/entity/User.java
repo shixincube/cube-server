@@ -11,6 +11,10 @@ import org.json.JSONObject;
 
 import java.util.Calendar;
 
+/**
+ * 应用层用户。
+ * 用户ID和Contact ID一致。
+ */
 public class User extends Entity {
 
     public final static String KnowledgeBaseName = "mind_echo";
