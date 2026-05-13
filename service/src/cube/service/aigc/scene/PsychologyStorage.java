@@ -2099,11 +2099,42 @@ public class PsychologyStorage implements Storagable {
                 new Conditional[] {
                         Conditional.createEqualTo("uid", appointment.getUserId())
                 });
-        return true;
+        if (result.isEmpty()) {
+            // 插入
+            return this.storage.executeInsert(this.appointmentTable, new StorageField[] {
+                    new StorageField("uid", appointment.getUserId()),
+                    new StorageField("theme", appointment.getConsultationTheme().code),
+                    new StorageField("date", appointment.getConsultationDate()),
+                    new StorageField("timestamp", appointment.getTimestamp())
+            });
+        }
+        else {
+            // 更新
+            return this.storage.executeUpdate(this.appointmentTable, new StorageField[] {
+                    new StorageField("theme", appointment.getConsultationTheme().code),
+                    new StorageField("date", appointment.getConsultationDate()),
+                    new StorageField("timestamp", appointment.getTimestamp())
+            }, new Conditional[] {
+                    Conditional.createEqualTo("uid", appointment.getUserId())
+            });
+        }
     }
 
-    public Appointment readAppointment(long contactId) {
-        return null;
+    public Appointment readAppointment(long id) {
+        List<StorageField[]> result = this.storage.executeQuery(this.appointmentTable, this.appointmentFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("uid", id)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        Appointment appointment = new Appointment(id);
+        appointment.setConsultationTheme(ConsultationTheme.parse(data.get("theme").getString()));
+        appointment.setConsultationDate(data.get("date").getLong());
+        appointment.setTimestamp(data.get("timestamp").getLong());
+        return appointment;
     }
 
 //    public boolean writeUsage(long cid, String token, long timestamp, String remote, String query,

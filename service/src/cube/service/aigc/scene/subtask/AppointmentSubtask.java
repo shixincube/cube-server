@@ -17,6 +17,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.guidance.Prompts;
 import cube.service.aigc.listener.GenerateTextListener;
+import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.SceneManager;
 import cube.util.TimeUtils;
 
@@ -184,6 +185,9 @@ public class AppointmentSubtask extends ConversationSubtask {
 
                     SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
                             convCtx, record);
+
+                    // 存储
+                    PsychologyScene.getInstance().getStorage().writeAppointment(appointment);
                 }
                 else {
                     if (generatingAnswer.isNotNull()) {

@@ -11,6 +11,7 @@ import cube.aigc.ModelConfig;
 import cube.aigc.Tokenizable;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.TemplateArticleConstants;
 import cube.aigc.psychology.Theme;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.composition.FactorSet;
@@ -26,30 +27,6 @@ import cube.util.MarkdownParser;
 import java.util.List;
 
 public class TemplateArticleBuilder {
-
-    /**
-     * 抑郁。
-     */
-    public final static String Depression = "depression";
-
-    private final static String sFormatDepressionTaskDesc = "该测评是使用绘画投射方式进行的抑郁倾向测评，受测人是%s性，%s。" +
-            "抑郁倾向级别是 **%s** （测评级别从低到高依次分为：很低、低、中等、高）。\n\n画面内容如下：\n%s\n";
-
-    /**
-     * 焦虑。
-     */
-    public final static String Anxiety = "anxiety";
-
-    private final static String sFormatAnxietyTaskDesc = "该测评是使用绘画投射方式进行的焦虑情绪测评，受测人是%s性，%s。" +
-            "焦虑情绪级别是 **%s** （测评级别从低到高依次分为：很低、低、中等、高）。\n\n画面内容如下：\n%s\n";
-
-    /**
-     * 强迫。
-     */
-    public final static String Obsession = "obsession";
-
-    private final static String sFormatObsessionTaskDesc = "该测评是使用绘画投射方式进行的强迫程度测评，受测人是%s性，%s。" +
-            "强迫程度级别是 **%s** （测评级别从低到高依次分为：很低、低、中等、高）。\n\n画面内容如下：\n%s\n";
 
     private final static String sPromptName = "psy_template_report";
 
@@ -76,9 +53,9 @@ public class TemplateArticleBuilder {
     }
 
     public boolean isValidTemplate() {
-        return (Depression.equalsIgnoreCase(this.templateName) ||
-                Anxiety.equalsIgnoreCase(this.templateName) ||
-                Obsession.equalsIgnoreCase(this.templateName));
+        return (TemplateArticleConstants.Depression.equalsIgnoreCase(this.templateName) ||
+                TemplateArticleConstants.Anxiety.equalsIgnoreCase(this.templateName) ||
+                TemplateArticleConstants.Obsession.equalsIgnoreCase(this.templateName));
     }
 
     public void init(PaintingReport report) {
@@ -126,16 +103,16 @@ public class TemplateArticleBuilder {
         String title = this.makeParagraphTitle(rate);
         String taskFormat = "%s\n%s\n%s\n%s";
         String prefix = "您的画像是：";
-        if (Depression.equalsIgnoreCase(this.templateName)) {
-            taskFormat = sFormatDepressionTaskDesc;
+        if (TemplateArticleConstants.Depression.equalsIgnoreCase(this.templateName)) {
+            taskFormat = TemplateArticleConstants.FormatDepressionTaskDesc;
             prefix = "您的内心风景画像是：";
         }
-        else if (Anxiety.equalsIgnoreCase(this.templateName)) {
-            taskFormat = sFormatAnxietyTaskDesc;
+        else if (TemplateArticleConstants.Anxiety.equalsIgnoreCase(this.templateName)) {
+            taskFormat = TemplateArticleConstants.FormatAnxietyTaskDesc;
             prefix = "您的内心焦虑画像是：";
         }
-        else if (Obsession.equalsIgnoreCase(this.templateName)) {
-            taskFormat = sFormatObsessionTaskDesc;
+        else if (TemplateArticleConstants.Obsession.equalsIgnoreCase(this.templateName)) {
+            taskFormat = TemplateArticleConstants.FormatObsessionTaskDesc;
             prefix = "您的内心强迫画像是：";
         }
 
@@ -176,7 +153,7 @@ public class TemplateArticleBuilder {
     private IndicatorRate evaluate(PaintingReport report) {
         IndicatorRate rate = IndicatorRate.Lowest;
 
-        if (Depression.equalsIgnoreCase(this.templateName)) {
+        if (TemplateArticleConstants.Depression.equalsIgnoreCase(this.templateName)) {
             ReportSection section = report.getReportSection(Indicator.Depression);
 
             if (null != section) {
@@ -196,7 +173,7 @@ public class TemplateArticleBuilder {
                 }
             }
         }
-        else if (Anxiety.equalsIgnoreCase(this.templateName)) {
+        else if (TemplateArticleConstants.Anxiety.equalsIgnoreCase(this.templateName)) {
             ReportSection section = report.getReportSection(Indicator.Anxiety);
             if (null != section) {
                 rate = fixRate(section.rate);
@@ -215,7 +192,7 @@ public class TemplateArticleBuilder {
                 }
             }
         }
-        else if (Obsession.equalsIgnoreCase(this.templateName)) {
+        else if (TemplateArticleConstants.Obsession.equalsIgnoreCase(this.templateName)) {
             ReportSection section = report.getReportSection(Indicator.Obsession);
             if (null != section) {
                 rate = fixRate(section.rate);
@@ -239,13 +216,13 @@ public class TemplateArticleBuilder {
     }
 
     private String makeTitle(String templateName) {
-        if (Depression.equalsIgnoreCase(templateName)) {
+        if (TemplateArticleConstants.Depression.equalsIgnoreCase(templateName)) {
             return "内心的风景-潜意识情绪与抑郁倾向测评";
         }
-        else if (Anxiety.equalsIgnoreCase(templateName)) {
+        else if (TemplateArticleConstants.Anxiety.equalsIgnoreCase(templateName)) {
             return "迷雾与彼岸-潜意识焦虑情绪测评";
         }
-        else if (Obsession.equalsIgnoreCase(templateName)) {
+        else if (TemplateArticleConstants.Obsession.equalsIgnoreCase(templateName)) {
             return "内心的秩序-潜意识控制欲与强迫测评";
         }
         else {
@@ -256,7 +233,7 @@ public class TemplateArticleBuilder {
     private String makeQuery(IndicatorRate rate) {
         String query = null;
 
-        if (Depression.equalsIgnoreCase(this.templateName)) {
+        if (TemplateArticleConstants.Depression.equalsIgnoreCase(this.templateName)) {
             switch (rate) {
                 case Lowest:
                     query = "抑郁倾向测试的盛夏繁茂之树的描述";
@@ -274,7 +251,7 @@ public class TemplateArticleBuilder {
                     break;
             }
         }
-        else if (Anxiety.equalsIgnoreCase(this.templateName)) {
+        else if (TemplateArticleConstants.Anxiety.equalsIgnoreCase(this.templateName)) {
             switch (rate) {
                 case Lowest:
                     query = "焦虑测评的坚固平稳的石桥的描述";
@@ -292,7 +269,7 @@ public class TemplateArticleBuilder {
                     break;
             }
         }
-        else if (Obsession.equalsIgnoreCase(this.templateName)) {
+        else if (TemplateArticleConstants.Obsession.equalsIgnoreCase(this.templateName)) {
             switch (rate) {
                 case Lowest:
                     query = "强迫测评的旷野漫步者的描述";
@@ -317,7 +294,7 @@ public class TemplateArticleBuilder {
     private String makeParagraphTitle(IndicatorRate rate) {
         String title = null;
 
-        if (Depression.equalsIgnoreCase(this.templateName)) {
+        if (TemplateArticleConstants.Depression.equalsIgnoreCase(this.templateName)) {
             switch (rate) {
                 case Lowest:
                     title = "盛夏繁茂之树";
@@ -335,7 +312,7 @@ public class TemplateArticleBuilder {
                     break;
             }
         }
-        else if (Anxiety.equalsIgnoreCase(this.templateName)) {
+        else if (TemplateArticleConstants.Anxiety.equalsIgnoreCase(this.templateName)) {
             switch (rate) {
                 case Lowest:
                     title = "坚固平稳的石桥";
@@ -353,7 +330,7 @@ public class TemplateArticleBuilder {
                     break;
             }
         }
-        else if (Obsession.equalsIgnoreCase(this.templateName)) {
+        else if (TemplateArticleConstants.Obsession.equalsIgnoreCase(this.templateName)) {
             switch (rate) {
                 case Lowest:
                     title = "旷野漫步者";
