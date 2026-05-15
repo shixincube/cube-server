@@ -37,5 +37,6 @@ public class TemplateArticleConstants {
      */
     public final static String Stress = "stress";
 
-    public final static String FormatStressTaskDesc = "";
+    public final static String FormatStressTaskDesc = "该测评是使用雨中人绘画投射方式进行压力感受和应对策略测评，受测人是%s性，%s。" +
+            "压力程度级别是 **%s** （测评级别从低到高依次分为：很低、低、中等、高）。\n\n画面内容如下：\n%s\n";
 }
