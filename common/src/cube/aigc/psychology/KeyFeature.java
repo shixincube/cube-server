@@ -7,6 +7,7 @@
 package cube.aigc.psychology;
 
 import cube.aigc.psychology.algorithm.Score;
+import cube.aigc.psychology.indicator.Indicable;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -53,6 +54,20 @@ public class KeyFeature implements JSONable {
 
     public void addIndicatorScore(Score score) {
         this.indicators.add(score);
+    }
+
+    public List<Score> getIndicatorScores() {
+        return this.indicators;
+    }
+
+    public Score getIndicatorScore(Indicable indicator) {
+        for (Score score : this.indicators) {
+            if (score.indicator == indicator ||
+                score.indicator.getCode().equalsIgnoreCase(indicator.getCode())) {
+                return score;
+            }
+        }
+        return null;
     }
 
     public String makePrompt(Theme theme, Attribute attribute) {

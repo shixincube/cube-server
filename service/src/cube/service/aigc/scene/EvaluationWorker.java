@@ -21,6 +21,7 @@ import cube.common.entity.GeneratingOption;
 import cube.common.entity.GeneratingRecord;
 import cube.service.aigc.AIGCService;
 import cube.util.FloatUtils;
+import cube.util.TextUtils;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -296,7 +297,9 @@ public class EvaluationWorker {
                             ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
                             null, null);
                     if (null != record) {
-                        keyFeature.setDescription(record.answer);
+                        int pos = record.answer.indexOf(TextUtils.gColonInChinese);
+                        String answer = pos > 0 ? record.answer.substring(pos + 1).trim() : record.answer.trim();
+                        keyFeature.setDescription(answer);
                     }
                 }
 

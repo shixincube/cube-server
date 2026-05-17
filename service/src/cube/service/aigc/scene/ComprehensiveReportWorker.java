@@ -263,7 +263,7 @@ public class ComprehensiveReportWorker implements Runnable {
                 scores.sort(new Comparator<Score>() {
                     @Override
                     public int compare(Score score1, Score scores2) {
-                        return scores2.value - score1.value;
+                        return (int) Math.round(scores2.value - score1.value);
                     }
                 });
                 Score result = scores.get(0);

@@ -9,15 +9,14 @@ package cube.service.aigc.scene;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
 import cube.aigc.Tokenizable;
-import cube.aigc.psychology.PaintingReport;
-import cube.aigc.psychology.Resource;
-import cube.aigc.psychology.TemplateArticleConstants;
-import cube.aigc.psychology.Theme;
+import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.IndicatorRate;
+import cube.aigc.psychology.algorithm.Score;
 import cube.aigc.psychology.composition.FactorSet;
 import cube.aigc.psychology.composition.ReportArticle;
 import cube.aigc.psychology.composition.ReportSection;
 import cube.aigc.psychology.indicator.Indicator;
+import cube.aigc.psychology.indicator.PIRIndicator;
 import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
@@ -55,7 +54,8 @@ public class TemplateArticleBuilder {
     public boolean isValidTemplate() {
         return (TemplateArticleConstants.Depression.equalsIgnoreCase(this.templateName) ||
                 TemplateArticleConstants.Anxiety.equalsIgnoreCase(this.templateName) ||
-                TemplateArticleConstants.Obsession.equalsIgnoreCase(this.templateName));
+                TemplateArticleConstants.Obsession.equalsIgnoreCase(this.templateName) ||
+                TemplateArticleConstants.Stress.equalsIgnoreCase(this.templateName));
     }
 
     public void init(PaintingReport report) {
@@ -103,22 +103,33 @@ public class TemplateArticleBuilder {
         String title = this.makeParagraphTitle(rate);
         String taskFormat = "%s\n%s\n%s\n%s";
         String prefix = "您的画像是：";
+        String sceneDescription = "无";
         if (TemplateArticleConstants.Depression.equalsIgnoreCase(this.templateName)) {
             taskFormat = TemplateArticleConstants.FormatDepressionTaskDesc;
             prefix = "您的内心风景画像是：";
+            sceneDescription = ContentTools.makePaintingFeature(report.paintingFeatureSet);
         }
         else if (TemplateArticleConstants.Anxiety.equalsIgnoreCase(this.templateName)) {
             taskFormat = TemplateArticleConstants.FormatAnxietyTaskDesc;
             prefix = "您的内心焦虑画像是：";
+            sceneDescription = ContentTools.makePaintingFeature(report.paintingFeatureSet);
         }
         else if (TemplateArticleConstants.Obsession.equalsIgnoreCase(this.templateName)) {
             taskFormat = TemplateArticleConstants.FormatObsessionTaskDesc;
             prefix = "您的内心强迫画像是：";
+            sceneDescription = ContentTools.makePaintingFeature(report.paintingFeatureSet);
+        }
+        else if (TemplateArticleConstants.Stress.equalsIgnoreCase(this.templateName)) {
+            taskFormat = TemplateArticleConstants.FormatStressTaskDesc;
+            prefix = "您的内心压力画像是：";
+            sceneDescription = ContentTools.makeKeyFeature(report.getEvaluationReport());
         }
 
-        String task = String.format(taskFormat, report.getAttribute().getGenderText(),
-                report.getAttribute().getAgeText(), rate.displayName,
-                ContentTools.makePaintingFeature(report.paintingFeatureSet));
+        String task = String.format(taskFormat,
+                report.getAttribute().getGenderText(),
+                report.getAttribute().getAgeText(),
+                rate.displayName,
+                sceneDescription);
         String content = prefix + " **" + title + "**\n\n" + contents.get(0);
         String prompt = Prompts.getPrompt(sPromptName);
         prompt = prompt.replace("{{task}}", task);
@@ -133,6 +144,7 @@ public class TemplateArticleBuilder {
             return null;
         }
 
+        // 4. 处理输出格式
         if (this.structured) {
             // 结构化输出
             MarkdownParser markdownParser = new MarkdownParser(record.answer);
@@ -211,6 +223,71 @@ public class TemplateArticleBuilder {
                 }
             }
         }
+        else if (TemplateArticleConstants.Stress.equalsIgnoreCase(this.templateName)) {
+            // 压力采用雨中人，输出关键特征
+            List<KeyFeature> keyFeatureList = report.getEvaluationReport().getKeyFeatures();
+            Score rainIntensity = null;
+            Score rainShelterEffectiveness = null;
+            Score rainShelteringMethod = null;
+            Score personDetail = null;
+            for (KeyFeature keyFeature : keyFeatureList) {
+                Score score = keyFeature.getIndicatorScore(PIRIndicator.RainIntensity);
+                if (null != score) {
+                    rainIntensity = score;
+                }
+                score = keyFeature.getIndicatorScore(PIRIndicator.RainShelterEffectiveness);
+                if (null != score) {
+                    rainShelterEffectiveness = score;
+                }
+                score = keyFeature.getIndicatorScore(PIRIndicator.RainShelteringMethod);
+                if (null != score) {
+                    rainShelteringMethod = score;
+                }
+                score = keyFeature.getIndicatorScore(PIRIndicator.PersonDetail);
+                if (null != score) {
+                    personDetail = score;
+                }
+            }
+
+            if (null != rainIntensity && null != rainShelterEffectiveness && null != personDetail
+                    && null != rainShelteringMethod) {
+                if (rainIntensity.scoring() < 0.4) {
+                    // 雨势小
+                    if (personDetail.scoring() < 0.4 &&
+                            (rainShelterEffectiveness.scoring() < 0.4 || rainShelteringMethod.scoring() < 0.4)) {
+                        // 人物细节匮乏，避雨无效或避雨方式无
+                        return IndicatorRate.Low;
+                    }
+                    else {
+                        return IndicatorRate.Lowest;
+                    }
+                }
+                else if (rainIntensity.scoring() > 0.4 && rainIntensity.scoring() < 0.6) {
+                    // 雨势一般
+                    if (personDetail.scoring() < 0.4) {
+                        // 人物细节匮乏
+                        return IndicatorRate.Medium;
+                    }
+                    else {
+                        return IndicatorRate.Low;
+                    }
+                }
+                else if (rainIntensity.scoring() > 0.6) {
+                    // 雨势大
+                    if (personDetail.scoring() < 0.4 &&
+                            (rainShelteringMethod.scoring() < 0.4 || rainShelterEffectiveness.scoring() < 0.4)) {
+                        // 人物细节匮乏，避雨无效或避雨方式无
+                        return IndicatorRate.High;
+                    }
+                    else {
+                        return IndicatorRate.Medium;
+                    }
+                }
+            }
+            else {
+                rate = IndicatorRate.Low;
+            }
+        }
 
         return rate;
     }
@@ -224,6 +301,9 @@ public class TemplateArticleBuilder {
         }
         else if (TemplateArticleConstants.Obsession.equalsIgnoreCase(templateName)) {
             return "内心的秩序-潜意识控制欲与强迫测评";
+        }
+        else if (TemplateArticleConstants.Stress.equalsIgnoreCase(templateName)) {
+            return "风雨中的你-潜意识压力测评";
         }
         else {
             return "潜意识测评";
@@ -287,6 +367,24 @@ public class TemplateArticleBuilder {
                     break;
             }
         }
+        else if (TemplateArticleConstants.Stress.equalsIgnoreCase(this.templateName)) {
+            switch (rate) {
+                case Lowest:
+                    query = "压力测评的和风细雨中的漫步者的描述";
+                    break;
+                case Low:
+                    query = "压力测评的风雨中拉扯的赶路人的描述";
+                    break;
+                case Medium:
+                    query = "压力测评的逆雨前行的孤勇者的描述";
+                    break;
+                case High:
+                    query = "压力测评的暴雨中搁浅的旅人的描述";
+                    break;
+                default:
+                    break;
+            }
+        }
 
         return query;
     }
@@ -343,6 +441,24 @@ public class TemplateArticleBuilder {
                     break;
                 case High:
                     title = "无尽迷宫旅人";
+                    break;
+                default:
+                    break;
+            }
+        }
+        else if (TemplateArticleConstants.Stress.equalsIgnoreCase(this.templateName)) {
+            switch (rate) {
+                case Lowest:
+                    title = "风细雨中的漫步者";
+                    break;
+                case Low:
+                    title = "风雨中拉扯的赶路人";
+                    break;
+                case Medium:
+                    title = "逆雨前行的孤勇者";
+                    break;
+                case High:
+                    title = "暴雨中搁浅的旅人";
                     break;
                 default:
                     break;

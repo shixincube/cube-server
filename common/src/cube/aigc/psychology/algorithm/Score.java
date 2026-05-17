@@ -18,17 +18,17 @@ public class Score implements JSONable {
 
     public final Indicable indicator;
 
-    public int value;
+    public double value;
 
     public double weight;
 
-    public Score(Indicable indicator, int value) {
+    public Score(Indicable indicator, double value) {
         this.indicator = indicator;
         this.value = value;
         this.weight = 1.0;
     }
 
-    public Score(Indicable indicator, int value, double weight) {
+    public Score(Indicable indicator, double value, double weight) {
         this.indicator = indicator;
         this.value = value;
         this.weight = weight;
@@ -36,8 +36,12 @@ public class Score implements JSONable {
 
     public Score(JSONObject json) {
         this.indicator = Indicator.parse(json.getString("indicator"));
-        this.value = json.getInt("value");
+        this.value = json.getDouble("value");
         this.weight = json.getDouble("weight");
+    }
+
+    public double scoring() {
+        return this.value * this.weight;
     }
 
     @Override

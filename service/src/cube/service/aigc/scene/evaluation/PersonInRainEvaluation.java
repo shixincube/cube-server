@@ -8,14 +8,12 @@ package cube.service.aigc.scene.evaluation;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
-import cube.aigc.psychology.algorithm.Attention;
-import cube.aigc.psychology.algorithm.PaintingConfidence;
-import cube.aigc.psychology.algorithm.PerceptronThing;
-import cube.aigc.psychology.algorithm.Tendency;
+import cube.aigc.psychology.algorithm.*;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
 import cube.aigc.psychology.composition.Texture;
 import cube.aigc.psychology.indicator.Indicator;
+import cube.aigc.psychology.indicator.PIRIndicator;
 import cube.aigc.psychology.material.Label;
 import cube.aigc.psychology.material.Person;
 import cube.aigc.psychology.material.Thing;
@@ -30,13 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PersonInRainEvaluation extends Evaluation {
-
-    private static Indicator[] sIndicators = new Indicator[] {
-            Indicator.Stress,
-            Indicator.Confidence,
-            Indicator.Repression,
-            Indicator.SelfConsciousness
-    };
 
     public enum RainIntensity {
         /**
@@ -225,12 +216,15 @@ public class PersonInRainEvaluation extends Evaluation {
 
         // 根据雨势加入关键特征
         String title = "";
+        Score score = new Score(PIRIndicator.RainIntensity, 1, FloatUtils.random(0.45, 0.55));
         switch (this.rainIntensity) {
             case Dense:
                 title = "雨中人绘画中雨势大";
+                score = new Score(PIRIndicator.RainIntensity, 1, FloatUtils.random(0.75, 0.90));
                 break;
             case Sparse:
                 title = "雨中人绘画中雨势小";
+                score = new Score(PIRIndicator.RainIntensity, 1, FloatUtils.random(0.10, 0.25));
                 break;
             default:
                 title = "雨中人绘画中雨势一般";
@@ -239,6 +233,7 @@ public class PersonInRainEvaluation extends Evaluation {
         String content = ContentTools.extract(title, this.tokenizer);
         if (null != content) {
             KeyFeature feature = new KeyFeature(title, content);
+            feature.addIndicatorScore(score);
             result.addKeyFeature(feature);
         }
         else {
@@ -257,13 +252,16 @@ public class PersonInRainEvaluation extends Evaluation {
 
         if (this.rainShelterEffect) {
             title = "雨中人绘画避雨有效";
+            score = new Score(PIRIndicator.RainShelterEffectiveness, 1, FloatUtils.random(0.8, 0.9));
         }
         else {
             title = "雨中人绘画避雨无效";
+            score = new Score(PIRIndicator.RainShelterEffectiveness, 1, FloatUtils.random(0.1, 0.2));
         }
         content = ContentTools.extract(title, this.tokenizer);
         if (null != content) {
             KeyFeature feature = new KeyFeature(title, content);
+            feature.addIndicatorScore(score);
             result.addKeyFeature(feature);
         }
         else {
@@ -355,21 +353,26 @@ public class PersonInRainEvaluation extends Evaluation {
         Logger.d(this.getClass(), "#evalPerson - person detail level: " + this.detailLevel.name());
 
         String title = "";
+        Score score;
         switch (this.detailLevel) {
             case Rich:
                 title = "雨中人绘画中人物细节丰富";
+                score = new Score(PIRIndicator.PersonDetail, 1, FloatUtils.random(0.8, 0.9));
                 break;
             case Lack:
                 title = "雨中人绘画中人物细节匮乏";
+                score = new Score(PIRIndicator.PersonDetail, 1, FloatUtils.random(0.1, 0.2));
                 break;
             default:
                 title = "雨中人绘画中人物细节一般";
+                score = new Score(PIRIndicator.PersonDetail, 1, FloatUtils.random(0.45, 0.55));
                 break;
         }
 
         String content = ContentTools.extract(title, this.tokenizer);
         if (null != content) {
             KeyFeature feature = new KeyFeature(title, content);
+            feature.addIndicatorScore(score);
             result.addKeyFeature(feature);
         }
         else {
@@ -449,16 +452,20 @@ public class PersonInRainEvaluation extends Evaluation {
         }
 
         String title = "";
+        Score score;
         if (this.hasShelter) {
             title = "雨中人绘画出现避雨方式";
+            score = new Score(PIRIndicator.RainShelteringMethod, 1, FloatUtils.random(0.7, 0.8));
         }
         else {
             title = "雨中人绘画没有避雨方式";
+            score = new Score(PIRIndicator.RainShelteringMethod, 1, FloatUtils.random(0.2, 0.3));
         }
 
         String content = ContentTools.extract(title, this.tokenizer);
         if (null != content) {
             KeyFeature keyFeature = new KeyFeature(title, content);
+            keyFeature.addIndicatorScore(score);
             result.addKeyFeature(keyFeature);
         }
         else {

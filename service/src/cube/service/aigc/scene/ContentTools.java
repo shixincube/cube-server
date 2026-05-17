@@ -418,6 +418,22 @@ public class ContentTools {
         return buf.toString();
     }
 
+    public static String makeKeyFeature(EvaluationReport evaluationReport) {
+        if (evaluationReport.getKeyFeatures().isEmpty()) {
+            return "";
+        }
+
+        StringBuilder buf = new StringBuilder();
+        buf.append("关键特征描述如下：\n");
+        for (KeyFeature keyFeature : evaluationReport.getKeyFeatures()) {
+            buf.append("- **").append(keyFeature.getName()).append("** ：");
+            buf.append(keyFeature.getDescription());
+            buf.append("\n");
+        }
+        buf.append("\n");
+        return buf.toString();
+    }
+
     public static String makeReportList(List<PaintingReport> reports) {
         StringBuilder buf = new StringBuilder();
         int index = 0;

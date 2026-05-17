@@ -7,10 +7,10 @@
 package cube.aigc.psychology.composition;
 
 import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.indicator.Indicable;
-import cube.aigc.psychology.indicator.Indicator;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.aigc.psychology.algorithm.Score;
+import cube.aigc.psychology.indicator.Indicable;
+import cube.aigc.psychology.indicator.Indicator;
 import cube.common.JSONable;
 import cube.common.Language;
 import org.json.JSONObject;
@@ -24,13 +24,13 @@ public class EvaluationScore implements JSONable {
 
     public int hit = 0;
 
-    public int value = 0;
+    public double value = 0;
 
-    public int positive = 0;
+    public double positive = 0;
 
     public double positiveWeight = 0;
 
-    public int negative = 0;
+    public double negative = 0;
 
     public double negativeWeight = 0;
 
@@ -44,11 +44,11 @@ public class EvaluationScore implements JSONable {
         this.indicator = indicator;
     }
 
-    public EvaluationScore(Indicable indicator, int value) {
+    public EvaluationScore(Indicable indicator, double value) {
         this(indicator, value, 1, null);
     }
 
-    public EvaluationScore(Indicable indicator, int value, double weight, Attribute attribute) {
+    public EvaluationScore(Indicable indicator, double value, double weight, Attribute attribute) {
         this.indicator = indicator;
         this.hit = 1;
         this.value = value;
@@ -68,7 +68,7 @@ public class EvaluationScore implements JSONable {
     public EvaluationScore(JSONObject json) {
         this.indicator = Indicator.parse(json.getString("indicator"));
         this.hit = json.getInt("hit");
-        this.value = json.getInt("value");
+        this.value = json.getDouble("value");
         this.positiveScore = json.getDouble("positiveScore");
         this.negativeScore = json.getDouble("negativeScore");
         if (json.has("rate")) {
@@ -94,7 +94,7 @@ public class EvaluationScore implements JSONable {
         return this.positiveScore - this.negativeScore;
     }
 
-    public int getValue() {
+    public double getValue() {
         return this.value;
     }
 
