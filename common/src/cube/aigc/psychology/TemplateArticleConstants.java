@@ -9,6 +9,11 @@ package cube.aigc.psychology;
 public class TemplateArticleConstants {
 
     /**
+     * 通俗化。
+     */
+    public final static String Popularization = "popularization";
+
+    /**
      * 抑郁。
      */
     public final static String Depression = "depression";
