@@ -25,6 +25,10 @@
       "file": "psy_template_report.md"
     },
     {
+      "name": "psy_popularization_report",
+      "file": "psy_popularization_report.md"
+    },
+    {
       "name": "psy_appointment_data",
       "file": "psy_appointment_data.md"
     },

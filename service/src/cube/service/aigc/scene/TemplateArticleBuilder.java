@@ -29,6 +29,8 @@ public class TemplateArticleBuilder {
 
     private final static String sPromptName = "psy_template_report";
 
+    private final static String sPopularizationPromptName = "psy_popularization_report";
+
     public final Theme theme;
 
     public final String templateName;
@@ -78,87 +80,93 @@ public class TemplateArticleBuilder {
     }
 
     public ReportArticle build(AIGCService service) {
-        // 1. 按照模板名提取关键指标
-        IndicatorRate rate = this.evaluate(report);
-        this.article.rate = rate;
-
-        // 2. 按照指标提取语料
-        String query = this.makeQuery(rate);
-        if (null == query) {
-            Logger.w(this.getClass(), "#build - Make query failed: " + templateName);
-            this.article.state = AIGCStateCode.Failure;
-            return null;
-        }
-
-        List<String> keywords = service.segmentText(query);
-        List<String> contents = Resource.getInstance().loadDataset().searchContentInOrder(
-                keywords.toArray(new String[0]), keywords.size());
-        if (contents.isEmpty()) {
-            Logger.w(this.getClass(), "#build - No content for query: " + query);
-            this.article.state = AIGCStateCode.Failure;
-            return null;
-        }
-
-        // 3. 按照语料描述生成文章
-        String title = this.makeParagraphTitle(rate);
-        String taskFormat = "%s\n%s\n%s\n%s";
-        String prefix = "您的画像是：";
-        String sceneDescription = "无";
-        if (TemplateArticleConstants.Depression.equalsIgnoreCase(this.templateName)) {
-            taskFormat = TemplateArticleConstants.FormatDepressionTaskDesc;
-            prefix = "您的内心风景画像是：";
-            sceneDescription = ContentTools.makePaintingFeature(report.paintingFeatureSet);
-        }
-        else if (TemplateArticleConstants.Anxiety.equalsIgnoreCase(this.templateName)) {
-            taskFormat = TemplateArticleConstants.FormatAnxietyTaskDesc;
-            prefix = "您的内心焦虑画像是：";
-            sceneDescription = ContentTools.makePaintingFeature(report.paintingFeatureSet);
-        }
-        else if (TemplateArticleConstants.Obsession.equalsIgnoreCase(this.templateName)) {
-            taskFormat = TemplateArticleConstants.FormatObsessionTaskDesc;
-            prefix = "您的内心强迫画像是：";
-            sceneDescription = ContentTools.makePaintingFeature(report.paintingFeatureSet);
-        }
-        else if (TemplateArticleConstants.Stress.equalsIgnoreCase(this.templateName)) {
-            taskFormat = TemplateArticleConstants.FormatStressTaskDesc;
-            prefix = "您的内心压力画像是：";
-            sceneDescription = ContentTools.makeKeyFeature(report.getEvaluationReport());
-        }
-
-        String task = String.format(taskFormat,
-                report.getAttribute().getGenderText(),
-                report.getAttribute().getAgeText(),
-                rate.displayName,
-                sceneDescription);
-        String content = prefix + " **" + title + "**\n\n" + contents.get(0);
-        String prompt = Prompts.getPrompt(sPromptName);
-        prompt = prompt.replace("{{task}}", task);
-        prompt = prompt.replace("{{content}}", content);
-        prompt = prompt.replace("{{leading}}", prefix + " **" + title + "** 。");
-
-        GeneratingRecord record = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt, null,
-                null, null);
-        if (null == record) {
-            Logger.w(this.getClass(), "#build - The record is null: " + task);
-            this.article.state = AIGCStateCode.Failure;
-            return null;
-        }
-
-        // 4. 处理输出格式
-        if (this.structured) {
-            // 结构化输出
-            MarkdownParser markdownParser = new MarkdownParser(record.answer);
-            this.article.setContent(markdownParser.getOther());
-            for (MarkdownParser.Paragraph paragraph : markdownParser.getParagraphs()) {
-                this.article.addParagraph(paragraph.title, paragraph.content);
-            }
+        if (TemplateArticleConstants.Popularization.equalsIgnoreCase(this.templateName)) {
+            String prompt = Prompts.getPrompt(sPopularizationPromptName);
         }
         else {
-            // 非结构化输出
-            this.article.addParagraph(title, record.answer);
+            // 1. 按照模板名提取关键指标
+            IndicatorRate rate = this.evaluate(this.report);
+            this.article.rate = rate;
+
+            // 2. 按照指标提取语料
+            String query = this.makeQuery(rate);
+            if (null == query) {
+                Logger.w(this.getClass(), "#build - Make query failed: " + this.templateName);
+                this.article.state = AIGCStateCode.Failure;
+                return null;
+            }
+
+            List<String> keywords = service.segmentText(query);
+            List<String> contents = Resource.getInstance().loadDataset().searchContentInOrder(
+                    keywords.toArray(new String[0]), keywords.size());
+            if (contents.isEmpty()) {
+                Logger.w(this.getClass(), "#build - No content for query: " + query);
+                this.article.state = AIGCStateCode.Failure;
+                return null;
+            }
+
+            // 3. 按照语料描述生成文章
+            String title = this.makeParagraphTitle(rate);
+            String taskFormat = "%s\n%s\n%s\n%s";
+            String prefix = "您的画像是：";
+            String sceneDescription = "无";
+            if (TemplateArticleConstants.Depression.equalsIgnoreCase(this.templateName)) {
+                taskFormat = TemplateArticleConstants.FormatDepressionTaskDesc;
+                prefix = "您的内心风景画像是：";
+                sceneDescription = ContentTools.makePaintingFeature(report.paintingFeatureSet);
+            }
+            else if (TemplateArticleConstants.Anxiety.equalsIgnoreCase(this.templateName)) {
+                taskFormat = TemplateArticleConstants.FormatAnxietyTaskDesc;
+                prefix = "您的内心焦虑画像是：";
+                sceneDescription = ContentTools.makePaintingFeature(report.paintingFeatureSet);
+            }
+            else if (TemplateArticleConstants.Obsession.equalsIgnoreCase(this.templateName)) {
+                taskFormat = TemplateArticleConstants.FormatObsessionTaskDesc;
+                prefix = "您的内心强迫画像是：";
+                sceneDescription = ContentTools.makePaintingFeature(report.paintingFeatureSet);
+            }
+            else if (TemplateArticleConstants.Stress.equalsIgnoreCase(this.templateName)) {
+                taskFormat = TemplateArticleConstants.FormatStressTaskDesc;
+                prefix = "您的内心压力画像是：";
+                sceneDescription = ContentTools.makeKeyFeature(report.getEvaluationReport());
+            }
+
+            String task = String.format(taskFormat,
+                    report.getAttribute().getGenderText(),
+                    report.getAttribute().getAgeText(),
+                    rate.displayName,
+                    sceneDescription);
+            String content = prefix + " **" + title + "**\n\n" + contents.get(0);
+            String prompt = Prompts.getPrompt(sPromptName);
+            prompt = prompt.replace("{{task}}", task);
+            prompt = prompt.replace("{{content}}", content);
+            prompt = prompt.replace("{{leading}}", prefix + " **" + title + "** 。");
+
+            GeneratingRecord record = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt, null,
+                    null, null);
+            if (null == record) {
+                Logger.w(this.getClass(), "#build - The record is null: " + task);
+                this.article.state = AIGCStateCode.Failure;
+                return null;
+            }
+
+            // 4. 处理输出格式
+            if (this.structured) {
+                // 结构化输出
+                MarkdownParser markdownParser = new MarkdownParser(record.answer);
+                this.article.setContent(markdownParser.getOther());
+                for (MarkdownParser.Paragraph paragraph : markdownParser.getParagraphs()) {
+                    this.article.addParagraph(paragraph.title, paragraph.content);
+                }
+            }
+            else {
+                // 非结构化输出
+                this.article.addParagraph(title, record.answer);
+            }
+
+            this.article.state = AIGCStateCode.Ok;
         }
 
-        this.article.state = AIGCStateCode.Ok;
         return this.article;
     }
 
