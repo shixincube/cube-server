@@ -92,11 +92,11 @@ public class GetPsychologyReportTask extends ServiceTask {
                 try {
                     JSONObject reportJson = null;
                     if (markdown) {
-                        reportJson = report.toMarkdown();
+                        reportJson = report.exportMarkdown();
                     }
                     else {
                         if (sections) {
-                            reportJson = report.makeReportSectionJSON();
+                            reportJson = report.exportReportSectionJSON();
                         }
                         else {
                             reportJson = report.toCompactJSON();

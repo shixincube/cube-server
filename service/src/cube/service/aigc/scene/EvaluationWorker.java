@@ -626,9 +626,7 @@ public class EvaluationWorker {
 
         // 生成概述
         StringBuilder prompt = new StringBuilder();
-        prompt.append(language.isChinese() ? "已知信息：\n\n" : "The known information:\n\n");
-        prompt.append(language.isChinese() ?
-                "受测人心理评测结果如下：\n\n" : "The psychological assessment results of the test subjects are as follows:\n\n");
+        prompt.append(language.isChinese() ? "已知受测人心理评测结果如下：\n\n" : "");
         for (ReportSection rs : list) {
             prompt.append(fixSecondPerson(rs.report, language)).append("\n\n");
             if (prompt.length() >= ModelConfig.getPromptLengthLimit(unitName)) {
@@ -636,7 +634,7 @@ public class EvaluationWorker {
             }
         }
         prompt.append("\n");
-        prompt.append("根据上述已知信息，简洁和专业地来回答用户的问题。问题是：概述此人的心理评测结果，各内容之间分段展示。");
+        prompt.append("根据受测人心理评测结果，你作为一位融合了“人本主义心理学底蕴”与“顶尖文案大师洞察力”的心理咨询师，概述此人的心理评测结果，字数控制在100到150字。");
         GeneratingRecord generating = this.service.syncGenerateText(authToken, unitName, prompt.toString(),
                 new GeneratingOption(), null, null);
         String result = (null != generating) ? generating.answer : null;

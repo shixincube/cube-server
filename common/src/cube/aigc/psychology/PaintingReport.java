@@ -215,7 +215,7 @@ public class PaintingReport extends Report {
         StringBuilder buf = new StringBuilder();
 
         buf.append("> ").append(this.attribute.getGenderText());
-        buf.append("    ").append(this.attribute.getAgeText());
+        buf.append("，").append(this.attribute.getAgeText());
         buf.append("\n\n> ").append(Utils.gsDateFormat.format(new Date(this.timestamp))).append("\n");
 
         if (null != this.evaluationReport) {
@@ -348,7 +348,7 @@ public class PaintingReport extends Report {
                 buf.append("**").append(rs.title).append("** \n\n");
                 buf.append("**内容**：\n\n").append(rs.report).append("\n\n");
                 buf.append("**建议**：\n\n").append(rs.suggestion).append("\n\n");
-                buf.append("\n***\n");
+                buf.append("\n****\n");
             }
             buf.append("\n\n");
         }
@@ -357,7 +357,26 @@ public class PaintingReport extends Report {
         return this.markdown;
     }
 
-    public JSONObject toMarkdown() {
+    public String customMarkdown() {
+        StringBuilder buf = new StringBuilder();
+
+        buf.append("> 受测人信息：").append(this.attribute.getGenderText());
+        buf.append("，").append(this.attribute.getAgeText()).append("。\n");
+        buf.append("> 测评日期：").append(Utils.gsDateFormat.format(new Date(this.timestamp))).append("\n\n");
+
+        buf.append("## 报告内容").append("\n\n");
+        if (null != this.reportSectionList) {
+            for (ReportSection rs : this.reportSectionList) {
+                buf.append("### ").append(rs.title).append("\n");
+                buf.append(rs.report).append("\n\n");
+                buf.append("**指标评级**： ").append(rs.indicator.getName()).append(" - ").append(rs.rate.displayName);
+                buf.append("**建议**： ").append(rs.suggestion).append("\n\n");
+            }
+        }
+        return buf.toString();
+    }
+
+    public JSONObject exportMarkdown() {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
         if (null != this.markdown) {
@@ -372,7 +391,7 @@ public class PaintingReport extends Report {
         }
     }
 
-    public JSONObject makeReportSectionJSON() {
+    public JSONObject exportReportSectionJSON() {
         JSONObject json = new JSONObject();
         json.put("sn", this.sn);
 
