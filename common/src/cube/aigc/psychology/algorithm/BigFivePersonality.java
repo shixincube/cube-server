@@ -857,6 +857,19 @@ public class BigFivePersonality implements JSONable {
         return this.neuroticismContent;
     }
 
+    public String toMarkdown() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("**人格画像**：").append(this.displayName).append("\n\n");
+        buf.append("**人格特质描述**：").append(this.description).append("\n\n");
+        buf.append("**人格维度特征**：\n");
+        buf.append("- ").append(BigFiveFactor.Obligingness.name).append("：").append(this.obligingnessContent).append("\n");
+        buf.append("- ").append(BigFiveFactor.Conscientiousness.name).append("：").append(this.conscientiousnessContent).append("\n");
+        buf.append("- ").append(BigFiveFactor.Extraversion.name).append("：").append(this.extraversionContent).append("\n");
+        buf.append("- ").append(BigFiveFactor.Achievement.name).append("：").append(this.achievementContent).append("\n");
+        buf.append("- ").append(BigFiveFactor.Neuroticism.name).append("：").append(this.neuroticismContent).append("\n");
+        return buf.toString();
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();

@@ -239,16 +239,16 @@ public class PersonalityAccelerator implements JSONable  {
         this.bigFivePersonality.reset(obligingness, conscientiousness, extraversion, achievement, neuroticism);
     }
 
-    public MBTIFeature getMBTIFeature() {
-        for (int i = 0; i < sBigFivePersonalities.length; ++i) {
-            BigFivePersonality bigFivePersonality = sBigFivePersonalities[i];
-            if (this.bigFivePersonality.getName().equals(bigFivePersonality.getName())) {
-                return new MBTIFeature(sMBTIFeatures[i].getCode());
-            }
-        }
-
-        return null;
-    }
+//    public MBTIFeature getMBTIFeature() {
+//        for (int i = 0; i < sBigFivePersonalities.length; ++i) {
+//            BigFivePersonality bigFivePersonality = sBigFivePersonalities[i];
+//            if (this.bigFivePersonality.getName().equals(bigFivePersonality.getName())) {
+//                return new MBTIFeature(sMBTIFeatures[i].getCode());
+//            }
+//        }
+//
+//        return null;
+//    }
 
     @Override
     public JSONObject toJSON() {

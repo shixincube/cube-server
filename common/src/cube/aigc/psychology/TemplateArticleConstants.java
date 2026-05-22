@@ -13,9 +13,6 @@ public class TemplateArticleConstants {
      */
     public final static String Popularization = "popularization";
 
-    public final static String tagSpecificTriggeringScenario = "{{specific_triggering_scenario}}";
-    public final static String defaultSpecificTriggeringScenario = "";
-
     /**
      * 抑郁。
      */

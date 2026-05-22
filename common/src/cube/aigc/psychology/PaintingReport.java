@@ -370,6 +370,7 @@ public class PaintingReport extends Report {
                 buf.append("### ").append(rs.title).append("\n");
                 buf.append(rs.report).append("\n\n");
                 buf.append("**指标评级**： ").append(rs.indicator.getName()).append(" - ").append(rs.rate.displayName);
+                buf.append("\n\n");
                 buf.append("**建议**： ").append(rs.suggestion).append("\n\n");
             }
         }

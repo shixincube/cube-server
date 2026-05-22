@@ -54,7 +54,8 @@ public class TemplateArticleBuilder {
     }
 
     public boolean isValidTemplate() {
-        return (TemplateArticleConstants.Depression.equalsIgnoreCase(this.templateName) ||
+        return (TemplateArticleConstants.Popularization.equalsIgnoreCase(this.templateName) ||
+                TemplateArticleConstants.Depression.equalsIgnoreCase(this.templateName) ||
                 TemplateArticleConstants.Anxiety.equalsIgnoreCase(this.templateName) ||
                 TemplateArticleConstants.Obsession.equalsIgnoreCase(this.templateName) ||
                 TemplateArticleConstants.Stress.equalsIgnoreCase(this.templateName));
@@ -82,6 +83,32 @@ public class TemplateArticleBuilder {
     public ReportArticle build(AIGCService service) {
         if (TemplateArticleConstants.Popularization.equalsIgnoreCase(this.templateName)) {
             String prompt = Prompts.getPrompt(sPopularizationPromptName);
+            prompt = prompt.replace("{{content}}", this.report.customMarkdown());
+            prompt = prompt.replace("{{personality}}",
+                    this.report.getEvaluationReport().getPersonalityAccelerator().getBigFivePersonality().toMarkdown());
+
+            GeneratingRecord record = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt, null,
+                    null, null);
+            if (null == record) {
+                Logger.w(this.getClass(), "#build - The record is null: Popularization");
+                this.article.state = AIGCStateCode.Failure;
+                return null;
+            }
+
+            if (this.structured) {
+                // 结构化输出
+                MarkdownParser markdownParser = new MarkdownParser(record.answer);
+                this.article.setContent(markdownParser.getOther());
+                for (MarkdownParser.Paragraph paragraph : markdownParser.getParagraphs()) {
+                    this.article.addParagraph(paragraph.title, paragraph.content);
+                }
+            }
+            else {
+                // 非结构化输出
+                this.article.addParagraph("心理潜意识画像", record.answer);
+            }
+
+            this.article.state = AIGCStateCode.Ok;
         }
         else {
             // 1. 按照模板名提取关键指标

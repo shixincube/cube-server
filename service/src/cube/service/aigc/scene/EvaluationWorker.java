@@ -35,7 +35,7 @@ public class EvaluationWorker {
 
     private final static String REFINE_EN = "The following content requires moderate refinement. Please do not alter the original meaning of the content or add any additional information. The content to be refined is as follows:\n\n%s\n";
 
-    private final static String PERSONALITY_FORMAT_CN = "已知受测人的人格特点如下：\n\n%s\n\n根据上述信息回答问题，不能编造成分，问题是：总结受测人的人格特点。";
+    private final static String PERSONALITY_FORMAT_CN = "已知受测人的大五人格特点如下：\n\n%s\n\n根据上述人格描述，概述受测人的人格特点。字数控制在100到150字，不能编造成分，严禁使用总结性废话：如“总而言之”、“综上所述”、“希望这份报告能帮助你”、“请记住”。";
 
     private final static String PERSONALITY_FORMAT_EN = "The personality traits of the test subject are known as follows:\n\n" +
             "%s" +
