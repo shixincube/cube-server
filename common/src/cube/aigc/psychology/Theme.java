@@ -25,7 +25,7 @@ public enum Theme {
 
     SocialIcebreakerGame("社交破冰", "SIG", "请你拿起笔，在纸上画出一个人、一棵树和一团火。不用担心绘画水平，这不是美术考试，只要是你心里想画的样子就可以。"),
 
-    SubconsciousRelationshipBetweenACouple("情侣潜意识关系", "SRBC", "欢迎来到《心画·双生》测验。请放松，不要思考。现在，请在画板上画出一棵“属于你们俩”的树。它可以是写实的，也可以是抽象的。"),
+    SubconsciousRelationshipBetweenCouple("情侣潜意识关系", "SRBC", "欢迎来到《心画·双生》测验。请放松，不要思考。现在，请在画板上画出一棵“属于你们俩”的树。它可以是写实的，也可以是抽象的。"),
 
     KineticFamilyDrawing("家庭动力绘画", "KFD", "画笔即魔法，爸爸妈妈和孩子只需要分别画出“一家人正在做某件事”的画面。不用担心画技，请完全跟随直觉落笔，画出自己想画的就可以。实在不知道怎么画的地方，用文字在旁边悄悄标注也是完全可以的！"),
 
@@ -44,7 +44,7 @@ public enum Theme {
     }
 
     public boolean isComprehensive() {
-        if (this.code.equalsIgnoreCase(SubconsciousRelationshipBetweenACouple.code) ||
+        if (this.code.equalsIgnoreCase(SubconsciousRelationshipBetweenCouple.code) ||
             this.code.equalsIgnoreCase(KineticFamilyDrawing.code)) {
             return true;
         }

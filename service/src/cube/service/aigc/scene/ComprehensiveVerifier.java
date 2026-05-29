@@ -14,7 +14,7 @@ import cube.aigc.psychology.composition.Comprehensive;
 import cube.aigc.psychology.composition.Question;
 import cube.aigc.psychology.composition.Scale;
 import cube.common.entity.AIGCChannel;
-import cube.service.aigc.scene.evaluation.SubconsciousRelationshipBetweenACoupleEvaluation;
+import cube.service.aigc.scene.evaluation.SubconsciousRelationshipBetweenCoupleEvaluation;
 
 import java.util.List;
 
@@ -36,7 +36,7 @@ public class ComprehensiveVerifier {
 
         List<Comprehensive> comprehensiveList = this.report.comprehensives;
         switch (this.report.theme) {
-            case SubconsciousRelationshipBetweenACouple:
+            case SubconsciousRelationshipBetweenCouple:
                 if (comprehensiveList.size() == 2) {
                     // 将选择输入量表
                     for (Comprehensive comprehensive : comprehensiveList) {
@@ -55,8 +55,8 @@ public class ComprehensiveVerifier {
                             }
 
                             for (String word : comprehensive.getChoices()) {
-                                SubconsciousRelationshipBetweenACoupleEvaluation.SRBCWord srbcWord =
-                                        SubconsciousRelationshipBetweenACoupleEvaluation.SRBCWord.parse(word);
+                                SubconsciousRelationshipBetweenCoupleEvaluation.SRBCWord srbcWord =
+                                        SubconsciousRelationshipBetweenCoupleEvaluation.SRBCWord.parse(word);
                                 scale.chooseAnswer(1, Integer.toString(srbcWord.sn));
                             }
                             comprehensive.addScale(scale);

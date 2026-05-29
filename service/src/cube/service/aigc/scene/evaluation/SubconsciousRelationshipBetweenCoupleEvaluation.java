@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation {
+public class SubconsciousRelationshipBetweenCoupleEvaluation extends Evaluation {
     /**
      * 核心词。
      */
@@ -233,7 +233,7 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
 
     public AIGCService service;
 
-    public SubconsciousRelationshipBetweenACoupleEvaluation(long contactId, Painting painting) {
+    public SubconsciousRelationshipBetweenCoupleEvaluation(long contactId, Painting painting) {
         super(contactId, painting);
     }
 
@@ -245,7 +245,7 @@ public class SubconsciousRelationshipBetweenACoupleEvaluation extends Evaluation
         results.add(this.evalTree(spaceLayout));
         results.add(this.evalOthers(spaceLayout));
 
-        EvaluationReport report = new EvaluationReport(this.contactId, Theme.SubconsciousRelationshipBetweenACouple,
+        EvaluationReport report = new EvaluationReport(this.contactId, Theme.SubconsciousRelationshipBetweenCouple,
                 this.painting.getAttribute(), Reference.Normal, new PaintingConfidence(this.painting), results);
         return report;
     }

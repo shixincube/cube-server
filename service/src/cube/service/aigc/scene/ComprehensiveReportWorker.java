@@ -25,7 +25,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.guidance.Prompts;
 import cube.service.aigc.scene.evaluation.Evaluation;
-import cube.service.aigc.scene.evaluation.SubconsciousRelationshipBetweenACoupleEvaluation;
+import cube.service.aigc.scene.evaluation.SubconsciousRelationshipBetweenCoupleEvaluation;
 import cube.util.Gender;
 import cube.util.TextUtils;
 import org.json.JSONObject;
@@ -207,8 +207,8 @@ public class ComprehensiveReportWorker implements Runnable {
     private Evaluation evaluate(Painting painting) {
         Evaluation evaluation = null;
         switch (this.report.theme) {
-            case SubconsciousRelationshipBetweenACouple:
-                evaluation = new SubconsciousRelationshipBetweenACoupleEvaluation(
+            case SubconsciousRelationshipBetweenCouple:
+                evaluation = new SubconsciousRelationshipBetweenCoupleEvaluation(
                         this.channel.getAuthToken().getContactId(), painting);
                 break;
             default:
@@ -225,9 +225,9 @@ public class ComprehensiveReportWorker implements Runnable {
 
     private void predictComprehensive(Comprehensive comprehensive, Evaluation evaluation, EvaluationReport evaluationReport) {
         switch (this.report.theme) {
-            case SubconsciousRelationshipBetweenACouple:
-                SubconsciousRelationshipBetweenACoupleEvaluation srbcEvaluation =
-                        (SubconsciousRelationshipBetweenACoupleEvaluation) evaluation;
+            case SubconsciousRelationshipBetweenCouple:
+                SubconsciousRelationshipBetweenCoupleEvaluation srbcEvaluation =
+                        (SubconsciousRelationshipBetweenCoupleEvaluation) evaluation;
 
                 srbcEvaluation.service = this.service;
 
@@ -282,7 +282,7 @@ public class ComprehensiveReportWorker implements Runnable {
 
     private boolean generateComprehensiveReport() {
         switch (this.report.theme) {
-            case SubconsciousRelationshipBetweenACouple:
+            case SubconsciousRelationshipBetweenCouple:
                 Comprehensive male = this.report.getComprehensiveByGender(Gender.Male);
                 Comprehensive female = this.report.getComprehensiveByGender(Gender.Female);
                 if (null == male || null == female) {

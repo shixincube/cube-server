@@ -10,6 +10,7 @@ import cube.aigc.psychology.EvaluationFeature;
 import cube.aigc.psychology.EvaluationReport;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
+import cube.aigc.psychology.composition.SpaceLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +83,9 @@ public class KineticFamilyDrawingEvaluation extends Evaluation {
     public EvaluationReport makeEvaluationReport() {
         List<EvaluationFeature> results = new ArrayList<>();
 
+        SpaceLayout spaceLayout = new SpaceLayout(this.painting);
+
+
         return null;
     }
 
@@ -89,4 +93,6 @@ public class KineticFamilyDrawingEvaluation extends Evaluation {
     public PaintingFeatureSet getPaintingFeatureSet() {
         return null;
     }
+
+
 }
