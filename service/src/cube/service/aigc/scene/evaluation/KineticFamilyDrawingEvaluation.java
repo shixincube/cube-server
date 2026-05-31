@@ -94,5 +94,8 @@ public class KineticFamilyDrawingEvaluation extends Evaluation {
         return null;
     }
 
-
+    private EvaluationFeature evalTree(SpaceLayout spaceLayout) {
+        EvaluationFeature result = new EvaluationFeature();
+        return result;
+    }
 }
