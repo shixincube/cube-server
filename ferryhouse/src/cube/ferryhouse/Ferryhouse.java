@@ -9,11 +9,11 @@ package cube.ferryhouse;
 import cell.api.Nucleus;
 import cell.api.Speakable;
 import cell.api.TalkListener;
+import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
 import cell.core.talk.PrimitiveInputStream;
 import cell.core.talk.TalkError;
 import cell.core.talk.dialect.ActionDialect;
-import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
 import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
@@ -52,8 +52,12 @@ public class Ferryhouse implements TalkListener {
     private int port;
 
     private JSONObject licence;
+
     private String domain;
 
+    /**
+     * 如果 ferryStorage 为 null 值，则表示不使用存储功能。
+     */
     private FerryStorage ferryStorage;
 
     private AtomicBoolean checkedIn;
@@ -66,6 +70,8 @@ public class Ferryhouse implements TalkListener {
     private FileManager fileManager;
 
     private AtomicBoolean ready;
+
+    private Endpoint gnosisEndpoint;
 
     private Ferryhouse() {
         this.checkedIn = new AtomicBoolean(false);
@@ -91,63 +97,84 @@ public class Ferryhouse implements TalkListener {
 
         // 数据库
         JSONObject mysqlConfig = new JSONObject();
-        mysqlConfig.put(MySQLStorage.CONFIG_HOST, properties.getProperty("mysql.host"));
-        mysqlConfig.put(MySQLStorage.CONFIG_PORT, Integer.parseInt(properties.getProperty("mysql.port", "3306")));
-        mysqlConfig.put(MySQLStorage.CONFIG_SCHEMA, properties.getProperty("mysql.schema"));
-        mysqlConfig.put(MySQLStorage.CONFIG_USER, properties.getProperty("mysql.user"));
-        mysqlConfig.put(MySQLStorage.CONFIG_PASSWORD, properties.getProperty("mysql.password"));
+        if (properties.containsKey("mysql.host") && properties.containsKey("mysql.port")) {
+            mysqlConfig.put(MySQLStorage.CONFIG_HOST, properties.getProperty("mysql.host"));
+            mysqlConfig.put(MySQLStorage.CONFIG_PORT, Integer.parseInt(properties.getProperty("mysql.port", "3306")));
+            mysqlConfig.put(MySQLStorage.CONFIG_SCHEMA, properties.getProperty("mysql.schema"));
+            mysqlConfig.put(MySQLStorage.CONFIG_USER, properties.getProperty("mysql.user"));
+            mysqlConfig.put(MySQLStorage.CONFIG_PASSWORD, properties.getProperty("mysql.password"));
+        }
+        else {
+            Logger.w(this.getClass(), "Database not configured");
+        }
 
         // 读取许可证
-        try {
-            this.licence = LicenceTool.extractData(new File("config/licence"), "shixincube.com");
-            if (null == this.licence) {
-                Logger.e(this.getClass(), "#config - Licence file error");
+        if (properties.containsKey("licence")) {
+            try {
+                String filePath = properties.getProperty("licence", "config/licence");
+                this.licence = LicenceTool.extractData(new File(filePath), "cube");
+                if (null == this.licence) {
+                    Logger.e(this.getClass(), "#config - Licence file error: " + filePath);
+                    System.exit(0);
+                    return;
+                }
+
+                this.domain = this.licence.getString("domain");
+
+                Logger.i(this.getClass(), "Domain: " + this.domain);
+            } catch (IOException e) {
+                Logger.e(this.getClass(), "#config - Can NOT find licence file");
                 System.exit(0);
                 return;
             }
-
-            this.domain = this.licence.getString("domain");
-
-            Logger.i(this.getClass(), "Domain: " + this.domain);
-        } catch (IOException e) {
-            Logger.e(this.getClass(), "#config - Can NOT find licence file");
-            System.exit(0);
-            return;
+        }
+        else {
+            Logger.i(this.getClass(), "No licence file, use default");
+            this.domain = "default_domain";
+            this.licence = LicenceTool.createDefault(this.domain);
         }
 
-        // 连接 Boat
+        // 尝试读取 Gnosis 配置
+        if (properties.containsKey("gnosis.host") && properties.containsKey("gnosis.port")) {
+            this.gnosisEndpoint = new Endpoint(properties.getProperty("gnosis.host"),
+                    Integer.parseInt(properties.getProperty("gnosis.port", "3000")));
+        }
+
+        // 连接 boat 或者直连
         this.nucleus.getTalkService().addListener(this);
         this.nucleus.getTalkService().call(this.address, this.port);
 
         ArrayList<String> domainList = new ArrayList<>();
         domainList.add(this.domain);
 
-        this.ferryStorage = new FerryStorage(this.domain, mysqlConfig);
+        if (mysqlConfig.length() > 2) {
+            this.ferryStorage = new FerryStorage(this.domain, mysqlConfig);
+        }
 
-        // 启动各个 Ferry
         (new Thread() {
             @Override
             public void run() {
-                ferryStorage.open();
-                ferryStorage.execSelfChecking(domainList);
+                if (null != ferryStorage) {
+                    ferryStorage.open();
+                    ferryStorage.execSelfChecking(domainList);
 
-                // 更新许可证数据
-                ferryStorage.writeLicence(licence);
+                    // 更新许可证数据
+                    ferryStorage.writeLicence(licence);
 
-                fileManager = new FileManager(domain, ferryStorage);
+                    fileManager = new FileManager(domain, ferryStorage);
 
-                // 从数据库加载偏好设置
-                Preferences preferences = loadPreferences();
-                refreshWithPreferences(preferences);
+                    // 从数据库加载偏好设置
+                    Preferences preferences = loadPreferences();
+                    refreshWithPreferences(preferences);
+                }
+                else {
+                    fileManager = new FileManager(domain);
+                }
 
                 // 就绪
                 ready.set(true);
             }
         }).start();
-    }
-
-    public FileManager getFileManager() {
-        return this.fileManager;
     }
 
     /**
@@ -157,12 +184,15 @@ public class Ferryhouse implements TalkListener {
      */
     public BoxReport generateReport() {
         BoxReport boxReport = new BoxReport(this.domain);
-        boxReport.setDataSpaceSize(this.ferryStorage.queryAllTablesSize());
 
-        this.fileManager.calcUsage(boxReport);
+        if (null != this.ferryStorage) {
+            boxReport.setDataSpaceSize(this.ferryStorage.queryAllTablesSize());
 
-        // 消息总数
-        boxReport.setTotalMessages(this.ferryStorage.countMessages());
+            this.fileManager.calcUsage(boxReport);
+
+            // 消息总数
+            boxReport.setTotalMessages(this.ferryStorage.countMessages());
+        }
 
         return boxReport;
     }
@@ -181,7 +211,9 @@ public class Ferryhouse implements TalkListener {
 
         this.nucleus.getTalkService().hangup(this.address, this.port, true);
 
-        this.ferryStorage.close();
+        if (null != this.ferryStorage) {
+            this.ferryStorage.close();
+        }
     }
 
     private Properties loadConfig() {
@@ -202,49 +234,54 @@ public class Ferryhouse implements TalkListener {
     private void writeLicence(JSONObject json) {
         File outputFile = new File("config/licence");
         try {
-            LicenceTool.writeFile(json, "shixincube.com", outputFile);
+            LicenceTool.writeFile(json, "cube", outputFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        this.ferryStorage.writeLicence(json);
+        if (null != this.ferryStorage) {
+            this.ferryStorage.writeLicence(json);
+        }
+
         this.licence = json;
     }
 
     private Preferences loadPreferences() {
         Preferences preferences = new Preferences();
 
-        // 是否从云端同步数据到本地
-        String value = this.ferryStorage.readProperty(Preferences.ITEM_SYNCH_DATA);
-        if (null != value) {
-            preferences.synchronizeData = value.equalsIgnoreCase("true") || value.equals("1");
-        }
-        else {
-            this.ferryStorage.writeProperty(Preferences.ITEM_SYNCH_DATA,
-                    preferences.synchronizeData ? "true" : "false");
-        }
-
-        // 重启后是否清空数据
-        value = this.ferryStorage.readProperty(Preferences.ITEM_CLEANUP_WHEN_REBOOT);
-        if (null != value) {
-            preferences.cleanupWhenReboot = value.equalsIgnoreCase("true") || value.equals("1");
-        }
-        else {
-            this.ferryStorage.writeProperty(Preferences.ITEM_CLEANUP_WHEN_REBOOT,
-                    preferences.cleanupWhenReboot ? "true" : "false");
-        }
-
-        // 最大可用存储空间
-        value = this.ferryStorage.readProperty(Preferences.ITEM_MAX_STORAGE_SPACE_SIZE);
-        if (null != value) {
-            long size = Long.parseLong(value);
-            if (size > 0) {
-                preferences.maxStorageSpaceSize = size;
+        if (null != this.ferryStorage) {
+            // 是否从云端同步数据到本地
+            String value = this.ferryStorage.readProperty(Preferences.ITEM_SYNC_DATA);
+            if (null != value) {
+                preferences.synchronizeData = value.equalsIgnoreCase("true") || value.equals("1");
             }
-        }
-        else {
-            this.ferryStorage.writeProperty(Preferences.ITEM_MAX_STORAGE_SPACE_SIZE,
-                    Long.toString(preferences.maxStorageSpaceSize));
+            else {
+                this.ferryStorage.writeProperty(Preferences.ITEM_SYNC_DATA,
+                        preferences.synchronizeData ? "true" : "false");
+            }
+
+            // 重启后是否清空数据
+            value = this.ferryStorage.readProperty(Preferences.ITEM_CLEANUP_WHEN_REBOOT);
+            if (null != value) {
+                preferences.cleanupWhenReboot = value.equalsIgnoreCase("true") || value.equals("1");
+            }
+            else {
+                this.ferryStorage.writeProperty(Preferences.ITEM_CLEANUP_WHEN_REBOOT,
+                        preferences.cleanupWhenReboot ? "true" : "false");
+            }
+
+            // 最大可用存储空间
+            value = this.ferryStorage.readProperty(Preferences.ITEM_MAX_STORAGE_SPACE_SIZE);
+            if (null != value) {
+                long size = Long.parseLong(value);
+                if (size > 0) {
+                    preferences.maxStorageSpaceSize = size;
+                }
+            }
+            else {
+                this.ferryStorage.writeProperty(Preferences.ITEM_MAX_STORAGE_SPACE_SIZE,
+                        Long.toString(preferences.maxStorageSpaceSize));
+            }
         }
 
         return preferences;
@@ -299,29 +336,58 @@ public class Ferryhouse implements TalkListener {
         String port = actionDialect.getParamAsString("port");
         if (FerryPort.WriteMessage.equals(port)) {
             Message message = new Message(actionDialect.getParamAsJson("message"));
-            this.ferryStorage.writeMessage(message);
+            if (null != this.ferryStorage) {
+                this.ferryStorage.writeMessage(message);
+            }
+            else {
+                Logger.i(this.getClass(), "Unsupported port: " + port);
+            }
         }
         else if (FerryPort.UpdateMessage.equals(port)) {
             Message message = new Message(actionDialect.getParamAsJson("message"));
-            this.ferryStorage.updateMessageState(message);
+            if (null != this.ferryStorage) {
+                this.ferryStorage.updateMessageState(message);
+            }
+            else {
+                Logger.i(this.getClass(), "Unsupported port: " + port);
+            }
         }
         else if (FerryPort.DeleteMessage.equals(port)) {
             Message message = new Message(actionDialect.getParamAsJson("message"));
-            this.ferryStorage.deleteMessage(message);
+            if (null != this.ferryStorage) {
+                this.ferryStorage.deleteMessage(message);
+            }
+            else {
+                Logger.i(this.getClass(), "Unsupported port: " + port);
+            }
         }
         else if (FerryPort.BurnMessage.equals(port)) {
             Message message = new Message(actionDialect.getParamAsJson("message"));
-            this.ferryStorage.updateMessagePayload(message);
+            if (null != this.ferryStorage) {
+                this.ferryStorage.updateMessagePayload(message);
+            }
+            else {
+                Logger.i(this.getClass(), "Unsupported port: " + port);
+            }
         }
         else if (FerryPort.SaveFile.equals(port)) {
             FileLabel fileLabel = new FileLabel(actionDialect.getParamAsJson("fileLabel"));
-            this.fileManager.saveFileLabel(fileLabel);
+            if (null != this.fileManager) {
+                this.fileManager.saveFileLabel(fileLabel);
+            }
+            else {
+                Logger.i(this.getClass(), "Unsupported port: " + port);
+            }
         }
         else if (FerryPort.TransferIntoMember.equals(port)) {
-            this.transferIntoMember(actionDialect);
+            if (!this.transferIntoMember(actionDialect)) {
+                Logger.i(this.getClass(), "Unsupported port: " + port);
+            }
         }
         else if (FerryPort.TransferOutMember.equals(port)) {
-            this.transferOutMember(actionDialect);
+            if (!this.transferOutMember(actionDialect)) {
+                Logger.i(this.getClass(), "Unsupported port: " + port);
+            }
         }
         else if (FerryPort.ResetLicence.equals(port)) {
             Logger.i(this.getClass(), "Reset licence - " + this.domain);
@@ -330,19 +396,31 @@ public class Ferryhouse implements TalkListener {
         }
     }
 
-    private void transferIntoMember(ActionDialect actionDialect) {
+    private boolean transferIntoMember(ActionDialect actionDialect) {
+        if (null == this.ferryStorage) {
+            return false;
+        }
+
         DomainMember member = new DomainMember(actionDialect.getParamAsJson("member"));
         this.ferryStorage.writeDomainMember(member);
 
         Contact contact = new Contact(actionDialect.getParamAsJson("contact"));
         this.ferryStorage.writeContact(contact);
+
+        return true;
     }
 
-    private void transferOutMember(ActionDialect actionDialect) {
+    private boolean transferOutMember(ActionDialect actionDialect) {
+        if (null == this.ferryStorage) {
+            return false;
+        }
+
         DomainMember member = new DomainMember(actionDialect.getParamAsJson("member"));
         // 修改状态
         member.setState(DomainMember.QUIT);
         this.ferryStorage.writeDomainMember(member);
+
+        return true;
     }
 
     private void processSynchronize(ActionDialect actionDialect) {
@@ -367,7 +445,7 @@ public class Ferryhouse implements TalkListener {
 
     @Override
     public void onListened(Speakable speakable, String cellet, Primitive primitive) {
-        ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
+        ActionDialect actionDialect = new ActionDialect(primitive);
         String action = actionDialect.getName();
 
         if (FerryAction.Ferry.name.equals(action)) {
@@ -392,6 +470,16 @@ public class Ferryhouse implements TalkListener {
         }
         else if (FerryAction.Synchronize.name.equals(action)) {
             this.processSynchronize(actionDialect);
+        }
+        else if (FerryAction.GnosisAgent.name.equals(action)) {
+            if (null != this.gnosisEndpoint) {
+                Gnosis gnosis = new Gnosis(this.gnosisEndpoint);
+                ActionDialect response = gnosis.auto(actionDialect);
+                this.nucleus.getTalkService().speak(FERRY, response);
+            }
+            else {
+                Logger.w(this.getClass(), "#onListened - No gnosis endpoint");
+            }
         }
     }
 
@@ -433,12 +521,17 @@ public class Ferryhouse implements TalkListener {
                 }
 
                 // 执行 Chek-In
-                ActionDialect dialect = new ActionDialect(FerryAction.CheckIn.name);
-                dialect.addParam("domain", domain);
-                dialect.addParam("licence", licence);
-                speakable.speak(FERRY, dialect);
-
-                checkedIn.set(true);
+                try {
+                    ActionDialect dialect = new ActionDialect(FerryAction.CheckIn.name);
+                    dialect.addParam("domain", domain);
+                    dialect.addParam("licence", licence);
+                    dialect.addParam("address", speakable.getRemoteAddress().getHostString());
+                    if (speakable.speak(FERRY, dialect)) {
+                        checkedIn.set(true);
+                    }
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "", e);
+                }
 
                 synchronized (preparedQueue) {
                     while (!preparedQueue.isEmpty()) {

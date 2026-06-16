@@ -104,7 +104,17 @@ public enum FerryAction {
      * 标记文件标签。
      * (S->B)
      */
-    MarkFile("markFile")
+    MarkFile("markFile"),
+
+    /**
+     * Gnosis 代理。
+     */
+    GnosisAgent("gnosisAgent"),
+
+    /**
+     * Gnosis 代理应答。
+     */
+    GnosisAgentAck("gnosisAgentAck"),
 
     ;
 

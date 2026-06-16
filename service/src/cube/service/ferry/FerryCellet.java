@@ -16,11 +16,8 @@ import cube.core.Kernel;
 import cube.ferry.FerryAction;
 import cube.service.ferry.task.*;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 /**
- *
+ * 摆渡服务。
  */
 public class FerryCellet extends AbstractCellet {
 
@@ -57,7 +54,19 @@ public class FerryCellet extends AbstractCellet {
         ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
         String action = dialect.getName();
 
-        if (FerryAction.Ping.name.equals(action)) {
+        if (FerryAction.GnosisAgent.name.equals(action)) {
+            this.execute(new GnosisAgentTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+        else if (FerryAction.GnosisAgentAck.name.equals(action)) {
+            this.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ferryService.notifyAckBundles(dialect);
+                }
+            });
+        }
+        else if (FerryAction.Ping.name.equals(action)) {
             this.execute(new PingTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }

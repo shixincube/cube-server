@@ -24,57 +24,57 @@ public class CopilotSetting implements JSONable {
     /**
      * 人格特质
      */
-//    public final PersonalityTrait personalityTrait;
+    public final PersonalityTrait personalityTrait;
 
     /**
      * 依恋类型
      */
-//    public final AttachmentType attachmentType;
+    public final AttachmentType attachmentType;
 
     /**
      * 文化背景
      */
-//    public final CulturalBackground culturalBackground;
+    public final CulturalBackground culturalBackground;
 
     /**
      * 主诉类型
      */
-//    public final ChiefComplaintType chiefComplaintType;
+    public final ChiefComplaintType chiefComplaintType;
 
     /**
      * 痛苦程度
      */
-//    public final PainLevel painLevel;
+    public final PainLevel painLevel;
 
     /**
      * 防御机制
      */
-//    public final DefenseMechanism defenseMechanism;
+    public final DefenseMechanism defenseMechanism;
 
     /**
      * 移情
      */
-//    public final Empathy empathy;
+    public final Empathy empathy;
 
     /**
      * 言语风格
      */
-//    public final SpeechStyle speechStyle;
+    public final SpeechStyle speechStyle;
 
     /**
      * “隐藏议程”模式
      */
-//    public boolean hiddenAgendaModel;
+    public boolean hiddenAgendaModel;
 
     /**
      * “多重角色”模式
      */
-//    public boolean multipleRolesModel;
+    public boolean multipleRolesModel;
 
     /**
      * “伦理陷阱”模式
      */
-//    public boolean ethicalTrapModel;
+    public boolean ethicalTrapModel;
 
     /**
      * 序号。
@@ -96,37 +96,37 @@ public class CopilotSetting implements JSONable {
                           PainLevel painLevel, DefenseMechanism defenseMechanism,
                           Empathy empathy, SpeechStyle speechStyle,
                           boolean hiddenAgendaModel, boolean multipleRolesModel, boolean ethicalTrapModel) {
-//        this.personalityTrait = personalityTrait == PersonalityTrait.Random ?
-//                PersonalityTrait.random() : personalityTrait;
-//        this.attachmentType = attachmentType == AttachmentType.Random ?
-//                AttachmentType.random() : attachmentType;
-//        this.culturalBackground = culturalBackground == CulturalBackground.Random ?
-//                CulturalBackground.random() : culturalBackground;
-//        this.chiefComplaintType = chiefComplaintType == ChiefComplaintType.Random ?
-//                ChiefComplaintType.random() : chiefComplaintType;
-//        this.painLevel = painLevel == PainLevel.Random ? PainLevel.random() : painLevel;
-//        this.defenseMechanism = defenseMechanism == DefenseMechanism.Random ?
-//                DefenseMechanism.random() : defenseMechanism;
-//        this.empathy = empathy == Empathy.Random ? Empathy.random() : empathy;
-//        this.speechStyle = speechStyle == SpeechStyle.Random ? SpeechStyle.random() : speechStyle;
-//        this.hiddenAgendaModel = hiddenAgendaModel;
-//        this.multipleRolesModel = multipleRolesModel;
-//        this.ethicalTrapModel = ethicalTrapModel;
+        this.personalityTrait = personalityTrait == PersonalityTrait.Random ?
+                PersonalityTrait.random() : personalityTrait;
+        this.attachmentType = attachmentType == AttachmentType.Random ?
+                AttachmentType.random() : attachmentType;
+        this.culturalBackground = culturalBackground == CulturalBackground.Random ?
+                CulturalBackground.random() : culturalBackground;
+        this.chiefComplaintType = chiefComplaintType == ChiefComplaintType.Random ?
+                ChiefComplaintType.random() : chiefComplaintType;
+        this.painLevel = painLevel == PainLevel.Random ? PainLevel.random() : painLevel;
+        this.defenseMechanism = defenseMechanism == DefenseMechanism.Random ?
+                DefenseMechanism.random() : defenseMechanism;
+        this.empathy = empathy == Empathy.Random ? Empathy.random() : empathy;
+        this.speechStyle = speechStyle == SpeechStyle.Random ? SpeechStyle.random() : speechStyle;
+        this.hiddenAgendaModel = hiddenAgendaModel;
+        this.multipleRolesModel = multipleRolesModel;
+        this.ethicalTrapModel = ethicalTrapModel;
         this.sn = Utils.generateSerialNumber();
     }
 
     public CopilotSetting(JSONObject json) {
-//        this.personalityTrait = PersonalityTrait.parse(json.getString("personalityTrait"));
-//        this.attachmentType = AttachmentType.parse(json.getString("attachmentType"));
-//        this.culturalBackground = CulturalBackground.parse(json.getString("culturalBackground"));
-//        this.chiefComplaintType = ChiefComplaintType.parse(json.getString("chiefComplaintType"));
-//        this.painLevel = PainLevel.parse(json.getString("painLevel"));
-//        this.defenseMechanism = DefenseMechanism.parse(json.getString("defenseMechanism"));
-//        this.empathy = Empathy.parse(json.getString("empathy"));
-//        this.speechStyle = SpeechStyle.parse(json.getString("speechStyle"));
-//        this.hiddenAgendaModel = json.getBoolean("hiddenAgendaModel");
-//        this.multipleRolesModel = json.getBoolean("multipleRolesModel");
-//        this.ethicalTrapModel = json.getBoolean("ethicalTrapModel");
+        this.personalityTrait = PersonalityTrait.parse(json.getString("personalityTrait"));
+        this.attachmentType = AttachmentType.parse(json.getString("attachmentType"));
+        this.culturalBackground = CulturalBackground.parse(json.getString("culturalBackground"));
+        this.chiefComplaintType = ChiefComplaintType.parse(json.getString("chiefComplaintType"));
+        this.painLevel = PainLevel.parse(json.getString("painLevel"));
+        this.defenseMechanism = DefenseMechanism.parse(json.getString("defenseMechanism"));
+        this.empathy = Empathy.parse(json.getString("empathy"));
+        this.speechStyle = SpeechStyle.parse(json.getString("speechStyle"));
+        this.hiddenAgendaModel = json.getBoolean("hiddenAgendaModel");
+        this.multipleRolesModel = json.getBoolean("multipleRolesModel");
+        this.ethicalTrapModel = json.getBoolean("ethicalTrapModel");
         if (json.has("sn")) {
             this.sn = json.getLong("sn");
         }

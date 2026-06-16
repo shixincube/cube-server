@@ -10,6 +10,8 @@ import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cube.core.AbstractCellet;
 import cube.dispatcher.Performer;
+import cube.dispatcher.ferry.handler.Gnosis;
+import cube.util.HttpServer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -38,11 +40,18 @@ public class FerryCellet extends AbstractCellet {
     @Override
     public boolean install() {
         this.performer = (Performer) this.getNucleus().getParameter("performer");
+        setupHandler();
+
         return true;
     }
 
     @Override
     public void uninstall() {
+    }
+
+    private void setupHandler() {
+        HttpServer httpServer = this.performer.getHttpServer();
+        httpServer.addContextHandler(new Gnosis(this.performer));
     }
 
     @Override

@@ -343,7 +343,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
     }
 
     private FileLabel makeQRCodeFile(String domainName) {
-        String string = "https://box.shixincube.com/box/" + domainName;
+        String string = "https://box.baizeyunbao.com/box/" + domainName;
         File qrFile = new File("storage/tmp/ferry_qrcode_" + domainName + ".jpg");
         // 生成二维码文件
         if (CodeUtils.generateQRCode(qrFile, string, 400, 400, new Color("#000000"))) {
@@ -528,6 +528,7 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
 
     protected void notifyAckBundles(ActionDialect actionDialect) {
         if (!actionDialect.containsParam("sn")) {
+            Logger.w(this.getClass(), "#notifyAckBundles - No SN");
             return;
         }
 
@@ -933,6 +934,40 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         return report;
     }
 
+    public GnosisAgentAckBundle callGnosisAgent(GnosisAgent gnosisAgent) {
+        if (0 == this.tickets.size()) {
+            Logger.w(this.getClass(), "#callGnosisAgent - No tickets");
+            return null;
+        }
+
+        Ticket ticket = this.tickets.values().iterator().next();
+
+        Integer sn = Utils.randomUnsigned();
+        ActionDialect actionDialect = new ActionDialect(FerryAction.GnosisAgent.name);
+        actionDialect.addParam("sn", sn.intValue());
+        actionDialect.addParam("agent", gnosisAgent.toJSON());
+
+        GnosisAgentAckBundle bundle = new GnosisAgentAckBundle(actionDialect, gnosisAgent);
+        this.ackBundles.put(sn, bundle);
+
+        if (!this.cellet.speak(ticket.talkContext, actionDialect)) {
+            this.ackBundles.remove(sn);
+            return bundle;
+        }
+
+        synchronized (bundle) {
+            try {
+                bundle.wait(10 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        this.ackBundles.remove(sn);
+
+        return bundle;
+    }
+
     private void setup() {
         AbstractModule messagingModule = this.getKernel().getModule("Messaging");
         if (null != messagingModule) {
@@ -1104,6 +1139,16 @@ public class FerryService extends AbstractModule implements CelletAdapterListene
         public AckBundle(ActionDialect request) {
             this.start = System.currentTimeMillis();
             this.request = request;
+        }
+    }
+
+    public class GnosisAgentAckBundle extends AckBundle {
+
+        public GnosisAgent agent;
+
+        public GnosisAgentAckBundle(ActionDialect request, GnosisAgent agent) {
+            super(request);
+            this.agent = agent;
         }
     }
 

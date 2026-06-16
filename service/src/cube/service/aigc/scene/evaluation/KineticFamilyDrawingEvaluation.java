@@ -6,11 +6,13 @@
 
 package cube.service.aigc.scene.evaluation;
 
+import cell.util.log.Logger;
 import cube.aigc.psychology.EvaluationFeature;
 import cube.aigc.psychology.EvaluationReport;
 import cube.aigc.psychology.Painting;
 import cube.aigc.psychology.composition.PaintingFeatureSet;
 import cube.aigc.psychology.composition.SpaceLayout;
+import cube.aigc.psychology.material.Person;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +86,7 @@ public class KineticFamilyDrawingEvaluation extends Evaluation {
         List<EvaluationFeature> results = new ArrayList<>();
 
         SpaceLayout spaceLayout = new SpaceLayout(this.painting);
-
+        results.add(this.evalPerson(spaceLayout));
 
         return null;
     }
@@ -94,8 +96,17 @@ public class KineticFamilyDrawingEvaluation extends Evaluation {
         return null;
     }
 
-    private EvaluationFeature evalTree(SpaceLayout spaceLayout) {
+    private EvaluationFeature evalPerson(SpaceLayout spaceLayout) {
         EvaluationFeature result = new EvaluationFeature();
+
+        List<Person> personList = this.painting.getPersons();
+        if (null == personList) {
+            Logger.w(this.getClass(), "#evalPerson - No person in the painting: " + this.contactId);
+            return null;
+        }
+
+
+
         return result;
     }
 }

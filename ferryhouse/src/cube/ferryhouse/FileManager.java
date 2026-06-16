@@ -45,12 +45,16 @@ public final class FileManager {
 
     private Queue<PrimitiveInputStream> streamQueue = new ConcurrentLinkedQueue<>();
 
+    public FileManager(String domainName) {
+        this(domainName, null);
+    }
+
     public FileManager(String domainName, FerryStorage ferryStorage) {
         this.domainName = domainName;
         this.storage = ferryStorage;
 
         String path = Cryptology.getInstance().hashWithMD5AsString(domainName.getBytes(StandardCharsets.UTF_8));
-        this.filePath = Paths.get(path + "/files");
+        this.filePath = Paths.get("./workspace/" + path + "/files");
         if (!Files.exists(this.filePath)) {
             try {
                 Files.createDirectories(this.filePath);
@@ -69,7 +73,9 @@ public final class FileManager {
      * @param fileLabel
      */
     public void saveFileLabel(FileLabel fileLabel) {
-        this.storage.writeFileLabel(fileLabel);
+        if (null != this.storage) {
+            this.storage.writeFileLabel(fileLabel);
+        }
     }
 
     /**
@@ -161,7 +167,7 @@ public final class FileManager {
             // 计算文件占用空间
             for (File file : files) {
                 String fileCode = file.getName();
-                FileLabel fileLabel = this.storage.readFileLabel(fileCode);
+                FileLabel fileLabel = (null != this.storage) ? this.storage.readFileLabel(fileCode) : null;
                 if (null == fileLabel) {
                     Logger.w(this.getClass(), "Can NOT find file in DB - " + fileCode);
                     continue;

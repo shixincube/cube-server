@@ -15,11 +15,20 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 /**
- *
+ * 授权文件工具。
  */
 public class LicenceTool {
 
     private LicenceTool() {
+    }
+
+    public static JSONObject createDefault(String domain) {
+        JSONObject data = new JSONObject();
+        data.put("domain", domain);
+        data.put("beginning", System.currentTimeMillis());
+        data.put("duration", 180L * 24 * 60 * 60 * 1000);
+        data.put("limit", 10);
+        return data;
     }
 
     public static void createFile(String domain, long beginning, String password, File output) throws IOException {

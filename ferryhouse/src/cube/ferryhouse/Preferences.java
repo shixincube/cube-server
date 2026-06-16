@@ -14,7 +14,7 @@ public class Preferences {
     /**
      * 是否从云端同步数据到本地，仅在故障数据恢复时有效。
      */
-    public final static String ITEM_SYNCH_DATA = "SynchronizeData";
+    public final static String ITEM_SYNC_DATA = "SynchronizeData";
 
     /**
      * 是否在重启后清空所有数据，配置数据除外。

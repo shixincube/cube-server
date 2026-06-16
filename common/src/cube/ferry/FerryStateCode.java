@@ -42,6 +42,11 @@ public enum FerryStateCode {
     NotFindMember(14),
 
     /**
+     * 无代理节点。
+     */
+    NoGnosisAgent(21),
+
+    /**
      * 未知的状态。
      */
     Unknown(99)

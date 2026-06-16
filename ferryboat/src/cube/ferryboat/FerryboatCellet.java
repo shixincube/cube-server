@@ -10,7 +10,6 @@ import cell.api.Servable;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.ferry.FerryAction;
@@ -47,7 +46,7 @@ public class FerryboatCellet extends AbstractCellet {
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
 
-        ActionDialect dialect = DialectFactory.getInstance().createActionDialect(primitive);
+        ActionDialect dialect = new ActionDialect(primitive);
         String action = dialect.getName();
 
         if (FerryAction.CheckIn.name.equals(action)) {
