@@ -75,6 +75,12 @@ public class Session extends ContextHandler {
                     }
 
                     ConfigInfo configInfo = Manager.getInstance().getConfigInfo(token);
+                    if (null == configInfo) {
+                        this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                        this.complete();
+                        return;
+                    }
+
                     JSONObject responseData = configInfo.toJSON();
 
                     // 移除缓存
@@ -86,7 +92,8 @@ public class Session extends ContextHandler {
                     this.complete();
                 } catch (Exception e) {
                     Logger.w(Session.class, "#doPost", e);
-                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                    this.respond(response, HttpStatus.INTERNAL_SERVER_ERROR_500,
+                            this.makeError(HttpStatus.INTERNAL_SERVER_ERROR_500));
                     this.complete();
                 }
             }

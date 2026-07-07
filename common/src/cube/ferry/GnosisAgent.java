@@ -11,7 +11,7 @@ import org.json.JSONObject;
 
 public class GnosisAgent implements JSONable {
 
-    public final static String VitalSigns = "VitalSigns";
+    public final static String VitalSigns = "Vital-Signs";
 
     public final static String Persons = "Persons";
 
