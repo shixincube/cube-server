@@ -124,6 +124,8 @@ public class AICapability implements JSONable {
 
         public final static String FeatureExtraction = "FeatureExtraction";
 
+        public final static String ImageTextToText = "ImageTextToText";
+
         private Multimodal() {
         }
     }

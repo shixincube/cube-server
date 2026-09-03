@@ -166,7 +166,7 @@ public class GenerateTextUnitMeta extends UnitMeta {
                     answerList.addAll(rrr.getAnswerList());
                 }
                 // 按照得分从高到底
-                Collections.sort(answerList, new Comparator<RetrieveReRankResult.Answer>() {
+                answerList.sort(new Comparator<RetrieveReRankResult.Answer>() {
                     @Override
                     public int compare(RetrieveReRankResult.Answer a1, RetrieveReRankResult.Answer a2) {
                         return (int) Math.round((a2.score - a1.score) * 100);
@@ -254,7 +254,7 @@ public class GenerateTextUnitMeta extends UnitMeta {
                 String responseText = Consts.NO_CONTENT_SENTENCE;
                 result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
                         (null != this.originalQuery) ? this.originalQuery : this.content,
-                        responseText, "", complexContext);
+                        responseText, "", null, complexContext);
             }
             else if (this.networkingEnabled) {
                 // 启用搜索或者启用联网信息检索都执行搜索
@@ -279,7 +279,7 @@ public class GenerateTextUnitMeta extends UnitMeta {
                 String responseText = Consts.SEARCHING_INTERNET_FOR_INFORMATION;
                 result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
                         (null != this.originalQuery) ? this.originalQuery : this.content,
-                        responseText, "", complexContext);
+                        responseText, "", null, complexContext);
             }
             else if (this.service.useAgent) {
                 GeneratingRecord generatingRecord =
@@ -289,7 +289,7 @@ public class GenerateTextUnitMeta extends UnitMeta {
                     // 过滤中文字符
                     result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
                             (null != this.originalQuery) ? this.originalQuery : this.content,
-                            generatingRecord.answer, generatingRecord.thought, complexContext);
+                            generatingRecord.answer, generatingRecord.thought, null, complexContext);
                 }
                 else {
                     this.channel.setProcessing(false);
@@ -328,9 +328,13 @@ public class GenerateTextUnitMeta extends UnitMeta {
 
                 String responseText = "";
                 String thoughtText = "";
+                JSONObject resultPayload = null;
                 try {
                     responseText = payload.getString("response");
                     thoughtText = payload.getString("thought");
+                    if (payload.has("resultPayload")) {
+                        resultPayload = payload.getJSONObject("resultPayload");
+                    }
                 } catch (Exception e) {
                     Logger.w(AIGCService.class, "Unit respond failed - channel: " + this.channel.getCode());
                     // 记录故障
@@ -347,7 +351,7 @@ public class GenerateTextUnitMeta extends UnitMeta {
                 responseText = this.filterChinese(this.unit, responseText);
                 result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
                         (null != this.originalQuery) ? this.originalQuery : this.content,
-                        responseText.trim(), thoughtText.trim(), complexContext);
+                        responseText.trim(), thoughtText.trim(), resultPayload, complexContext);
             }
         }
         else {
@@ -362,8 +366,8 @@ public class GenerateTextUnitMeta extends UnitMeta {
                 String content = resourceAnswer.extractContent(this.service, this.channel.getAuthToken());
                 String answer = resourceAnswer.answer(content);
                 result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
-                        (null != this.originalQuery) ? this.originalQuery : this.content, answer.trim(), "",
-                        complexContext);
+                        (null != this.originalQuery) ? this.originalQuery : this.content,
+                        answer.trim(), "", null, complexContext);
             }
         }
 

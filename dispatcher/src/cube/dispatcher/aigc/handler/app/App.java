@@ -7,14 +7,11 @@
 package cube.dispatcher.aigc.handler.app;
 
 import cell.util.log.Logger;
-import cube.aigc.Consts;
-import cube.aigc.ConversationRequest;
-import cube.aigc.ConversationResponse;
 import cube.aigc.ModelConfig;
 import cube.common.JSONable;
-import cube.common.entity.*;
+import cube.common.entity.FileLabel;
+import cube.common.entity.KnowledgeSource;
 import cube.util.HttpClientFactory;
-import cube.util.JSONUtils;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.WWWAuthenticationProtocolHandler;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -23,10 +20,12 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public final class App {
@@ -145,7 +144,7 @@ public final class App {
         return this.reopenChannel(token, config);
     }
 
-    public List<ConversationResponse> requestConversation(String token, ConversationRequest request) {
+    /*public List<ConversationResponse> requestConversation(String token, ConversationRequest request) {
         ChannelInfo channel = this.tokenChannelMap.get(token);
         if (null == channel) {
             Logger.w(this.getClass(), "#requestConversation - Not find channel for token: " + token);
@@ -322,7 +321,7 @@ public final class App {
         else {
             return this.makeResponse(sn, convId, request, content, end);
         }
-    }
+    }*/
 
     private List<FileLabel> parseFileLabels(JSONArray array) {
         List<FileLabel> list = new ArrayList<>();
@@ -340,7 +339,7 @@ public final class App {
         return list;
     }
 
-    private List<ConversationResponse> makeResponse(long sn, String conversationId,
+    /*private List<ConversationResponse> makeResponse(long sn, String conversationId,
                                                     ConversationRequest request, List<FileLabel> fileLabels) {
         List<ConversationResponse> result = new ArrayList<>();
 
@@ -355,9 +354,9 @@ public final class App {
         result.add(response);
 
         return result;
-    }
+    }*/
 
-    private List<ConversationResponse> makeResponse(long sn, String conversationId,
+    /*private List<ConversationResponse> makeResponse(long sn, String conversationId,
                                                     ConversationRequest request, String content, boolean end) {
         List<ConversationResponse> result = new ArrayList<>();
 
@@ -372,9 +371,9 @@ public final class App {
         result.add(response);
 
         return result;
-    }
+    }*/
 
-    private List<ConversationResponse> splitResponse(long sn, String conversationId,
+    /*private List<ConversationResponse> splitResponse(long sn, String conversationId,
                                                      ConversationRequest request, String content) {
         List<ConversationResponse> result = new ArrayList<>();
 
@@ -398,9 +397,9 @@ public final class App {
         }
 
         return result;
-    }
+    }*/
 
-    private ConversationResponse makeResponse(long sn, String conversationId, List<KnowledgeSource> sources) {
+    /*private ConversationResponse makeResponse(long sn, String conversationId, List<KnowledgeSource> sources) {
         StringBuilder text = new StringBuilder("\n");
         text.append("> 数据来源：\n");
         for (KnowledgeSource source : sources) {
@@ -410,7 +409,7 @@ public final class App {
         String id = UUID.randomUUID().toString();
         ConversationResponse response = new ConversationResponse(sn, id, conversationId, text.toString(), "");
         return response;
-    }
+    }*/
 
 
     public class ChannelInfo implements JSONable {

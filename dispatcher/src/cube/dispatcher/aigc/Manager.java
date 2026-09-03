@@ -14,14 +14,16 @@ import cell.util.log.Logger;
 import cube.aigc.*;
 import cube.aigc.app.ConfigInfo;
 import cube.aigc.complex.widget.Event;
-import cube.aigc.psychology.*;
+import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.Report;
+import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.app.UserProfile;
 import cube.aigc.psychology.composition.AnswerSheet;
-import cube.aigc.psychology.consultation.ConsultationTheme;
-import cube.common.entity.Emotion;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScaleResult;
+import cube.aigc.psychology.consultation.ConsultationTheme;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.Packet;
@@ -30,8 +32,8 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.PerformerListener;
-import cube.dispatcher.aigc.handler.Chart;
 import cube.dispatcher.aigc.handler.*;
+import cube.dispatcher.aigc.handler.Chart;
 import cube.dispatcher.aigc.handler.app.App;
 import cube.dispatcher.stream.StreamType;
 import cube.dispatcher.util.Tickable;
@@ -136,6 +138,7 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new Channel());
         httpServer.addContextHandler(new StopProcessing());
         httpServer.addContextHandler(new Chat());
+        httpServer.addContextHandler(new Multimodal());
         httpServer.addContextHandler(new Summarization());
         httpServer.addContextHandler(new SemanticSearch());
         httpServer.addContextHandler(new SpeechEmotionRecognition());
@@ -1605,62 +1608,46 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     /**
-     * 互动对话。
+     * 多模态对话。
      *
      * @param token
      * @param channelCode
-     * @param pattern
-     * @param content
-     * @param histories
-     * @param records
-     * @param option
+     * @param input
      * @return
-     * @deprecated
      */
-    public long executeConversation(String token, String channelCode, String pattern,
-                             String content, int histories, JSONArray records,
-                             GeneratingOption option) {
+    public MultimodalOutput executeMultimodal(String token, String channelCode, MultimodalInput input) {
         JSONObject data = new JSONObject();
         data.put("token", token);
-        data.put("code", channelCode);
-        data.put("pattern", pattern);
-        data.put("content", content);
-        data.put("option", option.toJSON());
-        data.put("histories", histories);
-        if (null != records) {
-            data.put("records", records);
-        }
-        data.put("recordable", false);
-        data.put("networking", false);
-        data.put("searchTopK", 20);
+        data.put("channel", channelCode);
+        data.put("input", input.toJSON());
 
-        Packet packet = new Packet(AIGCAction.Conversation.name, data);
+        Packet packet = new Packet(AIGCAction.Multimodal.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
         if (null == response) {
-            Logger.w(Manager.class, "#conversation - Response is null - " + channelCode);
-            return 0;
+            Logger.w(Manager.class, "#executeMultimodal - Response is null - " + channelCode);
+            return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(Manager.class, "#conversation - Response state code is NOT Ok - " + channelCode +
+            Logger.w(Manager.class, "#executeMultimodal - Response state code is NOT Ok - " + channelCode +
                     " - " + Packet.extractCode(responsePacket));
-            return 0;
+            return null;
         }
 
         JSONObject responseData = Packet.extractDataPayload(responsePacket);
-        return responseData.getLong("sn");
+        return new MultimodalOutput(responseData);
     }
 
-    public AIGCConversationResponse queryConversation(String token, String channelCode, long sn) {
+    public MultimodalOutput queryMultimodal(String token, String channelCode, long sn) {
         JSONObject data = new JSONObject();
         data.put("token", token);
         data.put("code", channelCode);
         data.put("sn", sn);
 
-        Packet packet = new Packet(AIGCAction.QueryConversation.name, data);
+        Packet packet = new Packet(AIGCAction.QueryMultimodal.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
@@ -1676,7 +1663,7 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
-        return new AIGCConversationResponse(Packet.extractDataPayload(responsePacket));
+        return new MultimodalOutput(Packet.extractDataPayload(responsePacket));
     }
 
     public JSONObject querySearchResults(String token) {

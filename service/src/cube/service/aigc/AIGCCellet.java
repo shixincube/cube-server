@@ -219,11 +219,6 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new AppASCIIArtTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-//        else if (AIGCAction.Sentiment.name.equals(action)) {
-//            // 来自 Dispatcher 的请求
-//            this.execute(new SentimentTask(this, talkContext, primitive,
-//                    this.markResponseTime(action)));
-//        }
         else if (AIGCAction.AnalyseVoiceStream.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new AnalyseVoiceStreamTask(this, talkContext, primitive,
@@ -284,14 +279,14 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new ChatTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-//        else if (AIGCAction.Conversation.name.equals(action)) {
+        else if (AIGCAction.Multimodal.name.equals(action)) {
+            // 来自 Dispatcher 的请求
+            this.execute(new MultimodalTask(this, talkContext, primitive,
+                    this.markResponseTime(action)));
+        }
+//        else if (AIGCAction.QueryMultimodal.name.equals(action)) {
 //            // 来自 Dispatcher 的请求
-//            this.execute(new ConversationTask(this, talkContext, primitive,
-//                    this.markResponseTime(action)));
-//        }
-//        else if (AIGCAction.QueryConversation.name.equals(action)) {
-//            // 来自 Dispatcher 的请求
-//            this.execute(new QueryConversationTask(this, talkContext, primitive,
+//            this.execute(new QueryMultimodalTask(this, talkContext, primitive,
 //                    this.markResponseTime(action)));
 //        }
         else if (AIGCAction.GetSearchResults.name.equals(action)) {

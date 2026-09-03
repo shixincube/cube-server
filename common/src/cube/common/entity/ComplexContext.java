@@ -31,7 +31,7 @@ public class ComplexContext extends Entity {
 
     private String subtask;
 
-    private List<ComplexResource> resources;
+    private final List<ComplexResource> resources;
 
     private boolean inferable = false;
 

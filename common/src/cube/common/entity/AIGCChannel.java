@@ -40,9 +40,9 @@ public class AIGCChannel extends Entity {
     private long activeTimestamp;
 
     // 倒序存储历史记录
-    private LinkedList<GeneratingRecord> history;
+    private final LinkedList<GeneratingRecord> history;
 
-    private AtomicBoolean processing;
+    private final AtomicBoolean processing;
 
     private long processingTimestamp;
 
@@ -200,7 +200,9 @@ public class AIGCChannel extends Entity {
         return null;
     }
 
-    public GeneratingRecord appendRecord(long sn, String unit, String query, String answer, String thought, ComplexContext context) {
+    public GeneratingRecord appendRecord(long sn, String unit, String query,
+                                         String answer, String thought, JSONObject resultPayload,
+                                         ComplexContext context) {
         this.activeTimestamp = System.currentTimeMillis();
 
         this.totalQueryWords += query.length();
@@ -208,7 +210,8 @@ public class AIGCChannel extends Entity {
 
         this.rounds.incrementAndGet();
 
-        GeneratingRecord record = new GeneratingRecord(sn, unit, query, answer, thought, this.activeTimestamp, context);
+        GeneratingRecord record = new GeneratingRecord(sn, unit, query, answer, thought, resultPayload,
+                this.activeTimestamp, context);
         synchronized (this.history) {
             this.history.addFirst(record);
         }
@@ -238,7 +241,8 @@ public class AIGCChannel extends Entity {
 
         this.rounds.incrementAndGet();
 
-        GeneratingRecord record = new GeneratingRecord(sn, source.unit, source.query, source.answer, source.thought,
+        GeneratingRecord record = new GeneratingRecord(sn, source.unit, source.query,
+                source.answer, source.thought, source.resultPayload,
                 this.activeTimestamp, source.context);
         synchronized (this.history) {
             this.history.addFirst(record);

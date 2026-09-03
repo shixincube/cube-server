@@ -28,6 +28,8 @@ public class GeneratingRecord implements JSONable {
 
     public String thought = "";
 
+    public JSONObject resultPayload;
+
     public List<FileLabel> queryFileLabels;
 
     public String[] queryAdditions;
@@ -45,7 +47,7 @@ public class GeneratingRecord implements JSONable {
     /**
      * 仅用于客户端向服务器以附件方式传递数据。
      *
-     * @param queryAdditions
+     * @param queryAdditions 询问的附加内容。
      */
     public GeneratingRecord(String[] queryAdditions) {
         this.sn = Utils.generateSerialNumber();
@@ -56,7 +58,7 @@ public class GeneratingRecord implements JSONable {
     /**
      * 仅用于客户端向服务器以附件方式传递数据。
      *
-     * @param queryFileLabels
+     * @param queryFileLabels 询问附加的文件清单。
      */
     public GeneratingRecord(List<FileLabel> queryFileLabels) {
         this.sn = Utils.generateSerialNumber();
@@ -72,13 +74,15 @@ public class GeneratingRecord implements JSONable {
         this.timestamp = System.currentTimeMillis();
     }
 
-    public GeneratingRecord(long sn, String unit, String query, String answer, String thought,
+    public GeneratingRecord(long sn, String unit, String query,
+                            String answer, String thought, JSONObject resultPayload,
                             long timestamp, ComplexContext context) {
         this.sn = sn;
         this.unit = unit;
         this.query = query;
         this.answer = answer;
         this.thought = thought;
+        this.resultPayload = resultPayload;
         this.timestamp = timestamp;
         this.context = context;
     }
@@ -137,6 +141,10 @@ public class GeneratingRecord implements JSONable {
 
         if (json.has("thought")) {
             this.thought = json.getString("thought");
+        }
+
+        if (json.has("resultPayload")) {
+            this.resultPayload = json.getJSONObject("resultPayload");
         }
 
         if (json.has("answerFileLabels")) {
@@ -254,6 +262,10 @@ public class GeneratingRecord implements JSONable {
 
         if (null != this.thought) {
             json.put("thought", this.thought);
+        }
+
+        if (null != this.resultPayload) {
+            json.put("resultPayload", this.resultPayload);
         }
 
         if (null != this.answerFileLabels) {

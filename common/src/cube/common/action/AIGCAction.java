@@ -187,14 +187,14 @@ public enum AIGCAction {
     Chat("chat"),
 
     /**
-     * 会话式问答互动（异步方式）。
+     * 多模态请求。
      */
-    Conversation("conversation"),
+    Multimodal("multimodal"),
 
     /**
-     * 查询会话数据。
+     * 查询多模态请求。
      */
-    QueryConversation("queryConversation"),
+    QueryMultimodal("queryMultimodal"),
 
     /**
      * 获取队列计数。

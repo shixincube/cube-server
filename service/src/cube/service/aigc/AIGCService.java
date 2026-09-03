@@ -37,7 +37,6 @@ import cube.service.aigc.command.Command;
 import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.guidance.GuideFlow;
 import cube.service.aigc.guidance.Guides;
-import cube.service.aigc.guidance.Prompts;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.*;
@@ -45,7 +44,6 @@ import cube.service.aigc.member.MemberCenter;
 import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.scene.*;
-import cube.service.aigc.scene.PromptBuilder;
 import cube.service.aigc.unit.*;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
@@ -102,12 +100,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * Key 是 AIGC 的 Query Key
      */
-    private final Map<String, Queue<UnitMeta>> summarizationQueueMap;
-
-    /**
-     * Key 是 AIGC 的 Query Key
-     */
-    private final Map<String, Queue<UnitMeta>> extractKeywordsQueueMap;
+    private final Map<String, Queue<UnitMeta>> multimodalQueueMap;
 
     /**
      * Key 是 AIGC 的 Query Key
@@ -132,7 +125,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * Key 是 Stream name
      */
-    private Map<String, List<VoiceStreamSink>> waitingVoiceStreamSinks;
+    private final Map<String, List<VoiceStreamSink>> waitingVoiceStreamSinks;
 
     private final List<UnitMeta> runningMetas;
 
@@ -189,8 +182,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         this.channelMap = new ConcurrentHashMap<>();
         this.textToFileQueueMap = new ConcurrentHashMap<>();
         this.textToImageQueueMap = new ConcurrentHashMap<>();
-        this.summarizationQueueMap = new ConcurrentHashMap<>();
-        this.extractKeywordsQueueMap = new ConcurrentHashMap<>();
+        this.multimodalQueueMap = new ConcurrentHashMap<>();
         this.semanticSearchQueueMap = new ConcurrentHashMap<>();
         this.retrieveReRankQueueMap = new ConcurrentHashMap<>();
         this.speechQueueMap = new ConcurrentHashMap<>();
@@ -2178,74 +2170,64 @@ public class AIGCService extends AbstractModule implements Generatable {
      *
      * @param tokenCode
      * @param channelCode
-     * @param content
-     * @param parameter
+     * @param input
      * @param listener
      * @return
-     * @deprecated
      */
-    public long executeConversation(String tokenCode, String channelCode, String content, AIGCConversationParameter parameter,
-                             ConversationListener listener) {
+    public boolean executeMultimodal(String tokenCode, String channelCode,
+                                     MultimodalInput input, MultimodalListener listener) {
         if (!this.isStarted()) {
-            Logger.w(AIGCService.class, "#conversation - Service is NOT ready");
-            return 0;
-        }
-
-        if (content.length() > ModelConfig.getPromptLengthLimit(ModelConfig.BAIZE_NEXT_UNIT)) {
-            Logger.w(AIGCService.class, "#conversation - Content length greater than "
-                    + ModelConfig.getPromptLengthLimit(ModelConfig.BAIZE_NEXT_UNIT));
-            return 0;
+            Logger.w(AIGCService.class, "#executeMultimodal - Service is NOT ready");
+            return false;
         }
 
         // 获取频道
         AIGCChannel channel = this.channelMap.get(channelCode);
         if (null == channel) {
-            Logger.d(AIGCService.class, "#conversation - Can NOT find channel, create new channel: " + channelCode);
+            Logger.d(AIGCService.class, "#executeMultimodal - Can NOT find channel, create new channel: " + channelCode);
             // 创建频道
             channel = this.createChannel(tokenCode, "User-" + channelCode, channelCode, Language.Chinese);
         }
 
         // 如果频道正在应答上一次问题，则返回 null
         if (channel.isProcessing()) {
-            Logger.w(AIGCService.class, "#conversation - Channel is processing: " + channelCode);
-            return 0;
+            Logger.w(AIGCService.class, "#executeMultimodal - Channel is processing: " + channelCode);
+            return false;
         }
 
         channel.setProcessing(true);
 
-        // 查找有该能力的单元
-        AIGCUnit unit = this.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+        // 查找单元
+        AIGCUnit unit = this.selectUnitByName(input.unit);
         if (null == unit) {
-            Logger.w(AIGCService.class, "#conversation - No conversational task unit setup in server");
+            Logger.w(AIGCService.class, "#executeMultimodal - No task unit setup in server: " + input.unit);
             channel.setProcessing(false);
-            return 0;
+            return false;
         }
 
-        final ConversationUnitMeta meta = new ConversationUnitMeta(unit, channel, content, parameter, listener);
+        final MultimodalUnitMeta meta = new MultimodalUnitMeta(this, unit, channel, input, listener);
 
-//        synchronized (this.conversationQueueMap) {
-//            Queue<ConversationUnitMeta> queue = this.conversationQueueMap.get(unit.getQueryKey());
-//            if (null == queue) {
-//                queue = new ConcurrentLinkedQueue<>();
-//                this.conversationQueueMap.put(unit.getQueryKey(), queue);
-//            }
-//
-//            queue.offer(meta);
-//        }
+        Queue<UnitMeta> queue = null;
+        synchronized (this.multimodalQueueMap) {
+            queue = this.multimodalQueueMap.computeIfAbsent(unit.getQueryKey(), k -> new ConcurrentLinkedQueue<>());
+            queue.offer(meta);
+        }
 
-        this.executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                processConversationMeta(meta);
-            }
-        });
+        if (!unit.isRunning()) {
+            final Queue<UnitMeta> metaQueue = queue;
+            (new Thread() {
+                @Override
+                public void run() {
+                    processQueue(meta.unit, metaQueue);
+                }
+            }).start();
+        }
 
-        return meta.sn;
+        return true;
     }
 
     /*
-     * @deprecated
-    public AIGCConversationResponse queryConversation(String channelCode, long sn) {
+    public AIGCConversationResponse queryMultimodal(String channelCode, long sn) {
         // 获取频道
         AIGCChannel channel = this.channelMap.get(channelCode);
         if (null == channel) {
@@ -2287,98 +2269,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }*/
 
-    /*
-     * 执行自然语言任务。
-     *
-     * @param task
-     * @param listener
-     * @return
-     * @deprecated 2024-12-13 废弃
-    public boolean performNaturalLanguageTask(NLTask task, NaturalLanguageTaskListener listener) {
-        if (!this.isStarted()) {
-            return false;
-        }
-
-        // 检查任务
-        if (!task.check()) {
-            Logger.w(AIGCService.class, "Natural language task data error: " + task.type);
-            return false;
-        }
-
-        // 查找有该能力的单元
-        AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.MultiTask);
-        if (null == unit) {
-            Logger.w(AIGCService.class, "No natural language task unit setup in server");
-            return false;
-        }
-
-        NaturalLanguageTaskMeta meta = new NaturalLanguageTaskMeta(unit, task, listener);
-
-        synchronized (this.nlTaskQueueMap) {
-            Queue<NaturalLanguageTaskMeta> queue = this.nlTaskQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.nlTaskQueueMap.put(unit.getQueryKey(), queue);
-            }
-
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            unit.setRunning(true);
-
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    processNaturalLanguageTaskQueue(meta.unit.getQueryKey());
-                }
-            });
-        }
-
-        return true;
-    }*/
-
-    /* FIXME 2024-12-13 过时，废弃
-    public boolean sentimentAnalysis(String text, SentimentAnalysisListener listener) {
-        if (!this.isStarted()) {
-            return false;
-        }
-
-        // 查找有该能力的单元
-        AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.SentimentAnalysis);
-        if (null == unit) {
-            Logger.w(AIGCService.class, "No sentiment analysis unit setup in server");
-            return false;
-        }
-
-        SentimentUnitMeta meta = new SentimentUnitMeta(unit, text, listener);
-
-        synchronized (this.sentimentQueueMap) {
-            Queue<SentimentUnitMeta> queue = this.sentimentQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.sentimentQueueMap.put(unit.getQueryKey(), queue);
-            }
-
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            unit.setRunning(true);
-
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    processSentimentQueue(meta.unit.getQueryKey());
-                }
-            });
-        }
-
-        return true;
-    }*/
-
     /**
-     * 生成文本摘要。
+     * 生成指定内容的摘要。
      *
      * @param text
      * @param listener
@@ -2389,38 +2281,23 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        // 查找有该能力的单元
-        AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Summarization);
-        if (null == unit) {
-            Logger.w(AIGCService.class, "No summarization unit setup in server");
-            return false;
-        }
+        final SummarizationListener summarizationListener = listener;
 
-        // 修正文本内容
-        String modified = text.replaceAll("\n", "。");
-
-        final UnitMeta meta = new SummarizationUnitMeta(this, unit, modified, listener);
-
-        Queue<UnitMeta> queue = null;
-        synchronized (this.summarizationQueueMap) {
-            queue = this.summarizationQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.summarizationQueueMap.put(unit.getQueryKey(), queue);
-            }
-
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            final Queue<UnitMeta> metaQueue = queue;
-            (new Thread() {
-                @Override
-                public void run() {
-                    processQueue(meta.unit, metaQueue);
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                GeneratingRecord result = generateText(ModelConfig.BAIZE_X_UNIT,
+                        "请提取以下内容的摘要信息，只返回摘要：\n\n" + text,
+                        null, null);
+                if (null == result) {
+                    summarizationListener.onFailed(text, AIGCStateCode.Failure);
+                    return;
                 }
-            }).start();
-        }
+
+                summarizationListener.onCompleted(text, result.answer);
+            }
+        };
+        thread.start();
 
         return true;
     }
@@ -2540,11 +2417,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         Queue<UnitMeta> queue = null;
         synchronized (this.textToFileQueueMap) {
-            queue = this.textToFileQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.textToFileQueueMap.put(unit.getQueryKey(), queue);
-            }
+            queue = this.textToFileQueueMap.computeIfAbsent(unit.getQueryKey(), k -> new ConcurrentLinkedQueue<>());
             queue.offer(meta);
         }
 
@@ -2562,7 +2435,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 提取关键词。
+     * 提取文本关键词。
      *
      * @param text
      * @param listener
@@ -2573,35 +2446,35 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        // 查找有该能力的单元
-        AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.ExtractKeywords);
-        if (null == unit) {
-            Logger.w(AIGCService.class, "No extract keywords unit setup in server");
-            return false;
-        }
+        final ExtractKeywordsListener extractKeywordsListener = listener;
 
-        final UnitMeta meta = new ExtractKeywordsUnitMeta(this, unit, text, listener);
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                GeneratingRecord result = generateText(ModelConfig.BAIZE_X_UNIT,
+                        "提取下面文本内容的关键词，仅回复关键词，关键词之间使用逗号分隔：\n\n" + text,
+                        null, null);
 
-        Queue<UnitMeta> queue = null;
-        synchronized (this.extractKeywordsQueueMap) {
-            queue = this.extractKeywordsQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.extractKeywordsQueueMap.put(unit.getQueryKey(), queue);
-            }
-
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            final Queue<UnitMeta> metaQueue = queue;
-            (new Thread() {
-                @Override
-                public void run() {
-                    processQueue(meta.unit, metaQueue);
+                if (null == result) {
+                    extractKeywordsListener.onFailed(text, AIGCStateCode.Failure);
+                    return;
                 }
-            }).start();
-        }
+
+                String[] words = null;
+                if (result.answer.contains(",")) {
+                    words = result.answer.split(",");
+                    extractKeywordsListener.onCompleted(text, Arrays.asList(words));
+                }
+                else if (result.answer.contains("，")) {
+                    words = result.answer.split("，");
+                    extractKeywordsListener.onCompleted(text, Arrays.asList(words));
+                }
+                else {
+                    extractKeywordsListener.onCompleted(text, Arrays.asList(new String[]{result.answer}));
+                }
+            }
+        };
+        thread.start();
 
         return true;
     }
@@ -3800,16 +3673,6 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     private void processGenerateTextMeta(GenerateTextUnitMeta meta) {
-//        Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(queryKey);
-//        if (null == queue) {
-//            Logger.w(AIGCService.class, "#processGenerateTextQueue - Not found unit: " + queryKey);
-//            AIGCUnit unit = this.unitMap.get(queryKey);
-//            if (null != unit) {
-//                unit.setRunning(false);
-//            }
-//            return;
-//        }
-
         AIGCUnit unit = meta.unit;
 
         int countdown = 50;
@@ -3848,24 +3711,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         unit.setRunning(false);
     }
 
-    private void processConversationMeta(ConversationUnitMeta meta) {
-//        Queue<ConversationUnitMeta> queue = this.conversationQueueMap.get(queryKey);
-//        if (null == queue) {
-//            Logger.w(AIGCService.class, "Not found unit: " + queryKey);
-//            return;
-//        }
-
-        meta.unit.setRunning(true);
-
-        try {
-            meta.process();
-        } catch (Exception e) {
-            Logger.e(this.getClass(), "#processConversationMeta - meta process", e);
-        }
-
-        meta.unit.setRunning(false);
-    }
-
     private void processQueue(AIGCUnit unit, Queue<UnitMeta> queue) {
         unit.setRunning(true);
 
@@ -3899,46 +3744,10 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     private boolean checkParticipantName(String name) {
         if (name.equalsIgnoreCase("AIGC") || name.equalsIgnoreCase("Cube") ||
-            name.equalsIgnoreCase("Baize") || name.contains("白泽")) {
+                name.equalsIgnoreCase("Baize") || name.contains("白泽")) {
             return false;
-        }
-        else {
+        } else {
             return true;
-        }
-    }
-
-    /**
-     * @deprecated
-     */
-    private class ConversationUnitMeta extends GenerateTextUnitMeta {
-
-        protected AIGCConversationParameter parameter;
-
-        protected ConversationListener conversationListener;
-
-        protected GenerateTextListener generateListener = new GenerateTextListener() {
-            @Override
-            public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
-                AIGCConversationResponse response = new AIGCConversationResponse(record);
-                conversationListener.onConversation(channel, response);
-            }
-            @Override
-            public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
-                conversationListener.onFailed(channel, stateCode);
-            }
-        };
-
-        public ConversationUnitMeta(AIGCUnit unit, AIGCChannel channel, String content,
-                                    AIGCConversationParameter parameter,
-                                    ConversationListener listener) {
-            super(AIGCService.this, unit, channel, content, parameter.toGenerativeOption(), parameter.categories,
-                    parameter.records, null, null);
-            this.listener = this.generateListener;
-            this.maxHistories = parameter.histories;
-            this.recordHistoryEnabled = parameter.recordable;
-            this.networkingEnabled = parameter.networking;
-            this.parameter = parameter;
-            this.conversationListener = listener;
         }
     }
 }
