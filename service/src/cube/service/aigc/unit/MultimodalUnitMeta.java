@@ -9,6 +9,7 @@ package cube.service.aigc.unit;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.Usage;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.*;
@@ -94,9 +95,25 @@ public class MultimodalUnitMeta extends UnitMeta {
             String responseText = payload.getString("response");
             String thoughtText = payload.has("thought") ? payload.getString("thought") : "";
             JSONObject resultPayload = payload.has("resultPayload") ? payload.getJSONObject("resultPayload") : null;
+            Usage usage = payload.has("performance") ? new Usage(payload.getJSONObject("performance")) : null;
             this.output = new MultimodalOutput(this.sn, this.unit.getCapability().getName(),
                     responseText, thoughtText, resultPayload);
+            // 关联用量信息
+            this.output.usage = usage;
             this.listener.onResponse(this.channel, this.output);
+
+            // 更新用量
+            if (null != usage) {
+                this.service.getExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        Logger.d(MultimodalUnitMeta.class, "Updates usage data: " +
+                                usage.inputTokens + "/" + usage.outputTokens);
+                        service.getStorage().updateUsage(channel.getAuthToken().getContactId(),
+                                unit.getCapability().getName(), usage.outputTokens, usage.inputTokens);
+                    }
+                });
+            }
         } catch (Exception e) {
             Logger.e(this.getClass(), "#process", e);
             this.listener.onFailed(this.channel, AIGCStateCode.IllegalOperation);

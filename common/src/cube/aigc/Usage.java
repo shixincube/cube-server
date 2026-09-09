@@ -16,48 +16,35 @@ public class Usage implements JSONable {
 
     public final String model;
 
-    public final long completionTokens;
+    public final long inputTokens;
 
-    public final long promptTokens;
+    public final long outputTokens;
 
-    public final long totalTokens;
+    public final long elapsed;
 
-    public String name;
-
-    public Usage(String model, long completionTokens, long promptTokens, long totalTokens) {
+    public Usage(String model, long inputTokens, long outputTokens, long elapsed) {
         this.model = model;
-        this.completionTokens = completionTokens;
-        this.promptTokens = promptTokens;
-        this.totalTokens = totalTokens;
+        this.inputTokens = inputTokens;
+        this.outputTokens = outputTokens;
+        this.elapsed = elapsed;
     }
 
     public Usage(JSONObject json) {
         this.model = json.has("model") ? json.getString("model") : "Baize";
-        this.completionTokens = json.has("completionTokens") ?
-                json.getLong("completionTokens") : json.getLong("completion_tokens");
-        this.promptTokens = json.has("promptTokens") ?
-                json.getLong("promptTokens") : json.getLong("prompt_tokens");
-        this.totalTokens = json.has("totalTokens") ?
-                json.getLong("totalTokens") : json.getLong("total_tokens");
-
-        if (json.has("name")) {
-            this.name = json.getString("name");
-        }
+        this.inputTokens = json.has("inputTokens") ?
+                json.getLong("inputTokens") : json.getLong("input_tokens");
+        this.outputTokens = json.has("outputTokens") ?
+                json.getLong("outputTokens") : json.getLong("output_tokens");
+        this.elapsed = json.has("elapsed") ? Long.parseLong(json.get("elapsed").toString()) : 0;
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("model", this.model);
-        json.put("completionTokens", this.completionTokens);
-        json.put("completion_tokens", this.completionTokens);
-        json.put("promptTokens", this.promptTokens);
-        json.put("prompt_tokens", this.promptTokens);
-        json.put("totalTokens", this.totalTokens);
-        json.put("total_tokens", this.totalTokens);
-        if (null != this.name) {
-            json.put("name", this.name);
-        }
+        json.put("inputTokens", this.inputTokens);
+        json.put("outputTokens", this.outputTokens);
+        json.put("elapsed", this.elapsed);
         return json;
     }
 

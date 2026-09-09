@@ -7,11 +7,13 @@
 package cube.common.entity;
 
 import cell.util.Utils;
+import cube.aigc.Usage;
 import cube.common.JSONable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -32,13 +34,15 @@ public class GeneratingRecord implements JSONable {
 
     public List<FileLabel> queryFileLabels;
 
-    public String[] queryAdditions;
+    public List<String> queryAdditions;
 
     public List<FileLabel> answerFileLabels;
 
     public String unit;
 
     public long timestamp;
+
+    public Usage usage;
 
     public ComplexContext context;
 
@@ -51,7 +55,7 @@ public class GeneratingRecord implements JSONable {
      */
     public GeneratingRecord(String[] queryAdditions) {
         this.sn = Utils.generateSerialNumber();
-        this.queryAdditions = queryAdditions;
+        this.queryAdditions = Arrays.asList(queryAdditions);
         this.timestamp = System.currentTimeMillis();
     }
 
@@ -158,10 +162,10 @@ public class GeneratingRecord implements JSONable {
 
         if (json.has("queryAdditions")) {
             JSONArray array = json.getJSONArray("queryAdditions");
-            this.queryAdditions = new String[array.length()];
+            this.queryAdditions = new ArrayList<>();
             for (int i = 0; i < array.length(); ++i) {
                 String text = array.getString(i);
-                this.queryAdditions[i] = text;
+                this.queryAdditions.add(text);
             }
         }
 
@@ -184,7 +188,7 @@ public class GeneratingRecord implements JSONable {
     }
 
     public boolean hasQueryAddition() {
-        return (null != this.queryAdditions && this.queryAdditions.length > 0);
+        return (null != this.queryAdditions && !this.queryAdditions.isEmpty());
     }
 
     public boolean hasQueryFile() {

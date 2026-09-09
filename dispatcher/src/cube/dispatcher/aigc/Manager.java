@@ -1652,13 +1652,13 @@ public class Manager implements Tickable, PerformerListener {
         request.addParam("token", token);
         ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
-            Logger.w(Manager.class, "#queryConversation - Response is null - " + channelCode);
+            Logger.w(Manager.class, "#queryMultimodal - Response is null - " + channelCode);
             return null;
         }
 
         Packet responsePacket = new Packet(response);
         if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(Manager.class, "#queryConversation - Response state code is NOT Ok - " + channelCode +
+            Logger.w(Manager.class, "#queryMultimodal - Response state code is NOT Ok - " + channelCode +
                     " - " + Packet.extractCode(responsePacket));
             return null;
         }

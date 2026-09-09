@@ -7,6 +7,7 @@
 package cube.common.entity;
 
 import cell.util.Utils;
+import cube.aigc.Usage;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
@@ -24,6 +25,8 @@ public class MultimodalOutput implements JSONable {
     public String thought;
 
     public JSONObject resultPayload;
+
+    public Usage usage;
 
     public long timestamp;
 
@@ -71,6 +74,10 @@ public class MultimodalOutput implements JSONable {
             this.resultPayload = json.getJSONObject("resultPayload");
         }
 
+        if (json.has("usage")) {
+            this.usage = new Usage(json.getJSONObject("usage"));
+        }
+
         if (json.has("timestamp")) {
             this.timestamp = json.getLong("timestamp");
         }
@@ -110,6 +117,10 @@ public class MultimodalOutput implements JSONable {
 
         if (null != this.resultPayload) {
             json.put("resultPayload", this.resultPayload);
+        }
+
+        if (null != this.usage) {
+            json.put("usage", this.usage.toJSON());
         }
 
         if (null != this.context) {

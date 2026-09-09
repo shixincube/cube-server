@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 public class Multimodal extends ContextHandler {
 
     public Multimodal() {
-        super("/aigc/multimodal/");
+        super("/multimodal/base/");
         setHandler(new Handler());
     }
 
@@ -35,7 +35,7 @@ public class Multimodal extends ContextHandler {
 
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getRequestPath(request);
+            String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401);
                 this.complete();
@@ -47,14 +47,14 @@ public class Multimodal extends ContextHandler {
                 String strSN = request.getParameter("sn");
                 long sn = Long.parseLong(strSN);
 
-                MultimodalOutput conversationResponse = Manager.getInstance().queryMultimodal(token, code, sn);
-                if (null == conversationResponse) {
+                MultimodalOutput multimodalOutput = Manager.getInstance().queryMultimodal(token, code, sn);
+                if (null == multimodalOutput) {
                     this.respond(response, HttpStatus.NOT_FOUND_404);
                     this.complete();
                     return;
                 }
 
-                this.respondOk(response, conversationResponse.toCompactJSON());
+                this.respondOk(response, multimodalOutput.toCompactJSON());
                 this.complete();
             } catch (Exception e) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400);

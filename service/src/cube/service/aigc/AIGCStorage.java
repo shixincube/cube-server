@@ -15,7 +15,6 @@ import cube.aigc.atom.Atom;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.consultation.ConsultationTheme;
 import cube.auth.AuthToken;
-import cube.common.entity.Emotion;
 import cube.common.Storagable;
 import cube.common.entity.*;
 import cube.core.Conditional;
@@ -2450,22 +2449,21 @@ public class AIGCStorage implements Storagable {
                     new StorageField("prompt_tokens", incrementalPrompt),
                     new StorageField("timestamp", System.currentTimeMillis())
             });
-            usage = new Usage(model, incrementalCompletion, incrementalPrompt,
-                    incrementalCompletion + incrementalPrompt);
+            usage = new Usage(model, incrementalPrompt, incrementalCompletion, 0);
         }
         else {
             this.storage.executeUpdate(this.usageTable, new StorageField[] {
-                    new StorageField("completion_tokens", incrementalCompletion + usage.completionTokens),
-                    new StorageField("prompt_tokens", incrementalPrompt + usage.promptTokens),
+                    new StorageField("completion_tokens", incrementalCompletion + usage.outputTokens),
+                    new StorageField("prompt_tokens", incrementalPrompt + usage.inputTokens),
                     new StorageField("timestamp", System.currentTimeMillis())
             }, new Conditional[] {
                     Conditional.createEqualTo("contact_id", contactId),
                     Conditional.createAnd(),
                     Conditional.createEqualTo("model", model)
             });
-            usage = new Usage(model, incrementalCompletion + usage.completionTokens,
-                    incrementalPrompt + usage.promptTokens,
-                    incrementalCompletion + incrementalPrompt + usage.totalTokens);
+            usage = new Usage(model,
+                    incrementalPrompt + usage.inputTokens,
+                    incrementalCompletion + usage.outputTokens, 0);
         }
         return usage;
     }
@@ -2481,9 +2479,9 @@ public class AIGCStorage implements Storagable {
         }
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
-        long completionTokens = data.get("completion_tokens").getLong();
-        long promptTokens = data.get("prompt_tokens").getLong();
-        return new Usage(model, completionTokens, promptTokens, completionTokens + promptTokens);
+        long inputTokens = data.get("prompt_tokens").getLong();
+        long outputTokens = data.get("completion_tokens").getLong();
+        return new Usage(model, inputTokens, outputTokens, 0);
     }
 
     public ContactPreference readContactPreference(long contactId) {

@@ -2647,8 +2647,6 @@ public class AIGCService extends AbstractModule implements Generatable {
                 // 跳过没有记录的模型
                 continue;
             }
-
-            usage.name = modelConfig.getName();
             result.add(usage);
         }
 

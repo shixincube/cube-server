@@ -18,9 +18,9 @@ public class ModelConfig implements JSONable {
 
     public static int BAIZE_CONTEXT_LIMIT = 256 * 1024;
 
-    public static int BAIZE_X_CONTEXT_LIMIT = 800 * 1024;
+    public static int BAIZE_X_CONTEXT_LIMIT = 1024 * 1024;
 
-    public static int BAIZE_NEXT_CONTEXT_LIMIT = 128 * 1024;
+    public static int BAIZE_NEXT_CONTEXT_LIMIT = 256 * 1024;
 
     public final static String[] TEXT_TO_IMAGE_UNIT = new String[] { "DallE" };
 
@@ -36,18 +36,14 @@ public class ModelConfig implements JSONable {
 
     public final static String PSYCHOLOGY_UNIT = "Psychology";
 
-    public final static String SPEECH_UNIT = "Speech";
-
     public final static String FACIAL_EXPRESSION_UNIT = "FacialExpression";
 
     public final static String AIXINLI = "AiXinLi";
 
     private final static String[][] UNIT_MAP_MODEL = new String[][] {
-            new String[] { "Chat", "Robot" },
+            new String[] { "Chat", "BaizeNext" },
             new String[] { "GPT", "GPT" },
-            new String[] { "DallE", "DallE" },
             new String[] { "Gemini", "Gemini" },
-            new String[] { "YiYan", "YiYan" },
             new String[] { "Baize", "Baize" },
             new String[] { "BaizeX", "BaizeX" },
             new String[] { "BaizeNext", "BaizeNext" },

@@ -30,17 +30,20 @@ public class AICapability implements JSONable {
 
     public final static String OtherProcessingTask = "OtherProcessing";
 
-    private String name;
+    private final String name;
 
-    private String task;
+    private final String task;
 
-    private List<String> subtasks;
+    private final String version;
 
-    private String description;
+    private final List<String> subtasks;
 
-    public AICapability(String name, String task, List<String> subtasks, String description) {
+    private final String description;
+
+    public AICapability(String name, String task, String version, List<String> subtasks, String description) {
         this.name = name;
         this.task = task;
+        this.version = version;
         this.subtasks = subtasks;
         this.description = description;
     }
@@ -48,6 +51,7 @@ public class AICapability implements JSONable {
     public AICapability(JSONObject json) {
         this.name = json.getString("name");
         this.task = json.getString("task");
+        this.version = json.has("version") ? json.getString("version") : "1.0";
 
         this.subtasks = new ArrayList<>();
         if (json.has("subtask")) {
@@ -71,6 +75,10 @@ public class AICapability implements JSONable {
         return this.task;
     }
 
+    public String getVersion() {
+        return this.version;
+    }
+
     public String getPrimarySubtask() {
         return this.subtasks.get(0);
     }
@@ -88,6 +96,7 @@ public class AICapability implements JSONable {
         JSONObject json = new JSONObject();
         json.put("name", this.name);
         json.put("task", this.task);
+        json.put("version", this.version);
 
         if (this.subtasks.size() == 1) {
             json.put("subtask", this.subtasks.get(0));
@@ -110,7 +119,7 @@ public class AICapability implements JSONable {
     }
 
 
-    public class Multimodal {
+    public static class Multimodal {
 
         public final static String TextToImage = "TextToImage";
 
@@ -131,7 +140,7 @@ public class AICapability implements JSONable {
     }
 
 
-    public class NaturalLanguageProcessing {
+    public static class NaturalLanguageProcessing {
 
         public final static String Segmentation = "Segmentation";
 
@@ -178,7 +187,7 @@ public class AICapability implements JSONable {
     }
 
 
-    public class ComputerVision {
+    public static class ComputerVision {
 
         public final static String DepthEstimation = "DepthEstimation";
 
@@ -205,7 +214,7 @@ public class AICapability implements JSONable {
     }
 
 
-    public class AudioProcessing {
+    public static class AudioProcessing {
 
         public final static String TextToSpeech = "TextToSpeech";
 
@@ -237,7 +246,7 @@ public class AICapability implements JSONable {
     }
 
 
-    public class DataProcessing {
+    public static class DataProcessing {
 
         public final static String ExtractURLContent = "ExtractURLContent";
 
@@ -245,7 +254,7 @@ public class AICapability implements JSONable {
         }
     }
 
-    public class PsychologyProcessing {
+    public static class PsychologyProcessing {
 
         public final static String GeneratePaintingTemplateArticle = "GeneratePaintingTemplateArticle";
 
@@ -253,7 +262,7 @@ public class AICapability implements JSONable {
         }
     }
 
-    public class OtherProcessing {
+    public static class OtherProcessing {
 
         public final static String Psychology = "Psychology";
 

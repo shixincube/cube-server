@@ -7,7 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
+    <orderEntry type="library" name="kaptcha-2.3.2" level="project" />
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
           <root url="file://$MODULE_DIR$/../../cube-server-dependencies" />
@@ -17,21 +18,10 @@
         <jarDirectory url="file://$MODULE_DIR$/../../cube-server-dependencies" recursive="false" />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="common" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="file://$MODULE_DIR$/libs" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-        <jarDirectory url="file://$MODULE_DIR$/libs" recursive="false" />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../cube-server-client/build/cube-server-client-1.0.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../build/cube-common-3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

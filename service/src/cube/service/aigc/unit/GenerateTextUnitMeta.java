@@ -12,6 +12,7 @@ import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.aigc.Page;
+import cube.aigc.Usage;
 import cube.aigc.complex.attachment.Attachment;
 import cube.aigc.complex.attachment.FileAttachment;
 import cube.common.Packet;
@@ -329,11 +330,15 @@ public class GenerateTextUnitMeta extends UnitMeta {
                 String responseText = "";
                 String thoughtText = "";
                 JSONObject resultPayload = null;
+                Usage usage = null;
                 try {
                     responseText = payload.getString("response");
                     thoughtText = payload.getString("thought");
                     if (payload.has("resultPayload")) {
                         resultPayload = payload.getJSONObject("resultPayload");
+                    }
+                    if (payload.has("performance")) {
+                        usage = new Usage(payload.getJSONObject("performance"));
                     }
                 } catch (Exception e) {
                     Logger.w(AIGCService.class, "Unit respond failed - channel: " + this.channel.getCode());
@@ -352,6 +357,8 @@ public class GenerateTextUnitMeta extends UnitMeta {
                 result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
                         (null != this.originalQuery) ? this.originalQuery : this.content,
                         responseText.trim(), thoughtText.trim(), resultPayload, complexContext);
+                // 设置用量
+                result.usage = usage;
             }
         }
         else {
@@ -395,16 +402,23 @@ public class GenerateTextUnitMeta extends UnitMeta {
 
         this.listener.onGenerated(this.channel, result);
 
+        final Usage usage = result.usage;
         this.service.getExecutor().execute(new Runnable() {
             @Override
             public void run() {
                 // 更新用量
-                List<String> tokens = calcTokens(prompt.toString());
-                long promptTokens = tokens.size();
-                tokens = calcTokens(history.answerContent);
-                long completionTokens = tokens.size();
-                service.getStorage().updateUsage(history.queryContactId, ModelConfig.getModelByUnit(history.unit),
-                        completionTokens, promptTokens);
+                if (null != usage) {
+                    service.getStorage().updateUsage(history.queryContactId, ModelConfig.getModelByUnit(history.unit),
+                            usage.outputTokens, usage.inputTokens);
+                }
+                else {
+                    List<String> tokens = calcTokens(prompt.toString());
+                    long promptTokens = tokens.size();
+                    tokens = calcTokens(history.answerContent);
+                    long completionTokens = tokens.size();
+                    service.getStorage().updateUsage(history.queryContactId, ModelConfig.getModelByUnit(history.unit),
+                            completionTokens, promptTokens);
+                }
 
                 // 保存历史记录
                 if (recordHistoryEnabled) {
