@@ -45,6 +45,8 @@ public class MultimodalUnitMeta extends UnitMeta {
     @Override
     public void process() {
         try {
+            Logger.d(this.getClass(), "#process - Model: " + this.unit.getCapability().getName());
+
             // 处理文件
             List<FileLabel> fileLabelList = new ArrayList<>();
             for (String filepath : this.input.files) {
@@ -55,6 +57,11 @@ public class MultimodalUnitMeta extends UnitMeta {
                         fileLabelList.add(fileLabel);
                     }
                 }
+                else if (filepath.startsWith("rtsp") || filepath.startsWith("rtmp")) {
+                    // RTSP 或 RTMP 视频流
+                    fileLabelList = null;
+                    break;
+                }
                 else {
                     // 加载文件
                     FileLabel fileLabel = this.service.getFile(this.channel.getAuthToken().getDomain(), filepath);
@@ -62,12 +69,6 @@ public class MultimodalUnitMeta extends UnitMeta {
                         fileLabelList.add(fileLabel);
                     }
                 }
-            }
-
-            if (fileLabelList.isEmpty()) {
-                Logger.w(this.getClass(), "#process - Get files failed: " + this.channel.getCode());
-                this.listener.onFailed(this.channel, AIGCStateCode.InvalidParameter);
-                return;
             }
 
             // 设置文件标签清单
