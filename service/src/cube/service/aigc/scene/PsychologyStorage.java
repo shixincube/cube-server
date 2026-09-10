@@ -33,7 +33,7 @@ import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.EmojiFilter;
 import cube.util.Gender;
-import cube.util.JSONUtils;
+import cube.util.JSONStorageUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -1055,22 +1055,22 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("sn", report.sn),
                     new StorageField("timestamp", System.currentTimeMillis()),
                     new StorageField("mood",
-                            JSONUtils.serializeEscape(
+                            JSONStorageUtils.encode(
                                     report.getDimensionScore().getFactor(HexagonDimension.Mood).toJSON().toString())),
                     new StorageField("cognition",
-                            JSONUtils.serializeEscape(
+                            JSONStorageUtils.encode(
                                     report.getDimensionScore().getFactor(HexagonDimension.Cognition).toJSON().toString())),
                     new StorageField("behavior",
-                            JSONUtils.serializeEscape(
+                            JSONStorageUtils.encode(
                                     report.getDimensionScore().getFactor(HexagonDimension.Behavior).toJSON().toString())),
                     new StorageField("interpersonal_relationship",
-                            JSONUtils.serializeEscape(
+                            JSONStorageUtils.encode(
                                     report.getDimensionScore().getFactor(HexagonDimension.InterpersonalRelationship).toJSON().toString())),
                     new StorageField("self_assessment",
-                            JSONUtils.serializeEscape(
+                            JSONStorageUtils.encode(
                                     report.getDimensionScore().getFactor(HexagonDimension.SelfAssessment).toJSON().toString())),
                     new StorageField("mental_health",
-                            JSONUtils.serializeEscape(
+                            JSONStorageUtils.encode(
                                     report.getDimensionScore().getFactor(HexagonDimension.MentalHealth).toJSON().toString())),
             });
         }
@@ -1083,7 +1083,7 @@ public class PsychologyStorage implements Storagable {
         this.writeReportPermission(report.getPermission());
 
         String dataString = report.getEvaluationReport().toStrictJSON().toString();
-        dataString = JSONUtils.serializeEscape(dataString);
+        dataString = JSONStorageUtils.encode(dataString);
 
         return this.storage.executeInsert(this.reportTable, new StorageField[] {
                 new StorageField("sn", report.sn),
@@ -1103,13 +1103,13 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("evaluation_data", dataString),
                 new StorageField("remark", report.getRemark()),
                 new StorageField("extension", (null != report.getExtension() ?
-                        JSONUtils.serializeEscape(report.getExtension().toString()) : null))
+                        JSONStorageUtils.encode(report.getExtension().toString()) : null))
         });
     }
 
     public boolean updatePsychologyReport(PaintingReport report) {
         String dataString = report.getEvaluationReport().toStrictJSON().toString();
-        dataString = JSONUtils.serializeEscape(dataString);
+        dataString = JSONStorageUtils.encode(dataString);
 
         return this.storage.executeUpdate(this.reportTable, new StorageField[] {
                 new StorageField("timestamp", report.timestamp),
@@ -1123,7 +1123,7 @@ public class PsychologyStorage implements Storagable {
                 new StorageField("evaluation_data", dataString),
                 new StorageField("remark", report.getRemark()),
                 new StorageField("extension", (null != report.getExtension() ?
-                        JSONUtils.serializeEscape(report.getExtension().toString()) : null))
+                        JSONStorageUtils.encode(report.getExtension().toString()) : null))
         }, new Conditional[] {
                 Conditional.createEqualTo("sn", report.sn)
         });
@@ -1231,8 +1231,14 @@ public class PsychologyStorage implements Storagable {
         }
 
         Map<String, StorageField> fields = StorageFields.get(result.get(0));
+        JSONObject dataJson = JSONStorageUtils.decodeObject(fields.get("data").getString());
+        if (null == dataJson) {
+            Logger.w(this.getClass(), "#readPainting - `data` data error: " + sn);
+            return null;
+        }
+
         try {
-            return new Painting(new JSONObject(fields.get("data").getString()));
+            return new Painting(dataJson);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#readPainting", e);
             return null;
@@ -1251,7 +1257,7 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("report_sn", sn),
                     new StorageField("file_code", fileCode),
                     new StorageField("timestamp", System.currentTimeMillis()),
-                    new StorageField("data", painting.toJSON().toString())
+                    new StorageField("data", JSONStorageUtils.encode(painting.toJSON()))
             });
         }
         else {
@@ -1259,7 +1265,7 @@ public class PsychologyStorage implements Storagable {
             return this.storage.executeUpdate(this.paintingTable, new StorageField[] {
                     new StorageField("file_code", fileCode),
                     new StorageField("timestamp", System.currentTimeMillis()),
-                    new StorageField("data", painting.toJSON().toString())
+                    new StorageField("data", JSONStorageUtils.encode(painting.toJSON()))
             }, new Conditional[] {
                     Conditional.createEqualTo("report_sn", sn)
             });
@@ -1272,13 +1278,19 @@ public class PsychologyStorage implements Storagable {
                         Conditional.createEqualTo("sn", sn)
                 });
         if (result.isEmpty()) {
+            Logger.e(this.getClass(), "#readPaintingFeatureSet - No record: " + sn);
             return null;
         }
 
         Map<String, StorageField> fields = StorageFields.get(result.get(0));
+        JSONObject dataJson = JSONStorageUtils.decodeObject(fields.get("data").getString());
+        if (null == dataJson) {
+            Logger.w(this.getClass(), "#readPaintingFeatureSet - `data` data error: " + sn);
+            return null;
+        }
+
         try {
-            String jsonString = JSONUtils.serializeLineFeed(fields.get("data").getString());
-            return new PaintingFeatureSet(new JSONObject(jsonString));
+            return new PaintingFeatureSet(dataJson);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#readPaintingFeatureSet", e);
             return null;
@@ -1296,14 +1308,14 @@ public class PsychologyStorage implements Storagable {
             return this.storage.executeInsert(this.paintingFeatureSetTable, new StorageField[] {
                     new StorageField("sn", featureSet.getSN()),
                     new StorageField("timestamp", System.currentTimeMillis()),
-                    new StorageField("data", featureSet.toJSON().toString())
+                    new StorageField("data", JSONStorageUtils.encode(featureSet.toJSON()))
             });
         }
         else {
             // 更新
             return this.storage.executeUpdate(this.paintingFeatureSetTable, new StorageField[] {
                     new StorageField("timestamp", System.currentTimeMillis()),
-                    new StorageField("data", featureSet.toJSON().toString())
+                    new StorageField("data", JSONStorageUtils.encode(featureSet.toJSON()))
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", featureSet.getSN())
             });
@@ -1321,9 +1333,14 @@ public class PsychologyStorage implements Storagable {
         }
 
         Map<String, StorageField> fields = StorageFields.get(result.get(0));
+        JSONObject dataJson = JSONStorageUtils.decodeObject(fields.get("data").getString());
+        if (null == dataJson) {
+            Logger.w(this.getClass(), "#readScale - `data` data error: " + sn);
+            return null;
+        }
+
         try {
-            String dataStr = JSONUtils.serializeLineFeed(fields.get("data").getString());
-            return new Scale(new JSONObject(dataStr));
+            return new Scale(dataJson);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#readScale", e);
             return null;
@@ -1340,7 +1357,7 @@ public class PsychologyStorage implements Storagable {
         String dataString = scale.toJSON().toString();
         // 过滤表情
         dataString = EmojiFilter.filterEmoji(dataString);
-        dataString = JSONUtils.serializeEscape(dataString);
+        dataString = JSONStorageUtils.encode(dataString);
 
         if (result.isEmpty()) {
             return this.storage.executeInsert(this.scaleTable, new StorageField[] {
@@ -1383,9 +1400,14 @@ public class PsychologyStorage implements Storagable {
         }
 
         Map<String, StorageField> fields = StorageFields.get(result.get(0));
+        JSONObject dataJson = JSONStorageUtils.decodeObject(fields.get("sheet").getString());
+        if (null == dataJson) {
+            Logger.w(this.getClass(), "#readAnswerSheet - `sheet` data error: " + scaleSn);
+            return null;
+        }
+
         try {
-            String dataStr = JSONUtils.serializeLineFeed(fields.get("sheet").getString());
-            return new AnswerSheet(new JSONObject(dataStr));
+            return new AnswerSheet(dataJson);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#readAnswerSheet", e);
             return null;
@@ -1401,13 +1423,13 @@ public class PsychologyStorage implements Storagable {
         if (result.isEmpty()) {
             return this.storage.executeInsert(this.scaleAnswerTable, new StorageField[] {
                     new StorageField("scale_sn", answerSheet.scaleSn),
-                    new StorageField("sheet", answerSheet.toJSON().toString()),
+                    new StorageField("sheet", JSONStorageUtils.encode(answerSheet.toJSON())),
                     new StorageField("num_answers", answerSheet.answers.size())
             });
         }
         else {
             return this.storage.executeUpdate(this.scaleAnswerTable, new StorageField[] {
-                    new StorageField("sheet", answerSheet.toJSON().toString()),
+                    new StorageField("sheet", JSONStorageUtils.encode(answerSheet.toJSON())),
                     new StorageField("num_answers", answerSheet.answers.size())
             }, new Conditional[] {
                     Conditional.createEqualTo("scale_sn", answerSheet.scaleSn)
@@ -1449,10 +1471,16 @@ public class PsychologyStorage implements Storagable {
                 data.get("language").isNullValue() ? Language.Chinese : Language.parse(data.get("language").getString()),
                 data.get("strict").getInt() != 0);
 
+        JSONArray factorData = JSONStorageUtils.decodeArray(data.get("factor_data").getString());
+        if (null == factorData) {
+            Logger.w(this.getClass(), "#readScaleReport - `factor_data` data error: " + sn);
+            return null;
+        }
+
         ScaleReport report = null;
         try {
             report = new ScaleReport(sn, data.get("contact_id").getLong(), data.get("timestamp").getLong(),
-                    attribute, new JSONArray(data.get("factor_data").getString()),
+                    attribute, factorData,
                     scale, data.get("state").getInt(),
                     data.get("remark").isNullValue() ? "" : data.get("remark").getString());
         } catch (Exception e) {
@@ -1481,8 +1509,14 @@ public class PsychologyStorage implements Storagable {
                     data.get("role").isNullValue() ? "" : data.get("role").getString(),
                     data.get("language").isNullValue() ? Language.Chinese : Language.parse(data.get("language").getString()),
                     data.get("strict").getInt() != 0);
+            JSONArray factorData = JSONStorageUtils.decodeArray(data.get("factor_data").getString());
+            if (null == factorData) {
+                Logger.w(this.getClass(), "#readScaleReports - `factor_data` data error: " + data.get("sn").getLong());
+                continue;
+            }
+
             ScaleReport report = new ScaleReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
-                    data.get("timestamp").getLong(), attribute, new JSONArray(data.get("factor_data").getString()),
+                    data.get("timestamp").getLong(), attribute, factorData,
                     scale, data.get("state").getInt(),
                     data.get("remark").isNullValue() ? "" : data.get("remark").getString());
             list.add(report);
@@ -1512,8 +1546,14 @@ public class PsychologyStorage implements Storagable {
                     data.get("role").isNullValue() ? "" : data.get("role").getString(),
                     data.get("language").isNullValue() ? Language.Chinese : Language.parse(data.get("language").getString()),
                     data.get("strict").getInt() != 0);
+            JSONArray factorData = JSONStorageUtils.decodeArray(data.get("factor_data").getString());
+            if (null == factorData) {
+                Logger.w(this.getClass(), "#readScaleReports - `factor_data` data error: " + data.get("sn").getLong());
+                continue;
+            }
+
             ScaleReport report = new ScaleReport(data.get("sn").getLong(), data.get("contact_id").getLong(),
-                    data.get("timestamp").getLong(), attribute, new JSONArray(data.get("factor_data").getString()),
+                    data.get("timestamp").getLong(), attribute, factorData,
                     scale, data.get("state").getInt(),
                     data.get("remark").isNullValue() ? "" : data.get("remark").getString());
             list.add(report);
@@ -1524,7 +1564,7 @@ public class PsychologyStorage implements Storagable {
     public boolean writeScaleReport(ScaleReport scaleReport) {
         String dataString = scaleReport.getFactorsAsJSONArray().toString();
         dataString = EmojiFilter.filterEmoji(dataString);
-        dataString = JSONUtils.serializeEscape(dataString);
+        dataString = JSONStorageUtils.encode(dataString);
 
         List<StorageField[]> result = this.storage.executeQuery(this.scaleReportTable, this.scaleReportFields,
                 new Conditional[] {
@@ -1578,11 +1618,23 @@ public class PsychologyStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
+            JSONArray evaluationScores = JSONStorageUtils.decodeArray(data.get("evaluation_scores").getString());
+            if (null == evaluationScores) {
+                Logger.w(this.getClass(), "#readPaintingLabels - `evaluation_scores` data error: " + data.get("sn").getLong());
+                continue;
+            }
+
             PaintingLabel label = new PaintingLabel(data.get("sn").getLong(), data.get("timestamp").getLong(),
-                    data.get("description").getString(), new JSONArray(data.get("evaluation_scores").getString()));
+                    data.get("description").getString(), evaluationScores);
 
             if (!data.get("representations").isNullValue()) {
-                label.setRepresentations(new JSONArray(data.get("representations").getString()));
+                JSONArray representations = JSONStorageUtils.decodeArray(data.get("representations").getString());
+                if (null != representations) {
+                    label.setRepresentations(representations);
+                }
+                else {
+                    Logger.w(this.getClass(), "#readPaintingLabels - `representations` data error: " + data.get("sn").getLong());
+                }
             }
 
             list.add(label);
@@ -1607,10 +1659,9 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("sn", label.getSn()),
                     new StorageField("timestamp", label.getTimestamp()),
                     new StorageField("description", label.getDescription()),
-                    new StorageField("evaluation_scores", label.getEvaluationScoresAsJSONArray().toString()),
+                    new StorageField("evaluation_scores", JSONStorageUtils.encode(label.getEvaluationScoresAsJSONArray())),
                     new StorageField("representations",
-                            (null != label.getRepresentations()) ?
-                                    label.getRepresentationsAsJSONArray().toString() : null)
+                            JSONStorageUtils.encode(label.getRepresentationsAsJSONArray()))
             });
         }
 
@@ -1659,15 +1710,15 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("title", article.getTitle()),
                     new StorageField("content", article.getContent()),
                     new StorageField("paragraph_1", (null != article.getParagraph(0)) ?
-                            JSONUtils.serializeEscape(article.getParagraph(0).toJSON().toString()) : null),
+                            JSONStorageUtils.encode(article.getParagraph(0).toJSON().toString()) : null),
                     new StorageField("paragraph_2", (null != article.getParagraph(1)) ?
-                            JSONUtils.serializeEscape(article.getParagraph(1).toJSON().toString()) : null),
+                            JSONStorageUtils.encode(article.getParagraph(1).toJSON().toString()) : null),
                     new StorageField("paragraph_3", (null != article.getParagraph(2)) ?
-                            JSONUtils.serializeEscape(article.getParagraph(2).toJSON().toString()) : null),
+                            JSONStorageUtils.encode(article.getParagraph(2).toJSON().toString()) : null),
                     new StorageField("paragraph_4", (null != article.getParagraph(3)) ?
-                            JSONUtils.serializeEscape(article.getParagraph(3).toJSON().toString()) : null),
+                            JSONStorageUtils.encode(article.getParagraph(3).toJSON().toString()) : null),
                     new StorageField("paragraph_5", (null != article.getParagraph(4)) ?
-                            JSONUtils.serializeEscape(article.getParagraph(4).toJSON().toString()) : null)
+                            JSONStorageUtils.encode(article.getParagraph(4).toJSON().toString()) : null)
             });
         }
         else {
@@ -1678,15 +1729,15 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("title", article.getTitle()),
                     new StorageField("content", article.getContent()),
                     new StorageField("paragraph_1", (null != article.getParagraph(0)) ?
-                            JSONUtils.serializeEscape(article.getParagraph(0).toJSON().toString()) : null),
+                            JSONStorageUtils.encode(article.getParagraph(0).toJSON().toString()) : null),
                     new StorageField("paragraph_2", (null != article.getParagraph(1)) ?
-                            JSONUtils.serializeEscape(article.getParagraph(1).toJSON().toString()) : null),
+                            JSONStorageUtils.encode(article.getParagraph(1).toJSON().toString()) : null),
                     new StorageField("paragraph_3", (null != article.getParagraph(2)) ?
-                            JSONUtils.serializeEscape(article.getParagraph(2).toJSON().toString()) : null),
+                            JSONStorageUtils.encode(article.getParagraph(2).toJSON().toString()) : null),
                     new StorageField("paragraph_4", (null != article.getParagraph(3)) ?
-                            JSONUtils.serializeEscape(article.getParagraph(3).toJSON().toString()) : null),
+                            JSONStorageUtils.encode(article.getParagraph(3).toJSON().toString()) : null),
                     new StorageField("paragraph_5", (null != article.getParagraph(4)) ?
-                            JSONUtils.serializeEscape(article.getParagraph(4).toJSON().toString()) : null)
+                            JSONStorageUtils.encode(article.getParagraph(4).toJSON().toString()) : null)
             }, new Conditional[] {
                     Conditional.createEqualTo("sn", article.sn)
             });
@@ -1718,7 +1769,12 @@ public class PsychologyStorage implements Storagable {
             if (data.get(name).isNullValue()) {
                 continue;
             }
-            JSONObject json = new JSONObject(JSONUtils.serializeLineFeed(data.get(name).getString()));
+            JSONObject json = JSONStorageUtils.decodeObject(data.get(name).getString());
+            if (null == json) {
+                Logger.w(this.getClass(), "#readReportArticle - `" + name + "` data error: " + sn);
+                continue;
+            }
+
             reportArticle.addParagraph(json);
         }
         return reportArticle;
@@ -1741,16 +1797,10 @@ public class PsychologyStorage implements Storagable {
         report.setSummary(data.get("summary").getString());
 
         if (!data.get("sections").isNullValue()) {
-            JSONArray arrayJson = null;
-            try {
-                arrayJson = new JSONArray(data.get("sections").getString().trim());
-            } catch (Exception e) {
-                try {
-                    arrayJson = new JSONArray(JSONUtils.serializeLineFeed(data.get("sections").getString().trim()));
-                } catch (Exception se) {
-                    Logger.e(this.getClass(), "#readComprehensiveReport", se);
-                    return null;
-                }
+            JSONArray arrayJson = JSONStorageUtils.decodeArray(data.get("sections").getString());
+            if (null == arrayJson) {
+                Logger.w(this.getClass(), "#readComprehensiveReport - `sections` data error: " + reportSn);
+                return null;
             }
 
             for (int i = 0; i < arrayJson.length(); ++i) {
@@ -1763,16 +1813,10 @@ public class PsychologyStorage implements Storagable {
         for (int i = 1; i <= 5; ++i) {
             String name = "comprehensive_" + i;
             if (!data.get(name).isNullValue()) {
-                JSONObject json = null;
-                try {
-                    json = new JSONObject(data.get(name).getString().trim());
-                } catch (Exception e) {
-                    try {
-                        json = new JSONObject(JSONUtils.serializeLineFeed(data.get(name).getString().trim()));
-                    } catch (Exception se) {
-                        Logger.e(this.getClass(), "#readComprehensiveReport", se);
-                        return null;
-                    }
+                JSONObject json = JSONStorageUtils.decodeObject(data.get(name).getString());
+                if (null == json) {
+                    Logger.w(this.getClass(), "#readComprehensiveReport - `" + name + "` data error: " + reportSn);
+                    return null;
                 }
 
                 Comprehensive comprehensive = new Comprehensive(json);
@@ -1793,12 +1837,12 @@ public class PsychologyStorage implements Storagable {
                 });
 
         String sectionsString = report.outputSections().toString();
-        sectionsString = JSONUtils.serializeEscape(sectionsString);
+        sectionsString = JSONStorageUtils.encode(sectionsString);
 
         String[] comprehensiveStringArray = new String[5];
         for (int i = 0; i < comprehensiveStringArray.length && i < report.comprehensives.size(); ++i) {
             String jsonString = report.comprehensives.get(i).toJSON().toString();
-            comprehensiveStringArray[i] = JSONUtils.serializeEscape(jsonString);
+            comprehensiveStringArray[i] = JSONStorageUtils.encode(jsonString);
         }
 
         if (result.isEmpty()) {
@@ -1864,9 +1908,9 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("timestamp", customer.timestamp),
                     new StorageField("state", customer.state),
                     new StorageField("hexagon_score", (null != customer.hexagonScore) ?
-                            JSONUtils.serializeEscape(customer.hexagonScore.toJSON().toString()) : null),
+                            JSONStorageUtils.encode(customer.hexagonScore.toJSON().toString()) : null),
                     new StorageField("personality", (null != customer.personality) ?
-                            JSONUtils.serializeEscape(customer.personality.toJSON().toString()) : null)
+                            JSONStorageUtils.encode(customer.personality.toJSON().toString()) : null)
             });
         }
         else {
@@ -1880,9 +1924,9 @@ public class PsychologyStorage implements Storagable {
                     new StorageField("timestamp", customer.timestamp),
                     new StorageField("state", customer.state),
                     new StorageField("hexagon_score", (null != customer.hexagonScore) ?
-                            JSONUtils.serializeEscape(customer.hexagonScore.toJSON().toString()) : null),
+                            JSONStorageUtils.encode(customer.hexagonScore.toJSON().toString()) : null),
                     new StorageField("personality", (null != customer.personality) ?
-                            JSONUtils.serializeEscape(customer.personality.toJSON().toString()) : null)
+                            JSONStorageUtils.encode(customer.personality.toJSON().toString()) : null)
             }, new Conditional[] {
                     Conditional.createEqualTo("id", customer.id),
                     Conditional.createAnd(),
@@ -1907,12 +1951,22 @@ public class PsychologyStorage implements Storagable {
                 Gender.parse(data.get("gender").getString()), data.get("age").getInt(), data.get("mobile").getString(),
                 data.get("comment").getString(), data.get("timestamp").getLong(), data.get("state").getInt());
         if (!data.get("hexagon_score").isNullValue()) {
-            customer.hexagonScore = new HexagonDimensionScore(new JSONObject(
-                    JSONUtils.serializeLineFeed(data.get("hexagon_score").getString().trim())));
+            JSONObject json = JSONStorageUtils.decodeObject(data.get("hexagon_score").getString());
+            if (null != json) {
+                customer.hexagonScore = new HexagonDimensionScore(json);
+            }
+            else {
+                Logger.w(this.getClass(), "#readCustomer - `hexagon_score` data error: " + id);
+            }
         }
         if (!data.get("personality").isNullValue()) {
-            customer.personality = new BigFivePersonality(new JSONObject(
-                    JSONUtils.serializeLineFeed(data.get("personality").getString().trim())));
+            JSONObject json = JSONStorageUtils.decodeObject(data.get("personality").getString());
+            if (null != json) {
+                customer.personality = new BigFivePersonality(json);
+            }
+            else {
+                Logger.w(this.getClass(), "#readCustomer - `personality` data error: " + id);
+            }
         }
         return customer;
     }
@@ -1937,12 +1991,22 @@ public class PsychologyStorage implements Storagable {
                     Gender.parse(data.get("gender").getString()), data.get("age").getInt(), data.get("mobile").getString(),
                     data.get("comment").getString(), data.get("timestamp").getLong(), data.get("state").getInt());
             if (!data.get("hexagon_score").isNullValue()) {
-                customer.hexagonScore = new HexagonDimensionScore(new JSONObject(
-                        JSONUtils.serializeLineFeed(data.get("hexagon_score").getString().trim())));
+                JSONObject json = JSONStorageUtils.decodeObject(data.get("hexagon_score").getString());
+                if (null != json) {
+                    customer.hexagonScore = new HexagonDimensionScore(json);
+                }
+                else {
+                    Logger.w(this.getClass(), "#readCustomers - `hexagon_score` data error: " + data.get("id").getLong());
+                }
             }
             if (!data.get("personality").isNullValue()) {
-                customer.personality = new BigFivePersonality(new JSONObject(
-                        JSONUtils.serializeLineFeed(data.get("personality").getString().trim())));
+                JSONObject json = JSONStorageUtils.decodeObject(data.get("personality").getString());
+                if (null != json) {
+                    customer.personality = new BigFivePersonality(json);
+                }
+                else {
+                    Logger.w(this.getClass(), "#readCustomers - `personality` data error: " + data.get("id").getLong());
+                }
             }
             list.add(customer);
         }
@@ -2173,34 +2237,22 @@ public class PsychologyStorage implements Storagable {
         }
 
         if (!data.get("extension").isNullValue()) {
-            JSONObject dataJson = null;
-            try {
-                dataJson = new JSONObject(data.get("extension").getString().trim());
-            } catch (Exception e) {
-                try {
-                    dataJson = new JSONObject(JSONUtils.serializeLineFeed(data.get("extension").getString().trim()));
-                } catch (Exception se) {
-                    Logger.e(this.getClass(), "#makeReport", se);
-                }
-            }
-
+            JSONObject dataJson = JSONStorageUtils.decodeObject(data.get("extension").getString());
             if (null != dataJson) {
                 report.setExtension(dataJson);
+            }
+            else {
+                Logger.w(this.getClass(), "#makeReport - `extension` data error: " + report.sn);
             }
         }
 
         EvaluationReport evaluationReport = null;
 
         if (!data.get("evaluation_data").isNullValue()) {
-            JSONObject dataJson = null;
-            try {
-                dataJson = new JSONObject(data.get("evaluation_data").getString().trim());
-            } catch (Exception e) {
-                try {
-                    dataJson = new JSONObject(JSONUtils.serializeLineFeed(data.get("evaluation_data").getString().trim()));
-                } catch (Exception se) {
-                    Logger.e(this.getClass(), "#makeReport", se);
-                }
+            JSONObject dataJson = JSONStorageUtils.decodeObject(data.get("evaluation_data").getString());
+            if (null == dataJson) {
+                Logger.w(this.getClass(), "#makeReport - `evaluation_data` data error: " + report.sn);
+                return null;
             }
 
             if (null == dataJson) {
@@ -2258,12 +2310,19 @@ public class PsychologyStorage implements Storagable {
                 HexagonDimensionScore dimensionScore = new HexagonDimensionScore();
                 Map<String, StorageField> map = StorageFields.get(fields.get(0));
 
-                dimensionScore.setFactor(new JSONObject(JSONUtils.serializeLineFeed(map.get("mood").getString())));
-                dimensionScore.setFactor(new JSONObject(JSONUtils.serializeLineFeed(map.get("cognition").getString())));
-                dimensionScore.setFactor(new JSONObject(JSONUtils.serializeLineFeed(map.get("behavior").getString())));
-                dimensionScore.setFactor(new JSONObject(JSONUtils.serializeLineFeed(map.get("interpersonal_relationship").getString())));
-                dimensionScore.setFactor(new JSONObject(JSONUtils.serializeLineFeed(map.get("self_assessment").getString())));
-                dimensionScore.setFactor(new JSONObject(JSONUtils.serializeLineFeed(map.get("mental_health").getString())));
+                String[] hexagonFields = new String[] {
+                        "mood", "cognition", "behavior",
+                        "interpersonal_relationship", "self_assessment", "mental_health"
+                };
+                for (String hexagonField : hexagonFields) {
+                    JSONObject json = JSONStorageUtils.decodeObject(map.get(hexagonField).getString());
+                    if (null == json) {
+                        Logger.w(this.getClass(), "#makeReport - `" + hexagonField + "` data error: " + report.sn);
+                        continue;
+                    }
+
+                    dimensionScore.setFactor(json);
+                }
 
                 report.setDimensionalScore(dimensionScore, normDimensionScore);
             }

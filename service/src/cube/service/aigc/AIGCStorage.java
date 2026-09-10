@@ -25,6 +25,7 @@ import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
 import cube.util.EmojiFilter;
+import cube.util.JSONStorageUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -837,7 +838,13 @@ public class AIGCStorage implements Storagable {
             return null;
         }
 
-        return new ModelConfig(new JSONObject(result.get(0)[0].getString()));
+        JSONObject value = JSONStorageUtils.decodeObject(result.get(0)[0].getString());
+        if (null == value) {
+            Logger.w(this.getClass(), "#getModelConfig - `value` data error: " + modelName);
+            return null;
+        }
+
+        return new ModelConfig(value);
     }
 
     public List<ModelConfig> getModelConfigs() {
@@ -852,7 +859,12 @@ public class AIGCStorage implements Storagable {
             return list;
         }
 
-        JSONArray models = new JSONArray(result.get(0)[0].getString());
+        JSONArray models = JSONStorageUtils.decodeArray(result.get(0)[0].getString());
+        if (null == models) {
+            Logger.w(this.getClass(), "#getModelConfigs - `models` data error");
+            return list;
+        }
+
         for (int i = 0; i < models.length(); ++i) {
             String model = models.getString(i);
             result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
@@ -861,7 +873,11 @@ public class AIGCStorage implements Storagable {
 
             for (StorageField[] fields : result) {
                 Map<String, StorageField> data = StorageFields.get(fields);
-                JSONObject value = new JSONObject(data.get("value").getString());
+                JSONObject value = JSONStorageUtils.decodeObject(data.get("value").getString());
+                if (null == value) {
+                    Logger.w(this.getClass(), "#getModelConfigs - `value` data error: " + model);
+                    continue;
+                }
                 try {
                     ModelConfig config = new ModelConfig(model, value);
                     list.add(config);
@@ -884,7 +900,11 @@ public class AIGCStorage implements Storagable {
 
             for (StorageField[] fields : result) {
                 Map<String, StorageField> data = StorageFields.get(fields);
-                JSONObject value = new JSONObject(data.get("value").getString());
+                JSONObject value = JSONStorageUtils.decodeObject(data.get("value").getString());
+                if (null == value) {
+                    Logger.w(this.getClass(), "#getModelConfigs - `value` data error: " + modelName);
+                    continue;
+                }
                 try {
                     ModelConfig config = new ModelConfig(modelName, value);
                     list.add(config);
@@ -907,7 +927,7 @@ public class AIGCStorage implements Storagable {
 
         StorageField[] fields = result.get(0);
         Map<String, StorageField> data = StorageFields.get(fields);
-        return new JSONObject(data.get("value").getString());
+        return JSONStorageUtils.decodeObject(data.get("value").getString());
     }
 
     public String readTokenByInvitation(String invitation) {
@@ -949,9 +969,13 @@ public class AIGCStorage implements Storagable {
 
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
+            JSONObject eventData = JSONStorageUtils.decodeObject(data.get("data").getString());
+            if (null == eventData) {
+                Logger.w(this.getClass(), "#readAppEvents - `data` data error: " + data.get("event").getString());
+                continue;
+            }
             AppEvent event = new AppEvent(data.get("event").getString(), data.get("timestamp").getLong(),
-                    data.get("time").getString(), data.get("contact_id").getLong(),
-                    new JSONObject(data.get("data").getString()));
+                    data.get("time").getString(), data.get("contact_id").getLong(), eventData);
             list.add(event);
         }
 
@@ -970,9 +994,13 @@ public class AIGCStorage implements Storagable {
             });
         for (StorageField[] fields : result) {
             Map<String, StorageField> data = StorageFields.get(fields);
+            JSONObject eventData = JSONStorageUtils.decodeObject(data.get("data").getString());
+            if (null == eventData) {
+                Logger.w(this.getClass(), "#readAppEvents - `data` data error: " + data.get("event").getString());
+                continue;
+            }
             AppEvent event = new AppEvent(data.get("event").getString(), data.get("timestamp").getLong(),
-                    data.get("time").getString(), data.get("contact_id").getLong(),
-                    new JSONObject(data.get("data").getString()));
+                    data.get("time").getString(), data.get("contact_id").getLong(), eventData);
             list.add(event);
         }
         return list;
@@ -984,7 +1012,7 @@ public class AIGCStorage implements Storagable {
                 new StorageField("time", appEvent.time),
                 new StorageField("timestamp", appEvent.timestamp),
                 new StorageField("contact_id", appEvent.contactId),
-                new StorageField("data", appEvent.getSafeData().toString())
+                new StorageField("data", JSONStorageUtils.encode(appEvent.getSafeData()))
         });
     }
 
@@ -1022,23 +1050,33 @@ public class AIGCStorage implements Storagable {
 
             try {
                 if (!data.get("query_files").isNullValue()) {
-                    JSONArray array = new JSONArray(data.get("query_files").getString());
-                    List<FileLabel> files = new ArrayList<>();
-                    for (int i = 0; i < array.length(); ++i) {
-                        FileLabel file = new FileLabel(array.getJSONObject(i));
-                        files.add(file);
+                    JSONArray array = JSONStorageUtils.decodeArray(data.get("query_files").getString());
+                    if (null != array) {
+                        List<FileLabel> files = new ArrayList<>();
+                        for (int i = 0; i < array.length(); ++i) {
+                            FileLabel file = new FileLabel(array.getJSONObject(i));
+                            files.add(file);
+                        }
+                        history.queryFileLabels = files;
                     }
-                    history.queryFileLabels = files;
+                    else {
+                        Logger.w(this.getClass(), "#readHistories - `query_files` data error: " + data.get("sn").getLong());
+                    }
                 }
 
                 if (!data.get("answer_files").isNullValue()) {
-                    JSONArray array = new JSONArray(data.get("answer_files").getString());
-                    List<FileLabel> files = new ArrayList<>();
-                    for (int i = 0; i < array.length(); ++i) {
-                        FileLabel file = new FileLabel(array.getJSONObject(i));
-                        files.add(file);
+                    JSONArray array = JSONStorageUtils.decodeArray(data.get("answer_files").getString());
+                    if (null != array) {
+                        List<FileLabel> files = new ArrayList<>();
+                        for (int i = 0; i < array.length(); ++i) {
+                            FileLabel file = new FileLabel(array.getJSONObject(i));
+                            files.add(file);
+                        }
+                        history.answerFileLabels = files;
                     }
-                    history.answerFileLabels = files;
+                    else {
+                        Logger.w(this.getClass(), "#readHistories - `answer_files` data error: " + data.get("sn").getLong());
+                    }
                 }
 
                 if (!data.get("thought").isNullValue()) {
@@ -1046,10 +1084,13 @@ public class AIGCStorage implements Storagable {
                 }
 
                 if (!data.get("context").isNullValue()) {
-                    String jsonString = data.get("context").getString();
-                    if (jsonString.length() > 3) {
-                        ComplexContext context = new ComplexContext(new JSONObject(jsonString));
+                    JSONObject contextJson = JSONStorageUtils.decodeObject(data.get("context").getString());
+                    if (null != contextJson) {
+                        ComplexContext context = new ComplexContext(contextJson);
                         history.context = context;
+                    }
+                    else {
+                        Logger.w(this.getClass(), "#readHistories - `context` data error: " + data.get("sn").getLong());
                     }
                 }
             } catch (Exception e) {
@@ -1096,23 +1137,33 @@ public class AIGCStorage implements Storagable {
 
             try {
                 if (!data.get("query_files").isNullValue()) {
-                    JSONArray array = new JSONArray(data.get("query_files").getString());
-                    List<FileLabel> files = new ArrayList<>();
-                    for (int i = 0; i < array.length(); ++i) {
-                        FileLabel file = new FileLabel(array.getJSONObject(i));
-                        files.add(file);
+                    JSONArray array = JSONStorageUtils.decodeArray(data.get("query_files").getString());
+                    if (null != array) {
+                        List<FileLabel> files = new ArrayList<>();
+                        for (int i = 0; i < array.length(); ++i) {
+                            FileLabel file = new FileLabel(array.getJSONObject(i));
+                            files.add(file);
+                        }
+                        history.queryFileLabels = files;
                     }
-                    history.queryFileLabels = files;
+                    else {
+                        Logger.w(this.getClass(), "#readHistories - `query_files` data error: " + data.get("sn").getLong());
+                    }
                 }
 
                 if (!data.get("answer_files").isNullValue()) {
-                    JSONArray array = new JSONArray(data.get("answer_files").getString());
-                    List<FileLabel> files = new ArrayList<>();
-                    for (int i = 0; i < array.length(); ++i) {
-                        FileLabel file = new FileLabel(array.getJSONObject(i));
-                        files.add(file);
+                    JSONArray array = JSONStorageUtils.decodeArray(data.get("answer_files").getString());
+                    if (null != array) {
+                        List<FileLabel> files = new ArrayList<>();
+                        for (int i = 0; i < array.length(); ++i) {
+                            FileLabel file = new FileLabel(array.getJSONObject(i));
+                            files.add(file);
+                        }
+                        history.answerFileLabels = files;
                     }
-                    history.answerFileLabels = files;
+                    else {
+                        Logger.w(this.getClass(), "#readHistories - `answer_files` data error: " + data.get("sn").getLong());
+                    }
                 }
 
                 if (!data.get("thought").isNullValue()) {
@@ -1120,10 +1171,13 @@ public class AIGCStorage implements Storagable {
                 }
 
                 if (!data.get("context").isNullValue()) {
-                    String jsonString = data.get("context").getString();
-                    if (jsonString.length() > 3) {
-                        ComplexContext context = new ComplexContext(new JSONObject(jsonString));
+                    JSONObject contextJson = JSONStorageUtils.decodeObject(data.get("context").getString());
+                    if (null != contextJson) {
+                        ComplexContext context = new ComplexContext(contextJson);
                         history.context = context;
+                    }
+                    else {
+                        Logger.w(this.getClass(), "#readHistories - `context` data error: " + data.get("sn").getLong());
                     }
                 }
             } catch (Exception e) {
@@ -1165,23 +1219,33 @@ public class AIGCStorage implements Storagable {
 
             try {
                 if (!data.get("query_files").isNullValue()) {
-                    JSONArray array = new JSONArray(data.get("query_files").getString());
-                    List<FileLabel> files = new ArrayList<>();
-                    for (int i = 0; i < array.length(); ++i) {
-                        FileLabel file = new FileLabel(array.getJSONObject(i));
-                        files.add(file);
+                    JSONArray array = JSONStorageUtils.decodeArray(data.get("query_files").getString());
+                    if (null != array) {
+                        List<FileLabel> files = new ArrayList<>();
+                        for (int i = 0; i < array.length(); ++i) {
+                            FileLabel file = new FileLabel(array.getJSONObject(i));
+                            files.add(file);
+                        }
+                        history.queryFileLabels = files;
                     }
-                    history.queryFileLabels = files;
+                    else {
+                        Logger.w(this.getClass(), "#readHistories - `query_files` data error: " + data.get("sn").getLong());
+                    }
                 }
 
                 if (!data.get("answer_files").isNullValue()) {
-                    JSONArray array = new JSONArray(data.get("answer_files").getString());
-                    List<FileLabel> files = new ArrayList<>();
-                    for (int i = 0; i < array.length(); ++i) {
-                        FileLabel file = new FileLabel(array.getJSONObject(i));
-                        files.add(file);
+                    JSONArray array = JSONStorageUtils.decodeArray(data.get("answer_files").getString());
+                    if (null != array) {
+                        List<FileLabel> files = new ArrayList<>();
+                        for (int i = 0; i < array.length(); ++i) {
+                            FileLabel file = new FileLabel(array.getJSONObject(i));
+                            files.add(file);
+                        }
+                        history.answerFileLabels = files;
                     }
-                    history.answerFileLabels = files;
+                    else {
+                        Logger.w(this.getClass(), "#readHistories - `answer_files` data error: " + data.get("sn").getLong());
+                    }
                 }
 
                 if (!data.get("thought").isNullValue()) {
@@ -1189,10 +1253,13 @@ public class AIGCStorage implements Storagable {
                 }
 
                 if (!data.get("context").isNullValue()) {
-                    String jsonString = data.get("context").getString();
-                    if (jsonString.length() > 3) {
-                        ComplexContext context = new ComplexContext(new JSONObject(jsonString));
+                    JSONObject contextJson = JSONStorageUtils.decodeObject(data.get("context").getString());
+                    if (null != contextJson) {
+                        ComplexContext context = new ComplexContext(contextJson);
                         history.context = context;
+                    }
+                    else {
+                        Logger.w(this.getClass(), "#readHistories - `context` data error: " + data.get("sn").getLong());
                     }
                 }
             } catch (Exception e) {
@@ -1230,16 +1297,16 @@ public class AIGCStorage implements Storagable {
                 new StorageField("query_domain", history.getDomain().getName()),
                 new StorageField("query_time", history.queryTime),
                 new StorageField("query_content", EmojiFilter.filterEmoji(history.queryContent)),
-                (null != queryFiles) ? new StorageField("query_files", queryFiles.toString()) :
+                (null != queryFiles) ? new StorageField("query_files", JSONStorageUtils.encode(queryFiles)) :
                         new StorageField("query_files", LiteralBase.STRING),
                 new StorageField("answer_cid", history.answerContactId),
                 new StorageField("answer_time", history.answerTime),
                 new StorageField("answer_content", EmojiFilter.filterEmoji(history.answerContent)),
-                (null != answerFiles) ? new StorageField("answer_files", answerFiles.toString()) :
+                (null != answerFiles) ? new StorageField("answer_files", JSONStorageUtils.encode(answerFiles)) :
                         new StorageField("answer_files", LiteralBase.STRING),
                 (null != history.thought) ? new StorageField("thought", history.thought) :
                         new StorageField("thought", LiteralBase.STRING),
-                (null != history.context) ? new StorageField("context", history.context.toJSON().toString()) :
+                (null != history.context) ? new StorageField("context", JSONStorageUtils.encode(history.context.toJSON())) :
                         new StorageField("context", LiteralBase.STRING),
                 new StorageField("feedback", history.feedback),
                 new StorageField("context_id", history.contextId)
@@ -2046,8 +2113,12 @@ public class AIGCStorage implements Storagable {
         }
 
         Map<String, StorageField> data = StorageFields.get(result.get(0));
-        Chart chart = new Chart(new JSONObject(data.get("chart").getString()));
-        return chart;
+        JSONObject chartJson = JSONStorageUtils.decodeObject(data.get("chart").getString());
+        if (null == chartJson) {
+            Logger.w(this.getClass(), "#readLastChart - `chart` data error: " + name);
+            return null;
+        }
+        return new Chart(chartJson);
     }
 
     public boolean insertChart(Chart chart) {
@@ -2061,7 +2132,7 @@ public class AIGCStorage implements Storagable {
                 new StorageField("year", calendar.get(Calendar.YEAR)),
                 new StorageField("month", calendar.get(Calendar.MONTH) + 1),
                 new StorageField("date", calendar.get(Calendar.DATE)),
-                new StorageField("chart", chart.toJSON().toString())
+                new StorageField("chart", JSONStorageUtils.encode(chart.toJSON()))
         });
     }
 
@@ -2498,7 +2569,12 @@ public class AIGCStorage implements Storagable {
             return null;
         }
 
-        JSONArray models = new JSONArray(data.get("models").getString());
+        JSONArray models = JSONStorageUtils.decodeArray(data.get("models").getString());
+        if (null == models) {
+            Logger.w(this.getClass(), "#readContactPreference - `models` data error: " + contactId);
+            return null;
+        }
+
         return new ContactPreference(contactId, models);
     }
 
@@ -2509,7 +2585,7 @@ public class AIGCStorage implements Storagable {
                 new StorageField("timestamp", emotionRecord.getTimestamp()),
                 new StorageField("source", emotionRecord.source),
                 new StorageField("source_data", LiteralBase.STRING,
-                        (null != emotionRecord.sourceData) ? emotionRecord.sourceData.toString() : null),
+                        JSONStorageUtils.encode(emotionRecord.sourceData)),
         });
     }
 
@@ -2526,7 +2602,13 @@ public class AIGCStorage implements Storagable {
                     data.get("timestamp").getLong(),
                     data.get("source").getString());
             if (!data.get("source_data").isNullValue()) {
-                record.sourceData = new JSONObject(data.get("source_data").getString());
+                JSONObject sourceData = JSONStorageUtils.decodeObject(data.get("source_data").getString());
+                if (null != sourceData) {
+                    record.sourceData = sourceData;
+                }
+                else {
+                    Logger.w(this.getClass(), "#readEmotionRecords - `source_data` data error: " + data.get("id").getLong());
+                }
             }
             list.add(record);
         }
@@ -2581,9 +2663,9 @@ public class AIGCStorage implements Storagable {
                     new StorageField("track", track.track),
                     new StorageField("label", track.label),
                     new StorageField("display", track.display),
-                    new StorageField("segment", track.segment.toJSON().toString()),
-                    new StorageField("emotion", track.emotion.toJSON().toString()),
-                    new StorageField("recognition", track.recognition.toJSON().toString()),
+                    new StorageField("segment", JSONStorageUtils.encode(track.segment.toJSON())),
+                    new StorageField("emotion", JSONStorageUtils.encode(track.emotion.toJSON())),
+                    new StorageField("recognition", JSONStorageUtils.encode(track.recognition.toJSON())),
             });
         }
 
@@ -2596,7 +2678,8 @@ public class AIGCStorage implements Storagable {
         int index = 0;
         for (Map.Entry<String, SpeakerIndicator> indicatorEntry : indicator.speakerIndicators.entrySet()) {
             ++index;
-            voiceIndicatorFields.add(new StorageField("indicator_" + index, indicatorEntry.getValue().toJSON().toString()));
+            voiceIndicatorFields.add(new StorageField("indicator_" + index,
+                    JSONStorageUtils.encode(indicatorEntry.getValue().toJSON())));
         }
 
         return this.storage.executeInsert(this.voiceIndicatorTable, voiceIndicatorFields.toArray(new StorageField[0]));
@@ -2630,11 +2713,20 @@ public class AIGCStorage implements Storagable {
         });
         for (StorageField[] trackFields : trackResult) {
             map = StorageFields.get(trackFields);
+
+            JSONObject segmentJson = JSONStorageUtils.decodeObject(map.get("segment").getString());
+            JSONObject emotionJson = JSONStorageUtils.decodeObject(map.get("emotion").getString());
+            JSONObject recognitionJson = JSONStorageUtils.decodeObject(map.get("recognition").getString());
+            if (null == segmentJson || null == emotionJson || null == recognitionJson) {
+                Logger.w(this.getClass(), "#readVoiceDiarization - track data error: " + voiceDiarization.getId());
+                continue;
+            }
+
             VoiceTrack track = new VoiceTrack(map.get("track").getString(), map.get("label").getString(),
                     map.get("display").getString(),
-                    new VoiceSegment(new JSONObject(map.get("segment").getString())),
-                    new SpeechEmotion(new JSONObject(map.get("emotion").getString())),
-                    new SpeechRecognitionInfo(new JSONObject(map.get("recognition").getString())));
+                    new VoiceSegment(segmentJson),
+                    new SpeechEmotion(emotionJson),
+                    new SpeechRecognitionInfo(recognitionJson));
             voiceDiarization.tracks.add(track);
         }
 
@@ -2673,11 +2765,20 @@ public class AIGCStorage implements Storagable {
             });
             for (StorageField[] trackFields : trackResult) {
                map = StorageFields.get(trackFields);
+
+               JSONObject segmentJson = JSONStorageUtils.decodeObject(map.get("segment").getString());
+               JSONObject emotionJson = JSONStorageUtils.decodeObject(map.get("emotion").getString());
+               JSONObject recognitionJson = JSONStorageUtils.decodeObject(map.get("recognition").getString());
+               if (null == segmentJson || null == emotionJson || null == recognitionJson) {
+                   Logger.w(this.getClass(), "#readVoiceDiarizations - track data error: " + voiceDiarization.getId());
+                   continue;
+               }
+
                VoiceTrack track = new VoiceTrack(map.get("track").getString(), map.get("label").getString(),
                        map.get("display").getString(),
-                       new VoiceSegment(new JSONObject(map.get("segment").getString())),
-                       new SpeechEmotion(new JSONObject(map.get("emotion").getString())),
-                       new SpeechRecognitionInfo(new JSONObject(map.get("recognition").getString())));
+                       new VoiceSegment(segmentJson),
+                       new SpeechEmotion(emotionJson),
+                       new SpeechRecognitionInfo(recognitionJson));
                 voiceDiarization.tracks.add(track);
             }
 
@@ -2730,7 +2831,13 @@ public class AIGCStorage implements Storagable {
 
         int index = 1;
         while (map.containsKey("indicator_" + index) && !map.get("indicator_" + index).isNullValue()) {
-            JSONObject data = new JSONObject(map.get("indicator_" + index).getString());
+            JSONObject data = JSONStorageUtils.decodeObject(map.get("indicator_" + index).getString());
+            if (null == data) {
+                Logger.w(this.getClass(), "#readVoiceIndicator - indicator_" + index + " data error: " + voiceId);
+                ++index;
+                continue;
+            }
+
             SpeakerIndicator indicator = new SpeakerIndicator(data);
             voiceIndicator.speakerIndicators.put(indicator.speaker, indicator);
             ++index;
@@ -2830,7 +2937,7 @@ public class AIGCStorage implements Storagable {
         models.put(baizeNEXT.getName());
         this.storage.executeInsert(this.appConfigTable, new StorageField[] {
                 new StorageField("item", ITEM_NAME_MODELS),
-                new StorageField("value", models.toString()),
+                new StorageField("value", JSONStorageUtils.encode(models)),
                 new StorageField("comment", "Model List"),
                 new StorageField("modified", System.currentTimeMillis())
         });
@@ -2848,7 +2955,7 @@ public class AIGCStorage implements Storagable {
         }
         this.storage.executeInsert(this.appConfigTable, new StorageField[] {
                 new StorageField("item", baizeNLG.getName()),
-                new StorageField("value", baizeNLG.toJSON().toString()),
+                new StorageField("value", JSONStorageUtils.encode(baizeNLG.toJSON())),
                 new StorageField("comment", "适合大多数场景的通用模型"),
                 new StorageField("modified", System.currentTimeMillis())
         });
@@ -2864,7 +2971,7 @@ public class AIGCStorage implements Storagable {
         }
         this.storage.executeInsert(this.appConfigTable, new StorageField[] {
                 new StorageField("item", baizeX.getName()),
-                new StorageField("value", baizeX.toJSON().toString()),
+                new StorageField("value", JSONStorageUtils.encode(baizeX.toJSON())),
                 new StorageField("comment", "适合一般场景且速度较快的通用模型"),
                 new StorageField("modified", System.currentTimeMillis())
         });
@@ -2880,7 +2987,7 @@ public class AIGCStorage implements Storagable {
         }
         this.storage.executeInsert(this.appConfigTable, new StorageField[] {
                 new StorageField("item", baizeNEXT.getName()),
-                new StorageField("value", baizeNEXT.toJSON().toString()),
+                new StorageField("value", JSONStorageUtils.encode(baizeNEXT.toJSON())),
                 new StorageField("comment", "支持下游任务的大语言生成模型"),
                 new StorageField("modified", System.currentTimeMillis())
         });

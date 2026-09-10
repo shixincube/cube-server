@@ -6,9 +6,7 @@
 
 package cube.service.aigc.event;
 
-public class UnitEvent {
+public final class Events {
 
-    public UnitEvent() {
-
-    }
+    public final static String OmniVLSegment = "OmniVLSegment";
 }

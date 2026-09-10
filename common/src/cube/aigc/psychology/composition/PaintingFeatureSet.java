@@ -62,7 +62,7 @@ public class PaintingFeatureSet implements JSONable {
 
                 this.dataMap.put(desc, representations);
             } catch (Exception e) {
-                Logger.e(this.getClass(), "", e);
+                Logger.e(this.getClass(), "#PaintingFeatureSet", e);
             }
         }
     }

@@ -17,7 +17,7 @@ import cube.core.StorageField;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
-import cube.util.JSONUtils;
+import cube.util.JSONStorageUtils;
 import cube.util.SQLUtils;
 import cube.util.TextUtils;
 import org.json.JSONException;
@@ -438,7 +438,7 @@ public class ContactStorage implements Storagable {
                     new StorageField("name", LiteralBase.STRING, contact.getName()),
                     new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
                     new StorageField("context", LiteralBase.STRING,
-                            (null != contact.getContext()) ? contact.getContext().toString() : null),
+                            JSONStorageUtils.encode(contact.getContext())),
                     new StorageField("recent_device_name", LiteralBase.STRING,
                             (null != device) ? device.getName() : null),
                     new StorageField("recent_device_platform", LiteralBase.STRING,
@@ -452,7 +452,7 @@ public class ContactStorage implements Storagable {
                         new StorageField("name", LiteralBase.STRING, contact.getName()),
                         new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
                         new StorageField("context", LiteralBase.STRING,
-                                (null != contact.getContext()) ? contact.getContext().toString() : null),
+                                JSONStorageUtils.encode(contact.getContext())),
                         new StorageField("recent_device_name", LiteralBase.STRING, device.getName()),
                         new StorageField("recent_device_platform", LiteralBase.STRING, device.getPlatform())
                 }, new Conditional[] {
@@ -464,7 +464,7 @@ public class ContactStorage implements Storagable {
                         new StorageField("name", LiteralBase.STRING, contact.getName()),
                         new StorageField("timestamp", LiteralBase.LONG, contact.getTimestamp()),
                         new StorageField("context", LiteralBase.STRING,
-                                (null != contact.getContext()) ? contact.getContext().toString() : null)
+                                JSONStorageUtils.encode(contact.getContext()))
                 }, new Conditional[] {
                         Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, contact.getId()))
                 });
@@ -558,7 +558,8 @@ public class ContactStorage implements Storagable {
         Long contactId = map.get("id").getLong();
         String name = map.get("name").getString();
         long timestamp = map.get("timestamp").getLong();
-        JSONObject context = map.get("context").isNullValue() ? null : new JSONObject(map.get("context").getString());
+        JSONObject context = map.get("context").isNullValue() ? null :
+                JSONStorageUtils.decodeObject(map.get("context").getString());
         String deviceName = map.get("recent_device_name").isNullValue() ? null : map.get("recent_device_name").getString();
         String devicePlatform = map.get("recent_device_platform").isNullValue() ? null : map.get("recent_device_platform").getString();
 
@@ -1170,7 +1171,7 @@ public class ContactStorage implements Storagable {
                             new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
                             new StorageField("state", LiteralBase.INT, group.getState().code),
                             new StorageField("context", LiteralBase.STRING,
-                                    (null == group.getContext()) ? null : group.getContext().toString())
+                                    JSONStorageUtils.encode(group.getContext()))
                     });
 
                     if (successful) {
@@ -1204,7 +1205,7 @@ public class ContactStorage implements Storagable {
                             new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
                             new StorageField("state", LiteralBase.INT, group.getState().code),
                             new StorageField("context", LiteralBase.STRING,
-                                    (null == group.getContext()) ? null : group.getContext().toString())
+                                    JSONStorageUtils.encode(group.getContext()))
                     }, new Conditional[] {
                             Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, groupId))
                     });
@@ -1311,8 +1312,13 @@ public class ContactStorage implements Storagable {
 
             // 是否有上下文数据
             if (!groupMap.get("context").isNullValue()) {
-                JSONObject context = new JSONObject(groupMap.get("context").getString());
-                group.setContext(context);
+                JSONObject context = JSONStorageUtils.decodeObject(groupMap.get("context").getString());
+                if (null != context) {
+                    group.setContext(context);
+                }
+                else {
+                    Logger.w(this.getClass(), "Group context data error: " + groupMap.get("id").getLong());
+                }
             }
         } catch (JSONException e) {
             Logger.e(this.getClass(), "JSON format error", e);
@@ -1405,7 +1411,7 @@ public class ContactStorage implements Storagable {
                         new StorageField("last_active", LiteralBase.LONG, group.getLastActiveTime()),
                         new StorageField("state", LiteralBase.INT, group.getState().code),
                         new StorageField("context", LiteralBase.STRING,
-                                (null == group.getContext()) ? null : group.getContext().toString())
+                                JSONStorageUtils.encode(group.getContext()))
                 }, new Conditional[] {
                         Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, group.getId()))
                 });
@@ -1588,12 +1594,14 @@ public class ContactStorage implements Storagable {
                 if (list.isEmpty()) {
                     storage.executeInsert(table, new StorageField[] {
                             new StorageField("id", LiteralBase.LONG, appendix.getContact().getId()),
-                            new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
+                            new StorageField("appendix", LiteralBase.STRING,
+                                    JSONStorageUtils.encode(appendix.toJSON()))
                     });
                 }
                 else {
                     storage.executeUpdate(table, new StorageField[] {
-                            new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
+                            new StorageField("appendix", LiteralBase.STRING,
+                                    JSONStorageUtils.encode(appendix.toJSON()))
                     }, new Conditional[] {
                             Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getContact().getId()))
                     });
@@ -1619,9 +1627,13 @@ public class ContactStorage implements Storagable {
             return null;
         }
 
-        String appendixContent = result.get(0)[1].getString();
+        JSONObject appendixJson = JSONStorageUtils.decodeObject(result.get(0)[1].getString());
+        if (null == appendixJson) {
+            Logger.w(this.getClass(), "Contact appendix data error: " + contact.getId());
+            return null;
+        }
 
-        return new ContactAppendix(contact, new JSONObject(appendixContent));
+        return new ContactAppendix(contact, appendixJson);
     }
 
     /**
@@ -1644,12 +1656,14 @@ public class ContactStorage implements Storagable {
                 if (list.isEmpty()) {
                     storage.executeInsert(table, new StorageField[] {
                             new StorageField("id", LiteralBase.LONG, appendix.getGroup().getId()),
-                            new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
+                            new StorageField("appendix", LiteralBase.STRING,
+                                    JSONStorageUtils.encode(appendix.toJSON()))
                     });
                 }
                 else {
                     storage.executeUpdate(table, new StorageField[] {
-                            new StorageField("appendix", LiteralBase.STRING, appendix.toJSON().toString())
+                            new StorageField("appendix", LiteralBase.STRING,
+                                    JSONStorageUtils.encode(appendix.toJSON()))
                     }, new Conditional[] {
                             Conditional.createEqualTo(new StorageField("id", LiteralBase.LONG, appendix.getGroup().getId()))
                     });
@@ -1675,8 +1689,13 @@ public class ContactStorage implements Storagable {
             return null;
         }
 
-        String appendixContent = result.get(0)[1].getString();
-        return new GroupAppendix(group, new JSONObject(appendixContent));
+        JSONObject appendixJson = JSONStorageUtils.decodeObject(result.get(0)[1].getString());
+        if (null == appendixJson) {
+            Logger.w(this.getClass(), "Group appendix data error: " + group.getId());
+            return null;
+        }
+
+        return new GroupAppendix(group, appendixJson);
     }
 
     /**
@@ -1873,7 +1892,13 @@ public class ContactStorage implements Storagable {
             for (StorageField[] field : list) {
                 Contact contact = new Contact(field[0].getLong(), domain, field[1].getString());
                 if (!field[2].isNullValue()) {
-                    contact.setContext(new JSONObject(field[2].getString()));
+                    JSONObject context = JSONStorageUtils.decodeObject(field[2].getString());
+                    if (null != context) {
+                        contact.setContext(context);
+                    }
+                    else {
+                        Logger.w(this.getClass(), "Contact context data error: " + field[0].getLong());
+                    }
                 }
                 result.add(contact);
             }
@@ -1892,7 +1917,13 @@ public class ContactStorage implements Storagable {
                 for (StorageField[] field : list) {
                     Contact contact = new Contact(field[0].getLong(), domain, field[1].getString());
                     if (!field[2].isNullValue()) {
-                        contact.setContext(new JSONObject(field[2].getString()));
+                        JSONObject context = JSONStorageUtils.decodeObject(field[2].getString());
+                        if (null != context) {
+                            contact.setContext(context);
+                        }
+                        else {
+                            Logger.w(this.getClass(), "Contact context data error: " + field[0].getLong());
+                        }
                     }
                     result.add(contact);
                 }
@@ -1939,9 +1970,14 @@ public class ContactStorage implements Storagable {
                     map.get("creation_time").getLong());
             group.setTag(map.get("tag").getString());
             group.setLastActiveTime(map.get("last_active").getLong());
-            String strContext = map.get("context").isNullValue() ? null : map.get("context").getString();
-            if (null != strContext) {
-                group.setContext(new JSONObject(strContext));
+            if (!map.get("context").isNullValue()) {
+                JSONObject context = JSONStorageUtils.decodeObject(map.get("context").getString());
+                if (null != context) {
+                    group.setContext(context);
+                }
+                else {
+                    Logger.w(this.getClass(), "Group context data error: " + map.get("id").getLong());
+                }
             }
 
             result.add(group);
@@ -2019,7 +2055,7 @@ public class ContactStorage implements Storagable {
                     new StorageField("duration", membership.duration),
                     new StorageField("description", membership.description),
                     new StorageField("context", (null != membership.context)
-                            ? JSONUtils.serializeEscape(membership.context.toString()) : null)
+                            ? JSONStorageUtils.encode(membership.context) : null)
             });
         }
         else {
@@ -2032,7 +2068,7 @@ public class ContactStorage implements Storagable {
                     new StorageField("duration", membership.duration),
                     new StorageField("description", membership.description),
                     new StorageField("context", (null != membership.context)
-                            ? JSONUtils.serializeEscape(membership.context.toString()) : null)
+                            ? JSONStorageUtils.encode(membership.context) : null)
             }, new Conditional[] {
                     Conditional.createEqualTo("id", membership.getId().longValue())
             });
@@ -2059,7 +2095,7 @@ public class ContactStorage implements Storagable {
                 data.get("state").getInt(), data.get("timestamp").getLong(), data.get("duration").getLong(),
                 data.get("description").getString(),
                 data.get("context").isNullValue() ? null :
-                        new JSONObject(JSONUtils.serializeLineFeed(data.get("context").getString())));
+                        JSONStorageUtils.decodeObject(data.get("context").getString()));
     }
 
     public List<Membership> readExpiredMemberships(String domain) {
@@ -2081,7 +2117,7 @@ public class ContactStorage implements Storagable {
                     data.get("timestamp").getLong(), data.get("duration").getLong(),
                     data.get("description").getString(),
                     data.get("context").isNullValue() ? null :
-                            new JSONObject(JSONUtils.serializeLineFeed(data.get("context").getString())));
+                            JSONStorageUtils.decodeObject(data.get("context").getString()));
             list.add(membership);
         }
 

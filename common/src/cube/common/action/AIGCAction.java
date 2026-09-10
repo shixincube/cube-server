@@ -22,6 +22,11 @@ public enum AIGCAction {
     Teardown("teardown"),
 
     /**
+     * 事件。
+     */
+    Event("event"),
+
+    /**
      * 单元向服务器提交知识分段内容。
      */
     SubmitSegments("submitSegments"),

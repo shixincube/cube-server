@@ -14,6 +14,7 @@ import cell.util.log.Logger;
 import cube.common.action.AIGCAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.service.aigc.event.EventCenter;
 import cube.service.aigc.task.*;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -648,6 +649,15 @@ public class AIGCCellet extends AbstractCellet {
             // 来自 Dispatcher 的请求
             this.execute(new ResetReportAttentionTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
+        }
+        else if (AIGCAction.Event.name.equals(action)) {
+            // 来自 Unit 的请求
+            this.execute(new Runnable() {
+                @Override
+                public void run() {
+                    EventCenter.getInstance().notifyEvent(dialect);
+                }
+            });
         }
         else if (AIGCAction.SubmitSegments.name.equals(action)) {
             // 来自 Unit 的请求

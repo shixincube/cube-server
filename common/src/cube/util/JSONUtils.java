@@ -196,14 +196,48 @@ public final class JSONUtils {
         return result;
     }
 
+    /**
+     * 将 JSON 文本里的反斜杠加倍，用于写入 MySQL 的字符串字段。
+     *
+     * <p>注意：本方法仅做字符替换，实现已被 {@code cube.service.util.JSONStorageUtils#encode(String)}
+     * 取代，新代码请直接使用 {@code JSONStorageUtils}。本方法保留仅为兼容旧调用。</p>
+     *
+     * @param text
+     * @return
+     */
     public static String serializeEscape(String text) {
         return text.replaceAll("\\\\", "\\\\\\\\");
     }
 
+    /**
+     * 将真实换行符替换为 {@code \n} 两个字符。
+     *
+     * <p>注意：本方法名为 serialize 却曾被用在读取路径上，语义混乱。
+     * 读取侧请直接使用 {@code cube.service.util.JSONStorageUtils#decodeObject(String)} /
+     * {@code decodeArray(String)}，它们已经内置了历史脏数据的修复逻辑。
+     * 本方法保留仅为兼容旧调用。</p>
+     *
+     * @param text
+     * @return
+     */
     public static String serializeLineFeed(String text) {
         return text.replaceAll("\\n", "\\\\n");
     }
 
+    /**
+     * 反转义数据库读出的文本。
+     *
+     * @param text
+     * @return
+     * @deprecated 该实现存在缺陷，请勿继续使用：它把 {@code \"} 还原为 {@code "}、
+     * 把 {@code \\} 还原为 {@code \}，会把<b>合法</b>的 JSON 文本破坏成非法 JSON；
+     * 且使用 {@code String.replaceAll()} 做纯字符串替换（替换串里 {@code \} 与 {@code $}
+     * 有特殊含义）属于误用。
+     * 读取路径请改用 {@code cube.service.util.JSONStorageUtils#decodeObject(String)} /
+     * {@code decodeArray(String)}：先按标准 JSON 解析，失败时才对历史脏数据做修复，
+     * 无法修复时返回 {@code null} 而不是抛出/破坏数据。
+     */
+    @Deprecated
     public static String deserializeEscape(String text) {
         String result = text.replaceAll("\\\\\"", "\\\"");
         result = result.replaceAll("\\\\n", "\\n");
