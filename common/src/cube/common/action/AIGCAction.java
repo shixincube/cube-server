@@ -272,11 +272,6 @@ public enum AIGCAction {
     TextToFile("textToFile"),
 
     /**
-     * 搜索命令。
-     */
-    SearchCommand("searchCommand"),
-
-    /**
      * 执行知识库问答。
      */
     PerformKnowledgeQA("performKnowledgeQA"),

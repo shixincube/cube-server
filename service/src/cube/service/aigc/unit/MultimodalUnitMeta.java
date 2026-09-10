@@ -96,7 +96,13 @@ public class MultimodalUnitMeta extends UnitMeta {
             String responseText = payload.getString("response");
             String thoughtText = payload.has("thought") ? payload.getString("thought") : "";
             JSONObject resultPayload = payload.has("resultPayload") ? payload.getJSONObject("resultPayload") : null;
-            Usage usage = payload.has("performance") ? new Usage(payload.getJSONObject("performance")) : null;
+            Usage usage = null;
+            if (payload.has("performance")) {
+                usage = new Usage(payload.getJSONObject("performance"));
+            }
+            else if (payload.has("usage")) {
+                usage = new Usage(payload.getJSONObject("usage"));
+            }
             this.output = new MultimodalOutput(this.sn, this.unit.getCapability().getName(),
                     responseText, thoughtText, resultPayload);
             // 关联用量信息
@@ -104,14 +110,14 @@ public class MultimodalUnitMeta extends UnitMeta {
             this.listener.onResponse(this.channel, this.output);
 
             // 更新用量
-            if (null != usage) {
+            if (null != this.output.usage) {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
                         Logger.d(MultimodalUnitMeta.class, "Updates usage data: " +
-                                usage.inputTokens + "/" + usage.outputTokens);
+                                output.usage.inputTokens + "/" + output.usage.outputTokens);
                         service.getStorage().updateUsage(channel.getAuthToken().getContactId(),
-                                unit.getCapability().getName(), usage.outputTokens, usage.inputTokens);
+                                unit.getCapability().getName(), output.usage.outputTokens, output.usage.inputTokens);
                     }
                 });
             }

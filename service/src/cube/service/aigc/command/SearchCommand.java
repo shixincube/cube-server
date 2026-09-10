@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 /**
  * 搜索命令。
+ * @deprecated
  */
 public class SearchCommand extends Command {
 

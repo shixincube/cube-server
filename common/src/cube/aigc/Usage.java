@@ -30,11 +30,9 @@ public class Usage implements JSONable {
     }
 
     public Usage(JSONObject json) {
-        this.model = json.has("model") ? json.getString("model") : "Baize";
-        this.inputTokens = json.has("inputTokens") ?
-                json.getLong("inputTokens") : json.getLong("input_tokens");
-        this.outputTokens = json.has("outputTokens") ?
-                json.getLong("outputTokens") : json.getLong("output_tokens");
+        this.model = json.has("model") ? json.getString("model") : "OmniBaize";
+        this.inputTokens = json.has("inputTokens") ? json.getLong("inputTokens") : 0;
+        this.outputTokens = json.has("outputTokens") ? json.getLong("outputTokens") : 0;
         this.elapsed = json.has("elapsed") ? Long.parseLong(json.get("elapsed").toString()) : 0;
     }
 

@@ -24,6 +24,7 @@ import org.json.JSONObject;
 
 /**
  * 执行命令。
+ * @deprecated
  */
 public class SearchCommandTask extends ServiceTask {
 
@@ -48,20 +49,20 @@ public class SearchCommandTask extends ServiceTask {
         SearchCommand command = new SearchCommand(keyword);
 
         AIGCService service = ((AIGCCellet) this.cellet).getService();
-        service.executeCommand(command, new CommandListener() {
-            @Override
-            public void onCompleted(Command command) {
-                cellet.speak(talkContext,
-                        makeResponse(dialect, packet, AIGCStateCode.Ok.code, command.toJSON()));
-                markResponseTime();
-            }
-
-            @Override
-            public void onFailed(int code) {
-                cellet.speak(talkContext,
-                        makeResponse(dialect, packet, code, command.toJSON()));
-                markResponseTime();
-            }
-        });
+//        service.executeCommand(command, new CommandListener() {
+//            @Override
+//            public void onCompleted(Command command) {
+//                cellet.speak(talkContext,
+//                        makeResponse(dialect, packet, AIGCStateCode.Ok.code, command.toJSON()));
+//                markResponseTime();
+//            }
+//
+//            @Override
+//            public void onFailed(int code) {
+//                cellet.speak(talkContext,
+//                        makeResponse(dialect, packet, code, command.toJSON()));
+//                markResponseTime();
+//            }
+//        });
     }
 }

@@ -11,6 +11,7 @@ import org.json.JSONObject;
 
 /**
  * 命令。
+ * @deprecated
  */
 public abstract class Command implements JSONable, Runnable {
 

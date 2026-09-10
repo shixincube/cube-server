@@ -3465,21 +3465,6 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 执行命令。
-     *
-     * @param command
-     * @param listener
-     */
-    public void executeCommand(final Command command, final CommandListener listener) {
-        this.executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                command.run();
-            }
-        });
-    }
-
-    /**
      * 识别上下文数据。
      *
      * @param text
