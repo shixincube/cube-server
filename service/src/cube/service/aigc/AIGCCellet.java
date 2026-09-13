@@ -650,7 +650,7 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new ResetReportAttentionTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (AIGCAction.Event.name.equals(action)) {
+        else if (AIGCAction.Event.name.equalsIgnoreCase(action)) {
             // 来自 Unit 的请求
             this.execute(new Runnable() {
                 @Override

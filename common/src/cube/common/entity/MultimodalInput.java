@@ -34,19 +34,6 @@ public class MultimodalInput implements JSONable {
 
     public boolean recordable = false;
 
-//    public double temperature = 0.3;
-//    public double topP = 0.95;
-//    public double repetitionPenalty = 1.3;
-//    public int topK = 10;
-//    public int maxNewTokens = 2048;
-
-//    public MultimodalInput(String unit, String content, List<FileLabel> fileLabels, MultimodalTask task) {
-//        this.unit = unit;
-//        this.content = content;
-//        this.fileLabels = fileLabels;
-//        this.task = task;
-//    }
-
     public MultimodalInput(JSONObject json) {
         this.unit = json.has("unit") ? json.getString("unit") : "OmniGround";
         this.content = json.getString("content");

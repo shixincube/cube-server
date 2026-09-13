@@ -15,6 +15,7 @@ import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.event.EventCenter;
 import cube.service.aigc.listener.MultimodalListener;
 import org.json.JSONObject;
 
@@ -40,6 +41,10 @@ public class MultimodalUnitMeta extends UnitMeta {
         this.channel = channel;
         this.input = input;
         this.listener = listener;
+    }
+
+    public AIGCChannel getChannel() {
+        return this.channel;
     }
 
     @Override
@@ -114,10 +119,27 @@ public class MultimodalUnitMeta extends UnitMeta {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        Logger.d(MultimodalUnitMeta.class, "Updates usage data: " +
-                                output.usage.inputTokens + "/" + output.usage.outputTokens);
-                        service.getStorage().updateUsage(channel.getAuthToken().getContactId(),
-                                unit.getCapability().getName(), output.usage.outputTokens, output.usage.inputTokens);
+                        if (output.resultPayload.has("streamId") && output.resultPayload.has("status")) {
+                            String id = output.resultPayload.getString("streamId");
+                            String status = output.resultPayload.getString("status");
+
+                            if (status.equalsIgnoreCase("starting")) {
+                                // 将 UnitMeta 记录到事件中心
+                                EventCenter.getInstance().putUnitMeta(id, MultimodalUnitMeta.this);
+                            } else if (status.equalsIgnoreCase("stopping")) {
+                                // 将 UnitMeta 移除事件中心
+                                EventCenter.getInstance().removeUnitMeta(id);
+                            }
+                        }
+
+                        if (output.usage.inputTokens != 0 && output.usage.outputTokens != 0) {
+                            Logger.d(MultimodalUnitMeta.class, "Update token usage: " +
+                                    output.usage.inputTokens + "/" + output.usage.outputTokens);
+                            service.getStorage().updateUsage(channel.getAuthToken().getContactId(),
+                                    unit.getCapability().getName(),
+                                    output.usage.outputTokens,
+                                    output.usage.inputTokens);
+                        }
                     }
                 });
             }

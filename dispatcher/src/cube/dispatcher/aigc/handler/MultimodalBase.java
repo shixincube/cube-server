@@ -20,46 +20,17 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * 多模态调用。
  */
-public class Multimodal extends ContextHandler {
+public class MultimodalBase extends ContextHandler {
 
-    public Multimodal() {
+    public MultimodalBase() {
         super("/multimodal/base/");
         setHandler(new Handler());
     }
 
-    private class Handler extends AIGCHandler {
+    private static class Handler extends AIGCHandler {
 
         public Handler() {
             super();
-        }
-
-        @Override
-        public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getApiToken(request);
-            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401);
-                this.complete();
-                return;
-            }
-
-            try {
-                String code = request.getParameter("code");
-                String strSN = request.getParameter("sn");
-                long sn = Long.parseLong(strSN);
-
-                MultimodalOutput multimodalOutput = Manager.getInstance().queryMultimodal(token, code, sn);
-                if (null == multimodalOutput) {
-                    this.respond(response, HttpStatus.NOT_FOUND_404);
-                    this.complete();
-                    return;
-                }
-
-                this.respondOk(response, multimodalOutput.toCompactJSON());
-                this.complete();
-            } catch (Exception e) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400);
-                this.complete();
-            }
         }
 
         @Override
@@ -71,8 +42,8 @@ public class Multimodal extends ContextHandler {
                 return;
             }
 
-            String channelCode = null;
-            MultimodalInput multimodalInput = null;
+            String channelCode;
+            MultimodalInput multimodalInput;
             try {
                 JSONObject json = this.readBodyAsJSONObject(request);
                 channelCode = json.getString("channel");
@@ -80,13 +51,6 @@ public class Multimodal extends ContextHandler {
             } catch (Exception e) {
                 Logger.e(Chat.class, "#doPost - Read body failed", e);
                 this.respond(response, HttpStatus.FORBIDDEN_403);
-                this.complete();
-                return;
-            }
-
-            if (null == channelCode) {
-                // 参数错误
-                this.respond(response, HttpStatus.NOT_FOUND_404);
                 this.complete();
                 return;
             }

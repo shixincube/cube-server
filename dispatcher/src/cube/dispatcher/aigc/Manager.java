@@ -138,7 +138,8 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new Channel());
         httpServer.addContextHandler(new StopProcessing());
         httpServer.addContextHandler(new Chat());
-        httpServer.addContextHandler(new Multimodal());
+        httpServer.addContextHandler(new MultimodalBase());
+        httpServer.addContextHandler(new MultimodalStream());
         httpServer.addContextHandler(new Summarization());
         httpServer.addContextHandler(new SemanticSearch());
         httpServer.addContextHandler(new SpeechEmotionRecognition());

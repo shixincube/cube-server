@@ -8,5 +8,5 @@ package cube.service.aigc.event;
 
 public interface EventListener {
 
-    void onEvent(Event event);
+    void onEvent(EventCenter center, Event event);
 }

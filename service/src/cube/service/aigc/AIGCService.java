@@ -33,8 +33,7 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.file.hook.FileStorageHook;
-import cube.service.aigc.command.Command;
-import cube.service.aigc.command.CommandListener;
+import cube.service.aigc.event.EventCenter;
 import cube.service.aigc.guidance.GuideFlow;
 import cube.service.aigc.guidance.Guides;
 import cube.service.aigc.knowledge.KnowledgeBase;
@@ -308,6 +307,9 @@ public class AIGCService extends AbstractModule implements Generatable {
                 // 会员中心
                 MemberCenter.getInstance().start(AIGCService.this);
 
+                // 事件中心
+                EventCenter.getInstance().start(AIGCService.this);
+
                 started.set(true);
                 Logger.i(AIGCService.class, "AIGC service is ready");
             }
@@ -325,6 +327,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         CopilotManager.getInstance().stop();
 
         MemberCenter.getInstance().stop();
+
+        EventCenter.getInstance().stop();
     }
 
     @Override
@@ -368,10 +372,11 @@ public class AIGCService extends AbstractModule implements Generatable {
             if (null != unit.getContext() && !unit.getContext().isValid()) {
                 // 已失效
                 unitIter.remove();
+                EventCenter.getInstance().removeUnitMeta(unit);
             }
         }
 
-        if (now - this.lastResetUnitTime > 5 * 60 * 1000) {
+        if (now - this.lastResetUnitTime > 10 * 60 * 1000) {
             this.lastResetUnitTime = now;
             unitIter = this.unitMap.values().iterator();
             while (unitIter.hasNext()) {
@@ -558,7 +563,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
             Double weight = this.unitWeightMap.get(contact.getId());
             if (null != weight) {
-                unit.setWeight(weight.doubleValue());
+                unit.setWeight(weight);
                 Logger.d(this.getClass(), "#setupUnit - Modify unit \"" +
                         unit.getCapability().getName() + "\" weight : " + weight);
             }
@@ -578,6 +583,8 @@ public class AIGCService extends AbstractModule implements Generatable {
             if (unit.getContact().getId().equals(contact.getId())) {
                 result.add(unit);
                 iter.remove();
+                // 从事件中心移除
+                EventCenter.getInstance().removeUnitMeta(unit);
             }
         }
 
@@ -634,6 +641,12 @@ public class AIGCService extends AbstractModule implements Generatable {
             if (unit.getCapability().getName().equals(unitName)
                     && unit.getContext().isValid()
                     && !unit.isRunning()) {
+                // 检查是否正在处理流
+                MultimodalUnitMeta meta = EventCenter.getInstance().searchUnitMeta(unit);
+                if (null != meta) {
+                    // 正在处理流
+                    continue;
+                }
                 candidates.add(unit);
             }
         }
@@ -643,10 +656,10 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         // 按照最近执行时间戳从低到高排序
-        Collections.sort(candidates, new Comparator<AIGCUnit>() {
+        candidates.sort(new Comparator<AIGCUnit>() {
             @Override
             public int compare(AIGCUnit u1, AIGCUnit u2) {
-                return (int)(u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
+                return (int) (u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
             }
         });
 
@@ -672,23 +685,6 @@ public class AIGCService extends AbstractModule implements Generatable {
                 candidates.add(unit);
             }
         }
-
-        // 如果可用节点超过3个，删除故障数最多的节点
-//        if (candidates.size() >= 3) {
-//            AIGCUnit excluded = null;
-//            int maxNumFailure = -1;
-//            for (AIGCUnit unit : candidates) {
-//                if (unit.numFailure() > 0) {
-//                    if (unit.numFailure() > maxNumFailure) {
-//                        maxNumFailure = unit.numFailure();
-//                        excluded = unit;
-//                    }
-//                }
-//            }
-//            if (null != excluded) {
-//                candidates.remove(excluded);
-//            }
-//        }
 
         // 无候选节点
         if (candidates.isEmpty()) {
@@ -718,10 +714,10 @@ public class AIGCService extends AbstractModule implements Generatable {
 //        });
 
         // 按照最近执行时间戳从低到高排序
-        Collections.sort(candidates, new Comparator<AIGCUnit>() {
+        candidates.sort(new Comparator<AIGCUnit>() {
             @Override
             public int compare(AIGCUnit u1, AIGCUnit u2) {
-                return (int)(u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
+                return (int) (u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
             }
         });
 
@@ -1726,111 +1722,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         return this.recognizeContext(content, authToken);
     }
 
-    /*public String inferByModule(String token, String moduleName, JSONObject params) {
-        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
-        AuthToken authToken = authService.getToken(token);
-        if (null == authToken) {
-            Logger.w(this.getClass(), "#inferByModule - Auth token error: " + token);
-            return null;
-        }
-
-        cube.service.aigc.module.Module module = ModuleManager.getInstance().getModule(moduleName);
-        if (null == module) {
-            Logger.w(this.getClass(), "#inferByModule - Module is not find: " + moduleName);
-            return null;
-        }
-
-        if (module instanceof PublicOpinion) {
-            if (!params.has("task")) {
-                Logger.d(this.getClass(), "#inferByModule - PublicOpinion module param error");
-                return null;
-            }
-
-            String taskName = params.getString("task");
-            OpinionTaskName task = OpinionTaskName.parse(taskName);
-            if (null == task) {
-                Logger.d(this.getClass(), "#inferByModule - PublicOpinion task is unknown: " + taskName);
-                return null;
-            }
-
-            if (task == OpinionTaskName.ArticleSentimentSummary ||
-                task == OpinionTaskName.ArticleSentimentClassification) {
-                if (!params.has("category") || !params.has("title")) {
-                    Logger.d(this.getClass(), "#inferByModule - PublicOpinion module param error");
-                    return null;
-                }
-
-                String category = params.getString("category");
-                String title = params.getString("title");
-                String sentiment = params.has("sentiment") ?
-                        params.getString("sentiment") : null;
-
-                PublicOpinion po = (PublicOpinion) module;
-
-                MutableArticleQuery maq = new MutableArticleQuery();
-                if (OpinionTaskName.ArticleSentimentSummary == task) {
-                    maq.articleQuery = po.makeEvaluatingArticleQuery(category, title,
-                            (null != sentiment) ? Sentiment.parse(sentiment) : null);
-                }
-                else {
-                    maq.articleQuery = po.makeArticleClassificationQuery(category, title);
-                }
-                
-                if (null == maq.articleQuery) {
-                    Logger.w(this.getClass(), "#inferByModule - Make article query failed: " + category);
-                    return null;
-                }
-
-                AIGCUnit unit = (this.useAgent) ? Agent.getInstance().getUnit()
-                        :  this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.Conversational);
-                if (null == unit) {
-                    Logger.w(this.getClass(), "#inferByModule - Unit error");
-                    return null;
-                }
-
-                AIGCChannel channel = this.getChannel(authToken);
-                if (null == channel) {
-                    channel = this.createChannel(token, "User-" + authToken.getContactId(),
-                            Utils.randomString(16));
-                }
-
-                StringBuilder result = new StringBuilder();
-
-                this.generateText(channel, unit, maq.articleQuery.query, maq.articleQuery.query,
-                        new GeneratingOption(), null, 0, null,
-                        null, false, false, new GenerateTextListener() {
-                    @Override
-                    public void onGenerated(AIGCChannel channel, GeneratingRecord record) {
-                        maq.articleQuery.answer = record.answer.replaceAll(",", "，");
-                        synchronized (result) {
-                            result.append(maq.articleQuery.output());
-                            result.notify();
-                        }
-                    }
-
-                    @Override
-                    public void onFailed(AIGCChannel channel, AIGCStateCode stateCode) {
-                        synchronized (result) {
-                            result.notify();
-                        }
-                    }
-                });
-
-                synchronized (result) {
-                    try {
-                        result.wait(2 * 60 * 1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                return result.toString();
-            }
-        }
-
-        return null;
-    }*/
-
     /**
      * 生成文本内容。
      *
@@ -2166,7 +2057,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 互动会话。
+     * 执行多模态任务。
      *
      * @param tokenCode
      * @param channelCode

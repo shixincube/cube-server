@@ -35,41 +35,6 @@ public abstract class UnitMeta {
         return this.service.syncRetrieveReRank(fileLabels, query);
     }
 
-//        protected List<String> readFileContent(List<FileLabel> fileLabels) {
-//            List<String> result = new ArrayList<>();
-//
-//            AbstractModule fileStorage = getKernel().getModule("FileStorage");
-//            for (FileLabel fileLabel : fileLabels) {
-//                if (fileLabel.getFileType() == FileType.TEXT
-//                        || fileLabel.getFileType() == FileType.TXT
-//                        || fileLabel.getFileType() == FileType.MD
-//                        || fileLabel.getFileType() == FileType.LOG) {
-//                    String fullpath = fileStorage.notify(new LoadFile(fileLabel.getDomain().getName(), fileLabel.getFileCode()));
-//                    if (null == fullpath) {
-//                        Logger.w(this.getClass(), "#readFileContent - Load file error: " + fileLabel.getFileCode());
-//                        continue;
-//                    }
-//
-//                    try {
-//                        List<String> lines = Files.readAllLines(Paths.get(fullpath));
-//                        for (String text : lines) {
-//                            if (text.trim().length() < 3) {
-//                                continue;
-//                            }
-//                            result.add(text);
-//                        }
-//                    } catch (Exception e) {
-//                        Logger.w(this.getClass(), "#readFileContent - Read file error: " + fullpath);
-//                    }
-//                }
-//                else {
-//                    Logger.w(this.getClass(), "#readFileContent - File type error: " + fileLabel.getFileType().getMimeType());
-//                }
-//            }
-//
-//            return result;
-//        }
-
     /**
      * 计算文本的 Token 列表。
      *

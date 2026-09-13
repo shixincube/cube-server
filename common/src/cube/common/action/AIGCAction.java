@@ -24,7 +24,7 @@ public enum AIGCAction {
     /**
      * 事件。
      */
-    Event("event"),
+     Event("event"),
 
     /**
      * 单元向服务器提交知识分段内容。
