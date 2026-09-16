@@ -16,9 +16,9 @@ public class Usage implements JSONable {
 
     public final String model;
 
-    public final long inputTokens;
+    public long inputTokens;
 
-    public final long outputTokens;
+    public long outputTokens;
 
     public final long elapsed;
 
@@ -30,9 +30,24 @@ public class Usage implements JSONable {
     }
 
     public Usage(JSONObject json) {
-        this.model = json.has("model") ? json.getString("model") : "OmniBaize";
-        this.inputTokens = json.has("inputTokens") ? json.getLong("inputTokens") : 0;
-        this.outputTokens = json.has("outputTokens") ? json.getLong("outputTokens") : 0;
+        this.model = json.has("model") ? json.getString("model") : "Omni";
+
+        this.inputTokens = 0;
+        if (json.has("inputTokens")) {
+            this.inputTokens = json.getLong("inputTokens");
+        }
+        else if (json.has("tokens")) {
+            this.inputTokens = json.getLong("tokens");
+        }
+
+        this.outputTokens =  0;
+        if (json.has("outputTokens")) {
+            this.outputTokens = json.getLong("outputTokens");
+        }
+        else if (json.has("generatedTokens")) {
+            this.outputTokens = json.getLong("generatedTokens");
+        }
+
         this.elapsed = json.has("elapsed") ? Long.parseLong(json.get("elapsed").toString()) : 0;
     }
 

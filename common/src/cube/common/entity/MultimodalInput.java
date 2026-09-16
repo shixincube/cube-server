@@ -11,6 +11,7 @@ import cube.util.JSONUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,6 +23,8 @@ public class MultimodalInput implements JSONable {
 
     public String content;
 
+    public List<JSONObject> history;
+
     public List<String> files;
 
     public List<FileLabel> fileLabels;
@@ -30,17 +33,15 @@ public class MultimodalInput implements JSONable {
 
     public JSONObject option;
 
-    public int histories = 0;
-
     public boolean recordable = false;
 
     public MultimodalInput(JSONObject json) {
         this.unit = json.has("unit") ? json.getString("unit") : "OmniGround";
         this.content = json.getString("content");
-        this.files = JSONUtils.toStringList(json.getJSONArray("files"));
+        this.history = json.has("history") ? JSONUtils.toObjectList(json.getJSONArray("history")) : null;
+        this.files = json.has("files") ? JSONUtils.toStringList(json.getJSONArray("files")) : new ArrayList<>();
         this.task = json.has("task") ? new MultimodalTask(json.getJSONObject("task")) : null;
         this.option = json.has("option") ? json.getJSONObject("option") : null;
-        this.histories = json.has("histories") ? json.getInt("histories") : 0;
         this.recordable = json.has("recordable") && json.getBoolean("recordable");
     }
 
@@ -48,6 +49,11 @@ public class MultimodalInput implements JSONable {
         JSONObject json = new JSONObject();
         json.put("unit", this.unit);
         json.put("content", this.content);
+
+        if (null != this.history) {
+            JSONArray array = JSONUtils.toObjectArray(this.history);
+            json.put("history", array);
+        }
 
         if (null != this.fileLabels) {
             JSONArray files = new JSONArray();
@@ -79,6 +85,10 @@ public class MultimodalInput implements JSONable {
         JSONObject json = new JSONObject();
         json.put("unit", this.unit);
         json.put("content", this.content);
+        if (null != this.history) {
+            JSONArray array = JSONUtils.toObjectArray(this.history);
+            json.put("history", array);
+        }
         json.put("files", JSONUtils.toStringArray(this.files));
         if (null != this.task) {
             json.put("task", this.task.toJSON());
@@ -86,7 +96,6 @@ public class MultimodalInput implements JSONable {
         if (null != this.option) {
             json.put("option", this.option);
         }
-        json.put("histories", this.histories);
         json.put("recordable", this.recordable);
         return json;
     }

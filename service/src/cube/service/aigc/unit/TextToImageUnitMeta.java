@@ -109,8 +109,8 @@ public class TextToImageUnitMeta extends UnitMeta {
                     // 计算用量
                     long contactId = channel.getAuthToken().getContactId();
                     List<String> tokens = calcTokens(text);
-                    long promptTokens = tokens.size();
-                    long completionTokens = (long) Math.floor(fileLabel.getFileSize() / 1024.0);
+                    int promptTokens = tokens.size();
+                    int completionTokens = (int) Math.floor(fileLabel.getFileSize() / 1024.0);
                     service.getStorage().updateUsage(contactId, ModelConfig.getModelByUnit(history.unit),
                             completionTokens, promptTokens);
 

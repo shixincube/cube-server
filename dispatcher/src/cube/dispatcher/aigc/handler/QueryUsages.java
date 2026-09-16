@@ -24,7 +24,7 @@ public class QueryUsages extends ContextHandler {
         setHandler(new Handler());
     }
 
-    private class Handler extends AIGCHandler {
+    private static class Handler extends AIGCHandler {
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
             String token = this.getApiToken(request);

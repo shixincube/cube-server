@@ -1861,18 +1861,7 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public SpeechRecognitionFuture automaticSpeechRecognition(String token, String fileCode, String fileUrl,
-                                                              boolean reset) {
-        String queryCode = FileUtils.fastHash((null != fileCode) ? fileCode : fileUrl);
-        if (reset) {
-            this.speechRecognitionFutureMap.remove(queryCode);
-        }
-        else {
-            if (this.speechRecognitionFutureMap.containsKey(queryCode)) {
-                // 正在处理
-                return this.speechRecognitionFutureMap.get(queryCode);
-            }
-        }
-
+                                                              boolean sync, boolean reset) {
         JSONObject data = new JSONObject();
         if (null != fileCode) {
             data.put("fileCode", fileCode);
@@ -1884,11 +1873,47 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect dialect = packet.toDialect();
         dialect.addParam("token", token);
 
-        SpeechRecognitionFuture future = new SpeechRecognitionFuture(token, fileCode, fileUrl, queryCode);
-        this.speechRecognitionFutureMap.put(queryCode, future);
+        if (sync) {
+            ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, dialect, 60 * 1000);
+            if (null == response) {
+                Logger.w(Manager.class, "#automaticSpeechRecognition - Response is null");
+                return null;
+            }
 
-        this.performer.transmit(AIGCCellet.NAME, dialect);
-        return future;
+            Packet responsePacket = new Packet(response);
+            if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+                Logger.w(Manager.class, "#automaticSpeechRecognition - Response state code : "
+                        + Packet.extractCode(responsePacket));
+                return null;
+            }
+
+            try {
+                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
+                SpeechRecognitionInfo result = new SpeechRecognitionInfo(resultJson);
+                return new SpeechRecognitionFuture(token, fileCode, fileUrl, result);
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#automaticSpeechRecognition", e);
+                return null;
+            }
+        }
+        else {
+            String queryCode = FileUtils.fastHash((null != fileCode) ? fileCode : fileUrl);
+            if (reset) {
+                this.speechRecognitionFutureMap.remove(queryCode);
+            }
+            else {
+                if (this.speechRecognitionFutureMap.containsKey(queryCode)) {
+                    // 正在处理
+                    return this.speechRecognitionFutureMap.get(queryCode);
+                }
+            }
+
+            SpeechRecognitionFuture future = new SpeechRecognitionFuture(token, fileCode, fileUrl, queryCode);
+            this.speechRecognitionFutureMap.put(queryCode, future);
+
+            this.performer.transmit(AIGCCellet.NAME, dialect);
+            return future;
+        }
     }
 
     public SpeechRecognitionFuture getSpeechRecognitionFuture(String queryCode) {
@@ -3244,7 +3269,7 @@ public class Manager implements Tickable, PerformerListener {
                     future.stateCode = AIGCStateCode.Ok;
                 }
                 else {
-                    Logger.w(this.getClass(), "#onReceived - Speech recognition timeout: " + result.file.getFileCode());
+                    Logger.d(this.getClass(), "#onReceived - Speech recognition timeout: " + result.file.getFileCode());
                 }
             }
             else {
@@ -3488,10 +3513,20 @@ public class Manager implements Tickable, PerformerListener {
             this.queryCode = queryCode;
         }
 
+        protected SpeechRecognitionFuture(String token, String fileCode, String fileUrl, SpeechRecognitionInfo result) {
+            this.timestamp = System.currentTimeMillis();
+            this.token = token;
+            this.fileCode = fileCode;
+            this.fileUrl = fileUrl;
+            this.result = result;
+        }
+
         @Override
         public JSONObject toJSON() {
             JSONObject json = new JSONObject();
-            json.put("queryCode", this.queryCode);
+            if (null != this.queryCode) {
+                json.put("queryCode", this.queryCode);
+            }
             json.put("timestamp", this.timestamp);
             json.put("stateCode", this.stateCode.code);
             if (null != this.result) {

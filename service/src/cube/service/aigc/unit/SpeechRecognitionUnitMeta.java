@@ -72,16 +72,6 @@ public class SpeechRecognitionUnitMeta extends UnitMeta {
                     "\nduration: " + info.durationInSeconds);
         }
 
-        // 进行标点断句
-//            String prompt = String.format(PROMPT, info.getText());
-//            AIGCUnit unit = selectUnitByName(ModelConfig.BAIZE_UNIT);
-//            if (null != unit) {
-//                GeneratingRecord result = syncGenerateText(unit, prompt, null, null, null);
-//                if (null != result) {
-//                    info.setText(result.answer);
-//                }
-//            }
-
         this.listener.onCompleted(this.file, info);
 
         this.service.getExecutor().execute(new Runnable() {
@@ -104,6 +94,11 @@ public class SpeechRecognitionUnitMeta extends UnitMeta {
                 pluginContext.setUnit(unit);
                 AIGCHook hook = service.getPluginSystem().getTaskProcessingHook();
                 hook.apply(pluginContext);
+
+                // 删除时长较短的语音文件
+                if (info.durationInSeconds <= 60) {
+                    service.deleteFile(authToken.getDomain(), file.getFileCode());
+                }
             }
         });
     }

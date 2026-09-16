@@ -111,10 +111,7 @@ public class AIGCService extends AbstractModule implements Generatable {
      */
     private final Map<String, Queue<UnitMeta>> retrieveReRankQueueMap;
 
-    /**
-     * Key 是 AIGC 的 Query Key
-     */
-    private final Map<String, Queue<UnitMeta>> speechQueueMap;
+    private final Queue<SpeechRecognitionUnitMeta> speechQueue;
 
     /**
      * Key 是 AIGC 的 Query Key
@@ -174,6 +171,8 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     private long lastResetUnitTime = 0;
 
+    private final int maxSpeechRecognitionConcurrences = 32;
+
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
         this.unitMap = new ConcurrentHashMap<>();
@@ -184,7 +183,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         this.multimodalQueueMap = new ConcurrentHashMap<>();
         this.semanticSearchQueueMap = new ConcurrentHashMap<>();
         this.retrieveReRankQueueMap = new ConcurrentHashMap<>();
-        this.speechQueueMap = new ConcurrentHashMap<>();
+        this.speechQueue = new ConcurrentLinkedQueue<>();
         this.audioQueueMap = new ConcurrentHashMap<>();
         this.waitingVoiceStreamSinks = new ConcurrentHashMap<>();
         this.runningMetas = new LinkedList<>();
@@ -833,10 +832,10 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         // 按照最近执行时间戳从低到高排序
-        Collections.sort(candidates, new Comparator<AIGCUnit>() {
+        candidates.sort(new Comparator<AIGCUnit>() {
             @Override
             public int compare(AIGCUnit u1, AIGCUnit u2) {
-                return (int)(u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
+                return (int) (u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
             }
         });
 
@@ -863,8 +862,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         Logger.d(this.getClass(), "#selectUnitBySubtask - Unit: " +
                 candidates.get(0).getCapability().getName() + "@" + candidates.get(0).getContact().getId());
         return candidates.get(0);
-//        unit = candidates.get(Utils.randomInt(0, candidates.size() - 1));
-//        return unit;
     }
 
     //-------- App Interface - Start --------
@@ -1794,16 +1791,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         meta.setRecordHistoryEnabled(recordable);
         meta.setNetworkingEnabled(networking);
 
-//        synchronized (this.generateQueueMap) {
-//            Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(unit.getQueryKey());
-//            if (null == queue) {
-//                queue = new ConcurrentLinkedQueue<>();
-//                this.generateQueueMap.put(unit.getQueryKey(), queue);
-//            }
-//
-//            queue.offer(meta);
-//        }
-
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -2694,27 +2681,31 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        final UnitMeta meta = new SpeechRecognitionUnitMeta(this, unit, authToken, fileLabel, listener);
+        final SpeechRecognitionUnitMeta meta = new SpeechRecognitionUnitMeta(this, unit, authToken, fileLabel, listener);
 
-        Queue<UnitMeta> queue = null;
-        synchronized (this.speechQueueMap) {
-            queue = this.speechQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.speechQueueMap.put(unit.getQueryKey(), queue);
-            }
+        this.speechQueue.offer(meta);
 
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            final Queue<UnitMeta> metaQueue = queue;
-            (new Thread() {
+        if (this.speechQueue.size() < this.maxSpeechRecognitionConcurrences) {
+            this.getExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
-                    processQueue(meta.unit, metaQueue);
+                    SpeechRecognitionUnitMeta unitMeta = speechQueue.poll();
+                    while (null != unitMeta) {
+                        unitMeta.unit.setRunning(true);
+                        try {
+                            // 执行
+                            unitMeta.process();
+                        } catch (Exception e) {
+                            Logger.e(this.getClass(), "#automaticSpeechRecognition", e);
+                        } finally {
+                            unitMeta.unit.setRunning(false);
+                        }
+
+                        // 下一个
+                        unitMeta = speechQueue.poll();
+                    }
                 }
-            }).start();
+            });
         }
 
         return true;

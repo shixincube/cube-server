@@ -30,6 +30,7 @@ import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.listener.KnowledgeQAListener;
 import cube.service.aigc.listener.TextToImageListener;
+import cube.util.JSONUtils;
 import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -73,10 +74,7 @@ public class ChatTask extends ServiceTask {
 
         JSONArray categoryArray = packet.data.has("categories")
                 ? packet.data.getJSONArray("categories") : new JSONArray();
-        List<String> categories = new ArrayList<>();
-        for (int i = 0; i < categoryArray.length(); ++i) {
-            categories.add(categoryArray.getString(i));
-        }
+        List<String> categories = JSONUtils.toStringList(categoryArray);
 
         List<GeneratingRecord> recordList = null;
         if (null != records) {

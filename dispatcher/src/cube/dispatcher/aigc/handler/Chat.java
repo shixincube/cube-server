@@ -33,7 +33,7 @@ public class Chat extends ContextHandler {
         setHandler(new Handler());
     }
 
-    private class Handler extends AIGCHandler {
+    private static class Handler extends AIGCHandler {
 
         public Handler() {
             super();

@@ -17,8 +17,11 @@ import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.event.EventCenter;
 import cube.service.aigc.listener.MultimodalListener;
+import cube.util.FileType;
+import cube.util.FileUtils;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,6 +54,42 @@ public class MultimodalUnitMeta extends UnitMeta {
     public void process() {
         try {
             Logger.d(this.getClass(), "#process - Model: " + this.unit.getCapability().getName());
+
+            // 如果内容是超链接，先下载内容
+            if (this.input.content.toLowerCase().startsWith("http://")
+                    || this.input.content.toLowerCase().startsWith("https://")) {
+                FileLabel fileLabel = this.service.downloadFile(this.channel.getAuthToken(), this.input.content);
+                if (null != fileLabel) {
+                    if (fileLabel.getFileType() == FileType.TEXT || fileLabel.getFileType() == FileType.MD) {
+                        // 文本文件，读取内容进行替换
+                        File file = this.service.loadFile(this.channel.getAuthToken().getDomain(), fileLabel.getFileCode());
+                        if (null != file) {
+                            String fileContent = FileUtils.readTextFile(file.getAbsolutePath());
+                            // 删除临时文件
+                            this.service.deleteFile(this.channel.getAuthToken().getDomain(), fileLabel.getFileCode());
+                            if (null != fileContent) {
+                                this.input.content = fileContent;
+                            }
+                            else {
+                                this.listener.onFailed(this.channel, AIGCStateCode.FileError);
+                                return;
+                            }
+                        }
+                        else {
+                            this.listener.onFailed(this.channel, AIGCStateCode.FileError);
+                            return;
+                        }
+                    }
+                    else {
+                        // 其他文件，则直接传给 Unit
+                        this.input.content = fileLabel.getFileCode();
+                    }
+                }
+                else {
+                    this.listener.onFailed(this.channel, AIGCStateCode.FileError);
+                    return;
+                }
+            }
 
             // 处理文件
             List<FileLabel> fileLabelList = new ArrayList<>();

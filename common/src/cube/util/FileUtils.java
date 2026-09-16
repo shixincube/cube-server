@@ -6,14 +6,16 @@
 
 package cube.util;
 
+import cell.util.log.Logger;
 import cube.common.entity.FileLabel;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -65,7 +67,7 @@ public final class FileUtils {
      */
     public static String fastHash(String string) {
         // 将 string 串切割
-        List<byte[]> list = FileUtils.slice(string.getBytes(Charset.forName("UTF-8")), 32);
+        List<byte[]> list = FileUtils.slice(string.getBytes(StandardCharsets.UTF_8), 32);
 
         // Hash
         String code = FileUtils.fastHash(list);
@@ -405,6 +407,22 @@ public final class FileUtils {
 
         // 判断扩展名类型
         return extractFileExtensionType(fileName);
+    }
+
+    /**
+     * 按照文本方式读取文件数据。
+     *
+     * @param filepath
+     * @return
+     */
+    public static String readTextFile(String filepath) {
+        try {
+            byte[] bytes = Files.readAllBytes(Paths.get(filepath));
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            Logger.e(FileUtils.class, "#readTextFile", e);
+            return null;
+        }
     }
 
     /**

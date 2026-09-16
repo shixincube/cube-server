@@ -181,6 +181,9 @@ public class GeneratingRecord implements JSONable {
         if (json.has("timestamp")) {
             this.timestamp = json.getLong("timestamp");
         }
+        else {
+            this.timestamp = System.currentTimeMillis();
+        }
 
         if (json.has("context")) {
             this.context = new ComplexContext(json.getJSONObject("context"));

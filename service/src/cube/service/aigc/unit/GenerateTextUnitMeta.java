@@ -333,7 +333,7 @@ public class GenerateTextUnitMeta extends UnitMeta {
                 Usage usage = null;
                 try {
                     responseText = payload.getString("response");
-                    thoughtText = payload.getString("thought");
+                    thoughtText = payload.has("thought") ? payload.getString("thought") : "";
                     if (payload.has("resultPayload")) {
                         resultPayload = payload.getJSONObject("resultPayload");
                     }
@@ -341,7 +341,7 @@ public class GenerateTextUnitMeta extends UnitMeta {
                         usage = new Usage(payload.getJSONObject("performance"));
                     }
                 } catch (Exception e) {
-                    Logger.w(AIGCService.class, "Unit respond failed - channel: " + this.channel.getCode());
+                    Logger.w(AIGCService.class, "Unit respond failed - channel: " + this.channel.getCode(), e);
                     // 记录故障
                     this.unit.markFailure(AIGCStateCode.Failure.code, System.currentTimeMillis(),
                             channel.getAuthToken().getContactId());
@@ -413,9 +413,9 @@ public class GenerateTextUnitMeta extends UnitMeta {
                 }
                 else {
                     List<String> tokens = calcTokens(prompt.toString());
-                    long promptTokens = tokens.size();
+                    int promptTokens = tokens.size();
                     tokens = calcTokens(history.answerContent);
-                    long completionTokens = tokens.size();
+                    int completionTokens = tokens.size();
                     service.getStorage().updateUsage(history.queryContactId, ModelConfig.getModelByUnit(history.unit),
                             completionTokens, promptTokens);
                 }

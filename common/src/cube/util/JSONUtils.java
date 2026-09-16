@@ -183,6 +183,34 @@ public final class JSONUtils {
     }
 
     /**
+     * 将 JSON 数组转为存储 JSONObject 的列表。
+     *
+     * @param array
+     * @return
+     */
+    public static List<JSONObject> toObjectList(JSONArray array) {
+        List<JSONObject> list = new ArrayList<>();
+        for (int i = 0; i < array.length(); ++i) {
+            list.add(array.getJSONObject(i));
+        }
+        return list;
+    }
+
+    /**
+     *
+     *
+     * @param list
+     * @return
+     */
+    public static JSONArray toObjectArray(List<JSONObject> list) {
+        JSONArray array = new JSONArray();
+        for (JSONObject value : list) {
+            array.put(value);
+        }
+        return array;
+    }
+
+    /**
      * 将 JSON 数组转为存储字符串数组。
      *
      * @param array
