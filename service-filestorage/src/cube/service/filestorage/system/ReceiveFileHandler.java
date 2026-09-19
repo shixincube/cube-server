@@ -59,8 +59,10 @@ public class ReceiveFileHandler extends ContextHandler {
             // Token Code
             String token = request.getParameter("token");
             if (null == token) {
+                Logger.w(ReceiveFileHandler.class, "#doPost - No token parameter");
                 this.respond(response, HttpStatus.FORBIDDEN_403);
                 this.complete();
+                return;
             }
 
             Contact contact = ContactManager.getInstance().getContact(token);
@@ -71,7 +73,15 @@ public class ReceiveFileHandler extends ContextHandler {
                 return;
             }
 
-            String contentType = request.getHeader(HttpHeader.CONTENT_TYPE.asString()).toLowerCase();
+            String contentTypeHeader = request.getHeader(HttpHeader.CONTENT_TYPE.asString());
+            if (null == contentTypeHeader) {
+                Logger.w(ReceiveFileHandler.class, "#doPost - No content type: " + token);
+                this.respond(response, HttpStatus.NOT_ACCEPTABLE_406);
+                this.complete();
+                return;
+            }
+
+            String contentType = contentTypeHeader.toLowerCase();
             if (contentType.contains("multipart/form-data")) {
                 // 客户端以 Form 数据格式上传
                 // TODO

@@ -408,7 +408,7 @@ public class GenerateTextUnitMeta extends UnitMeta {
             public void run() {
                 // 更新用量
                 if (null != usage) {
-                    service.getStorage().updateUsage(history.queryContactId, ModelConfig.getModelByUnit(history.unit),
+                    service.getStorage().updateUsage(history.queryContactId, history.unit,
                             usage.outputTokens, usage.inputTokens);
                 }
                 else {
@@ -416,7 +416,7 @@ public class GenerateTextUnitMeta extends UnitMeta {
                     int promptTokens = tokens.size();
                     tokens = calcTokens(history.answerContent);
                     int completionTokens = tokens.size();
-                    service.getStorage().updateUsage(history.queryContactId, ModelConfig.getModelByUnit(history.unit),
+                    service.getStorage().updateUsage(history.queryContactId, history.unit,
                             completionTokens, promptTokens);
                 }
 
@@ -429,7 +429,7 @@ public class GenerateTextUnitMeta extends UnitMeta {
     }
 
     protected String filterChinese(AIGCUnit unit, String text) {
-        if (unit.getCapability().getName().equalsIgnoreCase(ModelConfig.CHAT_UNIT)) {
+        if (unit.getCapability().getName().equalsIgnoreCase(ModelConfig.BAIZE_UNIT)) {
             if (TextUtils.containsChinese(text)) {
                 return text.replaceAll(",", "，");
             }

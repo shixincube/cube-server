@@ -47,6 +47,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -79,6 +80,13 @@ public class FileHandler extends CrossDomainHandler {
     private int cacheLimit = 5 * 1024 * 1024;
 
     /**
+     * 等待文件转储到文件存储服务的超时时长（毫秒）。
+     * 用于在响应客户端之前确认文件已经完成入库，避免客户端拿到 fileCode 后
+     * 立即查询 AIGCService#getFile 时因异步转储未完成而查询失败。
+     */
+    private long uploadWaitTimeout = 30 * 1000L;
+
+    /**
      * 构造函数。
      *
      * @param fileChunkStorage
@@ -93,8 +101,20 @@ public class FileHandler extends CrossDomainHandler {
         if (!this.tempPath.exists()) {
             this.tempPath.mkdirs();
         }
+
+        try {
+            this.uploadWaitTimeout = Long.parseLong(
+                    performer.getProperties().getProperty("filestorage.upload.timeout", "30000"));
+        } catch (Exception e) {
+            // 使用默认值
+        }
+        if (this.uploadWaitTimeout <= 0) {
+            this.uploadWaitTimeout = 30 * 1000L;
+        }
+
         Logger.i(this.getClass(), "The file handler concurrency config (U/D): "
-                + this.maxUploadConcurrency + "/" + this.maxDownloadConcurrency);
+                + this.maxUploadConcurrency + "/" + this.maxDownloadConcurrency
+                + " - upload wait timeout: " + this.uploadWaitTimeout + " ms");
     }
 
     /**
@@ -238,187 +258,231 @@ public class FileHandler extends CrossDomainHandler {
                 // 校验 Token
                 AuthToken authToken = this.performer.verifyToken(token);
 
-                /*JSONObject payload = new JSONObject();
-                payload.put("code", token);
-                Packet packet = new Packet(AuthAction.GetToken.name, payload);
-                ActionDialect dialect = this.performer.syncTransmit(AuthCellet.NAME, packet.toDialect());
-                if (null == dialect) {
-                    clearTempFiles(tempFiles);
-                    this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
-                    this.complete();
-                    return;
-                }
-
-                Packet responsePacket = new Packet(dialect);
-                if (Packet.extractCode(responsePacket) != AuthStateCode.Ok.code) {
-                    clearTempFiles(tempFiles);
-                    this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
-                    this.complete();
-                    return;
-                }
-
-                // 令牌有效期
-                AuthToken authToken = new AuthToken(Packet.extractDataPayload(responsePacket));
-                if (authToken.getExpiry() < System.currentTimeMillis()) {
-                    // 令牌过期
-                    Logger.d(this.getClass(), "Token have expired - " + authToken.getCode());
-                    clearTempFiles(tempFiles);
-                    this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
-                    this.complete();
-                    return;
-                }*/
-
                 final long contactId = authToken.getContactId();
                 final String domain = authToken.getDomain();
 
                 final String fileCode = FileUtils.makeFileCode(contactId, domain, fileName);
 
-                if (streamTransmission) {
-                    this.performer.getExecutor().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            Director director = performer.selectDirector(token, FileStorageCellet.NAME);
-                            Logger.d(this.getClass(), "#doPost - stream transmission on HTTP: " + fileCode + " - "
-                                    + director.fileEndpoint.toString());
+                // 文件转储完成信号。用于在应答客户端之前确认文件已经在文件存储服务完成入库，
+                // 避免客户端使用 fileCode 立即查询时因异步转储未完成而查不到文件。
+                final UploadCompletion completion = new UploadCompletion();
 
-                            HttpURLConnection conn = null;
-                            OutputStream os = null;
-                            BufferedInputStream bis = null;
-                            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-                            try {
-                                URL url = new URL("http://" + director.fileEndpoint.toString() + "/files/receive/"
-                                        + "?token=" + token + "&filename=" + URLEncoder.encode(fileName, "UTF-8"));
-                                conn = (HttpURLConnection) url.openConnection();
-                                conn.setDoInput(true);
-                                conn.setDoOutput(true);
-                                conn.setRequestMethod("POST");
-                                conn.setUseCaches(false);
-                                conn.setRequestProperty("Content-Type", "binary");
-                                conn.setRequestProperty("Connection", "Keep-Alive");
-                                conn.setRequestProperty("Accept", "*/*");
-                                conn.setRequestProperty("Cache-Control", "no-cache");
-                                // Connect
-                                conn.connect();
-                                os = conn.getOutputStream();
-                                byte[] fb = new byte[8 * 1024];
-                                for (File file : tempFiles) {
-                                    FileInputStream fis = null;
-                                    try {
-                                        fis = new FileInputStream(file);
-                                        int len = 0;
-                                        while ((len = fis.read(fb)) > 0) {
-                                            os.write(fb, 0, len);
-                                        }
-                                    } catch (Exception e) {
-                                        Logger.e(this.getClass(), "Read temp file failed", e);
-                                    } finally {
-                                        if (null != fis) {
-                                            try {
-                                                fis.close();
-                                            } catch (IOException e) {
-                                                // Nothing
+                if (streamTransmission) {
+                    // 流式传输：本次请求即为完整文件，等待转储完成后再应答
+                    completion.enableWaiting();
+
+                    try {
+                        this.performer.getExecutor().execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                Director director = performer.selectDirector(token, FileStorageCellet.NAME);
+                                if (null == director || null == director.fileEndpoint) {
+                                    Logger.e(this.getClass(), "#doPost - No available file storage director: " + fileCode);
+                                    completion.failed();
+                                    clearTempFiles(tempFiles);
+                                    return;
+                                }
+
+                                Logger.d(this.getClass(), "#doPost - stream transmission on HTTP: " + fileCode + " - "
+                                        + director.fileEndpoint.toString());
+
+                                HttpURLConnection conn = null;
+                                OutputStream os = null;
+                                BufferedInputStream bis = null;
+                                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                                try {
+                                    URL url = new URL("http://" + director.fileEndpoint.toString() + "/files/receive/"
+                                            + "?token=" + token + "&filename=" + URLEncoder.encode(fileName, "UTF-8"));
+                                    conn = (HttpURLConnection) url.openConnection();
+                                    conn.setDoInput(true);
+                                    conn.setDoOutput(true);
+                                    conn.setRequestMethod("POST");
+                                    conn.setUseCaches(false);
+                                    conn.setRequestProperty("Content-Type", "binary");
+                                    conn.setRequestProperty("Connection", "Keep-Alive");
+                                    conn.setRequestProperty("Accept", "*/*");
+                                    conn.setRequestProperty("Cache-Control", "no-cache");
+                                    // Connect
+                                    conn.connect();
+                                    os = conn.getOutputStream();
+                                    byte[] fb = new byte[8 * 1024];
+                                    for (File file : tempFiles) {
+                                        FileInputStream fis = null;
+                                        try {
+                                            fis = new FileInputStream(file);
+                                            int len = 0;
+                                            while ((len = fis.read(fb)) > 0) {
+                                                os.write(fb, 0, len);
+                                            }
+                                        } catch (Exception e) {
+                                            Logger.e(this.getClass(), "Read temp file failed", e);
+                                        } finally {
+                                            if (null != fis) {
+                                                try {
+                                                    fis.close();
+                                                } catch (IOException e) {
+                                                    // Nothing
+                                                }
                                             }
                                         }
                                     }
-                                }
 
-                                os.flush();
+                                    os.flush();
 
-                                int stateCode = conn.getResponseCode();
-                                if (stateCode == 200) {
-                                    bis = new BufferedInputStream(conn.getInputStream());
-                                    int len = 0;
-                                    while ((len = bis.read(fb)) > 0) {
-                                        buffer.write(fb, 0, len);
-                                        buffer.flush();
+                                    int stateCode = conn.getResponseCode();
+                                    if (stateCode == 200) {
+                                        bis = new BufferedInputStream(conn.getInputStream());
+                                        int len = 0;
+                                        while ((len = bis.read(fb)) > 0) {
+                                            buffer.write(fb, 0, len);
+                                            buffer.flush();
+                                        }
+
+                                        String responseString = new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+                                        FileLabel fileLabel = new FileLabel(new JSONObject(responseString));
+                                        Logger.d(this.getClass(), "#doPost - Upload file: " + fileLabel.getFileCode());
+                                        // 文件已完成入库，通知等待线程
+                                        completion.completed(fileLabel);
                                     }
-
-                                    String responseString = new String(buffer.toByteArray(), StandardCharsets.UTF_8);
-                                    FileLabel fileLabel = new FileLabel(new JSONObject(responseString));
-                                    Logger.d(this.getClass(), "#doPost - Upload file: " + fileLabel.getFileCode());
-                                }
-                                else {
-                                    Logger.e(this.getClass(), "#doPost - Upload file failed - code: " + stateCode);
-                                }
-                            } catch (Exception e) {
-                                Logger.e(this.getClass(), "#doPost - Upload file failed", e);
-                            } finally {
-                                try {
-                                    if (null != os) {
-                                        os.close();
+                                    else {
+                                        Logger.e(this.getClass(), "#doPost - Upload file failed - code: " + stateCode);
+                                        completion.failed();
                                     }
                                 } catch (Exception e) {
-                                    // Nothing
+                                    Logger.e(this.getClass(), "#doPost - Upload file failed", e);
+                                    completion.failed();
+                                } finally {
+                                    try {
+                                        if (null != os) {
+                                            os.close();
+                                        }
+                                    } catch (Exception e) {
+                                        // Nothing
+                                    }
+
+                                    try {
+                                        if (null != bis) {
+                                            bis.close();
+                                        }
+                                    } catch (Exception e) {
+                                        // Nothing
+                                    }
+
+                                    try {
+                                        buffer.close();
+                                    } catch (Exception e) {
+                                        // Nothing
+                                    }
+
+                                    try {
+                                        if (null != conn) {
+                                            conn.disconnect();
+                                        }
+                                    } catch (Exception e) {
+                                        // Nothing
+                                    }
+
+                                    clearTempFiles(tempFiles);
+
+                                    // 兜底释放等待线程，避免异常分支下请求被挂起
+                                    completion.finish();
                                 }
+                            }
+                        });
+                    } catch (Exception e) {
+                        Logger.e(this.getClass(), "#doPost - Submit stream transmission task failed: " + fileCode, e);
+                        completion.failed();
+                    }
+
+                    // 有界等待文件转储完成
+                    completion.waitFor(this.uploadWaitTimeout);
+                }
+                else {
+                    // 非流式传输：仅当本次请求已包含完整文件数据时才等待转储完成，
+                    // 分片上传的中间分片不能等待，否则请求会被阻塞到超时。
+                    final boolean wholeFile = (fileSize > 0 && total >= fileSize);
+                    if (wholeFile) {
+                        completion.enableWaiting();
+
+                        // 注册完成监听，文件区块组装完成后由 FileChunkStorage 回调
+                        this.fileChunkStorage.addListener(fileCode, new FileChunkEventListener() {
+                            @Override
+                            public void onCompleted(FileLabel fileLabel) {
+                                completion.completed(fileLabel);
+                            }
+
+                            @Override
+                            public void onFailed(String fileCode) {
+                                completion.failed();
+                            }
+                        });
+                    }
+
+                    try {
+                        this.performer.getExecutor().execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                int size = 0;
+                                long cursor = 0;
+
+                                byte[] fb = new byte[8 * 1024];
 
                                 try {
-                                    if (null != bis) {
-                                        bis.close();
+                                    for (File file : tempFiles) {
+                                        FileInputStream fis = null;
+                                        FlexibleByteBuffer fbuf = new FlexibleByteBuffer();
+                                        try {
+                                            fis = new FileInputStream(file);
+                                            int len = 0;
+                                            while ((len = fis.read(fb)) > 0) {
+                                                fbuf.put(fb, 0, len);
+                                            }
+                                        } catch (Exception e) {
+                                            Logger.e(this.getClass(), "Read temp file failed", e);
+                                        } finally {
+                                            if (null != fis) {
+                                                try {
+                                                    fis.close();
+                                                } catch (IOException e) {
+                                                    // Nothing
+                                                }
+                                            }
+                                        }
+
+                                        fbuf.flip();
+                                        byte[] data = new byte[fbuf.limit()];
+                                        System.arraycopy(fbuf.array(), 0, data, 0, fbuf.limit());
+                                        size = data.length;
+                                        FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, lastModified, cursor, size, data);
+                                        fileChunkStorage.append(chunk, fileCode);
+                                        cursor += size;
                                     }
                                 } catch (Exception e) {
-                                    // Nothing
-                                }
-
-                                try {
-                                    buffer.close();
-                                } catch (Exception e) {
-                                    // Nothing
-                                }
-
-                                try {
-                                    if (null != conn) {
-                                        conn.disconnect();
-                                    }
-                                } catch (Exception e) {
-                                    // Nothing
+                                    Logger.e(this.getClass(), "#doPost - Append file chunk failed: " + fileCode, e);
+                                    completion.failed();
                                 }
 
                                 clearTempFiles(tempFiles);
-                            }
-                        }
-                    });
-                }
-                else {
-                    this.performer.getExecutor().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            int size = 0;
-                            long cursor = 0;
 
-                            byte[] fb = new byte[8 * 1024];
-                            for (File file : tempFiles) {
-                                FileInputStream fis = null;
-                                FlexibleByteBuffer fbuf = new FlexibleByteBuffer();
-                                try {
-                                    fis = new FileInputStream(file);
-                                    int len = 0;
-                                    while ((len = fis.read(fb)) > 0) {
-                                        fbuf.put(fb, 0, len);
-                                    }
-                                } catch (Exception e) {
-                                    Logger.e(this.getClass(), "Read temp file failed", e);
-                                } finally {
-                                    if (null != fis) {
-                                        try {
-                                            fis.close();
-                                        } catch (IOException e) {
-                                            // Nothing
-                                        }
-                                    }
+                                if (wholeFile) {
+                                    // 兜底释放等待线程，避免异常分支下请求被挂起
+                                    completion.finish();
                                 }
-
-                                fbuf.flip();
-                                byte[] data = new byte[fbuf.limit()];
-                                System.arraycopy(fbuf.array(), 0, data, 0, fbuf.limit());
-                                size = data.length;
-                                FileChunk chunk = new FileChunk(contactId, domain, token, fileName, fileSize, lastModified, cursor, size, data);
-                                fileChunkStorage.append(chunk, fileCode);
-                                cursor += size;
                             }
+                        });
+                    } catch (Exception e) {
+                        Logger.e(this.getClass(), "#doPost - Submit chunk transmission task failed: " + fileCode, e);
+                        completion.failed();
+                    }
 
-                            clearTempFiles(tempFiles);
+                    if (wholeFile) {
+                        // 有界等待文件组装并入库完成
+                        completion.waitFor(this.uploadWaitTimeout);
+                        if (!completion.isDone()) {
+                            // 等待超时，移除监听器避免无效回调驻留
+                            this.fileChunkStorage.removeListener(fileCode);
                         }
-                    });
+                    }
                 }
 
                 JSONObject responseData = new JSONObject();
@@ -428,6 +492,25 @@ public class FileHandler extends CrossDomainHandler {
                     responseData.put("fileCode", fileCode);
                     responseData.put("lastModified", lastModified);
                     responseData.put("position", fileSize);
+
+                    // 回填文件转储状态。completed 表示文件已在文件存储服务完成入库，
+                    // 客户端可以立即使用 fileCode 进行查询。
+                    if (completion.isWaiting()) {
+                        FileLabel uploadedLabel = completion.getFileLabel();
+                        if (null != uploadedLabel) {
+                            responseData.put("state", "completed");
+                            responseData.put("fileLabel", uploadedLabel.toJSON());
+                        }
+                        else if (completion.isDone()) {
+                            Logger.w(this.getClass(), "#doPost - Upload file to storage failed: " + fileCode);
+                            responseData.put("state", "failed");
+                        }
+                        else {
+                            Logger.w(this.getClass(), "#doPost - Wait file dump timeout: " + fileCode
+                                    + " - " + this.uploadWaitTimeout + " ms");
+                            responseData.put("state", "pending");
+                        }
+                    }
                 } catch (JSONException e) {
                     Logger.w(this.getClass(), "#doPost", e);
                     this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
@@ -937,6 +1020,84 @@ public class FileHandler extends CrossDomainHandler {
 
         if (length > 0) {
             response.setContentLengthLong(length);
+        }
+    }
+
+    /**
+     * 文件转储完成信号。
+     *
+     * 上传请求在应答客户端之前，通过该类等待文件转储到文件存储服务完成，
+     * 从而保证客户端拿到响应后即可使用 fileCode 查询到文件标签。
+     */
+    protected final class UploadCompletion {
+
+        private final CountDownLatch latch = new CountDownLatch(1);
+
+        private volatile FileLabel fileLabel = null;
+
+        private volatile boolean waiting = false;
+
+        private volatile boolean done = false;
+
+        /**
+         * 是否需要等待转储完成。分片上传的中间分片不等待。
+         */
+        protected void enableWaiting() {
+            this.waiting = true;
+        }
+
+        protected boolean isWaiting() {
+            return this.waiting;
+        }
+
+        /**
+         * 转储成功。
+         */
+        protected void completed(FileLabel fileLabel) {
+            this.fileLabel = fileLabel;
+            this.done = true;
+            this.latch.countDown();
+        }
+
+        /**
+         * 转储失败。
+         */
+        protected void failed() {
+            this.done = true;
+            this.latch.countDown();
+        }
+
+        /**
+         * 释放等待线程，用于异常分支兜底。
+         */
+        protected void finish() {
+            this.latch.countDown();
+        }
+
+        /**
+         * 转储动作是否已结束，成功或失败均返回 true。
+         */
+        protected boolean isDone() {
+            return this.done;
+        }
+
+        protected FileLabel getFileLabel() {
+            return this.fileLabel;
+        }
+
+        /**
+         * 有界等待转储完成。
+         */
+        protected void waitFor(long timeout) {
+            if (!this.waiting) {
+                return;
+            }
+
+            try {
+                this.latch.await(timeout, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                Logger.w(FileHandler.class, "#waitFor - Wait file dump interrupted");
+            }
         }
     }
 

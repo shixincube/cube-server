@@ -434,7 +434,7 @@ public class ConversationWorker {
 
                     if (relation.isValidUser()) {
                         // 记录
-                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                 convCtx, prompt.result);
                     }
                 }
@@ -446,7 +446,7 @@ public class ConversationWorker {
 //            Logger.d(this.getClass(), "#work - The user is NOT valid: " + relation.getUid());
 //
 //            String result = Resource.getInstance().getCorpus("baize", "VISITOR_NOTICE", channel.getLanguage());
-//            final GeneratingRecord record = new GeneratingRecord(ModelConfig.AIXINLI, query, result);
+//            final GeneratingRecord record = new GeneratingRecord(ModelConfig.BAIZE_UNIT, query, result);
 //            (new Thread() {
 //                @Override
 //                public void run() {

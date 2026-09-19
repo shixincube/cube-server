@@ -61,7 +61,7 @@ public class StartAppointmentSubtask extends ConversationSubtask {
                 // 建立记忆
                 convCtx.getSubtaskMemory().record(record);
 
-                SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                         convCtx, record);
             }
         });

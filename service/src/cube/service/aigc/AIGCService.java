@@ -607,7 +607,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
         while (iter.hasNext()) {
             AIGCUnit unit = iter.next();
-            if (unit.getCapability().getName().equals(unitName)
+            if (unit.getCapability().getName().equalsIgnoreCase(unitName)
                     && unit.getContext().isValid()) {
                 ++num;
             }
@@ -637,7 +637,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
         while (iter.hasNext()) {
             AIGCUnit unit = iter.next();
-            if (unit.getCapability().getName().equals(unitName)
+            if (unit.getCapability().getName().equalsIgnoreCase(unitName)
                     && unit.getContext().isValid()
                     && !unit.isRunning()) {
                 // 检查是否正在处理流
@@ -679,7 +679,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
         while (iter.hasNext()) {
             AIGCUnit unit = iter.next();
-            if (unit.getCapability().getName().equals(unitName) &&
+            if (unit.getCapability().getName().equalsIgnoreCase(unitName) &&
                     unit.getContext().isValid()) {
                 candidates.add(unit);
             }
@@ -777,10 +777,10 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         // 按照最近执行时间戳从低到高排序
-        Collections.sort(candidates, new Comparator<AIGCUnit>() {
+        candidates.sort(new Comparator<AIGCUnit>() {
             @Override
             public int compare(AIGCUnit u1, AIGCUnit u2) {
-                return (int)(u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
+                return (int) (u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
             }
         });
 

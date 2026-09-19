@@ -654,7 +654,7 @@ public final class TextUtils {
     }
 
     public static String filterChinese(AIGCUnit unit, String text) {
-        if (unit.getCapability().getName().equalsIgnoreCase(ModelConfig.CHAT_UNIT)) {
+        if (unit.getCapability().getName().equalsIgnoreCase(ModelConfig.BAIZE_UNIT)) {
             if (TextUtils.containsChinese(text)) {
                 return text.replaceAll(",", "，");
             }

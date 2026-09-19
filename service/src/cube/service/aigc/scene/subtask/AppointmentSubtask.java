@@ -65,7 +65,7 @@ public class AppointmentSubtask extends ConversationSubtask {
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
-                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                             convCtx, record);
                 }
             });
@@ -183,7 +183,7 @@ public class AppointmentSubtask extends ConversationSubtask {
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
-                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                             convCtx, record);
 
                     // 存储
@@ -211,7 +211,7 @@ public class AppointmentSubtask extends ConversationSubtask {
                     // 建立记忆
                     convCtx.getSubtaskMemory().record(record);
 
-                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                             convCtx, record);
                 }
             }

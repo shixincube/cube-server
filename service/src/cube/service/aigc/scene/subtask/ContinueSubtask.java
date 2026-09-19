@@ -37,7 +37,7 @@ public class ContinueSubtask extends ConversationSubtask {
                 listener.onGenerated(channel, record);
                 channel.setProcessing(false);
 
-                SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                         convCtx, record);
             }
         });

@@ -111,7 +111,7 @@ public class TextToImageUnitMeta extends UnitMeta {
                     List<String> tokens = calcTokens(text);
                     int promptTokens = tokens.size();
                     int completionTokens = (int) Math.floor(fileLabel.getFileSize() / 1024.0);
-                    service.getStorage().updateUsage(contactId, ModelConfig.getModelByUnit(history.unit),
+                    service.getStorage().updateUsage(contactId, history.unit,
                             completionTokens, promptTokens);
 
                     // 保存历史记录

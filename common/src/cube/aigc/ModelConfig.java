@@ -14,40 +14,25 @@ import org.json.JSONObject;
  */
 public class ModelConfig implements JSONable {
 
-    public static int EXTRA_LONG_CONTEXT_LIMIT = 256 * 1024;
+    public static int EXTRA_LONG_CONTEXT_LIMIT = 10 * 1024 * 1024;
 
-    public static int BAIZE_CONTEXT_LIMIT = 256 * 1024;
+    public static int BAIZE_CONTEXT_LIMIT = 1024 * 1024;
 
     public static int BAIZE_X_CONTEXT_LIMIT = 1024 * 1024;
 
-    public static int BAIZE_NEXT_CONTEXT_LIMIT = 256 * 1024;
+    public static int BAIZE_NEXT_CONTEXT_LIMIT = 1024 * 1024;
 
     public final static String[] TEXT_TO_IMAGE_UNIT = new String[] { "DallE" };
 
-    public final static String CHAT_UNIT = "Chat";
+    public final static String BAIZE_UNIT = "Baize2";
 
-    public final static String BAIZE_UNIT = "Baize";
+    public final static String BAIZE_X_UNIT = "Baize2";
 
-    public final static String BAIZE_X_UNIT = "BaizeX";
-
-    public final static String BAIZE_NEXT_UNIT = "BaizeNext";
-
-    public final static String[] EXTRA_LONG_PROMPT_UNIT = new String[] { BAIZE_X_UNIT };
+    public final static String BAIZE_NEXT_UNIT = "Baize2";
 
     public final static String PSYCHOLOGY_UNIT = "Psychology";
 
     public final static String FACIAL_EXPRESSION_UNIT = "FacialExpression";
-
-    public final static String AIXINLI = "AiXinLi";
-
-    private final static String[][] UNIT_MAP_MODEL = new String[][] {
-            new String[] { "Chat", "BaizeNext" },
-            new String[] { "GPT", "GPT" },
-            new String[] { "Gemini", "Gemini" },
-            new String[] { "Baize", "Baize" },
-            new String[] { "BaizeX", "BaizeX" },
-            new String[] { "BaizeNext", "BaizeNext" },
-    };
 
     private final String model;
 
@@ -130,21 +115,6 @@ public class ModelConfig implements JSONable {
     }
 
     /**
-     * 获取单元名对应的模型。
-     *
-     * @param unit
-     * @return
-     */
-    public static String getModelByUnit(String unit) {
-        for (String[] map : UNIT_MAP_MODEL) {
-            if (map[0].equalsIgnoreCase(unit)) {
-                return map[1];
-            }
-        }
-        return unit;
-    }
-
-    /**
      * 判断指定的单元是否是 TextToImage 单元。
      *
      * @param unitName
@@ -152,21 +122,6 @@ public class ModelConfig implements JSONable {
      */
     public static boolean isTextToImageUnit(String unitName) {
         for (String name : TEXT_TO_IMAGE_UNIT) {
-            if (name.equalsIgnoreCase(unitName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 判断指定的单元是否是支持超长提示词的单元。
-     *
-     * @param unitName
-     * @return
-     */
-    public static boolean isExtraLongPromptUnit(String unitName) {
-        for (String name : EXTRA_LONG_PROMPT_UNIT) {
             if (name.equalsIgnoreCase(unitName)) {
                 return true;
             }
@@ -191,11 +146,6 @@ public class ModelConfig implements JSONable {
             return BAIZE_X_CONTEXT_LIMIT;
         }
 
-        if (isExtraLongPromptUnit(unitName)) {
-            return EXTRA_LONG_CONTEXT_LIMIT;
-        }
-        else {
-            return Math.min(Math.min(BAIZE_CONTEXT_LIMIT, BAIZE_NEXT_CONTEXT_LIMIT), BAIZE_X_CONTEXT_LIMIT);
-        }
+        return EXTRA_LONG_CONTEXT_LIMIT;
     }
 }

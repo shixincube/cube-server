@@ -53,7 +53,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
-                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                             convCtx, record);
 
                     // 取消子任务
@@ -100,7 +100,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 
-                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                 convCtx, record);
                     }
                 });
@@ -120,7 +120,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 
-                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                 convCtx, record);
 
                         // 取消子任务
@@ -149,7 +149,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
 
-                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                     convCtx, record);
 
                             // 取消子任务
@@ -172,7 +172,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
 
-                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                     convCtx, record);
                         }
                     });
@@ -208,7 +208,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
-                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                             convCtx, record);
                 }
             });
@@ -295,7 +295,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 
-                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                 convCtx, record);
                     }
                 });
@@ -331,7 +331,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 listener.onGenerated(channel, record);
                 channel.setProcessing(false);
 
-                SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                         convCtx, record);
                 return AIGCStateCode.Ok;
             }
@@ -399,7 +399,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 
-                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                 convCtx, record);
                     }
                 });
@@ -488,7 +488,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
-                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                             convCtx, record);
 
                     // 清空子任务
@@ -525,7 +525,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 listener.onGenerated(channel, record);
                 channel.setProcessing(false);
 
-                SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                         convCtx, record);
 
                 // 清空子任务
@@ -549,7 +549,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
             listener.onGenerated(channel, record);
             channel.setProcessing(false);
 
-            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                     convCtx, record);
 
             // 取消子任务
@@ -569,7 +569,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
             listener.onGenerated(channel, record);
             channel.setProcessing(false);
 
-            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                     convCtx, record);
         }
         return AIGCStateCode.Ok;
@@ -625,7 +625,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
-                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                             convCtx, record);
                 }
             });
@@ -652,7 +652,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     listener.onGenerated(channel, record);
                     channel.setProcessing(false);
 
-                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                    SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                             convCtx, record);
 
                     // 取消子任务
@@ -681,7 +681,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
 
-                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                     convCtx, record);
 
                             if (result.answer.contains("不相关") || result.answer.contains("无关")) {
@@ -703,7 +703,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
 
-                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                     convCtx, record);
                         }
                     }
@@ -721,7 +721,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
 
-                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                     convCtx, record);
                         }
                         else {
@@ -735,7 +735,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
 
-                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                     convCtx, record);
                         }
                     }
@@ -762,7 +762,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
 
-                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                     convCtx, record);
 
                             if (result.answer.contains("不相关") || result.answer.contains("无关")) {
@@ -785,7 +785,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                             listener.onGenerated(channel, record);
                             channel.setProcessing(false);
 
-                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                            SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                     convCtx, record);
                         }
                     }
@@ -800,7 +800,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         listener.onGenerated(channel, record);
                         channel.setProcessing(false);
 
-                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.AIXINLI,
+                        SceneManager.getInstance().saveHistoryRecord(channel.getCode(), ModelConfig.BAIZE_UNIT,
                                 convCtx, record);
                     }
                 }
