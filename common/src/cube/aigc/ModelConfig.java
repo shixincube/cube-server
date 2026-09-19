@@ -14,9 +14,11 @@ import org.json.JSONObject;
  */
 public class ModelConfig implements JSONable {
 
-    public static int EXTRA_LONG_CONTEXT_LIMIT = 10 * 1024 * 1024;
+    public static int EXTRA_LONG_CONTEXT_LIMIT = 1024 * 1024;
 
-    public static int BAIZE_CONTEXT_LIMIT = 1024 * 1024;
+    public static int BAIZE_CONTEXT_LIMIT = 128 * 1024;
+
+    public static int BAIZE_2_CONTEXT_LIMIT = 256 * 1024;
 
     public static int BAIZE_X_CONTEXT_LIMIT = 1024 * 1024;
 
