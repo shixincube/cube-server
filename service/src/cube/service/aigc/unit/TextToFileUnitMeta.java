@@ -144,7 +144,7 @@ public class TextToFileUnitMeta extends UnitMeta {
                 prompt.append("\n\n");
                 prompt.append(String.format(Consts.PROMPT_SUFFIX_FORMAT, this.text));
 
-                GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt.toString(),
+                GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt.toString(),
                         null, null, null);
                 if (null == generating) {
                     Logger.w(this.getClass(), "#process - Generating failed: " + fileLabel.getFileCode());

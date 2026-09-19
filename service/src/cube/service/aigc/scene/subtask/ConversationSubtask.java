@@ -74,15 +74,12 @@ public abstract class ConversationSubtask {
     }
 
     protected String polish(String text) {
-        AIGCUnit unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_X_UNIT);
+        AIGCUnit unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_UNIT);
         if (null == unit) {
-            unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_UNIT);
+            unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_2_UNIT);
             if (null == unit) {
-                unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
-                if (null == unit) {
-                    Logger.d(this.getClass(), "#polish - Can NOT find idle unit");
-                    return text;
-                }
+                Logger.d(this.getClass(), "#polish - Can NOT find idle unit");
+                return text;
             }
         }
 
@@ -107,7 +104,7 @@ public abstract class ConversationSubtask {
     public String fastPolish(String text) {
         AIGCUnit unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_UNIT);
         if (null == unit) {
-            unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_X_UNIT);
+            unit = this.service.selectIdleUnitByName(ModelConfig.BAIZE_2_UNIT);
             if (null == unit) {
                 Logger.d(this.getClass(), "#fastPolish - Can NOT find unit");
                 return text;
@@ -132,14 +129,11 @@ public abstract class ConversationSubtask {
 
     public String infer(String prompt) {
         // 由于算力有限，根据提示词长度选择单元
-        AIGCUnit unit = prompt.length() > 2000 ? this.service.selectIdleUnitByName(ModelConfig.BAIZE_X_UNIT) :
-                this.service.selectIdleUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+        AIGCUnit unit = prompt.length() < ModelConfig.BAIZE_CONTEXT_LIMIT ? this.service.selectIdleUnitByName(ModelConfig.BAIZE_UNIT) :
+                this.service.selectIdleUnitByName(ModelConfig.BAIZE_2_UNIT);
         if (null == unit) {
-            unit = this.service.selectUnitByName(ModelConfig.BAIZE_X_UNIT);
-            if (null == unit) {
-                Logger.w(this.getClass(), "#infer - Can NOT find unit");
-                return null;
-            }
+            Logger.w(this.getClass(), "#infer - Can NOT find unit");
+            return null;
         }
 
         GeneratingRecord result = this.service.syncGenerateText(unit, prompt, null, null, null);

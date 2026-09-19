@@ -34,8 +34,6 @@ public class VoiceDiarizationIndicator extends VoiceIndicator {
 
         double totalDuration = 0;
 
-//        System.out.println("XJW voiceDiarization.duration: " + voiceDiarization.duration);
-
         for (VoiceTrack track : voiceDiarization.tracks) {
             if (track.segment.duration < 0.2) {
                 // 跳过时长较短的分段

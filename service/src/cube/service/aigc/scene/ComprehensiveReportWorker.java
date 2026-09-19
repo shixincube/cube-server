@@ -302,7 +302,7 @@ public class ComprehensiveReportWorker implements Runnable {
                 }
 
                 // 生成摘要
-                GeneratingRecord summary = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                GeneratingRecord summary = this.service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                         String.format(Resource.getInstance().getCorpus("report", "SRBC_REPORT_SUMMARY"),
                                 contentList.get(0)),
                         null, null, null);
@@ -326,16 +326,16 @@ public class ComprehensiveReportWorker implements Runnable {
                 prompt = prompt.replace("{{女方三个关键词}}", female.buildChoicesString());
                 prompt = prompt.replace("{{情侣爱情描述内容}}", contentList.get(0));
 
-                GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                         prompt, null, null, null);
                 if (null == result) {
                     Logger.w(this.getClass(), "#generateComprehensiveReport - generate content failed: "
-                            + ModelConfig.BAIZE_NEXT_UNIT + " - prompt length: " + prompt.length());
-                    result = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
+                            + ModelConfig.BAIZE_2_UNIT + " - prompt length: " + prompt.length());
+                    result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT,
                             prompt, null, null, null);
                     if (null == result) {
                         Logger.e(this.getClass(), "#generateComprehensiveReport - generate content failed: "
-                                + ModelConfig.BAIZE_X_UNIT + " - prompt length: " + prompt.length());
+                                + ModelConfig.BAIZE_UNIT + " - prompt length: " + prompt.length());
                         return false;
                     }
                 }
@@ -360,7 +360,7 @@ public class ComprehensiveReportWorker implements Runnable {
                 prompt = prompt.replace("{{对方的植物类型}}", female.getComprehensiveSection().indicator.getName());
                 prompt = prompt.replace("{{对方的三个关键词}}", female.buildChoicesString());
                 prompt = prompt.replace("{{对方的植物类型特点}}", female.getComprehensiveSection().getContent());
-                GeneratingRecord resultMale = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                GeneratingRecord resultMale = this.service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                         prompt, null, null, null);
                 // 添加数据
                 male.addComprehensiveSection(new ComprehensiveSection("你隐藏的期待，TA并未察觉", resultMale.answer));
@@ -373,7 +373,7 @@ public class ComprehensiveReportWorker implements Runnable {
                 prompt = prompt.replace("{{对方的植物类型}}", male.getComprehensiveSection().indicator.getName());
                 prompt = prompt.replace("{{对方的三个关键词}}", male.buildChoicesString());
                 prompt = prompt.replace("{{对方的植物类型特点}}", male.getComprehensiveSection().getContent());
-                GeneratingRecord resultFemale = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                GeneratingRecord resultFemale = this.service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                         prompt, null, null, null);
                 // 添加数据
                 female.addComprehensiveSection(new ComprehensiveSection("你隐藏的期待，TA并未察觉", resultFemale.answer));

@@ -103,7 +103,7 @@ public class AppointmentSubtask extends ConversationSubtask {
                             query = query.replace("{{today}}", TimeUtils.formatTodayFullDate());
 
                             GeneratingRecord record = service.syncGenerateText(channel.getAuthToken(),
-                                    ModelConfig.BAIZE_NEXT_UNIT, query, null);
+                                    ModelConfig.BAIZE_2_UNIT, query, null);
                             if (null != record) {
                                 ConsultationTheme theme = extractConsultationTheme(record.answer);
                                 Date date = extractConsultationDate(record.answer);
@@ -137,7 +137,7 @@ public class AppointmentSubtask extends ConversationSubtask {
                             query = query.replace("{{today}}", TimeUtils.formatTodayFullDate());
 
                             GeneratingRecord record = service.syncGenerateText(channel.getAuthToken(),
-                                    ModelConfig.BAIZE_NEXT_UNIT, query, null);
+                                    ModelConfig.BAIZE_2_UNIT, query, null);
                             if (null != record) {
                                 int index = record.answer.indexOf("：");
                                 if (index > 1 && record.answer.startsWith("云宝")) {

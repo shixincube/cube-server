@@ -118,7 +118,7 @@ public class GuideFlow extends AbstractGuideFlow {
                     String prompt = String.format(
                             Prompts.getPrompt("FORMAT_POLISH"),
                             content);
-                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt,
+                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
                             null, null, null);
                     content = "**" + result.answer + "**";
                 }
@@ -179,7 +179,7 @@ public class GuideFlow extends AbstractGuideFlow {
                 // 对 Query 内容进行验证
                 String prompt = String.format(Prompts.getPrompt("FORMAT_VERIFY_TRUE_OR_FALSE"),
                         currentQuestionAnswer);
-                GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                         prompt, null, null, null);
 
                 if (result.answer.trim().contains(Prompts.getPrompt("SURE"))) {
@@ -205,7 +205,7 @@ public class GuideFlow extends AbstractGuideFlow {
                             Prompts.getPrompt("FORMAT_TRUE_OR_FALSE"),
                             this.currentQuestion.question,
                             currentQuestionAnswer);
-                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                             prompt, null, null, null);
 
                     if (result.answer.trim().equalsIgnoreCase(Prompts.getPrompt("YES"))) {
@@ -403,7 +403,7 @@ public class GuideFlow extends AbstractGuideFlow {
                         (null == currentQuestion.constraint) ? currentQuestion.question : currentQuestion.constraint,
                         query.replaceAll("\\*\\*", ""),
                         (null == currentQuestion.constraint) ? currentQuestion.question : currentQuestion.constraint);
-                GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
+                GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT,
                         prompt, null, null, null);
 
                 GeneratingRecord record = new GeneratingRecord(query);
@@ -480,7 +480,7 @@ public class GuideFlow extends AbstractGuideFlow {
                         ComplexContext complexContext = new ComplexContext();
                         complexContext.setSubtask(Subtask.StopGuideFlow);
 
-                        GeneratingRecord answer = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
+                        GeneratingRecord answer = service.syncGenerateText(ModelConfig.BAIZE_UNIT,
                                 String.format(Prompts.getPrompt("FORMAT_POLISH"), noResults),
                                 null, null, null);
 
@@ -584,7 +584,7 @@ public class GuideFlow extends AbstractGuideFlow {
                             ComplexContext complexContext = new ComplexContext();
                             complexContext.setSubtask(Subtask.StopGuideFlow);
 
-                            GeneratingRecord answer = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
+                            GeneratingRecord answer = service.syncGenerateText(ModelConfig.BAIZE_UNIT,
                                     String.format(Prompts.getPrompt("FORMAT_POLISH"), questionableResults),
                                     null, null, null);
 

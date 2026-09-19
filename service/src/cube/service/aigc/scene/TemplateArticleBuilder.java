@@ -87,7 +87,7 @@ public class TemplateArticleBuilder {
             prompt = prompt.replace("{{personality}}",
                     this.report.getEvaluationReport().getPersonalityAccelerator().getBigFivePersonality().toMarkdown());
 
-            GeneratingRecord record = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt, null,
+            GeneratingRecord record = service.syncGenerateText(ModelConfig.BAIZE_2_UNIT, prompt, null,
                     null, null);
             if (null == record) {
                 Logger.w(this.getClass(), "#build - The record is null: Popularization");
@@ -169,7 +169,7 @@ public class TemplateArticleBuilder {
             prompt = prompt.replace("{{content}}", content);
             prompt = prompt.replace("{{leading}}", prefix + " **" + title + "** 。");
 
-            GeneratingRecord record = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt, null,
+            GeneratingRecord record = service.syncGenerateText(ModelConfig.BAIZE_2_UNIT, prompt, null,
                     null, null);
             if (null == record) {
                 Logger.w(this.getClass(), "#build - The record is null: " + task);

@@ -469,14 +469,10 @@ public class AIGCService extends AbstractModule implements Generatable {
                         properties.getProperty("context.length.baize",
                                 Integer.toString(ModelConfig.BAIZE_CONTEXT_LIMIT))),
                     ModelConfig.BAIZE_CONTEXT_LIMIT);
-            ModelConfig.BAIZE_X_CONTEXT_LIMIT = Math.max(Integer.parseInt(
-                        properties.getProperty("context.length.baize_x",
-                                Integer.toString(ModelConfig.BAIZE_X_CONTEXT_LIMIT))),
-                    ModelConfig.BAIZE_X_CONTEXT_LIMIT);
-            ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT = Math.max(Integer.parseInt(
-                        properties.getProperty("context.length.baize_next",
-                                Integer.toString(ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT))),
-                    ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT);
+            ModelConfig.BAIZE_2_CONTEXT_LIMIT = Math.max(Integer.parseInt(
+                        properties.getProperty("context.length.baize2",
+                                Integer.toString(ModelConfig.BAIZE_2_CONTEXT_LIMIT))),
+                    ModelConfig.BAIZE_2_CONTEXT_LIMIT);
 
             // Unit 权重
             Iterator<Object> keyIter = properties.keySet().iterator();
@@ -519,8 +515,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         Logger.i(this.getClass(), "AI Service - Context length: " + ModelConfig.EXTRA_LONG_CONTEXT_LIMIT);
         Logger.i(this.getClass(), "AI Service - Baize context limit: " + ModelConfig.BAIZE_CONTEXT_LIMIT);
-        Logger.i(this.getClass(), "AI Service - BaizeX context limit: " + ModelConfig.BAIZE_X_CONTEXT_LIMIT);
-        Logger.i(this.getClass(), "AI Service - BaizeNext context limit: " + ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT);
+        Logger.i(this.getClass(), "AI Service - Baize2 context limit: " + ModelConfig.BAIZE_2_CONTEXT_LIMIT);
         if (this.useAgent) {
             Logger.i(this.getClass(), "AI Service - Agent URL: " + Agent.getInstance().getUrl());
         }
@@ -2164,7 +2159,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         Thread thread = new Thread() {
             @Override
             public void run() {
-                GeneratingRecord result = generateText(ModelConfig.BAIZE_X_UNIT,
+                GeneratingRecord result = generateText(ModelConfig.BAIZE_UNIT,
                         "请提取以下内容的摘要信息，只返回摘要：\n\n" + text,
                         null, null);
                 if (null == result) {
@@ -2329,7 +2324,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         Thread thread = new Thread() {
             @Override
             public void run() {
-                GeneratingRecord result = generateText(ModelConfig.BAIZE_X_UNIT,
+                GeneratingRecord result = generateText(ModelConfig.BAIZE_UNIT,
                         "提取下面文本内容的关键词，仅回复关键词，关键词之间使用逗号分隔：\n\n" + text,
                         null, null);
 
@@ -3106,7 +3101,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         }
 
-        GeneratingRecord result = this.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
+        GeneratingRecord result = this.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, prompt,
                 new GeneratingOption());
         if (null == result) {
             Logger.w(this.getClass(), "#performSpeechAnalysis - Generates failed: " + fileCode);
@@ -3446,55 +3441,6 @@ public class AIGCService extends AbstractModule implements Generatable {
                     result.addResource(resource);
                 }
             }
-        }
-        else {
-            // TODO 2025-7-24 需要重写该工作流
-//            Stage stage = Explorer.getInstance().perform(authToken, content);
-//            if (stage.isFlowable()) {
-//                result = new ComplexContext(false);
-//                result.stage = stage;
-//            }
-
-            /*Stage stage = Explorer.getInstance().infer(content);
-            if (stage.isComplex()) {
-                result = new ComplexContext(ComplexContext.Type.Heavyweight);
-
-                if (!stage.chartResources.isEmpty()) {
-                    for (ChartResource chartResource : stage.chartResources) {
-                        result.addResource(chartResource);
-                    }
-                }
-
-                if (!stage.attachmentResources.isEmpty()) {
-                    for (AttachmentResource attachmentResource : stage.attachmentResources) {
-                        result.addResource(attachmentResource);
-                    }
-                }
-
-                if (stage.inference) {
-                    Logger.d(this.getClass(), "#recognizeContext - perform stage");
-
-                    result.setInferable(true);
-                    result.setInferring(true);
-
-                    // 上下文 ID
-                    final long ctxId = result.getId();
-
-                    stage.perform(this, getChannel(authToken), new StageListener() {
-                        @Override
-                        public void onPerform(Stage stage, cube.service.aigc.module.Module module,
-                                              List<String> answerList) {
-                            ComplexContext ctx = Explorer.getInstance().getComplexContext(ctxId);
-                            if (null != ctx) {
-                                for (String answer : answerList) {
-                                    ctx.addInferenceResult(answer);
-                                }
-                                ctx.setInferring(false);
-                            }
-                        }
-                    });
-                }
-            }*/
         }
 
         return result;

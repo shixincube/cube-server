@@ -450,7 +450,7 @@ public class CounselingManager {
                     attribute.language.isChinese() ? theme.nameCN : theme.nameEN,
                     attribute.getGenderText(), attribute.age);
 
-            GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
+            GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, prompt,
                     new GeneratingOption(), null, null);
 
             wrapper.generatingStrategy.set(false);
@@ -516,7 +516,7 @@ public class CounselingManager {
                     attribute.language.isChinese() ? theme.nameCN : theme.nameEN,
                     attribute.getGenderText(), attribute.age);
 
-            GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
+            GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, prompt,
                     new GeneratingOption(), null, null);
 
             // 设置生成状态
@@ -631,7 +631,7 @@ public class CounselingManager {
                 conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
                 wrapper.theme.nameCN, wrapper.theme.nameCN);
 
-        GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
+        GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_2_UNIT,
                 prompt, new GeneratingOption(), null, null);
 
         wrapper.generatingWithText.set(false);
@@ -706,7 +706,7 @@ public class CounselingManager {
                 wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(), wrapper.theme.nameCN,
                 rhythm, positiveRatio, negativeRatio, neutralRatio);
 
-        GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
+        GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_2_UNIT,
                 prompt, new GeneratingOption(), null, null);
 
         wrapper.generatingWithEmotion.set(false);
@@ -823,7 +823,7 @@ public class CounselingManager {
                 conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
                 wrapper.theme.nameCN);
 
-        GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
+        GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_2_UNIT,
                 prompt, new GeneratingOption(), null, null);
 
         // 设置生成状态
@@ -1118,7 +1118,7 @@ public class CounselingManager {
                 conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
                 wrapper.theme.nameCN);
 
-        GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_NEXT_UNIT,
+        GeneratingRecord record = this.service.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_2_UNIT,
                 prompt, new GeneratingOption(), null, null);
         if (null == record) {
             Logger.w(this.getClass(), "#formulateStrategy - The record is null");

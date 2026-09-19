@@ -7,9 +7,6 @@
 package cube.service.aigc;
 
 import cell.util.log.Logger;
-import cube.aigc.Flowable;
-import cube.aigc.Module;
-import cube.aigc.Stage;
 import cube.aigc.complex.attachment.Attachment;
 import cube.aigc.complex.attachment.ThingAttachment;
 import cube.aigc.complex.widget.Button;
@@ -329,56 +326,6 @@ public class Explorer {
                 }
             })).start();
         }
-    }
-
-    /**
-     * 尝试匹配场景数据。
-     *
-     * @param content
-     * @return
-     */
-    public Stage perform(AuthToken authToken, String content) {
-        Stage stage = new Stage(authToken);
-        return stage;
-
-        /*TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
-        List<Keyword> keywordList = analyzer.analyze(content, 10);
-        List<String> words = new ArrayList<>();
-        for (Keyword keyword : keywordList) {
-            words.add(keyword.getWord());
-        }
-
-        if (words.isEmpty()) {
-            // 没有词
-            words.add(content);
-            Stage stage = new Stage(words);
-            stage.inference = false;
-            return stage;
-        }
-
-        Stage stage = new Stage(words);
-
-        try {
-            ChartInference chartInference = this.inferChart(words);
-            if (null != chartInference) {
-                stage.chartResources.addAll(chartInference.chartResources);
-                stage.attachmentResources.addAll(chartInference.attachmentResources);
-            }
-
-            // 判断上下文是否需要进行推算
-            boolean inference = false;
-            if (words.size() >= 2 && !this.hitChartsKeywords(words.get(0))
-                    && !this.hitChartsKeywords(words.get(1))) {
-                // 前2个关键词都没有图表相关词，进行推理
-                inference = true;
-            }
-
-            stage.inference = inference;
-        } catch (Exception e) {
-            Logger.e(this.getClass(), "#infer", e);
-        }
-
-        return stage;*/
     }
 
     /*private ChartInference inferChart(List<String> words) {

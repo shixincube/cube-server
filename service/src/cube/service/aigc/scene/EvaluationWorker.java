@@ -35,13 +35,13 @@ public class EvaluationWorker {
 
     private final static String REFINE_EN = "The following content requires moderate refinement. Please do not alter the original meaning of the content or add any additional information. The content to be refined is as follows:\n\n%s\n";
 
-    private final static String PERSONALITY_FORMAT_CN = "已知受测人的大五人格特点如下：\n\n%s\n\n根据上述人格描述，概述受测人的人格特点。字数控制在100到150字，不能编造成分，严禁使用总结性废话：如“总而言之”、“综上所述”、“希望这份报告能帮助你”、“请记住”。";
+    private final static String PERSONALITY_FORMAT_CN = "已知受测人的大五人格特点如下：\n\n%s\n\n根据上述人格描述，作为专业的心理学咨询师概述受测人的人格特点。字数控制在100到150字，不能编造成分，严禁使用总结性废话：如“总而言之”、“综上所述”、“希望这份报告能帮助你”、“请记住”。";
 
     private final static String PERSONALITY_FORMAT_EN = "The personality traits of the test subject are known as follows:\n\n" +
             "%s" +
             "\n\nAnswer the question based on the above information. Do not fabricate scores. The question is: Summarize the personality traits of the test subject.";
 
-    private final static String SCENARIO_CN = "关于%s的描述如下：\n\n%s\n\n给定%s的相关信息如下：\n\n%s\n\n请将上述描述和信息相结合，说明此%s心理特征在%s会有什么样的内心独白和行为表现。";
+    private final static String SCENARIO_CN = "关于%s的描述如下：\n\n%s\n\n给定%s的相关信息如下：\n\n%s\n\n请将上述描述和信息相结合，作为专业的心理学咨询师说明此%s心理特征在%s会有什么样的内心独白和行为表现。";
 
     private final static String SCENARIO_EN = "";
 
@@ -224,7 +224,7 @@ public class EvaluationWorker {
                             section.report);
 
                     GeneratingRecord record = this.service.syncGenerateText(channel.getAuthToken(),
-                            ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
+                            ModelConfig.BAIZE_2_UNIT, prompt, new GeneratingOption(),
                             null, null);
                     if (null != record) {
                         section.report = record.answer;
@@ -278,7 +278,7 @@ public class EvaluationWorker {
                                 sceneTitle, sceneContent,
                                 section.title, sceneTitle);
                         GeneratingRecord record = this.service.syncGenerateText(channel.getAuthToken(),
-                                ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
+                                ModelConfig.BAIZE_2_UNIT, prompt, new GeneratingOption(),
                                 null, null);
                         if (null != record) {
                             ReportSection sceneSection = new ReportSection(section.indicator,
@@ -294,7 +294,7 @@ public class EvaluationWorker {
                     String prompt = String.format(this.attribute.language.isChinese() ? REFINE_CN : REFINE_EN,
                             keyFeature.getDescription());
                     GeneratingRecord record = this.service.syncGenerateText(channel.getAuthToken(),
-                            ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
+                            ModelConfig.BAIZE_2_UNIT, prompt, new GeneratingOption(),
                             null, null);
                     if (null != record) {
                         int pos = record.answer.indexOf(TextUtils.gColonInChinese);
@@ -313,7 +313,7 @@ public class EvaluationWorker {
                     String prompt = String.format(this.attribute.language.isChinese() ? REFINE_CN : REFINE_EN,
                             keyFeature.getDescription());
                     GeneratingRecord record = this.service.syncGenerateText(channel.getAuthToken(),
-                            ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
+                            ModelConfig.BAIZE_2_UNIT, prompt, new GeneratingOption(),
                             null, null);
                     if (null != record) {
                         keyFeature.setDescription(record.answer);
@@ -352,7 +352,7 @@ public class EvaluationWorker {
         }
         String prompt = String.format(Resource.getInstance().getCorpus("report", formatContent,
                 this.attribute.language), content);
-        GeneratingRecord record = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt,
+        GeneratingRecord record = this.service.syncGenerateText(ModelConfig.BAIZE_2_UNIT, prompt,
                 new GeneratingOption(), null, null);
         if (null != record) {
             String separator = record.answer.contains(",") ? "," : "，";
@@ -378,7 +378,7 @@ public class EvaluationWorker {
             content.append("## ").append(keyFeature.getName()).append("\n\n");
 
             String prompt = keyFeature.makePrompt(theme, this.attribute);
-            GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
+            GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, prompt,
                     new GeneratingOption(), null, null);
             if (null == record) {
                 Logger.w(this.getClass(), "#inferKeyFeatureDescription - Generating failed");
@@ -423,7 +423,7 @@ public class EvaluationWorker {
         // 对人格画像进行描述
         prompt = String.format(language.isChinese() ? PERSONALITY_FORMAT_CN : PERSONALITY_FORMAT_EN,
                 fixSecondPerson(answer, language));
-        GeneratingRecord generatingResult = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT,
+        GeneratingRecord generatingResult = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT,
                 prompt, new GeneratingOption(), null, null);
         String fixAnswer = (null != generatingResult) ? generatingResult.answer : null;
         if (null != fixAnswer) {
@@ -587,7 +587,7 @@ public class EvaluationWorker {
             }
             if (null == suggestion) {
                 Logger.w(this.getClass(), "#inferScore - No suggestion for \"" + prompt + "\"");
-                GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt, new GeneratingOption(),
+                GeneratingRecord generating = this.service.syncGenerateText(ModelConfig.BAIZE_2_UNIT, prompt, new GeneratingOption(),
                         null, null);
                 suggestion = (null != generating) ? generating.answer : null;
             }
@@ -611,15 +611,9 @@ public class EvaluationWorker {
                     language);
         }
 
-        String unitName = null;
-        if (this.service.hasUnit(ModelConfig.BAIZE_NEXT_UNIT)) {
-            unitName = ModelConfig.BAIZE_NEXT_UNIT;
-        }
-        else if (this.service.hasUnit(ModelConfig.BAIZE_X_UNIT)) {
-            unitName = ModelConfig.BAIZE_X_UNIT;
-        }
-        else {
-            unitName = ModelConfig.BAIZE_UNIT;
+        String unitName = ModelConfig.BAIZE_UNIT;
+        if (this.service.hasUnit(ModelConfig.BAIZE_2_UNIT)) {
+            unitName = ModelConfig.BAIZE_2_UNIT;
         }
 
         StringBuilder summary = new StringBuilder();
@@ -646,7 +640,7 @@ public class EvaluationWorker {
                 e.printStackTrace();
             }
 
-            generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt.toString(),
+            generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, prompt.toString(),
                     new GeneratingOption(), null, null);
             result = (null != generating) ? generating.answer : null;
         }
@@ -668,7 +662,7 @@ public class EvaluationWorker {
             // make prompt
             String prompt = String.format(Resource.getInstance().getCorpus("report", "REPORT_SUMMARY", language),
                     section.title + "表现特征", buf.toString());
-            GeneratingRecord generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
+            GeneratingRecord generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, prompt,
                     new GeneratingOption(), null, null);
             if (null != generating) {
                 result.append(generating.answer).append("\n\n");
@@ -690,7 +684,7 @@ public class EvaluationWorker {
         // make prompt
         String prompt = String.format(Resource.getInstance().getCorpus("report", "REPORT_SUMMARY", language),
                 "绘画的主要特征描述", buf.toString());
-        GeneratingRecord generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, prompt,
+        GeneratingRecord generating = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, prompt,
                 new GeneratingOption(), null, null);
 
         if (null != generating) {

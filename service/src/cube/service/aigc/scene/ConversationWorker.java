@@ -58,11 +58,11 @@ public class ConversationWorker {
         }
 
         // 获取单元
-        AIGCUnit unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT, channel.getAuthToken().getContactId());
+        AIGCUnit unit = this.service.selectUnitByName(ModelConfig.BAIZE_2_UNIT, channel.getAuthToken().getContactId());
         if (null == unit) {
-            Logger.w(this.getClass(), "#work - Can NOT find unit \"" + ModelConfig.BAIZE_NEXT_UNIT + "\"");
+            Logger.w(this.getClass(), "#work - Can NOT find unit \"" + ModelConfig.BAIZE_2_UNIT + "\"");
 
-            unit = this.service.selectUnitByName(ModelConfig.BAIZE_X_UNIT);
+            unit = this.service.selectUnitByName(ModelConfig.BAIZE_UNIT);
             if (null == unit) {
                 return AIGCStateCode.UnitError;
             }
@@ -458,8 +458,8 @@ public class ConversationWorker {
 //        }
 
         // 获取单元
-        String unitName = prompt.content.length() > ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT || prompt.content.contains(JUMP_POLISH) ?
-                ModelConfig.BAIZE_X_UNIT : ModelConfig.BAIZE_NEXT_UNIT;
+        String unitName = (prompt.content.length() < ModelConfig.BAIZE_CONTEXT_LIMIT || prompt.content.contains(JUMP_POLISH)) ?
+                ModelConfig.BAIZE_UNIT : ModelConfig.BAIZE_2_UNIT;
         AIGCUnit unit = this.service.selectUnitByName(unitName, channel.getAuthToken().getContactId());
         if (null == unit) {
             Logger.w(this.getClass(), "#work - Can NOT find unit \"" + unitName + "\"");
@@ -522,13 +522,10 @@ public class ConversationWorker {
     private String polish(String text) {
         AIGCUnit unit = this.service.selectUnitByName(ModelConfig.BAIZE_UNIT);
         if (null == unit) {
-            unit = this.service.selectUnitByName(ModelConfig.BAIZE_X_UNIT);
+            unit = this.service.selectUnitByName(ModelConfig.BAIZE_2_UNIT);
             if (null == unit) {
-                unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
-                if (null == unit) {
-                    Logger.d(this.getClass(), "#polish - Can NOT find unit");
-                    return text;
-                }
+                Logger.d(this.getClass(), "#polish - Can NOT find unit");
+                return text;
             }
         }
 

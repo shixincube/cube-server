@@ -1555,7 +1555,7 @@ public class KnowledgeBase {
             return null;
         }
 
-        final AIGCUnit unit = this.service.selectUnitByName(ModelConfig.BAIZE_NEXT_UNIT);
+        final AIGCUnit unit = this.service.selectUnitByName(ModelConfig.BAIZE_2_UNIT);
         if (null == unit) {
             Logger.w(this.getClass(), "#asyncPerformKnowledgeQA - "
                     + this.baseInfo.name + " - Select unit error");

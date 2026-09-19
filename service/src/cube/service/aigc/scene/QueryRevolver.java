@@ -134,7 +134,7 @@ public class QueryRevolver {
         final StringBuilder result = new StringBuilder();
         String prefix = null;
         String postfix = null;
-        final int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60;
+        final int wordLimit = ModelConfig.BAIZE_2_CONTEXT_LIMIT - 60;
 
         final boolean english = TextUtils.isTextMainlyInEnglish(query);
 
@@ -572,7 +572,7 @@ public class QueryRevolver {
     public String generatePrompt(ConversationRelation relation, String query) {
         final StringBuilder result = new StringBuilder();
 
-        final int wordLimit = ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT - 60;
+        final int wordLimit = ModelConfig.BAIZE_2_CONTEXT_LIMIT - 60;
 
         Report report = relation.getReport();
 

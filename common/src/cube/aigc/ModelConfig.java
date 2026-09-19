@@ -20,17 +20,11 @@ public class ModelConfig implements JSONable {
 
     public static int BAIZE_2_CONTEXT_LIMIT = 256 * 1024;
 
-    public static int BAIZE_X_CONTEXT_LIMIT = 1024 * 1024;
-
-    public static int BAIZE_NEXT_CONTEXT_LIMIT = 1024 * 1024;
-
     public final static String[] TEXT_TO_IMAGE_UNIT = new String[] { "DallE" };
 
-    public final static String BAIZE_UNIT = "Baize2";
+    public final static String BAIZE_UNIT = "Baize";
 
-    public final static String BAIZE_X_UNIT = "Baize2";
-
-    public final static String BAIZE_NEXT_UNIT = "Baize2";
+    public final static String BAIZE_2_UNIT = "Baize2";
 
     public final static String PSYCHOLOGY_UNIT = "Psychology";
 
@@ -141,11 +135,8 @@ public class ModelConfig implements JSONable {
         if (unitName.equalsIgnoreCase(BAIZE_UNIT)) {
             return BAIZE_CONTEXT_LIMIT;
         }
-        else if (unitName.equalsIgnoreCase(BAIZE_NEXT_UNIT)) {
-            return BAIZE_NEXT_CONTEXT_LIMIT;
-        }
-        else if (unitName.equalsIgnoreCase(BAIZE_X_UNIT)) {
-            return BAIZE_X_CONTEXT_LIMIT;
+        else if (unitName.equalsIgnoreCase(BAIZE_2_UNIT)) {
+            return BAIZE_2_CONTEXT_LIMIT;
         }
 
         return EXTRA_LONG_CONTEXT_LIMIT;

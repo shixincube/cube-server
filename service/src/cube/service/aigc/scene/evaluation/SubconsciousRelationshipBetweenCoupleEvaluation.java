@@ -397,7 +397,7 @@ public class SubconsciousRelationshipBetweenCoupleEvaluation extends Evaluation 
         ComprehensiveSection section = null;
 
         // 润色
-        GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+        GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                 String.format(Prompts.getPrompt("FORMAT_POLISH"), content.get(0)),
                 null, null, null);
         if (null == result) {

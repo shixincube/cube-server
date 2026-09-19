@@ -79,10 +79,10 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         GeneratingRecord record = new GeneratingRecord(query);
 
                         if (scaleTrack.getQuestion().isDescriptive()) {
-                            GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, questionMD,
+                            GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT, questionMD,
                                     null, null, null);
                             if (null == result) {
-                                result = service.syncGenerateText(ModelConfig.BAIZE_UNIT, questionMD,
+                                result = service.syncGenerateText(ModelConfig.BAIZE_2_UNIT, questionMD,
                                         null, null, null);
                             }
                             record.answer = (null != result) ? result.answer : scaleTrack.getQuestion().content;
@@ -241,10 +241,10 @@ public class QuestionnaireSubtask extends ConversationSubtask {
 
                         if (question.isDescriptive()) {
                             String questionMD = makeQuestion(scaleTrack.scale, scaleTrack.questionCursor);
-                            GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, questionMD,
+                            GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT, questionMD,
                                     null, null, null);
                             if (null == result) {
-                                result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, questionMD,
+                                result = service.syncGenerateText(ModelConfig.BAIZE_2_UNIT, questionMD,
                                         null, null, null);
                             }
                             String resultAnswer = filterList((null != result) ? result.answer : question.content, 5);
@@ -313,10 +313,10 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_ANALYSIS_QUESTION_POSSIBILITY"),
                     query.replaceAll("\n", ""),
                     question.questionContent.replaceAll("\n", ""));
-            GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt,
+            GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
                     null, null, null);
             if (null == result) {
-                result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
+                result = this.service.syncGenerateText(ModelConfig.BAIZE_2_UNIT, prompt,
                         null, null, null);
             }
 
@@ -604,10 +604,10 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                     ComplexContext complexContext = new ComplexContext();
                     complexContext.setSubtask(Subtask.Questionnaire);
 
-                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
+                    GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_UNIT,
                             prompt, null, null, null);
                     if (null == result) {
-                        result = service.syncGenerateText(ModelConfig.BAIZE_UNIT,
+                        result = service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                                 prompt, null, null, null);
                     }
 
@@ -669,7 +669,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                                 Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_ANSWER_ANALYSIS_FOR_SCALE_QUESTION"),
                                 scaleTrack.scale.getQuestion(scaleTrack.questionCursor).content,
                                 query);
-                        GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                        GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                                 prompt, null, null, null);
                         if (null != result) {
                             String questionMD = makeQuestion(scaleTrack.scale, scaleTrack.questionCursor);
@@ -711,7 +711,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                         String prompt = String.format(
                                 Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_TOPICS_POSSIBILITY_ANSWER"),
                                 query);
-                        GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                        GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                                 prompt, null, null, null);
                         if (null != result) {
                             GeneratingRecord record = new GeneratingRecord(query);
@@ -750,7 +750,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                                 Resource.getInstance().getCorpus(CORPUS_PROMPT, "FORMAT_ANSWER_ANALYSIS_FOR_SCALE_QUESTION"),
                                 scaleTrack.scale.getQuestion(scaleTrack.questionCursor).content,
                                 query);
-                        GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                        GeneratingRecord result = service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                                 prompt, null, null, null);
                         if (null != result) {
                             String questionMD = makeQuestion(scaleTrack.scale, scaleTrack.questionCursor);

@@ -23,7 +23,7 @@ public class TeenagerQueryNode extends StrategyNode {
     private PaintingReport report;
 
     public TeenagerQueryNode(String query, QueryRevolver revolver, PaintingReport report) {
-        super(ModelConfig.BAIZE_NEXT_UNIT, report.getAttribute().language);
+        super(ModelConfig.BAIZE_2_UNIT, report.getAttribute().language);
         this.query = query;
         this.revolver = revolver;
         this.report = report;

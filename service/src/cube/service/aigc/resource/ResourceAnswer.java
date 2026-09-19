@@ -6,6 +6,7 @@
 
 package cube.service.aigc.resource;
 
+import cell.util.log.Logger;
 import cube.aigc.Consts;
 import cube.aigc.ModelConfig;
 import cube.auth.AuthToken;
@@ -164,14 +165,14 @@ public class ResourceAnswer {
 
                     if (content.length() > 10) {
                         String prompt = Consts.formatExtractContent(content.toString(), resource.title);
-                        GeneratingRecord response = service.syncGenerateText(ModelConfig.BAIZE_X_UNIT, prompt,
+                        GeneratingRecord response = service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
                                 new GeneratingOption(), null, null);
                         if (null != response) {
                             result.append(response.answer).append("\n");
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.w(this.getClass(), "", e);
                 }
             }
         }

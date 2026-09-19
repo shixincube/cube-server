@@ -52,7 +52,7 @@ public class QueryUser extends StrategyNode {
         prompt.append("\n\n");
         prompt.append("请根据以上表格数据回答问题：").append("");
 
-        return generator.generateText(ModelConfig.BAIZE_NEXT_UNIT, prompt.toString(),
+        return generator.generateText(ModelConfig.BAIZE_2_UNIT, prompt.toString(),
                 new GeneratingOption(), null);
     }
 
@@ -106,7 +106,7 @@ public class QueryUser extends StrategyNode {
                 if (num >= this.maxNum) {
                     break;
                 }
-                if (buf.length() + 1024 > ModelConfig.BAIZE_NEXT_CONTEXT_LIMIT) {
+                if (buf.length() + 128 > ModelConfig.BAIZE_2_CONTEXT_LIMIT) {
                     break;
                 }
             } catch (Exception e) {

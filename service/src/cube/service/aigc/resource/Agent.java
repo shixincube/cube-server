@@ -59,8 +59,7 @@ public final class Agent {
         this.unitList = new ArrayList<>();
         String[] models = new String[] {
                 ModelConfig.BAIZE_UNIT,
-                ModelConfig.BAIZE_X_UNIT,
-                ModelConfig.BAIZE_NEXT_UNIT,
+                ModelConfig.BAIZE_2_UNIT,
         };
         Contact contact = new Contact(100000, AuthConsts.DEFAULT_DOMAIN);
         for (String model : models) {
@@ -94,7 +93,7 @@ public final class Agent {
     }
 
     public GeneratingRecord generateText(String channelCode, String content, List<GeneratingRecord> records) {
-        return this.generateText(channelCode, ModelConfig.BAIZE_NEXT_UNIT, content, new GeneratingOption(), records);
+        return this.generateText(channelCode, ModelConfig.BAIZE_2_UNIT, content, new GeneratingOption(), records);
     }
 
     public GeneratingRecord generateText(String channelCode, String unitName, String content, GeneratingOption option,

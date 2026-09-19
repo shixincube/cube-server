@@ -170,7 +170,7 @@ public class GetPsychologyReportPartTask extends ServiceTask {
         String payload = ContentTools.makePaintingFeature(featureSet);
         String prompt = "# 任务目标\n\n你作为经验丰富的、能熟练应用房树人绘画投射测验的心理咨询师，对给定的绘画内容心理描述进行通俗化表述。\n\n# 绘画内容心理描述\n\n" +
                 "```\n" + payload + "\n```\n\n# 注意事项\n\n1. 不要额外添加任何和绘画内容无关的描述，尽可能多描述画面。\n2. 可以使用专业词汇，但要避免使用极端话术。\n3. 可以结合多个绘画内容，丰富描述，但是不能随意修改对应的心理特征。\n4. 不要加前言，注意分段。";
-        GeneratingRecord record = service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt,
+        GeneratingRecord record = service.syncGenerateText(ModelConfig.BAIZE_2_UNIT, prompt,
                 new GeneratingOption(), null, null);
         if (null == record) {
             Logger.w(this.getClass(), "#inferPaintingFeatureThought - Infer failed, output raw content");

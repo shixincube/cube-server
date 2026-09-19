@@ -26,10 +26,12 @@ import cube.service.aigc.listener.ReadPageListener;
 import cube.service.aigc.resource.Agent;
 import cube.service.aigc.resource.ResourceAnswer;
 import cube.service.contact.ContactManager;
+import cube.util.FileUtils;
 import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -37,6 +39,26 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GenerateTextUnitMeta extends UnitMeta {
+
+    /**
+     * SKILL 文件所在目录（工作目录相对路径）。
+     */
+    public final static String SKILLS_PATH = "assets/skills/";
+
+    /**
+     * SKILL 目录内约定的一级技能文件名。
+     */
+    public final static String SKILL_FILENAME = "SKILL.md";
+
+    /**
+     * SKILL 指令段模板：第一个参数为 SKILL 名称，第二个参数为 SKILL 内容。
+     */
+    private final static String SKILL_SECTION_FORMAT = "### Skill: %s\n%s";
+
+    /**
+     * 携带 SKILL 指令的提示词模板：第一个参数为 SKILL 指令，第二个参数为用户的问题。
+     */
+    private final static String SKILL_PROMPT_FORMAT = "%s\n\n请严格按照上述技能指令完成用户的请求。\n\n用户请求：%s";
 
     public final long sn;
 
@@ -134,9 +156,17 @@ public class GenerateTextUnitMeta extends UnitMeta {
 
             int recommendHistories = 5;
 
+            // 解析 categories 里配置的 SKILL 名称，未被识别为 SKILL 的作为知识释义分类
+            List<String> knowledgeCategories = new ArrayList<>();
+            final String skillInstruction = this.loadSkills(this.categories, knowledgeCategories);
+
             // 提示词长度限制
             int lengthLimit = ModelConfig.getPromptLengthLimit(this.unit.getCapability().getName());
             lengthLimit -= this.content.length();
+            if (null != skillInstruction) {
+                // 扣除 SKILL 指令占用的长度
+                lengthLimit -= skillInstruction.length();
+            }
 
             JSONObject data = new JSONObject();
             data.put("unit", this.unit.getCapability().getName());
@@ -190,6 +220,20 @@ public class GenerateTextUnitMeta extends UnitMeta {
                 }
             }
 
+            // 将 SKILL 指令注入提示词，一并提交给大模型
+            if (null != skillInstruction) {
+                String question = prompt.toString();
+                prompt.delete(0, prompt.length());
+                prompt.append(String.format(SKILL_PROMPT_FORMAT, skillInstruction, question));
+
+                // 更新提示词
+                data.put("content", prompt.toString());
+
+                if (Logger.isDebugLevel()) {
+                    Logger.d(this.getClass(), "#process - SKILL prompt length: " + prompt.length());
+                }
+            }
+
             // 处理多轮历史记录
             int lengthCount = prompt.length();
             List<GeneratingRecord> candidateRecords = new ArrayList<>();
@@ -238,8 +282,8 @@ public class GenerateTextUnitMeta extends UnitMeta {
             }
 
             // 加入分类释义
-            if (null != this.categories && !this.categories.isEmpty()) {
-                this.fillRecords(candidateRecords, this.categories, lengthLimit - lengthCount,
+            if (!knowledgeCategories.isEmpty()) {
+                this.fillRecords(candidateRecords, knowledgeCategories, lengthLimit - lengthCount,
                         this.unit.getCapability().getName());
             }
 
@@ -362,20 +406,14 @@ public class GenerateTextUnitMeta extends UnitMeta {
             }
         }
         else {
-            // 进入舞台流程
-            if (null != complexContext.stage) {
-                GeneratingRecord record = complexContext.stage.perform();
-                result = this.channel.appendRecord(this.sn, record);
-            }
-            else {
-                ResourceAnswer resourceAnswer = new ResourceAnswer(complexContext);
-                // 提取内容
-                String content = resourceAnswer.extractContent(this.service, this.channel.getAuthToken());
-                String answer = resourceAnswer.answer(content);
-                result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
-                        (null != this.originalQuery) ? this.originalQuery : this.content,
-                        answer.trim(), "", null, complexContext);
-            }
+            // 复杂上下文：提取资源内容后进行推理
+            ResourceAnswer resourceAnswer = new ResourceAnswer(complexContext);
+            // 提取内容
+            String content = resourceAnswer.extractContent(this.service, this.channel.getAuthToken());
+            String answer = resourceAnswer.answer(content);
+            result = this.channel.appendRecord(this.sn, this.unit.getCapability().getName(),
+                    (null != this.originalQuery) ? this.originalQuery : this.content,
+                    answer.trim(), "", null, complexContext);
         }
 
         if (complexContext.isSimplified()) {
@@ -504,7 +542,7 @@ public class GenerateTextUnitMeta extends UnitMeta {
                 buf.delete(buf.length() - 1, buf.length());
                 // 提取页面与提问匹配的信息
                 String prompt = Consts.formatExtractContent(buf.toString(), query);
-                GeneratingRecord answer = this.service.syncGenerateText(this.channel.getAuthToken(), ModelConfig.BAIZE_X_UNIT, prompt,
+                GeneratingRecord answer = this.service.syncGenerateText(this.channel.getAuthToken(), ModelConfig.BAIZE_UNIT, prompt,
                         new GeneratingOption());
                 if (null != answer) {
                     // 记录内容
@@ -573,5 +611,76 @@ public class GenerateTextUnitMeta extends UnitMeta {
                 break;
             }
         }
+    }
+
+    /**
+     * 解析 categories 里配置的 SKILL 名称，并加载 {@link #SKILLS_PATH} 目录下对应的 SKILL 文件内容。
+     * 未被识别为 SKILL 的分类名称收集到 knowledgeCategories 里，用于加载知识释义。
+     *
+     * @param categories 分类名称列表，SKILL 名称也从此列表指定。
+     * @param knowledgeCategories 输出参数，收集未被识别为 SKILL 的分类名称。
+     * @return 返回拼装好的 SKILL 指令文本，如果没有任何 SKILL 被加载则返回 null。
+     */
+    protected String loadSkills(List<String> categories, List<String> knowledgeCategories) {
+        if (null == categories || categories.isEmpty()) {
+            return null;
+        }
+
+        StringBuilder buf = new StringBuilder();
+        for (String category : categories) {
+            String skillName = (null == category) ? null : category.trim();
+            String content = this.loadSkill(skillName);
+            if (null == content) {
+                if (null != knowledgeCategories) {
+                    knowledgeCategories.add(category);
+                }
+                continue;
+            }
+
+            if (buf.length() > 0) {
+                buf.append("\n\n");
+            }
+            buf.append(String.format(SKILL_SECTION_FORMAT, skillName, content.trim()));
+
+            if (Logger.isDebugLevel()) {
+                Logger.d(this.getClass(), "#loadSkills - Skill \"" + skillName
+                        + "\" loaded, length: " + content.length());
+            }
+        }
+
+        return (buf.length() > 0) ? buf.toString() : null;
+    }
+
+    /**
+     * 加载指定名称的 SKILL 文件内容。
+     * 依次尝试 {@code assets/skills/{name}}、{@code assets/skills/{name}.md}、
+     * {@code assets/skills/{name}/SKILL.md}、{@code assets/skills/{name}/skill.md}。
+     *
+     * @param name SKILL 名称。
+     * @return 返回 SKILL 文件内容，未找到或者内容为空返回 null。
+     */
+    protected String loadSkill(String name) {
+        if (null == name || name.isEmpty() || name.contains("..")
+                || name.startsWith("/") || name.startsWith("\\")) {
+            return null;
+        }
+
+        File file = new File(SKILLS_PATH, name);
+        if (!file.isFile()) {
+            file = new File(SKILLS_PATH, name + ".md");
+        }
+        if (!file.isFile()) {
+            file = new File(SKILLS_PATH, name + File.separator + SKILL_FILENAME);
+        }
+        if (!file.isFile()) {
+            file = new File(SKILLS_PATH, name + File.separator + "skill.md");
+        }
+        if (!file.isFile()) {
+            // 不是 SKILL 名称
+            return null;
+        }
+
+        String content = FileUtils.readTextFile(file.getAbsolutePath());
+        return (null != content && !content.trim().isEmpty()) ? content : null;
     }
 }

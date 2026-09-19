@@ -134,7 +134,7 @@ public class AudioUnitMeta extends UnitMeta {
                 }
             }
 
-            if (result.tracks.size() == 0) {
+            if (result.tracks.isEmpty()) {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
@@ -155,7 +155,7 @@ public class AudioUnitMeta extends UnitMeta {
             if (Logger.isDebugLevel()) {
                 Logger.d(this.getClass(), "#process - makeClassifyTrackLabelPrompt: " + prompt);
             }
-            GeneratingRecord record = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT, prompt,
+            GeneratingRecord record = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT, prompt,
                     new GeneratingOption(), null, null);
             if (null == record) {
                 result.guessSpeakerLabels();

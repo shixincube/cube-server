@@ -68,7 +68,7 @@ public class CopilotManager {
         Copilot copilot = new Copilot(authToken, setting);
         this.copilotMap.put(authToken.getContactId(), copilot);
 
-        GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, copilotQuickStrategy,
+        GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, copilotQuickStrategy,
                 null, null, null);
         if (null != record) {
             setting.addSentences(filter(record.answer));
@@ -108,7 +108,7 @@ public class CopilotManager {
         copilotDeepStrategy = copilotDeepStrategy.replace("{{setting}}", setting.toMarkdown());
         copilotDeepStrategy = copilotDeepStrategy.replace("{{records}}", copilot.sheet.getRecordsAsMarkdown());
 
-        GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_NEXT_UNIT, copilotDeepStrategy,
+        GeneratingRecord record = this.service.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, copilotDeepStrategy,
                 null, null, null);
         if (null != record) {
             setting.clearSentences();

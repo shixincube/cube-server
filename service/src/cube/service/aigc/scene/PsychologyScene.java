@@ -400,9 +400,9 @@ public class PsychologyScene {
         }
 
         // 并发数量
-        int concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_NEXT_UNIT);
+        int concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_2_UNIT);
         if (0 == concurrency) {
-            concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_X_UNIT);
+            concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_UNIT);
             if (0 == concurrency) {
                 Logger.e(this.getClass(), "#generatePaintingReport - No baize unit");
                 return null;
@@ -917,10 +917,10 @@ public class PsychologyScene {
 
             Logger.i(this.getClass(), "#inferScaleAnswer - scale: " + scale.getSN() + " - " + questionSn);
 
-            GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+            GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                     question.makeInferencePrompt(), null, null, null);
             if (null == result) {
-                result = this.service.syncGenerateText(ModelConfig.BAIZE_X_UNIT,
+                result = this.service.syncGenerateText(ModelConfig.BAIZE_UNIT,
                         question.makeInferencePrompt(), null, null, null);
             }
             if (null == result) {
@@ -1020,7 +1020,7 @@ public class PsychologyScene {
         }
 
         // 并发数量
-        int numUnit = this.service.numUnitsByName(ModelConfig.BAIZE_NEXT_UNIT);
+        int numUnit = this.service.numUnitsByName(ModelConfig.BAIZE_2_UNIT);
         if (0 == numUnit) {
             Logger.e(this.getClass(), "#generateScaleReport - No unit");
             return null;
@@ -1171,7 +1171,7 @@ public class PsychologyScene {
         this.comprehensiveReportMap.put(report.sn, report);
 
         // 并发数
-        int concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_NEXT_UNIT);
+        int concurrency = this.service.numUnitsByName(ModelConfig.BAIZE_2_UNIT);
 
         if (this.numRunningComprehensiveTasks.get() >= concurrency) {
             // 超过最大并发队列长度
@@ -1864,7 +1864,7 @@ public class PsychologyScene {
                 description = ContentTools.extract(prompt.description, this.service.getTokenizer());
             }
             if (null == description) {
-                GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                         prompt.description, new GeneratingOption(), null, null);
                 if (null != result) {
                     description = result.answer;
@@ -1887,7 +1887,7 @@ public class PsychologyScene {
                     suggestion =  ContentTools.extract(prompt.suggestion, this.service.getTokenizer());
                 }
                 if (null == suggestion) {
-                    GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_NEXT_UNIT,
+                    GeneratingRecord result = this.service.syncGenerateText(ModelConfig.BAIZE_2_UNIT,
                             prompt.suggestion, new GeneratingOption(), null, null);
                     if (null != result) {
                         suggestion = result.answer;
