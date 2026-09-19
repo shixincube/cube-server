@@ -598,5 +598,5 @@ ant stop
 
 ## 获得帮助
 
-- Cube 官网：<https://www.shixincube.com/>
-- 邮件：<cube@spap.com>
+- Cube 官网：<https://www.aimindecho.com/>
+- 邮件：<cube@aimindecho.com>
