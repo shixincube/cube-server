@@ -39,7 +39,7 @@ const routes: RouteRecordRaw[] = [
         path: 'overview',
         name: 'overview',
         component: () => import('@/views/OverviewView.vue'),
-        meta: { title: '联系人（触点）概览' }
+        meta: { title: '联系人概览' }
       },
       {
         path: 'dispatcher',

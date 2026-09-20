@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * 联系人（触点）概览。
+ * 联系人概览。
  *
- * 数据来源为统计库 `/statistic/recent`，展示所选域昨日的联系人（触点）指标与时段分布。
+ * 数据来源为统计库 `/statistic/recent`，展示所选域昨日的联系人指标与时段分布。
  */
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import AppIcon from '@/components/AppIcon.vue'
@@ -155,8 +155,8 @@ onMounted(bootstrap)
 <template>
   <div>
     <PageHeader
-      title="联系人（触点）概览"
-      description="按域查看昨日联系人（触点）规模、活跃度与在线时段分布"
+      title="联系人概览"
+      description="按域查看昨日联系人规模、活跃度与在线时段分布"
     >
       <template #actions>
         <select v-model="domain" class="select w-52" :disabled="domains.length === 0">
@@ -181,19 +181,19 @@ onMounted(bootstrap)
         }}
       </span>
       <span>数据域：{{ domain }}</span>
-      <span class="text-slate-400">联系人（触点）</span>
+      <span class="text-slate-400">联系人</span>
     </div>
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard
-        label="昨日新增 / 联系人（触点）总数"
+        label="昨日新增 / 联系人总数"
         :value="statistic ? `${statistic.statistic.DNU ?? 0} / ${statistic.statistic.TNU}` : '--'"
         icon="users"
         tone="brand"
         hint="DNU 为与前一日总数之差"
       />
       <StatCard
-        label="昨日活跃联系人（触点）数"
+        label="昨日活跃联系人数"
         :value="statistic?.statistic.DAU ?? '--'"
         icon="activity"
         tone="emerald"
@@ -205,14 +205,14 @@ onMounted(bootstrap)
         unit="小时"
         icon="gauge"
         tone="amber"
-        hint="昨日所有登录联系人（触点）的平均在线时长"
+        hint="昨日所有登录联系人的平均在线时长"
       />
       <StatCard
         label="昨日峰值时段"
         :value="peakText"
         icon="bolt"
         tone="rose"
-        hint="时段内联系人（触点）数量最高的切片"
+        hint="时段内联系人数量最高的切片"
       />
     </div>
 
@@ -220,7 +220,7 @@ onMounted(bootstrap)
       <div class="card-header">
         <div>
           <h2 class="card-title">在线时段分布</h2>
-          <p class="mt-0.5 text-xs text-slate-400">按小时聚合的联系人（触点）数量，橙色柱为峰值时段</p>
+          <p class="mt-0.5 text-xs text-slate-400">按小时聚合的联系人数量，橙色柱为峰值时段</p>
         </div>
         <span v-if="peakSlice" class="pill pill-info">
           <AppIcon name="bolt" :size="12" />

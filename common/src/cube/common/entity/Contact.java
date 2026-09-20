@@ -22,7 +22,7 @@ public class Contact extends AbstractContact {
     /**
      * 普通用户联系人的最小 ID 。
      *
-     * ID 的十进制位数大于等于 8 位的联系人视为「联系人（触点）」。
+     * ID 的十进制位数大于等于 8 位的联系人视为「联系人」。
      * 统计口径以此常量为准，不要在各处硬编码数值。
      */
     public static final long MIN_USER_CONTACT_ID = 10000000L;

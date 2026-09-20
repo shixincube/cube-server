@@ -47,7 +47,7 @@ const groups: NavGroup[] = [
     children: [
       { path: '/dashboard', label: '服务器概览', icon: 'activity' },
       { path: '/ai-units', label: 'AI单元概览', icon: 'cube' },
-      { path: '/overview', label: '联系人（触点）概览', icon: 'users' }
+      { path: '/overview', label: '联系人概览', icon: 'users' }
     ]
   }
 ]

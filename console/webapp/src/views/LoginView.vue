@@ -125,7 +125,7 @@ onMounted(() => {
       <div class="p-8 sm:p-10">
         <div class="mb-7 flex items-center gap-2.5 lg:hidden">
           <img src="/assets/img/cube_256.png" alt="Cube" class="h-8 w-8 rounded-lg" />
-          <span class="text-sm font-semibold text-slate-800">时信魔方控制台</span>
+          <span class="text-sm font-semibold text-slate-800">Cube 控制台</span>
         </div>
 
         <h2 class="text-xl font-semibold text-slate-900">登录控制台</h2>
