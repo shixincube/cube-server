@@ -636,7 +636,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                     && unit.getContext().isValid()
                     && !unit.isRunning()) {
                 // 检查是否正在处理流
-                MultimodalUnitMeta meta = EventCenter.getInstance().searchUnitMeta(unit);
+                MultimodalUnitMeta meta = EventCenter.getInstance().searchMultimodalUnitMeta(unit);
                 if (null != meta) {
                     // 正在处理流
                     continue;

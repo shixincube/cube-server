@@ -29,8 +29,6 @@ public class MultimodalInput implements JSONable {
 
     public List<FileLabel> fileLabels;
 
-    public MultimodalTask task;
-
     public JSONObject option;
 
     public boolean recordable = false;
@@ -40,7 +38,6 @@ public class MultimodalInput implements JSONable {
         this.content = json.getString("content");
         this.history = json.has("history") ? JSONUtils.toObjectList(json.getJSONArray("history")) : null;
         this.files = json.has("files") ? JSONUtils.toStringList(json.getJSONArray("files")) : new ArrayList<>();
-        this.task = json.has("task") ? new MultimodalTask(json.getJSONObject("task")) : null;
         this.option = json.has("option") ? json.getJSONObject("option") : null;
         this.recordable = json.has("recordable") && json.getBoolean("recordable");
     }
@@ -69,10 +66,6 @@ public class MultimodalInput implements JSONable {
             json.put("files", new JSONArray());
         }
 
-        if (null != this.task) {
-            json.put("task", this.task.toJSON());
-        }
-
         if (null != this.option) {
             json.put("option", this.option);
         }
@@ -85,14 +78,14 @@ public class MultimodalInput implements JSONable {
         JSONObject json = new JSONObject();
         json.put("unit", this.unit);
         json.put("content", this.content);
+
         if (null != this.history) {
             JSONArray array = JSONUtils.toObjectArray(this.history);
             json.put("history", array);
         }
+
         json.put("files", JSONUtils.toStringArray(this.files));
-        if (null != this.task) {
-            json.put("task", this.task.toJSON());
-        }
+
         if (null != this.option) {
             json.put("option", this.option);
         }

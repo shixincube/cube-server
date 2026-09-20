@@ -11,9 +11,11 @@ import cell.util.log.Logger;
 import cube.common.entity.AIGCUnit;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.unit.MultimodalUnitMeta;
+import cube.service.aigc.unit.UnitMeta;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class EventCenter {
 
@@ -21,11 +23,11 @@ public class EventCenter {
 
     private final Map<String, EventListener> listenerMap;
 
-    private final Map<String, MultimodalUnitMeta> multimodalUnitMetaMap;
+    private final Map<String, UnitMeta> unitMetaMap;
 
     private EventCenter() {
         this.listenerMap = new HashMap<>();
-        this.multimodalUnitMetaMap = new HashMap<>();
+        this.unitMetaMap = new ConcurrentHashMap<>();
     }
 
     public static EventCenter getInstance() {
@@ -39,31 +41,31 @@ public class EventCenter {
     public void stop() {
     }
 
-    public void putUnitMeta(String id, MultimodalUnitMeta unitMeta) {
-        this.multimodalUnitMetaMap.put(id, unitMeta);
+    public void putUnitMeta(String id, UnitMeta unitMeta) {
+        this.unitMetaMap.put(id, unitMeta);
     }
 
     public void removeUnitMeta(String id) {
-        this.multimodalUnitMetaMap.remove(id);
+        this.unitMetaMap.remove(id);
     }
 
     public void removeUnitMeta(AIGCUnit unit) {
-        for (Map.Entry<String, MultimodalUnitMeta> item : this.multimodalUnitMetaMap.entrySet()) {
+        for (Map.Entry<String, UnitMeta> item : this.unitMetaMap.entrySet()) {
             if (item.getValue().unit.getQueryKey().equalsIgnoreCase(unit.getQueryKey())) {
-                this.multimodalUnitMetaMap.remove(item.getKey());
+                this.unitMetaMap.remove(item.getKey());
                 break;
             }
         }
     }
 
-    public MultimodalUnitMeta getUnitMeta(String id) {
-        return this.multimodalUnitMetaMap.get(id);
+    public UnitMeta getUnitMeta(String id) {
+        return this.unitMetaMap.get(id);
     }
 
-    public MultimodalUnitMeta searchUnitMeta(AIGCUnit unit) {
-        for (MultimodalUnitMeta item : this.multimodalUnitMetaMap.values()) {
+    public MultimodalUnitMeta searchMultimodalUnitMeta(AIGCUnit unit) {
+        for (UnitMeta item : this.unitMetaMap.values()) {
             if (item.unit.getQueryKey().equalsIgnoreCase(unit.getQueryKey())) {
-                return item;
+                return (item instanceof MultimodalUnitMeta) ? (MultimodalUnitMeta) item : null;
             }
         }
 

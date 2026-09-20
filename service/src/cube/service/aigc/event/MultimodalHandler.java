@@ -10,6 +10,7 @@ import cell.util.log.Logger;
 import cube.aigc.Usage;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.unit.MultimodalUnitMeta;
+import cube.service.aigc.unit.UnitMeta;
 import org.json.JSONObject;
 
 public class MultimodalHandler implements EventListener {
@@ -46,13 +47,14 @@ public class MultimodalHandler implements EventListener {
             */
 
             String id = payload.getString("streamId");
-            MultimodalUnitMeta unitMeta = center.getUnitMeta(id);
+            UnitMeta unitMeta = center.getUnitMeta(id);
             if (null != unitMeta) {
+                MultimodalUnitMeta multimodalUnitMeta = (MultimodalUnitMeta) unitMeta;
                 Usage usage = new Usage(payload.getJSONObject("performance"));
                 Logger.d(MultimodalUnitMeta.class, "Update token usage: " +
                         usage.inputTokens + "/" + usage.outputTokens);
-                this.service.getStorage().updateUsage(unitMeta.getChannel().getAuthToken().getContactId(),
-                        unitMeta.unit.getCapability().getName(),
+                this.service.getStorage().updateUsage(multimodalUnitMeta.getChannel().getAuthToken().getContactId(),
+                        multimodalUnitMeta.unit.getCapability().getName(),
                         usage.outputTokens,
                         usage.inputTokens);
             }
