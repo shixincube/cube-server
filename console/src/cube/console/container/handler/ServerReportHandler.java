@@ -35,6 +35,8 @@ public class ServerReportHandler extends ContextHandler {
 
     public ServerReportHandler(Console console) {
         super("/server-report");
+        // 接口挂在上下文根路径上，允许直接访问 /server-report （详见 SignInHandler）
+        setAllowNullPathInfo(true);
         setHandler(new Handler());
         this.console = console;
     }

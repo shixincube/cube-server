@@ -20,6 +20,23 @@ import java.util.List;
 public class Contact extends AbstractContact {
 
     /**
+     * 普通用户联系人的最小 ID 。
+     *
+     * ID 的十进制位数大于等于 8 位的联系人视为「联系人（触点）」。
+     * 统计口径以此常量为准，不要在各处硬编码数值。
+     */
+    public static final long MIN_USER_CONTACT_ID = 10000000L;
+
+    /**
+     * AIGC 工作单元联系人的最小 ID 。
+     *
+     * ID 的十进制位数大于等于 6 位、且小于 8 位的联系人是 service 里注册的 AIGC 工作单元节点
+     * （例如 <code>Unit-531001</code>）；位数小于 6 位的联系人不是统计对象。
+     * 统计口径以此常量为准，不要在各处硬编码数值。
+     */
+    public static final long MIN_UNIT_CONTACT_ID = 100000L;
+
+    /**
      * 联系人的设备列表。
      */
     private List<Device> deviceList;
@@ -365,5 +382,25 @@ public class Contact extends AbstractContact {
         JSONObject json = this.toJSON();
         json.put("device", device.toJSON());
         return json;
+    }
+
+    /**
+     * 判断指定联系人 ID 是否代表普通用户。
+     *
+     * @param contactId 联系人 ID 。
+     * @return 如果 ID 的十进制位数大于等于 8 返回 <code>true</code> 。
+     */
+    public static boolean isUserContactId(long contactId) {
+        return contactId >= MIN_USER_CONTACT_ID;
+    }
+
+    /**
+     * 判断指定联系人 ID 是否代表 AIGC 工作单元节点。
+     *
+     * @param contactId 联系人 ID 。
+     * @return 如果 ID 的十进制位数大于等于 6 且小于 8 返回 <code>true</code> 。
+     */
+    public static boolean isUnitContactId(long contactId) {
+        return contactId >= MIN_UNIT_CONTACT_ID && contactId < MIN_USER_CONTACT_ID;
     }
 }

@@ -92,6 +92,11 @@ public class ServiceManager {
             if (now - server.timestamp > this.timeout) {
                 iter.remove();
             }
+            else {
+                // 刷新运行状态。列表接口只在缓存未命中时才做一次完整 refresh，
+                // 若不在这里周期性刷新，运行状态会一直陈旧到缓存超时（5 分钟）。
+                server.refreshRunning();
+            }
         }
     }
 
@@ -119,6 +124,24 @@ public class ServiceManager {
 
         Path path = Paths.get(this.deploySourcePath.toString(), "cellets");
         return path.toString();
+    }
+
+    /**
+     * 返回内存中已加载的服务器名集合。
+     *
+     * 只读取内存缓存，不做任何文件或数据库访问，供上报路径做节点名归一使用。
+     *
+     * @return 服务器名集合，可能为空。
+     */
+    public java.util.Set<String> listServerNames() {
+        java.util.Set<String> result = new java.util.HashSet<>();
+        for (ServiceServer server : this.serverMap.values()) {
+            String name = server.getName();
+            if (null != name) {
+                result.add(name);
+            }
+        }
+        return result;
     }
 
     public List<ServiceServer> listServiceServers() {
@@ -151,7 +174,13 @@ public class ServiceManager {
             }
         }
 
-        return new ArrayList<>(this.serverMap.values());
+        List<ServiceServer> result = new ArrayList<>(this.serverMap.values());
+        for (ServiceServer server : result) {
+            // 保证本次响应里的运行状态是最新的（心跳为内存查询，端口探测有 3 秒结果缓存）
+            server.refreshRunning();
+        }
+
+        return result;
     }
 
     public ServiceServer getServiceServer(String tag, String deployPath) {

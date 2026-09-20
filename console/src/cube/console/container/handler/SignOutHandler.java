@@ -31,6 +31,8 @@ public class SignOutHandler extends ContextHandler {
 
     public SignOutHandler(UserManager userManager) {
         super("/signout");
+        // 接口挂在上下文根路径上，允许直接访问 /signout （详见 SignInHandler）
+        setAllowNullPathInfo(true);
         setHandler(new Handler());
         this.userManager = userManager;
     }

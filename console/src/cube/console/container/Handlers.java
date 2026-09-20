@@ -44,18 +44,23 @@ public final class Handlers {
 
         // 判断目录
         File path = new File("web");
+        String resourceBase = "web";
         if (path.exists() && path.isDirectory()) {
-            resourceHandler.setResourceBase("web");
+            resourceBase = "web";
         }
         else {
-            resourceHandler.setResourceBase("WebContent");
+            resourceBase = "WebContent";
         }
+        resourceHandler.setResourceBase(resourceBase);
 
         ContextHandler indexHandler = new ContextHandler("/");
         indexHandler.setHandler(resourceHandler);
 
         HandlerList handlers = new HandlerList();
         handlers.setHandlers(new Handler[] {
+                // 单页应用路由回退（仅处理磁盘上不存在的 GET 路径）
+                new SpaFallbackHandler(resourceBase),
+
                 // 索引页
                 indexHandler,
 

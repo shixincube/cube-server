@@ -34,6 +34,10 @@ public class ReportHandler extends ContextHandler {
 
     public ReportHandler(Console console) {
         super("/report");
+        // 接口挂在上下文根路径上，允许直接访问 /report 。
+        // 否则 Jetty 会 302 到 /report/ ，而上报方（SubmitThread 用的 Jetty HttpClient 默认不跟随重定向）
+        // 会因状态码非 200 而判定上报失败。
+        setAllowNullPathInfo(true);
         this.setHandler(new Handler());
         this.console = console;
     }

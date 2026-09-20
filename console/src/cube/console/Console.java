@@ -1,6 +1,5 @@
 /*
  * This source file is part of Cube.
- * https://shixincube.com/
  *
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
@@ -12,18 +11,23 @@ import cell.util.log.LogLevel;
 import cell.util.log.LogManager;
 import cell.util.log.Logger;
 import cube.console.mgmt.DispatcherManager;
+import cube.console.mgmt.DispatcherServer;
+import cube.console.mgmt.NodeHeartbeat;
 import cube.console.mgmt.ServiceManager;
+import cube.console.mgmt.ServiceServer;
 import cube.console.mgmt.StatisticDataManager;
 import cube.console.mgmt.UserManager;
 import cube.report.JVMReport;
 import cube.report.LogLine;
 import cube.report.LogReport;
 import cube.report.PerformanceReport;
-import cube.util.ConfigUtils;
+import cube.util.NodeName;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -59,6 +63,23 @@ public final class Console implements Runnable {
 
     private int maxReportNum = 30;
 
+    /**
+     * 节点自报名到控制台期望名的归一结果缓存（只缓存成功命中，避免每次上报都做集合比对）。
+     */
+    private ConcurrentHashMap<String, String> reporterAliases;
+
+    /**
+     * 控制台已知的服务器期望名缓存。
+     */
+    private final Set<String> expectedNames = new HashSet<>();
+
+    private volatile long expectedNamesRefreshTime = 0L;
+
+    /**
+     * 期望名缓存的有效期。
+     */
+    private final static long EXPECTED_NAMES_TTL = 30L * 1000L;
+
     private ScheduledExecutorService timer;
 
     private ConsoleLogHandler logHandler;
@@ -75,11 +96,128 @@ public final class Console implements Runnable {
         this.serverLogMap = new ConcurrentHashMap<>();
         this.serverJVMMap = new ConcurrentHashMap<>();
         this.serverPerfMap = new ConcurrentHashMap<>();
+        this.reporterAliases = new ConcurrentHashMap<>();
         this.logHandler = new ConsoleLogHandler();
     }
 
     public String getTag() {
         return this.consoleTag;
+    }
+
+    /**
+     * 将节点自报名归一为控制台的期望名。
+     *
+     * 控制台里的服务器名由本地推导（`&lt;tag&gt;#&lt;role&gt;#&lt;port&gt;`），节点上报时携带的是它自己算出的名字。
+     * 当两者前缀不一致（跨机部署、历史版本、网卡集合变化）时，若仍按精确键存取，监控数据会静默落到另一个键上：
+     * 列表显示正常但 JVM / 性能 / 日志全空且不报错。这里以「角色 + 端口」后缀唯一命中为准做一次归一，
+     * 使上报数据落到控制台期望的键上。歧义（同名后缀不止一个）时拒绝猜测，保持原样并告警。
+     *
+     * @param reporter 节点自报名。
+     * @return 归一后的名字；无法判断时返回入参。
+     */
+    public String resolveReporter(String reporter) {
+        if (null == reporter || reporter.length() == 0) {
+            return reporter;
+        }
+
+        String alias = this.reporterAliases.get(reporter);
+        if (null != alias) {
+            return alias;
+        }
+
+        if (null == this.dispatcherManager && null == this.serviceManager) {
+            return reporter;
+        }
+
+        Set<String> names = this.expectedNames();
+        NodeName.Resolution resolution = NodeName.resolve(reporter, names);
+
+        if (resolution.ambiguous) {
+            Logger.w(this.getClass(), "#resolveReporter - 节点名后缀命中多个服务器，无法归一: " + reporter);
+            return reporter;
+        }
+
+        if (resolution.normalized) {
+            Logger.i(this.getClass(), "#resolveReporter - 节点自报名与期望名不一致，已归一: "
+                    + reporter + " -> " + resolution.name);
+        }
+
+        // 仅在期望名集合非空时缓存，否则冷启动阶段可能把本该归一的名字误缓存为精确命中
+        if (null != resolution.name && !names.isEmpty()) {
+            this.reporterAliases.put(reporter, resolution.name);
+        }
+
+        return resolution.name;
+    }
+
+    /**
+     * 返回控制台已知的服务器期望名集合。
+     *
+     * 优先返回管理器内存缓存里的名字（零 IO，适合上报热路径）；只有当内存里还没有任何服务器
+     * （控制台刚启动、前端尚未拉取过列表）时，才按 TTL 做一次完整加载 —— 完整加载会读数据库并
+     * 触发各服务器的状态刷新（含端口探测），不能放在每份上报上。
+     *
+     * @return 期望名集合。
+     */
+    private Set<String> expectedNames() {
+        Set<String> names = new HashSet<>();
+        if (null != this.dispatcherManager) {
+            names.addAll(this.dispatcherManager.listServerNames());
+        }
+        if (null != this.serviceManager) {
+            names.addAll(this.serviceManager.listServerNames());
+        }
+
+        if (!names.isEmpty()) {
+            return names;
+        }
+
+        long now = System.currentTimeMillis();
+
+        if (now - this.expectedNamesRefreshTime > EXPECTED_NAMES_TTL) {
+            synchronized (this.expectedNames) {
+                if (now - this.expectedNamesRefreshTime > EXPECTED_NAMES_TTL) {
+                    Set<String> loaded = new HashSet<>();
+
+                    if (null != this.dispatcherManager) {
+                        collectNames(this.dispatcherManager.listDispatcherServers(), loaded);
+                    }
+                    if (null != this.serviceManager) {
+                        collectNames(this.serviceManager.listServiceServers(), loaded);
+                    }
+
+                    this.expectedNames.clear();
+                    this.expectedNames.addAll(loaded);
+                    this.expectedNamesRefreshTime = now;
+                }
+            }
+        }
+
+        synchronized (this.expectedNames) {
+            names.addAll(this.expectedNames);
+        }
+
+        return names;
+    }
+
+    private void collectNames(java.util.Collection<?> servers, Set<String> output) {
+        if (null == servers) {
+            return;
+        }
+
+        for (Object server : servers) {
+            String name = null;
+            if (server instanceof DispatcherServer) {
+                name = ((DispatcherServer) server).getName();
+            }
+            else if (server instanceof ServiceServer) {
+                name = ((ServiceServer) server).getName();
+            }
+
+            if (null != name) {
+                output.add(name);
+            }
+        }
     }
 
     public UserManager getUserManager() {
@@ -97,8 +235,8 @@ public final class Console implements Runnable {
     public void launch() {
         LogManager.getInstance().addHandle(this.logHandler);
 
-        // 生成服务器基于 MAC 地址信息的识别标识
-        this.consoleTag = ConfigUtils.makeUniqueStringWithMAC();
+        // 生成节点标识：默认取本机主网卡派生的稳定标识，与节点侧使用同一策略
+        this.consoleTag = NodeName.identity();
 
         this.userManager = new UserManager();
         this.dispatcherManager = new DispatcherManager(this.consoleTag);
@@ -126,10 +264,16 @@ public final class Console implements Runnable {
     }
 
     public void appendLogReport(LogReport report) {
-        List<LogLine> list = this.serverLogMap.get(report.getReporter());
+        // 归一节点名：自报名与控制台期望名不一致时，数据仍落到控制台期望的键上
+        String name = this.resolveReporter(report.getReporter());
+
+        // 收到上报即视为节点心跳，节点的运行状态据此判定（见 NodeHeartbeat）
+        NodeHeartbeat.getInstance().trace(name);
+
+        List<LogLine> list = this.serverLogMap.get(name);
         if (null == list) {
             list = new Vector<>();
-            this.serverLogMap.put(report.getReporter().toString(), list);
+            this.serverLogMap.put(name, list);
         }
 
         list.addAll(report.getLogs());
@@ -143,7 +287,7 @@ public final class Console implements Runnable {
 
     public List<LogLine> queryLogs(String serverName, long startTimestamp, int maxLength) {
         ArrayList<LogLine> result = new ArrayList<>();
-        List<LogLine> list = this.serverLogMap.get(serverName);
+        List<LogLine> list = this.serverLogMap.get(this.resolveReporter(serverName));
         if (null != list) {
             for (int i = 0, size = list.size(); i < size; ++i) {
                 LogLine line = list.get(i);
@@ -177,10 +321,16 @@ public final class Console implements Runnable {
     public void appendJVMReport(JVMReport report) {
         Logger.d(this.getClass(), "Received report from " + report.getReporter() + " (" + report.getName() + ")");
 
-        List<JVMReport> list = this.serverJVMMap.get(report.getReporter());
+        // 归一节点名：自报名与控制台期望名不一致时，数据仍落到控制台期望的键上
+        String name = this.resolveReporter(report.getReporter());
+
+        // 收到上报即视为节点心跳，节点的运行状态据此判定（见 NodeHeartbeat）
+        NodeHeartbeat.getInstance().trace(name);
+
+        List<JVMReport> list = this.serverJVMMap.get(name);
         if (null == list) {
             list = new Vector<>();
-            this.serverJVMMap.put(report.getReporter().toString(), list);
+            this.serverJVMMap.put(name, list);
         }
 
         report.scaleValue(1048576);
@@ -192,7 +342,7 @@ public final class Console implements Runnable {
 
     public List<JVMReport> queryJVMReport(String reporter, int num, long time) {
         List<JVMReport> result = new ArrayList<>(num);
-        List<JVMReport> list = this.serverJVMMap.get(reporter);
+        List<JVMReport> list = this.serverJVMMap.get(this.resolveReporter(reporter));
         if (null == list) {
             long reportTime = time;
             for (int i = 0; i < num; ++i) {
@@ -205,7 +355,10 @@ public final class Console implements Runnable {
             return result;
         }
 
-        long scope = 60000L;
+        // 节点每 60 秒上报一次，而守护任务的调度粒度是 10 秒，实际间隔落在 60~70 秒之间。
+        // 锚点匹配窗口若取 60 秒，查询恰好落在两次上报之间时会匹配不到任何记录，
+        // 整个结果集被填成全 0 的占位报告（前端图表因此“时有时无”）。取 2 倍间隔即可覆盖抖动。
+        long scope = 2 * 60000L;
         int index = 0;
 
         // 找到最近的记录
@@ -244,10 +397,16 @@ public final class Console implements Runnable {
     public void appendPerformanceReport(PerformanceReport report) {
         Logger.d(this.getClass(), "Received report from " + report.getReporter() + " (" + report.getName() + ")");
 
-        List<PerformanceReport> list = this.serverPerfMap.get(report.getReporter());
+        // 归一节点名：自报名与控制台期望名不一致时，数据仍落到控制台期望的键上
+        String name = this.resolveReporter(report.getReporter());
+
+        // 收到上报即视为节点心跳，节点的运行状态据此判定（见 NodeHeartbeat）
+        NodeHeartbeat.getInstance().trace(name);
+
+        List<PerformanceReport> list = this.serverPerfMap.get(name);
         if (null == list) {
             list = new Vector<>();
-            this.serverPerfMap.put(report.getReporter().toString(), list);
+            this.serverPerfMap.put(name, list);
         }
 
         list.add(report);
@@ -257,7 +416,7 @@ public final class Console implements Runnable {
     }
 
     public PerformanceReport queryLastPerformanceReport(String reporter) {
-        List<PerformanceReport> list = this.serverPerfMap.get(reporter);
+        List<PerformanceReport> list = this.serverPerfMap.get(this.resolveReporter(reporter));
         if (null == list) {
             return null;
         }
@@ -266,7 +425,7 @@ public final class Console implements Runnable {
     }
 
     public PerformanceReport queryPerformanceReport(String reporter, long timestamp) {
-        List<PerformanceReport> list = this.serverPerfMap.get(reporter);
+        List<PerformanceReport> list = this.serverPerfMap.get(this.resolveReporter(reporter));
         if (null == list) {
             return null;
         }

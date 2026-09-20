@@ -58,7 +58,7 @@ public class ContactTest implements TalkListener {
     }
 
     public void testSignIn() {
-        Contact self = new Contact(100200300L, AuthConsts.DEFAULT_DOMAIN, "时信魔方");
+        Contact self = new Contact(100200300L, AuthConsts.DEFAULT_DOMAIN, "Cube");
         Device device = new Device("Mac", "MacBookPro Ambrose");
         self.addDevice(device);
 

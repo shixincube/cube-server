@@ -19,8 +19,6 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -101,14 +99,7 @@ public final class FileUtils {
             buf.append("_").append(domain);
         }
 
-        String keyStr = buf.toString();
-
-        // 将 Key 串切割
-        List<byte[]> list = FileUtils.slice(keyStr.getBytes(StandardCharsets.UTF_8), 64);
-
-        // Hash
-        String code = FileUtils.fastHash(list);
-        return code;
+        return FileUtils.hashFileCode(buf.toString());
     }
 
     /**
@@ -137,14 +128,24 @@ public final class FileUtils {
             buf.append("_").append(domain);
         }
 
-        String keyStr = buf.toString();
+        return FileUtils.hashFileCode(buf.toString());
+    }
 
+    /**
+     * 对文件码原始串做散列。
+     *
+     * <p>返回一个长度为 64 的 A-Za-z 字符串。该字符串既作为文件区块存储的 Map Key，
+     * 也直接作为落盘的磁盘文件名，因此**返回长度与字符集必须保持稳定**。</p>
+     *
+     * @param keyStr 文件码原始串。
+     * @return 返回文件码。
+     */
+    private static String hashFileCode(String keyStr) {
         // 将 Key 串切割
         List<byte[]> list = FileUtils.slice(keyStr.getBytes(StandardCharsets.UTF_8), 64);
 
         // Hash
-        String code = FileUtils.fastHash(list);
-        return code;
+        return FileUtils.fastHash(list);
     }
 
     /**
@@ -212,41 +213,6 @@ public final class FileUtils {
      * @param bytes
      * @return
      */
-//    public static String bytesToHexString(byte[] bytes) {
-//        StringBuilder buf = new StringBuilder();
-//        for (int i = 0; i < bytes.length; ++i) {
-//            byte b = bytes[i];
-//            int n = b & 0xFF;
-//            if (n < 16) {
-//                buf.append("0");
-//            }
-//            buf.append(Integer.toHexString(n));
-//        }
-//        return buf.toString();
-//    }
-
-    /**
-     * 字节数组转16进制字符串。
-     *
-     * @param bytes
-     * @return
-     */
-//    public static String bytesToHexString(byte[] bytes) {
-//        Formatter formatter = new Formatter();
-//        for (byte b : bytes) {
-//            formatter.format("%02x", b);
-//        }
-//        String result = formatter.toString();
-//        formatter.close();
-//        return result;
-//    }
-
-    /**
-     * 字节数组转16进制字符串。
-     *
-     * @param bytes
-     * @return
-     */
     public static String bytesToHexString(byte[] bytes) {
         int len = bytes.length;
         char[] result = new char[len * 2];
@@ -261,27 +227,54 @@ public final class FileUtils {
     }
 
     private static String fastHash(List<byte[]> bytes) {
-        int seed = bytes.size();
+        int sliceCount = bytes.size();
         int length = bytes.get(0).length;
         int[] hashCode = new int[length];
 
-        for (int i = 0; i < bytes.size(); ++i) {
-            // 逐行处理
+        // FIXME 2026年9月20日 修正散列碰撞。
+        // 原实现里第 n 位输出只由各分片第 n 个字节决定：hashCode[n] = hashCode[n] * seed + b 。
+        // 当只有一个分片时 seed == 1 ，第一位即 hashCode[n] = 0 * 1 + b = b ，等于没有混合，
+        // 散列退化成 (b % 52) 查 CHAR_TABLE —— 而 CHAR_TABLE 只有 A-Za-z 52 个字母，
+        // 于是 ASCII 相差 52 的两个字符必然落到同一个槽：
+        //   '0'↔'d' '1'↔'e' … '9'↔'m' 、 'a'↔'-' 'b'↔'.' 's'↔'?' 't'↔'@' 'u'↔'A'
+        // 实测 "IMG_1234.jpg" 与 "IMG_efgh.jpg" 生成完全相同的文件码。
+        // 这里引入跨位置、跨分片的滚动状态，使每一位输出都携带整个输入的信息，
+        // 输出长度与字符表保持不变（仍为 A-Za-z 字母串，长度等于分片长度）。
+        int state = 0x811C9DC5;
+        for (int i = 0; i < sliceCount; ++i) {
             byte[] data = bytes.get(i);
             for (int n = 0; n < length; ++n) {
-                byte b = data[n];
-                hashCode[n] = hashCode[n] * seed + (b);
+                int b = data[n] & 0xFF;
+                // FNV-1a 滚动，保证字节的先后顺序也参与散列
+                state = (state ^ b) * 0x01000193;
+                hashCode[n] = hashCode[n] * 0x9E3779B1 + b + state;
             }
         }
 
         // 查表
-        StringBuilder buf = new StringBuilder();
+        StringBuilder buf = new StringBuilder(length);
         for (int code : hashCode) {
-            int index = (code & 0x7FFFFFFF) % CHAR_TABLE.length;
+            int index = (avalanche(code) & 0x7FFFFFFF) % CHAR_TABLE.length;
             buf.append((char)CHAR_TABLE[index]);
         }
 
         return buf.toString();
+    }
+
+    /**
+     * 位雪崩：把输入的高低比特充分混合，避免相邻取值在取模后落到相邻槽位。
+     *
+     * @param hash
+     * @return 返回混合后的值。
+     */
+    private static int avalanche(int hash) {
+        int h = hash;
+        h ^= (h >>> 16);
+        h *= 0x85EBCA6B;
+        h ^= (h >>> 13);
+        h *= 0xC2B2AE35;
+        h ^= (h >>> 16);
+        return h;
     }
 
     private static List<byte[]> slice(byte[] source, int sliceLength) {
@@ -432,57 +425,28 @@ public final class FileUtils {
      * @return
      */
     public static FileSize scaleFileSize(long sizeInBytes) {
-        String value = null;
-        String unit = null;
+        String value;
+        String unit;
 
-        if (sizeInBytes < KB) {
-            double d = ((double) sizeInBytes / (double) KB);
-            value = String.format("%.2f", d);
+        // 不足 1MB 一律按 KB 折算（1KB 以下显示为 0.xx KB）
+        if (sizeInBytes < MB) {
+            value = String.format("%.2f", (double) sizeInBytes / (double) KB);
             unit = "KB";
         }
-        else if (sizeInBytes >= KB && sizeInBytes < MB) {
-            double d = ((double) sizeInBytes / (double) KB);
-            value = String.format("%.2f", d);
-            unit = "KB";
-        }
-        else if (sizeInBytes >= MB && sizeInBytes < GB) {
-            double d = ((double) sizeInBytes / (double) MB);
-            value = String.format("%.2f", d);
+        else if (sizeInBytes < GB) {
+            value = String.format("%.2f", (double) sizeInBytes / (double) MB);
             unit = "MB";
         }
-        else if (sizeInBytes >= GB && sizeInBytes < TB) {
-            double d = ((double) sizeInBytes / (double) GB);
-            value = String.format("%.2f", d);
+        else if (sizeInBytes < TB) {
+            value = String.format("%.2f", (double) sizeInBytes / (double) GB);
             unit = "GB";
         }
         else {
-            double d = ((double) sizeInBytes / (double) TB);
-            value = String.format("%.2f", d);
+            value = String.format("%.2f", (double) sizeInBytes / (double) TB);
             unit = "TB";
         }
 
         return new FileSize(sizeInBytes, value, unit);
-    }
-
-    /**
-     * 在文件名里插入后缀。
-     *
-     * @param fileName
-     * @param postfix
-     * @return
-     */
-    public static String insertPostfix(String fileName, String postfix) {
-        int index = fileName.lastIndexOf(".");
-        if (index > 0) {
-            String name = fileName.substring(0, index);
-            String extension = fileName.substring(index + 1);
-            StringBuilder buf = new StringBuilder(name);
-            buf.append(postfix).append(".").append(extension);
-            return buf.toString();
-        }
-        else {
-            return fileName + postfix;
-        }
     }
 
     /**
@@ -566,70 +530,47 @@ public final class FileUtils {
     }
 
     /**
-     * 优化文件路径显示。
-     *
-     * @param absolutePath
-     * @return
-     */
-    public static String fixFilePath(String absolutePath) {
-        int index = absolutePath.indexOf(File.separator);
-        if (index < 0) {
-            return absolutePath;
-        }
-
-        String[] array = absolutePath.split(File.separator);
-        LinkedList<String> list = new LinkedList<>();
-        for (int i = 0; i < array.length; ++i) {
-            list.add(array[i]);
-        }
-
-        Iterator<String> iter = list.iterator();
-        while (iter.hasNext()) {
-            String path = iter.next();
-            if (path.equals(".")) {
-                iter.remove();
-            }
-        }
-
-        for (int i = 0; i < list.size(); ++i) {
-            String path = list.get(i);
-            if (path.equals("..")) {
-                list.remove(i);
-                list.remove(i - 1);
-                i -= 2;
-            }
-        }
-
-        StringBuilder result = new StringBuilder();
-        for (String path : list) {
-            result.append(path);
-            result.append(File.separator);
-        }
-        result.delete(result.length() - 1, result.length());
-        return result.toString();
-    }
-
-    /**
      * 修正 Windows 系统文件路径保存到 JSON 时转义字符无法解析的问题。
      *
      * @param path
      * @return
      */
     public static String fixWindowsPathForJSON(String path) {
-        return path.replaceAll("\\\\", "/");
+        // 纯字面量替换，不需要正则（原实现用 replaceAll 会把参数当正则解析）
+        return path.replace('\\', '/');
     }
 
     /**
-     * 清空路径。
+     * 清空指定路径里的内容。
+     *
+     * <p>该方法只清空 {@code path} 的**内容**，不删除 {@code path} 自身，调用方需自行删除。</p>
+     *
+     * <p>关于符号链接：{@link File#isDirectory()} 会跟随符号链接，若不加判断，
+     * 一个指向本路径之外目录的链接会让该方法递归进去并删除链接目标里的数据。
+     * 因此这里显式判断符号链接，遇到链接时只删除链接自身，绝不递归进入其指向的目录。</p>
      *
      * @param path
      */
     public static void emptyPath(File path) {
+        if (null == path) {
+            return;
+        }
+
+        if (Files.isSymbolicLink(path.toPath())) {
+            // 链接自身：只删除链接，不跟随
+            path.delete();
+            return;
+        }
+
         if (path.isDirectory()) {
             File[] files = path.listFiles();
             if (null != files && files.length > 0) {
                 for (File file : files) {
-                    if (file.isDirectory()) {
+                    if (Files.isSymbolicLink(file.toPath())) {
+                        // 只删除链接自身，不递归进入链接指向的目录
+                        file.delete();
+                    }
+                    else if (file.isDirectory()) {
                         emptyPath(file);
                         // 删除空目录
                         file.delete();
@@ -641,22 +582,4 @@ public final class FileUtils {
             }
         }
     }
-
-//    public static void main(String[] args) {
-//        System.out.println(FileUtils.fixFilePath("/Users/ambrose/Documents/Repositories/Cube3/cube-server/console/../deploy"));
-//        System.out.println(FileUtils.fixFilePath("D:/ambrose/Documents/Repositories/Cube3/cube-server/console/../deploy"));
-//        System.out.println(FileUtils.fixFilePath("D:\\ambrose\\Documents\\Repositories\\Cube3\\cube-server\\console\\..\\deploy"));
-//        System.out.println(FileUtils.makeFileCode(50001001L, "三周年纪念.png"));
-//        System.out.println(FileUtils.makeFileCode(50001001L, "三周年纪念.jpg"));
-//        System.out.println(FileUtils.makeFileCode(50002001L, "三周年纪念.png"));
-//        System.out.println();
-//        System.out.println(FileUtils.makeFileCode(2005179136L, "这个文件的文件名很长很长很长很长很长很长很长"
-//          + "很长很长很长很长很长很长很长很长很长很长很长.txt"));
-
-//        String fc1 = FileUtils.makeFileCode(22003303L, AuthConsts.DEFAULT_DOMAIN, "PT_10.jpg");
-//        String fc2 = FileUtils.makeFileCode(22003303L, AuthConsts.DEFAULT_DOMAIN, "PT_14.jpg");
-//        System.out.println(fc1);
-//        System.out.println(fc2);
-//        System.out.println(fc1.equals(fc2));
-//    }
 }

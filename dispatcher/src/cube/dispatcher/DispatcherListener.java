@@ -14,6 +14,7 @@ import cell.util.log.Logger;
 import cube.report.ReportService;
 import cube.util.ConfigUtils;
 import cube.util.HttpConfig;
+import cube.util.NodeName;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -186,15 +187,18 @@ public class DispatcherListener implements CellListener {
                     Integer.parseInt(properties.getProperty("console.port", "7080")));
 
             // 设置节点名
-            String defaultName = ConfigUtils.makeUniqueStringWithMAC();
+            String identity = NodeName.identity(properties.getProperty(NodeName.KEY_NODE_ID));
+            int port = 0;
             for (Servable server : nucleus.getTalkService().getServers()) {
                 if (server.getClass().getName().equals("cell.core.talk.Server")) {
-                    defaultName += "#dispatcher#" + server.getPort();
+                    port = server.getPort();
                     break;
                 }
             }
+            String defaultName = NodeName.makeName(identity, NodeName.ROLE_DISPATCHER, port);
             performer.setNodeName(properties.getProperty("name", defaultName));
-            Logger.i(this.getClass(), "Node name: " + performer.getNodeName());
+            Logger.i(this.getClass(), "Node name: " + performer.getNodeName()
+                    + " (identity: " + identity + ")");
         } catch (IOException e) {
             Logger.e(this.getClass(), "Read console follower config failed", e);
         }

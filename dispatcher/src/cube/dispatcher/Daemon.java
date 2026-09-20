@@ -49,6 +49,16 @@ public class Daemon extends TimerTask implements LogHandle {
      */
     private long lastReportTime = 0;
 
+    /**
+     * 日志报告间隔。
+     */
+    private long logReportInterval = 10 * 1000;
+
+    /**
+     * 上一次提交日志报告的时间戳。
+     */
+    private long lastLogReport = 0;
+
     private long latencyInterval = 5 * 60 * 1000;
 
     private long lastLatency = 0;
@@ -125,17 +135,20 @@ public class Daemon extends TimerTask implements LogHandle {
             }
         }
 
-//        if (now - this.lastReportTime >= this.reportInterval) {
-//            // 提交 JVM 报告
-//            this.submitJVMReport(now);
-//            // 提交性能报告
-//            this.submitPerformanceReport(now);
-//            // 更新时间戳
-//            this.lastReportTime = now;
-//        }
+        if (now - this.lastReportTime >= this.reportInterval) {
+            // 提交 JVM 报告
+            this.submitJVMReport(now);
+            // 提交性能报告
+            this.submitPerformanceReport(now);
+            // 更新时间戳
+            this.lastReportTime = now;
+        }
 
-        // 提交日志报告
-//        this.submitLogReport();
+        if (now - this.lastLogReport >= this.logReportInterval) {
+            this.lastLogReport = now;
+            // 提交日志报告
+            this.submitLogReport();
+        }
 
         if (now - this.lastLatency >= this.latencyInterval) {
             this.lastLatency = now;

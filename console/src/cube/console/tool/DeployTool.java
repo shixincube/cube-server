@@ -6,7 +6,7 @@
 
 package cube.console.tool;
 
-import cube.util.FileUtils;
+import cell.util.log.Logger;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -36,29 +36,32 @@ public final class DeployTool {
         };
 
         File path = null;
-        String pathString = null;
+        String root = null;
         for (String p : pathList) {
             path = new File(p);
             if (path.exists() && path.isDirectory()) {
-                pathString = path.getAbsolutePath();
+                root = path.getAbsolutePath();
                 break;
             }
         }
 
-        if (null == pathString) {
+        if (null == root) {
+            Logger.e(DeployTool.class, "#searchDeploySource - Can NOT find path");
             return null;
         }
 
-        pathString = FileUtils.fixFilePath(pathString);
+        root = Paths.get(root).normalize().toString();
 
-        Path cellJar = Paths.get(pathString, "bin/cell.jar");
+        Path cellJar = Paths.get(root, "bin/cell.jar");
         if (!Files.exists(cellJar)) {
+            Logger.e(DeployTool.class, "#searchDeploySource - Can NOT find cell.jar");
             return null;
         }
 
-        Path libsPath = Paths.get(pathString, "libs");
+        Path libsPath = Paths.get(root, "libs");
         File pathFile = new File(libsPath.toString());
         if (!pathFile.isDirectory()) {
+            Logger.e(DeployTool.class, "#searchDeploySource - Can NOT find `libs/` path");
             return null;
         }
 
@@ -67,6 +70,10 @@ public final class DeployTool {
         boolean hasService = false;
 
         File[] files = pathFile.listFiles();
+        if (null == files) {
+            Logger.e(DeployTool.class, "#searchDeploySource - list files is NULL");
+            return null;
+        }
         for (File file : files) {
             if (file.getName().startsWith("cube-common")) {
                 hasCommon = true;
@@ -80,9 +87,10 @@ public final class DeployTool {
         }
 
         if (!hasCommon || !hasDispatcher || !hasService) {
+            Logger.e(DeployTool.class, "#searchDeploySource - Can NOT find path");
             return null;
         }
 
-        return Paths.get(pathString);
+        return Paths.get(root);
     }
 }

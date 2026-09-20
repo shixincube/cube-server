@@ -47,9 +47,28 @@ public final class StatisticsSystem {
     // Time Distribution
     public final String ITEM_TD = "TD";
 
+    // Statistics version：统计口径版本
+    public final String ITEM_SV = "SV";
+
+    /**
+     * 当前统计口径版本。
+     *
+     * 口径发生变化（例如调整用户判定规则、修改时长单位）时必须 <b>递增</b> 该值：
+     * 每日统计会比对已入库的 {@link #ITEM_SV} 值，不一致时删除该日旧口径数据并重新统计，
+     * 否则历史日期会一直保留旧口径的结果。
+     */
+    public static final int STATISTICS_VERSION = 2;
+
     private final String contactEventTablePrefix = "contact_event_log_";
 
     private final String contactStatisticsTablePrefix = "contact_statistics_";
+
+    /**
+     * 联系人表名前缀，与 {@code ContactStorage} 保持一致。
+     *
+     * 统计存储器与联系人存储器使用同一份配置，因此可以直接查询联系人表。
+     */
+    private final String contactTablePrefix = "contact_";
 
     /**
      * 事件表。
@@ -214,18 +233,29 @@ public final class StatisticsSystem {
         }
     }
 
-    private void collect() {
-        // 统计昨天的数据
-        Calendar cal = Calendar.getInstance();
-        // 昨天
-        cal.set(Calendar.DATE, cal.get(Calendar.DATE) - 1);
+    /**
+     * 每日统计的天数（含昨日）。
+     *
+     * 统计口径升级后需要回补最近的日期，否则「昨日与前一日的差值」类指标（例如 DNU）
+     * 会在口径切换当天出现跳变。已按当前口径统计过的日期会被直接跳过，因此多检查几天无额外开销。
+     */
+    private static final int COLLECT_DAYS = 3;
 
-        // 时间复位
+    private void collect() {
+        Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
 
+        for (int i = 1; i <= COLLECT_DAYS; ++i) {
+            Calendar day = (Calendar) cal.clone();
+            day.add(Calendar.DAY_OF_MONTH, -i);
+            this.collectDay(day);
+        }
+    }
+
+    private void collectDay(Calendar cal) {
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH) + 1;
         int date = cal.get(Calendar.DATE);
@@ -234,14 +264,13 @@ public final class StatisticsSystem {
         long ending = beginning + (24L * 60 * 60 * 1000L);
 
         for (String domain : this.domainNameList) {
-            // 查询是否有记录
             String statisticTable = this.statisticsTableNameMap.get(domain);
 
-            List<StorageField[]> result = this.storage.executeQuery(statisticTable, new StorageField[] {
-                    new StorageField("sn", LiteralBase.LONG)
+            // 查询当日已有记录，用于判断是否需要统计
+            List<StorageField[]> existRows = this.storage.executeQuery(statisticTable, new StorageField[] {
+                    new StorageField("item", LiteralBase.STRING),
+                    new StorageField("data", LiteralBase.STRING)
             }, new Conditional[] {
-                    Conditional.createEqualTo("item", LiteralBase.STRING, ITEM_TNU),
-                    Conditional.createAnd(),
                     Conditional.createEqualTo("year", LiteralBase.INT, year),
                     Conditional.createAnd(),
                     Conditional.createEqualTo("month", LiteralBase.INT, month),
@@ -249,13 +278,30 @@ public final class StatisticsSystem {
                     Conditional.createEqualTo("date", LiteralBase.INT, date)
             });
 
-            if (!result.isEmpty()) {
-                // 有数据，不统计
+            boolean collected = false;
+            for (StorageField[] row : existRows) {
+                if (ITEM_SV.equals(row[0].getString())) {
+                    collected = (STATISTICS_VERSION == toStatisticsVersion(row[1].getString()));
+                    break;
+                }
+            }
+
+            if (collected) {
+                // 已按当前统计口径统计过，不重复统计
                 continue;
             }
 
-            // 日用户总数
-            int total = ContactManager.getInstance().countContacts(domain);
+            if (!existRows.isEmpty()) {
+                // 统计口径已升级，清除当日旧口径数据后重新统计
+                this.storage.execute("DELETE FROM " + statisticTable
+                        + " WHERE `year`=" + year + " AND `month`=" + month + " AND `date`=" + date);
+                Logger.i(this.getClass(), "Re-collect statistics of domain '" + domain
+                        + "' for " + year + "-" + month + "-" + date
+                        + " (version " + STATISTICS_VERSION + ")");
+            }
+
+            // 日用户总数：仅统计 ID 位数大于等于 8 位的用户，位数小于 8 位的是 AIGC 工作单元
+            int total = this.countUserContacts(domain);
             this.storage.executeInsert(statisticTable, new StorageField[] {
                     new StorageField("item", LiteralBase.STRING, ITEM_TNU),
                     new StorageField("data", LiteralBase.STRING, String.valueOf(total)),
@@ -276,8 +322,8 @@ public final class StatisticsSystem {
                     new StorageField("timestamp", LiteralBase.LONG, System.currentTimeMillis())
             });
 
-            // 平均在线时长
-            long aot = this.calcAOT(domain, beginning, ending);
+            // 平均在线时长（单位：小时）
+            double aot = this.calcAOT(domain, beginning, ending);
             this.storage.executeInsert(statisticTable, new StorageField[] {
                     new StorageField("item", LiteralBase.STRING, ITEM_AOT),
                     new StorageField("data", LiteralBase.STRING, String.valueOf(aot)),
@@ -301,6 +347,57 @@ public final class StatisticsSystem {
                     new StorageField("date", LiteralBase.INT, date),
                     new StorageField("timestamp", LiteralBase.LONG, System.currentTimeMillis())
             });
+
+            // 记录本日数据使用的统计口径版本
+            this.storage.executeInsert(statisticTable, new StorageField[] {
+                    new StorageField("item", LiteralBase.STRING, ITEM_SV),
+                    new StorageField("data", LiteralBase.STRING, String.valueOf(STATISTICS_VERSION)),
+                    new StorageField("year", LiteralBase.INT, year),
+                    new StorageField("month", LiteralBase.INT, month),
+                    new StorageField("date", LiteralBase.INT, date),
+                    new StorageField("timestamp", LiteralBase.LONG, System.currentTimeMillis())
+            });
+        }
+    }
+
+    /**
+     * 统计指定域里的用户总数。
+     *
+     * 仅统计 ID 十进制位数大于等于 8 位的联系人，位数小于 8 位的是 AIGC 工作单元节点。
+     *
+     * @param domain 指定域。
+     * @return 返回用户总数。
+     */
+    private int countUserContacts(String domain) {
+        String table = SQLUtils.correctTableName(this.contactTablePrefix + domain);
+
+        StringBuilder sql = new StringBuilder("SELECT COUNT(`id`) FROM ");
+        sql.append(table);
+        sql.append(" WHERE `id`>=").append(Contact.MIN_USER_CONTACT_ID);
+
+        List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+        if (result.isEmpty()) {
+            return 0;
+        }
+
+        return result.get(0)[0].isNullValue() ? 0 : result.get(0)[0].getInt();
+    }
+
+    /**
+     * 解析统计口径版本字符串。
+     *
+     * @param value 已入库的版本字符串。
+     * @return 返回版本号，无法解析时返回 0 。
+     */
+    private static int toStatisticsVersion(String value) {
+        if (null == value) {
+            return 0;
+        }
+
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return 0;
         }
     }
 
@@ -310,27 +407,43 @@ public final class StatisticsSystem {
         StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT `contact_id`) FROM ");
         sql.append(eventTable);
         sql.append(" WHERE `event`='SignIn'");
+        // 仅统计用户，排除 AIGC 工作单元
+        sql.append(" AND `contact_id`>=").append(Contact.MIN_USER_CONTACT_ID);
         sql.append(" AND `time`>=").append(beginning);
         sql.append(" AND `time`<").append(ending);
 
         List<StorageField[]> result = this.storage.executeQuery(sql.toString());
+        if (result.isEmpty()) {
+            return 0;
+        }
+
         return result.get(0)[0].getInt();
     }
 
-    private long calcAOT(String domain, long beginning, long ending) {
+    /**
+     * 计算指定时间区间内的用户平均在线时长。
+     *
+     * @param domain 指定域。
+     * @param beginning 起始时间戳。
+     * @param ending 结束时间戳。
+     * @return 返回平均在线时长，单位：<b>小时</b>，保留两位小数。
+     */
+    private double calcAOT(String domain, long beginning, long ending) {
         String eventTable = this.eventTableNameMap.get(domain);
 
         // 查询所有登录的用户 ID
         StringBuilder sql = new StringBuilder("SELECT DISTINCT `contact_id` FROM ");
         sql.append(eventTable);
         sql.append(" WHERE `event`='SignIn'");
+        // 仅统计用户，排除 AIGC 工作单元
+        sql.append(" AND `contact_id`>=").append(Contact.MIN_USER_CONTACT_ID);
         sql.append(" AND `time`>=").append(beginning);
         sql.append(" AND `time`<").append(ending);
 
         List<StorageField[]> contactIdList = this.storage.executeQuery(sql.toString());
 
         if (contactIdList.isEmpty()) {
-            return 0;
+            return 0.0;
         }
 
         long total = 0;
@@ -364,10 +477,14 @@ public final class StatisticsSystem {
                     // 跳过 SignIn
                     continue;
                 } else if (name.equals(ContactHook.DeviceTimeout)) {
-                    duration += (time - startTime) - 15000L;
+                    if (startTime > 0) {
+                        duration += (time - startTime) - 15000L;
+                    }
                     startTime = 0;
                 } else if (name.equals(ContactHook.SignOut)) {
-                    duration += time - startTime;
+                    if (startTime > 0) {
+                        duration += time - startTime;
+                    }
                     startTime = 0;
                 }
             }
@@ -382,11 +499,14 @@ public final class StatisticsSystem {
         }
 
         if (durationMap.isEmpty()) {
-            return 0;
+            return 0.0;
         }
 
         double value = (double) total / (double) durationMap.size();
-        return Math.round(value);
+
+        // 毫秒换算为小时，保留两位小数
+        double hours = value / (60.0 * 60.0 * 1000.0);
+        return Math.round(hours * 100) / 100.0;
     }
 
     private List<TimeSlice> calcTimeDistribution(String domain, long beginning, long ending) {
@@ -407,6 +527,8 @@ public final class StatisticsSystem {
 
             sql.append("SELECT * FROM ").append(eventTable);
             sql.append(" WHERE `event`='SignIn'");
+            // 仅统计用户，排除 AIGC 工作单元
+            sql.append(" AND `contact_id`>=").append(Contact.MIN_USER_CONTACT_ID);
             sql.append(" AND `time`>=").append(beginningTime);
             sql.append(" AND `time`<").append(endingTime);
 
@@ -417,6 +539,7 @@ public final class StatisticsSystem {
             }
 
             TimeSlice timeSlice = new TimeSlice(i, beginningTime, endingTime);
+            int numContacts = 0;
 
             for (StorageField[] row : result) {
                 Map<String, StorageField> map = StorageFields.get(row);
@@ -426,15 +549,24 @@ public final class StatisticsSystem {
                 // 读取联系人信息
                 JSONObject contactJson = json.getJSONObject("contact");
                 contactJson.remove("context");      // 删除 context 数据
+
+                // 二次校验：跳过 AIGC 工作单元
+                if (!Contact.isUserContactId(contactJson.optLong("id", 0L))) {
+                    continue;
+                }
+
                 Contact contact = new Contact(contactJson);
 
                 // 读取设备信息
                 Device device = new Device(json.getJSONObject("device"));
 
                 timeSlice.addContact(contact, device);
+                ++numContacts;
             }
 
-            list.add(timeSlice);
+            if (numContacts > 0) {
+                list.add(timeSlice);
+            }
         }
 
         return list;

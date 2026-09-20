@@ -49,6 +49,9 @@ public class ServerLogHandler extends ContextHandler {
                            HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
                 throws IOException, ServletException {
 
+            // 两个分支均返回 JSON，统一在此声明响应类型
+            httpServletResponse.setContentType("application/json; charset=UTF-8");
+
             if (target.equals("/console")) {
                 String[] array = httpServletRequest.getQueryString().split("=");
                 long start = Long.parseLong(array[1]);
@@ -76,8 +79,6 @@ public class ServerLogHandler extends ContextHandler {
             else if (target.equals("/server")) {
                 String query = URLDecoder.decode(httpServletRequest.getQueryString(), "UTF-8");
                 Map<String, String> params = Utils.parseQueryStringParams(query);
-
-                httpServletResponse.setContentType("application/json");
 
                 String name = params.get("name");
                 long start = Long.parseLong(params.get("start"));

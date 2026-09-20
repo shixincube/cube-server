@@ -163,13 +163,13 @@ public class UserStorage extends AbstractStorage {
             this.storage.executeCreate(this.userTable, this.userFields);
 
             // 插入默认用户
-            // 密码：shixincube
+            // 密码：baizejingzhi
             StorageField[] fields = new StorageField[] {
                     new StorageField("id", LiteralBase.LONG, Utils.generateSerialNumber()),
                     new StorageField("name", LiteralBase.STRING, "cube"),
-                    new StorageField("password", LiteralBase.STRING, "c7af98d321febe62e04d45e8806852e0"),
+                    new StorageField("password", LiteralBase.STRING, "5b311686fd5df6d4ddaa06145f8dc8cd"),
                     new StorageField("avatar", LiteralBase.STRING, "assets/img/avatar.png"),
-                    new StorageField("display_name", LiteralBase.STRING, "魔方管理员"),
+                    new StorageField("display_name", LiteralBase.STRING, "Cube"),
                     new StorageField("role", LiteralBase.INT, 1),
                     new StorageField("group", LiteralBase.STRING, AuthConsts.DEFAULT_DOMAIN)
             };

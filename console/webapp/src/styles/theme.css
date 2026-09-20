@@ -1,0 +1,249 @@
+/**
+ * Cube Console 设计系统。
+ *
+ * 采用 Tailwind CSS v4 的 CSS-first 配置：`@theme` 声明设计令牌，
+ * `@layer components` 沉淀控制台高频复用组件类（卡片、表格、表单、按钮、徽标）。
+ */
+
+@import 'tailwindcss';
+
+@theme {
+  /* 品牌主色 */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
+
+  --font-mono: 'SFMono-Regular', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+}
+
+/* ------------------------------------------------------------------ */
+/* 基础层                                                              */
+/* ------------------------------------------------------------------ */
+
+@layer base {
+  html,
+  body,
+  #app {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family:
+      'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, -apple-system, 'Segoe UI',
+      Roboto, sans-serif;
+    font-size: 14px;
+    color: #0f172a;
+    background: #f1f5f9;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 细滚动条，日志与长列表区域观感更干净 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(148 163 184 / 0.55);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(100 116 139 / 0.75);
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 组件层                                                              */
+/* ------------------------------------------------------------------ */
+
+@layer components {
+  /* 卡片 */
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  .card-header {
+    @apply flex items-center justify-between gap-3 border-b border-slate-200/80 px-5 py-3.5;
+  }
+
+  .card-title {
+    @apply text-sm font-semibold tracking-wide text-slate-700;
+  }
+
+  .card-body {
+    @apply px-5 py-4;
+  }
+
+  /* 按钮 */
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-transparent px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition select-none disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-brand-600 text-white hover:bg-brand-700;
+  }
+
+  .btn-ghost {
+    @apply border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+  }
+
+  .btn-danger {
+    @apply bg-rose-600 text-white hover:bg-rose-700;
+  }
+
+  .btn-success {
+    @apply bg-emerald-600 text-white hover:bg-emerald-700;
+  }
+
+  .btn-sm {
+    @apply px-2.5 py-1 text-xs;
+  }
+
+  /* 表单 */
+  .label {
+    @apply mb-1.5 block text-xs font-medium text-slate-500;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[13px] text-slate-800 transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500;
+  }
+
+  .select {
+    @apply w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 py-1.5 pr-8 text-[13px] text-slate-800 transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 16px 16px;
+  }
+
+  .input-invalid {
+    @apply border-rose-400 bg-rose-50/60 ring-2 ring-rose-500/15;
+  }
+
+  /* 状态徽标 */
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap;
+  }
+
+  .pill-dot {
+    @apply h-1.5 w-1.5 shrink-0 rounded-full;
+  }
+
+  .pill-on {
+    @apply bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 ring-inset;
+  }
+
+  .pill-off {
+    @apply bg-rose-50 text-rose-700 ring-1 ring-rose-200 ring-inset;
+  }
+
+  .pill-neutral {
+    @apply bg-slate-100 text-slate-600 ring-1 ring-slate-200 ring-inset;
+  }
+
+  .pill-info {
+    @apply bg-brand-50 text-brand-700 ring-1 ring-brand-200 ring-inset;
+  }
+
+  /* 表格 */
+  .data-table {
+    @apply w-full border-collapse text-left text-[13px];
+  }
+
+  .data-table thead th {
+    @apply border-b border-slate-200 bg-slate-50/70 px-4 py-2.5 text-xs font-semibold tracking-wide whitespace-nowrap text-slate-500;
+  }
+
+  .data-table tbody td {
+    @apply border-b border-slate-100 px-4 py-3 align-middle text-slate-700;
+  }
+
+  .data-table tbody tr:hover {
+    @apply bg-slate-50/70;
+  }
+
+  /* 页头 */
+  .page-title {
+    @apply text-lg font-semibold text-slate-900;
+  }
+
+  .page-desc {
+    @apply mt-0.5 text-xs text-slate-500;
+  }
+
+  /* 键值展示行 */
+  .kv-row {
+    @apply flex items-baseline gap-3 border-b border-dashed border-slate-200 py-2 last:border-0;
+  }
+
+  .kv-key {
+    @apply w-28 shrink-0 text-xs text-slate-500;
+  }
+
+  .kv-val {
+    @apply min-w-0 flex-1 text-[13px] break-all text-slate-800;
+  }
+
+  /* 分段控件 */
+  .seg {
+    @apply inline-flex rounded-lg bg-slate-100 p-0.5;
+  }
+
+  .seg-item {
+    @apply rounded-[7px] px-2.5 py-1 text-xs font-medium text-slate-500 transition;
+  }
+
+  .seg-item-active {
+    @apply bg-white text-brand-700 shadow-sm;
+  }
+
+  /* 日志视图 */
+  .log-view {
+    @apply overflow-auto p-3 font-mono text-xs leading-5;
+  }
+
+  .log-line {
+    @apply break-all whitespace-pre-wrap;
+  }
+
+  .log-debug {
+    @apply text-slate-500;
+  }
+
+  .log-info {
+    @apply text-sky-700;
+  }
+
+  .log-warn {
+    @apply text-amber-700;
+  }
+
+  .log-error {
+    @apply text-rose-700;
+  }
+}
+
+/* 数值/端口/路径统一等宽，便于纵向比读 */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

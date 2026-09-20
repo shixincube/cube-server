@@ -31,6 +31,8 @@ public class StopHandler extends ContextHandler {
 
     public StopHandler(Server server, Console console) {
         super("/stop");
+        // 接口挂在上下文根路径上，允许直接访问 /stop （详见 SignInHandler）
+        setAllowNullPathInfo(true);
         this.setHandler(new Handler());
         this.server = server;
         this.console = console;

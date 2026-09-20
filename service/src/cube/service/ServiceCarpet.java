@@ -19,6 +19,7 @@ import cube.license.LicenseTool;
 import cube.plugin.PluginSystem;
 import cube.report.ReportService;
 import cube.util.ConfigUtils;
+import cube.util.NodeName;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -214,10 +215,12 @@ public class ServiceCarpet implements CellListener {
             ReportService.getInstance().addHost(properties.getProperty("console.host"),
                     Integer.parseInt(properties.getProperty("console.port", "7080")));
 
-            String defaultName = ConfigUtils.makeUniqueStringWithMAC() + "#service#" +
-                    nucleus.getTalkService().getServers().get(0).getPort();
+            String identity = NodeName.identity(properties.getProperty(NodeName.KEY_NODE_ID));
+            int port = nucleus.getTalkService().getServers().get(0).getPort();
+            String defaultName = NodeName.makeName(identity, NodeName.ROLE_SERVICE, port);
             this.kernel.setNodeName(properties.getProperty("name", defaultName));
-            Logger.i(this.getClass(), "Node name: " + this.kernel.getNodeName());
+            Logger.i(this.getClass(), "Node name: " + this.kernel.getNodeName()
+                    + " (identity: " + identity + ")");
         } catch (IOException e) {
             Logger.e(this.getClass(), "Read console follower config failed", e);
         }

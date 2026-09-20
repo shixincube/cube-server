@@ -9,11 +9,11 @@ package cube.console.mgmt;
 import cell.util.log.Logger;
 import cube.common.JSONable;
 import cube.console.tool.Detector;
+import cube.util.NodeName;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -175,18 +175,34 @@ public class DispatcherServer implements JSONable {
 
         this.propertiesFile.load();
 
-        this.name = this.tag + "#dispatcher#" + this.cellConfigFile.getAccessPoint().getPort();
+        this.name = NodeName.makeName(this.tag, NodeName.ROLE_DISPATCHER,
+                this.cellConfigFile.getAccessPoint().getPort());
 
         // 检查是否正在运行
-        File tagFile = new File(this.deployPath + File.separator + "bin" + File.separator + "tag_dispatcher");
-        if (tagFile.exists() && tagFile.length() < 40) {
-            // 尝试检测服务是否能连通
-            AccessPoint ap = this.cellConfigFile.getAccessPoint();
-            this.running = Detector.detectCellServer(ap.getHost(), ap.getPort());
+        this.refreshRunning();
+    }
+
+    /**
+     * 刷新运行状态（不重新加载配置文件，供定时任务高频调用）。
+     *
+     * 两个信号取或：
+     * 1. 控制台在存活窗口内收到过该节点提交的报告 —— 上报即心跳，不要求控制台能反向连上节点；
+     * 2. 节点 SHM 访问点端口能从本机建立 TCP 连接 —— 覆盖节点刚启动、首份报告尚未到达的窗口期。
+     *
+     * 不再依赖 `<deployPath>/bin/tag_dispatcher` 这类由启动脚本写入的标记文件：它同时耦合了部署根目录
+     * 和 `-tag` 参数名（开发态直接从模块目录启动时标记文件落在模块的 bin 目录、名字也不一定是 dispatcher），
+     * 一旦不匹配就会把正在运行的节点判定为未运行。
+     */
+    protected void refreshRunning() {
+        long now = System.currentTimeMillis();
+
+        if (NodeHeartbeat.getInstance().isAlive(this.name, now)) {
+            this.running = true;
+            return;
         }
-        else {
-            this.running = false;
-        }
+
+        AccessPoint ap = this.cellConfigFile.getAccessPoint();
+        this.running = (null != ap) && Detector.isPortReachable(ap.getHost(), ap.getPort());
     }
 
     @Override
