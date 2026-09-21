@@ -2,8 +2,8 @@
 /**
  * 主机硬件配置（静态信息）。
  *
- * 只渲染键值行，不包含卡片外壳与标题——由 `DashboardView` 统一提供，
- * 以便与「实时性能」区在同一张卡片内形成「静态 / 动态」的清晰分层。
+ * 只渲染键值行，不包含卡片外壳与标题——卡片外壳（含右上角折叠按钮）由 `DashboardView` 提供，
+ * 与「主机实时性能」拆成两张独立卡片。
  */
 import { computed } from 'vue'
 import type { HostStaticResponse } from '@/api/types'

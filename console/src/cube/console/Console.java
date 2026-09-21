@@ -21,12 +21,16 @@ import cube.report.JVMReport;
 import cube.report.LogLine;
 import cube.report.LogReport;
 import cube.report.PerformanceReport;
+import cube.report.UnitReport;
 import cube.util.NodeName;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,6 +64,19 @@ public final class Console implements Runnable {
      * 性能信息记录。
      */
     private ConcurrentHashMap<String, List<PerformanceReport>> serverPerfMap;
+
+    /**
+     * AI 单元能力快照：每个节点只保留最近一份。
+     */
+    private ConcurrentHashMap<String, UnitSnapshot> serverUnitMap;
+
+    /**
+     * 单元能力上报的有效期。
+     *
+     * 节点每 60 秒上报一次，取 5 倍间隔容忍抖动与短时重连；超期视为该节点已不再承载单元，
+     * 避免节点停服后控制台一直显示陈旧的能力数据。
+     */
+    private final static long UNIT_REPORT_TTL = 5L * 60 * 1000L;
 
     private int maxReportNum = 30;
 
@@ -96,8 +113,27 @@ public final class Console implements Runnable {
         this.serverLogMap = new ConcurrentHashMap<>();
         this.serverJVMMap = new ConcurrentHashMap<>();
         this.serverPerfMap = new ConcurrentHashMap<>();
+        this.serverUnitMap = new ConcurrentHashMap<>();
         this.reporterAliases = new ConcurrentHashMap<>();
         this.logHandler = new ConsoleLogHandler();
+    }
+
+    /**
+     * 一次单元能力上报的快照。
+     *
+     * <code>receiveTime</code> 记控制台收到报告的时刻，而不是报告的生成时刻：节点与控制台的
+     * 系统时间存在偏差时，用节点时间做有效期判断会误判为过期（与 NodeHeartbeat 同一考虑）。
+     */
+    private final static class UnitSnapshot {
+
+        final UnitReport report;
+
+        final long receiveTime;
+
+        UnitSnapshot(UnitReport report, long receiveTime) {
+            this.report = report;
+            this.receiveTime = receiveTime;
+        }
     }
 
     public String getTag() {
@@ -445,6 +481,90 @@ public final class Console implements Runnable {
 
     public StatisticDataManager getStatisticDataManager() {
         return this.statisticDataManager;
+    }
+
+    public void appendUnitReport(UnitReport report) {
+        Logger.d(this.getClass(), "Received report from " + report.getReporter() + " (" + report.getName() + ")");
+
+        // 归一节点名：自报名与控制台期望名不一致时，数据仍落到控制台期望的键上
+        String name = this.resolveReporter(report.getReporter());
+
+        // 收到上报即视为节点心跳，节点的运行状态据此判定（见 NodeHeartbeat）
+        NodeHeartbeat.getInstance().trace(name);
+
+        // 单元能力是「当前态」而非时序数据，只保留最近一份
+        this.serverUnitMap.put(name, new UnitSnapshot(report, System.currentTimeMillis()));
+    }
+
+    /**
+     * 汇总各节点上报的单元能力。
+     *
+     * <p>同一个 Contact 物理实体在节点上可以注册多个 AIGC 单元（每个单元一个能力），多台节点也
+     * 可能都上报同一个实体，因此按物理实体 ID 归并、并按能力内容去重。</p>
+     *
+     * @param domain 指定域。
+     * @return 返回 Key 为物理实体 ID 、Value 为该物理实体承载的能力 JSON 列表（按名称排序）。
+     */
+    public Map<Long, List<JSONObject>> queryUnitCapabilities(String domain) {
+        Map<Long, List<JSONObject>> result = new HashMap<>();
+        // 多个节点可能上报同一个实体的同一能力，用能力 JSON 文本去重
+        Map<Long, Set<String>> seen = new HashMap<>();
+
+        long now = System.currentTimeMillis();
+
+        for (Map.Entry<String, UnitSnapshot> entry : this.serverUnitMap.entrySet()) {
+            UnitSnapshot snapshot = entry.getValue();
+
+            if (now - snapshot.receiveTime > UNIT_REPORT_TTL) {
+                // 超期快照即时清理，避免节点停服后能力数据永久残留
+                this.serverUnitMap.remove(entry.getKey(), snapshot);
+                continue;
+            }
+
+            for (JSONObject item : snapshot.report.getUnits()) {
+                if (!domain.equals(item.optString("domain"))) {
+                    continue;
+                }
+
+                JSONObject capability = item.optJSONObject("capability");
+                if (null == capability) {
+                    continue;
+                }
+
+                long contactId = item.optLong("id", 0L);
+
+                List<JSONObject> list = result.get(contactId);
+                if (null == list) {
+                    list = new ArrayList<>();
+                    result.put(contactId, list);
+                    seen.put(contactId, new HashSet<String>());
+                }
+
+                if (seen.get(contactId).add(capability.toString())) {
+                    list.add(capability);
+                }
+            }
+        }
+
+        // 名称排序，保证同一实体每次返回的能力顺序一致，表格不会跳动
+        for (List<JSONObject> list : result.values()) {
+            list.sort((a, b) -> a.optString("name").compareTo(b.optString("name")));
+        }
+
+        return result;
+    }
+
+    /**
+     * 最近一次收到单元能力上报的时间戳（控制台本地时钟），0 表示从未收到。
+     */
+    public long getUnitReportTimestamp() {
+        long timestamp = 0L;
+        for (UnitSnapshot snapshot : this.serverUnitMap.values()) {
+            if (snapshot.receiveTime > timestamp) {
+                timestamp = snapshot.receiveTime;
+            }
+        }
+        return timestamp;
     }
 
     @Override

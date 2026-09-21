@@ -172,6 +172,15 @@
     @apply bg-slate-50/70;
   }
 
+  /**
+   * 列数多、单元格内容短的台账表：收紧左右内边距，把省下来的宽度让给内容列。
+   * 9 列时每列可省 8px，合计约 70px，足以让时间戳等列保持单行。
+   */
+  .data-table-dense thead th,
+  .data-table-dense tbody td {
+    @apply px-3;
+  }
+
   /* 页头 */
   .page-title {
     @apply text-lg font-semibold text-slate-900;

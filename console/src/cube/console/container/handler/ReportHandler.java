@@ -12,6 +12,7 @@ import cube.report.JVMReport;
 import cube.report.LogReport;
 import cube.report.PerformanceReport;
 import cube.report.Report;
+import cube.report.UnitReport;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -77,6 +78,14 @@ public class ReportHandler extends ContextHandler {
                     try {
                         PerformanceReport report = new PerformanceReport(reportJson);
                         console.appendPerformanceReport(report);
+                    } catch (Exception e) {
+                        Logger.e(this.getClass(), "#handle", e);
+                    }
+                }
+                else if (UnitReport.NAME.equals(name)) {
+                    try {
+                        UnitReport report = new UnitReport(reportJson);
+                        console.appendUnitReport(report);
                     } catch (Exception e) {
                         Logger.e(this.getClass(), "#handle", e);
                     }

@@ -30,7 +30,8 @@ import java.util.Map;
  * <ul>
  *   <li><code>GET /statistic/recent</code> —— 昨日用户统计（仅统计 ID 位数大于等于 8 位的联系人）</li>
  *   <li><code>GET /statistic/daily</code> —— 指定日期的用户统计</li>
- *   <li><code>GET /statistic/units</code> —— 昨日 AI 单元概览（ID 位数大于等于 6 且小于 8 位的联系人）</li>
+ *   <li><code>GET /statistic/units</code> —— 昨日 AI 单元概览（ID 位数大于等于 6 且小于 8 位的联系人），
+ *       每行是一个 Contact 物理实体，<code>capabilities</code> 为该实体承载的能力（来自节点上报）</li>
  * </ul>
  */
 public class StatisticDataHandler extends ContextHandler {
@@ -77,13 +78,16 @@ public class StatisticDataHandler extends ContextHandler {
                     calendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(params.get("date")));
                 }
 
-                JSONObject data = console.getStatisticDataManager().queryUnitOverview(domain, calendar);
+                JSONObject data = console.getStatisticDataManager().queryUnitOverview(domain, calendar,
+                        console.queryUnitCapabilities(domain));
                 if (null == data) {
                     respond(response, HttpStatus.NOT_FOUND_404);
                     return;
                 }
 
                 data.put("tag", console.getTag());
+                // 能力来自节点上报，给出最近一次收到上报的时间，便于前端说明数据新鲜度
+                data.put("unitReportTime", console.getUnitReportTimestamp());
 
                 respondOk(response, data);
             }

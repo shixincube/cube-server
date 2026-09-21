@@ -24,6 +24,7 @@ const ICONS: Record<string, string> = {
   close: '<path d="M18 6L6 18M6 6l12 12"/>',
   chevronDown: '<path d="M6 9l6 6 6-6"/>',
   chevronRight: '<path d="M9 6l6 6-6 6"/>',
+  chevronLeft: '<path d="M15 6l-6 6 6 6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   pencil:
     '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
@@ -37,6 +38,7 @@ const ICONS: Record<string, string> = {
   eyeOff:
     '<path d="M10.6 5.2A9.9 9.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2"/><path d="M6.6 6.6A17.4 17.4 0 0 0 2 12s3.6 7 10 7a9.9 9.9 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M2 2l20 20"/>',
   search: '<circle cx="11" cy="11" r="7.5"/><path d="M20.5 20.5l-4.2-4.2"/>',
+  filter: '<path d="M3.5 5.5h17l-6.6 7.6v5.4l-3.8 2v-7.4Z"/>',
   external:
     '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10.5 13.5L21 3"/>',
   warning: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4.5M12 17.2h.01"/>',
@@ -61,6 +63,8 @@ const ICONS: Record<string, string> = {
     '<path d="M21 12h-6l-2 3h-2l-2-3H3"/><path d="M5.4 5.1L3 12v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6l-2.4-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.8 1.1Z"/>',
   loader:
     '<path d="M12 2v4M12 18v4M4.9 4.9l2.9 2.9M16.2 16.2l2.9 2.9M2 12h4M18 12h4M4.9 19.1l2.9-2.9M16.2 7.8l2.9-2.9"/>',
+  memory:
+    '<rect x="2.5" y="6.5" width="19" height="10.5" rx="2"/><path d="M7 6.5v10.5M12 6.5v10.5M17 6.5v10.5"/><path d="M7.5 17v3.5M12 17v3.5M16.5 17v3.5"/>',
   cube: '<path d="M12 2.5l9 5v9l-9 5-9-5v-9Z"/><path d="M3 7.5l9 5 9-5M12 12.5V22.5"/>'
 }
 

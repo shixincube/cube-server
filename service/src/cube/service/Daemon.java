@@ -15,9 +15,12 @@ import cell.util.log.LogLevel;
 import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.common.entity.AIGCUnit;
 import cube.license.LicenseConfig;
 import cube.license.LicenseTool;
 import cube.report.*;
+import cube.service.aigc.AIGCCellet;
+import cube.service.aigc.AIGCService;
 import cube.service.contact.ContactManager;
 import org.json.JSONObject;
 
@@ -142,6 +145,7 @@ public class Daemon extends TimerTask implements LogHandle {
         if (now - this.lastReportTime > this.reportInterval) {
             this.submitJVMReport(now);
             this.submitPerformanceReport(now);
+            this.submitUnitReport();
             this.lastReportTime = now;
         }
 
@@ -193,6 +197,33 @@ public class Daemon extends TimerTask implements LogHandle {
         report.appendItem(ContactManager.NAME, contactPerf);
 
         ReportService.getInstance().submitReport(report);
+    }
+
+    private void submitUnitReport() {
+        for (Cellet cellet : this.nucleus.getCelletService().getCellets()) {
+            if (!(cellet instanceof AIGCCellet)) {
+                continue;
+            }
+
+            AIGCService service = ((AIGCCellet) cellet).getService();
+            if (null == service) {
+                continue;
+            }
+
+            // 同一个 Contact 物理实体可能有多个单元（每个单元一个能力），这里逐条上报，
+            // 由控制台按物理实体归并。
+            UnitReport report = new UnitReport(this.kernel.getNodeName());
+            for (AIGCUnit unit : service.getAllUnits()) {
+                if (!report.addUnit(unit.getContact(), unit.getCapability())) {
+                    Logger.w(this.getClass(), "#submitUnitReport - Report is full with "
+                            + UnitReport.MAX_UNITS + " units, the rest are dropped");
+                    break;
+                }
+            }
+
+            // 单元全部下线时也要上报空报告，否则控制台会一直显示陈旧的能力数据。
+            ReportService.getInstance().submitReport(report);
+        }
     }
 
     private boolean verifyLicence() {

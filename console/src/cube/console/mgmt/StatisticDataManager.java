@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -108,17 +109,28 @@ public class StatisticDataManager {
         return this.storage.queryAllDomains();
     }
 
+    public JSONObject queryUnitOverview(String domain, Calendar calendar) {
+        return this.queryUnitOverview(domain, calendar, Collections.<Long, List<JSONObject>>emptyMap());
+    }
+
     /**
      * 查询指定域的 AIGC 工作单元概览。
      *
      * 工作单元是 ID 十进制位数大于等于 6 且小于 8 位的联系人（例如 <code>Unit-531001</code>），
      * 位数小于 6 位的联系人不是统计对象；「联系人概览」只统计 ID 位数大于等于 8 位的联系人。
      *
+     * <p>台账的一行是一个 Contact 物理实体：实体的基础信息与活动统计来自统计库，而实体承载的
+     * 能力（{@code AICapability}）只存在于节点内存，由节点周期上报后经
+     * {@code Console#queryUnitCapabilities} 归并传入——同一个物理实体上可以注册多个 AIGC 单元，
+     * 因此这里挂到行上的是一个能力数组。</p>
+     *
      * @param domain 指定域。
      * @param calendar 统计日期，按该日 00:00 ~ 24:00 统计日活动。
+     * @param capabilityMap Key 为物理实体 ID 、Value 为该实体承载的能力列表，由节点上报汇总得到。
      * @return 返回单元概览数据。
      */
-    public JSONObject queryUnitOverview(String domain, Calendar calendar) {
+    public JSONObject queryUnitOverview(String domain, Calendar calendar,
+                                        Map<Long, List<JSONObject>> capabilityMap) {
         if (null == this.storage) {
             return null;
         }
@@ -246,6 +258,15 @@ public class StatisticDataManager {
 
             Set<Integer> days = activeDayMap.get(id);
 
+            // 该物理实体当前承载的能力（一个实体可能有多个单元），节点未上报时为空数组
+            List<JSONObject> capabilities = capabilityMap.get(id);
+            JSONArray capabilityArray = new JSONArray();
+            if (null != capabilities) {
+                for (JSONObject capability : capabilities) {
+                    capabilityArray.put(capability);
+                }
+            }
+
             JSONObject unit = new JSONObject();
             unit.put("id", id);
             unit.put("name", contact.getString("name"));
@@ -257,6 +278,7 @@ public class StatisticDataManager {
             unit.put("lastActiveTime", lastActiveTime);
             unit.put("firstActiveTime", (numEvents > 0) ? events.get(0).time : 0L);
             unit.put("activeDays", (null == days) ? 0 : days.size());
+            unit.put("capabilities", capabilityArray);
             units.put(unit);
         }
 

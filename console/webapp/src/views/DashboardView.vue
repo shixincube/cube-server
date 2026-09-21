@@ -43,7 +43,11 @@ const hostStatic = ref<HostStaticResponse | null>(null)
 /** 主机动态性能，按秒级轮询 */
 const hostMetrics = ref<HostMetricsResponse | null>(null)
 const hostLoading = ref(false)
-const hostError = ref('')
+/** 两张卡片各自的错误，避免静态信息的报错显示在性能卡片里 */
+const hostStaticError = ref('')
+const hostMetricsError = ref('')
+/** 硬件配置卡片是否展开（与性能卡片分卡后各自独立） */
+const hardwareOpen = ref(true)
 
 const EMPTY_SERIES: JVMSeries = { labels: [], used: [], free: [] }
 
@@ -102,8 +106,9 @@ async function loadHostStatic(): Promise<void> {
   }
   try {
     hostStatic.value = await fetchHostStatic()
+    hostStaticError.value = ''
   } catch (error) {
-    hostError.value = error instanceof Error ? error.message : '读取主机硬件信息失败'
+    hostStaticError.value = error instanceof Error ? error.message : '读取主机硬件信息失败'
   }
 }
 
@@ -116,9 +121,9 @@ async function loadHostStatic(): Promise<void> {
 async function loadHostMetrics(): Promise<void> {
   try {
     hostMetrics.value = await fetchHostMetrics()
-    hostError.value = ''
+    hostMetricsError.value = ''
   } catch (error) {
-    hostError.value = error instanceof Error ? error.message : '读取主机性能数据失败'
+    hostMetricsError.value = error instanceof Error ? error.message : '读取主机性能数据失败'
   }
 }
 
@@ -291,51 +296,77 @@ onUnmounted(() => {
       </StatCard>
     </div>
 
-    <div class="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
-      <!-- 左列：主机硬件与性能在上，JVM 内存在下；右列日志自动等高 -->
+    <div class="mt-5 grid grid-cols-1 items-start gap-5 xl:grid-cols-2">
+      <!-- 左列：主机硬件与实时性能，上下两张卡片 -->
       <div class="flex flex-col gap-5">
-        <!-- 主机硬件与性能 -->
+        <!-- 主机硬件配置：右上角按钮可折叠 / 展开 -->
         <section class="card flex flex-col">
           <div class="card-header">
             <div>
-              <h2 class="card-title">主机硬件与性能</h2>
+              <h2 class="card-title">主机硬件配置</h2>
               <p class="mt-0.5 text-xs text-slate-400">
-                控制台所在服务器的硬件配置与实时运行指标
+                控制台所在服务器的静态硬件信息 · 5 分钟缓存
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="pill pill-neutral">
+                <AppIcon name="server" :size="12" />
+                {{ hostName || '本机' }}
+              </span>
+              <button
+                type="button"
+                class="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                :aria-expanded="hardwareOpen"
+                :aria-label="hardwareOpen ? '折叠硬件配置' : '展开硬件配置'"
+                :title="hardwareOpen ? '折叠硬件配置' : '展开硬件配置'"
+                @click="hardwareOpen = !hardwareOpen"
+              >
+                <AppIcon
+                  name="chevronDown"
+                  :size="16"
+                  class="transition-transform"
+                  :class="hardwareOpen ? '' : '-rotate-90'"
+                />
+              </button>
+            </div>
+          </div>
+
+          <div v-show="hardwareOpen" class="card-body">
+            <p v-if="hostStaticError" class="mb-3 flex items-center gap-1.5 text-xs text-amber-600">
+              <AppIcon name="warning" :size="13" />
+              {{ hostStaticError }}
+            </p>
+            <HostHardwarePanel :info="hostStatic" :loading="hostLoading" />
+          </div>
+        </section>
+
+        <!-- 主机实时性能：CPU / 内存 / 网络 / 磁盘 / JVM / 线程 依次展示 -->
+        <section class="card flex flex-col">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">主机实时性能</h2>
+              <p class="mt-0.5 text-xs text-slate-400">
+                每 5 秒采样一次，曲线保留最近 5 分钟
               </p>
             </div>
             <span class="pill pill-neutral">
-              <AppIcon name="server" :size="12" />
-              {{ hostName || '本机' }}
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              主机已运行 {{ hostUptimeText }}
             </span>
           </div>
 
           <div class="card-body">
-            <p v-if="hostError" class="mb-3 flex items-center gap-1.5 text-xs text-amber-600">
+            <p v-if="hostMetricsError" class="mb-3 flex items-center gap-1.5 text-xs text-amber-600">
               <AppIcon name="warning" :size="13" />
-              {{ hostError }}
+              {{ hostMetricsError }}
             </p>
-
-            <!-- 静态信息 -->
-            <div class="mb-3 flex items-center justify-between">
-              <h3 class="text-xs font-semibold tracking-wide text-slate-600">硬件配置</h3>
-              <span class="text-[11px] text-slate-400">静态 · 5 分钟缓存</span>
-            </div>
-            <HostHardwarePanel :info="hostStatic" :loading="hostLoading" />
-
-            <div class="my-4 border-t border-slate-200" />
-
-            <!-- 动态信息 -->
-            <div class="mb-3 flex items-center justify-between">
-              <h3 class="text-xs font-semibold tracking-wide text-slate-600">实时性能</h3>
-              <span class="flex items-center gap-1.5 text-[11px] text-slate-400">
-                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                每 5 秒采样 · 主机已运行 {{ hostUptimeText }}
-              </span>
-            </div>
             <HostPerformancePanel :metrics="hostMetrics" :loading="hostLoading" />
           </div>
         </section>
+      </div>
 
+      <!-- 右列：JVM 内存 + 实时日志（日志高度固定，不再被左列撑高） -->
+      <div class="flex flex-col gap-5">
         <!-- JVM 内存 -->
         <section class="card flex flex-col">
           <div class="card-header">
@@ -376,50 +407,56 @@ onUnmounted(() => {
             />
           </div>
         </section>
-      </div>
 
-      <!-- 实时日志 -->
-      <section class="card flex flex-col overflow-hidden">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">实时日志</h2>
-            <p class="mt-0.5 text-xs text-slate-400">每 10 秒增量拉取，每个视图保留最近 80 行</p>
+        <!-- 实时日志：视口高度固定，避免被左列的高卡片一起撑高 -->
+        <section class="card flex flex-col overflow-hidden">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">实时日志</h2>
+              <p class="mt-0.5 text-xs text-slate-400">
+                每 10 秒增量拉取，视口固定高度（约 27 行），每个视图保留最近 80 行
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div class="flex flex-wrap gap-1.5 px-5 pt-3 pb-1">
-          <button
-            v-for="source in logSources"
-            :key="source.key"
-            type="button"
-            class="rounded-lg px-2.5 py-1 text-xs font-medium transition"
-            :class="
-              activeLogTab === source.key
-                ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-200 ring-inset'
-                : 'text-slate-500 hover:bg-slate-100'
-            "
-            @click="activeLogTab = source.key"
-          >
-            {{ source.label }}
-          </button>
-        </div>
+          <div class="flex flex-wrap gap-1.5 px-5 pt-3 pb-1">
+            <button
+              v-for="source in logSources"
+              :key="source.key"
+              type="button"
+              class="rounded-lg px-2.5 py-1 text-xs font-medium transition"
+              :class="
+                activeLogTab === source.key
+                  ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-200 ring-inset'
+                  : 'text-slate-500 hover:bg-slate-100'
+              "
+              @click="activeLogTab = source.key"
+            >
+              {{ source.label }}
+            </button>
+          </div>
 
-        <div class="h-80 min-h-0 flex-1 border-t border-slate-100">
-          <LogPanel
-            v-if="activeLogTab === 'console'"
-            key="console"
-            source-key="console"
-            :fetcher="queryConsoleLogs"
-          />
-          <template v-else>
+          <!--
+            固定高度：原先用 flex-1 会被左列卡片一起撑高（实测 1370px / 67 行），
+            改为 624px 后视口 578px、可见约 27 行。LogPanel 内部还有约 46px 的过滤工具栏。
+          -->
+          <div class="h-[624px] min-h-0 border-t border-slate-100">
             <LogPanel
-              :key="activeLogTab"
-              :source-key="activeLogTab"
-              :fetcher="(start: number) => queryServerLogs(activeLogTab, start)"
+              v-if="activeLogTab === 'console'"
+              key="console"
+              source-key="console"
+              :fetcher="queryConsoleLogs"
             />
-          </template>
-        </div>
-      </section>
+            <template v-else>
+              <LogPanel
+                :key="activeLogTab"
+                :source-key="activeLogTab"
+                :fetcher="(start: number) => queryServerLogs(activeLogTab, start)"
+              />
+            </template>
+          </div>
+        </section>
+      </div>
     </div>
   </div>
 </template>

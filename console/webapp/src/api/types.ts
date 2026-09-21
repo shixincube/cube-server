@@ -286,7 +286,31 @@ export interface StatisticResponse {
 /** AI 单元的工作状态 */
 export type UnitState = 'online' | 'offline' | 'inactive'
 
-/** AI 单元（ID 十进制位数大于等于 6 且小于 8 位的联系人） */
+/**
+ * AI 单元能力（后端 `AICapability`）。
+ *
+ * 能力挂在 AIGC 单元上，而单元以 Contact 为物理实体：一个物理实体上可以注册多个单元，
+ * 因此台账的一行（一个物理实体）会对应一个能力数组。能力只存在于节点内存，由节点周期上报。
+ */
+export interface UnitCapability {
+  /** 能力名，例如 TextGeneration */
+  name: string
+  /** 能力所属任务类型，例如 NaturalLanguageProcessing */
+  task: string
+  version?: string
+  /** 单一子任务时后端给字符串 */
+  subtask?: string
+  /** 多个子任务时后端给数组 */
+  subtasks?: string[]
+  description: string
+}
+
+/**
+ * AI 单元（ID 十进制位数大于等于 6 且小于 8 位的联系人）。
+ *
+ * 注意：这里的「一行」是一个 Contact 物理实体，不是单个 AIGC 单元实例——
+ * 同一个实体上可能注册了多个单元，能力数组即由这些单元汇总而来。
+ */
 export interface UnitInfo {
   id: number
   name: string
@@ -305,6 +329,13 @@ export interface UnitInfo {
   firstActiveTime: number
   /** 回溯窗口内的活跃天数 */
   activeDays: number
+  /**
+   * 该物理实体当前承载的能力。
+   *
+   * 来自节点上报（约每分钟一次），节点未上报或上报已过期时为空数组。
+   * 字段可选是为了兼容尚未升级的后端。
+   */
+  capabilities?: UnitCapability[]
 }
 
 /** 单元活跃时段切片 */
@@ -342,6 +373,8 @@ export interface UnitOverviewResponse {
   peak: UnitTimeSlice | null
   timeline: UnitTimeSlice[]
   units: UnitInfo[]
+  /** 最近一次收到单元能力上报的时间戳，0 表示控制台从未收到过（能力列会全空） */
+  unitReportTime?: number
 }
 
 /** 更新调度机配置时提交的数据体 */

@@ -40,6 +40,10 @@ python3 webapp/mock/mock_console_server.py web 8899
 mock 返回的 JSON 结构对齐后端 `toJSON()`，但**不校验凭据、数据全为内存假数据**，
 仅限本地联调，不可部署到任何可被外部访问的环境。
 
+`/host/static`、`/host/metrics` 也已 mock：动态指标用正弦波随时间漂移，方便观察实时曲线是否在动。
+**注意单位**：JVM 报告里的内存是 **MB**（控制台入库前已按 1048576 换算），mock 必须保持一致，
+否则前端纵轴会大三个数量级。
+
 ## 与后端的接口约定
 
 前端依赖以下后端行为（见 `console/src/cube/console/container/handler/`）：
@@ -53,6 +57,12 @@ mock 返回的 JSON 结构对齐后端 `toJSON()`，但**不校验凭据、数�
    参数 `tag` / `path` / `pwd`（同样为 MD5 摘要）。
 4. **路由回退**：`SpaFallbackHandler` 会把非静态文件、非接口路径回退到 `index.html`，
    前端因此可以安全使用 history 路由模式。
+5. **AI 单元能力**：`GET /statistic/units` 的每个单元带 `capabilities` 数组与顶层
+   `unitReportTime`。能力**不在任何数据库里**，而是由 service 进程的 `Daemon` 每约 60 秒
+   经既有节点上报通道（`POST /report`，报文名 `UnitReport`）送到控制台内存快照，
+   控制台按物理实体 ID 归并、跨节点同能力去重，TTL 5 分钟。
+   因此：**能力可能为空**（节点未上报 / 该实体上没有 AIGC 单元），
+   前端以 `--` 并按 `unitReportTime` 提示数据新鲜度，不要把它当成统计口径缺失。
 
 ## 目录结构
 
@@ -65,7 +75,9 @@ src/
 │   └── types.ts        与后端 toJSON() 严格对齐的类型定义
 ├── charts/         ECharts 按需注册
 ├── components/     布局、表格、弹窗、日志面板、监视器等通用组件
-├── composables/    useChart（图表生命周期）、usePolling（轮询）
+│                    （AppShell 为外壳：侧边栏导航 + 顶栏 + 内容区，侧边栏支持收窄为图标条；
+│                     RealtimeAreaChart 为任务管理器风格的实时曲线）
+├── composables/    useChart（图表生命周期）、usePolling（轮询）、useMediaQuery（断点判断）
 ├── mock/           本地联调用的 mock 后端（纯 Python 标准库，无依赖）
 ├── router/         路由表与登录守卫
 ├── stores/         Pinia：登录态、服务器清单、全局通知
