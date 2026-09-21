@@ -8,5 +8,9 @@ package cube.service.aigc.event;
 
 public final class Events {
 
-    public final static String OmniVLSegment = "OmniVLSegment";
+    public final static String StreamStarted = "streamStarted";
+
+    public final static String StreamStopped = "streamStopped";
+
+    public final static String Segment = "segment";
 }

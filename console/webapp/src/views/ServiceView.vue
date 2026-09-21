@@ -308,16 +308,21 @@ usePolling(loadPerformance, 60000, { immediate: false })
       </div>
 
       <div class="overflow-x-auto">
-        <table class="data-table">
+        <!--
+          `table-fixed` + 明确列宽，理由同调度机页；本页「操作」有 3 个按钮（最小需 236px），
+          因此把「标签」收窄到 152px，7 列显式宽度合计 876px，余量留给自动列「部署路径」。
+        -->
+        <table class="data-table table-fixed min-w-[60rem]">
           <thead>
             <tr>
-              <th class="w-14">#</th>
-              <th class="w-44">标签</th>
+              <th class="w-[40px]">#</th>
+              <th class="w-[152px]">标签</th>
+              <th class="w-[78px]">版本号</th>
               <th>部署路径</th>
-              <th class="w-28">状态</th>
-              <th class="w-52">负载</th>
-              <th class="w-40">启动时间</th>
-              <th class="w-72 text-right">操作</th>
+              <th class="w-[100px]">状态</th>
+              <th class="w-[142px]">负载</th>
+              <th class="w-[132px]">启动时间</th>
+              <th class="w-[240px] text-right">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -327,9 +332,12 @@ usePolling(loadPerformance, 60000, { immediate: false })
                 <span class="font-medium text-slate-800">{{ row.server.tag }}</span>
                 <p class="tabular text-[11px] text-slate-400">{{ row.server.name }}</p>
               </td>
+              <td class="tabular text-xs whitespace-nowrap text-slate-600">
+                {{ row.server.version || '--' }}
+              </td>
               <td>
                 <span
-                  class="tabular text-xs break-all text-slate-600"
+                  class="tabular text-xs break-words text-slate-600"
                   :title="row.server.deployPath"
                 >
                   {{ row.server.deployPath }}
@@ -342,7 +350,7 @@ usePolling(loadPerformance, 60000, { immediate: false })
                   {{ row.server.running ? '采集中的…' : '--' }}
                 </span>
               </td>
-              <td class="tabular text-xs text-slate-600">
+              <td class="tabular text-xs whitespace-nowrap text-slate-600">
                 {{ row.perf ? formatTimeMDHMS(row.perf.startTime) : '--' }}
               </td>
               <td>
@@ -377,7 +385,7 @@ usePolling(loadPerformance, 60000, { immediate: false })
             </tr>
 
             <tr v-if="rows.length === 0">
-              <td colspan="7">
+              <td colspan="8">
                 <EmptyState
                   icon="server"
                   title="暂无已部署的服务单元"

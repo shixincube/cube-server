@@ -35,10 +35,16 @@ public class EventCenter {
     }
 
     public void start(AIGCService service) {
-        this.addListener(Events.OmniVLSegment, new MultimodalHandler(service));
+        MultimodalHandler multimodalHandler = new MultimodalHandler(service);
+        this.addListener(Events.StreamStarted, multimodalHandler);
+        this.addListener(Events.StreamStopped, multimodalHandler);
+        this.addListener(Events.Segment, multimodalHandler);
     }
 
     public void stop() {
+        this.removeListener(Events.StreamStarted);
+        this.removeListener(Events.StreamStopped);
+        this.removeListener(Events.Segment);
     }
 
     public void putUnitMeta(String id, UnitMeta unitMeta) {

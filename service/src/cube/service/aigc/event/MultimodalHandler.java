@@ -23,41 +23,34 @@ public class MultimodalHandler implements EventListener {
 
     @Override
     public void onEvent(EventCenter center, Event event) {
-        if (Events.OmniVLSegment.equalsIgnoreCase(event.name)) {
-            // 分段内容
-            JSONObject payload = event.payload;
-            /* JSON 结构
-            {
-                "sequence": 5,
-                "performance": {
-                    "elapsed": "5581",
-                    "inputTokens": 2526,
-                    "outputTokens": 9
-                },
-                "streamId": "4a605e54-e7d0-4b00-af4d-7c6764e1335a",
-                "response": "无明显变化",
-                "timestamp": 1789131476537,
-                "timeRange": {
-                    "endOffset": 53.594,
-                    "startOffset": 45.594,
-                    "endTimestamp": 1789131470677,
-                    "startTimestamp": 1789131462677
+        try {
+            if (Events.StreamStarted.equalsIgnoreCase(event.name)) {
+                // Nothing
+            }
+            else if (Events.StreamStopped.equalsIgnoreCase(event.name)) {
+                JSONObject payload = event.payload;
+                String id = payload.getString("streamId");
+                // 移除
+                EventCenter.getInstance().removeUnitMeta(id);
+            }
+            else if (Events.Segment.equalsIgnoreCase(event.name)) {
+                // 分段内容
+                JSONObject payload = event.payload;
+                String id = payload.getString("streamId");
+                UnitMeta unitMeta = center.getUnitMeta(id);
+                if (null != unitMeta) {
+                    MultimodalUnitMeta multimodalUnitMeta = (MultimodalUnitMeta) unitMeta;
+                    Usage usage = new Usage(payload.getJSONObject("performance"));
+                    Logger.d(MultimodalUnitMeta.class, "Update token usage: " +
+                            usage.inputTokens + "/" + usage.outputTokens);
+                    this.service.getStorage().updateUsage(multimodalUnitMeta.getChannel().getAuthToken().getContactId(),
+                            multimodalUnitMeta.unit.getCapability().getName(),
+                            usage.outputTokens,
+                            usage.inputTokens);
                 }
             }
-            */
-
-            String id = payload.getString("streamId");
-            UnitMeta unitMeta = center.getUnitMeta(id);
-            if (null != unitMeta) {
-                MultimodalUnitMeta multimodalUnitMeta = (MultimodalUnitMeta) unitMeta;
-                Usage usage = new Usage(payload.getJSONObject("performance"));
-                Logger.d(MultimodalUnitMeta.class, "Update token usage: " +
-                        usage.inputTokens + "/" + usage.outputTokens);
-                this.service.getStorage().updateUsage(multimodalUnitMeta.getChannel().getAuthToken().getContactId(),
-                        multimodalUnitMeta.unit.getCapability().getName(),
-                        usage.outputTokens,
-                        usage.inputTokens);
-            }
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "", e);
         }
     }
 }

@@ -568,16 +568,24 @@ usePolling(loadPerformance, 60000, { immediate: false })
       </div>
 
       <div class="overflow-x-auto">
-        <table class="data-table">
+        <!--
+          `table-fixed` + 明确列宽：默认 table-layout:auto 下 th 的宽度只是"偏好"，浏览器会把余量
+          按内容宽度分配，出现"部署路径被挤成逐字换行、时间戳折成两行"的问题。
+          这里按最窄目标 1280（内容盒 990px）反推各列宽度：7 列显式宽度合计 832px，
+          余量全部留给唯一的自动列「部署路径」（1280 下 158px，1920 下约 800px），路径不会长期贴边。
+          `min-w-[60rem]` 是下限兜底：容器再窄就横向滚动，而不是继续压缩各列。
+        -->
+        <table class="data-table table-fixed min-w-[60rem]">
           <thead>
             <tr>
-              <th class="w-14">#</th>
-              <th class="w-44">标签</th>
+              <th class="w-[40px]">#</th>
+              <th class="w-[176px]">标签</th>
+              <th class="w-[78px]">版本号</th>
               <th>部署路径</th>
-              <th class="w-28">状态</th>
-              <th class="w-52">负载</th>
-              <th class="w-40">启动时间</th>
-              <th class="w-56 text-right">操作</th>
+              <th class="w-[100px]">状态</th>
+              <th class="w-[142px]">负载</th>
+              <th class="w-[132px]">启动时间</th>
+              <th class="w-[172px] text-right">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -587,8 +595,11 @@ usePolling(loadPerformance, 60000, { immediate: false })
                 <span class="font-medium text-slate-800">{{ row.server.tag }}</span>
                 <p class="tabular text-[11px] text-slate-400">{{ row.server.name }}</p>
               </td>
+              <td class="tabular text-xs whitespace-nowrap text-slate-600">
+                {{ row.server.version || '--' }}
+              </td>
               <td>
-                <span class="tabular text-xs break-all text-slate-600" :title="row.server.deployPath">
+                <span class="tabular text-xs break-words text-slate-600" :title="row.server.deployPath">
                   {{ row.server.deployPath }}
                 </span>
               </td>
@@ -599,7 +610,7 @@ usePolling(loadPerformance, 60000, { immediate: false })
                   {{ row.server.running ? '采集中的…' : '--' }}
                 </span>
               </td>
-              <td class="tabular text-xs text-slate-600">
+              <td class="tabular text-xs whitespace-nowrap text-slate-600">
                 {{ row.perf ? formatTimeMDHMS(row.perf.startTime) : '--' }}
               </td>
               <td>
@@ -626,7 +637,7 @@ usePolling(loadPerformance, 60000, { immediate: false })
             </tr>
 
             <tr v-if="rows.length === 0">
-              <td colspan="7">
+              <td colspan="8">
                 <EmptyState
                   icon="sitemap"
                   title="暂无已部署的调度机"

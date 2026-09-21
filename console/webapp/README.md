@@ -63,6 +63,12 @@ mock 返回的 JSON 结构对齐后端 `toJSON()`，但**不校验凭据、数�
    控制台按物理实体 ID 归并、跨节点同能力去重，TTL 5 分钟。
    因此：**能力可能为空**（节点未上报 / 该实体上没有 AIGC 单元），
    前端以 `--` 并按 `unitReportTime` 提示数据新鲜度，不要把它当成统计口径缺失。
+6. **节点版本号**：`GET /servers/dispatcher`、`GET /servers/service` 的每一项都带 `version`
+   （调度机取 `cube.dispatcher.Version`，服务单元取 `cube.service.Version`）。
+   值来自**该节点部署目录** `libs/` 里 jar 内的同名类，而不是控制台自身的 classpath，
+   因此一个控制台下挂着不同构建版本的节点时能显示各自的真实版本；
+   目录不可读、jar 里没有该类、控制台 classpath 也没有时，后端给**空串**（字段一定存在），
+   前端以 `--` 兜底。
 
 ## 目录结构
 

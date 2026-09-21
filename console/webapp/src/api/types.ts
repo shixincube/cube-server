@@ -105,6 +105,11 @@ export interface DispatcherServer {
   tag: string
   deployPath: string
   name: string
+  /**
+   * 部署目录里 jar 内 `cube.dispatcher.Version` 的版本串（形如 `3.0.157`）。
+   * 控制台读不到时为**空串**（不会缺字段）。
+   */
+  version: string
   cellConfigFile: string
   propertiesFile: string
   running: boolean
@@ -126,6 +131,11 @@ export interface ServiceServer {
   configPath: string
   celletsPath: string
   name: string
+  /**
+   * 部署目录里 jar 内 `cube.service.Version` 的版本串（形如 `3.0.250`）。
+   * 控制台读不到时为**空串**（不会缺字段）。
+   */
+  version: string
   running: boolean
   server: AccessPoint
   logLevel: string

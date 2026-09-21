@@ -67,11 +67,13 @@ def series_cache_config(host, port):
     }
 
 
-def dispatcher_server(tag="cube", path="/data/cube/dispatcher", running=True, name_suffix=""):
+def dispatcher_server(tag="cube", path="/data/cube/dispatcher", running=True, name_suffix="",
+                      version="3.0.157"):
     return {
         "tag": tag,
         "deployPath": path,
         "name": "%s#dispatcher#%s%s" % (tag, 6800, name_suffix),
+        "version": version,
         "cellConfigFile": path + "/config/cell.xml",
         "propertiesFile": path + "/config/dispatcher.properties",
         "running": running,
@@ -93,13 +95,15 @@ def dispatcher_server(tag="cube", path="/data/cube/dispatcher", running=True, na
     }
 
 
-def service_server(tag="cube", path="/data/cube/service", running=True, name_suffix=""):
+def service_server(tag="cube", path="/data/cube/service", running=True, name_suffix="",
+                   version="3.0.250"):
     return {
         "tag": tag,
         "deployPath": path,
         "configPath": path + "/config",
         "celletsPath": path + "/cellets",
         "name": "%s#service#%s%s" % (tag, 7001, name_suffix),
+        "version": version,
         "running": running,
         "server": ap("10.0.0.7", 7001),
         "logLevel": "INFO",
@@ -127,12 +131,13 @@ def service_server(tag="cube", path="/data/cube/service", running=True, name_suf
 
 DISPATCHERS = [
     dispatcher_server("cube", "/data/cube/dispatcher", True),
-    dispatcher_server("cube", "/data/cube/dispatcher-bak", False, "-bak"),
+    # `-bak` 一行刻意给空版本号，用于验证「读不到版本时显示 --」
+    dispatcher_server("cube", "/data/cube/dispatcher-bak", False, "-bak", ""),
 ]
 
 SERVICES = [
     service_server("cube", "/data/cube/service", True),
-    service_server("cube", "/data/cube/service-bak", False, "-bak"),
+    service_server("cube", "/data/cube/service-bak", False, "-bak", ""),
 ]
 
 USER = {"name": "admin", "avatar": "/assets/img/avatar.png",

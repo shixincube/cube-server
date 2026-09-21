@@ -8,6 +8,7 @@ package cube.console.mgmt;
 
 import cube.common.JSONable;
 import cube.console.tool.Detector;
+import cube.console.tool.NodeVersion;
 import cube.util.NodeName;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -174,6 +175,9 @@ public class ServiceServer implements JSONable {
         json.put("configPath", this.configPath);
         json.put("celletsPath", this.celletsPath);
         json.put("name", this.name);
+        // 版本号取自部署目录 `libs/` 里 jar 内的 `cube.service.Version`，读不到时置空串
+        String version = NodeVersion.read(this.deployPath, NodeVersion.SERVICE);
+        json.put("version", null == version ? "" : version);
 
         json.put("running", this.running);
 
