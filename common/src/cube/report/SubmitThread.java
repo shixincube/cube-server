@@ -45,9 +45,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *     节点彻底静默，且必须重启进程才能恢复。</li>
  *     <li>整个生命周期只创建一个 {@code HttpClient} 并在结束时关闭，避免每次上报都新建
  *     客户端（含线程池与 Selector）造成的资源抖动。</li>
+ *     <li><b>提交线程的调度改为「电平触发」</b>：释放 {@code running} 标志位后再次确认队列，
+ *     若期间有新报告入队则由同一线程继续排空。原实现释放标志位与最后一次 {@code poll()}
+ *     之间存在窗口，落在这个窗口里的报告要等下一次 {@code submitReport}（10~60 秒后）
+ *     才会被提交，也是报告「时有时无」的一个来源。</li>
  *     <li><b>控制台未启动属预期情况</b>：连接类异常（拒绝连接、DNS 失败、连接超时等）
  *     只以 DEBUG 等级输出一行提示，不打印异常堆栈，避免服务端日志被刷屏；
  *     其它异常仍按 WARN 记录，以免掩盖真实缺陷。</li>
+ *     <li><b>每次提交结果回传给 {@link ReportService}</b>：连续失败 10 次后由
+ *     {@link ReportService#onSubmitResult(boolean)} 触发 30 分钟暂停期，
+ *     本轮剩余报告立即放弃，不再产生无效请求。</li>
  * </ul>
  */
 public class SubmitThread extends Thread {
@@ -82,6 +89,8 @@ public class SubmitThread extends Thread {
      */
     private final static long CONNECT_TIMEOUT = 3 * 1000;
 
+    private ReportService service;
+
     private List<String> hostUrls;
 
     private ConcurrentLinkedQueue<Report> queue;
@@ -92,9 +101,10 @@ public class SubmitThread extends Thread {
 
     private AtomicBoolean running;
 
-    public SubmitThread(List<String> hostUrls, ConcurrentLinkedQueue<Report> queue,
+    public SubmitThread(ReportService service, List<String> hostUrls, ConcurrentLinkedQueue<Report> queue,
                         int maxQueueLength, Map<Report, Integer> retries, AtomicBoolean running) {
         super("SubmitThread");
+        this.service = service;
         this.hostUrls = hostUrls;
         this.queue = queue;
         this.maxQueueLength = maxQueueLength;
@@ -110,12 +120,24 @@ public class SubmitThread extends Thread {
             client.setConnectTimeout(CONNECT_TIMEOUT);
             client.start();
 
-            this.drain(client);
+            while (true) {
+                this.drain(client);
+
+                // 先释放标志位再判断队列：若释放瞬间有新报告入队，由本线程继续处理。
+                // 否则该报告会滞留到下一个上报周期（10~60 秒后）才被提交。
+                this.running.set(false);
+                if (this.queue.isEmpty() || !this.running.compareAndSet(false, true)) {
+                    return;
+                }
+            }
         }
         catch (Throwable t) {
             Logger.w(this.getClass(), "Submit thread aborted", t);
         }
         finally {
+            // 必须复位，否则上报链路会永久静默
+            this.running.set(false);
+
             if (null != client) {
                 try {
                     client.stop();
@@ -124,22 +146,41 @@ public class SubmitThread extends Thread {
                     // Nothing
                 }
             }
-
-            // 必须复位，否则上报链路会永久静默
-            this.running.set(false);
         }
     }
 
     /**
      * 排空队列。失败的报告在重试预算内重新入队尾，留给下一轮提交（不在此轮内热重试），
      * 预算耗尽即丢弃。重试计数保存在 {@link ReportService} 中，跨线程累计。
+     *
+     * <p>
+     * 每次提交的结果回传给 {@link ReportService}。处于暂停期，或本次提交触发暂停期时，
+     * 都不再发起任何请求，直接丢弃本轮剩余报告。
+     * </p>
      */
     private void drain(HttpClient client) {
         List<Report> retryLater = new ArrayList<>();
 
         Report report = null;
         while ((report = this.queue.poll()) != null) {
+            if (this.service.isSuspended()) {
+                // 已进入暂停期：不再发起任何请求，丢弃残留报告后退出
+                retryLater.clear();
+                while (null != this.queue.poll()) {
+                    // 丢弃
+                }
+                return;
+            }
+
             int result = this.submit(report, client);
+
+            this.service.onSubmitResult(SUBMITTED == result);
+
+            if (this.service.isSuspended()) {
+                // 本次提交触发暂停期：ReportService 已清空队列，本轮剩余报告直接放弃
+                retryLater.clear();
+                return;
+            }
 
             if (SUBMITTED == result) {
                 this.retries.remove(report);
