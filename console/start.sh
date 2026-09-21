@@ -145,9 +145,24 @@ for file in "$LIBDIR"/*.jar; do
 	[ -f "$file" ] && CLASSPATH="$CLASSPATH:$file"
 done
 
+# 4) console 专属依赖目录 $PRGDIR/libs（oshi/jna 等只给 console 用的三方包）。
+#    注意这里是"追加"而不是继续上面的"命中即 break"：开发仓里 ../deploy/libs 必然存在，
+#    若把它并进前面那个 for，console/libs 永远不会被加进 classpath。
+#    追加在最后，保证同名 jar 以 LIBDIR（如 slf4j-api）里的那份为准。
+LOCAL_LIBDIR=""
+if [ -d "$PRGDIR/libs" ]; then
+	LOCAL_LIBDIR="$PRGDIR/libs"
+	for file in "$LOCAL_LIBDIR"/*.jar; do
+		[ -f "$file" ] && CLASSPATH="$CLASSPATH:$file"
+	done
+fi
+
 echo "Console jar : $CONSOLE_JAR"
 echo "Cell jar    : $CELL_JAR"
 echo "Libs dir    : $LIBDIR"
+if [ -n "$LOCAL_LIBDIR" ]; then
+	echo "Local libs  : $LOCAL_LIBDIR"
+fi
 
 JAVA_OPTS="-Dfile.encoding=UTF-8 -Duser.timezone=GMT+08 -Xmx1024m"
 

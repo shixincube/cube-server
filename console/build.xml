@@ -13,6 +13,8 @@
 
 	<property name="src.dir" value="src" />
 	<property name="lib.dir" value="../../cube-server-dependencies" />
+	<!-- console 专属三方依赖（oshi-core / jna / slf4j-api 等），随模块一起提交 -->
+	<property name="libs.dir" value="libs" />
 	<property name="common.dir" value="../build" />
 	<property name="doc.dir" value="doc" />
 
@@ -27,6 +29,9 @@
 		<fileset dir="${common.dir}">
 			<include name="cube-common-*.jar" />
 			<exclude name="cube-console-*.jar" />
+		</fileset>
+		<fileset dir="${libs.dir}">
+			<include name="*.jar" />
 		</fileset>
 		<pathelement path="${build.classes}" />
 	</path>
@@ -126,6 +131,9 @@
 					<include name="cube-common-*.jar" />
 					<include name="cube-console-*.jar" />
 				</fileset>
+				<fileset dir="${libs.dir}">
+					<include name="*.jar" />
+				</fileset>
 			</classpath>
 		</java>
 	</target>
@@ -143,6 +151,9 @@
 				<fileset dir="${common.dir}">
 					<include name="cube-common-*.jar" />
 					<include name="cube-console-*.jar" />
+				</fileset>
+				<fileset dir="${libs.dir}">
+					<include name="*.jar" />
 				</fileset>
 			</classpath>
 		</java>

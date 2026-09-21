@@ -36,6 +36,7 @@ public class SpaFallbackHandler extends AbstractHandler {
             "/deploy",
             "/auth",
             "/statistic",
+            "/host",
             "/log",
             "/server-report",
             "/report",

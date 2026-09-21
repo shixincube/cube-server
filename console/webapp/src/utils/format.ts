@@ -115,3 +115,92 @@ export function formatDuration(startTime: number, now = Date.now()): string {
   }
   return `${minutes} 分`
 }
+
+/** 字节数转人类可读容量（自适应 B / KB / MB / GB / TB） */
+export function formatBytes(bytes: number | undefined | null): string {
+  if (bytes === undefined || bytes === null || !Number.isFinite(bytes) || bytes < 0) {
+    return '--'
+  }
+  if (bytes < KB) {
+    return `${Math.round(bytes)} B`
+  }
+  if (bytes < MB) {
+    return `${(bytes / KB).toFixed(1)} KB`
+  }
+  if (bytes < GB) {
+    return `${(bytes / MB).toFixed(1)} MB`
+  }
+  if (bytes < TB) {
+    return `${(bytes / GB).toFixed(1)} GB`
+  }
+  return `${(bytes / TB).toFixed(1)} TB`
+}
+
+/** 字节/秒转人类可读速率，如 `1.2 MB/s` */
+export function formatRate(bytesPerSec: number | undefined | null): string {
+  if (bytesPerSec === undefined || bytesPerSec === null || !Number.isFinite(bytesPerSec)) {
+    return '--'
+  }
+  return `${formatBytes(bytesPerSec)}/s`
+}
+
+/** 链路速率（bit/s）转人类可读文案，如 `1000 Mbps` */
+export function formatLinkSpeed(bitsPerSec: number | undefined | null): string {
+  if (!bitsPerSec || !Number.isFinite(bitsPerSec) || bitsPerSec <= 0) {
+    return '--'
+  }
+  if (bitsPerSec >= 1e9) {
+    return `${(bitsPerSec / 1e9).toFixed(1)} Gbps`
+  }
+  if (bitsPerSec >= 1e6) {
+    return `${Math.round(bitsPerSec / 1e6)} Mbps`
+  }
+  return `${Math.round(bitsPerSec / 1e3)} Kbps`
+}
+
+/** 频率（Hz）转人类可读主频，如 `2.70 GHz` */
+export function formatFrequency(hz: number | undefined | null): string {
+  if (!hz || !Number.isFinite(hz) || hz <= 0) {
+    return '--'
+  }
+  if (hz >= 1e9) {
+    return `${(hz / 1e9).toFixed(2)} GHz`
+  }
+  if (hz >= 1e6) {
+    return `${Math.round(hz / 1e6)} MHz`
+  }
+  return `${Math.round(hz / 1e3)} KHz`
+}
+
+/** 0~1 的比值转百分比整数 */
+export function formatPercent(ratio: number | undefined | null): string {
+  if (ratio === undefined || ratio === null || !Number.isFinite(ratio)) {
+    return '--'
+  }
+  return `${Math.round(Math.max(0, Math.min(1, ratio)) * 100)}%`
+}
+
+/** 已运行时长：由持续秒数得到「x 天 x 小时 x 分」 */
+export function formatUptimeSeconds(seconds: number | undefined | null): string {
+  if (!seconds || !Number.isFinite(seconds) || seconds <= 0) {
+    return '--'
+  }
+  const days = Math.floor(seconds / 86400)
+  const hours = Math.floor((seconds % 86400) / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  if (days > 0) {
+    return `${days} 天 ${hours} 小时`
+  }
+  if (hours > 0) {
+    return `${hours} 小时 ${minutes} 分`
+  }
+  return `${minutes} 分`
+}
+
+/** 已运行时长：由毫秒得到「x 天 x 小时 x 分」 */
+export function formatUptimeMillis(millis: number | undefined | null): string {
+  if (!millis) {
+    return '--'
+  }
+  return formatUptimeSeconds(Math.floor(millis / 1000))
+}

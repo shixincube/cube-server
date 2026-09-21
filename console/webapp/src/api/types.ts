@@ -358,3 +358,269 @@ export interface DispatcherConfigPayload {
   cellets: string[]
   directors: Director[]
 }
+
+/* ------------------------------------------------------------------ */
+/* 主机硬件与性能（GET /host/static、GET /host/metrics）                */
+/* ------------------------------------------------------------------ */
+
+/** 主机基本信息 */
+export interface HostBasicInfo {
+  hostName: string
+  osName: string
+  osVersion: string
+  osArch: string
+  timezone: string
+  osFamily?: string
+  osManufacturer?: string
+  bitness?: number
+  /** 主机启动时间（毫秒） */
+  bootTime?: number
+  osVersionInfo?: string
+  osBuildNumber?: string
+  osCodeName?: string
+}
+
+/** 整机 / 主板 / BIOS 信息 */
+export interface HostSystemInfo {
+  manufacturer?: string
+  model?: string
+  serialNumber?: string
+  uuid?: string
+  firmware?: {
+    manufacturer?: string
+    name?: string
+    version?: string
+    releaseDate?: string
+  }
+  baseboard?: {
+    manufacturer?: string
+    model?: string
+    version?: string
+    serialNumber?: string
+  }
+}
+
+/** CPU 规格 */
+export interface HostCpuInfo {
+  name?: string
+  vendor?: string
+  family?: string
+  model?: string
+  stepping?: string
+  microarchitecture?: string
+  processorId?: string
+  identifier?: string
+  cpu64bit?: boolean
+  physicalCores?: number
+  logicalCores?: number
+  physicalPackages?: number
+  maxFrequencyHz?: number
+  caches?: { level: number; type: string; sizeBytes: number }[]
+}
+
+/** 内存条 */
+export interface HostMemoryModule {
+  bankLabel: string
+  capacityBytes: number
+  clockSpeedHz: number
+  manufacturer: string
+  memoryType: string
+  partNumber: string
+}
+
+/** 内存规格 */
+export interface HostMemoryInfo {
+  totalBytes?: number
+  pageSizeBytes?: number
+  modules?: HostMemoryModule[]
+}
+
+/** 物理磁盘 */
+export interface HostDiskDrive {
+  name: string
+  model: string
+  serial: string
+  sizeBytes: number
+  partitions: {
+    identification: string
+    name: string
+    type: string
+    label: string
+    sizeBytes: number
+    mountPoint: string
+  }[]
+}
+
+/** 网卡（静态） */
+export interface HostNic {
+  name: string
+  displayName: string
+  up: boolean
+  mtu: number
+  mac: string
+  addresses: string[]
+}
+
+/** 控制台运行时信息 */
+export interface HostRuntimeInfo {
+  javaVersion?: string
+  javaVendor?: string
+  jvmName?: string
+  jvmVersion?: string
+  availableProcessors?: number
+  configuredMaxHeapBytes?: number
+  fileEncoding?: string
+  userName?: string
+  workDir?: string
+  pid?: number
+  startTime?: number
+}
+
+/** `GET /host/static` 响应 */
+export interface HostStaticResponse {
+  sampledAt: number
+  host: HostBasicInfo
+  system: HostSystemInfo
+  cpu: HostCpuInfo
+  memory: HostMemoryInfo
+  diskDrives: HostDiskDrive[]
+  nicList: HostNic[]
+  runtime: HostRuntimeInfo
+}
+
+/** CPU 时间构成占比（0~1） */
+export interface HostCpuBreakdown {
+  user?: number
+  system?: number
+  idle?: number
+  iowait?: number
+  irq?: number
+  nice?: number
+  steal?: number
+}
+
+/** 动态 CPU 指标 */
+export interface HostCpuMetrics {
+  /** 系统整体 CPU 使用率（0~1） */
+  usage?: number
+  breakdown?: HostCpuBreakdown
+  /** 1 / 5 / 15 分钟负载均值，取不到时为 null */
+  loadAverage?: (number | null)[]
+  contextSwitches?: number
+  interrupts?: number
+  logicalCores?: number
+  /** 控制台进程自身 CPU 占用（0~1） */
+  processUsage?: number
+}
+
+/** 动态内存指标 */
+export interface HostMemoryMetrics {
+  totalBytes: number
+  availableBytes: number
+  usedBytes: number
+  /** 使用率（0~1） */
+  usage: number
+  swapTotalBytes: number
+  swapUsedBytes: number
+  swapUsage: number
+}
+
+/** 控制台 JVM 指标 */
+export interface HostJvmMetrics {
+  heapUsedBytes: number
+  heapCommittedBytes: number
+  heapMaxBytes: number
+  heapUsage: number
+  nonHeapUsedBytes: number
+  threadCount: number
+  peakThreadCount: number
+  uptimeMillis: number
+  startTime: number
+}
+
+/** 有流量的网卡明细 */
+export interface HostActiveNic {
+  name: string
+  displayName: string
+  mac: string
+  ipv4: string[]
+  mtu: number
+  linkSpeedBps: number
+  rxBytesTotal: number
+  txBytesTotal: number
+  rxBytesPerSec?: number
+  txBytesPerSec?: number
+  inErrors: number
+  outErrors: number
+}
+
+/** 动态网络指标 */
+export interface HostNetworkMetrics {
+  rxBytesPerSec?: number
+  txBytesPerSec?: number
+  rxBytesTotal: number
+  txBytesTotal: number
+  rxPacketsTotal: number
+  txPacketsTotal: number
+  activeInterfaces: HostActiveNic[]
+}
+
+/** 磁盘吞吐 */
+export interface HostDiskThroughput {
+  name: string
+  model: string
+  sizeBytes: number
+  readBytesTotal: number
+  writeBytesTotal: number
+  readBytesPerSec?: number
+  writeBytesPerSec?: number
+  readsTotal: number
+  writesTotal: number
+  queueLength: number
+}
+
+/** 分区占用 */
+export interface HostPartitionUsage {
+  name: string
+  mount: string
+  type: string
+  local: boolean
+  totalBytes: number
+  usableBytes: number
+  freeBytes: number
+  /** 使用率（0~1） */
+  usage: number
+}
+
+/** 动态磁盘指标 */
+export interface HostDiskMetrics {
+  readBytesPerSec?: number
+  writeBytesPerSec?: number
+  readBytesTotal: number
+  writeBytesTotal: number
+  drives: HostDiskThroughput[]
+  partitions: HostPartitionUsage[]
+}
+
+/** 动态系统指标 */
+export interface HostSystemMetrics {
+  processCount?: number
+  threadCount?: number
+  uptimeSeconds?: number
+  /** 主机启动时间（毫秒） */
+  bootTime?: number
+  openFileDescriptors?: number
+  maxFileDescriptors?: number
+}
+
+/** `GET /host/metrics` 响应 */
+export interface HostMetricsResponse {
+  timestamp: number
+  sampleIntervalSeconds: number
+  cpu?: HostCpuMetrics
+  memory?: HostMemoryMetrics
+  jvm?: HostJvmMetrics
+  network?: HostNetworkMetrics
+  disk?: HostDiskMetrics
+  system?: HostSystemMetrics
+}

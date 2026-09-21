@@ -76,6 +76,7 @@ public final class Handlers {
                 new ServiceHandler(console),
                 new AuthHandler(console),
                 new StatisticDataHandler(console),
+                new HostInfoHandler(),
 
                 new ServerLogHandler(console),
                 new ServerReportHandler(console),
