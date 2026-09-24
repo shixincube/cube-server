@@ -25,9 +25,11 @@ public class MultimodalInput implements JSONable {
 
     public List<JSONObject> history;
 
-    public List<String> files;
+    public List<String> fileCodes;
 
     public List<FileLabel> fileLabels;
+
+    public List<String> streams;
 
     public JSONObject option;
 
@@ -37,7 +39,7 @@ public class MultimodalInput implements JSONable {
         this.unit = json.has("unit") ? json.getString("unit") : "OmniGround";
         this.content = json.getString("content");
         this.history = json.has("history") ? JSONUtils.toObjectList(json.getJSONArray("history")) : null;
-        this.files = json.has("files") ? JSONUtils.toStringList(json.getJSONArray("files")) : new ArrayList<>();
+        this.fileCodes = json.has("files") ? JSONUtils.toStringList(json.getJSONArray("files")) : new ArrayList<>();
         this.option = json.has("option") ? json.getJSONObject("option") : null;
         this.recordable = json.has("recordable") && json.getBoolean("recordable");
     }
@@ -59,8 +61,8 @@ public class MultimodalInput implements JSONable {
             }
             json.put("files", files);
         }
-        else if (null != this.files) {
-            json.put("files", JSONUtils.toStringArray(this.files));
+        else if (null != this.fileCodes) {
+            json.put("files", JSONUtils.toStringArray(this.fileCodes));
         }
         else {
             json.put("files", new JSONArray());
@@ -84,7 +86,12 @@ public class MultimodalInput implements JSONable {
             json.put("history", array);
         }
 
-        json.put("files", JSONUtils.toStringArray(this.files));
+        if (null != this.fileCodes) {
+            json.put("files", JSONUtils.toStringArray(this.fileCodes));
+        }
+        else {
+            json.put("files", new JSONArray());
+        }
 
         if (null != this.option) {
             json.put("option", this.option);

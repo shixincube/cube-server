@@ -93,22 +93,22 @@ public class MultimodalUnitMeta extends UnitMeta {
 
             // 处理文件
             List<FileLabel> fileLabelList = new ArrayList<>();
-            for (String filepath : this.input.files) {
-                if (filepath.startsWith("http")) {
+            for (String fileItem : this.input.fileCodes) {
+                if (fileItem.startsWith("http")) {
                     // 下载文件
-                    FileLabel fileLabel = this.service.downloadFile(this.channel.getAuthToken(), filepath);
+                    FileLabel fileLabel = this.service.downloadFile(this.channel.getAuthToken(), fileItem);
                     if (null != fileLabel) {
                         fileLabelList.add(fileLabel);
                     }
                 }
-                else if (filepath.startsWith("rtsp") || filepath.startsWith("rtmp")) {
+                else if (fileItem.startsWith("rtsp") || fileItem.startsWith("rtmp")) {
                     // RTSP 或 RTMP 视频流
                     fileLabelList = null;
                     break;
                 }
                 else {
                     // 加载文件
-                    FileLabel fileLabel = this.service.getFile(this.channel.getAuthToken().getDomain(), filepath);
+                    FileLabel fileLabel = this.service.getFile(this.channel.getAuthToken().getDomain(), fileItem);
                     if (null != fileLabel) {
                         fileLabelList.add(fileLabel);
                     }
@@ -130,7 +130,7 @@ public class MultimodalUnitMeta extends UnitMeta {
 
             Packet response = new Packet(dialect);
             if (Packet.extractCode(response) != AIGCStateCode.Ok.code) {
-                Logger.w(this.getClass(), "#process - multimodal failed: " + Packet.extractCode(response));
+                Logger.w(this.getClass(), "#process - unit failed: " + Packet.extractCode(response));
                 // 回调错误
                 this.listener.onFailed(this.channel, AIGCStateCode.Failure);
                 return;
