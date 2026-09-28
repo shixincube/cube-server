@@ -21,17 +21,17 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.Explorer;
+import cube.service.aigc.guidance.SkillMeta;
+import cube.service.aigc.guidance.SkillRegistry;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.listener.ReadPageListener;
-import cube.service.aigc.resource.Agent;
+import cube.service.aigc.resource.Relay;
 import cube.service.aigc.resource.ResourceAnswer;
 import cube.service.contact.ContactManager;
-import cube.util.FileUtils;
 import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -41,14 +41,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GenerateTextUnitMeta extends UnitMeta {
 
     /**
-     * SKILL 文件所在目录（工作目录相对路径）。
+     * 截断技能内容时的提示语，用于让模型知道技能指令不完整。
      */
-    public final static String SKILLS_PATH = "assets/skills/";
+    private final static String SKILL_TRUNCATED_NOTICE = "\n\n[技能内容因上下文预算不足被截断]";
 
     /**
-     * SKILL 目录内约定的一级技能文件名。
+     * 允许写入的最小技能段长度，低于该长度直接整体丢弃而不做半截截断。
      */
-    public final static String SKILL_FILENAME = "SKILL.md";
+    private final static int MIN_SKILL_SECTION_LENGTH = 256;
 
     /**
      * SKILL 指令段模板：第一个参数为 SKILL 名称，第二个参数为 SKILL 内容。
@@ -87,6 +87,16 @@ public class GenerateTextUnitMeta extends UnitMeta {
     protected boolean recordHistoryEnabled = true;
 
     protected boolean networkingEnabled = false;
+
+    /**
+     * 本次请求实际注入的技能名称，用于留痕。
+     */
+    protected final List<String> injectedSkills = new ArrayList<>();
+
+    /**
+     * 本次请求因预算不足被截断或丢弃的技能名称，用于留痕与排查。
+     */
+    protected final List<String> truncatedSkills = new ArrayList<>();
 
     public GenerateTextUnitMeta(AIGCService service, AIGCUnit unit, AIGCChannel channel, String content,
                                 GeneratingOption option,
@@ -156,17 +166,32 @@ public class GenerateTextUnitMeta extends UnitMeta {
 
             int recommendHistories = 5;
 
+            // 上下文窗口长度
+            final int contextLimit = ModelConfig.getPromptLengthLimit(this.unit.getCapability().getName());
+
+            // SKILL 指令的独立预算：默认占上下文窗口的 25%，防止整篇技能把上下文吃光
+            final SkillRegistry skillRegistry = this.service.getSkillRegistry();
+            final int skillBudget = skillRegistry.getSkillBudgetChars(contextLimit);
+
             // 解析 categories 里配置的 SKILL 名称，未被识别为 SKILL 的作为知识释义分类
             List<String> knowledgeCategories = new ArrayList<>();
-            final String skillInstruction = this.loadSkills(this.categories, knowledgeCategories);
+            final String skillInstruction = this.loadSkills(this.categories, knowledgeCategories, skillBudget);
 
-            // 提示词长度限制
-            int lengthLimit = ModelConfig.getPromptLengthLimit(this.unit.getCapability().getName());
-            lengthLimit -= this.content.length();
-            if (null != skillInstruction) {
-                // 扣除 SKILL 指令占用的长度
-                lengthLimit -= skillInstruction.length();
+            // 提示词长度限制：扣除用户内容与 SKILL 指令占用的长度。
+            // 禁止负预算静默丢内容：一旦越界明确告警并留痕。
+            int lengthLimit = contextLimit - this.content.length()
+                    - ((null != skillInstruction) ? skillInstruction.length() : 0);
+            if (lengthLimit <= 0) {
+                Logger.w(this.getClass(), "#process - Prompt budget exhausted - context: " + contextLimit
+                        + ", query: " + this.content.length()
+                        + ", skill: " + ((null != skillInstruction) ? skillInstruction.length() : 0)
+                        + ", channel: " + this.channel.getCode());
+                // 钳制为 0，后续附件与历史记录都不会再被装配
+                lengthLimit = 0;
             }
+
+            // 技能调用留痕：与对话历史通过 sn 关联
+            this.recordSkillInvocation(skillInstruction, contextLimit, skillBudget, lengthLimit);
 
             JSONObject data = new JSONObject();
             data.put("unit", this.unit.getCapability().getName());
@@ -326,9 +351,9 @@ public class GenerateTextUnitMeta extends UnitMeta {
                         (null != this.originalQuery) ? this.originalQuery : this.content,
                         responseText, "", null, complexContext);
             }
-            else if (this.service.useAgent) {
+            else if (this.service.useRelay) {
                 GeneratingRecord generatingRecord =
-                        Agent.getInstance().generateText(channel.getCode(), this.unit.getCapability().getName(),
+                        Relay.getInstance().generateText(channel.getCode(), this.unit.getCapability().getName(),
                                 this.content, new GeneratingOption(), this.histories);
                 if (null != generatingRecord) {
                     // 过滤中文字符
@@ -614,36 +639,74 @@ public class GenerateTextUnitMeta extends UnitMeta {
     }
 
     /**
-     * 解析 categories 里配置的 SKILL 名称，并加载 {@link #SKILLS_PATH} 目录下对应的 SKILL 文件内容。
-     * 未被识别为 SKILL 的分类名称收集到 knowledgeCategories 里，用于加载知识释义。
+     * 解析 categories 里配置的 SKILL 名称，从 {@link SkillRegistry} 加载技能内容并拼装 SKILL 指令段。
+     * 未被识别为技能的分类名称收集到 knowledgeCategories 里，用于加载知识释义。
+     *
+     * <p>技能受独立预算约束：总长超过 {@code budget} 时先按剩余额度截断，剩余额度连
+     * {@link #MIN_SKILL_SECTION_LENGTH} 都放不下则整体丢弃，并把被截断/丢弃的技能名记录到
+     * {@link #truncatedSkills} 留痕，绝不静默丢内容。</p>
      *
      * @param categories 分类名称列表，SKILL 名称也从此列表指定。
      * @param knowledgeCategories 输出参数，收集未被识别为 SKILL 的分类名称。
+     * @param budget SKILL 指令可占用的最大字符数。
      * @return 返回拼装好的 SKILL 指令文本，如果没有任何 SKILL 被加载则返回 null。
      */
-    protected String loadSkills(List<String> categories, List<String> knowledgeCategories) {
+    protected String loadSkills(List<String> categories, List<String> knowledgeCategories, int budget) {
         if (null == categories || categories.isEmpty()) {
             return null;
         }
 
+        final SkillRegistry registry = this.service.getSkillRegistry();
+        final String domain = this.channel.getAuthToken().getDomain();
+        final int limit = Math.max(0, budget);
+
         StringBuilder buf = new StringBuilder();
         for (String category : categories) {
             String skillName = (null == category) ? null : category.trim();
-            String content = this.loadSkill(skillName);
-            if (null == content) {
+            if (null == skillName || skillName.isEmpty()) {
+                continue;
+            }
+
+            SkillMeta skill = registry.getSkill(skillName, domain);
+            if (null == skill || !skill.enabled) {
+                // 不是技能名称，按知识释义分类处理
                 if (null != knowledgeCategories) {
                     knowledgeCategories.add(category);
                 }
                 continue;
             }
 
+            String content = (null == skill.content) ? "" : skill.content.trim();
+            String section = String.format(SKILL_SECTION_FORMAT, skill.name, content);
+            int separatorLength = (buf.length() > 0) ? 2 : 0;
+            int available = limit - buf.length() - separatorLength;
+
+            if (limit <= 0 || available < section.length()) {
+                // 预算不足：按剩余额度截断，剩余额度不足以承载最小可用长度时整体丢弃
+                boolean truncated = available > MIN_SKILL_SECTION_LENGTH;
+                if (truncated) {
+                    if (buf.length() > 0) {
+                        buf.append("\n\n");
+                    }
+                    buf.append(GenerateTextUnitMeta.truncateSkillSection(skill.name, content, available));
+                    this.injectedSkills.add(skill.name);
+                }
+
+                this.truncatedSkills.add(skill.name);
+                Logger.w(GenerateTextUnitMeta.class, "#loadSkills - Skill \"" + skill.name
+                        + "\" exceeds the skill budget, needed: " + section.length()
+                        + ", available: " + Math.max(0, available) + ", truncated: " + truncated);
+                continue;
+            }
+
             if (buf.length() > 0) {
                 buf.append("\n\n");
             }
-            buf.append(String.format(SKILL_SECTION_FORMAT, skillName, content.trim()));
+            buf.append(section);
+            this.injectedSkills.add(skill.name);
 
             if (Logger.isDebugLevel()) {
-                Logger.d(this.getClass(), "#loadSkills - Skill \"" + skillName
+                Logger.d(GenerateTextUnitMeta.class, "#loadSkills - Skill \"" + skill.name
                         + "\" loaded, length: " + content.length());
             }
         }
@@ -652,35 +715,80 @@ public class GenerateTextUnitMeta extends UnitMeta {
     }
 
     /**
-     * 加载指定名称的 SKILL 文件内容。
-     * 依次尝试 {@code assets/skills/{name}}、{@code assets/skills/{name}.md}、
-     * {@code assets/skills/{name}/SKILL.md}、{@code assets/skills/{name}/skill.md}。
-     *
-     * @param name SKILL 名称。
-     * @return 返回 SKILL 文件内容，未找到或者内容为空返回 null。
+     * 按可用长度截断技能段落：保留开头部分并追加截断提示，返回长度不超过 {@code available}。
      */
-    protected String loadSkill(String name) {
-        if (null == name || name.isEmpty() || name.contains("..")
-                || name.startsWith("/") || name.startsWith("\\")) {
-            return null;
+    protected static String truncateSkillSection(String skillName, String content, int available) {
+        String header = String.format(SKILL_SECTION_FORMAT, skillName, "");
+        int bodyBudget = available - header.length() - SKILL_TRUNCATED_NOTICE.length();
+        if (bodyBudget <= 0) {
+            return header + SKILL_TRUNCATED_NOTICE;
         }
 
-        File file = new File(SKILLS_PATH, name);
-        if (!file.isFile()) {
-            file = new File(SKILLS_PATH, name + ".md");
-        }
-        if (!file.isFile()) {
-            file = new File(SKILLS_PATH, name + File.separator + SKILL_FILENAME);
-        }
-        if (!file.isFile()) {
-            file = new File(SKILLS_PATH, name + File.separator + "skill.md");
-        }
-        if (!file.isFile()) {
-            // 不是 SKILL 名称
-            return null;
+        if (content.length() <= bodyBudget) {
+            // 内容本身放得下，不截断也不加提示，避免误导模型
+            return String.format(SKILL_SECTION_FORMAT, skillName, content);
         }
 
-        String content = FileUtils.readTextFile(file.getAbsolutePath());
-        return (null != content && !content.trim().isEmpty()) ? content : null;
+        return header + content.substring(0, bodyBudget) + SKILL_TRUNCATED_NOTICE;
+    }
+
+    /**
+     * 记录技能调用留痕：与对话历史通过 {@code sn} 关联，落库到 {@code aigc_skill_invocation}。
+     * 没有任何技能参与时不产生记录；写入是异步的，不阻塞本次生成。
+     *
+     * @param skillInstruction 最终拼装的 SKILL 指令，可为 {@code null}。
+     * @param contextLimit 上下文窗口长度。
+     * @param skillBudget SKILL 指令的预算上限。
+     * @param remaining 扣除用户内容与技能指令后剩余的预算。
+     */
+    protected void recordSkillInvocation(String skillInstruction, int contextLimit, int skillBudget, int remaining) {
+        if (this.injectedSkills.isEmpty() && this.truncatedSkills.isEmpty()) {
+            return;
+        }
+
+        final JSONObject trace = new JSONObject();
+        trace.put("sn", this.sn);
+        trace.put("channel", this.channel.getCode());
+        trace.put("unit", this.unit.getCapability().getName());
+        trace.put("domain", this.channel.getAuthToken().getDomain());
+        trace.put("contactId", this.channel.getAuthToken().getContactId());
+
+        JSONArray injected = new JSONArray();
+        for (String name : this.injectedSkills) {
+            injected.put(name);
+        }
+        trace.put("skills", injected);
+
+        JSONArray truncated = new JSONArray();
+        for (String name : this.truncatedSkills) {
+            truncated.put(name);
+        }
+
+        JSONObject detail = new JSONObject();
+        detail.put("injected", injected);
+        detail.put("truncated", truncated);
+
+        JSONObject budget = new JSONObject();
+        budget.put("context", contextLimit);
+        budget.put("skillBudget", skillBudget);
+        budget.put("skillUsed", (null != skillInstruction) ? skillInstruction.length() : 0);
+        budget.put("remaining", remaining);
+        trace.put("budget", budget);
+
+        trace.put("timestamp", System.currentTimeMillis());
+
+        final AIGCService service = this.service;
+        service.getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (null != service.getStorage()) {
+                        service.getStorage().writeSkillInvocation(trace);
+                    }
+                } catch (Exception e) {
+                    Logger.w(GenerateTextUnitMeta.class, "#recordSkillInvocation", e);
+                }
+            }
+        });
     }
 }

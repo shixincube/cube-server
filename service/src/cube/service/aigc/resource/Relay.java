@@ -30,9 +30,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * 代理访问。
  */
-public final class Agent {
+public final class Relay {
 
-    private static Agent instance = null;
+    private static Relay instance = null;
 
     private final String url;
 
@@ -42,16 +42,16 @@ public final class Agent {
 
     private List<AIGCUnit> unitList;
 
-    public final static Agent getInstance() {
-        return Agent.instance;
+    public final static Relay getInstance() {
+        return Relay.instance;
     }
 
-    public final static Agent createInstance(String url, String token) {
-        Agent.instance = new Agent(url, token);
-        return Agent.instance;
+    public final static Relay createInstance(String url, String token) {
+        Relay.instance = new Relay(url, token);
+        return Relay.instance;
     }
 
-    private Agent(String url, String token) {
+    private Relay(String url, String token) {
         this.url = url.endsWith("/") ? url : url + "/";
         this.token = token;
         this.channelCode = Utils.randomString(16);

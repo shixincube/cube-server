@@ -78,7 +78,9 @@ storage_sqlite.json
 README
 DatasetMate.java
 zhong.png
-service/assets
+service/assets/*
+# SKILL 技能种子目录需要随仓库分发，服务启动时按需导入存储器（DB）
+!service/assets/skills/
 .gitignore
 misc.xml
 ferryhouse/script/rc-script.sh

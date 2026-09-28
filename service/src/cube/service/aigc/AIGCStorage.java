@@ -21,6 +21,7 @@ import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
+import cube.service.aigc.guidance.SkillMeta;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
@@ -87,6 +88,16 @@ public class AIGCStorage implements Storagable {
     private final String voiceIndicatorTable = "aigc_voice_indicator";
 
     private final String counselingRecordingTable = "aigc_counseling_recording";
+
+    /**
+     * SKILL 技能定义表。技能的唯一权威来源，多实例共享。
+     */
+    private final String skillTable = "aigc_skill";
+
+    /**
+     * SKILL 技能调用留痕表，按 sn 与对话历史关联。
+     */
+    private final String skillInvocationTable = "aigc_skill_invocation";
 
     private final StorageField[] appConfigFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
@@ -641,6 +652,93 @@ public class AIGCStorage implements Storagable {
             })
     };
 
+    /**
+     * SKILL 技能定义表的字段。
+     * 技能以 name 作为唯一键；scope 为空或 {@code global} 表示全局生效，否则按 domain 隔离。
+     */
+    private final StorageField[] skillFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("display_name", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("description", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            // 关键词，JSON 数组字符串
+            new StorageField("keywords", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("when_to_use", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("version", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("enabled", LiteralBase.INT, new Constraint[] {
+                    Constraint.DEFAULT_1
+            }),
+            new StorageField("scope", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            // 技能正文，超过 MySQL TEXT 上限时自动扩容到 MEDIUMTEXT
+            new StorageField("content", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("source", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("created", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            new StorageField("modified", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            })
+    };
+
+    /**
+     * SKILL 调用留痕表的字段。
+     */
+    private final StorageField[] skillInvocationFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("sn", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("channel", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("unit", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            // 已注入的技能，JSON 数组字符串
+            new StorageField("skills", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            // 明细：每个技能的版本、字符数、是否被截断
+            new StorageField("detail", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            // 预算：上下文长度、技能预算、实际占用、剩余
+            new StorageField("budget", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            })
+    };
+
     private Storage storage;
 
     public AIGCStorage(StorageType type, JSONObject config) {
@@ -823,6 +921,26 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.counselingRecordingTable, this.counselingRecordingFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.counselingRecordingTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.skillTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.skillTable, this.skillFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.skillTable + "' successfully");
+
+                if (this.storage.getType() == StorageType.MySQL) {
+                    // 技能正文可能超过 TEXT 上限，扩容为 MEDIUMTEXT
+                    this.storage.execute("ALTER TABLE `" + this.skillTable
+                            + "` CHANGE COLUMN `content` `content` MEDIUMTEXT NULL DEFAULT NULL");
+                }
+            }
+        }
+
+        if (!this.storage.exist(this.skillInvocationTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.skillInvocationTable, this.skillInvocationFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.skillInvocationTable + "' successfully");
             }
         }
     }
@@ -2896,29 +3014,17 @@ public class AIGCStorage implements Storagable {
     }
 
     private void resetDefaultConfig() {
-        // 支持中英双语的对话语言模型，具有 70 亿参数。针对中文问答和对话进行了优化。
-        // 经过约 1T 标识符的中英双语训练，辅以监督微调、反馈自助、人类反馈强化学习等技术的优化。
         JSONObject parameter = new JSONObject();
         parameter.put("unit", "Baize");
-        ModelConfig baizeNLG = new ModelConfig("Baize", "Baize",
+        ModelConfig baize = new ModelConfig("Baize", "Baize",
                 "适合大多数场景的通用模型",
                 "http://127.0.0.1:7010/aigc/chat/", parameter);
 
-        // 支持中英双语的功能型对话语言大模型。以轻量化实现高质量效果的模型。在1000亿 Token 中文语料上预训练，累计学习1.5万亿中文 Token，
-        // 并且在数百种任务上进行 Prompt 任务式训练。针对理解类任务，如分类、情感分析、抽取等，可以自定义标签体系；针对多种生成任务，
-        // 可以进行采样自由生成。
         parameter = new JSONObject();
-        parameter.put("unit", "BaizeX");
-        ModelConfig baizeX = new ModelConfig("BaizeX", "BaizeX",
-                "适合一般场景且速度较快的通用模型",
+        parameter.put("unit", "Baize2");
+        ModelConfig baize2 = new ModelConfig("BaizeX", "BaizeX",
+                "适合复杂场景且速度较快的通用模型",
                 "http://127.0.0.1:7010/aigc/chat/", parameter);
-
-        // 支持中英双语和多种插件的开源对话语言模型。模型具有 130 亿参数。在约七千亿中英文以及代码单词上预训练得到，后续经过对话指令微调、
-        // 插件增强学习和人类偏好训练具备多轮对话能力及使用多种插件的能力。
-        parameter = new JSONObject();
-        ModelConfig baizeNEXT = new ModelConfig("BaizeNext", "BaizeNext",
-                "支持下游任务的大语言生成模型",
-                "http://127.0.0.1:7010/aigc/conversation/", parameter);
 
         // 重置列表
         List<StorageField[]> result = this.storage.executeQuery(this.appConfigTable, new StorageField[] {
@@ -2932,9 +3038,8 @@ public class AIGCStorage implements Storagable {
             });
         }
         JSONArray models = new JSONArray();
-        models.put(baizeNLG.getName());
-        models.put(baizeX.getName());
-        models.put(baizeNEXT.getName());
+        models.put(baize.getName());
+        models.put(baize2.getName());
         this.storage.executeInsert(this.appConfigTable, new StorageField[] {
                 new StorageField("item", ITEM_NAME_MODELS),
                 new StorageField("value", JSONStorageUtils.encode(models)),
@@ -2946,50 +3051,285 @@ public class AIGCStorage implements Storagable {
 
         // Baize
         result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
-                Conditional.createEqualTo("item", baizeNLG.getName())
+                Conditional.createEqualTo("item", baize.getName())
         });
         if (!result.isEmpty()) {
             this.storage.executeDelete(this.appConfigTable, new Conditional[] {
-                    Conditional.createEqualTo("item", baizeNLG.getName())
+                    Conditional.createEqualTo("item", baize.getName())
             });
         }
         this.storage.executeInsert(this.appConfigTable, new StorageField[] {
-                new StorageField("item", baizeNLG.getName()),
-                new StorageField("value", JSONStorageUtils.encode(baizeNLG.toJSON())),
+                new StorageField("item", baize.getName()),
+                new StorageField("value", JSONStorageUtils.encode(baize.toJSON())),
                 new StorageField("comment", "适合大多数场景的通用模型"),
                 new StorageField("modified", System.currentTimeMillis())
         });
 
         // BaizeX
         result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
-                Conditional.createEqualTo("item", baizeX.getName())
+                Conditional.createEqualTo("item", baize2.getName())
         });
         if (!result.isEmpty()) {
             this.storage.executeDelete(this.appConfigTable, new Conditional[] {
-                    Conditional.createEqualTo("item", baizeX.getName())
+                    Conditional.createEqualTo("item", baize2.getName())
             });
         }
         this.storage.executeInsert(this.appConfigTable, new StorageField[] {
-                new StorageField("item", baizeX.getName()),
-                new StorageField("value", JSONStorageUtils.encode(baizeX.toJSON())),
-                new StorageField("comment", "适合一般场景且速度较快的通用模型"),
+                new StorageField("item", baize2.getName()),
+                new StorageField("value", JSONStorageUtils.encode(baize2.toJSON())),
+                new StorageField("comment", "适合复杂场景且速度较快的通用模型"),
                 new StorageField("modified", System.currentTimeMillis())
+        });
+    }
+
+    /**
+     * 判断 SKILL 技能定义表是否可用。
+     *
+     * @return 表存在返回 {@code true}。
+     */
+    public boolean hasSkillTable() {
+        try {
+            return this.storage.exist(this.skillTable);
+        } catch (Exception e) {
+            Logger.w(this.getClass(), "#hasSkillTable", e);
+            return false;
+        }
+    }
+
+    /**
+     * 获取技能表的签名，用于判断缓存是否需要重载。
+     * 签名由「行数 + 最大修改时间」组成，可检出新增、删除与更新。
+     *
+     * @return 查询失败时返回 {@code null}。
+     */
+    public String getSkillSignature() {
+        List<StorageField[]> result = this.storage.executeQuery("SELECT COUNT(*) AS `c`, COALESCE(MAX(`modified`), 0)"
+                + " AS `m` FROM `" + this.skillTable + "`");
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        Map<String, StorageField> data = StorageFields.get(result.get(0));
+        StorageField countField = data.get("c");
+        StorageField modifiedField = data.get("m");
+        if (null == countField || null == modifiedField) {
+            return null;
+        }
+
+        return countField.getLong() + "-" + modifiedField.getLong();
+    }
+
+    /**
+     * 读取全部技能。
+     *
+     * @return 返回技能列表，永不为 {@code null}。
+     */
+    public List<SkillMeta> readSkills() {
+        List<SkillMeta> list = new ArrayList<>();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.skillTable, this.skillFields);
+        for (StorageField[] fields : result) {
+            SkillMeta skill = parseSkillFields(StorageFields.get(fields));
+            if (null != skill) {
+                list.add(skill);
+            }
+        }
+
+        return list;
+    }
+
+    /**
+     * 按名称读取技能。
+     *
+     * @param name 技能名称，大小写不敏感。
+     * @return 不存在返回 {@code null}。
+     */
+    public SkillMeta readSkill(String name) {
+        String key = SkillMeta.normalizeName(name);
+        if (key.isEmpty()) {
+            return null;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(this.skillTable, this.skillFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("name", key)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        return parseSkillFields(StorageFields.get(result.get(0)));
+    }
+
+    /**
+     * 写入技能。名称已存在时仅在 {@code overwrite} 为 {@code true} 时更新。
+     *
+     * @param skill 技能数据。
+     * @param overwrite 是否覆盖同名技能。
+     * @return 返回是否写入了存储器。
+     */
+    public boolean writeSkill(SkillMeta skill, boolean overwrite) {
+        if (null == skill) {
+            return false;
+        }
+
+        String name = SkillMeta.normalizeName(skill.name);
+        if (name.isEmpty()) {
+            Logger.w(this.getClass(), "#writeSkill - Empty skill name");
+            return false;
+        }
+
+        long now = System.currentTimeMillis();
+
+        List<StorageField[]> result = this.storage.executeQuery(this.skillTable, new StorageField[] {
+                new StorageField("id", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("name", name)
         });
 
-        // BaizeNext
-        result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
-                Conditional.createEqualTo("item", baizeNEXT.getName())
-        });
-        if (!result.isEmpty()) {
-            this.storage.executeDelete(this.appConfigTable, new Conditional[] {
-                    Conditional.createEqualTo("item", baizeNEXT.getName())
-            });
+        boolean exists = !result.isEmpty();
+        if (exists && !overwrite) {
+            return false;
         }
-        this.storage.executeInsert(this.appConfigTable, new StorageField[] {
-                new StorageField("item", baizeNEXT.getName()),
-                new StorageField("value", JSONStorageUtils.encode(baizeNEXT.toJSON())),
-                new StorageField("comment", "支持下游任务的大语言生成模型"),
-                new StorageField("modified", System.currentTimeMillis())
+
+        JSONArray keywords = new JSONArray();
+        for (String keyword : skill.keywords) {
+            keywords.put(keyword);
+        }
+
+        StorageField[] fields = new StorageField[] {
+                new StorageField("display_name", (null != skill.displayName) ? skill.displayName : name),
+                new StorageField("description", skill.description),
+                new StorageField("keywords", JSONStorageUtils.encode(keywords)),
+                new StorageField("when_to_use", skill.whenToUse),
+                new StorageField("version", skill.version),
+                new StorageField("enabled", skill.enabled ? 1 : 0),
+                new StorageField("scope", skill.isGlobal() ? SkillMeta.SCOPE_GLOBAL : skill.scope),
+                new StorageField("content", skill.content),
+                new StorageField("source", (null != skill.source) ? skill.source : SkillMeta.SOURCE_DATABASE),
+                new StorageField("modified", now)
+        };
+
+        if (!exists) {
+            StorageField[] insertFields = new StorageField[fields.length + 2];
+            insertFields[0] = new StorageField("name", name);
+            insertFields[1] = new StorageField("created", (skill.created > 0) ? skill.created : now);
+            System.arraycopy(fields, 0, insertFields, 2, fields.length);
+            return this.storage.executeInsert(this.skillTable, insertFields);
+        }
+
+        return this.storage.executeUpdate(this.skillTable, fields, new Conditional[] {
+                Conditional.createEqualTo("name", name)
         });
+    }
+
+    /**
+     * 删除指定技能。
+     *
+     * @param name 技能名称。
+     * @return 返回是否执行了删除。
+     */
+    public boolean deleteSkill(String name) {
+        String key = SkillMeta.normalizeName(name);
+        if (key.isEmpty()) {
+            return false;
+        }
+
+        return this.storage.executeDelete(this.skillTable, new Conditional[] {
+                Conditional.createEqualTo("name", key)
+        });
+    }
+
+    /**
+     * 写入一条技能调用留痕。留痕与对话历史通过 {@code sn} 关联。
+     *
+     * @param trace 留痕数据，字段：sn、channel、unit、domain、contactId、skills、detail、budget、timestamp。
+     * @return 返回是否写入成功。
+     */
+    public boolean writeSkillInvocation(JSONObject trace) {
+        if (null == trace) {
+            return false;
+        }
+
+        return this.storage.executeInsert(this.skillInvocationTable, new StorageField[] {
+                new StorageField("sn", trace.optLong("sn", 0L)),
+                new StorageField("channel", trace.optString("channel", null)),
+                new StorageField("unit", trace.optString("unit", null)),
+                new StorageField("domain", trace.optString("domain", null)),
+                new StorageField("contact_id", trace.optLong("contactId", 0L)),
+                new StorageField("skills", JSONStorageUtils.encode(trace.optJSONArray("skills"))),
+                new StorageField("detail", JSONStorageUtils.encode(trace.optJSONObject("detail"))),
+                new StorageField("budget", JSONStorageUtils.encode(trace.optJSONObject("budget"))),
+                new StorageField("timestamp", trace.optLong("timestamp", System.currentTimeMillis()))
+        });
+    }
+
+    private SkillMeta parseSkillFields(Map<String, StorageField> data) {
+        StorageField nameField = data.get("name");
+        if (null == nameField || nameField.isNullValue()) {
+            return null;
+        }
+
+        SkillMeta skill = new SkillMeta(nameField.getString());
+
+        StorageField field = data.get("display_name");
+        if (null != field && !field.isNullValue()) {
+            skill.displayName = field.getString();
+        }
+        field = data.get("description");
+        if (null != field && !field.isNullValue()) {
+            skill.description = field.getString();
+        }
+        field = data.get("when_to_use");
+        if (null != field && !field.isNullValue()) {
+            skill.whenToUse = field.getString();
+        }
+        field = data.get("version");
+        if (null != field && !field.isNullValue()) {
+            skill.version = field.getString();
+        }
+        field = data.get("scope");
+        if (null != field && !field.isNullValue()) {
+            skill.scope = field.getString();
+        }
+        field = data.get("source");
+        if (null != field && !field.isNullValue()) {
+            skill.source = field.getString();
+        }
+        field = data.get("content");
+        if (null != field && !field.isNullValue()) {
+            skill.content = field.getString();
+        }
+        field = data.get("enabled");
+        if (null != field) {
+            skill.enabled = (field.getInt() != 0);
+        }
+        field = data.get("created");
+        if (null != field) {
+            skill.created = field.getLong();
+        }
+        field = data.get("modified");
+        if (null != field) {
+            skill.modified = field.getLong();
+        }
+
+        field = data.get("keywords");
+        if (null != field && !field.isNullValue()) {
+            try {
+                JSONArray array = JSONStorageUtils.decodeArray(field.getString());
+                if (null != array) {
+                    for (int i = 0; i < array.length(); ++i) {
+                        String keyword = array.getString(i);
+                        if (null != keyword && !keyword.trim().isEmpty()) {
+                            skill.keywords.add(keyword.trim());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "#parseSkillFields - Invalid keywords of skill: " + skill.name);
+            }
+        }
+
+        return skill;
     }
 }

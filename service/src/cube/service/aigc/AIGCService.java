@@ -36,12 +36,13 @@ import cube.file.hook.FileStorageHook;
 import cube.service.aigc.event.EventCenter;
 import cube.service.aigc.guidance.GuideFlow;
 import cube.service.aigc.guidance.Guides;
+import cube.service.aigc.guidance.SkillRegistry;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.*;
 import cube.service.aigc.member.MemberCenter;
 import cube.service.aigc.plugin.*;
-import cube.service.aigc.resource.Agent;
+import cube.service.aigc.resource.Relay;
 import cube.service.aigc.scene.*;
 import cube.service.aigc.unit.*;
 import cube.service.auth.AuthService;
@@ -158,9 +159,9 @@ public class AIGCService extends AbstractModule implements Generatable {
     private ConcurrentHashMap<String, AtomicInteger> generateTextUnitCountMap;
 
     /**
-     * 是否访问，仅用于本地测试
+     * 是否通过中继（Relay）访问，仅用于本地测试
      */
-    public boolean useAgent = false;
+    public boolean useRelay = false;
 
     /**
      * 配置文件最后修改时间。
@@ -224,6 +225,9 @@ public class AIGCService extends AbstractModule implements Generatable {
 
                     storage.open();
                     storage.execSelfChecking(null);
+
+                    // 绑定技能注册表：技能以存储器为准，多实例共享
+                    SkillRegistry.getInstance().setup(storage);
                 }
                 else {
                     Logger.e(AIGCService.class, "Can NOT find AIGC storage config");
@@ -500,14 +504,17 @@ public class AIGCService extends AbstractModule implements Generatable {
                         + Explorer.getInstance().getSearcherName());
             }
 
-            // 是否启用代理
-            this.useAgent = Boolean.parseBoolean(
-                    properties.getProperty("agent", "false"));
-            if (this.useAgent) {
-                Agent.createInstance(properties.getProperty("agent.url", "http://127.0.0.1:7010"),
-                        properties.getProperty("agent.token", ""));
+            // SKILL 技能
+            this.loadSkillConfig(properties);
+
+            // 是否启用中继（Relay）
+            this.useRelay = Boolean.parseBoolean(
+                    properties.getProperty("relay", "false"));
+            if (this.useRelay) {
+                Relay.createInstance(properties.getProperty("relay.url", "http://127.0.0.1:7010"),
+                        properties.getProperty("relay.token", ""));
                 // 添加单元
-                Agent.getInstance().fillUnits(this.unitMap);
+                Relay.getInstance().fillUnits(this.unitMap);
             }
         } catch (IOException e) {
             Logger.e(this.getClass(), "#loadConfig - Load config properties error", e);
@@ -516,9 +523,61 @@ public class AIGCService extends AbstractModule implements Generatable {
         Logger.i(this.getClass(), "AI Service - Context length: " + ModelConfig.EXTRA_LONG_CONTEXT_LIMIT);
         Logger.i(this.getClass(), "AI Service - Baize context limit: " + ModelConfig.BAIZE_CONTEXT_LIMIT);
         Logger.i(this.getClass(), "AI Service - Baize2 context limit: " + ModelConfig.BAIZE_2_CONTEXT_LIMIT);
-        if (this.useAgent) {
-            Logger.i(this.getClass(), "AI Service - Agent URL: " + Agent.getInstance().getUrl());
+        if (this.useRelay) {
+            Logger.i(this.getClass(), "AI Service - Relay URL: " + Relay.getInstance().getUrl());
         }
+    }
+
+    /**
+     * 加载 SKILL 技能相关配置。
+     *
+     * <p>各项配置：</p>
+     * <ul>
+     *     <li>{@code skills.path}：技能种子目录，多个使用逗号分隔，相对工作目录；
+     *         技能以存储器（DB）为准，目录仅用于引导与兜底；</li>
+     *     <li>{@code skills.cache.ttl}：缓存刷新间隔（毫秒），多实例部署下 DB 变更最长在该间隔后生效；</li>
+     *     <li>{@code skills.budget.ratio}：SKILL 指令占上下文窗口的百分比上限，防止技能把上下文吃光；</li>
+     *     <li>{@code skills.seed}：启动时是否把种子目录的技能导入存储器（幂等）；</li>
+     *     <li>{@code skills.seed.overwrite}：导入时是否覆盖存储器中的同名技能。</li>
+     * </ul>
+     *
+     * @param properties 配置文件内容。
+     */
+    private void loadSkillConfig(Properties properties) {
+        List<File> skillPaths = new ArrayList<>();
+        String pathValue = properties.getProperty("skills.path", SkillRegistry.DEFAULT_SKILLS_PATH);
+        for (String path : pathValue.split(",")) {
+            String trimmed = path.trim();
+            if (!trimmed.isEmpty()) {
+                skillPaths.add(new File(trimmed));
+            }
+        }
+
+        long cacheTtl = SkillRegistry.DEFAULT_CACHE_TTL;
+        try {
+            cacheTtl = Long.parseLong(properties.getProperty("skills.cache.ttl",
+                    Long.toString(SkillRegistry.DEFAULT_CACHE_TTL)));
+        } catch (Exception e) {
+            // 忽略，使用默认值
+        }
+
+        int budgetRatio = SkillRegistry.DEFAULT_BUDGET_RATIO;
+        try {
+            budgetRatio = Integer.parseInt(properties.getProperty("skills.budget.ratio",
+                    Integer.toString(SkillRegistry.DEFAULT_BUDGET_RATIO)));
+        } catch (Exception e) {
+            // 忽略，使用默认值
+        }
+
+        boolean seed = Boolean.parseBoolean(properties.getProperty("skills.seed", "false"));
+        boolean seedOverwrite = Boolean.parseBoolean(properties.getProperty("skills.seed.overwrite", "false"));
+
+        SkillRegistry.getInstance().configure(skillPaths, cacheTtl, budgetRatio, seed, seedOverwrite);
+
+        Logger.i(this.getClass(), "AI Service - Skills path: " + skillPaths
+                + " - cache TTL: " + cacheTtl + "ms"
+                + " - budget ratio: " + budgetRatio + "%"
+                + " - seed: " + seed);
     }
 
     public AIGCCellet getCellet() {
@@ -535,6 +594,15 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     public ExecutorService getExecutor() {
         return this.executor;
+    }
+
+    /**
+     * 获取 SKILL 技能注册表。技能以存储器（DB）为准，多实例共享同一份定义。
+     *
+     * @return 返回技能注册表。
+     */
+    public SkillRegistry getSkillRegistry() {
+        return SkillRegistry.getInstance();
     }
 
     public File getWorkingPath() {
@@ -1764,8 +1832,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         // 查找有该能力的单元
         // 优先按照单元名称进行检索，然后按照描述进行检索
         AIGCUnit unit = null;
-        if (this.useAgent) {
-            unit = Agent.getInstance().selectUnit(unitName);
+        if (this.useRelay) {
+            unit = Relay.getInstance().selectUnit(unitName);
         }
         else {
             unit = this.selectUnitByName(unitName);
@@ -1896,11 +1964,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         long sn = Utils.generateSerialNumber();
         unit.setRunning(true);
         try {
-            if (this.useAgent) {
-                Logger.d(this.getClass(), "#syncGenerateText - Agent - \"" + unit.getCapability().getName() + "\" - history:"
+            if (this.useRelay) {
+                Logger.d(this.getClass(), "#syncGenerateText - Relay - \"" + unit.getCapability().getName() + "\" - history:"
                         + ((null != history) ? history.size() : 0));
                 count.decrementAndGet();
-                return Agent.getInstance().generateText(Utils.randomString(16),
+                return Relay.getInstance().generateText(Utils.randomString(16),
                         unit.getCapability().getName(), prompt, option, history);
             }
 
@@ -1992,8 +2060,8 @@ public class AIGCService extends AbstractModule implements Generatable {
     public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt, GeneratingOption option,
                              List<GeneratingRecord> histories, int maxHistories, List<Attachment> attachments,
                              List<String> categories, boolean recordable, GenerateTextListener listener) {
-        if (this.useAgent) {
-            unit = Agent.getInstance().selectUnit(unit.getCapability().getName());
+        if (this.useRelay) {
+            unit = Relay.getInstance().selectUnit(unit.getCapability().getName());
         }
 
         if (null == unit) {
@@ -2019,16 +2087,6 @@ public class AIGCService extends AbstractModule implements Generatable {
                 Logger.d(this.getClass(), "#generateText - histories size: " + histories.size());
             }
         }
-
-//        synchronized (this.generateQueueMap) {
-//            Queue<GenerateTextUnitMeta> queue = this.generateQueueMap.get(unit.getQueryKey());
-//            if (null == queue) {
-//                queue = new ConcurrentLinkedQueue<>();
-//                this.generateQueueMap.put(unit.getQueryKey(), queue);
-//            }
-//
-//            queue.offer(meta);
-//        }
 
         this.executor.execute(new Runnable() {
             @Override
@@ -3455,8 +3513,8 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
         }
 
-        // 没有频道，如果使用代理则新建频道
-        if (this.useAgent) {
+        // 没有频道，如果使用中继（Relay）则新建频道
+        if (this.useRelay) {
             AIGCChannel channel = new AIGCChannel(authToken, "User-" + authToken.getContactId());
             this.channelMap.put(channel.getCode(), channel);
             return channel;
