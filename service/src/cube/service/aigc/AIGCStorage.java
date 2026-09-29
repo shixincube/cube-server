@@ -22,6 +22,7 @@ import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
 import cube.service.aigc.guidance.SkillMeta;
+import cube.service.aigc.guidance.SkillSession;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
@@ -98,6 +99,11 @@ public class AIGCStorage implements Storagable {
      * SKILL 技能调用留痕表，按 sn 与对话历史关联。
      */
     private final String skillInvocationTable = "aigc_skill_invocation";
+
+    /**
+     * SKILL 会话级技能绑定表。以频道为键，保证多实例下同一会话的技能绑定一致。
+     */
+    private final String skillSessionTable = "aigc_skill_session";
 
     private final StorageField[] appConfigFields = new StorageField[] {
             new StorageField("id", LiteralBase.LONG, new Constraint[] {
@@ -739,6 +745,32 @@ public class AIGCStorage implements Storagable {
             })
     };
 
+    /**
+     * SKILL 会话级技能绑定表的字段。
+     * 以 channel 作为唯一键；skills 为 JSON 数组字符串；updated 用于判定绑定是否过期。
+     */
+    private final StorageField[] skillSessionFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("channel", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("contact_id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            }),
+            // 已绑定的技能名称，JSON 数组字符串
+            new StorageField("skills", LiteralBase.STRING, new Constraint[] {
+                    Constraint.DEFAULT_NULL
+            }),
+            new StorageField("updated", LiteralBase.LONG, new Constraint[] {
+                    Constraint.DEFAULT_0
+            })
+    };
+
     private Storage storage;
 
     public AIGCStorage(StorageType type, JSONObject config) {
@@ -941,6 +973,13 @@ public class AIGCStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.skillInvocationTable, this.skillInvocationFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.skillInvocationTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.skillSessionTable)) {
+            // 不存在，建新表
+            if (this.storage.executeCreate(this.skillSessionTable, this.skillSessionFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.skillSessionTable + "' successfully");
             }
         }
     }
@@ -3262,6 +3301,158 @@ public class AIGCStorage implements Storagable {
                 new StorageField("budget", JSONStorageUtils.encode(trace.optJSONObject("budget"))),
                 new StorageField("timestamp", trace.optLong("timestamp", System.currentTimeMillis()))
         });
+    }
+
+    /**
+     * 判断会话级技能绑定表是否可用。
+     *
+     * @return 表存在返回 {@code true}。
+     */
+    public boolean hasSkillSessionTable() {
+        try {
+            return this.storage.exist(this.skillSessionTable);
+        } catch (Exception e) {
+            Logger.w(this.getClass(), "#hasSkillSessionTable", e);
+            return false;
+        }
+    }
+
+    /**
+     * 读取指定频道的技能绑定。
+     *
+     * @param channelCode 频道代码。
+     * @return 不存在返回 {@code null}。
+     */
+    public SkillSession readSkillSession(String channelCode) {
+        if (null == channelCode || channelCode.trim().isEmpty()) {
+            return null;
+        }
+
+        List<StorageField[]> result = this.storage.executeQuery(this.skillSessionTable, this.skillSessionFields,
+                new Conditional[] {
+                        Conditional.createEqualTo("channel", channelCode)
+                });
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        return parseSkillSessionFields(StorageFields.get(result.get(0)));
+    }
+
+    /**
+     * 写入（或更新）指定频道的技能绑定。
+     *
+     * @param session 技能绑定数据。
+     * @return 返回是否写入了存储器。
+     */
+    public boolean writeSkillSession(SkillSession session) {
+        if (null == session || null == session.channelCode || session.channelCode.trim().isEmpty()) {
+            return false;
+        }
+
+        JSONArray skills = new JSONArray();
+        for (String name : session.skills) {
+            skills.put(name);
+        }
+
+        StorageField[] fields = new StorageField[] {
+                new StorageField("domain", session.domain),
+                new StorageField("contact_id", session.contactId),
+                new StorageField("skills", JSONStorageUtils.encode(skills)),
+                new StorageField("updated", session.updated)
+        };
+
+        List<StorageField[]> result = this.storage.executeQuery(this.skillSessionTable, new StorageField[] {
+                new StorageField("id", LiteralBase.LONG)
+        }, new Conditional[] {
+                Conditional.createEqualTo("channel", session.channelCode)
+        });
+
+        if (result.isEmpty()) {
+            StorageField[] insertFields = new StorageField[fields.length + 1];
+            insertFields[0] = new StorageField("channel", session.channelCode);
+            System.arraycopy(fields, 0, insertFields, 1, fields.length);
+            return this.storage.executeInsert(this.skillSessionTable, insertFields);
+        }
+
+        return this.storage.executeUpdate(this.skillSessionTable, fields, new Conditional[] {
+                Conditional.createEqualTo("channel", session.channelCode)
+        });
+    }
+
+    /**
+     * 删除指定频道的技能绑定。
+     *
+     * @param channelCode 频道代码。
+     * @return 返回是否执行了删除。
+     */
+    public boolean deleteSkillSession(String channelCode) {
+        if (null == channelCode || channelCode.trim().isEmpty()) {
+            return false;
+        }
+
+        return this.storage.executeDelete(this.skillSessionTable, new Conditional[] {
+                Conditional.createEqualTo("channel", channelCode)
+        });
+    }
+
+    /**
+     * 清理过期的技能绑定。
+     *
+     * @param before 时间戳，修改时间早于该值的记录将被删除。
+     * @return 返回是否执行了删除。
+     */
+    public boolean pruneSkillSessions(long before) {
+        if (before <= 0) {
+            return false;
+        }
+
+        return this.storage.executeDelete(this.skillSessionTable, new Conditional[] {
+                Conditional.createLessThan(new StorageField("updated", before))
+        });
+    }
+
+    private SkillSession parseSkillSessionFields(Map<String, StorageField> data) {
+        StorageField channelField = data.get("channel");
+        if (null == channelField || channelField.isNullValue()) {
+            return null;
+        }
+
+        SkillSession session = new SkillSession(channelField.getString());
+
+        StorageField field = data.get("domain");
+        if (null != field && !field.isNullValue()) {
+            session.domain = field.getString();
+        }
+        field = data.get("contact_id");
+        if (null != field) {
+            session.contactId = field.getLong();
+        }
+        field = data.get("updated");
+        if (null != field) {
+            session.updated = field.getLong();
+        }
+
+        field = data.get("skills");
+        if (null != field && !field.isNullValue()) {
+            try {
+                JSONArray array = JSONStorageUtils.decodeArray(field.getString());
+                if (null != array) {
+                    for (int i = 0; i < array.length(); ++i) {
+                        String name = array.optString(i, null);
+                        String key = SkillMeta.normalizeName(name);
+                        if (!key.isEmpty() && !session.skills.contains(key)) {
+                            session.skills.add(key);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Logger.w(this.getClass(), "#parseSkillSessionFields - Invalid skills of channel: "
+                        + session.channelCode);
+            }
+        }
+
+        return session;
     }
 
     private SkillMeta parseSkillFields(Map<String, StorageField> data) {

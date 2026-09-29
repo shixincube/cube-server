@@ -51,11 +51,6 @@ public class SkillRegistry {
      */
     public final static long DEFAULT_CACHE_TTL = 60 * 1000L;
 
-    /**
-     * 默认的 SKILL 指令预算占比（相对上下文窗口长度，单位 %）。
-     */
-    public final static int DEFAULT_BUDGET_RATIO = 25;
-
     private final static String README_FILENAME = "readme.md";
 
     private static final SkillRegistry sInstance = new SkillRegistry();
@@ -69,8 +64,6 @@ public class SkillRegistry {
     private volatile List<File> sourcePaths = new ArrayList<>();
 
     private volatile long cacheTtl = DEFAULT_CACHE_TTL;
-
-    private volatile int budgetRatio = DEFAULT_BUDGET_RATIO;
 
     private volatile boolean seedEnabled = false;
 
@@ -131,17 +124,14 @@ public class SkillRegistry {
      * 应用配置。
      *
      * @param sourcePaths 技能种子目录列表（允许为 {@code null}）。
-     * @param cacheTtlMs 缓存时间，单位毫秒，<= 0 时使用默认值。
-     * @param budgetRatioPercent SKILL 指令预算占比（%），超出 [1, 90] 时使用默认值。
+     * @param cacheTtlMs 缓存时间，单位毫秒，&lt;= 0 时使用默认值。
      * @param seed 是否在启动时把种子目录的技能导入存储器。
      * @param seedOverwrite 导入时是否覆盖存储器中同名技能。
      */
-    public void configure(List<File> sourcePaths, long cacheTtlMs, int budgetRatioPercent,
+    public void configure(List<File> sourcePaths, long cacheTtlMs,
                           boolean seed, boolean seedOverwrite) {
         this.sourcePaths = (null == sourcePaths) ? new ArrayList<File>() : new ArrayList<>(sourcePaths);
         this.cacheTtl = (cacheTtlMs > 0) ? cacheTtlMs : DEFAULT_CACHE_TTL;
-        this.budgetRatio = (budgetRatioPercent > 0 && budgetRatioPercent <= 90)
-                ? budgetRatioPercent : DEFAULT_BUDGET_RATIO;
         this.seedEnabled = seed;
         this.seedOverwrite = seedOverwrite;
         this.invalidate();
@@ -163,22 +153,8 @@ public class SkillRegistry {
     }
 
     /**
-     * 计算 SKILL 指令可占用的字符预算。
-     *
-     * @param contextLimit 上下文窗口长度。
-     * @return 返回字符数预算，至少为 0。
+     * 返回当前已发布的技能数量（含未启用的）。
      */
-    public int getSkillBudgetChars(int contextLimit) {
-        if (contextLimit <= 0) {
-            return 0;
-        }
-        return (int) ((long) contextLimit * this.budgetRatio / 100L);
-    }
-
-    public int getBudgetRatio() {
-        return this.budgetRatio;
-    }
-
     public int size() {
         this.refreshIfNeeded();
         return this.skills.size();
@@ -255,7 +231,7 @@ public class SkillRegistry {
      * 按关键词匹配技能。
      *
      * @param words 分词结果。
-     * @param limit 返回的最大数量，<= 0 表示不限制。
+     * @param limit 返回的最大数量，&lt;= 0 表示不限制。
      * @param domain 域名。
      * @return 按名称排序的命中技能列表。
      */
@@ -271,6 +247,51 @@ public class SkillRegistry {
                     result.add(skill);
                     break;
                 }
+            }
+        }
+
+        sortByName(result);
+
+        if (limit > 0 && result.size() > limit) {
+            return new ArrayList<>(result.subList(0, limit));
+        }
+
+        return result;
+    }
+
+    /**
+     * 按原始查询文本匹配技能：分词命中**或**原文包含关键词即视为命中。
+     *
+     * <p>同时使用两种判定，是因为技能作者声明关键词时通常写的是完整词组（例如「会议纪要」），
+     * 而分词结果未必与词组完全一致；原文包含判定更接近作者意图。命中后按关键词长度倒序优先，
+     * 让更具体的技能排在前面。</p>
+     *
+     * @param query 用户原始查询文本，允许为 {@code null}。
+     * @param words 分词结果，允许为 {@code null}。
+     * @param limit 返回的最大数量，&lt;= 0 表示不限制。
+     * @param domain 域名。
+     * @return 按命中优先级排序的技能列表。
+     */
+    public List<SkillMeta> matchSkills(String query, List<String> words, int limit, String domain) {
+        List<SkillMeta> result = new ArrayList<>();
+        String text = (null == query) ? "" : query.toLowerCase();
+
+        for (SkillMeta skill : this.listSkills(domain)) {
+            boolean hit = false;
+            for (String keyword : skill.keywords) {
+                String key = (null == keyword) ? null : keyword.trim();
+                if (null == key || key.isEmpty()) {
+                    continue;
+                }
+
+                if ((null != words && words.contains(key)) || text.contains(key.toLowerCase())) {
+                    hit = true;
+                    break;
+                }
+            }
+
+            if (hit) {
+                result.add(skill);
             }
         }
 

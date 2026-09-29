@@ -372,13 +372,13 @@ AIGC 是服务单元的核心（240 个源文件），入口是 `AIGCCellet` →
 | `DigitalTwinMachine` | 数字孪生处理 |
 | `ContentTools` / `PromptBuilder` / `TemplateArticleBuilder` | 内容与提示词构建 |
 
-**向导流（guidance）** 由 `GuideFlow`（继承 `AbstractGuideFlow`）实现，脚本层用 JS 引擎（Nashorn）加载 `service/assets/guidance/` 下的流程定义，配套 `Guides`、`Prompts` 两个注册表。
+**向导流（guidance）** 由 `GuideFlow`（继承 `AbstractGuideFlow`）实现，脚本层用 JS 引擎（Nashorn）加载 `service/assets/guidance/` 下的流程定义，配套 `Guides`、`Prompts`、`SkillRegistry` 三个注册表。
 
 **监听器（17 个）** 覆盖 `GenerateText`、`TextToImage`、`TextToFile`、`Summarization`、`SemanticSearch`、`RetrieveReRank`、`AutomaticSpeechRecognition`、`SpeechEmotionRecognition`、`VoiceDiarization`、`FacialExpressionRecognition`、`Multimodal`、`KnowledgeQA`、`KnowledgeProgress`、`ResetKnowledgeStore`、`ReadPage`、`ExtractKeywords` 等异步结果回调。
 
 **插件（7 个）**：`NewFilePlugin`、`DeleteFilePlugin`、`InjectTokenPlugin`、`AppEventPlugin`、`KnowledgeBaseEventPlugin`、`ActivateKnowledgeBasePlugin`、`ContactEventPlugin`，用于把 AIGC 能力挂接到文件、令牌、事件、联系人等系统钩子上。
 
-**资源与检索**：`ResourceSearcher` 抽象 + `BingSearcher` / `BaiduSearcher` 实现（由 `aigc.properties` 的 `page.searcher` 选择）、`FastTokenizer`、`Agent`、`StageDirector`、`AtomCollider`、`AttachmentBuilder`。
+**资源与检索**：`ResourceSearcher` 抽象 + `BingSearcher` / `BaiduSearcher` 实现（由 `aigc.properties` 的 `page.searcher` 选择）、`FastTokenizer`、`Relay`、`StageDirector`、`AtomCollider`、`AttachmentBuilder`。
 
 **任务层（109 个 Task）** 与 **数据层**（`AIGCStorage`、`LensDataToolkit`、`ReportDataset`、`LensDataset`、`MemberCenter`、`EventCenter`）。
 
@@ -439,6 +439,94 @@ Harness 的核心思想：**把提示词模板能力嵌入任意环节**，在�
 
 `service/assets/robot/modules/` 存放以 JS 编写的可热部署模组，例如 `WeiXinMessageTool.js`、`WeiXinIgnoreList.js`、`DouYinVideoInfo.js`、`StopApp.js`。服务侧通过 `ModuleManager` 统一注册、启停模块，`AppManager` 负责应用层模块匹配与语义召回。模组的**热部署**依托三方插件体系（`service/plugin/` 下的 jar）与脚本系统实现，重启后自动载入。
 
+### 5.6 SKILL 技能与提示词编排
+
+**SKILL 技能**是一份可热更新、可跨实例共享的「行为指令」：用 Markdown 描述某类任务的执行规范，平台在需要时把它注入提示词，让模型按既定规范作答。
+
+#### 来源与存储
+
+技能有两个来源，**以存储器（DB 表 `aigc_skill`）为准**，多实例共享同一份定义：
+
+| 来源 | 位置 | 说明 |
+| --- | --- | --- |
+| 存储器 | MySQL 表 `aigc_skill` | 权威来源，支持热更新，多实例最长在 `skills.cache.ttl` 后生效 |
+| 种子目录 | `service/assets/skills/` | 仅用于引导与兜底；可经 `skills.seed` 幂等导入存储器 |
+
+种子目录支持 `<name>/SKILL.md`（或 `skill.md`）与 `<name>.md` 两种形式，以 `_` 或 `.` 开头的目录项被跳过（`_template/` 即模板示例）。`SKILL.md` 支持 YAML 风格的 front-matter：
+
+```markdown
+---
+name: pdf-report
+display_name: PDF 报告生成
+description: 根据给定数据生成可打印的 PDF 报告
+keywords: pdf, 报告, report
+when_to_use: 用户要求导出可打印的报告时
+version: 1.0
+enabled: true
+scope: global
+---
+技能正文……
+```
+
+`scope` 为空或 `global` 表示对所有域生效，否则仅对同名 domain 生效；`enabled: false` 的技能不会参与装载。
+
+#### 三个装载来源（自动引入）
+
+`GenerateTextUnitMeta` 在每次请求时按以下顺序合并出「本次生效的技能集合」，并把它**绑定到会话**：
+
+1. **调用方显式指定**：请求体 `categories` 里的技能名。额外支持两个绑定指令：`*` 清空绑定、`-name` 解绑。
+2. **关键词自动装载**：用用户原始请求去匹配技能声明的 `keywords`（分词命中**或**原文包含），上限 `skills.auto.limit`。**只有作者显式声明了 keywords 的技能才会被自动装载**——声明关键词即视为作者的授权，避免误注入。
+3. **会话已绑定**：本会话（频道）此前启用过的技能。技能指令**不进入多轮历史**，若不绑定，第二轮起技能就会失效。
+
+绑定以频道为键持久化到 `aigc_skill_session`，因此多实例部署下同一会话在不同实例上仍保持一致；本地另有一层短 TTL 缓存（`skills.session.cache.ttl`）降低读库频率，绑定自身有生存时间（`skills.session.ttl`，默认 30 分钟）。未被识别为技能的 `categories` 名称仍按旧逻辑当作知识释义分类处理。
+
+#### 技能目录注入
+
+当 `skills.catalog=true` 时，提示词里会额外注入一段 `[可用技能]` 目录（技能名 + 描述），让模型知道平台上存在哪些能力。目录段预算很小（`prompt.catalog.ratio`，默认 4%），未用满的额度会顺延给技能段。
+
+#### 提示词编排（PromptComposer）
+
+提示词按语义分段装配，每段有**独立的 Token 预算**，避免某一段超长把其他内容整体挤没：
+
+| 段 | 内容 | 是否可裁剪 |
+| --- | --- | --- |
+| 系统说明 | 角色与总体约束 | 不参与比例分配 |
+| 技能目录 | `[可用技能]` 清单 | 可截断 / 丢弃 |
+| 技能指令 | `[技能指令]` + 各技能全文 | 可截断 / 逐条丢弃 |
+| 已知信息 | `[已知信息]` + 附件检索结果与知识释义 | 可截断 |
+| 用户请求 | `用户请求：…` | **永不丢弃**，超预算时截断并提示 |
+| 历史对话 | 仍由协议字段 `history` 承载，由预算反推可携带的条数 | 只保留放得下的最新若干条 |
+
+预算按 **Token** 计量：`上下文窗口 - 输出预留(prompt.output.reserve.ratio)` 得到输入预算，弹性段再按 `prompt.catalog.ratio` / `prompt.skill.ratio` / `prompt.retrieval.ratio` / `prompt.history.ratio` 分配，未用满的额度顺延给后面的段。Token 由 `TokenEstimator` 把字符数换算得到，其「每 Token 字符数」会**用模型单元返回的真实用量（`inputTokens` / `outputTokens`）在线校准**（EWMA）。`prompt.composer=false` 时退化为顺序模式（不做比例切分），用于行为回退。
+
+兼容性：若本次没有任何附加段（无技能、无已知信息、无系统说明），最终提示词与历史版本完全一致，就是用户请求原文。
+
+#### 留痕与排查
+
+| 表 | 内容 |
+| --- | --- |
+| `aigc_skill_invocation` | 每次涉及技能或发生截断的请求：注入/截断/自动/生效的技能清单、分段预算、估算 Token 与实测 Token、当时校准值，按 `sn` 与对话历史关联 |
+| `aigc_skill_session` | 会话级技能绑定（频道、domain、联系人、技能清单、更新时间） |
+
+`#process - Prompt truncated` 日志会在发生截断时输出上下文窗口、输入预算与估算用量，便于回答「模型为什么没看到某个技能」。
+
+#### 相关配置
+
+| 键 | 默认 | 说明 |
+| --- | --- | --- |
+| `skills.path` | `assets/skills/` | 种子目录，逗号分隔多路径 |
+| `skills.cache.ttl` | `60000` | 技能定义缓存刷新间隔（毫秒） |
+| `skills.seed` / `skills.seed.overwrite` | `false` / `false` | 启动时是否把种子目录导入存储器、是否覆盖同名 |
+| `skills.auto` / `skills.auto.limit` | `true` / `2` | 是否按 keywords 自动装载、单次上限 |
+| `skills.catalog` | `true` | 是否注入技能目录 |
+| `skills.session` / `skills.session.ttl` / `skills.session.cache.ttl` | `true` / `1800000` / `30000` | 会话绑定的开关、生存时间、本地缓存时间 |
+| `prompt.composer` | `true` | 是否启用按比例分段编排 |
+| `prompt.output.reserve.ratio` | `25` | 为模型输出预留的上下文比例（%） |
+| `prompt.catalog.ratio` / `prompt.skill.ratio` / `prompt.retrieval.ratio` / `prompt.history.ratio` | `4` / `30` / `33` / `33` | 各弹性段预算占比（%） |
+| `token.chars.per.token` / `token.calibration.alpha` | `1.8` / `0.3` | Token 估算初值与校准平滑系数 |
+
+> **新增一个技能的步骤**：在 `service/assets/skills/<name>/SKILL.md` 写好带 front-matter 的技能（`enabled: true`，按需声明 `keywords`）→ 若希望随仓库分发并自动入库，置 `skills.seed=true` 后重启服务；否则用 SQL 直接写入 `aigc_skill` 表（或在控制台侧接入管理界面）。发起请求时在 `categories` 里带上技能名即可启用，此后该会话自动沿用。
+
 ---
 
 ## 六、配置说明
@@ -451,7 +539,7 @@ Harness 的核心思想：**把提示词模板能力嵌入任意环节**，在�
 | `deploy/config/dispatcher.xml` | 调度机 Cell 容器配置：监听器、Nucleus（心跳/Talk/WS/WSS/SSL/日志）、Cellet 清单 |
 | `deploy/config/service.xml` | 服务单元 Cell 容器配置：监听器、Nucleus、Cellet 清单（含 jar 动态加载项） |
 | `service/config/service.properties` | 服务单元线程池（cached / fixed，max） |
-| `service/config/aigc.properties` | AIGC 线程池、节点权重、上下文长度（全局与各模型分档）、页面搜索器、代理接口 |
+| `service/config/aigc.properties` | AIGC 线程池、节点权重、上下文长度（全局与各模型分档）、页面搜索器、代理接口；另含 SKILL 技能（`skills.*`）、提示词编排（`prompt.*`）与 Token 估算（`token.*`）配置，详见 5.6 |
 | `service/config/storage*.json` | 各模块的存储后端（默认 MySQL：host / port / schema / user / password） |
 | `service/config/psychology.json` | 心理学服务存储与单元配置（`maxQueueLength`、`contextLength` 等） |
 | `service/config/plugin.json` | 插件清单：`file`（jar）、`module`、`hooks`（如 `PrePush` → `MessagingPlugin`） |

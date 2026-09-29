@@ -36,7 +36,10 @@ import cube.file.hook.FileStorageHook;
 import cube.service.aigc.event.EventCenter;
 import cube.service.aigc.guidance.GuideFlow;
 import cube.service.aigc.guidance.Guides;
+import cube.service.aigc.guidance.PromptComposer;
 import cube.service.aigc.guidance.SkillRegistry;
+import cube.service.aigc.guidance.SkillSessionStore;
+import cube.service.aigc.guidance.TokenEstimator;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.knowledge.KnowledgeFramework;
 import cube.service.aigc.listener.*;
@@ -164,6 +167,21 @@ public class AIGCService extends AbstractModule implements Generatable {
     public boolean useRelay = false;
 
     /**
+     * 是否按技能声明的 keywords 自动装载技能（自动引入）。
+     */
+    private boolean skillAuto = true;
+
+    /**
+     * 单次自动装载的技能数量上限。
+     */
+    private int skillAutoLimit = 2;
+
+    /**
+     * 是否在提示词中注入技能目录（可用技能清单）。
+     */
+    private boolean skillCatalog = true;
+
+    /**
      * 配置文件最后修改时间。
      */
     private long configFileLastModified = 0;
@@ -228,9 +246,12 @@ public class AIGCService extends AbstractModule implements Generatable {
 
                     // 绑定技能注册表：技能以存储器为准，多实例共享
                     SkillRegistry.getInstance().setup(storage);
+
+                    // 绑定技能会话存储：会话级技能绑定以存储器为准，多实例一致
+                    SkillSessionStore.getInstance().setup(storage);
                 }
                 else {
-                    Logger.e(AIGCService.class, "Can NOT find AIGC storage config");
+                    Logger.e(AIGCService.class, "#start - Can NOT find AIGC storage config");
                 }
 
                 // 应用事件
@@ -312,6 +333,16 @@ public class AIGCService extends AbstractModule implements Generatable {
 
                 // 事件中心
                 EventCenter.getInstance().start(AIGCService.this);
+
+                if (null == AIGCService.this.storage) {
+                    // 存储器不可用时服务无法提供任何数据能力，明确保持「未就绪」状态。
+                    // 旧实现会在日志报错后继续往下执行并置位 ready，导致对外声称可用、
+                    // 而所有依赖 storage 的接口出现 NPE。
+                    Logger.e(AIGCService.class, "#start - AIGC service is NOT ready: "
+                            + "AIGC storage is unavailable");
+                    started.set(false);
+                    return;
+                }
 
                 started.set(true);
                 Logger.i(AIGCService.class, "AIGC service is ready");
@@ -529,16 +560,28 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 加载 SKILL 技能相关配置。
+     * 加载 SKILL 技能、提示词编排与 Token 估算相关配置。
      *
-     * <p>各项配置：</p>
+     * <p>技能相关配置：</p>
      * <ul>
      *     <li>{@code skills.path}：技能种子目录，多个使用逗号分隔，相对工作目录；
      *         技能以存储器（DB）为准，目录仅用于引导与兜底；</li>
      *     <li>{@code skills.cache.ttl}：缓存刷新间隔（毫秒），多实例部署下 DB 变更最长在该间隔后生效；</li>
-     *     <li>{@code skills.budget.ratio}：SKILL 指令占上下文窗口的百分比上限，防止技能把上下文吃光；</li>
      *     <li>{@code skills.seed}：启动时是否把种子目录的技能导入存储器（幂等）；</li>
-     *     <li>{@code skills.seed.overwrite}：导入时是否覆盖存储器中的同名技能。</li>
+     *     <li>{@code skills.seed.overwrite}：导入时是否覆盖存储器中的同名技能；</li>
+     *     <li>{@code skills.auto} / {@code skills.auto.limit}：是否按技能声明的 keywords 自动装载，以及单次上限；</li>
+     *     <li>{@code skills.catalog}：是否在提示词中注入技能目录（可用技能清单）；</li>
+     *     <li>{@code skills.session} / {@code skills.session.ttl} / {@code skills.session.cache.ttl}：
+     *         会话级技能绑定的开关、生存时间与本地缓存时间。</li>
+     * </ul>
+     *
+     * <p>提示词编排与 Token 估算配置：</p>
+     * <ul>
+     *     <li>{@code prompt.composer}：是否启用分段编排；</li>
+     *     <li>{@code prompt.output.reserve.ratio}：为模型输出预留的上下文比例（%）；</li>
+     *     <li>{@code prompt.catalog.ratio} / {@code prompt.skill.ratio} / {@code prompt.retrieval.ratio}
+     *         / {@code prompt.history.ratio}：各弹性段的预算占比（%）；</li>
+     *     <li>{@code token.chars.per.token} / {@code token.calibration.alpha}：Token 估算初值与校准平滑系数。</li>
      * </ul>
      *
      * @param properties 配置文件内容。
@@ -553,31 +596,81 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
         }
 
-        long cacheTtl = SkillRegistry.DEFAULT_CACHE_TTL;
-        try {
-            cacheTtl = Long.parseLong(properties.getProperty("skills.cache.ttl",
-                    Long.toString(SkillRegistry.DEFAULT_CACHE_TTL)));
-        } catch (Exception e) {
-            // 忽略，使用默认值
-        }
-
-        int budgetRatio = SkillRegistry.DEFAULT_BUDGET_RATIO;
-        try {
-            budgetRatio = Integer.parseInt(properties.getProperty("skills.budget.ratio",
-                    Integer.toString(SkillRegistry.DEFAULT_BUDGET_RATIO)));
-        } catch (Exception e) {
-            // 忽略，使用默认值
-        }
-
+        long cacheTtl = getLong(properties, "skills.cache.ttl", SkillRegistry.DEFAULT_CACHE_TTL);
         boolean seed = Boolean.parseBoolean(properties.getProperty("skills.seed", "false"));
         boolean seedOverwrite = Boolean.parseBoolean(properties.getProperty("skills.seed.overwrite", "false"));
 
-        SkillRegistry.getInstance().configure(skillPaths, cacheTtl, budgetRatio, seed, seedOverwrite);
+        SkillRegistry.getInstance().configure(skillPaths, cacheTtl, seed, seedOverwrite);
+
+        // 技能的自动装载与目录注入
+        this.skillAuto = Boolean.parseBoolean(properties.getProperty("skills.auto", "true"));
+        this.skillAutoLimit = getInt(properties, "skills.auto.limit", 2);
+        this.skillCatalog = Boolean.parseBoolean(properties.getProperty("skills.catalog", "true"));
+
+        // 会话级技能绑定
+        boolean sessionEnabled = Boolean.parseBoolean(properties.getProperty("skills.session", "true"));
+        long sessionTtl = getLong(properties, "skills.session.ttl", SkillSessionStore.DEFAULT_TTL);
+        long sessionCacheTtl = getLong(properties, "skills.session.cache.ttl",
+                SkillSessionStore.DEFAULT_CACHE_TTL);
+        SkillSessionStore.getInstance().configure(sessionEnabled, sessionTtl, sessionCacheTtl);
+
+        // 提示词编排
+        PromptComposer.Policy policy = new PromptComposer.Policy();
+        policy.outputReservePercent = getInt(properties, "prompt.output.reserve.ratio",
+                policy.outputReservePercent);
+        policy.catalogPercent = getInt(properties, "prompt.catalog.ratio", policy.catalogPercent);
+        policy.skillsPercent = getInt(properties, "prompt.skill.ratio", policy.skillsPercent);
+        policy.retrievalPercent = getInt(properties, "prompt.retrieval.ratio", policy.retrievalPercent);
+        policy.historyPercent = getInt(properties, "prompt.history.ratio", policy.historyPercent);
+        boolean composerEnabled = Boolean.parseBoolean(properties.getProperty("prompt.composer", "true"));
+        PromptComposer.getInstance().configure(composerEnabled, policy);
+
+        // Token 估算与校准
+        double charsPerToken = getDouble(properties, "token.chars.per.token",
+                TokenEstimator.DEFAULT_CHARS_PER_TOKEN);
+        double alpha = getDouble(properties, "token.calibration.alpha", TokenEstimator.DEFAULT_ALPHA);
+        TokenEstimator.getInstance().configure(charsPerToken, alpha);
 
         Logger.i(this.getClass(), "AI Service - Skills path: " + skillPaths
                 + " - cache TTL: " + cacheTtl + "ms"
-                + " - budget ratio: " + budgetRatio + "%"
                 + " - seed: " + seed);
+        Logger.i(this.getClass(), "AI Service - Skill auto: " + this.skillAuto
+                + " (limit " + this.skillAutoLimit + ")"
+                + " - catalog: " + this.skillCatalog
+                + " - session binding: " + sessionEnabled + " (ttl " + sessionTtl + "ms)");
+        Logger.i(this.getClass(), "AI Service - Prompt composer: " + composerEnabled
+                + " - ratios(catalog/skill/retrieval/history): "
+                + policy.catalogPercent + "/" + policy.skillsPercent + "/"
+                + policy.retrievalPercent + "/" + policy.historyPercent
+                + " - output reserve: " + policy.outputReservePercent + "%"
+                + " - chars/token: " + TokenEstimator.getInstance().getCharsPerToken());
+    }
+
+    private static int getInt(Properties properties, String key, int defaultValue) {
+        try {
+            String value = properties.getProperty(key);
+            return (null != value) ? Integer.parseInt(value.trim()) : defaultValue;
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    private static long getLong(Properties properties, String key, long defaultValue) {
+        try {
+            String value = properties.getProperty(key);
+            return (null != value) ? Long.parseLong(value.trim()) : defaultValue;
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    private static double getDouble(Properties properties, String key, double defaultValue) {
+        try {
+            String value = properties.getProperty(key);
+            return (null != value) ? Double.parseDouble(value.trim()) : defaultValue;
+        } catch (Exception e) {
+            return defaultValue;
+        }
     }
 
     public AIGCCellet getCellet() {
@@ -603,6 +696,54 @@ public class AIGCService extends AbstractModule implements Generatable {
      */
     public SkillRegistry getSkillRegistry() {
         return SkillRegistry.getInstance();
+    }
+
+    /**
+     * 获取会话级技能绑定存储。
+     *
+     * @return 返回技能会话存储。
+     */
+    public SkillSessionStore getSkillSessionStore() {
+        return SkillSessionStore.getInstance();
+    }
+
+    /**
+     * 获取提示词编排器。
+     *
+     * @return 返回提示词编排器。
+     */
+    public PromptComposer getPromptComposer() {
+        return PromptComposer.getInstance();
+    }
+
+    /**
+     * 获取 Token 估算器。
+     *
+     * @return 返回 Token 估算器。
+     */
+    public TokenEstimator getTokenEstimator() {
+        return TokenEstimator.getInstance();
+    }
+
+    /**
+     * 是否按技能声明的 keywords 自动装载技能。
+     */
+    public boolean isSkillAutoEnabled() {
+        return this.skillAuto;
+    }
+
+    /**
+     * 单次自动装载的技能数量上限。
+     */
+    public int getSkillAutoLimit() {
+        return this.skillAutoLimit;
+    }
+
+    /**
+     * 是否在提示词中注入技能目录。
+     */
+    public boolean isSkillCatalogEnabled() {
+        return this.skillCatalog;
     }
 
     public File getWorkingPath() {
@@ -660,9 +801,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     public List<AIGCChannel> getAllChannels() {
-        List<AIGCChannel> list = new ArrayList<>(this.channelMap.values());
-        list.addAll(this.channelMap.values());
-        return list;
+        return new ArrayList<>(this.channelMap.values());
     }
 
     public int numUnitsByName(String unitName) {
@@ -933,6 +1072,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         AIGCHook hook = this.pluginSystem.getAppEventHook();
         AIGCPluginContext context = new AIGCPluginContext(appEvent);
         hook.apply(context);
+
+        if (null == this.storage) {
+            Logger.w(this.getClass(), "#fireEvent - AIGC storage is NOT available");
+            return false;
+        }
 
         return this.storage.writeAppEvent(appEvent);
     }
@@ -1429,6 +1573,11 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     public ContactPreference getPreference(long contactId) {
+        if (null == this.storage) {
+            Logger.w(this.getClass(), "#getPreference - AIGC storage is NOT available");
+            return null;
+        }
+
         return this.storage.readContactPreference(contactId);
     }
 
@@ -1439,6 +1588,11 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @return
      */
     public String queryTokenByInvitation(String invitationCode) {
+        if (null == this.storage) {
+            Logger.w(this.getClass(), "#queryTokenByInvitation - AIGC storage is NOT available");
+            return null;
+        }
+
         return this.storage.readTokenByInvitation(invitationCode);
     }
 
@@ -1449,6 +1603,11 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @return
      */
     public String newInvitationForToken(String token) {
+        if (null == this.storage) {
+            Logger.w(this.getClass(), "#newInvitationForToken - AIGC storage is NOT available");
+            return null;
+        }
+
         String invitation = Utils.randomNumberString(6);
         if (!this.storage.writeInvitation(invitation, token)) {
             Logger.e(this.getClass(), "#newInvitationForToken - write invitation failed: " + token);
@@ -1950,14 +2109,7 @@ public class AIGCService extends AbstractModule implements Generatable {
      */
     public GeneratingRecord syncGenerateText(AIGCUnit unit, String prompt, GeneratingOption option,
                                    List<GeneratingRecord> history, Contact participantContact) {
-        AtomicInteger count = this.generateTextUnitCountMap.get(unit.getCapability().getName());
-        if (null == count) {
-            count = new AtomicInteger(1);
-            this.generateTextUnitCountMap.put(unit.getCapability().getName(), count);
-        }
-        else {
-            count.incrementAndGet();
-        }
+        AtomicInteger count = increaseUnitCounter(unit.getCapability().getName());
 
         Packet request = null;
         ActionDialect dialect = null;
@@ -1967,7 +2119,6 @@ public class AIGCService extends AbstractModule implements Generatable {
             if (this.useRelay) {
                 Logger.d(this.getClass(), "#syncGenerateText - Relay - \"" + unit.getCapability().getName() + "\" - history:"
                         + ((null != history) ? history.size() : 0));
-                count.decrementAndGet();
                 return Relay.getInstance().generateText(Utils.randomString(16),
                         unit.getCapability().getName(), prompt, option, history);
             }
@@ -1997,10 +2148,12 @@ public class AIGCService extends AbstractModule implements Generatable {
                         + " - " + unit.getCapability().getName() + "@" + unit.getContact().getId());
                 // 记录故障
                 unit.markFailure(AIGCStateCode.UnitError.code, System.currentTimeMillis(), participant.getId());
-                count.decrementAndGet();
                 return null;
             }
         } finally {
+            // 实时计数与运行标志同处收口：new Packet / transmit 抛异常时也必须递减，
+            // 否则计数会在异常路径上单调上涨。
+            count.decrementAndGet();
             unit.setRunning(false);
         }
 
@@ -2009,7 +2162,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         if (stateCode != AIGCStateCode.Ok.code) {
             Logger.e(AIGCService.class, "#syncGenerateText - failed, state code:" + stateCode
                     + " - " + unit.getCapability().getName() + "@" + unit.getContact().getId());
-            count.decrementAndGet();
             return null;
         }
         JSONObject payload = Packet.extractDataPayload(response);
@@ -2024,12 +2176,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         } catch (Exception e) {
             Logger.w(AIGCService.class, "#syncGenerateText - failed, sn:" + sn
                     + " - " + unit.getCapability().getName() + "@" + unit.getContact().getId());
-            count.decrementAndGet();
             return null;
         }
-
-        // 计数
-        count.decrementAndGet();
 
         // 过滤中文字符
         responseText = TextUtils.filterChinese(unit, responseText);
@@ -3541,43 +3689,59 @@ public class AIGCService extends AbstractModule implements Generatable {
         return new FileLabel(fileLabelJson);
     }
 
+    /**
+     * 增加指定单元的实时运行计数。
+     *
+     * <p>用 <code>computeIfAbsent</code> 保证「取计数器」这一步是原子的，避免旧实现的
+     * <code>get</code> + <code>put</code> 在并发下重复创建计数器而丢计数。
+     * 调用方必须在 <code>finally</code> 中递减返回的计数器。</p>
+     *
+     * @param unitName 单元能力名称。
+     * @return 返回该单元名对应的计数器。
+     */
+    private AtomicInteger increaseUnitCounter(String unitName) {
+        AtomicInteger count = this.generateTextUnitCountMap.computeIfAbsent(unitName,
+                k -> new AtomicInteger(0));
+        count.incrementAndGet();
+        return count;
+    }
+
     private void processGenerateTextMeta(GenerateTextUnitMeta meta) {
         AIGCUnit unit = meta.unit;
 
+        // 等待前一个任务释放该单元，最多 5 秒。
+        // 等待超时后仍继续派发：单元选择（selectUnitByName）在所有单元都忙时同样返回忙单元，
+        // 且应答按 sn 路由，因此同一单元上的并发执行是可接受的降级路径——只需让它可观测。
         int countdown = 50;
         while (unit.isRunning()) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                // 被中断时立即结束等待并恢复中断标志。
+                // 旧实现吞掉中断后仍会继续轮询满 5 秒。
+                Thread.currentThread().interrupt();
+                break;
             }
             --countdown;
             if (countdown <= 0) {
+                Logger.w(this.getClass(), "#processGenerateTextMeta - Unit is still busy, dispatch anyway - "
+                        + unit.getCapability().getName() + "@" + unit.getContact().getId());
                 break;
             }
         }
 
         unit.setRunning(true);
-
-        AtomicInteger count = this.generateTextUnitCountMap.get(unit.getCapability().getName());
-        if (null == count) {
-            count = new AtomicInteger(1);
-            this.generateTextUnitCountMap.put(unit.getCapability().getName(), count);
-        }
-        else {
-            count.incrementAndGet();
-        }
-
-        // 执行处理
+        AtomicInteger count = increaseUnitCounter(unit.getCapability().getName());
         try {
+            // 执行处理
             meta.process();
         } catch (Exception e) {
             Logger.e(this.getClass(), "#processGenerateTextMeta - meta process", e);
+        } finally {
+            // 与运行标志同处收口：process 抛异常时计数也必须递减。
+            count.decrementAndGet();
+            unit.setRunning(false);
         }
-
-        count.decrementAndGet();
-
-        unit.setRunning(false);
     }
 
     private void processQueue(AIGCUnit unit, Queue<UnitMeta> queue) {
