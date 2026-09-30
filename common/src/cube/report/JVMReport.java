@@ -6,6 +6,7 @@
 
 package cube.report;
 
+import cell.util.log.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -50,7 +51,7 @@ public class JVMReport extends Report {
             this.systemStartTime = json.getLong("systemStartTime");
             this.systemDuration = json.getLong("systemDuration");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(JVMReport.class, "#JVMReport - JSON error", e);
         }
     }
 
@@ -81,7 +82,7 @@ public class JVMReport extends Report {
             json.put("systemStartTime", this.systemStartTime);
             json.put("systemDuration", this.systemDuration);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(JVMReport.class, "#toJSON - JSON error", e);
         }
         return json;
     }

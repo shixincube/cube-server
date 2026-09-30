@@ -85,10 +85,6 @@ public class Representation implements JSONable {
 
     public void makeDescription() {
         String marked = null;
-        // 趋势
-//        if (this.positiveCorrelation == this.negativeCorrelation) {
-//            marked = NormalTrick + this.knowledgeStrategy.getTerm().word;
-//        }
 
         if (this.negativeCorrelation > 0 &&
                 this.positiveCorrelation < this.negativeCorrelation) {

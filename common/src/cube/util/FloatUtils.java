@@ -82,17 +82,6 @@ public final class FloatUtils {
         }
         System.out.println("----------------------------------------");
 
-//        double[] input = new double[] { 10, 14, 60 };
-//        double[] result = FloatUtils.normalization(input, 0, 1);
-//        for (double v : result) {
-//            System.out.println(v);
-//        }
-//        System.out.println("----------------------------------------");
 
-//        result = FloatUtils.scale(input, 100);
-//        for (double v : result) {
-//            System.out.println(v);
-//        }
-//        System.out.println("----------------------------------------");
     }
 }

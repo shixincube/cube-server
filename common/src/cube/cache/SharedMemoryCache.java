@@ -72,7 +72,7 @@ public class SharedMemoryCache extends AbstractCache {
         try {
             this.configFile = config.getString("configFile");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(SharedMemoryCache.class, "#configure - JSON error", e);
         }
     }
 

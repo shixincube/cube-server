@@ -605,22 +605,6 @@ public class Painting implements JSONable {
         person.refreshArea();
     }
 
-    /**
-     * 从低到高。
-     *
-     * @param list
-     * @return
-     */
-    private LinkedList<Thing> sortByArea(List<? extends Thing> list) {
-        LinkedList<Thing> result = new LinkedList<>(list);
-        result.sort(new Comparator<Thing>() {
-            @Override
-            public int compare(Thing t1, Thing t2) {
-                return t1.area - t2.area;
-            }
-        });
-        return result;
-    }
 
     /**
      * 从低到高。

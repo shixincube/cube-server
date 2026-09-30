@@ -46,13 +46,6 @@ public class SnapshotOperation extends VideoOperation {
         this.outputType = FileType.matchExtension(json.getString("outputType"));
         this.packToZip = json.getBoolean("packToZip");
 
-        /*if (json.has("timingPoints")) {
-            this.timeOffsets = new ArrayList<>();
-            JSONArray array = json.getJSONArray("timingPoints");
-            for (int i = 0; i < array.length(); ++i) {
-                this.timeOffsets.add(new TimeOffset(array.getJSONObject(i)));
-            }
-        }*/
     }
 
     @Override

@@ -7,7 +7,6 @@
 package cube.file;
 
 import cube.common.JSONable;
-import cube.util.FileUtils;
 import org.json.JSONObject;
 
 import java.io.File;

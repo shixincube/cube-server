@@ -77,7 +77,7 @@ public class OCRFile implements JSONable {
                 this.pages.add(new Page(pageArray.getJSONObject(i)));
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Logger.e(OCRFile.class, "#OCRFile - File not found", e);
         } catch (Exception e) {
             Logger.e(this.getClass(), "#OCRFile", e);
         } finally {
@@ -85,6 +85,8 @@ public class OCRFile implements JSONable {
                 try {
                     fis.close();
                 } catch (IOException e) {
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(OCRFile.class, "#OCRFile - Failed to close 'fis': " + e.getMessage());
                 }
             }
         }
@@ -118,6 +120,8 @@ public class OCRFile implements JSONable {
             try {
                 stream.close();
             } catch (IOException e) {
+                // 释放失败不影响主流程，仅记录
+                Logger.d(OCRFile.class, "#outputFile - Failed to close 'stream': " + e.getMessage());
             }
         }
     }

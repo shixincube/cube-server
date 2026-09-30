@@ -11,7 +11,6 @@ import org.json.JSONObject;
 
 public class RetrieveReRankResultSource implements JSONable {
 
-    private FileLabel fileLabel;
 
     public RetrieveReRankResultSource(JSONObject json) {
 

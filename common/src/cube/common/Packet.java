@@ -8,6 +8,7 @@ package cube.common;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
+import cell.util.log.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -88,7 +89,7 @@ public class Packet implements JSONable {
             json.put("name", this.name);
             json.put("data", this.data);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(Packet.class, "#toJSON - JSON error", e);
         }
         return json;
     }

@@ -13,6 +13,7 @@ import cell.util.CachedQueueExecutor;
 import cell.util.log.Logger;
 import cube.benchmark.ResponseTime;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -50,7 +51,8 @@ public abstract class AbstractCellet extends Cellet {
                 try {
                     max = Integer.parseInt(properties.getProperty("threadpool.max", "32"));
                 } catch (Exception e) {
-                    // Nothing
+                    // 配置非法时使用默认值
+                    Logger.d(AbstractCellet.class, "#initialize - Failed to parse the config 'threadpool.max', fallback to " + max + ": " + e.getMessage());
                 }
                 if (properties.getProperty("threadpool.type", "cached").equalsIgnoreCase("cached")) {
                     AbstractCellet.sExecutor = CachedQueueExecutor.newCachedQueueThreadPool(max);
@@ -90,10 +92,13 @@ public abstract class AbstractCellet extends Cellet {
     /**
      * 获取应答时间记录。
      *
+     * <p>返回内部映射的只读视图：调用方无法通过返回值修改本单元的状态。
+     * 视图是实时的，仍会反映后续新增的应答时间。</p>
+     *
      * @return 返回应答时间记录。
      */
     public Map<String, List<ResponseTime>> getResponseTimes() {
-        return this.responseTimeMap;
+        return Collections.unmodifiableMap(this.responseTimeMap);
     }
 
     /**

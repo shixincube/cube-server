@@ -9,6 +9,7 @@ package cube.cache;
 import cell.adapter.extra.timeseries.SeriesItem;
 import cell.adapter.extra.timeseries.SeriesMemory;
 import cell.adapter.extra.timeseries.SeriesMemoryConfig;
+import cell.util.log.Logger;
 import cube.core.AbstractTimeSeriesCache;
 import cube.core.CacheKey;
 import cube.core.CacheValue;
@@ -76,7 +77,7 @@ public class SeriesMemoryTimeSeriesCache extends AbstractTimeSeriesCache {
         try {
             this.configFile = config.getString("configFile");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(SeriesMemoryTimeSeriesCache.class, "#configure - JSON error", e);
         }
     }
 

@@ -7,6 +7,7 @@
 package cube.common.entity;
 
 import cell.util.Utils;
+import cell.util.log.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -71,7 +72,7 @@ public class FileThumbnail extends Entity {
             this.sourceHeight = json.getInt("sourceHeight");
             this.quality = json.getInt("quality");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(FileThumbnail.class, "#FileThumbnail - JSON error", e);
         }
     }
 
@@ -109,7 +110,7 @@ public class FileThumbnail extends Entity {
             json.put("sourceHeight", this.sourceHeight);
             json.put("quality", this.quality);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(FileThumbnail.class, "#toJSON - JSON error", e);
         }
         return json;
     }

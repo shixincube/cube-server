@@ -128,7 +128,7 @@ public class Resource {
                         this.knowledgeStrategies.add(cd);
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Logger.e(Resource.class, "#loadTermInterpretations - I/O error", e);
                 }
             }
         }
@@ -159,7 +159,7 @@ public class Resource {
                     byte[] data = Files.readAllBytes(Paths.get(this.memberFile.getAbsolutePath()));
                     this.membershipData = new JSONObject(new String(data, StandardCharsets.UTF_8));
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Logger.e(Resource.class, "#loadMembershipData - I/O error", e);
                 }
             }
         }
@@ -354,33 +354,5 @@ public class Resource {
         }
     }
 
-//    public String getChildStrategyContent() {
-//        if (this.childStrategyFile.exists()) {
-//            if (this.childStrategyFile.lastModified() != this.childStrategyFileModified) {
-//                try {
-//                    byte[] data = Files.readAllBytes(Paths.get(this.childStrategyFile.getAbsolutePath()));
-//                    this.childStrategyContent = new String(data, StandardCharsets.UTF_8);
-//                    this.childStrategyFileModified = this.childStrategyFile.lastModified();
-//                } catch (Exception e) {
-//                    Logger.e(this.getClass(), "#getChildStrategyContent", e);
-//                }
-//            }
-//        }
-//        return this.childStrategyContent;
-//    }
 
-//    public String getTeenagerStrategyContent() {
-//        if (this.teenagerStrategyFile.exists()) {
-//            if (this.teenagerStrategyFile.lastModified() != this.teenagerStrategyFileModified) {
-//                try {
-//                    byte[] data = Files.readAllBytes(Paths.get(this.teenagerStrategyFile.getAbsolutePath()));
-//                    this.teenagerStrategyContent = new String(data, StandardCharsets.UTF_8);
-//                    this.teenagerStrategyFileModified = this.teenagerStrategyFile.lastModified();
-//                } catch (Exception e) {
-//                    Logger.e(this.getClass(), "#getTeenagerStrategyContent", e);
-//                }
-//            }
-//        }
-//        return this.teenagerStrategyContent;
-//    }
 }

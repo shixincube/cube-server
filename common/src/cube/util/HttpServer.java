@@ -6,6 +6,7 @@
 
 package cube.util;
 
+import cell.util.log.Logger;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -201,7 +202,7 @@ public class HttpServer {
                 this.server.start();
                 this.server.join();
             } catch (Exception e) {
-                e.printStackTrace();
+                Logger.e(HttpServer.class, "#start - Unhandled exception", e);
             }
         }
         else {
@@ -211,7 +212,7 @@ public class HttpServer {
                     try {
                         server.start();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Logger.e(HttpServer.class, "#run - Unhandled exception", e);
                     }
                 }
             }).start();
@@ -229,7 +230,7 @@ public class HttpServer {
         try {
             this.server.stop();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(HttpServer.class, "#stop - Unhandled exception", e);
         }
 
         this.server = null;

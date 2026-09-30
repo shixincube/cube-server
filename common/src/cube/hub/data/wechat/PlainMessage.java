@@ -88,7 +88,7 @@ public class PlainMessage extends Metadata {
                 byte[] bytes = Base64.decode(json.getString("text"));
                 this.text = new String(bytes, StandardCharsets.UTF_8);
             } catch (IOException e) {
-                e.printStackTrace();
+                Logger.e(PlainMessage.class, "#PlainMessage - I/O error", e);
             }
         }
 
@@ -400,7 +400,7 @@ public class PlainMessage extends Metadata {
         try {
             md5 = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            Logger.e(PlainMessage.class, "#md5 - Algorithm not available", e);
             return null;
         }
 
@@ -413,12 +413,14 @@ public class PlainMessage extends Metadata {
                 md5.update(bytes, 0, length);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(PlainMessage.class, "#md5 - I/O error", e);
         } finally {
             if (null != fis) {
                 try {
                     fis.close();
                 } catch (IOException e) {
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(PlainMessage.class, "#md5 - Failed to close 'fis': " + e.getMessage());
                 }
             }
         }

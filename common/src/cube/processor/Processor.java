@@ -43,7 +43,8 @@ public abstract class Processor {
                         try {
                             reader.close();
                         } catch (IOException e) {
-                            // Nothing
+                            // 释放失败不影响主流程，仅记录
+                            Logger.d(Processor.class, "#buildInputStreamWorker - Failed to close 'reader': " + e.getMessage());
                         }
                     }
                 }

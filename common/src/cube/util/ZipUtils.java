@@ -6,6 +6,8 @@
 
 package cube.util;
 
+import cell.util.log.Logger;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -45,7 +47,7 @@ public class ZipUtils {
                         zos.write(buf, 0, length);
                     }
                 } catch (IOException ioe) {
-                    ioe.printStackTrace();
+                    Logger.e(ZipUtils.class, "#toZip - I/O error", ioe);
                 } finally {
                     if (null != fis) {
                         fis.close();
@@ -56,12 +58,14 @@ public class ZipUtils {
                 zos.closeEntry();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(ZipUtils.class, "#toZip - I/O error", e);
         } finally {
             if (null != zos) {
                 try {
                     zos.close();
                 } catch (IOException e) {
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(ZipUtils.class, "#toZip - Failed to close 'zos': " + e.getMessage());
                 }
             }
         }
@@ -94,6 +98,8 @@ public class ZipUtils {
                     try {
                         fis.close();
                     } catch (IOException e) {
+                        // 释放失败不影响主流程，仅记录
+                        Logger.d(ZipUtils.class, "#compress - Failed to close 'fis': " + e.getMessage());
                     }
                 }
             }

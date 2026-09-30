@@ -6,6 +6,7 @@
 
 package cube.common;
 
+import cell.util.log.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -61,7 +62,7 @@ public class ModuleEvent implements JSONable {
                 this.context = json.getJSONObject("context");
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(ModuleEvent.class, "#ModuleEvent - JSON error", e);
         }
     }
 
@@ -121,7 +122,7 @@ public class ModuleEvent implements JSONable {
                 json.put("context", this.context);
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(ModuleEvent.class, "#toJSON - JSON error", e);
         }
         return json;
     }
@@ -142,7 +143,7 @@ public class ModuleEvent implements JSONable {
         try {
             mod = json.getString("module");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(ModuleEvent.class, "#extractModuleName - JSON error", e);
         }
         return mod;
     }
@@ -158,7 +159,7 @@ public class ModuleEvent implements JSONable {
         try {
             event = json.getString("event");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(ModuleEvent.class, "#extractEventName - JSON error", e);
         }
         return event;
     }

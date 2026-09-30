@@ -11,10 +11,22 @@ import cube.util.SQLUtils;
 
 /**
  * 条件句式。
+ *
+ * <p><b>安全约定</b>：所有取值型句式都必须通过 {@link #renderValue(StorageField)}
+ * 输出 SQL 字面量，禁止直接调用 {@code field.getValue().toString()} ——
+ * 后者不会转义单引号与反斜杠，会形成注入点。</p>
  */
 public class Conditional {
 
     public final static String Quote = "`";
+
+    /**
+     * LIKE 模式串使用的转义字符。
+     *
+     * <p>与 {@link cube.util.SQLUtils#correctString(String)} 的反斜杠转义保持一致，
+     * 因此要求数据库运行在默认的 backslash-escapes 模式下。</p>
+     */
+    private final static char LIKE_ESCAPE_CHAR = '\\';
 
     /**
      * 句式的 SQL 语句。
@@ -56,6 +68,64 @@ public class Conditional {
     }
 
     /**
+     * 将字段值渲染为可直接拼进 SQL 的字面量。
+     *
+     * <p>字符串类型会转义后加单引号；数值与布尔类型按原样输出；
+     * 历史实现未覆盖的类型（FLOAT / DOUBLE / JSON 等）退化为转义字符串，
+     * 避免"什么都不输出"造成 SQL 语法错误。</p>
+     *
+     * @param field 字段描述。
+     * @return 返回 SQL 字面量。
+     * @throws IllegalArgumentException 字段值为 {@code null} 时抛出。
+     */
+    private static String renderValue(StorageField field) {
+        if (null == field.getValue()) {
+            // 历史实现此处会抛 NullPointerException，这里改为显式失败并给出字段名
+            throw new IllegalArgumentException("#renderValue - The value of field is null: " + field.getName());
+        }
+
+        LiteralBase literal = field.getLiteralBase();
+
+        if (null == literal) {
+            return "'" + SQLUtils.correctString(field.getString()) + "'";
+        }
+
+        switch (literal) {
+            case INT:
+                return String.valueOf(field.getInt());
+            case LONG:
+                return String.valueOf(field.getLong());
+            case BOOL:
+                return field.getBoolean() ? "1" : "0";
+            case STRING:
+            default:
+                return "'" + SQLUtils.correctString(field.getString()) + "'";
+        }
+    }
+
+    /**
+     * 转义 LIKE 模式串。
+     *
+     * <p>通配符 {@code %} 与 {@code _} 以及转义字符 {@code \} 都必须被转义，
+     * 否则用户输入的关键字会被当成通配符使用，导致匹配范围被放大。</p>
+     *
+     * @param pattern 原始模式串。
+     * @return 返回转义后的模式串。
+     */
+    private static String escapeLikePattern(String pattern) {
+        if (null == pattern) {
+            return "";
+        }
+
+        // 顺序不可颠倒：先转义转义字符自身，再转义通配符，最后转义单引号
+        String result = pattern.replace("\\", "\\\\");
+        result = result.replace("%", "\\%");
+        result = result.replace("_", "\\_");
+        result = result.replace("'", "''");
+        return result;
+    }
+
+    /**
      * 创建 AND 连接。
      *
      * @return 返回条件句式实例。
@@ -80,8 +150,16 @@ public class Conditional {
      * @return 返回括号句式实例。
      */
     public static Conditional createBracket(Conditional[] conditionals) {
+        if (null == conditionals || conditionals.length == 0) {
+            throw new IllegalArgumentException("#createBracket - Empty conditionals, refuse to build SQL");
+        }
+
         StringBuilder buf = new StringBuilder("( ");
         for (Conditional cond : conditionals) {
+            if (null == cond) {
+                continue;
+            }
+
             buf.append(cond.sql).append(" ");
         }
         buf.append(")");
@@ -171,14 +249,7 @@ public class Conditional {
      * @return 返回条件句式实例。
      */
     public static Conditional createEqualTo(StorageField field) {
-        String value = field.getValue().toString();
-
-        if (field.getLiteralBase() == LiteralBase.BOOL) {
-            value = (field.getBoolean() ? "1" : "0");
-        }
-        else if (field.getLiteralBase() == LiteralBase.STRING) {
-            value = "'" + value + "'";
-        }
+        String value = renderValue(field);
 
         String table = field.getTableName();
         if (null != table) {
@@ -228,14 +299,7 @@ public class Conditional {
      * @return
      */
     public static Conditional createUnequalTo(StorageField field) {
-        String value = field.getValue().toString();
-
-        if (field.getLiteralBase() == LiteralBase.BOOL) {
-            value = (field.getBoolean() ? "1" : "0");
-        }
-        else if (field.getLiteralBase() == LiteralBase.STRING) {
-            value = "'" + value + "'";
-        }
+        String value = renderValue(field);
 
         String table = field.getTableName();
         if (null != table) {
@@ -255,7 +319,7 @@ public class Conditional {
      * @return 返回条件句式实例。
      */
     public static Conditional createGreaterThan(StorageField field) {
-        return new Conditional(Quote + field.getName() + Quote + ">" + field.getValue().toString(),
+        return new Conditional(Quote + field.getName() + Quote + ">" + renderValue(field),
                 true);
     }
 
@@ -266,7 +330,7 @@ public class Conditional {
      * @return 返回条件句式实例。
      */
     public static Conditional createGreaterThanEqual(StorageField field) {
-        return new Conditional(Quote + field.getName() + Quote + ">=" + field.getValue().toString(),
+        return new Conditional(Quote + field.getName() + Quote + ">=" + renderValue(field),
                 true);
     }
 
@@ -277,7 +341,7 @@ public class Conditional {
      * @return 返回条件句式实例。
      */
     public static Conditional createLessThan(StorageField field) {
-        return new Conditional(Quote + field.getName() + Quote + "<" + field.getValue().toString(),
+        return new Conditional(Quote + field.getName() + Quote + "<" + renderValue(field),
                 true);
     }
 
@@ -288,7 +352,7 @@ public class Conditional {
      * @return 返回条件句式实例。
      */
     public static Conditional createLessThanEqual(StorageField field) {
-        return new Conditional(Quote + field.getName() + Quote + "<=" + field.getValue().toString(),
+        return new Conditional(Quote + field.getName() + Quote + "<=" + renderValue(field),
                 true);
     }
 
@@ -298,13 +362,36 @@ public class Conditional {
      * @param field 字段描述
      * @param values 对应的值数组。
      * @return 返回条件句式实例。
+     * @throws IllegalArgumentException 值数组为空或包含 {@code null} 元素时抛出。
      */
     public static Conditional createIN(StorageField field, Object[] values) {
+        if (null == values || values.length == 0) {
+            throw new IllegalArgumentException("#createIN - Empty values, refuse to build SQL for field: " + field.getName());
+        }
+
+        LiteralBase literal = field.getLiteralBase();
+
         StringBuilder buf = new StringBuilder();
         buf.append(Quote).append(field.getName()).append(Quote);
         buf.append(" IN (");
-        for (Object value : values) {
-            switch (field.getLiteralBase()) {
+
+        for (int i = 0; i < values.length; ++i) {
+            Object value = values[i];
+            if (null == value) {
+                throw new IllegalArgumentException("#createIN - Null element in values, refuse to build SQL for field: "
+                        + field.getName());
+            }
+
+            if (i > 0) {
+                buf.append(",");
+            }
+
+            if (null == literal) {
+                buf.append("'").append(SQLUtils.correctString(value.toString())).append("'");
+                continue;
+            }
+
+            switch (literal) {
                 case LONG:
                     buf.append(((Long) value).longValue());
                     break;
@@ -315,16 +402,12 @@ public class Conditional {
                     buf.append(((Boolean) value).booleanValue() ? "1" : "0");
                     break;
                 case STRING:
+                default:
+                    // 历史实现对未覆盖的类型输出 "0"，会静默改变匹配结果，这里统一按字符串转义处理
                     buf.append("'").append(SQLUtils.correctString(value.toString())).append("'");
                     break;
-                default:
-                    buf.append("0");
-                    break;
             }
-            buf.append(",");
         }
-        // 修正逗号
-        buf.delete(buf.length() - 1, buf.length());
 
         buf.append(")");
         return new Conditional(buf.toString());
@@ -333,13 +416,19 @@ public class Conditional {
     /**
      * 创建 LIKE %value% 条件。
      *
+     * <p>关键字中的 {@code %} 、{@code _} 与 {@code \} 会被转义，
+     * 并通过 {@code ESCAPE} 子句显式声明转义字符，确保用户输入只作为普通字符参与匹配。</p>
+     *
      * @param fieldName 字段名。
      * @param keyword 匹配关键字。
      * @return 返回条件句式实例。
      */
     public static Conditional createLike(String fieldName, String keyword) {
         StringBuilder buf = new StringBuilder();
-        buf.append(Quote).append(fieldName).append(Quote).append(" LIKE '%").append(keyword).append("%'");
+        buf.append(Quote).append(fieldName).append(Quote);
+        buf.append(" LIKE '%").append(escapeLikePattern(keyword)).append("%'");
+        // 显式声明转义字符，避免用户输入被当作通配符
+        buf.append(" ESCAPE '").append(LIKE_ESCAPE_CHAR).append(LIKE_ESCAPE_CHAR).append("'");
         return new Conditional(buf.toString(), true);
     }
 

@@ -8,7 +8,6 @@ package cube.service.aigc;
 
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.CachedQueueExecutor;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
@@ -33,6 +32,7 @@ import cube.core.AbstractModule;
 import cube.core.Kernel;
 import cube.core.Module;
 import cube.file.hook.FileStorageHook;
+import cube.service.aigc.channel.ChannelManager;
 import cube.service.aigc.event.EventCenter;
 import cube.service.aigc.guidance.GuideFlow;
 import cube.service.aigc.guidance.Guides;
@@ -65,13 +65,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * AIGC 服务。
+ *
+ * <p>本类收敛为<b>门面</b>：对上层暴露业务接口，把三类内聚职责委派给独立组件——</p>
+ * <ul>
+ *     <li>{@link UnitScheduler}：单元注册、选点与周期维护；</li>
+ *     <li>{@link ChannelManager}：频道的创建、查询、保活与回收；</li>
+ *     <li>{@link AIGCTaskExecutor}：各能力的任务队列、两层线程池与派发。</li>
+ * </ul>
+ * <p>本类自身只保留与上述三者无关的业务编排（用户、令牌、会员、知识库、文件、内容理解等）。</p>
  */
 public class AIGCService extends AbstractModule implements Generatable {
 
@@ -80,70 +86,39 @@ public class AIGCService extends AbstractModule implements Generatable {
     private final AIGCCellet cellet;
 
     /**
-     * Key 是 AIGC 的 Query Key
+     * 单元调度器：单元注册、选点与周期维护。
      */
-    private final Map<String, AIGCUnit> unitMap;
+    private final UnitScheduler unitScheduler;
 
     /**
-     * 单元权重。
-     * Key 是 Contact Id
+     * 频道管理器：频道的创建、查询、保活与回收。
      */
-    private final Map<Long, Double> unitWeightMap;
+    private final ChannelManager channelManager;
 
     /**
-     * Key 是 AIGC 的 Query Key
+     * 任务执行器：各能力的任务队列、两层线程池与派发。
      */
-    private final Map<String, Queue<UnitMeta>> textToFileQueueMap;
-
-    /**
-     * Key 是 AIGC 的 Query Key
-     */
-    private final Map<String, Queue<UnitMeta>> textToImageQueueMap;
-
-    /**
-     * Key 是 AIGC 的 Query Key
-     */
-    private final Map<String, Queue<UnitMeta>> multimodalQueueMap;
-
-    /**
-     * Key 是 AIGC 的 Query Key
-     */
-    private final Map<String, Queue<UnitMeta>> semanticSearchQueueMap;
-
-    /**
-     * Key 是 AIGC 的 Query Key
-     */
-    private final Map<String, Queue<UnitMeta>> retrieveReRankQueueMap;
-
-    private final Queue<SpeechRecognitionUnitMeta> speechQueue;
-
-    /**
-     * Key 是 AIGC 的 Query Key
-     */
-    private final Map<String, LinkedList<UnitMeta>> audioQueueMap;
+    private final AIGCTaskExecutor taskExecutor;
 
     /**
      * Key 是 Stream name
      */
     private final Map<String, List<VoiceStreamSink>> waitingVoiceStreamSinks;
 
-    private final List<UnitMeta> runningMetas;
-
-    /**
-     * 最大频道数量。
-     */
-    private final int maxChannel = 10000;
-
-    private ConcurrentHashMap<String, AIGCChannel> channelMap;
-
     /**
      * 知识库架构。
      */
     private KnowledgeFramework knowledgeFramework;
 
-    private final long channelTimeout = 30 * 60 * 1000;
+    /**
+     * 授权服务模块。启动时解析并缓存，避免热路径反复走 Kernel 查找。
+     */
+    private AuthService authService;
 
-    private ExecutorService executor;
+    /**
+     * 文件存储模块。该模块可能未部署，因此保持可空语义。
+     */
+    private AbstractModule fileStorage;
 
     private AIGCStorage storage;
 
@@ -155,11 +130,6 @@ public class AIGCService extends AbstractModule implements Generatable {
      * 工作路径。
      */
     public final File workingPath = new File("storage/tmp/");
-
-    /**
-     * 生成文本任务执行实时计数。
-     */
-    private ConcurrentHashMap<String, AtomicInteger> generateTextUnitCountMap;
 
     /**
      * 是否通过中继（Relay）访问，仅用于本地测试
@@ -188,25 +158,13 @@ public class AIGCService extends AbstractModule implements Generatable {
     // 配置文件上一次检测事件
     private long configFileLastTime = 0;
 
-    private long lastResetUnitTime = 0;
-
-    private final int maxSpeechRecognitionConcurrences = 32;
-
     public AIGCService(AIGCCellet cellet) {
         this.cellet = cellet;
-        this.unitMap = new ConcurrentHashMap<>();
-        this.unitWeightMap = new ConcurrentHashMap<>();
-        this.channelMap = new ConcurrentHashMap<>();
-        this.textToFileQueueMap = new ConcurrentHashMap<>();
-        this.textToImageQueueMap = new ConcurrentHashMap<>();
-        this.multimodalQueueMap = new ConcurrentHashMap<>();
-        this.semanticSearchQueueMap = new ConcurrentHashMap<>();
-        this.retrieveReRankQueueMap = new ConcurrentHashMap<>();
-        this.speechQueue = new ConcurrentLinkedQueue<>();
-        this.audioQueueMap = new ConcurrentHashMap<>();
+        this.unitScheduler = new UnitScheduler();
+        this.taskExecutor = new AIGCTaskExecutor();
+        // 频道创建需要把令牌码解析为访问令牌，这里注入解析器，避免频道管理器反向依赖服务
+        this.channelManager = new ChannelManager(cellet, token -> this.getAuthService().getToken(token));
         this.waitingVoiceStreamSinks = new ConcurrentHashMap<>();
-        this.runningMetas = new LinkedList<>();
-        this.generateTextUnitCountMap = new ConcurrentHashMap<>();
         this.tokenizer = new Tokenizer();
     }
 
@@ -217,6 +175,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         // 读取配置文件
         this.loadConfig();
 
+        // 启动引导线程保持独立：它负责创建线程池本身，且在 start() 返回后仍需继续运行，
+        // 不能放在自己将要创建的线程池上执行（停止时会出现「关池」与「引导未完成」的次序问题）。
         (new Thread(new Runnable() {
             @Override
             public void run() {
@@ -263,26 +223,14 @@ public class AIGCService extends AbstractModule implements Generatable {
                 pluginSystem.register(AIGCHook.ImportKnowledgeDoc, plugin);
                 pluginSystem.register(AIGCHook.RemoveKnowledgeDoc, plugin);
 
-                // 监听授权服务事件
-                AuthService authService = (AuthService) getKernel().getModule(AuthService.NAME);
-                while (!authService.isStarted()) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
+                // 监听授权服务事件（解析结果由 getAuthService() 缓存）
+                AuthService authService = AIGCService.this.getAuthService();
+                awaitModuleReady(authService, AuthService.NAME);
                 authService.getPluginSystem().register(AuthServiceHook.InjectToken,
                         new InjectTokenPlugin(AIGCService.this));
 
                 // 监听联系人服务事件
-                while (!ContactManager.getInstance().isStarted()) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
+                awaitModuleReady(ContactManager.getInstance(), "ContactManager");
                 ContactManager.getInstance().getPluginSystem().register(ContactHook.NewContact,
                         new ActivateKnowledgeBasePlugin(AIGCService.this));
                 ContactEventPlugin contactPlugin = new ContactEventPlugin(AIGCService.this);
@@ -291,16 +239,10 @@ public class AIGCService extends AbstractModule implements Generatable {
                 ContactManager.getInstance().getPluginSystem().register(ContactHook.DeviceTimeout, contactPlugin);
                 ContactManager.getInstance().getPluginSystem().register(ContactHook.VerifyVerificationCode, contactPlugin);
 
-                // 监听文件服务事件
-                AbstractModule fileStorage = getKernel().getModule("FileStorage");
+                // 监听文件服务事件（解析结果由 getFileStorage() 缓存）
+                AbstractModule fileStorage = AIGCService.this.getFileStorage();
                 if (null != fileStorage) {
-                    while (!fileStorage.isStarted()) {
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
+                    awaitModuleReady(fileStorage, "FileStorage");
                     fileStorage.getPluginSystem().register(FileStorageHook.SaveFile,
                             new NewFilePlugin(AIGCService.this));
                     fileStorage.getPluginSystem().register(FileStorageHook.DestroyFile,
@@ -367,10 +309,11 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     @Override
     public void stop() {
-        if (null != this.executor) {
-            this.executor.shutdown();
-            this.executor = null;
-        }
+        // 关闭两层线程池：后台短任务池 + 单元排空池
+        this.taskExecutor.shutdown();
+
+        // 清理频道索引，防止停止后索引残留
+        this.channelManager.clear();
 
         if (null != this.storage) {
             this.storage.close();
@@ -399,37 +342,11 @@ public class AIGCService extends AbstractModule implements Generatable {
             this.loadConfig();
         }
 
-        // 删除失效的 Unit
-        Iterator<AIGCUnit> unitIter = this.unitMap.values().iterator();
-        while (unitIter.hasNext()) {
-            AIGCUnit unit = unitIter.next();
-            if (null != unit.getContext() && !unit.getContext().isValid()) {
-                // 已失效
-                unitIter.remove();
-                EventCenter.getInstance().removeUnitMeta(unit);
-            }
-        }
+        // 单元维护：清理通信上下文失效的单元，并按周期复位单元运行标志
+        this.unitScheduler.onTick(now);
 
-        if (now - this.lastResetUnitTime > 10 * 60 * 1000) {
-            this.lastResetUnitTime = now;
-            unitIter = this.unitMap.values().iterator();
-            while (unitIter.hasNext()) {
-                unitIter.next().resetRunning();
-            }
-        }
-
-        Iterator<AIGCChannel> iter = this.channelMap.values().iterator();
-        while (iter.hasNext()) {
-            AIGCChannel channel = iter.next();
-            if (now - channel.getProcessingTimestamp() >= 5 * 60 * 1000) {
-                // 重置状态
-                channel.setProcessing(false);
-            }
-
-            if (now - channel.getActiveTimestamp() >= this.channelTimeout) {
-                iter.remove();
-            }
-        }
+        // 频道维护：复位未变化的处理标志，并回收空闲超时的频道
+        this.channelManager.onTick(now);
 
         if (null != this.knowledgeFramework) {
             this.knowledgeFramework.onTick(now);
@@ -459,6 +376,30 @@ public class AIGCService extends AbstractModule implements Generatable {
         CounselingManager.getInstance().onTick(now);
     }
 
+    /**
+     * 等待指定模块进入就绪状态。
+     *
+     * <p>启动期存在模块顺序依赖：AIGC 需要授权、联系人、文件存储等模块先就绪才能注册插件钩子。
+     * 原实现在三处各写了一遍「自旋 100ms + {@code printStackTrace}」，此处收敛为一处，
+     * 并把异常输出换成结构化日志（等待语义保持不变）。</p>
+     *
+     * @param module 待等待的模块；为 {@code null} 时视为无需等待。
+     * @param name   模块名，仅用于日志。
+     */
+    private static void awaitModuleReady(AbstractModule module, String name) {
+        if (null == module) {
+            return;
+        }
+
+        while (!module.isStarted()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Logger.w(AIGCService.class, "#awaitModuleReady - Interrupted while waiting for " + name);
+            }
+        }
+    }
+
     private void loadConfig() {
         try {
             File file = new File("config/aigc.properties");
@@ -470,6 +411,9 @@ public class AIGCService extends AbstractModule implements Generatable {
 //                if (Logger.isDebugLevel()) {
 //                    Logger.d(this.getClass(), "#loadConfig - File not modified");
 //                }
+                // 配置文件不存在时 lastModified() 与初值同为 0，首次加载会直接走到这里，
+                // 线程池便一直为空、所有异步入口静默失效——此处补建默认线程池。
+                this.taskExecutor.createExecutor(8, "fixed");
                 return;
             }
 
@@ -478,22 +422,13 @@ public class AIGCService extends AbstractModule implements Generatable {
             Properties properties = ConfigUtils.readProperties(file.getAbsolutePath());
 
             // 性能配置
-            if (null == this.executor) {
-                int max = 8;
-                try {
-                    max = Integer.parseInt(properties.getProperty("threadpool.max", "32"));
-                } catch (Exception e) {
-                    // Nothing
-                }
-                if (properties.getProperty("threadpool.type", "fixed").equalsIgnoreCase("cached")) {
-                    this.executor = CachedQueueExecutor.newCachedQueueThreadPool(max);
-                    Logger.i(this.getClass(), "AI Service - Thread pool type: cached - max: " + max);
-                }
-                else {
-                    this.executor = Executors.newFixedThreadPool(max);
-                    Logger.i(this.getClass(), "AI Service - Thread pool type: fixed - max: " + max);
-                }
+            int max = 8;
+            try {
+                max = Integer.parseInt(properties.getProperty("threadpool.max", "32"));
+            } catch (Exception e) {
+                // Nothing
             }
+            this.taskExecutor.createExecutor(max, properties.getProperty("threadpool.type", "fixed"));
 
             // 上下文长度限制
             ModelConfig.EXTRA_LONG_CONTEXT_LIMIT = Math.max(Integer.parseInt(
@@ -519,7 +454,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                         try {
                             long cid = Long.parseLong(seg[2]);
                             double weight = Double.parseDouble(properties.getProperty(key, "1.0"));
-                            unitWeightMap.put(cid, weight);
+                            this.unitScheduler.setWeight(cid, weight);
                             Logger.i(this.getClass(), "AI Service - Unit weight: " + cid + " - " + weight);
                         } catch (Exception e) {
                             // Nothing
@@ -545,7 +480,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                 Relay.createInstance(properties.getProperty("relay.url", "http://127.0.0.1:7010"),
                         properties.getProperty("relay.token", ""));
                 // 添加单元
-                Relay.getInstance().fillUnits(this.unitMap);
+                this.unitScheduler.fillFromRelay(Relay.getInstance());
             }
         } catch (IOException e) {
             Logger.e(this.getClass(), "#loadConfig - Load config properties error", e);
@@ -685,8 +620,49 @@ public class AIGCService extends AbstractModule implements Generatable {
         return this.tokenizer;
     }
 
+    /**
+     * 获取服务级后台任务线程池。
+     *
+     * <p>该池被场景子任务、DB 写入、回调等约 90 处短任务共用，因此<b>不要</b>向其中提交
+     * 长阻塞任务（模型推理等）——单元排空任务由任务执行器的独立池承担。</p>
+     *
+     * @return 返回线程池，尚未创建时返回 {@code null}。
+     */
     public ExecutorService getExecutor() {
-        return this.executor;
+        return this.taskExecutor.getExecutor();
+    }
+
+    /**
+     * 获取授权服务模块。
+     *
+     * <p>启动时已解析并缓存；若尚未缓存（启动竞态）则回退到 Kernel 查找并补缓存，
+     * 使行为与原先每处即时查找完全一致。</p>
+     *
+     * @return 返回授权服务模块。
+     */
+    private AuthService getAuthService() {
+        AuthService module = this.authService;
+        if (null == module) {
+            module = (AuthService) this.getKernel().getModule(AuthService.NAME);
+            this.authService = module;
+        }
+        return module;
+    }
+
+    /**
+     * 获取文件存储模块。
+     *
+     * <p>该模块允许未部署，因此仅在解析到实例时才缓存，避免把「暂时缺失」固化成永久缺失。</p>
+     *
+     * @return 返回文件存储模块；未部署时返回 {@code null}。
+     */
+    private AbstractModule getFileStorage() {
+        AbstractModule module = this.fileStorage;
+        if (null == module) {
+            module = this.getKernel().getModule("FileStorage");
+            this.fileStorage = module;
+        }
+        return module;
     }
 
     /**
@@ -750,320 +726,105 @@ public class AIGCService extends AbstractModule implements Generatable {
         return this.workingPath;
     }
 
+    /**
+     * 注册单元。已存在的单元仅更新其通信上下文。
+     *
+     * @param contact      联系人。
+     * @param capabilities 能力列表。
+     * @param context      通信上下文。
+     * @return 返回本次涉及的单元列表。
+     */
     public List<AIGCUnit> setupUnit(Contact contact, List<AICapability> capabilities, TalkContext context) {
-        List<AIGCUnit> result = new ArrayList<>(capabilities.size());
-
-        for (AICapability capability : capabilities) {
-            String key = AIGCUnit.makeQueryKey(contact, capability);
-            AIGCUnit unit = this.unitMap.get(key);
-            if (null != unit) {
-                unit.setContext(context);
-            }
-            else {
-                unit = new AIGCUnit(contact, capability, context);
-                this.unitMap.put(key, unit);
-            }
-
-            Double weight = this.unitWeightMap.get(contact.getId());
-            if (null != weight) {
-                unit.setWeight(weight);
-                Logger.d(this.getClass(), "#setupUnit - Modify unit \"" +
-                        unit.getCapability().getName() + "\" weight : " + weight);
-            }
-
-            result.add(unit);
-        }
-
-        return result;
+        return this.unitScheduler.setup(contact, capabilities, context);
     }
 
+    /**
+     * 注销指定联系人的所有单元。
+     *
+     * @param contact 联系人。
+     * @return 返回被注销的单元列表。
+     */
     public List<AIGCUnit> teardownUnit(Contact contact) {
-        List<AIGCUnit> result = new ArrayList<>();
-
-        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
-        while (iter.hasNext()) {
-            AIGCUnit unit = iter.next();
-            if (unit.getContact().getId().equals(contact.getId())) {
-                result.add(unit);
-                iter.remove();
-                // 从事件中心移除
-                EventCenter.getInstance().removeUnitMeta(unit);
-            }
-        }
-
-        return result;
+        return this.unitScheduler.teardown(contact);
     }
 
+    /**
+     * 获取当前所有单元的快照。
+     *
+     * @return 返回单元列表。
+     */
     public List<AIGCUnit> getAllUnits() {
-        List<AIGCUnit> list = new ArrayList<>(this.unitMap.size());
-        list.addAll(this.unitMap.values());
-        return list;
+        return this.unitScheduler.getAll();
     }
 
+    /**
+     * 获取当前所有频道的快照。
+     *
+     * @return 返回频道列表。
+     */
     public List<AIGCChannel> getAllChannels() {
-        return new ArrayList<>(this.channelMap.values());
+        return this.channelManager.getAll();
     }
 
+    /**
+     * 统计指定能力名下的有效单元数量。
+     *
+     * @param unitName 单元能力名。
+     * @return 返回数量。
+     */
     public int numUnitsByName(String unitName) {
-        int num = 0;
-        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
-        while (iter.hasNext()) {
-            AIGCUnit unit = iter.next();
-            if (unit.getCapability().getName().equalsIgnoreCase(unitName)
-                    && unit.getContext().isValid()) {
-                ++num;
-            }
-        }
-        return num;
+        return this.unitScheduler.numUnitsByName(unitName);
     }
 
+    /**
+     * 判断是否存在指定能力名的单元，不区分单元是否有效。
+     *
+     * @param unitName 单元能力名。
+     * @return 存在返回 {@code true}。
+     */
     public boolean hasUnit(String unitName) {
-        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
-        while (iter.hasNext()) {
-            if (iter.next().getCapability().getName().equals(unitName)) {
-                return true;
-            }
-        }
-        return false;
+        return this.unitScheduler.hasUnit(unitName);
     }
 
     /**
      * 选择空闲的单元，如果没有空闲单元返回 <code>null</code> 值。
      *
-     * @param unitName
-     * @return
+     * @param unitName 单元能力名。
+     * @return 找不到空闲单元时返回 {@code null}。
      */
-    public synchronized AIGCUnit selectIdleUnitByName(String unitName) {
-        ArrayList<AIGCUnit> candidates = new ArrayList<>();
-
-        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
-        while (iter.hasNext()) {
-            AIGCUnit unit = iter.next();
-            if (unit.getCapability().getName().equalsIgnoreCase(unitName)
-                    && unit.getContext().isValid()
-                    && !unit.isRunning()) {
-                // 检查是否正在处理流
-                MultimodalUnitMeta meta = EventCenter.getInstance().searchMultimodalUnitMeta(unit);
-                if (null != meta) {
-                    // 正在处理流
-                    continue;
-                }
-                candidates.add(unit);
-            }
-        }
-
-        if (candidates.isEmpty()) {
-            return null;
-        }
-
-        // 按照最近执行时间戳从低到高排序
-        candidates.sort(new Comparator<AIGCUnit>() {
-            @Override
-            public int compare(AIGCUnit u1, AIGCUnit u2) {
-                return (int) (u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
-            }
-        });
-
-        Logger.d(this.getClass(), "#selectIdleUnitByName - Unit: " + unitName + "@"
-                + candidates.get(0).getContact().getId());
-        return candidates.get(0);
+    public AIGCUnit selectIdleUnitByName(String unitName) {
+        return this.unitScheduler.selectIdle(unitName);
     }
 
-    public synchronized AIGCUnit selectUnitByName(String unitName) {
-        AIGCUnit idleUnit = this.selectIdleUnitByName(unitName);
-        if (null != idleUnit) {
-            return idleUnit;
-        }
-
-        ArrayList<AIGCUnit> candidates = new ArrayList<>();
-
-        // 选择所有可用节点
-        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
-        while (iter.hasNext()) {
-            AIGCUnit unit = iter.next();
-            if (unit.getCapability().getName().equalsIgnoreCase(unitName) &&
-                    unit.getContext().isValid()) {
-                candidates.add(unit);
-            }
-        }
-
-        // 无候选节点
-        if (candidates.isEmpty()) {
-            return null;
-        }
-
-        if (candidates.size() == 1) {
-            Logger.d(this.getClass(), "#selectUnitByName - Unit: " + unitName + "@"
-                    + candidates.get(0).getContact().getId());
-            return candidates.get(0);
-        }
-
-        // 按照发生错误的数量从低到高排序
-//        Collections.sort(candidates, new Comparator<AIGCUnit>() {
-//            @Override
-//            public int compare(AIGCUnit u1, AIGCUnit u2) {
-//                return u1.numFailure() - u2.numFailure();
-//            }
-//        });
-
-        // 按照权重从高到低排序
-//        Collections.sort(candidates, new Comparator<AIGCUnit>() {
-//            @Override
-//            public int compare(AIGCUnit u1, AIGCUnit u2) {
-//                return (int)(u2.getWeight() - u1.getWeight());
-//            }
-//        });
-
-        // 按照最近执行时间戳从低到高排序
-        candidates.sort(new Comparator<AIGCUnit>() {
-            @Override
-            public int compare(AIGCUnit u1, AIGCUnit u2) {
-                return (int) (u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
-            }
-        });
-
-        // 先进行一次选择，选择最久没有执行的
-        AIGCUnit unit = candidates.get(0);
-
-        iter = candidates.iterator();
-        while (iter.hasNext()) {
-            AIGCUnit u = iter.next();
-            if (u.isRunning()) {
-                // 把正在运行的单元从候选列表里删除
-                iter.remove();
-            }
-        }
-
-        if (candidates.isEmpty()) {
-            // 所有单元都在运行
-            Logger.d(this.getClass(), "#selectUnitByName - Unit: " + unitName + "@"
-                    + unit.getContact().getId());
-            return unit;
-        }
-
-        // 总是返回最久的单元
-        Logger.d(this.getClass(), "#selectUnitByName - Unit: " + unitName + "@"
-                + candidates.get(0).getContact().getId());
-        return candidates.get(0);
+    /**
+     * 按能力名选择单元。优先返回空闲单元，没有空闲单元时返回最久未执行的单元。
+     *
+     * @param unitName 单元能力名。
+     * @return 无可用单元时返回 {@code null}。
+     */
+    public AIGCUnit selectUnitByName(String unitName) {
+        return this.unitScheduler.select(unitName);
     }
 
-    public synchronized AIGCUnit selectUnitByName(String unitName, long cid) {
-        if (cid > 9999999999L) {
-            // 10位以上ID进行一般选择
-            return this.selectUnitByName(unitName);
-        }
-
-        ArrayList<AIGCUnit> candidates = new ArrayList<>();
-
-        // 选择所有权重大于5.0的可用节点
-        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
-        while (iter.hasNext()) {
-            AIGCUnit unit = iter.next();
-            if (unit.getCapability().getName().equals(unitName) &&
-                    unit.getContext().isValid() &&
-                    unit.getWeight() > 5.0) {
-                candidates.add(unit);
-            }
-        }
-
-        // 无候选节点
-        if (candidates.isEmpty()) {
-            // 进行一般选择
-            return this.selectUnitByName(unitName);
-        }
-
-        if (candidates.size() == 1) {
-            Logger.d(this.getClass(), "#selectUnitByName - Unit: " + unitName + "@"
-                    + candidates.get(0).getContact().getId());
-            return candidates.get(0);
-        }
-
-        // 按照最近执行时间戳从低到高排序
-        candidates.sort(new Comparator<AIGCUnit>() {
-            @Override
-            public int compare(AIGCUnit u1, AIGCUnit u2) {
-                return (int) (u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
-            }
-        });
-
-        // 先进行一次选择，选择最久没有执行的
-        AIGCUnit unit = candidates.get(0);
-
-        iter = candidates.iterator();
-        while (iter.hasNext()) {
-            AIGCUnit u = iter.next();
-            if (u.isRunning()) {
-                // 把正在运行的单元从候选列表里删除
-                iter.remove();
-            }
-        }
-
-        if (candidates.isEmpty()) {
-            // 所有单元都在运行
-            Logger.d(this.getClass(), "#selectUnitByName - Unit: " + unitName + "@"
-                    + unit.getContact().getId());
-            return unit;
-        }
-
-        // 总是返回最久的单元
-        Logger.d(this.getClass(), "#selectUnitByName - Unit: " + unitName + "@"
-                + candidates.get(0).getContact().getId());
-        return candidates.get(0);
+    /**
+     * 按能力名与联系人 ID 选择单元。
+     *
+     * @param unitName 单元能力名。
+     * @param cid      联系人 ID。
+     * @return 无可用单元时返回 {@code null}。
+     */
+    public AIGCUnit selectUnitByName(String unitName, long cid) {
+        return this.unitScheduler.select(unitName, cid);
     }
 
+    /**
+     * 按子任务名选择单元。
+     *
+     * @param subtask 子任务名。
+     * @return 无可用单元时返回 {@code null}。
+     */
     public AIGCUnit selectUnitBySubtask(String subtask) {
-        ArrayList<AIGCUnit> candidates = new ArrayList<>();
-
-        Iterator<AIGCUnit> iter = this.unitMap.values().iterator();
-        while (iter.hasNext()) {
-            AIGCUnit unit = iter.next();
-            if (unit.getCapability().containsSubtask(subtask) && unit.getContext().isValid()) {
-                candidates.add(unit);
-            }
-        }
-
-        if (candidates.isEmpty()) {
-            return null;
-        }
-
-        int num = candidates.size();
-        if (num == 1) {
-            Logger.d(this.getClass(), "#selectUnitBySubtask - Unit: " +
-                    candidates.get(0).getCapability().getName() + "@" + candidates.get(0).getContact().getId());
-            return candidates.get(0);
-        }
-
-        // 按照最近执行时间戳从低到高排序
-        candidates.sort(new Comparator<AIGCUnit>() {
-            @Override
-            public int compare(AIGCUnit u1, AIGCUnit u2) {
-                return (int) (u1.getLastRunningTimestamp() - u2.getLastRunningTimestamp());
-            }
-        });
-
-        // 先进行一次选择，选择最久没有执行的
-        AIGCUnit unit = candidates.get(0);
-
-        iter = candidates.iterator();
-        while (iter.hasNext()) {
-            AIGCUnit u = iter.next();
-            if (u.isRunning()) {
-                // 把正在运行的单元从候选列表里删除
-                iter.remove();
-            }
-        }
-
-        if (candidates.isEmpty()) {
-            // 所有单元都在运行
-            Logger.d(this.getClass(), "#selectUnitBySubtask - Unit: " +
-                    unit.getCapability().getName() + "@" + unit.getContact().getId());
-            return unit;
-        }
-
-        // 返回最久的单元
-        Logger.d(this.getClass(), "#selectUnitBySubtask - Unit: " +
-                candidates.get(0).getCapability().getName() + "@" + candidates.get(0).getContact().getId());
-        return candidates.get(0);
+        return this.unitScheduler.selectBySubtask(subtask);
     }
 
     //-------- App Interface - Start --------
@@ -1087,7 +848,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             Logger.w(this.getClass(), "#getUser - Can NOT find contact: " + uid);
             return null;
         }
-        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthService authService = this.getAuthService();
         AuthToken authToken = authService.getToken(AuthConsts.DEFAULT_DOMAIN, uid);
         if (null == authToken) {
             Logger.w(this.getClass(), "#getUser - Can NOT find token: " + uid);
@@ -1099,7 +860,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     public User getUser(String token) {
-        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthService authService = this.getAuthService();
         AuthToken authToken = authService.getToken(token);
         if (null == authToken) {
             Logger.w(this.getClass(), "#getUser - Can NOT find token: " + token);
@@ -1150,7 +911,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         // 创建令牌
-        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthService authService = this.getAuthService();
         // 10年有效时长
         AuthToken authToken = authService.applyToken(domain, appKey, id, tokenDuration);
 
@@ -1220,7 +981,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             // 老用户登录
             // 老用户当前使用的令牌删除，但是不删除设备的临时联系人
             Contact userContact = searchResult.getContactList().get(0);
-            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+            AuthService authService = this.getAuthService();
             // 当前使用令牌码
             AuthToken currentToken = authService.getToken(contact.getDomain().getName(), contact.getId());
             String tokenCode = null;
@@ -1310,7 +1071,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                 User user = new User(userContact.getContext());
                 if (user.getName().equals(userName) && user.getPassword().equals(password)) {
                     // 校验通过
-                    AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+                    AuthService authService = this.getAuthService();
                     // 当前使用令牌码，登录的账号继承当前临时账号的令牌码
                     AuthToken currentToken = authService.getToken(contact.getDomain().getName(), contact.getId());
                     String tokenCode = null;
@@ -1377,7 +1138,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         final KnowledgeBase knowledgeBase = base;
-        this.executor.execute(new Runnable() {
+        this.taskExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 if (Logger.isDebugLevel()) {
@@ -1451,7 +1212,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                 contact.getName() + "-" + ContactMask.SignOut.mask, user.toJSON(),
                 contact.getDevice());
         // 删除令牌
-        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthService authService = this.getAuthService();
         authService.deleteToken(contact.getDomain().getName(), contact.getId());
         return user;
     }
@@ -1642,13 +1403,13 @@ public class AIGCService extends AbstractModule implements Generatable {
             Contact contact = ContactManager.getInstance().newContact(phone,
                     domain, (null != userName) ? userName : phoneNumber, null, null);
             // 创建令牌
-            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+            AuthService authService = this.getAuthService();
             // 5年有效时长
             authToken = authService.applyToken(domain, appKey, contact.getId(), 5L * 365 * 24 * 60 * 60 * 1000);
         }
         else {
             // 有该联系人
-            AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+            AuthService authService = this.getAuthService();
             authToken = authService.queryAuthTokenByContactId(phone);
         }
 
@@ -1668,7 +1429,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         }
 
-        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthService authService = this.getAuthService();
         if (null == authService) {
             return null;
         }
@@ -1753,7 +1514,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             channel.feedbackRecord(historySN, feedback);
         }
 
-        this.executor.execute(new Runnable() {
+        this.taskExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 storage.updateHistoryFeedback(historySN, feedback);
@@ -1764,158 +1525,78 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 获取指定频道。
      *
-     * @param channelCode
-     * @return
+     * @param channelCode 频道码。
+     * @return 不存在返回 {@code null}。
      */
     public AIGCChannel getChannel(String channelCode) {
-        return this.channelMap.get(channelCode);
+        return this.channelManager.get(channelCode);
     }
 
     /**
      * 通过访问令牌获取对应的频道。
      *
-     * @param tokenCode
-     * @return
+     * @param tokenCode 访问令牌码。
+     * @return 不存在返回 {@code null}。
      */
     public AIGCChannel getChannelByToken(String tokenCode) {
-        for (Map.Entry<String, AIGCChannel> e : this.channelMap.entrySet()) {
-            AIGCChannel channel = e.getValue();
-            if (channel.getAuthToken().getCode().equals(tokenCode)) {
-                return channel;
-            }
-        }
-        return null;
+        return this.channelManager.getByToken(tokenCode);
     }
 
     /**
      * 创建频道。
      *
-     * @param token
-     * @param participant
-     * @param channelCode
-     * @param language
-     * @return
+     * @param token       访问令牌码。
+     * @param participant 参与方名称。
+     * @param channelCode 频道码。
+     * @param language    语言。
+     * @return 令牌无效时返回 {@code null}。
      */
     public AIGCChannel createChannel(String token, String participant, String channelCode, Language language) {
-        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
-        AuthToken authToken = authService.getToken(token);
-        if (null == authToken) {
-            return null;
-        }
-
-        return this.createChannel(authToken, participant, channelCode, language);
+        return this.channelManager.create(token, participant, channelCode, language);
     }
 
     /**
      * 创建频道。
      *
-     * @param authToken
-     * @param participant
-     * @param channelCode
-     * @param language
-     * @return
+     * @param authToken   访问令牌。
+     * @param participant 参与方名称。
+     * @param channelCode 频道码。
+     * @param language    语言。
+     * @return 返回新创建的频道。
      */
     public AIGCChannel createChannel(AuthToken authToken, String participant, String channelCode, Language language) {
-        AIGCChannel channel = new AIGCChannel(authToken, participant, channelCode, language);
-        this.channelMap.put(channel.getCode(), channel);
-        return channel;
+        return this.channelManager.create(authToken, participant, channelCode, language);
     }
 
     /**
      * 申请频道。
      *
-     * @param token
-     * @param participant
-     * @return
+     * @param token       访问令牌码。
+     * @param participant 参与方名称。
+     * @return 被拒绝时返回 {@code null}。
      */
     public AIGCChannel requestChannel(String token, String participant) {
-        if (this.channelMap.size() >= this.maxChannel) {
-            Logger.w(AIGCService.class, "#requestChannel - Channel num overflow: " + this.maxChannel);
-            return null;
-        }
-
-        if (!this.checkParticipantName(participant)) {
-            Logger.w(AIGCService.class, "#requestChannel - Participant is sensitive word: " + participant);
-            return null;
-        }
-
-        Iterator<Map.Entry<String, AIGCChannel>> iter = this.channelMap.entrySet().iterator();
-        while (iter.hasNext()) {
-            Map.Entry<String, AIGCChannel> e = iter.next();
-            AIGCChannel channel = e.getValue();
-            if (channel.getAuthToken().getCode().equals(token)) {
-                // 当前频道是否还在工作状态
-                if (channel.isProcessing()) {
-                    Logger.w(AIGCService.class, "#requestChannel - Channel is processing: " + channel.getCode());
-                    return null;
-                }
-            }
-        }
-
-        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
-        AuthToken authToken = authService.getToken(token);
-
-        AIGCChannel channel = new AIGCChannel(authToken, participant);
-        this.channelMap.put(channel.getCode(), channel);
-        return channel;
+        return this.channelManager.request(token, participant);
     }
 
     /**
      * 停止频道正在进行的操作。
      *
      * @param channelCode 指定频道码。
-     * @return
+     * @return 返回频道，不存在时返回 {@code null}。
      */
     public AIGCChannel stopProcessing(String channelCode) {
-        AIGCChannel channel = this.getChannel(channelCode);
-        if (null == channel) {
-            return null;
-        }
-
-        if (channel.isProcessing()) {
-            boolean hit = false;
-
-            // 进入队列，但是没有被执行线程处理
-            // TODO XJW
-//            for (Queue<GenerateTextUnitMeta> queue : this.generateQueueMap.values()) {
-//                Iterator<GenerateTextUnitMeta> iter = queue.iterator();
-//                while (iter.hasNext()) {
-//                    GenerateTextUnitMeta meta = iter.next();
-//                    if (meta.channel.getCode().equals(channelCode)) {
-//                        iter.remove();
-//                        channel.setProcessing(false);
-//                        hit = true;
-//                        break;
-//                    }
-//                }
-//                if (hit) {
-//                    break;
-//                }
-//            }
-
-            if (!hit) {
-                // 已经执行
-                this.cellet.interrupt(channel.getLastUnitMetaSn());
-            }
-        }
-
-        return channel;
+        return this.channelManager.stopProcessing(channelCode);
     }
 
     /**
      * 保活频道。
      *
-     * @param token
-     * @return
+     * @param token 频道码。
+     * @return 频道不存在返回 {@code false}。
      */
     public boolean keepAliveChannel(String token) {
-        AIGCChannel channel = this.channelMap.get(token);
-        if (null == channel) {
-            return false;
-        }
-
-        channel.setActiveTimestamp(System.currentTimeMillis());
-        return true;
+        return this.channelManager.keepAlive(token);
     }
 
     /**
@@ -1936,7 +1617,7 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @return
      */
     public ComplexContext preInfer(String token, String content) {
-        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthService authService = this.getAuthService();
         AuthToken authToken = authService.getToken(token);
         return this.recognizeContext(content, authToken);
     }
@@ -1973,7 +1654,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         // 获取频道
-        AIGCChannel channel = this.channelMap.get(channelCode);
+        AIGCChannel channel = this.channelManager.get(channelCode);
         if (null == channel) {
             Logger.w(AIGCService.class, "#generateText - Can NOT find AIGC channel: " + channelCode);
             return false;
@@ -2013,12 +1694,9 @@ public class AIGCService extends AbstractModule implements Generatable {
         meta.setRecordHistoryEnabled(recordable);
         meta.setNetworkingEnabled(networking);
 
-        this.executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                processGenerateTextMeta(meta);
-            }
-        });
+        // 取队列 → 起任务 → 收尾：同一单元上的请求串行消化，
+        // 取代原先「自旋等待单元空闲（上限 5 秒）后仍并发派发」的忙等实现。
+        this.taskExecutor.submitGenerateText(meta);
 
         return true;
     }
@@ -2026,10 +1704,10 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 返回生成文本单元实时运行计数。
      *
-     * @return
+     * @return 返回计数表。
      */
     public Map<String, AtomicInteger> getGenerateTextUnitRealtimeCount() {
-        return this.generateTextUnitCountMap;
+        return this.taskExecutor.getUnitTaskCountMap();
     }
 
     /**
@@ -2213,8 +1891,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         if (null == unit) {
-            // 没有单元数据
-            this.executor.execute(new Runnable() {
+            // 没有单元数据：异步回告失败，避免在调用方线程上回调
+            this.taskExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
                     listener.onFailed(channel, AIGCStateCode.NotFound);
@@ -2236,12 +1914,8 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
         }
 
-        this.executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                processGenerateTextMeta(meta);
-            }
-        });
+        // 取队列 → 起任务 → 收尾：同一单元上的请求串行消化
+        this.taskExecutor.submitGenerateText(meta);
     }
 
     /**
@@ -2261,7 +1935,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         // 获取频道
-        AIGCChannel channel = this.channelMap.get(channelCode);
+        AIGCChannel channel = this.channelManager.get(channelCode);
         if (null == channel) {
             Logger.d(AIGCService.class, "#executeMultimodal - Can NOT find channel, create new channel: " + channelCode);
             // 创建频道
@@ -2286,67 +1960,11 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         final MultimodalUnitMeta meta = new MultimodalUnitMeta(this, unit, channel, input, listener);
 
-        Queue<UnitMeta> queue = null;
-        synchronized (this.multimodalQueueMap) {
-            queue = this.multimodalQueueMap.computeIfAbsent(unit.getQueryKey(), k -> new ConcurrentLinkedQueue<>());
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            final Queue<UnitMeta> metaQueue = queue;
-            (new Thread() {
-                @Override
-                public void run() {
-                    processQueue(meta.unit, metaQueue);
-                }
-            }).start();
-        }
+        // 取队列 → 起任务 → 收尾，统一由单元任务队列执行器处理
+        this.taskExecutor.submitMultimodal(meta);
 
         return true;
     }
-
-    /*
-    public AIGCConversationResponse queryMultimodal(String channelCode, long sn) {
-        // 获取频道
-        AIGCChannel channel = this.channelMap.get(channelCode);
-        if (null == channel) {
-            Logger.w(AIGCService.class, "#queryConversation - Can NOT find channel: " + channelCode);
-            return null;
-        }
-
-        GeneratingRecord record = channel.getRecord(sn);
-        if (null == record) {
-            ConversationUnitMeta unitMeta = null;
-
-//            synchronized (this.conversationQueueMap) {
-//                for (Queue<ConversationUnitMeta> queue : this.conversationQueueMap.values()) {
-//                    for (ConversationUnitMeta meta : queue) {
-//                        if (meta.sn == sn) {
-//                            unitMeta = meta;
-//                            break;
-//                        }
-//                    }
-//
-//                    if (null != unitMeta) {
-//                        break;
-//                    }
-//                }
-//            }
-
-            if (null == unitMeta) {
-                Logger.w(this.getClass(), "#queryConversation - Can NOT find conversation : " + sn);
-                return null;
-            }
-
-            AIGCConversationResponse result = new AIGCConversationResponse(unitMeta.sn,
-                    unitMeta.unit.getCapability().getName());
-            result.processing = true;
-            return result;
-        }
-        else {
-            return new AIGCConversationResponse(record);
-        }
-    }*/
 
     /**
      * 生成指定内容的摘要。
@@ -2362,7 +1980,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         final SummarizationListener summarizationListener = listener;
 
-        Thread thread = new Thread() {
+        this.taskExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 GeneratingRecord result = generateText(ModelConfig.BAIZE_UNIT,
@@ -2375,8 +1993,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
                 summarizationListener.onCompleted(text, result.answer);
             }
-        };
-        thread.start();
+        });
 
         return true;
     }
@@ -2396,7 +2013,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         // 获取频道
-        AIGCChannel channel = this.channelMap.get(channelCode);
+        AIGCChannel channel = this.channelManager.get(channelCode);
         if (null == channel) {
             Logger.w(AIGCService.class, "#generateImage - Can NOT find AIGC channel: " + channelCode);
             return false;
@@ -2445,25 +2062,8 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         final UnitMeta meta = new TextToImageUnitMeta(this, unit, channel, text, listener);
 
-        Queue<UnitMeta> queue = null;
-        synchronized (this.textToImageQueueMap) {
-            queue = this.textToImageQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.textToImageQueueMap.put(unit.getQueryKey(), queue);
-            }
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            final Queue<UnitMeta> metaQueue = queue;
-            (new Thread() {
-                @Override
-                public void run() {
-                    processQueue(meta.unit, metaQueue);
-                }
-            }).start();
-        }
+        // 取队列 → 起任务 → 收尾，统一由单元任务队列执行器处理
+        this.taskExecutor.submitTextToImage(meta);
 
         return true;
     }
@@ -2494,21 +2094,8 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         final UnitMeta meta = new TextToFileUnitMeta(this, unit, channel, text, attachment.queryFileLabels, listener);
 
-        Queue<UnitMeta> queue = null;
-        synchronized (this.textToFileQueueMap) {
-            queue = this.textToFileQueueMap.computeIfAbsent(unit.getQueryKey(), k -> new ConcurrentLinkedQueue<>());
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            final Queue<UnitMeta> metaQueue = queue;
-            (new Thread() {
-                @Override
-                public void run() {
-                    processQueue(meta.unit, metaQueue);
-                }
-            }).start();
-        }
+        // 取队列 → 起任务 → 收尾，统一由单元任务队列执行器处理
+        this.taskExecutor.submitTextToFile(meta);
 
         return true;
     }
@@ -2527,7 +2114,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         final ExtractKeywordsListener extractKeywordsListener = listener;
 
-        Thread thread = new Thread() {
+        this.taskExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 GeneratingRecord result = generateText(ModelConfig.BAIZE_UNIT,
@@ -2552,8 +2139,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                     extractKeywordsListener.onCompleted(text, Arrays.asList(new String[]{result.answer}));
                 }
             }
-        };
-        thread.start();
+        });
 
         return true;
     }
@@ -2579,26 +2165,8 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         final UnitMeta meta = new SemanticSearchUnitMeta(this, unit, query, listener);
 
-        Queue<UnitMeta> queue = null;
-        synchronized (this.semanticSearchQueueMap) {
-            queue = this.semanticSearchQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.semanticSearchQueueMap.put(unit.getQueryKey(), queue);
-            }
-
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            final Queue<UnitMeta> metaQueue = queue;
-            (new Thread() {
-                @Override
-                public void run() {
-                    processQueue(meta.unit, metaQueue);
-                }
-            }).start();
-        }
+        // 取队列 → 起任务 → 收尾，统一由单元任务队列执行器处理
+        this.taskExecutor.submitSemanticSearch(meta);
 
         return true;
     }
@@ -2624,26 +2192,8 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         final UnitMeta meta = new RetrieveReRankUnitMeta(this, unit, queries, listener);
 
-        Queue<UnitMeta> queue = null;
-        synchronized (this.retrieveReRankQueueMap) {
-            queue = this.retrieveReRankQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.retrieveReRankQueueMap.put(unit.getQueryKey(), queue);
-            }
-
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            final Queue<UnitMeta> metaQueue = queue;
-            (new Thread() {
-                @Override
-                public void run() {
-                    processQueue(meta.unit, metaQueue);
-                }
-            }).start();
-        }
+        // 取队列 → 起任务 → 收尾，统一由单元任务队列执行器处理
+        this.taskExecutor.submitRetrieveReRank(meta);
 
         return true;
     }
@@ -2674,26 +2224,8 @@ public class AIGCService extends AbstractModule implements Generatable {
             }
         });
 
-        Queue<UnitMeta> queue = null;
-        synchronized (this.retrieveReRankQueueMap) {
-            queue = this.retrieveReRankQueueMap.get(unit.getQueryKey());
-            if (null == queue) {
-                queue = new ConcurrentLinkedQueue<>();
-                this.retrieveReRankQueueMap.put(unit.getQueryKey(), queue);
-            }
-
-            queue.offer(meta);
-        }
-
-        if (!unit.isRunning()) {
-            final Queue<UnitMeta> metaQueue = queue;
-            (new Thread() {
-                @Override
-                public void run() {
-                    processQueue(meta.unit, metaQueue);
-                }
-            }).start();
-        }
+        // 取队列 → 起任务 → 收尾，统一由单元任务队列执行器处理
+        this.taskExecutor.submitRetrieveReRank(meta);
 
         synchronized (result) {
             try {
@@ -2753,14 +2285,14 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         }
 
-        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthService authService = this.getAuthService();
         AuthToken authToken = authService.getToken(token);
         if (null == authToken) {
             Logger.w(this.getClass(), "#generatePaintingReport - Token error: " + token);
             return null;
         }
 
-        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        AbstractModule fileStorage = this.getFileStorage();
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#generatePaintingReport - File storage service is not ready");
             return null;
@@ -2823,7 +2355,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         }
 
-        AuthService authService = (AuthService) this.getKernel().getModule(AuthService.NAME);
+        AuthService authService = this.getAuthService();
         AuthToken authToken = authService.getToken(token);
         if (null == authToken) {
             Logger.w(this.getClass(), "#generateScaleReport - Token error: " + token);
@@ -2882,32 +2414,10 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        final SpeechRecognitionUnitMeta meta = new SpeechRecognitionUnitMeta(this, unit, authToken, fileLabel, listener);
+        final UnitMeta meta = new SpeechRecognitionUnitMeta(this, unit, authToken, fileLabel, listener);
 
-        this.speechQueue.offer(meta);
-
-        if (this.speechQueue.size() < this.maxSpeechRecognitionConcurrences) {
-            this.getExecutor().execute(new Runnable() {
-                @Override
-                public void run() {
-                    SpeechRecognitionUnitMeta unitMeta = speechQueue.poll();
-                    while (null != unitMeta) {
-                        unitMeta.unit.setRunning(true);
-                        try {
-                            // 执行
-                            unitMeta.process();
-                        } catch (Exception e) {
-                            Logger.e(this.getClass(), "#automaticSpeechRecognition", e);
-                        } finally {
-                            unitMeta.unit.setRunning(false);
-                        }
-
-                        // 下一个
-                        unitMeta = speechQueue.poll();
-                    }
-                }
-            });
-        }
+        // 取队列 → 起任务 → 收尾：共享队列，最多 maxSpeechRecognitionConcurrences 个排空任务并发处理
+        this.taskExecutor.submitSpeechRecognition(meta);
 
         return true;
     }
@@ -2933,42 +2443,19 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         }
 
-        synchronized (this.runningMetas) {
-            for (UnitMeta meta : this.runningMetas) {
-                if (meta instanceof AudioUnitMeta) {
-                    AudioUnitMeta aum = (AudioUnitMeta) meta;
-                    if (aum.getFile().getFileCode().equals(fileLabel.getFileCode())) {
-                        Logger.w(this.getClass(), "#performSpeakerDiarization - Re-submit the task for file: " +
-                                fileLabel.getFileCode());
-                        return fileLabel;
-                    }
-                }
-            }
+        // 同一文件的任务可能仍在执行，避免重复提交
+        if (this.taskExecutor.hasPendingAudio(fileLabel.getFileCode())) {
+            Logger.w(this.getClass(), "#performSpeakerDiarization - Re-submit the task for file: " +
+                    fileLabel.getFileCode());
+            return fileLabel;
         }
 
         final AudioUnitMeta meta = new AudioUnitMeta(this, unit, authToken, AIGCAction.SpeechDiarization,
                 fileLabel, preprocess, storage);
         meta.voiceDiarizationListener = listener;
 
-        LinkedList<UnitMeta> queue = this.audioQueueMap.computeIfAbsent(unit.getQueryKey(), k -> new LinkedList<>());
-        synchronized (queue) {
-            if (jumpToFirst) {
-                queue.addFirst(meta);
-            }
-            else {
-                queue.offer(meta);
-            }
-        }
-
-        if (!unit.isRunning()) {
-            final Queue<UnitMeta> metaQueue = queue;
-            (new Thread() {
-                @Override
-                public void run() {
-                    processQueue(meta.unit, metaQueue);
-                }
-            }).start();
-        }
+        // 取队列 → 起任务 → 收尾：音频流允许插队优先处理
+        this.taskExecutor.submitAudio(meta, jumpToFirst);
 
         return fileLabel;
     }
@@ -3048,7 +2535,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        this.executor.execute(new Runnable() {
+        this.taskExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 AIGCUnit unit = selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
@@ -3122,7 +2609,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                                       VoiceStreamAnalysisListener listener) {
         if (CounselingManager.getInstance().isOverDurationLimit(streamName)) {
             Logger.i(this.getClass(), "#analyseVoiceStream - Over duration limit: " + streamName);
-            this.executor.execute(new Runnable() {
+            this.taskExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
                     stopVoiceStream(authToken, streamName);
@@ -3131,7 +2618,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        this.executor.execute(new Runnable() {
+        this.taskExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 // 归档
@@ -3198,12 +2685,12 @@ public class AIGCService extends AbstractModule implements Generatable {
         JSONObject data = this.storage.readCounselingRecording(streamName);
         if (null == data) {
             // 直接停止
-            (new Thread() {
+            this.taskExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
                     CounselingManager.getInstance().stopStream(authToken, streamName);
                 }
-            }).start();
+            });
 
             // 删除队列里未处理数据
             List<VoiceStreamSink> sinkList = this.waitingVoiceStreamSinks.remove(streamName);
@@ -3216,24 +2703,8 @@ public class AIGCService extends AbstractModule implements Generatable {
                     fileCodes.add(sink.getFileCode());
                 }
 
-                if (!fileCodes.isEmpty()) {
-                    for (Map.Entry<String, LinkedList<UnitMeta>> entry : this.audioQueueMap.entrySet()) {
-                        LinkedList<UnitMeta> metas = entry.getValue();
-                        Iterator<UnitMeta> metaIterator = metas.iterator();
-                        while (metaIterator.hasNext()) {
-                            UnitMeta meta = metaIterator.next();
-                            AudioUnitMeta aum = (AudioUnitMeta) meta;
-
-                            // 删除指定文件码的 meta
-                            for (String fileCode : fileCodes) {
-                                if (aum.getFile().getFileCode().equals(fileCode)) {
-                                    metaIterator.remove();
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
+                // 将尚未处理的 Unit Meta 从队列里删除
+                this.taskExecutor.discardAudio(fileCodes);
 
                 // 45 秒后删除文件
                 new Timer().schedule(new TimerTask() {
@@ -3322,7 +2793,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             voiceDiarization.analysis = result.answer;
         }
 
-        this.executor.execute(new Runnable() {
+        this.taskExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 if (templateName.equalsIgnoreCase("psy_organize_record")) {
@@ -3357,7 +2828,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        this.executor.execute(new Runnable() {
+        this.taskExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 AIGCUnit unit = selectUnitByName(ModelConfig.FACIAL_EXPRESSION_UNIT);
@@ -3412,7 +2883,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     public FileLabel getFile(String domain, String fileCode) {
-        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        AbstractModule fileStorage = this.getFileStorage();
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#getFile - File storage service is not ready");
             return null;
@@ -3429,7 +2900,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     public File loadFile(String domain, String fileCode) {
-        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        AbstractModule fileStorage = this.getFileStorage();
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#loadFile - File storage service is not ready");
             return null;
@@ -3451,7 +2922,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     public FileLabel saveFile(AuthToken authToken, String fileCode, File file, String filename, boolean deleteAfterSave,
                               JSONObject context) {
-        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        AbstractModule fileStorage = this.getFileStorage();
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#saveFile - File storage service is not ready");
             return null;
@@ -3485,7 +2956,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     public FileLabel deleteFile(String domain, String fileCode) {
-        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        AbstractModule fileStorage = this.getFileStorage();
         if (null == fileStorage) {
             Logger.e(this.getClass(), "#deleteFile - File storage service is not ready");
             return null;
@@ -3652,28 +3123,19 @@ public class AIGCService extends AbstractModule implements Generatable {
         return result;
     }
 
+    /**
+     * 按访问令牌获取频道。中继（Relay）模式下允许按需创建频道。
+     *
+     * @param authToken 访问令牌。
+     * @return 返回频道，未找到返回 {@code null}。
+     */
     private AIGCChannel getChannel(AuthToken authToken) {
-        Iterator<AIGCChannel> iter = this.channelMap.values().iterator();
-        while (iter.hasNext()) {
-            AIGCChannel channel = iter.next();
-            if (channel.getAuthToken().getCode().equals(authToken.getCode())) {
-                return channel;
-            }
-        }
-
-        // 没有频道，如果使用中继（Relay）则新建频道
-        if (this.useRelay) {
-            AIGCChannel channel = new AIGCChannel(authToken, "User-" + authToken.getContactId());
-            this.channelMap.put(channel.getCode(), channel);
-            return channel;
-        }
-
-        return null;
+        return this.channelManager.get(authToken, this.useRelay);
     }
 
     public FileLabel downloadFile(AuthToken authToken, String fileUrl) {
         // 从外部链接下载
-        AbstractModule fileStorage = this.getKernel().getModule("FileStorage");
+        AbstractModule fileStorage = this.getFileStorage();
         if (null == fileStorage) {
             Logger.w(this.getClass(), "#downloadFile - File storage service is not ready");
             return null;
@@ -3692,95 +3154,12 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 增加指定单元的实时运行计数。
      *
-     * <p>用 <code>computeIfAbsent</code> 保证「取计数器」这一步是原子的，避免旧实现的
-     * <code>get</code> + <code>put</code> 在并发下重复创建计数器而丢计数。
-     * 调用方必须在 <code>finally</code> 中递减返回的计数器。</p>
+     * <p>调用方必须在 <code>finally</code> 中递减返回的计数器。</p>
      *
      * @param unitName 单元能力名称。
      * @return 返回该单元名对应的计数器。
      */
-    private AtomicInteger increaseUnitCounter(String unitName) {
-        AtomicInteger count = this.generateTextUnitCountMap.computeIfAbsent(unitName,
-                k -> new AtomicInteger(0));
-        count.incrementAndGet();
-        return count;
-    }
-
-    private void processGenerateTextMeta(GenerateTextUnitMeta meta) {
-        AIGCUnit unit = meta.unit;
-
-        // 等待前一个任务释放该单元，最多 5 秒。
-        // 等待超时后仍继续派发：单元选择（selectUnitByName）在所有单元都忙时同样返回忙单元，
-        // 且应答按 sn 路由，因此同一单元上的并发执行是可接受的降级路径——只需让它可观测。
-        int countdown = 50;
-        while (unit.isRunning()) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                // 被中断时立即结束等待并恢复中断标志。
-                // 旧实现吞掉中断后仍会继续轮询满 5 秒。
-                Thread.currentThread().interrupt();
-                break;
-            }
-            --countdown;
-            if (countdown <= 0) {
-                Logger.w(this.getClass(), "#processGenerateTextMeta - Unit is still busy, dispatch anyway - "
-                        + unit.getCapability().getName() + "@" + unit.getContact().getId());
-                break;
-            }
-        }
-
-        unit.setRunning(true);
-        AtomicInteger count = increaseUnitCounter(unit.getCapability().getName());
-        try {
-            // 执行处理
-            meta.process();
-        } catch (Exception e) {
-            Logger.e(this.getClass(), "#processGenerateTextMeta - meta process", e);
-        } finally {
-            // 与运行标志同处收口：process 抛异常时计数也必须递减。
-            count.decrementAndGet();
-            unit.setRunning(false);
-        }
-    }
-
-    private void processQueue(AIGCUnit unit, Queue<UnitMeta> queue) {
-        unit.setRunning(true);
-
-        UnitMeta meta = null;
-        synchronized (queue) {
-            meta = queue.poll();
-        }
-        while (null != meta) {
-            synchronized (this.runningMetas) {
-                this.runningMetas.add(meta);
-            }
-
-            // 执行处理
-            try {
-                meta.process();
-            } catch (Exception e) {
-                Logger.e(this.getClass(), "#processQueue - meta process error", e);
-            }
-
-            synchronized (this.runningMetas) {
-                this.runningMetas.remove(meta);
-            }
-
-            synchronized (queue) {
-                meta = queue.poll();
-            }
-        }
-
-        unit.setRunning(false);
-    }
-
-    private boolean checkParticipantName(String name) {
-        if (name.equalsIgnoreCase("AIGC") || name.equalsIgnoreCase("Cube") ||
-                name.equalsIgnoreCase("Baize") || name.contains("白泽")) {
-            return false;
-        } else {
-            return true;
-        }
+    public AtomicInteger increaseUnitCounter(String unitName) {
+        return this.taskExecutor.beginUnitTask(unitName);
     }
 }

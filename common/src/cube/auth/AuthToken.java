@@ -7,6 +7,7 @@
 package cube.auth;
 
 import cell.util.Cryptology;
+import cell.util.log.Logger;
 import cube.common.JSONable;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -127,7 +128,7 @@ public class AuthToken implements JSONable {
             }
             this.ferry = json.has("ferry") && json.getBoolean("ferry");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(AuthToken.class, "#AuthToken - JSON error", e);
         }
     }
 
@@ -234,7 +235,7 @@ public class AuthToken implements JSONable {
             }
             json.put("ferry", this.ferry);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(AuthToken.class, "#toJSON - JSON error", e);
         }
         return json;
     }
@@ -250,7 +251,7 @@ public class AuthToken implements JSONable {
             json.put("issue", this.issue);
             json.put("expiry", this.expiry);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(AuthToken.class, "#toCompactJSON - JSON error", e);
         }
         return json;
     }

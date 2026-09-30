@@ -6,7 +6,6 @@
 
 package cube.aigc.psychology.composition;
 
-import cell.util.Utils;
 import cube.aigc.psychology.Theme;
 import cube.aigc.psychology.algorithm.IndicatorRate;
 import cube.common.Language;

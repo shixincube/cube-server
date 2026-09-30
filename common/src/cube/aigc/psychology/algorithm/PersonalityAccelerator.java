@@ -23,45 +23,7 @@ import java.util.List;
  */
 public class PersonalityAccelerator implements JSONable  {
 
-    private final static BigFivePersonality[] sBigFivePersonalities = new BigFivePersonality[] {
-            BigFivePersonality.Architect,
-            BigFivePersonality.Expert,
-            BigFivePersonality.Guide,
-            BigFivePersonality.Generalist,
-            BigFivePersonality.Idealist,
-            BigFivePersonality.Supporter,
-            BigFivePersonality.Developer,
-            BigFivePersonality.Advocate,
-            BigFivePersonality.Realist,
-            BigFivePersonality.Instructor,
-            BigFivePersonality.Promoter,
-            BigFivePersonality.Explorer,
-            BigFivePersonality.Traditionalist,
-            BigFivePersonality.Adapter,
-            BigFivePersonality.Entrepreneur,
-            BigFivePersonality.Demonstrator,
-            BigFivePersonality.Controller
-    };
 
-    private final static MBTIFeature[] sMBTIFeatures = new MBTIFeature[] {
-            MBTIFeature.INTJ,
-            MBTIFeature.INTP,
-            MBTIFeature.ENTJ,
-            MBTIFeature.ENTP,
-            MBTIFeature.INFJ,
-            MBTIFeature.INFP,
-            MBTIFeature.ENFJ,
-            MBTIFeature.ENFP,
-            MBTIFeature.ISTJ,
-            MBTIFeature.ISFJ,
-            MBTIFeature.ESTJ,
-            MBTIFeature.ESFJ,
-            MBTIFeature.ISTP,
-            MBTIFeature.ISFP,
-            MBTIFeature.ESTP,
-            MBTIFeature.ESFP,
-            MBTIFeature.ISFJ
-    };
 
     private List<FiveFactor> fiveFactorList;
 
@@ -239,16 +201,6 @@ public class PersonalityAccelerator implements JSONable  {
         this.bigFivePersonality.reset(obligingness, conscientiousness, extraversion, achievement, neuroticism);
     }
 
-//    public MBTIFeature getMBTIFeature() {
-//        for (int i = 0; i < sBigFivePersonalities.length; ++i) {
-//            BigFivePersonality bigFivePersonality = sBigFivePersonalities[i];
-//            if (this.bigFivePersonality.getName().equals(bigFivePersonality.getName())) {
-//                return new MBTIFeature(sMBTIFeatures[i].getCode());
-//            }
-//        }
-//
-//        return null;
-//    }
 
     @Override
     public JSONObject toJSON() {

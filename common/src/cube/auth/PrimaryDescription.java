@@ -6,6 +6,7 @@
 
 package cube.auth;
 
+import cell.util.log.Logger;
 import cube.common.JSONable;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,7 +53,7 @@ public class PrimaryDescription implements JSONable {
             this.port = json.has("port") ? json.getInt("port") : 7000;
             this.primaryContent = json.getJSONObject("primaryContent");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(PrimaryDescription.class, "#PrimaryDescription - JSON error", e);
         }
     }
 
@@ -85,7 +86,7 @@ public class PrimaryDescription implements JSONable {
             json.put("port", this.port);
             json.put("primaryContent", this.primaryContent);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(PrimaryDescription.class, "#toJSON - JSON error", e);
         }
         return json;
     }

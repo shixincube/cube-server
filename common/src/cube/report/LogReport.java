@@ -6,6 +6,7 @@
 
 package cube.report;
 
+import cell.util.log.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,7 +39,7 @@ public class LogReport extends Report {
                 this.logLines.add(new LogLine(line));
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(LogReport.class, "#LogReport - JSON error", e);
         }
     }
 
@@ -67,7 +68,7 @@ public class LogReport extends Report {
         try {
             json.put("lines", lines);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(LogReport.class, "#toJSON - JSON error", e);
         }
 
         return json;

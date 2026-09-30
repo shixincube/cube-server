@@ -7,6 +7,7 @@
 package cube.common.entity;
 
 import cell.util.Utils;
+import cell.util.log.Logger;
 import cube.common.JSONable;
 import org.json.JSONObject;
 
@@ -176,7 +177,7 @@ public class Trace implements JSONable {
                 System.out.println(Trace.parseString(s));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(Trace.class, "#main - Unhandled exception", e);
         }
     }
 }

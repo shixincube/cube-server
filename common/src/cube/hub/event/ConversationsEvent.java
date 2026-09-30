@@ -7,7 +7,6 @@
 package cube.hub.event;
 
 import cube.common.entity.Conversation;
-import cube.common.entity.ConversationType;
 import cube.hub.data.DataHelper;
 import org.json.JSONArray;
 import org.json.JSONObject;

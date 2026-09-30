@@ -7,6 +7,7 @@
 package cube.ferry;
 
 import cell.adapter.CelletAdapter;
+import cell.util.log.Logger;
 import cube.util.ConfigUtils;
 
 import java.io.File;
@@ -42,7 +43,7 @@ public class FerryAdapter extends CelletAdapter {
             try {
                 Properties properties = ConfigUtils.readProperties(configFile.getAbsolutePath());
             } catch (IOException e) {
-                e.printStackTrace();
+                Logger.e(FerryAdapter.class, "#create - I/O error", e);
             }
         }
 

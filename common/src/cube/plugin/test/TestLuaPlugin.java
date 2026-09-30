@@ -6,6 +6,7 @@
 
 package cube.plugin.test;
 
+import cell.util.log.Logger;
 import cube.plugin.HookResult;
 import cube.plugin.LuaPlugin;
 import cube.plugin.PluginContext;
@@ -35,7 +36,7 @@ public class TestLuaPlugin {
             try {
                 Thread.sleep(1000L);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Logger.e(TestLuaPlugin.class, "#test - Interrupted", e);
             }
 
             System.out.println("----------------------------------------");
@@ -78,7 +79,7 @@ public class TestLuaPlugin {
             try {
                 this.call(context);
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                Logger.e(TestLuaPlugin.class, "#launch - File not found", e);
             }
 
             System.out.println("Data: " + ((SimpleContext)context).text);

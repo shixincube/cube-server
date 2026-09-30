@@ -6,6 +6,8 @@
 
 package cube.util;
 
+import cell.util.log.Logger;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,11 +51,15 @@ public final class IPSeeker {
             try {
                 in.close();
             } catch (IOException e) {
+                // 释放失败不影响主流程，仅记录
+                Logger.d(IPSeeker.class, "#IPSeeker - Failed to close 'in': " + e.getMessage());
             }
 
             try {
                 out.close();
             } catch (IOException e) {
+                // 释放失败不影响主流程，仅记录
+                Logger.d(IPSeeker.class, "#IPSeeker - Failed to close 'out': " + e.getMessage());
             }
         }
 
@@ -78,7 +84,7 @@ public final class IPSeeker {
             try {
                 IPSeeker.instance = new IPSeeker();
             } catch (IOException e) {
-                e.printStackTrace();
+                Logger.e(IPSeeker.class, "#getInstance - I/O error", e);
             }
         }
 

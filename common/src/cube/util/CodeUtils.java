@@ -86,7 +86,7 @@ public class CodeUtils {
             int index = path.lastIndexOf("/");
             path = path.substring(index + 1);
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            Logger.e(CodeUtils.class, "#extractURLLastPath - Malformed URL", e);
         }
         return path;
     }
@@ -129,10 +129,10 @@ public class CodeUtils {
             String ext = FileUtils.extractFileExtension(output.getName());
             ImageIO.write(image, ext, output);
         } catch (WriterException e) {
-            e.printStackTrace();
+            Logger.e(CodeUtils.class, "#generateQRCode - writer error", e);
             return false;
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(CodeUtils.class, "#generateQRCode - I/O error", e);
             return false;
         }
 
@@ -154,7 +154,7 @@ public class CodeUtils {
             String ext = FileUtils.extractFileExtension(output.getName());
             ImageIO.write(image, ext, output);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(CodeUtils.class, "#generateBarCode - Unhandled exception", e);
             return false;
         }
         return true;
@@ -228,7 +228,7 @@ public class CodeUtils {
                 g2d.drawString(footer, barX, height - (int)(fontSize * 0.5) - 5);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(CodeUtils.class, "#generateBarCode - Unhandled exception", e);
         }
         return image;
     }
@@ -258,12 +258,14 @@ public class CodeUtils {
             Result result = new MultiFormatReader().decode(bitmap, hints);
             return result.getText();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(CodeUtils.class, "#scanBarCode - Unhandled exception", e);
         } finally {
             if (null != fis) {
                 try {
                     fis.close();
                 } catch (IOException e) {
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(CodeUtils.class, "#scanBarCode - Failed to close 'fis': " + e.getMessage());
                 }
             }
         }
@@ -272,40 +274,14 @@ public class CodeUtils {
     }
 
     public static void main(String[] args) {
-//        String string = "https://box.shixincube.com/box/first-prototype-box";
-//        String protocol = CodeUtils.extractProtocol(string);
-//        System.out.println("Protocol: " + protocol);
-//
-//        if (protocol.equals("cube")) {
-//            String[] segments = CodeUtils.extractCubeResourceSegments(string);
-//            System.out.println("Segment: " + segments[0]);
-//            System.out.println("Segment: " + segments[1]);
-//        }
-//        else {
-//            System.out.println("Box: " + CodeUtils.isBoxDomain(string));
-//            System.out.println("Domain: " + CodeUtils.extractBoxDomain(string));
-//        }
 
-//        File qrFile = new File("service/storage/tmp/qrcode-yyzj.jpg");
-//        boolean success = CodeUtils.generateQRCode(qrFile, string, 400, 400,
-//                new Color("#000000"));
-//        System.out.println("Generate QRCode - " + success);
 
         String data = "532201-0703-0011";
-//        File barFile = new File("service/storage/tmp/bar-bzjz.jpg");
-//        boolean success = CodeUtils.generateBarCode(barFile, data, 200, 80);
-//        System.out.println("Generate bar code - " + success);
-//        String result = CodeUtils.scanBarCode(barFile);
-//        System.out.println("Bar code data: " + result);
 
         try {
             int width = 500;
             int height = 200;
 
-//            BufferedImage image = CodeUtils.generateBarCode(data, width, height,
-//                    "曲靖市第一中学", "高2011班    张伟");
-//            File barFile = new File("service/storage/tmp/bar-info.jpg");
-//            ImageIO.write(image, "jpg", barFile);
 
             int offsetX = PrintUtils.PaperA4Ultra.width - width;
             int offsetY = PrintUtils.PaperA4Ultra.height - height - 10;
@@ -315,12 +291,8 @@ public class CodeUtils {
             File paperFile = new File("service/storage/tmp/paper-demo.jpg");
             ImageIO.write(paper, "jpg", paperFile);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(CodeUtils.class, "#main - Unhandled exception", e);
         }
 
-//        File barFile = new File("service/storage/tmp/barcode.jpg");
-//        File barFile = new File("/Users/ambrose/Documents/Repositories/baize/test/data/painting_for_barcode_2.jpg");
-//        String result = CodeUtils.scanBarCode(barFile);
-//        System.out.println("Bar code data: " + result);
     }
 }

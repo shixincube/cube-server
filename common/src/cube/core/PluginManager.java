@@ -56,7 +56,7 @@ public class PluginManager {
                         }
                     }
                 } catch (JSONException e) {
-                    e.printStackTrace();
+                    Logger.e(PluginManager.class, "#start - JSON error", e);
                 }
             }
 
@@ -121,13 +121,13 @@ public class PluginManager {
                 buf.append(line);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(PluginManager.class, "#readConfig - Unhandled exception", e);
         } finally {
             if (null != reader) {
                 try {
                     reader.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Logger.e(PluginManager.class, "#readConfig - I/O error", e);
                 }
             }
         }
@@ -135,7 +135,7 @@ public class PluginManager {
         try {
             json = new JSONObject(buf.toString());
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(PluginManager.class, "#readConfig - JSON error", e);
         }
 
         return json;
@@ -188,9 +188,9 @@ public class PluginManager {
                     }
                 }
             } catch (JSONException e) {
-                e.printStackTrace();
+                Logger.e(PluginManager.class, "#readConfig - JSON error", e);
             } catch (MalformedURLException e) {
-                e.printStackTrace();
+                Logger.e(PluginManager.class, "#readConfig - Malformed URL", e);
             }
         }
 

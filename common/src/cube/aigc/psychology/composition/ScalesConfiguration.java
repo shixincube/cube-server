@@ -76,7 +76,7 @@ public class ScalesConfiguration {
             byte[] bytes = Files.readAllBytes(Paths.get(this.configFile.getAbsolutePath()));
             data = new JSONObject(new String(bytes, StandardCharsets.UTF_8));
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(ScalesConfiguration.class, "#load - Unhandled exception", e);
         }
 
         if (null == data) {

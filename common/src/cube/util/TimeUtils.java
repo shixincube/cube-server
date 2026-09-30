@@ -6,6 +6,7 @@
 
 package cube.util;
 
+import cell.util.log.Logger;
 import cube.common.Language;
 import cube.util.lunar.LunarCalendar;
 
@@ -239,7 +240,7 @@ public final class TimeUtils {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.e(TimeUtils.class, "#extractDate - Unhandled exception", e);
                 }
             }
         }

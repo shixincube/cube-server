@@ -91,10 +91,6 @@ public class Attribute implements JSONable {
     }
 
     public double[] calcFactor() {
-//        double[] data = FloatUtils.softmax(new double[] {
-//                this.isMale() ? 0.9 : 0.1,
-//                ((double) this.age) * 0.01
-//        });
         double[] data = new double[] {
                 this.isMale() ? 0.9 : 0.1,
                 ((double) this.age) * 0.01

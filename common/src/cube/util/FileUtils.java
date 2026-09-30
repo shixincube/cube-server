@@ -165,7 +165,7 @@ public final class FileUtils {
             md5 = MessageDigest.getInstance("MD5");
             sha1 = MessageDigest.getInstance("SHA1");
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            Logger.e(FileUtils.class, "#makeFileLabel - Algorithm not available", e);
         }
 
         FileInputStream fis = null;
@@ -179,14 +179,16 @@ public final class FileUtils {
                 sha1.update(bytes, 0, length);
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Logger.e(FileUtils.class, "#makeFileLabel - File not found", e);
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(FileUtils.class, "#makeFileLabel - I/O error", e);
         } finally {
             if (null != fis) {
                 try {
                     fis.close();
                 } catch (IOException e) {
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(FileUtils.class, "#makeFileLabel - Failed to close 'fis': " + e.getMessage());
                 }
             }
         }

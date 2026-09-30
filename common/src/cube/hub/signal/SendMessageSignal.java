@@ -7,6 +7,7 @@
 package cube.hub.signal;
 
 import cell.util.Base64;
+import cell.util.log.Logger;
 import cube.common.entity.Contact;
 import cube.common.entity.ConversationType;
 import org.json.JSONObject;
@@ -68,7 +69,7 @@ public class SendMessageSignal extends Signal {
                 byte[] bytes = Base64.decode(json.getString("text"));
                 this.text = new String(bytes, StandardCharsets.UTF_8);
             } catch (IOException e) {
-                e.printStackTrace();
+                Logger.e(SendMessageSignal.class, "#SendMessageSignal - I/O error", e);
             }
         }
 

@@ -7,6 +7,7 @@
 package cube.file;
 
 import cell.util.Utils;
+import cell.util.log.Logger;
 import cube.vision.BoundingBox;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
@@ -81,14 +82,16 @@ public class TesseractHocrFile extends OCRFile {
                 writer.write("\n");
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Logger.e(TesseractHocrFile.class, "#preproccess - File not found", e);
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(TesseractHocrFile.class, "#preproccess - I/O error", e);
         } finally {
             if (null != reader) {
                 try {
                     reader.close();
                 } catch (IOException e) {
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(TesseractHocrFile.class, "#preproccess - Failed to close 'reader': " + e.getMessage());
                 }
             }
 
@@ -96,6 +99,8 @@ public class TesseractHocrFile extends OCRFile {
                 try {
                     writer.close();
                 } catch (IOException e) {
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(TesseractHocrFile.class, "#preproccess - Failed to close 'writer': " + e.getMessage());
                 }
             }
         }
@@ -124,13 +129,13 @@ public class TesseractHocrFile extends OCRFile {
                 }
             }
         } catch (ParserConfigurationException e) {
-            e.printStackTrace();
+            Logger.e(TesseractHocrFile.class, "#readXML - Parser configuration error", e);
         } catch (SAXException e) {
-            e.printStackTrace();
+            Logger.e(TesseractHocrFile.class, "#readXML - SAX error", e);
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(TesseractHocrFile.class, "#readXML - I/O error", e);
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(TesseractHocrFile.class, "#readXML - Unhandled exception", e);
         }
     }
 

@@ -6,6 +6,8 @@
 
 package cube.license;
 
+import cell.util.log.Logger;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -73,23 +75,24 @@ public class LicenseTool {
             keyStore.load(fis, CertificateInfo.KEYSTORE_PASSWORD.toCharArray());
             privateKey = (PrivateKey) keyStore.getKey(CertificateInfo.PRIVATE_ALIAS, CertificateInfo.KEY_PASSWORD.toCharArray());
         } catch (KeyStoreException e) {
-            e.printStackTrace();
+            Logger.e(LicenseTool.class, "#getPrivateKey - Key store error", e);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Logger.e(LicenseTool.class, "#getPrivateKey - File not found", e);
         } catch (CertificateException e) {
-            e.printStackTrace();
+            Logger.e(LicenseTool.class, "#getPrivateKey - Certificate error", e);
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            Logger.e(LicenseTool.class, "#getPrivateKey - Algorithm not available", e);
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(LicenseTool.class, "#getPrivateKey - I/O error", e);
         } catch (UnrecoverableKeyException e) {
-            e.printStackTrace();
+            Logger.e(LicenseTool.class, "#getPrivateKey - unrecoverable key error", e);
         } finally {
             if (null != fis) {
                 try {
                     fis.close();
                 } catch (IOException e) {
-                    // Nothing
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(LicenseTool.class, "#getPrivateKey - Failed to close 'fis': " + e.getMessage());
                 }
             }
         }
@@ -120,15 +123,16 @@ public class LicenseTool {
             Certificate certificate = cf.generateCertificate(fis);
             publicKey = certificate.getPublicKey();
         } catch (CertificateException e) {
-            e.printStackTrace();
+            Logger.e(LicenseTool.class, "#getPublicKeyFromCer - Certificate error", e);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Logger.e(LicenseTool.class, "#getPublicKeyFromCer - File not found", e);
         } finally {
             if (null != fis) {
                 try {
                     fis.close();
                 } catch (IOException e) {
-                    // Nothing
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(LicenseTool.class, "#getPublicKeyFromCer - Failed to close 'fis': " + e.getMessage());
                 }
             }
         }
@@ -152,15 +156,16 @@ public class LicenseTool {
             Certificate certificate = cf.generateCertificate(fis);
             expiration = ((X509Certificate) certificate).getNotAfter();
         } catch (CertificateException e) {
-            e.printStackTrace();
+            Logger.e(LicenseTool.class, "#getExpiration - Certificate error", e);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Logger.e(LicenseTool.class, "#getExpiration - File not found", e);
         } finally {
             if (null != fis) {
                 try {
                     fis.close();
                 } catch (IOException e) {
-                    // Nothing
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(LicenseTool.class, "#getExpiration - Failed to close 'fis': " + e.getMessage());
                 }
             }
         }

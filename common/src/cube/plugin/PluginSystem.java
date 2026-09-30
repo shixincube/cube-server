@@ -138,15 +138,15 @@ public class PluginSystem<T extends Hook> {
 
             this.register(key, plugin);
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            Logger.e(PluginSystem.class, "#register - Class not found", e);
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            Logger.e(PluginSystem.class, "#register - Illegal access", e);
         } catch (InstantiationException e) {
-            e.printStackTrace();
+            Logger.e(PluginSystem.class, "#register - Instantiation error", e);
         } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+            Logger.e(PluginSystem.class, "#register - Method not found", e);
         } catch (InvocationTargetException e) {
-            e.printStackTrace();
+            Logger.e(PluginSystem.class, "#register - Invocation target error", e);
         }
     }
 
@@ -197,67 +197,5 @@ public class PluginSystem<T extends Hook> {
         return list;
     }
 
-    /**
-     * 从配置文件加载插件。
-     *
-     * @param configFilename
-     */
-    /*public void loadPlugin(String configFilename) {
-        // 读取配置文件
-        JSONObject config = this.readConfig(configFilename);
-        if (null == config) {
-            Logger.w(this.getClass(), "Load plugin config file failed: " + configFilename);
-            return;
-        }
 
-        try {
-            // 进行配置
-            if (config.has("plugins")) {
-                JSONArray array = config.getJSONArray("plugins");
-                for (int i = 0, size = array.length(); i < size; ++i) {
-                    JSONObject cfg = array.getJSONObject(i);
-                    this.register(cfg.getString("key"), cfg.getString("class"));
-                }
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }*/
-
-    /*private JSONObject readConfig(String pathname) {
-        File file = new File(pathname);
-        if (!file.exists()) {
-            return null;
-        }
-
-        JSONObject json = null;
-
-        StringBuilder buf = new StringBuilder();
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new FileReader(file));
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                buf.append(line);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (null != reader) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        try {
-            json = new JSONObject(buf.toString());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return json;
-    }*/
 }

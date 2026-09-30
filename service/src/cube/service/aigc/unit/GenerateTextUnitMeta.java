@@ -143,6 +143,18 @@ public class GenerateTextUnitMeta extends UnitMeta {
 
     @Override
     public void process() {
+        // 实时并发计数：与执行起止严格配对，异常路径同样释放。
+        // 原先在 AIGCService#processGenerateTextMeta 中随「自旋等待 + 派发」维护，
+        // 改为队列派发后迁移到此处，计数含义为「该能力名下正在处理的请求数」。
+        AtomicInteger count = this.service.increaseUnitCounter(this.unit.getCapability().getName());
+        try {
+            this.processInternal();
+        } finally {
+            count.decrementAndGet();
+        }
+    }
+
+    private void processInternal() {
         this.channel.setLastUnitMetaSn(this.sn);
 
         // 识别内容

@@ -153,7 +153,8 @@ public abstract class HttpHandler extends AbstractHandler {
             try {
                 value = URLDecoder.decode(param[1], "UTF-8");
             } catch (Exception e) {
-                // Nothing
+                // 解码失败时保留原始值
+                Logger.d(HttpHandler.class, "#parseQueryStringParams - Failed to decode the value, keep raw: " + e.getMessage());
             }
             result.put(param[0], value);
         }
@@ -165,7 +166,7 @@ public abstract class HttpHandler extends AbstractHandler {
         try {
             response.addHeader("Set-Cookie", name + "=" + URLEncoder.encode(value, "UTF-8") + "; max-age=" + maxAge);
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            Logger.e(HttpHandler.class, "#setCookie - Unsupported encoding", e);
         }
     }
 
@@ -186,7 +187,7 @@ public abstract class HttpHandler extends AbstractHandler {
                 response.getWriter().write(data.toString());
                 response.getWriter().close();
             } catch (IOException e) {
-                e.printStackTrace();
+                Logger.e(HttpHandler.class, "#respond - I/O error", e);
             }
         }
     }
@@ -200,7 +201,7 @@ public abstract class HttpHandler extends AbstractHandler {
                 response.getWriter().write(data.toString());
                 response.getWriter().close();
             } catch (IOException e) {
-                e.printStackTrace();
+                Logger.e(HttpHandler.class, "#respond - I/O error", e);
             }
         }
     }

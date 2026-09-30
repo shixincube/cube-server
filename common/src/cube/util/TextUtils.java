@@ -36,17 +36,6 @@ public final class TextUtils {
     private static final Pattern sURL =
             Pattern.compile("(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]");
 
-    private static final Pattern sFileURL = Pattern.compile(
-            "^((https|http|ftp|rtsp|mms)?://)"  //https、http、ftp、rtsp、mms
-            + "?(([0-9a-z_!~*'().&=+$%-]+: )?[0-9a-z_!~*'().&=+$%-]+@)?" //ftp的user@
-            + "(([0-9]{1,3}\\.){3}[0-9]{1,3}" // IP形式的URL- 例如：199.194.52.184
-            + "|" // 允许IP和DOMAIN（域名）
-            + "([0-9a-z_!~*'()-]+\\.)*" // 域名- www.
-            + "([0-9a-z][0-9a-z-]{0,61})?[0-9a-z]\\." // 二级域名
-            + "[a-z]{2,6})" // first level domain- .com or .museum
-            + "(:[0-9]{1,5})?" // 端口号最大为65535,5位数
-            + "((/?)|" // a slash isn't required if there is no file name
-            + "(/[0-9a-z_!~*'().;?:@&=+$,%#-]+)+/?)$");
 
     private static final Pattern sIPv4 = Pattern.compile("^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
             + "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
@@ -1076,53 +1065,8 @@ public final class TextUtils {
     }
 
     public static void main(String[] args) {
-//        String[] data = {
-//                "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.163 Safari/535.1",
-//                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Safari/605.1.15"
-//        };
-//
-//        for (String ua : data) {
-//            JSONObject result = TextUtils.parseUserAgent(ua);
-//            System.out.println("----------------------------------------");
-//            System.out.println(result.toString(4));
-//        }
 
-//        String[] data = {
-//                "http://www.news.cn/politics/leaders/2023-06/09/c_1129683180.htm",
-//                "https://github.com/shixincube/cube-server",
-//                "https://v26-web.douyinvod.com/4e1fc24a1b0137951fc477d4742c2603/64841a3f/video/tos/cn/tos-cn-ve-15c001-alinc2/oQTgo4C9VA8B2pnDAwg8VKrfQbQekFDB1huzQA/?a=6383&ch=5&cr=3&dr=0&lr=all&cd=0%7C0%7C0%7C3&cv=1&br=1858&bt=1858&cs=0&ds=6&ft=GN7rKGVVywIiRZm8Zmo~xj7ScoAp7cE06vrKEdFGcto0g3&mime_type=video_mp4&qs=1&rc=ODQ2OTdoOzg4ODc4NWdoZEBpM2R2dWY6ZjQ0ajMzNGkzM0AvMC4yYDQxNi4xNWMuMS80YSNyMF9ycjRfa2hgLS1kLS9zcw%3D%3D&l=20230610133343084F39F2113AF95FAE3C&btag=e00030000",
-//                "http://192.168.9.173/?t=9876",
-//                "http://baidu/?t=9876"
-//        };
-//        for (String url : data) {
-//            System.out.println("URL: " + TextUtils.isURL(url));
-//        }
-//        for (String url : data) {
-//            System.out.println("URL: " + TextUtils.ellipsisURL(url, 24));
-//        }
-//        System.out.println("----------------------------------------");
-//        for (String url : data) {
-//            String domain = TextUtils.extractDomain(url);
-//            System.out.println(domain + " - IP: " + TextUtils.isIPv4(domain));
-//        }
 
-//        List<String> simData = new ArrayList<>();
-//        for (String url : data) {
-//            StringBuilder buf = new StringBuilder("这个链接是什么内容");
-//            buf.append(Utils.randomString(Utils.randomInt(3, 10)));
-//            buf.append(url);
-//            buf.append("\n疑似链接：");
-//            buf.append(url);
-//            simData.add(buf.toString());
-//        }
-//
-//        for (String text : simData) {
-//            System.out.println("----------------------------------------");
-//            List<String> result = TextUtils.extractAllURLs(text);
-//            for (String url : result) {
-//                System.out.println(url);
-//            }
-//        }
 
 //        String[] dateValue = new String[] {
 //                "2023年",
@@ -1182,59 +1126,13 @@ public final class TextUtils {
 //            System.out.println(TextUtils.extractDay(value));
 //        }
 
-//        String[] sentenceList = new String[] {
-//                "很抱歉，作为一个人工智能助手，我没有实时获取汤臣倍健昨天的负面舆情数据的能力。同时，作为一个中立的信息来源，我也无法对任何特定的舆情数据进行评估或证实。舆情数据的真实性和准确性可能会受到多种因素的影响，包括数据采集的及时性、样本的选择、数据来源的可靠性等等。如果对汤臣倍健昨天的舆情数据有任何疑问或关注，建议关注相关的新闻报道、社交媒体评论等公开信息渠道，以了解实际情况。",
-//                "目前，A股半年报披露已经拉开帷幕，数据显示，截至7月4日20点，A股共有96家上市公司披露2023年半年度业绩预告，其中78家预喜，占比近八成。其中，国内VDS领军企业汤臣倍健率先于7月3日发布2023年半年度业绩预告，成为A股首批披露2023年半年度业绩预告的公司。  预告称，2023年上半年归属于上市公司股东的净利润约为13.63亿元~15.72亿元，同比增长预计将达到30%~50%，盈利水平有望超过2021年中报峰值的13.71亿元。由此可见，在受行业景气度影响的当下，汤臣倍健整体仍旧保持了较好的业绩增长。据悉，在今年618期间，汤臣倍健旗下全品牌全网销售额就创下新高，总销售额突破8亿元，同比增长超40%。在京东、天猫发布的好评榜、热卖榜等众多榜单中，汤臣倍健蛋白粉、专业益生菌品牌“Life-Space”、专业婴童品牌天然博士、新锐女性美态管理品牌汤臣倍健yep、骨关节营养品牌健力多等多个品牌实现了销量及口碑双丰收。其中汤臣倍健蛋白粉继续稳居天猫免疫力蛋白粉品类TOP1、京东“蛋白粉金榜”TOP1；专业益生菌品牌“Life-Space”实现了整体销售额近1.6亿元，同比增长超45%，稳占天猫进口益生菌好评榜TOP1、京东热卖榜TOP1。此外，“有颜值、更有技术含量”的Yep -GAGs胶原蛋白肽新品出道即大热，也夺得了天猫“胶原蛋白V榜”第一名。  聚焦“新原料、新功能、新技术”，近几年汤臣倍健深入营养健康的科学研究，也取得了不少研究成果。比如获得了双项国家发明专利的含真皮重要成分GAGs的胶原蛋白肽、更容易定植于肠道的专利益生菌等，这些科研成果落地产品后，也随即成为了深受消费者喜爱的口碑爆品。欧睿数据显示，2022年中国维生素与膳食补充剂行业零售总规模为2001亿人民币，增速约为4.9%。汤臣倍健份额为10.3%，稳居第一，整体数据非常可观。而汤臣倍健业绩的公示也进一步向消费者证明了其综合实力，让大家吃了一颗定心丸。未来，汤臣倍健将持续坚持科学营养，拉开强科技的领先优势，稳坐龙头地位，为国人输送更多优质的膳食营养补充剂产品。"
-//        };
-//        List<String> sentences = TextUtils.splitSentence(sentenceList[1]);
-//        for (String str : sentences) {
-//            System.out.println(str);
-//        }
 
 //        System.out.println(TextUtils.extractEmailAccountName("xjw@163.com"));
 
-//        String[] list = new String[] {
-//                "1. 是数字符号",
-//                " 2. 不是数字符号",
-//                "3 不是数字符号"
-//        };
-//        for (String str : list) {
-//            System.out.println(TextUtils.startsWithNumberSign(str));
-//            if (TextUtils.startsWithNumberSign(str)) {
-//                System.out.println(str.substring(2).trim());
-//            }
-//        }
 
-//        String table = "| 序号 | 学号 | 姓名 | 出生日期 |\n|--------|--------|--------|--------|\n| 1 | 1781001 | 刘备 | 40485 |\n| 2 | 1781002 | 曹操 | 40402 |\n| 3 | 1781003 | 孙权 | 40473 |\n";
-//        String data = "这是表格数据：\n\n" + table + "\n以上是表格信息";
-//        String result = extractMarkdownTable(data);
-//        System.out.println(result);
 
-//        System.out.println(removePunctuations("Hello, 世界! (This) is a test... “测试。”－1，23."));
-//        System.out.println(isLastPunctuationMark("Hello，世界！"));
-//        System.out.println(isLastPunctuationMark("Hello, 世界."));
-//        System.out.println(isLastPunctuationMark("Hello, 世界"));
 
-//        System.out.println(isJapanese("Hello，世界！"));
-//        System.out.println(isJapanese("デディ"));
-//        System.out.println(isJapanese("こ"));
-//        System.out.println(isJapanese("Hello こか"));
-//        System.out.println(isJapanese("世界せだって"));
 
-//        StringBuilder buf = new StringBuilder();
-//        String text = "世界 こかHello";
-//        String text = "せだって";
-//        for (int i = 0; i < text.length(); ++i) {
-//            String word = text.substring(i, i + 1);
-//            if (isChineseWord(word)) {
-//                buf.append(word);
-//            }
-//
-//            if (i + 1 == text.length()) {
-//                break;
-//            }
-//        }
-//        System.out.println(buf.toString());
 
         String text = "\"\"\"\n测试文本：{{文本内容}}\n\"\"\"\n\n{{我是谁}} # 标题\n";
         List<String> result = extractPromptTemplateTag(text);

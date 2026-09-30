@@ -158,7 +158,8 @@ public class FileDownloader {
                 try {
                     is.close();
                 } catch (IOException e) {
-                    // Nothing
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(FileDownloader.class, "#downloadFile - Failed to close 'is': " + e.getMessage());
                 }
             }
 
@@ -166,7 +167,8 @@ public class FileDownloader {
                 try {
                     fos.close();
                 } catch (IOException e) {
-                    // Nothing
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(FileDownloader.class, "#downloadFile - Failed to close 'fos': " + e.getMessage());
                 }
             }
         }

@@ -390,10 +390,6 @@ public class EvaluationReport implements JSONable {
     }
 
     private void recheckAttention() {
-//        if (this.reference == Reference.Normal) {
-//            this.attentionSuggestion = Attention.NoAttention;
-//            return;
-//        }
         Logger.w(this.getClass(), "#recheckAttention");
 
         int score = 0;

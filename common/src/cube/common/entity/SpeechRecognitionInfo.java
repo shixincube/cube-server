@@ -30,7 +30,6 @@ public class SpeechRecognitionInfo implements JSONable {
 
     public final double durationInSeconds;
 
-    private int numWords;
 
     public SpeechRecognitionInfo(JSONObject json) {
         this.file = json.has("file") ? new FileLabel(json.getJSONObject("file")) : null;

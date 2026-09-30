@@ -6,6 +6,7 @@
 
 package cube.util;
 
+import cell.util.log.Logger;
 import cube.vision.Size;
 
 import javax.imageio.ImageIO;
@@ -108,7 +109,7 @@ public final class ImageUtils {
             output = ImageUtils.resizeToDefault(output);
             ImageIO.write(output, "jpeg", new File(outputPath));
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(ImageUtils.class, "#main - I/O error", e);
         }
     }
 }

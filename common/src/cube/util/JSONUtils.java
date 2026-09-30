@@ -273,10 +273,6 @@ public final class JSONUtils {
         return result;
     }
 
-//    public static String deserializeEscape(String text) {
-//        String result = text.replaceAll("\\\\\"", "\\\"");
-//        return result.replaceAll("\\n", "\\\\n");
-//    }
 
     public static void main(String[] args) {
         JSONObject json = new JSONObject();

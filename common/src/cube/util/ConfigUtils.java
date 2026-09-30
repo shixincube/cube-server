@@ -354,6 +354,8 @@ public final class ConfigUtils {
                 try {
                     fis.close();
                 } catch (IOException e) {
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(ConfigUtils.class, "#readProperties - Failed to close 'fis': " + e.getMessage());
                 }
             }
         }

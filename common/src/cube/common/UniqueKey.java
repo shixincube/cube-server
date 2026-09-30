@@ -6,6 +6,8 @@
 
 package cube.common;
 
+
+import cell.util.log.Logger;
 /**
  * 唯一键。
  */
@@ -49,7 +51,8 @@ public final class UniqueKey {
             try {
                 return Long.parseLong(idstr);
             } catch (Exception e) {
-                // Nothing
+                // 前缀不是数字，按无 ID 处理
+                Logger.d(UniqueKey.class, "#extractId - Failed to parse the prefix as a number: " + e.getMessage());
             }
         }
 

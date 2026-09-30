@@ -6,6 +6,7 @@
 
 package cube.common.entity;
 
+import cell.util.log.Logger;
 import cube.core.Cache;
 import cube.core.CacheKey;
 import cube.core.CacheValue;
@@ -62,7 +63,7 @@ public final class HierarchyNodes {
                 }
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(HierarchyNodes.class, "#load - JSON error", e);
         }
 
         return node;

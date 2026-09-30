@@ -6,6 +6,7 @@
 
 package cube.util;
 
+import cell.util.log.Logger;
 import org.eclipse.jetty.client.HttpClient;
 
 import java.util.Iterator;
@@ -35,7 +36,7 @@ public final class HttpClientFactory {
                 try {
                     client.start();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.e(HttpClientFactory.class, "#borrowHttpClient - Unhandled exception", e);
                 }
             }
             return client;
@@ -45,7 +46,7 @@ public final class HttpClientFactory {
         try {
             client.start();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.e(HttpClientFactory.class, "#borrowHttpClient - Unhandled exception", e);
         }
         return client;
     }
@@ -60,7 +61,7 @@ public final class HttpClientFactory {
             try {
                 iter.next().stop();
             } catch (Exception e) {
-                e.printStackTrace();
+                Logger.e(HttpClientFactory.class, "#close - Unhandled exception", e);
             }
         }
         this.queue.clear();

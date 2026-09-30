@@ -70,31 +70,6 @@ public class Knowledge implements JSONable {
         return prompt;
     }
 
-    /*public void mergeAnswer(PromptMetadata other) {
-        if (null == other.answer) {
-            return;
-        }
-
-        StringBuilder buf = new StringBuilder();
-        String[] lines = this.prompt.split("\n");
-        // 首行
-        buf.append(lines[0]).append("\n");
-        // 合并答案
-        buf.append(other.answer);
-        // 逐条恢复
-        for (int i = 1; i < lines.length; ++i) {
-            buf.append(lines[i]).append("\n");
-        }
-        if (buf.length() > 2) {
-            buf.delete(buf.length() - 1, buf.length());
-        }
-
-        // 新提示词
-        this.prompt = buf.toString();
-
-        // 添加源
-        this.metadataList.addAll(other.metadataList);
-    }*/
 
     /**
      * 将相同的源进行合并。
@@ -185,38 +160,6 @@ public class Knowledge implements JSONable {
             return this.knowledgeSource;
         }
 
-        /*public KnowledgeSource matchSource() {
-            // 判断是文档还是文章
-            if (this.source.startsWith(DOCUMENT_PREFIX)) {
-                String fileCode = this.source.substring(DOCUMENT_PREFIX.length());
-                KnowledgeDocument doc = getKnowledgeDocByFileCode(fileCode);
-                if (null == doc) {
-                    return null;
-                }
-
-                return new KnowledgeSource(doc);
-            }
-            else if (this.source.startsWith(ARTICLE_PREFIX)) {
-                String id = this.source.substring(ARTICLE_PREFIX.length());
-                try {
-                    long articleId = Long.parseLong(id);
-                    KnowledgeArticle article = storage.readKnowledgeArticle(articleId);
-                    if (null == article) {
-                        return null;
-                    }
-
-                    return new KnowledgeSource(article);
-                } catch (Exception e) {
-                    // Nothing
-                }
-            }
-            else if (this.source.startsWith(SEGMENT_PREFIX)) {
-                String segment = this.source.substring(SEGMENT_PREFIX.length());
-                return new KnowledgeSource(segment);
-            }
-
-            return null;
-        }*/
 
         @Override
         public boolean equals(Object obj) {

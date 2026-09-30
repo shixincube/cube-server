@@ -116,10 +116,10 @@ public abstract class FFmpeg extends Processor {
             try {
                 status = process.waitFor();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Logger.e(FFmpeg.class, "#toCompactJSON - Interrupted", e);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(FFmpeg.class, "#toCompactJSON - I/O error", e);
         } finally {
             if (null != process) {
                 process.destroy();
@@ -155,10 +155,10 @@ public abstract class FFmpeg extends Processor {
             try {
                 status = process.waitFor();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Logger.e(FFmpeg.class, "#call - Interrupted", e);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(FFmpeg.class, "#call - I/O error", e);
         } finally {
             if (null != process) {
                 process.destroy();

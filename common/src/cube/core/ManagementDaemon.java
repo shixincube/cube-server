@@ -9,6 +9,7 @@ package cube.core;
 import cell.api.Servable;
 import cell.core.talk.BaseServer;
 import cell.core.talk.TalkContext;
+import cell.util.log.Logger;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -43,7 +44,7 @@ public class ManagementDaemon extends Thread {
             try {
                 Thread.sleep(this.spinningSleep);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Logger.e(ManagementDaemon.class, "#run - Interrupted", e);
             }
 
             if (!this.spinning) {
@@ -76,7 +77,7 @@ public class ManagementDaemon extends Thread {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.e(ManagementDaemon.class, "#run - Unhandled exception", e);
                 }
             }
         }

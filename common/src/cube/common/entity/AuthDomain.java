@@ -7,6 +7,7 @@
 package cube.common.entity;
 
 import cell.core.net.Endpoint;
+import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.auth.PrimaryDescription;
 import cube.common.JSONable;
@@ -113,7 +114,7 @@ public class AuthDomain implements JSONable {
                 this.tokens.put(code, token);
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(AuthDomain.class, "#AuthDomain - JSON error", e);
         }
     }
 

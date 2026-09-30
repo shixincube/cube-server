@@ -7,6 +7,7 @@
 package cube.common.entity;
 
 import cell.util.Utils;
+import cell.util.log.Logger;
 import cube.common.Domain;
 import cube.common.UniqueKey;
 import org.json.JSONArray;
@@ -121,7 +122,7 @@ public class HierarchyNode extends Entity {
                 this.unloadChildrenKeys.add(key);
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(HierarchyNode.class, "#HierarchyNode - JSON error", e);
         }
     }
 
@@ -342,7 +343,7 @@ public class HierarchyNode extends Entity {
 
             json.put("context", this.context);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(HierarchyNode.class, "#toJSON - JSON error", e);
         }
 
         return json;
@@ -364,7 +365,7 @@ public class HierarchyNode extends Entity {
 
             json.put("context", this.context);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(HierarchyNode.class, "#toCompactJSON - JSON error", e);
         }
         return json;
     }

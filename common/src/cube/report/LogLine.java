@@ -7,6 +7,7 @@
 package cube.report;
 
 import cell.util.log.LogLevel;
+import cell.util.log.Logger;
 import cube.common.JSONable;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -43,7 +44,7 @@ public class LogLine implements JSONable {
             this.text = json.getString("text");
             this.time = json.getLong("time");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(LogLine.class, "#LogLine - JSON error", e);
         }
     }
 
@@ -69,7 +70,7 @@ public class LogLine implements JSONable {
             json.put("text", this.text);
             json.put("time", this.time);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(LogLine.class, "#toJSON - JSON error", e);
         }
         return json;
     }

@@ -6,9 +6,7 @@
 
 package cube.common.entity;
 
-import cube.common.Domain;
 import cube.common.UniqueKey;
-import cube.common.state.MultipointCommStateCode;
 import org.json.JSONObject;
 
 import java.util.ArrayList;

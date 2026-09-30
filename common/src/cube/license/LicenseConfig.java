@@ -6,11 +6,12 @@
 
 package cube.license;
 
+import cell.util.log.Logger;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Base64;
 import java.util.Properties;
 
 public class LicenseConfig {
@@ -36,15 +37,16 @@ public class LicenseConfig {
             this.sn = properties.getProperty("sn");
             this.signature = properties.getProperty("signature");
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Logger.e(LicenseConfig.class, "#LicenseConfig - File not found", e);
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(LicenseConfig.class, "#LicenseConfig - I/O error", e);
         } finally {
             if (null != fis) {
                 try {
                     fis.close();
                 } catch (IOException e) {
-                    // Nothing
+                    // 释放失败不影响主流程，仅记录
+                    Logger.d(LicenseConfig.class, "#LicenseConfig - Failed to close 'fis': " + e.getMessage());
                 }
             }
         }

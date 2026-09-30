@@ -7,6 +7,7 @@
 package cube.common.entity;
 
 import cell.core.talk.TalkContext;
+import cell.util.log.Logger;
 import cube.common.JSONable;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -127,7 +128,7 @@ public class Device implements JSONable {
 
             this.talkContext = talkContext;
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(Device.class, "#Device - JSON error", e);
         }
     }
 

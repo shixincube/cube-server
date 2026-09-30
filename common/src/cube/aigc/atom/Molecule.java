@@ -6,6 +6,7 @@
 
 package cube.aigc.atom;
 
+import cell.util.log.Logger;
 import cube.common.entity.Chart;
 
 import java.util.*;
@@ -75,7 +76,8 @@ public class Molecule {
                         long v2 = Long.parseLong(date2);
                         return (int)(v1 - v2);
                     } catch (Exception e) {
-                        // Nothing
+                        // 解析失败时不参与排序
+                        Logger.d(Molecule.class, "#compare - Failed to parse the date as a number: " + e.getMessage());
                     }
 
                     return 0;
@@ -87,51 +89,8 @@ public class Molecule {
     }
 
     private Chart generateChart(Collection<LinkedList<Atom>> list) {
+        // 图表生成逻辑已停用：历史实现依赖 Chart 的旧版 API，该 API 已随 Chart 重构移除。
+        // 此处恒返回 null，因此调用方 Molecule#build 亦恒返回 null。恢复需按现行 Chart API 改写。
         return null;
-
-        /*ArrayList<Chart> seriesList = new ArrayList<>();
-
-        for (LinkedList<Atom> atoms : list) {
-            Atom first = atoms.get(0);
-            Atom last = atoms.get(atoms.size() - 1);
-
-            String label = first.label;
-            String[] words = label.split(",");
-            String name = words[0] + "-" + words[1];
-            String desc = name + " - " + first.formatDate() + "至" + last.formatDate();
-
-            // 图例名
-            String legend = words[words.length - 1];
-
-            ArrayList<String> xAxis = new ArrayList();
-            ArrayList<String> xAxisDesc = new ArrayList<>();
-            JSONArray data = new JSONArray();
-            for (Atom atom : atoms) {
-                xAxis.add(atom.formatSimpleDate());
-                xAxisDesc.add(atom.formatDate());
-                data.put(atom.value);
-            }
-
-            Chart chart = new Chart(name, desc, System.currentTimeMillis());
-            chart.setXAxis(xAxis);
-            chart.setData("line", data, legend);
-            chart.setXAxisDesc(xAxisDesc);
-            chart.setTimeline(atoms);
-            chart.label = words[0];
-            seriesList.add(chart);
-        }
-
-        // 仅一条数据
-        if (seriesList.size() == 1) {
-            return seriesList.get(0);
-        }
-
-        // 合并多条数据
-        Chart result = seriesList.get(0);
-        for (int i = 1; i < seriesList.size(); ++i) {
-            result.mergeSeries(seriesList.get(i));
-        }
-
-        return result;*/
     }
 }

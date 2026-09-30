@@ -6,6 +6,7 @@
 
 package cube.common.entity;
 
+import cell.util.log.Logger;
 import cube.common.JSONable;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,7 +30,7 @@ public class TargetContext implements JSONable {
             this.contact = new Contact(json.getJSONObject("contact"));
             this.device = new Device(json.getJSONObject("device"));
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(TargetContext.class, "#TargetContext - JSON error", e);
         }
     }
 
@@ -48,7 +49,7 @@ public class TargetContext implements JSONable {
             json.put("contact", this.contact.toBasicJSON());
             json.put("device", this.device.toCompactJSON());
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(TargetContext.class, "#toJSON - JSON error", e);
         }
         return json;
     }

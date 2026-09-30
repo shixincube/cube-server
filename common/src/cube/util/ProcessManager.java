@@ -6,6 +6,8 @@
 
 package cube.util;
 
+import cell.util.log.Logger;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -60,9 +62,12 @@ public final class ProcessManager {
             try {
                 output.status = process.waitFor();
             } catch (InterruptedException e) {
+                // 记录中断状态，恢复中断标记交由上层处理
+                Logger.w(ProcessManager.class, "#run - Interrupted while waiting", e);
+                Thread.currentThread().interrupt();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.e(ProcessManager.class, "#run - I/O error", e);
         } finally {
             process = null;
         }
@@ -112,12 +117,12 @@ public final class ProcessManager {
                             }
                         }
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Logger.e(ProcessManager.class, "#run - I/O error", e);
                     } finally {
                         try {
                             stdInput.close();
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            Logger.e(ProcessManager.class, "#run - I/O error", e);
                         }
 
                         phase = 2;
@@ -142,12 +147,12 @@ public final class ProcessManager {
                             }
                         }
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Logger.e(ProcessManager.class, "#run - I/O error", e);
                     } finally {
                         try {
                             errorInput.close();
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            Logger.e(ProcessManager.class, "#run - I/O error", e);
                         }
 
                         phase = 2;

@@ -143,7 +143,8 @@ public class SubmitThread extends Thread {
                     client.stop();
                 }
                 catch (Exception e) {
-                    // Nothing
+                    // 停止失败不影响线程复位，仅记录
+                    Logger.d(SubmitThread.class, "#run - Failed to stop the client: " + e.getMessage());
                 }
             }
         }

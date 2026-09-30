@@ -166,22 +166,6 @@ public class CopilotSetting implements JSONable {
 
     public String toMarkdown() {
         StringBuilder buf = new StringBuilder();
-//        buf.append("* 人格特质：").append(this.personalityTrait.display)
-//            .append("。").append(this.personalityTrait.description).append("\n");
-//        buf.append("* 依恋类型：").append(this.attachmentType.display)
-//                .append("。").append(this.attachmentType.description).append("\n");
-//        buf.append("* 文化背景：").append(this.culturalBackground.display)
-//                .append("。").append(this.culturalBackground.description).append("\n");
-//        buf.append("* 主诉类型：").append(this.chiefComplaintType.display)
-//                .append("。").append(this.chiefComplaintType.description).append("\n");
-//        buf.append("* 痛苦程度：").append(this.painLevel.display)
-//                .append("。").append(this.painLevel.description).append("\n");
-//        buf.append("* 防御机制：").append(this.defenseMechanism.display)
-//                .append("。").append(this.defenseMechanism.description).append("\n");
-//        buf.append("* 移情：").append(this.empathy.display)
-//                .append("。").append(this.empathy.description).append("\n");
-//        buf.append("* 言语风格：").append(this.speechStyle.display)
-//                .append("。").append(this.speechStyle.description).append("\n");
         return buf.toString();
     }
 

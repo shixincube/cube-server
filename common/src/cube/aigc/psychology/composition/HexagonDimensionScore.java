@@ -188,22 +188,6 @@ public class HexagonDimensionScore implements JSONable {
                 this.recordScore(HexagonDimension.InterpersonalRelationship, Utils.randomInt(80, 89),
                         IndicatorRate.Medium);
             }
-//            if (factorSet.symptomFactor.interpersonal > 3.0) {
-//                this.recordScore(HexagonDimension.InterpersonalRelationship, Utils.randomInt(80, 89),
-//                        IndicatorRate.High);
-//            }
-//            else if (factorSet.symptomFactor.interpersonal > 2.5) {
-//                this.recordScore(HexagonDimension.InterpersonalRelationship, Utils.randomInt(70, 79),
-//                        IndicatorRate.Medium);
-//            }
-//            else if (factorSet.symptomFactor.interpersonal > 1.66) {
-//                this.recordScore(HexagonDimension.InterpersonalRelationship, Utils.randomInt(60, 69),
-//                        IndicatorRate.Low);
-//            }
-//            else {
-//                this.recordScore(HexagonDimension.InterpersonalRelationship, Utils.randomInt(55, 59),
-//                        IndicatorRate.None);
-//            }
 
             // 行为
             if (factorSet.normHostile().norm && factorSet.normHorror().norm && factorSet.normParanoid().norm) {

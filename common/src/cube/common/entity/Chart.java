@@ -128,67 +128,6 @@ public class Chart implements JSONable {
         return null;
     }
 
-    /*
-    private void parseLegend() {
-        if (this.chart.seriesList.size() <= 1) {
-            return;
-        }
-
-        List<String> names = new ArrayList<>();
-
-        for (Chart.Series series : this.chart.seriesList) {
-            if (null == series.name) {
-                return;
-            }
-
-            names.add(series.name);
-        }
-
-        this.legend = new Legend(names);
-    }
-
-    public void setXAxis(List<String> axis) {
-        this.xAxis.addAll(axis);
-    }
-
-    public void setXAxis(JSONArray array) {
-        for (int i = 0; i < array.length(); ++i) {
-            this.xAxis.add(array.getString(i));
-        }
-    }
-
-    public void setXAxisDesc(List<String> descList) {
-        this.xAxisDesc.addAll(descList);
-    }
-
-    public void setData(String type, JSONArray data) {
-        Series series = new Series(type, data);
-        this.seriesList.add(series);
-    }
-
-    public void setData(String type, JSONArray data, String legend) {
-        Series series = new Series(type, data);
-        series.name = legend;
-        this.seriesList.add(series);
-    }
-
-    public Series getSeries() {
-        return this.seriesList.get(0);
-    }
-
-
-    public boolean mergeSeries(Chart chart) {
-        if (this.xAxis.size() != chart.xAxis.size()) {
-            return false;
-        }
-
-        this.seriesList.addAll(chart.seriesList);
-        return true;
-    }
-
-    public void setTimeline(List<Atom> atoms) {
-        this.timeline = new Timeline(atoms);
-    }*/
 
     @Override
     public JSONObject toJSON() {

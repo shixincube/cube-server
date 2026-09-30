@@ -6,7 +6,6 @@
 
 package cube.common.entity;
 
-import cube.common.Domain;
 import cube.common.UniqueKey;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -24,10 +23,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class CommField extends Entity {
 
-    /**
-     * 默认超时时间。
-     */
-    private long defaultTimeout = 40L * 1000L;
 
     /**
      * 定时器超时时间。
@@ -79,10 +74,6 @@ public class CommField extends Entity {
      */
     private BoundCalling boundCalling;
 
-    /**
-     * 是否启用音频通道混合。
-     */
-    private boolean compositeAudio = false;
 
     /**
      * 构造函数。

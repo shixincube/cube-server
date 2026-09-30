@@ -19,9 +19,7 @@ public class ExtractAudioOperation extends VideoOperation {
 
     private final static String KEY_OUTPUT_TYPE = "outputType";
 
-    private final static String KEY_CHANNEL = "ac";
 
-    private final static String KEY_SAMPLING_RATE = "ar";
 
     public FileType outputType;
 

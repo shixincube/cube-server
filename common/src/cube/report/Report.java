@@ -6,6 +6,7 @@
 
 package cube.report;
 
+import cell.util.log.Logger;
 import cube.common.JSONable;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,7 +46,7 @@ public class Report implements JSONable {
             this.timestamp = json.getLong("timestamp");
             this.reporter = json.getString("reporter");
         } catch (JSONException e) {
-            e.printStackTrace();
+            Logger.e(Report.class, "#Report - JSON error", e);
         }
     }
 

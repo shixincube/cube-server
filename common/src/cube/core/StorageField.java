@@ -10,33 +10,44 @@ import cell.core.talk.LiteralBase;
 
 /**
  * 存储字段。
+ *
+ * <h2>不可变性</h2>
+ * <p>本类实例在构造完成后<b>不再改变</b>：所有字段均为 {@code final}，
+ * 构造器对传入的约束数组做防御性拷贝，{@link #getConstraints()} 返回内部数组的副本。
+ * 调用方修改 {@code getConstraints()} 的返回值不会影响本实例。</p>
+ *
+ * <p>历史实现提供 {@code resetLiteralBase()} / {@code setValue()} / {@code setConstraints()}
+ * 三个就地修改方法，存储实现（如 SQLite 需要把 {@code BIGINT} 改写为 {@code INTEGER}）
+ * 会借助它们<b>直接改写调用方的对象</b>：同一份字段数组既用于建表又用于查询时，
+ * 查询会读到被改写后的字面义，长整型存在被降级为 {@code int} 的风险。
+ * 现在改为「构造修正后的新实例」，调用方持有的对象始终保持原样。</p>
  */
 public class StorageField {
 
     /**
      * 字段名。
      */
-    private String name;
+    private final String name;
 
     /**
      * 字段数据类型字面义。
      */
-    private LiteralBase literalBase;
+    private final LiteralBase literalBase;
 
     /**
      * 字段数据值。
      */
-    private Object value;
+    private final Object value;
 
     /**
      * 字段约束。
      */
-    private Constraint[] constraints;
+    private final Constraint[] constraints;
 
     /**
      * JOIN 时的表名。
      */
-    private String tableName;
+    private final String tableName;
 
     /**
      * 构造函数。
@@ -45,8 +56,7 @@ public class StorageField {
      * @param literalBase 字段的数据类型字面义。
      */
     public StorageField(String name, LiteralBase literalBase) {
-        this.name = name;
-        this.literalBase = literalBase;
+        this(null, name, literalBase, null, null);
     }
 
     /**
@@ -56,9 +66,7 @@ public class StorageField {
      * @param value 字段值。
      */
     public StorageField(String name, long value) {
-        this.name = name;
-        this.literalBase = LiteralBase.LONG;
-        this.value = value;
+        this(null, name, LiteralBase.LONG, value, null);
     }
 
     /**
@@ -68,9 +76,7 @@ public class StorageField {
      * @param value 字段值。
      */
     public StorageField(String name, Long value) {
-        this.name = name;
-        this.literalBase = LiteralBase.LONG;
-        this.value = value;
+        this(null, name, LiteralBase.LONG, value, null);
     }
 
     /**
@@ -80,9 +86,7 @@ public class StorageField {
      * @param value 字段值。
      */
     public StorageField(String name, int value) {
-        this.name = name;
-        this.literalBase = LiteralBase.INT;
-        this.value = value;
+        this(null, name, LiteralBase.INT, value, null);
     }
 
     /**
@@ -92,9 +96,7 @@ public class StorageField {
      * @param value 字段值。
      */
     public StorageField(String name, Integer value) {
-        this.name = name;
-        this.literalBase = LiteralBase.INT;
-        this.value = value;
+        this(null, name, LiteralBase.INT, value, null);
     }
 
     /**
@@ -104,9 +106,7 @@ public class StorageField {
      * @param value 字段值。
      */
     public StorageField(String name, String value) {
-        this.name = name;
-        this.literalBase = LiteralBase.STRING;
-        this.value = value;
+        this(null, name, LiteralBase.STRING, value, null);
     }
 
     /**
@@ -117,9 +117,7 @@ public class StorageField {
      * @param value 字段值。
      */
     public StorageField(String name, LiteralBase literalBase, Object value) {
-        this.name = name;
-        this.literalBase = literalBase;
-        this.value = value;
+        this(null, name, literalBase, value, null);
     }
 
     /**
@@ -130,9 +128,7 @@ public class StorageField {
      * @param literalBase 字段的数据类型字面义。
      */
     public StorageField(String tableName, String name, LiteralBase literalBase) {
-        this.tableName = tableName;
-        this.name = name;
-        this.literalBase = literalBase;
+        this(tableName, name, literalBase, null, null);
     }
 
     /**
@@ -144,10 +140,7 @@ public class StorageField {
      * @param value 数据值。
      */
     public StorageField(String tableName, String name, LiteralBase literalBase, Object value) {
-        this.tableName = tableName;
-        this.name = name;
-        this.literalBase = literalBase;
-        this.value = value;
+        this(tableName, name, literalBase, value, null);
     }
 
     /**
@@ -158,9 +151,27 @@ public class StorageField {
      * @param constraints 字段约束。
      */
     public StorageField(String name, LiteralBase literalBase, Constraint[] constraints) {
+        this(null, name, literalBase, null, constraints);
+    }
+
+    /**
+     * 构造函数。
+     *
+     * <p>约束数组会被拷贝，调用方之后修改传入的数组不会影响本实例。</p>
+     *
+     * @param tableName 表名。
+     * @param name 字段名。
+     * @param literalBase 字段的数据类型字面义。
+     * @param value 数据值。
+     * @param constraints 字段约束。
+     */
+    public StorageField(String tableName, String name, LiteralBase literalBase, Object value,
+                        Constraint[] constraints) {
+        this.tableName = tableName;
         this.name = name;
         this.literalBase = literalBase;
-        this.constraints = constraints;
+        this.value = value;
+        this.constraints = (null == constraints) ? null : constraints.clone();
     }
 
     /**
@@ -182,30 +193,12 @@ public class StorageField {
     }
 
     /**
-     * 重置字面义。
-     *
-     * @param base 新的字面义。
-     */
-    public void resetLiteralBase(LiteralBase base) {
-        this.literalBase = base;
-    }
-
-    /**
      * 获取表名。
      *
      * @return 返回表名。
      */
     public String getTableName() {
         return this.tableName;
-    }
-
-    /**
-     * 设置字段值。
-     *
-     * @param value 值对象。
-     */
-    public void setValue(Object value) {
-        this.value = value;
     }
 
     /**
@@ -301,20 +294,13 @@ public class StorageField {
     }
 
     /**
-     * 设置约束。
-     *
-     * @param constraints
-     */
-    public void setConstraints(Constraint[] constraints) {
-        this.constraints = constraints;
-    }
-
-    /**
      * 返回约束。
      *
-     * @return
+     * <p>返回内部数组的副本，调用方对返回值的修改不会影响本实例。</p>
+     *
+     * @return 返回约束数组，未设置时返回 {@code null} 。
      */
     public Constraint[] getConstraints() {
-        return this.constraints;
+        return (null == this.constraints) ? null : this.constraints.clone();
     }
 }

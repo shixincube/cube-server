@@ -39,25 +39,6 @@ public class ChartResource extends ComplexResource {
         return this.chart;
     }
 
-//    public String makeDataPlainString() {
-//        StringBuilder buf = new StringBuilder();
-//        buf.append(this.title).append("。\n");
-//        buf.append(this.chart.name).append("：\n");
-//
-//        for (Chart.Series series : this.chart.seriesList) {
-//            String legend = series.name;
-//
-//            for (int i = 0; i < this.chart.xAxis.size(); ++i) {
-//                String desc = this.chart.xAxisDesc.get(i);
-//                int value = series.getValue(i);
-//                buf.append(desc).append(legend).append("：").append(value)
-//                    .append("。\n");
-//            }
-//
-//            buf.append("\n");
-//        }
-//        return buf.toString();
-//    }
 
     @Override
     public JSONObject toJSON() {

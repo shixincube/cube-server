@@ -6,6 +6,7 @@
 
 package cube.vision;
 
+import cell.util.log.Logger;
 import org.json.JSONObject;
 
 import java.util.regex.Matcher;
@@ -53,7 +54,7 @@ public class Color {
                     this.green = Integer.parseInt(values[1].trim());
                     this.blue = Integer.parseInt(values[2].trim());
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.e(Color.class, "#Color - Unhandled exception", e);
                 }
             }
         }
@@ -71,7 +72,7 @@ public class Color {
                     this.green = Integer.parseInt(values[1].trim());
                     this.blue = Integer.parseInt(values[2].trim());
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.e(Color.class, "#Color - Unhandled exception", e);
                 }
             }
         }
