@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 
 <!-- ======================================================================= -->
-<!-- Cube Service Build File                                                 -->
+<!-- Cube AIGC Psychology Module Build File                                  -->
 <!-- ======================================================================= -->
 
-<project name="cube-service" default="build-release" basedir=".">
+<project name="cube-service-psychology" default="build-release" basedir=".">
 
 	<property name="version.brand" value="3.0" />
 
@@ -13,24 +13,29 @@
 
 	<property name="src.dir" value="src" />
 	<property name="lib.dir" value="../../cube-server-dependencies" />
-	<property name="common.dir" value="../build" />
+	<property name="dependencies.dir" value="../build" />
 	<property name="doc.dir" value="doc" />
 
 	<property name="build.dir" value="build" />
 	<property name="build.classes" value="${build.dir}/classes" />
 	<property name="build.jar" value="${build.dir}/jar" />
 
+	<!-- =================================================================== -->
+	<!-- Compile classpath                                                     -->
+	<!--                                                                     -->
+	<!-- 刻意【不】包含 cube-service-*.jar：                                  -->
+	<!-- 心理学业务模块以 AIGC Module 形态接入，必须与宿主共用同一个ClassLoader，-->
+	<!-- 因此不得依赖宿主 service 模块的任何类型。此约束由编译器强制保证——      -->
+	<!-- 一旦本模块出现 cube.service.* 的 import，编译即失败，               -->
+	<!-- 而不是留到运行期才暴露。                                            -->
+	<!-- 宿主侧的编译期引用通过 service/build.xml 里的反向依赖满足。          -->
+	<!-- =================================================================== -->
 	<path id="master-classpath">
 		<fileset dir="${lib.dir}">
 			<include name="*.jar" />
 		</fileset>
-		<fileset dir="${common.dir}">
+		<fileset dir="${dependencies.dir}">
 			<include name="cube-common-*.jar" />
-			<!-- 心理学业务模块插件（AIGC Module 形态，与宿主同一 ClassLoader）。
-			     宿主侧的 PsychologyScene / ComprehensiveReportWorker / QueryRevolver
-			     引用该模块的 PsychologyStorage，故编译期必须可见。
-			     该模块在根 build.xml 中排在 service 之前构建。 -->
-			<include name="cube-service-psychology-*.jar" />
 		</fileset>
 		<pathelement path="${build.classes}" />
 	</path>
@@ -48,7 +53,7 @@
 		<delete failonerror="false" includeemptydirs="true">
 			<fileset dir="${build.dir}"/>
 		</delete>
-		<delete file="../build/cube-service-${version.brand}.jar" failonerror="false" />
+		<delete file="${dependencies.dir}/cube-service-psychology-${version.brand}.jar" failonerror="false" />
 	</target>
 
 	<!-- =================================================================== -->
@@ -58,8 +63,9 @@
 		<javac target="${version.tgt}" source="${version.src}" fork="yes" srcdir="${src.dir}" destdir="${build.classes}" debug="on" encoding="UTF-8" deprecation="on" optimize="off">
 			<classpath refid="master-classpath" />
 		</javac>
-		<delete file="${build.jar}/cube-service.jar" failonerror="false" />
-		<jar destfile="${build.jar}/cube-service.jar" basedir="${build.classes}" excludes="cube/service/test/**" />
+		<delete file="${build.jar}/cube-service-psychology.jar" failonerror="false" />
+		<jar destfile="${build.jar}/cube-service-psychology.jar" basedir="${build.classes}"
+			 excludes="cube/service/psychology/test/**" />
 	</target>
 
 	<!-- =================================================================== -->
@@ -69,16 +75,17 @@
 		<javac target="${version.tgt}" source="${version.src}" fork="yes" srcdir="${src.dir}" destdir="${build.classes}" debug="off" encoding="UTF-8" deprecation="on" optimize="on">
 			<classpath refid="master-classpath" />
 		</javac>
-		<delete file="${build.jar}/cube-service.jar" failonerror="false" />
-		<jar destfile="${build.jar}/cube-service.jar" basedir="${build.classes}" excludes="cube/service/test/**" />
+		<delete file="${build.jar}/cube-service-psychology.jar" failonerror="false" />
+		<jar destfile="${build.jar}/cube-service-psychology.jar" basedir="${build.classes}"
+			 excludes="cube/service/psychology/test/**" />
 	</target>
 
 	<!-- =================================================================== -->
 	<!-- Builds project for debug                                            -->
 	<!-- =================================================================== -->
 	<target name="build-debug" depends="debug">
-		<delete file="../build/cube-service-${version.brand}.jar" failonerror="false" />
-		<copy file="${build.jar}/cube-service.jar" tofile="../build/cube-service-${version.brand}.jar"/>
+		<delete file="../build/cube-service-psychology-${version.brand}.jar" failonerror="false" />
+		<copy file="${build.jar}/cube-service-psychology.jar" tofile="../build/cube-service-psychology-${version.brand}.jar"/>
 		<echo>Build project for debug.</echo>
 		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>
 	</target>
@@ -87,12 +94,12 @@
 	<!-- Builds project for release                                          -->
 	<!-- =================================================================== -->
 	<target name="build-release" depends="release">
-		<delete file="../build/cube-service-${version.brand}.jar" failonerror="false" />
-		<copy file="${build.jar}/cube-service.jar" tofile="../build/cube-service-${version.brand}.jar"/>
+		<delete file="../build/cube-service-psychology-${version.brand}.jar" failonerror="false" />
+		<copy file="${build.jar}/cube-service-psychology.jar" tofile="../build/cube-service-psychology-${version.brand}.jar"/>
 		<echo>Build project for release.</echo>
 		<echo>Copyright (C) 2020 Cube Team. All rights reserved.</echo>
 	</target>
-	
+
 	<!-- =================================================================== -->
 	<!-- Generates API document                                              -->
 	<!-- =================================================================== -->
@@ -100,10 +107,10 @@
 		<delete failonerror="false" includeemptydirs="true">
 			<fileset dir="${doc.dir}"/>
 		</delete>
-		<javadoc destdir="${doc.dir}" windowtitle="Cube Service API Documents" encoding="UTF-8" docencoding="UTF-8">
+		<javadoc destdir="${doc.dir}" windowtitle="Cube AIGC Psychology Module API Documents" encoding="UTF-8" docencoding="UTF-8">
 			<packageset dir="${src.dir}">
 				<include name="**"/>
-				<exclude name="cube/service/test/**" />
+				<exclude name="cube/service/psychology/test/**" />
 			</packageset>
 		</javadoc>
 	</target>

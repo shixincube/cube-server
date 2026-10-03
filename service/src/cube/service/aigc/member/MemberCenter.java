@@ -7,6 +7,7 @@
 package cube.service.aigc.member;
 
 import cube.aigc.psychology.ReportPermission;
+import cube.aigc.psychology.RetentionPolicy;
 import cube.aigc.psychology.app.UserProfile;
 import cube.auth.AuthToken;
 import cube.common.entity.Contact;
@@ -54,13 +55,18 @@ public class MemberCenter {
 
     /**
      * 非会员报告保存天数。
+     *
+     * <p>取值已归位到 {@link RetentionPolicy}，以便写入侧与过期过滤侧
+     * 引用同一编译期常量。本字段仅为向后兼容保留，请勿在此直接改数值。</p>
      */
-    public final static int gsNonmemberRetention = 180;
+    public final static int gsNonmemberRetention = RetentionPolicy.NON_MEMBER_RETENTION_DAYS;
 
     /**
      * 会员报告保存天数。
+     *
+     * <p>取值已归位到 {@link RetentionPolicy}，理由同 {@link #gsNonmemberRetention}。</p>
      */
-    public final static int gsMemberRetention = 0;
+    public final static int gsMemberRetention = RetentionPolicy.MEMBER_RETENTION_DAYS;
 
     private final static MemberCenter instance = new MemberCenter();
 

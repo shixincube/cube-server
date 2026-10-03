@@ -17,6 +17,7 @@ import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.aigc.event.EventCenter;
 import cube.service.aigc.spi.ActionRunner;
+import cube.service.aigc.spi.AIGCHostImpl;
 import cube.service.aigc.spi.ModuleRegistry;
 import cube.service.aigc.task.*;
 
@@ -42,6 +43,14 @@ public class AIGCCellet extends AbstractCellet {
      */
     private ModuleRegistry moduleRegistry;
 
+    /**
+     * 宿主能力实现，向业务模块提供受控的服务访问能力。
+     *
+     * <p>与 {@link #moduleRegistry} 同在 {@code install()} 阶段创建，
+     * 早于任何一次动作派发，因此派发时该字段必然已就绪。</p>
+     */
+    private AIGCHostImpl aigcHost;
+
     public AIGCCellet() {
         super(AIGCService.NAME);
         this.responderList = new ConcurrentLinkedQueue<>();
@@ -56,7 +65,12 @@ public class AIGCCellet extends AbstractCellet {
 
         // 业务模块发现与动作绑定。必须在 install 阶段完成：
         // install 早于内核启动，也早于任何一次 onListened，故装载完成时路由表已权威。
+        //
+        // 装配顺序不可调换：registry 需先于 host 构造（host 要用它做兄弟模块查找），
+        // host 需先于 load 设置（模块 setup 时会拿到它），load 需最后执行。
         this.moduleRegistry = new ModuleRegistry(new ActionRouter());
+        this.aigcHost = new AIGCHostImpl(this.service, this.moduleRegistry);
+        this.moduleRegistry.setHost(this.aigcHost);
         this.moduleRegistry.load();
 
         return true;
@@ -71,6 +85,55 @@ public class AIGCCellet extends AbstractCellet {
             responder.finish();
         }
         this.responderList.clear();
+
+        // 逆序释放：先停模块（释放其资源），再关延迟执行器（停掉仍待执行的模块任务）
+        if (null != this.moduleRegistry) {
+            this.moduleRegistry.teardownAll();
+        }
+
+        if (null != this.aigcHost) {
+            this.aigcHost.shutdown();
+        }
+    }
+
+    /**
+     * 获取业务模块注册表。
+     *
+     * @return 返回注册表；未装载时返回 <code>null</code>。
+     */
+    public ModuleRegistry getModuleRegistry() {
+        return this.moduleRegistry;
+    }
+
+/**
+ * 获取宿主能力实现。
+     *
+     * @return 返回宿主能力实现；未装载时返回 <code>null</code>。
+     */
+    public AIGCHostImpl getAIGCHost() {
+        return this.aigcHost;
+    }
+
+    /**
+     * 校验已装载业务模块声明的单元能力是否均可用。
+     *
+     * <p><b>调用时机</b>：必须在宿主就绪之后——单元由 Relay 上报产生，
+     * {@code install()} 阶段单元表必然为空，此刻校验只会得到全量误报。
+     * 因此本方法不在装载路径上自动执行，由宿主在服务就绪后显式调用一次。</p>
+     *
+     * <p>校验失败不阻止模块工作，只记录明确的 WARN：能力是否应当存在
+     * 取决于部署形态，宿主不预置业务能力名，无从判断「缺失」是配置错误还是部署预期。</p>
+     *
+     * @return 全部声明能力均可用时返回 <code>true</code>。
+     */
+    public boolean verifyModuleCapabilities() {
+        ModuleRegistry registry = this.moduleRegistry;
+
+        if (null == registry) {
+            return true;
+        }
+
+        return registry.verifyCapabilities();
     }
 
     public AIGCService getService() {

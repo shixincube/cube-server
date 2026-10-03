@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.aigc.scene;
+package cube.service.psychology;
 
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
@@ -26,8 +26,6 @@ import cube.core.Conditional;
 import cube.core.Constraint;
 import cube.core.Storage;
 import cube.core.StorageField;
-import cube.service.aigc.member.MemberCenter;
-import cube.service.tokenizer.Tokenizer;
 import cube.storage.StorageFactory;
 import cube.storage.StorageFields;
 import cube.storage.StorageType;
@@ -40,9 +38,21 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 /**
  * 心理学场景的存储器。
+ *
+ * <p><b>模块归属</b>：本类随心理学业务模块 {@code service-psychology} 迁移而来，
+ * 编译期<b>只</b>依赖 {@code cube-common} 与 cell 框架，不依赖宿主 {@code service} 模块。
+ * 这一点由该模块的构建配置保证（classpath 中不含 {@code cube-service-*.jar}），
+ * 因此本类中不允许出现任何 {@code cube.service.*} 的类型引用。</p>
+ *
+ * <p><b>六维描述生成</b>：报告的六维得分描述需要分词器与 TF-IDF 语料，而
+ * {@code ContentTools} 位于宿主 {@code service} 模块（它依赖宿主侧的
+ * {@code Tokenizer} 与 {@code TFIDFAnalyzer}）。因此本类不持有分词器，
+ * 而是由宿主在打开存储前以 {@link BiConsumer} 注入一个「描述生成器」，
+ * 从而在编译期彻底切断对宿主模块的依赖。</p>
  */
 public class PsychologyStorage implements Storagable {
 
@@ -639,7 +649,14 @@ public class PsychologyStorage implements Storagable {
 
     private Storage storage;
 
-    private Tokenizer tokenizer;
+    /**
+     * 六维得分描述生成器。
+     *
+     * <p>由宿主在 {@link #open()} 之前以 {@link #setHexagonDescriber} 注入。
+     * 未注入时 {@link #fillHexagonScoreDescription} 会记WARN 并跳过，
+     * 结果等同于「描述为空」。</p>
+     */
+    private BiConsumer<HexagonDimensionScore, Language> hexagonDescriber;
 
     public final int limit = 5;
 
@@ -647,9 +664,15 @@ public class PsychologyStorage implements Storagable {
         this.storage = StorageFactory.getInstance().createStorage(type, "PsychologyStorage", config);
     }
 
-    public void open(Tokenizer tokenizer) {
-        this.tokenizer = tokenizer;
-        this.open();
+    /**
+     * 设置六维得分描述生成器。
+     *
+     * <p>必须在 {@link #open()} 之前调用；报告被读取时才会实际使用。</p>
+     *
+     * @param hexagonDescriber 描述生成器，可为 {@code null} 表示不生成描述。
+     */
+    public void setHexagonDescriber(BiConsumer<HexagonDimensionScore, Language> hexagonDescriber) {
+        this.hexagonDescriber = hexagonDescriber;
     }
 
     @Override
@@ -972,7 +995,7 @@ public class PsychologyStorage implements Storagable {
         String sql = "SELECT `sn`," + this.reportTable + ".timestamp FROM " + this.reportTable + "," + this.paintingReportManagementTable +
                 " WHERE " + this.reportTable + ".sn=" + this.paintingReportManagementTable + ".report_sn " +
                 " AND " + this.reportTable + ".state=" + AIGCStateCode.Ok.code +
-                " AND " + this.paintingReportManagementTable + ".retention=" + MemberCenter.gsNonmemberRetention;
+                " AND " + this.paintingReportManagementTable + ".retention=" + RetentionPolicy.NON_MEMBER_RETENTION_DAYS;
         List<StorageField[]> list = this.storage.executeQuery(sql);
         if (list.isEmpty()) {
             return 0;
@@ -980,7 +1003,7 @@ public class PsychologyStorage implements Storagable {
 
         int count = 0;
         long now = System.currentTimeMillis();
-        long delta = MemberCenter.gsNonmemberRetention * 24 * 60 * 60 * 1000L;
+        long delta = RetentionPolicy.NON_MEMBER_RETENTION_DAYS * 24 * 60 * 60 * 1000L;
         for (StorageField[] fields : list) {
             long sn = fields[0].getLong();
             long timestamp = fields[1].getLong();
@@ -2216,6 +2239,29 @@ public class PsychologyStorage implements Storagable {
 //        });
 //    }
 
+    /**
+     * 生成六维得分描述。
+     *
+     * <p>实际的描述算法依赖宿主 {@code service} 模块的分词器与 TF-IDF 语料，
+     * 由宿主在启动时以 {@link #setHexagonDescriber} 注入，本方法只负责调用与降级。</p>
+     *
+     * <p>未注入生成器时记 WARN 并跳过，结果等同于「描述为空」。这一降级与迁移前
+     * 「分词器为 {@code null} 时生成过程抛空指针并被 {@code makeReport} 的
+     * catch-all 吞掉」的结果一致，因此不会引入新的行为差异。</p>
+     *
+     * @param dimensionScore 六维得分。
+     * @param language 会话语言。
+     */
+    private void fillHexagonScoreDescription(HexagonDimensionScore dimensionScore, Language language) {
+        BiConsumer<HexagonDimensionScore, Language> describer = this.hexagonDescriber;
+        if (null == describer) {
+            Logger.w(this.getClass(), "#fillHexagonScoreDescription - Describer is NOT set, skip description");
+            return;
+        }
+
+        describer.accept(dimensionScore, language);
+    }
+
     private PaintingReport makeReport(StorageField[] storageFields) {
         Map<String, StorageField> data = StorageFields.get(storageFields);
 
@@ -2302,7 +2348,7 @@ public class PsychologyStorage implements Storagable {
                         evaluationReport.getPaintingConfidence(), evaluationReport.getFactorSet());
 
                 // 描述
-                ContentTools.fillHexagonScoreDescription(this.tokenizer, dimensionScore, report.getAttribute().language);
+                this.fillHexagonScoreDescription(dimensionScore, report.getAttribute().language);
 
                 report.setDimensionalScore(dimensionScore, normDimensionScore);
             }

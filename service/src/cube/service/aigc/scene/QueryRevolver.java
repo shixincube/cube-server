@@ -23,6 +23,7 @@ import cube.service.aigc.AIGCService;
 import cube.service.aigc.guidance.Prompts;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.listener.SemanticSearchListener;
+import cube.service.psychology.PsychologyStorage;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.util.TextUtils;

@@ -21,6 +21,7 @@
 	<property name="project-service-messaging.dir" value="service-messaging" />
 	<property name="project-service-multipointcomm.dir" value="service-multipointcomm" />
 	<property name="project-service-conference.dir" value="service-conference" />
+	<property name="project-service-psychology.dir" value="service-psychology" />
 	<property name="project-service-riskmgmt.dir" value="service-riskmgmt" />
 
 	<property name="project-ferryboat.dir" value="ferryboat" />
@@ -126,11 +127,20 @@
 	<!-- Builds all service projects for debug                               -->
 	<!-- =================================================================== -->
 	<target name="build-service-debug" depends="build-common-debug">
+		<!-- 心理学业务模块插件。必须排在 service 之前：
+		     service 编译期引用 cube.service.psychology.PsychologyStorage，
+		     依赖 ../build/cube-service-psychology-3.0.jar。
+		     该模块编译期只依赖 cube-common-*.jar，因此不存在循环依赖。 -->
 		<ant antfile="build.xml"
-			 dir="${project-service.dir}"
-			 inheritall="false"
-			 inheritrefs="false"
-			 target="build-debug" />
+				dir="${project-service-psychology.dir}"
+				inheritall="false"
+				inheritrefs="false"
+				target="build-debug" />
+		<ant antfile="build.xml"
+				dir="${project-service.dir}"
+				inheritall="false"
+				inheritrefs="false"
+				target="build-debug" />
 		<ant antfile="build.xml"
 			 dir="${project-service-filestorage.dir}"
 			 inheritall="false"
@@ -167,11 +177,17 @@
 	<!-- Builds all service projects for release                             -->
 	<!-- =================================================================== -->
 	<target name="build-service-release" depends="build-common-release">
+		<!-- 心理学业务模块插件。必须排在 service 之前，理由同 build-service-debug。 -->
 		<ant antfile="build.xml"
-			 dir="${project-service.dir}"
-			 inheritall="false"
-			 inheritrefs="false"
-			 target="build-release" />
+				dir="${project-service-psychology.dir}"
+				inheritall="false"
+				inheritrefs="false"
+				target="build-release" />
+		<ant antfile="build.xml"
+				dir="${project-service.dir}"
+				inheritall="false"
+				inheritrefs="false"
+				target="build-release" />
 		<ant antfile="build.xml"
 			 dir="${project-service-filestorage.dir}"
 			 inheritall="false"

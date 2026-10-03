@@ -36,6 +36,8 @@ import cube.service.aigc.scene.node.TeenagerProblemClassificationNode;
 import cube.service.aigc.scene.node.TeenagerQueryNode;
 import cube.service.cv.CVService;
 import cube.service.cv.listener.MatchSimilarityListener;
+import cube.service.psychology.PsychologyStorage;
+import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
@@ -137,7 +139,14 @@ public class PsychologyScene {
             this.maxQueueLength = preference.getInt("maxQueueLength");
             Logger.i(this.getClass(), "#start - max queue length: " + this.maxQueueLength);
 
-            this.storage.open(this.service.getTokenizer());
+            // 六维得分描述的生成依赖宿主侧的分词器与 TF-IDF 语料（ContentTools 位于
+            // service 模块），而 PsychologyStorage 已随心理学业务模块迁至 service-psychology。
+            // 因此以 lambda 注入，使插件模块编译期零 cube.service.* 依赖。
+            final Tokenizer tokenizer = this.service.getTokenizer();
+            this.storage.setHexagonDescriber((dimensionScore, language) ->
+                    ContentTools.fillHexagonScoreDescription(tokenizer, dimensionScore, language));
+
+            this.storage.open();
             this.storage.execSelfChecking(null);
 
             this.lastConfigModified = System.currentTimeMillis();

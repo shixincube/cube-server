@@ -18,6 +18,10 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="common" />
+    <!-- 心理学业务模块插件。COMPILE 作用域（无 scope 属性）：宿主源码 import 了
+         cube.service.psychology.PsychologyStorage，编译期必须可见。
+         与下方 cellet 模块的 RUNTIME 作用域不同，那些只需运行期可见。 -->
+    <orderEntry type="module" module-name="service-psychology" />
     <orderEntry type="module" module-name="service-filestorage" scope="RUNTIME" />
     <orderEntry type="module" module-name="service-messaging" scope="RUNTIME" />
     <orderEntry type="module" module-name="service-fileprocessor" scope="RUNTIME" />
