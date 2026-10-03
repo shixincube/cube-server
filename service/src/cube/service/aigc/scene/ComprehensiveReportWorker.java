@@ -78,7 +78,7 @@ public class ComprehensiveReportWorker implements Runnable {
             }
 
             // 获取单元
-            AIGCUnit unit = this.service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
+            AIGCUnit unit = this.service.selectUnitByName(PsychologyScene.UNIT);
             if (null == unit) {
                 // 没有可用单元
                 this.report.state = AIGCStateCode.UnitError;

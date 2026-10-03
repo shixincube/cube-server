@@ -58,6 +58,8 @@ public class PsychologyScene {
 
     private final static PsychologyScene instance = new PsychologyScene();
 
+    public final static String UNIT = "Psychology";
+
     private AIGCService service;
 
     private PsychologyStorage storage;
@@ -210,7 +212,7 @@ public class PsychologyScene {
             more = this.hasMoreObjects(info);
         }
 
-        AIGCUnit unit = this.service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
+        AIGCUnit unit = this.service.selectUnitByName(UNIT);
         if (null == unit) {
             Logger.w(this.getClass(), "#checkPsychologyPainting - No psychology unit: " + fileCode);
             return false;
@@ -413,7 +415,7 @@ public class PsychologyScene {
             concurrency -= 1;
         }
 
-        if (!this.service.hasUnit(ModelConfig.PSYCHOLOGY_UNIT)) {
+        if (!this.service.hasUnit(UNIT)) {
             Logger.e(this.getClass(), "#generatePaintingReport - No psychology unit");
             return null;
         }
@@ -470,7 +472,7 @@ public class PsychologyScene {
                             paintingReportTask.channel.setProcessing(true);
 
                             // 获取单元
-                            AIGCUnit unit = service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
+                            AIGCUnit unit = service.selectUnitByName(UNIT);
                             if (null == unit) {
                                 // 没有可用单元
                                 paintingReportTask.report.setState(AIGCStateCode.UnitError);
@@ -1410,7 +1412,7 @@ public class PsychologyScene {
         FileLabel resultFile = this.service.saveFile(authToken, newFileCode, outputFile, filename, true);
         */
 
-        AIGCUnit unit = this.service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
+        AIGCUnit unit = this.service.selectUnitByName(UNIT);
         if (null == unit) {
             Logger.e(this.getClass(), "#getPredictedPainting - No unit: " + fileCode);
             return null;
@@ -1471,7 +1473,7 @@ public class PsychologyScene {
         FileLabel rawFileLabel = this.service.saveFile(authToken, tmpFileCode, rawFile, filename, false);
         */
 
-        AIGCUnit unit = this.service.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
+        AIGCUnit unit = this.service.selectUnitByName(UNIT);
         if (null == unit) {
             Logger.e(this.getClass(), "#getPredictedPainting - No unit");
             return null;

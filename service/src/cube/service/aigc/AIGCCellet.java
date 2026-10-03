@@ -11,10 +11,13 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.spi.ActionRouter;
 import cube.common.action.AIGCAction;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.aigc.event.EventCenter;
+import cube.service.aigc.spi.ActionRunner;
+import cube.service.aigc.spi.ModuleRegistry;
 import cube.service.aigc.task.*;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -28,6 +31,17 @@ public class AIGCCellet extends AbstractCellet {
 
     private ConcurrentLinkedQueue<Responder> responderList;
 
+    /**
+     * AIGC 业务模块注册表。
+     *
+     * <p>在 {@link #install()} 中创建并完成装载，早于任何一次
+     * {@link #onListened} 派发，因此派发路径上不需要判空。</p>
+     *
+     * <p>出厂配置列出零个模块，故此处恒为「已装载但绑定表为空」，
+     * 派发成本为一次 volatile 读。</p>
+     */
+    private ModuleRegistry moduleRegistry;
+
     public AIGCCellet() {
         super(AIGCService.NAME);
         this.responderList = new ConcurrentLinkedQueue<>();
@@ -39,6 +53,11 @@ public class AIGCCellet extends AbstractCellet {
 
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.installModule(AIGCService.NAME, this.service);
+
+        // 业务模块发现与动作绑定。必须在 install 阶段完成：
+        // install 早于内核启动，也早于任何一次 onListened，故装载完成时路由表已权威。
+        this.moduleRegistry = new ModuleRegistry(new ActionRouter());
+        this.moduleRegistry.load();
 
         return true;
     }
@@ -108,12 +127,49 @@ public class AIGCCellet extends AbstractCellet {
         return actionDialect.getName().equalsIgnoreCase("interrupt");
     }
 
+    /**
+     * 尝试把请求派发给已注册的业务模块。
+     *
+     * <p>出厂配置下列出零个模块，本方法在「是否已绑定」检查后立即返回
+     * <code>false</code>，因此既不会建立应答计时记录，也不会向线程池提交任务，
+     * 对既有动作分支与未匹配请求不产生任何可观测差异。</p>
+     *
+     * @param talkContext 会话上下文。
+     * @param primitive 原始数据。
+     * @param dialect 动作方言，复用已构造的实例。
+     * @return 已由业务模块接管并提交任务时返回 <code>true</code>。
+     */
+    private boolean dispatchToModule(TalkContext talkContext, Primitive primitive, ActionDialect dialect) {
+        ModuleRegistry registry = this.moduleRegistry;
+
+        if (null == registry || !registry.getRouter().isLoaded()) {
+            return false;
+        }
+
+        ActionRouter.Bound bound = registry.getRouter().lookup(dialect.getName());
+        if (null == bound) {
+            return false;
+        }
+
+        // 仅命中业务模块时才创建应答计时记录，与既有动作分支的语义一致
+        this.execute(new ActionRunner(this, talkContext, primitive, this.markResponseTime(dialect.getName()),
+                registry.getHost(), bound.getBinding(), bound.getOwner()));
+        return true;
+    }
+
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
 
         ActionDialect dialect = new ActionDialect(primitive);
         String action = dialect.getName();
+
+        // 业务模块派发（双轨接入，出厂为空注册表）：
+        // 未命中时立即返回 false，继续走下方的既有动作分支，行为与改造前完全一致。
+        // 应答阻塞分支（Responder.NotifierKey）优先级最高，此处显式排除，确保它不会被业务模块劫持。
+        if (!dialect.containsParam(Responder.NotifierKey) && this.dispatchToModule(talkContext, primitive, dialect)) {
+            return;
+        }
 
         if (dialect.containsParam(Responder.NotifierKey)) {
             // 应答阻塞访问

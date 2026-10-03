@@ -26,8 +26,6 @@ public class ModelConfig implements JSONable {
 
     public final static String BAIZE_2_UNIT = "Baize2";
 
-    public final static String PSYCHOLOGY_UNIT = "Psychology";
-
     public final static String FACIAL_EXPRESSION_UNIT = "FacialExpression";
 
     private final String model;

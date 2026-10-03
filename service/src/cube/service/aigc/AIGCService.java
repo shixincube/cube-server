@@ -2083,7 +2083,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         // 临时使用 PSYCHOLOGY_UNIT
-        AIGCUnit unit = this.selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
+        AIGCUnit unit = this.selectUnitByName(PsychologyScene.UNIT);
         if (null == unit) {
             unit = this.selectUnitByName(ModelConfig.BAIZE_UNIT);
             if (null == unit) {
@@ -2538,7 +2538,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         this.taskExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                AIGCUnit unit = selectUnitByName(ModelConfig.PSYCHOLOGY_UNIT);
+                AIGCUnit unit = selectUnitByName(PsychologyScene.UNIT);
                 if (null == unit) {
                     Logger.w(AIGCService.class, "#speechEmotionRecognition - No unit");
                     listener.onFailed(fileLabel, AIGCStateCode.UnitNoReady);
