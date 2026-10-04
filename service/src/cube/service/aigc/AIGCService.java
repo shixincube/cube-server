@@ -20,6 +20,9 @@ import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.Theme;
 import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.listener.PaintingReportListener;
+import cube.aigc.psychology.listener.ScaleReportListener;
+import cube.aigc.spi.AIGCHost;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.Language;
@@ -188,9 +191,6 @@ public class AIGCService extends AbstractModule implements Generatable {
                 }
                 Logger.i(AIGCService.class, "AI Service - Working path: " + workingPath.getAbsolutePath());
 
-                // 启动心理学场景
-                PsychologyScene.getInstance().start(AIGCService.this);
-
                 JSONObject config = ConfigUtils.readStorageConfig();
                 if (config.has(AIGCService.NAME)) {
                     config = config.getJSONObject(AIGCService.NAME);
@@ -212,6 +212,20 @@ public class AIGCService extends AbstractModule implements Generatable {
                 }
                 else {
                     Logger.e(AIGCService.class, "#start - Can NOT find AIGC storage config");
+                }
+
+                // 装载 AIGC 业务模块（心理学等）。必须在宿主存储就绪之后：
+                // 模块 setup 可能读取宿主存储配置，提前装载会失败。
+                //
+                // 迁移前此处是「启动心理学场景」（PsychologyScene.getInstance().start），
+                // 位置在存储创建之前——今由模块自身的 setup 承接该职责，
+                // 且 PsychologyModule 自建 PsychologyStorage，不依赖此处创建的 AIGCStorage。
+                AIGCCellet theCellet = AIGCService.this.cellet;
+                if (null != theCellet) {
+                    theCellet.loadModules();
+                }
+                else {
+                    Logger.w(AIGCService.class, "#start - Cellet is NULL, NO AIGC module is loaded");
                 }
 
                 // 应用事件
@@ -296,7 +310,11 @@ public class AIGCService extends AbstractModule implements Generatable {
     public void dispose() {
         Logger.i(this.getClass(), "#dispose - AIGC service dispose");
 
-        PsychologyScene.getInstance().stop();
+        // 卸载 AIGC 业务模块（迁移前此处停心理学场景）
+        AIGCCellet theCellet = AIGCService.this.cellet;
+        if (null != theCellet && null != theCellet.getModuleRegistry()) {
+            theCellet.getModuleRegistry().teardownAll();
+        }
 
         CounselingManager.getInstance().stop();
 
@@ -371,7 +389,11 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         Explorer.getInstance().onTick(now);
 
-        PsychologyScene.getInstance().onTick(now);
+        // 驱动 AIGC 业务模块心跳（迁移前此处驱动心理学场景）
+        AIGCCellet theCellet = AIGCService.this.cellet;
+        if (null != theCellet && null != theCellet.getModuleRegistry()) {
+            theCellet.getModuleRegistry().tick(now);
+        }
 
         CounselingManager.getInstance().onTick(now);
     }
@@ -610,6 +632,27 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     public AIGCCellet getCellet() {
         return this.cellet;
+    }
+
+    /**
+     * 获取宿主能力接口。
+     *
+     * <p>报告生成编排（绘画报告、量表报告、量表读取）属心理学业务，实现体在
+     * 宿主运行时（需队列与工作线程，模块拿不到这些设施），经
+     * {@link AIGCHost} 转发给门面，从而门面不直接引用业务场景单例。</p>
+     *
+     * <p>⚠️ 每次现取、不缓存为字段：SPI 的 host 实现在 {@code install()} 阶段
+     * 构造，而本方法可能在 cellet 装配完成前被调用，缓存会拿到 {@code null}。</p>
+     *
+     * @return 返回宿主能力接口；未装配时返回 <code>null</code>。
+     */
+    private AIGCHost getHost() {
+        AIGCCellet theCellet = this.cellet;
+        if (null == theCellet) {
+            return null;
+        }
+
+        return theCellet.getAIGCHost();
     }
 
     public AIGCStorage getStorage() {
@@ -2082,8 +2125,7 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        // 临时使用 PSYCHOLOGY_UNIT
-        AIGCUnit unit = this.selectUnitByName(PsychologyScene.UNIT);
+        AIGCUnit unit = this.selectUnitByName(ModelConfig.BAIZE_2_UNIT);
         if (null == unit) {
             unit = this.selectUnitByName(ModelConfig.BAIZE_UNIT);
             if (null == unit) {
@@ -2265,124 +2307,6 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 生成心理学绘画测验报告。
-     *
-     * @param token
-     * @param attribute
-     * @param fileCode
-     * @param theme
-     * @param maxIndicators
-     * @param adjust
-     * @param remark
-     * @param listener
-     * @return
-     */
-    public PaintingReport generatePaintingReport(String token, Attribute attribute, String fileCode,
-                                                 Theme theme, int maxIndicators, boolean adjust,
-                                                 String remark, PaintingReportListener listener) {
-        if (!this.isStarted()) {
-            Logger.w(this.getClass(), "#generatePaintingReport - The service has NOT started");
-            return null;
-        }
-
-        AuthService authService = this.getAuthService();
-        AuthToken authToken = authService.getToken(token);
-        if (null == authToken) {
-            Logger.w(this.getClass(), "#generatePaintingReport - Token error: " + token);
-            return null;
-        }
-
-        AbstractModule fileStorage = this.getFileStorage();
-        if (null == fileStorage) {
-            Logger.e(this.getClass(), "#generatePaintingReport - File storage service is not ready");
-            return null;
-        }
-
-        GetFile getFile = new GetFile(authToken.getDomain(), fileCode);
-        JSONObject fileLabelJson = fileStorage.notify(getFile);
-        if (null == fileLabelJson) {
-            Logger.e(this.getClass(), "#generatePaintingReport - Get file failed: " + fileCode);
-            return null;
-        }
-
-        if (Logger.isDebugLevel()) {
-            Logger.d(this.getClass(), "#generatePaintingReport - max indicators: " + maxIndicators +
-                    ", file: " + fileCode);
-        }
-
-        FileLabel fileLabel = new FileLabel(fileLabelJson);
-
-        AIGCChannel channel = this.getChannelByToken(token);
-        if (null == channel) {
-            channel = this.createChannel(authToken, "Baize", Utils.randomString(16),
-                    attribute.language);
-        }
-
-        // 生成报告
-        PaintingReport report = PsychologyScene.getInstance().generatePaintingReport(channel,
-                attribute, fileLabel, theme, maxIndicators, adjust, 0, remark, listener);
-
-        return report;
-    }
-
-    /**
-     * 生成心理学量表测验报告。
-     *
-     * @param channel
-     * @param scale
-     * @param listener
-     * @return
-     */
-    public ScaleReport generateScaleReport(AIGCChannel channel, Scale scale, ScaleReportListener listener) {
-        if (!this.isStarted()) {
-            return null;
-        }
-
-        return PsychologyScene.getInstance().generateScaleReport(channel, scale, channel.getLanguage(), listener);
-    }
-
-    /**
-     * 生成心理学量表测验报告。
-     *
-     * @param token
-     * @param scaleSn
-     * @param language
-     * @param listener
-     * @return
-     */
-    public ScaleReport generateScaleReport(String token, long scaleSn, Language language, ScaleReportListener listener) {
-        if (!this.isStarted()) {
-            return null;
-        }
-
-        AuthService authService = this.getAuthService();
-        AuthToken authToken = authService.getToken(token);
-        if (null == authToken) {
-            Logger.w(this.getClass(), "#generateScaleReport - Token error: " + token);
-            return null;
-        }
-
-        try {
-            Scale scale = PsychologyScene.getInstance().getScale(scaleSn);
-            if (null == scale) {
-                Logger.w(this.getClass(), "#generateScaleReport - No scale, sn: " + scaleSn);
-                return null;
-            }
-
-            AIGCChannel channel = this.getChannelByToken(token);
-            if (null == channel) {
-                channel = this.createChannel(authToken, "Baize", Utils.randomString(16), language);
-            }
-
-            ScaleReport report = PsychologyScene.getInstance().generateScaleReport(channel, scale, language, listener);
-            return report;
-        } catch (Exception e) {
-            Logger.e(this.getClass(), "#generateScaleReport", e);
-            return null;
-        }
-    }
-
-    /**
      * 自动语音识别。
      *
      * @param authToken
@@ -2523,6 +2447,12 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 语音情绪识别。
      *
+     * <p><b>归属：平台能力，非心理学业务</b>。本方法只做「取音频文件 → 发给
+     * 音频分类单元 → 解析情绪 → 落情绪记录」。</p>
+     *
+     * <p>单元选点按 {@link AICapability.AudioProcessing#AudioClassification} 子任务
+     * 匹配（与语音识别、说话人分离同一惯例），不再指向心理学单元。</p>
+     *
      * @param token
      * @param fileCode
      * @param listener
@@ -2538,7 +2468,8 @@ public class AIGCService extends AbstractModule implements Generatable {
         this.taskExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                AIGCUnit unit = selectUnitByName(PsychologyScene.UNIT);
+                AIGCUnit unit = AIGCService.this.selectUnitBySubtask(
+                        AICapability.AudioProcessing.AudioClassification);
                 if (null == unit) {
                     Logger.w(AIGCService.class, "#speechEmotionRecognition - No unit");
                     listener.onFailed(fileLabel, AIGCStateCode.UnitNoReady);

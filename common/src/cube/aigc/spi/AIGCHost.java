@@ -6,17 +6,30 @@
 
 package cube.aigc.spi;
 
+import cell.core.net.Endpoint;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.AppEvent;
 import cube.aigc.TaskDescriptor;
 import cube.aigc.Usage;
+import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.ScaleReport;
+import cube.aigc.psychology.Theme;
+import cube.aigc.psychology.composition.HexagonDimensionScore;
+import cube.aigc.psychology.composition.PaintingFeatureSet;
+import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.listener.PaintingReportListener;
+import cube.aigc.psychology.listener.ScaleReportListener;
 import cube.auth.AuthToken;
 import cube.common.Language;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCUnit;
 import cube.common.entity.Contact;
+import cube.common.entity.FileLabel;
 import cube.common.entity.GeneratingOption;
 import cube.common.entity.GeneratingRecord;
+import cube.common.entity.ObjectInfo;
 import cube.core.Storage;
 import cube.storage.StorageFactory;
 import cube.storage.StorageType;
@@ -35,8 +48,8 @@ import java.util.List;
  * <p><b>实现由宿主提供</b>（<code>service</code> 模块内的 <code>AIGCHostImpl</code>）。
  * 模块只应持有本接口引用，不得持有实现类。</p>
  *
- * <p>本接口按 8 组能力组织，其中 24 个方法是既有 <code>AIGCService</code>
- * 公共方法的纯委托，可逐字段对拍；另 13 个是宿主需新增的派生能力。</p>
+ * <p>本接口按 11 组能力组织，其中 28 个方法是既有 <code>AIGCService</code>
+ * 公共方法的纯委托，可逐字段对拍；另 25 个是宿主需新增的派生能力。</p>
  */
 public interface AIGCHost {
 
@@ -90,6 +103,24 @@ public interface AIGCHost {
      * @return 返回词列表。
      */
     List<String> tokenize(String text);
+
+    /**
+     * 整句分词。
+     *
+     * <p><b>与 {@link #tokenize(String)} 的区别（务必按语义选用，不可互换）</b>：
+     * 本方法只切出基础词元，而 {@code tokenize} 走索引模式，会在每个长词元
+     * 之前额外插入其命中词典的 2-gram 与 3-gram。因此同一个「他的」，
+     * 本方法返回 {@code ["他的"]}，而 {@code tokenize} 可能返回
+     * {@code ["他的", "他的", "他", "他的"]}（含重复与更细的粒度）。</p>
+     *
+     * <p>调用方若要「按词元做整词替换」（如把「他 / 她 / 他的」统一替换为
+     * 第三方称谓），必须用本方法，否则会被插入的 n-gram 破坏词形边界，
+     * 产出重复或错位的文本。</p>
+     *
+     * @param text 待分词文本。
+     * @return 返回基础词元列表。
+     */
+    List<String> segmentWords(String text);
 
     /**
      * 抽取文本的 TF-IDF 关键词。
@@ -211,6 +242,28 @@ public interface AIGCHost {
             List<GeneratingRecord> history, Contact participantContact);
 
     /**
+     * 以指定能力名为指定联系人同步生成文本。
+     *
+     * <p><b>为何不能用 {@link #selectUnit(String)} + {@link #syncGenerateText} 组合替代</b>：
+     * 单元选点有「亲和」与「全局」两种策略。前者会优先复用该联系人已绑定的
+     * 单元，从而保证同一联系人的连续会话落在同一台推理机上（上下文缓存命中、
+     * 结果风格一致）；后者在全池中按空闲度选点，与联系人无关。</p>
+     *
+     * <p>报告生成这类「同一联系人连续多段生成」的场景必须走亲和选点，
+     * 换成全局选点会改变单元分布，属行为变更而非等价重构。</p>
+     *
+     * @param token 调用者的访问令牌，用于亲和选点。
+     * @param capabilityName 单元能力名。
+     * @param prompt 提示词。
+     * @param option 生成选项。
+     * @param history 历史记录，可为 {@code null}。
+     * @param participantContact 参与者联系人，可为 {@code null}。
+     * @return 返回生成结果；无可用单元时返回 {@code null}。
+     */
+    GeneratingRecord syncGenerateText(AuthToken token, String capabilityName, String prompt,
+            GeneratingOption option, List<GeneratingRecord> history, Contact participantContact);
+
+    /**
      * 以指定单元同步生成可校验的结构化结果。
      *
      * <p><b>本方法是 SPI 首发版的唯一真实缺口</b>：诸如「巡检地图 + 导航点
@@ -306,6 +359,23 @@ public interface AIGCHost {
      * @return 返回资源内容，两级路径均不存在时返回 <code>null</code>。
      */
     String readModuleResource(String moduleName, String relativePath);
+
+    /**
+     * 读取宿主引导提示词。
+     *
+     * <p><b>为何不能用模块自带的语料读取替代</b>：宿主提示词存在
+     * <code>assets/prompt/</code> 下，而心理学语料存在
+     * <code>assets/psychology/corpus.json</code>，两者虽有同名的
+     * <code>FORMAT_POLISH</code>，但<b>措辞并不相同</b>（前者以三引号包裹、
+     * 后者要求保持原换行结构）。提示词措辞直接影响模型输出，
+     * 换用另一份属于行为变更而非等价重构，故须经宿主原样取用。</p>
+     *
+     * <p>提示词键为裸字符串，宿主不预置业务键名；调用方须自行约定。</p>
+     *
+     * @param promptName 提示词名。
+     * @return 返回中文提示词模板；不存在时返回 <code>null</code>。
+     */
+    String getGuidePrompt(String promptName);
 
     // ───────── ⑤ 存储 ─────────
 
@@ -422,6 +492,21 @@ public interface AIGCHost {
     JSONObject queryPaintingReport(long sn, String format);
 
     /**
+     * 查询绘画报告实体。
+     *
+     * <p>与 {@link #queryPaintingReport(long, String)} 的区别：后者返回
+     * 已经导出的 JSON（形态固定），本方法返回报告本体，供需要读取
+     * 状态、章节、特征集等结构化字段的调用方使用。</p>
+     *
+     * <p>⚠️ 返回的是<b>宿主内存态中的同一个实例</b>，调用方<b>不得</b>修改它；
+     * 如需修改请先复制。</p>
+     *
+     * @param sn 报告序列号。
+     * @return 返回报告实体；不存在时返回 {@code null}。
+     */
+    PaintingReport getPaintingReport(long sn);
+
+    /**
      * 查询量表报告。
      *
      * @param sn 报告序列号。
@@ -470,4 +555,184 @@ public interface AIGCHost {
      * @return 返回重置后的报告 JSON；报告不存在或更新失败时返回 {@code null}。
      */
     JSONObject resetReportAttention(long sn, Integer newAttention);
+
+    // ───────── ⑨ 报告内容加工 ─────────
+
+    /**
+     * 生成六维得分描述。
+     *
+     * <p>六维描述的算法依赖宿主分词器与 TF-IDF 语料，二者均在 service 模块，
+     * 不能作为 SPI 类型暴露，故收敛为一个「就地填充描述」的方法。</p>
+     *
+     * <p>模块侧典型用法是把它包装成函数式接口注入自己的存储层，
+     * 与宿主侧已有的注入方式同构。</p>
+     *
+     * @param hds 六维得分，将被就地填充。
+     * @param language 会话语言。
+     */
+    void fillHexagonScoreDescription(HexagonDimensionScore hds, Language language);
+
+    /**
+     * 提取文本的语义片段。
+     *
+     * <p>依赖宿主的数据集与 TF-IDF 语料，模块无法自行实现。</p>
+     *
+     * @param query 待提取的文本。
+     * @return 返回语义片段；无匹配时返回 {@code null}。
+     */
+    String extractContent(String query);
+
+    /**
+     * 查询绘画特征集。
+     *
+     * <p>与 {@link #queryPaintingReport(long, String)} 同理，特征集在报告
+     * 生成过程中先落在宿主内存态，此刻尚未入库，模块自行查询会漏掉
+     * 「正在生成中」的那一份。</p>
+     *
+     * @param reportSn 报告序列号。
+     * @return 返回特征集；不存在时返回 {@code null}。
+     */
+    PaintingFeatureSet getPaintingFeatureSet(long reportSn);
+
+    /**
+     * 把报告加工为指定形态的文本。
+     *
+     * @param report 报告。
+     * @param summary 是否为摘要形态。
+     * @param maxIndicators 最多输出多少个指标。
+     * @param personality 是否输出人格描述。
+     * @return 返回 Markdown 文本。
+     */
+    String makeReportContent(PaintingReport report, boolean summary, int maxIndicators, boolean personality);
+
+    /**
+     * 生成报告的评级信息文本。
+     *
+     * @param report 报告。
+     * @return 返回 Markdown 文本。
+     */
+    String makeRatingInformation(PaintingReport report);
+
+    /**
+     * 生成报告的页面链接。
+     *
+     * @param endpoint 访问端点。
+     * @param token 访问令牌码。
+     * @param report 报告。
+     * @param indicatorLink 是否输出指标链接。
+     * @param personalityLink 是否输出人格链接。
+     * @return 返回 Markdown 文本。
+     */
+    String makePageLink(Endpoint endpoint, String token, PaintingReport report,
+            boolean indicatorLink, boolean personalityLink);
+
+    /**
+     * 把绘画特征集加工为文本。
+     *
+     * @param featureSet 绘画特征集。
+     * @return 返回 Markdown 文本。
+     */
+    String makePaintingFeature(PaintingFeatureSet featureSet);
+
+    // ───────── ⑪ 报告生成编排 ─────────
+
+    /**
+     * 生成绘画报告。
+     *
+     * <p><b>为何编排留在宿主而不在模块内</b>：报告生成需要「排队 + 起工作线程 +
+     * 按单元数限并发 + 写回存储」，其中队列与线程管理是宿主运行时职责；模块内
+     * 既拿不到这些设施，硬搬过去会要求 SPI 再暴露整套线程池与队列，能力面反而
+     * 扩大。因此模块只提供查询与数据能力，编排由宿主实现。</p>
+     *
+     * <p>该方法使宿主门面无需直接引用业务场景单例，从而消除「平台门面反向
+     * 依赖业务实现类」的方向倒置。</p>
+     *
+     * @param channel 会话频道。
+     * @param attribute 受测人属性。
+     * @param fileLabel 绘画文件。
+     * @param theme 分析主题。
+     * @param maxIndicators 最多输出的指标数。
+     * @param adjust 是否校正。
+     * @param retention 留存天数。
+     * @param remark 备注。
+     * @param listener 完成回调。
+     * @return 返回已入队的报告；入队失败时返回 {@code null}。
+     */
+    PaintingReport generatePaintingReport(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
+            Theme theme, int maxIndicators, boolean adjust, int retention, String remark,
+            PaintingReportListener listener);
+
+    /**
+     * 生成量表测验报告。
+     *
+     * @param channel 会话频道。
+     * @param scale 量表。
+     * @param language 会话语言。
+     * @param listener 完成回调。
+     * @return 返回已入队的报告；入队失败时返回 {@code null}。
+     */
+    ScaleReport generateScaleReport(AIGCChannel channel, Scale scale, Language language,
+            ScaleReportListener listener);
+
+    /**
+     * 按序列号读取量表。
+     *
+     * <p>与 {@link #generateScaleReport} 同属编排入口：门面在生成量表报告前
+     * 需先取量表本体，故一并经本接口取，避免门面直连业务场景。</p>
+     *
+     * @param sn 量表序列号。
+     * @return 返回量表；不存在时返回 {@code null}。
+     */
+    Scale getScale(long sn);
+
+    // ───────── ⑩ 计算机视觉与绘画 ─────────
+
+    /**
+     * 检测图像中的物体。
+     *
+     * <p>该能力由宿主转发至计算机视觉服务处理，模块侧无法自行实现。
+     * 返回的 {@link ObjectInfo} 位于 common，模块可直接读取其物体列表。</p>
+     *
+     * @param domain 存储域。
+     * @param fileCode 文件码。
+     * @param visualize 是否输出可视化标注。
+     * @return 返回检测结果；检测失败时返回 {@code null}。
+     */
+    ObjectInfo detectObject(String domain, String fileCode, boolean visualize);
+
+    /**
+     * 读取绘画推理数据。
+     *
+     * <p>产出内容为构图元素与关联边构成的图表数据，纯读，无副作用。</p>
+     *
+     * @param sn 报告序列号。
+     * @return 返回图表数据；报告不存在或尚未完成推理时返回 {@code null}。
+     */
+    JSONObject getPaintingInferenceData(long sn);
+
+    /**
+     * 预测绘画要素。
+     *
+     * @param token 访问令牌。
+     * @param fileCode 文件码。
+     * @return 返回绘画要素；预测失败时返回 {@code null}。
+     */
+    Painting getPredictedPainting(AuthToken token, String fileCode);
+
+    /**
+     * 预测绘画要素并输出带标注的图像。
+     *
+     * <p>与 {@link #getPredictedPainting(AuthToken, String)} 的区别：本方法
+     * 会把识别到的要素绘制到图上并保存为新文件，因此<b>有写副作用</b>，
+     * 且调用方需自行删除临时文件。</p>
+     *
+     * @param token 访问令牌。
+     * @param sn 报告序列号。
+     * @param boundingBox 是否输出外框。
+     * @param visualParam 是否输出视觉参数。
+     * @param probability 置信度阈值。
+     * @return 返回新生成图像的标签；预测失败时返回 {@code null}。
+     */
+    FileLabel getPredictedPainting(AuthToken token, long sn, boolean boundingBox, boolean visualParam,
+            double probability);
 }

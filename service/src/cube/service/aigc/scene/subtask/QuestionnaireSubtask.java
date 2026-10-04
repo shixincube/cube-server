@@ -16,10 +16,11 @@ import cube.common.entity.AIGCChannel;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
+import cube.aigc.spi.AIGCHost;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.scene.PsychologyScene;
-import cube.service.aigc.scene.ScaleReportListener;
+import cube.aigc.psychology.listener.ScaleReportListener;
 import cube.service.aigc.scene.SceneManager;
 import cube.util.TextUtils;
 import cube.util.TimeDuration;
@@ -455,7 +456,11 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 }
 
                 final Object mutex = new Object();
-                final ScaleReport scaleReport = service.generateScaleReport(channel, scaleTrack.scale, new ScaleReportListener() {
+                // 编排已移入心理学业务模块，门面不再保留该方法，故经宿主能力接口调用。
+                // 与 PsychologyScene#host() 同一入口：cellet → AIGCHostImpl
+                final AIGCHost host = QuestionnaireSubtask.this.service.getCellet().getAIGCHost();
+                final ScaleReport scaleReport = host.generateScaleReport(channel, scaleTrack.scale,
+                        channel.getLanguage(), new ScaleReportListener() {
                     @Override
                     public void onReportEvaluating(ScaleReport report) {
                         synchronized (mutex) {

@@ -6,11 +6,20 @@
 
 package cube.service.aigc.spi;
 
+import cell.core.net.Endpoint;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.ScaleReport;
+import cube.aigc.psychology.Theme;
 import cube.aigc.psychology.algorithm.Attention;
+import cube.aigc.psychology.composition.HexagonDimensionScore;
+import cube.aigc.psychology.composition.PaintingFeatureSet;
+import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.listener.PaintingReportListener;
+import cube.aigc.psychology.listener.ScaleReportListener;
 import cube.aigc.spi.AIGCHost;
 import cube.aigc.spi.AIGCPluginContextLite;
 import cube.aigc.spi.ActionModule;
@@ -22,12 +31,17 @@ import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 import cube.common.entity.GeneratingOption;
 import cube.common.entity.GeneratingRecord;
+import cube.common.entity.ObjectInfo;
 import cube.common.entity.User;
+import cube.core.Module;
 import cube.core.Storage;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCHook;
 import cube.service.aigc.AIGCPluginContext;
 import cube.service.aigc.AIGCService;
+import cube.service.aigc.guidance.Prompts;
+import cube.service.aigc.scene.ContentTools;
+import cube.service.cv.CVService;
 import cube.service.aigc.scene.PsychologyScene;
 import cube.service.tokenizer.SegToken;
 import cube.service.tokenizer.Tokenizer;
@@ -169,6 +183,23 @@ public final class AIGCHostImpl implements AIGCHost {
         }
 
         return words;
+    }
+
+    @Override
+    public List<String> segmentWords(String text) {
+        if (null == text || text.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Tokenizer tokenizer = this.service.getTokenizer();
+        if (null == tokenizer) {
+            Logger.w(this.getClass(), "#segmentWords - Tokenizer is NOT available");
+            return Collections.emptyList();
+        }
+
+        // 走 sentenceProcess 而非 process(INDEX)：后者会额外插入命中词典的
+        // 2/3-gram，调用方按整词做代词改写时会被破坏词形边界
+        return tokenizer.sentenceProcess(text);
     }
 
     @Override
@@ -321,6 +352,17 @@ public final class AIGCHostImpl implements AIGCHost {
         }
 
         return this.service.syncGenerateText(unit, prompt, option, history, participantContact);
+    }
+
+    @Override
+    public GeneratingRecord syncGenerateText(AuthToken token, String capabilityName, String prompt,
+            GeneratingOption option, List<GeneratingRecord> history, Contact participantContact) {
+        if (null == token) {
+            Logger.w(this.getClass(), "#syncGenerateText - Token is NULL");
+            return null;
+        }
+
+        return this.service.syncGenerateText(token, capabilityName, prompt, option, history, participantContact);
     }
 
     /**
@@ -581,6 +623,15 @@ public final class AIGCHostImpl implements AIGCHost {
         }
 
         return null;
+    }
+
+    @Override
+    public String getGuidePrompt(String promptName) {
+        if (null == promptName || promptName.trim().isEmpty()) {
+            return null;
+        }
+
+        return Prompts.getPrompt(promptName.trim());
     }
 
     // ───────── ⑤ 存储 ─────────
@@ -886,6 +937,11 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
     }
 
     @Override
+    public PaintingReport getPaintingReport(long sn) {
+        return this.scene().getPaintingReport(sn);
+    }
+
+    @Override
     public JSONObject queryScaleReport(long sn) {
         ScaleReport report = this.scene().getScaleReport(sn);
         return (null == report) ? null : report.toJSON();
@@ -946,6 +1002,177 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
         Attention attention = (null == newAttention) ? null : Attention.parse(newAttention);
         PaintingReport report = this.scene().resetReportAttention(sn, attention);
         return (null == report) ? null : report.toCompactJSON();
+    }
+
+    // ───────── ⑨ 报告内容加工 ─────────
+
+    @Override
+    public void fillHexagonScoreDescription(HexagonDimensionScore hds, Language language) {
+        if (null == hds) {
+            return;
+        }
+
+        ContentTools.fillHexagonScoreDescription(this.service.getTokenizer(), hds, language);
+    }
+
+    @Override
+    public String extractContent(String query) {
+        if (null == query || query.isEmpty()) {
+            return null;
+        }
+
+        return ContentTools.extract(query, this.service.getTokenizer());
+    }
+
+    @Override
+    public PaintingFeatureSet getPaintingFeatureSet(long reportSn) {
+        return this.scene().getPaintingFeatureSet(reportSn);
+    }
+
+    @Override
+    public String makeReportContent(PaintingReport report, boolean summary, int maxIndicators,
+            boolean personality) {
+        if (null == report) {
+            return null;
+        }
+
+        return ContentTools.makeContent(report, summary, maxIndicators, personality);
+    }
+
+    @Override
+    public String makeRatingInformation(PaintingReport report) {
+        if (null == report) {
+            return null;
+        }
+
+        return ContentTools.makeRatingInformation(report);
+    }
+
+    @Override
+    public String makePageLink(Endpoint endpoint, String token, PaintingReport report,
+            boolean indicatorLink, boolean personalityLink) {
+        if (null == report) {
+            return null;
+        }
+
+        return ContentTools.makePageLink(endpoint, token, report, indicatorLink, personalityLink);
+    }
+
+    @Override
+    public String makePaintingFeature(PaintingFeatureSet featureSet) {
+        if (null == featureSet) {
+            return null;
+        }
+
+        return ContentTools.makePaintingFeature(featureSet);
+    }
+
+    // ───────── ⑪ 报告生成编排 ─────────
+
+    @Override
+    public PaintingReport generatePaintingReport(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
+            Theme theme, int maxIndicators, boolean adjust, int retention, String remark,
+            PaintingReportListener listener) {
+        if (null == channel || null == attribute || null == fileLabel) {
+            Logger.w(this.getClass(), "#generatePaintingReport - Channel, attribute or file is NULL");
+            return null;
+        }
+
+        return this.scene().generatePaintingReport(channel, attribute, fileLabel, theme, maxIndicators,
+                adjust, retention, remark, listener);
+    }
+
+    @Override
+    public ScaleReport generateScaleReport(AIGCChannel channel, Scale scale, Language language,
+            ScaleReportListener listener) {
+        if (null == channel || null == scale) {
+            Logger.w(this.getClass(), "#generateScaleReport - Channel or scale is NULL");
+            return null;
+        }
+
+        return this.scene().generateScaleReport(channel, scale, language, listener);
+    }
+
+    @Override
+    public Scale getScale(long sn) {
+        return this.scene().getScale(sn);
+    }
+
+    // ───────── ⑩ 计算机视觉与绘画 ─────────
+
+    @Override
+    public ObjectInfo detectObject(String domain, String fileCode, boolean visualize) {
+        if (null == domain || null == fileCode) {
+            return null;
+        }
+
+        CVService cvService = this.acquireCVService();
+        if (null == cvService) {
+            return null;
+        }
+
+        try {
+            return cvService.detectObject(this.makeAuthToken(domain), fileCode, visualize);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#detectObject - Detect failed, fileCode: " + fileCode, e);
+            return null;
+        }
+    }
+
+    @Override
+    public JSONObject getPaintingInferenceData(long sn) {
+        //迁移前该方法还接收令牌但从不使用它，故此处也不需要令牌
+        return this.scene().getPaintingInferenceData(null, sn);
+    }
+
+    @Override
+    public Painting getPredictedPainting(AuthToken token, String fileCode) {
+        if (null == token || null == fileCode) {
+            return null;
+        }
+
+        return this.scene().getPredictedPainting(token, fileCode);
+    }
+
+    @Override
+    public FileLabel getPredictedPainting(AuthToken token, long sn, boolean boundingBox,
+            boolean visualParam, double probability) {
+        if (null == token) {
+            return null;
+        }
+
+        return this.scene().getPredictedPainting(token, sn, boundingBox, visualParam, probability);
+    }
+
+    /**
+     * 取得计算机视觉服务实例。
+     *
+     * <p>该服务由独立的视觉单元安装到内核模块表，类型为 {@code AbstractModule}，
+     * 调用前必须做类型转换——此处失败即表示视觉单元未部署。</p>
+     *
+     * @return 返回视觉服务；未部署时返回 {@code null}。
+     */
+    private CVService acquireCVService() {
+        Module module = this.service.getKernel().getModule(CVService.NAME);
+        if (module instanceof CVService) {
+            return (CVService) module;
+        }
+
+        Logger.w(this.getClass(), "#acquireCVService - CV module is NOT available");
+        return null;
+    }
+
+    /**
+     * 构造一个仅含存储域的访问令牌。
+     *
+     * <p>视觉服务只需要令牌中的存储域信息（用于定位文件），不需要具体联系人身份。</p>
+     *
+     * @param domain 存储域。
+     * @return 返回访问令牌。
+     */
+    private AuthToken makeAuthToken(String domain) {
+        return new AuthToken("", domain, "", 0L, System.currentTimeMillis(),
+                System.currentTimeMillis() + 86400000L, false);
     }
 
     /**

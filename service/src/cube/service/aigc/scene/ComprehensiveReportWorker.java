@@ -15,6 +15,7 @@ import cube.aigc.psychology.composition.Answer;
 import cube.aigc.psychology.composition.Comprehensive;
 import cube.aigc.psychology.composition.EvaluationScore;
 import cube.aigc.psychology.composition.Scale;
+import cube.aigc.spi.AIGCHost;
 import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.entity.AIGCChannel;
@@ -22,10 +23,11 @@ import cube.common.entity.AIGCUnit;
 import cube.common.entity.FileLabel;
 import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
+import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.guidance.Prompts;
-import cube.service.aigc.scene.evaluation.Evaluation;
-import cube.service.aigc.scene.evaluation.SubconsciousRelationshipBetweenCoupleEvaluation;
+import cube.service.psychology.evaluation.Evaluation;
+import cube.service.psychology.evaluation.SubconsciousRelationshipBetweenCoupleEvaluation;
 import cube.service.psychology.PsychologyStorage;
 import cube.util.Gender;
 import cube.util.TextUtils;
@@ -60,6 +62,23 @@ public class ComprehensiveReportWorker implements Runnable {
 
     public ComprehensiveReport getReport() {
         return this.report;
+    }
+
+    /**
+     * 获取宿主能力接口。
+     *
+     * <p>评估器已随心理学业务模块迁至 service-psychology，只能经 SPI 访问宿主能力。
+     * 每次现取，不缓存为字段：SPI 的装配晚于本工作器的构造。</p>
+     *
+     * @return 返回宿主能力接口；未装配时返回 {@code null}。
+     */
+    private AIGCHost host() {
+        AIGCCellet cellet = this.service.getCellet();
+        if (null == cellet) {
+            return null;
+        }
+
+        return cellet.getAIGCHost();
     }
 
     @Override
@@ -210,7 +229,7 @@ public class ComprehensiveReportWorker implements Runnable {
         switch (this.report.theme) {
             case SubconsciousRelationshipBetweenCouple:
                 evaluation = new SubconsciousRelationshipBetweenCoupleEvaluation(
-                        this.channel.getAuthToken().getContactId(), painting);
+                        this.channel.getAuthToken().getContactId(), painting, this.host());
                 break;
             default:
                 break;
@@ -229,8 +248,6 @@ public class ComprehensiveReportWorker implements Runnable {
             case SubconsciousRelationshipBetweenCouple:
                 SubconsciousRelationshipBetweenCoupleEvaluation srbcEvaluation =
                         (SubconsciousRelationshipBetweenCoupleEvaluation) evaluation;
-
-                srbcEvaluation.service = this.service;
 
                 // 提取绘画分数
                 List<EvaluationScore> scoreList = evaluationReport.getEvaluationScores();

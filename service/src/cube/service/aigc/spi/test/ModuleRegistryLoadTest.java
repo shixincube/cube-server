@@ -7,11 +7,14 @@
 package cube.service.aigc.spi.test;
 
 import cube.aigc.spi.AIGCPluginContextLite;
+import cube.auth.AuthToken;
 import cube.aigc.spi.AIGCSPI;
 import cube.aigc.spi.ActionBinding;
 import cube.aigc.spi.ActionModule;
 import cube.aigc.spi.ActionRouter;
 import cube.aigc.spi.ModuleDescriptor;
+import cube.common.Language;
+import cube.common.entity.ObjectInfo;
 import cube.service.aigc.spi.ModuleRegistry;
 import org.json.JSONObject;
 
@@ -168,7 +171,7 @@ public class ModuleRegistryLoadTest {
             // 场景13：SPI 版本常量与描述符一致
             // 用 >= 而非 == ：本用例只关心「常量与各测试模块声明的版本同源」，
             // 不应因契约升版而红灯（升版时需同步确认各测试模块的兼容性）
-            assertTrue("S13 当前SPI版本至少为4", AIGCSPI.VERSION >= 4);
+            assertTrue("S13 当前SPI版本至少为6", AIGCSPI.VERSION >= 6);
 
             // 场景14：Lite 上下文可承载字段且不泄漏 service 类型
             resetModuleEvents();
@@ -454,6 +457,11 @@ public class ModuleRegistryLoadTest {
         }
 
         @Override
+        public List<String> segmentWords(String text) {
+            return Collections.emptyList();
+        }
+
+        @Override
         public List<String> extractKeywords(String content, int topN) {
             return Collections.emptyList();
         }
@@ -485,6 +493,69 @@ public class ModuleRegistryLoadTest {
 
         @Override
         public JSONObject resetReportAttention(long sn, Integer newAttention) {
+            return null;
+        }
+
+        @Override
+        public void fillHexagonScoreDescription(cube.aigc.psychology.composition.HexagonDimensionScore hds,
+                Language language) {
+        }
+
+        @Override
+        public String extractContent(String query) {
+            return null;
+        }
+
+        @Override
+        public cube.aigc.psychology.composition.PaintingFeatureSet getPaintingFeatureSet(long reportSn) {
+            return null;
+        }
+
+        @Override
+        public String makeReportContent(cube.aigc.psychology.PaintingReport report, boolean summary,
+                int maxIndicators, boolean personality) {
+            return null;
+        }
+
+        @Override
+        public String makeRatingInformation(cube.aigc.psychology.PaintingReport report) {
+            return null;
+        }
+
+        @Override
+        public String makePageLink(cell.core.net.Endpoint endpoint, String token,
+                cube.aigc.psychology.PaintingReport report, boolean indicatorLink, boolean personalityLink) {
+            return null;
+        }
+
+        @Override
+        public String makePaintingFeature(cube.aigc.psychology.composition.PaintingFeatureSet featureSet) {
+            return null;
+        }
+
+        @Override
+        public cube.aigc.psychology.PaintingReport getPaintingReport(long sn) {
+            return null;
+        }
+
+        @Override
+        public ObjectInfo detectObject(String domain, String fileCode, boolean visualize) {
+            return null;
+        }
+
+        @Override
+        public JSONObject getPaintingInferenceData(long sn) {
+            return null;
+        }
+
+        @Override
+        public cube.aigc.psychology.Painting getPredictedPainting(AuthToken token, String fileCode) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.FileLabel getPredictedPainting(AuthToken token, long sn,
+                boolean boundingBox, boolean visualParam, double probability) {
             return null;
         }
 
@@ -543,6 +614,14 @@ public class ModuleRegistryLoadTest {
         }
 
         @Override
+        public cube.common.entity.GeneratingRecord syncGenerateText(cube.auth.AuthToken token,
+                String capabilityName, String prompt, cube.common.entity.GeneratingOption option,
+                List<cube.common.entity.GeneratingRecord> history,
+                cube.common.entity.Contact participantContact) {
+            return null;
+        }
+
+        @Override
         public JSONObject generateStructured(cube.common.entity.AIGCUnit unit, String prompt,
                 String jsonSchema, String schemaName, long timeoutMs) {
             return null;
@@ -582,6 +661,31 @@ public class ModuleRegistryLoadTest {
 
         @Override
         public String readModuleResource(String moduleName, String relativePath) {
+            return null;
+        }
+
+        @Override
+        public String getGuidePrompt(String promptName) {
+            return null;
+        }
+
+        @Override
+        public cube.aigc.psychology.PaintingReport generatePaintingReport(cube.common.entity.AIGCChannel channel,
+                cube.aigc.psychology.Attribute attribute, cube.common.entity.FileLabel fileLabel,
+                cube.aigc.psychology.Theme theme, int maxIndicators, boolean adjust, int retention,
+                String remark, cube.aigc.psychology.listener.PaintingReportListener listener) {
+            return null;
+        }
+
+        @Override
+        public cube.aigc.psychology.ScaleReport generateScaleReport(cube.common.entity.AIGCChannel channel,
+                cube.aigc.psychology.composition.Scale scale, cube.common.Language language,
+                cube.aigc.psychology.listener.ScaleReportListener listener) {
+            return null;
+        }
+
+        @Override
+        public cube.aigc.psychology.composition.Scale getScale(long sn) {
             return null;
         }
 

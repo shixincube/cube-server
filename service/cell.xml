@@ -61,20 +61,6 @@
 		<cellet port="6000">
 			<class>cube.service.messaging.MessagingServiceCellet</class>
 		</cellet>
-		<!--
-		<cellet port="6000">
-			<class>cube.service.multipointcomm.MultipointCommServiceCellet</class>
-		</cellet>
-		<cellet port="6000">
-			<class>cube.service.conference.ConferenceServiceCellet</class>
-		</cellet>
-		<cellet port="6000">
-			<class>cube.service.robot.RobotCellet</class>
-		</cellet>
-		<cellet port="6000">
-			<class>cube.service.signal.SignalCellet</class>
-		</cellet>
-		-->
 		<cellet port="6000">
 			<class>cube.service.aigc.AIGCCellet</class>
 		</cellet>
@@ -84,12 +70,26 @@
 		<cellet port="6000">
 			<class>cube.service.riskmgmt.RiskManagementCellet</class>
 		</cellet>
+		<!--
+		<cellet port="6000">
+			<class>cube.service.multipointcomm.MultipointCommServiceCellet</class>
+		</cellet>
+		<cellet port="6000">
+			<class>cube.service.conference.ConferenceServiceCellet</class>
+		</cellet>
+		<cellet port="6000">
+			<class>cube.service.robodroid.RobotCellet</class>
+		</cellet>
+		<cellet port="6000">
+			<class>cube.service.signal.SignalCellet</class>
+		</cellet>
+		<cellet port="6000">
+			<class>cube.service.hub.HubCellet</class>
+		</cellet>
 		<cellet port="6000">
 			<class>cube.service.ferry.FerryCellet</class>
 		</cellet>
-		<!--<cellet port="6000">
-			<class>cube.service.hub.HubCellet</class>
-		</cellet-->
+		-->
 	</cellets>
 
 	<!-- 适配器配置 -->

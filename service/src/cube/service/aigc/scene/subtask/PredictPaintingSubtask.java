@@ -21,7 +21,7 @@ import cube.service.aigc.AIGCService;
 import cube.service.aigc.listener.GenerateTextListener;
 import cube.service.aigc.member.MemberCenter;
 import cube.service.aigc.scene.ContentTools;
-import cube.service.aigc.scene.PaintingReportListener;
+import cube.aigc.psychology.listener.PaintingReportListener;
 import cube.service.aigc.scene.PsychologyScene;
 import cube.service.aigc.scene.SceneManager;
 import cube.service.contact.ContactManager;

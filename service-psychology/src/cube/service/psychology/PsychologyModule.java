@@ -8,6 +8,7 @@ package cube.service.psychology;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.app.ConsultationSchedule;
 import cube.aigc.psychology.app.Customer;
@@ -35,7 +36,7 @@ import java.util.List;
 /**
  * 心理学业务模块。
  *
- * <p><b>已迁范围（18 个动作）</b>：</p>
+ * <p><b>已迁范围（22 个动作）</b>：</p>
  * <ul>
  *   <li>首批 3 个：绘画标签与报告状态（{@code setPaintingReportState}、
  *       {@code getPaintingLabel}、{@code setPaintingLabel}）——只读写
@@ -48,11 +49,12 @@ import java.util.List;
  *   <li>第三批 4 个：量表族（{@code listPsychologyScales}、
  *       {@code getPsychologyScale}、{@code generatePsychologyScale}、
  *       {@code submitPsychologyAnswerSheet}）；</li>
- *   <li>第四批 3 个：报告读取与控制（{@code getPsychologyReport}、
- *       {@code stopGeneratingPsychologyReport}、{@code resetReportAttention}）。
- *       这三个<b>不自建报告读写</b>，而是经
- *       {@link AIGCHost} 的报告运行态能力访问宿主——
- *       原因见 {@link #queryPaintingReport}。</li>
+ *   <li>第四批 7 个：报告链路（{@code getPsychologyReport}、
+ *       {@code stopGeneratingPsychologyReport}、{@code resetReportAttention}、
+ *       {@code getPsychologyReportPart}、{@code modifyReportRemark}、
+ *       {@code getPsychologyPainting}、{@code checkPsychologyPainting}）。
+ *       其中报告读取与控制<b>不自建</b>，而是经 {@link AIGCHost} 的
+ *       「报告运行态」能力访问宿主——原因见 {@link #queryPaintingReport}。</li>
  * </ul>
  *
  * <p>前 11 个动作<b>只读写本地存储</b>，因此不需要分词器与 TF-IDF 语料；
@@ -88,6 +90,16 @@ public final class PsychologyModule implements ActionModule {
      * 模块名。全局唯一，同时作为存储命名空间与资源目录前缀。
      */
     public final static String NAME = "psychology";
+
+    /**
+     * 心理学 REST 主前缀。
+     *
+     * <p>与 dispatcher 侧现存的端点路径逐字一致（如
+     * {@code /aigc/psychology/scales}）。该前缀下的handler 仍由 dispatcher
+     * 侧注册，插件只做声明——插件编译期不含 {@code cube-dispatcher-*.jar}，
+     * 无法引用 {@code Manager} 与 Jetty。</p>
+     */
+    public final static String REST_PREFIX = "/aigc/psychology";
 
     /**
      * 模块版本。仅用于日志与诊断。
@@ -138,9 +150,19 @@ public final class PsychologyModule implements ActionModule {
 
     private final static String ACTION_STOP_REPORT = "stopGeneratingPsychologyReport";
 
+    private final static String ACTION_GENERATE_REPORT = "generatePsychologyReport";
+
     private final static String ACTION_GET_REPORT = "getPsychologyReport";
 
     private final static String ACTION_RESET_ATTENTION = "resetReportAttention";
+
+    private final static String ACTION_REPORT_PART = "getPsychologyReportPart";
+
+    private final static String ACTION_MODIFY_REMARK = "modifyReportRemark";
+
+    private final static String ACTION_PAINTING = "getPsychologyPainting";
+
+    private final static String ACTION_CHECK_PAINTING = "checkPsychologyPainting";
 
     /**
      * 心理学私有存储器。
@@ -166,8 +188,10 @@ public final class PsychologyModule implements ActionModule {
         return new ModuleDescriptor(NAME, VERSION, AIGCSPI.VERSION,
                 // 动作命名空间：不参与线协议，仅供冲突检测与日志
                 Collections.singletonList(NAME),
-                // 本批次无 REST 端点
-                Collections.emptyList(),
+                // REST 前缀：与 dispatcher 侧现存的 16 条心理学端点一致。
+                // 插件【不】注册 handler（其编译期不含 cube-dispatcher-*.jar），
+                // 本声明供 dispatcher 侧做前缀冲突检测与兜底通道的模块定位。
+                Arrays.asList(REST_PREFIX, "/aigc/painting", "/aigc/stream"),
                 // 本批次 3 个动作只读写本地存储，不调用任何模型单元
                 Collections.emptyList(),
                 // 本批次不依赖兄弟模块
@@ -198,6 +222,13 @@ public final class PsychologyModule implements ActionModule {
                     : StorageType.MySQL;
 
             this.storage = new PsychologyStorage(type, storageConfig);
+
+            // 六维得分描述的生成依赖宿主分词器与 TF-IDF 语料，二者在 service 模块，
+            // 插件无法直接引用；故以函数式接口注入，与宿主侧
+            // PsychologyScene#start 的做法同构。
+            // ⚠️ 必须在 storage.open() 之前注入：首次回读报告即可能触发描述生成
+            this.injectDescriber(host);
+
             this.storage.open();
 
             // 只记录存储类型，不输出配置内容（该配置文件含数据库凭据）
@@ -209,6 +240,25 @@ public final class PsychologyModule implements ActionModule {
             // 加载期出现的 Error（如类缺失）同样不应让宿主启动失败
             throw new ModuleException("#setup - Open psychology storage failed", t);
         }
+    }
+
+    /**
+     * 为存储层注入六维描述生成器。
+     *
+     * <p>未注入时 {@link PsychologyStorage} 会记 WARN 并跳过描述，结果等同于
+     * 「描述为空」。这与迁移前「分词器为 {@code null} 时生成过程抛空指针并被
+     * {@code makeReport} 的 catch-all 吞掉」的结果一致，因此注入失败不阻断装载。</p>
+     *
+     * @param host 宿主能力接口。
+     */
+    private void injectDescriber(AIGCHost host) {
+        if (null == host) {
+            Logger.w(this.getClass(), "#injectDescriber - Host is NULL, skip description generator");
+            return;
+        }
+
+        this.storage.setHexagonDescriber((dimensionScore, language) ->
+                host.fillHexagonScoreDescription(dimensionScore, language));
     }
 
     @Override
@@ -324,6 +374,10 @@ public final class PsychologyModule implements ActionModule {
                 // 三者均为 false：迁移前 stopGenerating 的令牌无效回 IllegalOperation，
                 // 而 resetReportAttention 根本不校验令牌有效性；
                 // 交由骨架前置校验会同时改变这两处的线协议可见行为
+                new ActionBinding(ACTION_GENERATE_REPORT, new GeneratePsychologyReportAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.NoToken, AIGCStateCode.InvalidParameter,
+                                AIGCStateCode.Failure, AIGCStateCode.Ok}),
                 new ActionBinding(ACTION_STOP_REPORT, new StopGeneratingReportAction(),
                         false, new AIGCStateCode[] {
                                 AIGCStateCode.NoToken, AIGCStateCode.IllegalOperation,
@@ -338,6 +392,31 @@ public final class PsychologyModule implements ActionModule {
                         false, new AIGCStateCode[] {
                                 AIGCStateCode.NoToken, AIGCStateCode.InvalidParameter,
                                 AIGCStateCode.Failure, AIGCStateCode.IllegalOperation,
+                                AIGCStateCode.Ok}),
+
+                // ── 第四批第 2 批：报告内容与备注 ──
+                // 均为 false：迁移前两者令牌无效时回的都是 IllegalOperation
+                new ActionBinding(ACTION_REPORT_PART, new GetPsychologyReportPartAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.NoToken, AIGCStateCode.IllegalOperation,
+                                AIGCStateCode.Failure, AIGCStateCode.InvalidParameter,
+                                AIGCStateCode.Ok}),
+                new ActionBinding(ACTION_MODIFY_REMARK, new ModifyReportRemarkAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.NoToken, AIGCStateCode.IllegalOperation,
+                                AIGCStateCode.Failure, AIGCStateCode.InvalidParameter,
+                                AIGCStateCode.Ok}),
+
+                // ── 第四批第 3 批：绘画读取与校验 ──
+                new ActionBinding(ACTION_PAINTING, new GetPsychologyPaintingAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.NoToken, AIGCStateCode.IllegalOperation,
+                                AIGCStateCode.Failure, AIGCStateCode.InvalidParameter,
+                                AIGCStateCode.Ok}),
+                // ⚠️ 本动作第二码也是 NoToken，且永不回 Failure，勿「顺手统一」
+                new ActionBinding(ACTION_CHECK_PAINTING, new CheckPsychologyPaintingAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.NoToken, AIGCStateCode.InvalidParameter,
                                 AIGCStateCode.Ok}));
     }
 
@@ -722,5 +801,36 @@ public final class PsychologyModule implements ActionModule {
      */
     JSONObject resetReportAttention(AIGCHost host, long sn, Integer attention) {
         return host.resetReportAttention(sn, attention);
+    }
+
+    // ───────── 报告内容与备注 ─────────
+
+    /**
+     * 修改报告备注。
+     *
+     * <p>逻辑完全在本模块内：更新备注 → 回读报告 → 把备注附加到回读结果上。
+     * 两步都已由本模块的 {@link PsychologyStorage} 提供，无需经 SPI。</p>
+     *
+     * <p>⚠️ 回读报告会触发六维描述生成，而描述器在 {@link #setup} 时注入；
+     * 若注入失败，描述为空（与迁移前的降级结果一致）。</p>
+     *
+     * @param reportSn 报告序列号。
+     * @param remark 新备注。
+     * @return 返回更新后的报告；更新失败或报告不存在时返回 <code>null</code>。
+     */
+    PaintingReport modifyReportRemark(long reportSn, String remark) {
+        this.ensureSelfChecked();
+
+        if (!this.storage.updatePsychologyReportRemark(reportSn, remark)) {
+            return null;
+        }
+
+        PaintingReport report = this.storage.readPsychologyReport(reportSn);
+        if (null == report) {
+            return null;
+        }
+
+        report.setRemark(remark);
+        return report;
     }
 }

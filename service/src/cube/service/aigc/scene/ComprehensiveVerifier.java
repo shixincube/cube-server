@@ -14,7 +14,7 @@ import cube.aigc.psychology.composition.Comprehensive;
 import cube.aigc.psychology.composition.Question;
 import cube.aigc.psychology.composition.Scale;
 import cube.common.entity.AIGCChannel;
-import cube.service.aigc.scene.evaluation.SubconsciousRelationshipBetweenCoupleEvaluation;
+import cube.service.psychology.evaluation.SubconsciousRelationshipBetweenCoupleEvaluation;
 
 import java.util.List;
 

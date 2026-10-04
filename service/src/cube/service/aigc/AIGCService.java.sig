@@ -54,10 +54,7 @@ public List<VoiceDiarization> getVoiceDiarizations(AuthToken authToken) {
 public Map<String, AtomicInteger> getGenerateTextUnitRealtimeCount() {
 public Membership activateMembership(AuthToken token, String channel, String invitationCode) {
 public Membership cancelMembership(AuthToken token) {
-public PaintingReport generatePaintingReport(String token, Attribute attribute, String fileCode,
 public PromptComposer getPromptComposer() {
-public ScaleReport generateScaleReport(AIGCChannel channel, Scale scale, ScaleReportListener listener) {
-public ScaleReport generateScaleReport(String token, long scaleSn, Language language, ScaleReportListener listener) {
 public SkillRegistry getSkillRegistry() {
 public SkillSessionStore getSkillSessionStore() {
 public String newInvitationForToken(String token) {

@@ -482,4 +482,26 @@ public void teardownAll() {
 
     Logger.i(ModuleRegistry.class, "#teardownAll - All AIGC action modules are unloaded");
 }
+
+/**
+ * 驱动全部模块的心跳。
+ *
+ * <p>由宿主在自身的 tick 节奏中调用（与宿主心跳同频），替代迁移前
+ * 「门面逐个调业务场景 {@code onTick}」的硬编码写法。</p>
+ *
+ * <p>单个模块的心跳异常不影响其余模块，也不向上抛出——tick 是周期性维护，
+ * 一个模块抛异常不应导致其余模块失去心跳。</p>
+ *
+ * @param now 当前时刻（毫秒）。
+ */
+public void tick(long now) {
+    for (ActionModule module : this.modules) {
+        try {
+            module.onTick(now);
+        } catch (Throwable t) {
+            Logger.e(ModuleRegistry.class, "#tick - Module \"" + module.getName()
+                    + "\" onTick FAILED", (t instanceof Exception) ? (Exception) t : null);
+        }
+    }
+}
 }

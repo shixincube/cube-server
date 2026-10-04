@@ -63,17 +63,45 @@ public class AIGCCellet extends AbstractCellet {
         Kernel kernel = (Kernel) this.getNucleus().getParameter("kernel");
         kernel.installModule(AIGCService.NAME, this.service);
 
-        // 业务模块发现与动作绑定。必须在 install 阶段完成：
-        // install 早于内核启动，也早于任何一次 onListened，故装载完成时路由表已权威。
+        // 业务模块注册表与宿主能力实现在此构造（registry → host → setHost）。
         //
-        // 装配顺序不可调换：registry 需先于 host 构造（host 要用它做兄弟模块查找），
-        // host 需先于 load 设置（模块 setup 时会拿到它），load 需最后执行。
+        // ⚠️ 此处【不】装载模块（load）：装载需要宿主存储就绪，而 install() 早于
+        // 引导线程中的存储创建。装载由 AIGCService 在存储就绪后调用 loadModules() 触发。
+        //
+        // 即便装载晚于 install，也仍早于任何一次 onListened（内核启动后才收报文），
+        // 故路由表在首个请求到达前已权威。
         this.moduleRegistry = new ModuleRegistry(new ActionRouter());
         this.aigcHost = new AIGCHostImpl(this.service, this.moduleRegistry);
         this.moduleRegistry.setHost(this.aigcHost);
-        this.moduleRegistry.load();
 
         return true;
+    }
+
+    /**
+     * 装载已注册的业务模块。
+     *
+     * <p>由宿主在<b>自身存储就绪之后</b>调用，替代迁移前
+     * 「门面在引导线程中直接启业务场景」的做法。延后的原因：
+     * 模块的 {@code setup} 可能读取宿主存储配置，宿主存储未就绪时装载会失败。</p>
+     *
+     * <p>即便装载晚于 install，也仍早于任何一次 onListened（内核启动后才收报文），
+     * 故路由表在首个请求到达前已权威。</p>
+     *
+     * <p><b>⚠️ 不可重复调用</b>：{@link ModuleRegistry#load()} 自身没有重复装载保护，
+     * 二次调用会再次实例化并再次 {@code setup} 各模块，模块必须能承受重复初始化。
+     * 宿主因此只在此处调用一次。</p>
+     *
+     * @return 成功装载的模块数。
+     */
+    public int loadModules() {
+        ModuleRegistry registry = this.moduleRegistry;
+
+        if (null == registry) {
+            Logger.w(this.getClass(), "#loadModules - Module registry is NOT available");
+            return 0;
+        }
+
+        return registry.load();
     }
 
     @Override
@@ -677,11 +705,6 @@ public class AIGCCellet extends AbstractCellet {
         else if (AIGCAction.GeneratePsychologyComprehensive.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new GeneratePsychologyComprehensiveTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.GeneratePsychologyReport.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new GeneratePsychologyReportTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (AIGCAction.GetPsychologyReport.name.equals(action)) {

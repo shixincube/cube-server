@@ -26,16 +26,26 @@ import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.common.state.CVStateCode;
+import cube.aigc.spi.AIGCHost;
+import cube.aigc.psychology.listener.PaintingReportListener;
+import cube.aigc.psychology.listener.ScaleReportListener;
+import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCHook;
 import cube.service.aigc.AIGCPluginContext;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.resource.FastTokenizer;
-import cube.service.aigc.scene.evaluation.*;
 import cube.service.aigc.scene.node.DetectTeenagerQueryStrategyNode;
 import cube.service.aigc.scene.node.TeenagerProblemClassificationNode;
 import cube.service.aigc.scene.node.TeenagerQueryNode;
 import cube.service.cv.CVService;
 import cube.service.cv.listener.MatchSimilarityListener;
+import cube.service.psychology.evaluation.AttachmentStyleEvaluation;
+import cube.service.psychology.evaluation.Evaluation;
+import cube.service.psychology.EvaluationWorker;
+import cube.service.psychology.evaluation.HTPEvaluation;
+import cube.service.psychology.evaluation.PersonInRainEvaluation;
+import cube.service.psychology.evaluation.ScaleEvaluation;
+import cube.service.psychology.evaluation.SocialIcebreakerGameEvaluation;
 import cube.service.psychology.PsychologyStorage;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -117,6 +127,27 @@ public class PsychologyScene {
 
     public static PsychologyScene getInstance() {
         return PsychologyScene.instance;
+    }
+
+    /**
+     * 获取宿主能力接口。
+     *
+     * <p>评估器与报告工作器已随心理学业务模块迁至 service-psychology，
+     * 它们只能经SPI 访问宿主能力，故由本场景统一转发。</p>
+     *
+     * <p>⚠️ 不可缓存为字段：SPI 的装配在 {@code AIGCCellet.start()} 内完成，
+     * 而本场景的 {@link #start(AIGCService)} 早于它执行，
+     * 缓存会拿到 {@code null}。每次现取即可。</p>
+     *
+     * @return 返回宿主能力接口；未装配时返回 <code>null</code>。
+     */
+    private AIGCHost host() {
+        AIGCCellet cellet = this.service.getCellet();
+        if (null == cellet) {
+            return null;
+        }
+
+        return cellet.getAIGCHost();
     }
 
     public void start(AIGCService service) {
@@ -1783,6 +1814,7 @@ public class PsychologyScene {
 
     private EvaluationWorker processReport(AIGCChannel channel, Painting painting, Theme theme, AIGCUnit unit) {
         Evaluation evaluation = null;
+        AIGCHost host = this.host();
         switch (theme) {
             case HouseTreePerson:
                 evaluation = (null == painting) ?
@@ -1794,12 +1826,11 @@ public class PsychologyScene {
                 evaluation = new AttachmentStyleEvaluation(channel.getAuthToken().getContactId(), painting);
                 break;
             case PersonInRain:
-                evaluation = new PersonInRainEvaluation(channel.getAuthToken().getContactId(), painting,
-                        this.service.getTokenizer());
+                evaluation = new PersonInRainEvaluation(channel.getAuthToken().getContactId(), painting, host);
                 break;
             case SocialIcebreakerGame:
                 evaluation = new SocialIcebreakerGameEvaluation(channel.getAuthToken().getContactId(),
-                        painting, this.service.getTokenizer());
+                        painting, host);
                 break;
             default:
                 evaluation = (null == painting) ?
@@ -1812,7 +1843,7 @@ public class PsychologyScene {
         // 生成评估报告
         EvaluationReport report = evaluation.makeEvaluationReport();
 
-        EvaluationWorker evaluationWorker = new EvaluationWorker(report, this.service);
+        EvaluationWorker evaluationWorker = new EvaluationWorker(report, host);
         if (report.isEmpty()) {
             Logger.w(this.getClass(), "#processReport - No things in painting: " + channel.getAuthToken().getContactId());
             return evaluationWorker;
@@ -1859,7 +1890,7 @@ public class PsychologyScene {
             return AIGCStateCode.Ok;
         }
 
-        EvaluationWorker evaluationWorker = new EvaluationWorker(this.service, task.scaleReport.getAttribute());
+        EvaluationWorker evaluationWorker = new EvaluationWorker(this.host(), task.scaleReport.getAttribute());
 
         for (ScaleFactor factor : task.scaleReport.getFactors()) {
             ScalePrompt.Factor prompt = task.scale.getResult().prompt.getFactor(factor.name);

@@ -12,6 +12,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
+import cube.aigc.spi.DispatcherExtension;
 import cube.aigc.app.ConfigInfo;
 import cube.aigc.complex.widget.Event;
 import cube.aigc.psychology.Attribute;
@@ -47,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -57,6 +59,11 @@ public class Manager implements Tickable, PerformerListener {
     private final static Manager instance = new Manager();
 
     private Performer performer;
+
+    /**
+     * 已装载的业务模块网关扩展，按装载顺序。
+     */
+    private List<DispatcherExtension> dispatcherExtensions;
 
     private long lastTickTime;
 
@@ -203,6 +210,27 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new PsychologyModifyReportRemark());
         httpServer.addContextHandler(new PsychologyComprehensives());
         httpServer.addContextHandler(new PsychologyTemplateArticle());
+
+        // 业务模块兜底通道 POST /aigc/module/{moduleName}/{actionName}。
+        //
+        // ⚠️ 受配置开关控制（config/dispatcher.properties 的 module.rest.enabled），
+        // 默认关闭：关闭时该路径不注册，行为与插件化改造前完全一致。
+        // 专属端点（上面 16 条）始终保留，兜底通道不替代它们。
+        if (ModuleAction.isEnabled()) {
+            httpServer.addContextHandler(new ModuleAction());
+            Logger.i(Manager.class, "#setupHandler - Module fallback channel enabled at " + ModuleAction.PATH);
+        }
+        else {
+            Logger.i(Manager.class, "#setupHandler - Module fallback channel is DISABLED");
+        }
+
+        // 业务模块的网关扩展：模块只声明自己拥有的 REST 前缀，handler 仍由本侧注册。
+        // 详见 DispatcherExtension 的 javadoc（为何不让插件直接提供 ContextHandler）。
+        this.dispatcherExtensions = DispatcherExtensions.load();
+        Set<String> modulePrefixes = DispatcherExtensions.collectPrefixes(this.dispatcherExtensions);
+        if (!modulePrefixes.isEmpty()) {
+            Logger.i(Manager.class, "#setupHandler - Module REST prefixes: " + modulePrefixes);
+        }
 
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Activate());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.User());
