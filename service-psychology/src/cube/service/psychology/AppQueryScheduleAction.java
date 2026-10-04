@@ -22,19 +22,19 @@ import java.util.List;
  * <p>对应线协议动作 {@code appQuerySchedule}，逐字符等同于既有枚举
  * {@code AIGCAction.AppQuerySchedule} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code InvalidParameter → InconsistentToken → Ok}。前两位由宿主代为产出。</p>
  *
  * <p><b>⚠️ 未注册分支的字段名是 {@code starting}/{@code ending}，不是
- * {@code page}/{@code size}</b>（迁移前 {@code AppQueryScheduleTask:61-66}）。
+ * {@code page}/{@code size}</b>（{@code AppQueryScheduleTask:61-66}）。
  * 本动作与 {@link AppQueryCustomerAction} 在这一点上<b>刻意不同</b>，因为日程查询是
  * 「时间窗筛选」而非「分页」，客户端据此回显查询区间。实施时务必逐一对照源文件，
  * 不要照抄客户侧的字段名。</p>
  *
  * <p><b>时间窗默认值</b>：缺 {@code starting} 时取「当前时间 − 365 天」，
- * 缺 {@code ending} 时取「当前时间 + 365 天」（迁移前 L74-79）。默认值依赖
+ * 缺 {@code ending} 时取「当前时间 + 365 天」（L74-79）。默认值依赖
  * {@code System.currentTimeMillis()}，因此同一请求在不同毫秒派发可能落在不同窗口
- * ——这是迁移前既有行为。</p>
+ * ——这是既有行为。</p>
  */
 public final class AppQueryScheduleAction implements AIGCActionTask {
 
@@ -46,7 +46,7 @@ public final class AppQueryScheduleAction implements AIGCActionTask {
     @Override
     public AIGCStateCode handle(ActionContext ctx) {
         if (!ctx.getHost().isRegistered(ctx.getToken().getCode())) {
-            // 未注册用户无数据：注意字段为 starting/ending（迁移前 L61-66）
+            // 未注册用户无数据：注意字段为 starting/ending（L61-66）
             JSONObject responseData = new JSONObject();
             responseData.put("list", new JSONArray());
             responseData.put("total", 0);
@@ -58,7 +58,7 @@ public final class AppQueryScheduleAction implements AIGCActionTask {
         }
 
         try {
-            // 刻意不判空：request 为 null 时 NPE，与迁移前一致
+            // 刻意不判空：request 为 null 时 NPE，与既有行为一致
             JSONObject request = ctx.getRequest().data;
 
             long starting = request.has("starting")
@@ -90,7 +90,7 @@ public final class AppQueryScheduleAction implements AIGCActionTask {
         } catch (Exception e) {
             Logger.e(this.getClass(), "", e);
 
-            // ⚠️ 回显原始请求（可能为 null），与迁移前 L103 一致
+            // ⚠️ 回显原始请求（可能为 null），与L103 一致
             ctx.respond(AIGCStateCode.InvalidParameter, ctx.getRequest().data);
 
             return AIGCStateCode.InvalidParameter;

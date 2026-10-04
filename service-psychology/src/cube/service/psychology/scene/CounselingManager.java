@@ -1,0 +1,1257 @@
+/*
+ * This source file is part of Cube.
+ *
+ * Copyright (c) 2023-2026 Ambrose Xu.
+ */
+
+package cube.service.psychology.scene;
+
+import cell.util.collection.FlexibleByteBuffer;
+import cell.util.log.Logger;
+import cube.aigc.ModelConfig;
+import cube.aigc.spi.AIGCHost;
+import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.Role;
+import cube.aigc.psychology.consultation.ConsultationTheme;
+import cube.auth.AuthToken;
+import cube.common.entity.*;
+import cube.common.state.AIGCStateCode;
+import cube.aigc.listener.VoiceDiarizationListener;
+import cube.util.AudioUtils;
+import cube.util.FileUtils;
+import cube.util.TextUtils;
+import cube.util.TimeUtils;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import cube.service.psychology.scene.StreamArchive;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+public class CounselingManager {
+
+    private final static String CATEGORY = "conversation";
+
+    private final long maxDuration = 2 * 60 * 60 * 1000;
+
+    private AIGCHost host;
+
+    private ExecutorService executor;
+
+    private Map<String, List<VoiceStreamSink>> streamSinkMap;
+
+    private Map<String, List<VoiceDiarization>> combinedVoiceMap;
+
+    private Map<String, Wrapper> wrapperMap;
+
+    private final static CounselingManager instance = new CounselingManager();
+
+    private CounselingManager() {
+        this.executor = Executors.newCachedThreadPool();
+        this.streamSinkMap = new ConcurrentHashMap<>();
+        this.combinedVoiceMap = new ConcurrentHashMap<>();
+        this.wrapperMap = new ConcurrentHashMap<>();
+    }
+
+    public static CounselingManager getInstance() {
+        return CounselingManager.instance;
+    }
+
+    public void start(AIGCHost host) {
+        this.host = host;
+    }
+
+    public void stop() {
+        this.executor.shutdown();
+
+        Iterator<Map.Entry<String, List<VoiceStreamSink>>> iter = this.streamSinkMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, List<VoiceStreamSink>> entry = iter.next();
+            for (VoiceStreamSink streamSink : entry.getValue()) {
+                this.host.deleteFile(streamSink.authToken.getDomain(), streamSink.getFileLabel().getFileCode());
+            }
+        }
+
+        Iterator<Map.Entry<String, List<VoiceDiarization>>> diarizationIter = this.combinedVoiceMap.entrySet().iterator();
+        while (diarizationIter.hasNext()) {
+            Map.Entry<String, List<VoiceDiarization>> entry = diarizationIter.next();
+            String streamName = entry.getKey();
+            Wrapper wrapper = this.wrapperMap.get(streamName);
+            if (null != wrapper) {
+                for (VoiceDiarization diarization : entry.getValue()) {
+                    this.host.deleteFile(wrapper.authToken.getDomain(), diarization.fileCode);
+                }
+            }
+        }
+
+        this.wrapperMap.clear();
+    }
+
+    public void onTick(long now) {
+        Iterator<Map.Entry<String, Wrapper>> iter = this.wrapperMap.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, Wrapper> entry = iter.next();
+            Wrapper wrapper = entry.getValue();
+            if (now - wrapper.timestamp > this.maxDuration) {
+                (new Thread() {
+                    @Override
+                    public void run() {
+                        // 关闭超过最大时长流
+                        stopStream(wrapper.authToken, wrapper.streamName);
+                    }
+                }).start();
+            }
+            else if (now - wrapper.refreshTimestamp > 4 * 60 * 60 * 1000) {
+                // 删除超时的数据
+                String streamName = entry.getKey();
+
+                // 删除文件
+                List<VoiceStreamSink> sinkList = this.streamSinkMap.get(streamName);
+                if (null != sinkList) {
+                    for (VoiceStreamSink sink : sinkList) {
+                        this.host.deleteFile(sink.authToken.getDomain(), sink.getFileLabel().getFileCode());
+                    }
+                }
+
+                List<VoiceDiarization> diarizationList = this.combinedVoiceMap.get(streamName);
+                if (null != diarizationList) {
+                    for (VoiceDiarization diarization : diarizationList) {
+                        this.host.deleteFile(wrapper.authToken.getDomain(), diarization.fileCode);
+                    }
+                }
+
+                // 关闭归档线程
+                wrapper.archiveStopped.set(true);
+
+                // 删除内存里的数据
+                this.streamSinkMap.remove(streamName);
+                this.combinedVoiceMap.remove(streamName);
+
+                // 删除 Wrapper 记录
+                iter.remove();
+            }
+        }
+    }
+
+    /**
+     * 记录并处理语音流片段。
+     *
+     * @param streamSink
+     */
+    public void record(VoiceStreamSink streamSink) {
+        Wrapper wrapper = this.wrapperMap.get(streamSink.getStreamName());
+        if (null != wrapper) {
+            // 判读是否已结束
+            if (wrapper.hasStopped()) {
+                // 删除文件
+                this.host.deleteFile(streamSink.authToken.getDomain(), streamSink.getFileLabel().getFileCode());
+                Logger.d(this.getClass(), "#record - The stream has stopped: " + wrapper.streamName);
+                return;
+            }
+
+            // 更新时间戳
+            wrapper.refreshTimestamp = System.currentTimeMillis();
+        }
+
+        List<VoiceStreamSink> list = this.streamSinkMap.computeIfAbsent(streamSink.getStreamName(), k -> new ArrayList<>());
+        final List<VoiceStreamSink> listCopy = new ArrayList<>();
+        synchronized (list) {
+            list.add(streamSink);
+            list.sort(new Comparator<VoiceStreamSink>() {
+                @Override
+                public int compare(VoiceStreamSink s1, VoiceStreamSink s2) {
+                    return s1.getIndex() - s2.getIndex();
+                }
+            });
+
+            Logger.d(this.getClass(), "#record : " + list.size());
+
+            if (list.size() >= 5 && this.isContinuous(list)) {
+                // 大约30秒，且数据连续
+                listCopy.addAll(list);
+                list.clear();
+            }
+            else if (list.size() > 8) {
+                // 数据量大，即便不连续也处理
+                Logger.w(this.getClass(), "#record - list overflow: " + list.size());
+                listCopy.addAll(list);
+                list.clear();
+            }
+        }
+
+        if (!listCopy.isEmpty()) {
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    // 生成 Caption
+                    formulateCaption(listCopy);
+                }
+            });
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    // 生成策略
+                    formulateStrategyWithText(listCopy);
+                    formulateStrategyWithEmotion(listCopy);
+                }
+            });
+
+            this.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    // 组合数据再次进行分析并归档
+                    combine(listCopy);
+                }
+            });
+        }
+    }
+
+    /**
+     * 归档数据。
+     *
+     * @param authToken
+     * @param fileCode
+     * @param streamName
+     * @param index
+     */
+    public void archive(AuthToken authToken, String fileCode, String streamName, int index) {
+        long timestamp = System.currentTimeMillis();
+
+        Wrapper wrapper = this.wrapperMap.get(streamName);
+        if (null == wrapper) {
+            Logger.w(this.getClass(), "#archive - No stream data: " + streamName + "/" + index);
+            return;
+        }
+
+        if (wrapper.archiveStopped.get()) {
+            Logger.w(this.getClass(), "#archive - Stopped: " + streamName + "/" + index);
+            return;
+        }
+
+        File file = this.host.loadFile(authToken.getDomain(), fileCode);
+        if (null == file) {
+            Logger.w(this.getClass(), "#archive - Can NOT find file: " + fileCode);
+            return;
+        }
+
+        FileInputStream fis = null;
+        FlexibleByteBuffer buf = new FlexibleByteBuffer();
+        try {
+            fis = new FileInputStream(file);
+            byte[] bytes = new byte[8 * 1024];
+            int bytesRead = 0;
+            while ((bytesRead = fis.read(bytes)) > 0) {
+                buf.put(bytes, 0, bytesRead);
+            }
+            buf.flip();
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#archive", e);
+            return;
+        } finally {
+            if (null != fis) {
+                try {
+                    fis.close();
+                } catch (Exception e) {
+                    // Nothing
+                }
+            }
+        }
+
+        // WAVE 转 PCM
+        byte[] pcmData = AudioUtils.wavToPcm(buf.array(), buf.limit());
+
+        // 新归档数据
+        RecordingArchive recordingArchive = new RecordingArchive(pcmData, index, timestamp);
+        wrapper.appendArchive(recordingArchive);
+    }
+
+    public boolean isOverDurationLimit(String streamName) {
+        Wrapper wrapper = this.wrapperMap.get(streamName);
+        if (null != wrapper) {
+            return (System.currentTimeMillis() - wrapper.timestamp >= this.maxDuration);
+        }
+        return false;
+    }
+
+    /**
+     * 停止流。
+     *
+     * @param authToken
+     * @param streamName
+     * @return
+     */
+    public FileLabel stopStream(AuthToken authToken, String streamName) {
+        Wrapper wrapper = this.wrapperMap.get(streamName);
+        if (null == wrapper) {
+            Logger.w(this.getClass(), "#stopStream - No stream data: " + streamName);
+            return null;
+        }
+
+        // 标记结束
+        wrapper.endTimestamp = System.currentTimeMillis();
+
+        // 判断时长，少于1分钟，不进行保存
+        if (wrapper.endTimestamp - wrapper.timestamp < 60 * 1000) {
+            Logger.w(this.getClass(), "#stopStream - Record less than 1 minute: " + streamName);
+            // 停止归档
+            wrapper.archiveStopped.set(true);
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            // 删除缓存的归档文件
+            wrapper.deleteArchive();
+            return null;
+        }
+
+        // 等待数据接收完成，判断时间戳与当前时间是否超过30秒
+        while (System.currentTimeMillis() - wrapper.endTimestamp < 30 * 1000) {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        while (!wrapper.recordingArchives.isEmpty()) {
+            // 等待完成
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (System.currentTimeMillis() - wrapper.endTimestamp > 60 * 1000) {
+                // 超时退出
+                break;
+            }
+        }
+
+        // 停止归档
+        wrapper.archiveStopped.set(true);
+
+        FileLabel recordingFileLabel = null;
+
+        try {
+            // 归档文件转 WAV 文件
+            StreamArchive archive = new StreamArchive(this.host.getWorkingPath().getAbsolutePath(), streamName);
+            if (archive.exists()) {
+                // 计算 duration
+                long duration = archive.calculateDurationMillis();
+                Logger.d(this.getClass(), "#stopStream - Voice duration: " + duration);
+                // 转 WAV 文件
+                File wavFile = archive.outputWavFile();
+                if (null != wavFile) {
+                    // WAV 转 MP3
+                    String fileName = "recording_counseling_" + streamName + "_" +
+                            TimeUtils.formatDateForPathSymbol(archive.getTimestamp()) + ".mp3";
+                    File mp3File = host.convertWavToMp3(wavFile.getName(), fileName);
+                    if (null != mp3File) {
+                        long elapsed = System.currentTimeMillis() - wrapper.endTimestamp;
+                        Logger.d(this.getClass(), "#stopStream - Convert to mp3 file: " + streamName +
+                                " - elapsed: " + Math.round(elapsed / 1000.0) + "s");
+
+                        // 持久化 MP3 文件到存储
+                        String fileCode = FileUtils.makeFileCode(authToken.getContactId(), authToken.getDomain(),
+                                fileName);
+
+                        JSONObject fileContext = new JSONObject();
+                        fileContext.put("duration", duration);
+                        // 保存到文件系统
+                        recordingFileLabel = CounselingManager.this.host.saveFileWithContext(authToken, fileCode, mp3File,
+                                fileName, true, fileContext);
+                    }
+                    else {
+                        Logger.w(this.getClass(), "#stopStream - Convert to mp3 file failed: " + streamName);
+                    }
+
+                    if (wavFile.exists()) {
+                        wavFile.delete();
+                    }
+                }
+                else {
+                    Logger.w(this.getClass(), "#stopStream - Convert to wav file failed: " + streamName);
+                }
+
+                // 删除归档
+                if (!archive.delete()) {
+                    Logger.w(this.getClass(), "#stopStream - Deletes file failed: " + archive.getFile().getAbsolutePath());
+                }
+            }
+            else {
+                Logger.w(this.getClass(), "#stopStream - Archive file is NOT exists: " + streamName);
+                this.wrapperMap.remove(streamName);
+            }
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#stopStream: " + streamName, e);
+        }
+
+        // 记录
+        if (null != recordingFileLabel) {
+            boolean successful = this.host.writeCounselingRecording(authToken, streamName, wrapper.timestamp,
+                    wrapper.endTimestamp - wrapper.timestamp, wrapper.attribute, wrapper.theme,
+                    recordingFileLabel.getFileCode());
+            if (!successful) {
+                Logger.w(this.getClass(), "#stopStream - Writes the counseling recording failed: " + streamName);
+            }
+            else {
+                // 删除
+                this.wrapperMap.remove(streamName);
+            }
+        }
+
+        return recordingFileLabel;
+    }
+
+    /**
+     * 查询咨询策略。
+     *
+     * @param authToken
+     * @param theme
+     * @param attribute
+     * @param streamName
+     * @param index
+     * @return
+     */
+    public CounselingStrategy queryCounselingStrategy(AuthToken authToken, ConsultationTheme theme,
+                                                      Attribute attribute, String streamName, int index) {
+        Wrapper wrapper = this.wrapperMap.computeIfAbsent(streamName,
+                k -> new Wrapper(streamName, authToken, theme, attribute));
+        // 更新时间戳
+        wrapper.refreshTimestamp = System.currentTimeMillis();
+        List<CounselingStrategy> strategies = wrapper.strategies;
+
+        if (strategies.isEmpty()) {
+            if (wrapper.generatingStrategy.get()) {
+                Logger.d(this.getClass(), "#queryCounselingStrategy - Generating: " + streamName);
+                return null;
+            }
+
+            wrapper.generatingStrategy.set(true);
+
+            // 无数据策略支持
+            String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_OPENING"),
+                    attribute.language.isChinese() ? theme.nameCN : theme.nameEN,
+                    attribute.getGenderText(), attribute.age);
+
+            GeneratingRecord record = this.host.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, prompt,
+                    new GeneratingOption(), null, null);
+
+            wrapper.generatingStrategy.set(false);
+
+            if (null == record) {
+                Logger.w(this.getClass(), "#queryCounselingStrategy - The response is null");
+                return null;
+            }
+
+            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), attribute, theme, streamName,
+                    CounselingStrategy.ConsultingAction.General, record.answer);
+            synchronized (strategies) {
+                strategies.add(strategy);
+            }
+            return strategy;
+        }
+        else {
+            synchronized (strategies) {
+                for (CounselingStrategy strategy : strategies) {
+                    if (strategy.index == index) {
+                        return strategy;
+                    }
+                }
+            }
+
+            return strategies.get(strategies.size() - 1);
+        }
+    }
+
+    /**
+     * 查询咨询字幕。
+     *
+     * @param authToken
+     * @param theme
+     * @param attribute
+     * @param consultingAction
+     * @param streamName
+     * @param index
+     * @return
+     */
+    public CounselingStrategy queryCounselingCaption(AuthToken authToken, ConsultationTheme theme, Attribute attribute,
+                                                     CounselingStrategy.ConsultingAction consultingAction,
+                                                     String streamName, int index) {
+        Wrapper wrapper = this.wrapperMap.computeIfAbsent(streamName,
+                k -> new Wrapper(streamName, authToken, theme, attribute));
+        // 设置策略动作
+        wrapper.consultingAction = consultingAction;
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#queryCounselingCaption - Consulting action: " + consultingAction.code);
+        }
+
+        final List<CounselingStrategy> captions = wrapper.captions;
+        if (captions.isEmpty()) {
+            if (wrapper.generatingCaption.get()) {
+                Logger.d(this.getClass(), "#queryCounselingCaption - Generating: " + streamName);
+                return null;
+            }
+
+            wrapper.generatingCaption.set(true);
+
+            // 无数据策略支持
+            String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_OPENING_CAPTION"),
+                    attribute.language.isChinese() ? theme.nameCN : theme.nameEN,
+                    attribute.getGenderText(), attribute.age);
+
+            GeneratingRecord record = this.host.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, prompt,
+                    new GeneratingOption(), null, null);
+
+            // 设置生成状态
+            wrapper.generatingCaption.set(false);
+
+            if (null == record) {
+                Logger.w(this.getClass(), "#queryCounselingCaption - The response is null");
+                return null;
+            }
+
+            List<String> contents = TextUtils.extractMarkdownTextAsList(record.answer);
+            Logger.d(this.getClass(), "#queryCounselingCaption - Content lines: " + contents.size());
+            synchronized (captions) {
+                for (String content : contents) {
+                    CounselingStrategy caption = new CounselingStrategy(captions.size(), attribute, theme,
+                            streamName, CounselingStrategy.ConsultingAction.General, content);
+                    captions.add(caption);
+                }
+            }
+
+            return captions.get(0);
+        }
+        else {
+            synchronized (captions) {
+                for (CounselingStrategy caption : captions) {
+                    if (caption.index == index) {
+                        return caption;
+                    }
+                }
+            }
+
+            if (index >= 0 && index < captions.size()) {
+                return captions.get(index);
+            }
+            else {
+                return captions.get(captions.size() - 1);
+            }
+        }
+    }
+
+    private void formulateStrategyWithText(List<VoiceStreamSink> sinks) {
+        final String streamName = sinks.get(0).getStreamName();
+        Wrapper wrapper = this.wrapperMap.get(streamName);
+        if (null == wrapper) {
+            Logger.w(this.getClass(), "#formulateStrategyWithText - No find wrapper: " + streamName);
+            return;
+        }
+
+        if (wrapper.hasStopped()) {
+            Logger.d(this.getClass(), "#formulateStrategyWithText - The wrapper has stopped: " + streamName);
+            return;
+        }
+
+        if (wrapper.generatingWithText.get()) {
+            Logger.d(this.getClass(), "#formulateStrategyWithText - Generating strategy: " + streamName);
+            return;
+        }
+
+        wrapper.generatingWithText.set(true);
+
+        StringBuilder conversation = new StringBuilder();
+
+        String lastLabel = "";
+        for (VoiceStreamSink sink : sinks) {
+            for (VoiceTrack track : sink.getDiarization().tracks) {
+                String text = track.recognition.text;
+                String mark = "";
+                if (TextUtils.isLastPunctuationMark(text)) {
+                    text = track.recognition.text.substring(0, track.recognition.text.length() - 1);
+                    mark = track.recognition.text.substring(track.recognition.text.length() - 1);
+                }
+
+                if (text.length() == 0) {
+                    continue;
+                }
+
+                if (!lastLabel.equalsIgnoreCase(track.label)) {
+                    // 标签变更
+                    conversation.append("\n\n");
+                    // 角色
+                    if (track.label.equalsIgnoreCase(Role.Counselor.label)) {
+                        conversation.append("咨询师").append(TextUtils.gColonInChinese);
+                        lastLabel = track.label;
+                    }
+                    else if (track.label.equalsIgnoreCase(Role.Customer.label)) {
+                        conversation.append("来访者").append(TextUtils.gColonInChinese);
+                        lastLabel = track.label;
+                    }
+                    else {
+                        conversation.append("来访者").append(TextUtils.gColonInChinese);
+                        lastLabel = Role.Customer.label;
+                    }
+                }
+
+                // 内容
+                conversation.append(text);
+                conversation.append(mark);
+
+                if (conversation.length() > 500) {
+                    // 控制对话总字数
+                    break;
+                }
+            }
+
+            if (conversation.length() > 500) {
+                // 控制对话总字数
+                break;
+            }
+        }
+
+        String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_STRATEGY_TEXT"),
+                conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
+                wrapper.theme.nameCN, wrapper.theme.nameCN);
+
+        GeneratingRecord record = this.host.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_2_UNIT,
+                prompt, new GeneratingOption(), null, null);
+
+        wrapper.generatingWithText.set(false);
+
+        if (null == record) {
+            Logger.w(this.getClass(), "#formulateStrategyWithText - The record is null");
+            return;
+        }
+
+        List<CounselingStrategy> strategies = wrapper.strategies;
+        synchronized (strategies) {
+            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute, wrapper.theme,
+                    wrapper.streamName, CounselingStrategy.ConsultingAction.Suggestion, record.answer);
+            strategies.add(strategy);
+        }
+    }
+
+    private void formulateStrategyWithEmotion(List<VoiceStreamSink> sinks) {
+        final String streamName = sinks.get(0).getStreamName();
+        Wrapper wrapper = this.wrapperMap.get(streamName);
+        if (null == wrapper) {
+            Logger.w(this.getClass(), "#formulateStrategyWithEmotion - No find wrapper: " + streamName);
+            return;
+        }
+
+        if (wrapper.hasStopped()) {
+            Logger.d(this.getClass(), "#formulateStrategyWithEmotion - The wrapper has stopped: " + streamName);
+            return;
+        }
+
+        if (wrapper.generatingWithEmotion.get()) {
+            Logger.d(this.getClass(), "#formulateStrategyWithEmotion - Generating strategy: " + streamName);
+            return;
+        }
+
+        wrapper.generatingWithEmotion.set(true);
+
+        float totalRhythm = 0;
+        float countRhythm = 0;
+
+        float totalPositiveRatio = 0;
+        float countPositiveRatio = 0;
+
+        float totalNegativeRatio = 0;
+        float countNegativeRatio = 0;
+
+        for (VoiceStreamSink sink : sinks) {
+            for (SpeakerIndicator indicator : sink.getDiarization().indicator.speakerIndicators.values()) {
+                if (indicator.label.equalsIgnoreCase(Role.Customer.label)) {
+                    // 语言节奏
+                    totalRhythm += indicator.rhythm;
+                    ++countRhythm;
+
+                    // 正面情绪
+                    totalPositiveRatio += indicator.emotionRatio.positiveRatio;
+                    ++countPositiveRatio;
+
+                    // 负面情绪
+                    totalNegativeRatio += indicator.emotionRatio.negativeRatio;
+                    ++countNegativeRatio;
+                    break;
+                }
+            }
+        }
+
+        int rhythm = Math.round(totalRhythm / countRhythm);
+        int positiveRatio = Math.round(totalPositiveRatio / countPositiveRatio);
+        int negativeRatio = Math.round(totalNegativeRatio / countNegativeRatio);
+        int neutralRatio = 100 - positiveRatio - negativeRatio;
+
+        String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_STRATEGY_EMOTION"),
+                wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(), wrapper.theme.nameCN,
+                rhythm, positiveRatio, negativeRatio, neutralRatio);
+
+        GeneratingRecord record = this.host.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_2_UNIT,
+                prompt, new GeneratingOption(), null, null);
+
+        wrapper.generatingWithEmotion.set(false);
+
+        if (null == record) {
+            Logger.w(this.getClass(), "#formulateStrategyWithEmotion - The record is null");
+            return;
+        }
+
+        List<CounselingStrategy> strategies = wrapper.strategies;
+        synchronized (strategies) {
+            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute, wrapper.theme,
+                    wrapper.streamName, CounselingStrategy.ConsultingAction.Analysis, record.answer);
+            strategies.add(strategy);
+        }
+    }
+
+    private void formulateCaption(List<VoiceStreamSink> sinks) {
+        final String streamName = sinks.get(0).getStreamName();
+        Wrapper wrapper = this.wrapperMap.get(streamName);
+        if (null == wrapper) {
+            Logger.w(this.getClass(), "#formulateCaption - No find wrapper: " + streamName);
+            return;
+        }
+
+        if (wrapper.hasStopped()) {
+            Logger.d(this.getClass(), "#formulateCaption - The wrapper has stopped: " + streamName);
+            return;
+        }
+
+        if (wrapper.generatingCaption.get()) {
+            Logger.d(this.getClass(), "#formulateCaption - Generating caption : " + wrapper.streamName);
+            return;
+        }
+
+        wrapper.generatingCaption.set(true);
+
+        Logger.d(this.getClass(), "#formulateCaption - Formulates caption : " + wrapper.streamName);
+
+        StringBuilder conversation = new StringBuilder();
+
+        String lastLabel = "";
+        for (VoiceStreamSink sink : sinks) {
+            for (VoiceTrack track : sink.getDiarization().tracks) {
+                String text = track.recognition.text;
+                String mark = "";
+                if (TextUtils.isLastPunctuationMark(text)) {
+                    text = track.recognition.text.substring(0, track.recognition.text.length() - 1);
+                    mark = track.recognition.text.substring(track.recognition.text.length() - 1);
+                }
+
+                if (text.length() == 0) {
+                    continue;
+                }
+
+                if (!lastLabel.equalsIgnoreCase(track.label)) {
+                    // 标签变更
+                    conversation.append("\n\n");
+                    // 角色
+                    if (track.label.equalsIgnoreCase(Role.Counselor.label)) {
+                        conversation.append("咨询师").append(TextUtils.gColonInChinese);
+                        lastLabel = track.label;
+                    }
+                    else if (track.label.equalsIgnoreCase(Role.Customer.label)) {
+                        conversation.append("来访者").append(TextUtils.gColonInChinese);
+                        lastLabel = track.label;
+                    }
+                    else {
+                        conversation.append("来访者").append(TextUtils.gColonInChinese);
+                        lastLabel = Role.Customer.label;
+                    }
+                }
+
+                // 内容
+                conversation.append(text);
+                // 语气情绪
+                conversation.append("（语气").append(TextUtils.gColonInChinese);
+                conversation.append(track.emotion.emotion.primaryWord);
+                conversation.append("）");
+                conversation.append(mark);
+
+                if (conversation.length() > 500) {
+                    // 控制对话总字数
+                    break;
+                }
+            }
+
+            if (conversation.length() > 500) {
+                // 控制对话总字数
+                break;
+            }
+        }
+
+        if (conversation.toString().startsWith("\n\n")) {
+            conversation.delete(0, 2);
+        }
+
+        String promptTitle = "FORMAT_COUNSELING_STRATEGY_CAPTION_ANALYSIS";
+        switch (wrapper.consultingAction) {
+            case Analysis:
+                promptTitle = "FORMAT_COUNSELING_STRATEGY_CAPTION_ANALYSIS";
+                break;
+            case Suggestion:
+                promptTitle = "FORMAT_COUNSELING_STRATEGY_CAPTION_SUGGESTION";
+                break;
+            case Conversation:
+                promptTitle = "FORMAT_COUNSELING_STRATEGY_CAPTION_CONVERSATION";
+                break;
+            default:
+                break;
+        }
+
+        String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, promptTitle),
+                conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
+                wrapper.theme.nameCN);
+
+        GeneratingRecord record = this.host.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_2_UNIT,
+                prompt, new GeneratingOption(), null, null);
+
+        // 设置生成状态
+        wrapper.generatingCaption.set(false);
+
+        if (null == record) {
+            Logger.w(this.getClass(), "#formulateCaption - The record is null");
+            return;
+        }
+
+        List<String> contentList = TextUtils.extractMarkdownTextAsList(record.answer);
+        Logger.d(this.getClass(), "#formulateCaption - Content lines: " + contentList.size());
+        List<CounselingStrategy> captions = wrapper.captions;
+        synchronized (captions) {
+            for (String content : contentList) {
+                // 过滤提示段
+                if (content.trim().endsWith(":") || content.trim().endsWith("：")) {
+                    continue;
+                }
+                CounselingStrategy caption = new CounselingStrategy(captions.size(), wrapper.attribute,
+                        wrapper.theme, wrapper.streamName, wrapper.consultingAction, content);
+                captions.add(caption);
+            }
+        }
+
+        Logger.d(this.getClass(), "#formulateCaption - New caption : " + wrapper.streamName + "/" + captions.size());
+    }
+
+    private void combine(List<VoiceStreamSink> sinks) {
+        final AuthToken authToken = sinks.get(0).authToken;
+        final String streamName = sinks.get(0).getStreamName();
+        final int beginIndex = sinks.get(0).getIndex();
+        final int endIndex = sinks.get(sinks.size() - 1).getIndex();
+
+        final Wrapper wrapper = this.wrapperMap.get(streamName);
+        if (null == wrapper) {
+            Logger.w(this.getClass(), "#combine - No stream: " + streamName);
+            return;
+        }
+
+        if (wrapper.hasStopped()) {
+            Logger.d(this.getClass(), "#combine - The stream has stopped: " + streamName);
+            return;
+        }
+
+        if (wrapper.generatingStrategy.get()) {
+            Logger.d(this.getClass(), "#combine - Generating: " + streamName);
+            return;
+        }
+
+        wrapper.generatingStrategy.set(true);
+
+        List<File> fileList = new ArrayList<>();
+
+        FlexibleByteBuffer buffer = new FlexibleByteBuffer();
+        FlexibleByteBuffer fileBuf = new FlexibleByteBuffer();
+
+        for (VoiceStreamSink sink : sinks) {
+            File file = this.host.loadFile(authToken.getDomain(), sink.getFileLabel().getFileCode());
+            if (null == file) {
+                Logger.w(this.getClass(), "#combine - The file is NOT exists : " + sink.getFileLabel().getFileCode());
+                continue;
+            }
+
+            fileList.add(file);
+
+            FileInputStream fis = null;
+            fileBuf.clear();
+
+            try {
+                fis = new FileInputStream(file);
+                byte[] bytes = new byte[8 * 1024];
+                int bytesRead = 0;
+                while ((bytesRead = fis.read(bytes)) > 0) {
+                    fileBuf.put(bytes, 0, bytesRead);
+                }
+                fileBuf.flip();
+            } catch (Exception e) {
+                Logger.e(this.getClass(), "#combine", e);
+            } finally {
+                if (null != fis) {
+                    try {
+                        fis.close();
+                    } catch (Exception e) {
+                        // Nothing
+                    }
+                }
+            }
+
+            // WAVE 转 PCM
+            byte[] pcmData = AudioUtils.wavToPcm(fileBuf.array(), fileBuf.limit());
+            buffer.put(pcmData);
+        }
+
+        buffer.flip();
+
+        // 删除已处理的 Sink 文件
+        for (VoiceStreamSink sink : sinks) {
+            this.host.deleteFile(authToken.getDomain(), sink.getFileLabel().getFileCode());
+        }
+        // 删除临时文件
+        for (File file : fileList) {
+            if (file.exists()) {
+                file.delete();
+            }
+        }
+
+        // PCM 转 WAVE
+        byte[] wavData = AudioUtils.pcmToWav(buffer.array(), 0, buffer.limit(),
+                AudioUtils.SAMPLE_RATE, AudioUtils.SAMPLE_SIZE_IN_BITS, AudioUtils.CHANNELS);
+
+        File outputFile = new File(this.host.getWorkingPath(),
+                streamName + "-" + beginIndex + "_" + endIndex + ".wav");
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(outputFile);
+            fos.write(wavData);
+            fos.flush();
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#combine", e);
+        } finally {
+            if (null != fos) {
+                try {
+                    fos.close();
+                } catch (Exception e) {
+                    // Nothing
+                }
+            }
+        }
+
+        if (!outputFile.exists()) {
+            Logger.w(this.getClass(), "#combine - Creates file failed: " + outputFile.getName());
+            wrapper.generatingStrategy.set(false);
+            return;
+        }
+
+        // 将文件保存到存储器
+        String tmpFileCode = FileUtils.makeFileCode(authToken.getContactId(),
+                authToken.getDomain(), outputFile.getName());
+        FileLabel fileLabel = this.host.saveFile(authToken, tmpFileCode, outputFile,
+                outputFile.getName(), true);
+
+        if (null == fileLabel) {
+            Logger.e(this.getClass(), "#combine - Save file failed, stream: " + streamName);
+            wrapper.generatingStrategy.set(false);
+            if (outputFile.exists()) {
+                outputFile.delete();
+            }
+            return;
+        }
+
+        Logger.d(this.getClass(), "#combine - num: " + sinks.size() + " , stream: " + streamName + " " +
+                beginIndex + "-" + endIndex + " , file code: " + fileLabel.getFileCode());
+
+        // 任务以插队方式提高优先级
+        fileLabel = this.host.performSpeakerDiarization(authToken, fileLabel, false,
+                false, true, new VoiceDiarizationListener() {
+            @Override
+            public void onCompleted(FileLabel source, VoiceDiarization diarization) {
+                diarization.remark = beginIndex + "-" + endIndex;
+                final List<VoiceDiarization> voiceDiarizationList = combinedVoiceMap.computeIfAbsent(streamName, k -> new ArrayList<>());
+                synchronized (voiceDiarizationList) {
+                    voiceDiarizationList.add(diarization);
+                    voiceDiarizationList.sort(new Comparator<VoiceDiarization>() {
+                        @Override
+                        public int compare(VoiceDiarization vd1, VoiceDiarization vd2) {
+                            String[] index1 = vd1.remark.split("-");
+                            String[] index2 = vd2.remark.split("-");
+                            return Integer.parseInt(index1[0]) - Integer.parseInt(index2[0]);
+                        }
+                    });
+                }
+
+                // 生成策略
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            List<VoiceDiarization> diarizations = new ArrayList<>();
+                            double total = 0;
+                            synchronized (voiceDiarizationList) {
+                                for (int i = voiceDiarizationList.size() - 1; i >= 0; --i) {
+                                    VoiceDiarization vd = voiceDiarizationList.get(i);
+                                    diarizations.add(vd);
+                                    total += vd.duration;
+                                    if (total >= 25) {
+                                        break;
+                                    }
+                                }
+                            }
+                            // 排序
+                            diarizations.sort(new Comparator<VoiceDiarization>() {
+                                @Override
+                                public int compare(VoiceDiarization vd1, VoiceDiarization vd2) {
+                                    String[] index1 = vd1.remark.split("-");
+                                    String[] index2 = vd2.remark.split("-");
+                                    return Integer.parseInt(index1[0]) - Integer.parseInt(index2[0]);
+                                }
+                            });
+
+                            // 制作策略
+                            formulateStrategy(wrapper, diarizations);
+                        } catch (Exception e) {
+                            Logger.e(this.getClass(), "#combine", e);
+                        } finally {
+                            wrapper.generatingStrategy.set(false);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onFailed(FileLabel source, AIGCStateCode stateCode) {
+                Logger.e(this.getClass(), "#combine - onFailed - state: " + stateCode.code);
+                wrapper.generatingStrategy.set(false);
+            }
+        });
+
+        if (null == fileLabel) {
+            Logger.e(this.getClass(), "#combine - #performSpeakerDiarization ERROR: " + streamName);
+            wrapper.generatingStrategy.set(false);
+        }
+    }
+
+    /**
+     * 制订策略。
+     *
+     * @param wrapper
+     * @param diarizations
+     */
+    private void formulateStrategy(Wrapper wrapper, List<VoiceDiarization> diarizations) {
+        Logger.d(this.getClass(), "#formulateStrategy - Formulates strategy : " + wrapper.streamName);
+
+        StringBuilder conversation = new StringBuilder();
+        String lastLabel = "";
+        for (VoiceDiarization voiceDiarization : diarizations) {
+            for (VoiceTrack track : voiceDiarization.tracks) {
+                String text = track.recognition.text;
+                String mark = "";
+                if (TextUtils.isLastPunctuationMark(text)) {
+                    text = track.recognition.text.substring(0, track.recognition.text.length() - 1);
+                    mark = track.recognition.text.substring(track.recognition.text.length() - 1);
+                }
+
+                if (text.length() == 0) {
+                    continue;
+                }
+
+                if (!lastLabel.equalsIgnoreCase(track.label)) {
+                    // 标签变更
+                    conversation.append("\n\n");
+                    // 角色
+                    if (track.label.equalsIgnoreCase(Role.Counselor.label)) {
+                        conversation.append("咨询师").append(TextUtils.gColonInChinese);
+                        lastLabel = track.label;
+                    }
+                    else if (track.label.equalsIgnoreCase(Role.Customer.label)) {
+                        conversation.append("来访者").append(TextUtils.gColonInChinese);
+                        lastLabel = track.label;
+                    }
+                    else {
+                        conversation.append("来访者").append(TextUtils.gColonInChinese);
+                        lastLabel = Role.Customer.label;
+                    }
+                }
+
+                // 内容
+                conversation.append(text);
+                // 语气情绪
+                conversation.append("（语气").append(TextUtils.gColonInChinese);
+                conversation.append(track.emotion.emotion.primaryWord);
+                conversation.append("）");
+                conversation.append(mark);
+
+                if (conversation.length() > 500) {
+                    // 控制对话总字数
+                    break;
+                }
+            }
+
+            if (conversation.length() > 500) {
+                // 控制对话总字数
+                break;
+            }
+        }
+
+        if (conversation.toString().startsWith("\n\n")) {
+            conversation.delete(0, 2);
+        }
+
+        String prompt = String.format(Resource.getInstance().getCorpus(CATEGORY, "FORMAT_COUNSELING_STRATEGY"),
+                conversation.toString(), wrapper.attribute.getGenderText(), wrapper.attribute.getAgeText(),
+                wrapper.theme.nameCN);
+
+        GeneratingRecord record = this.host.syncGenerateText(wrapper.authToken, ModelConfig.BAIZE_2_UNIT,
+                prompt, new GeneratingOption(), null, null);
+        if (null == record) {
+            Logger.w(this.getClass(), "#formulateStrategy - The record is null");
+            return;
+        }
+
+        List<CounselingStrategy> strategies = wrapper.strategies;
+        synchronized (strategies) {
+            CounselingStrategy strategy = new CounselingStrategy(strategies.size(), wrapper.attribute, wrapper.theme,
+                    wrapper.streamName, CounselingStrategy.ConsultingAction.General, record.answer);
+            strategies.add(strategy);
+        }
+
+        Logger.d(this.getClass(), "#formulateStrategy - New strategy : " + wrapper.streamName + "/" + strategies.size());
+    }
+
+    private boolean isContinuous(List<VoiceStreamSink> sinkList) {
+        int begin = sinkList.get(0).getIndex();
+        int next = begin + 1;
+        for (int i = 1; i < sinkList.size(); ++i) {
+            int index = sinkList.get(i).getIndex();
+            if (index != next) {
+                // 索引不连续
+                return false;
+            }
+            ++next;
+        }
+        return true;
+    }
+
+    protected class RecordingArchive {
+
+        public final byte[] pcmData;
+
+        public final int index;
+
+        public final long timestamp;
+
+        public RecordingArchive(byte[] pcmData, int index, long timestamp) {
+            this.pcmData = pcmData;
+            this.index = index;
+            this.timestamp = timestamp;
+        }
+    }
+
+    protected class Wrapper implements Runnable {
+
+        public final String streamName;
+
+        public final long timestamp;
+
+        public final AuthToken authToken;
+
+        public final ConsultationTheme theme;
+
+        public final Attribute attribute;
+
+        public final List<CounselingStrategy> strategies;
+
+        public final List<CounselingStrategy> captions;
+
+        public CounselingStrategy.ConsultingAction consultingAction;
+
+        public long refreshTimestamp = 0;
+
+        public long endTimestamp = 0;
+
+        protected final AtomicBoolean generatingWithText = new AtomicBoolean(false);
+
+        protected final AtomicBoolean generatingWithEmotion = new AtomicBoolean(false);
+
+        protected final AtomicBoolean generatingCaption = new AtomicBoolean(false);
+
+        protected final AtomicBoolean generatingStrategy = new AtomicBoolean(false);
+
+        protected final ConcurrentLinkedQueue<RecordingArchive> recordingArchives = new ConcurrentLinkedQueue<>();
+
+        protected final AtomicBoolean archiveStopped = new AtomicBoolean(false);
+
+        protected Wrapper(String streamName, AuthToken authToken, ConsultationTheme theme, Attribute attribute) {
+            this.streamName = streamName;
+            this.timestamp = System.currentTimeMillis();
+            this.authToken = authToken;
+            this.theme = theme;
+            this.attribute = attribute;
+            this.strategies = new ArrayList<>();
+            this.captions = new ArrayList<>();
+            this.consultingAction = CounselingStrategy.ConsultingAction.Analysis;
+            this.refreshTimestamp = System.currentTimeMillis();
+            // 启动归档线程
+            (new Thread(this)).start();
+        }
+
+        protected boolean hasStopped() {
+            return this.endTimestamp != 0;
+        }
+
+        protected void appendArchive(RecordingArchive archive) {
+            this.recordingArchives.add(archive);
+        }
+
+        protected void deleteArchive() {
+            StreamArchive archive = new StreamArchive(host.getWorkingPath().getAbsolutePath(), streamName);
+            archive.delete();
+        }
+
+        @Override
+        public void run() {
+            Logger.i(this.getClass(), "#run - The archive thread start: " + this.streamName);
+
+            while (!this.archiveStopped.get()) {
+                RecordingArchive current = this.recordingArchives.poll();
+                if (null == current) {
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    continue;
+                }
+
+                try {
+                    StreamArchive archive = new StreamArchive(host.getWorkingPath().getAbsolutePath(), streamName);
+                    // 保存
+                    File vsaFile = archive.save(current.index, current.pcmData);
+                    if (null != vsaFile) {
+                        if (Logger.isDebugLevel()) {
+                            Logger.d(this.getClass(), "#archive - PCM archive: " + vsaFile.getName() +
+                                    " - size: " + FileUtils.scaleFileSize(vsaFile.length()).toString());
+                        }
+                    } else {
+                        Logger.e(this.getClass(), "#archive - Archives file failed: " + streamName);
+                    }
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#archive", e);
+                }
+            }
+
+            Logger.i(this.getClass(), "#run - The archive thread end: " + this.streamName);
+        }
+    }
+}

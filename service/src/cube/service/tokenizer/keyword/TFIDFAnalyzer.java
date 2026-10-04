@@ -1,5 +1,6 @@
 package cube.service.tokenizer.keyword;
 
+import cube.aigc.text.Keyword;
 import cube.service.tokenizer.Tokenizer;
 
 import java.io.*;

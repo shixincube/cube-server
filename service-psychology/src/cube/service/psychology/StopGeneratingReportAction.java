@@ -6,6 +6,7 @@
 
 package cube.service.psychology;
 
+import cube.aigc.spi.AIGCHost;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.spi.AIGCActionTask;
 import cube.aigc.spi.ActionContext;
@@ -18,10 +19,10 @@ import org.json.JSONObject;
  * <p>对应线协议动作 {@code stopGeneratingPsychologyReport}，逐字符等同于既有枚举
  * {@code AIGCAction.StopGeneratingPsychologyReport} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code NoToken → IllegalOperation → InvalidParameter → Ok / Failure}。</p>
  *
- * <p><b>为何 requiresToken 取 false</b>：迁移前令牌无效时回的是
+ * <p><b>为何 requiresToken 取 false</b>：令牌无效时回的是
  * {@code IllegalOperation}，而宿主动作骨架在 {@code requiresToken=true} 时
  * 会改回 {@code InconsistentToken}——这是线协议可见的语义变更。
  * 故保留 {@code false}，令牌有效性由本处理器自行判定。</p>
@@ -50,7 +51,7 @@ public final class StopGeneratingReportAction implements AIGCActionTask {
 
         long sn = 0;
         try {
-            // 刻意不判 data 是否为 null：迁移前 packet.data 为 null 时此处抛 NPE
+            // 刻意不判 data 是否为 null：packet.data 为 null 时此处抛 NPE
             // 并落入 catch 回 InvalidParameter；若改用 ctx.getParams()，它会返回
             // 空对象使 sn 静默为 0，把「参数缺失」变成「停止 sn=0」——语义反转
             sn = ctx.getRequest().data.getLong("sn");
@@ -66,7 +67,7 @@ public final class StopGeneratingReportAction implements AIGCActionTask {
             return AIGCStateCode.Ok;
         }
 
-        // 迁移前此处回显原始请求体，不是空对象
+        // 此处回显原始请求体，不是空对象
         ctx.respond(AIGCStateCode.Failure, ctx.getRequest().data);
         return AIGCStateCode.Failure;
     }

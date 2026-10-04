@@ -23,20 +23,20 @@ import org.json.JSONObject;
  * <p>对应线协议动作 {@code getPsychologyPainting}，逐字符等同于既有枚举
  * {@code AIGCAction.GetPsychologyPainting} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code NoToken → IllegalOperation → Ok / Failure → InvalidParameter}，
  * 其中三个 {@code Failure} 分支都<b>回显原始请求体</b>。</p>
  *
- * <p><b>三个分支的默认参数</b>（逐字复刻迁移前 L58-63）：
+ * <p><b>三个分支的默认参数</b>（逐字复刻 L58-63）：
  * {@code sn=0}、{@code chart=false}、{@code bbox=true}、{@code vparam=false}、
  * {@code prob=0.5}、{@code fileCode=null}。其中 {@code bbox} 默认
  * <b>true</b> 而非 false。</p>
  *
- * <p>⚠️ 迁移前 {@code chart} 分支把 {@code authToken} 传入
+ * <p>⚠️ {@code chart} 分支把 {@code authToken} 传入
  * {@code getPaintingInferenceData}，但该方法<b>从未使用它</b>。
  * 此处保持一致（传了但不用），不「顺手修正」。</p>
  *
- * <p><b>为何 requiresToken 取 false</b>：迁移前令牌无效回的是
+ * <p><b>为何 requiresToken 取 false</b>：令牌无效回的是
  * {@code IllegalOperation}，而宿主动作骨架在 {@code requiresToken=true} 时
  * 会改回 {@code InconsistentToken}——这是线协议可见的语义变更。</p>
  */
@@ -59,7 +59,7 @@ public final class GetPsychologyPaintingAction implements AIGCActionTask {
         }
 
         try {
-            // 刻意不判 data 是否为 null：迁移前 packet.data 为 null 时会在下方
+            // 刻意不判 data 是否为 null：packet.data 为 null 时会在下方
             // 解析块抛 NPE 并落入 catch 回 InvalidParameter
             JSONObject data = ctx.getRequest().data;
 
@@ -96,7 +96,7 @@ public final class GetPsychologyPaintingAction implements AIGCActionTask {
     /**
      * 二选一应答。
      *
-     * <p>三个分支的失败态都回显原始请求体（迁移前 L74/88/101），
+     * <p>三个分支的失败态都回显原始请求体（L74/88/101），
      * 此处统一处理以免漏掉。</p>
      *
      * @param ctx 动作上下文。

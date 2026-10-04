@@ -7,8 +7,8 @@
 package cube.service.robodroid.mission;
 
 import cell.util.log.Logger;
-import cube.robot.Task;
-import cube.robot.TaskNames;
+import cube.robodroid.Task;
+import cube.robodroid.TaskNames;
 import cube.service.robodroid.Roboengine;
 
 import java.io.IOException;

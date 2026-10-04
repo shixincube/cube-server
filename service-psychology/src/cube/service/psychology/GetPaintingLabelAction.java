@@ -22,15 +22,15 @@ import java.util.List;
  * <p>对应线协议动作 {@code getPaintingLabel}，逐字符等同于既有枚举
  * {@code AIGCAction.GetPaintingLabel} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
- * {@code NoToken → InvalidParameter → Ok}。迁移前本动作<b>没有</b>
+ * <p><b>状态码序列</b>：
+ * {@code NoToken → InvalidParameter → Ok}。本动作<b>没有</b>
  * {@code Failure} 分支——若存储层抛出异常，异常会穿透
  * {@code ServiceTask#run} 逃逸到线程池，最终没有应答、调用方超时；
  * 迁移后宿主动作骨架会兜底补一次 {@code Failure} 应答。这属于行为改善而非回归，
- * 但确实与迁移前不同，因此状态码白名单中仍列入 {@code Failure}。</p>
+ * 但确实与其他动作不同，因此状态码白名单中仍列入 {@code Failure}。</p>
  *
  * <p><b>为何 requiresToken 取 false</b>：同
- * {@link SetPaintingReportStateAction}，迁移前只判令牌存在性，
+ * {@link SetPaintingReportStateAction}，只判令牌存在性，
  * 以保住 {@code NoToken} 应答码并避免新增 {@code InconsistentToken} 拦截。</p>
  */
 public final class GetPaintingLabelAction implements AIGCActionTask {

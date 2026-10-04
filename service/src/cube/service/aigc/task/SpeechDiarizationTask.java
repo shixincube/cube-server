@@ -19,7 +19,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.VoiceDiarizationListener;
+import cube.aigc.listener.VoiceDiarizationListener;
 
 /**
  * 说话者分割与分析。

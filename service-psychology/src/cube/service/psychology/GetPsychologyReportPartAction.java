@@ -6,6 +6,7 @@
 
 package cube.service.psychology;
 
+import cube.service.psychology.scene.ReportRenderer;
 import cell.core.net.Endpoint;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
@@ -32,24 +33,24 @@ import java.util.List;
  * <p>对应线协议动作 {@code getPsychologyReportPart}，逐字符等同于既有枚举
  * {@code AIGCAction.GetPsychologyReportPart} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code NoToken → IllegalOperation → Failure / Ok → InvalidParameter}。</p>
  *
  * <p><b>⚠️ 两处不可「顺手统一」的差异</b>：</p>
  * <ol>
- *   <li>报告不存在时回 {@code Failure} + <b>空对象</b>（迁移前 L95），
+ *   <li>报告不存在时回 {@code Failure} + <b>空对象</b>（L95），
  *       而同批的 {@link GetPsychologyReportAction} 回 {@code Failure} +
  *       <b>回显请求体</b>；</li>
- *   <li>本动作没有独立的参数校验分支——迁移前整个「参数解析 + 字段组装」
+ *   <li>本动作没有独立的参数校验分支——整个「参数解析 + 字段组装」
  *       被一个 try 包住（L74-166），任何异常（含 {@code sn} 缺失）都统一
  *       落 {@code InvalidParameter}。因此<b>不要</b>把 {@code sn} 读取单独
  *       拆出来做前置校验，否则它会从 {@code InvalidParameter} 变成别的码。</li>
  * </ol>
  *
  * <p><b>处理中报告的语义</b>：当报告状态为
- * {@code Processing} 或 {@code Inferencing} 时，迁移前只填 {@code thought}
+ * {@code Processing} 或 {@code Inferencing} 时，只填 {@code thought}
  * 一个字段（原始特征描述，<b>不</b>调模型），其余字段全部跳过，
- * 但仍然回 {@code Ok}（迁移前 L144-159）。</p>
+ * 但仍然回 {@code Ok}（L144-159）。</p>
  *
  * <p><b>为何 requiresToken 取 false</b>：同
  * {@link ModifyReportRemarkAction}。</p>
@@ -59,7 +60,7 @@ public final class GetPsychologyReportPartAction implements AIGCActionTask {
     /**
      * 主观题特征描述的推理提示词。
      *
-     * <p><b>⚠️ 逐字复刻迁移前的硬编码文本</b>（迁移前 L171-172）。
+     * <p><b>⚠️ 逐字复刻的硬编码文本</b>（L171-172）。
      * 任何改动都会改变模型输出，进而改变 {@code thought} 字段的内容，
      * 属线协议可见变更。</p>
      */
@@ -87,7 +88,7 @@ public final class GetPsychologyReportPartAction implements AIGCActionTask {
             return AIGCStateCode.IllegalOperation;
         }
 
-        // 整个「参数解析 + 字段组装」共用一个 try，与迁移前 L74-166 的结构一致：
+        // 整个「参数解析 + 字段组装」共用一个 try，与L74-166 的结构一致：
         // 任何异常都统一落 InvalidParameter，故不可把某一步单独提前 return
         try {
             JSONObject data = ctx.getRequest().data;
@@ -96,7 +97,7 @@ public final class GetPsychologyReportPartAction implements AIGCActionTask {
             boolean content = data.has("content") && data.getBoolean("content");
             boolean section = data.has("section") && data.getBoolean("section");
             boolean thought = data.has("thought") && data.getBoolean("thought");
-            // 迁移前 L80-82：未要求正文时才接受摘要开关
+            // L80-82：未要求正文时才接受摘要开关
             boolean summary = !content && data.has("summary") && data.getBoolean("summary");
             boolean rating = data.has("rating") && data.getBoolean("rating");
 
@@ -109,7 +110,7 @@ public final class GetPsychologyReportPartAction implements AIGCActionTask {
             PaintingReport report = host.getPaintingReport(sn);
 
             if (null == report) {
-                // 迁移前 L93 先记一条 WARN 再应答
+                // L93 先记一条 WARN 再应答
                 Logger.w(this.getClass(), "#handle - Can NOT find report sn: " + sn);
                 ctx.respondEmpty(AIGCStateCode.Failure);
                 return AIGCStateCode.Failure;
@@ -129,7 +130,7 @@ public final class GetPsychologyReportPartAction implements AIGCActionTask {
                 // 处理中：只回原始特征描述，不调模型，仍回 Ok
                 PaintingFeatureSet featureSet = host.getPaintingFeatureSet(sn);
                 if (null != featureSet) {
-                    responseData.put("thought", host.makePaintingFeature(featureSet));
+                    responseData.put("thought", ReportRenderer.makePaintingFeature(featureSet));
                 }
                 else {
                     Logger.w(this.getClass(), "#handle - Can NOT find feature set for report: " + sn);
@@ -148,7 +149,7 @@ public final class GetPsychologyReportPartAction implements AIGCActionTask {
     /**
      * 填充已完成报告的各可选字段。
      *
-     * <p>逐字对应迁移前 L105-141。</p>
+     * <p>对应 L105-141。</p>
      *
      * @param ctx 动作上下文。
      * @param host 宿主能力。
@@ -166,7 +167,7 @@ public final class GetPsychologyReportPartAction implements AIGCActionTask {
             JSONObject responseData, boolean content, boolean section, boolean thought, boolean summary,
             boolean rating, Endpoint endpoint, String tokenCode) {
         if (content) {
-            responseData.put("content", host.makeReportContent(report, true, 5, true));
+            responseData.put("content", ReportRenderer.makeContent(report, true, 5, true));
         }
 
         if (section) {
@@ -189,22 +190,22 @@ public final class GetPsychologyReportPartAction implements AIGCActionTask {
         }
 
         if (summary) {
-            responseData.put("summary", host.makeReportContent(report, true, 0, false));
+            responseData.put("summary", ReportRenderer.makeContent(report, true, 0, false));
         }
 
         if (rating) {
-            responseData.put("rating", host.makeRatingInformation(report));
+            responseData.put("rating", ReportRenderer.makeRatingInformation(report));
         }
 
         if (null != endpoint) {
-            responseData.put("link", host.makePageLink(endpoint, tokenCode, report, true, true));
+            responseData.put("link", ReportRenderer.makePageLink(endpoint, tokenCode, report, true, true));
         }
     }
 
     /**
      * 把绘画特征集转为通俗化描述。
      *
-     * <p>逐字对应迁移前 L169-181：先取原始特征描述作为载荷与降级值，
+     * <p>对应 L169-181：先取原始特征描述作为载荷与降级值，
      * 再让模型改写；模型不可用时返回原始载荷。</p>
      *
      * @param ctx 动作上下文。
@@ -212,7 +213,7 @@ public final class GetPsychologyReportPartAction implements AIGCActionTask {
      * @return 返回通俗化描述；模型不可用时返回原始特征描述。
      */
     private String inferFeatureThought(ActionContext ctx, PaintingFeatureSet featureSet) {
-        String payload = ctx.getHost().makePaintingFeature(featureSet);
+        String payload = ReportRenderer.makePaintingFeature(featureSet);
 
         AIGCUnit unit = ctx.getHost().selectUnit(ModelConfig.BAIZE_2_UNIT);
         GeneratingRecord record = (null == unit) ? null
@@ -220,7 +221,7 @@ public final class GetPsychologyReportPartAction implements AIGCActionTask {
                         new GeneratingOption(), null, null);
 
         if (null == record) {
-            // 降级：输出原始内容，与迁移前 L175-178 一致
+            // 降级：输出原始内容，与L175-178 一致
             Logger.w(this.getClass(), "#inferFeatureThought - Infer failed, output raw content");
             return payload;
         }

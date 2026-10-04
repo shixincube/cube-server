@@ -10,7 +10,18 @@ import cell.core.net.Endpoint;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.psychology.Painting;
+import cube.aigc.psychology.ReportPermission;
+import cube.aigc.complex.attachment.Attachment;
+import cube.aigc.SemanticSearchListener;
+import cube.aigc.text.Keyword;
+import cube.aigc.listener.GenerateTextListener;
+import cube.aigc.listener.VoiceDiarizationListener;
+import cube.aigc.cv.MatchSimilarityListener;
 import cube.aigc.psychology.Attribute;
+import cube.aigc.psychology.consultation.ConsultationTheme;
+import cube.aigc.psychology.EvaluationReport;
+import cube.common.entity.AIGCChatHistory;
+import cube.common.entity.Chart;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.Theme;
@@ -28,6 +39,7 @@ import cube.common.Language;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.AIGCUnit;
 import cube.common.entity.Contact;
+import cube.common.entity.Membership;
 import cube.common.entity.FileLabel;
 import cube.common.entity.GeneratingOption;
 import cube.common.entity.GeneratingRecord;
@@ -36,13 +48,18 @@ import cube.common.entity.User;
 import cube.core.Module;
 import cube.core.Storage;
 import cube.service.aigc.AIGCCellet;
+import cube.service.aigc.member.MemberCenter;
+import cube.service.contact.ContactManager;
 import cube.service.aigc.AIGCHook;
 import cube.service.aigc.AIGCPluginContext;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.guidance.Prompts;
 import cube.service.aigc.scene.ContentTools;
 import cube.service.cv.CVService;
-import cube.service.aigc.scene.PsychologyScene;
+import cube.util.AudioUtils;
+import cube.service.aigc.utils.WavToMp3Context;
+import cube.service.aigc.utils.AudioProcessor;
+import cube.service.psychology.scene.PsychologyScene;
 import cube.service.tokenizer.SegToken;
 import cube.service.tokenizer.Tokenizer;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
@@ -87,7 +104,7 @@ public final class AIGCHostImpl implements AIGCHost {
     private final static String MODULE_ASSET_PREFIX = "assets/modules/";
 
     /**
-     * 模块资源迁移前的旧路径前缀（相对工作目录）。
+     * 模块资源的旧路径前缀（相对工作目录），仅用于回退兼容。
      */
     private final static String LEGACY_MODULE_ASSET_PREFIX = "assets/";
 
@@ -111,6 +128,11 @@ public final class AIGCHostImpl implements AIGCHost {
      */
     private final ModuleRegistry registry;
 
+    @Override
+    public User getUserById(long uid) {
+        return this.service.getUser(uid);
+    }
+
     /**
      * 进程内唯一的 TF-IDF 分析器，延迟创建。
      *
@@ -118,6 +140,54 @@ public final class AIGCHostImpl implements AIGCHost {
      * 多实例会导致并发重复加载。</p>
      */
     private volatile TFIDFAnalyzer analyzer;
+
+    @Override
+    public User getUser(String tokenCode) {
+        if (null == tokenCode) {
+            return null;
+        }
+
+        return this.service.getUser(tokenCode);
+    }
+
+    @Override
+    public AIGCUnit selectUnitForContact(String capabilityName, long contactId) {
+        if (null == capabilityName) {
+            return null;
+        }
+
+        return this.service.selectUnitByName(capabilityName, contactId);
+    }
+
+    @Override
+    public AIGCChannel createChannelByCode(String tokenCode, String participant, String channelCode,
+            Language language) {
+        if (null == tokenCode) {
+            return null;
+        }
+
+        return this.service.createChannel(tokenCode, participant, channelCode, language);
+    }
+
+    @Override
+    public List<Keyword> extractWeightedKeywords(String content, int topN) {
+        if (null == content || content.isEmpty() || topN <= 0) {
+            return Collections.emptyList();
+        }
+
+        TFIDFAnalyzer analyzer = this.acquireAnalyzer();
+        if (null == analyzer) {
+            return Collections.emptyList();
+        }
+
+        try {
+            List<Keyword> words = analyzer.analyze(content, topN);
+            return (null == words) ? Collections.<Keyword>emptyList() : words;
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#extractWeightedKeywords - Analyze failed", e);
+            return Collections.emptyList();
+        }
+    }
 
     /**
      * 构造函数。
@@ -130,7 +200,7 @@ public final class AIGCHostImpl implements AIGCHost {
         this.registry = registry;
     }
 
-    // ───────── ① 身份与文本 ─────────
+    // ───────── 身份与文本 ─────────
 
     @Override
     public AuthToken resolveToken(String tokenCode) {
@@ -155,6 +225,43 @@ public final class AIGCHostImpl implements AIGCHost {
     @Override
     public boolean isReady() {
         return this.service.isStarted();
+    }
+
+    @Override
+    public Contact getContact(String tokenCode) {
+        if (null == tokenCode) {
+            return null;
+        }
+
+        return ContactManager.getInstance().getContact(tokenCode);
+    }
+
+    @Override
+    public Membership getMembership(String domain, long contactId, int state) {
+        if (null == domain) {
+            return null;
+        }
+
+        return ContactManager.getInstance().getMembershipSystem()
+                .getMembership(domain, contactId, state);
+    }
+
+    @Override
+    public int getRemainingUsages(User user, Membership membership) {
+        if (null == user) {
+            return 0;
+        }
+
+        return MemberCenter.getInstance().getRemainingUsages(user, membership);
+    }
+
+    @Override
+    public ReportPermission allowPredictPainting(String domain, User user, long reportSn) {
+        if (null == user) {
+            return null;
+        }
+
+        return MemberCenter.getInstance().allowPredictPainting(domain, user, reportSn);
     }
 
     @Override
@@ -222,6 +329,15 @@ public final class AIGCHostImpl implements AIGCHost {
         }
     }
 
+    @Override
+    public AIGCUnit selectIdleUnit(String capabilityName) {
+        if (null == capabilityName) {
+            return null;
+        }
+
+        return this.service.selectIdleUnitByName(capabilityName);
+    }
+
     /**
      * 取得进程内唯一的 TF-IDF 分析器。
      *
@@ -256,7 +372,7 @@ public final class AIGCHostImpl implements AIGCHost {
         }
     }
 
-    // ───────── ② 频道 ─────────
+    // ───────── 频道 ─────────
 
     @Override
     public AIGCChannel getChannelByToken(String tokenCode) {
@@ -295,7 +411,7 @@ public final class AIGCHostImpl implements AIGCHost {
         return this.service.stopProcessing(channelCode);
     }
 
-    // ───────── ③ 模型单元 ─────────
+    // ───────── 模型单元 ─────────
 
     @Override
     public AIGCUnit selectUnit(String capabilityName) {
@@ -495,6 +611,15 @@ public final class AIGCHostImpl implements AIGCHost {
         return null;
     }
 
+    @Override
+    public FileLabel downloadFile(AuthToken authToken, String fileUrl) {
+        if (null == authToken || null == fileUrl) {
+            return null;
+        }
+
+        return this.service.downloadFile(authToken, fileUrl);
+    }
+
     /**
      * 尝试把文本解析为 JSON 对象或数组。
      *
@@ -543,7 +668,7 @@ public final class AIGCHostImpl implements AIGCHost {
         }
     }
 
-    // ───────── ④ 文件与资源 ─────────
+    // ───────── 文件与资源 ─────────
 
     @Override
     public FileLabel getFile(String domain, String fileCode) {
@@ -614,7 +739,7 @@ public final class AIGCHostImpl implements AIGCHost {
             return FileUtils.readTextFile(file.getAbsolutePath());
         }
 
-        // 回退到迁移前的旧资源路径，兼容既有部署
+        // 回退到旧资源路径，兼容既有部署
         File legacy = new File(LEGACY_MODULE_ASSET_PREFIX + name + "/" + relative);
         if (legacy.exists()) {
             Logger.d(this.getClass(), "#readModuleResource - Fallback to legacy asset path: "
@@ -634,7 +759,7 @@ public final class AIGCHostImpl implements AIGCHost {
         return Prompts.getPrompt(promptName.trim());
     }
 
-    // ───────── ⑤ 存储 ─────────
+    // ───────── 存储 ─────────
 
     @Override
     public Storage openModuleStorage(String storageName, StorageType type, JSONObject config) {
@@ -672,7 +797,7 @@ public final class AIGCHostImpl implements AIGCHost {
         }
     }
 
-    // ───────── ⑥ 调度与横切 ─────────
+    // ───────── 调度与横切 ─────────
 
     /**
      * 提交延迟任务。
@@ -731,95 +856,147 @@ public final class AIGCHostImpl implements AIGCHost {
      */
     private volatile java.util.concurrent.ScheduledExecutorService delayExecutor;
 
-    /**
-     * 提交延迟任务。
-     *
-     * @param taskKey 任务键，用于日志。
-     * @param delayMs 延迟（毫秒）。
-     * @param job 任务体。
-     */
-    private void scheduleDelayed(String taskKey, long delayMs, Runnable job) {
-        java.util.concurrent.ScheduledExecutorService executor = this.delayExecutor;
-        if (null == executor) {
-            synchronized (this) {
-                executor = this.delayExecutor;
-                if (null == executor) {
-                    executor = java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
-                        Thread thread = new Thread(r, "AIGC-module-delay");
-                        thread.setDaemon(true);
-                        return thread;
-                    });
-                    this.delayExecutor = executor;
-                }
-            }
+    // ───────── 会话与语音 ─────────
+
+    @Override
+    public AIGCChannel getChannel(String channelCode) {
+        if (null == channelCode) {
+            return null;
         }
 
-        try {
-            executor.schedule(() -> {
-                try {
-                    job.run();
-                } catch (Exception e) {
-                    Logger.e(this.getClass(), "#scheduleDelayed - Task \"" + taskKey + "\" failed", e);
-                }
-            }, delayMs, java.util.concurrent.TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            Logger.e(this.getClass(), "#scheduleDelayed - Can NOT schedule task \"" + taskKey + "\"", e);
-        }
-    }
-
-    /**
-     * 关闭延迟任务执行器。
-     *
-     * <p>由宿主在服务停止时调用，避免线程泄漏。</p>
-     */
-    public void shutdown() {
-        java.util.concurrent.ScheduledExecutorService executor = this.delayExecutor;
-        if (null != executor) {
-            executor.shutdownNow();
-            this.delayExecutor = null;
-        }
+        return this.service.getChannel(channelCode);
     }
 
     @Override
-    public void fireHook(String hookKey, AIGCPluginContextLite context) {
-        if (null == hookKey || null == context) {
-            Logger.w(this.getClass(), "#fireHook - Hook key or context is NULL");
+    public AIGCChannel createChannel(AuthToken authToken, String participant, String channelCode,
+            Language language) {
+        if (null == authToken) {
+            return null;
+        }
+
+        return this.service.createChannel(authToken, participant, channelCode, language);
+    }
+
+    @Override
+    public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt, GeneratingOption option,
+            List<GeneratingRecord> histories, int maxHistories, List<Attachment> attachments,
+            List<String> categories, boolean recordable, GenerateTextListener listener) {
+        if (null == channel || null == unit) {
             return;
         }
 
-        AIGCHook hook = this.resolveHook(hookKey);
-        if (null == hook) {
-            Logger.w(this.getClass(), "#fireHook - Unknown hook key: " + hookKey);
+        this.service.generateText(channel, unit, query, prompt, option, histories, maxHistories,
+                attachments, categories, recordable, listener);
+    }
+
+    @Override
+    public FileLabel performSpeakerDiarization(AuthToken authToken, FileLabel fileLabel, boolean preprocess,
+            boolean storage, boolean jumpToFirst, VoiceDiarizationListener listener) {
+        if (null == authToken || null == fileLabel) {
+            return null;
+        }
+
+        return this.service.performSpeakerDiarization(authToken, fileLabel, preprocess, storage, jumpToFirst, listener);
+    }
+
+    // ───────── 对话历史与图表 ─────────
+
+    @Override
+    public void writeChatHistory(AIGCChatHistory history) {
+        if (null == history) {
             return;
         }
 
-        hook.apply(this.translate(context));
+        this.service.getStorage().writeHistory(history);
+    }
+
+    @Override
+    public List<AIGCChatHistory> readChatHistories(long contactId, String domain, long startTime, long endTime) {
+        return this.service.getStorage().readHistoriesByContactId(contactId, domain, startTime, endTime);
+    }
+
+    @Override
+    public Chart readLastChart(String name) {
+        if (null == name) {
+            return null;
+        }
+
+        return this.service.getStorage().readLastChart(name);
+    }
+
+    @Override
+    public boolean insertChart(Chart chart) {
+        if (null == chart) {
+            return false;
+        }
+
+        return this.service.getStorage().insertChart(chart);
+    }
+
+    @Override
+    public boolean writeCounselingRecording(AuthToken authToken, String streamName, long timestamp, long duration,
+            Attribute attribute, ConsultationTheme theme, String fileCode) {
+        if (null == authToken) {
+            return false;
+        }
+
+        return this.service.getStorage().writeCounselingRecording(authToken, streamName, timestamp, duration,
+                attribute, theme, fileCode);
     }
 
     /**
-     * 把 SPI 侧上下文翻译成宿主侧上下文。
+     * 取得计算机视觉服务实例。
      *
-     * <p>翻译而非直接传递的原因：钩子消费者（如风控的 AI 任务留痕）会强转为
-     * service 侧上下文类型，若直接传递 SPI 上下文将抛出类型转换异常。</p>
+     * <p>该服务由独立的视觉单元安装到内核模块表，类型为 {@code AbstractModule}，
+     * 调用前必须做类型转换——此处失败即表示视觉单元未部署。</p>
      *
-     * @param lite SPI 侧上下文。
-     * @return 返回宿主侧上下文。
+     * @return 返回视觉服务；未部署时返回 {@code null}。
      */
-    private AIGCPluginContext translate(AIGCPluginContextLite lite) {
-        AIGCPluginContext context = new AIGCPluginContext(lite.getAuthToken(), lite.getTask());
-        context.setUnit(lite.getUnit());
-        context.setInputTokens(lite.getInputTokens());
-        context.setOutputTokens(lite.getOutputTokens());
-
-        for (String fileCode : lite.getFileCodeList()) {
-            FileLabel fileLabel = this.service.getFile(
-                    (null != lite.getAuthToken()) ? lite.getAuthToken().getDomain() : null, fileCode);
-            if (null != fileLabel) {
-                context.addFileLabel(fileLabel);
-            }
+    private CVService acquireCVService() {
+        Module module = this.service.getKernel().getModule(CVService.NAME);
+        if (module instanceof CVService) {
+            return (CVService) module;
         }
 
-        return context;
+        Logger.w(this.getClass(), "#acquireCVService - CV module is NOT available");
+        return null;
+    }
+
+    /**
+     * 构造一个仅含存储域的访问令牌。
+     *
+     * <p>视觉服务只需要令牌中的存储域信息（用于定位文件），不需要具体联系人身份。</p>
+     *
+     * @param domain 存储域。
+     * @return 返回访问令牌。
+     */
+    private AuthToken makeAuthToken(String domain) {
+        return new AuthToken("", domain, "", 0L, System.currentTimeMillis(),
+                System.currentTimeMillis() + 86400000L, false);
+    }
+
+    /**
+     * 获取心理学场景单例。
+     *
+     * <p>报告运行态（生成中报告的内存表与任务队列）由该单例持有，
+     * 是本组方法的唯一数据来源。</p>
+     *
+     * @return 返回场景单例。
+     */
+    private PsychologyScene scene() {
+        return PsychologyScene.getInstance();
+    }
+
+    /**
+     * 获取宿主服务，供派生能力按需使用。
+     *
+     * <p>仅供宿主内部桥接类使用，<b>不得</b>暴露给模块——否则插件可经此拿到
+     * service 类型，依赖方向约束随即失效。</p>
+     *
+     * @return 返回 AIGC 服务。
+     */
+    public AIGCService getService() {
+        return this.service;
     }
 
     /**
@@ -846,6 +1023,47 @@ public final class AIGCHostImpl implements AIGCHost {
         }
 
         return null;
+    }
+
+    /**
+     * 把 SPI 侧上下文翻译成宿主侧上下文。
+     *
+     * <p>翻译而非直接传递的原因：钩子消费者（如风控的 AI 任务留痕）会强转为
+     * service 侧上下文类型，若直接传递 SPI 上下文将抛出类型转换异常。</p>
+     *
+     * @param lite SPI 侧上下文。
+     * @return 返回宿主侧上下文。
+     */
+    private AIGCPluginContext translate(AIGCPluginContextLite lite) {
+        AIGCPluginContext context = new AIGCPluginContext(lite.getAuthToken(), lite.getTask());
+        context.setUnit(lite.getUnit());
+        context.setInputTokens(lite.getInputTokens());
+        context.setOutputTokens(lite.getOutputTokens());
+
+        for (String fileCode : lite.getFileCodeList()) {
+            FileLabel fileLabel = this.service.getFile(lite.getAuthToken().getDomain(), fileCode);
+            if (null != fileLabel) {
+                context.addFileLabel(fileLabel);
+            }
+        }
+
+        return context;
+    }
+
+    @Override
+    public void fireHook(String hookKey, AIGCPluginContextLite context) {
+        if (null == hookKey || null == context) {
+            Logger.w(this.getClass(), "#fireHook - Hook key or context is NULL");
+            return;
+        }
+
+        AIGCHook hook = this.resolveHook(hookKey);
+        if (null == hook) {
+            Logger.w(this.getClass(), "#fireHook - Unknown hook key: " + hookKey);
+            return;
+        }
+
+        hook.apply(this.translate(context));
     }
 
     @Override
@@ -883,8 +1101,6 @@ lite.setOutputTokens(descriptor.getOutputTokens());
 this.fireHook(AIGCHook.TaskProcessing, lite);
 }
 
-    // ───────── ⑦ 兄弟模块 ─────────
-
     @Override
     public <T> T getSiblingModule(String moduleName, Class<T> type) {
         if (null == moduleName || null == type || null == this.registry) {
@@ -905,8 +1121,6 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
 
         return type.cast(module);
     }
-
-    // ───────── ⑧ 报告运行态 ─────────
 
     @Override
     public JSONObject queryPaintingReport(long sn, String format) {
@@ -1004,8 +1218,6 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
         return (null == report) ? null : report.toCompactJSON();
     }
 
-    // ───────── ⑨ 报告内容加工 ─────────
-
     @Override
     public void fillHexagonScoreDescription(HexagonDimensionScore hds, Language language) {
         if (null == hds) {
@@ -1028,46 +1240,6 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
     public PaintingFeatureSet getPaintingFeatureSet(long reportSn) {
         return this.scene().getPaintingFeatureSet(reportSn);
     }
-
-    @Override
-    public String makeReportContent(PaintingReport report, boolean summary, int maxIndicators,
-            boolean personality) {
-        if (null == report) {
-            return null;
-        }
-
-        return ContentTools.makeContent(report, summary, maxIndicators, personality);
-    }
-
-    @Override
-    public String makeRatingInformation(PaintingReport report) {
-        if (null == report) {
-            return null;
-        }
-
-        return ContentTools.makeRatingInformation(report);
-    }
-
-    @Override
-    public String makePageLink(Endpoint endpoint, String token, PaintingReport report,
-            boolean indicatorLink, boolean personalityLink) {
-        if (null == report) {
-            return null;
-        }
-
-        return ContentTools.makePageLink(endpoint, token, report, indicatorLink, personalityLink);
-    }
-
-    @Override
-    public String makePaintingFeature(PaintingFeatureSet featureSet) {
-        if (null == featureSet) {
-            return null;
-        }
-
-        return ContentTools.makePaintingFeature(featureSet);
-    }
-
-    // ───────── ⑪ 报告生成编排 ─────────
 
     @Override
     public PaintingReport generatePaintingReport(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
@@ -1097,8 +1269,6 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
     public Scale getScale(long sn) {
         return this.scene().getScale(sn);
     }
-
-    // ───────── ⑩ 计算机视觉与绘画 ─────────
 
     @Override
     public ObjectInfo detectObject(String domain, String fileCode, boolean visualize) {
@@ -1144,58 +1314,121 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
         return this.scene().getPredictedPainting(token, sn, boundingBox, visualParam, probability);
     }
 
-    /**
-     * 取得计算机视觉服务实例。
-     *
-     * <p>该服务由独立的视觉单元安装到内核模块表，类型为 {@code AbstractModule}，
-     * 调用前必须做类型转换——此处失败即表示视觉单元未部署。</p>
-     *
-     * @return 返回视觉服务；未部署时返回 {@code null}。
-     */
-    private CVService acquireCVService() {
-        Module module = this.service.getKernel().getModule(CVService.NAME);
-        if (module instanceof CVService) {
-            return (CVService) module;
+    @Override
+    public String generatePersonalKnowledge(String tokenCode, String query, boolean english) {
+        if (null == query) {
+            return null;
         }
 
-        Logger.w(this.getClass(), "#acquireCVService - CV module is NOT available");
-        return null;
+        return this.service.generatePersonalKnowledge(tokenCode, query, english);
+    }
+
+    @Override
+    public File getWorkingPath() {
+        return this.service.getWorkingPath();
+    }
+
+    @Override
+    public boolean matchSimilarity(FileLabel fileLabel, List<String> templateNames,
+            MatchSimilarityListener listener) {
+        if (null == fileLabel || null == templateNames || templateNames.isEmpty()) {
+            return false;
+        }
+
+        CVService cvService = this.acquireCVService();
+        if (null == cvService) {
+            return false;
+        }
+
+        return cvService.matchSimilarity(fileLabel, templateNames, listener);
+    }
+
+    @Override
+    public boolean semanticSearch(String query, SemanticSearchListener listener) {
+        if (null == query) {
+            return false;
+        }
+
+        return this.service.semanticSearch(query, listener);
+    }
+
+
+
+/**
+     * 提交延迟任务。
+     *
+     * @param taskKey 任务键，用于日志。
+     * @param delayMs 延迟（毫秒）。
+     * @param job 任务体。
+     */
+    private void scheduleDelayed(String taskKey, long delayMs, Runnable job) {
+        java.util.concurrent.ScheduledExecutorService executor = this.delayExecutor;
+        if (null == executor) {
+            synchronized (this) {
+                executor = this.delayExecutor;
+                if (null == executor) {
+                    executor = java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
+                        Thread thread = new Thread(r, "AIGC-module-delay");
+                        thread.setDaemon(true);
+                        return thread;
+                    });
+                    this.delayExecutor = executor;
+                }
+            }
+        }
+
+        try {
+            executor.schedule(() -> {
+                try {
+                    job.run();
+                } catch (Exception e) {
+                    Logger.e(this.getClass(), "#scheduleDelayed - Task \"" + taskKey + "\" failed", e);
+                }
+            }, delayMs, java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#scheduleDelayed - Can NOT schedule task \"" + taskKey + "\"", e);
+        }
     }
 
     /**
-     * 构造一个仅含存储域的访问令牌。
+     * 关闭延迟任务执行器。
      *
-     * <p>视觉服务只需要令牌中的存储域信息（用于定位文件），不需要具体联系人身份。</p>
-     *
-     * @param domain 存储域。
-     * @return 返回访问令牌。
+     * <p>由宿主在服务停止时调用，避免线程泄漏。</p>
      */
-    private AuthToken makeAuthToken(String domain) {
-        return new AuthToken("", domain, "", 0L, System.currentTimeMillis(),
-                System.currentTimeMillis() + 86400000L, false);
+    public void shutdown() {
+        java.util.concurrent.ScheduledExecutorService executor = this.delayExecutor;
+        if (null != executor) {
+            executor.shutdownNow();
+            this.delayExecutor = null;
+        }
     }
 
-    /**
-     * 获取心理学场景单例。
-     *
-     * <p>报告运行态（生成中报告的内存表与任务队列）由该单例持有，
-     * 是本组方法的唯一数据来源。</p>
-     *
-     * @return 返回场景单例。
-     */
-    private PsychologyScene scene() {
-        return PsychologyScene.getInstance();
+    @Override
+    public File convertWavToMp3(String wavFileName, String mp3FileName) {
+        if (null == wavFileName || null == mp3FileName) {
+            return null;
+        }
+
+        File workingPath = this.service.getWorkingPath();
+        if (null == workingPath) {
+            return null;
+        }
+
+        WavToMp3Context context = new WavToMp3Context(wavFileName, mp3FileName,
+                AudioUtils.SAMPLE_RATE, AudioUtils.CHANNELS);
+        AudioProcessor processor = new AudioProcessor(workingPath.toPath());
+        processor.go(context);
+
+        return context.isSuccessful() ? new File(workingPath, mp3FileName) : null;
     }
 
-    /**
-     * 获取宿主服务，供派生能力按需使用。
-     *
-     * <p>仅供宿主内部桥接类使用，<b>不得</b>暴露给模块——否则插件可经此拿到
-     * service 类型，依赖方向约束随即失效。</p>
-     *
-     * @return 返回 AIGC 服务。
-     */
-    public AIGCService getService() {
-        return this.service;
+    @Override
+    public FileLabel saveFileWithContext(AuthToken token, String fileCode, File file, String filename,
+            boolean deleteAfterSave, JSONObject context) {
+        if (null == token || null == file) {
+            return null;
+        }
+
+        return this.service.saveFile(token, fileCode, file, filename, deleteAfterSave, context);
     }
 }

@@ -24,12 +24,13 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.scene.ComprehensiveReportListener;
-import cube.service.aigc.scene.PsychologyScene;
+import cube.service.psychology.scene.ComprehensiveReportListener;
+import cube.service.psychology.scene.PsychologyScene;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import cube.service.psychology.scene.ComprehensiveReportListener;
 import java.util.List;
 
 /**

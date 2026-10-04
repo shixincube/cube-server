@@ -18,10 +18,10 @@ import org.json.JSONObject;
  * <p>对应线协议动作 {@code setPaintingReportState}，逐字符等同于既有枚举
  * {@code AIGCAction.SetPaintingReportState} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code NoToken → InvalidParameter → Failure → Ok}。</p>
  *
- * <p><b>为何 requiresToken 取 false</b>：迁移前的
+ * <p><b>为何 requiresToken 取 false</b>：
  * {@code SetPaintingReportStateTask} 只用 {@code getTokenCode(dialect) == null}
  * 判定「无令牌」并以 {@code NoToken} 应答，<b>不调用 extractAuthToken</b>，
  * 因此不校验令牌有效性。若交由宿主以 {@code requiresToken=true} 前置校验，

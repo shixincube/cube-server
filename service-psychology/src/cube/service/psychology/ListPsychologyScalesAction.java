@@ -23,10 +23,10 @@ import java.util.List;
  * <p>对应线协议动作 {@code listPsychologyScales}，逐字符等同于既有枚举
  * {@code AIGCAction.ListPsychologyScales} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code NoToken → IllegalOperation → Ok}。</p>
  *
- * <p><b>为何 requiresToken 取 false</b>：迁移前令牌无效时回的是
+ * <p><b>为何 requiresToken 取 false</b>：令牌无效时回的是
  * {@code IllegalOperation}，而宿主动作骨架在 {@code requiresToken=true} 时
  * 会改回 {@code InconsistentToken}——这是线协议可见的语义变更。
  * 故保留 {@code false}，令牌有效性由本处理器自行判定。</p>
@@ -71,7 +71,7 @@ public final class ListPsychologyScalesAction implements AIGCActionTask {
     /**
      * 列出全部已开放的量表。
      *
-     * <p>迁移前该过滤逻辑位于 {@code PsychologyScene#listScales}，
+     * <p>该过滤逻辑位于 {@code PsychologyScene#listScales}，
      * 此处逐字复刻：未开放的量表不进入结果集。</p>
      *
      * @param contactId 联系人 ID。

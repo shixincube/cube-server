@@ -8,7 +8,7 @@ package cube.dispatcher.robodroid;
 
 import cell.core.talk.dialect.ActionDialect;
 import cube.dispatcher.Performer;
-import cube.robot.RobotAction;
+import cube.robodroid.RobotAction;
 import cube.util.CrossDomainHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.json.JSONObject;

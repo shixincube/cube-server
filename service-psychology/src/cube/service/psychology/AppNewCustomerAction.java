@@ -19,15 +19,15 @@ import org.json.JSONObject;
  * <p>对应线协议动作 {@code appNewCustomer}，逐字符等同于既有枚举
  * {@code AIGCAction.AppNewCustomer} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code InvalidParameter → InconsistentToken → IllegalOperation → Failure → Ok}，
  * 末位还有一个由 {@code catch} 兜底的 {@code InvalidParameter}。前两位由宿主
  * {@code ActionRunner} 代为产出。</p>
  *
  * <p><b>写入语义</b>：先以请求体解析出提交数据，再用<b>不含 id</b> 的六参构造器
- * 生成一个新 id 的实例落库——即客户端不能自选 id（迁移前 L67-68）。</p>
+ * 生成一个新 id 的实例落库——即客户端不能自选 id（L67-68）。</p>
  *
- * <p><b>⚠️ 写入失败时回显的是原始请求而非空对象</b>（迁移前 L76）。这一点极易写错：
+ * <p><b>⚠️ 写入失败时回显的是原始请求而非空对象</b>（L76）。这一点极易写错：
  * 若改为 {@code respondEmpty(Failure)}，客户端会丢失自己提交的数据而无法重试。</p>
  */
 public final class AppNewCustomerAction implements AIGCActionTask {
@@ -41,10 +41,10 @@ public final class AppNewCustomerAction implements AIGCActionTask {
         }
 
         try {
-            // 刻意不判空：data 为 null 时构造器抛 NPE，与迁移前一致，最终回 InvalidParameter
+            // 刻意不判空：data 为 null 时构造器抛 NPE，与既有行为一致，最终回 InvalidParameter
             Customer submitted = new Customer(ctx.getRequest().data);
 
-            // 六参构造器内部生成新 id：客户端提交的 id 被丢弃（迁移前 L67-68）
+            // 六参构造器内部生成新 id：客户端提交的 id 被丢弃（L67-68）
             Customer newCustomer = new Customer(submitted.name, submitted.gender, submitted.age,
                     submitted.mobile, submitted.comment, submitted.timestamp);
 
@@ -55,14 +55,14 @@ public final class AppNewCustomerAction implements AIGCActionTask {
                 return AIGCStateCode.Ok;
             }
 
-            // ⚠️ 回显原始请求，不是空对象（迁移前 L76）
+            // ⚠️ 回显原始请求，不是空对象（L76）
             ctx.respond(AIGCStateCode.Failure, ctx.getRequest().data);
 
             return AIGCStateCode.Failure;
         } catch (Exception e) {
             Logger.e(this.getClass(), "", e);
 
-            // 迁移前 L82 回的是空对象（与 write 失败分支不同，逐字节复刻）
+            // L82 回的是空对象（与 write 失败分支不同，逐字节复刻）
             ctx.respondEmpty(AIGCStateCode.InvalidParameter);
 
             return AIGCStateCode.InvalidParameter;

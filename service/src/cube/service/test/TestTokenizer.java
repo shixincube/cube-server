@@ -8,7 +8,7 @@ package cube.service.test;
 
 import cube.service.tokenizer.SegToken;
 import cube.service.tokenizer.Tokenizer;
-import cube.service.tokenizer.keyword.Keyword;
+import cube.aigc.text.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.util.TextUtils;
 

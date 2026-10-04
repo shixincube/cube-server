@@ -1,9 +1,10 @@
 package cube.service.test;
 
-import cube.service.aigc.scene.PaintingUtils;
+import cube.service.psychology.scene.PaintingUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import cube.service.psychology.scene.PaintingUtils;
 import java.io.File;
 
 public class TestPainting {

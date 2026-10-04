@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * 模块注册表装载流程验证。
  *
- * <p>覆盖 Phase 1 新增的装载语义：启用开关 → 实例化 → 绑定 → setup 的顺序、
+ * <p>覆盖装载语义：启用开关 → 实例化 → 绑定 → setup 的顺序、
  * setup 失败后的动作回滚、可选性对阻塞状态的影响、能力校验，以及停机卸载。</p>
  *
  * <p>本用例在临时目录内构造配置文件，通过切换工作目录来驱动
@@ -107,6 +107,17 @@ public class ModuleRegistryLoadTest {
             assertTrue("S5 setup失败的模块不计入", 0 == count);
             assertTrue("S5 其动作已回滚", 0 == registry.getRouter().size());
             assertTrue("S5 非可选模块失败置阻塞标记", registry.hasBlockingFailure());
+            // 声明不随绑定回滚而移除：宿主据此识别「该动作本属该模块，只是模块未就绪」，
+            // 从而回 ModuleNotLoaded 而非让请求悬挂
+            assertTrue("S5 失败后动作声明仍保留", registry.getRouter().isDeclared("failingAction"));
+            assertTrue("S5 失败后动作未绑定", null == registry.getRouter().lookup("failingAction"));
+
+            // 场景5b：模块未配置时不声明任何动作（区分「未装」与「已声明但失败」）
+            resetModuleEvents();
+            write(config, "module.1.enabled=false");
+            registry = newRegistry(new NoopHost());
+            registry.load();
+            assertTrue("S5b 未装载的模块不产生声明", !registry.getRouter().isDeclared("failingAction"));
 
             // 场景6：optional=true 的失败不置阻塞标记
             resetModuleEvents();
@@ -512,28 +523,6 @@ public class ModuleRegistryLoadTest {
         }
 
         @Override
-        public String makeReportContent(cube.aigc.psychology.PaintingReport report, boolean summary,
-                int maxIndicators, boolean personality) {
-            return null;
-        }
-
-        @Override
-        public String makeRatingInformation(cube.aigc.psychology.PaintingReport report) {
-            return null;
-        }
-
-        @Override
-        public String makePageLink(cell.core.net.Endpoint endpoint, String token,
-                cube.aigc.psychology.PaintingReport report, boolean indicatorLink, boolean personalityLink) {
-            return null;
-        }
-
-        @Override
-        public String makePaintingFeature(cube.aigc.psychology.composition.PaintingFeatureSet featureSet) {
-            return null;
-        }
-
-        @Override
         public cube.aigc.psychology.PaintingReport getPaintingReport(long sn) {
             return null;
         }
@@ -666,6 +655,150 @@ public class ModuleRegistryLoadTest {
 
         @Override
         public String getGuidePrompt(String promptName) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.FileLabel saveFileWithContext(cube.auth.AuthToken token, String fileCode,
+                java.io.File file, String filename, boolean deleteAfterSave, org.json.JSONObject context) {
+            return null;
+        }
+
+        @Override
+        public java.io.File convertWavToMp3(String wavFileName, String mp3FileName) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.User getUserById(long uid) {
+            return null;
+        }
+
+        @Override
+        public java.util.List<cube.aigc.text.Keyword> extractWeightedKeywords(String content, int topN) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.AIGCUnit selectUnitForContact(String capabilityName, long contactId) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.AIGCChannel createChannelByCode(String tokenCode, String participant,
+                String channelCode, cube.common.Language language) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.User getUser(String tokenCode) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.AIGCUnit selectIdleUnit(String capabilityName) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.AIGCChannel getChannel(String channelCode) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.AIGCChannel createChannel(cube.auth.AuthToken authToken, String participant,
+                String channelCode, cube.common.Language language) {
+            return null;
+        }
+
+        @Override
+        public void generateText(cube.common.entity.AIGCChannel channel, cube.common.entity.AIGCUnit unit,
+                String query, String prompt, cube.common.entity.GeneratingOption option,
+                java.util.List<cube.common.entity.GeneratingRecord> histories, int maxHistories,
+                java.util.List<cube.aigc.complex.attachment.Attachment> attachments,
+                java.util.List<String> categories, boolean recordable,
+                cube.aigc.listener.GenerateTextListener listener) {
+        }
+
+        @Override
+        public cube.common.entity.FileLabel performSpeakerDiarization(cube.auth.AuthToken authToken,
+                cube.common.entity.FileLabel fileLabel, boolean preprocess, boolean storage, boolean jumpToFirst,
+                cube.aigc.listener.VoiceDiarizationListener listener) {
+            return null;
+        }
+
+        @Override
+        public void writeChatHistory(cube.common.entity.AIGCChatHistory history) {
+        }
+
+        @Override
+        public java.util.List<cube.common.entity.AIGCChatHistory> readChatHistories(long contactId, String domain,
+                long startTime, long endTime) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.Chart readLastChart(String name) {
+            return null;
+        }
+
+        @Override
+        public boolean insertChart(cube.common.entity.Chart chart) {
+            return false;
+        }
+
+        @Override
+        public boolean writeCounselingRecording(cube.auth.AuthToken authToken, String streamName, long timestamp,
+                long duration, cube.aigc.psychology.Attribute attribute,
+                cube.aigc.psychology.consultation.ConsultationTheme theme, String fileCode) {
+            return false;
+        }
+
+        @Override
+        public java.io.File getWorkingPath() {
+            return null;
+        }
+
+        @Override
+        public boolean semanticSearch(String query, cube.aigc.SemanticSearchListener listener) {
+            return false;
+        }
+
+        @Override
+        public String generatePersonalKnowledge(String tokenCode, String query, boolean english) {
+            return null;
+        }
+
+        @Override
+        public boolean matchSimilarity(cube.common.entity.FileLabel fileLabel,
+                java.util.List<String> templateNames,
+                cube.aigc.cv.MatchSimilarityListener listener) {
+            return false;
+        }
+
+        @Override
+        public cube.common.entity.FileLabel downloadFile(cube.auth.AuthToken authToken, String fileUrl) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.Contact getContact(String tokenCode) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.Membership getMembership(String domain, long contactId, int state) {
+            return null;
+        }
+
+        @Override
+        public int getRemainingUsages(cube.common.entity.User user, cube.common.entity.Membership membership) {
+            return 0;
+        }
+
+        @Override
+        public cube.aigc.psychology.ReportPermission allowPredictPainting(String domain,
+                cube.common.entity.User user, long reportSn) {
             return null;
         }
 

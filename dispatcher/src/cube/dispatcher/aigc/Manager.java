@@ -214,7 +214,7 @@ public class Manager implements Tickable, PerformerListener {
         // 业务模块兜底通道 POST /aigc/module/{moduleName}/{actionName}。
         //
         // ⚠️ 受配置开关控制（config/dispatcher.properties 的 module.rest.enabled），
-        // 默认关闭：关闭时该路径不注册，行为与插件化改造前完全一致。
+        // 默认关闭：关闭时该路径不注册，专属端点不受影响。
         // 专属端点（上面 16 条）始终保留，兜底通道不替代它们。
         if (ModuleAction.isEnabled()) {
             httpServer.addContextHandler(new ModuleAction());

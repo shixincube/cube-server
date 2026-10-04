@@ -22,8 +22,8 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.GenerateTextListener;
-import cube.service.aigc.scene.ConversationWorker;
+import cube.aigc.listener.GenerateTextListener;
+import cube.service.psychology.scene.ConversationWorker;
 import cube.util.TextUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -107,7 +107,7 @@ public class PsychologyConversationTask extends ServiceTask {
             return;
         }
 
-        ConversationWorker worker = new ConversationWorker(service);
+        ConversationWorker worker = new ConversationWorker(service.getCellet().getAIGCHost());
         AIGCStateCode stateCode = AIGCStateCode.Failure;
 
         if (null != conversationRelationList && !conversationRelationList.isEmpty()) {

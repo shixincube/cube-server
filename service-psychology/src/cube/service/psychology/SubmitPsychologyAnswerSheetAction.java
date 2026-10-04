@@ -28,12 +28,12 @@ import java.util.List;
  * <p>对应线协议动作 {@code submitPsychologyAnswerSheet}，逐字符等同于既有枚举
  * {@code AIGCAction.SubmitPsychologyAnswerSheet} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code NoToken → IllegalOperation → Ok / Failure / InvalidParameter}。</p>
  *
  * <p><b>本动作是量表族中依赖最重的一个</b>：主观题需要先由模型产出自由文本，
  * 再按 TF-IDF 权重把文本匹配回备选项。因此它同时用到三个宿主能力：
- * 单元选择、同步生成、TF-IDF 关键词抽取。迁移前这些能力由
+ * 单元选择、同步生成、TF-IDF 关键词抽取。这些能力由
  * {@code PsychologyScene} 直接调用 {@code AIGCService} 与
  * {@code TFIDFAnalyzer}（均在 service 模块），插件不可见。</p>
  *
@@ -71,7 +71,7 @@ public final class SubmitPsychologyAnswerSheetAction implements AIGCActionTask {
             ScaleResult scaleResult = ((PsychologyModule) ctx.getModule()).submitAnswerSheet(ctx, answerSheet);
 
             if (null == scaleResult) {
-                // 迁移前此处回显原始请求体，不是空对象
+                // 此处回显原始请求体，不是空对象
                 ctx.respond(AIGCStateCode.Failure, requestData);
                 return AIGCStateCode.Failure;
             }
@@ -127,7 +127,7 @@ public final class SubmitPsychologyAnswerSheetAction implements AIGCActionTask {
 
         GeneratingRecord record = generate(ctx, question);
         if (null == record) {
-            // 生成失败：退化为第一项，与迁移前一致
+            // 生成失败：退化为第一项，与既有行为一致
             Answer first = question.answers.get(0);
             question.chooseAnswer(first.code);
             question.setInferenceResult(first.content);

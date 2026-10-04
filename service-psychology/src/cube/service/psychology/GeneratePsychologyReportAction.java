@@ -32,22 +32,22 @@ import org.json.JSONObject;
  * <p>对应线协议动作 {@code generatePsychologyReport}，逐字符等同于既有枚举
  * {@code AIGCAction.GeneratePsychologyReport} 的 {@code name} 字段。</p>
  *
- * <p><b>三分支结构</b>（迁移前 {@code GeneratePsychologyReportTask} L60-183）：</p>
+ * <p><b>三分支结构</b>（{@code GeneratePsychologyReportTask} L60-183）：</p>
  * <ul>
  *   <li>{@code fileCode + theme + attribute}三者齐全 → 绘画报告；</li>
  *   <li>否则若有 {@code scaleSn} → 量表报告；</li>
  *   <li>否则 → {@code InvalidParameter}。</li>
  * </ul>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code NoToken → InvalidParameter → Ok / Failure}。</p>
  *
- * <p><b>⚠️ 令牌无效回 {@code NoToken} 而非 {@code InconsistentToken}</b>：迁移前
+ * <p><b>⚠️ 令牌无效回 {@code NoToken} 而非 {@code InconsistentToken}</b>：
  * L52-57 是「令牌解析为 null → 回 NoToken」，并非校验有效性。因此
  * {@code requiresToken} 取 {@code false}，交由本处理器自判——若交由骨架前置校验，
  * 应答码会变成 {@code InconsistentToken}，属线协议可见变更。</p>
  *
- * <p><b>⚠️ 读参数一律用 {@code ctx.getRequest().data}</b>：迁移前用的是
+ * <p><b>⚠️ 读参数一律用 {@code ctx.getRequest().data}</b>：用的是
  * {@code packet.data}，即<b>原样透传的请求体</b>。若改用 {@code ctx.getParams()}
  * （无 data 时返回空对象），三分支的 {@code has} 判定会全部变false，
  * 从而把「参数缺失」从 {@code InvalidParameter} 变成走到最后 else——
@@ -67,7 +67,7 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
 
         AuthToken authToken = ctx.getHost().resolveToken(token);
         if (null == authToken) {
-            // 迁移前 L52-57：令牌解析为 null 也回 NoToken
+            // L52-57：令牌解析为 null 也回 NoToken
             ctx.respondEmpty(AIGCStateCode.NoToken);
             return AIGCStateCode.NoToken;
         }
@@ -81,7 +81,7 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
             return this.generateScale(ctx, data, token, authToken);
         }
         else {
-            // 迁移前 L180：回空对象而非请求体
+            // L180：回空对象而非请求体
             ctx.respondEmpty(AIGCStateCode.InvalidParameter);
             return AIGCStateCode.InvalidParameter;
         }
@@ -109,19 +109,19 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
             attribute = new Attribute(data.getJSONObject("attribute"));
             fileCode = data.getString("fileCode");
             theme = Theme.parse(data.getString("theme"));
-            //⚠️ 迁移前的默认值：indicators 缺省30、adjust 缺省 true
+            //⚠️ 默认值：indicators 缺省30、adjust 缺省 true
             //（尽管 L64 声明的局部变量初值是 10/true，随后立即被覆盖）
             maxIndicators = data.has("indicators") ? data.getInt("indicators") : 30;
             adjust = data.has("adjust") ? data.getBoolean("adjust") : true;
             remark = data.has("remark") ? data.getString("remark") : null;
         } catch (Exception e) {
-            // 迁移前 L77-82：解析异常回空对象
+            // L77-82：解析异常回空对象
             ctx.respondEmpty(AIGCStateCode.InvalidParameter);
             return AIGCStateCode.InvalidParameter;
         }
 
         if (null == theme) {
-            // 迁移前 L84-90
+            // L84-90
             ctx.respondEmpty(AIGCStateCode.InvalidParameter);
             return AIGCStateCode.InvalidParameter;
         }
@@ -133,7 +133,7 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
             ctx.respond(AIGCStateCode.Ok, report.toJSON());
         }
         else {
-            // 迁移前 L131：失败回显原始请求体
+            // L131：失败回显原始请求体
             ctx.respond(AIGCStateCode.Failure, data);
         }
 
@@ -159,14 +159,14 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
             language = data.has("language")
                     ? Language.parse(data.getString("language")) : Language.Chinese;
         } catch (Exception e) {
-            // 迁移前 L145-150
+            // L145-150
             ctx.respondEmpty(AIGCStateCode.InvalidParameter);
             return AIGCStateCode.InvalidParameter;
         }
 
         Scale scale = ctx.getHost().getScale(scaleSn);
         if (null == scale) {
-            // 与迁移前一致：AIGCService#generateScaleReport 在取不到量表时返回 null，
+            // 与既有行为一致：AIGCService#generateScaleReport 在取不到量表时返回 null，
             // Task 侧落入 Failure + 回显请求体
             ctx.respond(AIGCStateCode.Failure, data);
             return AIGCStateCode.Failure;
@@ -174,7 +174,7 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
 
         AIGCChannel channel = ctx.getHost().getChannelByToken(token);
         if (null == channel) {
-            // 迁移前 createChannel(authToken, "Baize", random(16), language)
+            // createChannel(authToken, "Baize", random(16), language)
             channel = ctx.getHost().acquireChannel(authToken, "Baize", null, language);
         }
 
@@ -194,9 +194,9 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
     /**
      * 绘画报告的取文件 + 组频道 + 提交编排。
      *
-     * <p>迁移前这一段在 {@code AIGCService#generatePaintingReport} 内：解析令牌 →
+     * <p>这一段在 {@code AIGCService#generatePaintingReport} 内：解析令牌 →
      * 取文件标签 → 取或建频道 → 提交场景。本类拆成独立小类只为让
-     * {@link #generatePainting} 保持可读，逻辑与迁移前逐句一致。</p>
+     * {@link #generatePainting} 保持可读，逻辑逐句一致。</p>
      */
     private static final class ReportBuilder {
 
@@ -213,14 +213,14 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
         private PaintingReport build(String fileCode, Attribute attribute, Theme theme, int maxIndicators,
                 boolean adjust, String remark) {
             if (!this.ctx.getHost().isReady()) {
-                // 迁移前 AIGCService L2325：服务未启动
+                // AIGCService L2325：服务未启动
                 Logger.w(GeneratePsychologyReportAction.class,
                         "#generatePaintingReport - The service has NOT started");
                 return null;
             }
 
-            // 迁移前 L2337-2355：取文件标签。
-            // host.getFile(domain, fileCode) 与迁移前的
+            // L2337-2355：取文件标签。
+            // host.getFile(domain, fileCode) 与
             //「fileStorage.notify(new GetFile(...)) + new FileLabel(json)」完全等价
             //（已核对 AIGCService#getFile 实现体一致），故此处直接调用
             FileLabel fileLabel = this.ctx.getHost().getFile(this.authToken.getDomain(), fileCode);
@@ -232,8 +232,8 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
 
             AIGCChannel channel = this.ctx.getHost().getChannelByToken(this.token);
             if (null == channel) {
-                // 迁移前 createChannel(authToken, "Baize", random(16), attribute.language)
-                // channelCode 传 null 由宿主生成随机码，与迁移前等价
+                // createChannel(authToken, "Baize", random(16), attribute.language)
+                // channelCode 传 null 由宿主生成随机码，与既有行为等价
                 channel = this.ctx.getHost().acquireChannel(this.authToken, "Baize", null, attribute.language);
             }
 
@@ -245,7 +245,7 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
     /**
      * 绘画报告事件监听器。
      *
-     * <p>迁移前是 {@code GeneratePsychologyReportTask} 内的匿名类，六个方法
+     * <p>是 {@code GeneratePsychologyReportTask} 内的匿名类，六个方法
      * <b>全部只打 debug 日志、无业务逻辑</b>（生成是异步的，此处仅记录事件）。
      * 此处逐方法原样复刻。</p>
      */
@@ -291,7 +291,7 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
     /**
      * 量表报告事件监听器。
      *
-     * <p>迁移前是匿名类，三个方法同样只打 debug 日志。此处逐方法原样复刻。</p>
+     * <p>是匿名类，三个方法同样只打 debug 日志。此处逐方法原样复刻。</p>
      */
     private static final class LoggingScaleListener implements ScaleReportListener {
 

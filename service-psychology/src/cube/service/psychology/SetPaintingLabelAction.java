@@ -23,13 +23,13 @@ import java.util.List;
  * <p>对应线协议动作 {@code setPaintingLabel}，逐字符等同于既有枚举
  * {@code AIGCAction.SetPaintingLabel} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code NoToken → InvalidParameter → Failure → Ok}。</p>
  *
- * <p><b>写入语义</b>：与迁移前的场景方法完全一致——先按报告序列号删除既有标签，
+ * <p><b>写入语义</b>：与场景方法完全一致——先按报告序列号删除既有标签，
  * 标签列表为空时直接返回成功，否则逐条插入。<b>该操作不是原子的</b>：
- * 删除成功而插入失败时，该报告的标签会全部丢失。此缺陷为迁移前既有，
- * 本批次原样搬运不引入新行为，修复留待报告链路批次。</p>
+ * 删除成功而插入失败时，该报告的标签会全部丢失。此缺陷为既有，
+ * 调用方需知悉此风险。</p>
  *
  * <p><b>为何 requiresToken 取 false</b>：同
  * {@link SetPaintingReportStateAction}。</p>

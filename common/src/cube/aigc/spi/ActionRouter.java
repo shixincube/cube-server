@@ -10,6 +10,7 @@ import cell.util.log.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -47,6 +48,52 @@ public final class ActionRouter {
      * 动作表。Key 为线协议动作名。
      */
     private final ConcurrentHashMap<String, Bound> table = new ConcurrentHashMap<>();
+
+    /**
+     * 已声明动作名。
+     *
+     * <p>与 {@link #table} <b>刻意分离</b>：本集合记录「业务模块声明过该动作」，
+     * 不随绑定失败而移除。模块装载失败时绑定会回滚，但声明仍在——
+     * 宿主据此判定「该动作本应由某模块处理，只是模块未就绪」，
+     * 从而回 {@code ModuleNotLoaded} 而非让请求悬挂。</p>
+     */
+    private final Set<String> declaredActions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    /**
+     * 标记一批动作已被某模块声明。
+     *
+     * <p>由 {@code ModuleRegistry} 在实例化模块后、绑定动作前调用。
+     * 重复声明同一动作不视为冲突——冲突判定仍以 {@link #bind} 为准。</p>
+     *
+     * @param actions 动作名集合，可为 {@code null}。
+     */
+    public void declareAll(Collection<String> actions) {
+        if (null == actions) {
+            return;
+        }
+
+        for (String action : actions) {
+            if (null != action && !action.isEmpty() && !RESERVED_ACTIONS.contains(action)) {
+                this.declaredActions.add(action);
+            }
+        }
+    }
+
+    /**
+     * 判断某动作是否已被业务模块声明。
+     *
+     * <p>供宿主在动作表未命中时区分两种情形：</p>
+     * <ul>
+     *     <li>已声明 → 所属模块未就绪，应回 {@code ModuleNotLoaded}；</li>
+     *     <li>未声明 → 该动作本就不属于任何业务模块，按既有分支处理。</li>
+     * </ul>
+     *
+     * @param action 动作名。
+     * @return 已被声明时返回 {@code true}。
+     */
+    public boolean isDeclared(String action) {
+        return null != action && this.declaredActions.contains(action);
+    }
 
     /**
      * 是否已完成装载。用于在装载前把派发成本压到一次 volatile 读。

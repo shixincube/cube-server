@@ -36,20 +36,20 @@ import java.util.List;
 /**
  * 心理学业务模块。
  *
- * <p><b>已迁范围（22 个动作）</b>：</p>
+ * <p><b>提供的动作</b>：</p>
  * <ul>
- *   <li>首批 3 个：绘画标签与报告状态（{@code setPaintingReportState}、
+ *   <li>绘画标签与报告状态（{@code setPaintingReportState}、
  *       {@code getPaintingLabel}、{@code setPaintingLabel}）——只读写
  *       {@link PsychologyStorage} 的标签与状态方法；</li>
- *   <li>第二批 8 个：客户与日程 CRUD（{@code appQueryCustomer}、
+ *   <li>8 个：客户与日程 CRUD（{@code appQueryCustomer}、
  *       {@code appNewCustomer}、{@code appUpdateCustomer}、
  *       {@code appDeleteCustomer}、{@code appQuerySchedule}、
  *       {@code appNewSchedule}、{@code appUpdateSchedule}、
  *       {@code appDeleteSchedule}）；</li>
- *   <li>第三批 4 个：量表族（{@code listPsychologyScales}、
+ *   <li>4 个：量表族（{@code listPsychologyScales}、
  *       {@code getPsychologyScale}、{@code generatePsychologyScale}、
  *       {@code submitPsychologyAnswerSheet}）；</li>
- *   <li>第四批 7 个：报告链路（{@code getPsychologyReport}、
+ *   <li>7 个：报告链路（{@code getPsychologyReport}、
  *       {@code stopGeneratingPsychologyReport}、{@code resetReportAttention}、
  *       {@code getPsychologyReportPart}、{@code modifyReportRemark}、
  *       {@code getPsychologyPainting}、{@code checkPsychologyPainting}）。
@@ -58,7 +58,7 @@ import java.util.List;
  * </ul>
  *
  * <p>前 11 个动作<b>只读写本地存储</b>，因此不需要分词器与 TF-IDF 语料；
- * 第三批的 {@code submitPsychologyAnswerSheet} 需要关键词抽取，
+ * 的 {@code submitPsychologyAnswerSheet} 需要关键词抽取，
  * 但它经 {@link AIGCHost#extractKeywords(String, int)} 委托宿主完成，
  * <b>本模块仍不持有</b>分词器或语料。</p>
  *
@@ -73,11 +73,10 @@ import java.util.List;
  * {@link PsychologyStorage} 整体迁入本模块，插件与宿主共用同一份 DDL，
  * 不存在两套表定义漂移的可能。</p>
  *
- * <p><b>令牌校验的分批差异</b>：首批 3 个动作的 {@code requiresToken=false}
- * （迁移前只判令牌存在性），第二批 8 个为 {@code true}（迁移前校验有效性），
- * 第三批 4 个量表族为 {@code false}（迁移前令牌无效回
- * {@code IllegalOperation}，而骨架在 {@code true} 时会改回
- * {@code InconsistentToken}）。三者都刻意对齐迁移前语义，
+ * <p><b>令牌校验的分组差异</b>：客户与日程 CRUD 8 个动作为 {@code true}
+ * （校验令牌有效性），其余动作为 {@code false}——它们对无效令牌返回
+ * {@code IllegalOperation} 或 {@code NoToken}，若交由宿主骨架前置校验
+ * 会改成 {@code InconsistentToken}，属应答码变更。
  * 详见 {@link #getActions()} 的注释与各处理器 javadoc。</p>
  *
  * <p><b>包名约束</b>：本类必须与 {@link PsychologyStorage} 同包。若把它放进
@@ -188,13 +187,13 @@ public final class PsychologyModule implements ActionModule {
         return new ModuleDescriptor(NAME, VERSION, AIGCSPI.VERSION,
                 // 动作命名空间：不参与线协议，仅供冲突检测与日志
                 Collections.singletonList(NAME),
-                // REST 前缀：与 dispatcher 侧现存的 16 条心理学端点一致。
+                // REST 前缀：与 dispatcher 侧现存的 17 条心理学端点一致。
                 // 插件【不】注册 handler（其编译期不含 cube-dispatcher-*.jar），
                 // 本声明供 dispatcher 侧做前缀冲突检测与兜底通道的模块定位。
                 Arrays.asList(REST_PREFIX, "/aigc/painting", "/aigc/stream"),
-                // 本批次 3 个动作只读写本地存储，不调用任何模型单元
+                // 上述动作不调用任何模型单元
                 Collections.emptyList(),
-                // 本批次不依赖兄弟模块
+                // 不依赖兄弟模块
                 Collections.emptyList(),
                 // setup 内只做「读配置 + new + open」，不含建表，实际耗时在百毫秒级
                 30000L,
@@ -246,8 +245,7 @@ public final class PsychologyModule implements ActionModule {
      * 为存储层注入六维描述生成器。
      *
      * <p>未注入时 {@link PsychologyStorage} 会记 WARN 并跳过描述，结果等同于
-     * 「描述为空」。这与迁移前「分词器为 {@code null} 时生成过程抛空指针并被
-     * {@code makeReport} 的 catch-all 吞掉」的结果一致，因此注入失败不阻断装载。</p>
+     * 「描述为空」，因此注入失败不阻断装载。</p>
      *
      * @param host 宿主能力接口。
      */
@@ -275,22 +273,16 @@ public final class PsychologyModule implements ActionModule {
 
     @Override
     public List<ActionBinding> getActions() {
-        // 前 3 个绑定的 requiresToken 一律为 false，理由见各动作处理器的 javadoc：
-        // 迁移前这三个任务只判「令牌是否存在」，不校验有效性，若交由宿主前置校验
-        // 会把「无令牌」的应答码从 NoToken 改成 InvalidParameter，并新增
-        // InconsistentToken 拦截——两者都是线协议可见的语义变更。
+        // requiresToken 决定宿主是否在派发前校验令牌有效性，须逐个动作对齐：
         //
-        // 后 8 个绑定的 requiresToken 为 true：这批任务迁移前本就调用
-        // getUser(tokenCode)（即校验令牌有效性），ActionRunner 的前置校验与之等价，
-        // 因此处理器内无需重复写令牌代码。
-        //
-        // 第三批 4 个量表族绑定同样为 false：这批任务迁移前令牌无效时回的是
-        // IllegalOperation，而骨架在 true 时会改回 InconsistentToken，
-        // 属线协议可见变更，故保留由处理器自判。
-        //
-        // 第四批 3 个报告绑定亦为 false，理由见下方注释。
+        // · true（仅客户与日程 CRUD 8 个）：由骨架前置校验令牌，
+        //   无效即回 InvalidParameter + InconsistentToken，处理器内无需重复校验。
+        // · false（其余全部）：这些动作对无效令牌有各自约定的应答码
+        //   （NoToken 或 IllegalOperation），若交由骨架前置校验会被改写成
+        //   InconsistentToken —— 属线协议可见变更，故保留由处理器自判。
+        //   逐个动作的具体依据见各处理器 javadoc。
         return Arrays.asList(
-                // ── 首批：绘画标签与报告状态 ──
+                // ── 绘画标签与报告状态 ──
                 new ActionBinding(ACTION_SET_REPORT_STATE, new SetPaintingReportStateAction(),
                         false, new AIGCStateCode[] {
                                 AIGCStateCode.NoToken, AIGCStateCode.InvalidParameter,
@@ -304,7 +296,7 @@ public final class PsychologyModule implements ActionModule {
                                 AIGCStateCode.NoToken, AIGCStateCode.InvalidParameter,
                                 AIGCStateCode.Failure, AIGCStateCode.Ok}),
 
-                // ── 第二批：客户 CRUD（未注册用户回空列表，故白名单无 IllegalOperation）──
+                // ── 客户 CRUD（未注册用户回空列表，故白名单无 IllegalOperation）──
                 new ActionBinding(ACTION_QUERY_CUSTOMER, new AppQueryCustomerAction(),
                         true, new AIGCStateCode[] {
                                 AIGCStateCode.InvalidParameter, AIGCStateCode.InconsistentToken,
@@ -325,7 +317,7 @@ public final class PsychologyModule implements ActionModule {
                                 AIGCStateCode.IllegalOperation, AIGCStateCode.NoData,
                                 AIGCStateCode.Failure, AIGCStateCode.Ok}),
 
-                // ── 第二批：日程 CRUD ──
+                // ── 日程 CRUD ──
                 new ActionBinding(ACTION_QUERY_SCHEDULE, new AppQueryScheduleAction(),
                         true, new AIGCStateCode[] {
                                 AIGCStateCode.InvalidParameter, AIGCStateCode.InconsistentToken,
@@ -346,8 +338,8 @@ public final class PsychologyModule implements ActionModule {
                                 AIGCStateCode.IllegalOperation, AIGCStateCode.NoData,
                                 AIGCStateCode.Failure, AIGCStateCode.Ok}),
 
-                // ── 第三批：量表族 ──
-                // requiresToken 为 false：这批任务迁移前令牌无效时回的是
+                // ── 量表族 ──
+                // requiresToken 为 false：这些动作令牌无效时回的是
                 // IllegalOperation（而非骨架在 true 时给出的 InconsistentToken），
                 // 交由骨架前置校验会改变线协议可见的应答码，故处理器内自行判定。
                 new ActionBinding(ACTION_LIST_SCALES, new ListPsychologyScalesAction(),
@@ -370,8 +362,8 @@ public final class PsychologyModule implements ActionModule {
                                 AIGCStateCode.Failure, AIGCStateCode.InvalidParameter,
                                 AIGCStateCode.Ok}),
 
-                // ── 第四批：报告读取与控制 ──
-                // 三者均为 false：迁移前 stopGenerating 的令牌无效回 IllegalOperation，
+                // ── 报告读取与控制 ──
+                // 三者均为 false：stopGenerating 的令牌无效回 IllegalOperation，
                 // 而 resetReportAttention 根本不校验令牌有效性；
                 // 交由骨架前置校验会同时改变这两处的线协议可见行为
                 new ActionBinding(ACTION_GENERATE_REPORT, new GeneratePsychologyReportAction(),
@@ -394,8 +386,8 @@ public final class PsychologyModule implements ActionModule {
                                 AIGCStateCode.Failure, AIGCStateCode.IllegalOperation,
                                 AIGCStateCode.Ok}),
 
-                // ── 第四批第 2 批：报告内容与备注 ──
-                // 均为 false：迁移前两者令牌无效时回的都是 IllegalOperation
+                // ── 报告内容与备注 ──
+                // 均为 false：无效令牌回 IllegalOperation
                 new ActionBinding(ACTION_REPORT_PART, new GetPsychologyReportPartAction(),
                         false, new AIGCStateCode[] {
                                 AIGCStateCode.NoToken, AIGCStateCode.IllegalOperation,
@@ -407,7 +399,7 @@ public final class PsychologyModule implements ActionModule {
                                 AIGCStateCode.Failure, AIGCStateCode.InvalidParameter,
                                 AIGCStateCode.Ok}),
 
-                // ── 第四批第 3 批：绘画读取与校验 ──
+                // ── 绘画读取与校验 ──
                 new ActionBinding(ACTION_PAINTING, new GetPsychologyPaintingAction(),
                         false, new AIGCStateCode[] {
                                 AIGCStateCode.NoToken, AIGCStateCode.IllegalOperation,
@@ -460,7 +452,7 @@ public final class PsychologyModule implements ActionModule {
      * 覆写绘画标签（先清后写）。
      *
      * <p><b>注意该操作不是原子的</b>：删除成功而插入失败时，该报告的标签会全部丢失。
-     * 这是迁移前的既有语义，本批次原样搬运不引入新行为，修复留待报告链路批次。</p>
+     * 这是既有语义，调用方需知悉此风险。</p>
      *
      * @param sn 报告序列号。
      * @param labels 待写入的标签列表，可为空。
@@ -491,7 +483,7 @@ public final class PsychologyModule implements ActionModule {
         return this.storage.writePaintingManagementState(sn, state);
     }
 
-    // ───────── 客户与日程（第二批） ─────────
+    // ───────── 客户与日程 ─────────
     //
     // 联系人 ID 由处理器从 ctx.getToken().getContactId() 取得后传入，
     // 本模块不做任何令牌解析——那是宿主的职责。
@@ -610,8 +602,7 @@ public final class PsychologyModule implements ActionModule {
     /**
      * 解析令牌对应的联系人 ID。
      *
-     * <p>迁移前这批任务直接调 {@code service.getToken(tokenCode).getContactId()}。
-     * 此处收敛为「解析失败返回 0」，让处理器得以用单一条件判空。</p>
+     * <p>解析失败返回 0，让处理器得以用单一条件判空。</p>
      *
      * <p><b>宿主能力从上下文取而非从模块字段取</b>：模块在 {@code setup(host)}
      * 期间保存的那份引用是<b>装载期</b>注入的，若这里用它解析请求令牌，
@@ -728,7 +719,7 @@ public final class PsychologyModule implements ActionModule {
      * <p><b>为何不自建</b>：报告在生成过程中先落在宿主的内存表里，
      * 此刻尚未入库；若本模块只查 {@link PsychologyStorage}，
      * 调用方查「正在生成中」的报告会得到「不存在」，
-     * 而迁移前能查到（并附带队列位置）。这是线协议可见的行为回归。
+     * 而经由宿主接口能查到（并附带队列位置）。这是线协议可见的行为回归。
      * 故整条读取经宿主完成，宿主持有内存表与队列的归属。</p>
      *
      * @param ctx 动作上下文。
@@ -812,7 +803,7 @@ public final class PsychologyModule implements ActionModule {
      * 两步都已由本模块的 {@link PsychologyStorage} 提供，无需经 SPI。</p>
      *
      * <p>⚠️ 回读报告会触发六维描述生成，而描述器在 {@link #setup} 时注入；
-     * 若注入失败，描述为空（与迁移前的降级结果一致）。</p>
+     * 若注入失败，描述为空（与降级结果一致）。</p>
      *
      * @param reportSn 报告序列号。
      * @param remark 新备注。

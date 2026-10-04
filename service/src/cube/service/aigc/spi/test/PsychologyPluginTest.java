@@ -39,9 +39,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * 心理学插件的装载与动作契约验证。
  *
- * <p>覆盖 Phase 2 首批迁移的三个动作：{@code setPaintingReportState} /
+ * <p>覆盖绘画标签与报告状态三个动作：{@code setPaintingReportState} /
  * {@code getPaintingLabel} / {@code setPaintingLabel}。重点验证
- * <b>状态码序列与迁移前逐项一致</b>——这是「切流后应答逐字节一致」的前提。</p>
+ * <b>状态码序列</b>——这是「应答逐字节一致」的前提。</p>
  *
  * <p><b>运行前提</b>：模块注册表以相对路径 {@code config/xxx} 定位配置，
  * 而 {@code System.setProperty("user.dir")} 对 {@code File} 的相对路径解析
@@ -101,7 +101,7 @@ public class PsychologyPluginTest {
             registry.setHost(newRegistryHost());
             count = registry.load();
             assertTrue("S2 成功装载1 个插件", 1 == count);
-            // 动作总数随迁移批次递增，此处只断言「已迁批次全部绑定」
+            // 动作总数可扩充，此处只断言「全部动作均已绑定」
             assertTrue("S2 绑定数至少为 22", router.router.size() >= 22);
             assertTrue("S2 setPaintingReportState 已绑定", router.router.isBound("setPaintingReportState"));
             assertTrue("S2 getPaintingLabel 已绑定", router.router.isBound("getPaintingLabel"));
@@ -127,11 +127,11 @@ public class PsychologyPluginTest {
             // 场景4：三个绑定的 requiresToken 必须为 false
             //（取 true 会把「无令牌」应答码从 NoToken 改成 InvalidParameter，并新增
             //  InconsistentToken 拦截，属线协议可见的语义变更）
-            // 首批 3 个绑定的 requiresToken 必须为 false
+            // 标签与状态类绑定的 requiresToken 必须为 false
             //（取 true 会把「无令牌」应答码从 NoToken 改成 InvalidParameter，并新增
             //  InconsistentToken 拦截，属线协议可见的语义变更）
-            // 第二批 8 个刻意为 true：这批任务迁移前本就校验令牌有效性。
-            // 此处按 action 名前缀判定，不写死数量，以便后续批次扩充时本断言依然有效。
+            // CRUD 8 个刻意为 true：这些动作本就校验令牌有效性。
+            // 此处按 action 名前缀判定，不写死数量，以便动作扩充时本断言依然有效。
             boolean firstBatchOk = true;
             for (ActionBinding binding : module.getActions()) {
                 boolean isPainting = binding.action.startsWith("set") || binding.action.startsWith("get");
@@ -142,7 +142,7 @@ public class PsychologyPluginTest {
             assertTrue("S4 首批（绘画标签/报告状态）绑定的 requiresToken 均为 false", firstBatchOk);
             assertTrue("S4 绑定数量至少为 22", module.getActions().size() >= 22);
 
-            // 场景5：状态码契约（迁移前逐项对照）
+            // 场景5：状态码契约
             ActionDialect setState = dialect("setPaintingReportState", "t1", "{\"sn\":1,\"state\":1}");
             RecordingContext ctx = new RecordingContext(setState, module);
             AIGCStateCode code = router.router.lookup("setPaintingReportState").getBinding().task.handle(ctx);
@@ -193,7 +193,7 @@ public class PsychologyPluginTest {
                     AIGCStateCode.InconsistentToken != code);
             assertTrue("S6 无效 token 时正常执行", AIGCStateCode.Ok == code);
 
-            //════ 第二批：客户/日程 CRUD ════
+            // ── 客户/日程 CRUD ──
             // 注：本段必须放在「场景7 卸载」之前——卸载会清空路由表与模块注册表，
             //     之后的 findModule 与 isBound 断言都将失去被测对象。
 
@@ -211,9 +211,8 @@ public class PsychologyPluginTest {
                     ++falseCount;
                 }
             }
-            // 第二批 8 个为true；第三批 4 个量表族为 false，故 true 数固定为 8
+            // true 固定为 8（仅 CRUD），其余为 false
             assertTrue("S10 其中 8 个requiresToken=true", 8 == trueCount);
-            // false = 首批 3 + 第三批 4 + 第四批 3
             assertTrue("S10 其中 15 个 requiresToken=false", 15 == falseCount);
 
             for (String name : new String[] {"appQueryCustomer", "appNewCustomer",
@@ -288,7 +287,7 @@ public class PsychologyPluginTest {
             }
             assertTrue("S9 并发 400 次调用结果恒为 Ok", 0 == nonOk.get());
 
-            //════ 第三批：量表族 ════
+            // ── 量表 ──
             // S21 绑定元数据：4 个量表族动作已绑定，且 requiresToken 均为 false
             assertTrue("S21 绑定总数为 23", 23 == router.router.size());
             assertTrue("S21 listPsychologyScales 已绑定", router.router.isBound("listPsychologyScales"));
@@ -318,7 +317,7 @@ public class PsychologyPluginTest {
                     ctx(module, "submitPsychologyAnswerSheet", null, null, "{\"scaleSn\":1}"));
             assertTrue("S22 submitSheet 无令牌回 NoToken", AIGCStateCode.NoToken == r);
 
-            // S23 令牌无效：4 个动作均回 IllegalOperation（迁移前语义，非 InconsistentToken）
+            // S23 令牌无效：4 个动作均回 IllegalOperation
             AIGCHost nilHost = new NilTokenHost();
             r = handle(router, "listPsychologyScales",
                     ctx(module, "listPsychologyScales", regToken, nilHost, null));
@@ -347,7 +346,7 @@ public class PsychologyPluginTest {
             r = handle(router, "getPsychologyScale", c24);
             assertTrue("S24 getScale 按名查不到回 Failure", AIGCStateCode.Failure == r);
 
-            // S24 getScale 无 sn 无 name：迁移前 scale 保持 null，回 Failure
+            // S24 getScale 无 sn 无 name：scale 保持 null，回 Failure
             c24 = ctx(module, "getPsychologyScale", regToken, regHost, "{}");
             r = handle(router, "getPsychologyScale", c24);
             assertTrue("S24 getScale 无 sn 无 name 回 Failure", AIGCStateCode.Failure == r);
@@ -358,7 +357,7 @@ public class PsychologyPluginTest {
             assertTrue("S25 generateScale 缺 name 回 InvalidParameter",
                     AIGCStateCode.InvalidParameter == r);
 
-            // S25 generateScale 缺 gender：迁移前为无默认值必填项，同样落 InvalidParameter
+            // S25 generateScale 缺 gender：为无默认值必填项，同样落 InvalidParameter
             r = handle(router, "generatePsychologyScale",
                     ctx(module, "generatePsychologyScale", regToken, regHost, "{\"name\":\"x\",\"age\":20}"));
             assertTrue("S25 generateScale 缺 gender 回 InvalidParameter",
@@ -428,7 +427,7 @@ public class PsychologyPluginTest {
             }
             assertTrue("S28 量表动作并发 120 次调用结果恒为 Failure", 0 == scaleNonOk.get());
 
-            //════ 第四批：报告读取与控制 ════
+            // ── 报告读取与控制 ──
             // S29 绑定元数据：3 个报告动作已绑定，requiresToken 均为 false
             assertTrue("S29 stopGeneratingPsychologyReport 已绑定",
                     router.router.isBound("stopGeneratingPsychologyReport"));
@@ -439,7 +438,7 @@ public class PsychologyPluginTest {
                             && !router.router.lookup("getPsychologyReport").getBinding().requiresToken
                             && !router.router.lookup("resetReportAttention").getBinding().requiresToken);
 
-            // S30 三者均以 NoToken 起手（迁移前只判方言里有无 token 参数）
+            // S30 三者均以 NoToken 起手（只判方言里有无 token 参数）
             assertTrue("S30 stopReport 无令牌回 NoToken",
                     AIGCStateCode.NoToken == handle(router, "stopGeneratingPsychologyReport",
                             ctx(module, "stopGeneratingPsychologyReport", null, null, "{\"sn\":1}")));
@@ -451,7 +450,7 @@ public class PsychologyPluginTest {
                             ctx(module, "resetReportAttention", null, null, "{\"sn\":1}")));
 
             // S31 令牌无效：stopReport 与 getReport 回 IllegalOperation；
-            //     但 resetAttention 迁移前不校验令牌有效性，绝不能被拦截。
+            //     但 resetAttention 不校验令牌有效性，绝不能被拦截。
             //     用 ReportHost（保留报告数据能力）但把 resolvedToken 置空来模拟「令牌无效」，
             //     不可用 NilTokenHost —— 那会把报告数据能力一并抹掉，测的就不是令牌分支了
             ReportHost rh = new ReportHost();
@@ -484,7 +483,7 @@ public class PsychologyPluginTest {
                     AIGCStateCode.Failure == handle(router, "stopGeneratingPsychologyReport", c32));
             assertTrue("S32 stopReport Failure 回显原始请求体", 999 == c32.data.getLong("sn"));
 
-            // S32 stopReport 缺 sn：迁移前 packet.data.getLong 抛异常 → InvalidParameter
+            // S32 stopReport 缺 sn：packet.data.getLong 抛异常 → InvalidParameter
             assertTrue("S32 stopReport 缺 sn 回 InvalidParameter",
                     AIGCStateCode.InvalidParameter == handle(router, "stopGeneratingPsychologyReport",
                             ctx(module, "stopGeneratingPsychologyReport", regToken, rh, "{}")));
@@ -528,7 +527,7 @@ public class PsychologyPluginTest {
             c33 = ctx(module, "getPsychologyReport", regToken, rh, "{\"size\":5,\"type\":\"scale\"}");
             assertTrue("S33 scale 列表分支回 Ok",
                     AIGCStateCode.Ok == handle(router, "getPsychologyReport", c33));
-            // ⚠️ 锁既有缺陷：迁移前 L166 填的是 num（总条数）而非 pageSize，勿「顺手修正」
+            // ⚠️ 锁既有缺陷：L166 填的是 num（总条数）而非 pageSize，勿「顺手修正」
             assertTrue("S33 scale 列表 size 为总条数（既有缺陷，勿修）",
                     1 == c33.data.getInt("size"));
 
@@ -544,12 +543,12 @@ public class PsychologyPluginTest {
                     AIGCStateCode.Failure == handle(router, "resetReportAttention", c34));
             assertTrue("S34 resetAttention Failure 回空对象", null != c34.data && c34.data.isEmpty());
 
-            // 缺 sn → InvalidParameter（迁移前用 has("sn") 判定，与参数类型非法区分）
+            // 缺 sn → InvalidParameter（用 has("sn") 判定，与参数类型非法区分）
             assertTrue("S34 resetAttention 缺 sn 回 InvalidParameter",
                     AIGCStateCode.InvalidParameter == handle(router, "resetReportAttention",
                             ctx(module, "resetReportAttention", regToken, rh, "{}")));
 
-            // sn 类型非法 → JSONException 落入 catch → IllegalOperation（全批唯一）
+            // sn 类型非法 → JSONException 落入 catch → IllegalOperation（本组唯一）
             assertTrue("S34 resetAttention sn 类型非法回 IllegalOperation",
                     AIGCStateCode.IllegalOperation == handle(router, "resetReportAttention",
                             ctx(module, "resetReportAttention", regToken, rh, "{\"sn\":\"abc\"}")));
@@ -567,7 +566,7 @@ public class PsychologyPluginTest {
                     AIGCStateCode.Ok == handle(router, "resetReportAttention", c34));
             assertTrue("S34 指定 attention 已透传", 2 == c34.data.getInt("attention"));
 
-            //════ 第四批第 2 批：报告内容与备注 ════
+            // ── 报告内容与备注 ──
             // S35 绑定元数据
             assertTrue("S35 getPsychologyReportPart 已绑定", router.router.isBound("getPsychologyReportPart"));
             assertTrue("S35 modifyReportRemark 已绑定", router.router.isBound("modifyReportRemark"));
@@ -609,7 +608,7 @@ public class PsychologyPluginTest {
             assertTrue("S37 处理中仅回 thought 字段", c37b.data.has("thought"));
             assertTrue("S37 处理中不回 content（未要求）", !c37b.data.has("content"));
 
-            // S37 reportPart：summary 开关在 content 为真时被忽略（迁移前 L80-82）
+            // S37 reportPart：summary 开关在 content 为真时被忽略（L80-82）
             RecordingContext c37c = ctx(module, "getPsychologyReportPart", regToken, rh,
                     "{\"sn\":" + rh.paintingSn + ",\"content\":true,\"summary\":true}");
             assertTrue("S37 reportPart content 优先于 summary 回 Ok",
@@ -633,7 +632,7 @@ public class PsychologyPluginTest {
                     AIGCStateCode.InvalidParameter == handle(router, "modifyReportRemark",
                             ctx(module, "modifyReportRemark", regToken, regHost, "{\"sn\":1}")));
 
-            //════ 第四批第 3 批：绘画读取与校验 ════
+            // ── 绘画读取与校验 ──
             // S39 绑定元数据
             assertTrue("S39 getPsychologyPainting 已绑定", router.router.isBound("getPsychologyPainting"));
             assertTrue("S39 checkPsychologyPainting 已绑定", router.router.isBound("checkPsychologyPainting"));
@@ -641,7 +640,7 @@ public class PsychologyPluginTest {
                     !router.router.lookup("getPsychologyPainting").getBinding().requiresToken
                             && !router.router.lookup("checkPsychologyPainting").getBinding().requiresToken);
 
-            // S40 令牌分支：painting 第二码 IllegalOperation，而 check 第二码是 **NoToken**（全批唯一）
+            // S40 令牌分支：painting 第二码 IllegalOperation，而 check 第二码是 **NoToken**（本组唯一）
             assertTrue("S40 painting 无令牌回 NoToken",
                     AIGCStateCode.NoToken == handle(router, "getPsychologyPainting",
                             ctx(module, "getPsychologyPainting", null, null, "{}")));
@@ -740,11 +739,11 @@ public class PsychologyPluginTest {
      * <p><b>令牌同时注入两处</b>：<b>方言参数</b>与 <b>已解析令牌</b>。
      * 原因有两类动作：</p>
      * <ul>
-     *   <li>{@code requiresToken=true} 的动作（第二批 CRUD）由宿主动作骨架
+     *   <li>{@code requiresToken=true} 的动作（CRUD）由宿主动作骨架
      *       前置校验令牌，处理器只读 {@code ctx.getToken()}；</li>
-     *   <li>{@code requiresToken=false} 的动作（首批与第三批量表族）在处理器内
+     *   <li>{@code requiresToken=false} 的动作在处理器内
      *       自行读方言里的令牌字符串，宿主的 {@code ActionRunner} 不参与解析。
-     *       若这里不注入，第二批用例照旧通过，而量表族会一律走
+     *       若这里不注入，CRUD 用例照旧通过，而量表类动作会一律走
      *       {@code NoToken} 分支——测试就会假绿。</li>
      * </ul>
      *
@@ -903,7 +902,7 @@ public class PsychologyPluginTest {
 
         @Override
         public AuthToken getToken() {
-            // requiresToken=false 的动作处理器不读它（首批 3 个）；为 null
+            // requiresToken=false 的动作处理器不读它；为 null
             return this.token;
         }
 
@@ -1058,28 +1057,6 @@ public class PsychologyPluginTest {
         }
 
         @Override
-        public String makeReportContent(cube.aigc.psychology.PaintingReport report, boolean summary,
-                int maxIndicators, boolean personality) {
-            return null;
-        }
-
-        @Override
-        public String makeRatingInformation(cube.aigc.psychology.PaintingReport report) {
-            return null;
-        }
-
-        @Override
-        public String makePageLink(cell.core.net.Endpoint endpoint, String token,
-                cube.aigc.psychology.PaintingReport report, boolean indicatorLink, boolean personalityLink) {
-            return null;
-        }
-
-        @Override
-        public String makePaintingFeature(cube.aigc.psychology.composition.PaintingFeatureSet featureSet) {
-            return "特征描述";
-        }
-
-        @Override
         public cube.aigc.psychology.PaintingReport getPaintingReport(long sn) {
             return null;
         }
@@ -1216,6 +1193,150 @@ public class PsychologyPluginTest {
         }
 
         @Override
+        public cube.common.entity.FileLabel saveFileWithContext(cube.auth.AuthToken token, String fileCode,
+                java.io.File file, String filename, boolean deleteAfterSave, org.json.JSONObject context) {
+            return null;
+        }
+
+        @Override
+        public java.io.File convertWavToMp3(String wavFileName, String mp3FileName) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.User getUserById(long uid) {
+            return null;
+        }
+
+        @Override
+        public java.util.List<cube.aigc.text.Keyword> extractWeightedKeywords(String content, int topN) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.AIGCUnit selectUnitForContact(String capabilityName, long contactId) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.AIGCChannel createChannelByCode(String tokenCode, String participant,
+                String channelCode, cube.common.Language language) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.User getUser(String tokenCode) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.AIGCUnit selectIdleUnit(String capabilityName) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.AIGCChannel getChannel(String channelCode) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.AIGCChannel createChannel(cube.auth.AuthToken authToken, String participant,
+                String channelCode, cube.common.Language language) {
+            return null;
+        }
+
+        @Override
+        public void generateText(cube.common.entity.AIGCChannel channel, cube.common.entity.AIGCUnit unit,
+                String query, String prompt, cube.common.entity.GeneratingOption option,
+                java.util.List<cube.common.entity.GeneratingRecord> histories, int maxHistories,
+                java.util.List<cube.aigc.complex.attachment.Attachment> attachments,
+                java.util.List<String> categories, boolean recordable,
+                cube.aigc.listener.GenerateTextListener listener) {
+        }
+
+        @Override
+        public cube.common.entity.FileLabel performSpeakerDiarization(cube.auth.AuthToken authToken,
+                cube.common.entity.FileLabel fileLabel, boolean preprocess, boolean storage, boolean jumpToFirst,
+                cube.aigc.listener.VoiceDiarizationListener listener) {
+            return null;
+        }
+
+        @Override
+        public void writeChatHistory(cube.common.entity.AIGCChatHistory history) {
+        }
+
+        @Override
+        public java.util.List<cube.common.entity.AIGCChatHistory> readChatHistories(long contactId, String domain,
+                long startTime, long endTime) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.Chart readLastChart(String name) {
+            return null;
+        }
+
+        @Override
+        public boolean insertChart(cube.common.entity.Chart chart) {
+            return false;
+        }
+
+        @Override
+        public boolean writeCounselingRecording(cube.auth.AuthToken authToken, String streamName, long timestamp,
+                long duration, cube.aigc.psychology.Attribute attribute,
+                cube.aigc.psychology.consultation.ConsultationTheme theme, String fileCode) {
+            return false;
+        }
+
+        @Override
+        public java.io.File getWorkingPath() {
+            return null;
+        }
+
+        @Override
+        public boolean semanticSearch(String query, cube.aigc.SemanticSearchListener listener) {
+            return false;
+        }
+
+        @Override
+        public String generatePersonalKnowledge(String tokenCode, String query, boolean english) {
+            return null;
+        }
+
+        @Override
+        public boolean matchSimilarity(cube.common.entity.FileLabel fileLabel,
+                java.util.List<String> templateNames,
+                cube.aigc.cv.MatchSimilarityListener listener) {
+            return false;
+        }
+
+        @Override
+        public cube.common.entity.FileLabel downloadFile(cube.auth.AuthToken authToken, String fileUrl) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.Contact getContact(String tokenCode) {
+            return null;
+        }
+
+        @Override
+        public cube.common.entity.Membership getMembership(String domain, long contactId, int state) {
+            return null;
+        }
+
+        @Override
+        public int getRemainingUsages(cube.common.entity.User user, cube.common.entity.Membership membership) {
+            return 0;
+        }
+
+        @Override
+        public cube.aigc.psychology.ReportPermission allowPredictPainting(String domain,
+                cube.common.entity.User user, long reportSn) {
+            return null;
+        }
+
+        @Override
         public cube.aigc.psychology.PaintingReport generatePaintingReport(cube.common.entity.AIGCChannel channel,
                 cube.aigc.psychology.Attribute attribute, cube.common.entity.FileLabel fileLabel,
                 cube.aigc.psychology.Theme theme, int maxIndicators, boolean adjust, int retention,
@@ -1276,7 +1397,7 @@ public class PsychologyPluginTest {
     /**
      * 恒定返回「令牌无效」的宿主能力。
      *
-     * <p>用于验证量表族动作的令牌失效分支：迁移前这批动作在
+     * <p>用于验证量表族动作的令牌失效分支：这些动作在
      * {@code getToken()} 返回 {@code null} 时回 {@code IllegalOperation}，
      * 而非宿主动作骨架在 {@code requiresToken=true} 时给出的
      * {@code InconsistentToken}。本类只覆写令牌解析，其余行为沿用
@@ -1318,7 +1439,7 @@ public class PsychologyPluginTest {
      * 返回「处理中」状态报告的宿主能力。
      *
      * <p>用于验证报告链路里最容易被忽略的一条分支：报告状态为
-     * {@code Processing} 或 {@code Inferencing} 时，迁移前只填
+     * {@code Processing} 或 {@code Inferencing} 时，只填
      * {@code thought} 一个字段（原始特征描述，<b>不</b>调模型），
      * 其余字段全部跳过，但仍然回 {@code Ok}。</p>
      */
@@ -1354,7 +1475,7 @@ public class PsychologyPluginTest {
      * <p>报告运行态（生成中报告的内存表、任务队列）由宿主持有，
      * 真实实现依赖 {@code PsychologyScene} 的单例状态与数据库，
      * 在用例中无法复现。本类以固定数据替代，用于验证
-     * <b>处理器是否把参数正确透传、是否按迁移前的状态码契约应答</b>，
+     * <b>处理器是否把参数正确透传、是否按状态码契约应答</b>，
      * 而不验证宿主自身的查询逻辑。</p>
      */
     static class ReportHost extends NoopHost {
@@ -1406,14 +1527,6 @@ public class PsychologyPluginTest {
         }
 
         @Override
-        public String makeReportContent(cube.aigc.psychology.PaintingReport report, boolean summary,
-                int maxIndicators, boolean personality) {
-            // 记录参数以便断言「content 与 summary 的优先级」是否正确透传
-            this.lastContentArgs = (summary ? "S" : "F") + maxIndicators + (personality ? "P" : "-");
-            return "内容-" + this.lastContentArgs;
-        }
-
-        @Override
         public JSONObject queryPaintingReport(long sn, String format) {
             if (sn != this.paintingSn) {
                 return null;
@@ -1422,7 +1535,7 @@ public class PsychologyPluginTest {
             JSONObject json = new JSONObject();
             json.put("sn", sn);
             json.put("format", format);
-            // 摘要形态才带队列位置，与迁移前一致
+            // 摘要形态才带队列位置，与既有行为一致
             if ("compact".equals(format)) {
                 json.put("queuePosition", 2);
             }

@@ -20,10 +20,10 @@ import org.json.JSONObject;
  * <p>对应线协议动作 {@code getPsychologyReport}，逐字符等同于既有枚举
  * {@code AIGCAction.GetPsychologyReport} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code NoToken → IllegalOperation → InvalidParameter → Ok / Failure}。</p>
  *
- * <p><b>三分支结构</b>（迁移前 L88-176）：</p>
+ * <p><b>三分支结构</b>（L88-176）：</p>
  * <ul>
  *   <li>{@code sn != 0}：查绘画报告，未命中则回退查量表报告；</li>
  *   <li>{@code sn == 0 && pageSize != 0}：列表分支，按 {@code type} 分绘画/量表；</li>
@@ -32,12 +32,12 @@ import org.json.JSONObject;
  *
  * <p><b>⚠️ 已知既有缺陷，此处原样复刻、请勿「顺手修正」</b>：量表报告列表分支
  * 应答的 {@code size} 字段填的是<b>总条数</b>而非请求的 {@code pageSize}
- * （迁移前 {@code GetPsychologyReportTask} L166）。这会让客户端按 {@code size}
+ * （{@code GetPsychologyReportTask} L166）。这会让客户端按 {@code size}
  * 翻页时行为异常，但已上线多年、客户端可能已适配该行为；
  * 插件化不得改变线协议可见的输出。</p>
  *
  * <p><b>为何 requiresToken 取 false</b>：同
- * {@link StopGeneratingReportAction}，迁移前令牌无效回 {@code IllegalOperation}。</p>
+ * {@link StopGeneratingReportAction}，令牌无效回 {@code IllegalOperation}。</p>
  */
 public final class GetPsychologyReportAction implements AIGCActionTask {
 
@@ -62,7 +62,7 @@ public final class GetPsychologyReportAction implements AIGCActionTask {
             return AIGCStateCode.IllegalOperation;
         }
 
-        // 刻意不判 data 是否为 null：迁移前 packet.data 为 null 时会在下方
+        // 刻意不判 data 是否为 null：packet.data 为 null 时会在下方
         // 解析块抛 NPE 并落入 catch 回 InvalidParameter（空对象）。
         // 若改用 ctx.getParams()，它返回空对象使全部参数取默认值，
         // 从而走到「列表分支」回 Ok——把失败变成了成功
@@ -102,7 +102,7 @@ public final class GetPsychologyReportAction implements AIGCActionTask {
                     descending, state, type);
         }
 
-        // 迁移前此处回显原始请求体
+        // 此处回显原始请求体
         ctx.respond(AIGCStateCode.InvalidParameter, data);
         return AIGCStateCode.InvalidParameter;
     }
@@ -110,7 +110,7 @@ public final class GetPsychologyReportAction implements AIGCActionTask {
     /**
      * 按序列号读取单个报告。
      *
-     * <p>迁移前先查绘画报告，未命中则回退查量表报告（L88-127）。
+     * <p>先查绘画报告，未命中则回退查量表报告（L88-127）。
      * 两者都未命中时回 {@code Failure} 并回显请求体。</p>
      *
      * @param ctx 动作上下文。
@@ -130,10 +130,10 @@ public final class GetPsychologyReportAction implements AIGCActionTask {
             return AIGCStateCode.Ok;
         }
 
-        // 导出过程可能抛异常（如 Markdown 模板缺失），迁移前在此回 Failure
+        // 导出过程可能抛异常（如 Markdown 模板缺失），在此回 Failure
         // 并回显请求体（L110-114）；宿主实现已把异常收敛为 null，
         // 故这里无法区分「报告不存在」与「导出失败」，两者都回 Failure——
-        // 与迁移前对「导出失败」的应答一致，而「不存在」本就该回 Failure
+        // 与「导出失败」的应答一致，而「不存在」本就该回 Failure
         Logger.d(GetPsychologyReportAction.class, "#querySingle - No painting report: " + sn);
 
         JSONObject scaleReport = module.queryScaleReport(ctx.getHost(), sn);
@@ -149,7 +149,7 @@ public final class GetPsychologyReportAction implements AIGCActionTask {
     /**
      * 分页读取报告列表。
      *
-     * <p>迁移前 L129-171 按 {@code type} 分绘画与量表两条路径。</p>
+     * <p>L129-171 按 {@code type} 分绘画与量表两条路径。</p>
      *
      * @param ctx 动作上下文。
      * @param module 心理学模块。
@@ -172,7 +172,7 @@ public final class GetPsychologyReportAction implements AIGCActionTask {
         else {
             responseData = module.listScaleReports(ctx.getHost(), contactId, descending, state);
             responseData.put("page", pageIndex);
-            // ⚠️ 迁移前 L166 填的是 num（总条数）而非 pageSize。
+            // ⚠️ L166 填的是 num（总条数）而非 pageSize。
             // 此处原样复刻该行为，修正它属于独立的线协议变更，不可在本改造中顺手做
             responseData.put("size", responseData.getInt("total"));
         }

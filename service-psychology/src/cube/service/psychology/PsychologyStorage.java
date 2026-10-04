@@ -2245,7 +2245,7 @@ public class PsychologyStorage implements Storagable {
      * <p>实际的描述算法依赖宿主 {@code service} 模块的分词器与 TF-IDF 语料，
      * 由宿主在启动时以 {@link #setHexagonDescriber} 注入，本方法只负责调用与降级。</p>
      *
-     * <p>未注入生成器时记 WARN 并跳过，结果等同于「描述为空」。这一降级与迁移前
+     * <p>未注入生成器时记 WARN 并跳过，结果等同于「描述为空」。这一降级与
      * 「分词器为 {@code null} 时生成过程抛空指针并被 {@code makeReport} 的
      * catch-all 吞掉」的结果一致，因此不会引入新的行为差异。</p>
      *

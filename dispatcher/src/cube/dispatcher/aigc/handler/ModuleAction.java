@@ -206,7 +206,7 @@ public class ModuleAction extends ContextHandler {
      * 读取兜底通道开关。
      *
      * @return 启用时返回 <code>true</code>；配置缺失或读取失败时返回
-     *         <code>false</code>（默认关闭，保证升级后行为与改造前完全一致）。
+     *         <code>false</code>（默认关闭，关闭时该路径不注册）。
      */
     public static boolean isEnabled() {
         java.io.File file = new java.io.File("config/dispatcher.properties");

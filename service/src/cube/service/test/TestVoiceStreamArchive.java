@@ -1,11 +1,12 @@
 package cube.service.test;
 
 import cell.util.Utils;
-import cube.service.aigc.scene.StreamArchive;
+import cube.service.psychology.scene.StreamArchive;
 import cube.util.AudioUtils;
 import cube.util.ConfigUtils;
 
 import java.io.File;
+import cube.service.psychology.scene.StreamArchive;
 import java.nio.charset.StandardCharsets;
 
 public class TestVoiceStreamArchive {

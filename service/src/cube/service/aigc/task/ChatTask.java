@@ -27,7 +27,7 @@ import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
 import cube.service.aigc.knowledge.KnowledgeBase;
 import cube.service.aigc.knowledge.KnowledgeFramework;
-import cube.service.aigc.listener.GenerateTextListener;
+import cube.aigc.listener.GenerateTextListener;
 import cube.service.aigc.listener.KnowledgeQAListener;
 import cube.service.aigc.listener.TextToImageListener;
 import cube.util.JSONUtils;

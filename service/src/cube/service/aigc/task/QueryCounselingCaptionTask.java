@@ -21,7 +21,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.scene.CounselingManager;
+import cube.service.psychology.scene.CounselingManager;
 import org.json.JSONObject;
 
 /**

@@ -10,6 +10,7 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.aigc.cv.MatchSimilarityListener;
 import cube.auth.AuthToken;
 import cube.common.Packet;
 import cube.common.action.CVAction;

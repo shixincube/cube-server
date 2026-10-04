@@ -17,7 +17,7 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.SemanticSearchListener;
+import cube.aigc.SemanticSearchListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

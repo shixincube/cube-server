@@ -15,7 +15,7 @@ import cube.aigc.psychology.composition.Question;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScalesConfiguration;
 import cube.service.tokenizer.Tokenizer;
-import cube.service.tokenizer.keyword.Keyword;
+import cube.aigc.text.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import cube.util.FloatUtils;
 import cube.util.TextUtils;

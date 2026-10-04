@@ -17,8 +17,8 @@ import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.VoiceDiarizationListener;
-import cube.service.aigc.scene.VoiceDiarizationIndicator;
+import cube.aigc.listener.VoiceDiarizationListener;
+import cube.service.psychology.scene.VoiceDiarizationIndicator;
 import cube.util.FileUtils;
 import cube.util.TextUtils;
 import cube.util.TimeUtils;
@@ -178,7 +178,7 @@ public class AudioUnitMeta extends UnitMeta {
                 @Override
                 public void run() {
                     VoiceDiarizationIndicator voiceIndicator = new VoiceDiarizationIndicator(result.getId());
-                    voiceIndicator.analyse(service, result);
+                    voiceIndicator.analyse(AudioUnitMeta.this.service.getCellet().getAIGCHost(), result);
 
                     // 设置指标
                     result.indicator = voiceIndicator;

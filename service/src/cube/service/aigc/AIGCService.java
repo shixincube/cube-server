@@ -6,6 +6,9 @@
 
 package cube.service.aigc;
 
+import cube.service.psychology.scene.ReportRenderer;
+import cube.aigc.listener.GenerateTextListener;
+import cube.aigc.listener.VoiceDiarizationListener;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
@@ -37,8 +40,6 @@ import cube.core.Module;
 import cube.file.hook.FileStorageHook;
 import cube.service.aigc.channel.ChannelManager;
 import cube.service.aigc.event.EventCenter;
-import cube.service.aigc.guidance.GuideFlow;
-import cube.service.aigc.guidance.Guides;
 import cube.service.aigc.guidance.PromptComposer;
 import cube.service.aigc.guidance.SkillRegistry;
 import cube.service.aigc.guidance.SkillSessionStore;
@@ -50,6 +51,10 @@ import cube.service.aigc.member.MemberCenter;
 import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Relay;
 import cube.service.aigc.scene.*;
+import cube.service.psychology.scene.CounselingManager;
+import cube.service.psychology.scene.CopilotManager;
+import cube.service.psychology.scene.PromptBuilder;
+import cube.service.aigc.spi.ModuleRegistry;
 import cube.service.aigc.unit.*;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
@@ -87,6 +92,15 @@ public class AIGCService extends AbstractModule implements Generatable {
     public final static String NAME = "AIGC";
 
     private final AIGCCellet cellet;
+
+    /**
+     * 业务模块是否处于降级状态（未装载、装载失败或能力缺失）。
+     *
+     * <p>降级时宿主<b>不提供</b>该业务域的动作能力，对应请求回
+     * {@link AIGCStateCode#ModuleNotLoaded}；平台能力（聊天、知识库、频道、文件等）
+     * 不受影响。</p>
+     */
+    private volatile boolean moduleDegraded = false;
 
     /**
      * 单元调度器：单元注册、选点与周期维护。
@@ -217,15 +231,31 @@ public class AIGCService extends AbstractModule implements Generatable {
                 // 装载 AIGC 业务模块（心理学等）。必须在宿主存储就绪之后：
                 // 模块 setup 可能读取宿主存储配置，提前装载会失败。
                 //
-                // 迁移前此处是「启动心理学场景」（PsychologyScene.getInstance().start），
+                // 此处是「启动心理学场景」（PsychologyScene.getInstance().start），
                 // 位置在存储创建之前——今由模块自身的 setup 承接该职责，
                 // 且 PsychologyModule 自建 PsychologyStorage，不依赖此处创建的 AIGCStorage。
                 AIGCCellet theCellet = AIGCService.this.cellet;
                 if (null != theCellet) {
                     theCellet.loadModules();
+
+                    // 模块装载结果必须由宿主消费，否则「插件没装」与「动作没命中」
+                    // 在运行期无法区分。此处按fail-fast 语义处理：
+                    // 模块未就绪时，宿主不提供该业务域的能力，其余平台能力不受影响。
+                    ModuleRegistry registry = theCellet.getModuleRegistry();
+                    boolean blocked = (null != registry) && registry.hasBlockingFailure();
+                    boolean capabilitiesOk = (null == registry) || registry.verifyCapabilities();
+
+                    AIGCService.this.moduleDegraded = blocked || !capabilitiesOk;
+
+                    if (AIGCService.this.moduleDegraded) {
+                        Logger.e(AIGCService.class, "#start - 业务模块未就绪（装载失败或能力缺失），"
+                                + "宿主不提供该业务域能力；平台能力（聊天/知识库/频道/文件）不受影响");
+                    }
                 }
                 else {
-                    Logger.w(AIGCService.class, "#start - Cellet is NULL, NO AIGC module is loaded");
+                    Logger.e(AIGCService.class,
+                            "#start - Cellet is NULL, NO AIGC module is loaded; "
+                            + "the corresponding business capabilities are NOT available");
                 }
 
                 // 应用事件
@@ -273,16 +303,10 @@ public class AIGCService extends AbstractModule implements Generatable {
                 Explorer.getInstance().setup(AIGCService.this, tokenizer);
 
                 // 咨询管理器
-                CounselingManager.getInstance().start(AIGCService.this);
+                CounselingManager.getInstance().start(AIGCService.this.getHost());
 
                 // 陪练管理器
-                CopilotManager.getInstance().start(AIGCService.this);
-
-                // 引导系统列表
-                List<GuideFlow> guideFlows = Guides.listGuideFlows();
-                for (GuideFlow flow : guideFlows) {
-                    Logger.i(AIGCService.class, "Guide flow: " + flow.getName());
-                }
+                CopilotManager.getInstance().start(AIGCService.this.getHost());
 
                 // 会员中心
                 MemberCenter.getInstance().start(AIGCService.this);
@@ -310,7 +334,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     public void dispose() {
         Logger.i(this.getClass(), "#dispose - AIGC service dispose");
 
-        // 卸载 AIGC 业务模块（迁移前此处停心理学场景）
+        // 卸载 AIGC 业务模块（此处停心理学场景）
         AIGCCellet theCellet = AIGCService.this.cellet;
         if (null != theCellet && null != theCellet.getModuleRegistry()) {
             theCellet.getModuleRegistry().teardownAll();
@@ -389,7 +413,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         Explorer.getInstance().onTick(now);
 
-        // 驱动 AIGC 业务模块心跳（迁移前此处驱动心理学场景）
+        // 驱动 AIGC 业务模块心跳（此处驱动心理学场景）
         AIGCCellet theCellet = AIGCService.this.cellet;
         if (null != theCellet && null != theCellet.getModuleRegistry()) {
             theCellet.getModuleRegistry().tick(now);
@@ -514,6 +538,71 @@ public class AIGCService extends AbstractModule implements Generatable {
         if (this.useRelay) {
             Logger.i(this.getClass(), "AI Service - Relay URL: " + Relay.getInstance().getUrl());
         }
+    }
+
+    /**
+     * 业务模块是否处于降级状态。
+     *
+     * <p>供健康检查与运维查询：降级表示该业务域当前不可用，
+     * 但主服务与其余平台能力正常运行。</p>
+     *
+     * @return 降级时返回 <code>true</code>。
+     */
+    public boolean isModuleDegraded() {
+        return this.moduleDegraded;
+    }
+
+    /**
+     * 按联系人个人知识库生成补充说明。
+     *
+     * <p>把该联系人的历史知识条目按问题相关度检索后拼成一段文本，
+     * 用于给模型补充个人背景。个人知识库的访问权在宿主，
+     * 故该能力由宿主实现，模块经 SPI 转发调用。</p>
+     *
+     * @param tokenCode 访问令牌码，用于定位联系人档案。
+     * @param query 问题。
+     * @param english 是否以英文提问（影响人称表述）。
+     * @return 返回补充文本；无知识库、无命中或联系人信息缺失时返回 <code>null</code>。
+     */
+    public String generatePersonalKnowledge(String tokenCode, String query, boolean english) {
+        if (null == query) {
+            return null;
+        }
+
+        User user = this.getUser(tokenCode);
+        if (null == user) {
+            Logger.d(this.getClass(), "#generatePersonalKnowledge - No user: " + tokenCode);
+            return null;
+        }
+
+        long contactId = user.getContactId();
+
+        KnowledgeFramework framework = this.getKnowledgeFramework();
+        if (null == framework) {
+            return null;
+        }
+
+        KnowledgeBase base = framework.getKnowledgeBase(contactId, User.KnowledgeBaseName);
+        if (null == base) {
+            Logger.d(this.getClass(), "#generatePersonalKnowledge - No personal base: " + contactId);
+            return null;
+        }
+
+        String fixedQuery = english ? "I'm user \"" + user.getName() + "\", " + query
+                : "我是用户“" + user.getName() + "”，" + query;
+        Knowledge knowledge = base.generateKnowledge(fixedQuery, 3);
+        if (null == knowledge) {
+            Logger.d(this.getClass(), "#generatePersonalKnowledge - Generates knowledge failed: " + contactId);
+            return null;
+        }
+
+        StringBuilder buf = new StringBuilder();
+        for (Knowledge.Metadata metadata : knowledge.metadataList) {
+            buf.append(metadata.getContent());
+            buf.append("\n\n");
+        }
+
+        return buf.toString();
     }
 
     /**
@@ -1193,7 +1282,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                 markdown.append(user.markdown());
                 Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(
                         authToken.getDomain(), user.getId(), Membership.STATE_NORMAL);
-                markdown.append(ContentTools.makeMembership(user, membership));
+                markdown.append(ReportRenderer.makeMembership(user, membership));
 
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTimeInMillis(System.currentTimeMillis());
@@ -2692,7 +2781,7 @@ public class AIGCService extends AbstractModule implements Generatable {
 
         String prompt = null;
         if (null == parameters || parameters.isEmpty()) {
-            PromptBuilder builder = new PromptBuilder(templateName);
+            PromptBuilder builder = new PromptBuilder(this.getHost(), templateName);
             builder.put("original_transcript", voiceDiarization.buildSpeechText(true));
             builder.put("interview_date", TimeUtils.formatDateString(voiceDiarization.getTimestamp(), Language.Chinese));
             builder.put("interview_duration", TimeUtils.calcTimeDuration((long)(voiceDiarization.duration * 1000)).toHumanStringDHMS());
@@ -2918,6 +3007,8 @@ public class AIGCService extends AbstractModule implements Generatable {
     public List<String> segmentText(String text) {
         return this.tokenizer.sentenceProcess(text);
     }
+
+
 
     /**
      * 句子相似度。

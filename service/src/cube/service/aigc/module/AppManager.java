@@ -13,7 +13,7 @@ import cube.auth.AuthToken;
 import cube.common.entity.QuestionAnswer;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.listener.SemanticSearchListener;
+import cube.aigc.SemanticSearchListener;
 
 import java.util.ArrayList;
 import java.util.List;

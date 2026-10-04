@@ -6,7 +6,7 @@
 
 package cube.dispatcher.test;
 
-import cube.robot.Account;
+import cube.robodroid.Account;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpStatus;

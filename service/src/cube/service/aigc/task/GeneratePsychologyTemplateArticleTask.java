@@ -26,9 +26,10 @@ import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.scene.TemplateArticleBuilder;
-import cube.service.aigc.scene.PaintingTemplateArticleListener;
-import cube.service.aigc.scene.PsychologyScene;
+import cube.service.psychology.scene.TemplateArticleBuilder;
+import cube.service.psychology.scene.PaintingTemplateArticleListener;
+import cube.service.psychology.scene.PsychologyScene;
+import cube.service.psychology.scene.PaintingTemplateArticleListener;
 import org.json.JSONObject;
 
 public class GeneratePsychologyTemplateArticleTask extends ServiceTask {

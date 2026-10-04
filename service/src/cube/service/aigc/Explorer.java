@@ -27,7 +27,7 @@ import cube.service.aigc.resource.ResourceSearcher;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
 import cube.service.tokenizer.Tokenizer;
-import cube.service.tokenizer.keyword.Keyword;
+import cube.aigc.text.Keyword;
 import cube.service.tokenizer.keyword.TFIDFAnalyzer;
 import org.eclipse.jetty.http.HttpStatus;
 

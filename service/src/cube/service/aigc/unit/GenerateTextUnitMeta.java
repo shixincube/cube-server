@@ -25,7 +25,7 @@ import cube.service.aigc.guidance.PromptComposer;
 import cube.service.aigc.guidance.SkillMeta;
 import cube.service.aigc.guidance.SkillRegistry;
 import cube.service.aigc.guidance.SkillSession;
-import cube.service.aigc.listener.GenerateTextListener;
+import cube.aigc.listener.GenerateTextListener;
 import cube.service.aigc.listener.ReadPageListener;
 import cube.service.aigc.resource.Relay;
 import cube.service.aigc.resource.ResourceAnswer;

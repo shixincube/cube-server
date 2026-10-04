@@ -7,12 +7,15 @@
 package cube.service.aigc;
 
 import cell.core.talk.Primitive;
+import cube.service.Director;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.spi.ActionRouter;
 import cube.common.action.AIGCAction;
+import cube.common.state.AIGCStateCode;
+import cube.common.Packet;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.service.aigc.event.EventCenter;
@@ -21,6 +24,7 @@ import cube.service.aigc.spi.AIGCHostImpl;
 import cube.service.aigc.spi.ModuleRegistry;
 import cube.service.aigc.task.*;
 
+import org.json.JSONObject;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -80,8 +84,7 @@ public class AIGCCellet extends AbstractCellet {
     /**
      * 装载已注册的业务模块。
      *
-     * <p>由宿主在<b>自身存储就绪之后</b>调用，替代迁移前
-     * 「门面在引导线程中直接启业务场景」的做法。延后的原因：
+     * <p>由宿主在<b>自身存储就绪之后</b>调用，     * 「门面在引导线程中直接启业务场景」的做法。延后的原因：
      * 模块的 {@code setup} 可能读取宿主存储配置，宿主存储未就绪时装载会失败。</p>
      *
      * <p>即便装载晚于 install，也仍早于任何一次 onListened（内核启动后才收报文），
@@ -140,6 +143,49 @@ public class AIGCCellet extends AbstractCellet {
      */
     public AIGCHostImpl getAIGCHost() {
         return this.aigcHost;
+    }
+
+    /**
+     * 判断某动作是否「已由业务模块声明、但当前未绑定」。
+     *
+     * <p>用于识别「所属模块未装载或装载失败」——此时动作既不在模块中、
+     * 也不在下方既有分支里，若不作处理，请求将无人应答而悬挂。</p>
+     *
+     * @param action 动作名。
+     * @return 属于「已声明但未绑定」时返回 <code>true</code>。
+     */
+    private boolean isDeclaredButUnbound(String action) {
+        ModuleRegistry registry = this.moduleRegistry;
+
+        return null != registry
+                && registry.getRouter().isLoaded()
+                && registry.getRouter().isDeclared(action)
+                && null == registry.getRouter().lookup(action);
+    }
+
+    /**
+     * 构造「业务模块未就绪」的应答。
+     *
+     * <p>应答须带回 {@code _performer}，dispatcher 依此把结果回送给原调用方，
+     * 否则调用方收不到任何回应。该字段的复制逻辑与
+     * {@code ServiceTask#makeDispatcherResponse} 一致，此处复刻是因为
+     * 本类并非 {@code ServiceTask} 的子类，无法复用其受保护方法。</p>
+     *
+     * @param dialect 请求方言。
+     * @return 返回应答方言。
+     */
+    private ActionDialect makeModuleNotLoadedResponse(ActionDialect dialect) {
+        Packet request = new Packet(dialect);
+
+        // 载荷字段名与 ServiceTask#makePacketPayload 一致：code + data
+        JSONObject payload = new JSONObject();
+        payload.put("code", AIGCStateCode.ModuleNotLoaded.code);
+        payload.put("data", new JSONObject());
+
+        Packet response = new Packet(request.sn, request.name, payload);
+        ActionDialect responseDialect = response.toDialect();
+        Director.copyPerformer(dialect, responseDialect);
+        return responseDialect;
     }
 
     /**
@@ -256,9 +302,21 @@ public class AIGCCellet extends AbstractCellet {
         String action = dialect.getName();
 
         // 业务模块派发（双轨接入，出厂为空注册表）：
-        // 未命中时立即返回 false，继续走下方的既有动作分支，行为与改造前完全一致。
+        // 未命中时立即返回 false，继续走下方的既有动作分支，行为。
         // 应答阻塞分支（Responder.NotifierKey）优先级最高，此处显式排除，确保它不会被业务模块劫持。
         if (!dialect.containsParam(Responder.NotifierKey) && this.dispatchToModule(talkContext, primitive, dialect)) {
+            return;
+        }
+
+        // 该动作已由业务模块声明、但未绑定 —— 说明所属模块未装载或装载失败。
+        // 此处必须明确应答：若继续往下走，该动作既不在模块中、也不在下方分支里，
+        // 请求将无人应答而悬挂。此处返回 ModuleNotLoaded，
+        // 客户端得以区分「业务域不可用」与「服务端故障」。
+        if (!dialect.containsParam(Responder.NotifierKey)
+                && this.isDeclaredButUnbound(action)) {
+            Logger.w(this.getClass(), "#onListened - Action \"" + action
+                    + "\" is declared by an AIGC module which is NOT loaded");
+            this.speak(talkContext, this.makeModuleNotLoadedResponse(dialect));
             return;
         }
 
@@ -315,46 +373,6 @@ public class AIGCCellet extends AbstractCellet {
         else if (AIGCAction.AppSignOutUser.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new AppSignOutUserTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.AppQuerySchedule.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new AppQueryScheduleTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.AppUpdateSchedule.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new AppUpdateScheduleTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.AppNewSchedule.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new AppNewScheduleTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.AppDeleteSchedule.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new AppDeleteScheduleTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.AppQueryCustomer.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new AppQueryCustomerTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.AppUpdateCustomer.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new AppUpdateCustomerTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.AppNewCustomer.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new AppNewCustomerTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.AppDeleteCustomer.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new AppDeleteCustomerTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (AIGCAction.AppVersion.name.equals(action)) {
@@ -707,31 +725,6 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new GeneratePsychologyComprehensiveTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (AIGCAction.GetPsychologyReport.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new GetPsychologyReportTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.CheckPsychologyPainting.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new CheckPsychologyPaintingTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.ModifyReportRemark.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new ModifyReportRemarkTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.StopGeneratingPsychologyReport.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new StopGeneratingPsychologyReportTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.GetPsychologyReportPart.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new GetPsychologyReportPartTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
         else if (AIGCAction.GeneratePsychologyTemplateArticle.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new GeneratePsychologyTemplateArticleTask(this, talkContext, primitive,
@@ -742,54 +735,9 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new GetPsychologyTemplateArticleTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (AIGCAction.ListPsychologyScales.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new ListPsychologyScalesTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.GetPsychologyScale.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new GetPsychologyScaleTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.GeneratePsychologyScale.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new GeneratePsychologyScaleTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.SubmitPsychologyAnswerSheet.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new SubmitPsychologyAnswerSheetTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
         else if (AIGCAction.PsychologyConversation.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new PsychologyConversationTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.GetPsychologyPainting.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new GetPsychologyPaintingTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.GetPaintingLabel.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new GetPaintingLabelTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.SetPaintingLabel.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new SetPaintingLabelTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.SetPaintingReportState.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new SetPaintingReportStateTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.ResetReportAttention.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new ResetReportAttentionTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (AIGCAction.Event.name.equalsIgnoreCase(action)) {

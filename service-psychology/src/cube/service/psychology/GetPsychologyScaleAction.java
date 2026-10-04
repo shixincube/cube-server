@@ -22,14 +22,14 @@ import org.json.JSONObject;
  * <p>对应线协议动作 {@code getPsychologyScale}，逐字符等同于既有枚举
  * {@code AIGCAction.GetPsychologyScale} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code NoToken → IllegalOperation → Ok / Failure / InvalidParameter}。</p>
  *
  * <p><b>两个易错点</b>：</p>
  * <ul>
  *   <li>{@code Failure} 分支回显的是<b>原始请求体</b>而非空对象，而
  *       {@code catch} 分支回空对象——两者不同，不可统一；</li>
- *   <li>读取请求参数必须用 {@code ctx.getRequest().data}：迁移前
+ *   <li>读取请求参数必须用 {@code ctx.getRequest().data}：
  *       {@code packet.data} 为 {@code null} 时会抛 NPE 并落入
  *       {@code catch}（{@code InvalidParameter}）；若改用
  *       {@code ctx.getParams()}，它会返回空对象，
@@ -38,7 +38,7 @@ import org.json.JSONObject;
  * </ul>
  *
  * <p><b>为何 requiresToken 取 false</b>：同
- * {@link ListPsychologyScalesAction}，迁移前令牌无效回
+ * {@link ListPsychologyScalesAction}，令牌无效回
  * {@code IllegalOperation} 而非 {@code InconsistentToken}。</p>
  */
 public final class GetPsychologyScaleAction implements AIGCActionTask {
@@ -74,7 +74,7 @@ public final class GetPsychologyScaleAction implements AIGCActionTask {
             }
 
             if (null == scale) {
-                // 迁移前此处回显原始请求体，不是空对象
+                // 此处回显原始请求体，不是空对象
                 ctx.respond(AIGCStateCode.Failure, requestData);
                 return AIGCStateCode.Failure;
             }

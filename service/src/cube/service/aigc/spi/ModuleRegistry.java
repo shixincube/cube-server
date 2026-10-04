@@ -17,6 +17,7 @@ import cube.util.ConfigUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -169,7 +170,7 @@ public List<ActionModule> getModules() {
  * 从配置文件发现并绑定模块。
  *
  * <p>出厂配置未列出任何模块时，本方法只记录一行 INFO 日志后返回，
- * 因此运行期行为与改造前完全一致。</p>
+ * 因此运行期行为。</p>
  *
  * <p>配置查找顺序与宿主既有的配置加载保持一致：先
  * <code>config/aigc-modules.properties</code>，再退回工作目录下的
@@ -245,6 +246,10 @@ public int load() {
         if (null == module) {
             continue;
         }
+
+        // 先登记动作声明，再绑定：声明不随绑定失败而移除，
+        // 使宿主在模块未就绪时能识别「该动作本属该模块」并回明确状态码
+        this.declareActions(module);
 
         if (!this.bindActions(module)) {
             // 出现动作冲突时该模块视为装载失败，但不牵连其他模块
@@ -343,8 +348,7 @@ private boolean isEnabled(Properties properties, int index) {
  * @param module 模块实例。
  * @return 全部绑定成功时返回 <code>true</code>。
  */
-private boolean bindActions(ActionModule module) {
-    List<ActionBinding> actions = module.getActions();
+private boolean bindActions(ActionModule module) {    List<ActionBinding> actions = module.getActions();
     if (null == actions || actions.isEmpty()) {
         Logger.w(ModuleRegistry.class, "#bindActions - Module \"" + module.getName()
                 + "\" provides NO action");
@@ -359,6 +363,39 @@ private boolean bindActions(ActionModule module) {
     }
 
     return success;
+}
+
+/**
+ * 登记模块声明的动作名。
+ *
+ * <p><b>与 {@link #bindActions(ActionModule)} 的区别</b>：绑定表在装载失败时会被回滚，
+ * 而本方法登记的声明<b>不随之移除</b>。这样宿主在派发时能区分
+ * 「动作属于未就绪的模块」与「动作不属于任何模块」，前者回明确状态码、
+ * 后者走既有分支，避免模块未就绪时请求悬挂。</p>
+ *
+ * @param module 模块实例。
+ */
+private void declareActions(ActionModule module) {
+    try {
+        List<ActionBinding> actions = module.getActions();
+        if (null == actions) {
+            return;
+        }
+
+        List<String> names = new ArrayList<>(actions.size());
+        for (ActionBinding binding : actions) {
+            if (null != binding) {
+                names.add(binding.action);
+            }
+        }
+
+        this.router.declareAll(names);
+    } catch (Throwable t) {
+        // 声明阶段失败不阻断装载：该模块的绑定与 setup 仍照常进行，
+        // 只是失去「明确状态码」这层兜底，退化为既有分支处理
+        Logger.e(ModuleRegistry.class, "#declareActions - FAILED for module \""
+                + module.getName() + "\"", (t instanceof Exception) ? (Exception) t : null);
+    }
 }
 
 /**
@@ -430,7 +467,9 @@ public boolean verifyCapabilities() {
 
         for (String capability : descriptor.requiredCapabilities) {
             if (null == this.host || !this.host.hasUnit(capability)) {
-                Logger.w(ModuleRegistry.class, "#verifyCapabilities - Module \"" + module.getName()
+                // 能力缺失意味着该模块的核心动作无法执行，属故障而非提示，
+                // 故记 ERROR：模块已装载但功能不可用，宿主据此回ModuleNotLoaded
+                Logger.e(ModuleRegistry.class, "#verifyCapabilities - Module \"" + module.getName()
                         + "\" requires capability \"" + capability + "\" but NO unit is available");
                 allAvailable = false;
             }
@@ -486,8 +525,7 @@ public void teardownAll() {
 /**
  * 驱动全部模块的心跳。
  *
- * <p>由宿主在自身的 tick 节奏中调用（与宿主心跳同频），替代迁移前
- * 「门面逐个调业务场景 {@code onTick}」的硬编码写法。</p>
+ * <p>由宿主在自身的 tick 节奏中调用（与宿主心跳同频）， * 「门面逐个调业务场景 {@code onTick}」的硬编码写法。</p>
  *
  * <p>单个模块的心跳异常不影响其余模块，也不向上抛出——tick 是周期性维护，
  * 一个模块抛异常不应导致其余模块失去心跳。</p>

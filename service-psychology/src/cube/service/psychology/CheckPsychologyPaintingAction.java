@@ -24,17 +24,17 @@ import org.json.JSONObject;
  * <p>对应线协议动作 {@code checkPsychologyPainting}，逐字符等同于既有枚举
  * {@code AIGCAction.CheckPsychologyPainting} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code NoToken → NoToken → InvalidParameter → InvalidParameter → Ok}。</p>
  *
- * <p><b>⚠️ 本动作有两处全批唯一之处，绝不可「顺手统一」</b>：</p>
+ * <p><b>⚠️ 本动作有两处本组唯一之处，绝不可「顺手统一」</b>：</p>
  * <ol>
- *   <li><b>第二码也是 {@code NoToken}</b>（迁移前 L49：{@code getToken()} 返回
+ *   <li><b>第二码也是 {@code NoToken}</b>（L49：{@code getToken()} 返回
  *       {@code null} 时回 {@code NoToken} 而非 {@code IllegalOperation}）。
  *       骨架在 {@code requiresToken=true} 时会回 {@code InconsistentToken}，
- *       两个码都不同于迁移前，因此必须 {@code false} 并自行复刻；</li>
+ *       两个码都不同于骨架前置校验，因此必须 {@code false} 并自行复刻；</li>
  *   <li><b>永不回 {@code Failure}</b>——任何无法确认的情形都回
- *       {@code Ok} 且 {@code result=false}（迁移前 L74-77）。</li>
+ *       {@code Ok} 且 {@code result=false}（L74-77）。</li>
  * </ol>
  *
  * <p><b>⚠️ 本动作是「同名双向」动作</b>：除入站派发外，宿主
@@ -42,7 +42,7 @@ import org.json.JSONObject;
  * 做像素级校验。迁移后该出站调用必须依然发生，否则
  * {@code result} 会退化为「只看有无其他物体」，失去像素校验。</p>
  *
- * <p>判定逻辑逐字复刻迁移前 {@code PsychologyScene#checkPsychologyPainting}：
+ * <p>判定逻辑逐字复刻 {@code PsychologyScene#checkPsychologyPainting}：
  * 先检测图像中的物体数量，若远端像素校验通过<b>或</b>画面中没有其他物体，
  * 即认为是绘画。</p>
  */
@@ -51,7 +51,7 @@ public final class CheckPsychologyPaintingAction implements AIGCActionTask {
     /**
      * 画面中被判定为「非绘画元素」的物体数量阈值。
      *
-     * <p>逐字复刻迁移前 {@code PsychologyScene#hasMoreObjects}：该数量大于此值时
+     * <p>逐字复刻 {@code PsychologyScene#hasMoreObjects}：该数量大于此值时
      * 视为画面中还有其他物体。</p>
      */
     private final static int MAX_EXTRA_OBJECTS = 1;
@@ -85,7 +85,7 @@ public final class CheckPsychologyPaintingAction implements AIGCActionTask {
 
         AuthToken authToken = ctx.getHost().resolveToken(tokenCode);
 
-        // 第二码仍是 NoToken：迁移前此处回的不是 IllegalOperation，勿改
+        // 第二码仍是 NoToken：此处回的不是 IllegalOperation，勿改
         if (null == authToken) {
             ctx.respondEmpty(AIGCStateCode.NoToken);
             return AIGCStateCode.NoToken;
@@ -105,7 +105,7 @@ public final class CheckPsychologyPaintingAction implements AIGCActionTask {
             return AIGCStateCode.InvalidParameter;
         }
 
-        // 无论检测与否都回 Ok，判定结果放在 result 里（迁移前 L72-77）
+        // 无论检测与否都回 Ok，判定结果放在 result 里（L72-77）
         JSONObject responseData = new JSONObject();
         responseData.put("result", this.check(ctx, authToken, fileCode));
         ctx.respond(AIGCStateCode.Ok, responseData);
@@ -116,7 +116,7 @@ public final class CheckPsychologyPaintingAction implements AIGCActionTask {
     /**
      * 判定给定图像是否为绘画。
      *
-     * <p>逐字复刻迁移前 {@code PsychologyScene#checkPsychologyPainting}：
+     * <p>逐字复刻 {@code PsychologyScene#checkPsychologyPainting}：
      * 先取文件标签（取不到直接判非绘画），再检测画面中除绘画外的其他元素，
      * 最后由远端绘画单元做像素级校验，两者满足其一即认为是绘画。</p>
      *
@@ -128,21 +128,21 @@ public final class CheckPsychologyPaintingAction implements AIGCActionTask {
     private boolean check(ActionContext ctx, AuthToken token, String fileCode) {
         AIGCHost host = ctx.getHost();
 
-        // ① 取文件标签：取不到即判非绘画（迁移前 L211-215）
+        // ① 取文件标签：取不到即判非绘画（L211-215）
         cube.common.entity.FileLabel fileLabel = host.getFile(token.getDomain(), fileCode);
         if (null == fileLabel) {
             Logger.w(this.getClass(), "#check - File error: " + fileCode);
             return false;
         }
 
-        // ② 物体检测：画面中还有其他元素时判为非绘画（迁移前 L217-222）
+        // ② 物体检测：画面中还有其他元素时判为非绘画（L217-222）
         ObjectInfo info = host.detectObject(token.getDomain(), fileCode, false);
         boolean more = this.hasMoreObjects(info);
 
-        // ③ 像素校验：转发给远端绘画单元（迁移前 L224-249）
+        // ③ 像素校验：转发给远端绘画单元（L224-249）
         boolean predicted = this.predictByUnit(host, fileLabel);
 
-        // 逐字复刻迁移前 L253：像素校验通过「或」无其他元素
+        // 逐字复刻 L253：像素校验通过「或」无其他元素
         return predicted || !more;
     }
 

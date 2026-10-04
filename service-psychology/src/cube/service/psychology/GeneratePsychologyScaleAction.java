@@ -22,13 +22,13 @@ import org.json.JSONObject;
  * <p>对应线协议动作 {@code generatePsychologyScale}，逐字符等同于既有枚举
  * {@code AIGCAction.GeneratePsychologyScale} 的 {@code name} 字段。</p>
  *
- * <p><b>状态码序列与迁移前逐项一致</b>：
+ * <p><b>状态码序列</b>：
  * {@code NoToken → IllegalOperation → Ok / Failure / InvalidParameter}。</p>
  *
- * <p><b>参数默认值逐字复刻迁移前</b>：{@code name} 必取（缺失抛异常落入
+ * <p><b>参数默认值逐字复刻</b>：{@code name} 必取（缺失抛异常落入
  * {@code catch}）；{@code language} 缺省为 {@link Language#Chinese}；
  * {@code role} 缺省为空串；{@code strict} 缺省为 {@code false}。
- * 注意 {@code gender} 与 {@code age} 在迁移前是<b>无默认值</b>的必取项——
+ * 注意 {@code gender} 与 {@code age} 在是<b>无默认值</b>的必取项——
  * {@code packet.data.getString("gender")} 在字段缺失时抛 JSONException。</p>
  *
  * <p><b>为何 requiresToken 取 false</b>：同
@@ -69,7 +69,7 @@ public final class GeneratePsychologyScaleAction implements AIGCActionTask {
                     .generateScale(authToken.getContactId(), scaleName, attribute);
 
             if (null == scale) {
-                // 迁移前此处回显原始请求体，不是空对象
+                // 此处回显原始请求体，不是空对象
                 ctx.respond(AIGCStateCode.Failure, requestData);
                 return AIGCStateCode.Failure;
             }

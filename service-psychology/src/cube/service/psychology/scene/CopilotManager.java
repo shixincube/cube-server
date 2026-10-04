@@ -1,0 +1,252 @@
+/*
+ * This source file is part of Cube.
+ *
+ * Copyright (c) 2023-2026 Ambrose Xu.
+ */
+
+package cube.service.psychology.scene;
+
+import cell.util.log.Logger;
+import cube.aigc.ModelConfig;
+import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.copilot.CopilotSetting;
+import cube.aigc.psychology.copilot.CopilotSheet;
+import cube.auth.AuthToken;
+import cube.common.JSONable;
+import cube.common.entity.GeneratingRecord;
+import cube.aigc.spi.AIGCHost;
+import cube.util.TextUtils;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class CopilotManager {
+
+    /**
+     * 宿主能力接口，由模块在装载时注入。
+     */
+    private AIGCHost host;
+
+    private Map<Long, Copilot> copilotMap;
+
+    private final static CopilotManager instance = new CopilotManager();
+
+    private CopilotManager() {
+        this.copilotMap = new ConcurrentHashMap<>();
+    }
+
+    public static CopilotManager getInstance() {
+        return CopilotManager.instance;
+    }
+
+    public void start(AIGCHost host) {
+        this.host = host;
+    }
+
+    public void stop() {
+
+    }
+
+    public CopilotSetting applyCopilot(AuthToken authToken, CopilotSetting copilotSetting) {
+        // 移除历史
+        this.copilotMap.remove(authToken.getContactId());
+
+        String copilotQuickStrategy = Resource.getInstance().getStrategyContent("copilot_quick_strategy");
+        if (null == copilotQuickStrategy) {
+            Logger.w(this.getClass(), "#applyCopilot - No copilot quick strategy: " + authToken.getContactId());
+            return null;
+        }
+
+        CopilotSetting setting = new CopilotSetting(copilotSetting.personalityTrait,
+                copilotSetting.attachmentType, copilotSetting.culturalBackground,
+                copilotSetting.chiefComplaintType, copilotSetting.painLevel,
+                copilotSetting.defenseMechanism, copilotSetting.empathy, copilotSetting.speechStyle,
+                copilotSetting.hiddenAgendaModel, copilotSetting.multipleRolesModel, copilotSetting.ethicalTrapModel);
+
+        copilotQuickStrategy = copilotQuickStrategy.replace("{{setting}}", setting.toMarkdown());
+
+        Copilot copilot = new Copilot(authToken, setting);
+        this.copilotMap.put(authToken.getContactId(), copilot);
+
+        GeneratingRecord record = this.host.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, copilotQuickStrategy,
+                null, null, null);
+        if (null != record) {
+            setting.addSentences(filter(record.answer));
+        }
+
+        return setting;
+    }
+
+    public Copilot disposeCopilot(AuthToken authToken, long sn) {
+        Copilot copilot = this.copilotMap.remove(authToken.getContactId());
+        if (null == copilot) {
+            Logger.w(this.getClass(), "#disposeCopilot - Can NOT find copilot: " + authToken.getContactId());
+            return null;
+        }
+
+        // TODO
+        return copilot;
+    }
+
+    public CopilotSetting submitContent(AuthToken authToken, CopilotSheet sheet) {
+        Copilot copilot = this.copilotMap.get(authToken.getContactId());
+        if (null == copilot) {
+            Logger.w(this.getClass(), "#submitContent - No copilot data: " + authToken.getContactId());
+            return null;
+        }
+
+        copilot.sheet.addRecords(sheet);
+
+        String copilotDeepStrategy = Resource.getInstance().getStrategyContent("copilot_deep_strategy");
+        if (null == copilotDeepStrategy) {
+            Logger.w(this.getClass(), "#submitContent - No copilot deep strategy: " + authToken.getContactId());
+            return null;
+        }
+
+        CopilotSetting setting = copilot.copilotSetting;
+
+        copilotDeepStrategy = copilotDeepStrategy.replace("{{setting}}", setting.toMarkdown());
+        copilotDeepStrategy = copilotDeepStrategy.replace("{{records}}", copilot.sheet.getRecordsAsMarkdown());
+
+        GeneratingRecord record = this.host.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, copilotDeepStrategy,
+                null, null, null);
+        if (null != record) {
+            setting.clearSentences();
+            setting.addSentences(filter(record.answer));
+        }
+
+        return setting;
+    }
+
+//    private String filter(String text) {
+//        StringBuilder buf = new StringBuilder();
+//        int num = 0;
+//        String[] lines = text.split("\n");
+//        for (String line : lines) {
+//            if (line.length() < 3) {
+//                continue;
+//            }
+//
+//            buf.append("- ").append(line.trim()).append("\n");
+//            ++num;
+//            if (num >= 3) {
+//                break;
+//            }
+//        }
+//        return buf.toString();
+//    }
+
+    private List<String> filter(String text) {
+        List<String> result = new ArrayList<>();
+        String[] lines = text.split("\n");
+        for (String line : lines) {
+            if (line.length() == 0) {
+                continue;
+            }
+            int start = line.indexOf("（");
+            if (start > 0) {
+                if (start < 6) {
+                    int end = line.indexOf("）");
+                    line = line.substring(0, start) + line.substring(end + 1).trim();
+                    start = line.indexOf("（");
+                    if (start > 0) {
+                        line = line.substring(0, start).trim();
+                    }
+                }
+                else {
+                    line = line.substring(0, start).trim();
+                }
+            }
+            else {
+                line = line.trim();
+            }
+
+            // 提取来访者的话术
+            String newLine = filterLine(line.trim());
+            if (null != newLine) {
+                result.add(newLine);
+            }
+        }
+
+        return result;
+    }
+
+    private String filterLine(String line) {
+        StringBuilder buf = new StringBuilder();
+        if (line.startsWith("来访者：")) {
+            line = line.split("：")[1].trim();
+            line = line.replace("“", "");
+            line = line.replace("”", "");
+            line = line.replace("\"", "");
+            buf.append(line.trim());
+            buf.append("\n");
+        }
+        else if (line.startsWith("咨询师：")) {
+            return null;
+        }
+        else if (TextUtils.startsWithNumberSign(line)) {
+            line = line.split(". ")[1].trim();
+            line = line.replace("“", "");
+            line = line.replace("”", "");
+            line = line.replace("\"", "");
+            return filterLine(line.trim());
+        }
+        else if (line.length() <= 3) {
+            return null;
+        }
+        else {
+            line = line.trim().replace("\n\n", "").trim();
+            buf.append(line);
+            if (!line.endsWith("\n")) {
+                buf.append("\n");
+            }
+        }
+
+        if (buf.length() <= 3) {
+            return null;
+        }
+        return buf.toString();
+    }
+
+    public class Copilot implements JSONable {
+
+        public final long sn;
+
+        public final long timestamp;
+
+        public AuthToken authToken;
+
+        public CopilotSetting copilotSetting;
+
+        public CopilotSheet sheet;
+
+        public long duration;
+
+        public Copilot(AuthToken authToken, CopilotSetting copilotSetting) {
+            this.sn = copilotSetting.getSn();
+            this.timestamp = System.currentTimeMillis();
+            this.authToken = authToken;
+            this.copilotSetting = copilotSetting;
+            this.sheet = new CopilotSheet();
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = this.toCompactJSON();
+            return json;
+        }
+
+        @Override
+        public JSONObject toCompactJSON() {
+            JSONObject json = new JSONObject();
+            json.put("sn", this.sn);
+            json.put("timestamp", this.timestamp);
+            json.put("duration", this.duration);
+            json.put("setting", this.copilotSetting.toCompactJSON());
+            return json;
+        }
+    }
+}

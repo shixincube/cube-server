@@ -6,6 +6,7 @@
 
 package cube.service.aigc.knowledge;
 
+import cube.aigc.listener.GenerateTextListener;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
@@ -25,7 +26,7 @@ import cube.service.aigc.AIGCService;
 import cube.service.aigc.AIGCStorage;
 import cube.service.aigc.listener.*;
 import cube.service.aigc.resource.Relay;
-import cube.service.tokenizer.keyword.Keyword;
+import cube.aigc.text.Keyword;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

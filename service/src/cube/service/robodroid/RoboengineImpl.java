@@ -6,9 +6,9 @@
 
 package cube.service.robodroid;
 
-import cube.robot.Account;
-import cube.robot.Schedule;
-import cube.robot.Task;
+import cube.robodroid.Account;
+import cube.robodroid.Schedule;
+import cube.robodroid.Task;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Response;
