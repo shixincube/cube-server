@@ -5,7 +5,7 @@ import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.algorithm.KnowledgeStrategy;
 import cube.common.Language;
-import cube.service.tokenizer.Tokenizer;
+import cube.util.tokenizer.Tokenizer;
 import cube.util.TextUtils;
 
 import java.util.List;

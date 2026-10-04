@@ -15,7 +15,6 @@ import cell.util.log.Logger;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
 import cube.robodroid.*;
-import cube.robot.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

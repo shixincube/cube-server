@@ -17,7 +17,6 @@ import cube.core.Kernel;
 import cube.core.Module;
 import cube.plugin.PluginSystem;
 import cube.robodroid.*;
-import cube.robot.*;
 import cube.service.client.ClientManager;
 import cube.service.client.ServerClient;
 import cube.service.robodroid.mission.AbstractMission;

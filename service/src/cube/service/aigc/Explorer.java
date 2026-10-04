@@ -26,9 +26,9 @@ import cube.service.aigc.resource.BingSearcher;
 import cube.service.aigc.resource.ResourceSearcher;
 import cube.service.auth.AuthService;
 import cube.service.contact.ContactManager;
-import cube.service.tokenizer.Tokenizer;
+import cube.util.tokenizer.Tokenizer;
 import cube.aigc.text.Keyword;
-import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+import cube.util.tokenizer.keyword.TFIDFAnalyzer;
 import org.eclipse.jetty.http.HttpStatus;
 
 import java.util.*;

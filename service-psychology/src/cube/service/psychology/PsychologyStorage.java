@@ -8,6 +8,7 @@ package cube.service.psychology;
 
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
+import cube.service.psychology.scene.ContentTools;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.IndicatorRate;
@@ -48,9 +49,9 @@ import java.util.function.BiConsumer;
  * 这一点由该模块的构建配置保证（classpath 中不含 {@code cube-service-*.jar}），
  * 因此本类中不允许出现任何 {@code cube.service.*} 的类型引用。</p>
  *
- * <p><b>六维描述生成</b>：报告的六维得分描述需要分词器与 TF-IDF 语料，而
- * {@code ContentTools} 位于宿主 {@code service} 模块（它依赖宿主侧的
- * {@code Tokenizer} 与 {@code TFIDFAnalyzer}）。因此本类不持有分词器，
+ * <p><b>六维描述生成</b>：报告的六维得分描述需要分词器与 TF-IDF 语料，
+ * 而 {@link ContentTools#fillHexagonScoreDescription} 经宿主能力接口转发，
+ * 传入的分词器实例由宿主持有。因此本类不持有分词器，
  * 而是由宿主在打开存储前以 {@link BiConsumer} 注入一个「描述生成器」，
  * 从而在编译期彻底切断对宿主模块的依赖。</p>
  */

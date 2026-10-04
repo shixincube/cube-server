@@ -238,8 +238,8 @@ public class PsychologyScene {
             this.maxQueueLength = preference.getInt("maxQueueLength");
             Logger.i(this.getClass(), "#start - max queue length: " + this.maxQueueLength);
 
-            // 六维得分描述的生成依赖宿主侧的分词器与 TF-IDF 语料（ContentTools 位于
-            // service 模块），而 PsychologyStorage 已随心理学业务模块迁至 service-psychology。
+            // 六维得分描述的生成需要分词器实例，而分词器由宿主持有；
+            // PsychologyStorage 已随心理学业务模块迁至 service-psychology。
             // 因此以 lambda 注入，使插件模块编译期零 cube.service.* 依赖。
             this.storage.setHexagonDescriber(this.host::fillHexagonScoreDescription);
 

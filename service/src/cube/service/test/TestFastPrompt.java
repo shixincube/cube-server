@@ -1,6 +1,6 @@
 package cube.service.test;
 
-import cube.service.tokenizer.Tokenizer;
+import cube.util.tokenizer.Tokenizer;
 
 import java.util.List;
 

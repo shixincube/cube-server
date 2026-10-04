@@ -32,9 +32,9 @@ import java.util.List;
  * 这些文本的格式约定与既有客户端强绑定，故集中在本类实现，
  * 由心理学业务模块直接调用，不再经宿主能力接口转发。</p>
  *
- * <p>需要宿主分词器的两个方法（{@code fillHexagonScoreDescription} 与
- * {@code extract}）不在本类——它们依赖宿主的词典与 TF-IDF 权重表，
- * 留在宿主侧。</p>
+ * <p>按关键词匹配语料的两个方法（{@code fillHexagonScoreDescription} 与
+ * {@code extract}）不在本类——它们依赖分词与 TF-IDF 权重，
+ * 在 {@link ContentTools}。</p>
  */
 public class ReportRenderer {
 

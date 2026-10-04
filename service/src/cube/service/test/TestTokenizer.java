@@ -6,10 +6,10 @@
 
 package cube.service.test;
 
-import cube.service.tokenizer.SegToken;
-import cube.service.tokenizer.Tokenizer;
+import cube.util.tokenizer.SegToken;
+import cube.util.tokenizer.Tokenizer;
 import cube.aigc.text.Keyword;
-import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+import cube.util.tokenizer.keyword.TFIDFAnalyzer;
 import cube.util.TextUtils;
 
 import java.util.List;

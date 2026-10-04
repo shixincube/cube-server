@@ -7,8 +7,8 @@
 package cube.service.aigc.resource;
 
 import cube.aigc.Tokenizable;
-import cube.service.tokenizer.Tokenizer;
-import cube.service.tokenizer.keyword.TFIDFAnalyzer;
+import cube.util.tokenizer.Tokenizer;
+import cube.util.tokenizer.keyword.TFIDFAnalyzer;
 
 import java.util.List;
 
