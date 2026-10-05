@@ -290,6 +290,36 @@
 			</fileset>
 		</copy>
 		<echo>Synced aigc-modules.properties to ${deploy.dir}/config/.</echo>
+
+		<!-- 心理学配置模板：随模板部署，运维据此创建 .local.json。
+		     .local.json 含数据库凭据，由gitignore排除，不进仓库、也不随包分发。
+		     部署时若缺少它，PsychologyModule 会记 ERROR 并拒绝装载
+		     （消息中指明该复制哪个文件），不会静默连错库。 -->
+		<copy todir="${deploy.dir}/config/" overwrite="true">
+			<fileset dir="${project-service.dir}/config/">
+				<include name="psychology.json.template" />
+			</fileset>
+		</copy>
+		<!-- 提示运维创建实际配置。此处只做提示、不做判断：判断需 ant-contrib 的
+		     <if>，而本工程只依赖 ant 核心（build.xml 无任何 taskdef 引入），
+		     引入额外依赖会提高构建环境的隐式要求。 -->
+		<echo>Reminder: copy ${deploy.dir}/config/psychology.json.template to</echo>
+		<echo>          ${deploy.dir}/config/psychology.local.json and fill in the database settings.</echo>
+
+		<!-- 业务资产：心理学语料/量表/脚本、引导流程、提示词。
+		     Resource 与 Guides 读的是硬编码相对路径（assets/psychology/...），
+		     cell.sh 的工作目录是 deploy/，故必须同步，否则部署形态下
+		     checkFiles 全部失败、语料与量表一律读不到。
+		     ⚠️ 刻意【不】同步 service/assets/data/（1.3G，含模型与词典），
+		     该目录由部署环境单独提供。 -->
+		<copy todir="${deploy.dir}/assets/">
+			<fileset dir="${project-service.dir}/assets/">
+				<include name="psychology/**" />
+				<include name="guidance/**" />
+				<include name="prompt/**" />
+			</fileset>
+		</copy>
+		<echo>Synced assets (psychology / guidance / prompt) to ${deploy.dir}/assets/.</echo>
 	</target>
 
 	<!-- =================================================================== -->

@@ -1422,9 +1422,7 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
         return this.service.semanticSearch(query, listener);
     }
 
-
-
-/**
+    /**
      * 提交延迟任务。
      *
      * @param taskKey 任务键，用于日志。

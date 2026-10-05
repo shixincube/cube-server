@@ -38,10 +38,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * 手写启动脚本，无依赖解析机制；按类路径顺序自动发现会引入「同名类被遮蔽」的
  * 调试成本，且模块启停需要运维开关，配置文件天然承载该职责。</p>
  *
- * <p><b>装载时序</b>：本类由 {@code AIGCCellet#install()} 调用。
- * {@code install()} 早于内核启动，也早于任何一次动作派发，
- * 因此装载完成时路由表已权威。这也是<b>不能</b>把装载放进
- * {@code AIGCService#start()} 的原因：那样会留下「派发已可用但路由表仍空」的窗口。</p>
+ * <p><b>装载时序</b>：本类由 {@code AIGCCellet#install()} 构造，但
+ * <b>{@link #load()} 不在 install() 中执行</b>——它由 {@code AIGCService}
+ * 的引导线程在宿主存储就绪后经 {@code AIGCCellet#loadModules()} 触发。
+ * 延后的原因是模块的 {@code setup()} 可能读取宿主存储配置，
+ * 宿主存储未就绪时装载会失败。</p>
+ *
+ * <p>即便装载晚于 install，也仍早于任何一次
+ * {@code AIGCCellet#onListened}（内核启动后才收报文），
+ * 故路由表在首个请求到达前已权威。</p>
  *
  * <p><b>线程约束</b>：<b>{@link #load()} 运行在单元安装阶段，此时宿主的服务级
  * 线程池尚未创建，因此本方法内严禁调用线程池或新建线程</b>，
@@ -60,49 +65,49 @@ public final class ModuleRegistry {
      */
     private final static String CONFIG_FILE = "aigc-modules.properties";
 
-/**
+    /**
  * 模块类配置键前缀。
  */
-private final static String KEY_PREFIX = "module.";
+    private final static String KEY_PREFIX = "module.";
 
-/**
+    /**
  * 模块类配置键后缀。
  */
-private final static String KEY_SUFFIX = ".class";
+    private final static String KEY_SUFFIX = ".class";
 
-/**
+    /**
  * 模块启用开关配置键后缀。
  */
-private final static String KEY_ENABLED_SUFFIX = ".enabled";
+    private final static String KEY_ENABLED_SUFFIX = ".enabled";
 
-/**
+    /**
  * 动作路由器。
  */
-private final ActionRouter router;
+    private final ActionRouter router;
 
-/**
+    /**
  * 已装载的模块实例。
  *
  * <p>使用并发集合：本列表在装载阶段写入、在派发与兄弟模块查找阶段读取，
  * 虽时序上装载早于读取，但 {@link #findModule(String)} 可能被运行期调用，
  * 不应依赖「写完即冻结」的隐含假设。</p>
  */
-private final List<ActionModule> modules = new CopyOnWriteArrayList<>();
+    private final List<ActionModule> modules = new CopyOnWriteArrayList<>();
 
-/**
+    /**
  * 模块名 → 实例索引，供 {@link #findModule(String)} 与兄弟模块查找使用。
  */
-private final ConcurrentHashMap<String, ActionModule> moduleMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ActionModule> moduleMap = new ConcurrentHashMap<>();
 
-/**
+    /**
  * 宿主能力接口。
  */
-private AIGCHost host;
+    private AIGCHost host;
 
-/**
+    /**
  * 是否存在非可选模块初始化失败。
  */
-private volatile boolean blockingFailure = false;
+    private volatile boolean blockingFailure = false;
 
     /**
      * 构造函数。
@@ -122,16 +127,16 @@ private volatile boolean blockingFailure = false;
         return this.router;
     }
 
-/**
+    /**
  * 获取宿主能力接口。
  *
  * @return 返回宿主能力接口；未设置时返回 <code>null</code>。
  */
-public AIGCHost getHost() {
+    public AIGCHost getHost() {
     return this.host;
 }
 
-/**
+    /**
  * 设置宿主能力接口。
  *
  * <p>必须在 {@link #load()} 之前调用：模块的 {@code setup(host)} 在装载时
@@ -139,17 +144,17 @@ public AIGCHost getHost() {
  *
  * @param host 宿主能力接口。
  */
-public void setHost(AIGCHost host) {
+    public void setHost(AIGCHost host) {
     this.host = host;
 }
 
-/**
+    /**
  * 查找已装载的模块实例。
  *
  * @param moduleName 模块名。
  * @return 返回模块实例；不存在时返回 <code>null</code>。
  */
-public ActionModule findModule(String moduleName) {
+    public ActionModule findModule(String moduleName) {
     if (null == moduleName) {
         return null;
     }
@@ -157,33 +162,33 @@ public ActionModule findModule(String moduleName) {
     return this.moduleMap.get(moduleName);
 }
 
-/**
+    /**
  * 获取已装载模块列表（只读视图）。
  *
  * @return 返回模块列表。
  */
-public List<ActionModule> getModules() {
+    public List<ActionModule> getModules() {
     return Collections.unmodifiableList(this.modules);
 }
 
-/**
- * 从配置文件发现并绑定模块。
- *
- * <p>出厂配置未列出任何模块时，本方法只记录一行 INFO 日志后返回，
- * 因此运行期行为。</p>
- *
- * <p>配置查找顺序与宿主既有的配置加载保持一致：先
- * <code>config/aigc-modules.properties</code>，再退回工作目录下的
- * <code>aigc-modules.properties</code>；两者都不存在时按「零模块」处理，
- * 记 INFO 而非 ERROR（首次部署必然如此）。</p>
- *
+    /**
+     * 从配置文件发现并绑定模块。
+     *
+     * <p>模块清单未列出任何模块时，本方法只记录一行 INFO 日志后返回
+     * 0，运行期行为与「未启用模块化」完全一致。</p>
+     *
+     * <p>配置查找顺序与宿主既有的配置加载保持一致：先
+     * <code>config/aigc-modules.properties</code>，再退回工作目录下的
+     * <code>aigc-modules.properties</code>；两者都不存在时按「未启用」处理，
+     * 记 INFO 而非 ERROR（首次部署必然如此）。</p>
+     *
  * <p>单个模块的处理顺序为：启用开关 → 实例化 → 绑定动作 → {@code setup(host)}。
  * <b>{@code setup} 必须排在绑定之后</b>，因为只有先完成模块自身初始化，
  * 建立的绑定才对派发线程可见且状态完整；反过来会让派发线程读到未初始化的实例。</p>
  *
  * @return 成功装载的模块数量。
  */
-public int load() {
+    public int load() {
     File file = new File("config/" + CONFIG_FILE);
     if (!file.exists()) {
         file = new File(CONFIG_FILE);
@@ -278,14 +283,14 @@ public int load() {
     return count;
 }
 
-/**
+    /**
  * 读取模块的启用开关。
  *
  * @param properties 配置属性。
  * @param index 模块序号。
  * @return 启用时返回 <code>true</code>；未配置或值非法时按「启用」处理。
  */
-private boolean isEnabled(Properties properties, int index) {
+    private boolean isEnabled(Properties properties, int index) {
     String value = properties.getProperty(KEY_PREFIX + index + KEY_ENABLED_SUFFIX);
     if (null == value) {
         return true;
@@ -339,7 +344,7 @@ private boolean isEnabled(Properties properties, int index) {
         return null;
     }
 
-/**
+    /**
  * 建立模块的全部动作绑定。
  *
  * <p>本方法必须在 {@link ActionModule#setup(AIGCHost)} <b>之前</b>调用：
@@ -348,7 +353,8 @@ private boolean isEnabled(Properties properties, int index) {
  * @param module 模块实例。
  * @return 全部绑定成功时返回 <code>true</code>。
  */
-private boolean bindActions(ActionModule module) {    List<ActionBinding> actions = module.getActions();
+    private boolean bindActions(ActionModule module) {
+        List<ActionBinding> actions = module.getActions();
     if (null == actions || actions.isEmpty()) {
         Logger.w(ModuleRegistry.class, "#bindActions - Module \"" + module.getName()
                 + "\" provides NO action");
@@ -365,7 +371,7 @@ private boolean bindActions(ActionModule module) {    List<ActionBinding> action
     return success;
 }
 
-/**
+    /**
  * 登记模块声明的动作名。
  *
  * <p><b>与 {@link #bindActions(ActionModule)} 的区别</b>：绑定表在装载失败时会被回滚，
@@ -375,7 +381,7 @@ private boolean bindActions(ActionModule module) {    List<ActionBinding> action
  *
  * @param module 模块实例。
  */
-private void declareActions(ActionModule module) {
+    private void declareActions(ActionModule module) {
     try {
         List<ActionBinding> actions = module.getActions();
         if (null == actions) {
@@ -398,19 +404,19 @@ private void declareActions(ActionModule module) {
     }
 }
 
-/**
+    /**
  * 注销模块的全部动作绑定，用于初始化失败时回滚。
  *
  * @param module 模块实例。
  */
-private void unbindActions(ActionModule module) {
+    private void unbindActions(ActionModule module) {
     if (this.router.unbindAll(module)) {
         Logger.w(ModuleRegistry.class, "#unbindActions - Actions of module \"" + module.getName()
                 + "\" have been unbound");
     }
 }
 
-/**
+    /**
  * 初始化模块。
  *
  * <p><b>失败处理策略</b>：模块声明 <code>optional=false</code> 时，
@@ -421,7 +427,7 @@ private void unbindActions(ActionModule module) {
  * @param module 模块实例。
  * @return 初始化成功时返回 <code>true</code>。
  */
-private boolean setupModule(ActionModule module) {
+    private boolean setupModule(ActionModule module) {
     ModuleDescriptor descriptor = module.getDescriptor();
     boolean optional = (null != descriptor) && descriptor.optional;
 
@@ -443,7 +449,7 @@ private boolean setupModule(ActionModule module) {
     }
 }
 
-/**
+    /**
  * 校验模块声明的单元能力是否均可用。
  *
  * <p><b>调用时机</b>：必须在宿主就绪（单元已通过 Relay 上报注册）之后调用，
@@ -456,7 +462,7 @@ private boolean setupModule(ActionModule module) {
  *
  * @return 全部已装载模块的声明能力均可用时返回 <code>true</code>。
  */
-public boolean verifyCapabilities() {
+    public boolean verifyCapabilities() {
     boolean allAvailable = true;
 
     for (ActionModule module : this.modules) {
@@ -484,7 +490,7 @@ public boolean verifyCapabilities() {
     return allAvailable;
 }
 
-/**
+    /**
  * 是否存在「非可选模块初始化失败」。
  *
  * <p>供宿主在健康检查与日志中暴露：此时模块未装载，但主服务仍在运行，
@@ -492,17 +498,17 @@ public boolean verifyCapabilities() {
  *
  * @return 存在非可选模块初始化失败时返回 <code>true</code>。
  */
-public boolean hasBlockingFailure() {
+    public boolean hasBlockingFailure() {
     return this.blockingFailure;
 }
 
-/**
+    /**
  * 卸载全部模块并清空路由表。
  *
  * <p>由宿主在单元卸载时调用。单个模块的 {@code teardown()} 异常不影响其余模块，
  * 且不向上抛出——停机路径不应因插件异常而中断。</p>
  */
-public void teardownAll() {
+    public void teardownAll() {
     for (ActionModule module : this.modules) {
         try {
             module.teardown();
@@ -522,7 +528,7 @@ public void teardownAll() {
     Logger.i(ModuleRegistry.class, "#teardownAll - All AIGC action modules are unloaded");
 }
 
-/**
+    /**
  * 驱动全部模块的心跳。
  *
  * <p>由宿主在自身的 tick 节奏中调用（与宿主心跳同频）， * 「门面逐个调业务场景 {@code onTick}」的硬编码写法。</p>
@@ -532,7 +538,7 @@ public void teardownAll() {
  *
  * @param now 当前时刻（毫秒）。
  */
-public void tick(long now) {
+    public void tick(long now) {
     for (ActionModule module : this.modules) {
         try {
             module.onTick(now);

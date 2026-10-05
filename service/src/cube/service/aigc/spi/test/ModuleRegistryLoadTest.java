@@ -242,8 +242,8 @@ public class ModuleRegistryLoadTest {
         }
     }
 
-/**
- * 重置测试模块的静态事件记录。
+    /**
+     * 重置测试模块的静态事件记录。
      */
     private static void resetModuleEvents() {
         GoodModule.setupCount = 0;

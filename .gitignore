@@ -105,3 +105,7 @@ AIGC-业务模块插件化改造方案.md
 # 心理学数据库实际配置：含明文口令，由部署环境按psychology.json.template 定制
 service/config/psychology.local.json
 deploy/config/psychology.local.json
+
+# 部署形态的配置与资产均由 `ant deploy` 从 service/ 同步生成，不入库
+deploy/config/psychology.json.template
+deploy/config/aigc-modules.properties

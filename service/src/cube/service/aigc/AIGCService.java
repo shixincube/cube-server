@@ -223,9 +223,10 @@ public class AIGCService extends AbstractModule implements Generatable {
                 // 装载 AIGC 业务模块（心理学等）。必须在宿主存储就绪之后：
                 // 模块 setup 可能读取宿主存储配置，提前装载会失败。
                 //
-                // 此处是「启动心理学场景」（PsychologyScene.getInstance().start），
-                // 位置在存储创建之前——今由模块自身的 setup 承接该职责，
-                // 且 PsychologyModule 自建 PsychologyStorage，不依赖此处创建的 AIGCStorage。
+                // 这里同时也是业务场景的启动时机——由模块的 setup 统一承接：
+                // PsychologyModule 在 setup 里建存储并装配 PsychologyScene
+                // （注入 host、storage、队列上限，并完成分词器与引导流程初始化）。
+                // 宿主侧不再单独调用场景，故场景的宿主能力与存储必定有效。
                 AIGCCellet theCellet = AIGCService.this.cellet;
                 if (null != theCellet) {
                     theCellet.loadModules();

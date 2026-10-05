@@ -39,11 +39,13 @@ public class AIGCCellet extends AbstractCellet {
     /**
      * AIGC 业务模块注册表。
      *
-     * <p>在 {@link #install()} 中创建并完成装载，早于任何一次
+     * <p>在 {@link #install()} 中创建，<b>装载</b>则由 {@code AIGCService}
+     * 的引导线程经 {@link #loadModules()} 触发（延后原因是模块 setup
+     * 可能读取宿主存储配置）。无论是否装载完毕，它都早于任何一次
      * {@link #onListened} 派发，因此派发路径上不需要判空。</p>
      *
-     * <p>出厂配置列出零个模块，故此处恒为「已装载但绑定表为空」，
-     * 派发成本为一次 volatile 读。</p>
+     * <p>模块清单由 {@code config/aigc-modules.properties} 决定；
+     * 该文件未列出任何模块时，注册表为空，派发成本为一次 volatile 读。</p>
      */
     private ModuleRegistry moduleRegistry;
 
@@ -84,8 +86,10 @@ public class AIGCCellet extends AbstractCellet {
     /**
      * 装载已注册的业务模块。
      *
-     * <p>由宿主在<b>自身存储就绪之后</b>调用，     * 「门面在引导线程中直接启业务场景」的做法。延后的原因：
-     * 模块的 {@code setup} 可能读取宿主存储配置，宿主存储未就绪时装载会失败。</p>
+     * <p>由宿主在<b>自身存储就绪之后</b>、于引导线程中调用。延后的原因：
+     * 模块的 {@code setup} 可能读取宿主存储配置，宿主存储未就绪时装载会失败。
+     * 装载亦承担业务场景的装配——由模块 setup 注入场景所需的宿主能力与存储，
+     * 宿主不再单独启动场景。</p>
      *
      * <p>即便装载晚于 install，也仍早于任何一次 onListened（内核启动后才收报文），
      * 故路由表在首个请求到达前已权威。</p>
@@ -136,8 +140,8 @@ public class AIGCCellet extends AbstractCellet {
         return this.moduleRegistry;
     }
 
-/**
- * 获取宿主能力实现。
+    /**
+     * 获取宿主能力实现。
      *
      * @return 返回宿主能力实现；未装载时返回 <code>null</code>。
      */
@@ -267,7 +271,7 @@ public class AIGCCellet extends AbstractCellet {
     /**
      * 尝试把请求派发给已注册的业务模块。
      *
-     * <p>出厂配置下列出零个模块，本方法在「是否已绑定」检查后立即返回
+     * <p>模块清单未列出任何模块时，本方法在「是否已绑定」检查后立即返回
      * <code>false</code>，因此既不会建立应答计时记录，也不会向线程池提交任务，
      * 对既有动作分支与未匹配请求不产生任何可观测差异。</p>
      *
