@@ -981,10 +981,23 @@ public final class AIGCHostImpl implements AIGCHost {
      * <p>报告运行态（生成中报告的内存表与任务队列）由该单例持有，
      * 是本组方法的唯一数据来源。</p>
      *
-     * @return 返回场景单例。
+     * <p><b>场景的装配由模块的 setup 完成</b>，早于任何一次动作派发；
+     * 但若模块因配置缺失等原因未装载成功，场景会保持未装配状态。
+     * 此时返回 <code>null</code>，由调用方判空后回明确失败，
+     * 而不是让空引用异常被动作执行层 catch 成无信息的
+     * {@code Failure}。</p>
+     *
+     * @return 返回已装配的场景；未装配时返回 <code>null</code>。
      */
     private PsychologyScene scene() {
-        return PsychologyScene.getInstance();
+        PsychologyScene scene = PsychologyScene.getInstance();
+        if (!scene.isReady()) {
+            Logger.e(AIGCHostImpl.class, "#scene - Psychology scene is NOT ready, "
+                    + "the business module is probably NOT loaded");
+            return null;
+        }
+
+        return scene;
     }
 
     /**
@@ -1124,7 +1137,11 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
 
     @Override
     public JSONObject queryPaintingReport(long sn, String format) {
-        PaintingReport report = this.scene().getPaintingReport(sn);
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
+        PaintingReport report = scene.getPaintingReport(sn);
         if (null == report) {
             return null;
         }
@@ -1140,7 +1157,7 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
             else {
                 json = report.toCompactJSON();
                 // 所在队列位置：仅摘要形态需要，与迁移前一致
-                json.put("queuePosition", this.scene().getGeneratingQueuePosition(sn));
+                json.put("queuePosition", scene.getGeneratingQueuePosition(sn));
             }
 
             return json;
@@ -1152,23 +1169,35 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
 
     @Override
     public PaintingReport getPaintingReport(long sn) {
-        return this.scene().getPaintingReport(sn);
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
+        return scene.getPaintingReport(sn);
     }
 
     @Override
     public JSONObject queryScaleReport(long sn) {
-        ScaleReport report = this.scene().getScaleReport(sn);
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
+        ScaleReport report = scene.getScaleReport(sn);
         return (null == report) ? null : report.toJSON();
     }
 
     @Override
     public JSONObject listPaintingReports(long contactId, int page, int size, boolean descending, int state) {
-        int num = (state == -1) ? this.scene().numPaintingReports(contactId)
-                : this.scene().numPaintingReports(contactId, state);
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
+        int num = (state == -1) ? scene.numPaintingReports(contactId)
+                : scene.numPaintingReports(contactId, state);
 
         List<PaintingReport> list = (state == -1)
-                ? this.scene().getPaintingReports(contactId, page, size, descending)
-                : this.scene().getPaintingReportsWithState(contactId, page, size, descending, state);
+                ? scene.getPaintingReports(contactId, page, size, descending)
+                : scene.getPaintingReportsWithState(contactId, page, size, descending, state);
 
         JSONArray array = new JSONArray();
         for (PaintingReport report : list) {
@@ -1186,12 +1215,16 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
 
     @Override
     public JSONObject listScaleReports(long contactId, boolean descending, int state) {
-        int num = (state == -1) ? this.scene().numScaleReports(contactId)
-                : this.scene().numScaleReports(contactId, state);
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
+        int num = (state == -1) ? scene.numScaleReports(contactId)
+                : scene.numScaleReports(contactId, state);
 
         List<ScaleReport> list = (state == -1)
-                ? this.scene().getScaleReports(contactId, descending)
-                : this.scene().getScaleReports(contactId, state, descending);
+                ? scene.getScaleReports(contactId, descending)
+                : scene.getScaleReports(contactId, state, descending);
 
         JSONArray array = new JSONArray();
         for (ScaleReport report : list) {
@@ -1207,14 +1240,22 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
 
     @Override
     public JSONObject stopReportGeneration(long sn) {
-        PaintingReport report = this.scene().stopGenerating(sn);
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
+        PaintingReport report = scene.stopGenerating(sn);
         return (null == report) ? null : report.toCompactJSON();
     }
 
     @Override
     public JSONObject resetReportAttention(long sn, Integer newAttention) {
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
         Attention attention = (null == newAttention) ? null : Attention.parse(newAttention);
-        PaintingReport report = this.scene().resetReportAttention(sn, attention);
+        PaintingReport report = scene.resetReportAttention(sn, attention);
         return (null == report) ? null : report.toCompactJSON();
     }
 
@@ -1238,36 +1279,52 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
 
     @Override
     public PaintingFeatureSet getPaintingFeatureSet(long reportSn) {
-        return this.scene().getPaintingFeatureSet(reportSn);
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
+        return scene.getPaintingFeatureSet(reportSn);
     }
 
     @Override
     public PaintingReport generatePaintingReport(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
             Theme theme, int maxIndicators, boolean adjust, int retention, String remark,
             PaintingReportListener listener) {
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
         if (null == channel || null == attribute || null == fileLabel) {
             Logger.w(this.getClass(), "#generatePaintingReport - Channel, attribute or file is NULL");
             return null;
         }
 
-        return this.scene().generatePaintingReport(channel, attribute, fileLabel, theme, maxIndicators,
+        return scene.generatePaintingReport(channel, attribute, fileLabel, theme, maxIndicators,
                 adjust, retention, remark, listener);
     }
 
     @Override
     public ScaleReport generateScaleReport(AIGCChannel channel, Scale scale, Language language,
             ScaleReportListener listener) {
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
         if (null == channel || null == scale) {
             Logger.w(this.getClass(), "#generateScaleReport - Channel or scale is NULL");
             return null;
         }
 
-        return this.scene().generateScaleReport(channel, scale, language, listener);
+        return scene.generateScaleReport(channel, scale, language, listener);
     }
 
     @Override
     public Scale getScale(long sn) {
-        return this.scene().getScale(sn);
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
+        return scene.getScale(sn);
     }
 
     @Override
@@ -1291,17 +1348,25 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
 
     @Override
     public JSONObject getPaintingInferenceData(long sn) {
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
         //迁移前该方法还接收令牌但从不使用它，故此处也不需要令牌
-        return this.scene().getPaintingInferenceData(null, sn);
+        return scene.getPaintingInferenceData(null, sn);
     }
 
     @Override
     public Painting getPredictedPainting(AuthToken token, String fileCode) {
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
         if (null == token || null == fileCode) {
             return null;
         }
 
-        return this.scene().getPredictedPainting(token, fileCode);
+        return scene.getPredictedPainting(token, fileCode);
     }
 
     @Override
@@ -1311,7 +1376,12 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
             return null;
         }
 
-        return this.scene().getPredictedPainting(token, sn, boundingBox, visualParam, probability);
+        PsychologyScene scene = this.scene();
+        if (null == scene) {
+            return null;
+        }
+
+        return scene.getPredictedPainting(token, sn, boundingBox, visualParam, probability);
     }
 
     @Override

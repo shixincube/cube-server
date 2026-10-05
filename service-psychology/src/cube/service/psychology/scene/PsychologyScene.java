@@ -87,10 +87,17 @@ public class PsychologyScene {
      */
     private AIGCHost host;
 
+    /**
+     * 心理学存储。
+     *
+     * <p><b>由 {@code PsychologyModule} 创建并传入</b>（见 {@link #setup}），
+     * 本类不自己建、不自己close。</p>
+     */
     private PsychologyStorage storage;
 
-    private long lastConfigModified;
-
+    /**
+     * 报告生成队列上限，装配时由模块从配置读入。
+     */
     private int maxQueueLength = 30;
 
     private Queue<PaintingReportTask> paintingReportTaskQueue;
@@ -146,11 +153,10 @@ public class PsychologyScene {
      * 获取宿主能力接口。
      *
      * <p>评估器与报告工作器已随心理学业务模块迁至 service-psychology，
-     * 它们只能经SPI 访问宿主能力，故由本场景统一转发。</p>
+     * 它们只能经 SPI 访问宿主能力，故由本场景统一转发。</p>
      *
-     * <p>⚠️ 不可缓存为字段：SPI 的装配在 {@code AIGCCellet.start()} 内完成，
-     * 而本场景的 {@link #start(AIGCService)} 早于它执行，
-     * 缓存会拿到 {@code null}。每次现取即可。</p>
+     * <p>字段在 {@link #setup} 时由模块注入，注入动作早于任何一次动作派发，
+     * 故直接读字段即可，不存在「取到 null」的窗口。</p>
      *
      * @return 返回宿主能力接口；未装配时返回 <code>null</code>。
      */
@@ -170,14 +176,6 @@ public class PsychologyScene {
 
         HostGeneratable(AIGCHost host) {
             this.host = host;
-
-        // 对话历史与图表的读写经宿主能力完成，场景管理器只做转发
-        SceneManager.getInstance().setHost(host);
-
-        // 引导系统列表：流程定义随心理学业务模块迁入插件，故在此列出
-        for (GuideFlow flow : Guides.listGuideFlows()) {
-            Logger.i(this.getClass(), "#start - Guide flow: " + flow.getName());
-        }
         }
 
         @Override
@@ -218,81 +216,122 @@ public class PsychologyScene {
         }
     }
 
-    public void start(AIGCHost host) {
-        this.host = host;
-
-        try {
-            JSONObject config = ConfigUtils.readJsonFile("psychology.json");
-
-            // 读取存储配置
-            JSONObject storage = config.getJSONObject("storage");
-            if (storage.getString("type").equalsIgnoreCase("SQLite")) {
-                this.storage = new PsychologyStorage(StorageType.SQLite, storage);
-            }
-            else {
-                this.storage = new PsychologyStorage(StorageType.MySQL, storage);
-            }
-
-            // 读取性能配置
-            JSONObject preference = config.getJSONObject("preference");
-            this.maxQueueLength = preference.getInt("maxQueueLength");
-            Logger.i(this.getClass(), "#start - max queue length: " + this.maxQueueLength);
-
-            // 六维得分描述的生成需要分词器实例，而分词器由宿主持有；
-            // PsychologyStorage 已随心理学业务模块迁至 service-psychology。
-            // 因此以 lambda 注入，使插件模块编译期零 cube.service.* 依赖。
-            this.storage.setHexagonDescriber(this.host::fillHexagonScoreDescription);
-
-            this.storage.open();
-            this.storage.execSelfChecking(null);
-
-            this.lastConfigModified = System.currentTimeMillis();
-
-            // 检查资源文件
-            Resource.getInstance().setTokenizer(new HostTokenizer(this.host));
-            Resource.getInstance().checkFiles();
-
-            // 数据管理器设置
-            
-
-            // 激活数据集
-            String r = this.host.extractContent("白泽京智");
-            Logger.i(this.getClass(), "#start - Active dataset: " + r);
-
-            String corpus = Resource.getInstance().getCorpus("baize", "MIND_ECHO");
-            Logger.i(this.getClass(), "#start - Active corpus: " + corpus);
-        } catch (Exception e) {
-            e.printStackTrace();
-            Logger.w(this.getClass(), "#start", e);
+    /**
+     * 装配场景。
+     *
+     * <p>由 {@code PsychologyModule#setup(AIGCHost)} 调用。本方法<b>只接收</b>
+     * 已就绪的存储与宿主能力，不自己读配置、不自己建存储——
+     * 存储的唯一所有者是模块，场景只是它的使用者。同一 jar 内互相引用
+     * 不违反「插件编译期零宿主依赖」约束。</p>
+     *
+     * <p><b>为何必须由模块驱动</b>：本场景的 41 处存储访问与 60+ 处方法
+     * 都会被插件动作经 SPI 回调到，而 {@code ActionModule} 的契约方法只有
+     * {@code setup} / {@code teardown} / {@code onTick} 三个。若场景自行
+     * 初始化，就必然出现「无人调用 start ⇒ 存储恒为 null，而调用点照旧」
+     * 的断链。</p>
+     *
+     * @param host 宿主能力接口。
+     * @param storage 已打开的心理学存储。
+     * @param maxQueueLength 报告生成队列上限。
+     */
+    public void setup(AIGCHost host, PsychologyStorage storage, int maxQueueLength) {
+        if (null == host || null == storage) {
+            throw new IllegalArgumentException("Host and storage must NOT be NULL");
         }
+
+        this.host = host;
+        this.storage = storage;
+        this.maxQueueLength = (maxQueueLength > 0) ? maxQueueLength : this.maxQueueLength;
+        this.lastRetentionRefresh = System.currentTimeMillis();
+
+        Logger.i(this.getClass(), "#setup - Scene is ready, max queue length: " + this.maxQueueLength);
+
+        // 对话历史与图表的读写经宿主能力完成，场景管理器只做转发
+        SceneManager.getInstance().setHost(host);
+
+        // 引导系统列表：流程定义随心理学业务模块迁至插件，故在此列出
+        for (GuideFlow flow : Guides.listGuideFlows()) {
+            Logger.i(this.getClass(), "#setup - Guide flow: " + flow.getName());
+        }
+
+        // 协议实体（量表、语料）以接口方式使用分词器与 TF-IDF，而实现依赖宿主
+        // 的词典与权重表，故以本地适配器代理。必须在任何语料/量表加载之前设置：
+        // Resource#loadDataset 内部即调用 tokenizer.analyze。
+        Resource.getInstance().setTokenizer(new HostTokenizer(host));
+
+        // 资产缺失不阻断装载——只记 ERROR，能力退化而非服务不可用
+        if (!Resource.getInstance().checkFiles()) {
+            Logger.e(this.getClass(), "#setup - SOME asset file is MISSING, "
+                    + "resource-dependent features will be degraded");
+        }
+
+        String dataset = host.extractContent("白泽京智");
+        Logger.i(this.getClass(), "#setup - Active dataset: " + dataset);
+
+        String corpus = Resource.getInstance().getCorpus("baize", "MIND_ECHO");
+        Logger.i(this.getClass(), "#setup - Active corpus: " + corpus);
+    }
+
+    /**
+     * 停止场景并释放其持有的引用。
+     *
+     * <p><b>不关闭存储</b>：存储的所有者是模块，由模块的 {@code teardown}
+     * 关闭。此处只清空引用并阻断新任务，避免双重关闭。</p>
+     */
+    public void teardown() {
+        // 阻止新任务进入
+        this.maxQueueLength = 0;
+        this.numRunningPaintingTasks.set(Integer.MAX_VALUE);
+
+        this.storage = null;
+        this.host = null;
 
         this.numRunningPaintingTasks.set(0);
     }
 
-    public void stop() {
-        if (null != this.storage) {
-            this.storage.close();
-        }
-
-        // 阻止新任务进入
-        this.maxQueueLength = 0;
-        this.numRunningPaintingTasks.set(Integer.MAX_VALUE);
+    /**
+     * 报告生成队列上限。
+     *
+     * @return 返回队列上限；场景未装配时返回 0。
+     */
+    public int getMaxQueueLength() {
+        return this.maxQueueLength;
     }
 
-    private void loadConfig() {
-        try {
-            File file = new File("config/psychology.json");
-            if (file.exists() && file.lastModified() <= this.lastConfigModified) {
-                return;
-            }
+    /**
+     * 宿主能力是否已就绪。
+     *
+     * <p>供动作处理器在经 SPI 回调本场景前判空——场景未装配时
+     * 应直接回失败并记ERROR，而不是让空引用异常被上层 catch 吞成
+     * 无信息的 {@code Failure}。</p>
+     *
+     * @return 已装配时返回 <code>true</code>。
+     */
+    public boolean isReady() {
+        return null != this.host && null != this.storage;
+    }
 
-            JSONObject config = ConfigUtils.readJsonFile("psychology.json");
-            if (null != config) {
-                this.lastConfigModified = file.lastModified();
-            }
-        } catch (Exception e) {
-            Logger.w(this.getClass(), "#loadConfig", e);
-        }
+    /**
+     * 上次执行报告保留期刷新的时刻。
+     *
+     * <p>{@link #onTick(long)} 每小时刷新一次入库报告的留存策略。
+     * 装配时初始化为当前时刻，使首次刷新在一个小时后发生——
+     * 与旧实现在 {@code start()} 中置 {@code System.currentTimeMillis()}
+     * 的行为一致。</p>
+     */
+    private long lastRetentionRefresh;
+
+    /**
+     * 读取并应用运行期可变的配置项。
+     *
+     * <p><b>队列上限与存储均不在此处应用</b>：前者是启动期参数，由
+     * {@link #setup} 一次性设定；后者归模块所有。运行期需要重读的只有
+     * 报告保留期策略，而它是 {@link #onTick(long)} 内的每小时刷新，
+     * 不依赖配置文件改动。</p>
+     */
+    private void loadConfig() {
+        // 保留此方法作为配置热更的挂载点：若将来某项偏好（如保留天数）
+        // 需要运行期重读，在此读取并应用即可，不必再改调用点。
     }
 
     public PsychologyStorage getStorage() {
@@ -2022,8 +2061,8 @@ public class PsychologyScene {
         }
 
         // 处理超期留存报告
-        if (now - this.lastConfigModified > 60 * 60 * 1000) {
-            this.lastConfigModified = now;
+        if (now - this.lastRetentionRefresh > 60 * 60 * 1000) {
+            this.lastRetentionRefresh = now;
             int count = this.storage.refreshPsychologyReportRetention();
             Logger.i(this.getClass(), "#onTick - Refresh report retention: " + count);
         }

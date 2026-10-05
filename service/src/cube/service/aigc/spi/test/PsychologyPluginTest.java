@@ -22,6 +22,8 @@ import cube.common.entity.ObjectInfo;
 import cube.common.state.AIGCStateCode;
 import cube.core.Storage;
 import cube.service.aigc.spi.ModuleRegistry;
+import cube.service.psychology.PsychologyModule;
+import cube.service.psychology.scene.PsychologyScene;
 import cube.storage.StorageType;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -688,10 +690,22 @@ public class PsychologyPluginTest {
             // 宿主无 CV 能力、无绘画单元 → 判定为非绘画
             assertTrue("S42 无能力时判为非绘画", !c42.data.getBoolean("result"));
 
+            // S43 场景生命周期：存储唯一化 + 宿主能力注入 + 队列上限
+            // 这三项是本轮修复的核心。此前场景的 start(AIGCHost) 全仓零调用者，
+            // 它的 storage 与 host 恒为 null，41 处存储访问全部会 NPE。
+            PsychologyScene scene = PsychologyScene.getInstance();
+            assertTrue("S43 场景已装配（isReady）", scene.isReady());
+            assertTrue("S43 场景与模块持有同一个 PsychologyStorage 实例",
+                    scene.getStorage() == ((PsychologyModule) module).getStorageForTest());
+            assertTrue("S43 队列上限取自 preference.maxQueueLength = 20",
+                    20 == scene.getMaxQueueLength());
+
             // S28 停机卸载：放在全部动作测试之后，因为卸载会清空路由表与模块注册表
             registry.teardownAll();
             assertTrue("S7 卸载后绑定清空", 0 == router.router.size());
             assertTrue("S7 卸载后按名查找返回 null", null == registry.findModule("psychology"));
+            assertTrue("S43 卸载后场景回到未装配状态", !scene.isReady());
+            assertTrue("S43 卸载后场景不再持有存储", null == scene.getStorage());
         }
         finally {
             config.delete();

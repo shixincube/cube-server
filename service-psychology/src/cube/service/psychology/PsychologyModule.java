@@ -24,6 +24,7 @@ import cube.aigc.spi.ActionModule;
 import cube.aigc.spi.ModuleDescriptor;
 import cube.aigc.spi.ModuleException;
 import cube.auth.AuthToken;
+import cube.service.psychology.scene.PsychologyScene;
 import cube.common.state.AIGCStateCode;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
@@ -128,6 +129,11 @@ public final class PsychologyModule implements ActionModule {
      * 让装载失败并记ERROR，而不是让服务在启动后才因连不上库而异常。</p>
      */
     private final static String PLACEHOLDER = "<your-";
+
+    /**
+     * 报告生成队列上限的缺省值（配置未给出 {@code preference.maxQueueLength} 时）。
+     */
+    private final static int DEFAULT_MAX_QUEUE_LENGTH = 20;
 
     /**
      * 动作线协议名。取自既有枚举的 {@code name} 字段，逐字符相同，<b>不带模块前缀</b>。
@@ -246,6 +252,13 @@ public final class PsychologyModule implements ActionModule {
 
             this.storage.open();
 
+            // 把存储与宿主能力交给场景，并读入队列上限。
+            // 场景是本模块内部的使用者（同一 jar 内引用，不违反零宿主依赖约束），
+            // 它持有内存态的报告表与生成队列，插件动作经 SPI 回调它。
+            // ⚠️ 场景装配必须排在 storage.open() 之后：它内部会加载语料与量表，
+            //    而后者可能回读存储。
+            this.setupScene(host, config);
+
             // 只记录配置来源与存储类型，不输出配置内容（该配置文件含数据库凭据）
             Logger.i(this.getClass(), "#setup - Psychology storage opened, type: " + type
                     + ", config: " + this.configFileName);
@@ -256,6 +269,29 @@ public final class PsychologyModule implements ActionModule {
             // 加载期出现的 Error（如类缺失）同样不应让宿主启动失败
             throw new ModuleException("#setup - Open psychology storage failed", t);
         }
+    }
+
+    /**
+     * 装配业务场景。
+     *
+     * <p>场景持有报告内存表、生成队列与各工作器，是本模块报告链路的运行态容器。
+     * 存储与宿主能力由本模块创建后注入，场景自身不读配置、不建存储。</p>
+     *
+     * <p>队列上限取 {@code preference.maxQueueLength}，缺省 20。旧实现里
+     * 这一项由场景在启动时读取，而那条启动路径已经不存在，导致配置写20
+     * 实际用的是代码默认 30。</p>
+     *
+     * @param host 宿主能力接口。
+     * @param config 已生效的模块配置。
+     */
+    private void setupScene(AIGCHost host, JSONObject config) {
+        int maxQueueLength = DEFAULT_MAX_QUEUE_LENGTH;
+        JSONObject preference = config.optJSONObject("preference");
+        if (null != preference) {
+            maxQueueLength = preference.optInt("maxQueueLength", DEFAULT_MAX_QUEUE_LENGTH);
+        }
+
+        PsychologyScene.getInstance().setup(host, this.storage, maxQueueLength);
     }
 
     /**
@@ -302,6 +338,18 @@ public final class PsychologyModule implements ActionModule {
     }
 
     /**
+     * 取得本模块持有的存储。
+     *
+     * <p>供冒烟测试验证「场景与模块持有同一个实例」——这是存储唯一化的核心判据。
+     * 生产代码不应使用，调用方请直接使用本类已有的领域方法。</p>
+     *
+     * @return 返回存储；未装配时返回 <code>null</code>。
+     */
+    public PsychologyStorage getStorageForTest() {
+        return this.storage;
+    }
+
+    /**
      * 为存储层注入六维描述生成器。
      *
      * <p>未注入时 {@link PsychologyStorage} 会记 WARN 并跳过描述，结果等同于
@@ -321,14 +369,41 @@ public final class PsychologyModule implements ActionModule {
 
     @Override
     public void teardown() {
+        // 先停场景再关存储：场景会清空对存储的引用，反序会造成
+        // 「场景仍可能被访问而存储已关闭」的窗口
+        try {
+            PsychologyScene.getInstance().teardown();
+        } catch (Throwable t) {
+            // 不外抛：停机路径不应因清理异常而中断，存储仍需关闭
+            Logger.e(this.getClass(), "#teardown - Scene teardown FAILED",
+                    (t instanceof Exception) ? (Exception) t : null);
+        }
+
         if (null != this.storage) {
             this.storage.close();
             this.storage = null;
         }
 
         this.selfChecked = false;
+        this.configFileName = "(not loaded)";
 
         Logger.i(this.getClass(), "#teardown - Psychology module is stopped");
+    }
+
+    @Override
+    public void onTick(long now) {
+        // 心跳只在存储就绪时有意义：场景的维护动作会回读存储
+        if (null == this.storage) {
+            return;
+        }
+
+        try {
+            PsychologyScene.getInstance().onTick(now);
+        } catch (Throwable t) {
+            // 与 ModuleRegistry#tick 的约定一致：单个模块的心跳异常不外抛
+            Logger.e(this.getClass(), "#onTick - Scene tick FAILED",
+                    (t instanceof Exception) ? (Exception) t : null);
+        }
     }
 
     @Override
