@@ -27,5 +27,21 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <!-- 客户端 SDK。cube.client.Client 等类由独立仓库 cube-server-client 提供，
+         server-app 的 Manager 与 4 个 Handler 在编译期 import 它们。
+         该仓库不在本 IDEA 项目内（见 .idea/modules.xml 只登记了本仓 15 个模块），
+         故此处显式声明其 jar —— 与 build.xml 的 client.dir 保持一致：
+             <property name="client.dir" value="../../cube-server-client/build" />
+         未声明时 IDEA 报「找不到符号 cube.client.Client」，
+         而命令行 javac 因手工给了 classpath 不会暴露这个问题。 -->
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../cube-server-client/build/cube-server-client-1.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
