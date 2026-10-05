@@ -57,6 +57,14 @@ public class AIGCCellet extends AbstractCellet {
      */
     private AIGCHostImpl aigcHost;
 
+    /**
+     * 业务模块降级期间是否已发出过运行期告警。
+     *
+     * <p>非volatile：仅在派发线程中读写，无跨线程可见性需求。
+     * 降级状态本身由 {@code AIGCService} 的 volatile 字段承载。</p>
+     */
+    private boolean degradationWarned = false;
+
     public AIGCCellet() {
         super(AIGCService.NAME);
         this.responderList = new ConcurrentLinkedQueue<>();
@@ -298,6 +306,35 @@ public class AIGCCellet extends AbstractCellet {
         return true;
     }
 
+    /**
+     * 业务模块未就绪时，首次遇到相关动作记一条 ERROR。
+     *
+     * <p>目的是让「降级」在运行期也可被察觉：装载阶段的 ERROR 说明原因，
+     * 而这条说明「降级期间确实有请求到达」——若运维在服务运行一段时间后
+     * 才从客户端侧得知功能不可用，中间没有任何线索。</p>
+     *
+     * <p><b>只记一次</b>：降级期间每次请求都打日志会迅速刷满日志文件，
+     * 而「发生过一次」这一事实已足够定位。</p>
+     *
+     * @param action 动作名。
+     */
+    private void warnDegradedOnce(String action) {
+        if (this.degradationWarned) {
+            return;
+        }
+
+        AIGCService service = this.service;
+        if (null == service || !service.isModuleDegraded()) {
+            return;
+        }
+
+        this.degradationWarned = true;
+
+        Logger.e(this.getClass(), "#onListened - Business modules are DEGRADED; action \""
+                + action + "\" and the rest of the business domain are NOT available."
+                + " This message is logged only once per cellet lifetime.");
+    }
+
     @Override
     public void onListened(TalkContext talkContext, Primitive primitive) {
         super.onListened(talkContext, primitive);
@@ -323,6 +360,12 @@ public class AIGCCellet extends AbstractCellet {
             this.speak(talkContext, this.makeModuleNotLoadedResponse(dialect));
             return;
         }
+
+        // 降级状态下首次遇到「本应由业务模块处理」的动作时记一次 ERROR。
+        // 不记WARN 的理由：降级本身已在装载阶段记过 ERROR，这里若每次都打
+        // WARN 会把日志刷满，而「降级期间收到业务请求」这一事实只需告知一次。
+        // 抑制标记使得降级持续期间不重复输出。
+        this.warnDegradedOnce(action);
 
         if (dialect.containsParam(Responder.NotifierKey)) {
             // 应答阻塞访问

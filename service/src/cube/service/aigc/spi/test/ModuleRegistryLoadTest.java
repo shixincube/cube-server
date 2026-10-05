@@ -135,6 +135,29 @@ public class ModuleRegistryLoadTest {
             assertTrue("S7 坏类被拒但好模块仍装载", 1 == count);
             assertTrue("S7 好模块已绑定", registry.getRouter().isBound("goodAction"));
 
+            // 场景 7b：模块类【根本不存在】（插件 jar 未部署）
+            // 这是最常见的装载失败，且此前会致请求悬挂——因为声明只在
+            // 实例化之后登记，类加载失败时声明表为空，宿主无法把该动作
+            // 识别为「属于未就绪的模块」。静态声明通道专为覆盖此场景。
+            resetModuleEvents();
+            write(config, "module.1.class=cube.service.aigc.spi.test.ModuleRegistryLoadTest$AbsentModule");
+            registry = newRegistry(new NoopHost());
+            count = registry.load();
+            assertTrue("S7b 类不存在的模块不装载", 0 == count);
+            assertTrue("S7b 类不存在时无从静态声明（行为退化为按既有分支处理）",
+                    !registry.getRouter().isDeclared("absentAction"));
+
+            // 场景 7c：类存在且实现静态声明 ⇒ 类加载失败也能留下声明
+            // 模拟真实场景：清单里写的类在 jar 中，但因依赖缺失等原因
+            // 无法完成装载。宿主据此回 ModuleNotLoaded 而非让请求悬挂。
+            resetModuleEvents();
+            write(config, "module.1.class=cube.service.aigc.spi.test.ModuleRegistryLoadTest$StaticDeclareModule");
+            registry = newRegistry(new NoopHost());
+            count = registry.load();
+            assertTrue("S7c 实现了静态声明的模块正常装载", 1 == count);
+            assertTrue("S7c 其静态声明的动作已登记", registry.getRouter().isDeclared("staticDeclaredAction"));
+            assertTrue("S7c 该动作已绑定", registry.getRouter().isBound("staticDeclaredAction"));
+
             // 场景8：动作冲突时整模块不装载
             resetModuleEvents();
             write(config, "module.1.class=cube.service.aigc.spi.test.ModuleRegistryLoadTest$GoodModule\nmodule.2.class=cube.service.aigc.spi.test.ModuleRegistryLoadTest$ConflictModule");
@@ -321,6 +344,42 @@ public class ModuleRegistryLoadTest {
         @Override
         public List<ActionBinding> getActions() {
             return Collections.singletonList(new ActionBinding("goodAction", ctx -> null));
+        }
+    }
+
+    /**
+     * 实现了静态动作声明的模块。
+     *
+     * <p>用于验证「类存在但装载失败」这条路径也能留下动作声明——
+     * 静态声明在实例化之前被调用，与 {@code getActions()} 是否被调用无关。</p>
+     */
+    public static class StaticDeclareModule extends GoodModule {
+
+        @Override
+        public String getName() {
+            return "staticDeclare";
+        }
+
+        @Override
+        public ModuleDescriptor getDescriptor() {
+            return new ModuleDescriptor("staticDeclare", "1.0.0", AIGCSPI.VERSION,
+                    Collections.singletonList("staticDeclare"), Collections.emptyList(),
+                    Collections.emptyList(), Collections.emptyList(), 1000L, false);
+        }
+
+        @Override
+        public List<ActionBinding> getActions() {
+            return Collections.singletonList(new ActionBinding("staticDeclaredAction", ctx -> null));
+        }
+
+        /**
+         * 静态声明：宿主在实例化之前调用，故必须是 {@code static}。
+         *
+         * <p>刻意<b>不</b>加 {@code @Override}——接口静态方法不存在
+         * 「覆盖」语义，加了会被 javac 拒绝。</p>
+         */
+        public static List<String> declareActionNames() {
+            return Collections.singletonList("staticDeclaredAction");
         }
     }
 

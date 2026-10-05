@@ -203,6 +203,48 @@ public final class PsychologyModule implements ActionModule {
      */
     private volatile boolean selfChecked = false;
 
+    /**
+     * 静态声明本模块的动作名。
+     *
+     * <p>宿主在清单解析出类名之后、实例化之前调用本方法，
+     * 因此它必须是静态的且不依赖任何实例状态——这样即使插件 jar 缺失、
+     * 模块类加载失败，宿主仍能知道「这些动作属于一个未就绪的模块」，
+     * 从而回 {@code AIGCStateCode#ModuleNotLoaded} 而非让请求悬挂。</p>
+     *
+     * <p>清单里的动作名必须与 {@link #getActions()} 逐字一致；
+     * 两者不一致时以 {@code getActions()} 为准（它同时用于绑定），
+     * 本方法仅用于「类加载前」的兜底声明。</p>
+     *
+     * @return 返回本模块提供的全部动作名。
+     */
+    public static List<String> declareActionNames() {
+        return Arrays.asList(
+                ACTION_SET_REPORT_STATE,
+                ACTION_GET_LABEL,
+                ACTION_SET_LABEL,
+                ACTION_QUERY_CUSTOMER,
+                ACTION_NEW_CUSTOMER,
+                ACTION_UPDATE_CUSTOMER,
+                ACTION_DELETE_CUSTOMER,
+                ACTION_QUERY_SCHEDULE,
+                ACTION_NEW_SCHEDULE,
+                ACTION_UPDATE_SCHEDULE,
+                ACTION_DELETE_SCHEDULE,
+                ACTION_LIST_SCALES,
+                ACTION_GET_SCALE,
+                ACTION_GENERATE_SCALE,
+                ACTION_SUBMIT_ANSWER_SHEET,
+                ACTION_STOP_REPORT,
+                ACTION_GENERATE_REPORT,
+                ACTION_GET_REPORT,
+                ACTION_RESET_ATTENTION,
+                ACTION_REPORT_PART,
+                ACTION_MODIFY_REMARK,
+                ACTION_PAINTING,
+                ACTION_CHECK_PAINTING
+        );
+    }
+
     @Override
     public String getName() {
         return NAME;

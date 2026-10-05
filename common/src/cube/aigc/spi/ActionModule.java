@@ -81,4 +81,29 @@ public interface ActionModule {
      * @return 返回动作绑定列表，不可为 <code>null</code>。
      */
     List<ActionBinding> getActions();
+
+    /**
+     * 声明本模块的动作名，<b>不要求实例化成功</b>。
+     *
+     * <p><b>为何需要它</b>：宿主在动作表未命中时，靠「已声明」判定
+     * 该动作属于某个未就绪的模块，从而回 {@code AIGCStateCode#ModuleNotLoaded}
+     * 而非让请求悬挂。但若声明只在实例化之后登记，那么
+     * <b>模块类找不到、jar 缺失、清单文件不存在</b>这三种最常见的装载失败，
+     * 声明表是空的——动作既不在模块里、也不在宿主分支里，
+     * 请求将<b>无人应答而悬挂</b>。</p>
+     *
+     * <p>本方法在清单解析出类名之后、实例化之前被调用，因此它必须是
+     * <b>静态</b>方法且不依赖实例状态。实现应返回该模块将提供的全部动作名；
+     * 返回空列表表示「本模块不参与静态声明」，此时行为退化为
+     * 仅靠 {@link #getActions()} 登记（能覆盖 setup 失败，
+     * 但覆盖不了类加载失败）。</p>
+     *
+     * <p>实现约束：不得抛异常、不得阻塞、不得有副作用；
+     * 宿主对本方法返回值的异常做吞没处理。</p>
+     *
+     * @return 返回动作名列表；不可为 <code>null</code>，无声明时返回空列表。
+     */
+    static List<String> declareActionNames() {
+        return java.util.Collections.emptyList();
+    }
 }

@@ -17,6 +17,7 @@ import cube.util.ConfigUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -247,6 +248,11 @@ public final class ModuleRegistry {
             continue;
         }
 
+        // 静态声明：必须早于实例化，否则「类找不到 / jar 缺失」这类失败
+        // 不会留下任何声明，宿主将无法把该动作识别为「属于未就绪的模块」，
+        // 请求既不在模块里也不在宿主分支里 ⇒ 无人应答而悬挂。
+        this.declareStatically(className);
+
         ActionModule module = this.instantiate(className);
         if (null == module) {
             continue;
@@ -345,7 +351,55 @@ public final class ModuleRegistry {
     }
 
     /**
- * 建立模块的全部动作绑定。
+     * 在实例化之前登记模块的动作名。
+     *
+     * <p>调用 {@link ActionModule#declareActionNames()} 静态方法，
+     * 它的存在使「类找不到」「jar 缺失」「构造器抛异常」三种失败
+     * 也能留下声明记录。</p>
+     *
+     * <p>本方法<b>不阻断</b>装载：静态声明抛异常或返回空列表时，
+     * 行为退化为「仅靠实例化后的 {{@link #declareActions(ActionModule)}} 登记」，
+     * 即能覆盖 setup 失败但覆盖不了类加载失败。</p>
+     *
+     * @param className 模块实现类的全限定名。
+     */
+    private void declareStatically(String className) {
+        try {
+            Class<?> clazz = Class.forName(className);
+            Method method = clazz.getMethod("declareActionNames");
+            Object result = method.invoke(null);
+            if (!(result instanceof List)) {
+                return;
+            }
+
+            List<?> names = (List<?>) result;
+            List<String> actions = new ArrayList<>(names.size());
+            for (Object name : names) {
+                if (name instanceof String) {
+                    actions.add((String) name);
+                }
+            }
+
+            this.router.declareAll(actions);
+        } catch (ClassNotFoundException e) {
+            // 类本身不可见：这是「插件 jar 未部署」最常见的形态，
+            // 记 ERROR 让部署者能立刻定位；声明无从登记，
+            // 该模块的动作将退化为「按既有分支处理」
+            Logger.e(ModuleRegistry.class, "#declareStatically - Class not found: " + className
+                    + "; its actions will NOT be recognized as module-owned"
+                    + " (is the module jar deployed into libs/ ?)", e);
+        } catch (NoSuchMethodException e) {
+            // 模块未实现静态声明：属正常情况，接口给了默认空实现
+            Logger.d(ModuleRegistry.class, "#declareStatically - Module \"" + className
+                    + "\" declares NO static action names");
+        } catch (Throwable t) {
+            Logger.e(ModuleRegistry.class, "#declareStatically - FAILED for module \""
+                    + className + "\"", (t instanceof Exception) ? (Exception) t : null);
+        }
+    }
+
+    /**
+     * 建立模块的全部动作绑定。
  *
  * <p>本方法必须在 {@link ActionModule#setup(AIGCHost)} <b>之前</b>调用：
  * 模块初始化时其动作已全部可见，反之则会让派发线程读到未初始化的实例。</p>
