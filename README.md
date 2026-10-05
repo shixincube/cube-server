@@ -541,13 +541,17 @@ scope: global
 | `service/config/service.properties` | 服务单元线程池（cached / fixed，max） |
 | `service/config/aigc.properties` | AIGC 线程池、节点权重、上下文长度（全局与各模型分档）、页面搜索器、代理接口；另含 SKILL 技能（`skills.*`）、提示词编排（`prompt.*`）与 Token 估算（`token.*`）配置，详见 5.6 |
 | `service/config/storage*.json` | 各模块的存储后端（默认 MySQL：host / port / schema / user / password） |
-| `service/config/psychology.json` | 心理学服务存储与单元配置（`maxQueueLength`、`contextLength` 等） |
+| `service/config/aigc-modules.properties` | AIGC 业务模块清单（`module.<n>.class/enabled/optional`），`ModuleRegistry` 据此发现并装载模块；`ant deploy` 会自动把本文件同步到 `deploy/config/`，不要在部署目录另存副本 |
+| `service/config/psychology.json.template` | 心理学模块的存储与单元配置模板（`maxQueueLength`、`contextLength` 等），**受版本控制**，只含占位符 |
+| `service/config/psychology.local.json` | 心理学模块的实际生效配置，**不受版本控制**（含明文口令）。首次使用时从 `.template` 复制并填入真实值；缺失或仍是占位符时模块拒绝装载并在日志中指明该创建哪个文件 |
 | `service/config/plugin.json` | 插件清单：`file`（jar）、`module`、`hooks`（如 `PrePush` → `MessagingPlugin`） |
 | `service/config/*-cache.properties` | 共享内存缓存参数（token-pool、general、contact、group、hub、filelabel 等） |
 | `service/config/cipher.properties` | 密码机参数 |
 | `service/config/robot.properties` | 机器人服务 API 地址与令牌 |
 
-> ⚠️ 仓库中的 `storage*.json` 与 `psychology.json` 含明文数据库账号。生产部署前请改为从环境变量或独立的密钥配置注入，并确认这些文件未被提交到公开仓库。
+> ⚠️ 仓库中的 `storage*.json` 含明文数据库账号。生产部署前请改为从环境变量或独立的密钥配置注入，并确认这些文件未被提交到公开仓库。
+> 心理学模块的数据库配置已按此要求处理：仓库只保留 `psychology.json.template`（占位符），
+> 实际配置放在 gitignore 覆盖的 `psychology.local.json`。
 
 ---
 

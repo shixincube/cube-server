@@ -279,6 +279,17 @@
 				<include name="cube-service-riskmgmt-*.jar" />
 			</fileset>
 		</copy>
+
+		<!-- 业务模块清单：以 service/config 为唯一来源同步到部署形态。
+		     此前两份文件各自维护、要求人工"保持同步"，实际已漂移
+		     （deploy 那份的三行一直是注释态，部署形态下模块根本不加载）。
+		     ModuleRegistry 在部署形态下读deploy/config/，故必须同步。 -->
+		<copy todir="${deploy.dir}/config/" overwrite="true">
+			<fileset dir="${project-service.dir}/config/">
+				<include name="aigc-modules.properties" />
+			</fileset>
+		</copy>
+		<echo>Synced aigc-modules.properties to ${deploy.dir}/config/.</echo>
 	</target>
 
 	<!-- =================================================================== -->

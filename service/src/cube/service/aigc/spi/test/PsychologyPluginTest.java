@@ -70,7 +70,9 @@ public class PsychologyPluginTest {
         }
 
         File config = new File(configDir, "aigc-modules.properties");
-        File storage = new File(configDir, "psychology.json");
+        // 与 PsychologyModule#readConfig 的查找顺序一致：本地实际配置优先于模板。
+        // 写local 而不是已废弃的 psychology.json，否则模块会读到未定制的模板而拒绝装载。
+        File storage = new File(configDir, "psychology.local.json");
 
         try {
             // 用 SQLite 避免依赖真实 MySQL

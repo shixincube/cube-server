@@ -1,0 +1,19 @@
+{
+	"storage" : {
+		"type"     : "MySQL",
+		"host"     : "<your-mysql-host>",
+		"port"     : 3306,
+		"schema"   : "<your-schema>",
+		"user"     : "<your-user>",
+		"password" : "<your-password>"
+	},
+
+	"preference" : {
+		"maxQueueLength" : 20
+	},
+
+	"unit" : {
+		"name" : "Baize",
+		"contextLength" : 5000
+	}
+}

@@ -106,13 +106,28 @@ public final class PsychologyModule implements ActionModule {
     public final static String VERSION = "1.0.0";
 
     /**
-     * 心理学数据库配置文件名（相对工作目录）。
+     * 心理学数据库配置文件名（本地覆盖，优先于模板）。
      *
-     * <p>{@link ConfigUtils#readJsonFile(String)} 会依次尝试工作目录下的同名文件与
-     * {@code config/} 下的同名文件，与宿主场景启动时的读取路径完全一致，
-     * 因此插件与宿主始终指向同一份配置，不存在两份 DB 配置。</p>
+     * <p>该文件含数据库凭据，<b>不受版本控制</b>，由部署环境提供。
+     * 它存在即生效，不存在时退回 {@link #CONFIG_FILE_TEMPLATE}。</p>
      */
-    private final static String CONFIG_FILE = "psychology.json";
+    private final static String CONFIG_FILE_LOCAL = "psychology.local.json";
+
+    /**
+     * 心理学数据库配置文件名（模板，受版本控制）。
+     *
+     * <p>只含占位符与默认值，<b>直接使用它即表示配置未按环境定制</b>——
+     * 见 {@link #setup(AIGCHost)} 中对占位符的检测。</p>
+     */
+    private final static String CONFIG_FILE_TEMPLATE = "psychology.json.template";
+
+    /**
+     * 模板中存储主机与库名的占位符。
+     *
+     * <p>命中即视为「读到的是未定制的模板」，按配置缺失处理：
+     * 让装载失败并记ERROR，而不是让服务在启动后才因连不上库而异常。</p>
+     */
+    private final static String PLACEHOLDER = "<your-";
 
     /**
      * 动作线协议名。取自既有枚举的 {@code name} 字段，逐字符相同，<b>不带模块前缀</b>。
@@ -173,6 +188,11 @@ public final class PsychologyModule implements ActionModule {
     private PsychologyStorage storage;
 
     /**
+     * 实际生效的配置文件名，仅用于日志。
+     */
+    private String configFileName = "(not loaded)";
+
+    /**
      * 建表是否已完成。首次动作派发时惰性执行，见 {@link #ensureSelfChecked()}。
      */
     private volatile boolean selfChecked = false;
@@ -205,14 +225,11 @@ public final class PsychologyModule implements ActionModule {
     public void setup(AIGCHost host) throws ModuleException {
         // 严禁在此调用 host.schedule()：install() 阶段宿主线程池尚未创建
         try {
-            JSONObject config = ConfigUtils.readJsonFile(CONFIG_FILE);
-            if (null == config) {
-                throw new ModuleException("Config file \"" + CONFIG_FILE + "\" is NOT found");
-            }
+            JSONObject config = this.readConfig();
 
             JSONObject storageConfig = config.getJSONObject("storage");
             if (null == storageConfig) {
-                throw new ModuleException("Config file \"" + CONFIG_FILE
+                throw new ModuleException("Config file \"" + this.configFileName
                         + "\" has NO \"storage\" section");
             }
 
@@ -222,16 +239,16 @@ public final class PsychologyModule implements ActionModule {
 
             this.storage = new PsychologyStorage(type, storageConfig);
 
-            // 六维得分描述的生成依赖宿主分词器与 TF-IDF 语料，二者在 service 模块，
-            // 插件无法直接引用；故以函数式接口注入，与宿主侧
-            // PsychologyScene#start 的做法同构。
+            // 六维得分描述的生成依赖宿主分词器与 TF-IDF 语料，二者在宿主服务侧，
+            // 插件无法直接引用；故以函数式接口注入。
             // ⚠️ 必须在 storage.open() 之前注入：首次回读报告即可能触发描述生成
             this.injectDescriber(host);
 
             this.storage.open();
 
-            // 只记录存储类型，不输出配置内容（该配置文件含数据库凭据）
-            Logger.i(this.getClass(), "#setup - Psychology storage opened, type: " + type);
+            // 只记录配置来源与存储类型，不输出配置内容（该配置文件含数据库凭据）
+            Logger.i(this.getClass(), "#setup - Psychology storage opened, type: " + type
+                    + ", config: " + this.configFileName);
         } catch (ModuleException e) {
             throw e;
         } catch (Throwable t) {
@@ -239,6 +256,49 @@ public final class PsychologyModule implements ActionModule {
             // 加载期出现的 Error（如类缺失）同样不应让宿主启动失败
             throw new ModuleException("#setup - Open psychology storage failed", t);
         }
+    }
+
+    /**
+     * 读取实际生效的数据库配置。
+     *
+     * <p>查找顺序：{@code psychology.local.json}（本地实际配置，不受版本控制）
+     * → {@code psychology.json.template}（模板，受版本控制）。两者都经
+     * {@link ConfigUtils#readJsonFile(String)} 定位，会依次尝试工作目录下的同名文件
+     * 与 {@code config/} 下的同名文件。</p>
+     *
+     * <p>命中模板且其中仍为占位符时按<b>配置缺失</b>处理并抛
+     * {@link ModuleException}：这比让它「装载成功、连库时才失败」更早暴露问题，
+     * 且错误信息直接指出应当创建哪个文件。</p>
+     *
+     * @return 返回生效配置。
+     * @throws ModuleException 配置不存在或仍是未定制的模板时抛出。
+     */
+    private JSONObject readConfig() throws ModuleException {
+        JSONObject local = ConfigUtils.readJsonFile(CONFIG_FILE_LOCAL);
+        if (null != local) {
+            this.configFileName = CONFIG_FILE_LOCAL;
+            return local;
+        }
+
+        JSONObject template = ConfigUtils.readJsonFile(CONFIG_FILE_TEMPLATE);
+        if (null == template) {
+            throw new ModuleException("Config file \"" + CONFIG_FILE_LOCAL
+                    + "\" is NOT found, nor is the template \"" + CONFIG_FILE_TEMPLATE
+                    + "\"; copy the template to \"" + CONFIG_FILE_LOCAL
+                    + "\" and fill in the database settings");
+        }
+
+        JSONObject storage = template.optJSONObject("storage");
+        String host = (null == storage) ? null : storage.optString("host", "");
+        if (null != host && host.startsWith(PLACEHOLDER)) {
+            throw new ModuleException("Config file \"" + CONFIG_FILE_TEMPLATE
+                    + "\" is NOT customized (storage.host=\"" + host
+                    + "\"); copy it to \"" + CONFIG_FILE_LOCAL + "\" and fill in the real values");
+        }
+
+        this.configFileName = CONFIG_FILE_TEMPLATE;
+
+        return template;
     }
 
     /**
