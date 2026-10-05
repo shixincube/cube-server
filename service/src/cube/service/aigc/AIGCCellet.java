@@ -96,8 +96,7 @@ public class AIGCCellet extends AbstractCellet {
      *
      * <p>由宿主在<b>自身存储就绪之后</b>、于引导线程中调用。延后的原因：
      * 模块的 {@code setup} 可能读取宿主存储配置，宿主存储未就绪时装载会失败。
-     * 装载亦承担业务场景的装配——由模块 setup 注入场景所需的宿主能力与存储，
-     * 宿主不再单独启动场景。</p>
+     * 装载亦承担业务场景的装配——由模块 setup 注入场景所需的宿主能力与存储。</p>
      *
      * <p>即便装载晚于 install，也仍早于任何一次 onListened（内核启动后才收报文），
      * 故路由表在首个请求到达前已权威。</p>
@@ -342,8 +341,7 @@ public class AIGCCellet extends AbstractCellet {
         ActionDialect dialect = new ActionDialect(primitive);
         String action = dialect.getName();
 
-        // 业务模块派发（双轨接入，出厂为空注册表）：
-        // 未命中时立即返回 false，继续走下方的既有动作分支，行为。
+        // 业务模块派发：未命中时立即返回 false，继续走下方的动作分支，行为不变。
         // 应答阻塞分支（Responder.NotifierKey）优先级最高，此处显式排除，确保它不会被业务模块劫持。
         if (!dialect.containsParam(Responder.NotifierKey) && this.dispatchToModule(talkContext, primitive, dialect)) {
             return;

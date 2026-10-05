@@ -15,8 +15,7 @@ import java.io.File;
 /**
  * 场景存储可达性只读验证。
  *
- * <p>验证「模块装配后场景确实可访问存储」这一核心判据。此前
- * {@code PsychologyScene#start(AIGCHost)} 全仓零调用者，场景的
+ * <p>验证「模块装配后场景确实可访问存储」这一核心判据：场景未装配时，
  * {@code storage} 与 {@code host} 恒为 null，41 处存储访问全部会抛
  * 空引用异常并被动作执行层 catch 成无信息的 {@code Failure}。</p>
  *

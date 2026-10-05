@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.psychology;
+package cube.service.psychology.action;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.app.ConsultationSchedule;
@@ -12,7 +12,7 @@ import cube.aigc.psychology.consultation.ConsultationScheduleState;
 import cube.aigc.spi.AIGCActionTask;
 import cube.aigc.spi.ActionContext;
 import cube.common.state.AIGCStateCode;
-import org.json.JSONObject;
+import cube.service.psychology.PsychologyModule;
 
 /**
  * 删除日程动作。

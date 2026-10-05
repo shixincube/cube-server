@@ -14,7 +14,7 @@ import cube.common.state.AIGCStateCode;
  * <p>把线协议上的 action 字符串与一个无状态任务处理器绑定。
  * {@link #action} 必须与既有枚举的 <code>name</code> 字段逐字符相同
  * （例如 <code>"generatePsychologyReport"</code>，<b>不带模块前缀</b>），
- * 以保证插件化前后线协议完全一致。</p>
+ * 以保证线协议一致。</p>
  */
 public final class ActionBinding {
 

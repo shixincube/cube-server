@@ -27,9 +27,9 @@
 		<fileset dir="${common.dir}">
 			<include name="cube-common-*.jar" />
 			<!-- 心理学业务模块插件（AIGC Module 形态，与宿主同一 ClassLoader）。
-			     宿主侧的 PsychologyScene / ComprehensiveReportWorker / QueryRevolver
-			     引用该模块的 PsychologyStorage，故编译期必须可见。
-			     该模块在根 build.xml 中排在 service 之前构建。 -->
+			     宿主侧的 AIGCHostImpl 与 5 个保留 task 引用该模块的
+			     PsychologyScene / CopilotManager / CounselingManager 等类，
+			     故编译期必须可见。该模块在根 build.xml 中排在 service 之前构建。 -->
 			<include name="cube-service-psychology-*.jar" />
 		</fileset>
 		<pathelement path="${build.classes}" />

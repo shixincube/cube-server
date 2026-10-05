@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.psychology;
+package cube.service.psychology.action;
 
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.psychology.Attribute;
@@ -14,6 +14,7 @@ import cube.aigc.spi.ActionContext;
 import cube.auth.AuthToken;
 import cube.common.Language;
 import cube.common.state.AIGCStateCode;
+import cube.service.psychology.PsychologyModule;
 import org.json.JSONObject;
 
 /**
@@ -25,7 +26,7 @@ import org.json.JSONObject;
  * <p><b>状态码序列</b>：
  * {@code NoToken → IllegalOperation → Ok / Failure / InvalidParameter}。</p>
  *
- * <p><b>参数默认值逐字复刻</b>：{@code name} 必取（缺失抛异常落入
+ * <p><b>参数默认值</b>：{@code name} 必取（缺失抛异常落入
  * {@code catch}）；{@code language} 缺省为 {@link Language#Chinese}；
  * {@code role} 缺省为空串；{@code strict} 缺省为 {@code false}。
  * 注意 {@code gender} 与 {@code age} 在是<b>无默认值</b>的必取项——

@@ -12,13 +12,10 @@ import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cube.benchmark.ResponseTime;
 import cube.common.Packet;
-import cube.common.entity.AIGCChannel;
 import cube.common.state.AIGCStateCode;
 import cube.service.ServiceTask;
 import cube.service.aigc.AIGCCellet;
 import cube.service.aigc.AIGCService;
-import cube.service.aigc.command.Command;
-import cube.service.aigc.command.CommandListener;
 import cube.service.aigc.command.SearchCommand;
 import org.json.JSONObject;
 

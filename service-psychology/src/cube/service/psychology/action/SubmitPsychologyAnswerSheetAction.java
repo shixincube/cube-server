@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.psychology;
+package cube.service.psychology.action;
 
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.ModelConfig;
@@ -17,6 +17,7 @@ import cube.aigc.spi.ActionContext;
 import cube.common.entity.AIGCUnit;
 import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
+import cube.service.psychology.PsychologyModule;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -33,15 +34,14 @@ import java.util.List;
  *
  * <p><b>本动作是量表族中依赖最重的一个</b>：主观题需要先由模型产出自由文本，
  * 再按 TF-IDF 权重把文本匹配回备选项。因此它同时用到三个宿主能力：
- * 单元选择、同步生成、TF-IDF 关键词抽取。这些能力由
- * {@code PsychologyScene} 直接调用 {@code AIGCService} 与
- * {@code TFIDFAnalyzer}（均在 service 模块），插件不可见。</p>
+ * 单元选择、同步生成、TF-IDF 关键词抽取。这三项的实现在宿主
+ * {@code service} 模块内，插件不可见，故一律经 SPI 取得。</p>
  *
- * <p><b>与宿主侧并存</b>：宿主 {@code PsychologyScene#inferScaleAnswer}
- * 仍然保留（{@code AIGCCellet} 里的 else-if 未删除），因此本文件与宿主侧
- * 存在<b>两份等价的答案评级实现</b>，由 {@code aigc-modules.properties}
- * 的模块开关决定走哪一份。修改评级规则时<b>两份必须同步</b>，
- * 否则会出现「启用插件前后结果不一致」。</p>
+ * <p><b>与场景内实现并存</b>：{@code PsychologyScene#inferScaleAnswer}
+ * 服务于宿主内直接调用场景的路径（引导流程与问卷子任务），
+ * 本文件服务于动作派发路径，因此存在<b>两份等价的答案推断实现</b>，
+ * 由 {@code aigc-modules.properties} 的模块开关决定走哪一份。
+ * 修改推断规则时<b>两份必须同步</b>，否则两条路径会给出不同答案。</p>
  *
  * <p><b>为何 requiresToken 取 false</b>：同
  * {@link ListPsychologyScalesAction}。</p>
@@ -87,7 +87,7 @@ public final class SubmitPsychologyAnswerSheetAction implements AIGCActionTask {
     /**
      * 为主观题推断答案。
      *
-     * <p>逐字复刻宿主 {@code PsychologyScene#inferScaleAnswer}：先用
+     * <p>先用
      * {@code Baize2} 生成描述文本，失败回退 {@code Baize}，再按各备选项
      * 文本的 TF-IDF 前 3 个关键词做包含匹配；命中不到时取第一项。</p>
      *
@@ -96,7 +96,7 @@ public final class SubmitPsychologyAnswerSheetAction implements AIGCActionTask {
      * @param ctx 动作上下文。
      * @param scale 待评级的量表。
      */
-    static void inferScaleAnswers(ActionContext ctx, Scale scale) {
+    static public void inferScaleAnswers(ActionContext ctx, Scale scale) {
         List<cube.aigc.psychology.composition.Question> questions = scale.getQuestions();
         if (null == questions) {
             return;
@@ -114,7 +114,7 @@ public final class SubmitPsychologyAnswerSheetAction implements AIGCActionTask {
      * @param scale 待评级的量表。
      * @param question 待推断的题目。
      */
-    private static void inferScaleAnswer(ActionContext ctx, Scale scale,
+    public static void inferScaleAnswer(ActionContext ctx, Scale scale,
             cube.aigc.psychology.composition.Question question) {
         if (!question.isDescriptive()) {
             return;

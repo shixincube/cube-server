@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.psychology;
+package cube.service.psychology.action;
 
 import cube.service.psychology.scene.ReportRenderer;
 import cell.core.net.Endpoint;
@@ -60,7 +60,7 @@ public final class GetPsychologyReportPartAction implements AIGCActionTask {
     /**
      * 主观题特征描述的推理提示词。
      *
-     * <p><b>⚠️ 逐字复刻的硬编码文本</b>（L171-172）。
+     * <p><b>⚠️ 硬编码文本</b>（L171-172）。
      * 任何改动都会改变模型输出，进而改变 {@code thought} 字段的内容，
      * 属线协议可见变更。</p>
      */

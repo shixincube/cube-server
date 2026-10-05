@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.psychology;
+package cube.service.psychology.action;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
@@ -27,7 +27,7 @@ import org.json.JSONObject;
  * {@code NoToken → IllegalOperation → Ok / Failure → InvalidParameter}，
  * 其中三个 {@code Failure} 分支都<b>回显原始请求体</b>。</p>
  *
- * <p><b>三个分支的默认参数</b>（逐字复刻 L58-63）：
+ * <p><b>三个分支的默认参数</b>（L58-63）：
  * {@code sn=0}、{@code chart=false}、{@code bbox=true}、{@code vparam=false}、
  * {@code prob=0.5}、{@code fileCode=null}。其中 {@code bbox} 默认
  * <b>true</b> 而非 false。</p>

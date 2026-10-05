@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.psychology;
+package cube.service.psychology.action;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
@@ -12,6 +12,7 @@ import cube.aigc.spi.AIGCActionTask;
 import cube.aigc.spi.ActionContext;
 import cube.auth.AuthToken;
 import cube.common.state.AIGCStateCode;
+import cube.service.psychology.PsychologyModule;
 import org.json.JSONObject;
 
 /**
@@ -30,11 +31,11 @@ import org.json.JSONObject;
  *   <li>{@code sn == 0 && pageSize == 0}：{@code InvalidParameter}（回显请求体）。</li>
  * </ul>
  *
- * <p><b>⚠️ 已知既有缺陷，此处原样复刻、请勿「顺手修正」</b>：量表报告列表分支
+ * <p><b>⚠️ 已知缺陷，请勿「顺手修正」</b>：量表报告列表分支
  * 应答的 {@code size} 字段填的是<b>总条数</b>而非请求的 {@code pageSize}
  * （{@code GetPsychologyReportTask} L166）。这会让客户端按 {@code size}
  * 翻页时行为异常，但已上线多年、客户端可能已适配该行为；
- * 插件化不得改变线协议可见的输出。</p>
+ * 修正它属于独立的线协议变更。</p>
  *
  * <p><b>为何 requiresToken 取 false</b>：同
  * {@link StopGeneratingReportAction}，令牌无效回 {@code IllegalOperation}。</p>
@@ -131,7 +132,7 @@ public final class GetPsychologyReportAction implements AIGCActionTask {
         }
 
         // 导出过程可能抛异常（如 Markdown 模板缺失），在此回 Failure
-        // 并回显请求体（L110-114）；宿主实现已把异常收敛为 null，
+        // 并回显请求体（L110-114）；查询侧已把异常收敛为 null，
         // 故这里无法区分「报告不存在」与「导出失败」，两者都回 Failure——
         // 与「导出失败」的应答一致，而「不存在」本就该回 Failure
         Logger.d(GetPsychologyReportAction.class, "#querySingle - No painting report: " + sn);
@@ -173,7 +174,7 @@ public final class GetPsychologyReportAction implements AIGCActionTask {
             responseData = module.listScaleReports(ctx.getHost(), contactId, descending, state);
             responseData.put("page", pageIndex);
             // ⚠️ L166 填的是 num（总条数）而非 pageSize。
-            // 此处原样复刻该行为，修正它属于独立的线协议变更，不可在本改造中顺手做
+            // 修正它属于独立的线协议变更，不可在此顺手做
             responseData.put("size", responseData.getInt("total"));
         }
 

@@ -690,9 +690,8 @@ public class PsychologyPluginTest {
             // 宿主无 CV 能力、无绘画单元 → 判定为非绘画
             assertTrue("S42 无能力时判为非绘画", !c42.data.getBoolean("result"));
 
-            // S43 场景生命周期：存储唯一化 + 宿主能力注入 + 队列上限
-            // 这三项是本轮修复的核心。此前场景的 start(AIGCHost) 全仓零调用者，
-            // 它的 storage 与 host 恒为 null，41 处存储访问全部会 NPE。
+            // S43 场景生命周期：存储唯一化 + 宿主能力注入 + 队列上限。
+            // 场景未装配时 storage 与 host 恒为 null，41 处存储访问全部会 NPE。
             PsychologyScene scene = PsychologyScene.getInstance();
             assertTrue("S43 场景已装配（isReady）", scene.isReady());
             assertTrue("S43 场景与模块持有同一个 PsychologyStorage 实例",

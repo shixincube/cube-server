@@ -1352,7 +1352,7 @@ this.fireHook(AIGCHook.TaskProcessing, lite);
         if (null == scene) {
             return null;
         }
-        //迁移前该方法还接收令牌但从不使用它，故此处也不需要令牌
+        // 绘画推理数据不依赖令牌，故不传
         return scene.getPaintingInferenceData(null, sn);
     }
 

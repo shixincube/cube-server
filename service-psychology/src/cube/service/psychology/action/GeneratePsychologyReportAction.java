@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.psychology;
+package cube.service.psychology.action;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
@@ -245,9 +245,8 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
     /**
      * 绘画报告事件监听器。
      *
-     * <p>是 {@code GeneratePsychologyReportTask} 内的匿名类，六个方法
-     * <b>全部只打 debug 日志、无业务逻辑</b>（生成是异步的，此处仅记录事件）。
-     * 此处逐方法原样复刻。</p>
+     * <p>六个方法<b>全部只打 debug 日志、无业务逻辑</b>
+     * （生成是异步的，此处仅记录事件）。</p>
      */
     private static final class LoggingPaintingListener implements PaintingReportListener {
 
@@ -291,7 +290,7 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
     /**
      * 量表报告事件监听器。
      *
-     * <p>是匿名类，三个方法同样只打 debug 日志。此处逐方法原样复刻。</p>
+     * <p>三个方法同样只打 debug 日志，无业务逻辑。</p>
      */
     private static final class LoggingScaleListener implements ScaleReportListener {
 

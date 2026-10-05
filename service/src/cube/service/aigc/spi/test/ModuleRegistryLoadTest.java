@@ -136,9 +136,9 @@ public class ModuleRegistryLoadTest {
             assertTrue("S7 好模块已绑定", registry.getRouter().isBound("goodAction"));
 
             // 场景 7b：模块类【根本不存在】（插件 jar 未部署）
-            // 这是最常见的装载失败，且此前会致请求悬挂——因为声明只在
-            // 实例化之后登记，类加载失败时声明表为空，宿主无法把该动作
-            // 识别为「属于未就绪的模块」。静态声明通道专为覆盖此场景。
+            // 这是最常见的装载失败：若声明只在实例化之后登记，
+            // 类加载失败时声明表为空，宿主无法把该动作识别为
+            // 「属于未就绪的模块」，请求会悬挂。静态声明通道专为覆盖此场景。
             resetModuleEvents();
             write(config, "module.1.class=cube.service.aigc.spi.test.ModuleRegistryLoadTest$AbsentModule");
             registry = newRegistry(new NoopHost());

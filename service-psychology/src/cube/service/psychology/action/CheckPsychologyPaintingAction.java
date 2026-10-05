@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.psychology;
+package cube.service.psychology.action;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
@@ -37,30 +37,28 @@ import org.json.JSONObject;
  *       {@code Ok} 且 {@code result=false}（L74-77）。</li>
  * </ol>
  *
- * <p><b>⚠️ 本动作是「同名双向」动作</b>：除入站派发外，宿主
+ * <p><b>⚠️ 本动作是「同名双向」动作</b>：除入站派发外，
  * {@code PsychologyScene} 还用<b>同一动作名</b>把它转发给远端绘画单元
- * 做像素级校验。迁移后该出站调用必须依然发生，否则
+ * 做像素级校验。该出站调用必须发生，否则
  * {@code result} 会退化为「只看有无其他物体」，失去像素校验。</p>
  *
- * <p>判定逻辑逐字复刻 {@code PsychologyScene#checkPsychologyPainting}：
- * 先检测图像中的物体数量，若远端像素校验通过<b>或</b>画面中没有其他物体，
- * 即认为是绘画。</p>
+ * <p>判定逻辑：先检测图像中的物体数量，若远端像素校验通过<b>或</b>
+ * 画面中没有其他物体，即认为是绘画。</p>
  */
 public final class CheckPsychologyPaintingAction implements AIGCActionTask {
 
     /**
      * 画面中被判定为「非绘画元素」的物体数量阈值。
      *
-     * <p>逐字复刻 {@code PsychologyScene#hasMoreObjects}：该数量大于此值时
-     * 视为画面中还有其他物体。</p>
+     * <p>该数量大于此值时视为画面中还有其他物体。</p>
      */
     private final static int MAX_EXTRA_OBJECTS = 1;
 
     /**
      * 绘画识别单元的能力名。
      *
-     * <p>与宿主 {@code PsychologyScene.UNIT} 逐字相同。该常量原在宿主类上，
-     * 插件不能引用宿主类型，故在此自持一份——<b>值必须保持一致</b>，
+     * <p>与场景的 {@code UNIT} 常量逐字相同。插件不能引用宿主类型，
+     * 故在此自持一份——<b>值必须保持一致</b>，
      * 否则会选不到单元导致校验静默失效。</p>
      */
     private final static String PSYCHOLOGY_UNIT = "Psychology";
@@ -116,7 +114,7 @@ public final class CheckPsychologyPaintingAction implements AIGCActionTask {
     /**
      * 判定给定图像是否为绘画。
      *
-     * <p>逐字复刻 {@code PsychologyScene#checkPsychologyPainting}：
+     * <p>判定规则：
      * 先取文件标签（取不到直接判非绘画），再检测画面中除绘画外的其他元素，
      * 最后由远端绘画单元做像素级校验，两者满足其一即认为是绘画。</p>
      *
@@ -142,7 +140,7 @@ public final class CheckPsychologyPaintingAction implements AIGCActionTask {
         // ③ 像素校验：转发给远端绘画单元（L224-249）
         boolean predicted = this.predictByUnit(host, fileLabel);
 
-        // 逐字复刻 L253：像素校验通过「或」无其他元素
+        // 像素校验通过「或」无其他元素即判定为绘画
         return predicted || !more;
     }
 
@@ -151,7 +149,7 @@ public final class CheckPsychologyPaintingAction implements AIGCActionTask {
      *
      * <p>⚠️ 这里用的动作名与本动作<b>同名</b>，但它是<b>出站</b>调用
      * （发往远端绘画单元），与入站派发是两回事，不可混为一谈。
-     * 迁移后此调用依然必须发生，否则判定会退化为「只看有无其他物体」，
+     * 该调用必须发生，否则判定会退化为「只看有无其他物体」，
      * 失去像素级校验。</p>
      *
      * @param host 宿主能力。

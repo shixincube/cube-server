@@ -44,7 +44,7 @@ import java.util.function.BiConsumer;
 /**
  * 心理学场景的存储器。
  *
- * <p><b>模块归属</b>：本类随心理学业务模块 {@code service-psychology} 迁移而来，
+ * <p><b>模块归属</b>：本类属于心理学业务模块 {@code service-psychology}，
  * 编译期<b>只</b>依赖 {@code cube-common} 与 cell 框架，不依赖宿主 {@code service} 模块。
  * 这一点由该模块的构建配置保证（classpath 中不含 {@code cube-service-*.jar}），
  * 因此本类中不允许出现任何 {@code cube.service.*} 的类型引用。</p>

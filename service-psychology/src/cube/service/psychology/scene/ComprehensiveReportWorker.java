@@ -76,7 +76,7 @@ public class ComprehensiveReportWorker implements Runnable {
     /**
      * 获取宿主能力接口。
      *
-     * <p>评估器已随心理学业务模块迁至 service-psychology，只能经 SPI 访问宿主能力。
+     * <p>评估器只能经 SPI 访问宿主能力，故由此处统一转发。
      * 每次现取，不缓存为字段：SPI 的装配晚于本工作器的构造。</p>
      *
      * @return 返回宿主能力接口；未装配时返回 {@code null}。

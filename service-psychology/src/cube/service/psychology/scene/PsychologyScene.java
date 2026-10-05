@@ -152,8 +152,8 @@ public class PsychologyScene {
     /**
      * 获取宿主能力接口。
      *
-     * <p>评估器与报告工作器已随心理学业务模块迁至 service-psychology，
-     * 它们只能经 SPI 访问宿主能力，故由本场景统一转发。</p>
+     * <p>评估器与报告工作器位于同一 jar 内，但它们只能经 SPI 访问宿主能力，
+     * 故由本场景统一转发。</p>
      *
      * <p>字段在 {@link #setup} 时由模块注入，注入动作早于任何一次动作派发，
      * 故直接读字段即可，不存在「取到 null」的窗口。</p>
@@ -227,8 +227,7 @@ public class PsychologyScene {
      * <p><b>为何必须由模块驱动</b>：本场景的 41 处存储访问与 60+ 处方法
      * 都会被插件动作经 SPI 回调到，而 {@code ActionModule} 的契约方法只有
      * {@code setup} / {@code teardown} / {@code onTick} 三个。若场景自行
-     * 初始化，就必然出现「无人调用 start ⇒ 存储恒为 null，而调用点照旧」
-     * 的断链。</p>
+     * 初始化，就必然出现「无人装配 ⇒ 存储恒为 null，而调用点照旧」的断链。</p>
      *
      * @param host 宿主能力接口。
      * @param storage 已打开的心理学存储。
@@ -249,7 +248,7 @@ public class PsychologyScene {
         // 对话历史与图表的读写经宿主能力完成，场景管理器只做转发
         SceneManager.getInstance().setHost(host);
 
-        // 引导系统列表：流程定义随心理学业务模块迁至插件，故在此列出
+        // 引导系统列表：流程定义随心理学业务模块一并位于插件内，故在此列出
         for (GuideFlow flow : Guides.listGuideFlows()) {
             Logger.i(this.getClass(), "#setup - Guide flow: " + flow.getName());
         }
@@ -315,9 +314,7 @@ public class PsychologyScene {
      * 上次执行报告保留期刷新的时刻。
      *
      * <p>{@link #onTick(long)} 每小时刷新一次入库报告的留存策略。
-     * 装配时初始化为当前时刻，使首次刷新在一个小时后发生——
-     * 与旧实现在 {@code start()} 中置 {@code System.currentTimeMillis()}
-     * 的行为一致。</p>
+     * 装配时初始化为当前时刻，使首次刷新在一个小时后发生。</p>
      */
     private long lastRetentionRefresh;
 

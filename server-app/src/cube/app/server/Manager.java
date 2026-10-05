@@ -8,11 +8,8 @@ package cube.app.server;
 
 import cube.client.Client;
 import cube.common.entity.Contact;
-import cube.util.ConfigUtils;
 import cube.util.HttpClientFactory;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Properties;
 
 /**

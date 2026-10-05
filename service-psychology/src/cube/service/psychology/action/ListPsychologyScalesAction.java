@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.psychology;
+package cube.service.psychology.action;
 
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.psychology.Resource;
@@ -12,6 +12,7 @@ import cube.aigc.psychology.composition.Scale;
 import cube.aigc.spi.AIGCActionTask;
 import cube.aigc.spi.ActionContext;
 import cube.common.state.AIGCStateCode;
+import cube.service.psychology.PsychologyModule;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -72,12 +73,12 @@ public final class ListPsychologyScalesAction implements AIGCActionTask {
      * 列出全部已开放的量表。
      *
      * <p>该过滤逻辑位于 {@code PsychologyScene#listScales}，
-     * 此处逐字复刻：未开放的量表不进入结果集。</p>
+     * 未开放的量表不进入结果集。</p>
      *
      * @param contactId 联系人 ID。
      * @return 返回已开放的量表列表。
      */
-    static List<Scale> listScales(long contactId) {
+    static public List<Scale> listScales(long contactId) {
         List<Scale> result = new java.util.ArrayList<>();
 
         for (Scale scale : Resource.getInstance().listScales(contactId)) {

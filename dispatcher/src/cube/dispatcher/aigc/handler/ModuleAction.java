@@ -189,7 +189,7 @@ public class ModuleAction extends ContextHandler {
                 return true;
             }
 
-            // painting / counseling 系列归心理学模块（历史命名如此）
+            // painting / counseling / scale / app 系列归心理学模块
             if (moduleName.startsWith("psych")) {
                 return name.startsWith("psychology")
                         || name.startsWith("painting")

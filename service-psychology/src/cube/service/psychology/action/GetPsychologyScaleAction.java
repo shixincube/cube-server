@@ -4,7 +4,7 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.psychology;
+package cube.service.psychology.action;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
@@ -14,6 +14,7 @@ import cube.aigc.spi.AIGCActionTask;
 import cube.aigc.spi.ActionContext;
 import cube.auth.AuthToken;
 import cube.common.state.AIGCStateCode;
+import cube.service.psychology.PsychologyModule;
 import org.json.JSONObject;
 
 /**

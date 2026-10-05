@@ -19,11 +19,11 @@ import cube.aigc.psychology.composition.ScaleResult;
 import cube.aigc.spi.AIGCHost;
 import cube.aigc.spi.AIGCSPI;
 import cube.aigc.spi.ActionBinding;
-import cube.aigc.spi.ActionContext;
 import cube.aigc.spi.ActionModule;
 import cube.aigc.spi.ModuleDescriptor;
 import cube.aigc.spi.ModuleException;
 import cube.auth.AuthToken;
+import cube.service.psychology.action.*;
 import cube.service.psychology.scene.PsychologyScene;
 import cube.common.state.AIGCStateCode;
 import cube.storage.StorageType;
@@ -68,7 +68,7 @@ import java.util.List;
  * {@code AbstractCellet} 执行器与宿主服务级线程池<b>都尚未创建</b>，
  * 因此 {@code setup} 内<b>严禁</b>调用 {@link AIGCHost#schedule}：
  * 该调用取不到执行器，会「记一条 WARN 后把任务丢弃」，既无异常也无失败标记。
- * 建表因此改为首次动作派发时惰性执行，见 {@link #ensureSelfChecked()}。</p>
+ * 建表采用首次动作派发时惰性执行，见 {@link #ensureSelfChecked()}。</p>
  *
  * <p><b>表结构单一来源</b>：16 张 {@code psychology_} 前缀表的定义随
  * {@link PsychologyStorage} 整体迁入本模块，插件与宿主共用同一份 DDL，
@@ -319,9 +319,8 @@ public final class PsychologyModule implements ActionModule {
      * <p>场景持有报告内存表、生成队列与各工作器，是本模块报告链路的运行态容器。
      * 存储与宿主能力由本模块创建后注入，场景自身不读配置、不建存储。</p>
      *
-     * <p>队列上限取 {@code preference.maxQueueLength}，缺省 20。旧实现里
-     * 这一项由场景在启动时读取，而那条启动路径已经不存在，导致配置写20
-     * 实际用的是代码默认 30。</p>
+     * <p>队列上限取 {@code preference.maxQueueLength}，缺省 20；
+     * 配置为 20 时即生效为 20，不使用代码默认值 30。</p>
      *
      * @param host 宿主能力接口。
      * @param config 已生效的模块配置。
@@ -595,8 +594,8 @@ public final class PsychologyModule implements ActionModule {
      * <p>{@code execSelfChecking()} 在表已存在时只是逐表存在性查询，耗时很短；
      * 但首次部署时要执行 16 次建表与若干改表，MySQL 下可能耗时数秒。
      * 由于 {@code setup()} 运行在单元安装阶段（该阶段阻塞会顺延内核启动），
-     * 因此把建表推迟到首次动作派发。宿主场景启动时仍会执行同一份建表逻辑，
-     * 两者都是幂等的（逐表先判断存在再创建），重复调用无害。</p>
+     * 因此把建表推迟到首次动作派发。建表本身逐表先判断存在再创建，
+     * 是幂等的，重复调用无害。</p>
      */
     private void ensureSelfChecked() {
         if (this.selfChecked) {
@@ -619,7 +618,7 @@ public final class PsychologyModule implements ActionModule {
      * @param sn 报告序列号。
      * @return 返回标签列表，无记录时返回空列表。
      */
-    List<PaintingLabel> readPaintingLabels(long sn) {
+    public List<PaintingLabel> readPaintingLabels(long sn) {
         this.ensureSelfChecked();
 
         return this.storage.readPaintingLabels(sn);
@@ -635,7 +634,7 @@ public final class PsychologyModule implements ActionModule {
      * @param labels 待写入的标签列表，可为空。
      * @return 写入成功返回 <code>true</code>。
      */
-    boolean writePaintingLabels(long sn, List<PaintingLabel> labels) {
+    public boolean writePaintingLabels(long sn, List<PaintingLabel> labels) {
         this.ensureSelfChecked();
 
         this.storage.deletePaintingLabel(sn);
@@ -654,7 +653,7 @@ public final class PsychologyModule implements ActionModule {
      * @param state 目标状态。
      * @return 写入成功返回 <code>true</code>。
      */
-    boolean writePaintingReportState(long sn, int state) {
+    public boolean writePaintingReportState(long sn, int state) {
         this.ensureSelfChecked();
 
         return this.storage.writePaintingManagementState(sn, state);
@@ -671,7 +670,7 @@ public final class PsychologyModule implements ActionModule {
      * @param cid 联系人 ID。
      * @return 返回未删除的客户数量。
      */
-    int countCustomers(long cid) {
+    public int countCustomers(long cid) {
         this.ensureSelfChecked();
 
         return this.storage.countCustomers(cid);
@@ -683,7 +682,7 @@ public final class PsychologyModule implements ActionModule {
      * @param cid 联系人 ID。
      * @return 返回客户列表，无记录时返回空列表。
      */
-    List<Customer> readCustomers(long cid) {
+    public List<Customer> readCustomers(long cid) {
         this.ensureSelfChecked();
 
         return this.storage.readCustomers(cid);
@@ -696,7 +695,7 @@ public final class PsychologyModule implements ActionModule {
      * @param id 客户 ID。
      * @return 返回客户；不存在时返回 <code>null</code>。
      */
-    Customer readCustomer(long cid, long id) {
+    public Customer readCustomer(long cid, long id) {
         this.ensureSelfChecked();
 
         return this.storage.readCustomer(cid, id);
@@ -714,7 +713,7 @@ public final class PsychologyModule implements ActionModule {
      * @param customer 待写入的客户。
      * @return 写入成功返回 <code>true</code>。
      */
-    boolean writeCustomer(long cid, Customer customer) {
+    public boolean writeCustomer(long cid, Customer customer) {
         this.ensureSelfChecked();
 
         return this.storage.writeCustomer(cid, customer);
@@ -728,7 +727,7 @@ public final class PsychologyModule implements ActionModule {
      * @param ending 结束时间戳（含）。
      * @return 返回未删除且落在时间窗内的日程数量。
      */
-    int countSchedules(long cid, long starting, long ending) {
+    public int countSchedules(long cid, long starting, long ending) {
         this.ensureSelfChecked();
 
         return this.storage.countSchedules(cid, starting, ending);
@@ -742,7 +741,7 @@ public final class PsychologyModule implements ActionModule {
      * @param ending 结束时间戳（含）。
      * @return 返回日程列表，无记录时返回空列表。
      */
-    List<ConsultationSchedule> readSchedules(long cid, long starting, long ending) {
+    public List<ConsultationSchedule> readSchedules(long cid, long starting, long ending) {
         this.ensureSelfChecked();
 
         return this.storage.readSchedules(cid, starting, ending);
@@ -755,7 +754,7 @@ public final class PsychologyModule implements ActionModule {
      * @param id 日程 ID。
      * @return 返回日程；不存在时返回 <code>null</code>。
      */
-    ConsultationSchedule readSchedule(long cid, long id) {
+    public ConsultationSchedule readSchedule(long cid, long id) {
         this.ensureSelfChecked();
 
         return this.storage.readSchedule(cid, id);
@@ -768,7 +767,7 @@ public final class PsychologyModule implements ActionModule {
      * @param schedule 待写入的日程。
      * @return 写入成功返回 <code>true</code>。
      */
-    boolean writeSchedule(long cid, ConsultationSchedule schedule) {
+    public boolean writeSchedule(long cid, ConsultationSchedule schedule) {
         this.ensureSelfChecked();
 
         return this.storage.writeSchedule(cid, schedule);
@@ -791,7 +790,7 @@ public final class PsychologyModule implements ActionModule {
      * @param tokenCode 令牌码。
      * @return 返回联系人 ID；令牌无效时返回 <code>0</code>。
      */
-    long resolveContactId(AIGCHost host, String tokenCode) {
+    public long resolveContactId(AIGCHost host, String tokenCode) {
         if (null == tokenCode || null == host) {
             return 0;
         }
@@ -806,7 +805,7 @@ public final class PsychologyModule implements ActionModule {
      * @param contactId 联系人 ID。
      * @return 返回已开放的量表列表。
      */
-    List<Scale> listScales(long contactId) {
+    public List<Scale> listScales(long contactId) {
         return ListPsychologyScalesAction.listScales(contactId);
     }
 
@@ -816,7 +815,7 @@ public final class PsychologyModule implements ActionModule {
      * @param sn 量表序列号。
      * @return 返回量表；不存在时返回 <code>null</code>。
      */
-    Scale getScale(long sn) {
+    public Scale getScale(long sn) {
         this.ensureSelfChecked();
 
         return this.storage.readScale(sn);
@@ -830,7 +829,7 @@ public final class PsychologyModule implements ActionModule {
      * @param attribute 受测者属性。
      * @return 返回量表；量表定义不存在时返回 <code>null</code>。
      */
-    Scale generateScale(long contactId, String scaleName, Attribute attribute) {
+    public Scale generateScale(long contactId, String scaleName, Attribute attribute) {
         Scale scale = Resource.getInstance().loadScaleByName(scaleName, contactId);
         if (null == scale) {
             return null;
@@ -847,15 +846,14 @@ public final class PsychologyModule implements ActionModule {
     /**
      * 提交答题卡：评级、评分并落库。
      *
-     * <p>逐字复刻宿主 {@code PsychologyScene#submitAnswerSheet}：未答完时
-     * 直接返回当前结果；答完后先为主观题推断答案，再执行评分脚本。
-     * 任何异常都归为「评分失败」，返回 {@code null}。</p>
+     * <p>未答完时直接返回当前结果；答完后先为主观题推断答案，
+     * 再执行评分脚本。任何异常都归为「评分失败」，返回 {@code null}。</p>
      *
      * @param ctx 动作上下文，用于访问模型单元与关键词抽取。
      * @param answerSheet 答题卡。
      * @return 返回评分结果；量表不存在或评分失败时返回 <code>null</code>。
      */
-    ScaleResult submitAnswerSheet(cube.aigc.spi.ActionContext ctx, AnswerSheet answerSheet) {
+    public ScaleResult submitAnswerSheet(cube.aigc.spi.ActionContext ctx, AnswerSheet answerSheet) {
         Scale scale = this.getScale(answerSheet.scaleSn);
         if (null == scale) {
             return null;
@@ -904,7 +902,7 @@ public final class PsychologyModule implements ActionModule {
      * @param format 导出格式：{@code compact} / {@code markdown} / {@code sections}。
      * @return 返回报告 JSON；不存在或导出失败时返回 <code>null</code>。
      */
-    JSONObject queryPaintingReport(AIGCHost host, long sn, String format) {
+    public JSONObject queryPaintingReport(AIGCHost host, long sn, String format) {
         return host.queryPaintingReport(sn, format);
     }
 
@@ -915,7 +913,7 @@ public final class PsychologyModule implements ActionModule {
      * @param sn 报告序列号。
      * @return 返回报告 JSON；不存在时返回 <code>null</code>。
      */
-    JSONObject queryScaleReport(AIGCHost host, long sn) {
+    public JSONObject queryScaleReport(AIGCHost host, long sn) {
         return host.queryScaleReport(sn);
     }
 
@@ -930,7 +928,7 @@ public final class PsychologyModule implements ActionModule {
      * @param state 报告状态；{@code -1} 表示不限。
      * @return 返回含 {@code total} 与 {@code list} 的对象。
      */
-    JSONObject listPaintingReports(AIGCHost host, long contactId, int page, int size,
+    public JSONObject listPaintingReports(AIGCHost host, long contactId, int page, int size,
             boolean descending, int state) {
         return host.listPaintingReports(contactId, page, size, descending, state);
     }
@@ -944,7 +942,7 @@ public final class PsychologyModule implements ActionModule {
      * @param state 报告状态；{@code -1} 表示不限。
      * @return 返回含 {@code total} 与 {@code list} 的对象。
      */
-    JSONObject listScaleReports(AIGCHost host, long contactId, boolean descending, int state) {
+    public JSONObject listScaleReports(AIGCHost host, long contactId, boolean descending, int state) {
         return host.listScaleReports(contactId, descending, state);
     }
 
@@ -955,7 +953,7 @@ public final class PsychologyModule implements ActionModule {
      * @param sn 报告序列号。
      * @return 返回被停止的报告 JSON；未生效时返回 <code>null</code>。
      */
-    JSONObject stopReportGeneration(AIGCHost host, long sn) {
+    public JSONObject stopReportGeneration(AIGCHost host, long sn) {
         return host.stopReportGeneration(sn);
     }
 
@@ -967,7 +965,7 @@ public final class PsychologyModule implements ActionModule {
      * @param attention 目标关注等级；<code>null</code> 表示回滚到滚动建议。
      * @return 返回重置后的报告 JSON；报告不存在或更新失败时返回 <code>null</code>。
      */
-    JSONObject resetReportAttention(AIGCHost host, long sn, Integer attention) {
+    public JSONObject resetReportAttention(AIGCHost host, long sn, Integer attention) {
         return host.resetReportAttention(sn, attention);
     }
 
@@ -986,7 +984,7 @@ public final class PsychologyModule implements ActionModule {
      * @param remark 新备注。
      * @return 返回更新后的报告；更新失败或报告不存在时返回 <code>null</code>。
      */
-    PaintingReport modifyReportRemark(long reportSn, String remark) {
+    public PaintingReport modifyReportRemark(long reportSn, String remark) {
         this.ensureSelfChecked();
 
         if (!this.storage.updatePsychologyReportRemark(reportSn, remark)) {

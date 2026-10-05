@@ -220,13 +220,13 @@ public class AIGCService extends AbstractModule implements Generatable {
                     Logger.e(AIGCService.class, "#start - Can NOT find AIGC storage config");
                 }
 
-                // 装载 AIGC 业务模块（心理学等）。必须在宿主存储就绪之后：
+                // 装载 AIGC 业务模块。必须在宿主存储就绪之后：
                 // 模块 setup 可能读取宿主存储配置，提前装载会失败。
                 //
-                // 这里同时也是业务场景的启动时机——由模块的 setup 统一承接：
-                // PsychologyModule 在 setup 里建存储并装配 PsychologyScene
-                // （注入 host、storage、队列上限，并完成分词器与引导流程初始化）。
-                // 宿主侧不再单独调用场景，故场景的宿主能力与存储必定有效。
+                // 业务场景的装配亦由模块的 setup 承接——PsychologyModule
+                // 在 setup 里建存储并装配 PsychologyScene（注入 host、storage、
+                // 队列上限，并完成分词器与引导流程初始化），故场景的宿主能力
+                // 与存储必定有效。
                 AIGCCellet theCellet = AIGCService.this.cellet;
                 if (null != theCellet) {
                     theCellet.loadModules();
@@ -760,8 +760,7 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 获取授权服务模块。
      *
-     * <p>启动时已解析并缓存；若尚未缓存（启动竞态）则回退到 Kernel 查找并补缓存，
-     * 使行为与原先每处即时查找完全一致。</p>
+     * <p>启动时已解析并缓存；若尚未缓存（启动竞态）则回退到 Kernel 查找并补缓存。</p>
      *
      * @return 返回授权服务模块。
      */
@@ -1819,8 +1818,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         meta.setRecordHistoryEnabled(recordable);
         meta.setNetworkingEnabled(networking);
 
-        // 取队列 → 起任务 → 收尾：同一单元上的请求串行消化，
-        // 取代原先「自旋等待单元空闲（上限 5 秒）后仍并发派发」的忙等实现。
+        // 取队列 → 起任务 → 收尾：同一单元上的请求串行消化
         this.taskExecutor.submitGenerateText(meta);
 
         return true;
@@ -2533,7 +2531,7 @@ public class AIGCService extends AbstractModule implements Generatable {
      * 音频分类单元 → 解析情绪 → 落情绪记录」。</p>
      *
      * <p>单元选点按 {@link AICapability.AudioProcessing#AudioClassification} 子任务
-     * 匹配（与语音识别、说话人分离同一惯例），不再指向心理学单元。</p>
+     * 匹配，与语音识别、说话人分离同一惯例。</p>
      *
      * @param token
      * @param fileCode

@@ -30,7 +30,7 @@ import java.util.List;
  *
  * <p>把结构化的报告数据渲染成 Markdown 文本，供模型读取与客户端展示。
  * 这些文本的格式约定与既有客户端强绑定，故集中在本类实现，
- * 由心理学业务模块直接调用，不再经宿主能力接口转发。</p>
+ * 由心理学业务模块直接调用。</p>
  *
  * <p>按关键词匹配语料的两个方法（{@code fillHexagonScoreDescription} 与
  * {@code extract}）不在本类——它们依赖分词与 TF-IDF 权重，

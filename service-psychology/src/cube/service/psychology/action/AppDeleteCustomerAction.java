@@ -4,14 +4,14 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.psychology;
+package cube.service.psychology.action;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.app.Customer;
 import cube.aigc.spi.AIGCActionTask;
 import cube.aigc.spi.ActionContext;
 import cube.common.state.AIGCStateCode;
-import org.json.JSONObject;
+import cube.service.psychology.PsychologyModule;
 
 /**
  * 删除客户动作。
@@ -29,8 +29,7 @@ import org.json.JSONObject;
  *
  * <p><b>⚠️ 读-改-写非原子</b>：{@code readCustomer} 与 {@code writeCustomer} 之间
  * 无锁无事务，两个并发删除可能丢失其中一次的写入。这是<b>既有</b>缺陷
- * （{@code AppDeleteCustomerTask:65-76}），本批原样搬运不引入新行为，
- * 需由存储层修复。</p>
+ * （{@code AppDeleteCustomerTask:65-76}），需由存储层修复。</p>
  *
  * <p><b>⚠️ 两个失败分支回显的都是原始请求</b>：{@code NoData}（L68）与
  * {@code Failure}（L83）；仅 {@code catch} 分支回空对象（L89）。</p>

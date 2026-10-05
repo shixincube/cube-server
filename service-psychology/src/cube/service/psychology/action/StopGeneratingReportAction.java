@@ -4,13 +4,14 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.service.psychology;
+package cube.service.psychology.action;
 
-import cube.aigc.spi.AIGCHost;
 import cell.core.talk.dialect.ActionDialect;
 import cube.aigc.spi.AIGCActionTask;
 import cube.aigc.spi.ActionContext;
+import cube.aigc.spi.AIGCHost;
 import cube.common.state.AIGCStateCode;
+import cube.service.psychology.PsychologyModule;
 import org.json.JSONObject;
 
 /**
@@ -27,10 +28,10 @@ import org.json.JSONObject;
  * 会改回 {@code InconsistentToken}——这是线协议可见的语义变更。
  * 故保留 {@code false}，令牌有效性由本处理器自行判定。</p>
  *
- * <p><b>为何停止逻辑走 SPI 而非插件自建</b>：报告生成期间它只存在于宿主的
+ * <p><b>为何停止逻辑走 SPI 而非插件自建</b>：报告生成期间它只存在于场景的
  * 内存表与任务队列中，尚未入库。插件自建既无从得知「是否仍在队列中」，
- * 也无法真正中断宿主的生成线程。详见
- * {@link AIGCHostImpl#stopReportGeneration} 与对应 SPI 契约。</p>
+ * 也无法真正中断生成线程，故经
+ * {@link AIGCHost#stopReportGeneration} 委托宿主完成。</p>
  */
 public final class StopGeneratingReportAction implements AIGCActionTask {
 

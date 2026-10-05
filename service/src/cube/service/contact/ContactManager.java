@@ -16,7 +16,6 @@ import cell.core.net.Endpoint;
 import cell.core.talk.Primitive;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
-import cell.util.CachedQueueExecutor;
 import cell.util.Clock;
 import cell.util.Utils;
 import cell.util.log.Logger;

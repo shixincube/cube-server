@@ -31,20 +31,19 @@ public final class AIGCSPI {
      * 会员中心），模块无法自行访问；其中会员系统本身位于宿主，故 SPI 只暴露
      * 「按域名 + 联系人 ID 取资格」这一结果，不把会员系统作为返回类型。</p>
      *
-     * <p>另新增 {@link AIGCHost#downloadFile}：按外部链接下载文件并登记为文件标签。
+     * <p>{@link AIGCHost#downloadFile}：按外部链接下载文件并登记为文件标签。
      * 供「模板文章」等动作使用——调用方只拿到第三方给出的图片地址，
      * 下载动作由文件存储服务完成，模块不直接发起网络请求。</p>
      *
-     * <p>另新增 {@link AIGCHost#makeKeyFeature}：把评测报告的关键特征列表
+     * <p>{@link AIGCHost#makeKeyFeature}：把评测报告的关键特征列表
      * 渲染为 Markdown 文本。该能力与报告内容加工同族，但服务的报告类型不同
      * （综合评测报告而非绘画报告），故单独提供。</p>
      *
-     * <p>另新增 {@link AIGCHost#matchSimilarity}：以模板素材做图像相似度匹配。
+     * <p>{@link AIGCHost#matchSimilarity}：以模板素材做图像相似度匹配。
      * 绘画解读需要在物体检测之外补充素材判断（如雨中人绘画里的伞），
-     * 检索由计算机视觉服务承担，模块不持有其模型。
-     * 为此 {@code MatchSimilarityListener} 从 service 下沉到
-     * <code>common</code>——其回调参数（文件标签、素材列表、状态码）
-     * 本就在common，下沉无额外依赖。</p>
+     * 检索由计算机视觉服务承担，模块不持有其模型；
+     * 其回调监听器 {@code MatchSimilarityListener} 亦定义在
+     * <code>common</code>，回调参数（文件标签、素材列表、状态码）不依赖宿主。</p>
      */
     public final static int VERSION = 24;
 
