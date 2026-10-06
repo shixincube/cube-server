@@ -4,9 +4,10 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.dispatcher.aigc.handler;
+package cube.dispatcher.aigc.handler.psychology;
 
 import cube.dispatcher.aigc.Manager;
+import cube.dispatcher.aigc.handler.AIGCHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
@@ -15,12 +16,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 停止心理学报告生成。
+ * 图表数据管理。
  */
-public class PsychologyStopping extends ContextHandler {
+public class ChartData extends ContextHandler {
 
-    public PsychologyStopping() {
-        super("/aigc/psychology/stop");
+    public ChartData() {
+        super("/aigc/chart/data/");
         setHandler(new Handler());
     }
 
@@ -41,15 +42,15 @@ public class PsychologyStopping extends ContextHandler {
 
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
-                long sn = data.getLong("sn");
-                JSONObject result = Manager.getInstance().stopGeneratingPsychologyReport(token, sn);
-                if (null != result) {
-                    this.respondOk(response, result);
+                JSONObject responseData = Manager.getInstance().handleChartData(token, data);
+                if (null != responseData) {
+                    this.respondOk(response, responseData);
+                    this.complete();
                 }
                 else {
                     this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
+                    this.complete();
                 }
-                this.complete();
             } catch (Exception e) {
                 this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();

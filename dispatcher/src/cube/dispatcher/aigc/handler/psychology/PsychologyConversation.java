@@ -4,11 +4,12 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.dispatcher.aigc.handler;
+package cube.dispatcher.aigc.handler.psychology;
 
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 import cube.dispatcher.aigc.Manager;
+import cube.dispatcher.aigc.handler.AIGCHandler;
 import cube.util.FileLabels;
 import cube.util.TextUtils;
 import org.eclipse.jetty.http.HttpStatus;

@@ -174,6 +174,14 @@ public class AIGCService extends AbstractModule implements Generatable {
         this.tokenizer = new Tokenizer();
     }
 
+    /**
+     * 启动服务。
+     *
+     * <p>在独立引导线程中依次完成：读取配置、打开存储器并自检、绑定技能注册表与
+     * 会话存储、装载 AIGC 业务模块（装载结果决定降级标志 {@link #moduleDegraded}）、
+     * 注册授权/联系人/文件服务事件插件、实例化知识框架、启动资源管理器、会员中心
+     * 与事件中心。存储器不可用时保持「未就绪」状态，不对外声称可用。</p>
+     */
     @Override
     public void start() {
         this.pluginSystem = new AIGCPluginSystem();
@@ -314,6 +322,12 @@ public class AIGCService extends AbstractModule implements Generatable {
         })).start();
     }
 
+    /**
+     * 销毁服务。
+     *
+     * <p>卸载全部 AIGC 业务模块（含心理学场景的停止），并停止会员中心与事件中心。
+     * 本方法不关闭存储器与线程池，那是 {@link #stop()} 的职责。</p>
+     */
     @Override
     public void dispose() {
         Logger.i(this.getClass(), "#dispose - AIGC service dispose");
@@ -329,6 +343,12 @@ public class AIGCService extends AbstractModule implements Generatable {
         EventCenter.getInstance().stop();
     }
 
+    /**
+     * 停止服务。
+     *
+     * <p>关闭两层线程池（后台短任务池 + 单元排空池）、清理频道索引、
+     * 关闭存储器并停止资源管理器。</p>
+     */
     @Override
     public void stop() {
         // 关闭两层线程池：后台短任务池 + 单元排空池
@@ -347,11 +367,26 @@ public class AIGCService extends AbstractModule implements Generatable {
         Explorer.getInstance().teardown();
     }
 
+    /**
+     * 获取 AIGC 插件系统。
+     *
+     * @return 返回插件系统实例。
+     */
     @Override
     public AIGCPluginSystem getPluginSystem() {
         return this.pluginSystem;
     }
 
+    /**
+     * 周期回调（60 秒一次）。
+     *
+     * <p>依次执行：配置热加载（每 5 分钟检测一次）、单元维护、频道维护、
+     * 知识框架维护、超时语音流接收器清理（4 小时）、资源管理器维护，
+     * 以及驱动 AIGC 业务模块心跳。</p>
+     *
+     * @param module 模块。
+     * @param kernel 内核。
+     */
     @Override
     public void onTick(Module module, Kernel kernel) {
         // 周期 60 秒
@@ -424,6 +459,13 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
+    /**
+     * 读取并应用服务配置（{@code config/aigc.properties}，支持热加载）。
+     *
+     * <p>覆盖：线程池规模与类型、各模型上下文长度下限、单元权重（{@code unit.weight.<cid>}）、
+     * 网络搜索器、SKILL 技能（经 {@link #loadSkillConfig(Properties)}）、中继（Relay）开关。
+     * 配置文件不存在或内容未变时补建默认线程池，保证异步入口可用。</p>
+     */
     private void loadConfig() {
         try {
             File file = new File("config/aigc.properties");
@@ -670,6 +712,14 @@ public class AIGCService extends AbstractModule implements Generatable {
                 + " - chars/token: " + TokenEstimator.getInstance().getCharsPerToken());
     }
 
+    /**
+     * 读取整型配置项。
+     *
+     * @param properties 配置项集合。
+     * @param key 配置键。
+     * @param defaultValue 默认值。
+     * @return 值缺失或非法时返回默认值。
+     */
     private static int getInt(Properties properties, String key, int defaultValue) {
         try {
             String value = properties.getProperty(key);
@@ -679,6 +729,14 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
+    /**
+     * 读取长整型配置项。
+     *
+     * @param properties 配置项集合。
+     * @param key 配置键。
+     * @param defaultValue 默认值。
+     * @return 值缺失或非法时返回默认值。
+     */
     private static long getLong(Properties properties, String key, long defaultValue) {
         try {
             String value = properties.getProperty(key);
@@ -688,6 +746,14 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
+    /**
+     * 读取浮点型配置项。
+     *
+     * @param properties 配置项集合。
+     * @param key 配置键。
+     * @param defaultValue 默认值。
+     * @return 值缺失或非法时返回默认值。
+     */
     private static double getDouble(Properties properties, String key, double defaultValue) {
         try {
             String value = properties.getProperty(key);
@@ -697,6 +763,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
+    /**
+     * 获取服务所在的 Cellet。
+     *
+     * @return 返回 Cellet 实例。
+     */
     public AIGCCellet getCellet() {
         return this.cellet;
     }
@@ -734,10 +805,20 @@ public class AIGCService extends AbstractModule implements Generatable {
         this.taskExecutor.discardAudio(fileCodes);
     }
 
+    /**
+     * 获取 AIGC 存储器。
+     *
+     * @return 返回存储器；服务未就绪或存储配置缺失时返回 {@code null}。
+     */
     public AIGCStorage getStorage() {
         return this.storage;
     }
 
+    /**
+     * 获取文本分词器。
+     *
+     * @return 返回分词器实例。
+     */
     public Tokenizer getTokenizer() {
         return this.tokenizer;
     }
@@ -843,6 +924,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         return this.skillCatalog;
     }
 
+    /**
+     * 获取服务工作路径（{@code storage/tmp/}）。
+     *
+     * @return 返回工作路径。
+     */
     public File getWorkingPath() {
         return this.workingPath;
     }
@@ -950,6 +1036,15 @@ public class AIGCService extends AbstractModule implements Generatable {
 
     //-------- App Interface - Start --------
 
+    /**
+     * 触发应用事件。
+     *
+     * <p>先经插件系统分发（{@link AIGCHook#AppEvent} 钩子），再持久化到存储器。</p>
+     *
+     * @param appEvent 应用事件。
+     * @return 插件链处理完成且存储器写入成功返回 {@code true}；
+     *         存储器不可用或写入失败返回 {@code false}。
+     */
     public boolean fireEvent(AppEvent appEvent) {
         AIGCHook hook = this.pluginSystem.getAppEventHook();
         AIGCPluginContext context = new AIGCPluginContext(appEvent);
@@ -963,6 +1058,12 @@ public class AIGCService extends AbstractModule implements Generatable {
         return this.storage.writeAppEvent(appEvent);
     }
 
+    /**
+     * 按联系人 ID 获取用户（含访问令牌）。
+     *
+     * @param uid 联系人 ID。
+     * @return 返回用户；联系人或令牌不存在返回 {@code null}。
+     */
     public User getUser(long uid) {
         Contact contact = ContactManager.getInstance().getContact(AuthConsts.DEFAULT_DOMAIN, uid);
         if (null == contact) {
@@ -980,6 +1081,12 @@ public class AIGCService extends AbstractModule implements Generatable {
         return user;
     }
 
+    /**
+     * 按访问令牌码获取用户。
+     *
+     * @param token 访问令牌码。
+     * @return 返回用户；令牌或联系人不存在返回 {@code null}。
+     */
     public User getUser(String token) {
         AuthService authService = this.getAuthService();
         AuthToken authToken = authService.getToken(token);
@@ -1000,10 +1107,13 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 创建新用户。
      *
-     * @param appAgent
-     * @param device
-     * @param channel
-     * @return
+     * <p>生成 10 位随机联系人 ID（冲突时重试），签发 10 年有效期的访问令牌，
+     * 并以随机名称与「未登录」显示名注册为联系人。</p>
+     *
+     * @param appAgent 应用代理标识。
+     * @param device 设备信息，可为 {@code null}。
+     * @param channel 渠道代码。
+     * @return 返回新用户（含令牌）。
      */
     public User createUser(String appAgent, Device device, String channel) {
         final String domain = AuthConsts.DEFAULT_DOMAIN;
@@ -1046,6 +1156,13 @@ public class AIGCService extends AbstractModule implements Generatable {
         return user;
     }
 
+    /**
+     * 修改用户信息（当前仅支持显示名）。
+     *
+     * @param token 访问令牌码。
+     * @param modification 修改内容。
+     * @return 返回更新后的用户；令牌或联系人无效返回 {@code null}。
+     */
     public User modifyUser(String token, UserModification modification) {
         AuthToken authToken = this.getToken(token);
         if (null == authToken) {
@@ -1066,6 +1183,17 @@ public class AIGCService extends AbstractModule implements Generatable {
         return user;
     }
 
+    /**
+     * 手机号验证码登录（注册/登录二合一）。
+     *
+     * <p>新用户：绑定手机号、更新个人知识记忆、激活 1 年会员；
+     * 老用户：删除临时联系人令牌并将令牌码过户给原账号，
+     * 临时联系人标记作废并删除其个人知识库。</p>
+     *
+     * @param contact 当前设备上的临时联系人。
+     * @param verificationCode 已验证的验证码（含手机号）。
+     * @return 返回登录后的用户（含新令牌）。
+     */
     public User checkInUser(Contact contact, VerificationCode verificationCode) {
         // 查找用户
         ContactSearchResult searchResult = ContactManager.getInstance().searchWithContactName(
@@ -1140,6 +1268,20 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
+    /**
+     * 用户名密码登录（注册/登录二合一）。
+     *
+     * <p>注册：用户名不存在时创建新用户、更新个人知识记忆、激活 1 年会员；
+     * 登录：校验用户名密码，通过后令牌码过户给原账号并更新个人知识记忆，
+     * 临时联系人标记作废并删除其个人知识库。</p>
+     *
+     * @param register {@code true} 表示注册语义，{@code false} 表示登录语义。
+     * @param userName 用户名（邮箱）。
+     * @param password 密码。
+     * @param contact 当前设备上的临时联系人。
+     * @return 注册时用户已存在、登录时用户不存在或密码错误均返回 {@code null}；
+     *         否则返回登录后的用户。
+     */
     public User checkInUser(boolean register, String userName, String password, Contact contact) {
         ContactSearchResult searchResult = ContactManager.getInstance()
                 .searchWithContactName(contact.getDomain().getName(), userName);
@@ -1241,6 +1383,16 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
+    /**
+     * 更新用户的个人知识记忆（异步）。
+     *
+     * <p>把用户档案（含会员信息）渲染为 Markdown，写入其个人知识库中标题为
+     * {@link User#KnowledgeTitle} 的文章；不存在则创建并激活，存在则更新后重新激活。
+     * 个人知识库不存在时会先创建。</p>
+     *
+     * @param authToken 访问令牌。
+     * @param user 用户。
+     */
     private void updatePersonalKnowledgeBase(AuthToken authToken, User user) {
         KnowledgeBase base = this.getKnowledgeFramework().getKnowledgeBase(user.getId(), User.KnowledgeBaseName);
         if (null == base) {
@@ -1317,8 +1469,10 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 注销用户。
      *
-     * @param contact
-     * @return
+     * <p>联系人标记 SignOut 并在名称后追加掩码、更新联系人上下文、删除访问令牌。</p>
+     *
+     * @param contact 联系人。
+     * @return 返回不带令牌的用户。
      */
     public User signOutUser(Contact contact) {
         Logger.i(this.getClass(), "#signOutUser - User: " + contact.getId());
@@ -1341,10 +1495,14 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 使用邀请码激活会员。
      *
-     * @param token 令牌。
+     * <p>特殊码 {@code 941017} 表示强制取消会员。激活成功后绑定邀请码
+     * 并更新个人知识记忆中的会员信息。</p>
+     *
+     * @param token 访问令牌。
      * @param channel 渠道代码。
      * @param invitationCode 邀请码。
-     * @return
+     * @return 返回会员；联系人不存在或邀请码无效返回 {@code null}，
+     *         特殊码场景返回取消结果。
      */
     public Membership activateMembership(AuthToken token, String channel, String invitationCode) {
         Contact contact = ContactManager.getInstance().getContact(token.getDomain(), token.getContactId());
@@ -1385,8 +1543,10 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 取消指定用户的会员。
      *
-     * @param token 令牌。
-     * @return
+     * <p>取消成功后同步更新个人知识记忆中的会员信息。</p>
+     *
+     * @param token 访问令牌。
+     * @return 返回被取消的会员；联系人不存在或原本无会员返回 {@code null}。
      */
     public Membership cancelMembership(AuthToken token) {
         Contact contact = ContactManager.getInstance().getContact(token.getDomain(), token.getContactId());
@@ -1403,6 +1563,15 @@ public class AIGCService extends AbstractModule implements Generatable {
         return membership;
     }
 
+    /**
+     * 生成用户近一年的聊天词云。
+     *
+     * <p>读取该联系人近 365 天的历史问答，对问题与回答分别做 TF-IDF 分词
+     * （各取前 10 个词）后汇入词云。</p>
+     *
+     * @param authToken 访问令牌。
+     * @return 返回词云。
+     */
     public WordCloud createWordCloud(AuthToken authToken) {
         WordCloud wordCloud = new WordCloud();
 
@@ -1426,6 +1595,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         return wordCloud;
     }
 
+    /**
+     * 获取全部模型配置。
+     *
+     * @return 返回模型配置列表；服务未就绪返回 {@code null}。
+     */
     public List<ModelConfig> getModelConfigs() {
         if (!this.isStarted()) {
             return null;
@@ -1434,6 +1608,12 @@ public class AIGCService extends AbstractModule implements Generatable {
         return this.storage.getModelConfigs();
     }
 
+    /**
+     * 按模型名列表获取模型配置。
+     *
+     * @param modelNames 模型名数组。
+     * @return 返回模型配置列表；服务未就绪返回 {@code null}。
+     */
     public List<ModelConfig> getModelConfigs(JSONArray modelNames) {
         if (!this.isStarted()) {
             return null;
@@ -1442,6 +1622,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         return this.storage.getModelConfigs(JSONUtils.toStringList(modelNames));
     }
 
+    /**
+     * 获取已启用的应用通知列表。
+     *
+     * @return 返回通知列表；服务未就绪或读取异常返回空列表。
+     */
     public List<Notification> getNotifications() {
         if (!this.isStarted()) {
             return new ArrayList<>();
@@ -1454,6 +1639,12 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
+    /**
+     * 获取联系人偏好设置。
+     *
+     * @param contactId 联系人 ID。
+     * @return 返回偏好；存储器不可用或无记录返回 {@code null}。
+     */
     public ContactPreference getPreference(long contactId) {
         if (null == this.storage) {
             Logger.w(this.getClass(), "#getPreference - AIGC storage is NOT available");
@@ -1466,8 +1657,8 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 通过邀请码查询令牌。
      *
-     * @param invitationCode
-     * @return
+     * @param invitationCode 邀请码。
+     * @return 返回对应令牌码；存储器不可用或无记录返回 {@code null}。
      */
     public String queryTokenByInvitation(String invitationCode) {
         if (null == this.storage) {
@@ -1479,10 +1670,10 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 为令牌创建新的邀请码。
+     * 为令牌创建新的邀请码（6 位数字，异步写入）。
      *
-     * @param token
-     * @return
+     * @param token 访问令牌码。
+     * @return 返回新邀请码；存储器不可用返回 {@code null}，写入失败仍返回邀请码。
      */
     public String newInvitationForToken(String token) {
         if (null == this.storage) {
@@ -1498,11 +1689,14 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 检测或注入验证码。
+     * 检测或注入验证码登录令牌。
      *
-     * @param phoneNumber
-     * @param userName 用户名，可以为 {@code null} 值。
-     * @return
+     * <p>手机号对应的联系人不存在时，创建联系人并签发 5 年有效期令牌；
+     * 已存在时直接返回其现有令牌。</p>
+     *
+     * @param phoneNumber 手机号。
+     * @param userName 用户名，可为 {@code null}。
+     * @return 返回访问令牌；手机号格式非法返回 {@code null}。
      */
     public AuthToken getOrInjectAuthToken(String phoneNumber, String userName) {
         long phone = 0;
@@ -1542,8 +1736,9 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 获取令牌。
      *
-     * @param tokenCode
-     * @return
+     * @param tokenCode 令牌码。
+     * @return 返回访问令牌；令牌码为 {@code null}、授权服务未就绪或令牌不存在
+     *         返回 {@code null}。
      */
     public AuthToken getToken(String tokenCode) {
         if (null == tokenCode) {
@@ -1559,6 +1754,11 @@ public class AIGCService extends AbstractModule implements Generatable {
         return authToken;
     }
 
+    /**
+     * 获取知识库架构。
+     *
+     * @return 返回知识框架；启动完成前返回 {@code null}。
+     */
     public KnowledgeFramework getKnowledgeFramework() {
         return this.knowledgeFramework;
     }
@@ -1566,8 +1766,8 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 获取指定联系人的知识库信息列表。
      *
-     * @param tokenCode
-     * @return
+     * @param tokenCode 访问令牌码。
+     * @return 返回知识库信息列表；令牌无效返回 {@code null}。
      */
     public List<KnowledgeBaseInfo> getKnowledgeBaseInfoList(String tokenCode) {
         AuthToken authToken = this.getToken(tokenCode);
@@ -1579,11 +1779,11 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 获取对应的知识库实例。
+     * 按令牌与知识库名获取知识库实例。
      *
-     * @param tokenCode
-     * @param baseName
-     * @return
+     * @param tokenCode 访问令牌码。
+     * @param baseName 知识库名。
+     * @return 返回知识库；令牌无效或知识库不存在返回 {@code null}。
      */
     public KnowledgeBase getKnowledgeBase(String tokenCode, String baseName) {
         AuthToken authToken = this.getToken(tokenCode);
@@ -1594,10 +1794,11 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
+     * 按令牌与分类获取知识库实例列表。
      *
-     * @param tokenCode
-     * @param category
-     * @return
+     * @param tokenCode 访问令牌码。
+     * @param category 分类名。
+     * @return 返回知识库列表；令牌无效返回 {@code null}。
      */
     public List<KnowledgeBase> getKnowledgeBaseByCategory(String tokenCode, String category) {
         AuthToken authToken = this.getToken(tokenCode);
@@ -1608,16 +1809,23 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 获取对应的知识库实例。
+     * 按联系人与知识库名获取知识库实例。
      *
-     * @param contactId
-     * @param baseName
-     * @return
+     * @param contactId 联系人 ID。
+     * @param baseName 知识库名。
+     * @return 返回知识库；知识框架未就绪或知识库不存在返回 {@code null}。
      */
     public synchronized KnowledgeBase getKnowledgeBase(Long contactId, String baseName) {
         return this.knowledgeFramework.getKnowledgeBase(contactId, baseName);
     }
 
+    /**
+     * 按联系人与分类获取知识库实例列表。
+     *
+     * @param contactId 联系人 ID。
+     * @param category 分类名。
+     * @return 返回知识库列表；知识框架未就绪返回 {@code null}。
+     */
     public synchronized List<KnowledgeBase> getKnowledgeBaseByCategory(Long contactId, String category) {
         return this.knowledgeFramework.getKnowledgeBaseByCategory(contactId, category);
     }
@@ -1721,43 +1929,35 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 提交事件。
+     * 提交事件到事件中心。
      *
-     * @param event
-     * @return
+     * @param event 事件。
+     * @return 返回事件处理结果。
      */
     public EventResult submitEvent(Event event) {
         return Explorer.getInstance().fireEvent(event);
     }
 
     /**
-     * 预推理，以复合上下文形式进行描述。
+     * 生成文本内容（频道异步方式）。
      *
-     * @param token
-     * @param content
-     * @return
-     */
-    public ComplexContext preInfer(String token, String content) {
-        AuthService authService = this.getAuthService();
-        AuthToken authToken = authService.getToken(token);
-        return this.recognizeContext(content, authToken);
-    }
-
-    /**
-     * 生成文本内容。
+     * <p>校验服务状态、内容长度、频道存在性与处理中状态后，按单元名
+     * （找不到时回退到会话子任务）选择单元，构造 {@link GenerateTextUnitMeta}
+     * 交由任务执行器排队执行；同一单元上的请求串行消化。</p>
      *
      * @param channelCode 频道代码。
      * @param content 内容。
      * @param unitName 单元名。
      * @param option 生成参数设置。
-     * @param histories 历史记录别表。
+     * @param histories 历史记录列表。
      * @param maxHistories 最大历史记录数量。
      * @param attachments 附件信息。
      * @param categories 分类信息。
      * @param recordable 是否记录到库。
      * @param networking 是否进行联网操作。
      * @param listener 监听器。
-     * @return
+     * @return 任务受理返回 {@code true}；服务未就绪、内容超限、频道不存在或
+     *         正在处理、无可用单元返回 {@code false}。
      */
     public boolean generateText(String channelCode, String content, String unitName, GeneratingOption option,
                                 List<GeneratingRecord> histories, int maxHistories, List<Attachment> attachments,
@@ -1833,11 +2033,11 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 同步方式生成文本。
      *
-     * @param authToken
-     * @param unitName
-     * @param prompt
-     * @param option
-     * @return
+     * @param authToken 访问令牌。
+     * @param unitName 单元名。
+     * @param prompt 提示词。
+     * @param option 生成参数设置。
+     * @return 返回生成记录；无单元、无联系人或生成失败返回 {@code null}。
      */
     public GeneratingRecord syncGenerateText(AuthToken authToken, String unitName, String prompt, GeneratingOption option) {
         AIGCUnit unit = this.selectUnitByName(unitName);
@@ -1857,12 +2057,12 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 同步方式生成文本。
      *
-     * @param unitName
-     * @param prompt
-     * @param option
-     * @param history
-     * @param participantContact
-     * @return
+     * @param unitName 单元名。
+     * @param prompt 提示词。
+     * @param option 生成参数设置。
+     * @param history 历史记录列表。
+     * @param participantContact 参与方联系人。
+     * @return 返回生成记录；无单元或生成失败返回 {@code null}。
      */
     public GeneratingRecord syncGenerateText(String unitName, String prompt, GeneratingOption option,
                                              List<GeneratingRecord> history, Contact participantContact) {
@@ -1875,15 +2075,15 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 同步方式生成文本。
+     * 同步方式生成文本（按联系人 ID 选择单元）。
      *
-     * @param authToken
-     * @param unitName
-     * @param prompt
-     * @param option
-     * @param history
-     * @param participantContact
-     * @return
+     * @param authToken 访问令牌。
+     * @param unitName 单元名。
+     * @param prompt 提示词。
+     * @param option 生成参数设置。
+     * @param history 历史记录列表。
+     * @param participantContact 参与方联系人。
+     * @return 返回生成记录；无单元或生成失败返回 {@code null}。
      */
     public GeneratingRecord syncGenerateText(AuthToken authToken, String unitName, String prompt, GeneratingOption option,
                                             List<GeneratingRecord> history, Contact participantContact) {
@@ -1896,14 +2096,18 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 同步方式生成文本。
+     * 同步方式生成文本（底层实现）。
      *
-     * @param unit
-     * @param prompt
-     * @param option
-     * @param history
-     * @param participantContact
-     * @return
+     * <p>经 {@code cellet.transmit} 向单元发送 {@code TextToText} 请求
+     * （超时 8 分钟），中继模式下走中继通道。应答解析出回答与思维链，
+     * 并按单元做中文过滤。transmit 抛异常时也会递减实时计数并复位运行标志。</p>
+     *
+     * @param unit 单元。
+     * @param prompt 提示词。
+     * @param option 生成参数设置。
+     * @param history 历史记录列表。
+     * @param participantContact 参与方联系人，为 {@code null} 时使用单元所属联系人。
+     * @return 返回生成记录；传输失败、状态码非 Ok 或应答缺字段返回 {@code null}。
      */
     public GeneratingRecord syncGenerateText(AIGCUnit unit, String prompt, GeneratingOption option,
                                    List<GeneratingRecord> history, Contact participantContact) {
@@ -1982,6 +2186,15 @@ public class AIGCService extends AbstractModule implements Generatable {
         return new GeneratingRecord(request.sn, unit.getCapability().getName(), prompt, responseText, thoughtText);
     }
 
+    /**
+     * 生成文本（{@link Generatable} 接口实现，同步方式）。
+     *
+     * @param unitName 单元名。
+     * @param prompt 提示词。
+     * @param option 生成参数设置。
+     * @param history 历史记录列表。
+     * @return 返回生成记录；无可用单元或生成失败返回 {@code null}。
+     */
     @Override
     public GeneratingRecord generateText(String unitName, String prompt, GeneratingOption option,
                                          List<GeneratingRecord> history) {
@@ -1989,19 +2202,23 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 生成文本。
+     * 生成文本（频道异步方式，调用方自带单元）。
      *
-     * @param channel
-     * @param unit
-     * @param query
-     * @param prompt
-     * @param option
-     * @param histories
-     * @param maxHistories
-     * @param attachments
-     * @param categories
-     * @param recordable
-     * @param listener
+     * <p>与 {@link #generateText(String, String, String, GeneratingOption, List, int, List, List, boolean, boolean, GenerateTextListener)}
+     * 的区别：单元由调用方选定，且不联网；无单元数据时异步回调失败，
+     * 避免在调用方线程上回调。</p>
+     *
+     * @param channel 频道。
+     * @param unit 单元；中继模式下会按能力名重新选择。
+     * @param query 原始提问（用于记录）。
+     * @param prompt 提示词。
+     * @param option 生成参数设置。
+     * @param histories 历史记录列表。
+     * @param maxHistories 最大历史记录数量。
+     * @param attachments 附件信息。
+     * @param categories 分类信息。
+     * @param recordable 是否记录到库。
+     * @param listener 监听器。
      */
     public void generateText(AIGCChannel channel, AIGCUnit unit, String query, String prompt, GeneratingOption option,
                              List<GeneratingRecord> histories, int maxHistories, List<Attachment> attachments,
@@ -2041,11 +2258,14 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 执行多模态任务。
      *
-     * @param tokenCode
-     * @param channelCode
-     * @param input
-     * @param listener
-     * @return
+     * <p>频道不存在时按频道码自动创建；正在处理或无对应能力单元时拒绝。</p>
+     *
+     * @param tokenCode 访问令牌码。
+     * @param channelCode 频道码。
+     * @param input 多模态输入。
+     * @param listener 监听器。
+     * @return 任务受理返回 {@code true}；服务未就绪、频道正在处理或无单元
+     *         返回 {@code false}。
      */
     public boolean executeMultimodal(String tokenCode, String channelCode,
                                      MultimodalInput input, MultimodalListener listener) {
@@ -2087,11 +2307,13 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 生成指定内容的摘要。
+     * 生成指定内容的摘要（异步）。
      *
-     * @param text
-     * @param listener
-     * @return
+     * <p>在后台线程调用白泽单元提取摘要，仅返回摘要文本。</p>
+     *
+     * @param text 原文。
+     * @param listener 监听器。
+     * @return 任务受理返回 {@code true}；服务未就绪返回 {@code false}。
      */
     public boolean generateSummarization(String text, SummarizationListener listener) {
         if (!this.isStarted()) {
@@ -2119,13 +2341,14 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 文本生成图片。
+     * 文本生成图片（按频道码）。
      *
-     * @param channelCode
-     * @param text
-     * @param unitName
-     * @param listener
-     * @return
+     * @param channelCode 频道码。
+     * @param text 提示词。
+     * @param unitName 单元名。
+     * @param listener 监听器。
+     * @return 任务受理返回 {@code true}；服务未就绪、频道不存在、正在处理、
+     *         无单元或单元非文生图类型返回 {@code false}。
      */
     public boolean generateImage(String channelCode, String text, String unitName, TextToImageListener listener) {
         if (!this.isStarted()) {
@@ -2143,13 +2366,14 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 文本生成图片。
+     * 文本生成图片（频道实例方式）。
      *
-     * @param channel
-     * @param text
-     * @param unitName
-     * @param listener
-     * @return
+     * @param channel 频道。
+     * @param text 提示词。
+     * @param unitName 单元名。
+     * @param listener 监听器。
+     * @return 任务受理返回 {@code true}；服务未就绪、频道正在处理、无单元或
+     *         单元非文生图类型返回 {@code false}。
      */
     public boolean generateImage(AIGCChannel channel, String text, String unitName, TextToImageListener listener) {
         if (!this.isStarted()) {
@@ -2191,11 +2415,13 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 文本生成文件。
      *
+     * <p>优先使用白泽 2 单元，回退白泽单元；以附件的查询文件标签为线索生成文件。</p>
+     *
      * @param channel 频道。
-     * @param text 文本内容。
-     * @param attachment 附件。
+     * @param text 提示词。
+     * @param attachment 参考的生成记录（含查询文件标签）。
      * @param listener 监听器。
-     * @return
+     * @return 任务受理返回 {@code true}；服务未就绪或无单元返回 {@code false}。
      */
     public boolean generateFile(AIGCChannel channel, String text, GeneratingRecord attachment, TextToFileListener listener) {
         if (!this.isStarted()) {
@@ -2220,11 +2446,13 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 提取文本关键词。
+     * 提取文本关键词（异步）。
      *
-     * @param text
-     * @param listener
-     * @return
+     * <p>在后台线程调用白泽单元提取关键词，按中英文逗号拆分。</p>
+     *
+     * @param text 原文。
+     * @param listener 监听器。
+     * @return 任务受理返回 {@code true}；服务未就绪返回 {@code false}。
      */
     public boolean extractKeywords(String text, ExtractKeywordsListener listener) {
         if (!this.isStarted()) {
@@ -2266,9 +2494,10 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 语义搜索。
      *
-     * @param query
-     * @param listener
-     * @return
+     * @param query 查询语句。
+     * @param listener 监听器。
+     * @return 任务受理返回 {@code true}；服务未就绪或无语义搜索单元
+     *         返回 {@code false}。
      */
     public boolean semanticSearch(String query, SemanticSearchListener listener) {
         if (!this.isStarted()) {
@@ -2293,9 +2522,9 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 检索并重排序。
      *
-     * @param queries
-     * @param listener
-     * @return
+     * @param queries 查询语句列表。
+     * @param listener 监听器。
+     * @return 任务受理返回 {@code true}；服务未就绪或无重排单元返回 {@code false}。
      */
     public boolean retrieveReRank(List<String> queries, RetrieveReRankListener listener) {
         if (!this.isStarted()) {
@@ -2317,6 +2546,16 @@ public class AIGCService extends AbstractModule implements Generatable {
         return true;
     }
 
+    /**
+     * 同步方式检索并重排序。
+     *
+     * <p>按文件标签与查询语句做重排，内部通过等待回调结果实现同步语义
+     * （最长等待 5 分钟）。</p>
+     *
+     * @param fileLabels 文件标签列表。
+     * @param query 查询语句。
+     * @return 返回重排结果；无重排单元返回 {@code null}，超时或失败返回空列表。
+     */
     public List<RetrieveReRankResult> syncRetrieveReRank(List<FileLabel> fileLabels, String query) {
         AIGCUnit unit = this.selectUnitBySubtask(AICapability.NaturalLanguageProcessing.RetrieveReRank);
         if (null == unit) {
@@ -2360,8 +2599,8 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 查询联系人的用量数据。
      *
-     * @param contactId
-     * @return
+     * @param contactId 联系人 ID。
+     * @return 返回各模型的用量列表（跳过无记录的模型）；服务未就绪返回 {@code null}。
      */
     public List<Usage> queryContactUsages(long contactId) {
         if (!this.isStarted()) {
@@ -2386,10 +2625,13 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 自动语音识别。
      *
-     * @param authToken
-     * @param fileCodeOrUrl
-     * @param listener
-     * @return
+     * <p>支持文件码或外部 URL（自动下载）；文件经语音识别单元转写。</p>
+     *
+     * @param authToken 访问令牌。
+     * @param fileCodeOrUrl 文件码或外部 URL。
+     * @param listener 监听器。
+     * @return 任务受理返回 {@code true}；文件获取失败或无语音识别单元
+     *         返回 {@code false}。
      */
     public boolean automaticSpeechRecognition(AuthToken authToken, String fileCodeOrUrl,
                                               AutomaticSpeechRecognitionListener listener) {
@@ -2424,15 +2666,19 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 说话者分割与分析。
+     * 说话者分割与分析（文件标签方式）。
      *
-     * @param authToken
-     * @param fileLabel
-     * @param preprocess
-     * @param storage
-     * @param jumpToFirst
-     * @param listener
-     * @return
+     * <p>同一文件的任务可能仍在执行，避免重复提交（直接返回原文件标签）。
+     * 音频流允许插队优先处理。</p>
+     *
+     * @param authToken 访问令牌。
+     * @param fileLabel 音频文件标签。
+     * @param preprocess 是否预处理。
+     * @param storage 是否落库。
+     * @param jumpToFirst 是否插队优先处理。
+     * @param listener 监听器。
+     * @return 返回文件标签；无说话人分离单元返回 {@code null}，任务重复提交时
+     *         返回原文件标签。
      */
     public FileLabel performSpeakerDiarization(AuthToken authToken, FileLabel fileLabel, boolean preprocess,
                                              boolean storage, boolean jumpToFirst,
@@ -2462,14 +2708,14 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 说话者分割与分析。
+     * 说话者分割与分析（文件码或 URL 方式）。
      *
-     * @param authToken
-     * @param fileCodeOrUrl
-     * @param preprocess
-     * @param storage
-     * @param listener
-     * @return
+     * @param authToken 访问令牌。
+     * @param fileCodeOrUrl 文件码或外部 URL（自动下载）。
+     * @param preprocess 是否预处理。
+     * @param storage 是否落库。
+     * @param listener 监听器。
+     * @return 返回文件标签；文件获取失败或无说话人分离单元返回 {@code null}。
      */
     public FileLabel performSpeakerDiarization(AuthToken authToken, String fileCodeOrUrl, boolean preprocess,
                                              boolean storage, VoiceDiarizationListener listener) {
@@ -2492,6 +2738,13 @@ public class AIGCService extends AbstractModule implements Generatable {
         return this.performSpeakerDiarization(authToken, fileLabel, preprocess, storage, false, listener);
     }
 
+    /**
+     * 获取指定文件的说话人分离结果。
+     *
+     * @param authToken 访问令牌。
+     * @param fileCode 文件码。
+     * @return 返回说话人分离结果（含文件信息）；无记录返回 {@code null}。
+     */
     public VoiceDiarization getVoiceDiarization(AuthToken authToken, String fileCode) {
         VoiceDiarization voiceDiarization = this.storage.readVoiceDiarization(fileCode);
         if (null == voiceDiarization) {
@@ -2502,6 +2755,12 @@ public class AIGCService extends AbstractModule implements Generatable {
         return voiceDiarization;
     }
 
+    /**
+     * 获取联系人的全部说话人分离结果。
+     *
+     * @param authToken 访问令牌。
+     * @return 返回说话人分离结果列表（含文件信息）。
+     */
     public List<VoiceDiarization> getVoiceDiarizations(AuthToken authToken) {
         List<VoiceDiarization> result = this.storage.readVoiceDiarizations(authToken.getContactId());
         for (VoiceDiarization voiceDiarization : result) {
@@ -2510,6 +2769,13 @@ public class AIGCService extends AbstractModule implements Generatable {
         return result;
     }
 
+    /**
+     * 删除指定文件的说话人分离记录。
+     *
+     * @param authToken 访问令牌。
+     * @param fileCode 文件码。
+     * @return 返回被删除的说话人分离结果（含文件信息）；无记录返回 {@code null}。
+     */
     public VoiceDiarization deleteVoiceDiarization(AuthToken authToken, String fileCode) {
         VoiceDiarization voiceDiarization = this.storage.readVoiceDiarization(fileCode);
         if (null == voiceDiarization) {
@@ -2604,17 +2870,16 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-    /**
-    /**
-    /**
-    /**
      * 面部表情识别。
      *
-     * @param token
-     * @param fileCode
-     * @param visualize
-     * @param listener
-     * @return
+     * <p>支持 JPEG/PNG/BMP 图片，经面部表情单元识别，可要求可视化结果。</p>
+     *
+     * @param token 访问令牌。
+     * @param fileCode 图片文件码。
+     * @param visualize 是否输出可视化结果。
+     * @param listener 监听器。
+     * @return 任务受理返回 {@code true}；文件获取失败返回 {@code false}，
+     *         其余失败经监听器回调。
      */
     public boolean facialExpressionRecognition(AuthToken token, String fileCode, boolean visualize,
                                                FacialExpressionRecognitionListener listener) {
@@ -2674,10 +2939,23 @@ public class AIGCService extends AbstractModule implements Generatable {
         return true;
     }
 
+    /**
+     * 获取联系人的情绪记录列表。
+     *
+     * @param authToken 访问令牌。
+     * @return 返回情绪记录列表。
+     */
     public List<EmotionRecord> getEmotionRecords(AuthToken authToken) {
         return this.storage.readEmotionRecords(authToken.getContactId());
     }
 
+    /**
+     * 获取指定文件的文件标签。
+     *
+     * @param domain 域名。
+     * @param fileCode 文件码。
+     * @return 返回文件标签；文件存储服务未就绪或文件不存在返回 {@code null}。
+     */
     public FileLabel getFile(String domain, String fileCode) {
         AbstractModule fileStorage = this.getFileStorage();
         if (null == fileStorage) {
@@ -2695,6 +2973,13 @@ public class AIGCService extends AbstractModule implements Generatable {
         return new FileLabel(fileLabelJson);
     }
 
+    /**
+     * 将指定文件加载到本地并返回文件对象。
+     *
+     * @param domain 域名。
+     * @param fileCode 文件码。
+     * @return 返回文件；文件存储服务未就绪或加载失败返回 {@code null}。
+     */
     public File loadFile(String domain, String fileCode) {
         AbstractModule fileStorage = this.getFileStorage();
         if (null == fileStorage) {
@@ -2712,10 +2997,31 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
+    /**
+     * 保存文件到文件存储服务。
+     *
+     * @param authToken 访问令牌。
+     * @param fileCode 文件码。
+     * @param file 本地文件。
+     * @param filename 保存后的文件名，可为 {@code null}。
+     * @param deleteAfterSave 保存成功后是否删除本地文件。
+     * @return 返回文件标签；文件存储服务未就绪或保存失败返回 {@code null}。
+     */
     public FileLabel saveFile(AuthToken authToken, String fileCode, File file, String filename, boolean deleteAfterSave) {
         return this.saveFile(authToken, fileCode, file, filename, deleteAfterSave, null);
     }
 
+    /**
+     * 保存文件到文件存储服务（带上下文）。
+     *
+     * @param authToken 访问令牌。
+     * @param fileCode 文件码。
+     * @param file 本地文件。
+     * @param filename 保存后的文件名，可为 {@code null}。
+     * @param deleteAfterSave 保存成功后是否删除本地文件。
+     * @param context 附加上下文，写入文件标签，可为 {@code null}。
+     * @return 返回文件标签；文件存储服务未就绪或保存失败返回 {@code null}。
+     */
     public FileLabel saveFile(AuthToken authToken, String fileCode, File file, String filename, boolean deleteAfterSave,
                               JSONObject context) {
         AbstractModule fileStorage = this.getFileStorage();
@@ -2751,6 +3057,14 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
     }
 
+    /**
+     * 删除指定文件。
+     *
+     * @param domain 域名。
+     * @param fileCode 文件码。
+     * @return 返回被删除文件的标签；文件存储服务未就绪、文件不存在或删除失败
+     *         返回 {@code null}。
+     */
     public FileLabel deleteFile(String domain, String fileCode) {
         AbstractModule fileStorage = this.getFileStorage();
         if (null == fileStorage) {
@@ -2777,21 +3091,22 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 文本分词。
      *
-     * @param text
-     * @return
+     * @param text 文本。
+     * @return 返回分词结果列表。
      */
     public List<String> segmentText(String text) {
         return this.tokenizer.sentenceProcess(text);
     }
 
-
-
     /**
      * 句子相似度。
      *
-     * @param sentenceA
-     * @param sentenceB
-     * @return
+     * <p>对两个句子分别做 TF-IDF 分词（各取前 10 个词），按词表交集占比
+     * 计算相似度。</p>
+     *
+     * @param sentenceA 句子 A。
+     * @param sentenceB 句子 B。
+     * @return 返回 0~1 之间的相似度；无有效词时可能返回 NaN。
      */
     public double sentenceSimilarity(String sentenceA, String sentenceB) {
         TFIDFAnalyzer analyzer = new TFIDFAnalyzer(this.tokenizer);
@@ -2817,11 +3132,14 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 识别上下文数据。
+     * 识别上下文数据（URL 资源提取）。
      *
-     * @param text
-     * @param authToken
-     * @return
+     * <p>内容包含多个 URL 或整体为一个 URL 时，经 URL 内容提取单元读取
+     * 并封装为超链接资源；读取失败时资源标记为失败态。普通文本返回空上下文。</p>
+     *
+     * @param text 输入文本。
+     * @param authToken 访问令牌。
+     * @return 返回复杂上下文；无对应单元或单元出错时返回空上下文。
      */
     public ComplexContext recognizeContext(String text, AuthToken authToken) {
         final String content = text.trim();
@@ -2931,6 +3249,13 @@ public class AIGCService extends AbstractModule implements Generatable {
         return this.channelManager.get(authToken, this.useRelay);
     }
 
+    /**
+     * 从外部链接下载文件到文件存储服务。
+     *
+     * @param authToken 访问令牌。
+     * @param fileUrl 外部文件 URL。
+     * @return 返回文件标签；文件存储服务未就绪或下载失败返回 {@code null}。
+     */
     public FileLabel downloadFile(AuthToken authToken, String fileUrl) {
         // 从外部链接下载
         AbstractModule fileStorage = this.getFileStorage();

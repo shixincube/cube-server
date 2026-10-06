@@ -4,9 +4,11 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.dispatcher.aigc.handler;
+package cube.dispatcher.aigc.handler.psychology;
 
+import cube.aigc.psychology.composition.Scale;
 import cube.dispatcher.aigc.Manager;
+import cube.dispatcher.aigc.handler.AIGCHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
@@ -15,12 +17,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 心理学绘画报告状态操作。
+ * 心理学量表数据。
  */
-public class PsychologyPaintingReportState extends ContextHandler {
+public class PsychologyScales extends ContextHandler {
 
-    public PsychologyPaintingReportState() {
-        super("/aigc/psychology/report/state");
+    public PsychologyScales() {
+        super("/aigc/psychology/scales");
         setHandler(new Handler());
     }
 
@@ -28,6 +30,31 @@ public class PsychologyPaintingReportState extends ContextHandler {
 
         public Handler() {
             super();
+        }
+
+        @Override
+        public void doGet(HttpServletRequest request, HttpServletResponse response) {
+            // 量表列表
+            String token = this.getApiToken(request);
+            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
+                this.complete();
+                return;
+            }
+
+            try {
+                JSONObject result = Manager.getInstance().listPsychologyScales(token);
+                if (null != result) {
+                    this.respondOk(response, result);
+                }
+                else {
+                    this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
+                }
+                this.complete();
+            } catch (Exception e) {
+                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                this.complete();
+            }
         }
 
         @Override
@@ -41,43 +68,15 @@ public class PsychologyPaintingReportState extends ContextHandler {
 
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
-
-                long sn = data.getLong("sn");
-                int state = data.getInt("state");
-
-                if (Manager.getInstance().setPaintingReportState(token, sn, state)) {
-                    this.respondOk(response, data);
+                String scaleName = data.getString("name");
+                String gender = data.getString("gender");
+                int age = data.getInt("age");
+                Scale scale = Manager.getInstance().generatePsychologyScale(token, scaleName, gender, age);
+                if (null != scale) {
+                    this.respondOk(response, scale.toJSON());
                 }
                 else {
-                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
-                }
-
-                this.complete();
-            } catch (Exception e) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
-                this.complete();
-            }
-        }
-
-        @Override
-        public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            String token = this.getApiToken(request);
-            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
-                this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
-                this.complete();
-                return;
-            }
-
-            try {
-                long sn = Long.parseLong(request.getParameter("sn"));
-
-                JSONObject result = Manager.getInstance().getPsychologyReportPart(token, sn,
-                        false, false, false, false, false, false);
-                if (null != result) {
-                    this.respondOk(response, result);
-                }
-                else {
-                    this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                    this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 }
                 this.complete();
             } catch (Exception e) {

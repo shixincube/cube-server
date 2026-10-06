@@ -4,13 +4,14 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.dispatcher.aigc.handler;
+package cube.dispatcher.aigc.handler.psychology;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Report;
 import cube.aigc.psychology.ReportPermission;
 import cube.dispatcher.aigc.Manager;
+import cube.dispatcher.aigc.handler.AIGCHandler;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import org.eclipse.jetty.http.HttpStatus;

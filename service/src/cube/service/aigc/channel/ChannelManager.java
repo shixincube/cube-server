@@ -6,6 +6,7 @@
 
 package cube.service.aigc.channel;
 
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.common.Language;
@@ -93,6 +94,10 @@ public class ChannelManager {
      * @return 不存在返回 {@code null}。
      */
     public AIGCChannel get(String channelCode) {
+        // ConcurrentHashMap 不接受 null 键查询
+        if (null == channelCode) {
+            return null;
+        }
         return this.channelMap.get(channelCode);
     }
 
@@ -103,6 +108,10 @@ public class ChannelManager {
      * @return 不存在返回 {@code null}。
      */
     public AIGCChannel getByToken(String tokenCode) {
+        // ConcurrentHashMap 不接受 null 键查询
+        if (null == tokenCode) {
+            return null;
+        }
         // 走凭证索引，避免对 channelMap 做全表扫描（上限 10000 时是热路径成本）
         String channelCode = this.channelTokenMap.get(tokenCode);
         return (null != channelCode) ? this.channelMap.get(channelCode) : null;
@@ -176,7 +185,9 @@ public class ChannelManager {
      * @return 返回新创建的频道。
      */
     public AIGCChannel create(AuthToken authToken, String participant, String channelCode, Language language) {
-        AIGCChannel channel = new AIGCChannel(authToken, participant, channelCode, language);
+        // 频道码为键，ConcurrentHashMap 不接受 null 键：为空时代生成随机码
+        String code = (null == channelCode || channelCode.isEmpty()) ? Utils.randomString(16) : channelCode;
+        AIGCChannel channel = new AIGCChannel(authToken, participant, code, language);
         this.index(channel);
         return channel;
     }
@@ -191,6 +202,12 @@ public class ChannelManager {
      * @return 被拒绝时返回 {@code null}。
      */
     public AIGCChannel request(String token, String participant) {
+        // null 参与方会让 checkParticipantName 抛 NPE，null 令牌无法解析，一并拒绝
+        if (null == token || null == participant) {
+            Logger.w(ChannelManager.class, "#request - Token or participant is NULL");
+            return null;
+        }
+
         if (this.channelMap.size() >= MAX_CHANNEL) {
             Logger.w(ChannelManager.class, "#request - Channel num overflow: " + MAX_CHANNEL);
             return null;
@@ -296,7 +313,8 @@ public class ChannelManager {
      */
     private void index(AIGCChannel channel) {
         this.channelMap.put(channel.getCode(), channel);
-        if (null != channel.getAuthToken()) {
+        // 令牌码同为哈希键，null / 空串一律跳过索引（频道本身仍可按码访问）
+        if (null != channel.getAuthToken() && null != channel.getAuthToken().getCode()) {
             this.channelTokenMap.put(channel.getAuthToken().getCode(), channel.getCode());
         }
     }

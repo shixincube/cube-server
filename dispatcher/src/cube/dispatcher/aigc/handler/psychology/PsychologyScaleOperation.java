@@ -4,10 +4,14 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.dispatcher.aigc.handler;
+package cube.dispatcher.aigc.handler.psychology;
 
+import cell.util.log.Logger;
+import cube.aigc.psychology.composition.AnswerSheet;
 import cube.aigc.psychology.composition.Scale;
+import cube.aigc.psychology.composition.ScaleResult;
 import cube.dispatcher.aigc.Manager;
+import cube.dispatcher.aigc.handler.AIGCHandler;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONObject;
@@ -18,10 +22,10 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * 心理学量表数据。
  */
-public class PsychologyScales extends ContextHandler {
+public class PsychologyScaleOperation extends ContextHandler {
 
-    public PsychologyScales() {
-        super("/aigc/psychology/scales");
+    public PsychologyScaleOperation() {
+        super("/aigc/psychology/scale");
         setHandler(new Handler());
     }
 
@@ -33,7 +37,7 @@ public class PsychologyScales extends ContextHandler {
 
         @Override
         public void doGet(HttpServletRequest request, HttpServletResponse response) {
-            // 量表列表
+            // 获取指定 SN 量表
             String token = this.getApiToken(request);
             if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
@@ -42,15 +46,17 @@ public class PsychologyScales extends ContextHandler {
             }
 
             try {
-                JSONObject result = Manager.getInstance().listPsychologyScales(token);
-                if (null != result) {
-                    this.respondOk(response, result);
+                long sn = Long.parseLong(request.getParameter("sn"));
+                Scale scale = Manager.getInstance().getPsychologyScale(token, sn);
+                if (null != scale) {
+                    this.respondOk(response, scale.toJSON());
                 }
                 else {
                     this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));
                 }
                 this.complete();
             } catch (Exception e) {
+                Logger.w(this.getClass(), "", e);
                 this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                 this.complete();
             }
@@ -58,8 +64,9 @@ public class PsychologyScales extends ContextHandler {
 
         @Override
         public void doPost(HttpServletRequest request, HttpServletResponse response) {
+            // 提交答题卡
             String token = this.getApiToken(request);
-            if (!Manager.getInstance().checkToken(token, this.getDevice(request))) {
+            if (!Manager.getInstance().checkToken(token, getDevice(request))) {
                 this.respond(response, HttpStatus.UNAUTHORIZED_401, this.makeError(HttpStatus.UNAUTHORIZED_401));
                 this.complete();
                 return;
@@ -67,12 +74,10 @@ public class PsychologyScales extends ContextHandler {
 
             try {
                 JSONObject data = this.readBodyAsJSONObject(request);
-                String scaleName = data.getString("name");
-                String gender = data.getString("gender");
-                int age = data.getInt("age");
-                Scale scale = Manager.getInstance().generatePsychologyScale(token, scaleName, gender, age);
-                if (null != scale) {
-                    this.respondOk(response, scale.toJSON());
+                AnswerSheet sheet = new AnswerSheet(data);
+                ScaleResult scaleResult = Manager.getInstance().submitPsychologyAnswerSheet(token, sheet);
+                if (null != scaleResult) {
+                    this.respondOk(response, scaleResult.toJSON());
                 }
                 else {
                     this.respond(response, HttpStatus.NOT_FOUND_404, this.makeError(HttpStatus.NOT_FOUND_404));

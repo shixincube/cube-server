@@ -7,6 +7,7 @@
 package cube.service.psychology.action;
 
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.Scale;
@@ -170,8 +171,7 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
 
         AIGCChannel channel = ctx.getHost().getChannelByToken(token);
         if (null == channel) {
-            // createChannel(authToken, "Baize", random(16), language)
-            channel = ctx.getHost().acquireChannel(authToken, "Baize", null, language);
+            channel = ctx.getHost().acquireChannel(authToken, "Baize", Utils.randomString(16), language);
         }
 
         ScaleReport report = ((PsychologyModule) ctx.getModule()).generateScaleReport(channel, scale, language,
@@ -225,9 +225,9 @@ public final class GeneratePsychologyReportAction implements AIGCActionTask {
 
             AIGCChannel channel = this.ctx.getHost().getChannelByToken(this.token);
             if (null == channel) {
-                // createChannel(authToken, "Baize", random(16), attribute.language)
-                // channelCode 传 null 由宿主生成随机码，与既有行为等价
-                channel = this.ctx.getHost().acquireChannel(this.authToken, "Baize", null, attribute.language);
+                // 频道码必须显式生成：null 会让宿主以 null 作哈希键而抛 NPE
+                channel = this.ctx.getHost().acquireChannel(this.authToken, "Baize",
+                        Utils.randomString(16), attribute.language);
             }
 
             return ((PsychologyModule) this.ctx.getModule()).generatePaintingReport(channel, attribute, fileLabel, theme,

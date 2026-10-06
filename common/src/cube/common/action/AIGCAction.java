@@ -462,11 +462,6 @@ public enum AIGCAction {
     SubmitEvent("submitEvent"),
 
     /**
-     * 预推理。
-     */
-    PreInfer("preInfer"),
-
-    /**
      * 生成心理学报告。
      */
     GeneratePsychologyReport("generatePsychologyReport"),

@@ -4,11 +4,12 @@
  * Copyright (c) 2023-2025 Ambrose Xu.
  */
 
-package cube.dispatcher.aigc.handler;
+package cube.dispatcher.aigc.handler.psychology;
 
 import cell.util.log.Logger;
 import cube.aigc.psychology.*;
 import cube.dispatcher.aigc.Manager;
+import cube.dispatcher.aigc.handler.AIGCHandler;
 import cube.util.FileLabels;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -67,7 +68,7 @@ public class PsychologyReports extends ContextHandler {
                         this.respondOk(response, responseData);
                     }
                     else {
-                        this.respond(response, HttpStatus.FORBIDDEN_403, this.makeError(HttpStatus.FORBIDDEN_403));
+                        this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
                     }
                 }
                 else if (data.has("scaleSn")) {
@@ -85,7 +86,7 @@ public class PsychologyReports extends ContextHandler {
                 }
                 this.complete();
             } catch (Exception e) {
-                this.respond(response, HttpStatus.BAD_REQUEST_400, this.makeError(HttpStatus.BAD_REQUEST_400));
+                this.respond(response, HttpStatus.INTERNAL_SERVER_ERROR_500, this.makeError(HttpStatus.INTERNAL_SERVER_ERROR_500));
                 this.complete();
             }
         }

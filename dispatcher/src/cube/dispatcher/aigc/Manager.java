@@ -12,7 +12,6 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.*;
-import cube.aigc.spi.DispatcherExtension;
 import cube.aigc.app.ConfigInfo;
 import cube.aigc.complex.widget.Event;
 import cube.aigc.psychology.Attribute;
@@ -25,6 +24,7 @@ import cube.aigc.psychology.composition.AnswerSheet;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScaleResult;
 import cube.aigc.psychology.consultation.ConsultationTheme;
+import cube.aigc.spi.DispatcherExtension;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.Packet;
@@ -34,8 +34,9 @@ import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.PerformerListener;
 import cube.dispatcher.aigc.handler.*;
-import cube.dispatcher.aigc.handler.Chart;
+import cube.dispatcher.aigc.handler.psychology.Chart;
 import cube.dispatcher.aigc.handler.app.App;
+import cube.dispatcher.aigc.handler.psychology.*;
 import cube.dispatcher.stream.StreamType;
 import cube.dispatcher.util.Tickable;
 import cube.util.FileLabels;
@@ -44,11 +45,7 @@ import cube.util.HttpServer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -184,7 +181,6 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new ChatHistory());
         httpServer.addContextHandler(new Chart());
         httpServer.addContextHandler(new ChainOfThought());
-        httpServer.addContextHandler(new PreInfer());
         httpServer.addContextHandler(new TextToFile());
         httpServer.addContextHandler(new GetQueueCount());
         httpServer.addContextHandler(new ApplyStream());
@@ -2392,29 +2388,6 @@ public class Manager implements Tickable, PerformerListener {
 
         return Packet.extractDataPayload(responsePacket);
     }*/
-
-    public JSONObject preInfer(String token, String content) {
-        JSONObject data = new JSONObject();
-        data.put("content", content);
-
-        Packet packet = new Packet(AIGCAction.PreInfer.name, data);
-        ActionDialect request = packet.toDialect();
-        request.addParam("token", token);
-
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
-        if (null == response) {
-            Logger.w(this.getClass(), "#preInfer - No response");
-            return null;
-        }
-
-        Packet responsePacket = new Packet(response);
-        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.w(this.getClass(), "#preInfer - Response state is " + Packet.extractCode(responsePacket));
-            return null;
-        }
-
-        return Packet.extractDataPayload(responsePacket);
-    }
 
     /**
      * 生成心理测验报告。

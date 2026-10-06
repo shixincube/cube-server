@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="service-multipointcomm" scope="RUNTIME" />
     <orderEntry type="module" module-name="service-conference" scope="RUNTIME" />
     <orderEntry type="module" module-name="service-riskmgmt" scope="RUNTIME" />
+    <orderEntry type="module" module-name="service-psychology" scope="RUNTIME" />
   </component>
 </module>

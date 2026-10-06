@@ -244,6 +244,11 @@ public abstract class HttpHandler extends AbstractHandler {
                 error.put("reason", "REQUEST_TIMEOUT");
                 error.put("state", HttpStatus.REQUEST_TIMEOUT_408);
                 break;
+            case HttpStatus.INTERNAL_SERVER_ERROR_500:
+                error.put("message", "Program exception");
+                error.put("reason", "EXCEPTION");
+                error.put("state", HttpStatus.REQUEST_TIMEOUT_408);
+                break;
             default:
                 break;
         }
