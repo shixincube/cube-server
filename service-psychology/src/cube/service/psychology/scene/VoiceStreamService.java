@@ -170,8 +170,9 @@ public class VoiceStreamService {
             list.add(streamSink);
         }
 
+        // 指标分析开启：咨询策略的情绪因子依赖分离结果里的 indicator
         FileLabel fileLabel = this.host.performSpeakerDiarization(authToken,
-                this.host.getFile(authToken.getDomain(), fileCode), false, false, false,
+                this.host.getFile(authToken.getDomain(), fileCode), false, false, false, true,
                 new VoiceDiarizationListener() {
                     @Override
                     public void onCompleted(FileLabel source, VoiceDiarization diarization) {

@@ -39,13 +39,22 @@ public final class AIGCSPI {
      * 渲染为 Markdown 文本。该能力与报告内容加工同族，但服务的报告类型不同
      * （综合评测报告而非绘画报告），故单独提供。</p>
      *
-     * <p>{@link AIGCHost#matchSimilarity}：以模板素材做图像相似度匹配。
-     * 绘画解读需要在物体检测之外补充素材判断（如雨中人绘画里的伞），
-     * 检索由计算机视觉服务承担，模块不持有其模型；
-     * 其回调监听器 {@code MatchSimilarityListener} 亦定义在
-     * <code>common</code>，回调参数（文件标签、素材列表、状态码）不依赖宿主。</p>
-     */
-    public final static int VERSION = 24;
+ * <p>{@link AIGCHost#matchSimilarity}：以模板素材做图像相似度匹配。
+ * 绘画解读需要在物体检测之外补充素材判断（如雨中人绘画里的伞），
+ * 检索由计算机视觉服务承担，模块不持有其模型；
+ * 其回调监听器 {@code MatchSimilarityListener} 亦定义在
+ * <code>common</code>，回调参数（文件标签、素材列表、状态码）不依赖宿主。</p>
+ *
+ * <p><b>v25</b>：{@link AIGCHost#performSpeakerDiarization} 增加
+ * {@code sentiment} 参数——内容语料的正负面 / 中性指标分析由「无条件执行」
+ * 改为「按需开启」（每段一次文本生成调用，成本较高）；
+ * 新增 {@link AIGCHost#registerSpeechListener} /
+ * {@link AIGCHost#unregisterSpeechListener}——说话人分离是平台级能力，
+ * 分离结果上的角色映射等收尾操作经模块级监听器
+ * {@code SpeechModuleListener} 由各业务模块自行订阅，宿主不再内置任何
+ * 业务角色分类。</p>
+ */
+    public final static int VERSION = 25;
 
     private AIGCSPI() {
     }

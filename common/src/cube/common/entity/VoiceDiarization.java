@@ -6,7 +6,6 @@
 
 package cube.common.entity;
 
-import cube.aigc.psychology.Role;
 import cube.common.Language;
 import cube.util.ConfigUtils;
 import cube.util.TextUtils;
@@ -157,50 +156,6 @@ public class VoiceDiarization extends Entity {
         }
 
         return map.size();
-    }
-
-    public void guessSpeakerLabels() {
-        HashMap<String, List<VoiceTrack>> map = new HashMap<>();
-        for (int i = 0; i < this.tracks.size(); ++i) {
-            VoiceTrack track = this.tracks.get(i);
-            track.track = String.valueOf(i + 1);
-
-            if (map.containsKey(track.label)) {
-                List<VoiceTrack> trackList = map.get(track.label);
-                trackList.add(track);
-            }
-            else {
-                List<VoiceTrack> trackList = new ArrayList<>();
-                trackList.add(track);
-                map.put(track.label, trackList);
-            }
-        }
-
-        if (map.size() == 1) {
-            for (VoiceTrack track : this.tracks) {
-                track.label = Role.Counselor.label;
-            }
-        }
-        else if (map.size() >= 2) {
-            VoiceTrack first = this.tracks.get(0);
-            String firstLabel = first.label;
-            String otherLabel = "";
-            for (VoiceTrack track : this.tracks) {
-                if (!track.label.equals(firstLabel)) {
-                    otherLabel = track.label;
-                    break;
-                }
-            }
-
-            for (VoiceTrack track : this.tracks) {
-                if (track.label.equals(firstLabel)) {
-                    track.label = "counselor";
-                }
-                else if (track.label.equals(otherLabel)) {
-                    track.label = "customer";
-                }
-            }
-        }
     }
 
     /**

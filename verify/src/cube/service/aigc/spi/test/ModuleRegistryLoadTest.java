@@ -726,8 +726,18 @@ public class ModuleRegistryLoadTest {
         @Override
         public cube.common.entity.FileLabel performSpeakerDiarization(cube.auth.AuthToken authToken,
                 cube.common.entity.FileLabel fileLabel, boolean preprocess, boolean storage, boolean jumpToFirst,
-                cube.aigc.listener.VoiceDiarizationListener listener) {
+                boolean sentiment, cube.aigc.listener.VoiceDiarizationListener listener) {
             return null;
+        }
+
+        @Override
+        public boolean registerSpeechListener(cube.aigc.listener.SpeechModuleListener listener) {
+            return false;
+        }
+
+        @Override
+        public boolean unregisterSpeechListener(cube.aigc.listener.SpeechModuleListener listener) {
+            return false;
         }
 
         @Override

@@ -15,6 +15,7 @@ import cube.aigc.complex.attachment.Attachment;
 import cube.aigc.SemanticSearchListener;
 import cube.aigc.text.Keyword;
 import cube.aigc.listener.GenerateTextListener;
+import cube.aigc.listener.SpeechModuleListener;
 import cube.aigc.listener.VoiceDiarizationListener;
 import cube.aigc.cv.MatchSimilarityListener;
 import cube.aigc.psychology.Attribute;
@@ -915,12 +916,31 @@ public final class AIGCHostImpl implements AIGCHost {
 
     @Override
     public FileLabel performSpeakerDiarization(AuthToken authToken, FileLabel fileLabel, boolean preprocess,
-            boolean storage, boolean jumpToFirst, VoiceDiarizationListener listener) {
+            boolean storage, boolean jumpToFirst, boolean sentiment, VoiceDiarizationListener listener) {
         if (null == authToken || null == fileLabel) {
             return null;
         }
 
-        return this.service.performSpeakerDiarization(authToken, fileLabel, preprocess, storage, jumpToFirst, listener);
+        return this.service.performSpeakerDiarization(authToken, fileLabel, preprocess, storage,
+                jumpToFirst, sentiment, listener);
+    }
+
+    @Override
+    public boolean registerSpeechListener(SpeechModuleListener listener) {
+        if (null == listener) {
+            return false;
+        }
+
+        return this.service.registerSpeechListener(listener);
+    }
+
+    @Override
+    public boolean unregisterSpeechListener(SpeechModuleListener listener) {
+        if (null == listener) {
+            return false;
+        }
+
+        return this.service.unregisterSpeechListener(listener);
     }
 
     // ───────── 对话历史与图表 ─────────

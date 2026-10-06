@@ -971,9 +971,9 @@ public class CounselingManager {
         Logger.d(this.getClass(), "#combine - num: " + sinks.size() + " , stream: " + streamName + " " +
                 beginIndex + "-" + endIndex + " , file code: " + fileLabel.getFileCode());
 
-        // 任务以插队方式提高优先级
+        // 任务以插队方式提高优先级；指标分析开启——策略生成的情绪因子依赖它
         fileLabel = this.host.performSpeakerDiarization(authToken, fileLabel, false,
-                false, true, new VoiceDiarizationListener() {
+                false, true, true, new VoiceDiarizationListener() {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {
                 diarization.remark = beginIndex + "-" + endIndex;

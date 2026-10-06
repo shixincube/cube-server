@@ -24,6 +24,7 @@ import cube.service.psychology.action.*;
 import cube.service.psychology.scene.CopilotManager;
 import cube.service.psychology.scene.CounselingManager;
 import cube.service.psychology.scene.PsychologyScene;
+import cube.service.psychology.scene.PsychologySpeechListener;
 import cube.service.psychology.scene.VoiceStreamService;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
@@ -362,6 +363,13 @@ public final class PsychologyModule implements ActionModule {
             // 语音流服务：承载分析/停止/归档查询三个入站动作的编排
             VoiceStreamService.getInstance().setup(host, this.storage);
 
+            // 语音监听器：订阅宿主的「说话人分离完成」事件，把说话人映射为
+            // 「来访者 / 咨询师」。该角色分类原硬编码在宿主 AudioUnitMeta 里，
+            // 属咨询业务收尾操作，故下沉到本模块经监听器完成。
+            // ⚠️ 排在最后：此前任何一步失败都会走 rollbackSetup，
+            //    注销逻辑与 teardown 共用。
+            PsychologySpeechListener.getInstance().setup(host);
+
             // 只记录配置来源与存储类型，不输出配置内容（该配置文件含数据库凭据）
             Logger.i(this.getClass(), "#setup - Psychology storage opened, type: " + type
                     + ", config: " + this.configFileName);
@@ -385,6 +393,13 @@ public final class PsychologyModule implements ActionModule {
      * <p>不外抛：回滚自身失败不应掩盖原始的装载异常。</p>
      */
     private void rollbackSetup() {
+        try {
+            PsychologySpeechListener.getInstance().teardown();
+        } catch (Throwable t) {
+            Logger.e(this.getClass(), "#rollbackSetup - Speech listener teardown FAILED",
+                    (t instanceof Exception) ? (Exception) t : null);
+        }
+
         try {
             CopilotManager.getInstance().stop();
         } catch (Throwable t) {
@@ -514,8 +529,17 @@ public final class PsychologyModule implements ActionModule {
 
     @Override
     public void teardown() {
-        // 停机顺序：咨询/陪练管理器 → 场景 → 存储。
-        // 前两者都持有内存态的流与陪练会话，且经 SPI 回调宿主；
+        // 停机顺序：语音监听器 → 咨询/陪练管理器 → 场景 → 存储。
+        // 先注销监听器：宿主的说话人分离事件不再进入本模块，
+        // 后续管理器停止期间不会再有新的事件触发角色映射。
+        try {
+            PsychologySpeechListener.getInstance().teardown();
+        } catch (Throwable t) {
+            Logger.e(this.getClass(), "#teardown - Speech listener teardown FAILED",
+                    (t instanceof Exception) ? (Exception) t : null);
+        }
+
+        // 咨询/陪练管理器持有内存态的流与陪练会话，且经 SPI 回调宿主；
         // 若先关存储，它们在停止过程中回读存储会失败。
         try {
             CounselingManager.getInstance().stop();

@@ -58,8 +58,13 @@ public class SpeechDiarizationTask extends ServiceTask {
         AIGCService service = ((AIGCCellet) this.cellet).getService();
         AuthToken authToken = service.getToken(token);
 
+        // 内容语料的正负面 / 中性指标分析为可选功能：
+        // 缺省开启以保持既有应答结构，调用方可显式传 false 关闭以省去
+        // 每段一次的文本生成调用
+        boolean sentiment = !packet.data.has("indicator") || packet.data.getBoolean("indicator");
+
         // 执行 Speaker Diarization
-        FileLabel fileLabel = service.performSpeakerDiarization(authToken, fileCodeOrUrl, true, true,
+        FileLabel fileLabel = service.performSpeakerDiarization(authToken, fileCodeOrUrl, true, true, sentiment,
                 new VoiceDiarizationListener() {
             @Override
             public void onCompleted(FileLabel source, VoiceDiarization diarization) {

@@ -16,6 +16,7 @@ import cube.aigc.complex.attachment.Attachment;
 import cube.aigc.complex.widget.Event;
 import cube.aigc.complex.widget.EventResult;
 import cube.aigc.listener.GenerateTextListener;
+import cube.aigc.listener.SpeechModuleListener;
 import cube.aigc.listener.VoiceDiarizationListener;
 import cube.aigc.spi.AIGCHost;
 import cube.auth.AuthConsts;
@@ -62,6 +63,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -110,6 +112,15 @@ public class AIGCService extends AbstractModule implements Generatable {
      * Key 是 Stream name
      */
     private final Map<String, List<VoiceStreamSink>> waitingVoiceStreamSinks;
+
+    /**
+     * 语音能力模块级监听器，按注册顺序扇出。
+     *
+     * <p>说话人分离是平台级能力，分离结果上的角色映射等收尾操作由各业务模块
+     * 经 {@link SpeechModuleListener} 订阅。宿主侧只做扇出与异常隔离，
+     * 不内置任何业务角色分类。</p>
+     */
+    private final CopyOnWriteArrayList<SpeechModuleListener> speechModuleListeners;
 
     /**
      * 知识库架构。
@@ -171,6 +182,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         // 频道创建需要把令牌码解析为访问令牌，这里注入解析器，避免频道管理器反向依赖服务
         this.channelManager = new ChannelManager(cellet, token -> this.getAuthService().getToken(token));
         this.waitingVoiceStreamSinks = new ConcurrentHashMap<>();
+        this.speechModuleListeners = new CopyOnWriteArrayList<>();
         this.tokenizer = new Tokenizer();
     }
 
@@ -2676,12 +2688,13 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param preprocess 是否预处理。
      * @param storage 是否落库。
      * @param jumpToFirst 是否插队优先处理。
+     * @param sentiment 是否分析内容语料的正负面 / 中性指标。
      * @param listener 监听器。
      * @return 返回文件标签；无说话人分离单元返回 {@code null}，任务重复提交时
      *         返回原文件标签。
      */
     public FileLabel performSpeakerDiarization(AuthToken authToken, FileLabel fileLabel, boolean preprocess,
-                                             boolean storage, boolean jumpToFirst,
+                                             boolean storage, boolean jumpToFirst, boolean sentiment,
                                              VoiceDiarizationListener listener) {
         // 查找有该能力的单元
         AIGCUnit unit = this.selectUnitBySubtask(AICapability.AudioProcessing.SpeakerDiarization);
@@ -2698,7 +2711,7 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         final AudioUnitMeta meta = new AudioUnitMeta(this, unit, authToken, AIGCAction.SpeechDiarization,
-                fileLabel, preprocess, storage);
+                fileLabel, preprocess, storage, sentiment);
         meta.voiceDiarizationListener = listener;
 
         // 取队列 → 起任务 → 收尾：音频流允许插队优先处理
@@ -2714,11 +2727,12 @@ public class AIGCService extends AbstractModule implements Generatable {
      * @param fileCodeOrUrl 文件码或外部 URL（自动下载）。
      * @param preprocess 是否预处理。
      * @param storage 是否落库。
+     * @param sentiment 是否分析内容语料的正负面 / 中性指标。
      * @param listener 监听器。
      * @return 返回文件标签；文件获取失败或无说话人分离单元返回 {@code null}。
      */
     public FileLabel performSpeakerDiarization(AuthToken authToken, String fileCodeOrUrl, boolean preprocess,
-                                             boolean storage, VoiceDiarizationListener listener) {
+                                             boolean storage, boolean sentiment, VoiceDiarizationListener listener) {
         FileLabel fileLabel = null;
         if (TextUtils.isURL(fileCodeOrUrl)) {
             fileLabel = this.downloadFile(authToken, fileCodeOrUrl);
@@ -2735,7 +2749,84 @@ public class AIGCService extends AbstractModule implements Generatable {
             return null;
         }
 
-        return this.performSpeakerDiarization(authToken, fileLabel, preprocess, storage, false, listener);
+        return this.performSpeakerDiarization(authToken, fileLabel, preprocess, storage, false, sentiment, listener);
+    }
+
+    /**
+     * 注册语音能力模块级监听器。
+     *
+     * <p>供 {@code AIGCHost} 转发：业务模块在装载阶段订阅说话人分离完成事件，
+     * 在结果上做角色映射等收尾操作。宿主不内置任何业务角色分类。</p>
+     *
+     * @param listener 监听器。
+     * @return 注册成功返回 {@code true}；参数为 {@code null} 或已注册时
+     *         返回 {@code false}。
+     */
+    public boolean registerSpeechListener(SpeechModuleListener listener) {
+        if (null == listener) {
+            return false;
+        }
+
+        boolean added = this.speechModuleListeners.addIfAbsent(listener);
+        if (added) {
+            Logger.i(this.getClass(), "#registerSpeechListener - Registered \""
+                    + listener.getName() + "\", total: " + this.speechModuleListeners.size());
+        }
+        else {
+            Logger.w(this.getClass(), "#registerSpeechListener - Listener \""
+                    + listener.getName() + "\" is ALREADY registered");
+        }
+        return added;
+    }
+
+    /**
+     * 注销语音能力模块级监听器。
+     *
+     * @param listener 监听器。
+     * @return 注销成功返回 {@code true}；参数为 {@code null} 或未注册时
+     *         返回 {@code false}。
+     */
+    public boolean unregisterSpeechListener(SpeechModuleListener listener) {
+        if (null == listener) {
+            return false;
+        }
+
+        boolean removed = this.speechModuleListeners.remove(listener);
+        if (removed) {
+            Logger.i(this.getClass(), "#unregisterSpeechListener - Unregistered \""
+                    + listener.getName() + "\", total: " + this.speechModuleListeners.size());
+        }
+        else {
+            Logger.w(this.getClass(), "#unregisterSpeechListener - Listener \""
+                    + listener.getName() + "\" is NOT registered");
+        }
+        return removed;
+    }
+
+    /**
+     * 向全部模块级监听器扇出「说话人分离完成」事件。
+     *
+     * <p>在请求级 {@link VoiceDiarizationListener} 回调<b>之前</b>调用，
+     * 按注册顺序执行；单个监听器抛出异常只记录，不影响其他监听器、
+     * 请求级回调与结果落库。</p>
+     *
+     * @param source 源音频文件标签。
+     * @param diarization 分离结果。
+     */
+    public void notifyDiarizationListeners(FileLabel source, VoiceDiarization diarization) {
+        if (this.speechModuleListeners.isEmpty()) {
+            return;
+        }
+
+        for (SpeechModuleListener listener : this.speechModuleListeners) {
+            try {
+                listener.onDiarizationCompleted(source, diarization);
+            }
+            catch (Throwable t) {
+                Logger.e(this.getClass(), "#notifyDiarizationListeners - Listener \""
+                        + listener.getName() + "\" FAILED", (t instanceof Exception) ? (Exception) t : null);
+            }
+        }
     }
 
     /**

@@ -8,6 +8,7 @@ package cube.aigc.spi;
 
 import cube.aigc.text.Keyword;
 import cube.aigc.listener.VoiceDiarizationListener;
+import cube.aigc.listener.SpeechModuleListener;
 import cube.aigc.complex.attachment.Attachment;
 import cube.aigc.listener.GenerateTextListener;
 import cell.core.net.Endpoint;
@@ -783,16 +784,50 @@ public interface AIGCHost {
      * <p>用于咨询录音的说话人分离。处理由音频单元承担，
      * 模块不持有音频模型。</p>
      *
+     * <p><b>指标分析为可选</b>：{@code sentiment} 为 {@code true} 时，
+     * 宿主在分离完成后对每个说话人的内容语料做正负面 / 中性评估
+     * （每段一次文本生成调用，成本较高）；为 {@code false} 时结果中的
+     * {@code indicator} 保持 {@code null}。需要指标的调用方（如咨询策略
+     * 生成）应显式传 {@code true}，只关心转写与说话人的调用方可关闭。</p>
+     *
      * @param authToken 访问令牌。
      * @param fileLabel 待处理音频。
      * @param preprocess 是否先做降噪等预处理。
      * @param storage 结果是否落库。
      * @param jumpToFirst 是否跳到首条结果。
+     * @param sentiment 是否分析内容语料的正负面 / 中性指标。
      * @param listener 分离结果回调。
      * @return 返回待处理的文件标签；单元不可用时返回 <code>null</code>。
      */
     FileLabel performSpeakerDiarization(AuthToken authToken, FileLabel fileLabel, boolean preprocess,
-            boolean storage, boolean jumpToFirst, VoiceDiarizationListener listener);
+            boolean storage, boolean jumpToFirst, boolean sentiment, VoiceDiarizationListener listener);
+
+    /**
+     * 注册语音能力模块级监听器。
+     *
+     * <p><b>为何提供注册能力</b>：说话人分离是平台级能力，其结果上的收尾操作
+     * （如把说话人映射为业务角色）属各业务模块。模块在 {@code setup} 阶段注册，
+     * {@code teardown} 阶段注销，即可挂入宿主的分离完成事件，
+     * 无需宿主为任何业务写死处理逻辑。</p>
+     *
+     * <p>监听器在请求级 {@link VoiceDiarizationListener} 回调<b>之前</b>被扇出，
+     * 按注册顺序执行；单个监听器抛出异常不影响其他监听器与请求级回调。
+     * 重复注册同一实例无效果。</p>
+     *
+     * @param listener 监听器。
+     * @return 注册成功返回 <code>true</code>；参数为 {@code null} 或已注册时
+     *         返回 <code>false</code>。
+     */
+    boolean registerSpeechListener(SpeechModuleListener listener);
+
+    /**
+     * 注销语音能力模块级监听器。
+     *
+     * @param listener 监听器。
+     * @return 注销成功返回 <code>true</code>；参数为 {@code null} 或未注册时
+     *         返回 <code>false</code>。
+     */
+    boolean unregisterSpeechListener(SpeechModuleListener listener);
 
     /**
      * 读取一份说话人分离结果。

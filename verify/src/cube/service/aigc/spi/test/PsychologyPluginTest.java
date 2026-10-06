@@ -102,7 +102,8 @@ public class PsychologyPluginTest {
             registry = new ModuleRegistry(router.router);
             // 注入带令牌的宿主：量表族的 listScales 经模块持有的 host 解析联系人，
             // 若此处给的是「令牌恒为 null」的宿主，它会一律走 IllegalOperation 分支
-            registry.setHost(newRegistryHost());
+            NoopHost registryHost = newRegistryHost();
+            registry.setHost(registryHost);
             count = registry.load();
             assertTrue("S2 成功装载1 个插件", 1 == count);
             // 动作总数可扩充，此处只断言「全部动作均已绑定」
@@ -112,6 +113,12 @@ public class PsychologyPluginTest {
             assertTrue("S2 setPaintingLabel 已绑定", router.router.isBound("setPaintingLabel"));
             assertTrue("S2 appQueryCustomer 已绑定", router.router.isBound("appQueryCustomer"));
             assertTrue("S2 无阻塞失败", !registry.hasBlockingFailure());
+            // 语音监听器：模块装载后必须已订阅宿主的说话人分离事件，
+            // 且是唯一的订阅者（角色映射属模块收尾职责）
+            assertTrue("S2 语音监听器已注册且唯一",
+                    1 == registryHost.registeredSpeechListeners.size());
+            assertTrue("S2 语音监听器为 psychology-speech",
+                    "psychology-speech".equals(registryHost.registeredSpeechListeners.get(0).getName()));
 
             ActionModule module = registry.findModule("psychology");
             assertTrue("S2 可按名查找模块", null != module);
@@ -730,6 +737,9 @@ public class PsychologyPluginTest {
             assertTrue("S7 卸载后按名查找返回 null", null == registry.findModule("psychology"));
             assertTrue("S43 卸载后场景回到未装配状态", !scene.isReady());
             assertTrue("S43 卸载后场景不再持有存储", null == scene.getStorage());
+            // 语音监听器随模块卸载注销：宿主的分离事件不再进入本模块
+            assertTrue("S7 卸载后语音监听器已注销",
+                    registryHost.registeredSpeechListeners.isEmpty());
         }
         finally {
             config.delete();
@@ -766,7 +776,7 @@ public class PsychologyPluginTest {
      *
      * @return 返回带令牌的宿主能力。
      */
-    private static AIGCHost newRegistryHost() {
+    private static NoopHost newRegistryHost() {
         NoopHost host = new NoopHost();
         host.registered = true;
         host.resolvedToken = token("t-reg", 1001L);
@@ -1013,6 +1023,13 @@ public class PsychologyPluginTest {
         boolean registered = false;
 
         /**
+         * 记录经 {@link #registerSpeechListener} 注册的语音监听器，
+         * 供断言「模块装载后已订阅、卸载后已注销」。
+         */
+        final java.util.List<cube.aigc.listener.SpeechModuleListener> registeredSpeechListeners =
+                new java.util.concurrent.CopyOnWriteArrayList<>();
+
+        /**
          * 模拟令牌解析结果。
          *
          * <p>为 {@code null} 时 {@link #resolveToken(String)} 恒返回 {@code null}，
@@ -1241,8 +1258,18 @@ public class PsychologyPluginTest {
         @Override
         public cube.common.entity.FileLabel performSpeakerDiarization(cube.auth.AuthToken authToken,
                 cube.common.entity.FileLabel fileLabel, boolean preprocess, boolean storage, boolean jumpToFirst,
-                cube.aigc.listener.VoiceDiarizationListener listener) {
+                boolean sentiment, cube.aigc.listener.VoiceDiarizationListener listener) {
             return null;
+        }
+
+        @Override
+        public boolean registerSpeechListener(cube.aigc.listener.SpeechModuleListener listener) {
+            return (null != listener) && NoopHost.this.registeredSpeechListeners.add(listener);
+        }
+
+        @Override
+        public boolean unregisterSpeechListener(cube.aigc.listener.SpeechModuleListener listener) {
+            return (null != listener) && NoopHost.this.registeredSpeechListeners.remove(listener);
         }
 
         @Override
