@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+
+<!-- ======================================================================= -->
+<!-- Cube AIGC Integration Verify Build File                                -->
+<!--                                                                       -->
+<!-- 编译「宿主 × 插件」的集成验证程序（冒烟 + 只读校验）。                 -->
+<!--                                                                       -->
+<!-- 为何独立成模块：                                                       -->
+<!--   这批程序按设计同时引用两侧的类型 —— 宿主侧提供 ModuleRegistry /     -->
+<!--   ActionRouter，插件侧提供 PsychologyModule / PsychologyStorage /    -->
+<!--   PsychologyScene。而宿主 service 模块对插件是【零编译期引用】的        -->
+<!--   （见 service/build.xml 里刻意不 include 插件 jar 的那段注释），      -->
+<!--   两者无法共存于同一个编译单元。                                          -->
+<!--                                                                       -->
+<!-- 本模块是全工程【唯一】允许在编译期 classpath 出现插件 jar 的地方。     -->
+<!-- 产物只进 build/classes，不进任何 deploy 目录，也不参与主构建链。       -->
+<!-- ======================================================================= -->
+
+<project name="cube-verify" default="build-release" basedir=".">
+
+	<property name="version.brand" value="3.0" />
+
+	<property name="version.tgt" value="1.8" />
+	<property name="version.src" value="1.8" />
+
+	<property name="src.dir" value="src" />
+	<property name="lib.dir" value="../cube-server-dependencies" />
+	<property name="dependencies.dir" value="../build" />
+
+	<property name="build.dir" value="build" />
+	<property name="build.classes" value="${build.dir}/classes" />
+
+	<!-- =================================================================== -->
+	<!-- Compile classpath                                                     -->
+	<!--                                                                     -->
+	<!-- 刻意包含三类 jar：                                                  -->
+	<!--   ① 三方依赖（../cube-server-dependencies）                         -->
+	<!--   ② cube-common（与宿主/插件共用）                                   -->
+	<!--   ③ cube-service-psychology —— 唯一允许出现该依赖的地方            -->
+	<!-- 另外还须含宿主自身的 cube-service-*.jar：ModuleRegistry 等类型在     -->
+	<!-- 宿主 jar 中，而宿主源码不参与本模块编译（避免把它拉进依赖链）。     -->
+	<!-- =================================================================== -->
+	<path id="master-classpath">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="${dependencies.dir}">
+			<include name="cube-common-*.jar" />
+			<include name="cube-service-*.jar" />
+		</fileset>
+		<pathelement path="${build.classes}" />
+	</path>
+
+	<target name="init">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${build.classes}" />
+	</target>
+
+	<target name="clean">
+		<delete dir="${build.dir}" />
+	</target>
+
+	<target name="build-debug">
+		<javac target="${version.tgt}" source="${version.src}" fork="yes" srcdir="${src.dir}" destdir="${build.classes}" debug="on" encoding="UTF-8" deprecation="on" optimize="off">
+			<classpath refid="master-classpath" />
+		</javac>
+	</target>
+
+	<target name="build-release">
+		<javac target="${version.tgt}" source="${version.src}" fork="yes" srcdir="${src.dir}" destdir="${build.classes}" debug="off" encoding="UTF-8" deprecation="on" optimize="on">
+			<classpath refid="master-classpath" />
+		</javac>
+	</target>
+
+	<target name="build" depends="clean, init, build-release" />
+
+</project>

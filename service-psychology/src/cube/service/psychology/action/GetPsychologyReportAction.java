@@ -24,7 +24,7 @@ import org.json.JSONObject;
  * <p><b>状态码序列</b>：
  * {@code NoToken → IllegalOperation → InvalidParameter → Ok / Failure}。</p>
  *
- * <p><b>三分支结构</b>（L88-176）：</p>
+ * <p><b>三分支结构</b>：</p>
  * <ul>
  *   <li>{@code sn != 0}：查绘画报告，未命中则回退查量表报告；</li>
  *   <li>{@code sn == 0 && pageSize != 0}：列表分支，按 {@code type} 分绘画/量表；</li>
@@ -33,7 +33,7 @@ import org.json.JSONObject;
  *
  * <p><b>⚠️ 已知缺陷，请勿「顺手修正」</b>：量表报告列表分支
  * 应答的 {@code size} 字段填的是<b>总条数</b>而非请求的 {@code pageSize}
- * （{@code GetPsychologyReportTask} L166）。这会让客户端按 {@code size}
+ * （见 {@link #queryList}）。这会让客户端按 {@code size}
  * 翻页时行为异常，但已上线多年、客户端可能已适配该行为；
  * 修正它属于独立的线协议变更。</p>
  *
@@ -111,7 +111,7 @@ public final class GetPsychologyReportAction implements AIGCActionTask {
     /**
      * 按序列号读取单个报告。
      *
-     * <p>先查绘画报告，未命中则回退查量表报告（L88-127）。
+     * <p>先查绘画报告，未命中则回退查量表报告。
      * 两者都未命中时回 {@code Failure} 并回显请求体。</p>
      *
      * @param ctx 动作上下文。
@@ -125,19 +125,19 @@ public final class GetPsychologyReportAction implements AIGCActionTask {
             boolean markdown, boolean sections) {
         String format = markdown ? "markdown" : (sections ? "sections" : "compact");
 
-        JSONObject report = module.queryPaintingReport(ctx.getHost(), sn, format);
+        JSONObject report = module.queryPaintingReport(sn, format);
         if (null != report) {
             ctx.respond(AIGCStateCode.Ok, report);
             return AIGCStateCode.Ok;
         }
 
         // 导出过程可能抛异常（如 Markdown 模板缺失），在此回 Failure
-        // 并回显请求体（L110-114）；查询侧已把异常收敛为 null，
+        // 并回显请求体；查询侧已把异常收敛为 null，
         // 故这里无法区分「报告不存在」与「导出失败」，两者都回 Failure——
         // 与「导出失败」的应答一致，而「不存在」本就该回 Failure
         Logger.d(GetPsychologyReportAction.class, "#querySingle - No painting report: " + sn);
 
-        JSONObject scaleReport = module.queryScaleReport(ctx.getHost(), sn);
+        JSONObject scaleReport = module.queryScaleReport(sn);
         if (null != scaleReport) {
             ctx.respond(AIGCStateCode.Ok, scaleReport);
             return AIGCStateCode.Ok;
@@ -150,7 +150,7 @@ public final class GetPsychologyReportAction implements AIGCActionTask {
     /**
      * 分页读取报告列表。
      *
-     * <p>L129-171 按 {@code type} 分绘画与量表两条路径。</p>
+     * <p>按 {@code type} 分绘画与量表两条路径。</p>
      *
      * @param ctx 动作上下文。
      * @param module 心理学模块。
@@ -167,13 +167,13 @@ public final class GetPsychologyReportAction implements AIGCActionTask {
         JSONObject responseData;
 
         if (TYPE_PAINTING.equalsIgnoreCase(type)) {
-            responseData = module.listPaintingReports(ctx.getHost(), contactId, pageIndex, pageSize, descending, state);
+            responseData = module.listPaintingReports(contactId, pageIndex, pageSize, descending, state);
             responseData.put("size", pageSize);
         }
         else {
-            responseData = module.listScaleReports(ctx.getHost(), contactId, descending, state);
+            responseData = module.listScaleReports(contactId, descending, state);
             responseData.put("page", pageIndex);
-            // ⚠️ L166 填的是 num（总条数）而非 pageSize。
+            // ⚠️ 这里填的是 num（总条数）而非 pageSize。
             // 修正它属于独立的线协议变更，不可在此顺手做
             responseData.put("size", responseData.getInt("total"));
         }

@@ -109,3 +109,4 @@ deploy/config/psychology.local.json
 # 部署形态的配置与资产均由 `ant deploy` 从 service/ 同步生成，不入库
 deploy/config/psychology.json.template
 deploy/config/aigc-modules.properties
+compile-check.sh

@@ -36,7 +36,7 @@ import cube.service.psychology.PsychologyModule;
  * 下方 try 块内会被捕获，故最终以 {@code InvalidParameter} 应答——与既有行为一致。
  * 由于失败时回显的是原始请求而非校验说明，客户端应先枚举合法主题值。</p>
  *
- * <p><b>⚠️ 写入失败回显原始请求</b>（L75），{@code catch} 分支回空对象（L81）。</p>
+ * <p><b>⚠️ 写入失败回显原始请求</b>，{@code catch} 分支回空对象。</p>
  */
 public final class AppNewScheduleAction implements AIGCActionTask {
 
@@ -51,7 +51,7 @@ public final class AppNewScheduleAction implements AIGCActionTask {
         try {
             ConsultationSchedule submitted = new ConsultationSchedule(ctx.getRequest().data);
 
-            // 复制构造器：新 id 由 ConfigUtils 生成，客户端提交的 id 被丢弃（L67）
+            // 复制构造器：新 id 由 ConfigUtils 生成，客户端提交的 id 被丢弃
             ConsultationSchedule newSchedule = new ConsultationSchedule(submitted);
 
             long cid = ctx.getToken().getContactId();
@@ -61,14 +61,14 @@ public final class AppNewScheduleAction implements AIGCActionTask {
                 return AIGCStateCode.Ok;
             }
 
-            // ⚠️ 回显原始请求（L75）
+            // ⚠️ 回显原始请求
             ctx.respond(AIGCStateCode.Failure, ctx.getRequest().data);
 
             return AIGCStateCode.Failure;
         } catch (Exception e) {
             Logger.e(this.getClass(), "", e);
 
-            // L81 回空对象
+            // 回空对象
             ctx.respondEmpty(AIGCStateCode.InvalidParameter);
 
             return AIGCStateCode.InvalidParameter;

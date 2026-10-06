@@ -6,29 +6,26 @@
 
 package cube.service.psychology.scene;
 
-import cube.aigc.text.Keyword;
-import cube.service.psychology.scene.PsychologyScene;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.spi.AIGCHost;
+import cube.aigc.SemanticSearchListener;
 import cube.aigc.complex.attachment.Attachment;
 import cube.aigc.complex.attachment.FileAttachment;
+import cube.aigc.listener.GenerateTextListener;
 import cube.aigc.psychology.ComprehensiveReport;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.composition.*;
+import cube.aigc.spi.AIGCHost;
+import cube.aigc.text.Keyword;
 import cube.common.Language;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
-import cube.aigc.listener.GenerateTextListener;
-import cube.aigc.SemanticSearchListener;
 import cube.service.psychology.scene.subtask.*;
 import cube.util.TextUtils;
 
 import java.util.ArrayList;
-import cube.service.psychology.scene.PromptBuilder;
-import cube.service.psychology.scene.PromptRevolver;
 import java.util.List;
 
 public class ConversationWorker {

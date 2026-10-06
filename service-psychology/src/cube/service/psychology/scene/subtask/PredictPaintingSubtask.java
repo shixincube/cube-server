@@ -6,23 +6,22 @@
 
 package cube.service.psychology.scene.subtask;
 
-import cube.service.psychology.scene.ReportRenderer;
-import cube.aigc.spi.AIGCHost;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.psychology.RetentionPolicy;
 import cube.aigc.complex.attachment.Attachment;
 import cube.aigc.complex.attachment.ReportAttachment;
+import cube.aigc.listener.GenerateTextListener;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Subtask;
+import cube.aigc.psychology.listener.PaintingReportListener;
+import cube.aigc.spi.AIGCHost;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
-import cube.aigc.listener.GenerateTextListener;
-import cube.aigc.psychology.listener.PaintingReportListener;
 import cube.service.psychology.scene.PsychologyScene;
+import cube.service.psychology.scene.ReportRenderer;
 import cube.service.psychology.scene.SceneManager;
 
 import java.util.List;

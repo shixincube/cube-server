@@ -11,10 +11,10 @@ import cube.aigc.ModelConfig;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.copilot.CopilotSetting;
 import cube.aigc.psychology.copilot.CopilotSheet;
+import cube.aigc.spi.AIGCHost;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.entity.GeneratingRecord;
-import cube.aigc.spi.AIGCHost;
 import cube.util.TextUtils;
 import org.json.JSONObject;
 

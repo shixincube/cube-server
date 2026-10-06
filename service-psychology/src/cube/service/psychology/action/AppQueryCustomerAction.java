@@ -45,7 +45,7 @@ public final class AppQueryCustomerAction implements AIGCActionTask {
     @Override
     public AIGCStateCode handle(ActionContext ctx) {
         if (!ctx.getHost().isRegistered(ctx.getToken().getCode())) {
-            // 未注册用户无数据：回空列表（AppQueryCustomerTask:62-67）
+            // 未注册用户无数据：回空列表而非 IllegalOperation
             JSONObject responseData = new JSONObject();
             responseData.put("list", new JSONArray());
             responseData.put("total", 0);
@@ -57,7 +57,7 @@ public final class AppQueryCustomerAction implements AIGCActionTask {
         }
 
         try {
-            // 刻意不判空：request 为 null 时此处 NPE，与packet.data 为 null 的行为一致
+            // 刻意不判空：request 为 null 时此处 NPE，最终回 InvalidParameter
             JSONObject request = ctx.getRequest().data;
 
             int page = request.has("page") ? request.getInt("page") : 0;
@@ -68,7 +68,7 @@ public final class AppQueryCustomerAction implements AIGCActionTask {
 
             int total = module.countCustomers(cid);
             List<Customer> list = new ArrayList<>();
-            // 分页参数为 0/0 时才返回完整列表，与L80-82 一致
+            // 分页参数为 0/0 时才返回完整列表
             if (page == 0 && size == 0) {
                 list = module.readCustomers(cid);
             }
@@ -89,7 +89,7 @@ public final class AppQueryCustomerAction implements AIGCActionTask {
         } catch (Exception e) {
             Logger.e(this.getClass(), "", e);
 
-            // 回显原始请求（可能为 null），与L100 一致
+            // 回显原始请求（可能为 null）
             ctx.respond(AIGCStateCode.InvalidParameter, ctx.getRequest().data);
 
             return AIGCStateCode.InvalidParameter;

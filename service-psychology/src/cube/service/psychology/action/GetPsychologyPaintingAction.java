@@ -6,6 +6,7 @@
 
 package cube.service.psychology.action;
 
+import cube.service.psychology.PsychologyModule;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.aigc.psychology.Painting;
@@ -24,17 +25,17 @@ import org.json.JSONObject;
  * {@code AIGCAction.GetPsychologyPainting} 的 {@code name} 字段。</p>
  *
  * <p><b>状态码序列</b>：
- * {@code NoToken → IllegalOperation → Ok / Failure → InvalidParameter}，
- * 其中三个 {@code Failure} 分支都<b>回显原始请求体</b>。</p>
+ * {@code NoToken → IllegalOperation → Ok / Failure → InvalidParameter}。
+ * 三个数据分支的 {@code Failure} 都<b>回显原始请求体</b>，
+ * 而 {@code catch} 分支回<b>空对象</b>。</p>
  *
- * <p><b>三个分支的默认参数</b>（L58-63）：
+ * <p><b>三个分支的默认参数</b>：
  * {@code sn=0}、{@code chart=false}、{@code bbox=true}、{@code vparam=false}、
  * {@code prob=0.5}、{@code fileCode=null}。其中 {@code bbox} 默认
  * <b>true</b> 而非 false。</p>
  *
- * <p>⚠️ {@code chart} 分支把 {@code authToken} 传入
- * {@code getPaintingInferenceData}，但该方法<b>从未使用它</b>。
- * 此处保持一致（传了但不用），不「顺手修正」。</p>
+ * <p>⚠️ {@code chart} 分支调用 {@code getPaintingInferenceData(sn)} 时
+ * <b>不传令牌</b>——该方法无需令牌。</p>
  *
  * <p><b>为何 requiresToken 取 false</b>：令牌无效回的是
  * {@code IllegalOperation}，而宿主动作骨架在 {@code requiresToken=true} 时
@@ -73,17 +74,17 @@ public final class GetPsychologyPaintingAction implements AIGCActionTask {
             AIGCHost host = ctx.getHost();
 
             if (chart) {
-                JSONObject inferenceData = host.getPaintingInferenceData(sn);
+                JSONObject inferenceData = ((PsychologyModule) ctx.getModule()).getPaintingInferenceData(sn);
                 return this.respond(ctx, AIGCStateCode.Ok, inferenceData, AIGCStateCode.Failure);
             }
 
             if (null != fileCode) {
-                Painting painting = host.getPredictedPainting(authToken, fileCode);
+                Painting painting = ((PsychologyModule) ctx.getModule()).getPredictedPainting(authToken, fileCode);
                 return this.respond(ctx, AIGCStateCode.Ok,
                         (null == painting) ? null : painting.toFullJson(), AIGCStateCode.Failure);
             }
 
-            FileLabel fileLabel = host.getPredictedPainting(authToken, sn, bbox, vparam, prob);
+            FileLabel fileLabel = ((PsychologyModule) ctx.getModule()).getPredictedPainting(authToken, sn, bbox, vparam, prob);
             return this.respond(ctx, AIGCStateCode.Ok,
                     (null == fileLabel) ? null : fileLabel.toCompactJSON(), AIGCStateCode.Failure);
         } catch (Exception e) {
@@ -96,8 +97,7 @@ public final class GetPsychologyPaintingAction implements AIGCActionTask {
     /**
      * 二选一应答。
      *
-     * <p>三个分支的失败态都回显原始请求体（L74/88/101），
-     * 此处统一处理以免漏掉。</p>
+     * <p>三个数据分支的失败态都回显原始请求体，此处统一处理以免漏掉。</p>
      *
      * @param ctx 动作上下文。
      * @param okCode 成功时的状态码。

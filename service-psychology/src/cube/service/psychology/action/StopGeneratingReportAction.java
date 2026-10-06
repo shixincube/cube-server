@@ -31,7 +31,7 @@ import org.json.JSONObject;
  * <p><b>为何停止逻辑走 SPI 而非插件自建</b>：报告生成期间它只存在于场景的
  * 内存表与任务队列中，尚未入库。插件自建既无从得知「是否仍在队列中」，
  * 也无法真正中断生成线程，故经
- * {@link AIGCHost#stopReportGeneration} 委托宿主完成。</p>
+ * 模块内直调场景完成（不再经宿主能力接口中转）。</p>
  */
 public final class StopGeneratingReportAction implements AIGCActionTask {
 
@@ -61,7 +61,7 @@ public final class StopGeneratingReportAction implements AIGCActionTask {
             return AIGCStateCode.InvalidParameter;
         }
 
-        JSONObject report = ((PsychologyModule) ctx.getModule()).stopReportGeneration(ctx.getHost(), sn);
+        JSONObject report = ((PsychologyModule) ctx.getModule()).stopReportGeneration(sn);
 
         if (null != report) {
             ctx.respond(AIGCStateCode.Ok, report);

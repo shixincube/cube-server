@@ -29,12 +29,12 @@ import org.json.JSONObject;
  *
  * <p><b>⚠️ 本动作有两处本组唯一之处，绝不可「顺手统一」</b>：</p>
  * <ol>
- *   <li><b>第二码也是 {@code NoToken}</b>（L49：{@code getToken()} 返回
+ *   <li><b>第二码也是 {@code NoToken}</b>：{@code resolveToken()} 返回
  *       {@code null} 时回 {@code NoToken} 而非 {@code IllegalOperation}）。
  *       骨架在 {@code requiresToken=true} 时会回 {@code InconsistentToken}，
  *       两个码都不同于骨架前置校验，因此必须 {@code false} 并自行复刻；</li>
  *   <li><b>永不回 {@code Failure}</b>——任何无法确认的情形都回
- *       {@code Ok} 且 {@code result=false}（L74-77）。</li>
+ *       {@code Ok} 且 {@code result=false}。</li>
  * </ol>
  *
  * <p><b>⚠️ 本动作是「同名双向」动作</b>：除入站派发外，
@@ -103,7 +103,7 @@ public final class CheckPsychologyPaintingAction implements AIGCActionTask {
             return AIGCStateCode.InvalidParameter;
         }
 
-        // 无论检测与否都回 Ok，判定结果放在 result 里（L72-77）
+        // 无论检测与否都回 Ok，判定结果放在 result 里
         JSONObject responseData = new JSONObject();
         responseData.put("result", this.check(ctx, authToken, fileCode));
         ctx.respond(AIGCStateCode.Ok, responseData);
@@ -126,18 +126,18 @@ public final class CheckPsychologyPaintingAction implements AIGCActionTask {
     private boolean check(ActionContext ctx, AuthToken token, String fileCode) {
         AIGCHost host = ctx.getHost();
 
-        // ① 取文件标签：取不到即判非绘画（L211-215）
+        // ① 取文件标签：取不到即判非绘画
         cube.common.entity.FileLabel fileLabel = host.getFile(token.getDomain(), fileCode);
         if (null == fileLabel) {
             Logger.w(this.getClass(), "#check - File error: " + fileCode);
             return false;
         }
 
-        // ② 物体检测：画面中还有其他元素时判为非绘画（L217-222）
+        // ② 物体检测：画面中还有其他元素时判为非绘画
         ObjectInfo info = host.detectObject(token.getDomain(), fileCode, false);
         boolean more = this.hasMoreObjects(info);
 
-        // ③ 像素校验：转发给远端绘画单元（L224-249）
+        // ③ 像素校验：转发给远端绘画单元
         boolean predicted = this.predictByUnit(host, fileLabel);
 
         // 像素校验通过「或」无其他元素即判定为绘画

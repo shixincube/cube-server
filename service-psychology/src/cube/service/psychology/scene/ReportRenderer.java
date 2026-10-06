@@ -7,21 +7,24 @@
 package cube.service.psychology.scene;
 
 import cell.core.net.Endpoint;
-import cube.aigc.Consts;
-import cube.aigc.psychology.*;
-import cube.aigc.psychology.algorithm.*;
+import cube.aigc.psychology.EvaluationReport;
+import cube.aigc.psychology.KeyFeature;
+import cube.aigc.psychology.PaintingReport;
+import cube.aigc.psychology.ReportPermission;
+import cube.aigc.psychology.algorithm.Attention;
+import cube.aigc.psychology.algorithm.BigFivePersonality;
+import cube.aigc.psychology.algorithm.PersonalityAccelerator;
+import cube.aigc.psychology.algorithm.Suggestion;
 import cube.aigc.psychology.app.Link;
-import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.composition.EvaluationScore;
+import cube.aigc.psychology.composition.PaintingFeatureSet;
+import cube.aigc.psychology.composition.ReportSection;
 import cube.aigc.psychology.indicator.Indicator;
 import cube.common.Language;
 import cube.common.entity.AIGCChannel;
-import cube.common.entity.Membership;
-import cube.common.entity.User;
 import cube.util.FileLabels;
-import cube.util.TextUtils;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -33,8 +36,9 @@ import java.util.List;
  * 由心理学业务模块直接调用。</p>
  *
  * <p>按关键词匹配语料的两个方法（{@code fillHexagonScoreDescription} 与
- * {@code extract}）不在本类——它们依赖分词与 TF-IDF 权重，
- * 在 {@link ContentTools}。</p>
+ * {@code extract}）不在本类——它们依赖宿主分词器与 TF-IDF 权重，
+ * 实现体在宿主侧（{@code cube.service.aigc.utils.ContentTools}），
+ * 由本模块经宿主能力接口调用。</p>
  */
 public class ReportRenderer {
 
@@ -502,56 +506,6 @@ public class ReportRenderer {
         return buf.toString();
     }
 
-    public static String makeMembership(User user, Membership membership) {
-        StringBuffer buf = new StringBuffer();
-        if (null == membership) {
-            buf.append("用户“").append(user.getName()).append("”不是白泽灵思会员，");
-            List<String> benefitsList = null;
-            if (user.isRegistered()) {
-                buf.append("其是注册用户，享受免费版权益。\n\n");
-                benefitsList = Resource.getInstance().getMemberBenefits(Consts.USER_TYPE_FREE);
-            }
-            else {
-                buf.append("其是访客，享受访客权益。\n\n");
-                benefitsList = Resource.getInstance().getMemberBenefits(Consts.USER_TYPE_VISITOR);
-            }
-            buf.append("其可享受的产品权益有：\n");
-            for (String line : benefitsList) {
-                buf.append("* ").append(line).append("\n");
-            }
-            buf.append("\n");
-        }
-        else {
-            buf.append("用户“").append(user.getName()).append("”是白泽灵思");
-            if (membership.type.equals(Membership.TYPE_ORDINARY)) {
-                buf.append("专业版会员。\n\n");
-                buf.append("其可享受的专业版会员权益有：\n");
-            }
-            else {
-                buf.append("旗舰版会员。\n\n");
-                buf.append("其可享受的旗舰版会员权益有：\n");
-            }
-            List<String> benefitsList = Resource.getInstance().getMemberBenefits(membership.type);
-            for (String line : benefitsList) {
-                buf.append("* ").append(line).append("\n");
-            }
-            buf.append("\n");
-
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(membership.getTimestamp());
-            buf.append("会员有效期从");
-            buf.append(calendar.get(Calendar.YEAR)).append("年");
-            buf.append(calendar.get(Calendar.MONTH) + 1).append("月");
-            buf.append(calendar.get(Calendar.DATE)).append("日");
-            buf.append("至");
-            calendar.setTimeInMillis(membership.getTimestamp() + membership.duration);
-            buf.append(calendar.get(Calendar.YEAR)).append("年");
-            buf.append(calendar.get(Calendar.MONTH) + 1).append("月");
-            buf.append(calendar.get(Calendar.DATE)).append("日");
-            buf.append("\n\n");
-        }
-        return buf.toString();
-    }
     private static String clipContent(String content) {
         return clipContent(content, true);
     }

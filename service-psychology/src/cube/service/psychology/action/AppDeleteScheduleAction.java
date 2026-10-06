@@ -30,9 +30,10 @@ import cube.service.psychology.PsychologyModule;
  *
  * <p><b>⚠️ 读-改-写非原子</b>，与客户侧同缺陷，既有。</p>
  *
- * <p><b>⚠️ 两个失败分支回显的都是原始请求</b>：{@code NoData}（L69）与
- * {@code Failure}（L84）；仅 {@code catch} 分支回空对象（L90）。
- * 注意本文件的 catch 日志串是 {@code "#run"}（L88），与其余 7 个文件的空串
+ * <p><b>⚠️ 两个失败分支回显的都是原始请求</b>：{@code NoData} 与
+ * {@code Failure} 两处均以 {@code ctx.getRequest().data} 作为应答载荷；
+ * 仅 {@code catch} 分支回空对象。
+ * 注意本文件的 catch 日志串是 {@code "#run"}，与其余 7 个文件的空串
  * 不同——不影响应答，但保留以贴合原实现。</p>
  */
 public final class AppDeleteScheduleAction implements AIGCActionTask {
@@ -46,20 +47,20 @@ public final class AppDeleteScheduleAction implements AIGCActionTask {
         }
 
         try {
-            // 刻意不判空：data 为 null 时 NPE，与L65 一致
+            // 刻意不判空：data 为 null 时抛 NPE，由 catch 分支收口
             long id = ctx.getRequest().data.getLong("id");
             long cid = ctx.getToken().getContactId();
             PsychologyModule module = (PsychologyModule) ctx.getModule();
 
             ConsultationSchedule schedule = module.readSchedule(cid, id);
             if (null == schedule) {
-                // ⚠️ 回显原始请求（L69）
+                // ⚠️ 回显原始请求
                 ctx.respond(AIGCStateCode.NoData, ctx.getRequest().data);
 
                 return AIGCStateCode.NoData;
             }
 
-            // 软删除：置状态位而非物理删除（L75）
+            // 软删除：置状态位而非物理删除
             schedule.state = ConsultationScheduleState.Deleted;
 
             if (module.writeSchedule(cid, schedule)) {
@@ -68,14 +69,14 @@ public final class AppDeleteScheduleAction implements AIGCActionTask {
                 return AIGCStateCode.Ok;
             }
 
-            // ⚠️ 回显原始请求（L84）
+            // ⚠️ 回显原始请求
             ctx.respond(AIGCStateCode.Failure, ctx.getRequest().data);
 
             return AIGCStateCode.Failure;
         } catch (Exception e) {
             Logger.e(this.getClass(), "#run", e);
 
-            // L90 回空对象
+            // 回空对象
             ctx.respondEmpty(AIGCStateCode.InvalidParameter);
 
             return AIGCStateCode.InvalidParameter;

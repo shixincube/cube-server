@@ -6,17 +6,17 @@
 
 package cube.service.psychology.scene.subtask;
 
-import cube.aigc.spi.AIGCHost;
 import cube.aigc.ModelConfig;
+import cube.aigc.listener.GenerateTextListener;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Subtask;
+import cube.aigc.spi.AIGCHost;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
-import cube.aigc.listener.GenerateTextListener;
 import cube.service.psychology.scene.SceneManager;
 
 public class ContinueSubtask extends ConversationSubtask {

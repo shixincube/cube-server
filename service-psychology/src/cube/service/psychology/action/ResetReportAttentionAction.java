@@ -31,13 +31,12 @@ import org.json.JSONObject;
  *       属线协议可见变更；</li>
  *   <li><b>catch 分支回 {@code IllegalOperation}</b>：同组另两个动作
  *       参数异常回 {@code InvalidParameter}，而本动作
- *       （{@code ResetReportAttentionTask} L67-72）回
- *       {@code IllegalOperation}。这是本组动作里唯一一个，
+ *       回 {@code IllegalOperation}。这是本组动作里唯一一个，
  *       保持原样以确保异常场景下客户端行为不变。</li>
  * </ol>
  *
- * <p>此外本动作的 {@code Failure} 分支回<b>空对象</b>而非回显请求体
- * （L58-59），与同组另两个动作亦不同。</p>
+ * <p>此外本动作的 {@code Failure} 分支回<b>空对象</b>而非回显请求体，
+ * 与同组另两个动作亦不同。</p>
  *
  * <p><b>为何 requiresToken 取 false</b>：同
  * {@link StopGeneratingReportAction}，避免宿主骨架把「无令牌」的应答码
@@ -55,13 +54,13 @@ public final class ResetReportAttentionAction implements AIGCActionTask {
             return AIGCStateCode.NoToken;
         }
 
-        // 刻意不校验令牌有效性：本动作只判令牌存在性（L37-43），
-        // 之后直接进入参数判断。若此处补 resolveToken 判定，
+        // 刻意不校验令牌有效性：本动作只判令牌存在性，之后直接进入参数判断。
+        // 若此处补 resolveToken 判定，
         // 无效令牌会从「继续执行」变成「被拦截」，属线协议可见变更
 
         JSONObject data = ctx.getRequest().data;
 
-        // 用 has("sn") 而非 getLong：缺 sn 时走 InvalidParameter（L45-50），
+        // 用 has("sn") 而非 getLong：缺 sn 时走 InvalidParameter，
         // 而 sn 类型非法（如字符串）时抛 JSONException 落入 catch 回 IllegalOperation。
         // 两种异常的应答码不同，故此处不能用统一的 try 包住 sn 读取
         if (!data.has("sn")) {
@@ -75,7 +74,7 @@ public final class ResetReportAttentionAction implements AIGCActionTask {
             // 缺 attention 时传 null：宿主侧据此回滚到滚动建议而非置为指定等级
             Integer attention = data.has("attention") ? data.getInt("attention") : null;
 
-            JSONObject report = ((PsychologyModule) ctx.getModule()).resetReportAttention(ctx.getHost(), sn, attention);
+            JSONObject report = ((PsychologyModule) ctx.getModule()).resetReportAttention(sn, attention);
 
             if (null == report) {
                 // 此处回空对象，不是回显请求体
@@ -86,7 +85,7 @@ public final class ResetReportAttentionAction implements AIGCActionTask {
             ctx.respond(AIGCStateCode.Ok, report);
             return AIGCStateCode.Ok;
         } catch (Exception e) {
-            // ⚠️ catch 回 IllegalOperation（L67-72），同组另两个动作是 InvalidParameter
+            // ⚠️ catch 回 IllegalOperation，同组另两个动作是 InvalidParameter
             Logger.e(this.getClass(), "#handle - Can NOT reset attention", e);
             ctx.respondEmpty(AIGCStateCode.IllegalOperation);
             return AIGCStateCode.IllegalOperation;

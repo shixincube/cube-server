@@ -8,10 +8,10 @@ package cube.service.psychology.scene;
 
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.spi.AIGCHost;
 import cube.aigc.guidance.*;
 import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.Subtask;
+import cube.aigc.spi.AIGCHost;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;

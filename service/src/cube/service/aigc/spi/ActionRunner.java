@@ -107,8 +107,11 @@ public final class ActionRunner extends ServiceTask implements ActionContext {
                 stateCode = AIGCStateCode.Cancelled;
             }
 
-            // 处理器既未应答也未取消时，按返回码补一次空应答，避免调用方无限等待
-            if (!this.isResponded()) {
+            // 处理器既未应答也未取消时，按返回码补一次空应答，避免调用方无限等待。
+            // ⚠️ 流式动作不补：处理器交回控制权时首段可能仍在生成中，
+            //    此时补一个空成功会让客户端把后续片段当成 unsolicited。
+            //    流式动作的「必须应答」由处理器自己负责。
+            if (!this.binding.streaming && !this.isResponded()) {
                 this.respondEmpty(stateCode);
             }
         } catch (Exception e) {
@@ -161,7 +164,13 @@ public final class ActionRunner extends ServiceTask implements ActionContext {
 
     @Override
     public void respond(AIGCStateCode code, JSONObject data) {
-        if (!this.responded.compareAndSet(false, true)) {
+        if (this.binding.streaming) {
+            // 流式：记录「已应答过」但不据其拒绝后续片段。
+            // CAS 仍然执行，使 isResponded() 如实反映「至少应答过一次」，
+            // 供处理器自查；只是不再充当闸门。
+            this.responded.compareAndSet(false, true);
+        }
+        else if (!this.responded.compareAndSet(false, true)) {
             Logger.w(ActionRunner.class, "#respond - Action \"" + this.binding.action
                     + "\" has already responded, ignore the duplicated one");
             return;

@@ -23,17 +23,15 @@ import cube.common.entity.AIGCUnit;
 import cube.common.entity.FileLabel;
 import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
+import cube.service.psychology.PsychologyStorage;
 import cube.service.psychology.evaluation.Evaluation;
 import cube.service.psychology.evaluation.SubconsciousRelationshipBetweenCoupleEvaluation;
-import cube.service.psychology.PsychologyStorage;
 import cube.util.Gender;
 import cube.util.TextUtils;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import cube.service.psychology.scene.ComprehensiveReportListener;
-import cube.service.psychology.scene.ComprehensiveVerifier;
 import java.util.List;
 
 public class ComprehensiveReportWorker implements Runnable {
@@ -74,12 +72,13 @@ public class ComprehensiveReportWorker implements Runnable {
     }
 
     /**
-     * 获取宿主能力接口。
+     * 执行综合评测报告生成。
      *
-     * <p>评估器只能经 SPI 访问宿主能力，故由此处统一转发。
-     * 每次现取，不缓存为字段：SPI 的装配晚于本工作器的构造。</p>
-     *
-     * @return 返回宿主能力接口；未装配时返回 {@code null}。
+     * <p>逐个综合项执行「推理绘画 → 绘画评估 → 生成章节」，过程中经
+     * {@link ComprehensiveReportListener} 回调进度。任一环节失败即置
+     * {@code report.finished=true}、写入对应错误码，并通过
+     * {@code onEvaluateFailed} 通知，<b>不抛异常</b>。
+     * 完成后由调用方经 {@link #getReport()} 取回结果。</p>
      */
     @Override
     public void run() {

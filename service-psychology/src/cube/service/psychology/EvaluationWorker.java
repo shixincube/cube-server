@@ -164,10 +164,10 @@ public class EvaluationWorker {
     /**
      * 生成报告内容。
      *
-     * @param channel
-     * @param theme
-     * @param maxIndicatorTexts
-     * @return
+     * @param channel 所属频道。
+     * @param theme 报告主题，决定选用哪个评估器实现。
+     * @param maxIndicatorTexts 指标文本的最大条数。
+     * @return 返回与之匹配的评估工作器。
      */
     public EvaluationWorker make(AIGCChannel channel, Theme theme, int maxIndicatorTexts) {
         switch (theme) {

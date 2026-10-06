@@ -59,7 +59,7 @@ public class StreamArchive {
     /**
      * 计算以毫秒为单位的播放时长。
      *
-     * @return
+     * @return 返回播放时长（毫秒）；无分片时返回 0。
      */
     public long calculateDurationMillis() {
         if (0 == this.header.numChunks()) {
@@ -115,7 +115,7 @@ public class StreamArchive {
     /**
      * 转为 WAV 文件。
      *
-     * @return
+     * @return 返回生成的 WAV 文件；PCM 数据不可用时返回 {@code null}。
      */
     public File outputWavFile() {
         byte[] pcmData = this.loadPCM();
@@ -151,6 +151,8 @@ public class StreamArchive {
 
     /**
      * 删除文件。
+     *
+     * @return 文件存在且删除成功时返回 {@code true}；文件不存在时返回 {@code false}。
      */
     public boolean delete() {
         if (this.file.exists()) {

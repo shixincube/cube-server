@@ -7,24 +7,24 @@
 package cube.service.aigc;
 
 import cell.core.talk.Primitive;
-import cube.service.Director;
 import cell.core.talk.TalkContext;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.aigc.spi.ActionRouter;
+import cube.common.Packet;
 import cube.common.action.AIGCAction;
 import cube.common.state.AIGCStateCode;
-import cube.common.Packet;
 import cube.core.AbstractCellet;
 import cube.core.Kernel;
+import cube.service.Director;
 import cube.service.aigc.event.EventCenter;
-import cube.service.aigc.spi.ActionRunner;
 import cube.service.aigc.spi.AIGCHostImpl;
+import cube.service.aigc.spi.ActionRunner;
 import cube.service.aigc.spi.ModuleRegistry;
 import cube.service.aigc.task.*;
-
 import org.json.JSONObject;
+
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -430,46 +430,6 @@ public class AIGCCellet extends AbstractCellet {
             this.execute(new AppASCIIArtTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
-        else if (AIGCAction.AnalyseVoiceStream.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new AnalyseVoiceStreamTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.QueryCounselingCaption.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new QueryCounselingCaptionTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.QueryCounselingStrategy.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new QueryCounselingStrategyTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.GetVoiceStreamFile.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new GetVoiceStreamTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.StopVoiceStream.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new StopVoiceStreamTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.SubmitCopilotSheet.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new SubmitCopilotSheetTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.ApplyCopilot.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new ApplyCopilotTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.DisposeCopilot.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new DisposeCopilotTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
         else if (AIGCAction.Summarization.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new SummarizationTask(this, talkContext, primitive,
@@ -583,11 +543,6 @@ public class AIGCCellet extends AbstractCellet {
         else if (AIGCAction.DeleteSpeechDiarization.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new DeleteSpeechDiarizationTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.SpeechAnalysis.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new SpeechAnalysisTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (AIGCAction.SpeechEmotionRecognition.name.equals(action)) {
@@ -758,31 +713,6 @@ public class AIGCCellet extends AbstractCellet {
         else if (AIGCAction.PreInfer.name.equals(action)) {
             // 来自 Dispatcher 的请求
             this.execute(new PreInferTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.QueryPsychologyComprehensive.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new GetPsychologyComprehensiveTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.GeneratePsychologyComprehensive.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new GeneratePsychologyComprehensiveTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.GeneratePsychologyTemplateArticle.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new GeneratePsychologyTemplateArticleTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.GetPsychologyTemplateArticle.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new GetPsychologyTemplateArticleTask(this, talkContext, primitive,
-                    this.markResponseTime(action)));
-        }
-        else if (AIGCAction.PsychologyConversation.name.equals(action)) {
-            // 来自 Dispatcher 的请求
-            this.execute(new PsychologyConversationTask(this, talkContext, primitive,
                     this.markResponseTime(action)));
         }
         else if (AIGCAction.Event.name.equalsIgnoreCase(action)) {

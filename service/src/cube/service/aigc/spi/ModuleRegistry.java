@@ -7,23 +7,13 @@
 package cube.service.aigc.spi;
 
 import cell.util.log.Logger;
-import cube.aigc.spi.ActionBinding;
-import cube.aigc.spi.ActionModule;
-import cube.aigc.spi.ActionRouter;
-import cube.aigc.spi.AIGCSPI;
-import cube.aigc.spi.AIGCHost;
-import cube.aigc.spi.ModuleDescriptor;
+import cube.aigc.spi.*;
 import cube.util.ConfigUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -206,88 +196,88 @@ public final class ModuleRegistry {
         try {
             properties = ConfigUtils.readProperties(file.getAbsolutePath());
         } catch (IOException e) {
-        Logger.e(ModuleRegistry.class, "#load - Read module config failed: " + file.getAbsolutePath(), e);
+            Logger.e(ModuleRegistry.class, "#load - Read module config failed: " + file.getAbsolutePath(), e);
+            this.router.setLoaded(true);
+            return 0;
+        }
+
+        // 按序号升序装载，装载顺序即绑定顺序（先到先得，与冲突策略一致）
+        TreeMap<Integer, String> classNameMap = new TreeMap<>();
+        for (String key : properties.stringPropertyNames()) {
+            if (!key.startsWith(KEY_PREFIX) || !key.endsWith(KEY_SUFFIX)) {
+                continue;
+            }
+
+            String value = properties.getProperty(key);
+            if (null == value) {
+                continue;
+            }
+
+            value = value.trim();
+            if (value.isEmpty()) {
+                continue;
+            }
+
+            // module.<n>.class
+            String index = key.substring(KEY_PREFIX.length(), key.length() - KEY_SUFFIX.length());
+            try {
+                classNameMap.put(Integer.parseInt(index), value);
+            } catch (NumberFormatException e) {
+                Logger.e(ModuleRegistry.class, "#load - Illegal module key: " + key);
+            }
+        }
+
+        int count = 0;
+        for (Map.Entry<Integer, String> entry : classNameMap.entrySet()) {
+            int index = entry.getKey();
+            String className = entry.getValue();
+
+            // 启用开关：未显式配置时默认启用，避免运维漏写开关导致模块静默不加载
+            if (!this.isEnabled(properties, index)) {
+                Logger.i(ModuleRegistry.class, "#load - Module \"" + className + "\" is DISABLED by configuration");
+                continue;
+            }
+
+            // 静态声明：必须早于实例化，否则「类找不到 / jar 缺失」这类失败
+            // 不会留下任何声明，宿主将无法把该动作识别为「属于未就绪的模块」，
+            // 请求既不在模块里也不在宿主分支里 ⇒ 无人应答而悬挂。
+            this.declareStatically(className);
+
+            ActionModule module = this.instantiate(className);
+            if (null == module) {
+                continue;
+            }
+
+            // 先登记动作声明，再绑定：声明不随绑定失败而移除，
+            // 使宿主在模块未就绪时能识别「该动作本属该模块」并回明确状态码
+            this.declareActions(module);
+
+            if (!this.bindActions(module)) {
+                // 出现动作冲突时该模块视为装载失败，但不牵连其他模块
+                Logger.e(ModuleRegistry.class, "#load - Module \"" + className
+                        + "\" is NOT bound because of action conflicts");
+                continue;
+            }
+
+            // 绑定成功后再初始化：模块在 setup 中读取自身状态，此时其动作已全部可见
+            if (!this.setupModule(module)) {
+                this.unbindActions(module);
+                Logger.e(ModuleRegistry.class, "#load - Module \"" + className + "\" setup FAILED,"
+                        + " its actions have been rolled back");
+                continue;
+            }
+
+            this.modules.add(module);
+            this.moduleMap.put(module.getName(), module);
+            ++count;
+        }
+
         this.router.setLoaded(true);
-        return 0;
+
+        Logger.i(ModuleRegistry.class, "#load - Loaded " + count + " AIGC action module(s), "
+                + this.router.size() + " action(s) bound: " + this.router.actions());
+        return count;
     }
-
-    // 按序号升序装载，装载顺序即绑定顺序（先到先得，与冲突策略一致）
-    TreeMap<Integer, String> classNameMap = new TreeMap<>();
-    for (String key : properties.stringPropertyNames()) {
-        if (!key.startsWith(KEY_PREFIX) || !key.endsWith(KEY_SUFFIX)) {
-            continue;
-        }
-
-        String value = properties.getProperty(key);
-        if (null == value) {
-            continue;
-        }
-
-        value = value.trim();
-        if (value.isEmpty()) {
-            continue;
-        }
-
-        // module.<n>.class
-        String index = key.substring(KEY_PREFIX.length(), key.length() - KEY_SUFFIX.length());
-        try {
-            classNameMap.put(Integer.parseInt(index), value);
-        } catch (NumberFormatException e) {
-        Logger.e(ModuleRegistry.class, "#load - Illegal module key: " + key);
-    }
-}
-
-    int count = 0;
-    for (Map.Entry<Integer, String> entry : classNameMap.entrySet()) {
-        int index = entry.getKey();
-        String className = entry.getValue();
-
-        // 启用开关：未显式配置时默认启用，避免运维漏写开关导致模块静默不加载
-        if (!this.isEnabled(properties, index)) {
-            Logger.i(ModuleRegistry.class, "#load - Module \"" + className + "\" is DISABLED by configuration");
-            continue;
-        }
-
-        // 静态声明：必须早于实例化，否则「类找不到 / jar 缺失」这类失败
-        // 不会留下任何声明，宿主将无法把该动作识别为「属于未就绪的模块」，
-        // 请求既不在模块里也不在宿主分支里 ⇒ 无人应答而悬挂。
-        this.declareStatically(className);
-
-        ActionModule module = this.instantiate(className);
-        if (null == module) {
-            continue;
-        }
-
-        // 先登记动作声明，再绑定：声明不随绑定失败而移除，
-        // 使宿主在模块未就绪时能识别「该动作本属该模块」并回明确状态码
-        this.declareActions(module);
-
-        if (!this.bindActions(module)) {
-            // 出现动作冲突时该模块视为装载失败，但不牵连其他模块
-            Logger.e(ModuleRegistry.class, "#load - Module \"" + className
-                    + "\" is NOT bound because of action conflicts");
-            continue;
-        }
-
-        // 绑定成功后再初始化：模块在 setup 中读取自身状态，此时其动作已全部可见
-        if (!this.setupModule(module)) {
-            this.unbindActions(module);
-            Logger.e(ModuleRegistry.class, "#load - Module \"" + className + "\" setup FAILED,"
-                    + " its actions have been rolled back");
-            continue;
-        }
-
-        this.modules.add(module);
-        this.moduleMap.put(module.getName(), module);
-        ++count;
-    }
-
-    this.router.setLoaded(true);
-
-    Logger.i(ModuleRegistry.class, "#load - Loaded " + count + " AIGC action module(s), "
-            + this.router.size() + " action(s) bound: " + this.router.actions());
-    return count;
-}
 
     /**
      * 读取模块的启用开关。

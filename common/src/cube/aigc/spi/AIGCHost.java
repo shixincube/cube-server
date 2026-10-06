@@ -39,6 +39,7 @@ import cube.common.entity.AIGCUnit;
 import cube.common.entity.Contact;
 import cube.common.entity.Membership;
 import cube.common.entity.User;
+import cube.common.entity.VoiceDiarization;
 import cube.common.entity.FileLabel;
 import cube.common.entity.GeneratingOption;
 import cube.common.entity.GeneratingRecord;
@@ -62,9 +63,15 @@ import java.util.List;
  * 模块只应持有本接口引用，不得持有实现类。</p>
  *
  * <p>本接口按能力域分组组织：身份与文本、频道、模型单元、文件与资源、存储、
- * 调度与横切、兄弟模块、报告运行态、报告内容加工、计算机视觉与绘画、报告生成编排。
+ * 调度与横切、兄弟模块、计算机视觉与绘画、会话与语音、对话历史与图表。
  * 其中多数方法是对既有 <code>AIGCService</code> 公共方法的纯委托，可逐字段对拍；
- * 另一些是宿主为模块补的派生能力（如报告运行态读取与生成编排）。</p>
+ * 另一些是宿主为模块补的派生能力（如知识库检索、语义检索与页面抓取）。</p>
+ *
+ * <p><b>已刻意移除的一组方法</b>：「报告运行态」与「报告生成编排」曾在本接口上
+ * 各有十余个方法，实现体无一例外是回调插件自己的 <code>PsychologyScene</code>。
+ * 由于场景与模块同在一个 jar 内，这条「插件 → SPI → 宿主 → 插件」的环路
+ * 并不带来任何依赖方向上的收益，只让宿主必须持有插件 jar 才能编译。
+ * 现已改为插件 action 直接调用场景，故从接口移除。</p>
  */
 public interface AIGCHost {
 
@@ -116,7 +123,6 @@ public interface AIGCHost {
      * @return 返回联系人；不存在时返回 {@code null}。
      */
     Contact getContact(String tokenCode);
-
 
     /**
      * 按访问令牌取用户档案。
@@ -223,7 +229,6 @@ public interface AIGCHost {
      */
     List<String> extractKeywords(String content, int topN);
 
-
     /**
      * 按 TF-IDF 权重取关键词。
      *
@@ -295,7 +300,6 @@ public interface AIGCHost {
      * @return 返回可用单元，无可用单元时返回 <code>null</code>。
      */
     AIGCUnit selectUnitBySubtask(String subtask);
-
 
     /**
      * 选择空闲的单元。
@@ -588,6 +592,19 @@ public interface AIGCHost {
     void schedule(String taskKey, long delayMs, Runnable job);
 
     /**
+     * 从音频处理队列中丢弃指定文件的待处理任务。
+     *
+     * <p>用于停止语音流：客户端要求结束时，队列里可能还压着若干
+     * 尚未开始做说话人分离的分片。丢弃它们可避免「流已停、任务还在跑」，
+     * 也避免这些任务随后去读已被删除的文件。</p>
+     *
+     * <p>已出队并开始执行的任务不受影响。</p>
+     *
+     * @param fileCodes 文件码集合；为空时不做任何事。
+     */
+    void discardAudioTasks(java.util.Collection<String> fileCodes);
+
+    /**
      * 触发横切事件钩子。
      *
      * <p>钩子键为裸字符串（如 <code>"TaskProcessing"</code>），
@@ -633,91 +650,6 @@ public interface AIGCHost {
      */
     <T> T getSiblingModule(String moduleName, Class<T> type);
 
-    // ───────── 报告运行态 ─────────
-
-    /**
-     * 查询绘画报告。
-     *
-     * <p><b>为何整条读取走宿主而非插件自建</b>：报告在生成过程中先落在宿主的
-     * 内存表中，此刻尚未入库。若模块自行读存储，将查不到「正在生成中」的报告，
-     * 使调用方从「查得到（状态为生成中）」变成「查不到」——
-     * 这是线协议可见的行为回归。故内存表与队列的归属留在宿主。</p>
-     *
-     * @param sn 报告序列号。
-     * @param format 导出格式：{@code compact} 为摘要、
-     *                {@code markdown} 为 Markdown 正文、
-     *                {@code sections} 为分节 JSON。
-     * @return 返回报告 JSON；不存在时返回 {@code null}。
-     */
-    JSONObject queryPaintingReport(long sn, String format);
-
-    /**
-     * 查询绘画报告实体。
-     *
-     * <p>与 {@link #queryPaintingReport(long, String)} 的区别：后者返回
-     * 已经导出的 JSON（形态固定），本方法返回报告本体，供需要读取
-     * 状态、章节、特征集等结构化字段的调用方使用。</p>
-     *
-     * <p>⚠️ 返回的是<b>宿主内存态中的同一个实例</b>，调用方<b>不得</b>修改它；
-     * 如需修改请先复制。</p>
-     *
-     * @param sn 报告序列号。
-     * @return 返回报告实体；不存在时返回 {@code null}。
-     */
-    PaintingReport getPaintingReport(long sn);
-
-    /**
-     * 查询量表报告。
-     *
-     * @param sn 报告序列号。
-     * @return 返回报告 JSON；不存在时返回 {@code null}。
-     */
-    JSONObject queryScaleReport(long sn);
-
-    /**
-     * 分页查询绘画报告。
-     *
-     * @param contactId 联系人 ID。
-     * @param page 页码，从 0 开始。
-     * @param size 每页条数。
-     * @param descending 是否倒序（按时间）。
-     * @param state 报告状态；{@code -1} 表示不限状态。
-     * @return 返回含 {@code total} 与 {@code list} 的对象。
-     */
-    JSONObject listPaintingReports(long contactId, int page, int size, boolean descending, int state);
-
-    /**
-     * 查询量表报告列表。
-     *
-     * @param contactId 联系人 ID。
-     * @param descending 是否倒序（按时间）。
-     * @param state 报告状态；{@code -1} 表示不限状态。
-     * @return 返回含 {@code total} 与 {@code list} 的对象。
-     */
-    JSONObject listScaleReports(long contactId, boolean descending, int state);
-
-    /**
-     * 停止报告生成。
-     *
-     * <p>仅当报告仍在生成队列中时生效；已完成或不在队列中时返回
-     * {@code null}，且<b>不</b>修改任何状态。</p>
-     *
-     * @param sn 报告序列号。
-     * @return 返回被停止的报告 JSON；未生效时返回 {@code null}。
-     */
-    JSONObject stopReportGeneration(long sn);
-
-    /**
-     * 重置报告关注等级。
-     *
-     * @param sn 报告序列号。
-     * @param newAttention 目标关注等级；{@code null} 表示回滚到滚动建议。
-     * @return 返回重置后的报告 JSON；报告不存在或更新失败时返回 {@code null}。
-     */
-    JSONObject resetReportAttention(long sn, Integer newAttention);
-
-    // ───────── 报告内容加工 ─────────
-
     /**
      * 生成六维得分描述。
      *
@@ -743,80 +675,18 @@ public interface AIGCHost {
     String extractContent(String query);
 
     /**
-     * 查询绘画特征集。
+     * 按联系人个人知识库生成补充说明。
      *
-     * <p>与 {@link #queryPaintingReport(long, String)} 同理，特征集在报告
-     * 生成过程中先落在宿主内存态，此刻尚未入库，模块自行查询会漏掉
-     * 「正在生成中」的那一份。</p>
+     * <p>把该联系人的历史知识条目按问题相关度检索后拼成一段文本，
+     * 用于给模型补充个人背景。本方法已完成检索、筛选与拼接，
+     * 返回值可直接拼入提示词。</p>
      *
-     * @param reportSn 报告序列号。
-     * @return 返回特征集；不存在时返回 {@code null}。
+     * @param tokenCode 访问令牌码，用于定位联系人档案。
+     * @param query 问题。
+     * @param english 是否以英文提问（影响人称表述）。
+     * @return 返回补充文本；无知识库、无命中或联系人信息缺失时返回 <code>null</code>。
      */
-    PaintingFeatureSet getPaintingFeatureSet(long reportSn);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // ───────── 报告生成编排 ─────────
-
-    /**
-     * 生成绘画报告。
-     *
-     * <p><b>为何编排留在宿主而不在模块内</b>：报告生成需要「排队 + 起工作线程 +
-     * 按单元数限并发 + 写回存储」，其中队列与线程管理是宿主运行时职责；模块内
-     * 既拿不到这些设施，硬搬过去会要求 SPI 再暴露整套线程池与队列，能力面反而
-     * 扩大。因此模块只提供查询与数据能力，编排由宿主实现。</p>
-     *
-     * <p>该方法使宿主门面无需直接引用业务场景单例，从而消除「平台门面反向
-     * 依赖业务实现类」的方向倒置。</p>
-     *
-     * @param channel 会话频道。
-     * @param attribute 受测人属性。
-     * @param fileLabel 绘画文件。
-     * @param theme 分析主题。
-     * @param maxIndicators 最多输出的指标数。
-     * @param adjust 是否校正。
-     * @param retention 留存天数。
-     * @param remark 备注。
-     * @param listener 完成回调。
-     * @return 返回已入队的报告；入队失败时返回 {@code null}。
-     */
-    PaintingReport generatePaintingReport(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
-            Theme theme, int maxIndicators, boolean adjust, int retention, String remark,
-            PaintingReportListener listener);
-
-    /**
-     * 生成量表测验报告。
-     *
-     * @param channel 会话频道。
-     * @param scale 量表。
-     * @param language 会话语言。
-     * @param listener 完成回调。
-     * @return 返回已入队的报告；入队失败时返回 {@code null}。
-     */
-    ScaleReport generateScaleReport(AIGCChannel channel, Scale scale, Language language,
-            ScaleReportListener listener);
-
-    /**
-     * 按序列号读取量表。
-     *
-     * <p>与 {@link #generateScaleReport} 同属编排入口：门面在生成量表报告前
-     * 需先取量表本体，故一并经本接口取，避免门面直连业务场景。</p>
-     *
-     * @param sn 量表序列号。
-     * @return 返回量表；不存在时返回 {@code null}。
-     */
-    Scale getScale(long sn);
+    String generatePersonalKnowledge(String tokenCode, String query, boolean english);
 
     // ───────── 计算机视觉与绘画 ─────────
 
@@ -924,6 +794,35 @@ public interface AIGCHost {
     FileLabel performSpeakerDiarization(AuthToken authToken, FileLabel fileLabel, boolean preprocess,
             boolean storage, boolean jumpToFirst, VoiceDiarizationListener listener);
 
+    /**
+     * 读取一份说话人分离结果。
+     *
+     * <p><b>为何是宿主能力</b>：说话人分离是<b>平台级</b>能力，不属心理学业务 ——
+     * 分离任务由音频单元执行，结果写入宿主存储，宿主另有
+     * 「查询/删除分离结果」的入站动作。咨询业务只是它的消费者之一，
+     * 故此处只读不写，不把该表的归属迁进业务模块。</p>
+     *
+     * @param fileCode 音频文件码。
+     * @return 返回分离结果；不存在时返回 <code>null</code>。
+     */
+    VoiceDiarization readVoiceDiarization(String fileCode);
+
+    /**
+     * 写回分离结果的分析字段。
+     *
+     * @param diarization 分离结果，将被就地更新。
+     * @return 写入成功返回 <code>true</code>。
+     */
+    boolean updateVoiceDiarizationAnalysis(VoiceDiarization diarization);
+
+    /**
+     * 写回分离结果的督导建议字段。
+     *
+     * @param diarization 分离结果，将被就地更新。
+     * @return 写入成功返回 <code>true</code>。
+     */
+    boolean updateVoiceDiarizationSuggestion(VoiceDiarization diarization);
+
     // ───────── 对话历史与图表 ─────────
 
     /**
@@ -1002,54 +901,4 @@ public interface AIGCHost {
      */
     boolean semanticSearch(String query, SemanticSearchListener listener);
 
-    /**
-     * 按联系人个人知识库生成补充说明。
-     *
-     * <p>把该联系人的历史知识条目按问题相关度检索后拼成一段文本，
-     * 用于给模型补充个人背景。本方法已完成检索、筛选与拼接，
-     * 返回值可直接拼入提示词。</p>
-     *
-     * @param tokenCode 访问令牌码，用于定位联系人档案。
-     * @param query 问题。
-     * @param english 是否以英文提问（影响人称表述）。
-     * @return 返回补充文本；无知识库、无命中或联系人信息缺失时返回 <code>null</code>。
-     */
-    String generatePersonalKnowledge(String tokenCode, String query, boolean english);
-
-    /**
-     * 读取绘画推理数据。
-     *
-     * <p>产出内容为构图元素与关联边构成的图表数据，纯读，无副作用。</p>
-     *
-     * @param sn 报告序列号。
-     * @return 返回图表数据；报告不存在或尚未完成推理时返回 {@code null}。
-     */
-    JSONObject getPaintingInferenceData(long sn);
-
-    /**
-     * 预测绘画要素。
-     *
-     * @param token 访问令牌。
-     * @param fileCode 文件码。
-     * @return 返回绘画要素；预测失败时返回 {@code null}。
-     */
-    Painting getPredictedPainting(AuthToken token, String fileCode);
-
-    /**
-     * 预测绘画要素并输出带标注的图像。
-     *
-     * <p>与 {@link #getPredictedPainting(AuthToken, String)} 的区别：本方法
-     * 会把识别到的要素绘制到图上并保存为新文件，因此<b>有写副作用</b>，
-     * 且调用方需自行删除临时文件。</p>
-     *
-     * @param token 访问令牌。
-     * @param sn 报告序列号。
-     * @param boundingBox 是否输出外框。
-     * @param visualParam 是否输出视觉参数。
-     * @param probability 置信度阈值。
-     * @return 返回新生成图像的标签；预测失败时返回 {@code null}。
-     */
-    FileLabel getPredictedPainting(AuthToken token, long sn, boolean boundingBox, boolean visualParam,
-            double probability);
 }
-

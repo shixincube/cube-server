@@ -8,18 +8,18 @@ package cube.service.psychology.scene.subtask;
 
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
+import cube.aigc.listener.GenerateTextListener;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.ScaleReport;
 import cube.aigc.psychology.app.Link;
 import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.listener.ScaleReportListener;
+import cube.aigc.spi.AIGCHost;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
-import cube.aigc.spi.AIGCHost;
-import cube.aigc.listener.GenerateTextListener;
 import cube.service.psychology.scene.PsychologyScene;
-import cube.aigc.psychology.listener.ScaleReportListener;
 import cube.service.psychology.scene.SceneManager;
 import cube.util.TextUtils;
 import cube.util.TimeDuration;
@@ -455,7 +455,7 @@ public class QuestionnaireSubtask extends ConversationSubtask {
                 }
 
                 final Object mutex = new Object();
-                final ScaleReport scaleReport = QuestionnaireSubtask.this.host.generateScaleReport(channel, scaleTrack.scale,
+                final ScaleReport scaleReport = PsychologyScene.getInstance().generateScaleReport(channel, scaleTrack.scale,
                         channel.getLanguage(), new ScaleReportListener() {
                     @Override
                     public void onReportEvaluating(ScaleReport report) {

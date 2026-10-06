@@ -24,11 +24,12 @@ import cube.service.psychology.PsychologyModule;
  * 前两位由宿主代为产出。</p>
  *
  * <p><b>状态对齐是本动作的关键语义</b>：{@code state} 字段<b>不由客户端决定</b>——
- * L76 用库中当前值的 {@code state} 覆盖提交值，因此客户端无法借此把已删除
+ * 写回前用库中当前值的 {@code state} 覆盖提交值，因此客户端无法借此把已删除
  * 的记录「复活」。本实现必须保留这一步，它是软删除语义的一部分。</p>
  *
- * <p><b>⚠️ 两个失败分支回显的都是原始请求</b>：{@code NoData}（L70）与
- * {@code Failure}（L85）；仅 {@code catch} 分支回空对象（L91）。</p>
+ * <p><b>⚠️ 两个失败分支回显的都是原始请求</b>：{@code NoData} 与
+ * {@code Failure} 两处均以 {@code ctx.getRequest().data} 作为应答载荷；
+ * 仅 {@code catch} 分支回空对象。</p>
  *
  * <p><b>⚠️ 与 {@link AppUpdateScheduleAction} 的有意不对称</b>：日程侧不做状态对齐。
  * 本动作必须对齐，不得为了「统一风格」而改动。</p>
@@ -50,13 +51,13 @@ public final class AppUpdateCustomerAction implements AIGCActionTask {
 
             Customer current = module.readCustomer(cid, submitted.id);
             if (null == current) {
-                // ⚠️ 回显原始请求（L70）
+                // ⚠️ 回显原始请求
                 ctx.respond(AIGCStateCode.NoData, ctx.getRequest().data);
 
                 return AIGCStateCode.NoData;
             }
 
-            // 状态对齐：state 取库中当前值，客户端提交值被丢弃（L76）
+            // 状态对齐：state 取库中当前值，客户端提交值被丢弃
             submitted.state = current.state;
 
             if (module.writeCustomer(cid, submitted)) {
@@ -65,14 +66,14 @@ public final class AppUpdateCustomerAction implements AIGCActionTask {
                 return AIGCStateCode.Ok;
             }
 
-            // ⚠️ 回显原始请求（L85）
+            // ⚠️ 回显原始请求
             ctx.respond(AIGCStateCode.Failure, ctx.getRequest().data);
 
             return AIGCStateCode.Failure;
         } catch (Exception e) {
             Logger.e(this.getClass(), "", e);
 
-            // L91 回空对象
+            // 回空对象
             ctx.respondEmpty(AIGCStateCode.InvalidParameter);
 
             return AIGCStateCode.InvalidParameter;

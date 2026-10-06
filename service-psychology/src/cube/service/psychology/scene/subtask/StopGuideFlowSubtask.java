@@ -6,20 +6,18 @@
 
 package cube.service.psychology.scene.subtask;
 
-import cube.aigc.spi.AIGCHost;
 import cube.aigc.ModelConfig;
 import cube.aigc.guidance.AbstractGuideFlow;
+import cube.aigc.listener.GenerateTextListener;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.ConversationRelation;
 import cube.aigc.psychology.composition.Subtask;
+import cube.aigc.spi.AIGCHost;
 import cube.common.entity.AIGCChannel;
 import cube.common.entity.ComplexContext;
 import cube.common.entity.GeneratingRecord;
 import cube.common.state.AIGCStateCode;
-import cube.aigc.listener.GenerateTextListener;
 import cube.service.psychology.scene.SceneManager;
-import cube.util.TimeDuration;
-import cube.util.TimeUtils;
 
 public class StopGuideFlowSubtask extends ConversationSubtask {
 

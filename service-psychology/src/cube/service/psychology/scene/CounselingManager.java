@@ -9,15 +9,15 @@ package cube.service.psychology.scene;
 import cell.util.collection.FlexibleByteBuffer;
 import cell.util.log.Logger;
 import cube.aigc.ModelConfig;
-import cube.aigc.spi.AIGCHost;
+import cube.aigc.listener.VoiceDiarizationListener;
 import cube.aigc.psychology.Attribute;
 import cube.aigc.psychology.Resource;
 import cube.aigc.psychology.Role;
 import cube.aigc.psychology.consultation.ConsultationTheme;
+import cube.aigc.spi.AIGCHost;
 import cube.auth.AuthToken;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
-import cube.aigc.listener.VoiceDiarizationListener;
 import cube.util.AudioUtils;
 import cube.util.FileUtils;
 import cube.util.TextUtils;
@@ -32,7 +32,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import cube.service.psychology.scene.StreamArchive;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CounselingManager {
@@ -143,7 +142,7 @@ public class CounselingManager {
     /**
      * 记录并处理语音流片段。
      *
-     * @param streamSink
+     * @param streamSink 语音流失水槽，提供流名与所属授权。
      */
     public void record(VoiceStreamSink streamSink) {
         Wrapper wrapper = this.wrapperMap.get(streamSink.getStreamName());
@@ -217,10 +216,10 @@ public class CounselingManager {
     /**
      * 归档数据。
      *
-     * @param authToken
-     * @param fileCode
-     * @param streamName
-     * @param index
+     * @param authToken 访问令牌，用于定位域名。
+     * @param fileCode 归档音频文件码。
+     * @param streamName 流名。
+     * @param index 分片序号。
      */
     public void archive(AuthToken authToken, String fileCode, String streamName, int index) {
         long timestamp = System.currentTimeMillis();
@@ -284,9 +283,9 @@ public class CounselingManager {
     /**
      * 停止流。
      *
-     * @param authToken
-     * @param streamName
-     * @return
+     * @param authToken 访问令牌，用于定位域名。
+     * @param streamName 流名。
+     * @return 返回语音流文件标签；无数据、时长不足 1 分钟或已停止时返回 <code>null</code>。
      */
     public FileLabel stopStream(AuthToken authToken, String streamName) {
         Wrapper wrapper = this.wrapperMap.get(streamName);
@@ -416,12 +415,12 @@ public class CounselingManager {
     /**
      * 查询咨询策略。
      *
-     * @param authToken
-     * @param theme
-     * @param attribute
-     * @param streamName
-     * @param index
-     * @return
+     * @param authToken 访问令牌，同时决定按联系人亲和选点。
+     * @param theme 咨询主题。
+     * @param attribute 受测者属性，含性别与年龄。
+     * @param streamName 流名。
+     * @param index 分片序号。
+     * @return 返回咨询策略；尚在生成中或无数据时返回 <code>null</code>。
      */
     public CounselingStrategy queryCounselingStrategy(AuthToken authToken, ConsultationTheme theme,
                                                       Attribute attribute, String streamName, int index) {
@@ -477,13 +476,13 @@ public class CounselingManager {
     /**
      * 查询咨询字幕。
      *
-     * @param authToken
-     * @param theme
-     * @param attribute
-     * @param consultingAction
-     * @param streamName
-     * @param index
-     * @return
+     * @param authToken 访问令牌，同时决定按联系人亲和选点。
+     * @param theme 咨询主题。
+     * @param attribute 受测者属性。
+     * @param consultingAction 咨询动作，决定生成哪一段字幕。
+     * @param streamName 流名。
+     * @param index 分片序号。
+     * @return 返回咨询字幕策略；尚在生成中或无数据时返回 <code>null</code>。
      */
     public CounselingStrategy queryCounselingCaption(AuthToken authToken, ConsultationTheme theme, Attribute attribute,
                                                      CounselingStrategy.ConsultingAction consultingAction,

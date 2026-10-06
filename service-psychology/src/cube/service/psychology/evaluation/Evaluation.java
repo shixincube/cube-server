@@ -27,14 +27,14 @@ public abstract class Evaluation {
     /**
      * 生成评估报告。
      *
-     * @return
+     * @return 返回评估报告。
      */
     public abstract EvaluationReport makeEvaluationReport();
 
     /**
      * 获取会话特征数据集。
      *
-     * @return
+     * @return 返回绘画特征集。
      */
     public abstract PaintingFeatureSet getPaintingFeatureSet();
 }

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <!-- 三方依赖：与宿主/插件模块同用仓库上一层目录 -->
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/../cube-server-dependencies" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/../cube-server-dependencies" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="service" />
+    <!-- ⚠️ 刻意依赖 service-psychology：本模块是全工程唯一允许在编译期
+         引用插件的地方。原因见 verify/build.xml 顶部的说明。
+         service 模块本身【不得】加这条依赖（见 service/service.iml）。 -->
+    <orderEntry type="module" module-name="service-psychology" />
+  </component>
+</module>

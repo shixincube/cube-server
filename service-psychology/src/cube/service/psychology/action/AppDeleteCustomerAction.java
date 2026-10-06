@@ -31,8 +31,9 @@ import cube.service.psychology.PsychologyModule;
  * 无锁无事务，两个并发删除可能丢失其中一次的写入。这是<b>既有</b>缺陷
  * （{@code AppDeleteCustomerTask:65-76}），需由存储层修复。</p>
  *
- * <p><b>⚠️ 两个失败分支回显的都是原始请求</b>：{@code NoData}（L68）与
- * {@code Failure}（L83）；仅 {@code catch} 分支回空对象（L89）。</p>
+ * <p><b>⚠️ 两个失败分支回显的都是原始请求</b>：{@code NoData} 与
+ * {@code Failure} 两处均以 {@code ctx.getRequest().data} 作为应答载荷；
+ * 仅 {@code catch} 分支回空对象。</p>
  */
 public final class AppDeleteCustomerAction implements AIGCActionTask {
 
@@ -45,20 +46,20 @@ public final class AppDeleteCustomerAction implements AIGCActionTask {
         }
 
         try {
-            // 刻意不判空：data 为 null 时 NPE，与L64 一致
+            // 刻意不判空：data 为 null 时抛 NPE，由 catch 分支收口
             long id = ctx.getRequest().data.getLong("id");
             long cid = ctx.getToken().getContactId();
             PsychologyModule module = (PsychologyModule) ctx.getModule();
 
             Customer customer = module.readCustomer(cid, id);
             if (null == customer) {
-                // ⚠️ 回显原始请求（L68）
+                // ⚠️ 回显原始请求，而非空对象
                 ctx.respond(AIGCStateCode.NoData, ctx.getRequest().data);
 
                 return AIGCStateCode.NoData;
             }
 
-            // 软删除：置状态位而非物理删除（L74）
+            // 软删除：置状态位而非物理删除
             customer.state = Customer.STATE_DELETE;
 
             if (module.writeCustomer(cid, customer)) {
@@ -67,14 +68,14 @@ public final class AppDeleteCustomerAction implements AIGCActionTask {
                 return AIGCStateCode.Ok;
             }
 
-            // ⚠️ 回显原始请求（L83）
+            // ⚠️ 回显原始请求，而非空对象
             ctx.respond(AIGCStateCode.Failure, ctx.getRequest().data);
 
             return AIGCStateCode.Failure;
         } catch (Exception e) {
             Logger.e(this.getClass(), "", e);
 
-            // L89 回空对象
+            // 回空对象，与上面两个失败分支不同
             ctx.respondEmpty(AIGCStateCode.InvalidParameter);
 
             return AIGCStateCode.InvalidParameter;

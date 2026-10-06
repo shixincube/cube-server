@@ -44,16 +44,13 @@ import cube.service.aigc.plugin.*;
 import cube.service.aigc.resource.Relay;
 import cube.service.aigc.spi.ModuleRegistry;
 import cube.service.aigc.unit.*;
+import cube.service.aigc.utils.UserProfileRenderer;
 import cube.service.auth.AuthService;
 import cube.service.auth.AuthServiceHook;
 import cube.service.contact.ContactHook;
 import cube.service.contact.ContactManager;
 import cube.service.contact.ContactMask;
 import cube.service.contact.MembershipSystem;
-import cube.service.psychology.scene.CopilotManager;
-import cube.service.psychology.scene.CounselingManager;
-import cube.service.psychology.scene.PromptBuilder;
-import cube.service.psychology.scene.ReportRenderer;
 import cube.storage.StorageType;
 import cube.util.*;
 import cube.util.tokenizer.Tokenizer;
@@ -295,12 +292,6 @@ public class AIGCService extends AbstractModule implements Generatable {
                 // 资源管理器
                 Explorer.getInstance().setup(AIGCService.this, tokenizer);
 
-                // 咨询管理器
-                CounselingManager.getInstance().start(AIGCService.this.getHost());
-
-                // 陪练管理器
-                CopilotManager.getInstance().start(AIGCService.this.getHost());
-
                 // 会员中心
                 MemberCenter.getInstance().start(AIGCService.this);
 
@@ -332,10 +323,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         if (null != theCellet && null != theCellet.getModuleRegistry()) {
             theCellet.getModuleRegistry().teardownAll();
         }
-
-        CounselingManager.getInstance().stop();
-
-        CopilotManager.getInstance().stop();
 
         MemberCenter.getInstance().stop();
 
@@ -411,8 +398,6 @@ public class AIGCService extends AbstractModule implements Generatable {
         if (null != theCellet && null != theCellet.getModuleRegistry()) {
             theCellet.getModuleRegistry().tick(now);
         }
-
-        CounselingManager.getInstance().onTick(now);
     }
 
     /**
@@ -735,6 +720,18 @@ public class AIGCService extends AbstractModule implements Generatable {
         }
 
         return theCellet.getAIGCHost();
+    }
+
+    /**
+     * 从音频处理队列中丢弃指定文件的待处理任务。
+     *
+     * <p>供插件在停止语音流时调用：队列里尚未开始做说话人分离的分片
+     * 若继续执行，会去读已被删除的文件。</p>
+     *
+     * @param fileCodes 文件码集合。
+     */
+    public void discardAudio(java.util.Collection<String> fileCodes) {
+        this.taskExecutor.discardAudio(fileCodes);
     }
 
     public AIGCStorage getStorage() {
@@ -1274,7 +1271,7 @@ public class AIGCService extends AbstractModule implements Generatable {
                 markdown.append(user.markdown());
                 Membership membership = ContactManager.getInstance().getMembershipSystem().getMembership(
                         authToken.getDomain(), user.getId(), Membership.STATE_NORMAL);
-                markdown.append(ReportRenderer.makeMembership(user, membership));
+                markdown.append(UserProfileRenderer.makeMembership(user, membership));
 
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTimeInMillis(System.currentTimeMillis());
@@ -2607,221 +2604,9 @@ public class AIGCService extends AbstractModule implements Generatable {
     }
 
     /**
-     * 分析语音流。
-     *
-     * @param authToken
-     * @param fileCode
-     * @param streamName
-     * @param index
-     * @param listener
-     * @return
-     */
-    public boolean analyseVoiceStream(AuthToken authToken, String fileCode, String streamName, int index,
-                                      VoiceStreamAnalysisListener listener) {
-        if (CounselingManager.getInstance().isOverDurationLimit(streamName)) {
-            Logger.i(this.getClass(), "#analyseVoiceStream - Over duration limit: " + streamName);
-            this.taskExecutor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    stopVoiceStream(authToken, streamName);
-                }
-            });
-            return false;
-        }
-
-        this.taskExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                // 归档
-                CounselingManager.getInstance().archive(authToken, fileCode, streamName, index);
-            }
-        });
-
-        final VoiceStreamSink streamSink = new VoiceStreamSink(streamName, index, fileCode);
-        streamSink.authToken = authToken;
-
-        List<VoiceStreamSink> list = this.waitingVoiceStreamSinks.computeIfAbsent(streamName, k -> new ArrayList<>());
-        synchronized (list) {
-            list.add(streamSink);
-        }
-
-        FileLabel fileLabel = this.performSpeakerDiarization(authToken, fileCode, false, false,
-                new VoiceDiarizationListener() {
-            @Override
-            public void onCompleted(FileLabel source, VoiceDiarization diarization) {
-                List<VoiceStreamSink> sinkList = waitingVoiceStreamSinks.get(streamName);
-                if (null != sinkList) {
-                    synchronized (sinkList) {
-                        sinkList.remove(streamSink);
-                    }
-                }
-
-                streamSink.setDiarization(diarization);
-                streamSink.setFileLabel(source);
-
-                if (Logger.isDebugLevel()) {
-                    Logger.d(this.getClass(), "#onCompleted - stream sink completed: " + fileCode);
-                }
-
-                listener.onCompleted(source, streamSink);
-
-                // 记录流
-                CounselingManager.getInstance().record(streamSink);
-            }
-
-            @Override
-            public void onFailed(FileLabel source, AIGCStateCode stateCode) {
-                List<VoiceStreamSink> sinkList = waitingVoiceStreamSinks.get(streamName);
-                if (null != sinkList) {
-                    synchronized (sinkList) {
-                        sinkList.remove(streamSink);
-                    }
-                }
-
-                listener.onFailed(source, stateCode);
-            }
-        });
-
-        return (null != fileLabel);
-    }
-
     /**
-     * 停止语音流处理。停止后不可恢复。
-     *
-     * @param authToken
-     * @param streamName
-     * @return
-     */
-    public boolean stopVoiceStream(AuthToken authToken, String streamName) {
-        JSONObject data = this.storage.readCounselingRecording(streamName);
-        if (null == data) {
-            // 直接停止
-            this.taskExecutor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    CounselingManager.getInstance().stopStream(authToken, streamName);
-                }
-            });
-
-            // 删除队列里未处理数据
-            List<VoiceStreamSink> sinkList = this.waitingVoiceStreamSinks.remove(streamName);
-            if (null != sinkList) {
-                Logger.d(this.getClass(), "#stopVoiceStream - Waiting size: " + sinkList.size());
-
-                // 将尚未处理的 Unit Meta 从队列里删除
-                List<String> fileCodes = new ArrayList<>();
-                for (VoiceStreamSink sink : sinkList) {
-                    fileCodes.add(sink.getFileCode());
-                }
-
-                // 将尚未处理的 Unit Meta 从队列里删除
-                this.taskExecutor.discardAudio(fileCodes);
-
-                // 45 秒后删除文件
-                new Timer().schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        for (VoiceStreamSink sink : sinkList) {
-                            deleteFile(authToken.getDomain(), sink.getFileCode());
-                        }
-                    }
-                }, 45 * 1000);
-            }
-
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
     /**
-     * 获取语音流文件。
-     *
-     * @param authToken
-     * @param streamName
-     * @return
-     */
-    public FileLabel getVoiceStreamFile(AuthToken authToken, String streamName) {
-        JSONObject data = this.storage.readCounselingRecording(streamName);
-        if (null == data) {
-            return null;
-        }
-
-        String fileCode = data.getString("fileCode");
-        FileLabel file = this.getFile(authToken.getDomain(), fileCode);
-        return file;
-    }
-
     /**
-     * 执行语音内容分析。
-     *
-     * @param authToken
-     * @param fileCode
-     * @param templateName
-     * @param parameters
-     * @return
-     */
-    public String performSpeechAnalysis(AuthToken authToken, String fileCode, String templateName,
-                                        Map<String, String> parameters) {
-        VoiceDiarization voiceDiarization = this.storage.readVoiceDiarization(fileCode);
-        if (null == voiceDiarization) {
-            Logger.w(this.getClass(), "#performSpeechAnalysis - No voice diarization: " + fileCode);
-            return null;
-        }
-
-        String prompt = null;
-        if (null == parameters || parameters.isEmpty()) {
-            PromptBuilder builder = new PromptBuilder(this.getHost(), templateName);
-            builder.put("original_transcript", voiceDiarization.buildSpeechText(true));
-            builder.put("interview_date", TimeUtils.formatDateString(voiceDiarization.getTimestamp(), Language.Chinese));
-            builder.put("interview_duration", TimeUtils.calcTimeDuration((long)(voiceDiarization.duration * 1000)).toHumanStringDHMS());
-            builder.put("interview_form", "线下");
-            prompt = builder.build();
-
-            if (null == prompt) {
-                Logger.w(this.getClass(), "#performSpeechAnalysis - No prompt template: " + templateName);
-                return null;
-            }
-        }
-        else {
-            // TODO XJW
-            return null;
-        }
-
-        GeneratingRecord result = this.syncGenerateText(authToken, ModelConfig.BAIZE_2_UNIT, prompt,
-                new GeneratingOption());
-        if (null == result) {
-            Logger.w(this.getClass(), "#performSpeechAnalysis - Generates failed: " + fileCode);
-            return null;
-        }
-
-        // 填写数据
-        if (templateName.equalsIgnoreCase("psy_supervise_record")) {
-            voiceDiarization.suggestion = result.answer;
-        }
-        else {
-            voiceDiarization.analysis = result.answer;
-        }
-
-        this.taskExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                if (templateName.equalsIgnoreCase("psy_organize_record")) {
-                    storage.updateVoiceDiarizationAnalysis(voiceDiarization);
-                }
-                else if (templateName.equalsIgnoreCase("psy_supervise_record")) {
-                    storage.updateVoiceDiarizationSuggestion(voiceDiarization);
-                }
-                else {
-                    storage.updateVoiceDiarizationAnalysis(voiceDiarization);
-                }
-            }
-        });
-
-        return result.answer;
-    }
-
     /**
      * 面部表情识别。
      *

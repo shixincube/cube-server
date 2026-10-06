@@ -78,12 +78,18 @@ public interface ActionContext {
     /**
      * 应答。
      *
-     * <p>幂等：重复调用只生效第一次，第二次记录 WARN。
+     * <p><b>非流式动作</b>（{@link ActionBinding#streaming} 为 {@code false}）：
+     * 幂等，重复调用只生效第一次，第二次记录 WARN。
      * 调用方无需为每个分支都应答——处理器返回后若尚未应答，
      * 宿主会以返回的状态码补一次空应答。</p>
      *
+     * <p><b>流式动作</b>（{@link ActionBinding#streaming} 为 {@code true}）：
+     * 可多次调用，每次产出一段，宿主不去重、返回后也不补空应答。
+     * 此时处理器<b>必须</b>自行保证「无论成功失败都至少应答一次」，
+     * 否则调用方会一直等待。</p>
+     *
      * @param code 状态码。
-     * @param data 应答数据，可为 <code>null</code>。
+     * @param data 应答数据，可为 {@code null}。
      */
     void respond(AIGCStateCode code, JSONObject data);
 

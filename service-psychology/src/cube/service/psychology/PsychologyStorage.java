@@ -8,7 +8,6 @@ package cube.service.psychology;
 
 import cell.core.talk.LiteralBase;
 import cell.util.log.Logger;
-import cube.service.psychology.scene.ContentTools;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.BigFivePersonality;
 import cube.aigc.psychology.algorithm.IndicatorRate;
@@ -19,6 +18,7 @@ import cube.aigc.psychology.consultation.ConsultationMethod;
 import cube.aigc.psychology.consultation.ConsultationScheduleState;
 import cube.aigc.psychology.consultation.ConsultationTheme;
 import cube.aigc.psychology.indicator.Indicator;
+import cube.auth.AuthToken;
 import cube.common.Language;
 import cube.common.Storagable;
 import cube.common.entity.Appointment;
@@ -50,7 +50,7 @@ import java.util.function.BiConsumer;
  * 因此本类中不允许出现任何 {@code cube.service.*} 的类型引用。</p>
  *
  * <p><b>六维描述生成</b>：报告的六维得分描述需要分词器与 TF-IDF 语料，
- * 而 {@link ContentTools#fillHexagonScoreDescription} 经宿主能力接口转发，
+ * 而该生成算法的实现体在宿主侧（{@code cube.service.aigc.utils.ContentTools}），经宿主能力接口转发，
  * 传入的分词器实例由宿主持有。因此本类不持有分词器，
  * 而是由宿主在打开存储前以 {@link BiConsumer} 注入一个「描述生成器」，
  * 从而在编译期彻底切断对宿主模块的依赖。</p>
@@ -88,6 +88,22 @@ public class PsychologyStorage implements Storagable {
     private final String scheduleTable = "psychology_schedule";
 
     private final String appointmentTable = "psychology_appointment";
+
+    /**
+     * 咨询录音归档表。
+     *
+     * <p><b>表名变更</b>：原为宿主 {@code aigc_counseling_recording}，
+     * 随咨询业务迁入本模块后改为 {@code psychology_counseling_recording}。</p>
+     *
+     * <p><b>为何要迁</b>：该表只被咨询流使用（写入方是
+     * {@code CounselingManager#stopStream}，读取方是
+     * {@code stopVoiceStream} 与 {@code getVoiceStreamFile}），
+     * 留在宿主存储会让咨询业务反过来依赖宿主。</p>
+     *
+     * <p>⚠️ <b>既有数据不会被自动迁移</b>：旧表在宿主库中留存，
+     * 新表在本模块的库中从空表开始。历史咨询录音需按需手工搬运。</p>
+     */
+    private final String counselingRecordingTable = "psychology_counseling_recording";
 
 //    private final String usageTable = "psychology_usage";
 
@@ -615,6 +631,39 @@ public class PsychologyStorage implements Storagable {
             })
     };
 
+    private final StorageField[] counselingRecordingFields = new StorageField[] {
+            new StorageField("id", LiteralBase.LONG, new Constraint[] {
+                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
+            }),
+            new StorageField("cid", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("domain", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("stream", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("timestamp", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("duration", LiteralBase.LONG, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("gender", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("age", LiteralBase.INT, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("theme", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            }),
+            new StorageField("file_code", LiteralBase.STRING, new Constraint[] {
+                    Constraint.NOT_NULL
+            })
+    };
+
 //    private final StorageField[] usageFields = new StorageField[] {
 //            new StorageField("id", LiteralBase.LONG, new Constraint[] {
 //                    Constraint.PRIMARY_KEY, Constraint.AUTOINCREMENT
@@ -686,6 +735,21 @@ public class PsychologyStorage implements Storagable {
         this.storage.close();
     }
 
+    /**
+     * 逐表检查并建表。
+     *
+     * <p><b>调用时机</b>：由 {@code PsychologyModule.setup()} 在
+     * {@link #open()} 之后、场景装配之前调用一次，<b>不在请求路径上</b>。
+     * 早前曾用「首次动作派发时惰性建表」以避开启动阻塞，现已改为
+     * 在 setup 内一次完成：{@code setup} 本就运行在单元安装阶段，
+     * 延后建表只会让「表是否存在」变成运行期变量，而建表逐表先判断
+     * 存在再创建、是幂等的，重复执行无害。</p>
+     *
+     * <p>首次部署要建十几张表（MySQL 下可能耗时数秒），稳态下只是
+     * 逐表存在性查询，很快。</p>
+     *
+     * @param domainNameList 本存储不按域分库，忽略该参数。
+     */
     @Override
     public void execSelfChecking(List<String> domainNameList) {
         if (!this.storage.exist(this.reportTable)) {
@@ -825,6 +889,12 @@ public class PsychologyStorage implements Storagable {
             // 不存在，建新表
             if (this.storage.executeCreate(this.appointmentTable, this.appointmentFields)) {
                 Logger.i(this.getClass(), "Created table '" + this.appointmentTable + "' successfully");
+            }
+        }
+
+        if (!this.storage.exist(this.counselingRecordingTable)) {
+            if (this.storage.executeCreate(this.counselingRecordingTable, this.counselingRecordingFields)) {
+                Logger.i(this.getClass(), "Created table '" + this.counselingRecordingTable + "' successfully");
             }
         }
 
@@ -2387,6 +2457,83 @@ public class PsychologyStorage implements Storagable {
         report.makeMarkdown();
 
         return report;
+    }
+
+    // ───────── 咨询录音归档 ─────────
+
+    /**
+     * 写入一条咨询录音记录。
+     *
+     * @param authToken 访问令牌。
+     * @param streamName 录音流名。
+     * @param timestamp 起始时间戳。
+     * @param duration 时长（毫秒）。
+     * @param attribute 受测人属性。
+     * @param theme 咨询主题。
+     * @param fileCode 录音文件码。
+     * @return 写入成功返回 <code>true</code>。
+     */
+    public boolean writeCounselingRecording(AuthToken authToken, String streamName, long timestamp,
+            long duration, Attribute attribute, ConsultationTheme theme, String fileCode) {
+        return (this.storage.executeInsert(this.counselingRecordingTable, new StorageField[] {
+                new StorageField("cid", authToken.getContactId()),
+                new StorageField("domain", authToken.getDomain()),
+                new StorageField("stream", streamName),
+                new StorageField("timestamp", timestamp),
+                new StorageField("duration", duration),
+                new StorageField("gender", attribute.gender),
+                new StorageField("age", attribute.age),
+                new StorageField("theme", theme.code),
+                new StorageField("file_code", fileCode)
+        }));
+    }
+
+    /**
+     * 按流名读取咨询录音记录。
+     *
+     * @param streamName 录音流名。
+     * @return 返回含 {@code stream} / {@code timestamp} / {@code duration} /
+     *         {@code theme} / {@code fileCode} 的对象；无记录时返回 <code>null</code>。
+     */
+    public JSONObject readCounselingRecording(String streamName) {
+        List<StorageField[]> storageFields = this.storage.executeQuery(this.counselingRecordingTable,
+                this.counselingRecordingFields, new Conditional[] {
+                        Conditional.createEqualTo("stream", streamName)
+                });
+        if (storageFields.isEmpty()) {
+            return null;
+        }
+
+        JSONObject result = new JSONObject();
+        Map<String, StorageField> data = StorageFields.get(storageFields.get(0));
+        result.put("stream", data.get("stream").getString());
+        result.put("timestamp", data.get("timestamp").getLong());
+        result.put("duration", data.get("duration").getLong());
+        result.put("theme", data.get("theme").getString());
+        result.put("fileCode", data.get("file_code").getString());
+
+        return result;
+    }
+
+    /**
+     * 按流名读取咨询录音的文件码。
+     *
+     * @param streamName 录音流名。
+     * @return 返回文件码；无记录时返回 <code>null</code>。
+     */
+    public String readCounselingRecordingFileCode(String streamName) {
+        List<StorageField[]> result = this.storage.executeQuery(this.counselingRecordingTable,
+                new StorageField[] {
+                        new StorageField("file_code", LiteralBase.STRING)
+                }, new Conditional[] {
+                        Conditional.createEqualTo("stream", streamName)
+                });
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        return result.get(0)[0].getString();
     }
 
     private List<EvaluationScore> filter(List<EvaluationScore> indicatorList, List<EvaluationScore> sources) {

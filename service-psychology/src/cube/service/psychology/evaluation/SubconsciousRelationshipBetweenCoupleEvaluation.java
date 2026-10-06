@@ -261,8 +261,8 @@ public class SubconsciousRelationshipBetweenCoupleEvaluation extends Evaluation 
     /**
      * 对关键词对应的指标进行评估。
      *
-     * @param words
-     * @return
+     * @param words 待评分的分词列表。
+     * @return 返回各指标得分；无有效分词时返回空列表。
      */
     public List<EvaluationScore> evaluateWords(List<String> words) {
         List<EvaluationScore> result = this.buildEmptyScoreList();
@@ -284,8 +284,8 @@ public class SubconsciousRelationshipBetweenCoupleEvaluation extends Evaluation 
     /**
      * 合并分数列表
      *
-     * @param input
-     * @return
+     * @param input 待合并的得分列表。
+     * @return 返回合并去重后的得分列表。
      */
     public List<EvaluationScore> mergeScoreList(List<EvaluationScore> input) {
         List<EvaluationScore> result = this.buildEmptyScoreList();
@@ -337,9 +337,9 @@ public class SubconsciousRelationshipBetweenCoupleEvaluation extends Evaluation 
     /**
      * 计算指标分。
      *
-     * @param paintingScores
-     * @param wordScores
-     * @return
+     * @param paintingScores 绘画维度得分。
+     * @param wordScores 词汇维度得分。
+     * @return 返回各指标的计算得分。
      */
     public List<Score> caleIndicatorScores(List<EvaluationScore> paintingScores, List<EvaluationScore> wordScores) {
         if (paintingScores.size() != SRBCIndicator.length() || wordScores.size() != SRBCIndicator.length()) {

@@ -9,15 +9,18 @@ package cube.service.psychology.scene;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
-import cube.aigc.ModelConfig;
-import cube.aigc.StrategyFlow;
-import cube.aigc.StrategyNode;
+import cube.aigc.*;
+import cube.aigc.cv.MatchSimilarityListener;
 import cube.aigc.psychology.*;
 import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.algorithm.PerceptronThing;
 import cube.aigc.psychology.algorithm.Representation;
 import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.listener.PaintingReportListener;
+import cube.aigc.psychology.listener.ScaleReportListener;
 import cube.aigc.psychology.material.Label;
+import cube.aigc.spi.AIGCHost;
+import cube.aigc.spi.AIGCPluginContextLite;
 import cube.auth.AuthConsts;
 import cube.auth.AuthToken;
 import cube.common.Language;
@@ -26,29 +29,12 @@ import cube.common.action.AIGCAction;
 import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.common.state.CVStateCode;
-import cube.service.psychology.scene.ComprehensiveReportWorker;
-import cube.service.psychology.scene.TemplateArticleBuilder;
-import cube.common.entity.Material;
-import cube.aigc.Generatable;
-import cube.aigc.Tokenizable;
-import cube.aigc.spi.AIGCPluginContextLite;
-import cube.aigc.spi.AIGCHost;
-import cube.aigc.psychology.listener.PaintingReportListener;
-import cube.aigc.psychology.listener.ScaleReportListener;
+import cube.service.psychology.EvaluationWorker;
+import cube.service.psychology.PsychologyStorage;
+import cube.service.psychology.evaluation.*;
 import cube.service.psychology.scene.node.DetectTeenagerQueryStrategyNode;
 import cube.service.psychology.scene.node.TeenagerProblemClassificationNode;
 import cube.service.psychology.scene.node.TeenagerQueryNode;
-import cube.aigc.cv.MatchSimilarityListener;
-import cube.service.psychology.evaluation.AttachmentStyleEvaluation;
-import cube.service.psychology.evaluation.Evaluation;
-import cube.service.psychology.EvaluationWorker;
-import cube.service.psychology.evaluation.HTPEvaluation;
-import cube.service.psychology.evaluation.PersonInRainEvaluation;
-import cube.service.psychology.evaluation.ScaleEvaluation;
-import cube.service.psychology.evaluation.SocialIcebreakerGameEvaluation;
-import cube.service.psychology.PsychologyStorage;
-import cube.storage.StorageType;
-import cube.util.ConfigUtils;
 import cube.util.FileUtils;
 import cube.util.ImageUtils;
 import cube.util.TextUtils;
@@ -59,10 +45,6 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import cube.service.psychology.scene.ComprehensiveReportListener;
-import cube.service.psychology.scene.PaintingTemplateArticleListener;
-import cube.service.psychology.scene.PaintingUtils;
-import cube.service.psychology.scene.PromptRevolver;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -311,6 +293,36 @@ public class PsychologyScene {
     }
 
     /**
+     * 注入一份报告到内存表，仅供冒烟测试使用。
+     *
+     * <p><b>为何需要它</b>：报告的运行态读取（命中 / 未命中 / 队列位置 /
+     * 导出形态）此前是经宿主能力接口回调本场景的，测试便可在宿主桩里
+     * 构造报告返回给动作。改为动作直调场景后，那条注入路径不复存在，
+     * 而报告<b>本来就在本场景的内存表里</b>——测试直接注入此处即可，
+     * 比经外部桩往返更贴近真实形态。</p>
+     *
+     * <p>生产代码不应使用。</p>
+     *
+     * @param report 待注入的报告。
+     */
+    public void putReportForTest(Report report) {
+        if (null == report) {
+            return;
+        }
+
+        this.reportMap.put(report.sn, report);
+    }
+
+    /**
+     * 清空内存表中的报告，仅供冒烟测试在用例之间隔离状态。
+     *
+     * <p>生产代码不应使用。</p>
+     */
+    public void clearReportsForTest() {
+        this.reportMap.clear();
+    }
+
+    /**
      * 上次执行报告保留期刷新的时刻。
      *
      * <p>{@link #onTick(long)} 每小时刷新一次入库报告的留存策略。
@@ -491,9 +503,9 @@ public class PsychologyScene {
     /**
      * 修改报告备注。
      *
-     * @param reportSn
-     * @param remark
-     * @return
+     * @param reportSn 报告序列号。
+     * @param remark 新备注。
+     * @return 返回更新后的报告；更新失败或报告不存在时返回 {@code null}。
      */
     public PaintingReport modifyPaintingReportRemark(long reportSn, String remark) {
         if (this.storage.updatePsychologyReportRemark(reportSn, remark)) {
@@ -507,16 +519,16 @@ public class PsychologyScene {
     /**
      * 根据主题生成评测报告。
      *
-     * @param channel
-     * @param attribute
-     * @param fileLabel
-     * @param theme
-     * @param maxIndicators
-     * @param adjust
+     * @param channel 所属频道。
+     * @param attribute 受测者属性。
+     * @param fileLabel 绘画文件标签。
+     * @param theme 报告主题。
+     * @param maxIndicators 指标的最大条数。
+     * @param adjust 是否按指标强度调整措辞。
      * @param retention 保存天数
      * @param remark 备注
-     * @param listener
-     * @return
+     * @param listener 生成过程监听器。
+     * @return 返回已提交的绘画报告；入队失败或队列已满时返回 {@code null}。
      */
     public synchronized PaintingReport generatePaintingReport(AIGCChannel channel, Attribute attribute,
                                                               FileLabel fileLabel, Theme theme,
@@ -808,9 +820,9 @@ public class PsychologyScene {
     /**
      * 重置报告的关注等级数据。
      *
-     * @param reportSn
-     * @param newAttention
-     * @return
+     * @param reportSn 报告序列号。
+     * @param newAttention 目标关注等级；{@code null} 表示回滚到滚动建议。
+     * @return 返回重置后的报告；报告不存在时返回 {@code null}。
      */
     public PaintingReport resetReportAttention(long reportSn, Attention newAttention) {
         PaintingReport report = this.getPaintingReport(reportSn);
@@ -842,14 +854,14 @@ public class PsychologyScene {
     /**
      * 按照模板规则生成绘画报告内容。
      *
-     * @param channel
-     * @param attribute
-     * @param fileLabel
-     * @param theme
-     * @param templateName
-     * @param structured
-     * @param listener
-     * @return 返回报告序号。
+     * @param channel 所属频道。
+     * @param attribute 受测者属性。
+     * @param fileLabel 绘画文件标签。
+     * @param theme 报告主题。
+     * @param templateName 模板名。
+     * @param structured 是否输出结构化版本。
+     * @param listener 生成过程监听器。
+     * @return 返回报告序号；模板名非法时返回 {@code null}。
      */
     public TemplateArticleBuilder generatePaintingTemplateArticle(AIGCChannel channel, Attribute attribute, FileLabel fileLabel,
                                                                   Theme theme, String templateName, boolean structured,
@@ -943,8 +955,8 @@ public class PsychologyScene {
     /**
      * 获取绘画模板报告文章。
      *
-     * @param sn
-     * @return
+     * @param sn 报告序号。
+     * @return 返回文章；内存态与存储中均无记录时返回 {@code null}。
      */
     public ReportArticle getPaintingTemplateArticle(long sn) {
         TemplateArticleBuilder builder = this.articleBuilderMap.get(sn);
@@ -1115,8 +1127,8 @@ public class PsychologyScene {
     /**
      * 根据报告内容推荐量表。
      *
-     * @param reportSn
-     * @return
+     * @param reportSn 报告序列号。
+     * @return 返回推荐的量表；报告不存在时返回 {@code null}。
      */
     public Scale recommendScale(long reportSn) {
         PaintingReport report = this.getPaintingReport(reportSn);
@@ -1132,11 +1144,11 @@ public class PsychologyScene {
     /**
      * 生成量表报告。
      *
-     * @param channel
-     * @param scale
-     * @param language
-     * @param listener
-     * @return
+     * @param channel 所属频道。
+     * @param scale 量表，须已答完。
+     * @param language 输出语言。
+     * @param listener 生成过程监听器。
+     * @return 返回已提交的量表报告；量表未答完、重复提交或入队失败时返回 {@code null}。
      */
     public ScaleReport generateScaleReport(AIGCChannel channel, Scale scale, Language language,
                                            ScaleReportListener listener) {
@@ -1270,11 +1282,11 @@ public class PsychologyScene {
     /**
      * 生成融合内容。
      *
-     * @param channel
-     * @param theme
-     * @param comprehensives
-     * @param listener
-     * @return
+     * @param channel 所属频道。
+     * @param theme 综合评测主题，须支持综合评测。
+     * @param comprehensives 待评测的综合项列表。
+     * @param listener 生成过程监听器。
+     * @return 返回已提交的综合报告；主题不匹配、文件缺失或入队失败时返回 {@code null}。
      */
     public synchronized ComprehensiveReport generateComprehensive(AIGCChannel channel, Theme theme,
                                                                   List<Comprehensive> comprehensives,
@@ -1456,10 +1468,10 @@ public class PsychologyScene {
     /**
      * 构建基于上下文数据的提示词。
      *
-     * @param context
-     * @param query
-     * @param language
-     * @return
+     * @param context 会话上下文，提供关系与当前报告。
+     * @param query 本轮用户输入。
+     * @param language 输出语言。
+     * @return 返回提示词链；无匹配策略时返回 {@code null}。
      */
     public PromptRevolver revolve(ConversationContext context, String query, Language language) {
         QueryRevolver revolver = new QueryRevolver(this.host, this.storage);

@@ -7,27 +7,27 @@
 package cube.service.psychology;
 
 import cell.util.log.Logger;
-import cube.aigc.psychology.Attribute;
-import cube.aigc.psychology.PaintingReport;
-import cube.aigc.psychology.Resource;
+import cube.aigc.psychology.*;
+import cube.aigc.psychology.algorithm.Attention;
 import cube.aigc.psychology.app.ConsultationSchedule;
 import cube.aigc.psychology.app.Customer;
-import cube.aigc.psychology.composition.AnswerSheet;
-import cube.aigc.psychology.composition.PaintingLabel;
-import cube.aigc.psychology.composition.Scale;
-import cube.aigc.psychology.composition.ScaleResult;
-import cube.aigc.spi.AIGCHost;
-import cube.aigc.spi.AIGCSPI;
-import cube.aigc.spi.ActionBinding;
-import cube.aigc.spi.ActionModule;
-import cube.aigc.spi.ModuleDescriptor;
-import cube.aigc.spi.ModuleException;
+import cube.aigc.psychology.composition.*;
+import cube.aigc.psychology.listener.PaintingReportListener;
+import cube.aigc.psychology.listener.ScaleReportListener;
+import cube.aigc.spi.*;
 import cube.auth.AuthToken;
-import cube.service.psychology.action.*;
-import cube.service.psychology.scene.PsychologyScene;
+import cube.common.Language;
+import cube.common.entity.AIGCChannel;
+import cube.common.entity.FileLabel;
 import cube.common.state.AIGCStateCode;
+import cube.service.psychology.action.*;
+import cube.service.psychology.scene.CopilotManager;
+import cube.service.psychology.scene.CounselingManager;
+import cube.service.psychology.scene.PsychologyScene;
+import cube.service.psychology.scene.VoiceStreamService;
 import cube.storage.StorageType;
 import cube.util.ConfigUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Arrays;
@@ -68,7 +68,8 @@ import java.util.List;
  * {@code AbstractCellet} 执行器与宿主服务级线程池<b>都尚未创建</b>，
  * 因此 {@code setup} 内<b>严禁</b>调用 {@link AIGCHost#schedule}：
  * 该调用取不到执行器，会「记一条 WARN 后把任务丢弃」，既无异常也无失败标记。
- * 建表采用首次动作派发时惰性执行，见 {@link #ensureSelfChecked()}。</p>
+ * 建表在 {@code setup} 内一次性完成（{@code storage.open()} 之后、
+ * 场景装配之前），不推迟到首次动作派发。</p>
  *
  * <p><b>表结构单一来源</b>：16 张 {@code psychology_} 前缀表的定义随
  * {@link PsychologyStorage} 整体迁入本模块，插件与宿主共用同一份 DDL，
@@ -184,6 +185,34 @@ public final class PsychologyModule implements ActionModule {
 
     private final static String ACTION_CHECK_PAINTING = "checkPsychologyPainting";
 
+    private final static String ACTION_ANALYSE_VOICE_STREAM = "analyseVoiceStream";
+
+    private final static String ACTION_STOP_VOICE_STREAM = "stopVoiceStream";
+
+    private final static String ACTION_GET_VOICE_STREAM_FILE = "getVoiceStreamFile";
+
+    private final static String ACTION_SPEECH_ANALYSIS = "speechAnalysis";
+
+    private final static String ACTION_GET_TEMPLATE_ARTICLE = "getPsychologyTemplateArticle";
+
+    private final static String ACTION_GENERATE_TEMPLATE_ARTICLE = "generatePsychologyTemplateArticle";
+
+    private final static String ACTION_GET_COMPREHENSIVE = "queryPsychologyComprehensive";
+
+    private final static String ACTION_GENERATE_COMPREHENSIVE = "generatePsychologyComprehensive";
+
+    private final static String ACTION_CONVERSATION = "psychologyConversation";
+
+    private final static String ACTION_APPLY_COPILOT = "applyCopilot";
+
+    private final static String ACTION_DISPOSE_COPILOT = "disposeCopilot";
+
+    private final static String ACTION_SUBMIT_COPILOT_SHEET = "submitCopilotSheet";
+
+    private final static String ACTION_QUERY_COUNSELING_STRATEGY = "queryCounselingStrategy";
+
+    private final static String ACTION_QUERY_COUNSELING_CAPTION = "queryCounselingCaption";
+
     /**
      * 心理学私有存储器。
      *
@@ -197,11 +226,6 @@ public final class PsychologyModule implements ActionModule {
      * 实际生效的配置文件名，仅用于日志。
      */
     private String configFileName = "(not loaded)";
-
-    /**
-     * 建表是否已完成。首次动作派发时惰性执行，见 {@link #ensureSelfChecked()}。
-     */
-    private volatile boolean selfChecked = false;
 
     /**
      * 静态声明本模块的动作名。
@@ -241,7 +265,21 @@ public final class PsychologyModule implements ActionModule {
                 ACTION_REPORT_PART,
                 ACTION_MODIFY_REMARK,
                 ACTION_PAINTING,
-                ACTION_CHECK_PAINTING
+                ACTION_CHECK_PAINTING,
+                ACTION_ANALYSE_VOICE_STREAM,
+                ACTION_STOP_VOICE_STREAM,
+                ACTION_GET_VOICE_STREAM_FILE,
+                ACTION_SPEECH_ANALYSIS,
+                ACTION_GET_TEMPLATE_ARTICLE,
+                ACTION_GENERATE_TEMPLATE_ARTICLE,
+                ACTION_GET_COMPREHENSIVE,
+                ACTION_GENERATE_COMPREHENSIVE,
+                ACTION_CONVERSATION,
+                ACTION_APPLY_COPILOT,
+                ACTION_DISPOSE_COPILOT,
+                ACTION_SUBMIT_COPILOT_SHEET,
+                ACTION_QUERY_COUNSELING_STRATEGY,
+                ACTION_QUERY_COUNSELING_CAPTION
         );
     }
 
@@ -263,7 +301,10 @@ public final class PsychologyModule implements ActionModule {
                 Collections.emptyList(),
                 // 不依赖兄弟模块
                 Collections.emptyList(),
-                // setup 内只做「读配置 + new + open」，不含建表，实际耗时在百毫秒级
+                // setup 内含建表：读配置 + new + open + 逐表建表 + 场景装配。
+                // 建表逐表先判断存在再创建（幂等），稳态下只是存在性查询很快；
+                // 首次部署要执行十几张表的建表，MySQL 下可能耗时数秒，
+                // 故超时给到 30 秒。
                 30000L,
                 // 非可选：装载失败将使宿主记为「未就绪」
                 false);
@@ -272,6 +313,10 @@ public final class PsychologyModule implements ActionModule {
     @Override
     public void setup(AIGCHost host) throws ModuleException {
         // 严禁在此调用 host.schedule()：install() 阶段宿主线程池尚未创建
+        Logger.i(this.getClass(), "\n----------------------------------------" +
+                "\n** Module: " + PsychologyModule.NAME +
+                "\n** Version: " + PsychologyModule.VERSION +
+                "\n----------------------------------------");
         try {
             JSONObject config = this.readConfig();
 
@@ -294,22 +339,81 @@ public final class PsychologyModule implements ActionModule {
 
             this.storage.open();
 
+            // 建表：在此一次性完成，不做惰性推迟。
+            // ⚠️ 必须排在 storage.open() 之后（需要连接），且必须排在
+            //    setupScene() 之前 —— 场景装配会加载语料与量表，
+            //    而后者可能回读存储，表不存在会直接失败。
+            this.storage.execSelfChecking(null);
+
             // 把存储与宿主能力交给场景，并读入队列上限。
             // 场景是本模块内部的使用者（同一 jar 内引用，不违反零宿主依赖约束），
             // 它持有内存态的报告表与生成队列，插件动作经 SPI 回调它。
-            // ⚠️ 场景装配必须排在 storage.open() 之后：它内部会加载语料与量表，
+            // ⚠️ 场景装配必须排在建表之后：它内部会加载语料与量表，
             //    而后者可能回读存储。
             this.setupScene(host, config);
+
+            // 咨询与陪练两个管理器：注入宿主能力并启动。
+            // ⚠️ 排在场景之后：两者都经 SPI 回调宿主，而宿主的线程池在
+            //    install() 阶段尚未创建；放在此处可确保它们初始化时
+            //    场景与存储均已就绪。
+            CounselingManager.getInstance().start(host);
+            CopilotManager.getInstance().start(host);
+
+            // 语音流服务：承载分析/停止/归档查询三个入站动作的编排
+            VoiceStreamService.getInstance().setup(host, this.storage);
 
             // 只记录配置来源与存储类型，不输出配置内容（该配置文件含数据库凭据）
             Logger.i(this.getClass(), "#setup - Psychology storage opened, type: " + type
                     + ", config: " + this.configFileName);
         } catch (ModuleException e) {
+            this.rollbackSetup();
             throw e;
         } catch (Throwable t) {
             // 捕获 Throwable 而非 Exception：模块由第三方维护，
             // 加载期出现的 Error（如类缺失）同样不应让宿主启动失败
+            this.rollbackSetup();
             throw new ModuleException("#setup - Open psychology storage failed", t);
+        }
+    }
+
+    /**
+     * 回滚 {@link #setup(AIGCHost)} 中途失败留下的资源。
+     *
+     * <p>装载失败后宿主会跳过该模块，但已启动的组件仍持有宿主引用与线程，
+     * 不清理会留下「装载失败却仍在跑」的孤儿组件。</p>
+     *
+     * <p>不外抛：回滚自身失败不应掩盖原始的装载异常。</p>
+     */
+    private void rollbackSetup() {
+        try {
+            CopilotManager.getInstance().stop();
+        } catch (Throwable t) {
+            Logger.e(this.getClass(), "#rollbackSetup - Copilot manager stop FAILED",
+                    (t instanceof Exception) ? (Exception) t : null);
+        }
+
+        try {
+            CounselingManager.getInstance().stop();
+        } catch (Throwable t) {
+            Logger.e(this.getClass(), "#rollbackSetup - Counseling manager stop FAILED",
+                    (t instanceof Exception) ? (Exception) t : null);
+        }
+
+        try {
+            VoiceStreamService.getInstance().teardown();
+        } catch (Throwable t) {
+            Logger.e(this.getClass(), "#rollbackSetup - Voice stream teardown FAILED",
+                    (t instanceof Exception) ? (Exception) t : null);
+        }
+
+        if (null != this.storage) {
+            try {
+                this.storage.close();
+            } catch (Throwable t) {
+                Logger.e(this.getClass(), "#rollbackSetup - Storage close FAILED",
+                        (t instanceof Exception) ? (Exception) t : null);
+            }
+            this.storage = null;
         }
     }
 
@@ -410,7 +514,32 @@ public final class PsychologyModule implements ActionModule {
 
     @Override
     public void teardown() {
-        // 先停场景再关存储：场景会清空对存储的引用，反序会造成
+        // 停机顺序：咨询/陪练管理器 → 场景 → 存储。
+        // 前两者都持有内存态的流与陪练会话，且经 SPI 回调宿主；
+        // 若先关存储，它们在停止过程中回读存储会失败。
+        try {
+            CounselingManager.getInstance().stop();
+        } catch (Throwable t) {
+            Logger.e(this.getClass(), "#teardown - Counseling manager stop FAILED",
+                    (t instanceof Exception) ? (Exception) t : null);
+        }
+
+        try {
+            CopilotManager.getInstance().stop();
+        } catch (Throwable t) {
+            Logger.e(this.getClass(), "#teardown - Copilot manager stop FAILED",
+                    (t instanceof Exception) ? (Exception) t : null);
+        }
+
+        // 语音流服务持有待处理分片表，其中文件需经宿主删除，故排在存储关闭前
+        try {
+            VoiceStreamService.getInstance().teardown();
+        } catch (Throwable t) {
+            Logger.e(this.getClass(), "#teardown - Voice stream service teardown FAILED",
+                    (t instanceof Exception) ? (Exception) t : null);
+        }
+
+        // 再停场景：场景会清空对存储的引用，反序会造成
         // 「场景仍可能被访问而存储已关闭」的窗口
         try {
             PsychologyScene.getInstance().teardown();
@@ -425,7 +554,6 @@ public final class PsychologyModule implements ActionModule {
             this.storage = null;
         }
 
-        this.selfChecked = false;
         this.configFileName = "(not loaded)";
 
         Logger.i(this.getClass(), "#teardown - Psychology module is stopped");
@@ -436,6 +564,23 @@ public final class PsychologyModule implements ActionModule {
         // 心跳只在存储就绪时有意义：场景的维护动作会回读存储
         if (null == this.storage) {
             return;
+        }
+
+        try {
+            // 咨询流的心跳：超时关流与过期数据清理，排在场景之前——
+            // 它处理的是尚未成为报告的原始音频，与场景无耦合
+            CounselingManager.getInstance().onTick(now);
+        } catch (Throwable t) {
+            Logger.e(this.getClass(), "#onTick - Counseling manager tick FAILED",
+                    (t instanceof Exception) ? (Exception) t : null);
+        }
+
+        try {
+            // 语音流心跳：清理超期未完成的分片（分离在途但迟迟无回调）
+            VoiceStreamService.getInstance().onTick(now);
+        } catch (Throwable t) {
+            Logger.e(this.getClass(), "#onTick - Voice stream service tick FAILED",
+                    (t instanceof Exception) ? (Exception) t : null);
         }
 
         try {
@@ -585,31 +730,95 @@ public final class PsychologyModule implements ActionModule {
                 new ActionBinding(ACTION_CHECK_PAINTING, new CheckPsychologyPaintingAction(),
                         false, new AIGCStateCode[] {
                                 AIGCStateCode.NoToken, AIGCStateCode.InvalidParameter,
-                                AIGCStateCode.Ok}));
-    }
+                                AIGCStateCode.Ok}),
 
-    /**
-     * 惰性建表。
-     *
-     * <p>{@code execSelfChecking()} 在表已存在时只是逐表存在性查询，耗时很短；
-     * 但首次部署时要执行 16 次建表与若干改表，MySQL 下可能耗时数秒。
-     * 由于 {@code setup()} 运行在单元安装阶段（该阶段阻塞会顺延内核启动），
-     * 因此把建表推迟到首次动作派发。建表本身逐表先判断存在再创建，
-     * 是幂等的，重复调用无害。</p>
-     */
-    private void ensureSelfChecked() {
-        if (this.selfChecked) {
-            return;
-        }
+                // ── 语音流（录制咨询音频 → 说话人分离 → 归档）──
+                // 四者均为 false：宿主原任务类只校验「方言里有没有 token 参数」，
+                // 未校验有效性；交由骨架前置校验会把无效令牌改写成
+                // InconsistentToken，属线协议可见变更
+                new ActionBinding(ACTION_ANALYSE_VOICE_STREAM, new AnalyseVoiceStreamAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.InvalidParameter, AIGCStateCode.Failure,
+                                AIGCStateCode.Ok}),
+                new ActionBinding(ACTION_STOP_VOICE_STREAM, new StopVoiceStreamAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.InvalidParameter, AIGCStateCode.Failure,
+                                AIGCStateCode.Ok}),
+                new ActionBinding(ACTION_GET_VOICE_STREAM_FILE, new GetVoiceStreamFileAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.InvalidParameter, AIGCStateCode.Failure,
+                                AIGCStateCode.Ok}),
+                new ActionBinding(ACTION_SPEECH_ANALYSIS, new SpeechAnalysisAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.InvalidParameter, AIGCStateCode.Failure,
+                                AIGCStateCode.Ok}),
 
-        synchronized (this) {
-            if (this.selfChecked) {
-                return;
-            }
+                // ── 模板文章 ──
+                // requiresToken 均为 false：宿主原任务类自行判令牌且各自动作
+                // 的应答码不同（无 token 与令牌无效分别回 NoToken /
+                // InvalidParameter），交由骨架前置校验会改写为 InconsistentToken
+                new ActionBinding(ACTION_GET_TEMPLATE_ARTICLE, new GetPsychologyTemplateArticleAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.NoToken, AIGCStateCode.NoData,
+                                AIGCStateCode.IllegalOperation, AIGCStateCode.Ok}),
+                new ActionBinding(ACTION_GENERATE_TEMPLATE_ARTICLE,
+                        new GeneratePsychologyTemplateArticleAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.NoToken, AIGCStateCode.InvalidParameter,
+                                AIGCStateCode.NotFound, AIGCStateCode.Failure,
+                                AIGCStateCode.IllegalOperation, AIGCStateCode.Ok}),
 
-            this.storage.execSelfChecking(null);
-            this.selfChecked = true;
-        }
+                // ── 心理融合评测 ──
+                new ActionBinding(ACTION_GET_COMPREHENSIVE, new GetPsychologyComprehensiveAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.NoToken, AIGCStateCode.IllegalOperation,
+                                AIGCStateCode.NoData, AIGCStateCode.InvalidParameter,
+                                AIGCStateCode.Ok}),
+                new ActionBinding(ACTION_GENERATE_COMPREHENSIVE,
+                        new GeneratePsychologyComprehensiveAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.NoToken, AIGCStateCode.InvalidParameter,
+                                AIGCStateCode.Failure, AIGCStateCode.IllegalOperation,
+                                AIGCStateCode.Ok}),
+
+                // ── 心理学对话（流式）──
+                // ⚠️ 唯一声明 streaming=true 的动作：一次请求可能 speak 两次
+                //    （先回受理，再回流式内容），故既不能去重也不能补空应答
+                new ActionBinding(ACTION_CONVERSATION, new PsychologyConversationAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.NoToken, AIGCStateCode.InvalidParameter,
+                                AIGCStateCode.Failure, AIGCStateCode.Ok}, true),
+
+                // ── 陪练 ──
+                // 三个动作为 false：宿主原任务类对「无 token 参数」与
+                // 「令牌解析不出」都回 NoToken，交由骨架前置校验会把后者
+                // 改写为 InconsistentToken，属线协议可见变更
+                new ActionBinding(ACTION_APPLY_COPILOT, new ApplyCopilotAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.NoToken, AIGCStateCode.Failure,
+                                AIGCStateCode.InvalidParameter, AIGCStateCode.Ok}),
+                new ActionBinding(ACTION_DISPOSE_COPILOT, new DisposeCopilotAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.NoToken, AIGCStateCode.Failure,
+                                AIGCStateCode.InvalidParameter, AIGCStateCode.Ok}),
+                new ActionBinding(ACTION_SUBMIT_COPILOT_SHEET, new SubmitCopilotSheetAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.NoToken, AIGCStateCode.Failure,
+                                AIGCStateCode.InvalidParameter, AIGCStateCode.Ok}),
+
+                // ── 咨询策略与字幕 ──
+                // 为 false：宿主原任务类把「无 token 参数」与参数缺失
+                // 合并判为 InvalidParameter（不是 NoToken 也不是 InconsistentToken）
+                new ActionBinding(ACTION_QUERY_COUNSELING_STRATEGY,
+                        new QueryCounselingStrategyAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.InvalidParameter, AIGCStateCode.NoData,
+                                AIGCStateCode.Failure, AIGCStateCode.Ok}),
+                new ActionBinding(ACTION_QUERY_COUNSELING_CAPTION,
+                        new QueryCounselingCaptionAction(),
+                        false, new AIGCStateCode[] {
+                                AIGCStateCode.InvalidParameter, AIGCStateCode.NoData,
+                                AIGCStateCode.Failure, AIGCStateCode.Ok}));
     }
 
     /**
@@ -619,8 +828,6 @@ public final class PsychologyModule implements ActionModule {
      * @return 返回标签列表，无记录时返回空列表。
      */
     public List<PaintingLabel> readPaintingLabels(long sn) {
-        this.ensureSelfChecked();
-
         return this.storage.readPaintingLabels(sn);
     }
 
@@ -635,8 +842,6 @@ public final class PsychologyModule implements ActionModule {
      * @return 写入成功返回 <code>true</code>。
      */
     public boolean writePaintingLabels(long sn, List<PaintingLabel> labels) {
-        this.ensureSelfChecked();
-
         this.storage.deletePaintingLabel(sn);
 
         if (labels.isEmpty()) {
@@ -654,8 +859,6 @@ public final class PsychologyModule implements ActionModule {
      * @return 写入成功返回 <code>true</code>。
      */
     public boolean writePaintingReportState(long sn, int state) {
-        this.ensureSelfChecked();
-
         return this.storage.writePaintingManagementState(sn, state);
     }
 
@@ -671,8 +874,6 @@ public final class PsychologyModule implements ActionModule {
      * @return 返回未删除的客户数量。
      */
     public int countCustomers(long cid) {
-        this.ensureSelfChecked();
-
         return this.storage.countCustomers(cid);
     }
 
@@ -683,8 +884,6 @@ public final class PsychologyModule implements ActionModule {
      * @return 返回客户列表，无记录时返回空列表。
      */
     public List<Customer> readCustomers(long cid) {
-        this.ensureSelfChecked();
-
         return this.storage.readCustomers(cid);
     }
 
@@ -696,8 +895,6 @@ public final class PsychologyModule implements ActionModule {
      * @return 返回客户；不存在时返回 <code>null</code>。
      */
     public Customer readCustomer(long cid, long id) {
-        this.ensureSelfChecked();
-
         return this.storage.readCustomer(cid, id);
     }
 
@@ -714,8 +911,6 @@ public final class PsychologyModule implements ActionModule {
      * @return 写入成功返回 <code>true</code>。
      */
     public boolean writeCustomer(long cid, Customer customer) {
-        this.ensureSelfChecked();
-
         return this.storage.writeCustomer(cid, customer);
     }
 
@@ -728,8 +923,6 @@ public final class PsychologyModule implements ActionModule {
      * @return 返回未删除且落在时间窗内的日程数量。
      */
     public int countSchedules(long cid, long starting, long ending) {
-        this.ensureSelfChecked();
-
         return this.storage.countSchedules(cid, starting, ending);
     }
 
@@ -742,8 +935,6 @@ public final class PsychologyModule implements ActionModule {
      * @return 返回日程列表，无记录时返回空列表。
      */
     public List<ConsultationSchedule> readSchedules(long cid, long starting, long ending) {
-        this.ensureSelfChecked();
-
         return this.storage.readSchedules(cid, starting, ending);
     }
 
@@ -755,8 +946,6 @@ public final class PsychologyModule implements ActionModule {
      * @return 返回日程；不存在时返回 <code>null</code>。
      */
     public ConsultationSchedule readSchedule(long cid, long id) {
-        this.ensureSelfChecked();
-
         return this.storage.readSchedule(cid, id);
     }
 
@@ -768,8 +957,6 @@ public final class PsychologyModule implements ActionModule {
      * @return 写入成功返回 <code>true</code>。
      */
     public boolean writeSchedule(long cid, ConsultationSchedule schedule) {
-        this.ensureSelfChecked();
-
         return this.storage.writeSchedule(cid, schedule);
     }
 
@@ -816,8 +1003,6 @@ public final class PsychologyModule implements ActionModule {
      * @return 返回量表；不存在时返回 <code>null</code>。
      */
     public Scale getScale(long sn) {
-        this.ensureSelfChecked();
-
         return this.storage.readScale(sn);
     }
 
@@ -837,7 +1022,6 @@ public final class PsychologyModule implements ActionModule {
 
         scale.setAttribute(attribute);
 
-        this.ensureSelfChecked();
         this.storage.writeScale(scale);
 
         return scale;
@@ -861,7 +1045,6 @@ public final class PsychologyModule implements ActionModule {
 
         scale.submitAnswer(answerSheet);
 
-        this.ensureSelfChecked();
         this.storage.writeScale(scale);
         this.storage.writeAnswerSheet(answerSheet);
 
@@ -887,40 +1070,86 @@ public final class PsychologyModule implements ActionModule {
     }
 
     // ───────── 报告读取与控制 ─────────
+    //
+    // 这组能力全部落在本模块内：报告的运行态内存表与生成队列由
+    // PsychologyScene 持有，而场景与本模块同在一个 jar 内，
+    // 因此直接调用即可，无需经宿主能力接口中转。
+    //
+    // 【为何不再走 SPI】此前这组方法挂在 AIGCHost 上，实现体是
+    // 「宿主转发给插件场景」，而调用方是插件自己的 action ——
+    // 构成「插件 → SPI → 宿主 → 插件」的环路。环路不带来依赖方向上的
+    // 收益，却要求宿主编译期持有插件 jar，是反向依赖的根源。
+    // 删除后宿主不再引用任何插件类型，build.xml 得以移除插件 jar。
 
     /**
      * 查询绘画报告。
      *
-     * <p><b>为何不自建</b>：报告在生成过程中先落在宿主的内存表里，
-     * 此刻尚未入库；若本模块只查 {@link PsychologyStorage}，
-     * 调用方查「正在生成中」的报告会得到「不存在」，
-     * 而经由宿主接口能查到（并附带队列位置）。这是线协议可见的行为回归。
-     * 故整条读取经宿主完成，宿主持有内存表与队列的归属。</p>
-     *
-     * @param ctx 动作上下文。
      * @param sn 报告序列号。
      * @param format 导出格式：{@code compact} / {@code markdown} / {@code sections}。
      * @return 返回报告 JSON；不存在或导出失败时返回 <code>null</code>。
      */
-    public JSONObject queryPaintingReport(AIGCHost host, long sn, String format) {
-        return host.queryPaintingReport(sn, format);
+    public JSONObject queryPaintingReport(long sn, String format) {
+        PsychologyScene scene = this.getSceneOrNull();
+        if (null == scene) {
+            return null;
+        }
+
+        PaintingReport report = scene.getPaintingReport(sn);
+        if (null == report) {
+            return null;
+        }
+
+        try {
+            JSONObject json;
+            if ("markdown".equalsIgnoreCase(format)) {
+                json = report.exportMarkdown();
+            }
+            else if ("sections".equalsIgnoreCase(format)) {
+                json = report.exportReportSectionJSON();
+            }
+            else {
+                json = report.toCompactJSON();
+                // 所在队列位置：仅摘要形态需要，与迁移前一致
+                json.put("queuePosition", scene.getGeneratingQueuePosition(sn));
+            }
+
+            return json;
+        } catch (Exception e) {
+            Logger.e(this.getClass(), "#queryPaintingReport - Export failed, sn: " + sn, e);
+            return null;
+        }
+    }
+
+    /**
+     * 查询绘画报告实体。
+     *
+     * @param sn 报告序列号。
+     * @return 返回报告实体；不存在时返回 <code>null</code>。
+     */
+    public PaintingReport getPaintingReport(long sn) {
+        PsychologyScene scene = this.getSceneOrNull();
+        return (null == scene) ? null : scene.getPaintingReport(sn);
     }
 
     /**
      * 查询量表报告。
      *
-     * @param ctx 动作上下文。
      * @param sn 报告序列号。
      * @return 返回报告 JSON；不存在时返回 <code>null</code>。
      */
-    public JSONObject queryScaleReport(AIGCHost host, long sn) {
-        return host.queryScaleReport(sn);
+    public JSONObject queryScaleReport(long sn) {
+        PsychologyScene scene = this.getSceneOrNull();
+        if (null == scene) {
+            return null;
+        }
+
+        ScaleReport report = scene.getScaleReport(sn);
+        return (null == report) ? null : report.toJSON();
     }
 
     /**
      * 分页查询绘画报告。
      *
-     * @param ctx 动作上下文。
      * @param contactId 联系人 ID。
      * @param page 页码，从 0 开始。
      * @param size 每页条数。
@@ -928,45 +1157,236 @@ public final class PsychologyModule implements ActionModule {
      * @param state 报告状态；{@code -1} 表示不限。
      * @return 返回含 {@code total} 与 {@code list} 的对象。
      */
-    public JSONObject listPaintingReports(AIGCHost host, long contactId, int page, int size,
+    public JSONObject listPaintingReports(long contactId, int page, int size,
             boolean descending, int state) {
-        return host.listPaintingReports(contactId, page, size, descending, state);
+        PsychologyScene scene = this.getSceneOrNull();
+        if (null == scene) {
+            return null;
+        }
+
+        int num = (state == -1) ? scene.numPaintingReports(contactId)
+                : scene.numPaintingReports(contactId, state);
+
+        List<PaintingReport> list = (state == -1)
+                ? scene.getPaintingReports(contactId, page, size, descending)
+                : scene.getPaintingReportsWithState(contactId, page, size, descending, state);
+
+        JSONArray array = new JSONArray();
+        for (PaintingReport report : list) {
+            array.put(report.toCompactJSON());
+        }
+
+        JSONObject data = new JSONObject();
+        data.put("total", num);
+        data.put("page", page);
+        data.put("size", size);
+        data.put("list", array);
+
+        return data;
     }
 
     /**
      * 查询量表报告列表。
      *
-     * @param ctx 动作上下文。
      * @param contactId 联系人 ID。
      * @param descending 是否倒序。
      * @param state 报告状态；{@code -1} 表示不限。
      * @return 返回含 {@code total} 与 {@code list} 的对象。
      */
-    public JSONObject listScaleReports(AIGCHost host, long contactId, boolean descending, int state) {
-        return host.listScaleReports(contactId, descending, state);
+    public JSONObject listScaleReports(long contactId, boolean descending, int state) {
+        PsychologyScene scene = this.getSceneOrNull();
+        if (null == scene) {
+            return null;
+        }
+
+        int num = (state == -1) ? scene.numScaleReports(contactId)
+                : scene.numScaleReports(contactId, state);
+
+        List<ScaleReport> list = (state == -1)
+                ? scene.getScaleReports(contactId, descending)
+                : scene.getScaleReports(contactId, state, descending);
+
+        JSONArray array = new JSONArray();
+        for (ScaleReport report : list) {
+            array.put(report.toCompactJSON());
+        }
+
+        JSONObject data = new JSONObject();
+        data.put("total", num);
+        data.put("list", array);
+
+        return data;
     }
 
     /**
      * 停止报告生成。
      *
-     * @param ctx 动作上下文。
      * @param sn 报告序列号。
      * @return 返回被停止的报告 JSON；未生效时返回 <code>null</code>。
      */
-    public JSONObject stopReportGeneration(AIGCHost host, long sn) {
-        return host.stopReportGeneration(sn);
+    public JSONObject stopReportGeneration(long sn) {
+        PsychologyScene scene = this.getSceneOrNull();
+        if (null == scene) {
+            return null;
+        }
+
+        PaintingReport report = scene.stopGenerating(sn);
+        return (null == report) ? null : report.toCompactJSON();
     }
 
     /**
      * 重置报告关注等级。
      *
-     * @param ctx 动作上下文。
      * @param sn 报告序列号。
-     * @param attention 目标关注等级；<code>null</code> 表示回滚到滚动建议。
+     * @param newAttention 目标关注等级；<code>null</code> 表示回滚到滚动建议。
      * @return 返回重置后的报告 JSON；报告不存在或更新失败时返回 <code>null</code>。
      */
-    public JSONObject resetReportAttention(AIGCHost host, long sn, Integer attention) {
-        return host.resetReportAttention(sn, attention);
+    public JSONObject resetReportAttention(long sn, Integer newAttention) {
+        PsychologyScene scene = this.getSceneOrNull();
+        if (null == scene) {
+            return null;
+        }
+
+        Attention attention = (null == newAttention) ? null : Attention.parse(newAttention);
+        PaintingReport report = scene.resetReportAttention(sn, attention);
+        return (null == report) ? null : report.toCompactJSON();
+    }
+
+    /**
+     * 查询绘画特征集。
+     *
+     * @param reportSn 报告序列号。
+     * @return 返回特征集；不存在时返回 <code>null</code>。
+     */
+    public PaintingFeatureSet getPaintingFeatureSet(long reportSn) {
+        PsychologyScene scene = this.getSceneOrNull();
+        return (null == scene) ? null : scene.getPaintingFeatureSet(reportSn);
+    }
+
+    /**
+     * 读取绘画推理数据。
+     *
+     * @param sn 报告序列号。
+     * @return 返回推理数据；报告不存在或尚未完成推理时返回 <code>null</code>。
+     */
+    public JSONObject getPaintingInferenceData(long sn) {
+        PsychologyScene scene = this.getSceneOrNull();
+        if (null == scene) {
+            return null;
+        }
+
+        // 绘画推理数据不依赖令牌，故不传
+        return scene.getPaintingInferenceData(null, sn);
+    }
+
+    /**
+     * 预测绘画要素。
+     *
+     * @param token 访问令牌。
+     * @param fileCode 文件码。
+     * @return 返回绘画要素；预测失败时返回 <code>null</code>。
+     */
+    public Painting getPredictedPainting(AuthToken token, String fileCode) {
+        PsychologyScene scene = this.getSceneOrNull();
+        if (null == scene || null == token || null == fileCode) {
+            return null;
+        }
+
+        return scene.getPredictedPainting(token, fileCode);
+    }
+
+    /**
+     * 预测绘画要素并输出带标注的图像。
+     *
+     * @param token 访问令牌。
+     * @param sn 报告序列号。
+     * @param boundingBox 是否输出外框。
+     * @param visualParam 是否输出视觉参数。
+     * @param probability 置信度阈值。
+     * @return 返回新生成图像的标签；预测失败时返回 <code>null</code>。
+     */
+    public FileLabel getPredictedPainting(AuthToken token, long sn, boolean boundingBox,
+            boolean visualParam, double probability) {
+        PsychologyScene scene = this.getSceneOrNull();
+        if (null == scene || null == token) {
+            return null;
+        }
+
+        return scene.getPredictedPainting(token, sn, boundingBox, visualParam, probability);
+    }
+
+    /**
+     * 生成绘画报告并入队。
+     *
+     * @param channel 会话频道。
+     * @param attribute 受测人属性。
+     * @param fileLabel 绘画文件。
+     * @param theme 分析主题。
+     * @param maxIndicators 最多输出的指标数。
+     * @param adjust 是否校正。
+     * @param retention 留存天数。
+     * @param remark 备注。
+     * @param listener 完成回调。
+     * @return 返回已入队的报告；入队失败时返回 <code>null</code>。
+     */
+    public PaintingReport generatePaintingReport(AIGCChannel channel, Attribute attribute,
+            FileLabel fileLabel, Theme theme, int maxIndicators, boolean adjust, int retention,
+            String remark, PaintingReportListener listener) {
+        PsychologyScene scene = this.getSceneOrNull();
+        if (null == scene) {
+            return null;
+        }
+        if (null == channel || null == attribute || null == fileLabel) {
+            Logger.w(this.getClass(), "#generatePaintingReport - Channel, attribute or file is NULL");
+            return null;
+        }
+
+        return scene.generatePaintingReport(channel, attribute, fileLabel, theme, maxIndicators,
+                adjust, retention, remark, listener);
+    }
+
+    /**
+     * 生成量表测验报告并入队。
+     *
+     * @param channel 会话频道。
+     * @param scale 量表。
+     * @param language 会话语言。
+     * @param listener 完成回调。
+     * @return 返回已入队的报告；入队失败时返回 <code>null</code>。
+     */
+    public ScaleReport generateScaleReport(AIGCChannel channel, Scale scale, Language language,
+            ScaleReportListener listener) {
+        PsychologyScene scene = this.getSceneOrNull();
+        if (null == scene) {
+            return null;
+        }
+        if (null == channel || null == scale) {
+            Logger.w(this.getClass(), "#generateScaleReport - Channel or scale is NULL");
+            return null;
+        }
+
+        return scene.generateScaleReport(channel, scale, language, listener);
+    }
+
+    /**
+     * 取得已装配的场景。
+     *
+     * <p>场景由本模块的 {@link #setup(AIGCHost)} 装配，早于任何一次动作派发；
+     * 但若模块因配置缺失等原因未装载成功，场景会保持未装配状态。
+     * 此处返回 <code>null</code> 让调用方回明确失败，
+     * 而不是让空引用异常被动作执行层 catch 成无信息的 {@code Failure}。</p>
+     *
+     * @return 返回已装配的场景；未装配时返回 <code>null</code>。
+     */
+    private PsychologyScene getSceneOrNull() {
+        PsychologyScene scene = PsychologyScene.getInstance();
+        if (!scene.isReady()) {
+            Logger.e(this.getClass(), "#getSceneOrNull - Psychology scene is NOT ready, "
+                    + "the business module is probably NOT loaded");
+            return null;
+        }
+
+        return scene;
     }
 
     // ───────── 报告内容与备注 ─────────
@@ -985,8 +1405,6 @@ public final class PsychologyModule implements ActionModule {
      * @return 返回更新后的报告；更新失败或报告不存在时返回 <code>null</code>。
      */
     public PaintingReport modifyReportRemark(long reportSn, String remark) {
-        this.ensureSelfChecked();
-
         if (!this.storage.updatePsychologyReportRemark(reportSn, remark)) {
             return null;
         }

@@ -18,7 +18,7 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.service.aigc.AIGCService;
 import cube.aigc.listener.VoiceDiarizationListener;
-import cube.service.psychology.scene.VoiceDiarizationIndicator;
+import cube.service.aigc.utils.VoiceDiarizationIndicator;
 import cube.util.FileUtils;
 import cube.util.TextUtils;
 import cube.util.TimeUtils;

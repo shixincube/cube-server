@@ -6,16 +6,14 @@
 
 package cube.service.psychology.scene;
 
-import cube.aigc.spi.AIGCHost;
-import cube.service.psychology.scene.PsychologyScene;
 import cell.util.Utils;
 import cube.aigc.complex.attachment.Attachment;
 import cube.aigc.complex.attachment.ReportAttachment;
-import cube.aigc.guidance.EvaluationResult;
 import cube.aigc.psychology.PaintingReport;
 import cube.aigc.psychology.composition.ConversationContext;
 import cube.aigc.psychology.composition.Question;
 import cube.aigc.psychology.composition.Scale;
+import cube.aigc.spi.AIGCHost;
 import cube.common.entity.AIGCChatHistory;
 import cube.common.entity.AttachmentResource;
 import cube.common.entity.Chart;
@@ -98,9 +96,9 @@ public class SceneManager {
     /**
      * 按照聊天记录方式查询。
      *
-     * @param relationId
-     * @param domainName
-     * @return
+     * @param relationId 关系 ID。
+     * @param domainName 域名。
+     * @return 返回关联聊天记录的报告列表；无记录时返回空列表。
      */
     public List<PaintingReport> queryReportsWithChat(long relationId, String domainName) {
         List<PaintingReport> result = new ArrayList<>();

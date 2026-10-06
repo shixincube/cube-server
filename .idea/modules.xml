@@ -16,6 +16,8 @@
       <module fileurl="file://$PROJECT_DIR$/service-multipointcomm/service-multipointcomm.iml" filepath="$PROJECT_DIR$/service-multipointcomm/service-multipointcomm.iml" />
       <module fileurl="file://$PROJECT_DIR$/service-psychology/service-psychology.iml" filepath="$PROJECT_DIR$/service-psychology/service-psychology.iml" />
       <module fileurl="file://$PROJECT_DIR$/service-riskmgmt/service-riskmgmt.iml" filepath="$PROJECT_DIR$/service-riskmgmt/service-riskmgmt.iml" />
+      <!-- 「宿主 × 插件」集成验证程序：唯一在编译期引用 service-psychology 的模块 -->
+      <module fileurl="file://$PROJECT_DIR$/verify/verify.iml" filepath="$PROJECT_DIR$/verify/verify.iml" />
     </modules>
   </component>
 </project>
