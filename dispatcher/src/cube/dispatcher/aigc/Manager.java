@@ -24,7 +24,6 @@ import cube.aigc.psychology.composition.AnswerSheet;
 import cube.aigc.psychology.composition.Scale;
 import cube.aigc.psychology.composition.ScaleResult;
 import cube.aigc.psychology.consultation.ConsultationTheme;
-import cube.aigc.spi.DispatcherExtension;
 import cube.auth.AuthToken;
 import cube.common.JSONable;
 import cube.common.Packet;
@@ -34,9 +33,9 @@ import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.PerformerListener;
 import cube.dispatcher.aigc.handler.*;
-import cube.dispatcher.aigc.handler.psychology.Chart;
 import cube.dispatcher.aigc.handler.app.App;
-import cube.dispatcher.aigc.handler.psychology.*;
+import cube.dispatcher.aigc.spi.DispatcherExtension;
+import cube.dispatcher.aigc.spi.DispatcherExtensions;
 import cube.dispatcher.stream.StreamType;
 import cube.dispatcher.util.Tickable;
 import cube.util.FileLabels;
@@ -151,7 +150,6 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new FacialExpressionRecognition());
         httpServer.addContextHandler(new SpeechDiarization());
         httpServer.addContextHandler(new SpeechDiarizationOperation());
-        httpServer.addContextHandler(new SpeechAnalysis());
         httpServer.addContextHandler(new KnowledgeQA());
         httpServer.addContextHandler(new KnowledgeProfiles());
         httpServer.addContextHandler(new KnowledgeInfos());
@@ -179,33 +177,22 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new QueryAppEvents());
         httpServer.addContextHandler(new QueryUsages());
         httpServer.addContextHandler(new ChatHistory());
-        httpServer.addContextHandler(new Chart());
-        httpServer.addContextHandler(new ChainOfThought());
         httpServer.addContextHandler(new TextToFile());
         httpServer.addContextHandler(new GetQueueCount());
         httpServer.addContextHandler(new ApplyStream());
-        httpServer.addContextHandler(new StopStream());
-        httpServer.addContextHandler(new QueryCounselingStrategy());
-        httpServer.addContextHandler(new QueryCounselingCaption());
-        httpServer.addContextHandler(new ApplyCopilot());
-        httpServer.addContextHandler(new DisposeCopilot());
-        httpServer.addContextHandler(new SubmitCopilotSheet());
 
-        httpServer.addContextHandler(new PsychologyReports());
-        httpServer.addContextHandler(new CheckPsychology());
-        httpServer.addContextHandler(new PsychologyStopping());
-        httpServer.addContextHandler(new PsychologyReportParts());
-        httpServer.addContextHandler(new PsychologyScales());
-        httpServer.addContextHandler(new PsychologyScaleOperation());
-        httpServer.addContextHandler(new PsychologyConversation());
-        httpServer.addContextHandler(new PsychologyPaintings());
-        httpServer.addContextHandler(new ResetReportAttention());
-        httpServer.addContextHandler(new PaintingLabels());
-        httpServer.addContextHandler(new PsychologyPaintingReportState());
-        httpServer.addContextHandler(new PsychologyReportPage());
-        httpServer.addContextHandler(new PsychologyModifyReportRemark());
-        httpServer.addContextHandler(new PsychologyComprehensives());
-        httpServer.addContextHandler(new PsychologyTemplateArticle());
+        // ⚠️ 语音基础能力的端点（语音识别 /aigc/speech/recognition、
+        // 说话人分离 /aigc/speech/diarization 及其 opt、情绪识别
+        // /aigc/speech/emotion、语音流申请 /aigc/stream/apply/）
+        // 属宿主功能实现，仍在本类内联注册，不经插件注入。
+        // 另：/aigc/chart/data 由宿主图表任务处理，亦保留在此。
+        //
+        // ⚠️ 与之相对，「分析语音内容」（/aigc/speech/analysis）与
+        // 「停止语音流」（/aigc/stream/stop/）路由的是心理学插件的动作，
+        // 注册权已移交插件；说话人视图 /aigc/chart/ 与 /aigc/cot/ 同理。
+        // ⚠️ 绘画图表数据（/aigc/chart/data）与说话人视图
+        //（/aigc/chart/、/aigc/cot/）中，前者由宿主图表任务处理，
+        // 保留在此；后两者路由插件动作，已移交插件。
 
         // 业务模块兜底通道 POST /aigc/module/{moduleName}/{actionName}。
         //
@@ -220,8 +207,9 @@ public class Manager implements Tickable, PerformerListener {
             Logger.i(Manager.class, "#setupHandler - Module fallback channel is DISABLED");
         }
 
-        // 业务模块的网关扩展：模块只声明自己拥有的 REST 前缀，handler 仍由本侧注册。
-        // 详见 DispatcherExtension 的 javadoc（为何不让插件直接提供 ContextHandler）。
+        // 业务模块的网关扩展：模块声明自己拥有的 REST 前缀，并提供自己的
+        // ContextHandler 实例；本侧只按类名反射装载、做路径去重后注册。
+        // 详见 cube.dispatcher.aigc.spi.DispatcherExtension 的 javadoc。
         this.dispatcherExtensions = DispatcherExtensions.load();
         Set<String> modulePrefixes = DispatcherExtensions.collectPrefixes(this.dispatcherExtensions);
         if (!modulePrefixes.isEmpty()) {
@@ -246,12 +234,10 @@ public class Manager implements Tickable, PerformerListener {
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Evaluate());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.KeepAlive());
         httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Inject());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.NewSchedule());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.DeleteSchedule());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Schedules());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.NewCustomer());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.DeleteCustomer());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Customers());
+
+        // 业务模块自有的 REST 端点：排在全部宿主端点之后，
+        // 使宿主端点在路径重复时天然优先（重复项会被记 ERROR 并跳过）。
+        DispatcherExtensions.registerEndpointHandlers(this.dispatcherExtensions, httpServer);
     }
 
     public JSONObject syncRequest(String token, AIGCAction action, JSONObject data) {

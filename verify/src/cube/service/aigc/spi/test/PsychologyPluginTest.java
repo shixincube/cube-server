@@ -120,6 +120,14 @@ public class PsychologyPluginTest {
             assertTrue("S2 语音监听器为 psychology-speech",
                     "psychology-speech".equals(registryHost.registeredSpeechListeners.get(0).getName()));
 
+            // 网关端点提供者：插件须能向 dispatcher 提供自己的 ContextHandler。
+            // ⚠️ 该类只在 dispatcher 侧加载（其编译期依赖 cube-dispatcher-*.jar），
+            //    本模块 classpath 刻意不含 dispatcher，故此处只断言「类已随插件产出」，
+            //    不去加载它；端点数量的运行期验证由 dispatcher 侧装载器负责。
+            assertTrue("S2 插件已产出端点提供者类",
+                    null != PsychologyPluginTest.class.getClassLoader()
+                            .getResource("cube/service/psychology/dispatcher/PsychologyEndpoints.class"));
+
             ActionModule module = registry.findModule("psychology");
             assertTrue("S2 可按名查找模块", null != module);
             if (null == module) {

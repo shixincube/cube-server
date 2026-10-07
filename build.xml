@@ -126,11 +126,12 @@
 	<!-- =================================================================== -->
 	<!-- Builds all service projects for debug                               -->
 	<!-- =================================================================== -->
-	<target name="build-service-debug" depends="build-common-debug">
-		<!-- 心理学业务模块插件。必须排在 service 之前：
-		     service 编译期引用 cube.service.psychology.PsychologyStorage，
-		     依赖 ../build/cube-service-psychology-3.0.jar。
-		     该模块编译期只依赖 cube-common-*.jar，因此不存在循环依赖。 -->
+	<target name="build-service-debug" depends="build-common-debug,build-dispatcher-debug">
+		<!-- 心理学业务模块插件。
+		     ⚠️ 必须排在 service 之前：该模块的 dispatcher 子包向网关注入 REST 端点，
+		     编译期引用 cube-dispatcher-*.jar，故 depends 里加了 build-dispatcher-debug。
+		     依赖方向单向：本模块 → dispatcher；dispatcher 侧零引用本模块任何类型，
+		     仅按配置类名反射装载。不存在循环依赖。 -->
 		<ant antfile="build.xml"
 				dir="${project-service-psychology.dir}"
 				inheritall="false"
@@ -176,7 +177,7 @@
 	<!-- =================================================================== -->
 	<!-- Builds all service projects for release                             -->
 	<!-- =================================================================== -->
-	<target name="build-service-release" depends="build-common-release">
+	<target name="build-service-release" depends="build-common-release,build-dispatcher-release">
 		<!-- 心理学业务模块插件。必须排在 service 之前，理由同 build-service-debug。 -->
 		<ant antfile="build.xml"
 				dir="${project-service-psychology.dir}"

@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -77,6 +78,21 @@ public class HttpServer {
 
     public void addContextHandler(ContextHandler handler) {
         this.handlers.add(handler);
+    }
+
+    /**
+     * 获取已注册的上下文处理器列表。
+     *
+     * <p>供业务模块扩展装载器做<b>路径去重</b>：Jetty 的
+     * {@code ContextHandlerCollection} 对同一路径是<b>后者覆盖前者</b>，
+     * 模块端点注册前须先看清宿主已占用哪些路径，使宿主天然优先。</p>
+     *
+     * <p>返回只读视图，外部不得直接改动。</p>
+     *
+     * @return 返回已注册处理器的只读列表。
+     */
+    public List<ContextHandler> getContextHandlers() {
+        return Collections.unmodifiableList(this.handlers);
     }
 
     public void setHandler(HandlerList handlerList) {

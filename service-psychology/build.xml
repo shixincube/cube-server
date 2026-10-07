@@ -29,6 +29,14 @@
 	<!-- 一旦本模块出现 cube.service.* 的 import，编译即失败，               -->
 	<!-- 而不是留到运行期才暴露。                                            -->
 	<!-- 宿主侧的编译期引用通过 service/build.xml 里的反向依赖满足。          -->
+	<!--                                                                     -->
+	<!-- ✅ 刻意【包含】cube-dispatcher-*.jar：                              -->
+	<!-- 本模块的 dispatcher 子包向网关注入 REST 端点，需构造 Jetty handler，-->
+	<!-- 故编译期必须能看到 handler 类。依赖方向是单向的：                    -->
+	<!-- 本模块 → dispatcher；dispatcher 侧【零引用】本模块任何类型，          -->
+	<!-- 仅按配置里的类名反射装载（见 DispatcherExtensions）。                 -->
+	<!-- 因此构建顺序必须先产出 cube-dispatcher-*.jar（顶层 build.xml 的      -->
+	<!-- build-service-psychology-* 已 depends="build-dispatcher-*"）。       -->
 	<!-- =================================================================== -->
 	<path id="master-classpath">
 		<fileset dir="${lib.dir}">
@@ -36,6 +44,7 @@
 		</fileset>
 		<fileset dir="${dependencies.dir}">
 			<include name="cube-common-*.jar" />
+			<include name="cube-dispatcher-*.jar" />
 		</fileset>
 		<pathelement path="${build.classes}" />
 	</path>
