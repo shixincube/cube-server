@@ -24,46 +24,46 @@
 
 ```
                     ┌───────────────────────────────────────────┐
-   客户端 / 浏览器   │  Talk(7000) · WS(7070) · WSS(7077)        │
-   移动端 / 第三方   │  HTTP(7010) · HTTPS(7017) · Stream(7171)  │
+   客户端 / 浏览器    │  Talk(7000) · WS(7070) · WSS(7077)        │
+   移动端 / 第三方    │  HTTP(7010) · HTTPS(7017) · Stream(7171)  │
                     └───────────────────┬───────────────────────┘
                                         │
-                     ┌──────────────────▼──────────────────┐
-                     │        dispatcher  调度机           │
-                     │                                     │
-                     │  Performer  接入层连接器            │
-                     │    ├── Director 路由表（按 Cellet   │
-                     │    │    权重切分区间，加权随机选路） │
+                     ┌──────────────────▼───────────────────┐
+                     │         dispatcher  调度机            │
+                     │                                      │
+                     │  Performer  接入层连接器               │
+                     │    ├── Director 路由表（按 Cellet      │
+                     │    │    权重切分区间，加权随机选路）      │
                      │    ├── Token → Device → Director     │
-                     │    ├── Block   同步转发（轮询等应答）│
-                     │    ├── Transmission 异步回送映射     │
-                     │    └── StreamServer 大流量数据通道    │
-                     │                                     │
-                     │  Cellet：Auth / Contact / FileStorage│
-                     │    FileProcessor / Messaging / AIGC  │
-                     │    CV / Ferry / Hub / Robot / ...    │
-                     │                                     │
-                     │  Daemon 守护：心跳、超时、日志报告    │
-                     └──────────────────┬──────────────────┘
+                     │    ├── Block   同步转发（轮询等应答）    │
+                     │    ├── Transmission 异步回送映射        │
+                     │    └── StreamServer 大流量数据通道      │
+                     │                                       │
+                     │  Cellet：Auth / Contact / FileStorage │
+                     │    FileProcessor / Messaging / AIGC   │
+                     │    CV / Ferry / Hub / Robot / ...     │
+                     │                                       │
+                     │  Daemon 守护：心跳、超时、日志报告        │
+                     └──────────────────┬───────────────────┘
                                         │ Cell Talk 协议（6000）
-                     ┌──────────────────▼──────────────────┐
-                     │          service  服务单元           │
-                     │                                     │
+                     ┌──────────────────▼───────────────────┐
+                     │          service  服务单元            │
+                     │                                      │
                      │  ServiceCarpet → Kernel → Module     │
-                     │    ├── AIGC     模型编排 / 知识库    │
-                     │    ├── Auth     域与令牌             │
-                     │    ├── Contact  联系人 / 群组 / 会员 │
+                     │    ├── AIGC     模型编排 / 知识库      │
+                     │    ├── Auth     域与令牌              │
+                     │    ├── Contact  联系人 / 群组 / 会员   │
                      │    ├── FileStorage / FileProcessor   │
                      │    ├── Messaging / MultipointComm    │
                      │    ├── Conference / Hub / Signal     │
-                     │    ├── Ferry    摆渡与租约           │
-                     │    ├── Robot    机器人任务           │
-                     │    ├── CV       视觉计算接口         │
-                     │    └── Tokenizer 分词与关键词        │
+                     │    ├── Ferry    摆渡与租约            │
+                     │    ├── Robot    机器人任务            │
+                     │    ├── CV       视觉计算接口          │
+                     │    └── Tokenizer 分词与关键词         │
                      └──────────────────┬──────────────────┘
                                         │
                      ┌──────────────────▼──────────────────┐
-                     │  MySQL / 共享内存缓存 / 本地存储      │
+                     │   MySQL / 共享内存缓存 / 本地存储      │
                      └─────────────────────────────────────┘
 ```
 
@@ -71,11 +71,29 @@
 | --- | --- | --- |
 | 调度机 | `dispatcher/` | 接入、鉴权、路由、并发控制、REST/WS 接口、流式数据 |
 | 服务单元 | `service/` | 业务逻辑、模型编排、知识库、数据持久化 |
-| 公共库 | `common/` | 协议包、实体模型、动作枚举、存储与工具 |
+| 业务模块 | `service-psychology/` | 心理学业务模块（AIGC Module 形态），以插件 jar 装载，提供 37 个业务动作与 30 个 REST 端点 |
+| 公共库 | `common/` | 协议包、实体模型、动作枚举、模块 SPI、存储与工具 |
 | 控制台 | `console/` | Web 管理界面，管理/监视多个服务节点 |
 | 应用服务器 | `server-app/` | 独立应用型服务入口 |
 | 摆渡服务 | `ferryboat/`、`ferryhouse/` | 跨域消息摆渡与工作区 |
+| 验证程序 | `verify/` | 模块装载与场景存储的集成验证（全工程唯一同时引用插件与宿主的编译单元） |
 | 扩展服务 | `service-conference/`、`service-messaging/`、`service-multipointcomm/`、`service-filestorage/`、`service-fileprocessor/`、`service-riskmgmt/` | 以 jar 形式动态加载的独立服务单元 |
+
+### 业务模块的插件化边界（本仓库的一条硬约束）
+
+`dispatcher/` 与 `service/` 两个工程**不包含任何心理学代码**。心理学业务（含其 REST 端点实现）整体位于 `service-psychology/`，以 AIGC Module 形态装载。依赖方向**单向**：
+
+```
+service-psychology  ──编译期──▶  dispatcher   （构造网关端点 handler 所必需）
+service-psychology  ──运行期──▶  service      （经 cube.aigc.spi.* 与宿主交互）
+dispatcher / service  ──✗──▶  service-psychology   （零编译期引用）
+```
+
+- 插件 jar 放入 `deploy/libs/`，与宿主同一 ClassLoader；
+- 宿主与网关侧只持有 SPI 接口，按 `module.extensions` 配置的类名**反射装载**，不 import 插件任何类型；
+- 模块未装载时，其端点自然不存在（返回 404），宿主不提供任何降级兜底端点。
+
+详见 [5.7 模块 SPI 与端点注入](#57-模块-spi-与端点注入)。
 
 ---
 
@@ -91,7 +109,7 @@ cube-server/
 │   │   ├── DispatcherTask       # 调度任务抽象
 │   │   ├── Daemon               # 守护任务：心跳/超时/报告
 │   │   ├── stream/              # StreamServer 大流量通道
-│   │   ├── aigc/                # AIGC 接口管理器 + REST 处理器（97 个）
+│   │   ├── aigc/                # AIGC 接口管理器 + 通用 REST 处理器（宿主 63 个端点）
 │   │   ├── contact/             # 联系人接口
 │   │   ├── filestorage/         # 文件存取与分享页
 │   │   ├── fileprocessor/       # 媒体转码与信息隐写
@@ -103,16 +121,29 @@ cube-server/
 │   │   ├── cv/                  # 视觉计算
 │   │   ├── robot/               # 机器人回调
 │   │   ├── auth/                # 鉴权
-│   │   └── riskmgmt/            # 风控
+│   │   ├── riskmgmt/            # 风控
+│   │   ├── spi/                 # 业务模块 SPI：DispatcherExtension（端点扩展点）+ 装载器
+│   │   └── handler/             # 通用 REST 处理器（心理学端点不在此处，见 service-psychology）
 │   ├── assets/                  # 分享页、App 页、图表、水印等静态资源
 │   └── config/dispatcher.properties
+│
+├── service-psychology/         # 心理学业务模块（插件 jar，编译期依赖 dispatcher）
+│   └── src/cube/service/psychology/
+│       ├── PsychologyModule            # 模块入口：描述符、动作绑定、装载与卸载
+│       ├── PsychologyStorage           # 模块私有存储（建表在 setup 内一次完成）
+│       ├── action/                     # 37 个动作处理器，一动作一类
+│       ├── scene/                      # 业务场景：咨询、副驾、语音流、报告生成
+│       ├── evaluation/                 # 评测与综合报告
+│       ├── dataset/                    # 量表 / 问卷数据集
+│       ├── dispatcher/PsychologyEndpoints   # 向网关注入 30 个 REST 端点
+│       └── dispatcher/handler/         # 30 个端点实现（继承网关 AIGCHandler）
 │
 ├── service/                     # 服务单元（业务）
 │   ├── src/cube/service/
 │   │   ├── ServiceCarpet        # 容器监听器：授权校验、内核装配
 │   │   ├── Daemon               # 守护任务：状态报告、日志上报
 │   │   ├── Kernel / Module      # 模块容器
-│   │   ├── aigc/                # ★ AIGC 核心（240 个源文件）
+│   │   ├── aigc/                # ★ AIGC 平台能力（宿主 152 个源文件）
 │   │   ├── auth/                # 域、令牌、存储
 │   │   ├── contact/             # 联系人、群组、会员、积分统计
 │   │   ├── client/              # 服务端内部客户端（与网关互通）
@@ -123,17 +154,20 @@ cube-server/
 │   │   ├── signal/              # 信令服务
 │   │   └── tokenizer/           # 分词器（词典 + Viterbi + TF-IDF）
 │   ├── assets/                  # 提示词模板、策略、向导流、问卷、脚本模组
-│   ├── config/                  # 服务配置、存储配置、插件声明
+│   ├── config/                  # 服务配置、存储配置、模块声明
 │   ├── plugin/                  # 热插拔插件 jar
 │   └── lib/                     # 本地动态库
 │
-├── common/                      # 公共库：协议、实体、动作、存储、工具
+├── verify/                      # 集成验证：模块装载（44 断言）+ 插件契约（162 断言）
+│
+├── common/                      # 公共库：协议、实体、动作、模块 SPI、存储、工具
 ├── console/                     # 控制台 Web
 ├── server-app/                  # 应用服务器
 ├── ferryboat/ ferryhouse/       # 摆渡服务与工作区
 ├── deploy/                      # 部署产物与启停脚本
 ├── build.xml / Makefile         # Ant 构建入口
-└── Dockerfile                   # 容器化构建
+├── compile-check.sh             # 5 段全量编译验证（common → dispatcher → 插件 → service → verify）
+└── Dockerfile                # 容器化构建
 ```
 
 ---
@@ -203,18 +237,28 @@ cellets = Auth, Contact, FileStorage, FileProcessor, Messaging, AIGC, CV, Ferry
 
 **① REST / HTTP（默认 7010 / 7017）**
 
-AIGC 相关处理器共 97 个，由 `cube.dispatcher.aigc.Manager` 在启动时统一注册到 Jetty 上下文。主要分组：
+AIGC 相关端点共 **93** 条，由两条来源装配：
 
-| 分组 | 路径示例 | 说明 |
-| --- | --- | --- |
-| 对话与生成 | `/aigc/chat/`、`/aigc/channel/`、`/aigc/stop/`、`/aigc/cot/`、`/aigc/preinfer/` | 问答、通道、思维链、预推理 |
-| NLP | `/aigc/nlp/segmentation`、`/aigc/nlp/semantic`、`/aigc/nlp/summarization` | 分词、语义搜索、摘要 |
-| 多模态 | `/multimodal/base/`、`/multimodal/stream/`、`/aigc/text2file/`、`/aigc/facial/expression`、`/aigc/speech/*` | 多模态、文本生成文件、表情、语音识别/情感/说话人分割/谈话分析 |
-| 知识库 | `/aigc/knowledge/{new,delete,update,info,doc,import,remove,reset,backup,segment,qa,profile}`、`/aigc/knowledge/article/*` | 知识库生命周期、文档与文章管理 |
-| 心理学 | `/aigc/psychology/{check,converse,scale,scales,stop,comprehensive,template}`、`/aigc/psychology/report/*`、`/aigc/psychology/painting`、`/aigc/painting/label` | 量表、绘画、报告与模板文章 |
-| 心理咨询策略 | `/aigc/stream/strategy/`、`/aigc/stream/caption/`、`/aigc/copilot/{apply,dispose,sheet}` | 策略查询、副驾（Copilot） |
-| 应用层 | `/app/{user,session,verify,activate,membership,config,change,evaluate,inject,keepalive,version}`、`/app/customer/*`、`/app/schedule/*`、`/app/chat`、`/app/wordcloud`、`/app/asciiart`、`/app/emotion` | 移动端应用接口 |
-| 运维与文档 | `/aigc/history/`、`/aigc/usage/`、`/aigc/queue/`、`/aigc/event/`、`/doc/api/`、`/static/` | 历史、用量、队列、事件、接口文档 |
+- **宿主端点（63 条）** —— `cube.dispatcher.aigc.Manager#setupHandler()` 内联注册到 Jetty 上下文；
+- **业务模块端点（30 条）** —— 由模块插件经 `DispatcherExtension` 提供，网关在**自身端点之后**按 `getContextPath()` 去重注册（先注册者保留，故宿主天然优先）。
+
+主要分组：
+
+| 分组 | 路径示例 | 来源 | 说明 |
+| --- | --- | --- | --- |
+| 对话与生成 | `/aigc/chat/`、`/aigc/channel/`、`/aigc/stop/`、`/aigc/cot/`、`/aigc/preinfer/` | 部分模块 | 问答、通道、思维链、预推理 |
+| NLP | `/aigc/nlp/segmentation`、`/aigc/nlp/semantic`、`/aigc/nlp/summarization` | 宿主 | 分词、语义搜索、摘要 |
+| 多模态 | `/multimodal/base/`、`/multimodal/stream/`、`/aigc/text2file/`、`/aigc/facial/expression` | 宿主 | 多模态、文本生成文件、表情 |
+| 语音基础能力 | `/aigc/speech/recognition`、`/aigc/speech/diarization`、`/aigc/speech/diarization/opt/`、`/aigc/speech/emotion`、`/aigc/stream/apply/` | 宿主 | 语音识别、说话人分离、语音情绪识别、语音流申请 |
+| 知识库 | `/aigc/knowledge/{new,delete,update,info,doc,import,remove,reset,backup,segment,qa,profile}`、`/aigc/knowledge/article/*` | 宿主 | 知识库生命周期、文档与文章管理 |
+| 心理学 | `/aigc/psychology/{check,converse,scale,scales,stop,comprehensive,template}`、`/aigc/psychology/report/*`、`/aigc/psychology/painting`、`/aigc/painting/label` | **模块** | 量表、绘画、报告与模板文章 |
+| 语音流（咨询） | `/aigc/speech/analysis`、`/aigc/stream/stop/` | **模块** | 语音内容分析、停止语音流（分离与情绪识别由宿主完成） |
+| 说话人视图 | `/aigc/chart/`、`/aigc/cot/` | **模块** | 说话人图表与思维链 |
+| 心理咨询策略 | `/aigc/stream/strategy/`、`/aigc/stream/caption/`、`/aigc/copilot/{apply,dispose,sheet}` | **模块** | 策略查询、副驾（Copilot） |
+| 应用层 | `/app/{user,session,verify,activate,membership,config,change,evaluate,inject,keepalive,version}`、`/app/chat`、`/app/wordcloud`、`/app/asciiart`、`/app/emotion` | 宿主 | 移动端应用接口 |
+| 客户与日程 | `/app/customer/*`、`/app/schedule/*` | **模块** | 客户与预约日程 CRUD |
+| 运维与文档 | `/aigc/history/`、`/aigc/usage/`、`/aigc/queue/`、`/aigc/event/`、`/doc/api/`、`/static/` | 宿主 | 历史、用量、队列、事件、接口文档 |
+| 模块兜底通道 | `/aigc/module/{moduleName}/{actionName}` | 宿主 | 低频动作的透传通道，默认关闭（`module.rest.enabled`） |
 
 鉴权与设备信息通过请求头或路径携带：
 
@@ -228,7 +272,7 @@ AIGC 相关处理器共 97 个，由 `cube.dispatcher.aigc.Manager` 在启动时
 
 **② Cell Talk 协议（默认 7000）**
 
-面向长连接的客户端使用二进制协议，通过 `Packet` + `ActionDialect` 承载 `sn` / `name` / `data` / `state`。动作定义集中在 `common/src/cube/common/action/`，其中 `AIGCAction` 共 **124** 个动作常量。
+面向长连接的客户端使用二进制协议，通过 `Packet` + `ActionDialect` 承载 `sn` / `name` / `data` / `state`。动作定义集中在 `common/src/cube/common/action/`，其中 `AIGCAction` 共 **123** 个动作常量。
 
 **③ WebSocket / WSS（7070 / 7077）** 与 **Stream（7171）** 分别承载实时双向通信与大流量数据流。
 
@@ -273,9 +317,42 @@ director.1.weight=5
 robot.enabled=false
 robot.api=http://127.0.0.1:2280/event/callback/{token}
 robot.callback=http://127.0.0.1:7010/robot/event/{token}
+
+# 业务模块网关扩展（详见 3.8 与 5.5）
+module.extensions=cube.service.psychology.PsychologyDispatcherExtension,cube.service.psychology.dispatcher.PsychologyEndpoints
+module.rest.enabled=false
 ```
 
 扩展集群时，只需在 `director.N.*` 追加节点块并调整 `weight`，调度机会自动重算路由区间——**无需重启客户端**。
+
+⚠️ 插件 jar 必须与 `cube-dispatcher-3.0.jar` 同在 `deploy/libs/`。`ant build-debug` **不含 deploy 阶段**，改动插件后须再跑 `ant deploy`，否则 `Class.forName` 反射失败，端点静默不注册（只记一条 ERROR）。
+
+### 3.8 模块端点注入
+
+网关自身不感知任何业务模块。模块端点由两条配置驱动：
+
+```properties
+# 扩展实现类（逗号分隔），按类名反射装载
+module.extensions=<前缀声明类>,<端点提供者类>
+# 模块动作兜底通道开关
+module.rest.enabled=false
+```
+
+装载流程（`cube.dispatcher.aigc.spi.DispatcherExtensions`）：
+
+```
+读取 module.extensions → Class.forName → 实例化（须实现 DispatcherExtension）
+   ↓
+收集 getRestPrefixes()  → 前缀冲突检测（先声明者保留，仅用于诊断）
+   ↓
+宿主 63 条端点注册完毕
+   ↓
+逐个调用 getEndpointHandlers() → 按 getContextPath() 去重 → 注册
+   ├─ 路径重复：记 ERROR 并跳过（宿主优先）
+   └─ 单个扩展抛异常：记 ERROR，不影响其余扩展与网关启动
+```
+
+`DispatcherExtension` 的两个方法是 **`default` 方法**，只声明前缀的旧实现无需改动即可继续装载。路径一律以各 handler 自身的 `super(path)` 为准，扩展点不参与路径拼接，也不改写任何既有路径字符串——**REST 路径的兼容性由构造器保证，而非由注册框架保证**。
 
 ---
 
@@ -338,9 +415,9 @@ ServiceCarpet.cellDestroyed       → 卸载插件、关闭密码机、卸载缓
 
 ### 4.4 AIGC 服务单元
 
-AIGC 是服务单元的核心（240 个源文件），入口是 `AIGCCellet` → `AIGCService`。
+AIGC 是服务单元的核心（宿主侧 152 个源文件），入口是 `AIGCCellet` → `AIGCService`。宿主只承载**平台能力**与**模块 SPI 实现**，业务语义（心理学、咨询、副驾、语音流）全部在 `service-psychology/` 内。
 
-**AIGCCellet** 维护 `Responder` 队列：向调度机发出请求后，用 `sn` 匹配应答；`transmit(...)` 默认超时 3 分钟。
+**AIGCCellet** 维护 `Responder` 队列：向调度机发出请求后，用 `sn` 匹配应答；`transmit(...)` 默认超时 3 分钟。请求先经 `ActionRouter` 查是否由已装载模块处理，未命中再回退既有的 71 个 `task/` 分支。
 
 **AIGCService**（约 3600 行）提供的能力域：
 
@@ -359,28 +436,23 @@ AIGC 是服务单元的核心（240 个源文件），入口是 `AIGCCellet` →
 
 **知识库** 由 `KnowledgeFramework` / `KnowledgeBase` / `FrameworkWrapper` 组成，动作面覆盖新建、删除、更新、文档导入/移除、分段查询、激活/释放、重置、备份、文章增删改查与分类——即 Graph RAG 的数据侧骨架。
 
-**场景层**（22 个类）是业务语义的编排中心：
+**场景层**已随心理学业务迁入插件（`service-psychology/src/cube/service/psychology/scene/`，21 个类）：`PsychologyScene`（绘画报告、量表报告、模板文章）、`CounselingManager` / `CopilotManager`（咨询流程与副驾会话）、`VoiceStreamService`（语音流登记与归档）、`StreamArchive`、`EvaluationWorker` 等。宿主 `service/aigc/scene/` 目前为空。
 
-| 类 | 作用 |
-| --- | --- |
-| `SceneManager` | 通道级会话上下文与量表轨道（`ScaleTrack`）、聊天记录落库 |
-| `PsychologyScene` | 心理学场景主控：绘画报告、量表报告、模板文章 |
-| `CounselingManager` / `CopilotManager` | 咨询流程与副驾会话管理 |
-| `QueryRevolver` / `PromptRevolver` | 查询与提示词的轮转（Revolve）策略 |
-| `EvaluationWorker` / `EvaluationWorker`、`ComprehensiveReportWorker`、`ComprehensiveVerifier` | 评测与综合报告生成与校验 |
-| `ConversationWorker` / `StreamArchive` / `VoiceDiarizationIndicator` | 对话处理、流归档、说话人指示 |
-| `DigitalTwinMachine` | 数字孪生处理 |
-| `ContentTools` / `PromptBuilder` / `TemplateArticleBuilder` | 内容与提示词构建 |
+宿主保留的通用构件：`ContentTools` / `PromptBuilder`（内容与提示词构建）、`VoiceDiarizationIndicator`（说话人指标分析）、`UserProfileRenderer`。
+
+**语音基础能力**（语音识别、说话人分离、语音情绪识别）全部在宿主：分离由音频单元执行，结果写入 `voice_diarization` 表；宿主另有「查询/删除分离结果」的入站动作。业务模块经 SPI 只读该结果并回写分析字段。分离结果的**指标分析（内容语料正负面 / 中性）为可选功能**（`performSpeakerDiarization` 的 `sentiment` 参数），关闭时结果中的 `indicator` 保持 `null`。模块侧对**结果收尾**（如把说话人映射为「来访者 / 咨询师」）经 `SpeechModuleListener` 订阅完成，宿主不内置任何业务角色分类。
 
 **向导流（guidance）** 由 `GuideFlow`（继承 `AbstractGuideFlow`）实现，脚本层用 JS 引擎（Nashorn）加载 `service/assets/guidance/` 下的流程定义，配套 `Guides`、`Prompts`、`SkillRegistry` 三个注册表。
 
-**监听器（17 个）** 覆盖 `GenerateText`、`TextToImage`、`TextToFile`、`Summarization`、`SemanticSearch`、`RetrieveReRank`、`AutomaticSpeechRecognition`、`SpeechEmotionRecognition`、`VoiceDiarization`、`FacialExpressionRecognition`、`Multimodal`、`KnowledgeQA`、`KnowledgeProgress`、`ResetKnowledgeStore`、`ReadPage`、`ExtractKeywords` 等异步结果回调。
+**监听器（13 个）** 覆盖 `GenerateText`、`TextToImage`、`TextToFile`、`Summarization`、`SemanticSearch`、`RetrieveReRank`、`AutomaticSpeechRecognition`、`SpeechEmotionRecognition`、`FacialExpressionRecognition`、`Multimodal`、`KnowledgeQA`、`KnowledgeProgress`、`ResetKnowledgeStore`、`ReadPage`、`ExtractKeywords` 等异步结果回调。
 
 **插件（7 个）**：`NewFilePlugin`、`DeleteFilePlugin`、`InjectTokenPlugin`、`AppEventPlugin`、`KnowledgeBaseEventPlugin`、`ActivateKnowledgeBasePlugin`、`ContactEventPlugin`，用于把 AIGC 能力挂接到文件、令牌、事件、联系人等系统钩子上。
 
 **资源与检索**：`ResourceSearcher` 抽象 + `BingSearcher` / `BaiduSearcher` 实现（由 `aigc.properties` 的 `page.searcher` 选择）、`FastTokenizer`、`Relay`、`StageDirector`、`AtomCollider`、`AttachmentBuilder`。
 
-**任务层（109 个 Task）** 与 **数据层**（`AIGCStorage`、`LensDataToolkit`、`ReportDataset`、`LensDataset`、`MemberCenter`、`EventCenter`）。
+**任务层（71 个 Task）** 与 **数据层**（`AIGCStorage`、`LensDataToolkit`、`ReportDataset`、`MemberCenter`、`EventCenter`）。
+
+**模块 SPI 实现**（`aigc/spi/`，宿主侧）：`AIGCHostImpl`（把宿主能力暴露给模块）、`ActionRunner`（动作骨架：参数校验、令牌解析、异常兜底）、`ModuleRegistry`（按 `aigc-modules.properties` 发现、实例化、绑定动作、调用 `setup`）。装载序为 `enabled → 实例化 → 绑定动作 → setup`，**绑定早于 setup**；`setup` 失败回滚 `unbindAll`；任何模块失败都不阻断宿主启动。
 
 ---
 
@@ -527,6 +599,69 @@ scope: global
 
 > **新增一个技能的步骤**：在 `service/assets/skills/<name>/SKILL.md` 写好带 front-matter 的技能（`enabled: true`，按需声明 `keywords`）→ 若希望随仓库分发并自动入库，置 `skills.seed=true` 后重启服务；否则用 SQL 直接写入 `aigc_skill` 表（或在控制台侧接入管理界面）。发起请求时在 `categories` 里带上技能名即可启用，此后该会话自动沿用。
 
+### 5.7 模块 SPI 与端点注入
+
+业务模块（当前为心理学）以 **AIGC Module** 形态接入：独立工程、独立 jar、运行期装载，可按开关启停。宿主侧不感知任何模块类型，模块侧也不反向依赖宿主实现。
+
+**① 动作面：模块 SPI（`cube.aigc.spi.*`，位于 `common`）**
+
+| 接口 | 作用 |
+| --- | --- |
+| `ActionModule` | 模块入口：描述符、动作声明、`setup` / `teardown` / `onTick` |
+| `ModuleDescriptor` | 模块名、版本、SPI 版本、动作命名空间、REST 前缀、所需单元能力、兄弟依赖、装载超时、是否可选 |
+| `ActionBinding` | 单个动作的绑定关系：`requiresToken` 等 |
+| `AIGCHost` | 宿主能力门面（存储、文件、模型单元、通道、调度、语音分离结果读写等） |
+| `ActionContext` / `AIGCActionTask` | 动作处理上下文与处理器契约 |
+| `AIGCSPI` | SPI 契约版本（当前 `VERSION = 25`）。**任何签名变更都必须递增该值**，模块描述符里的 `spiVersion` 与之比对，不匹配即拒绝加载，不做静默降级 |
+
+**② 端点面：网关扩展（`cube.dispatcher.aigc.spi`，位于 `dispatcher`）**
+
+| 类型 | 作用 |
+| --- | --- |
+| `DispatcherExtension` | 网关扩展点。`getRestPrefixes()` 声明前缀（诊断用），`getEndpointHandlers()`（**default 方法**）返回本模块的 Jetty `ContextHandler` 实例 |
+| `DispatcherExtensions` | 装载器：读配置 → 反射实例化 → 前缀冲突检测 → 路径去重注册 |
+
+模块端的对应实现：
+
+| 类 | 作用 |
+| --- | --- |
+| `PsychologyEndpoints` | 心理学端点清单（30 条），按语义分组，顺序即注册顺序 |
+| `psychology/dispatcher/handler/*` | 30 个端点实现，继承网关的 `AIGCHandler`（跨包继承，关键方法为 `protected`，**必须显式 import**） |
+| `PsychologyDispatcherExtension` | 纯前缀声明的薄壳，与上面两者并存于同一配置项 |
+
+**③ 编译期依赖是单向的**
+
+```
+service-psychology  →  dispatcher   （构造 handler 所必需）
+dispatcher          ✗  service-psychology
+service             ✗  service-psychology
+```
+
+因此：插件 `build.xml` 的 `master-classpath` **包含** `cube-dispatcher-*.jar`；`service-psychology.iml` 需声明 dispatcher 的 COMPILE 作用域依赖；而 `dispatcher/build.xml` 与 `service/build.xml` 刻意**不包含** `cube-service-psychology-*.jar`。
+
+**④ 构建顺序**
+
+插件编译期需要 dispatcher 的产物，故顶层 `build.xml` 的 `build-service-debug` / `build-service-release` 已 `depends` `build-dispatcher-*`：
+
+```
+common → dispatcher → service-psychology → service → 其余 service-* → ferry → console → server-app
+```
+
+**⑤ 校验**
+
+```bash
+./compile-check.sh
+```
+
+按 5 段全量编译（common → dispatcher → service-psychology → service → verify），其中 **dispatcher 段必须在插件段之前**，插件段的 classpath 含 dispatcher classes。集成验证在 `/tmp` 下的临时工作目录运行（测试会覆写 `config/` 下的真实配置，**不可在 `service/` 目录直接跑**）：
+
+```bash
+mkdir -p /tmp/psy/config && cp service/config/aigc-modules.properties /tmp/psy/config/
+# classpath 需含 common / dispatcher / 插件 / service / verify 五套 classes 与依赖 jar
+java -cp "$CP" cube.service.aigc.spi.test.ModuleRegistryLoadTest   # 44 断言
+java -cp "$CP" cube.service.aigc.spi.test.PsychologyPluginTest     # 162 断言
+```
+
 ---
 
 ## 六、配置说明
@@ -542,6 +677,8 @@ scope: global
 | `service/config/aigc.properties` | AIGC 线程池、节点权重、上下文长度（全局与各模型分档）、页面搜索器、代理接口；另含 SKILL 技能（`skills.*`）、提示词编排（`prompt.*`）与 Token 估算（`token.*`）配置，详见 5.6 |
 | `service/config/storage*.json` | 各模块的存储后端（默认 MySQL：host / port / schema / user / password） |
 | `service/config/aigc-modules.properties` | AIGC 业务模块清单（`module.<n>.class/enabled/optional`），`ModuleRegistry` 据此发现并装载模块；`ant deploy` 会自动把本文件同步到 `deploy/config/`，不要在部署目录另存副本 |
+| `dispatcher/config/dispatcher.properties` 的 `module.extensions` | 网关扩展实现类清单（逗号分隔）。同时容纳「只声明前缀」与「提供端点」两类扩展，详见 3.8 与 5.5 |
+| `dispatcher/config/dispatcher.properties` 的 `module.rest.enabled` | 模块动作兜底通道 `POST /aigc/module/{moduleName}/{actionName}` 的开关，默认 `false`（关闭时该路径不注册） |
 | `service/config/psychology.json.template` | 心理学模块的存储与单元配置模板（`maxQueueLength`、`contextLength` 等），**受版本控制**，只含占位符 |
 | `service/config/psychology.local.json` | 心理学模块的实际生效配置，**不受版本控制**（含明文口令）。首次使用时从 `.template` 复制并填入真实值；缺失或仍是占位符时模块拒绝装载并在日志中指明该创建哪个文件 |
 | `service/config/plugin.json` | 插件清单：`file`（jar）、`module`、`hooks`（如 `PrePush` → `MessagingPlugin`） |
@@ -590,11 +727,22 @@ make build
 make deploy
 ```
 
-`build` 依次构建 `common` → `dispatcher` → `service` → `ferry` → `console` → `server-app`，产物输出到 `build/` 子目录，`deploy` 将编译结果安装到部署目录。
+`build` 依次构建 `common` → `dispatcher` → `service-psychology`（业务模块插件）→ `service` → 其余 `service-*` → `ferry` → `console` → `server-app`，产物输出到 `build/` 子目录，`deploy` 将编译结果安装到部署目录。
+
+> ⚠️ `service-psychology` 编译期依赖 `cube-dispatcher-*.jar`（它要构造网关的端点 handler），因此必须排在 `dispatcher` 之后。`build-service-debug` / `build-service-release` 已声明该依赖，但**单独进入该目录手工 `ant` 构建时需自行保证顺序**。
+> 插件 jar（`cube-service-psychology-3.0.jar`）由 `deploy` 拷入 `deploy/libs/`，与宿主同一 ClassLoader。**宿主与网关侧编译期均不引用插件**，但运行期网关要靠它装载端点——漏了 `ant deploy` 会导致端点静默消失。
 
 针对单个工程也可直接构建，如 `ant build-dispatcher-release`、`ant build-service-release`。
 
-### 7.4 启动与停止
+### 7.4 编译验证
+
+```bash
+./compile-check.sh
+```
+
+不依赖 Ant，直接用 JDK 8 的 `javac` 做 5 段全量编译（见 5.5 ⑤），用于在改动 SPI、模块或网关端点后快速验证依赖方向与签名一致性。
+
+### 7.5 启动与停止
 
 ```bash
 cd deploy
@@ -609,7 +757,7 @@ cd deploy
 
 默认日志目录为 `deploy/logs/`，可用 `tail -f` 跟踪。
 
-### 7.5 端口一览
+### 7.6 端口一览
 
 | 端口 | 组件 | 协议/用途 |
 | --- | --- | --- |
@@ -624,7 +772,7 @@ cd deploy
 | 7080 | console | 控制台 Web |
 | 6860 | service | Contacts 适配器 |
 
-### 7.6 容器化
+### 7.7 容器化
 
 ```bash
 docker build -t cube-server .
@@ -633,7 +781,7 @@ docker run -p 7000:7000 -p 7070:7070 -p 7077:7077 -p 7010:7010 -p 7017:7017 cube
 
 镜像基于 `cubestack/jdk1.8`，入口为 `cd /home/deploy && ./start.sh && tail -n 100 -f logs/*.out`。
 
-### 7.7 控制台
+### 7.8 控制台
 
 ```bash
 cd console
@@ -660,12 +808,35 @@ ant stop
 
 ### 8.2 新增一个 REST 接口
 
+先判断归属：**平台能力**（所有模块都能用）与**业务能力**（属某个模块）的做法完全不同。
+
+**① 平台能力端点** —— 加在网关工程：
+
 1. 在 `dispatcher/src/cube/dispatcher/aigc/handler/` 新建类，继承 `ContextHandler`，构造函数中 `super("/aigc/<分组>/<名称>")` 并 `setHandler(new Handler())`。
 2. 内部 `Handler` 继承 `AIGCHandler`：用 `getApiToken(request)` 取令牌，`Manager.getInstance().checkToken(...)` 校验，非法则返回 401。
 3. 通过 `Manager.getInstance().syncRequest(token, AIGCAction.Xxx, data)` 转发到服务单元。
 4. 在 `cube.dispatcher.aigc.Manager#setupHandler()` 中 `httpServer.addContextHandler(new Xxx())` 完成注册。
 
-### 8.3 新增提示词模板 / 策略 / 向导流
+**② 业务模块端点** —— 加在模块工程，**不要**写进网关：
+
+1. 在 `service-psychology/src/cube/service/psychology/dispatcher/handler/` 新建类（同 ① 的结构，但包名属模块，注意**跨包继承 `AIGCHandler` 必须显式 import**）。
+2. 路径写在构造器的 `super(...)` 里，**这是线协议，一经发布不可改**。
+3. 在 `PsychologyEndpoints#getEndpointHandlers()` 的列表里登记，顺序即注册顺序。
+4. 若同时新增了动作：先在 `common/.../action/AIGCAction.java` 加枚举（字符串即线协议名），再在模块的 `action/` 下实现处理器，并在 `PsychologyModule#declareActionNames()` 与 `getActions()` 中**逐字一致地**声明（不一致会导致请求悬挂而非回错码）。
+
+宿主与网关侧的编译期**不引用**插件任何类型，因此模块改动不需要动网关代码——只需重启网关让端点重新装载。
+
+### 8.3 新增一个业务模块
+
+1. 新建工程目录（如 `service-inspection/`），拷贝 `service-psychology/build.xml` 与 `.iml` 作为骨架。
+2. 实现 `ActionModule`（`getName` / `getDescriptor` / `declareActionNames` / `getActions` / `setup` / `teardown` / `onTick`）。`declareActionNames()` 必须与 `getActions()` 逐字一致。
+3. 如需 REST 端点，实现 `cube.dispatcher.aigc.spi.DispatcherExtension`，把端点清单与实现放进模块的 `dispatcher/` 子包。
+4. 在 `deploy/libs/` 放置模块 jar（与宿主同 ClassLoader），在 `service/config/aigc-modules.properties` 声明 `module.<n>.class` 与 `enabled`。
+5. 在 `dispatcher/config/dispatcher.properties` 的 `module.extensions` 追加实现类全限定名。
+6. 构建顺序：`dispatcher` 之后（模块编译期依赖它）。
+7. 用 `./compile-check.sh` 验证，并在 `verify/` 下补集成验证（该模块是全工程唯一允许同时引用插件与宿主的编译单元）。
+
+### 8.4 新增提示词模板 / 策略 / 向导流
 
 | 目标 | 操作 |
 | --- | --- |
@@ -675,7 +846,7 @@ ant stop
 | 问卷/量表 | 放入 `service/assets/psychology/questionnaires/` 与 `scale.json` |
 | 脚本模组 | 放入 `service/assets/robot/modules/`，由 `ModuleManager` 载入 |
 
-### 8.4 代码约定
+### 8.5 代码约定
 
 - 所有跨节点通信必须携带 `_performer`（P-KEY）；服务单元主动推送必须携带 `_director`（D-KEY）。
 - 响应统一携带 `state`：`StateCode.makeState(code, desc)`。
